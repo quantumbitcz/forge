@@ -1305,6 +1305,766 @@ New fields in `state.json`:
 
 ---
 
+## Phase 3: Self-Healing Pipeline & Recovery Patterns
+
+### Overview
+
+The pipeline currently has basic retry loops (quality fix cycles, test fix cycles) but lacks structured recovery for infrastructure failures, API timeouts, tool crashes, and partial completions. This phase adds a resilience layer that makes the pipeline self-healing — it detects failures, classifies them, applies the appropriate recovery strategy, and continues without human intervention when possible.
+
+### Failure Taxonomy
+
+Every failure the pipeline can encounter falls into one of these categories:
+
+| Category | Examples | Recovery strategy | Max retries |
+|---|---|---|---|
+| **TRANSIENT** | API timeout, network blip, rate limit, MCP server temporarily unavailable | Wait + retry with exponential backoff | 3 |
+| **TOOL_FAILURE** | Bash command exits non-zero, linter crashes, build tool OOM | Diagnose, adjust, retry | 2 |
+| **AGENT_FAILURE** | Agent produces malformed output, hits context limit, infinite loop detection | Reset agent context, retry with simplified prompt | 2 |
+| **STATE_CORRUPTION** | state.json invalid, checkpoint missing, git state unexpected | Reconstruct from last known good state | 1 |
+| **EXTERNAL_DEPENDENCY** | Docker not running, database unavailable, Keycloak down, preview env not deploying | Check dependency, wait or skip with degraded mode | 3 |
+| **RESOURCE_EXHAUSTION** | Disk full, token budget exceeded, too many concurrent processes | Free resources, reduce scope, continue | 1 |
+| **UNRECOVERABLE** | Permission denied, invalid credentials, fundamental config error, user cancellation | Checkpoint state, report to user, stop cleanly | 0 |
+
+### Recovery Architecture
+
+```
+shared/
+  recovery/
+    recovery-engine.md            # Agent: classifies failures, selects recovery strategy
+    strategies/
+      transient-retry.md          # Exponential backoff with jitter
+      tool-diagnosis.md           # Analyze tool failure, adjust and retry
+      agent-reset.md              # Reset agent context, simplify prompt
+      state-reconstruction.md     # Rebuild state from git + artifacts
+      dependency-health.md        # Check and wait for external dependencies
+      resource-cleanup.md         # Free resources, reduce scope
+      graceful-stop.md            # Checkpoint everything, clean exit
+    health-checks/
+      pre-stage-health.sh         # Run before each stage: verify prerequisites
+      dependency-check.sh         # Verify external deps (docker, db, network)
+```
+
+### Recovery Engine (`recovery-engine.md`)
+
+A lightweight agent that intercepts failures at any pipeline stage. It does NOT replace the stage agents — it wraps them.
+
+**How the orchestrator uses it:**
+
+```
+For each stage:
+  1. Run pre-stage-health.sh → verify prerequisites
+     If unhealthy: dispatch recovery-engine with EXTERNAL_DEPENDENCY
+  2. Execute stage agent
+     If success: proceed to next stage
+     If failure:
+       a. Capture failure context (exit code, stderr, last output, stage, action)
+       b. Dispatch recovery-engine with failure context
+       c. Recovery engine classifies failure → selects strategy
+       d. Execute strategy (retry, diagnose, reset, etc.)
+       e. If recovered: re-run stage agent
+       f. If not recovered after max retries: checkpoint state → escalate to user
+```
+
+**Failure context schema** (passed to recovery engine):
+
+```json
+{
+  "failure_id": "f-20260321-001",
+  "stage": "VERIFYING",
+  "agent": "pl-500-test-gate",
+  "action": "running tests via ./gradlew test",
+  "error_type": "TOOL_FAILURE",
+  "exit_code": 137,
+  "stderr_tail": "Killed - process used too much memory",
+  "stdout_tail": "Test > shouldCreateUser PASSED\nTest > shouldHandleBilling",
+  "timestamp": "2026-03-21T14:30:00Z",
+  "retry_count": 0,
+  "max_retries": 2
+}
+```
+
+### Recovery Strategies (detailed)
+
+#### 1. Transient Retry (`transient-retry.md`)
+
+For API timeouts, rate limits, network issues, MCP server hiccups.
+
+```
+Strategy:
+  1. Wait: base_delay * 2^retry_count + random_jitter (0-1s)
+     - Base delay: 2s for API calls, 5s for network, 10s for MCP servers
+     - Max delay cap: 60s
+  2. Retry the exact same operation
+  3. If still failing after max_retries:
+     - If MCP tool: try alternative tool or manual approach
+     - If API call: check if API is fundamentally down (health endpoint)
+     - Escalate if no alternative exists
+
+Detection heuristics:
+  - Exit code 28 (curl timeout), 52 (empty reply), 56 (network receive error)
+  - stderr contains: "timeout", "ETIMEDOUT", "ECONNREFUSED", "rate limit", "429", "503"
+  - MCP tool returns connection error
+```
+
+#### 2. Tool Diagnosis (`tool-diagnosis.md`)
+
+For build failures, linter crashes, test runner errors.
+
+```
+Strategy:
+  1. Classify the tool failure:
+     - OOM (exit 137, "Killed", "OutOfMemoryError")
+       → Reduce scope: run on changed files only, increase heap, split test suite
+     - Config error (missing config file, invalid syntax)
+       → Check config exists, validate syntax, offer to regenerate from template
+     - Dependency missing (command not found, module not found)
+       → Check PATH, suggest install command, try alternative tool
+     - Compilation error (type errors, syntax errors)
+       → This is NOT a tool failure — it's an implementation issue. Route back to implementer.
+  2. Apply fix
+  3. Retry
+  4. If still failing: log diagnostic info, escalate
+
+Detection heuristics:
+  - Exit code 137/139: OOM/segfault
+  - Exit code 127: command not found
+  - Exit code 1-2: tool-specific (check stderr for classification)
+  - stderr contains: "FATAL", "panic", "Segmentation fault", "Cannot find module"
+```
+
+#### 3. Agent Reset (`agent-reset.md`)
+
+For agents that produce malformed output, hit context limits, or loop.
+
+```
+Strategy:
+  1. Detect the agent failure:
+     - Output doesn't match expected format (missing required fields)
+     - Agent ran for >10 minutes without producing a stage transition
+     - Agent made >20 tool calls without progress (loop detection)
+     - Context window exceeded (truncation errors)
+  2. Save partial results (whatever the agent did produce)
+  3. Reset: dispatch a fresh agent instance with:
+     - Simplified prompt (remove verbose context, keep essentials)
+     - Partial results as starting point
+     - Explicit instruction: "Continue from where the previous attempt left off"
+  4. If still failing: reduce scope (e.g., review fewer files, plan fewer tasks)
+  5. If still failing: escalate to user with partial results
+
+Loop detection:
+  Track last 20 tool calls. If >50% are the same tool with the same arguments:
+    → Agent is looping. Kill and reset.
+```
+
+#### 4. State Reconstruction (`state-reconstruction.md`)
+
+For corrupted state.json, missing checkpoints, or git drift.
+
+```
+Strategy:
+  1. Check what's broken:
+     - state.json missing → reconstruct from git log (find last pipeline commit)
+     - state.json invalid JSON → restore from last checkpoint file
+     - Checkpoint missing → scan .pipeline/ for latest checkpoint-*.json
+     - Git drift (unexpected commits since last pipeline SHA)
+       → Diff against last_commit_sha, ask user to incorporate or discard
+  2. Reconstruct:
+     - Read git log for pipeline commits (conventional commit messages)
+     - Scan .pipeline/ for stage notes, checkpoints, reports
+     - Infer current stage from available artifacts
+     - Rebuild state.json with best-effort field values
+  3. Resume from reconstructed state
+  4. Log reconstruction details in stage notes
+
+Never silently discard user changes. If git drift is detected:
+  → Pause, show diff, ask user: "incorporate", "discard", or "abort"
+```
+
+#### 5. Dependency Health (`dependency-health.md`)
+
+For Docker, database, Keycloak, preview environments, external APIs.
+
+```
+Strategy:
+  1. Run dependency-check.sh for the current stage's requirements:
+     - VERIFY stage: build tools, test tools, database (if integration tests)
+     - SHIP stage: git remote, gh CLI
+     - PREVIEW stage: preview URL, playwright
+  2. For each unhealthy dependency:
+     - Docker not running → attempt `docker start` or `colima start`
+     - Database unreachable → check docker-compose, attempt restart
+     - Keycloak down → check container status, attempt restart
+     - Network unreachable → retry with backoff
+     - Tool not installed → log clear install instructions, skip or degrade
+  3. Wait for recovery (up to 60s per dependency)
+  4. If recovered: proceed
+  5. If not: determine if stage can run in degraded mode
+     - Missing database → skip integration tests, run unit tests only, log WARNING
+     - Missing Docker → skip container-based verification, log WARNING
+     - Missing gh → write PR details to file instead of creating PR, log WARNING
+  6. If critical dependency unrecoverable: escalate to user
+
+Pre-stage health check matrix:
+  | Stage | Required | Optional |
+  |-------|----------|----------|
+  | PREFLIGHT | git, python3 | — |
+  | EXPLORE | Read/Glob/Grep tools | context7 |
+  | PLAN | — | context7 |
+  | VALIDATE | — | — |
+  | IMPLEMENT | git, build tool | context7 |
+  | VERIFY | build tool, test tool | docker, database |
+  | REVIEW | — | linters |
+  | DOCS | — | — |
+  | SHIP | git | gh CLI |
+  | PREVIEW | network, playwright | lighthouse |
+  | LEARN | — | — |
+```
+
+#### 6. Resource Cleanup (`resource-cleanup.md`)
+
+For disk full, token budget exceeded, too many processes.
+
+```
+Strategy:
+  1. Diagnose resource issue:
+     - Disk full → clean .pipeline/ old reports, clean build caches, suggest `docker system prune`
+     - Token budget → reduce agent prompt size, summarize prior context, split remaining work
+     - Process limit → kill orphaned processes, wait for others to complete
+  2. Apply cleanup
+  3. Retry operation
+  4. If still exhausted: reduce scope
+     - Fewer files in quality gate review
+     - Skip optional checks (lighthouse, visual regression)
+     - Summarize instead of full analysis
+```
+
+#### 7. Graceful Stop (`graceful-stop.md`)
+
+For unrecoverable errors or user cancellation.
+
+```
+Strategy:
+  1. Save everything:
+     - Write state.json with current progress
+     - Write checkpoint with last completed action
+     - Flush stage notes with partial results
+     - Commit any uncommitted work-in-progress to a WIP branch
+  2. Report:
+     - What was completed
+     - What was in progress when stopped
+     - What remains
+     - How to resume: `/pipeline-run --from={current_stage}`
+  3. Clean exit (exit 0, no error)
+
+The pipeline never leaves work in an unrecoverable state. Even on SIGTERM:
+  - The Stop hook fires and captures state
+  - Next run detects interrupted state and offers resume
+```
+
+### State Schema Extension for Recovery
+
+New fields in `state.json`:
+
+```json
+{
+  "recovery": {
+    "failures": [
+      {
+        "failure_id": "f-20260321-001",
+        "stage": "VERIFYING",
+        "category": "TOOL_FAILURE",
+        "strategy_applied": "tool-diagnosis",
+        "retries": 1,
+        "resolved": true,
+        "resolution": "Reduced test scope to changed modules only (OOM on full suite)",
+        "timestamp": "2026-03-21T14:30:00Z",
+        "duration_ms": 15000
+      }
+    ],
+    "total_failures": 1,
+    "total_recoveries": 1,
+    "degraded_capabilities": ["integration-tests-skipped"]
+  }
+}
+```
+
+### Self-Healing Metrics & Learning
+
+The retrospective agent (`pl-700-retrospective`) analyzes recovery data:
+
+```
+For each run with failures:
+  1. Log failure patterns to pipeline-log.md:
+     - PATTERN: "Gradle OOM on full test suite — needs -Xmx3g or module-scoped test runs"
+     - PREEMPT: "Check heap config before VERIFY stage in large projects"
+  2. Track failure frequency per category:
+     - If TRANSIENT failures >3 across last 5 runs → suggest checking network/API health
+     - If TOOL_FAILURE on same tool >2 runs → suggest tool version upgrade or config fix
+     - If AGENT_FAILURE on same agent >2 runs → flag agent prompt as potentially too complex
+  3. Auto-tune recovery params:
+     - If retries rarely needed beyond 1 → reduce max_retries to save time
+     - If backoff delays are too short (still failing) → increase base_delay
+```
+
+---
+
+## Phase 4: Marketplace Distribution
+
+### Overview
+
+The plugin currently requires installation as a git submodule (`git submodule add ... .claude/plugins/dev-pipeline`). This is friction-heavy: manual setup, manual updates, submodule gotchas (detached HEAD, hook issues in worktrees).
+
+Claude Code supports a **marketplace system** for plugin distribution. Plugins are installed via `/plugin install` and auto-updated. This phase migrates dev-pipeline to marketplace distribution.
+
+### Current vs. Target Installation Experience
+
+**Current (git submodule):**
+```bash
+cd your-project
+git submodule add https://github.com/quantumbitcz/dev-pipeline .claude/plugins/dev-pipeline
+git submodule update --init
+# Manually configure .claude/dev-pipeline.local.md
+# Manually update .claude/settings.json hooks
+# On every update: git submodule update --remote
+```
+
+**Target (marketplace):**
+```bash
+# One-time: add the marketplace
+/plugin marketplace add quantumbitcz/dev-pipeline
+
+# Install the plugin
+/plugin install dev-pipeline@quantumbitcz
+
+# Use it
+/pipeline-run "add user avatars"
+```
+
+Or declaratively in `.claude/settings.json`:
+```json
+{
+  "enabledPlugins": {
+    "dev-pipeline@quantumbitcz": true
+  }
+}
+```
+
+### Plugin Structure Migration
+
+The plugin needs to move from the current root-level `plugin.json` to the standard `.claude-plugin/` structure:
+
+**Current structure:**
+```
+dev-pipeline/
+  plugin.json                    # Root-level manifest (non-standard)
+  agents/
+  skills/
+  hooks/
+  shared/
+  modules/
+```
+
+**Target structure:**
+```
+dev-pipeline/
+  .claude-plugin/
+    plugin.json                  # Standard manifest location
+    marketplace.json             # Marketplace catalog entry
+  agents/
+  skills/
+  hooks/
+    hooks.json                   # Hook definitions (separate from manifest)
+    pipeline-checkpoint.sh
+    feedback-capture.sh
+  shared/
+  modules/
+```
+
+### Manifest Migration
+
+**Current `plugin.json` (root-level):**
+```json
+{
+  "name": "dev-pipeline",
+  "description": "Reusable autonomous development pipeline with framework modules",
+  "version": "0.1.0",
+  "hooks": {
+    "PostToolUse": [ ... ],
+    "Stop": [ ... ]
+  }
+}
+```
+
+**New `.claude-plugin/plugin.json`:**
+```json
+{
+  "name": "dev-pipeline",
+  "version": "1.0.0",
+  "description": "Autonomous 10-stage development pipeline with multi-language support, self-healing recovery, and generalized code quality checks",
+  "author": {
+    "name": "QuantumBit s.r.o.",
+    "url": "https://github.com/quantumbitcz"
+  },
+  "repository": "https://github.com/quantumbitcz/dev-pipeline",
+  "license": "Proprietary",
+  "keywords": [
+    "pipeline", "tdd", "code-review", "quality-gate",
+    "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c"
+  ]
+}
+```
+
+**New `hooks/hooks.json`:**
+```json
+{
+  "hooks": [
+    {
+      "event": "PostToolUse",
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
+          "timeout": 5000
+        }
+      ]
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Skill",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
+          "timeout": 5000
+        }
+      ]
+    },
+    {
+      "event": "Stop",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/feedback-capture.sh",
+          "timeout": 3000
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Marketplace Catalog
+
+**New `.claude-plugin/marketplace.json`:**
+```json
+{
+  "name": "quantumbitcz",
+  "owner": {
+    "name": "QuantumBit s.r.o.",
+    "url": "https://github.com/quantumbitcz"
+  },
+  "metadata": {
+    "description": "Autonomous development pipeline with multi-language support",
+    "version": "2026.03.21"
+  },
+  "plugins": [
+    {
+      "name": "dev-pipeline",
+      "description": "10-stage autonomous development pipeline: Preflight, Explore, Plan, Validate, Implement (TDD), Verify, Review, Docs, Ship, Learn. Supports Kotlin, TypeScript, Python, Go, Rust, C, Swift, Java with self-healing recovery and generalized code quality checks.",
+      "source": "./",
+      "strict": false
+    }
+  ]
+}
+```
+
+### First-Run Experience
+
+When a user installs via marketplace and runs `/pipeline-run` for the first time in a project without config:
+
+```
+1. Detect: no .claude/dev-pipeline.local.md exists
+2. Display welcome message:
+   "Dev Pipeline is installed but not configured for this project."
+3. Auto-detect project:
+   - Scan for project markers (build.gradle.kts, package.json, Cargo.toml, etc.)
+   - Suggest module: "Detected: Kotlin + Spring Boot → kotlin-spring module"
+4. Generate config:
+   - Copy modules/{detected-module}/local-template.md → .claude/dev-pipeline.local.md
+   - Copy modules/{detected-module}/pipeline-config-template.md → .claude/pipeline-config.md
+   - Create empty .claude/pipeline-log.md
+5. Verify:
+   - Run engine.sh --verify to confirm config is valid
+   - Run build/test commands from local-template to confirm they work
+6. Ready:
+   "Configuration complete. Run /pipeline-run 'your feature' to start."
+```
+
+This replaces the current 8-step manual setup from the README.
+
+### Update Strategy
+
+| Scenario | Behavior |
+|---|---|
+| Plugin update available | Claude Code notifies user, auto-updates on next session |
+| Breaking change in config schema | Plugin detects old config format, offers migration |
+| New module added | Available immediately after update |
+| Rule files updated | New rules apply on next engine.sh invocation |
+| New agent added | Available on next pipeline run |
+
+### Impact on Consuming Projects
+
+**Removal of git submodule:**
+
+For `wellplanned-be` and `wellplanned-fe`:
+```bash
+# Remove submodule
+git submodule deinit .claude/plugins/dev-pipeline
+git rm .claude/plugins/dev-pipeline
+rm -rf .git/modules/.claude/plugins/dev-pipeline
+
+# Add marketplace plugin reference
+# (in .claude/settings.json)
+{
+  "enabledPlugins": {
+    "dev-pipeline@quantumbitcz": true
+  }
+}
+
+# Keep existing config files (they still work):
+# .claude/dev-pipeline.local.md
+# .claude/pipeline-config.md
+# .claude/pipeline-log.md
+
+git add -A && git commit -m "chore: migrate dev-pipeline from submodule to marketplace plugin"
+```
+
+**Path references in settings.json hooks:**
+
+Old hooks referencing `.claude/plugins/dev-pipeline/...` paths become invalid once the submodule is removed. With marketplace distribution, all hooks are registered through `hooks/hooks.json` within the plugin — consuming projects no longer need per-project hook entries in their `settings.json` for the pipeline's core checks.
+
+Project-specific hooks (like BE's "block editing generated OpenAPI sources") remain in the project's `settings.json` — those are project concerns, not plugin concerns.
+
+---
+
+## Phase 5: Project Init & Command Consolidation
+
+### Overview
+
+Currently, each consuming project has its own `.claude/commands/` with framework-specific commands (e.g., wellplanned-be has `/build`, `/test`, `/scan`, `/usecase`, `/adapter`, etc.). These commands contain useful patterns but are duplicated across projects and disconnected from the pipeline plugin.
+
+This phase:
+1. **Moves reusable commands into the pipeline plugin** as module-specific commands
+2. **Creates a `/pipeline-init` skill** that auto-configures any project for the pipeline
+3. Eliminates manual setup entirely — install the plugin, run `/pipeline-init`, start building
+
+### Command Classification & Migration
+
+Commands from wellplanned-be analyzed for reuse:
+
+| Command | Type | Migration target |
+|---|---|---|
+| `/dev` | Generic pipeline launcher | Already exists as `/pipeline-run` skill — delete from projects |
+| `/build` | Generic (Gradle wrapper) | `modules/kotlin-spring/commands/build.md` — parameterized per module |
+| `/test` | Generic (Gradle test wrapper) | `modules/kotlin-spring/commands/test.md` — parameterized per module |
+| `/db` | Generic (Docker Compose) | `shared/commands/db.md` — works across all modules using Docker |
+| `/migration` | Generic (Flyway) | `modules/kotlin-spring/commands/migration.md` — DB migration tool varies by module |
+| `/scan` | Framework-specific (Kotlin) | Replaced by `engine.sh` — Layer 1+2 checks subsume scan functionality |
+| `/usecase` | Framework-specific (Kotlin hexagonal) | `modules/kotlin-spring/commands/usecase.md` |
+| `/adapter` | Framework-specific (Kotlin hexagonal) | `modules/kotlin-spring/commands/adapter.md` |
+| `/controller` | Framework-specific (Kotlin OpenAPI) | `modules/kotlin-spring/commands/controller.md` |
+| `/openapi` | Framework-specific (Kotlin) | `modules/kotlin-spring/commands/openapi.md` |
+
+**New plugin directory structure for commands:**
+
+```
+commands/                              # Plugin-level shared commands
+  pipeline-init.md                     # /pipeline-init — project setup wizard
+  db.md                                # /db — Docker Compose database management
+
+modules/
+  kotlin-spring/
+    commands/
+      build.md                         # /build — Gradle build wrapper
+      test.md                          # /test — Gradle test runner with module shortcuts
+      usecase.md                       # /usecase — Scaffold hexagonal use case
+      adapter.md                       # /adapter — Add persistence adapter methods
+      controller.md                    # /controller — Implement OpenAPI endpoint
+      migration.md                     # /migration — Create Flyway migration
+      openapi.md                       # /openapi — Regenerate OpenAPI sources
+
+  react-vite/
+    commands/
+      build.md                         # /build — Bun/Vite build wrapper
+      test.md                          # /test — Vitest runner
+      component.md                     # /component — Scaffold React component
+
+  python-fastapi/
+    commands/
+      build.md                         # /build — uv/pip build wrapper
+      test.md                          # /test — Pytest runner
+      router.md                        # /router — Scaffold FastAPI router
+      migration.md                     # /migration — Create Alembic migration
+
+  go-stdlib/
+    commands/
+      build.md                         # /build — Go build wrapper
+      test.md                          # /test — Go test runner
+
+  rust-axum/
+    commands/
+      build.md                         # /build — Cargo build wrapper
+      test.md                          # /test — Cargo test runner
+
+  # Other modules get build.md + test.md at minimum
+```
+
+**Key principle:** Commands are discovered by Claude Code from the plugin's `commands/` directories. Module-specific commands are only available when that module is active (detected during `/pipeline-init` or from `dev-pipeline.local.md`).
+
+### `/pipeline-init` Skill
+
+**Entry point:** `skills/pipeline-init/SKILL.md`
+**Purpose:** Zero-config project setup. Scans a project, detects its stack, configures the pipeline, and validates everything works.
+
+**Flow:**
+
+```
+DETECT
+  → Scan project root for stack markers:
+    | Marker | Detection |
+    |--------|-----------|
+    | build.gradle.kts + src/main/kotlin/ | kotlin-spring |
+    | build.gradle.kts + src/main/java/ | java-spring |
+    | package.json + vite.config.* + react | react-vite |
+    | package.json + svelte.config.* | typescript-svelte |
+    | package.json + (express\|nestjs) | typescript-node |
+    | pyproject.toml + fastapi | python-fastapi |
+    | go.mod | go-stdlib |
+    | Cargo.toml | rust-axum |
+    | Package.swift + Vapor | swift-vapor |
+    | *.xcodeproj or Package.swift | swift-ios |
+    | Makefile + *.c/*.h | c-embedded |
+
+  → Detect additional features:
+    - Docker Compose → enable /db command
+    - CI/CD workflows → detect deployment patterns for preview config
+    - Test framework → configure test commands
+    - Linters installed → configure Layer 2 adapters
+    - OpenAPI spec → enable contract validation config
+    - Related repos (via git remotes or config) → suggest cross-repo contracts
+
+  → Present findings to user:
+    "Detected: Kotlin + Spring Boot (hexagonal architecture)
+     Build: Gradle 8.x
+     Tests: Kotest + Testcontainers (106 test classes)
+     Linters: Detekt + ktlint
+     Database: PostgreSQL via Docker Compose
+     CI: GitHub Actions
+     Module: kotlin-spring
+
+     Ready to configure? [Y/n]"
+
+CONFIGURE
+  → Generate .claude/dev-pipeline.local.md from module template:
+    - Fill in detected build/test/lint commands
+    - Set scaffolder patterns from module defaults
+    - Configure quality gate batches
+    - Set file path patterns for the detected project structure
+
+  → Generate .claude/pipeline-config.md from module template:
+    - Set default runtime params (max_fix_loops, auto_proceed_risk, etc.)
+    - Initialize domain hotspots as empty
+
+  → Create empty .claude/pipeline-log.md
+
+  → If project has related repos (e.g., shared OpenAPI spec):
+    - Suggest contract validation config
+    - Ask user for consumer/source paths
+
+  → If project has preview environments:
+    - Detect URL pattern from CI config
+    - Suggest preview validation config
+
+VALIDATE
+  → Run build command → verify it works
+  → Run test command → verify it works
+  → Run engine.sh --verify → verify checks work
+  → Run linter (if detected) → verify Layer 2 adapter works
+
+  → Report:
+    "Configuration complete!
+
+     Module: kotlin-spring
+     Build: ./gradlew build ✓
+     Tests: ./gradlew test ✓ (106 tests passing)
+     Checks: engine.sh ✓ (kotlin rules + spring overrides loaded)
+     Linter: detekt ✓ (adapter working)
+
+     Files created:
+       .claude/dev-pipeline.local.md
+       .claude/pipeline-config.md
+       .claude/pipeline-log.md
+
+     Available commands:
+       /pipeline-run  — Run the full pipeline
+       /build         — Build the project
+       /test          — Run tests
+       /usecase       — Scaffold a use case
+       /adapter       — Add adapter methods
+       /controller    — Implement an endpoint
+       /migration     — Create DB migration
+       /scan          — Run code checks (now via engine.sh)
+
+     Ready to use: /pipeline-run 'your first feature'"
+
+CLEANUP (for projects migrating from submodule)
+  → If .claude/plugins/dev-pipeline exists as submodule:
+    - Ask: "Found existing submodule installation. Remove it? [Y/n]"
+    - If yes: run submodule removal commands
+    - Preserve existing config files (.claude/dev-pipeline.local.md, etc.)
+    - Update any settings.json hook paths
+```
+
+**Idempotent:** Running `/pipeline-init` on an already-configured project detects existing config, shows diff against what it would generate, and asks whether to update or keep current.
+
+### Command Parameterization
+
+Module commands are templates with placeholders filled from `dev-pipeline.local.md`:
+
+```markdown
+---
+description: Build the project
+allowed-tools: Bash(*)
+---
+
+# Build
+
+Read the build command from .claude/dev-pipeline.local.md:
+- Default: {{build_command}} (from local config)
+- With --fast or no-test: skip tests
+- With --clean: clean build
+- With --module <name>: build specific module
+
+Run the build command. If it fails, show only compiler errors (not full stacktraces).
+```
+
+The `{{build_command}}` is resolved from the module's `local-template.md` during `/pipeline-init`. This means `/build` works the same way across all projects — the command structure is shared, only the underlying tool invocation differs.
+
+### State Schema Extension
+
+No new `state.json` fields needed. Init runs outside the pipeline state machine — it's a one-time setup utility.
+
+### Impact on Consuming Projects
+
+After this phase, consuming projects:
+1. **Delete** `.claude/commands/` entirely (all commands come from the plugin)
+2. **Delete** `.claude/plugins/dev-pipeline` submodule (plugin comes from marketplace)
+3. **Keep** `.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md` (project config stays in project)
+4. **Simplify** `.claude/settings.json` (remove pipeline hook entries — hooks are in plugin now)
+
+---
+
 ## Migration Path
 
 ### Impact on existing files
@@ -1340,21 +2100,25 @@ to:
 
 ### Delivery sequence
 
-| # | Branch | Contents | Depends on |
-|---|---|---|---|
-| 1 | `feat/check-engine-core` | engine.sh, run-patterns.sh, output-format.md, JSON schema | — |
-| 2 | `feat/language-rules` | `patterns/*.json` (8 languages) + `examples/` (~35 files) | #1 |
-| 3 | `feat/linter-bridge` | `layer-2-linter/` — adapters, severity-map, run-linter.sh | #1 |
-| 4 | `feat/agent-intelligence` | `layer-3-agent/` — agents, known-deprecations JSONs | #1 |
-| 5 | `feat/new-modules` | 9 new module directories (3-4 files each) | #2 |
-| 6 | `feat/migrate-existing-modules` | Update kotlin-spring + react-vite, delete old scripts, deprecation schema migration | #1, #2 |
-| 7 | `feat/test-bootstrapper` | `pl-150-test-bootstrapper` agent | #1 |
-| 8 | `feat/contract-validator` | `pl-250-contract-validator` agent | #1 |
-| 9 | `feat/migration-orchestrator` | `pl-160-migration-planner` agent + orchestrator updates | #1 |
-| 10 | `feat/preview-validator` | `pl-650-preview-validator` agent | #1 |
-| 11 | `feat/update-contracts` | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#10 |
+| # | Branch | Phase | Contents | Depends on |
+|---|---|---|---|---|
+| 1 | `feat/check-engine-core` | 1 | engine.sh, run-patterns.sh, output-format.md, JSON schema | — |
+| 2 | `feat/language-rules` | 1 | `patterns/*.json` (8 languages) + `examples/` (~35 files) | #1 |
+| 3 | `feat/linter-bridge` | 1 | `layer-2-linter/` — adapters, severity-map, run-linter.sh, defaults | #1 |
+| 4 | `feat/agent-intelligence` | 1 | `layer-3-agent/` — agents, known-deprecations JSONs | #1 |
+| 5 | `feat/new-modules` | 1 | 9 new module directories (3-4 files + commands each) | #2 |
+| 6 | `feat/migrate-existing-modules` | 1 | Update kotlin-spring + react-vite, delete old scripts, deprecation schema migration | #1, #2 |
+| 7 | `feat/test-bootstrapper` | 2 | `pl-150-test-bootstrapper` agent | #1 |
+| 8 | `feat/contract-validator` | 2 | `pl-250-contract-validator` agent | #1 |
+| 9 | `feat/migration-orchestrator` | 2 | `pl-160-migration-planner` agent + orchestrator migration mode | #1 |
+| 10 | `feat/preview-validator` | 2 | `pl-650-preview-validator` agent | #1 |
+| 11 | `feat/recovery-engine` | 3 | Recovery engine agent, strategies, health checks, pre-stage hooks | #1 |
+| 12 | `feat/marketplace-distribution` | 4 | .claude-plugin/ structure, hooks.json, marketplace.json, delete root plugin.json | #6 |
+| 13 | `feat/pipeline-init` | 5 | /pipeline-init skill, project detection, config generation | #5, #12 |
+| 14 | `feat/module-commands` | 5 | Module-specific commands (build, test, scaffolders per module) | #5 |
+| 15 | `feat/update-contracts` | All | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#14 |
 
-PRs 1-6 = Phase 1. PRs 7-11 = Phase 2.
+PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities). PR 11 = Phase 3 (Self-Healing). PRs 12-14 = Phase 4+5 (Distribution + Init). PR 15 = cross-cutting docs update.
 
 ### Estimated file count
 
@@ -1365,7 +2129,11 @@ PRs 1-6 = Phase 1. PRs 7-11 = Phase 2.
 | Linter adapters + config + defaults | ~13 |
 | Agent intelligence (agents, deprecation JSONs) | ~12 |
 | Examples | ~35 |
-| New modules (9 x 3-4 files) | ~30 |
-| New agents (Phase 2) | 4 |
+| New modules (9 x 3-4 config files) | ~30 |
+| Module commands (build, test, scaffolders) | ~25 |
+| New pipeline agents (Phase 2) | 4 |
+| Recovery engine + strategies + health checks (Phase 3) | ~10 |
+| Marketplace structure (.claude-plugin/, hooks.json) | ~4 |
+| Pipeline-init skill | ~2 |
 | Migration (conversion script, updated existing files) | ~12 |
-| **Total** | **~119** |
+| **Total** | **~160** |
