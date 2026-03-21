@@ -1,0 +1,25 @@
+changelog:
+  categories:
+    - title: Features
+      labels:
+        - enhancement
+    - title: Bug Fixes
+      labels:
+        - bug
+    - title: Agents
+      labels:
+        - agents
+    - title: Modules
+      labels:
+        - module
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"
+  exclude:
+    labels:
+      - dependencies
+    authors:
+      - github-actions[bot]
