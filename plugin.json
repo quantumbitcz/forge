@@ -1,9 +1,19 @@
 {
   "name": "dev-pipeline",
   "description": "Reusable autonomous development pipeline with framework modules",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "hooks": {
     "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
+            "timeout": 5000
+          }
+        ]
+      },
       {
         "matcher": "Skill",
         "hooks": [
