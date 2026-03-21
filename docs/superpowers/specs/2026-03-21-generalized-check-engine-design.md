@@ -1625,6 +1625,188 @@ For each run with failures:
      - If backoff delays are too short (still failing) → increase base_delay
 ```
 
+### Adaptive Learning System
+
+Beyond self-healing recovery metrics, the pipeline learns and improves across three dimensions: rule evolution, agent effectiveness, and cross-project knowledge transfer.
+
+#### 1. Rule Learning — Auto-Evolving Check Rules
+
+When the quality gate (Stage 6) or human review finds a new antipattern that isn't covered by existing Layer 1 rules, the retrospective agent (Stage 9) can **automatically propose and add new rules** to the language JSON files.
+
+**Flow:**
+
+```
+REVIEW stage findings → retrospective analysis at LEARN stage:
+
+For each finding from quality gate review agents:
+  1. Check: does a Layer 1 rule already cover this pattern?
+     - Match finding's file:line against Layer 1 findings for the same run
+     - If Layer 1 already caught it → skip (no new rule needed)
+  2. If NOT caught by Layer 1:
+     - Extract the pattern: what grep regex would catch this?
+     - Classify: is this language-generic or framework-specific?
+     - Determine severity from the review agent's assessment
+     - Generate a candidate rule:
+       {
+         "id": "KT-LEARNED-{NNN}",
+         "name": "{descriptive-name}",
+         "pattern": "{extracted-regex}",
+         "severity": "WARNING",
+         "category": "{matched-category}",
+         "message": "{from review finding}",
+         "fix_hint": "{from review finding}",
+         "example_ref": "",
+         "scope": "all",
+         "_learned_from": "run-{story_id}-{date}",
+         "_confidence": 0.85
+       }
+  3. Validation:
+     - Run the candidate pattern against the project's codebase
+     - Count matches: if >50 hits → too broad, refine or discard
+     - Count false positives: sample 5 random matches, check if they're real issues
+     - If <3 false positives out of 5 samples → confidence is HIGH
+  4. If confidence HIGH:
+     - Append to language JSON's `rules` array (in `_learned_rules` section)
+     - Log to pipeline-log.md: "RULE-LEARNED: {id} — {description}"
+  5. If confidence LOW:
+     - Log to pipeline-log.md as "RULE-CANDIDATE: {id} — needs manual review"
+     - Do NOT auto-add to rules
+
+Learned rules are prefixed with _learned_ metadata fields:
+  - `_learned_from`: which pipeline run discovered this
+  - `_confidence`: 0.0-1.0, based on false positive rate
+  - `_hit_count`: incremented each run when the rule fires (tracks usefulness)
+  - `_false_positive_reports`: incremented when the implementer ignores the finding
+
+Pruning: if a learned rule has _hit_count == 0 over 10 runs, or _false_positive_reports > 3,
+the retrospective agent removes it and logs "RULE-PRUNED: {id} — {reason}".
+```
+
+**Storage:** Learned rules live in the same language JSON files alongside curated rules. They're distinguished by the `_learned_from` metadata field. This means they benefit from the same engine.sh execution path — no separate processing.
+
+#### 2. Agent Prompt Improvement — Effectiveness Tracking
+
+The retrospective agent tracks which agents produce the best outcomes and suggests prompt refinements for underperforming agents.
+
+**Metrics tracked per agent per run** (stored in `.pipeline/reports/`):
+
+```json
+{
+  "agent_effectiveness": {
+    "pl-300-implementer": {
+      "runs": 15,
+      "avg_fix_cycles_needed": 1.2,
+      "avg_quality_score": 88,
+      "common_failure_patterns": ["missing null checks", "wrong import order"],
+      "avg_time_seconds": 120,
+      "context_resets": 0
+    },
+    "pl-400-quality-gate": {
+      "runs": 15,
+      "false_positive_rate": 0.08,
+      "missed_issues_found_in_preview": 2,
+      "avg_findings_per_run": 4.5
+    },
+    "be-hex-reviewer": {
+      "runs": 10,
+      "findings_accepted": 45,
+      "findings_ignored": 3,
+      "false_positive_rate": 0.06
+    }
+  }
+}
+```
+
+**Improvement triggers:**
+
+| Signal | Action |
+|---|---|
+| Agent's `avg_fix_cycles_needed` > 2 for 5+ runs | Log PREEMPT: "Agent {name} frequently needs rework — consider adding examples for {common_failure_patterns} to its prompt" |
+| Agent's `false_positive_rate` > 0.15 for 5+ runs | Log PREEMPT: "Agent {name} has high false positive rate — review its severity mapping or scope" |
+| Agent's `context_resets` > 0 in 3+ of last 5 runs | Log PREEMPT: "Agent {name} hitting context limits — simplify prompt or split into sub-agents" |
+| Agent's `findings_ignored` > 30% of `findings_accepted` | Log PREEMPT: "Agent {name} findings frequently ignored — recalibrate severity or refine detection" |
+| Quality score consistently > 95 for 5+ runs | Log PATTERN: "Quality consistently high — consider increasing threshold from 80 to 85" |
+
+**Prompt refinement suggestions** are logged to `pipeline-log.md` as `AGENT-IMPROVE` entries. They are NOT auto-applied to agent .md files — the user or a human reviewer decides whether to act on them. This is because agent prompts are nuanced and auto-editing them could degrade performance.
+
+```
+## AGENT-IMPROVE: pl-300-implementer (2026-03-22)
+Signal: avg_fix_cycles_needed 2.4 over last 5 runs
+Common failures: missing null checks in Kotlin domain models
+Suggestion: Add to implementer prompt: "For Kotlin domain models, always use
+nullable types with safe calls for optional fields. Reference
+examples/kotlin/null-safety.md#safe-call-pattern"
+```
+
+#### 3. Cross-Project Knowledge Transfer
+
+Learnings from one project should benefit other projects using the same module. This is achieved through **shared learnings** — patterns that are module-specific rather than project-specific.
+
+**Architecture:**
+
+```
+Per-project (local):
+  .claude/pipeline-log.md          # Project-specific PREEMPT items and run history
+
+Plugin-level (shared):
+  shared/learnings/
+    kotlin-spring.md               # Cross-project learnings for kotlin-spring module
+    react-vite.md                  # Cross-project learnings for react-vite module
+    ...
+```
+
+**Flow:**
+
+```
+At LEARN stage, the retrospective agent:
+  1. Analyze this run's findings, fix patterns, and recovery events
+  2. For each learning, classify:
+     - PROJECT-SPECIFIC: references project paths, domain entities, specific configs
+       → Write to .claude/pipeline-log.md (as today)
+     - MODULE-GENERIC: applies to any project using this module
+       → Write to shared/learnings/{module}.md (in the plugin repo)
+       → Also write to .claude/pipeline-log.md for local use
+
+Classification heuristics:
+  - Contains absolute paths or project-specific package names → PROJECT-SPECIFIC
+  - References framework patterns, library quirks, or language idioms → MODULE-GENERIC
+  - Example: "Always check TypeScript compiles after component changes" → MODULE-GENERIC
+  - Example: "wellplanned-be billing module needs extra auth checks" → PROJECT-SPECIFIC
+
+At PREFLIGHT stage:
+  1. Load .claude/pipeline-log.md (project-specific PREEMPTs)
+  2. Load shared/learnings/{module}.md (cross-project PREEMPTs)
+  3. Merge, deduplicate, apply matching items
+```
+
+**Shared learnings file format:**
+
+```markdown
+# Cross-Project Learnings: kotlin-spring
+
+## PREEMPT items
+
+### KS-PREEMPT-001: Check R2DBC entity timestamps on update adapters
+- **Source:** wellplanned-be run 2026-03-15
+- **Domain:** persistence
+- **Pattern:** R2DBC updates all columns — update adapters must fetch-then-set to preserve @CreatedDate
+- **Confidence:** HIGH (confirmed across 3 runs)
+- **Hit count:** 5
+
+### KS-PREEMPT-002: Generated OpenAPI sources excluded from detekt
+- **Source:** wellplanned-be run 2026-03-18
+- **Domain:** build
+- **Pattern:** Detekt globs don't work with srcDir-added generated sources — use post-eval exclusion
+- **Confidence:** HIGH (confirmed across 2 projects)
+- **Hit count:** 2
+```
+
+**Privacy:** Shared learnings are stripped of project-specific identifiers (paths, entity names, config values) before writing to the plugin repo. They contain only the pattern and the module context.
+
+**Update mechanism:** When the plugin is updated (via marketplace or git pull), new cross-project learnings become available to all projects. The retrospective agent appends to shared learnings; the `/pipeline-init` skill loads them at setup time.
+
+**Conflict resolution:** If a project-specific PREEMPT contradicts a shared one (e.g., project says "skip this check" but shared says "always do this check"), project-specific takes priority. This follows the existing parameter resolution order: `pipeline-config.md` > `dev-pipeline.local.md` > plugin defaults.
+
 ---
 
 ## Phase 4: Marketplace Distribution
@@ -2142,12 +2324,13 @@ to:
 | 9 | `feat/migration-orchestrator` | 2 | `pl-160-migration-planner` agent + orchestrator migration mode | #1 |
 | 10 | `feat/preview-validator` | 2 | `pl-650-preview-validator` agent | #1 |
 | 11 | `feat/recovery-engine` | 3 | Recovery engine agent, strategies, health checks, pre-stage hooks | #1 |
-| 12 | `feat/marketplace-distribution` | 4 | .claude-plugin/ structure, hooks.json, marketplace.json, delete root plugin.json | #6 |
-| 13 | `feat/pipeline-init` | 5 | /pipeline-init skill, project detection, config generation | #5, #12 |
-| 14 | `feat/module-commands` | 5 | Module-specific commands (build, test, scaffolders per module) | #5 |
-| 15 | `feat/update-contracts` | All | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#14 |
+| 12 | `feat/adaptive-learning` | 3 | Rule learning, agent effectiveness tracking, cross-project knowledge transfer | #1, #11 |
+| 13 | `feat/marketplace-distribution` | 4 | .claude-plugin/ structure, hooks.json, marketplace.json, delete root plugin.json | #6 |
+| 14 | `feat/pipeline-init` | 5 | /pipeline-init skill, project detection, config generation | #5, #13 |
+| 15 | `feat/module-commands` | 5 | Module-specific commands (build, test, scaffolders per module) | #5 |
+| 16 | `feat/update-contracts` | All | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#15 |
 
-PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities). PR 11 = Phase 3 (Self-Healing). PRs 12-14 = Phase 4+5 (Distribution + Init). PR 15 = cross-cutting docs update.
+PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities). PRs 11-12 = Phase 3 (Self-Healing + Learning). PR 13 = Phase 4 (Distribution). PRs 14-15 = Phase 5 (Init + Commands). PR 16 = cross-cutting docs update.
 
 ### Estimated file count
 
@@ -2162,7 +2345,8 @@ PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities
 | Module commands (build, test, scaffolders) | ~25 |
 | New pipeline agents (Phase 2) | 4 |
 | Recovery engine + strategies + health checks (Phase 3) | ~10 |
+| Adaptive learning (shared/learnings/, retrospective extensions) | ~5 |
 | Marketplace structure (.claude-plugin/, hooks.json) | ~4 |
 | Pipeline-init skill | ~2 |
 | Migration (conversion script, updated existing files) | ~12 |
-| **Total** | **~160** |
+| **Total** | **~165** |
