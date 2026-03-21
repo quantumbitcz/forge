@@ -626,84 +626,682 @@ Only kotlin-spring and react-vite retain custom review agents (existing `be-hex-
 ### Capability 1: Test Coverage Bootstrapping
 
 **Agent:** `pl-150-test-bootstrapper`
-**Trigger:** Manual via `/pipeline-run "bootstrap test coverage for {module}"` or when orchestrator detects coverage below threshold during PREFLIGHT.
+**Agent file:** `agents/pl-150-test-bootstrapper.md`
+**Tools:** `Read`, `Write`, `Edit`, `Bash`, `Glob`, `Grep`, `Agent` (for dispatching parallel test generators)
 
-**Flow:**
-1. Analyze project structure, identify testable units
-2. Prioritize by test value: business logic with branching (P1 — critical path), data transformation (P2 — core), pure UI rendering (P3 — peripheral)
-3. Generate test files in batches (5-10 at a time), using `examples/` for idiomatic patterns
-4. Run generated tests, fix failures, commit passing batch
-5. Report: coverage before/after, files tested, files skipped
+#### Trigger Conditions
 
-Not a replacement for TDD — generates regression safety net for existing code.
+Two entry paths:
+
+1. **Manual:** `/pipeline-run "bootstrap test coverage for {feature-area}"` — runs as a standalone pipeline (skips PLAN/VALIDATE, goes straight to test generation).
+2. **Automatic:** During PREFLIGHT, if the orchestrator detects test coverage below `test_bootstrapper.coverage_threshold` (default: 30%, configurable in `pipeline-config.md`), it suggests bootstrapping before proceeding with the feature. User can accept or skip.
+
+#### Configuration (in `dev-pipeline.local.md`)
+
+```yaml
+test_bootstrapper:
+  coverage_threshold: 30        # Below this %, suggest bootstrapping
+  batch_size: 8                 # Tests generated per batch before running
+  max_batches: 20               # Safety limit
+  target_coverage: 60           # Stop when this % is reached
+  skip_patterns:                # Files to never generate tests for
+    - "**/generated/**"
+    - "**/test-fixtures/**"
+    - "**/types.ts"
+    - "**/index.ts"
+  priority_patterns:            # P1 targets (always test first)
+    - "**/core/impl/**"         # Use cases
+    - "**/hooks/use-*.ts"       # Custom hooks
+    - "**/api/*.ts"             # API layer
+```
+
+#### Flow
+
+```
+PREFLIGHT
+  → Read project config, detect test framework and conventions
+  → Run coverage tool to get baseline (e.g., `./gradlew jacocoTestReport`, `bun run test -- --coverage`)
+  → Parse coverage report → identify untested files
+
+ANALYZE
+  → For each untested file:
+    1. Read the file, understand its purpose
+    2. Classify: P1 (critical path — branching logic, state mutations, API calls),
+                 P2 (core — mappers, transformers, utilities),
+                 P3 (peripheral — pure rendering, constants, types)
+    3. Estimate test complexity: simple (1-3 test cases), moderate (4-8), complex (9+)
+  → Sort by priority (P1 first), then by complexity (simple first within priority)
+  → Write analysis to `.pipeline/stage_notes_bootstrap.md`
+
+GENERATE (batch loop)
+  → For each batch of `batch_size` files (starting from top of priority list):
+    1. Read the source file + any types/interfaces it depends on
+    2. Read relevant `examples/{lang}/testing.md` for idiomatic patterns
+    3. Read existing test files in the project for conventions (describe style, import patterns, mock setup)
+    4. Generate test file following project conventions:
+       - File placement: project's test directory structure (e.g., `src/tests/{feature}/` or co-located)
+       - Test framework: detected from config (Kotest, Vitest, pytest, Go testing, etc.)
+       - Test fixtures: reuse existing factories/helpers if available
+       - Coverage targets: at minimum test the happy path + one error path per public function
+       - Data: use realistic domain data, not "foo"/"bar" placeholder values
+    5. Run the test: `{test_command} --filter={test_file}`
+    6. If test fails:
+       - Read error output
+       - Fix the test (up to 3 attempts per file)
+       - If still failing after 3 attempts: skip file, log reason
+    7. If test passes: stage the file
+
+  → After each batch:
+    - Run full test suite to catch regressions
+    - If regressions: revert the batch, skip problematic files, re-run
+    - If clean: commit batch with message `test: bootstrap coverage for {feature-area} (batch N)`
+    - Re-run coverage tool, check against `target_coverage`
+    - If target reached: stop
+
+REPORT
+  → Write `.pipeline/reports/bootstrap-{date}.md`:
+    - Coverage before: X%
+    - Coverage after: Y%
+    - Files tested: N (P1: a, P2: b, P3: c)
+    - Files skipped: M (with reasons)
+    - Test quality notes: any patterns the generated tests don't cover well
+  → Update `pipeline-log.md` with PREEMPT items for untestable patterns discovered
+```
+
+#### Output Artifacts
+
+| Artifact | Location | Committed? |
+|---|---|---|
+| Generated test files | Project's test directory | Yes (one commit per batch) |
+| Bootstrap report | `.pipeline/reports/bootstrap-{date}.md` | No |
+| Stage notes | `.pipeline/stage_notes_bootstrap.md` | No |
+| Coverage reports | `.pipeline/coverage/` | No |
+
+#### State Schema Extension
+
+New fields in `state.json` when running in bootstrap mode:
+
+```json
+{
+  "mode": "bootstrap",
+  "bootstrap": {
+    "coverage_before": 2.1,
+    "coverage_current": 45.3,
+    "coverage_target": 60,
+    "batches_completed": 5,
+    "files_tested": 38,
+    "files_skipped": 4,
+    "files_remaining": 12
+  }
+}
+```
+
+#### Constraints
+
+- **Not a replacement for TDD.** This generates regression tests for *existing* untested code. New features still go through the TDD implementation stage (pl-300-implementer RED/GREEN/REFACTOR).
+- **Does not mock everything.** For integration-heavy code (database, API calls), generates integration test stubs that assert the function signature and basic behavior, not full integration tests. Those require project-specific infrastructure (Testcontainers, MSW, etc.).
+- **Respects existing test conventions.** If the project already has 5 tests using a specific pattern, the bootstrapper follows that pattern, not the generic examples.
+- **Idempotent.** Running bootstrap twice skips already-tested files. The priority list is re-calculated each run based on current coverage.
+
+---
 
 ### Capability 2: Cross-Repo Contract Validation
 
 **Agent:** `pl-250-contract-validator`
-**Runs at:** VALIDATE stage (Stage 3)
+**Agent file:** `agents/pl-250-contract-validator.md`
+**Tools:** `Read`, `Glob`, `Grep`, `Bash`, `Agent` (for dispatching diff analysis)
 
-**Configuration:**
+#### When It Runs
+
+During the VALIDATE stage (Stage 3), after the planner produces a plan but before implementation begins. The orchestrator checks `contracts` config — if present, dispatches this agent before `pl-210-validator`.
+
+Also available as a standalone check: `/pipeline-run "validate contracts"`.
+
+#### Configuration (in `dev-pipeline.local.md`)
 
 ```yaml
 contracts:
-  - type: openapi
-    source: /path/to/api.yml
-    consumer: /path/to/frontend/api/
+  - name: "wellplanned-api"
+    type: openapi
+    source: /Users/denissajnar/IdeaProjects/wellplanned-be/wellplanned-adapter/input/api/spec/api.yml
+    consumer: /Users/denissajnar/WebstormProjects/wellplanned-fe/src/app/api/
+    baseline_branch: master          # Compare against this branch's version
     breaking_change_severity: CRITICAL
+
+  # Future extension examples:
+  # - name: "shared-types"
+  #   type: typescript
+  #   source: /path/to/shared/types/index.ts
+  #   consumer: /path/to/consuming/project/
+  #   baseline_branch: main
+  #
+  # - name: "grpc-contract"
+  #   type: protobuf
+  #   source: /path/to/proto/
+  #   consumer: /path/to/generated/client/
+  #   baseline_branch: main
 ```
 
-**Detects:**
+#### Flow
 
-| Change type | Severity |
-|---|---|
-| Endpoint removed | CRITICAL |
-| Field removed from response | CRITICAL |
-| Field type changed | CRITICAL |
-| Required field added to request | WARNING |
-| Enum value removed | WARNING |
-| Endpoint path changed | WARNING |
-| Optional field added | INFO |
+```
+LOAD CONTRACTS
+  → Read contracts config from dev-pipeline.local.md
+  → For each contract:
 
-Supports OpenAPI (first implementation), with extension points for Protobuf, GraphQL, shared TypeScript types.
+DIFF
+  → Get baseline version: `git show {baseline_branch}:{source_path}` (the contract as it was before changes)
+  → Get current version: read current file from disk
+  → If no baseline (new contract): skip diff, report INFO "new contract detected"
+  → If unchanged: skip, report "contract unchanged"
+
+ANALYZE (OpenAPI-specific)
+  → Parse both versions (baseline and current) as OpenAPI 3.x specs
+  → Compare at structural level:
+
+  Endpoint-level changes:
+    → For each endpoint in baseline:
+      - If missing in current: CRITICAL "Endpoint removed: {method} {path}"
+      - If path changed: WARNING "Endpoint path changed: {old} -> {new}"
+    → For each endpoint in current not in baseline:
+      - INFO "New endpoint: {method} {path}"
+
+  Schema-level changes (request/response bodies):
+    → For each schema referenced by an endpoint:
+      - Field removed from response: CRITICAL "Response field removed: {schema}.{field}"
+      - Field type changed: CRITICAL "Field type changed: {schema}.{field} ({old_type} -> {new_type})"
+      - Required field added to request: WARNING "Required request field added: {schema}.{field}"
+      - Optional field added to request: INFO "Optional request field added: {schema}.{field}"
+      - Field added to response: INFO "Response field added: {schema}.{field}"
+      - Enum value removed: WARNING "Enum value removed: {schema}.{field}.{value}"
+      - Enum value added: INFO "Enum value added: {schema}.{field}.{value}"
+
+  Parameter changes:
+    → Required path/query parameter added: WARNING
+    → Parameter removed: CRITICAL
+    → Parameter type changed: CRITICAL
+
+CONSUMER IMPACT
+  → For each breaking/warning finding, search the consumer codebase for usage:
+    - Grep consumer directory for endpoint paths, field names, enum values
+    - If used: annotate finding with "USED by: {consumer_file}:{line}"
+    - If not used: downgrade severity by one level (CRITICAL -> WARNING, WARNING -> INFO)
+    This prevents false alarms for contract changes that don't affect the actual consumer.
+
+REPORT
+  → Emit findings in unified output format (file:line | CATEGORY | SEVERITY | message | fix_hint)
+  → File = contract source path, line = best-effort line in spec
+  → Category: `CONTRACT-BREAK`, `CONTRACT-CHANGE`, `CONTRACT-ADD`
+  → Write detailed analysis to `.pipeline/stage_3_notes_{storyId}.md`
+  → If any CRITICAL findings: recommend plan revision to handle contract migration
+```
+
+#### Breaking Change Detection Matrix
+
+| Change Type | Category | Base Severity | If unused by consumer |
+|---|---|---|---|
+| Endpoint removed | CONTRACT-BREAK | CRITICAL | WARNING |
+| Field removed from response | CONTRACT-BREAK | CRITICAL | WARNING |
+| Field type changed | CONTRACT-BREAK | CRITICAL | WARNING |
+| Parameter removed | CONTRACT-BREAK | CRITICAL | WARNING |
+| Parameter type changed | CONTRACT-BREAK | CRITICAL | WARNING |
+| Required field added to request | CONTRACT-CHANGE | WARNING | INFO |
+| Enum value removed | CONTRACT-CHANGE | WARNING | INFO |
+| Endpoint path changed | CONTRACT-CHANGE | WARNING | INFO |
+| Required parameter added | CONTRACT-CHANGE | WARNING | INFO |
+| Optional field added to request | CONTRACT-ADD | INFO | INFO |
+| Field added to response | CONTRACT-ADD | INFO | INFO |
+| Enum value added | CONTRACT-ADD | INFO | INFO |
+| New endpoint | CONTRACT-ADD | INFO | INFO |
+
+#### State Schema Extension
+
+New fields in `state.json`:
+
+```json
+{
+  "contract_validation": {
+    "contracts_checked": 1,
+    "breaking_changes": 0,
+    "warnings": 2,
+    "infos": 5,
+    "consumer_impact_findings": 1
+  }
+}
+```
+
+#### Extension Points for Future Contract Types
+
+The agent uses a strategy pattern internally. Each contract type implements:
+
+```
+interface ContractDiffer:
+  parse(content: string) -> ParsedContract
+  diff(baseline: ParsedContract, current: ParsedContract) -> Finding[]
+  findConsumerUsage(finding: Finding, consumerPath: string) -> Usage[]
+```
+
+| Type | Parser | Diff strategy | Consumer search |
+|---|---|---|---|
+| `openapi` | OpenAPI 3.x YAML/JSON parser | Endpoint + schema structural diff | Grep for paths, field names, types |
+| `protobuf` (future) | Proto3 parser | Message field + service method diff | Grep for generated client method names |
+| `graphql` (future) | GraphQL schema parser | Type + field + query diff | Grep for query/mutation names |
+| `typescript` (future) | TS type extractor | Exported type structural diff | TS compiler import resolution |
+
+Only `openapi` is implemented in Phase 2. Others are extension points documented in the agent file.
+
+#### Constraints
+
+- **Read-only on both repos.** The agent never modifies the source or consumer project. It only reads and compares.
+- **Baseline from git, current from disk.** This catches uncommitted contract changes that would break the consumer.
+- **Consumer impact is advisory.** Even if a field is unused by the consumer, the finding still exists at reduced severity — other consumers may exist.
+- **Requires both repos accessible.** If the consumer path is unreachable, the agent runs diff-only without consumer impact analysis and logs an INFO finding.
+
+---
 
 ### Capability 3: Migration/Upgrade Orchestration
 
 **Agent:** `pl-160-migration-planner`
-**Trigger:** `/pipeline-run "migrate: {description}"` — `migrate:` prefix activates migration mode.
+**Agent file:** `agents/pl-160-migration-planner.md`
+**Tools:** `Read`, `Write`, `Edit`, `Bash`, `Glob`, `Grep`, `Agent` (for dispatching migration workers)
 
-**Migration mode vs feature mode:**
+#### Trigger
 
-| Aspect | Feature mode | Migration mode |
+`/pipeline-run "migrate: {description}"` — the `migrate:` prefix tells the orchestrator to activate migration mode instead of feature mode.
+
+Examples:
+- `/pipeline-run "migrate: replace react-dnd with @dnd-kit"`
+- `/pipeline-run "migrate: upgrade React 18 to React 19"`
+- `/pipeline-run "migrate: remove shadcn/ui wrapper layer"`
+- `/pipeline-run "migrate: upgrade Spring Boot 3.x to 4.x"`
+
+#### How Migration Mode Differs from Feature Mode
+
+| Aspect | Feature mode (today) | Migration mode (new) |
 |---|---|---|
-| Scope | Single story | Project-wide |
-| Planning | One pass | Multi-phase with checkpoints |
-| Testing | Write new tests | Existing tests must keep passing |
-| Risk | Assessed once | Re-assessed after each phase |
-| Commits | One commit | Separate commit per phase |
-| Quality gate | Once at end | After each phase |
+| story_state | Uses standard 10 states | Uses `MIGRATING` with sub-states |
+| Scope | Single story, localized changes | Project-wide, touches many files |
+| Planning | One plan, one implementation pass | Multi-phase plan with per-phase checkpoints |
+| Testing | Write new tests (TDD) | Existing tests must keep passing throughout. No new tests unless behavior changes. |
+| Risk | Assessed once at PLAN stage | Re-assessed after each phase |
+| Rollback | Git revert one commit | Each phase is a separate commit, independently revertable |
+| Quality gate | Runs once after IMPLEMENT | Runs after each migration phase |
+| Implementation | `pl-300-implementer` (TDD) | `pl-300-implementer` in migration-aware mode (no RED phase, preserve existing tests) |
 
-**Phases:** Audit -> Compatibility -> Migrate (batch by feature area) -> Cleanup -> Verify
+#### Configuration (in `dev-pipeline.local.md`)
+
+```yaml
+migration:
+  max_phases: 10                    # Safety limit on migration phases
+  max_files_per_batch: 20           # Files changed per migration batch within a phase
+  require_green_after_batch: true   # Run tests after each batch, not just each phase
+  auto_rollback_on_failure: true    # Revert batch if tests fail
+  parallel_batches: false           # Sequential by default (safer for interdependent changes)
+```
+
+#### Flow
+
+```
+PREFLIGHT (same as feature mode)
+  → Config loaded, state initialized
+  → Detect migration mode from "migrate:" prefix
+
+EXPLORE (Stage 1)
+  → Standard exploration, but focused on migration scope:
+    - What library/pattern is being replaced?
+    - How many files use it? (full audit)
+    - What are the API surface changes? (old API vs new API)
+    - Are there known migration guides? (use context7)
+
+PLAN (Stage 2 — migration-specific)
+  → `pl-160-migration-planner` replaces `pl-200-planner`
+  → Produces a multi-phase migration plan:
+
+  Phase 1: AUDIT
+    - List every file using the old library/pattern
+    - Categorize by migration complexity:
+      - Simple (1:1 API replacement, e.g., import rename)
+      - Moderate (API shape change, needs adaptation)
+      - Complex (behavioral change, needs redesign)
+    - Output: `.pipeline/migration-audit.json`
+
+  Phase 2: PREPARE
+    - Add new dependency alongside old (if applicable)
+    - Create adapter/shim layer if needed for gradual migration
+    - Verify project still builds and all tests pass
+    - Commit: "chore: add {new-lib} alongside {old-lib}"
+
+  Phase 3-N: MIGRATE (one phase per feature area)
+    - Group files by feature area (e.g., "builder components", "shared hooks", "API layer")
+    - For each group:
+      Batch loop:
+        1. Replace old API with new API in batch of files
+        2. Run type checker / compiler
+        3. If type errors: fix them
+        4. Run tests
+        5. If test failures:
+           - If `auto_rollback_on_failure`: revert batch, log problematic files
+           - If not: attempt fix (up to 3 tries), then escalate to user
+        6. If clean: commit batch "refactor: migrate {feature-area} from {old} to {new} (batch M)"
+      After all batches in phase:
+        - Run full test suite
+        - Run Layer 1 + Layer 2 checks
+        - Quality gate scoring
+        - If FAIL: pause, present findings to user
+        - If PASS/CONCERNS: proceed to next phase
+        - Update risk assessment
+
+  Phase N+1: CLEANUP
+    - Remove old dependency from package manifest
+    - Remove adapter/shim layer
+    - Remove old imports that are no longer used
+    - Run dead code detection (Layer 2 linter)
+    - Commit: "chore: remove {old-lib} and migration shims"
+
+  Phase N+2: VERIFY
+    - Full test suite
+    - Full Layer 1 + Layer 2 + Layer 3 checks
+    - Version compatibility check (new dependency tree is clean)
+    - Quality gate with all review agents
+    - Final commit if any cleanup needed
+
+SHIP (Stage 8)
+  → PR with all phase commits (squash optional, default: keep individual commits for traceability)
+  → PR description includes migration summary:
+    - Files migrated: N
+    - Phases completed: M
+    - Test suite: all passing
+    - Quality score: X
+
+LEARN (Stage 9)
+  → Standard retrospective, plus:
+    - Record migration patterns in pipeline-log.md for future similar migrations
+    - If migration took >5 phases, record PREEMPT suggesting smaller scope next time
+```
+
+#### Migration Audit JSON Schema
+
+```json
+{
+  "migration_id": "replace-react-dnd-with-dnd-kit",
+  "old_library": "react-dnd",
+  "new_library": "@dnd-kit/core",
+  "total_files_affected": 23,
+  "files": [
+    {
+      "path": "src/app/components/builder/day-column.tsx",
+      "complexity": "complex",
+      "feature_area": "builder",
+      "usages": ["useDrag", "useDrop", "DndProvider"],
+      "estimated_changes": 15,
+      "dependencies": ["src/app/components/builder/plan-builder.tsx"]
+    }
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "audit",
+      "status": "completed"
+    },
+    {
+      "phase": 2,
+      "name": "prepare",
+      "files": [],
+      "status": "completed"
+    },
+    {
+      "phase": 3,
+      "name": "migrate-builder",
+      "files": ["day-column.tsx", "plan-builder.tsx", "..."],
+      "status": "in_progress",
+      "batches_completed": 2,
+      "batches_total": 4
+    }
+  ]
+}
+```
+
+#### State Schema Extension
+
+New fields in `state.json` when in migration mode:
+
+```json
+{
+  "mode": "migration",
+  "story_state": "MIGRATING",
+  "migration": {
+    "migration_id": "replace-react-dnd-with-dnd-kit",
+    "current_phase": 3,
+    "total_phases": 6,
+    "phase_name": "migrate-builder",
+    "batch_in_phase": 2,
+    "total_batches_in_phase": 4,
+    "files_migrated": 12,
+    "files_remaining": 11,
+    "files_skipped": 0,
+    "phase_quality_scores": [95, 88],
+    "rollbacks": 0
+  }
+}
+```
+
+New `story_state` values for migration mode:
+
+| Value | Description |
+|---|---|
+| `"MIGRATING"` | Active migration in progress (phases 1-N) |
+| `"MIGRATION_PAUSED"` | Paused due to quality gate failure or user request |
+| `"MIGRATION_CLEANUP"` | Removing old dependencies and shims |
+| `"MIGRATION_VERIFY"` | Final full verification after all phases |
+
+These are additional valid values — the standard 10 states remain for feature mode.
+
+#### Constraints
+
+- **Never mixes old and new in the same file.** Each file is fully migrated or untouched — no partial migrations within a file.
+- **Tests are the safety net, not the target.** Migration mode does NOT write new tests. If existing tests pass, the migration is correct. If behavior needs to change, that's a separate feature pipeline run.
+- **User can pause and resume.** State is checkpointed after each batch. `/pipeline-run --from=migrate` resumes from the last completed batch.
+- **Rollback granularity is per-batch.** Each batch is a separate commit. `git revert {batch-commit}` undoes exactly that batch.
+- **Complex files may need manual intervention.** If a file fails 3 auto-fix attempts, the agent logs it as "manual intervention needed" and continues with other files. The SHIP stage PR lists these files as "requires manual review."
+
+---
 
 ### Capability 4: Post-Ship Preview Validation
 
 **Agent:** `pl-650-preview-validator`
-**Runs at:** After `pl-600-pr-builder` creates the PR.
+**Agent file:** `agents/pl-650-preview-validator.md`
+**Tools:** `Read`, `Bash`, `Grep`, `mcp__plugin_playwright_playwright__*` (all Playwright tools)
 
-**Configuration:**
+#### When It Runs
+
+After `pl-600-pr-builder` creates the PR in Stage 8 (SHIP), the orchestrator checks for `preview` config. If present, it dispatches `pl-650-preview-validator` before transitioning to Stage 9 (LEARN).
+
+This is an **optional sub-stage** of SHIP — projects without preview environments skip it entirely.
+
+#### Configuration (in `dev-pipeline.local.md`)
 
 ```yaml
 preview:
+  enabled: true
   url_pattern: "https://pr-{pr_number}.preview.wellplanned.app"
-  wait_for_deploy: 120
-  health_endpoint: "/health"
+  wait_for_deploy:
+    timeout: 180                    # Seconds to wait for preview to become healthy
+    poll_interval: 10               # Seconds between health checks
+  health_endpoint: "/health"        # GET this endpoint, expect 200
+
   checks:
     - type: smoke
+      routes:                       # Key routes to verify (200 OK, no blank page)
+        - /
+        - /coach/dashboard
+        - /client/dashboard
+        - /admin
+
     - type: lighthouse
+      thresholds:
+        performance: 50             # Minimum Lighthouse score (0-100)
+        accessibility: 80
+        best_practices: 80
+        seo: 60
+      pages:                        # Pages to audit (default: routes from smoke check)
+        - /
+        - /coach/dashboard
+
     - type: visual_regression
+      baseline_url: "https://staging.wellplanned.app"  # Compare against this
+      pages:
+        - /coach/dashboard
+        - /client/dashboard
+      threshold: 0.05               # Max 5% pixel difference
+
     - type: playwright
+      test_command: "bun run test:e2e"  # Run project's own E2E suite
+      env:
+        BASE_URL: "{preview_url}"   # Injected at runtime
+
+  on_failure:
+    comment_on_pr: true             # Post findings as PR comment
+    add_label: "preview-failed"     # Add label to PR
+    block_merge: false              # Advisory, not blocking (default)
+    retry_fix_cycle: false          # If true, sends auto-fixable findings back to IMPLEMENT
+
+  on_success:
+    comment_on_pr: true             # Post success summary
+    add_label: "preview-validated"  # Add label to PR
 ```
 
-Uses Playwright MCP for smoke checks and visual regression. Appends results to PR as comment. Triggers fix cycle if auto-fixable issues found.
+#### Flow
+
+```
+WAIT FOR PREVIEW
+  → Extract PR number from pl-600-pr-builder output
+  → Construct preview URL from url_pattern
+  → Poll health endpoint:
+    - GET {preview_url}{health_endpoint} every poll_interval seconds
+    - If 200 within timeout: proceed
+    - If timeout reached: report WARNING "Preview not ready after {timeout}s", skip preview checks
+      Possible reasons: CI still building, deployment pending, infrastructure issue
+    - Write deploy timing to `.pipeline/stage_8_notes_{storyId}.md`
+
+SMOKE CHECK (if configured)
+  → For each route:
+    1. browser_navigate to {preview_url}{route}
+    2. Wait for network idle
+    3. Check HTTP status (expect 200)
+    4. browser_snapshot → verify page is not blank (has meaningful content)
+    5. browser_console_messages → check for JavaScript errors (any console.error)
+  → Findings:
+    - 500/404 response: CRITICAL "Route {route} returned {status}"
+    - Blank page: CRITICAL "Route {route} renders blank page"
+    - JS errors: WARNING "Route {route} has console errors: {messages}"
+    - Slow load (>5s): WARNING "Route {route} took {time}s to load"
+
+LIGHTHOUSE AUDIT (if configured)
+  → For each page:
+    1. Run Lighthouse via CLI: `lighthouse {preview_url}{page} --output=json --chrome-flags="--headless"`
+    2. Parse JSON results
+    3. Compare scores against thresholds
+  → Findings:
+    - Score below threshold: WARNING "Lighthouse {category} score {actual} below threshold {expected} on {page}"
+    - If any score <30: CRITICAL "Lighthouse {category} critically low ({actual}) on {page}"
+  → Write full Lighthouse report to `.pipeline/reports/lighthouse-{pr_number}.json`
+
+VISUAL REGRESSION (if configured)
+  → For each page:
+    1. browser_navigate to {preview_url}{page}
+    2. browser_take_screenshot → save as `.pipeline/screenshots/preview-{page-slug}.png`
+    3. browser_navigate to {baseline_url}{page}
+    4. browser_take_screenshot → save as `.pipeline/screenshots/baseline-{page-slug}.png`
+    5. Compare screenshots pixel-by-pixel (using ImageMagick `compare` or `pixelmatch` via Bash)
+    6. Calculate diff percentage
+  → Findings:
+    - Diff > threshold: WARNING "Visual regression on {page}: {diff_percent}% pixel difference"
+    - Diff > 3x threshold: CRITICAL "Major visual regression on {page}: {diff_percent}%"
+    - Screenshots saved for human review
+  → If no baseline URL configured: skip, log INFO "No baseline URL, skipping visual regression"
+
+PLAYWRIGHT E2E (if configured)
+  → Run project's E2E test suite against preview URL:
+    1. Set environment variables (BASE_URL, etc.)
+    2. Execute test_command via Bash
+    3. Parse test results (exit code + stdout)
+  → Findings:
+    - Test failures: CRITICAL "E2E test failed: {test_name} — {error_message}" (one finding per failed test)
+    - All passed: no findings
+  → If test command not found or fails to start: WARNING "E2E suite could not run: {error}"
+
+SCORING
+  → All findings scored using standard scoring.md formula
+  → Verdict thresholds same as quality gate (PASS >= 80, CONCERNS 60-79, FAIL < 60)
+
+REPORT
+  → Generate PR comment with results:
+
+    ## Preview Validation Results
+
+    | Check | Result | Details |
+    |-------|--------|---------|
+    | Smoke | PASS | 4/4 routes healthy |
+    | Lighthouse | CONCERNS | Performance 48 (threshold 50) on /coach/dashboard |
+    | Visual Regression | PASS | All pages within 5% threshold |
+    | Playwright E2E | PASS | 12/12 tests passed |
+
+    **Score: 95/100 — PASS**
+
+    <details><summary>Findings (1)</summary>
+    /coach/dashboard:0 | PERF-LIGHTHOUSE | WARNING | Performance score 48 below threshold 50
+    </details>
+
+  → Post comment via `gh pr comment {pr_number} --body "..."`
+  → Add label via `gh pr edit {pr_number} --add-label "preview-validated"`
+
+ON FAILURE (if retry_fix_cycle enabled)
+  → Filter findings to auto-fixable only:
+    - JS errors with stack traces → fixable
+    - Blank pages → likely missing route/import → fixable
+    - Lighthouse performance → may need optimization → flag for manual
+    - Visual regression → not auto-fixable → flag for manual
+  → Send fixable findings back to orchestrator
+  → Orchestrator returns to IMPLEMENT → VERIFY → REVIEW → SHIP cycle
+  → Re-run preview validation after new PR push
+  → Max 1 fix cycle (prevent infinite loops)
+```
+
+#### State Schema Extension
+
+New fields in `state.json`:
+
+```json
+{
+  "preview_validation": {
+    "preview_url": "https://pr-42.preview.wellplanned.app",
+    "deploy_wait_seconds": 45,
+    "checks_run": ["smoke", "lighthouse", "visual_regression", "playwright"],
+    "score": 95,
+    "verdict": "PASS",
+    "findings_count": 1,
+    "fix_cycle_triggered": false
+  }
+}
+```
+
+#### Dependencies
+
+| Dependency | Required? | Fallback |
+|---|---|---|
+| Playwright MCP plugin | Yes (for smoke, visual regression) | If unavailable, skip those checks, log WARNING |
+| `gh` CLI | Yes (for PR comments, labels) | If unavailable, write report to stage notes only |
+| Lighthouse CLI | No (for lighthouse check) | If not installed, skip lighthouse check, log INFO |
+| ImageMagick (`compare`) or `pixelmatch` | No (for visual regression) | If unavailable, skip visual regression, log INFO |
+| Project's E2E test suite | No (for playwright check) | If test_command fails to start, skip, log WARNING |
+
+#### Constraints
+
+- **Read-only on the codebase.** The validator only reads code and navigates the preview. It never modifies source files directly. Fix cycles go through the orchestrator -> implementer path.
+- **Network required.** Preview validation inherently needs network access to the preview URL.
+- **Time-boxed.** Total preview validation time is capped at 10 minutes (configurable). If checks exceed this, remaining checks are skipped with a WARNING.
+- **Non-blocking by default.** `block_merge: false` means findings are advisory. Teams can set `block_merge: true` to make preview validation a merge gate.
+- **Screenshots are ephemeral.** Stored in `.pipeline/screenshots/`, not committed. The PR comment contains the findings summary; screenshots are for local review only.
 
 ---
 
