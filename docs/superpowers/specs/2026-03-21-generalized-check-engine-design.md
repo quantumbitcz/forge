@@ -2221,6 +2221,92 @@ VALIDATE
 
      Ready to use: /pipeline-run 'your first feature'"
 
+HEALTH SCAN
+  → After config is generated and build/test verified, offer a full codebase health scan:
+    "Would you like to run a health scan on the existing codebase?
+     This checks for antipatterns, security issues, dependency vulnerabilities,
+     code quality problems, and deprecations across all source files.
+     [Y/n]"
+
+  → If accepted:
+    1. Run engine.sh --verify on all source files (Layer 1 pattern matching)
+    2. Run Layer 2 linters if available (detekt, eslint, clippy, ruff, etc.)
+    3. Check dependency files for known vulnerabilities:
+       - package.json → `npm audit` / `bun audit`
+       - build.gradle.kts → check for known CVEs via Gradle plugin or trivy
+       - Cargo.toml → `cargo audit`
+       - requirements.txt / pyproject.toml → `pip-audit` or `safety`
+       - go.mod → `govulncheck`
+    4. Aggregate findings by category and severity:
+
+       ## Codebase Health Report
+
+       | Category | CRITICAL | WARNING | INFO | Total |
+       |----------|----------|---------|------|-------|
+       | Security | 0 | 2 | 0 | 2 |
+       | Architecture | 0 | 5 | 0 | 5 |
+       | Code quality | 0 | 8 | 12 | 20 |
+       | Dependencies | 1 | 3 | 0 | 4 |
+       | Readability | 0 | 0 | 15 | 15 |
+
+       Total: 46 findings (1 CRITICAL, 18 WARNING, 27 INFO)
+       Score: 73/100 (CONCERNS)
+
+       Top issues:
+       1. [CRITICAL] Known vulnerability in react-dnd v16 (CVE-...)
+       2. [WARNING] 5 hexagonal boundary violations in adapter layer
+       3. [WARNING] 8 generic exceptions without domain-specific types
+
+    5. Ask: "Would you like to bootstrap fixes for these issues?
+            Options:
+            a) Fix CRITICAL issues now (recommended)
+            b) Fix all WARNING+ issues now
+            c) Save report and fix later (/pipeline-run 'fix health scan findings')
+            d) Skip"
+
+    6. Save full report to .pipeline/reports/health-scan-{date}.md regardless of choice
+
+RELATED REPOS
+  → After health scan (or after VALIDATE if scan skipped), prompt for related repositories:
+    "Do you have related repositories that would help the pipeline understand
+     your full system? For example:
+     - Frontend repo (if this is a backend project, or vice versa)
+     - Infrastructure/deployment repo (Helm, Terraform, ArgoCD)
+     - Shared libraries or types repo
+     - API spec or contract repo
+
+     Provide paths (comma-separated), or press Enter to skip:"
+
+  → For each provided repo:
+    1. Verify path exists and is a git repo
+    2. Detect its role:
+       - Has package.json + React/Vue/Svelte → frontend
+       - Has build.gradle/pom.xml/go.mod + API endpoints → backend
+       - Has Helm/Terraform/docker-compose → infrastructure
+       - Has .proto/.graphql/openapi.yml → contracts
+    3. Store in dev-pipeline.local.md:
+       ```yaml
+       related_repos:
+         - path: /Users/user/projects/wellplanned-fe
+           role: frontend
+           module: react-vite
+         - path: /Users/user/projects/wellplanned-infra
+           role: infrastructure
+         - path: /Users/user/projects/wellplanned-be
+           role: backend
+           module: kotlin-spring
+       ```
+    4. If a contract file is found (OpenAPI spec, .proto, etc.):
+       - Auto-configure contract validation (Phase 2, Capability 2)
+       - Ask: "Found OpenAPI spec at {backend}/api.yml.
+              Consumer appears to be {frontend}/src/app/api/.
+              Enable breaking change detection? [Y/n]"
+
+  → Related repos enable:
+    - Cross-repo contract validation (pl-250-contract-validator)
+    - Broader context for planning agents (explore related repos during Stage 1)
+    - Infrastructure-aware deployment verification (preview URLs from infra config)
+
 CLEANUP (for projects migrating from submodule)
   → If .claude/plugins/dev-pipeline exists as submodule:
     - Ask: "Found existing submodule installation. Remove it? [Y/n]"
