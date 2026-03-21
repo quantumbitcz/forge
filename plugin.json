@@ -1,0 +1,30 @@
+{
+  "name": "dev-pipeline",
+  "description": "Reusable autonomous development pipeline with framework modules",
+  "version": "0.1.0",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/feedback-capture.sh",
+            "timeout": 3000
+          }
+        ]
+      }
+    ]
+  }
+}
