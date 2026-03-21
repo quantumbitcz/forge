@@ -59,6 +59,23 @@ file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 - Pipe `|` delimiter. If message or hint contains `|`, escape as `\|`.
 - Multi-line findings: emit one line per finding location. Group in post-processing via deduplication key `(file, line, category)`.
 
+### Pipeline Modes
+
+The pipeline operates in one of three modes. Each mode has its own `story_state` values and `--from` behavior:
+
+| Mode | Trigger | `story_state` values | `--from` targets | Checkpoint `stage` field |
+|---|---|---|---|---|
+| **feature** (default) | `/pipeline-run "..."` | 10 standard states (PREFLIGHT through LEARNING) | Stage names: `explore`, `plan`, `validate`, `implement`, `verify`, `review`, `docs`, `ship`, `learn` | Integer 0-9 |
+| **migration** | `/pipeline-run "migrate: ..."` | `MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY` | Phase names: `migrate`, `cleanup`, `verify` + phase number: `migrate:3` (resume at phase 3) | String `"migration:{phase_number}"` |
+| **bootstrap** | `/pipeline-run "bootstrap test coverage ..."` | `BOOTSTRAPPING` | Batch number: `bootstrap:5` (resume at batch 5) | String `"bootstrap:{batch_number}"` |
+
+The `mode` field in `state.json` determines which state machine is active. The orchestrator, recovery engine, and checkpoint system all check `mode` before interpreting `story_state` or `stage` values.
+
+Recovery engine behavior per mode:
+- **feature mode:** Pre-stage health check matrix applies as documented. Recovery interacts with existing retry counters (`quality_cycles`, `test_cycles`, etc.).
+- **migration mode:** Health checks run before each migration phase (not each batch). Recovery checkpoints at phase + batch granularity.
+- **bootstrap mode:** Health checks run before each test generation batch. Recovery checkpoints at batch granularity.
+
 ### Invocation Contract for `engine.sh`
 
 `engine.sh` operates in three modes, determined by arguments:
@@ -1348,6 +1365,8 @@ shared/
 
 A lightweight agent that intercepts failures at any pipeline stage. It does NOT replace the stage agents — it wraps them.
 
+**Boundary with existing retry loops:** The recovery engine handles *infrastructure and runtime failures only*. It sits outside the existing stage retry loops. If a build command exits non-zero with compiler errors, that is routed through the existing `verify_fix_count` loop, not the recovery engine. The recovery engine only activates when the tool itself fails to run (OOM, crash, missing binary, network issue) rather than when the tool runs successfully and reports problems in the code.
+
 **How the orchestrator uses it:**
 
 ```
@@ -1615,6 +1634,8 @@ For each run with failures:
 The plugin currently requires installation as a git submodule (`git submodule add ... .claude/plugins/dev-pipeline`). This is friction-heavy: manual setup, manual updates, submodule gotchas (detached HEAD, hook issues in worktrees).
 
 Claude Code supports a **marketplace system** for plugin distribution. Plugins are installed via `/plugin install` and auto-updated. This phase migrates dev-pipeline to marketplace distribution.
+
+**Note:** Phase 4 targets the Claude Code marketplace system whose API surface is based on observed conventions from existing marketplace plugins (superpowers, levnikolaevich-skills-marketplace). If the marketplace API differs from this design at implementation time, the manifest and catalog files will be adjusted accordingly; the migration strategy and consuming project impact remain the same.
 
 ### Current vs. Target Installation Experience
 
@@ -1920,7 +1941,7 @@ modules/
   # Other modules get build.md + test.md at minimum
 ```
 
-**Key principle:** Commands are discovered by Claude Code from the plugin's `commands/` directories. Module-specific commands are only available when that module is active (detected during `/pipeline-init` or from `dev-pipeline.local.md`).
+**Key principle:** Plugin-level commands in `commands/` are auto-discovered by Claude Code (same mechanism as skills — the plugin system scans `commands/*.md` at the plugin root). Module-specific commands in `modules/*/commands/` are NOT auto-discovered — `/pipeline-init` copies the active module's commands into the project's `.claude/commands/` directory during setup. This means only the relevant module's commands appear as slash commands for the user. If the user switches modules, re-running `/pipeline-init` updates the commands.
 
 ### `/pipeline-init` Skill
 
