@@ -5,7 +5,7 @@
     {
       "id": "KS-ARCH-001",
       "name": "transactional-on-adapter",
-      "pattern": "grep -E '@Transactional'",
+      "pattern": "@Transactional",
       "scope_pattern": "/adapter/",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY",
@@ -16,7 +16,7 @@
     {
       "id": "KS-ARCH-002",
       "name": "java-uuid-in-core",
-      "pattern": "grep -E 'import java\\.util\\.UUID'",
+      "pattern": "import java\\.util\\.UUID",
       "scope_pattern": "core/src/main",
       "severity": "WARNING",
       "category": "CONV-TYPE",
@@ -27,7 +27,7 @@
     {
       "id": "KS-ARCH-003",
       "name": "java-time-in-core",
-      "pattern": "grep -E 'import java\\.time\\.'",
+      "pattern": "import java\\.time\\.",
       "scope_pattern": "core/src/main",
       "severity": "WARNING",
       "category": "CONV-TYPE",
@@ -38,7 +38,7 @@
     {
       "id": "KS-CONV-001",
       "name": "console-output-in-production",
-      "pattern": "grep -E '(println|print\\(|System\\.out|System\\.err)'",
+      "pattern": "(println|print\\(|System\\.out|System\\.err)",
       "scope_pattern": "src/main",
       "severity": "INFO",
       "category": "CONV-LOG",
