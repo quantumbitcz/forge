@@ -2354,6 +2354,165 @@ After this phase, consuming projects:
 
 ---
 
+## Phase 6: Infrastructure Module & Deployment Verification
+
+### Overview
+
+When a user provides an infrastructure repository during `/pipeline-init`, the pipeline gains infrastructure-aware capabilities: deployment verification, Helm chart validation, Docker/Docker Compose testing, Kubernetes manifest checks, and infrastructure best practice auditing. This is implemented as a new module (`infra-k8s`) with specialized agents and check rules.
+
+### Module: `infra-k8s`
+
+```
+modules/infra-k8s/
+  conventions.md              # IaC patterns, Helm best practices, K8s security
+  local-template.md           # kubectl, helm, docker, kind commands
+  rules-override.json         # Layer 1 rules for YAML/Helm/Dockerfile checks
+  commands/
+    deploy.md                 # /deploy — trigger deployment to target environment
+    helm-check.md             # /helm-check — lint and template Helm charts
+    infra-test.md             # /infra-test — spin up local cluster, run integration tests
+```
+
+### Layer 1 Rules for Infrastructure
+
+Base language file: `layer-1-fast/patterns/yaml.json` + `layer-1-fast/patterns/dockerfile.json`
+
+**YAML/Helm checks:**
+
+| Rule | Pattern | Severity | Category |
+|---|---|---|---|
+| Hardcoded secrets in values.yaml | `password:.*[^{]$`, `secret:.*[^}]$` | CRITICAL | SEC-CRED |
+| No resource limits on containers | Missing `resources.limits` | WARNING | INFRA-RESOURCE |
+| Latest tag in image references | `image:.*:latest` | WARNING | INFRA-TAG |
+| No liveness/readiness probes | Missing `livenessProbe`/`readinessProbe` | WARNING | INFRA-HEALTH |
+| Privileged containers | `privileged: true` | CRITICAL | SEC-PRIV |
+| No network policies | Missing NetworkPolicy | INFO | INFRA-NETWORK |
+| Hardcoded replicas (should use HPA) | `replicas: [0-9]+` without HPA | INFO | INFRA-SCALE |
+
+**Dockerfile checks:**
+
+| Rule | Pattern | Severity | Category |
+|---|---|---|---|
+| Running as root | No `USER` instruction | WARNING | SEC-ROOT |
+| Using `latest` base image | `FROM .*:latest` | WARNING | INFRA-TAG |
+| `ADD` instead of `COPY` | `^ADD ` | INFO | INFRA-BEST |
+| No `.dockerignore` | Missing file | INFO | INFRA-BEST |
+| `apt-get` without `--no-install-recommends` | `apt-get install` without flag | INFO | INFRA-SIZE |
+
+### Specialized Agents
+
+**`infra-deploy-reviewer` agent:**
+- Reviews Helm charts, K8s manifests, Terraform configs for best practices
+- Checks for security misconfigurations (RBAC, network policies, pod security standards)
+- Validates resource quotas and limits are appropriate
+- Runs during REVIEW stage (quality gate batch)
+
+**`infra-deploy-verifier` agent:**
+- Verifies deployments actually work by spinning up local infrastructure
+- Uses tools available on the user's machine: Docker, Docker Compose, kind, k3d, minikube
+- Runs during VERIFY stage
+
+### Infrastructure Testing Flow
+
+```
+DETECT (during /pipeline-init or when infra repo is linked)
+  → Scan for available tools:
+    | Tool | Detection | Use |
+    |------|-----------|-----|
+    | docker | `command -v docker` | Container builds, Compose testing |
+    | docker-compose / docker compose | version check | Multi-service integration tests |
+    | helm | `command -v helm` | Chart linting, templating, dry-run |
+    | kubectl | `command -v kubectl` | Manifest validation, apply --dry-run |
+    | kind | `command -v kind` | Full local K8s cluster for E2E |
+    | k3d | `command -v k3d` | Lightweight local K8s cluster |
+    | trivy | `command -v trivy` | Image vulnerability scanning |
+    | kube-linter | `command -v kube-linter` | K8s manifest best practices |
+    | polaris | `command -v polaris` | K8s deployment validation |
+
+VERIFY (during pipeline VERIFY stage for infra changes)
+  → Tiered verification based on available tools:
+
+  Tier 1 — Static checks (always, <10s):
+    - `helm lint charts/` (if Helm charts present)
+    - `helm template charts/ | kubectl apply --dry-run=client -f -` (validate rendered manifests)
+    - `docker build --check` (BuildKit check mode, if available)
+    - Layer 1 rules on all YAML/Dockerfile files
+
+  Tier 2 — Container checks (if Docker available, <60s):
+    - Build all Dockerfiles
+    - `docker compose config` (validate compose file)
+    - `docker compose up -d` + health check + `docker compose down`
+    - `trivy image` on built images (if trivy available)
+
+  Tier 3 — Cluster checks (if kind/k3d available, <5min):
+    - Create ephemeral cluster: `kind create cluster --name pipeline-test`
+    - Install Helm charts: `helm install --wait --timeout 2m`
+    - Run readiness checks: `kubectl wait --for=condition=ready pod --all`
+    - Run smoke tests against cluster services
+    - Tear down: `kind delete cluster --name pipeline-test`
+
+  → Each tier is optional — graceful degradation if tools not installed
+  → User configures max tier in pipeline-config.md:
+    ```yaml
+    infra:
+      max_verification_tier: 2    # 1=static, 2=container, 3=cluster
+      cluster_tool: kind           # kind | k3d | minikube
+      compose_file: deploy/docker-compose.yml
+      helm_chart: deploy/helm/wellplanned
+    ```
+
+REVIEW (during pipeline REVIEW stage)
+  → infra-deploy-reviewer checks:
+    - Security: RBAC least privilege, no privileged containers, secrets management
+    - Reliability: resource limits, health probes, PDB, topology spread
+    - Scalability: HPA configured, no hardcoded replicas
+    - Observability: metrics endpoints, structured logging config, tracing headers
+    - Networking: service mesh config, ingress TLS, network policies
+```
+
+### `/deploy` Command
+
+A new module command that triggers deployment to a target environment:
+
+```
+/deploy staging     → deploy to staging (via ArgoCD sync, Helm upgrade, or kubectl apply)
+/deploy production  → deploy to production (with confirmation gate)
+/deploy preview     → deploy preview environment for current PR
+/deploy rollback    → rollback to previous version
+```
+
+The deploy command reads deployment config from `dev-pipeline.local.md`:
+```yaml
+deploy:
+  method: argocd              # argocd | helm | kubectl | docker-compose
+  staging:
+    command: "gh workflow dispatch deploy.yml -f environment=staging"
+  production:
+    command: "gh workflow dispatch deploy.yml -f environment=production"
+    require_confirmation: true
+  preview:
+    command: "gh workflow dispatch deploy.yml -f environment=preview -f pr={pr_number}"
+```
+
+### State Schema Extension
+
+New fields in `state.json` when infra verification runs:
+
+```json
+{
+  "infra_verification": {
+    "tier_reached": 2,
+    "docker_build": "PASS",
+    "compose_health": "PASS",
+    "helm_lint": "PASS",
+    "trivy_vulns": 0,
+    "cluster_test": "SKIPPED"
+  }
+}
+```
+
+---
+
 ## Migration Path
 
 ### Impact on existing files
@@ -2414,9 +2573,10 @@ to:
 | 13 | `feat/marketplace-distribution` | 4 | .claude-plugin/ structure, hooks.json, marketplace.json, delete root plugin.json | #6 |
 | 14 | `feat/pipeline-init` | 5 | /pipeline-init skill, project detection, config generation | #5, #13 |
 | 15 | `feat/module-commands` | 5 | Module-specific commands (build, test, scaffolders per module) | #5 |
-| 16 | `feat/update-contracts` | All | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#15 |
+| 16 | `feat/infra-module` | 6 | infra-k8s module, YAML/Dockerfile rules, infra agents, /deploy command | #1, #5 |
+| 17 | `feat/update-contracts` | All | stage-contract.md, state-schema.md, scoring.md, CLAUDE.md, README | #6-#16 |
 
-PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities). PRs 11-12 = Phase 3 (Self-Healing + Learning). PR 13 = Phase 4 (Distribution). PRs 14-15 = Phase 5 (Init + Commands). PR 16 = cross-cutting docs update.
+PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities). PRs 11-12 = Phase 3 (Self-Healing + Learning). PR 13 = Phase 4 (Distribution). PRs 14-15 = Phase 5 (Init + Commands). PR 16 = Phase 6 (Infrastructure). PR 17 = cross-cutting docs update.
 
 ### Estimated file count
 
@@ -2435,4 +2595,5 @@ PRs 1-6 = Phase 1 (Check Engine + Modules). PRs 7-10 = Phase 2 (New Capabilities
 | Marketplace structure (.claude-plugin/, hooks.json) | ~4 |
 | Pipeline-init skill | ~2 |
 | Migration (conversion script, updated existing files) | ~12 |
-| **Total** | **~165** |
+| Infrastructure module (Phase 6) | ~10 |
+| **Total** | **~175** |
