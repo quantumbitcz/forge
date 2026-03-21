@@ -1,7 +1,7 @@
 # Generalized Check Engine & Multi-Language Pipeline Enhancement
 
 **Date:** 2026-03-21
-**Status:** Reviewed (spec review iteration 1 — all critical/important issues resolved)
+**Status:** Reviewed (2 iterations — all critical/important issues resolved)
 **Author:** Denis Sajnar + Claude
 
 ## Summary
@@ -84,7 +84,7 @@ engine.sh --review --project-root /path/to/project [--files-changed file1 file2 
 
 **Environment variables:**
 - `TOOL_INPUT` — JSON from Claude Code hook system (Mode 1 only). Contains `file_path`.
-- `PLUGIN_ROOT` — path to dev-pipeline plugin root (set by Claude Code for plugins).
+- `CLAUDE_PLUGIN_ROOT` — path to dev-pipeline plugin root (set by Claude Code for plugins). Used for resolving relative paths to rule files, examples, etc.
 
 ### Module Detection
 
@@ -109,33 +109,54 @@ In PostToolUse mode (Mode 1), `engine.sh` caches the detected module in `.pipeli
 
 ### Hook Registration in `plugin.json`
 
-The updated `plugin.json` registers `engine.sh` for Edit and Write tool use:
+The updated `plugin.json` adds an `engine.sh` entry for Edit and Write tool use, preserving the existing hook structure:
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PostToolUse",
-      "matcher": "Edit|Write",
-      "command": "shared/checks/engine.sh --hook",
-      "timeout": 5000
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Skill",
-      "command": "hooks/pipeline-checkpoint.sh",
-      "timeout": 5000
-    },
-    {
-      "event": "Stop",
-      "command": "hooks/feedback-capture.sh",
-      "timeout": 3000
-    }
-  ]
+  "name": "dev-pipeline",
+  "description": "Reusable autonomous development pipeline with framework modules",
+  "version": "0.2.0",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/feedback-capture.sh",
+            "timeout": 3000
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
-The existing checkpoint and feedback hooks remain unchanged. The new `engine.sh --hook` entry replaces per-module hook registrations in consuming projects' `settings.json`.
+The existing checkpoint and feedback hooks remain unchanged. The new `engine.sh --hook` entry replaces per-module hook registrations in consuming projects' `settings.json`. **Consuming projects should remove their old check/guard hook entries from `.claude/settings.json`** — the plugin-level hook now handles this centrally.
+
+Convention for JSON metadata keys: underscore-prefixed keys (`_match_order`, `_severity_map`, `_note`) in any JSON config file are documentation/metadata, not functional data. Parsers must skip keys starting with `_`.
 
 ---
 
@@ -163,6 +184,7 @@ shared/checks/
   layer-2-linter/                    # VERIFY stage — real linters, 5-30s
     adapters/
       detekt.sh
+      checkstyle.sh
       eslint.sh
       clippy.sh
       ruff.sh
@@ -402,16 +424,16 @@ Runs during the VERIFY stage. Delegates to real, installed linters and normalize
 
 **Linter adapter mapping:**
 
-| Language | Primary linter | Fallback | Config detection |
-|---|---|---|---|
-| Kotlin | detekt | ktlint | `detekt.yml` or gradle plugin |
-| Java | detekt / SonarLint | checkstyle | `checkstyle.xml` or gradle plugin |
-| TypeScript | eslint | biome | `eslint.config.*` or `.eslintrc.*` |
-| Python | ruff | pylint, mypy | `ruff.toml`, `pyproject.toml [tool.ruff]` |
-| Go | staticcheck | go vet | always available with Go toolchain |
-| Rust | clippy | — | always available with cargo |
-| C/C++ | clang-tidy | cppcheck | `.clang-tidy` or `compile_commands.json` |
-| Swift | swiftlint | — | `.swiftlint.yml` |
+| Language | Primary linter | Fallback | Config detection | Adapter |
+|---|---|---|---|---|
+| Kotlin | detekt | ktlint | `detekt.yml` or gradle plugin | `detekt.sh` |
+| Java | checkstyle | spotbugs | `checkstyle.xml` or gradle plugin | `checkstyle.sh` (new) |
+| TypeScript | eslint | biome | `eslint.config.*` or `.eslintrc.*` | `eslint.sh` |
+| Python | ruff | pylint, mypy | `ruff.toml`, `pyproject.toml [tool.ruff]` | `ruff.sh` |
+| Go | staticcheck | go vet | always available with Go toolchain | `go-vet.sh` |
+| Rust | clippy | — | always available with cargo | `clippy.sh` |
+| C/C++ | clang-tidy | cppcheck | `.clang-tidy` or `compile_commands.json` | `clang-tidy.sh` |
+| Swift | swiftlint | — | `.swiftlint.yml` | `swiftlint.sh` |
 
 **Adapter contract:**
 
@@ -608,7 +630,7 @@ Only kotlin-spring and react-vite retain custom review agents (existing `be-hex-
 
 **Flow:**
 1. Analyze project structure, identify testable units
-2. Prioritize by risk: business logic with branching (HIGH), data transformation (MEDIUM), pure UI (LOW)
+2. Prioritize by test value: business logic with branching (P1 — critical path), data transformation (P2 — core), pure UI rendering (P3 — peripheral)
 3. Generate test files in batches (5-10 at a time), using `examples/` for idiomatic patterns
 4. Run generated tests, fix failures, commit passing batch
 5. Report: coverage before/after, files tested, files skipped
