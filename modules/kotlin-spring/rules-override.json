@@ -1,0 +1,69 @@
+{
+  "extends": "kotlin",
+  "framework": "spring",
+  "additional_rules": [
+    {
+      "id": "KS-ARCH-001",
+      "name": "transactional-on-adapter",
+      "pattern": "grep -E '@Transactional'",
+      "scope_pattern": "/adapter/",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY",
+      "message": "@Transactional on adapter class — should be on use case only",
+      "fix_hint": "Move @Transactional to the use-case / service layer; adapters should not own transaction boundaries.",
+      "example_ref": ""
+    },
+    {
+      "id": "KS-ARCH-002",
+      "name": "java-uuid-in-core",
+      "pattern": "grep -E 'import java\\.util\\.UUID'",
+      "scope_pattern": "core/src/main",
+      "severity": "WARNING",
+      "category": "CONV-TYPE",
+      "message": "java.util.UUID in core — use kotlin.uuid.Uuid with typed ID wrapper",
+      "fix_hint": "Replace java.util.UUID with kotlin.uuid.Uuid and wrap in a domain-specific value class (e.g., XxxId).",
+      "example_ref": ""
+    },
+    {
+      "id": "KS-ARCH-003",
+      "name": "java-time-in-core",
+      "pattern": "grep -E 'import java\\.time\\.'",
+      "scope_pattern": "core/src/main",
+      "severity": "WARNING",
+      "category": "CONV-TYPE",
+      "message": "java.time in core — use kotlinx.datetime.Instant",
+      "fix_hint": "Replace java.time.* imports with kotlinx.datetime equivalents (Instant, LocalDate, etc.).",
+      "example_ref": ""
+    },
+    {
+      "id": "KS-CONV-001",
+      "name": "console-output-in-production",
+      "pattern": "grep -E '(println|print\\(|System\\.out|System\\.err)'",
+      "scope_pattern": "src/main",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Console output in non-test code — use structured logging instead",
+      "fix_hint": "Replace println/print/System.out with a logger (e.g., KotlinLogging.logger or SLF4J).",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Core must not import adapters",
+      "scope_pattern": "core/src/main",
+      "forbidden_imports": [
+        "cz\\.quantumbit\\.wellplanned\\.adapter\\."
+      ],
+      "severity": "CRITICAL",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "port/": 100,
+      "adapter/": 200
+    }
+  }
+}
