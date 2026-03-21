@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "deprecations": [
+    {
+      "pattern": "<Cell ",
+      "replacement": "Use shape prop on parent component (Bar, Area, etc.)",
+      "package": "recharts",
+      "since": "3.0.0",
+      "added": "2026-03-21",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "IconLeft|IconRight",
+      "replacement": "Use Chevron component instead",
+      "package": "react-day-picker",
+      "since": "9.0.0",
+      "added": "2026-03-21",
+      "addedBy": "seed"
+    }
+  ]
+}
