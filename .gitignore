@@ -1,6 +1,9 @@
 # Pipeline state (local only, never committed)
 .pipeline/
 
+# Worktrees
+.worktrees/
+
 # OS
 .DS_Store
 
