@@ -2098,6 +2098,14 @@ to:
 2. For 1 release: old scripts become thin wrappers calling `engine.sh`
 3. Next release: remove wrappers
 
+### Development conventions
+
+**Git worktrees:** All implementation work MUST use git worktrees. Each PR branch gets its own worktree so the user's main working directory stays clean and usable. This allows parallel development — the user continues their own work while the pipeline enhancement builds in an isolated worktree. Clean up worktrees after the branch is merged.
+
+**Commit messages:** No AI attribution in commit messages (no `Co-Authored-By: Claude` or similar). Commits should look like normal developer commits. Use conventional commit format (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+
+**Commit size:** Keep commits reasonably sized and logically scoped. One commit per logical change — don't bundle unrelated changes. A single PR may have multiple commits but each should be reviewable on its own.
+
 ### Delivery sequence
 
 | # | Branch | Phase | Contents | Depends on |
