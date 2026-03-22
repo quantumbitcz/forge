@@ -21,8 +21,10 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ### Agent files (`agents/*.md`)
 - YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools` list.
 - Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
-- Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
+- Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
+- The recap agent (`pl-720-recap`) generates a human-readable summary of each pipeline run during Stage 9 (LEARN), after the retrospective.
+- **Worktree isolation:** All implementation runs in a git worktree (`.pipeline/worktree`). The user's working tree is never modified during pipeline execution.
 
 ### Stage contracts (`shared/stage-contract.md`)
 - Every stage has defined entry conditions, exit conditions, and data flow. Agents must comply with the contract.
@@ -31,12 +33,24 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ### Quality scoring (`shared/scoring.md`)
 - Unified formula across all review agents: `100 - 20*CRITICAL - 5*WARNING - 2*INFO`.
 - Verdict thresholds: PASS (score >= threshold), CONCERNS (score >= threshold - margin), FAIL (below).
+- `SCOUT-*` findings track Boy Scout improvements (no point deduction, tracked for reporting).
+- Score sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity.
 
 ### State and recovery (`shared/state-schema.md`, `shared/recovery/`)
 - Pipeline state lives in `.pipeline/` (gitignored, local only). Checkpoints are saved after each task for resume-on-interrupt.
 - PREEMPT system: learnings from `pipeline-log.md` are proactively applied to matching domain areas in new runs.
 - Recovery engine (`shared/recovery/recovery-engine.md`) with 7 strategies: transient-retry, state-reconstruction, agent-reset, tool-diagnosis, dependency-health, resource-cleanup, graceful-stop.
 - Health checks (`shared/recovery/health-checks/`) run pre-stage dependency and environment validation.
+
+### Linear Integration (optional)
+- If Linear MCP is available, the pipeline creates an Epic with Stories and Tasks during PLAN, updates ticket statuses per stage, and posts quality findings and recap summaries as comments.
+- Configured via `linear:` section in `dev-pipeline.local.md` (disabled by default).
+- Graceful degradation: pipeline runs without Linear when MCP is unavailable.
+
+### Adaptive MCP Detection
+- PREFLIGHT detects available MCPs (Linear, Playwright, Slack, Context7, Figma) by checking tool availability.
+- Each agent uses MCPs relevant to its stage (e.g., Playwright for preview validation, Context7 for documentation lookup).
+- No MCP is required. The pipeline adapts to whatever the user has installed and suggests missing optional MCPs.
 
 ### Check engine (`shared/checks/`)
 - 3-layer generalized check engine triggered on every `Edit`/`Write` via PostToolUse hook.
@@ -53,6 +67,12 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ### Skills (`skills/`)
 - `pipeline-run` — the main entry point, thin launcher for the orchestrator.
 - `pipeline-init` — initializes `.claude/dev-pipeline.local.md` and `.claude/pipeline-config.md` for a consuming project.
+- `pipeline-status` — shows current pipeline state, last run results, quality score, and Linear tracking.
+- `pipeline-reset` — clears pipeline run state while preserving accumulated learnings.
+- `verify` — quick build + lint + test check without a full pipeline run.
+- `security-audit` — runs module-appropriate security scanners and reports vulnerabilities.
+- `codebase-health` — runs the check engine in full review mode for a comprehensive health report.
+- `migration` — plans and executes library/framework migrations via `pl-160-migration-planner`.
 - `bootstrap-project` — scaffolds a new project from a module template via `pl-050-project-bootstrapper`.
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
 - `fe-*` skills (`fe-check-theme`, `fe-dark-mode-check`, `fe-design-review`, `fe-react-doctor`) — inline frontend checks. React-vite module only.
@@ -81,12 +101,11 @@ All 12 modules follow the same structure (`conventions.md`, `local-template.md`,
 - Hexagonal architecture: sealed interface hierarchy (`XxxPersisted`, `XxxNotPersisted`, `XxxId`), ports & adapters pattern.
 - Core uses Kotlin types (`kotlin.uuid.Uuid`, `kotlinx.datetime.Instant`); persistence layer uses Java types.
 - Reactive stack: WebFlux + R2DBC + CoroutineCrudRepository.
-- Verification scripts: `check-antipatterns.sh`, `check-core-boundary.sh`, `check-file-size.sh`.
 
 ### react-vite
 - Typography via inline `style={{ fontSize }}`, not Tailwind `text-*` classes.
 - Colors via theme tokens (`bg-background`, `text-foreground`), never hardcoded hex.
-- Guard hooks enforce: theme tokens, function size (~30 lines), file size (~400 lines), import order, no deprecated APIs.
+- Check engine enforces: theme tokens, function size (~30 lines), file size (~400 lines), import order, no deprecated APIs.
 - `known-deprecations.json` is a self-updating registry maintained by the check engine's deprecation layer.
 
 ## Validation
@@ -108,6 +127,12 @@ shared/checks/engine.sh --dry-run
 
 # Verify all modules have required files
 for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json} 2>&1; done
+
+# Verify Linear config in all module templates
+for m in modules/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING linear: $m"; done
+
+# Verify all agents have Forbidden Actions section
+grep -l "Forbidden Actions" agents/*.md | wc -l
 ```
 
 ## Gotchas
