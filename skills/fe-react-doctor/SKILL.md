@@ -6,14 +6,14 @@ disable-model-invocation: true
 
 # React Doctor
 
-Run `react-doctor` to analyze the WellPlanned React codebase for common issues and anti-patterns.
+Run `react-doctor` to analyze the React codebase for common issues and anti-patterns.
 
 ## Usage
 
 Run the analysis:
 
 ```bash
-cd /Users/denissajnar/WebstormProjects/wellplanned-fe && npx -y react-doctor@latest .
+npx -y react-doctor@latest .
 ```
 
 ## After Analysis
