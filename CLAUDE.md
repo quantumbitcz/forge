@@ -64,6 +64,16 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 - Per-module learnings files (e.g., `kotlin-spring.md`, `react-vite.md`) — accumulated patterns from past runs.
 - JSON schemas: `rule-learning-schema.json` (check rule evolution), `agent-effectiveness-schema.json` (agent performance tracking).
 
+### Error taxonomy (`shared/error-taxonomy.md`)
+- 15 standard error types (TOOL_FAILURE, BUILD_FAILURE, TEST_FAILURE, etc.) with recovery strategies.
+- Agents classify errors before reporting to the orchestrator or recovery engine.
+- Pre-classified errors skip heuristic classification in the recovery engine.
+
+### Agent communication (`shared/agent-communication.md`)
+- All inter-agent data flows through the orchestrator via stage notes.
+- Agents are isolated — they cannot dispatch other agents, write state, or message the user.
+- The quality gate includes previous batch findings when dispatching subsequent batches to reduce duplicate work.
+
 ### Skills (`skills/`)
 - `pipeline-run` — the main entry point, thin launcher for the orchestrator.
 - `pipeline-init` — initializes `.claude/dev-pipeline.local.md` and `.claude/pipeline-config.md` for a consuming project.
@@ -75,6 +85,8 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 - `migration` — plans and executes library/framework migrations via `pl-160-migration-planner`.
 - `bootstrap-project` — scaffolds a new project from a module template via `pl-050-project-bootstrapper`.
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
+- `pipeline-history` — view quality score trends, agent effectiveness, and run metrics across pipeline runs.
+- `pipeline-rollback` — safely rollback pipeline changes (worktree, merge, Linear, state).
 - `fe-*` skills (`fe-check-theme`, `fe-dark-mode-check`, `fe-design-review`, `fe-react-doctor`) — inline frontend checks. React-vite module only.
 
 ### Hooks (`hooks/hooks.json`)
@@ -144,6 +156,11 @@ grep -l "Forbidden Actions" agents/*.md | wc -l
 - `pipeline-config.md` is auto-tuned by the retrospective agent — manual edits may be overwritten after a run.
 - The check engine hook fires on every `Edit`/`Write` — if `shared/checks/engine.sh` is broken or non-executable, all file edits will trigger hook errors.
 - `rules-override.json` in modules extends (not replaces) shared check defaults. Use `"disabled": true` to suppress a shared rule, not deletion.
+- The scoring formula is customizable per-project via `pipeline-config.md`. Constraints enforced at PREFLIGHT — see `shared/scoring.md`.
+- PREEMPT items decay in confidence if unused for 10+ runs: HIGH → MEDIUM → LOW → ARCHIVED. Archived items are not loaded at PREFLIGHT.
+- The orchestrator enforces parallel task conflict detection at IMPLEMENT time — tasks sharing files are automatically serialized.
+- Convention drift is detected mid-run via SHA256 hash comparison. Agents log WARNING if conventions change but continue with the newer version.
+- `--dry-run` flag runs PREFLIGHT through VALIDATE without entering IMPLEMENT. No worktree, no Linear tickets, no file changes.
 
 ## Plugin distribution (`.claude-plugin/`)
 
