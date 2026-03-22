@@ -30,7 +30,7 @@ quality_gate:
   batch_1:
     - agent: go-arch-reviewer
       focus: "handler/service/repository layering, interface boundaries"
-    - agent: go-security-reviewer
+    - agent: security-reviewer
       focus: "auth, injection, error leaking, input validation"
   batch_2:
     - agent: "Code Reviewer"

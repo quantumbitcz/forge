@@ -6,7 +6,7 @@ description: |
   <example>
   Context: pl-300 has completed implementation -- all tests pass, 8 files changed across core/domain/ and adapter/output/
   user: "Run quality gate on the coaching relationship changes"
-  assistant: "Dispatching quality gate. Batch 1 (Architecture): architecture-reviewer, be-security-reviewer. 2 agents returned 7 raw findings. After dedup: 5 unique findings (1 CRITICAL, 2 WARNING, 2 INFO). Score: 100 - 20 - 10 - 4 = 66. Dispatching pl-300 for fix cycle 1."
+  assistant: "Dispatching quality gate. Batch 1 (Architecture): architecture-reviewer, security-reviewer. 2 agents returned 7 raw findings. After dedup: 5 unique findings (1 CRITICAL, 2 WARNING, 2 INFO). Score: 100 - 20 - 10 - 4 = 66. Dispatching pl-300 for fix cycle 1."
   <commentary>The quality gate dispatches agents from config batch_1, deduplicates overlapping findings, computes the score, and since there is a CRITICAL, triggers a fix cycle before proceeding.</commentary>
   </example>
 

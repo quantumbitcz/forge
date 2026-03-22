@@ -34,7 +34,7 @@ quality_gate:
   batch_1:
     - agent: fe-design-reviewer
       focus: "Svelte 5 rune usage, component patterns, reactivity"
-    - agent: be-security-reviewer
+    - agent: security-reviewer
       focus: "server-side auth, input validation, data exposure"
   batch_2:
     - agent: "Code Reviewer"

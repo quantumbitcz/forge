@@ -38,7 +38,7 @@ Includes:
 - `local-template.md` -- project config template with Gradle commands, scaffolder patterns (domain model, use case, port, adapter, controller, migration, test), and quality gate batches
 - `pipeline-config-template.md` -- mutable runtime parameters template
 - Verification scripts: `check-antipatterns.sh` (double-bang, framework imports in core), `check-core-boundary.sh` (hexagonal layer violations), `check-file-size.sh` (files over threshold)
-- Review agents: `architecture-reviewer`, `be-security-reviewer`
+- Review agents: `architecture-reviewer`, `security-reviewer`
 
 ### react-vite
 
@@ -250,7 +250,7 @@ Reference your agents in the `quality_gate.batch_N` section and any `inline_chec
 | Agent | Module | Role |
 |-------|--------|------|
 | `architecture-reviewer` | shared | Detects architecture pattern and reviews for compliance violations |
-| `be-security-reviewer` | kotlin-spring | Reviews for auth, injection, and data exposure issues |
+| `security-reviewer` | shared | Reviews code for security vulnerabilities across all languages and frameworks |
 | `fe-code-reviewer` | react-vite | Reviews against frontend conventions and security patterns |
 | `fe-deprecation-scanner` | react-vite | Finds and fixes deprecated API usages, self-updating registry |
 

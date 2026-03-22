@@ -35,7 +35,7 @@ quality_gate:
   batch_1:
     - agent: architecture-reviewer
       focus: "architecture pattern violations"
-    - agent: be-security-reviewer
+    - agent: security-reviewer
       focus: "auth, ownership, injection, data exposure"
   batch_2:
     - agent: "Code Reviewer"

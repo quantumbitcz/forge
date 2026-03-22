@@ -32,7 +32,7 @@ quality_gate:
   batch_1:
     - agent: py-arch-reviewer
       focus: "router/service/repository layering violations"
-    - agent: py-security-reviewer
+    - agent: security-reviewer
       focus: "auth, injection, data exposure, CORS"
   batch_2:
     - agent: "Code Reviewer"

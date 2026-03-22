@@ -29,7 +29,7 @@ quality_gate:
   batch_1:
     - agent: rs-arch-reviewer
       focus: "handler/service layering, state management, error handling"
-    - agent: rs-security-reviewer
+    - agent: security-reviewer
       focus: "auth, unsafe usage, input validation, error leaking"
   batch_2:
     - agent: "Code Reviewer"
