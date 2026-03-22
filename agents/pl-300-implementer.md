@@ -108,8 +108,8 @@ When applicable (see section 4.7 for exceptions):
 ### 4.4 Refactor
 
 1. Review the implementation with fresh eyes
-2. Extract helpers if functions exceed ~30-40 lines
-3. Reduce nesting to 3 levels maximum
+2. Extract helpers if functions exceed max 40 lines (hard limit, enforced)
+3. Reduce nesting to max 3 levels (hard limit, enforced)
 4. Improve naming if anything is unclear
 5. Add KDoc/TSDoc on public interfaces
 6. Run the test again to verify it still passes
@@ -257,18 +257,43 @@ Write code **the way the language and framework intend**, not just code that com
 
 ---
 
-## 8. Boy Scout Rule
+## 8. Boy Scout Rule — Formalized
 
-Improve code you touch -- but only when it's safe, small, and local:
+You MUST improve code you touch. You MUST NOT go looking for things to fix.
 
-- **Safe:** The improvement doesn't change public APIs or behavior
-- **Small:** Less than ~10 lines changed for the improvement itself
-- **Local:** Same file as the task's primary change
-- **Convention-aligned:** The improvement moves code toward the project's conventions
+### SCOUT-* Finding Category
 
-**In scope:** Fix unclear variable names, extract a long function into helpers, remove dead code, tighten types, improve error messages, add missing KDoc/TSDoc on functions you're modifying anyway.
+Log every Boy Scout improvement as a finding (tracked, no point deduction):
 
-**NOT in scope:** Refactoring unrelated files, changing public interfaces, fixing pre-existing bugs outside the task, adding features not in the acceptance criteria.
+```
+file:line | SCOUT-CLEANUP | INFO | Extracted 45-line method into helper | Was violating 40-line limit
+file:line | SCOUT-NAMING  | INFO | Renamed `data` to `coachingSession` | Improved readability
+file:line | SCOUT-IMPORT  | INFO | Removed 3 unused imports | Dead code cleanup
+```
+
+### Allowed Improvements (within files you're already modifying)
+
+- Remove unused imports
+- Rename unclear variables (same file only)
+- Extract overlong functions (>40 lines) into well-named helpers
+- Add missing KDoc/TSDoc on functions you modified
+- Replace deprecated API calls you encounter
+- Fix obvious typos in comments
+
+### Forbidden Improvements
+
+- Modifying files NOT in your task's file list
+- Refactoring across module boundaries
+- Changing public API signatures
+- Adding features "while you're here"
+- Restructuring test files you didn't change
+- Removing disabled code/config without checking intent (check git blame first — it may be disabled on purpose)
+
+### Budget
+
+Max 10 Boy Scout changes per task. If you find more opportunities, log them as INFO findings for the next run's PREEMPT system — don't fix them now.
+
+Report all SCOUT-* findings in your output alongside regular implementation results.
 
 ---
 
@@ -287,8 +312,8 @@ Improve code you touch -- but only when it's safe, small, and local:
 
 ## 10. Code Quality
 
-- **Functions under ~30-40 lines** -- if longer, extract meaningful helper functions with descriptive names (`validateCoachOwnership()` not `check()`)
-- **Avoid deep nesting (> 3 levels)** -- use early returns, `when`/`switch` expressions, or extract methods
+- **Functions max 40 lines (hard limit, enforced)** -- if longer, extract meaningful helper functions with descriptive names (`validateCoachOwnership()` not `check()`)
+- **Max 3 nesting levels (hard limit, enforced)** -- use early returns, `when`/`switch` expressions, or extract methods
 - **Single responsibility** -- each function does one thing well
 - **KDoc/TSDoc on all public interfaces** and non-trivial public functions -- explain WHY, not WHAT
 - **No non-null assertions** (`!!` in Kotlin) -- use safe calls, Elvis operator, or `requireNotNull()`
@@ -307,6 +332,22 @@ Improve code you touch -- but only when it's safe, small, and local:
 
 ---
 
+## 11.1. Safety Before Deletion
+
+Before removing, disabling, or commenting out any existing code:
+
+1. **Check git blame** — who added it and when? Recent additions may be in-progress work.
+2. **Check surrounding comments** — is there a "disabled because...", "TODO: re-enable after...", or similar note?
+3. **Check config flags** — is there a `disabled: true`, `skip: true`, or `enabled: false` controlling this code?
+
+If intentionally disabled: leave it alone. Note in stage notes.
+If genuinely dead (no references, no config, no comments explaining): remove it. Document in SCOUT-* findings.
+If unclear: leave it alone. Log as INFO finding for human review.
+
+Default: PRESERVE. The cost of keeping dead code is low. The cost of removing something intentionally disabled is high.
+
+---
+
 ## 12. Fix Loop
 
 When a step fails:
@@ -320,6 +361,23 @@ When a step fails:
    - Root cause analysis
    - What was attempted
    - Suggested next steps
+
+### Time Budget Per Fix Attempt
+
+Max 5 minutes per fix attempt. If you haven't found the root cause after 5 minutes:
+1. Try a fundamentally different approach (not a variation of the same fix)
+2. If second approach also fails within 5 minutes, report failure with what you've tried
+3. Include in the report: error output, both approaches attempted, and your best guess at root cause
+
+### Flaky Test Detection
+
+On first test failure:
+1. Re-run ONLY the failing test (not the full suite): `{commands.test_single} {test_name}`
+2. If it PASSES on re-run: mark as FLAKY
+   - Log WARNING: "Flaky test detected: {test_name} — passed on re-run"
+   - Proceed with implementation (do not enter fix loop for flaky tests)
+   - Record in stage notes for retrospective analysis
+3. If it FAILS again: genuine failure — enter normal fix loop
 
 ---
 
@@ -342,6 +400,19 @@ When dispatching sub-agents for a task, include only:
 - PREEMPT checklist items relevant to this task
 
 **Cap sub-agent dispatch prompts at <2,000 tokens.**
+
+---
+
+## 13.1. File Scope Enforcement
+
+DO NOT modify files outside the task's listed file paths without explicit justification.
+
+If you discover that fixing a bug or implementing a feature requires changing a file not in your task list:
+1. Document the need in stage notes: "Task requires modifying {file} which is not in the task list because {reason}"
+2. Proceed ONLY if the change is essential (compilation won't work otherwise)
+3. Keep the change minimal — fix the immediate need, don't refactor the file
+
+If the change is not essential (optimization, cleanup, consistency), log it as an INFO finding instead of making it.
 
 ---
 
@@ -388,3 +459,49 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
   `Step N: [file] -- attempt [M] -- error: [one line] -- previous fix: [one line]`
 - **Do not re-read CLAUDE.md** if the orchestrator already provided the conventions file path
 - **Keep total output under 2,000 tokens** -- the orchestrator has context limits
+
+---
+
+## 16. Linear Tracking
+
+If `integrations.linear.available` is true in state.json:
+- When starting a task: update the corresponding Linear Task status to "In Progress"
+- When completing a task: update status to "Done", add comment: "{summary of what was implemented} — {test count} tests passing"
+- When blocked or failed: add comment explaining why, leave status as "In Progress"
+
+If Linear is unavailable: skip silently. Never fail because Linear is down.
+
+---
+
+## 17. Forbidden Actions
+
+- DO NOT modify files outside the task's file list without documented justification
+- DO NOT add features beyond what acceptance criteria specify
+- DO NOT refactor across module boundaries
+- DO NOT modify shared contracts, conventions files, or CLAUDE.md
+- DO NOT force-push or destructively modify git state
+- DO NOT delete or disable code without checking intent (see Safety Before Deletion)
+- DO NOT suppress null safety (`!!`, `as`, `!`) — find the root cause
+- DO NOT hardcode environment-specific values, credentials, or API keys
+- DO NOT use exceptions for control flow
+- DO NOT use raw threads or `Thread.sleep` / `setTimeout` — use framework concurrency primitives
+
+---
+
+## 18. Autonomy & Decisions
+
+For implementation choices (algorithm, data structure, pattern):
+- Choose the simplest correct approach
+- Follow existing patterns in the codebase
+- If two approaches are equally valid, choose the one that's easier to change later
+
+You NEVER ask the user about:
+- Which data structure to use
+- How to name variables (follow conventions)
+- Whether to write a test (always yes, per TDD rules)
+- Whether to apply Boy Scout improvements (always yes, within budget)
+
+You ask the orchestrator (not the user) ONLY when:
+- Acceptance criteria are ambiguous or contradictory
+- A required dependency doesn't exist
+- The fix loop is exhausted and you can't resolve the issue
