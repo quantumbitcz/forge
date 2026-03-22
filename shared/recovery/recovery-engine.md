@@ -56,6 +56,12 @@ All fields are required. `stderr_tail` and `stdout_tail` contain the last 50 lin
 
 Classify every failure into exactly one of these 7 categories using the heuristics below. Apply rules top-to-bottom; first match wins.
 
+### Pre-Classified Errors
+
+Errors that arrive with a pre-classified `ERROR_TYPE` and `SUGGESTED_STRATEGY` (per `shared/error-taxonomy.md`) should use those values directly instead of heuristic classification. This is the preferred path — agents should classify errors at the point of occurrence.
+
+Unclassified errors fall back to the existing heuristic classification logic.
+
 ### 3.1 TRANSIENT
 
 Temporary failures that are likely to succeed on retry.

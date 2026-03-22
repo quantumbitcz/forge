@@ -447,6 +447,20 @@ After all groups complete, write `.pipeline/stage_4_notes_{storyId}.md` with imp
 
 Extract from results: steps completed vs failed, files created/modified, fix loop count, unresolved failures, test coverage notes.
 
+### 7.6 Parallel Conflict Detection
+
+Before dispatching a parallel group, validate no file conflicts exist:
+
+1. For each task in the group, collect the `files` list (creates + modifies)
+2. Find any files that appear in 2+ tasks within the same group
+3. If conflicts found:
+   - Log WARNING: "Conflict detected: {file} is in both Task {A} and Task {B}"
+   - Serialize the conflicting tasks: move Task {B} to a new sequential sub-group after the current group
+   - Report in stage notes: "Serialized {N} tasks due to file conflicts"
+4. If no conflicts: proceed with parallel dispatch as normal
+
+This check runs at IMPLEMENT time, not PLAN time, because task file lists are finalized during scaffolding.
+
 ### Linear Tracking
 
 If `integrations.linear.available` is true:
@@ -830,17 +844,48 @@ State files use JSON. Stage notes use markdown.
 
 ---
 
-## 16. Timeouts
+## 16. Timeout Enforcement
 
-| Scope | Limit | Action |
-|-------|-------|--------|
-| Single agent | 10 min | Kill, proceed with available results, log timeout |
-| Stage total | 30 min | Checkpoint, warn user, suggest resume |
+### Agent Dispatch Timeouts
+
+When dispatching an agent via the Agent tool:
+
+1. Record the dispatch timestamp in stage notes
+2. The Agent tool has a built-in timeout mechanism — agents complete when they return a result
+3. If an agent has not returned after the stage timeout (30 min), the orchestrator:
+   - Stops waiting for the agent
+   - Proceeds with available results from other agents in the batch
+   - Logs: "Agent {name} timed out after {duration}. Proceeding without its results."
+   - Adds INFO finding: `{agent}:0 | REVIEW-GAP | INFO | Agent timed out, {focus} not reviewed`
+4. If a late result arrives after the orchestrator moved on: discard it
+
+### Command Timeouts
+
+When running shell commands (build, test, lint):
+
+1. Use the configurable timeout from `commands.{cmd}_timeout` in `dev-pipeline.local.md`
+2. Default timeouts: build=120s, test=300s, lint=60s
+3. If a command exceeds its timeout:
+   - Kill the process
+   - Report: "Command '{cmd}' timed out after {N}s"
+   - Classify as TOOL_FAILURE for recovery engine
+
+### Stage Timeouts
+
+| Level | Timeout | Action |
+|---|---|---|
+| Single command | `commands.*_timeout` (default 120-300s) | Kill, report TOOL_FAILURE |
+| Stage total | 30 minutes | Checkpoint, warn user, suggest resume |
 | Full pipeline | 2 hours | Checkpoint, pause, notify user |
-| Partial failure | N-1 of N agents succeed | Proceed with available results, note missing agent |
-| Rate limits | Agent dispatch throttled | Serialize remaining dispatches with delays |
+| Full pipeline (dry-run) | 30 minutes | Stop, report what completed |
 
-Timeouts are defensive -- they prevent runaway agents, not thorough work.
+### Enforcement Rule
+
+Timeouts are defensive — they prevent runaway execution, not thoroughness. When a timeout fires:
+- NEVER discard work already completed
+- ALWAYS checkpoint before stopping
+- ALWAYS tell the user what was completed and what was skipped
+- NEVER retry after a stage timeout (the user decides to resume or abort)
 
 ---
 
@@ -1083,3 +1128,4 @@ The orchestrator references these shared documents but never modifies them:
 - `shared/scoring.md` -- quality scoring formula, verdict thresholds, finding format, deduplication rules
 - `shared/state-schema.md` -- JSON schemas for `state.json` and `checkpoint-{storyId}.json`
 - `shared/stage-contract.md` -- stage numbers, names, transitions, entry/exit conditions, data flow
+- `shared/error-taxonomy.md` -- standard error classification types, recovery mapping, agent error reporting format
