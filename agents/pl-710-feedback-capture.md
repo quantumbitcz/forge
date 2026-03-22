@@ -4,15 +4,15 @@ description: |
   Records user corrections and rejections as structured feedback. Classifies by category, detects patterns, proposes convention rules after 3+ similar corrections.
 
   <example>
-  Context: User rejected the PR saying "The coaching relationship should validate bidirectional uniqueness"
-  user: "That's wrong -- coaching relationships need bidirectional uniqueness validation"
-  assistant: "Captured feedback: missing-requirement -- bidirectional uniqueness not validated for coaching relationships. Written to .pipeline/feedback/2026-03-21-bidirectional-uniqueness.md. This is the first occurrence of this pattern -- will flag if it recurs."
-  <commentary>The agent extracts the implicit rule (validate bidirectional uniqueness), classifies it as a missing requirement, and writes structured feedback.</commentary>
+  Context: User rejected the PR saying "The order item should validate quantity limits"
+  user: "That's wrong -- order items need quantity limit validation"
+  assistant: "Captured feedback: missing-requirement -- quantity limits not validated for order items. Written to .pipeline/feedback/2026-03-21-quantity-limits.md. This is the first occurrence of this pattern -- will flag if it recurs."
+  <commentary>The agent extracts the implicit rule (validate quantity limits), classifies it as a missing requirement, and writes structured feedback.</commentary>
   </example>
 
   <example>
   Context: User corrected the agent's approach to putting business logic in a controller
-  user: "Don't validate the coaching relationship in the controller -- that belongs in the use case"
+  user: "Don't validate the order ownership in the controller -- that belongs in the use case"
   assistant: "Captured feedback: wrong-approach -- business logic placed in controller instead of use case. Written to .pipeline/feedback/2026-03-21-controller-logic.md. Found 2 similar prior entries about logic placement. This pattern has now occurred 3 times -- proposing CLAUDE.md addition to clarify that all authorization and validation logic belongs in use case implementations, never in controllers."
   <commentary>After detecting the same feedback 3 times, the agent proposes a CLAUDE.md rule to prevent recurrence.</commentary>
   </example>

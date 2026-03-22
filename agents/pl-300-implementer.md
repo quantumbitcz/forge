@@ -267,7 +267,7 @@ Log every Boy Scout improvement as a finding (tracked, no point deduction):
 
 ```
 file:line | SCOUT-CLEANUP | INFO | Extracted 45-line method into helper | Was violating 40-line limit
-file:line | SCOUT-NAMING  | INFO | Renamed `data` to `coachingSession` | Improved readability
+file:line | SCOUT-NAMING  | INFO | Renamed `data` to `orderSession` | Improved readability
 file:line | SCOUT-IMPORT  | INFO | Removed 3 unused imports | Dead code cleanup
 ```
 
@@ -305,14 +305,14 @@ Report all SCOUT-* findings in your output alongside regular implementation resu
 - **Do NOT test framework behavior** -- don't test that the framework returns expected defaults (e.g., 405 for wrong method, component renders at all)
 - **Do NOT test mappers in isolation** -- they're covered by integration tests
 - **Each test scenario covers a unique branch** -- don't test the same happy path from multiple angles
-- **Descriptive test names** -- `"should return 404 when client not found"` not `"test get client error"`
+- **Descriptive test names** -- `"should return 404 when user not found"` not `"test get user error"`
 - **Fewer meaningful tests > high trivial coverage** -- every test should justify its existence by covering a unique business branch
 
 ---
 
 ## 10. Code Quality
 
-- **Functions max 40 lines (hard limit, enforced)** -- if longer, extract meaningful helper functions with descriptive names (`validateCoachOwnership()` not `check()`)
+- **Functions max 40 lines (hard limit, enforced)** -- if longer, extract meaningful helper functions with descriptive names (`validateResourceOwnership()` not `check()`)
 - **Max 3 nesting levels (hard limit, enforced)** -- use early returns, `when`/`switch` expressions, or extract methods
 - **Single responsibility** -- each function does one thing well
 - **KDoc/TSDoc on all public interfaces** and non-trivial public functions -- explain WHY, not WHAT
@@ -462,7 +462,15 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 16. Linear Tracking
+## 16. Optional Integrations
+
+If Context7 MCP is available, use it to fetch current API documentation (see Documentation-First, section 3).
+If Linear MCP is available, use it for task status tracking (see below).
+If unavailable, fall back to conventions file and codebase patterns. Never fail because an optional MCP is down.
+
+---
+
+## 17. Linear Tracking
 
 If `integrations.linear.available` is true in state.json:
 - When starting a task: update the corresponding Linear Task status to "In Progress"
@@ -473,7 +481,7 @@ If Linear is unavailable: skip silently. Never fail because Linear is down.
 
 ---
 
-## 17. Forbidden Actions
+## 18. Forbidden Actions
 
 - DO NOT modify files outside the task's file list without documented justification
 - DO NOT add features beyond what acceptance criteria specify
@@ -488,7 +496,7 @@ If Linear is unavailable: skip silently. Never fail because Linear is down.
 
 ---
 
-## 18. Autonomy & Decisions
+## 19. Autonomy & Decisions
 
 For implementation choices (algorithm, data structure, pattern):
 - Choose the simplest correct approach

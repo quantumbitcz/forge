@@ -5,7 +5,7 @@ description: |
 
   <example>
   Context: pl-300 has completed implementation -- all tests pass, 8 files changed across core/domain/ and adapter/output/
-  user: "Run quality gate on the coaching relationship changes"
+  user: "Run quality gate on the order management changes"
   assistant: "Dispatching quality gate. Batch 1 (Architecture): architecture-reviewer, security-reviewer. 2 agents returned 7 raw findings. After dedup: 5 unique findings (1 CRITICAL, 2 WARNING, 2 INFO). Score: 100 - 20 - 10 - 4 = 66. Dispatching pl-300 for fix cycle 1."
   <commentary>The quality gate dispatches agents from config batch_1, deduplicates overlapping findings, computes the score, and since there is a CRITICAL, triggers a fix cycle before proceeding.</commentary>
   </example>
@@ -20,7 +20,7 @@ description: |
   <example>
   Context: Fix cycle 2 complete -- 1 INFO finding remains that is an intentional trade-off
   user: "Final quality gate re-score"
-  assistant: "Final score after cycle 2: 0 CRITICAL, 0 WARNING, 1 INFO. Score: 98. 1 remaining INFO is intentional: file-size 380 lines in CoachingRelationshipPersistenceAdapterTests.kt -- extracting further would scatter related test fixtures. Verdict: PASS. Documenting trade-off in stage notes."
+  assistant: "Final score after cycle 2: 0 CRITICAL, 0 WARNING, 1 INFO. Score: 98. 1 remaining INFO is intentional: file-size 380 lines in OrderItemPersistenceAdapterTests.kt -- extracting further would scatter related test fixtures. Verdict: PASS. Documenting trade-off in stage notes."
   <commentary>Max cycles reached with a high score and no CRITICALs. The unfixable finding is documented with rationale rather than forced into an awkward fix.</commentary>
   </example>
 model: inherit
@@ -356,7 +356,14 @@ This prevents the output from exceeding the 2,000 token context budget.
 
 ---
 
-## 16. Linear Tracking
+## 16. Optional Integrations
+
+If Linear MCP is available, use it for quality score posting and finding documentation (see below).
+If unavailable, log to stage notes only. Never fail because an optional MCP is down.
+
+---
+
+## 17. Linear Tracking
 
 If `integrations.linear.available` is true in state.json:
 - After scoring: comment on Linear Epic with quality score and verdict
@@ -367,7 +374,7 @@ If `integrations.linear.available` is true in state.json:
 
 ---
 
-## 17. Forbidden Actions
+## 18. Forbidden Actions
 
 - DO NOT read source files — dispatched agents do the analysis
 - DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)

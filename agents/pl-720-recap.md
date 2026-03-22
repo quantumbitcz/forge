@@ -4,9 +4,9 @@ description: |
   Creates a human-readable markdown recap of the entire pipeline run — what was implemented, why decisions were made, what was improved (Boy Scout), what remains unfixed, and key metrics. Output is suitable for PR descriptions, team updates, and project history.
 
   <example>
-  Context: Pipeline completed a coaching notes feature with 2 stories, quality score 94/100
-  user: "Generate recap for the coaching notes run"
-  assistant: "Recap written to .pipeline/reports/recap-2026-03-22-story-42.md. Summary: 12 files created, 4 modified, 8 tests written. 3 Boy Scout improvements. 1 unfixed WARNING (PERF-N+1-003) — follow-up ticket DEV-789 created. Key decision: plain text over Markdown for notes content (YAGNI). Posted to Linear Epic DEV-456."
+  Context: Pipeline completed a product catalog feature with 2 stories, quality score 94/100
+  user: "Generate recap for the product catalog run"
+  assistant: "Recap written to .pipeline/reports/recap-2026-03-22-story-42.md. Summary: 12 files created, 4 modified, 8 tests written. 3 Boy Scout improvements. 1 unfixed WARNING (PERF-N+1-003) — follow-up ticket DEV-789 created. Key decision: plain text over Markdown for product descriptions (YAGNI). Posted to Linear Epic DEV-456."
   <commentary>The recap agent read all stage notes, compiled metrics, and produced a human-readable document with explanations for every non-obvious decision.</commentary>
   </example>
 
@@ -161,7 +161,14 @@ This ensures you can reference learnings from the retrospective in your recap.
 
 ---
 
-## 7. Forbidden Actions
+## 7. Optional Integrations
+
+If Linear MCP is available, post a summarized recap as a comment on the Epic (see section 5).
+If unavailable, write recap to file only. Never fail because an optional MCP is down.
+
+---
+
+## 8. Forbidden Actions
 
 - DO NOT modify source files, agents, or configuration
 - DO NOT modify shared contracts
@@ -172,7 +179,7 @@ This ensures you can reference learnings from the retrospective in your recap.
 
 ---
 
-## 8. Graceful Degradation
+## 9. Graceful Degradation
 
 - If stage notes are missing for a stage: note "Stage {N} notes unavailable" in the recap
 - If state.json is incomplete: report available metrics, note what's missing
@@ -181,7 +188,7 @@ This ensures you can reference learnings from the retrospective in your recap.
 
 ---
 
-## 9. Context Management
+## 10. Context Management
 
 - Return ONLY the recap file path and a 2-3 line summary
 - Keep the recap file itself under 3,000 tokens

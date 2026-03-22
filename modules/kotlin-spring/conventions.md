@@ -79,16 +79,16 @@ core/
 - **API tests:** Custom `@RestIntegrationTest` annotation — WebTestClient + PostgreSQL + Keycloak Testcontainers
 - **Persistence tests:** `@PersistenceIntegrationTest` — SpringBootTest + PostgreSQL Testcontainer
 - **Factories:** `testFixtures` source set — `createUser(...)`, `createChatMessage(...)` etc.
-- **Auth:** Keycloak test realm with `test-coach`/`password` and `test-client`/`password`
+- **Auth:** Test realm with predefined test users (e.g., `test-admin`/`password`, `test-user`/`password`)
 - **Rules:** Test behavior not implementation, no duplicate scenarios, one assertion focus per test
 
 ## Security
 
-- JWT Bearer auth via Keycloak, roles mapped by `RealmRoleJwtAuthenticationConverter`
-- Path rules: `/me/**` -> client role, most paths -> coach role
-- `AuthenticatedUserProvider.currentUserId()` for current user — never trust request body userId
-- Coach endpoints must verify coaching relationship before accessing client data
-- Enterprise endpoints must verify membership
+- **Auth:** JWT/OAuth2 Bearer authentication — configure via Spring Security DSL
+- **Roles:** Path-based role authorization via request matchers (e.g., `/admin/**` requires ADMIN role, `/api/**` requires authenticated)
+- **User context:** Extract authenticated user from `SecurityContext` — never trust user IDs from request body
+- **Resource authorization:** Verify the requesting user has access to the requested resource (ownership check at service layer)
+- **Test auth:** Use test realm with predefined test users (e.g., `test-admin`/`password`, `test-user`/`password`)
 
 ## Data Access
 

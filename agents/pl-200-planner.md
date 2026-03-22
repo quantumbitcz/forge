@@ -226,7 +226,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ### Pattern Reference
 - **Similar existing feature:** [path to a similar implementation to follow as template]
-- **Domain area:** [billing / coaching / communication / tracking / etc.]
+- **Domain area:** [billing / scheduling / inventory / communication / etc.]
 - **Scaffolder patterns used:** [pattern names from config, or "none"]
 
 ### Story 1: [Story title]

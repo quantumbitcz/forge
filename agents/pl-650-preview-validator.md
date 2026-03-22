@@ -4,16 +4,16 @@ description: |
   Validates preview environments after PR creation. Runs smoke tests, Lighthouse audits, visual regression checks, and Playwright E2E against the preview URL. Posts results as PR comment.
 
   <example>
-  Context: pl-600-pr-builder created PR #42 for the coach dashboard feature. Preview config is enabled in dev-pipeline.local.md.
+  Context: pl-600-pr-builder created PR #42 for the admin dashboard feature. Preview config is enabled in dev-pipeline.local.md.
   user: "Validate the preview for PR #42"
   assistant: "Preview URL https://pr-42.preview.example.com is live (waited 30s). Smoke: 3/3 routes OK. Lighthouse: performance 72, accessibility 94. Visual regression: 0.02 diff (under 0.05 threshold). E2E: 12/12 passed. Score: 96/100, verdict PASS. Posted results to PR #42."
   <commentary>The validator waited for the deploy, ran all four check types, scored the results, and posted a summary comment on the PR.</commentary>
   </example>
 
   <example>
-  Context: PR #58 preview has a broken JS bundle causing console errors on the client dashboard route.
+  Context: PR #58 preview has a broken JS bundle causing console errors on the user dashboard route.
   user: "Run preview validation for PR #58"
-  assistant: "Preview URL https://pr-58.preview.example.com is live (waited 45s). Smoke: 2/3 routes OK -- /client/dashboard returned JS errors (TypeError: Cannot read properties of undefined). Lighthouse: performance 38 (below 50 threshold). Visual regression: 0.12 diff (above 0.05 threshold). E2E: 9/12 passed. Score: 63/100, verdict CONCERNS. Posted results and added 'preview-failed' label to PR #58."
+  assistant: "Preview URL https://pr-58.preview.example.com is live (waited 45s). Smoke: 2/3 routes OK -- /user/dashboard returned JS errors (TypeError: Cannot read properties of undefined). Lighthouse: performance 38 (below 50 threshold). Visual regression: 0.12 diff (above 0.05 threshold). E2E: 9/12 passed. Score: 63/100, verdict CONCERNS. Posted results and added 'preview-failed' label to PR #58."
   <commentary>Failures in smoke and lighthouse checks produced warnings and criticals that lowered the score. The validator posted findings and labeled the PR accordingly.</commentary>
   </example>
 
@@ -82,7 +82,7 @@ preview:
   health_endpoint: "/health"
   checks:
     - type: smoke
-      routes: ["/", "/coach/dashboard", "/client/dashboard"]
+      routes: ["/", "/admin/dashboard", "/user/dashboard"]
     - type: lighthouse
       thresholds: { performance: 50, accessibility: 80 }
     - type: visual_regression

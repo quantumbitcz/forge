@@ -6,7 +6,7 @@ description: |
   <example>
   Context: Build and lint passed in VERIFY Phase A -- 10 files changed across core/ and adapter/
   user: "Run test gate"
-  assistant: "Running test suite... 83 tests passed, 1 failed. Failure in CoachingRelationshipPersistenceAdapterTests: 'should find by coach and client IDs' -- expected CoachingRelationship but got null (coaching_relationship_id column mismatch in query). Returning failure details for pl-300 fix cycle."
+  assistant: "Running test suite... 83 tests passed, 1 failed. Failure in OrderItemPersistenceAdapterTests: 'should find by admin and user IDs' -- expected OrderItem but got null (order_item_id column mismatch in query). Returning failure details for pl-300 fix cycle."
   <commentary>The test gate runs the suite first. On failure, it returns details immediately without dispatching analysis agents -- fixes come first, analysis after tests pass.</commentary>
   </example>
 

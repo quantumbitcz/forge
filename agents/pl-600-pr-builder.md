@@ -11,16 +11,16 @@ description: |
   </example>
 
   <example>
-  Context: A bug fix for 404 on client group endpoint has passed verify + review stages
-  user: "Create a PR for the client group fix"
-  assistant: "Creating branch fix/client-group-404, staging 2 commits (fix + test), opening PR with fix: prefix. Quality gate: PASS 98/100."
+  Context: A bug fix for 404 on user group endpoint has passed verify + review stages
+  user: "Create a PR for the user group fix"
+  assistant: "Creating branch fix/user-group-404, staging 2 commits (fix + test), opening PR with fix: prefix. Quality gate: PASS 98/100."
   <commentary>Bug fixes use fix/ branch prefix and fix: commit prefix per Conventional Commits.</commentary>
   </example>
 
   <example>
-  Context: User rejected the PR saying "The coaching relationship should validate bidirectional uniqueness"
-  user: "That's wrong -- coaching relationships need bidirectional uniqueness validation"
-  assistant: "Recording feedback via pl-710-feedback-capture: missing-requirement -- bidirectional uniqueness not validated. Resetting quality/test cycle counters and re-entering IMPLEMENT with this constraint."
+  Context: User rejected the PR saying "The order item should validate quantity limits"
+  user: "That's wrong -- order items need quantity limit validation"
+  assistant: "Recording feedback via pl-710-feedback-capture: missing-requirement -- quantity limits not validated. Resetting quality/test cycle counters and re-entering IMPLEMENT with this constraint."
   <commentary>On rejection, the pr-builder dispatches feedback capture, resets counters, and signals the orchestrator to re-enter implementation.</commentary>
   </example>
 model: inherit
@@ -75,10 +75,10 @@ You receive from the orchestrator:
 Derive the branch prefix from the nature of the work:
 
 - **New feature:** `feat/{slug}` (e.g., `feat/plan-comments`, `feat/US029-daily-check-ins`)
-- **Bug fix:** `fix/{slug}` (e.g., `fix/client-group-404`, `fix/booking-overlap`)
+- **Bug fix:** `fix/{slug}` (e.g., `fix/user-group-404`, `fix/booking-overlap`)
 - **Refactor:** `refactor/{slug}` (e.g., `refactor/extract-booking-validation`)
 
-The slug is a kebab-case summary of the requirement. If a story ID is provided, include it as a prefix in the slug (e.g., `feat/US015-client-dashboard`).
+The slug is a kebab-case summary of the requirement. If a story ID is provided, include it as a prefix in the slug (e.g., `feat/US015-user-dashboard`).
 
 ### 4.2 Create the Branch
 
@@ -169,7 +169,7 @@ Create the PR via `gh pr create` with a structured body that merges quality gate
 gh pr create --title "feat: add plan comment feature" --body "$(cat <<'EOF'
 ## Summary
 - Added PlanComment domain model with sealed interface hierarchy
-- Implemented create/find/delete use cases with coaching relationship authorization
+- Implemented create/find/delete use cases with ownership authorization
 - Added persistence adapter with Flyway migration V14
 - Added API endpoints with integration tests covering CRUD lifecycle
 
@@ -179,7 +179,7 @@ gh pr create --title "feat: add plan comment feature" --body "$(cat <<'EOF'
 
 ## Test Plan
 - [ ] Integration tests pass: all CRUD operations verified
-- [ ] Authorization tested: coach-only access, relationship check
+- [ ] Authorization tested: admin-only access, ownership check
 - [ ] Edge cases: 404 on missing plan, 409 on duplicate comment
 
 ## Pipeline Run

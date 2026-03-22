@@ -18,10 +18,10 @@ description: |
   </example>
 
   <example>
-  Context: Feedback directory has 22 entries, many about coaching relationship validation
+  Context: Feedback directory has 22 entries, many about order item validation
   user: "Run post-pipeline learning"
-  assistant: "Pipeline report written. Feedback directory has 22 entries (exceeds 20 threshold) -- consolidated into summary.md, archived 14 entries already incorporated into CLAUDE.md. Coaching relationship validation appeared 5 times -- proposing CLAUDE.md addition. Domain hotspot: coaching has 4 issues across 3 runs, adding domain-specific PREEMPT."
-  <commentary>The agent handles feedback consolidation, detects the recurring pattern, and tracks the coaching domain as a hotspot.</commentary>
+  assistant: "Pipeline report written. Feedback directory has 22 entries (exceeds 20 threshold) -- consolidated into summary.md, archived 14 entries already incorporated into CLAUDE.md. Order item validation appeared 5 times -- proposing CLAUDE.md addition. Domain hotspot: billing has 4 issues across 3 runs, adding domain-specific PREEMPT."
+  <commentary>The agent handles feedback consolidation, detects the recurring pattern, and tracks the billing domain as a hotspot.</commentary>
   </example>
 model: inherit
 color: magenta
