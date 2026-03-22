@@ -782,7 +782,7 @@ Body: Thin launcher that dispatches `pl-160-migration-planner` with the user's i
 
 - [ ] **Step 7: Fix `/fe-react-doctor` hardcoded path**
 
-Read `skills/fe-react-doctor/SKILL.md`. Replace the hardcoded path `/Users/denissajnar/WebstormProjects/wellplanned-fe` with dynamic detection: use current working directory or read from `dev-pipeline.local.md` config.
+Read `skills/fe-react-doctor/SKILL.md`. Replace any hardcoded project path with dynamic detection: use current working directory or read from `dev-pipeline.local.md` config. (Note: this fix has already been applied.)
 
 - [ ] **Step 8: Validate all skills**
 

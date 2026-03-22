@@ -6,14 +6,14 @@ description: |
   <example>
   Context: pl-600-pr-builder created PR #42 for the coach dashboard feature. Preview config is enabled in dev-pipeline.local.md.
   user: "Validate the preview for PR #42"
-  assistant: "Preview URL https://pr-42.preview.wellplanned.app is live (waited 30s). Smoke: 3/3 routes OK. Lighthouse: performance 72, accessibility 94. Visual regression: 0.02 diff (under 0.05 threshold). E2E: 12/12 passed. Score: 96/100, verdict PASS. Posted results to PR #42."
+  assistant: "Preview URL https://pr-42.preview.example.com is live (waited 30s). Smoke: 3/3 routes OK. Lighthouse: performance 72, accessibility 94. Visual regression: 0.02 diff (under 0.05 threshold). E2E: 12/12 passed. Score: 96/100, verdict PASS. Posted results to PR #42."
   <commentary>The validator waited for the deploy, ran all four check types, scored the results, and posted a summary comment on the PR.</commentary>
   </example>
 
   <example>
   Context: PR #58 preview has a broken JS bundle causing console errors on the client dashboard route.
   user: "Run preview validation for PR #58"
-  assistant: "Preview URL https://pr-58.preview.wellplanned.app is live (waited 45s). Smoke: 2/3 routes OK -- /client/dashboard returned JS errors (TypeError: Cannot read properties of undefined). Lighthouse: performance 38 (below 50 threshold). Visual regression: 0.12 diff (above 0.05 threshold). E2E: 9/12 passed. Score: 63/100, verdict CONCERNS. Posted results and added 'preview-failed' label to PR #58."
+  assistant: "Preview URL https://pr-58.preview.example.com is live (waited 45s). Smoke: 2/3 routes OK -- /client/dashboard returned JS errors (TypeError: Cannot read properties of undefined). Lighthouse: performance 38 (below 50 threshold). Visual regression: 0.12 diff (above 0.05 threshold). E2E: 9/12 passed. Score: 63/100, verdict CONCERNS. Posted results and added 'preview-failed' label to PR #58."
   <commentary>Failures in smoke and lighthouse checks produced warnings and criticals that lowered the score. The validator posted findings and labeled the PR accordingly.</commentary>
   </example>
 
@@ -75,7 +75,7 @@ You receive from the orchestrator (or pl-600-pr-builder):
 ```yaml
 preview:
   enabled: true
-  url_pattern: "https://pr-{pr_number}.preview.wellplanned.app"
+  url_pattern: "https://pr-{pr_number}.preview.example.com"  # Replace with your project's preview URL pattern
   wait_for_deploy:
     timeout: 180
     poll_interval: 10
@@ -86,7 +86,7 @@ preview:
     - type: lighthouse
       thresholds: { performance: 50, accessibility: 80 }
     - type: visual_regression
-      baseline_url: "https://staging.wellplanned.app"
+      baseline_url: "https://staging.example.com"  # Replace with your project's staging URL
       threshold: 0.05
     - type: playwright
       test_command: "bun run test:e2e"
@@ -112,7 +112,7 @@ Construct the preview URL by replacing `{pr_number}` in `url_pattern`.
 Poll the health endpoint until it returns HTTP 200 or the timeout is reached:
 
 ```bash
-PREVIEW_URL="https://pr-${PR_NUMBER}.preview.wellplanned.app"
+PREVIEW_URL="https://pr-${PR_NUMBER}.preview.example.com"  # Constructed from url_pattern
 HEALTH_URL="${PREVIEW_URL}/health"
 TIMEOUT=180
 INTERVAL=10
@@ -288,7 +288,7 @@ Update `state.json` with the validation results:
 ```json
 {
   "preview_validation": {
-    "preview_url": "https://pr-42.preview.wellplanned.app",
+    "preview_url": "https://pr-42.preview.example.com",
     "deploy_wait_seconds": 30,
     "checks_run": ["smoke", "lighthouse", "visual_regression", "playwright"],
     "checks_skipped": [],

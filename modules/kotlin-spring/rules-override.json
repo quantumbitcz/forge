@@ -52,7 +52,7 @@
       "name": "Core must not import adapters",
       "scope_pattern": "core/src/main",
       "forbidden_imports": [
-        "cz\\.quantumbit\\.wellplanned\\.adapter\\."
+        "\\.adapter\\."
       ],
       "severity": "CRITICAL",
       "category": "ARCH-BOUNDARY"

@@ -113,22 +113,22 @@ Group files by logical unit and create separate commits:
 
 ```bash
 # Domain model + ports
-git add wellplanned-core/src/main/kotlin/.../domain/plan/PlanComment.kt
-git add wellplanned-core/src/main/kotlin/.../input/usecase/plan/ICreatePlanCommentUseCase.kt
-git add wellplanned-core/src/main/kotlin/.../output/port/plan/ICreatePlanCommentPort.kt
+git add core/src/main/kotlin/.../domain/plan/PlanComment.kt
+git add core/src/main/kotlin/.../input/usecase/plan/ICreatePlanCommentUseCase.kt
+git add core/src/main/kotlin/.../output/port/plan/ICreatePlanCommentPort.kt
 git commit -m "feat(plan): add PlanComment domain model and ports"
 
 # Use case implementation
-git add wellplanned-core/src/main/kotlin/.../impl/plan/ICreatePlanCommentUseCaseImpl.kt
+git add core/src/main/kotlin/.../impl/plan/ICreatePlanCommentUseCaseImpl.kt
 git commit -m "feat(plan): implement create plan comment use case"
 
 # Persistence adapter + migration
-git add wellplanned-adapter/output/postgresql/...
+git add adapter/output/postgresql/...
 git commit -m "feat(plan): add plan comment persistence adapter and migration"
 
 # API controller + mapper + tests
-git add wellplanned-adapter/input/api/.../controller/PlanCommentsController.kt
-git add wellplanned-app/src/test/kotlin/...
+git add adapter/input/api/.../controller/PlanCommentsController.kt
+git add app/src/test/kotlin/...
 git commit -m "feat(plan): add plan comment API endpoint with integration tests"
 ```
 

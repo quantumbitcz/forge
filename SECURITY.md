@@ -7,7 +7,7 @@ If you discover a security vulnerability in this plugin or its agents, please re
 **Do not open a public GitHub issue for security vulnerabilities.**
 
 Instead, contact the team directly:
-- Email: security@wellplanned.app
+- Email: security@quantumbit.cz
 - Or use GitHub's private vulnerability reporting (Settings > Security > Advisories > New draft advisory)
 
 We will acknowledge receipt within 48 hours and provide an initial assessment within 5 business days.

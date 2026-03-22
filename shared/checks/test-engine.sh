@@ -42,7 +42,7 @@ mkdir -p "$TMPDIR/build/generated-sources"
 # Test 1: Kotlin file with antipatterns
 echo "--- Test 1: Kotlin antipatterns ---"
 cat > "$TMPDIR/src/main/kotlin/core/domain/Bad.kt" << 'EOF'
-package cz.quantumbit.wellplanned.core.domain
+package com.example.core.domain
 
 import java.util.UUID
 import org.springframework.data.annotation.Id
