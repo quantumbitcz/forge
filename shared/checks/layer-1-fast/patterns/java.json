@@ -117,5 +117,7 @@
     }
   },
   "boundaries": [],
-  "deprecations": {}
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/java.json"
+  }
 }

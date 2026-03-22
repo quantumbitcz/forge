@@ -41,7 +41,7 @@
     }
   ],
   "additional_boundaries": [],
-  "disabled_rules": [],
+  "disabled_rules": ["FE-CONV-001"],
   "severity_overrides": {},
   "threshold_overrides": {
     "file_size": {

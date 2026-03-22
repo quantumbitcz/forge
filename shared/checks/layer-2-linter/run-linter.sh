@@ -24,12 +24,12 @@ ADAPTER_DIR="$SCRIPT_DIR/adapters"
 declare -A PRIMARY FALLBACK
 PRIMARY=(
   [kotlin]=detekt      [java]=checkstyle   [typescript]=eslint
-  [python]=ruff        [go]=staticcheck    [rust]=clippy
+  [python]=ruff        [go]=go-vet         [rust]=clippy
   [c]=clang-tidy       [swift]=swiftlint
 )
 FALLBACK=(
   [kotlin]=ktlint      [java]=spotbugs     [typescript]=biome
-  [python]=pylint      [go]="go"           [c]=cppcheck
+  [python]=pylint      [c]=cppcheck
 )
 
 # Resolve the linter binary name for command -v checks

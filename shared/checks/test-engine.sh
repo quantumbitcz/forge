@@ -109,10 +109,13 @@ OUTPUT=$(TOOL_INPUT='{"file_path": "/tmp/does-not-exist.kt"}' \
   bash "$PLUGIN_ROOT/shared/checks/engine.sh" --hook 2>/dev/null || true)
 assert_silent "Nonexistent file skipped" "$OUTPUT"
 
-# Test 6: Verify mode stub
-echo "--- Test 6: Verify mode stub ---"
-OUTPUT=$(bash "$PLUGIN_ROOT/shared/checks/engine.sh" --verify --project-root "$TMPDIR" 2>&1 || true)
-assert_output "Verify mode responds" "Layer 2" "$OUTPUT"
+# Test 6: Verify mode with a file
+echo "--- Test 6: Verify mode with file ---"
+OUTPUT=$(CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
+  bash "$PLUGIN_ROOT/shared/checks/engine.sh" --verify \
+  --project-root "$TMPDIR" \
+  --files-changed "$TMPDIR/src/main/kotlin/core/domain/Bad.kt" 2>/dev/null || true)
+assert_output "Verify mode finds antipatterns" "QUAL-NULL" "$OUTPUT"
 
 # Summary
 echo ""

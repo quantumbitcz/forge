@@ -9,7 +9,13 @@ FILE="${1:?Usage: run-patterns.sh <file> <rules.json> [override.json]}"
 RULES_JSON="${2:?Usage: run-patterns.sh <file> <rules.json> [override.json]}"
 OVERRIDE_JSON="${3:-}"
 
-BASENAME="$(basename "$FILE")"
+# Compute project-relative path (preferred) or fall back to basename
+PROJECT_ROOT="$(git -C "$(dirname "$FILE")" rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -n "$PROJECT_ROOT" ]]; then
+  DISPLAY_PATH="${FILE#"$PROJECT_ROOT/"}"
+else
+  DISPLAY_PATH="$(basename "$FILE")"
+fi
 
 # --- Build merged config (single python3 call) ---
 # Produces section-delimited JSON: RULES, THRESHOLDS, BOUNDARIES.
@@ -46,6 +52,10 @@ if override_path:
     # Merge threshold overrides
     for tkey, tval in ov.get('threshold_overrides', {}).items():
         if tkey in thresholds and isinstance(tval, dict):
+            # Handle default_override: replaces the base default
+            if 'default_override' in tval:
+                thresholds[tkey]['default'] = tval['default_override']
+                tval = {k: v for k, v in tval.items() if k != 'default_override'}
             if 'overrides' not in thresholds[tkey]:
                 thresholds[tkey]['overrides'] = {}
             thresholds[tkey]['overrides'].update(tval)
@@ -104,7 +114,7 @@ emit() {
   local line="$1" category="$2" severity="$3" message="$4" fix_hint="$5"
   message="${message//|/\\|}"
   fix_hint="${fix_hint//|/\\|}"
-  echo "${BASENAME}:${line} | ${category} | ${severity} | ${message} | ${fix_hint}"
+  echo "${DISPLAY_PATH}:${line} | ${category} | ${severity} | ${message} | ${fix_hint}"
 }
 
 # --- Main ---
@@ -134,16 +144,22 @@ for r in rules:
         r['message'],
         r.get('fix_hint', ''),
         r.get('scope', r.get('scope_pattern', 'all')),
-        str(r.get('case_insensitive', False))
+        str(r.get('case_insensitive', False)),
+        r.get('scope_exclude', '')
     ]
     print(SEP.join(fields))
 ")"
 
-  while IFS="$SEP" read -r id pattern exclude_pattern severity category message fix_hint scope case_insensitive; do
+  while IFS="$SEP" read -r id pattern exclude_pattern severity category message fix_hint scope case_insensitive scope_exclude; do
     [[ -z "$id" ]] && continue
 
     # Check scope
     if ! in_scope "$scope" "$FILE"; then
+      continue
+    fi
+
+    # Check scope_exclude — skip if file matches exclusion pattern
+    if [[ -n "$scope_exclude" ]] && echo "$FILE" | grep -qE "$scope_exclude"; then
       continue
     fi
 
@@ -205,8 +221,11 @@ for key, val in overrides.items():
     file_size_threshold="$override_threshold"
   fi
 
-  # Awk pass: line count + function size tracking for Kotlin
-  awk -v basename="$BASENAME" \
+  # Awk pass: line count + function size tracking
+  # NOTE: Function boundary detection is currently Kotlin-only (matches `fun ` declarations).
+  # Other languages need their own patterns (def for Python, func for Go, fn for Rust, etc.).
+  # File size checking works for all languages. This is a known Phase 1 limitation.
+  awk -v display_path="$DISPLAY_PATH" \
       -v file_thresh="$file_size_threshold" \
       -v func_thresh="$func_size_default" '
   BEGIN { func_start=0; func_name="" }
@@ -215,7 +234,7 @@ for key, val in overrides.items():
     if (func_start > 0) {
       func_len = NR - func_start
       if (func_len > func_thresh) {
-        printf "%s:%d | QUAL-READ | WARNING | Function %s is %d lines (threshold: %d) | Break into smaller functions with single responsibility.\n", basename, func_start, func_name, func_len, func_thresh
+        printf "%s:%d | QUAL-READ | WARNING | Function %s is %d lines (threshold: %d) | Break into smaller functions with single responsibility.\n", display_path, func_start, func_name, func_len, func_thresh
       }
     }
     func_start = NR
@@ -230,12 +249,12 @@ for key, val in overrides.items():
     if (func_start > 0) {
       func_len = NR - func_start
       if (func_len > func_thresh) {
-        printf "%s:%d | QUAL-READ | WARNING | Function %s is %d lines (threshold: %d) | Break into smaller functions with single responsibility.\n", basename, func_start, func_name, func_len, func_thresh
+        printf "%s:%d | QUAL-READ | WARNING | Function %s is %d lines (threshold: %d) | Break into smaller functions with single responsibility.\n", display_path, func_start, func_name, func_len, func_thresh
       }
     }
     # File size check
     if (NR > file_thresh) {
-      printf "%s:0 | QUAL-READ | WARNING | File is %d lines (threshold: %d) | Split into smaller, focused files.\n", basename, NR, file_thresh
+      printf "%s:0 | QUAL-READ | WARNING | File is %d lines (threshold: %d) | Split into smaller, focused files.\n", display_path, NR, file_thresh
     }
   }
   ' "$FILE"
