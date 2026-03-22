@@ -48,6 +48,7 @@ Parse `$ARGUMENTS` for optional flags before the requirement text:
 | Flag | Example | Effect |
 |------|---------|--------|
 | `--from=<stage>` | `--from=verify Implement plan comments` | Skip to the specified stage |
+| `--dry-run` | `--dry-run Implement plan comments` | Run PREFLIGHT through VALIDATE, then stop with a dry-run report |
 
 **Valid `--from` values:** `preflight` (0), `explore` (1), `plan` (2), `validate` (3), `implement` (4), `verify` (5), `review` (6), `docs` (7), `ship` (8), `learn` (9)
 
@@ -57,6 +58,50 @@ When `--from` is specified:
 3. Begin execution at the specified stage
 4. If resuming from `verify` or later, assume implementation is already done -- use the current working tree state
 5. If resuming from `implement`, re-read the plan from previous stage notes or ask user to provide it
+
+### 2.2 --dry-run Mode
+
+If `--dry-run` is passed (can combine with `--from`):
+
+1. Run PREFLIGHT normally (config validation, MCP detection, state init)
+2. Run EXPLORE normally (codebase analysis)
+3. Run PLAN normally (create stories, tasks, parallel groups)
+4. Run VALIDATE normally (check plan quality)
+5. **STOP after VALIDATE.** Do not enter IMPLEMENT.
+
+Output a dry-run summary:
+
+    ## Dry Run Report
+
+    **Requirement:** {requirement}
+    **Module:** {module} ({framework})
+    **Risk Level:** {risk_level}
+    **Validation:** {GO/REVISE/NO-GO}
+
+    ### Plan Summary
+    - Stories: {count}
+    - Tasks: {count} across {group_count} parallel groups
+    - Estimated files: {count} creates, {count} modifies
+
+    ### Quality Gate Configuration
+    - Batch 1: {agent_list}
+    - Batch 2: {agent_list}
+    - Inline checks: {list}
+
+    ### Integrations Available
+    {MCP detection results from PREFLIGHT}
+
+    ### PREEMPT Items Matched
+    {list of PREEMPT items that would apply}
+
+    To execute: /pipeline-run {same arguments without --dry-run}
+
+Key rules:
+- `--dry-run` creates NO files outside `.pipeline/` (stage notes still written for debugging)
+- `--dry-run` creates NO Linear tickets
+- `--dry-run` creates NO git branches or worktrees
+- `--dry-run` is compatible with `--from` (e.g., `--dry-run --from=plan` skips EXPLORE)
+- State.json is written with `"dry_run": true` flag
 
 ---
 
@@ -146,6 +191,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 ```json
 {
   "version": "1.1",
+  "dry_run": false,
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
   "requirement": "<original requirement verbatim>",
@@ -337,6 +383,8 @@ Mark Validate as completed.
 ## 7. Stage 4: IMPLEMENT (dispatch pl-310-scaffolder + pl-300-implementer)
 
 **story_state:** `IMPLEMENTING`
+
+If `dry_run` is true in state.json, skip this stage and all subsequent stages. The pipeline already output the dry-run report after VALIDATE.
 
 ### 7.1 Git Checkpoint
 
