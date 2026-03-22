@@ -115,6 +115,15 @@ Agents with a `condition` field are only dispatched when the condition is met. E
 
 If no agents in a batch qualify after condition evaluation, skip the batch entirely.
 
+### Empty Batch Handling
+
+If all agents in a batch are conditional and none qualify (conditions not met), skip the batch and log: "Batch {N} skipped — no agents qualified."
+
+If ALL batches are skipped (no agents qualified across entire quality gate):
+- Return verdict PASS with score 100
+- Add WARNING in report: "No review agents qualified for any batch. Full coverage gap — manual review recommended."
+- This can happen if all agents have conditions and the change only affects files that don't match any condition pattern.
+
 ---
 
 ## 5. Inline Checks
@@ -180,6 +189,26 @@ The fix-and-rescore cycle continues until one of these conditions is met:
 2. **Score < 100 but all remaining findings are unfixable**: False positives, intentional trade-offs, or issues requiring architectural changes beyond the task scope. Proceed with a note in stage notes explaining what was left and why.
 3. **Max cycles reached**: `quality_gate.max_review_cycles` from config (fallback: 2). Proceed with current score. Remaining issues logged for retrospective.
 
+### Unfixable Finding Documentation
+
+When a finding survives all fix cycles, document it in the quality gate report AND post to Linear (if available) with this structure:
+
+#### Unfixed Finding: {CATEGORY-CODE}
+
+**What:** {description of the issue with file:line reference}
+**Why it wasn't fixed:** {specific reason — not "couldn't fix it". Examples: "requires changing port interface (out of scope)", "false positive from pattern matcher", "intentional trade-off documented in conventions"}
+**Options:**
+1. {Option A} — {trade-offs, estimated effort}
+2. {Option B} — {trade-offs, estimated effort}
+3. {Accept for now} — {risk assessment at current scale}
+
+**Recommendation:** {which option and why}
+
+For each unfixed finding, determine whether a follow-up Linear ticket should be created:
+- Architectural WARNINGs: YES — create follow-up ticket
+- Style INFOs: NO — document in recap only
+- Performance WARNINGs: YES if in hot path, NO if cold path
+
 ---
 
 ## 9. Fix Cycles
@@ -193,6 +222,17 @@ When fix cycles are needed:
 5. Max cycles: `quality_gate.max_review_cycles` from config
 
 On re-run after fixes, dispatch all batch agents again (not just the ones that found issues). Fixes may introduce new problems that other agents catch.
+
+### Oscillation Detection
+
+Track quality score across fix cycles. If the score DECREASES between consecutive cycles (e.g., cycle 1: 85 → cycle 2: 78):
+
+1. Flag as "quality regression during fix cycle"
+2. Post to Linear (if available): "Fix cycle {N} introduced regression: {score_before} → {score_after}. New findings: {list}"
+3. Escalate to user using the standard escalation format — do not continue fixing if fixes are making things worse
+4. Include in the report: which files were modified in the fix cycle and which new findings appeared
+
+This prevents the scenario where an implementer "fixes" one issue but introduces two new ones, creating an infinite degradation loop.
 
 ---
 
@@ -294,6 +334,12 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 {Any agents that failed, timed out, were skipped (condition not met), or had rate limiting. Impact on coverage.}
 ```
 
+### Findings Cap
+
+If >50 deduplicated findings exist, return only the top 50 by severity in the findings table. Add a note at the bottom: "Showing 50 of {N} total findings. Remaining {N-50} findings are INFO severity or lower."
+
+This prevents the output from exceeding the 2,000 token context budget.
+
 ---
 
 ## 15. Context Management
@@ -303,3 +349,25 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - **Total output under 2,000 tokens** -- the orchestrator has context limits
 - **Do not re-read files between cycles** -- rely on agent results only
 - **Log score history** -- include scores from all cycles for the retrospective to track improvement trends
+
+---
+
+## 16. Linear Tracking
+
+If `integrations.linear.available` is true in state.json:
+- After scoring: comment on Linear Epic with quality score and verdict
+- Per finding: include in the comment (max 2000 chars — summarize if needed)
+- On fix cycle: update the comment with new score
+- On unfixable findings: post detailed documentation per the Unfixable Finding format above
+- If Linear unavailable: skip silently, log to stage notes only
+
+---
+
+## 17. Forbidden Actions
+
+- DO NOT read source files — dispatched agents do the analysis
+- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
+- DO NOT override verdict thresholds — they come from shared/scoring.md
+- DO NOT truncate findings without noting the total count
+- DO NOT skip deduplication under any circumstances
+- DO NOT delete or disable findings without checking if they were intentional (e.g., a finding marked as "accepted" in a previous cycle)
