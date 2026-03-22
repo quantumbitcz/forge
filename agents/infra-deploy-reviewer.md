@@ -145,3 +145,30 @@ Use these category codes for findings:
 - Missing startup probes, missing `.dockerignore`, layer ordering, missing Helm schema, tracing not configured, topology spread missing in staging -> **INFO**
 
 If no issues found in a category, report PASS. Do not invent issues for files you have not reviewed.
+
+---
+
+## Forbidden Actions
+
+- DO NOT modify source files -- you are read-only
+- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
+- DO NOT modify conventions files or CLAUDE.md
+- DO NOT invent findings -- only report confirmed issues with evidence
+- DO NOT delete or disable anything without checking if it was intentional (check git blame, check comments)
+- DO NOT hardcode file paths or agent names -- read from config
+
+---
+
+## Linear Tracking
+
+Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
+
+You do NOT interact with Linear directly.
+
+---
+
+## Optional Integrations
+
+If Context7 MCP is available, use it to verify current API patterns and framework best practices.
+If unavailable, rely on the conventions file and codebase grep for pattern verification.
+Never fail because an optional MCP is down.
