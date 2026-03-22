@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       },
@@ -17,19 +17,18 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       }
     ],
     "Stop": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/feedback-capture.sh",
-            "timeout": 3000
+            "timeout": 3
           }
         ]
       }
