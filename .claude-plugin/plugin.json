@@ -1,16 +1,18 @@
 {
   "name": "dev-pipeline",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Autonomous 10-stage development pipeline with multi-language support, self-healing recovery, and generalized code quality checks",
   "author": {
     "name": "QuantumBit s.r.o.",
     "url": "https://github.com/quantumbitcz"
   },
   "repository": "https://github.com/quantumbitcz/dev-pipeline",
+  "homepage": "https://github.com/quantumbitcz/dev-pipeline",
   "license": "Proprietary",
   "keywords": [
-    "pipeline", "tdd", "code-review", "quality-gate",
+    "pipeline", "tdd", "code-review", "quality-gate", "linear",
     "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c"
   ],
-  "category": "development"
+  "category": "development",
+  "hooks": "hooks/hooks.json"
 }
