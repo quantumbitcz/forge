@@ -103,6 +103,20 @@ Key rules:
 - `--dry-run` is compatible with `--from` (e.g., `--dry-run --from=plan` skips EXPLORE)
 - State.json is written with `"dry_run": true` flag
 
+### Dry-Run State Behavior
+
+Dry-run populates state.json fields normally for stages 0-3:
+- `integrations`: detected normally (MCP probing runs)
+- `preempt_items_applied`: loaded normally (PREEMPT matching runs)
+- `preempt_items_status`: remains `{}` (no implementation to track)
+- `domain_area`, `risk_level`: set by planner at Stage 2
+- `stage_timestamps`: recorded for stages 0-3 only
+- `score_history`: remains `[]` (no review cycles)
+- `linear_sync`: remains `{ "in_sync": true }` (Linear tickets NOT created in dry-run)
+- `total_retries`: tracks validation retries only (0-2)
+- `recovery_budget`: tracks any recovery during stages 0-3
+- `conventions_hash`, `conventions_section_hashes`: computed normally
+
 ---
 
 ## 3. Stage 0: PREFLIGHT (inline)
@@ -200,6 +214,21 @@ If `--from=<stage>` is provided, it **overrides checkpoint recovery**. The orche
 - `--from=0` is equivalent to a fresh start (no checkpoint recovery)
 - Counters (`quality_cycles`, `test_cycles`, `verify_fix_count`) are NOT reset by `--from`. To reset counters, delete `.pipeline/state.json` and start fresh.
 - If `--from` targets a stage that requires artifacts from a skipped stage (e.g., `--from=4` without a plan), fail at entry condition check and report which prerequisite is missing.
+
+### 3.7a Pipeline Lock
+
+Before initializing state, check for a concurrent pipeline run:
+
+1. Check if `.pipeline/.lock` exists
+2. If exists: read the lock file (JSON: `{ "pid": <number>, "session_id": "<uuid>", "started": "<ISO8601>", "requirement": "<text>" }`)
+3. Check if the lock is stale:
+   - If `started` is > 24 hours ago: treat as stale, remove lock, continue
+   - If the PID is no longer running (check with `kill -0 <pid>` or `ps -p <pid>`): treat as stale, remove lock, continue
+4. If lock is active: warn user: "Another pipeline run is active (started {time}, requirement: '{req}'). Running concurrently may corrupt state. Options: (1) Wait for the other run to complete, (2) Force takeover (kills other run's state), (3) Abort."
+5. If no lock or stale lock: create `.pipeline/.lock` with current session info
+6. Clean up: delete `.pipeline/.lock` at LEARN stage completion or on graceful-stop
+
+Do NOT create the lock file during `--dry-run` runs.
 
 ### 3.8 Initialize State
 
@@ -655,6 +684,17 @@ Check if documentation needs updating:
 
 Do NOT create new documentation files (README, design docs) unless the requirement explicitly asks for it.
 
+### Large Change Documentation
+
+If the implementation touched more than 15 files (check `checkpoint-{storyId}.json` total `files_created` + `files_modified`):
+
+1. Verify ALL new public interfaces have KDoc/TSDoc (not just spot-check)
+2. If new API endpoints were added, verify OpenAPI spec is updated (if applicable)
+3. If new migrations exist, verify each has a comment explaining WHY
+4. Log in stage notes: "Large change ({N} files). Documentation verification: {pass/issues_found}."
+
+For standard changes (≤ 15 files), the current inline verification is sufficient.
+
 Write `.pipeline/stage_7_notes_{storyId}.md` with documentation changes made.
 
 Update state: add `docs` timestamp.
@@ -685,6 +725,19 @@ Rules:
 ```
 
 Present PR to user with summary of work, quality score, test results.
+
+### Merge Conflict Handling
+
+Before merging the worktree branch, the PR builder should detect potential conflicts:
+
+1. Determine the base branch (the branch active at worktree creation — typically the branch checked out at PREFLIGHT). Run `git merge-tree $(git merge-base HEAD {base_branch}) HEAD {base_branch}` to detect conflicts before attempting the actual merge
+2. If conflicts detected:
+   - Do NOT merge
+   - Create the PR as-is (branch exists, conflicts visible in PR)
+   - Escalate to user with conflict details:
+     > "Pipeline created PR but merge conflicts detected with base branch. Conflicting files: {list}. Options: (1) Resolve conflicts manually and merge, (2) Rebase worktree branch with `/pipeline-run --from=ship`, (3) Abort — worktree preserved at `.pipeline/worktree`."
+3. If no conflicts: proceed with merge normally
+4. If merge itself fails unexpectedly (after dry-merge passed): preserve worktree, escalate with error details
 
 ### Linear Tracking
 
@@ -1039,6 +1092,17 @@ For multi-module runs, `state.json` tracks per-module progress:
 
 The orchestrator manages transitions: a module's sub-pipeline advances independently, but cross-module dependencies (e.g., frontend depends on backend API) are enforced by the sequential ordering.
 
+### Multi-Module Failure Handling
+
+When a module's sub-pipeline fails (e.g., backend IMPLEMENT fails after max retries):
+
+1. Set the failed module's state to `"FAILED"` in `state.json.modules[]`
+2. **Dependent modules:** do NOT enter IMPLEMENT. Set their state to `"BLOCKED"` with reason: "Blocked by {failed_module} failure"
+3. **Independent modules:** continue their sub-pipeline normally
+4. Escalate to user: "Module {name} failed at {stage}. Dependent modules ({list}) are blocked. Independent modules ({list}) continuing. Options: (1) Fix {name} and resume with `/pipeline-run --from={stage}`, (2) Abort all modules."
+
+Module dependency is determined by config ordering — modules listed earlier are assumed to be depended upon by later modules (backend before frontend).
+
 ---
 
 ## 20. Worktree Policy
@@ -1181,6 +1245,36 @@ MISSING Slack — notifications unavailable
 ```
 
 Pipeline runs without any MCPs. They add capabilities, never requirements.
+
+### MCP Mid-Run Health
+
+MCP availability can change during a run. Before dispatching any agent that depends on an MCP:
+
+1. Check `recovery.degraded_capabilities[]` — if the MCP is already degraded, skip without re-checking
+2. If not degraded: the dispatch itself serves as a health check — if the MCP call fails, the agent handles it inline (per `error-taxonomy.md` MCP_UNAVAILABLE handling)
+3. On first MCP failure during the run: update `integrations.{name}.available: false` and add to `recovery.degraded_capabilities[]`
+4. Subsequent dispatches skip that MCP without attempting (no cumulative timeout delays)
+
+This is lightweight — no explicit health-check ping. The first failure detection and graceful degradation is sufficient for optional MCPs.
+
+### Linear Operation Resilience
+
+All Linear MCP operations should follow this pattern:
+
+1. **Attempt** the Linear operation (create epic, update status, post comment)
+2. **On success:** continue normally
+3. **On failure:**
+   a. Retry once after 3-second delay
+   b. If retry fails: log to `state.json.linear_sync.failed_operations[]` with `{ "op": "<operation>", "error": "<message>", "timestamp": "<now>" }`
+   c. Set `state.json.linear_sync.in_sync: false`
+   d. **Continue pipeline** — Linear failures never block the development workflow
+   e. Log WARNING in stage notes: "Linear operation failed: {op}. Pipeline continues without ticket sync."
+4. **At LEARN stage:** if `linear_sync.in_sync: false`, the retrospective reports: "Linear sync issues: {count} failed operations. Consider running manual sync."
+
+Linear availability can change mid-run. If the first Linear failure occurs after PREFLIGHT:
+- Update `integrations.linear.available: false` in state.json
+- Skip all subsequent Linear operations for the rest of the run (don't retry each one)
+- This prevents accumulating timeout delays from a down Linear server
 
 ---
 

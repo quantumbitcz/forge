@@ -20,7 +20,12 @@ Clear the pipeline run state so you can start fresh.
 3. If not confirmed:
    - "Reset cancelled. Pipeline state preserved."
 
+## What gets deleted
+
+Deletes: state.json, checkpoint-*.json, stage_*_notes_*.md, stage_final_notes_*.md, .lock, .check-engine-skipped, reports/, feedback/ (but NOT pipeline-log.md, pipeline-config.md, or dev-pipeline.local.md — these survive resets)
+
 ## Important
 - NEVER delete `.claude/pipeline-log.md` — this contains accumulated learnings across all runs
 - NEVER delete `.claude/dev-pipeline.local.md` — this is the project configuration
+- NEVER delete `.claude/pipeline-config.md` — this contains auto-tuned runtime parameters
 - ONLY delete `.pipeline/` which contains ephemeral run state

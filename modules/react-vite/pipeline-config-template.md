@@ -11,6 +11,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | max_review_loops | 2 | Max REVIEW iterations before escalating to user |
 | auto_proceed_risk | MEDIUM | Highest risk level at which pipeline proceeds without asking (LOW, MEDIUM, HIGH, ALL) |
 | parallel_impl_threshold | 3 | Dispatch parallel sub-agents when >= N independent implementation steps |
+| total_retries_max | 10 | Global retry budget across all loops (5-30) |
 
 ## Review Agents
 
@@ -58,3 +59,4 @@ Applied by the retrospective agent when updating this config:
 #   info_weight: 2
 #   pass_threshold: 80
 #   concerns_threshold: 60
+#   oscillation_tolerance: 5  # Score regression tolerance for quality cycles (0-20)

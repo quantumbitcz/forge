@@ -370,11 +370,29 @@ Also read `state.json.score_history` and report score progression trend.
 After each run, evaluate PREEMPT items in pipeline-log.md:
 
 - Items that were matched AND applied in this run: increment `hit_count`, update `last_hit` date, reset `runs_since_last_hit` to 0
-- Items NOT matched (domain didn't match this run): increment `runs_since_last_hit`
+- Items NOT matched (domain didn't match this run): do NOT increment `runs_since_last_hit` (items are only evaluated when their domain is active — see Confidence Decay Formula below)
 - Items not hit in 10 consecutive runs where their domain WAS active:
   - HIGH → MEDIUM
   - MEDIUM → LOW
   - LOW → ARCHIVED
+
+### Confidence Decay Formula
+
+For each PREEMPT item in `pipeline-log.md`, after updating hit counts:
+
+1. **Domain match check:** Compare `item.domain` with `state.json.domain_area`
+   - If domains match AND item was applied: reset `runs_since_last_hit` to 0
+   - If domains match AND item was NOT applied (loaded but not used): increment `runs_since_last_hit` by 1
+   - If domains don't match: do NOT increment (item is only evaluated when its domain is active)
+
+2. **False positive acceleration:** Each false positive recorded in `preempt_items_status` adds 3 to `runs_since_last_hit` (accelerated decay)
+
+3. **Demotion thresholds:**
+   - `runs_since_last_hit >= 10`: demote confidence (HIGH → MEDIUM → LOW → ARCHIVED)
+   - Reset `runs_since_last_hit` to 0 after each demotion
+   - ARCHIVED items are NOT loaded at PREFLIGHT in future runs
+
+4. **Promotion check:** If `hit_count >= 4` and `false_positives == 0` and confidence is not already HIGH: promote to HIGH. If an item has been HIGH for 5+ consecutive successful applications, flag for permanent rule consideration.
 
 ### Archival
 

@@ -67,6 +67,18 @@ A `.pipeline/checkpoint-*.json` file contains invalid JSON.
    - Stage notes to see what was planned vs completed.
    - Filesystem: check if planned output files exist.
 
+### 1.3a Checkpoint Corruption Recovery
+
+When checkpoint JSON is unreadable (partial write, truncated, corrupted):
+
+1. **Try JSON repair:** Trim to last complete `}` bracket, attempt re-parse
+2. **Try fallback checkpoints:** If multiple `checkpoint-*.json` files exist, use the most recent valid one
+3. **Parse stage notes:** If no valid checkpoint exists, reconstruct `tasks_completed[]` from `stage_4_notes_{storyId}.md` by scanning for "Task completed" or "T00N: pass/fail" entries
+4. **Git-based reconstruction:** `git log --oneline` in the worktree to find pipeline commits per task
+5. **Last resort:** If all reconstruction fails, treat ALL tasks as remaining. The pipeline will re-run completed tasks (idempotent if code already exists) rather than skip them incorrectly.
+
+For counter reconstruction when checkpoint is lost, use the **evidence-based approach** (see counter reconstruction above). If evidence is ambiguous, prefer the lower estimate to allow legitimate retries rather than blocking them.
+
 ### 1.4 Git Drift
 
 The filesystem state has diverged from what `state.json` or the checkpoint expects (e.g., user manually edited files, or a different tool made changes).

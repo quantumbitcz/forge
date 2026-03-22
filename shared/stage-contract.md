@@ -340,7 +340,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - Pull request (URL)
 - `stage_8_notes_{storyId}.md` -- PR details
 
-**Exit condition:** PR created and presented to user. Worktree branch merged back to base branch and cleaned up (or preserved on failure).
+**Exit condition:** PR created; worktree merged if no conflicts, or PR created with conflict flag if base branch diverged. Worktree cleaned up on successful merge (or preserved on failure/conflict).
 
 **On user approval:** Proceed to Stage 9 (LEARN).
 

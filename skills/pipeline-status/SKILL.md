@@ -20,7 +20,11 @@ Show the current state of the development pipeline for this project.
    - **Fix cycles:** `verify_fix_count`, `quality_cycles`, `test_cycles`
    - **Stage timestamps:** which stages have completed and when
    - **Linear tracking:** Epic ID and status (if `linear.epic_id` is set)
+   - **Linear sync:** `linear_sync.in_sync` (true/false, note failed operations if not in sync)
    - **Integrations:** which MCPs were detected as available
+   - **Total retries:** `total_retries` / `total_retries_max` (global retry budget usage)
+   - **Score history:** `score_history` (quality oscillation trend, e.g., `[85, 78, 92]`)
+   - **Recovery budget:** `recovery_budget.total_weight` / `recovery_budget.max_weight` (recovery budget usage)
 
 3. Check for recent stage notes:
    - Read the latest `.pipeline/stage_*_notes_*.md` file

@@ -84,6 +84,20 @@ For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 
 See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work. Cap dedup hints at top 20 findings by severity. If > 20 findings from previous batches, include top 20 with note: "({N-20} additional findings omitted)."
 
+#### Timeout Awareness in Dedup Hints
+
+When dispatching batch 2+ agents, include timeout information alongside dedup hints:
+
+    Previous batch findings ({N} total, showing top 20 for dedup):
+    [findings list]
+
+    Agents that timed out in previous batches (their domains were NOT reviewed):
+    - {agent_name}: {focus_area}
+
+    If your review scope overlaps with a timed-out agent's domain, prioritize checking that area — it has zero coverage from previous batches.
+
+This ensures subsequent batch agents are aware of coverage gaps and can partially compensate.
+
 ### 4.3 Agent Dispatch Prompt
 
 Each dispatched agent receives a prompt containing:
