@@ -1,0 +1,4 @@
+src/main/kotlin/domain/User.kt:15:5: A swallowed exception may hide bugs [SwallowedException]
+src/main/kotlin/domain/User.kt:23:1: The function is too long (45 lines) [complexity.TooLongFunction]
+src/main/kotlin/domain/User.kt:50:10: This style issue should be noted [style.MagicNumber]
+src/main/kotlin/domain/User.kt:8:3: Unknown rule [SomeNewRule]

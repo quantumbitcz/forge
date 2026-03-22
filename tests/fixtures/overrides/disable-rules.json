@@ -1,0 +1,7 @@
+{
+  "additional_rules": [],
+  "disabled_rules": ["KT-NULL-001"],
+  "severity_overrides": {
+    "KT-BLOCK-001": "CRITICAL"
+  }
+}

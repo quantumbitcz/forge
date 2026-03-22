@@ -1,0 +1,11 @@
+[
+  {
+    "filePath": "src/components/App.tsx",
+    "messages": [
+      {"ruleId": "react-hooks/exhaustive-deps", "severity": 1, "message": "Missing dependency", "line": 25},
+      {"ruleId": "@typescript-eslint/no-explicit-any", "severity": 1, "message": "Unexpected any", "line": 30},
+      {"ruleId": "some-unknown-rule", "severity": 1, "message": "Unknown", "line": 40},
+      {"ruleId": null, "severity": 2, "message": "Parsing error: unexpected token", "line": 1}
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "additional_rules": [
+    {
+      "id": "CUSTOM-001",
+      "pattern": "TODO",
+      "severity": "INFO",
+      "category": "CONV-TODO",
+      "message": "TODO found",
+      "fix_hint": "Resolve before merging",
+      "scope": "all"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {}
+}
