@@ -10,6 +10,7 @@
       "removed_in": null,
       "replacement": "Use the shape prop on Pie, Bar, etc. instead of Cell children",
       "source": "https://recharts.org/en-US/guide/migration-to-3.x",
+      "migrated_from": "react-vite module",
       "severity": "WARNING"
     },
     {
@@ -20,6 +21,7 @@
       "removed_in": null,
       "replacement": "Use components prop: components={{ Chevron: CustomChevron }}",
       "source": "https://daypicker.dev/upgrading",
+      "migrated_from": "react-vite module",
       "severity": "WARNING"
     },
     {
