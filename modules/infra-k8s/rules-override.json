@@ -1,0 +1,83 @@
+{
+  "extends": "yaml",
+  "description": "Infrastructure-specific rule overrides for Helm charts, K8s manifests, and Dockerfiles.",
+  "additional_rules": [
+    {
+      "id": "IK-SEC-001",
+      "name": "hardcoded-secrets-in-values",
+      "pattern": "(password|secret|token|api[_-]?key):\\s*[^{\\s]\\S+",
+      "exclude_pattern": "^\\s*#|CHANGE_ME|REPLACE_ME|\\{\\{",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Hardcoded secret detected in values.yaml — secrets must never be stored in Helm values.",
+      "fix_hint": "Use ExternalSecret, SealedSecret, or reference a K8s Secret via secretKeyRef. Never commit plaintext credentials.",
+      "scope": "values.yaml"
+    },
+    {
+      "id": "IK-SEC-002",
+      "name": "privileged-container",
+      "pattern": "privileged:\\s*true",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-PRIV",
+      "message": "Privileged container detected — this grants full host access and breaks container isolation.",
+      "fix_hint": "Remove privileged: true. Add only the specific capabilities needed via securityContext.capabilities.add.",
+      "scope": "all"
+    },
+    {
+      "id": "IK-SEC-003",
+      "name": "missing-user-instruction",
+      "pattern": null,
+      "structural_check": "dockerfile_no_user",
+      "severity": "WARNING",
+      "category": "SEC-ROOT",
+      "message": "Dockerfile has no USER instruction — container will run as root by default.",
+      "fix_hint": "Add a non-root user (adduser/addgroup) and a USER instruction before CMD/ENTRYPOINT.",
+      "scope": "Dockerfile"
+    },
+    {
+      "id": "IK-TAG-001",
+      "name": "latest-tag-in-image",
+      "pattern": "image:.*:latest",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "INFRA-TAG",
+      "message": "Image uses :latest tag — defeats reproducibility and safe rollback.",
+      "fix_hint": "Pin to a specific version (semver or git SHA). Example: image: nginx:1.25.4",
+      "scope": "all"
+    },
+    {
+      "id": "IK-HEALTH-001",
+      "name": "missing-health-probes",
+      "pattern": null,
+      "structural_check": "k8s_no_probes",
+      "severity": "WARNING",
+      "category": "INFRA-HEALTH",
+      "message": "Deployment has no liveness or readiness probes — K8s cannot detect unhealthy pods.",
+      "fix_hint": "Add livenessProbe and readinessProbe to every container spec. Use /healthz for liveness and /readyz for readiness.",
+      "scope": "deployment.yaml"
+    },
+    {
+      "id": "IK-RES-001",
+      "name": "missing-resource-limits",
+      "pattern": null,
+      "structural_check": "k8s_no_resource_limits",
+      "severity": "WARNING",
+      "category": "INFRA-RES",
+      "message": "Container has no resource limits — risks noisy-neighbor issues and node instability.",
+      "fix_hint": "Add resources.requests and resources.limits for both cpu and memory to every container.",
+      "scope": "deployment.yaml"
+    },
+    {
+      "id": "IK-NET-001",
+      "name": "no-network-policies",
+      "pattern": null,
+      "structural_check": "chart_no_networkpolicy",
+      "severity": "INFO",
+      "category": "INFRA-NET",
+      "message": "No NetworkPolicy found in chart — all pod-to-pod traffic is allowed by default.",
+      "fix_hint": "Add a default-deny NetworkPolicy and whitelist required ingress/egress paths.",
+      "scope": "chart"
+    }
+  ]
+}
