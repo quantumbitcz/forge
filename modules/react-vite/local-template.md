@@ -30,6 +30,10 @@ quality_gate:
   max_review_cycles: 2
   batch_1:
     - agent: frontend-reviewer
+    - agent: security-reviewer
+      focus: "XSS, injection, secrets exposure, prototype pollution"
+    - agent: frontend-performance-reviewer
+      focus: "re-renders, bundle size, code splitting, asset optimization"
       focus: "project conventions + security"
     - agent: "Code Reviewer"
       source: builtin

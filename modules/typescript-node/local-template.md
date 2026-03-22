@@ -35,6 +35,8 @@ quality_gate:
     - agent: architecture-reviewer
       focus: "architecture pattern violations, dependency direction"
     - agent: security-reviewer
+    - agent: backend-performance-reviewer
+      focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
       focus: "auth, injection, input sanitization, data exposure"
   batch_2:
     - agent: "Code Reviewer"

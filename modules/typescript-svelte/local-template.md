@@ -36,6 +36,8 @@ quality_gate:
   max_review_cycles: 2
   batch_1:
     - agent: frontend-reviewer
+    - agent: frontend-performance-reviewer
+      focus: "re-renders, bundle size, code splitting, asset optimization"
       focus: "Svelte 5 rune usage, component patterns, reactivity"
     - agent: security-reviewer
       focus: "server-side auth, input validation, data exposure"

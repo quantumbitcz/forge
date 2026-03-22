@@ -34,6 +34,8 @@ quality_gate:
     - agent: architecture-reviewer
       focus: "handler/service/repository layering, interface boundaries"
     - agent: security-reviewer
+    - agent: backend-performance-reviewer
+      focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
       focus: "auth, injection, error leaking, input validation"
   batch_2:
     - agent: "Code Reviewer"

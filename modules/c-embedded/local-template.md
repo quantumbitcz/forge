@@ -28,6 +28,10 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: security-reviewer
+      focus: "buffer overflows, format strings, integer overflows, use-after-free"
+    - agent: backend-performance-reviewer
+      focus: "ISR allocation, cache-friendly access, busy-wait loops, volatile usage"
     - agent: "Code Reviewer"
       source: builtin
       focus: "general correctness, memory safety, const correctness"

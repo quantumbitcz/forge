@@ -30,6 +30,12 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: architecture-reviewer
+      focus: "repository pattern adherence, layer boundaries"
+    - agent: security-reviewer
+      focus: "auth, input validation, secrets exposure"
+    - agent: backend-performance-reviewer
+      focus: "EventLoop blocking, Fluent eager loading, resource management"
     - agent: "Code Reviewer"
       source: builtin
       focus: "general correctness, repository pattern adherence"

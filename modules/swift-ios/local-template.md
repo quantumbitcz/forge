@@ -30,6 +30,10 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: architecture-reviewer
+      focus: "MVVM adherence, layer boundaries, dependency direction"
+    - agent: security-reviewer
+      focus: "Keychain usage, App Transport Security, certificate pinning"
     - agent: "Code Reviewer"
       source: builtin
       focus: "general correctness, MVVM adherence, view complexity"

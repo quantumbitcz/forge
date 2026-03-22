@@ -33,6 +33,8 @@ quality_gate:
     - agent: architecture-reviewer
       focus: "handler/service layering, state management, error handling"
     - agent: security-reviewer
+    - agent: backend-performance-reviewer
+      focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
       focus: "auth, unsafe usage, input validation, error leaking"
   batch_2:
     - agent: "Code Reviewer"

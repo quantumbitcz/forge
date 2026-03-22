@@ -36,6 +36,8 @@ quality_gate:
     - agent: architecture-reviewer
       focus: "router/service/repository layering violations"
     - agent: security-reviewer
+    - agent: backend-performance-reviewer
+      focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
       focus: "auth, injection, data exposure, CORS"
   batch_2:
     - agent: "Code Reviewer"
