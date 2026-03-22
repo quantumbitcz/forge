@@ -145,6 +145,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 
 ```json
 {
+  "version": "1.1",
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
   "requirement": "<original requirement verbatim>",
@@ -157,7 +158,26 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "validation_retries": 0,
   "stage_timestamps": { "preflight": "<now ISO 8601>" },
   "last_commit_sha": "",
-  "preempt_items_applied": []
+  "preempt_items_applied": [],
+  "integrations": {
+    "linear": { "available": false, "team": "" },
+    "playwright": { "available": false },
+    "slack": { "available": false },
+    "figma": { "available": false },
+    "context7": { "available": false }
+  },
+  "linear": {
+    "epic_id": "",
+    "story_ids": [],
+    "task_ids": {}
+  },
+  "modules": [],
+  "cost": {
+    "wall_time_seconds": 0,
+    "stages_completed": 0
+  },
+  "recovery_applied": [],
+  "scout_improvements": 0
 }
 ```
 

@@ -317,7 +317,13 @@ Return EXACTLY this structure. No preamble or reasoning outside the format.
 
 ---
 
-## 10. Optional Integrations
+## 10. Linear Tracking
+
+Validation results are posted to Linear by the orchestrator (`pl-100`), not by the validator directly. You do not interact with Linear.
+
+---
+
+## 11. Optional Integrations
 
 You do not directly use MCPs. If conventions file references context7 library versions, validate against the conventions file content (which was populated using context7 during planning).
 Never fail because an optional MCP is down.

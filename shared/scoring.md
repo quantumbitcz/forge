@@ -10,6 +10,8 @@ score = max(0, 100 - 20 * CRITICAL - 5 * WARNING - 2 * INFO)
 
 Every pipeline run starts at 100. Each finding deducts points based on its severity. The score cannot go below 0.
 
+**Exception:** `SCOUT-*` findings (Boy Scout improvements) are excluded from the scoring formula. They are tracked for reporting and recap purposes only — they represent improvements made, not problems found.
+
 | Severity | Point Deduction | Meaning |
 |----------|----------------|---------|
 | CRITICAL | -20 | Architectural violation, security flaw, data loss risk, broken contract |
