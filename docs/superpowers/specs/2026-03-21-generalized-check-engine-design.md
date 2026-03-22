@@ -1707,7 +1707,7 @@ The retrospective agent tracks which agents produce the best outcomes and sugges
       "missed_issues_found_in_preview": 2,
       "avg_findings_per_run": 4.5
     },
-    "be-hex-reviewer": {
+    "architecture-reviewer": {
       "runs": 10,
       "findings_accepted": 45,
       "findings_ignored": 3,

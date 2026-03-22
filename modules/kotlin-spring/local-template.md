@@ -33,8 +33,8 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: be-hex-reviewer
-      focus: "hexagonal architecture violations"
+    - agent: architecture-reviewer
+      focus: "architecture pattern violations"
     - agent: be-security-reviewer
       focus: "auth, ownership, injection, data exposure"
   batch_2:

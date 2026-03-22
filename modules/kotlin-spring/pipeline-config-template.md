@@ -17,7 +17,7 @@ Updated by `pipeline-learner` agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| be-hex-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
+| architecture-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
 | be-security-reviewer | true | secondary | Auth/data exposure — findings merged into quality-gate |
 
 ## Domain Hotspots
