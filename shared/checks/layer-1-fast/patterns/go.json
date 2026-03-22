@@ -1,0 +1,108 @@
+{
+  "language": "go",
+  "extensions": [".go"],
+  "source": "go vet, staticcheck, golangci-lint",
+  "rules": [
+    {
+      "id": "GO-ERR-001",
+      "name": "discarded-error",
+      "pattern": "_\\s*=.*\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-ERR",
+      "message": "Explicitly discarded error return value — may hide failures.",
+      "fix_hint": "Handle the error: check with if err != nil or wrap with fmt.Errorf.",
+      "example_ref": "go/errors.md#discarded-error",
+      "scope": "all"
+    },
+    {
+      "id": "GO-CONV-001",
+      "name": "fmt-print-in-non-test",
+      "pattern": "fmt\\.(Print|Println|Printf)\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "fmt.Print in non-test code — use a structured logger instead.",
+      "fix_hint": "Replace with log/slog or a structured logging library (e.g. zap, zerolog).",
+      "example_ref": "go/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "GO-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apiKey)\\s*[:=]\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a vault; load via os.Getenv or a config library.",
+      "example_ref": "go/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "GO-PANIC-001",
+      "name": "panic-usage",
+      "pattern": "\\bpanic\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "panic() usage — crashes the entire program; prefer returning errors.",
+      "fix_hint": "Return an error instead of panicking; reserve panic for truly unrecoverable situations in init.",
+      "example_ref": "go/errors.md#panic",
+      "scope": "main"
+    },
+    {
+      "id": "GO-BLOCK-001",
+      "name": "time-sleep",
+      "pattern": "time\\.Sleep\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "INFO",
+      "category": "PERF-BLOCK",
+      "message": "time.Sleep call — acceptable in Go but verify it is intentional.",
+      "fix_hint": "Consider using a ticker, timer, or context-based cancellation for more responsive shutdown.",
+      "example_ref": "go/concurrency.md#sleep",
+      "scope": "main"
+    },
+    {
+      "id": "GO-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\t{4,}\\S",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
+      "example_ref": "go/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "GO-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|\"[^\"]*\"|const\\s",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a package-level const with a descriptive name.",
+      "example_ref": "go/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "_test.go": 500
+      },
+      "_note": "Lines of code. Go files tend to be compact; test files get more room."
+    },
+    "function_size": {
+      "default": 40,
+      "_note": "Go functions can be longer due to explicit error handling."
+    }
+  },
+  "boundaries": [],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/go.json"
+  }
+}
