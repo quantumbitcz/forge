@@ -132,8 +132,37 @@ case "$DEP" in
     fi
     ;;
 
+  context7)
+    # Quick probe — attempt to check if context7 MCP is responsive
+    # This is a passive check; we can't call MCP from bash.
+    # Instead, check if the tool list mentions context7 (passed via env)
+    if [[ -n "${CONTEXT7_AVAILABLE:-}" ]]; then
+      echo "INFO: Context7 MCP reported as available" >&2
+    else
+      echo "INFO: Context7 MCP not detected — using conventions file for documentation" >&2
+    fi
+    echo "OK"
+    ;;
+
+  git-remote|remote)
+    project_root="${2:-$(pwd)}"
+    remote_url="$(git -C "$project_root" remote get-url origin 2>/dev/null || true)"
+    if [[ -z "$remote_url" ]]; then
+      echo "WARN: No git remote 'origin' configured — PR creation will fail" >&2
+      echo "OK"
+      exit 0
+    fi
+    if timeout 5 git -C "$project_root" ls-remote --exit-code origin HEAD &>/dev/null; then
+      echo "INFO: Git remote reachable: $remote_url" >&2
+      echo "OK"
+    else
+      echo "WARN: Git remote unreachable: $remote_url — PR creation may fail" >&2
+      echo "OK"
+    fi
+    ;;
+
   *)
-    echo "UNAVAILABLE: unknown dependency '$DEP' (supported: docker, database, network, gh, node, gradle, playwright)"
+    echo "UNAVAILABLE: unknown dependency '$DEP' (supported: docker, database, network, gh, node, gradle, playwright, context7, git-remote)"
     ;;
 esac
 
