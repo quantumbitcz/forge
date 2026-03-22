@@ -7,8 +7,8 @@ set -euo pipefail
 #
 # Modes:
 #   --hook              PostToolUse hook (single file, Layer 1 only)
-#   --verify            VERIFY stage (Layer 1 + Layer 2 stub)
-#   --review            REVIEW stage (Layer 1 + Layer 2 + Layer 3 stubs)
+#   --verify            VERIFY stage (Layer 1 + Layer 2)
+#   --review            REVIEW stage (Layer 1 + Layer 2 + Layer 3 stub)
 
 trap 'exit 0' ERR
 
@@ -107,14 +107,27 @@ parse_batch_args() {
   done
 }
 
-# --- Mode: --verify (VERIFY stage, Layer 1 + Layer 2 stub) ---
+# --- Run Layer 2 on a single file ---
+run_layer2() {
+  local file="$1" project_root="${2:-}"
+  local lang
+  lang="$(detect_language "$file")" || true
+  [[ -z "$lang" ]] && return 0
+  local severity_map="$SCRIPT_DIR/layer-2-linter/config/severity-map.json"
+  local runner="$SCRIPT_DIR/layer-2-linter/run-linter.sh"
+  [[ ! -x "$runner" ]] && return 0
+  "$runner" "$lang" "$project_root" "$file" "$severity_map"
+}
+
+# --- Mode: --verify (VERIFY stage, Layer 1 + Layer 2) ---
 mode_verify() {
   shift  # consume --verify
   parse_batch_args "$@"
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
-    [[ -f "$f" ]] && run_layer1 "$f" "$PROJECT_ROOT"
+    [[ -f "$f" ]] || continue
+    run_layer1 "$f" "$PROJECT_ROOT"
+    run_layer2 "$f" "$PROJECT_ROOT"
   done
-  echo "# Layer 2 (linter bridge) not yet implemented" >&2
 }
 
 # --- Mode: --review (REVIEW stage, all layers) ---
@@ -122,9 +135,10 @@ mode_review() {
   shift  # consume --review
   parse_batch_args "$@"
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
-    [[ -f "$f" ]] && run_layer1 "$f" "$PROJECT_ROOT"
+    [[ -f "$f" ]] || continue
+    run_layer1 "$f" "$PROJECT_ROOT"
+    run_layer2 "$f" "$PROJECT_ROOT"
   done
-  echo "# Layer 2 (linter bridge) not yet implemented" >&2
   echo "# Layer 3 (agent intelligence) not yet implemented" >&2
 }
 
