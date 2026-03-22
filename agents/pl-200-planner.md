@@ -164,6 +164,13 @@ Tasks within a story are grouped by dependency. **Max 3 groups**, numbered 1-3, 
 - Logic tasks that depend on group 1 outputs go in group 2
 - Integration, polish, and tests go in group 3
 
+### Conflict Prevention
+
+When assigning tasks to parallel groups:
+- Tasks that modify the same file MUST NOT be in the same group
+- If unsure whether two tasks share files, place them in sequential groups (safer)
+- The orchestrator performs runtime conflict detection as a safety net, but the planner should minimize conflicts by design
+
 ### 3.10 Design Test Strategy
 
 For each story, define:

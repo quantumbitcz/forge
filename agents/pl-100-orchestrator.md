@@ -1121,7 +1121,51 @@ Never escalate with just "Pipeline blocked." Always include diagnosis and action
 
 ---
 
-## 25. Reference Documents
+## 25. Pipeline Observability
+
+### Progress Reporting
+
+At each stage transition, output a concise progress line:
+
+```
+[STAGE {N}/10] {STAGE_NAME} — {status} ({elapsed}s)
+```
+
+Examples:
+```
+[STAGE 0/10] PREFLIGHT — complete (2s) — module: kotlin-spring, risk: MEDIUM
+[STAGE 1/10] EXPLORE — complete (15s) — 12 files analyzed, 3 patterns found
+[STAGE 2/10] PLAN — complete (8s) — 2 stories, 5 tasks, 2 parallel groups
+[STAGE 3/10] VALIDATE — complete (6s) — verdict: GO
+[STAGE 4/10] IMPLEMENT — in progress — task 3/5 (group 2)
+[STAGE 5/10] VERIFY — complete (12s) — build OK, lint OK, tests 42/42
+[STAGE 6/10] REVIEW — complete (25s) — score: 94/100 (CONCERNS), cycle 2/2
+[STAGE 7/10] DOCS — complete (3s) — no updates needed
+[STAGE 8/10] SHIP — complete (5s) — PR #42 created
+[STAGE 9/10] LEARN — complete (4s) — 1 learning, recap written
+```
+
+### Error Reporting
+
+When a stage fails or pauses, include diagnostic context:
+```
+[STAGE 5/10] VERIFY — FAILED (45s) — test failures: 3 (AuthServiceTest, PlanTest, NoteTest)
+```
+
+### Cost Tracking
+
+The `cost` object already exists in state.json (added in Phase 1). Update it at each stage transition:
+- `wall_time_seconds`: total elapsed from PREFLIGHT start to current stage
+- `stages_completed`: increment by 1
+
+Report in final output:
+```
+Pipeline complete in {wall_time}s — {stages_completed} stages, {quality_score}/100
+```
+
+---
+
+## 26. Reference Documents
 
 The orchestrator references these shared documents but never modifies them:
 
