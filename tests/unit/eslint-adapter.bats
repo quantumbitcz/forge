@@ -178,3 +178,19 @@ for entry in results:
   assert_success
   assert_output ""
 }
+
+# ---------------------------------------------------------------------------
+# 9. no-eval rule maps to CRITICAL severity and SEC-EVAL category
+# ---------------------------------------------------------------------------
+@test "eslint parser: no-eval rule maps to CRITICAL severity" {
+  # Create fixture with no-eval finding
+  local raw="$TEST_TEMP/no-eval.json"
+  cat > "$raw" << 'EOF'
+[{"filePath":"src/app.ts","messages":[{"ruleId":"no-eval","severity":2,"message":"eval can be harmful","line":5}]}]
+EOF
+
+  run run_parser "$SEV_MAP" "$raw"
+  assert_success
+  assert_output --partial "CRITICAL"
+  assert_output --partial "SEC-EVAL"
+}

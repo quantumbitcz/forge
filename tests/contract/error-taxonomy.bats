@@ -46,7 +46,7 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
   # Check that the error types appear in table rows that include | (table cells)
   local found_table_rows
   found_table_rows=$(grep -c '|.*\(tool-diagnosis\|agent-reset\|state-reconstruction\|dependency-health\|transient-retry\|resource-cleanup\|graceful\|none\)' "$ERROR_TAXONOMY" || true)
-  [[ "$found_table_rows" -ge 10 ]] || fail "Expected at least 10 table rows with recovery strategies, got $found_table_rows"
+  [[ "$found_table_rows" -ge 15 ]] || fail "Expected at least 15 table rows with recovery strategies, got $found_table_rows"
 }
 
 # ---------------------------------------------------------------------------

@@ -63,10 +63,10 @@ CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 # 5. Warning at 80% (4.0) documented
 # ---------------------------------------------------------------------------
 @test "recovery-engine: budget warning at 80 percent (4.0) documented" {
-  grep -q "4\.0\|80%" "$RECOVERY_ENGINE" \
-    || fail "Budget warning at 80% (4.0) not documented"
-  grep -q "warning\|Warning" "$RECOVERY_ENGINE" \
-    || fail "Budget warning not mentioned"
+  grep -q "80%" "$RECOVERY_ENGINE" \
+    || fail "80% warning threshold not documented"
+  grep -q "4\.0" "$RECOVERY_ENGINE" \
+    || fail "4.0 weight warning threshold not documented"
 }
 
 # ---------------------------------------------------------------------------
@@ -99,16 +99,22 @@ CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 }
 
 # ---------------------------------------------------------------------------
-# 9. Network permanence detection: 3 consecutive failures (documented in error-taxonomy.md
-#    and referenced/implied in recovery-engine.md via TRANSIENT strategy)
+# 9. All 7 failure classification categories are documented
 # ---------------------------------------------------------------------------
-@test "recovery-engine: network permanence detection referenced in error-taxonomy" {
-  local ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
-  grep -q "3 consecutive\|consecutive.*3\|3.*consecutive" "$ERROR_TAXONOMY" \
-    || fail "3 consecutive failures for network permanence not documented in error-taxonomy.md"
-  # recovery-engine.md should reference transient-retry strategy for network failures
-  grep -q "transient-retry" "$RECOVERY_ENGINE" \
-    || fail "transient-retry strategy not mentioned in recovery-engine.md"
+@test "recovery-engine: all 7 failure classification categories documented" {
+  local categories=(
+    "3.1 TRANSIENT"
+    "3.2 TOOL_FAILURE"
+    "3.3 AGENT_FAILURE"
+    "3.4 STATE_CORRUPTION"
+    "3.5 EXTERNAL_DEPENDENCY"
+    "3.6 RESOURCE_EXHAUSTION"
+    "3.7 UNRECOVERABLE"
+  )
+  for category in "${categories[@]}"; do
+    grep -q "$category" "$RECOVERY_ENGINE" \
+      || fail "Failure classification category '$category' not found in recovery-engine.md"
+  done
 }
 
 # ---------------------------------------------------------------------------
