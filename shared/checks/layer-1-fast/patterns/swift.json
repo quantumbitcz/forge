@@ -1,0 +1,120 @@
+{
+  "language": "swift",
+  "extensions": [".swift"],
+  "source": "SwiftLint, Swift API Design Guidelines",
+  "rules": [
+    {
+      "id": "SW-FORCE-001",
+      "name": "force-unwrap",
+      "pattern": "!\\.\\w|!\\[",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|!=|!==|@IBOutlet",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Force unwrap (!) — crashes at runtime if the value is nil.",
+      "fix_hint": "Use optional binding (if let / guard let), nil-coalescing (??), or optional chaining (?.) instead.",
+      "example_ref": "swift/optionals.md#force-unwrap",
+      "scope": "all"
+    },
+    {
+      "id": "SW-FORCE-002",
+      "name": "force-cast",
+      "pattern": "\\bas!\\s",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Force cast (as!) — crashes at runtime if the type doesn't match.",
+      "fix_hint": "Use conditional cast (as?) with optional binding instead.",
+      "example_ref": "swift/optionals.md#force-cast",
+      "scope": "all"
+    },
+    {
+      "id": "SW-FORCE-003",
+      "name": "implicitly-unwrapped-optional",
+      "pattern": ":\\s*\\w+!",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|@IBOutlet|@IBAction",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Implicitly unwrapped optional — crashes if accessed while nil.",
+      "fix_hint": "Use a regular optional (?) with proper unwrapping, unless required for Interface Builder outlets.",
+      "example_ref": "swift/optionals.md#implicitly-unwrapped",
+      "scope": "all"
+    },
+    {
+      "id": "SW-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to Keychain, environment variables, or a secure configuration; never embed in source.",
+      "example_ref": "swift/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "SW-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bprint\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "print() in production code — use os_log or a structured logger instead.",
+      "fix_hint": "Replace with os_log, Logger (iOS 14+), or a project-specific logging framework.",
+      "example_ref": "swift/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "SW-TRY-001",
+      "name": "force-try",
+      "pattern": "\\btry!\\s",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Force try (try!) — crashes at runtime if the call throws.",
+      "fix_hint": "Use do/catch or try? with optional binding for recoverable errors.",
+      "example_ref": "swift/error-handling.md#force-try",
+      "scope": "all"
+    },
+    {
+      "id": "SW-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use guard statements for early exits.",
+      "example_ref": "swift/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "SW-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*\"|let\\s+\\w+\\s*=\\s*\\d|static\\s+let",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a static let constant with a descriptive name.",
+      "example_ref": "swift/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "Tests/": 500,
+        "UITests/": 500
+      },
+      "_note": "Lines of code. Test files get more room."
+    },
+    "function_size": {
+      "default": 30,
+      "_note": "Detected via brace-counting heuristic, not grep."
+    }
+  },
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/swift.json"
+  }
+}

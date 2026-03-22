@@ -1,0 +1,84 @@
+{
+  "language": "c",
+  "extensions": [".c", ".h"],
+  "source": "clang-tidy, cppcheck, CERT C Coding Standard",
+  "rules": [
+    {
+      "id": "C-MEM-001",
+      "name": "malloc-without-free",
+      "pattern": "\\bmalloc\\(",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "SEC-MEM",
+      "message": "malloc() call — ensure corresponding free() exists to prevent memory leaks.",
+      "fix_hint": "Verify every malloc has a matching free on all code paths, including error paths.",
+      "example_ref": "c/memory.md#malloc-free",
+      "scope": "all"
+    },
+    {
+      "id": "C-MEM-002",
+      "name": "buffer-overflow-risk",
+      "pattern": "\\b(gets|sprintf|strcpy|strcat)\\(",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-OVERFLOW",
+      "message": "Unsafe function with buffer overflow risk — use bounds-checked alternative.",
+      "fix_hint": "Replace gets→fgets, sprintf→snprintf, strcpy→strncpy or strlcpy, strcat→strncat or strlcat.",
+      "example_ref": "c/security.md#buffer-overflow",
+      "scope": "all"
+    },
+    {
+      "id": "C-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a secure configuration file; load via getenv().",
+      "example_ref": "c/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "C-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bprintf\\(",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "printf() in production code — use a logging framework instead.",
+      "fix_hint": "Replace with syslog(), a project-specific logger, or guard with a debug/verbose flag.",
+      "example_ref": "c/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "C-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\t{4,}\\S|^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns / goto cleanup pattern.",
+      "example_ref": "c/readability.md#nesting",
+      "scope": "all"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 500,
+      "overrides": {
+        "test/": 600,
+        "tests/": 600
+      },
+      "_note": "Lines of code. C files tend to be longer due to explicit memory management and boilerplate."
+    },
+    "function_size": {
+      "default": 50,
+      "_note": "Detected via brace-counting heuristic, not grep."
+    }
+  },
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/c.json"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "language": "rust",
+  "extensions": [".rs"],
+  "source": "Clippy, rust-analyzer, Rust API Guidelines",
+  "rules": [
+    {
+      "id": "RS-UNWRAP-001",
+      "name": "unwrap-usage",
+      "pattern": "\\.unwrap\\(\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*unwrap[^\"]*\"",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "unwrap() usage — can panic at runtime if the value is None or Err.",
+      "fix_hint": "Use pattern matching, unwrap_or, unwrap_or_else, or the ? operator instead.",
+      "example_ref": "rust/error-handling.md#unwrap",
+      "scope": "all"
+    },
+    {
+      "id": "RS-EXPECT-001",
+      "name": "expect-usage",
+      "pattern": "\\.expect\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "QUAL-NULL",
+      "message": "expect() usage — better than unwrap but still panics on None/Err.",
+      "fix_hint": "Prefer the ? operator or match/if-let for recoverable errors; reserve expect for truly unrecoverable cases.",
+      "example_ref": "rust/error-handling.md#expect",
+      "scope": "all"
+    },
+    {
+      "id": "RS-UNSAFE-001",
+      "name": "unsafe-block",
+      "pattern": "\\bunsafe\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "SEC-UNSAFE",
+      "message": "Unsafe block — bypasses Rust's safety guarantees and requires manual correctness proof.",
+      "fix_hint": "Verify the unsafe block is necessary; document the safety invariant with a // SAFETY: comment.",
+      "example_ref": "rust/safety.md#unsafe-blocks",
+      "scope": "all"
+    },
+    {
+      "id": "RS-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a secrets manager; load via std::env::var or config crate.",
+      "example_ref": "rust/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "RS-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bprintln!\\(|\\bprint!\\(|\\beprint",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Console output — use a structured logger (tracing, log crate) instead.",
+      "fix_hint": "Replace with tracing::info!/debug!/warn! or log::info!/debug!/warn! macros.",
+      "example_ref": "rust/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "RS-CLONE-001",
+      "name": "excessive-clone",
+      "pattern": "\\.clone\\(\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "PERF-CLONE",
+      "message": "clone() call — may indicate unnecessary data copying.",
+      "fix_hint": "Consider borrowing (&T) or using Cow<T> to avoid unnecessary allocations.",
+      "example_ref": "rust/performance.md#clone",
+      "scope": "all"
+    },
+    {
+      "id": "RS-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
+      "example_ref": "rust/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "RS-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s|static\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a const with a descriptive name.",
+      "example_ref": "rust/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "tests/": 500,
+        "benches/": 400
+      },
+      "_note": "Lines of code. Test and benchmark files get more room."
+    },
+    "function_size": {
+      "default": 40,
+      "_note": "Detected via brace-counting heuristic, not grep."
+    }
+  },
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/rust.json"
+  }
+}
