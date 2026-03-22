@@ -84,8 +84,15 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "stages_completed": 0
   },
   "recovery_applied": [],
+  "recovery": {
+    "total_failures": 0,
+    "total_recoveries": 0,
+    "degraded_capabilities": [],
+    "failures": []
+  },
   "scout_improvements": 0,
-  "conventions_hash": ""
+  "conventions_hash": "",
+  "dry_run": false
 }
 ```
 
@@ -111,9 +118,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | Per-module state for multi-module projects. Each entry: `{ "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects (main `story_state` field is used instead). |
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
-| `recovery_applied` | string[] | Yes | List of recovery strategy names applied during this run (e.g., `["transient-retry", "tool-diagnosis"]`). Appended each time the recovery engine applies a strategy. Used to enforce the recovery budget (max 5 total applications per run). |
+| `recovery_applied` | string[] | Yes | Flat list of recovery strategy names applied during this run (e.g., `["transient-retry", "tool-diagnosis"]`). Appended each time the recovery engine applies a strategy. Used by the orchestrator to enforce the recovery budget (max 5 total applications per run). This is the simplified view — the recovery engine maintains a richer `recovery` object (see `shared/recovery/recovery-engine.md` Section 5) with `total_failures`, `total_recoveries`, `degraded_capabilities`, and detailed `failures[]` entries. Both are written to state.json — `recovery_applied` is the budget counter, `recovery` is the detailed log. |
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of conventions_file content at PREFLIGHT. Agents compare to detect mid-run convention changes. Empty if conventions file was unavailable. |
+| `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 
 **Note:** The `version` field enables schema migration. Recovery engine checks this before parsing. If the `version` field is missing (pre-1.1 state files), the recovery engine treats it as version `"1.0"` and applies forward migration (adding new fields with default values) before proceeding.
 

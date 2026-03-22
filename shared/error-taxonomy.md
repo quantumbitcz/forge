@@ -16,7 +16,7 @@ When reporting errors, agents should structure them as:
 
 | Type | Meaning | Recoverable? | Default Strategy |
 |---|---|---|---|
-| TOOL_FAILURE | Shell command failed (build, test, lint) | Yes | transient-retry |
+| TOOL_FAILURE | Shell command failed or tool crashed (build, test, lint) | Yes | tool-diagnosis |
 | BUILD_FAILURE | Compilation error | Yes | tool-diagnosis |
 | TEST_FAILURE | Test assertion failed | Yes | tool-diagnosis |
 | LINT_FAILURE | Linter reported errors | Yes | tool-diagnosis |

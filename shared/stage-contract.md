@@ -446,6 +446,42 @@ Valid values: stage number (0-9) or lowercase stage name (`preflight`, `explore`
 
 ---
 
+## --dry-run Flag Behavior
+
+The `--dry-run` flag allows users to preview what the pipeline would do without making any changes.
+
+### Syntax
+
+```
+/pipeline-run "requirement" --dry-run
+/pipeline-run "requirement" --dry-run --from=plan
+```
+
+### Behavior
+
+1. `--dry-run` runs Stages 0-3 (PREFLIGHT, EXPLORE, PLAN, VALIDATE) normally
+2. After VALIDATE completes, the pipeline **stops** and outputs a dry-run report
+3. Stages 4-9 (IMPLEMENT through LEARN) are skipped entirely
+4. `--dry-run` is compatible with `--from` (e.g., `--dry-run --from=plan` skips EXPLORE)
+
+### What dry-run does NOT do
+
+- Does NOT create a git worktree
+- Does NOT create Linear tickets
+- Does NOT modify any source files
+- Does NOT create a PR
+- Stage notes ARE written to `.pipeline/` (for debugging)
+- State.json IS written with `"dry_run": true`
+
+### Common Use Cases
+
+| Command | Use Case |
+|---------|----------|
+| `--dry-run` | Preview the full plan before committing to implementation |
+| `--dry-run --from=plan` | Re-plan after exploration, preview without re-exploring |
+
+---
+
 ## Data Flow Summary
 
 ```
