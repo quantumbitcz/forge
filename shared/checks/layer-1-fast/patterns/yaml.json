@@ -1,0 +1,80 @@
+{
+  "language": "yaml",
+  "extensions": [".yaml", ".yml"],
+  "source": "kube-linter, Polaris, Helm best practices",
+  "rules": [
+    {
+      "id": "YML-SEC-001",
+      "name": "hardcoded-secret-values",
+      "pattern": "(password|secret|token):\\s*[^{]\\S+",
+      "exclude_pattern": "^\\s*#|CHANGE_ME|REPLACE_ME|\\{\\{|\\$\\{",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded password, secret, or token in YAML value.",
+      "fix_hint": "Move secrets to a K8s Secret, ExternalSecret, or environment variable. Never store plaintext credentials in manifests or values files.",
+      "example_ref": "yaml/security.md#credentials",
+      "scope": "all"
+    },
+    {
+      "id": "YML-SEC-002",
+      "name": "privileged-container",
+      "pattern": "privileged:\\s*true",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-PRIV",
+      "message": "Privileged container grants full host access — breaks container isolation boundary.",
+      "fix_hint": "Remove privileged: true. Add only the specific Linux capabilities needed via securityContext.capabilities.add.",
+      "example_ref": "yaml/security.md#privileged",
+      "scope": "all"
+    },
+    {
+      "id": "YML-TAG-001",
+      "name": "latest-tag",
+      "pattern": "image:.*:latest",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "INFRA-TAG",
+      "message": "Image reference uses :latest tag — defeats reproducibility and prevents safe rollback.",
+      "fix_hint": "Pin to a specific version tag (semver or git SHA). Example: image: nginx:1.25.4 or image: myapp:abc1234",
+      "example_ref": "yaml/images.md#immutable-tags",
+      "scope": "all"
+    },
+    {
+      "id": "YML-RES-001",
+      "name": "hardcoded-replicas-without-hpa",
+      "pattern": "replicas:\\s*[0-9]+",
+      "exclude_pattern": "^\\s*#|\\{\\{",
+      "severity": "INFO",
+      "category": "INFRA-SCALE",
+      "message": "Hardcoded replica count — consider using HorizontalPodAutoscaler for dynamic scaling.",
+      "fix_hint": "If this deployment needs autoscaling, remove the static replicas field and configure an HPA resource instead.",
+      "example_ref": "yaml/scaling.md#hpa",
+      "scope": "all"
+    },
+    {
+      "id": "YML-READ-001",
+      "name": "long-lines",
+      "pattern": "^.{200,}",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Line exceeds 200 characters — reduces readability and causes horizontal scrolling.",
+      "fix_hint": "Break long values using YAML multi-line scalars (| or >) or restructure the data.",
+      "example_ref": "yaml/readability.md#line-length",
+      "scope": "all"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 500,
+      "_note": "Lines of code. Helm values and K8s manifests can be verbose; 500 lines is a reasonable upper bound per file."
+    },
+    "function_size": {
+      "_note": "Not applicable to YAML files. Structural complexity is checked at Layer 2 by agent-based review."
+    }
+  },
+  "boundaries": [],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/yaml.json"
+  }
+}
