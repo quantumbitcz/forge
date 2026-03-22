@@ -83,6 +83,11 @@ case "$STAGE" in
   verify)
     detect_build_tool
     detect_test_tool
+    # Disk space check (min 100MB free — same as implement)
+    free_kb=$(df -k "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
+    if [[ "$free_kb" -lt 102400 ]]; then
+      echo "ERROR: Less than 100MB free disk space ($((free_kb / 1024))MB available)" >&2
+    fi
     # Module-specific tool check
     module=""
     [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && \

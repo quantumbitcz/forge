@@ -16,6 +16,7 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 |   +-- archive/                        # Incorporated feedback moved here
 +-- reports/
     +-- pipeline-{YYYY-MM-DD}.md       # Per-run retrospective report
+    +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by pl-720-recap)
 ```
 
 ### File Lifecycle
@@ -27,7 +28,8 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 | `stage_N_notes_*.md` | Each stage | Stage agent | Yes | No |
 | `stage_final_notes_*.md` | Stage 9 (LEARN) | Retrospective agent | Yes | No |
 | `feedback/*.md` | On user correction | Feedback capture agent | Yes (pattern data) | No |
-| `reports/*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
+| `reports/pipeline-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
+| `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (pl-720-recap) | Yes (project history) | No |
 
 ### Related Files (outside `.pipeline/`, committed to git)
 
@@ -261,3 +263,16 @@ Per-run retrospective report written by `pl-700-retrospective` at Stage 9. Conta
 - Comparison against previous runs (trend data)
 
 If multiple runs occur on the same date, reports use a suffix: `pipeline-{YYYY-MM-DD}-2.md`, `pipeline-{YYYY-MM-DD}-3.md`.
+
+### reports/recap-{YYYY-MM-DD}-{storyId}.md
+
+Human-readable run recap written by `pl-720-recap` at Stage 9, after the retrospective. Contains:
+
+- What was built (per-story summary with file lists)
+- Key decisions made (with trade-off reasoning)
+- Boy Scout improvements (SCOUT-* findings)
+- Unfixed findings (with explanation and follow-up tickets)
+- Pipeline metrics (files, tests, fix cycles, score progression)
+- Learnings captured (PREEMPT items added/updated)
+
+If Linear is available, a summarized version (max 2,000 chars) is posted as a comment on the Epic. If a PR exists, the "What Was Built" and "Key Decisions" sections are appended to the PR description.
