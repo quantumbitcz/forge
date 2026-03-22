@@ -1,0 +1,121 @@
+{
+  "language": "java",
+  "extensions": [".java"],
+  "source": "SonarJava, SpotBugs, Google Java Style Guide",
+  "rules": [
+    {
+      "id": "JV-NULL-001",
+      "name": "null-dereference-risk",
+      "pattern": "\\.get\\(\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\\.isPresent\\(\\).*\\.get\\(\\)|\"[^\"]*\\.get\\(\\)[^\"]*\"",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Optional.get() without isPresent check — risks NoSuchElementException.",
+      "fix_hint": "Use .orElse(), .orElseThrow(), or .ifPresent() instead of raw .get().",
+      "example_ref": "java/null-safety.md#optional-get",
+      "scope": "all"
+    },
+    {
+      "id": "JV-BLOCK-001",
+      "name": "blocking-calls",
+      "pattern": "Thread\\.sleep",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Thread.sleep() blocks the current thread — avoid in production code.",
+      "fix_hint": "Use ScheduledExecutorService, CompletableFuture.delayedExecutor(), or reactive delay.",
+      "example_ref": "java/concurrency.md#blocking-calls",
+      "scope": "main"
+    },
+    {
+      "id": "JV-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a vault; reference via config properties.",
+      "example_ref": "java/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "JV-CONV-001",
+      "name": "console-output",
+      "pattern": "System\\.(out|err)\\.|\\.printStackTrace\\(\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Console output or printStackTrace — use a structured logger instead.",
+      "fix_hint": "Replace with logger.info/debug/warn/error from SLF4J or java.util.logging.",
+      "example_ref": "java/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "JV-EXCEPT-001",
+      "name": "generic-exception-thrown",
+      "pattern": "throw new (Exception|RuntimeException)\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Generic exception thrown — use domain-specific exception types.",
+      "fix_hint": "Define a domain exception hierarchy and throw the specific subtype.",
+      "example_ref": "java/exceptions.md#domain-exceptions",
+      "scope": "all"
+    },
+    {
+      "id": "JV-EXCEPT-002",
+      "name": "catch-generic-exception",
+      "pattern": "catch\\s*\\(\\s*(Exception|Throwable)\\s",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Catching generic Exception/Throwable — catch specific exception types.",
+      "fix_hint": "Catch only the specific exception types you can handle; let others propagate.",
+      "example_ref": "java/exceptions.md#specific-catch",
+      "scope": "all"
+    },
+    {
+      "id": "JV-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named methods or use early returns / guard clauses.",
+      "example_ref": "java/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "JV-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|static\\s+final|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a static final constant with a descriptive name.",
+      "example_ref": "java/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "impl/": 150,
+        "controller/": 250,
+        "mapper/": 200,
+        "test/": 500
+      },
+      "_note": "Lines of code. Implementation classes should be small and focused; tests get more room."
+    },
+    "function_size": {
+      "default": 30,
+      "_note": "Detected via awk brace-counting, not grep."
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}
