@@ -26,7 +26,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fe-code-reviewer
+    - agent: frontend-reviewer
       focus: "project conventions + security"
     - agent: "Code Reviewer"
       source: builtin
@@ -51,8 +51,6 @@ quality_gate:
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "type encapsulation, branded types, discriminated unions"
-    - agent: fe-deprecation-scanner
-      condition: "package.json or import changes"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 

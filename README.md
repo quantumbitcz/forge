@@ -50,7 +50,7 @@ Includes:
 - `pipeline-config-template.md` -- mutable runtime parameters template
 - Guard hooks: `theme-guard.sh`, `function-size-guard.sh`, `file-size-guard.sh`, `import-order-guard.sh`, `deprecation-guard.sh`
 - `known-deprecations.json` -- self-updating registry of deprecated APIs
-- Review agents: `fe-code-reviewer`, `fe-deprecation-scanner`
+- Review agents: `frontend-reviewer`
 - Inline check skills: `/fe-check-theme`, `/fe-design-review`, `/fe-react-doctor`, `/fe-dark-mode-check`
 
 ## Quick setup
@@ -251,8 +251,7 @@ Reference your agents in the `quality_gate.batch_N` section and any `inline_chec
 |-------|--------|------|
 | `architecture-reviewer` | shared | Detects architecture pattern and reviews for compliance violations |
 | `security-reviewer` | shared | Reviews code for security vulnerabilities across all languages and frameworks |
-| `fe-code-reviewer` | react-vite | Reviews against frontend conventions and security patterns |
-| `fe-deprecation-scanner` | react-vite | Finds and fixes deprecated API usages, self-updating registry |
+| `frontend-reviewer` | shared | Reviews frontend code for quality, conventions, accessibility, and performance |
 
 ## File inventory
 

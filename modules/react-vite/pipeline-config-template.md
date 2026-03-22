@@ -17,8 +17,7 @@ Updated by `pipeline-learner` agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| fe-code-reviewer | true | secondary | Conventions + security — findings merged into quality-gate |
-| fe-deprecation-scanner | true | secondary | Deprecated API usage — findings merged into quality-gate |
+| frontend-reviewer | true | secondary | Conventions + security — findings merged into quality-gate |
 
 ## Domain Hotspots
 

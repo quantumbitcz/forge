@@ -113,7 +113,7 @@ The three files in `shared/` are contracts consumed by all agents:
 |-----------|---------|---------|
 | Module directory | lowercase-with-hyphens | `python-fastapi` |
 | Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
-| Module agent | `{prefix}-{role}` | `fe-code-reviewer` |
+| Module agent | `{prefix}-{role}` | `frontend-reviewer` |
 | Skill directory | lowercase-with-hyphens | `fe-check-theme` |
 | Verification script | `check-{what}.sh` | `check-antipatterns.sh` |
 | Guard hook | `{what}-guard.sh` | `theme-guard.sh` |

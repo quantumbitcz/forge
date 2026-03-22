@@ -65,7 +65,7 @@ Create module agents in `agents/` with a short prefix (e.g., `py-` for python-fa
 - Typography via inline `style={{ fontSize }}`, not Tailwind `text-*` classes.
 - Colors via theme tokens (`bg-background`, `text-foreground`), never hardcoded hex.
 - Guard hooks enforce: theme tokens, function size (~30 lines), file size (~400 lines), import order, no deprecated APIs.
-- `known-deprecations.json` is a self-updating registry maintained by `fe-deprecation-scanner`.
+- `known-deprecations.json` is a self-updating registry maintained by the check engine's deprecation layer.
 
 ## Validation
 
