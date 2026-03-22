@@ -1,983 +1,495 @@
 # Pipeline Orchestration Hardening — Design Spec
 
 **Date:** 2026-03-22
-**Scope:** All pipeline agents, shared contracts, skills, plugin manifests, MCP integrations
-**Status:** Approved for implementation
+**Scope:** Contract-first hardening of shared contracts, then orchestrator + agent updates
+**Status:** Draft — awaiting spec review
+**Approach:** Clean Contract Evolution (Option B) — version bumps with forward migration
 
 ---
 
 ## Context
 
-A thorough audit of every pipeline agent (`pl-*`), cross-cutting reviewer, shared contract, recovery system, health check, skill, and plugin manifest revealed structural gaps that affect reliability at scale. This spec addresses all findings in 16 areas.
+A thorough investigation of the orchestration layer identified 15 gaps across shared contracts, the orchestrator, and agents. These range from critical (PREEMPT hit counts never updated, no design-level feedback escalation) to structural (silent check engine failures, recovery budget lacks prioritization).
 
-The driving principles behind every change:
-
-- **Autonomy first.** The pipeline should complete runs with zero user interaction in the common case. The user is asked only when a decision is genuinely 50/50 or when a critical failure requires human judgment. Everything else — architectural choices, naming, patterns, trade-offs with a clear winner — the agent decides and documents why.
-- **Score 100 or explain why not.** Every finding gets fixed or gets a written explanation. Nothing is silently accepted.
-- **Safety before speed.** Before deleting, disabling, or removing anything, verify it wasn't intentional. A disabled plugin, a skipped test, a commented-out config line — these may exist for a reason. Check git blame, check comments, check conventions before touching them.
-- **Transparency.** Every run produces a human-readable recap of what was done, why, and what was left. Stakeholders who never touch the CLI should be able to read the recap and understand the full picture.
+This spec addresses all 15 issues in two batches:
+- **Batch 1 (Contracts):** Changes to 7 shared contract files that form the foundation
+- **Batch 2 (Consumers):** Orchestrator and agent updates that adopt the new contracts
 
 ---
 
-## 1. Large Codebase & Multi-Module Support
+## Batch 1: Contract Changes
 
-### Why this matters
+### 1. State Schema (`shared/state-schema.md`)
 
-The orchestrator assumes a single `module` value in config. If a requirement spans a Kotlin backend and a React frontend (common in full-stack features), the pipeline uses one module's conventions for everything. Explorers have no file limits — a naive exploration of a 100K-file monorepo would exhaust context or timeout.
+#### 1.1 Version Bump
 
-### What changes
+Schema version changes from `"1.1"` to `"1.2"`.
 
-**Orchestrator (`pl-100`)** gets a new section: `## Large Codebase Handling`
+Forward migration: When recovery engine encounters `version: "1.1"` state files, it adds all new fields with defaults and sets `version: "1.2"`.
 
-```
-When dispatching any agent, enforce these limits:
-- Exploration: max 50 files per pass, grouped by domain area
-- Implementation: max 20 files per task. If a task lists more, split it
-- Review: max 100 files per batch agent dispatch
-- If the project has multiple modules (e.g., both `build.gradle.kts` and
-  `package.json` at different paths), treat each as a separate sub-pipeline
-  with its own conventions file
+#### 1.2 New Fields in `state.json`
 
-For multi-module requirements:
-1. EXPLORE dispatches per-module explorers in parallel
-2. PLAN creates stories grouped by module, with integration points explicit
-3. IMPLEMENT runs per-module, sequentially (backend first, then frontend)
-4. REVIEW dispatches module-appropriate reviewers for each module's files
-```
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `total_retries` | integer | 0 | Cumulative retry count across all loops |
+| `total_retries_max` | integer | 10 | Global retry ceiling (configurable in pipeline-config.md) |
+| `preempt_items_status` | object | `{}` | Tracks which PREEMPT items were applied/skipped/false-positive |
+| `feedback_classification` | string | `""` | `""` \| `"implementation"` \| `"design"` — set by pl-710 on PR rejection |
+| `check_engine_skipped` | integer | 0 | Count of inline check engine invocations that were skipped due to timeout/error |
+| `recovery_budget` | object | see below | Weighted recovery budget tracking |
+| `score_history` | integer[] | `[]` | Quality score per review cycle for oscillation detection |
+| `linear_sync` | object | see below | Tracks Linear API operation success/failure |
+| `conventions_section_hashes` | object | `{}` | Per-section SHA256 hashes (first 8 chars) for granular drift detection |
 
-**Why per-module sequential, not parallel:** Backend changes often define the API contract that frontend consumes. Running them in parallel would mean the frontend implements against a non-existent API. Backend-first ensures contracts exist before frontend work starts.
-
-**Multi-module state tracking:** For multi-module runs, `state.json` gets a `modules` array tracking per-module progress:
+**`recovery_budget` default:**
 
 ```json
 {
-  "modules": [
-    { "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" },
-    { "module": "react-vite", "story_state": "PLANNING", "story_id": "story-2" }
-  ]
+  "total_weight": 0.0,
+  "max_weight": 5.0,
+  "applications": []
 }
 ```
 
-The orchestrator manages module transitions: backend module completes through VERIFY before frontend module enters IMPLEMENT.
+Each application entry: `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`
+
+**`linear_sync` default:**
+
+```json
+{
+  "in_sync": true,
+  "failed_operations": []
+}
+```
+
+Each failed operation: `{ "op": "<operation>", "error": "<message>", "timestamp": "<ISO8601>" }`
+
+**`preempt_items_status` example:**
+
+```json
+{
+  "check-openapi-before-controller": { "applied": true, "false_positive": false },
+  "use-kotlin-uuid": { "applied": false, "false_positive": true }
+}
+```
+
+**`recovery` object — new sub-field:**
+
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `budget_warning_issued` | boolean | `false` | True when recovery budget exceeds 80% |
+
+#### 1.3 Checkpoint Schema Addition
+
+New field in `tasks_completed[]` entries in `checkpoint-{storyId}.json`:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `preempt_items_used` | string[] | Yes | PREEMPT item identifiers applied during this task. Empty array if none. |
+
+#### 1.4 Migration Path (1.1 → 1.2)
+
+When recovery engine encounters `version: "1.1"`:
+
+1. Add `total_retries: 0`, `total_retries_max: 10`
+2. Add `preempt_items_status: {}`
+3. Add `feedback_classification: ""`
+4. Add `check_engine_skipped: 0`
+5. Add `recovery_budget: { "total_weight": 0.0, "max_weight": 5.0, "applications": [] }`
+6. Add `score_history: []`
+7. Add `linear_sync: { "in_sync": true, "failed_operations": [] }`
+8. Copy `conventions_hash` value into `conventions_section_hashes: { "_full": "<value>" }`
+9. Add `recovery.budget_warning_issued: false`
+10. Populate `recovery_budget.applications` from existing `recovery_applied[]` with weight 1.0 each (conservative)
+11. Set `version: "1.2"`
+
+**Downstream impact:** All agents that read state.json, orchestrator (state init + every stage transition), recovery engine (budget tracking), retrospective (PREEMPT updates).
 
 ---
 
-## 2. Git Worktree Enforcement
+### 2. Stage Contract (`shared/stage-contract.md`)
 
-### Why this matters
+#### 2.1 Global Retry Budget
 
-The implementer currently works directly in the user's working tree. If the user is editing files while the pipeline runs, conflicts are guaranteed. Even worse, a failed pipeline run could leave the working tree in a half-modified state.
+Add new section after existing retry loop table:
 
-### What changes
+**Global Retry Budget**
 
-**Orchestrator** gets a new section: `## Worktree Policy`
+All retry loops share a cumulative budget tracked in `state.json.total_retries`. Every retry increment (validation_retries++, verify_fix_count++, test_cycles++, quality_cycles++) also increments `total_retries`.
+
+| Field | Default | Configurable In |
+|-------|---------|-----------------|
+| `total_retries_max` | 10 | `pipeline-config.md` |
+
+When `total_retries >= total_retries_max`, the orchestrator escalates to the user regardless of which individual loop has budget remaining. Escalation format:
+
+> "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}. How should I proceed?"
+
+Constraint: `total_retries_max` must be >= 5 and <= 30. If violated, use default (10).
+
+#### 2.2 Feedback Classification in Stage 8
+
+Replace the single-path PR rejection flow with:
+
+| Feedback Type | Detection Heuristic | Routing |
+|---|---|---|
+| `implementation` | References specific files, code behavior, test cases, UI details, variable names | Reset `quality_cycles` and `test_cycles` to 0 → re-enter Stage 4 (IMPLEMENT) |
+| `design` | References wrong approach, wrong decomposition, missing stories, architectural direction, "should be split", "wrong pattern" | Reset ALL counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`, `total_retries`) → re-enter Stage 2 (PLAN) with feedback as planner input |
+
+Detection responsibility: `pl-710-feedback-capture` classifies the feedback and writes `feedback_classification` to stage notes. The orchestrator reads it and sets `state.json.feedback_classification`.
+
+If classification is ambiguous, default to `implementation` (safer — doesn't discard the existing plan).
+
+#### 2.3 Stage 4 Entry Condition
+
+**Current:** "Plan validated with GO verdict; worktree created"
+
+**New:** "Plan validated with GO verdict; worktree created on a unique branch; working tree clean"
+
+Pre-entry checks:
+1. Check `git branch --list pipeline/{story-id}` — if branch exists, append epoch suffix: `pipeline/{story-id}-{epoch}`
+2. Check for stale worktree at `.pipeline/worktree` — if found, remove and log WARNING
+3. Verify working tree is clean — if dirty, warn user, offer to stash. NEVER force-clean.
+
+#### 2.4 Parallel Conflict Detection Algorithm
+
+Replace the under-specified Stage 4 section 7.6 with:
 
 ```
-At IMPLEMENT stage entry:
-1. Create a worktree: `git worktree add .pipeline/worktree -b pipeline/{story-id}`
-2. All implementation, scaffolding, and testing happens inside the worktree
-3. Dispatched agents receive the worktree path, not the main working directory
-4. On SHIP success: merge worktree branch back to the base branch, clean up
-5. On SHIP failure or abort: preserve worktree for manual inspection
-
-Ordering with checkpoint:
-1. First: git checkpoint commit in main tree (`git add -A && git commit`)
-2. Then: create worktree branching from that checkpoint commit
-3. All subsequent work happens in the worktree
-This ensures the worktree starts from a clean, committed state.
-
-Health check before worktree creation:
-- Verify no existing worktree at .pipeline/worktree (clean up stale ones)
-- Verify working tree is clean (no uncommitted changes that would block branch creation)
-- If working tree is dirty: warn user, offer to stash, never force-clean
-
-Check engine compatibility:
-- The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel`
-  to find the project root. Inside a worktree, this resolves correctly to the
-  worktree root. No changes needed to engine.sh.
-- Agents dispatched inside the worktree receive the worktree path as their
-  working directory. All relative paths resolve within the worktree.
-
-NEVER run `git worktree remove --force` or `git clean -f` without user confirmation.
+BEFORE dispatching parallel group G:
+  1. For each task T in G:
+     - If scaffolder ran: read files_created + files_modified from scaffolder output
+     - Else: read files list from plan (task.files_create + task.files_modify)
+  2. Build conflict map: { "path/file.kt": ["T001", "T003"] }
+  3. For each file with >1 task:
+     - Keep first task (by plan order) in group G
+     - Move all other tasks claiming that file to new sub-group G'
+     - Log in stage notes: "Conflict: {file} claimed by {tasks}. Serialized {moved_tasks}."
+  4. Dispatch G (now conflict-free)
+  5. After G completes, run conflict check on G' (recursive — G' may have internal conflicts)
+  6. Report total serializations in stage notes
 ```
 
-**Why worktrees instead of branches:** Worktrees give physical isolation — the user's IDE stays on their branch, the pipeline works in its own directory. Branches alone would still modify the same files on disk.
+This check runs at IMPLEMENT time because task file lists are finalized during scaffolding.
+
+#### 2.5 Stage 6 Oscillation Tolerance
+
+**Current:** "If score DECREASES between cycles → escalate"
+
+**New:** Track `score_history[]` in state.json. After each cycle:
+
+1. If `score_history` has < 2 entries: no check, continue
+2. `delta = current_score - previous_score`
+3. If `delta >= 0`: improvement or stable — continue
+4. If `abs(delta) <= oscillation_tolerance` (default: 5): minor regression — allow one more cycle, log WARNING
+5. If `abs(delta) > oscillation_tolerance`: significant regression — escalate
+
+Configurable: `scoring.oscillation_tolerance` in `pipeline-config.md` (constraint: >= 0, <= 20).
+
+#### 2.6 Stage 5 Check Engine Skip Reporting
+
+Add to VERIFY Phase A actions:
+
+> Before running build/lint, read `.pipeline/.check-engine-skipped`. If present and count > 0: report in stage notes: "{N} file edits had inline checks skipped (hook timeout/error). Running full verification now." Reset counter to 0 after reading.
+
+**Downstream impact:** Orchestrator (all retry logic, feedback routing, worktree creation, conflict detection, oscillation handling, skip reporting).
 
 ---
 
-## 3. Config Validation in PREFLIGHT
+### 3. Scoring (`shared/scoring.md`)
 
-### Why this matters
+#### 3.1 Oscillation Tolerance
 
-If `dev-pipeline.local.md` doesn't exist, has malformed YAML, or references a non-existent conventions file, the pipeline fails at a random later stage with a confusing error. Fail-fast in PREFLIGHT is better.
+Add section "Score Oscillation Handling" after "Review Cycle Flow":
 
-### What changes
+Track `score_history[]` in `state.json` across quality cycles. After each cycle's score is computed:
 
-**Orchestrator PREFLIGHT section** gets explicit validation steps:
+1. If `score_history` has < 2 entries: no oscillation check, continue
+2. `delta = current - previous`
+3. If `delta >= 0`: continue normally
+4. If `abs(delta) <= oscillation_tolerance` (default: 5): minor regression — allow one more cycle, log WARNING: "Score dipped {abs(delta)} points ({previous} → {current}). Within tolerance. Continuing."
+5. If `abs(delta) > oscillation_tolerance`: significant regression — escalate: "Quality regression: {previous} → {current} (delta: {delta}, tolerance: {oscillation_tolerance}). Fix cycle may be introducing new issues."
 
-```
-After reading config files, validate:
-
-1. dev-pipeline.local.md exists and has valid YAML frontmatter
-   - If missing: ERROR — "Run /pipeline-init to set up this project"
-   - If YAML invalid: ERROR — show parse error, line number
-
-2. Required fields present: project_type, framework, module, commands.build,
-   commands.test, quality_gate
-   - If missing: ERROR — list missing fields
-
-3. conventions_file path resolves to a readable file
-   - If missing: WARN — "Conventions file not found at {path}.
-     Using universal defaults. Framework-specific checks will be skipped."
-   - Continue with degraded mode, do NOT abort
-
-4. pipeline-config.md exists (optional)
-   - If missing: INFO — "No runtime config found. Using defaults."
-
-5. All agents referenced in quality_gate batches exist
-   - Plugin agents: verify the agent name matches a file in agents/
-   - Builtin agents: accept any name (Claude Code resolves these)
-   - If plugin agent missing: WARN — "Agent {name} not found.
-     Will be skipped during REVIEW."
-```
-
-**Why warn-and-continue instead of hard-fail for conventions:** A missing conventions file shouldn't block the entire pipeline. Universal checks still work. The user gets told, and module-specific checks are skipped. This respects the autonomy principle — fix what you can, report what you can't.
-
-**Convention file verification timing:** The PREFLIGHT check is a one-time validation that the path resolves. However, each agent that reads the conventions file should also handle the case where it's become unreadable between stages (deleted, permissions changed). The rule: PREFLIGHT does the initial check and warns. Each agent does a defensive `Read` and if it fails, proceeds with universal defaults and logs INFO. No agent should crash because the conventions file disappeared mid-run.
-
----
-
-## 4. Forbidden Actions
-
-### Why this matters
-
-The orchestrator has principles but no hard prohibitions. Without explicit "DO NOT" rules, agents can drift into destructive behavior — modifying shared contracts, reading entire codebases, asking the user unnecessary questions, or deleting things that were intentionally disabled.
-
-### What changes
-
-**Every agent** gets a `## Forbidden Actions` section:
-
-```
-## Forbidden Actions
-
-These are hard rules. Violating them is always wrong, regardless of context.
-
-### Universal (ALL agents including orchestrator):
-- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT modify conventions files during a pipeline run
-- DO NOT modify CLAUDE.md directly (propose changes only)
-- DO NOT continue after a CRITICAL finding without user approval
-- DO NOT create files outside .pipeline/ and the project source tree
-- DO NOT force-push, force-clean, or destructively modify git state
-- DO NOT delete or disable anything without first checking if it was intentional
-  (check git blame, comments, config flags before removing)
-- DO NOT hardcode commands, agent names, or file paths — always read from config
-
-### Orchestrator-only (pl-100):
-- DO NOT read source files — dispatched agents do this
-- DO NOT ask the user outside the 3 defined touchpoints (start, approval, escalation)
-- DO NOT dispatch agents without explicit scope and file limits
-
-### Implementation agents (pl-300, pl-310):
-- DO NOT modify files outside the task's listed file paths
-- DO NOT add features beyond what acceptance criteria specify
-- DO NOT refactor across module boundaries during Boy Scout improvements
-```
-
-**The "check before deleting" rule explained:** When an agent encounters something that looks unused — a disabled hook, a commented-out config line, a skipped test — it must NOT assume it's dead code. The pattern:
-
-```
-Before removing/disabling/deleting anything:
-1. Check git blame — who added it and when?
-2. Check surrounding comments — is there a "disabled because..." note?
-3. Check config flags — is there a `disabled: true` or `skip: true`?
-4. If intentionally disabled: leave it alone, note in stage notes
-5. If genuinely dead: remove it, document in recap why it was removed
-6. If unclear: leave it alone. Log as INFO finding for human review.
-
-Default: preserve. The cost of keeping dead code is low. The cost of
-removing something intentionally disabled is high.
-```
-
----
-
-## 5. Autonomy Model
-
-### Why this matters
-
-The pipeline's value is autonomous execution. Every unnecessary user question costs time and breaks flow. But some decisions genuinely need human input — shipping those without asking creates worse problems.
-
-### What changes
-
-**Orchestrator** gets a new section: `## Autonomy & Decision Framework`
-
-```
-## Autonomy & Decision Framework
-
-The pipeline operates with MAXIMUM autonomy. The user is interrupted only when:
-1. Pipeline starts (present the requirement interpretation)
-2. Genuine 50/50 architectural decisions (see below)
-3. CRITICAL findings that can't be auto-resolved
-4. PR approval
-
-For ALL other decisions, the agent decides and documents the reasoning.
-
-### Decision Hierarchy
-
-When you encounter a design, architecture, or implementation choice:
-
-**Clear winner (70/30 or better)** — Choose it silently.
-Document: "Decision: {chosen} because {reason}" in stage notes.
-Example: "Using sealed interface hierarchy — matches existing pattern in
-UserPersisted/UserNotPersisted/UserId."
-
-**Slight lean (60/40)** — Choose the simpler option.
-Document both options and why the simpler one won.
-Prefer: fewer files, less coupling, easier to reverse, matches existing patterns.
-Example: "Chose plain text over Markdown for notes — YAGNI, can upgrade later
-without schema change."
-
-**Genuine 50/50** — Ask the user.
-Present: both options, concrete trade-offs, your slight lean if any.
-Example: "Should expired subscriptions be soft-deleted or hard-deleted?
-Soft-delete preserves audit trail but grows the table. Hard-delete is simpler
-but loses history. Your data retention policy determines this — I can't infer it."
-
-**Requires domain knowledge** — Ask the user.
-Example: "The order model has a 'status' field. What are the valid
-transitions? (e.g., can a cancelled session be reopened?)"
-
-### What is NEVER worth asking about
-- Implementation details (data structure, algorithm choice)
-- Code style (conventions file decides)
-- Test strategy (TDD rules decide)
-- Naming (follow existing patterns)
-- Whether to fix a WARNING (always fix if possible)
-- Whether to apply Boy Scout improvements (always apply within budget)
-```
-
-**Why this level of detail:** Without explicit guidance, AI agents tend toward two extremes — either asking about everything (annoying, slow) or deciding everything silently (risky). The hierarchy gives a clear decision tree that minimizes interruptions while protecting against bad autonomous calls.
-
----
-
-## 6. Error Handling & Recovery Enhancements
-
-### Why this matters
-
-Current agents have sparse error handling. Missing config files, malformed YAML, git conflicts, flaky tests, timeout scenarios — all undefined. The pipeline either crashes or enters fix loops that never terminate.
-
-### What changes
-
-**6.1 Command timeouts (all agents that run shell commands)**
-
-```
-Every shell command gets a timeout (all configurable via dev-pipeline.local.md):
-- commands.build: 120 seconds (configurable via commands.build_timeout)
-- commands.test: 300 seconds (configurable via commands.test_timeout)
-- commands.lint: 60 seconds (configurable via commands.lint_timeout)
-- Inline check scripts: 5 seconds (existing hooks.json timeout: 5000ms)
-
-On timeout:
-- Classify as TOOL_FAILURE
-- Log: "Command '{cmd}' timed out after {N}s"
-- Report to orchestrator for retry or escalation
-```
-
-**6.2 Flaky test detection (`pl-500-test-gate`)**
-
-```
-On first test failure:
-1. Re-run ONLY the failing tests (not full suite)
-2. If they PASS on re-run: mark as FLAKY
-   - Log WARNING: "Flaky test: {test_name} — passed on re-run"
-   - Proceed (don't enter fix loop for flaky tests)
-   - Post to Linear ticket: "Flaky test detected: {test_name}"
-3. If they FAIL again: genuine failure, enter normal fix loop
-```
-
-**Why re-run only failing tests:** Re-running the entire suite for one flaky test wastes minutes. Targeted re-run confirms flakiness in seconds.
-
-**6.3 Standardized escalation format (all agents)**
-
-```
-When escalating to user, always use this format:
-
-## Pipeline Paused: {STAGE_NAME}
-
-**What happened:** {specific failure — not "something went wrong"}
-**What was tried:** {N} attempts — {strategy 1}, {strategy 2}, ...
-**Root cause (best guess):** {analysis based on error output}
-**Options:**
-1. {Concrete action} — `/pipeline-run --from={stage}`
-2. {Alternative} — what changes to make first
-3. Abort — no action needed, state preserved
-
-Never escalate with just "Pipeline blocked." Always include diagnosis.
-```
-
-**6.4 Recovery budget**
-
-```
-The existing recovery engine defines 7 strategies (transient-retry,
-state-reconstruction, agent-reset, tool-diagnosis, dependency-health,
-resource-cleanup, graceful-stop). Each strategy has its own internal
-retry limit.
-
-New constraint: Max 5 total strategy *applications* per pipeline run.
-The recovery engine tries strategies in priority order. After 5 total
-applications (across any combination of strategies), stop trying and
-escalate. This means in the worst case, the engine tries 5 different
-strategies (or the same one 5 times, or any mix).
-
-If recovery itself fails: write minimal state.json with
-{ "recovery_failed": true, "last_known_stage": N } and escalate
-with playbook. Never enter infinite recovery loops.
-
-This cap is a new constraint added to shared/recovery/recovery-engine.md.
-```
-
-**6.5 Oscillation detection (`pl-400-quality-gate`)**
-
-```
-Track score across fix cycles. If score DECREASES between cycles
-(e.g., 85 → 78), flag as "quality regression during fix cycle."
-- Post to Linear: "Fix cycle {N} made things worse: {score_before} → {score_after}"
-- Escalate: don't keep fixing if fixes are introducing new problems
-```
-
----
-
-## 7. Score 100 Philosophy
-
-### Why this matters
-
-The current pipeline accepts CONCERNS (score 60-79) as "good enough" after max cycles. This means warnings accumulate across runs. The new philosophy: every finding gets fixed or gets a written explanation.
-
-### What changes
-
-**7.1 Escalation ladder**
-
-| Score | Action |
-|---|---|
-| 95-99 | Proceed. Remaining INFOs documented in Linear. Likely style nits or intentional trade-offs. |
-| 80-94 | Proceed with CONCERNS. Each unfixed WARNING documented in Linear with: what, why, options. Create follow-up tickets for architectural WARNINGs. |
-| 60-79 | Pause. Full findings posted to Linear. Ask user: "Score {N}/100 after {max} cycles. {M} findings remain. Options: 1) I fix specific items you choose, 2) Proceed as-is, 3) Abort." |
-| < 60 | Pause. Recommend abort or major replan. Present architectural analysis of root cause. |
-| Any CRITICAL remaining | Hard stop. NEVER proceed. Post to Linear. Present specific CRITICAL with full context and options. |
-
-**7.2 Unfixable finding documentation**
-
-When a finding survives all fix cycles, the quality gate posts a structured comment on the Linear Epic:
-
-```markdown
-## Unfixed Finding: {CATEGORY-CODE}
-
-**What:** {description of the issue}
-**Why it wasn't fixed:** {specific reason — not "couldn't fix it"}
-**Options:**
-1. {Option A} — {trade-offs, estimated effort}
-2. {Option B} — {trade-offs, estimated effort}
-3. {Accept for now} — {risk assessment at current scale}
-
-**Recommendation:** {which option and why}
-```
-
-**Why document everything:** A finding that's "unfixable in this sprint" is still a finding. The documentation creates a paper trail. The follow-up ticket ensures it doesn't get forgotten. The Linear comment means anyone reviewing the epic can see the full quality picture.
-
----
-
-## 8. Boy Scout Rule — Formalized
-
-### Why this matters
-
-The implementer already mentions "leave code better than you found it" but it's vague and untracked. Agents don't know what's allowed, how much, or how to report it.
-
-### What changes
-
-**8.1 New finding category: `SCOUT-*`**
-
-Boy Scout improvements are logged as positive findings (no point deduction):
-
-```
-file:line | SCOUT-CLEANUP | INFO | Extracted 45-line method into helper | Was violating 40-line limit
-file:line | SCOUT-NAMING  | INFO | Renamed `data` to `orderItem` | Improved readability
-file:line | SCOUT-IMPORT  | INFO | Removed 3 unused imports | Dead code cleanup
-```
-
-**8.2 Hard boundaries**
-
-```
-## Boy Scout Rules (all implementation agents)
-
-You MUST improve code you touch. You MUST NOT go looking for things to fix.
-
-Allowed (within files you're already modifying):
-- Remove unused imports
-- Rename unclear variables (same file only)
-- Extract overlong functions (>40 lines)
-- Add missing KDoc/TSDoc on functions you modified
-- Replace deprecated API calls you encounter
-- Fix obvious typos in comments
-
-Forbidden:
-- Modifying files not in your task's file list
-- Refactoring across module boundaries
-- Changing public API signatures
-- Adding features "while you're here"
-- Restructuring test files you didn't change
-- Removing disabled code/config without checking intent (see Section 4)
-
-Budget: Max 10 Boy Scout changes per task. If you find more,
-log them as INFO findings for the next run's PREEMPT.
-```
-
-**Why a budget:** Without limits, an eager agent could "Boy Scout" an entire file, turning a 2-line change into a 200-line diff. The budget keeps improvements proportional to the actual task.
-
----
-
-## 9. Recap Agent — `pl-720-recap`
-
-### Why this matters
-
-The retrospective (`pl-700`) updates config and learnings for the pipeline's future runs. But humans — PR reviewers, project stakeholders, future developers — need a different view: what was done, why decisions were made, what improved, and what was left. Currently, this information is scattered across stage notes, state.json, and Linear comments.
-
-### What changes
-
-**New agent: `agents/pl-720-recap.md`**
+Configurable in `pipeline-config.md`:
 
 ```yaml
-name: pl-720-recap
-description: Creates a human-readable markdown recap of the entire pipeline run.
-  Reads all stage notes, state, quality reports, and Boy Scout logs to produce a
-  single document explaining what was built, why decisions were made, what was
-  improved, what remains unfixed, and key metrics. Suitable for PR descriptions,
-  team updates, and project history.
-tools: [Read, Glob, Grep, Bash]
+scoring:
+  oscillation_tolerance: 5
 ```
 
-Note: The recap agent does not list Linear MCP tools in its frontmatter. It uses
-whatever tools are available at runtime (Linear tools are visible in the agent's
-prompt context if the MCP is active). If Linear is unavailable, the recap is
-written to file only — no error.
+Constraint: `oscillation_tolerance` must be >= 0 and <= 20. If violated, use default (5).
 
-**Execution order within Stage 9 (LEARN):**
-1. `pl-700-retrospective` runs first — updates config, captures learnings
-2. `pl-720-recap` runs second — reads all outputs including retrospective results
-3. Orchestrator closes the Linear Epic AFTER both agents complete
-This ensures the recap can reference learnings from the retrospective.
+#### 3.2 Critical Agent Gap Severity
 
-**Input (from orchestrator):**
-- All stage notes paths (`.pipeline/stage_*_notes_*.md`)
-- State.json (counters, timestamps, integrations)
-- Quality gate report (findings, scores, verdicts)
-- Boy Scout log (SCOUT-* findings)
-- PR URL (if created)
-- Linear Epic ID (if tracked)
+Strengthen partial failure handling. Add after existing rule 2:
 
-**Output: `.pipeline/reports/recap-{date}-{story-id}.md`**
+> If the timed-out agent covers a CRITICAL-focused domain, use WARNING severity instead of INFO for the coverage gap finding:
+> `{agent}:0 | REVIEW-GAP | WARNING | Critical-domain agent timed out, {focus} not reviewed | Re-run review or inspect manually`
+>
+> A domain is "critical-focused" if the agent's `focus` field in batch config contains any of: "security", "auth", "injection", "architecture", "boundary", "SRP", "DIP".
 
-```markdown
-# Pipeline Recap: {requirement summary}
+#### 3.3 Constraints Table Addition
 
-**Date:** {ISO date}
-**Duration:** {minutes}
-**PR:** #{number} ({url})
-**Linear:** {epic-id}
-**Quality Score:** {final-score}/100 ({verdict})
+Add to the existing constraints list:
+
+| Field | Constraint |
+|-------|-----------|
+| `oscillation_tolerance` | >= 0 and <= 20 |
+
+**Downstream impact:** Quality gate agent (oscillation logic, partial failure severity), orchestrator (constraint validation at PREFLIGHT).
 
 ---
 
-## What Was Built
+### 4. Recovery Engine (`shared/recovery-engine.md`)
 
-{Per-story summary: what files were created/modified, what functionality
-was added, how it integrates with existing code}
+#### 4.1 Weighted Recovery Budget
 
-## Key Decisions Made
+Replace "max 5 applications" (section 8) with weighted budget:
 
-{Table: decision | chosen option | rejected option | reasoning}
+| Strategy | Weight | Rationale |
+|----------|--------|-----------|
+| `transient-retry` | 0.5 | Cheap, likely to succeed |
+| `tool-diagnosis` | 1.0 | Standard |
+| `state-reconstruction` | 1.5 | Expensive, risk of data loss |
+| `agent-reset` | 1.0 | Standard |
+| `dependency-health` | 1.0 | Standard |
+| `resource-cleanup` | 0.5 | Cheap, low risk |
+| `graceful-stop` | 0.0 | Terminal — ends the run |
 
-Explanation: For each non-obvious decision, explain the trade-off analysis.
-Why was this the right call for this project, at this time?
+Budget ceiling: `max_weight: 5.0` (same effective limit, but cheap strategies don't starve expensive ones).
 
-## Quality Improvements (Boy Scout)
+Budget warning: When `total_weight > 4.0` (80%), set `recovery.budget_warning_issued: true`, log WARNING: "Recovery budget at {percent}% — {remaining} weight remaining."
 
-{Table: file | change | impact}
+Budget exhaustion: When `total_weight >= max_weight`, escalate with full budget report.
 
-These are improvements made to existing code while implementing the feature.
-They weren't requested — they were found along the way and fixed.
+State tracking: Use `state.json.recovery_budget` object (replaces `recovery_applied` as the primary budget tracker). Keep `recovery_applied` as derived view for backward compatibility.
 
-## Unfixed Findings
+#### 4.2 Pre-Classified Error Validation
 
-{Table: finding | severity | why unfixed | follow-up ticket}
+Add to section 3 "Pre-Classified Errors":
 
-For each: what would it take to fix, and why wasn't it done in this run?
+> When an error arrives with `ERROR_TYPE` and `SUGGESTED_STRATEGY`, validate:
+> 1. `ERROR_TYPE` must exist in `error-taxonomy.md`
+> 2. Compare `SUGGESTED_STRATEGY` with the default strategy for that `ERROR_TYPE`
+> 3. If mismatched: log WARNING "Pre-classified {type} suggests {strategy}, expected {default}. Using suggested."
+> 4. If `ERROR_TYPE` is unknown: log WARNING "Unknown error type {type}. Falling back to heuristic classification."
+>
+> The agent's suggestion is always respected (unless the error type is unknown). The warning surfaces miscalibration for the retrospective.
 
-## Metrics
+#### 4.3 Degraded Capabilities Enforcement
 
-{Table: files created, files modified, tests written, coverage, fix cycles,
-score progression, PREEMPT items applied, Boy Scout improvements}
+Add new section "Degraded Capability Handling":
 
-## Learnings Captured
+> After recovery returns DEGRADED, the recovery engine writes the degraded capability name to `recovery.degraded_capabilities[]`. The orchestrator MUST check this array before any capability-dependent dispatch:
+>
+> | Degraded Capability | Skipped Operations |
+> |---|---|
+> | `"context7"` | Documentation prefetch (Stage 4), context7 queries |
+> | `"linear"` | All Linear tracking operations (create, update, comment) |
+> | `"playwright"` | Preview validation (Stage 8.5) |
+> | `"slack"` | Slack notifications |
+> | `"build"` | Escalate — cannot proceed without build |
+> | `"test"` | Escalate — cannot proceed without tests |
+> | `"git"` | Escalate — cannot proceed without git |
+>
+> Required capabilities (`build`, `test`, `git`) trigger immediate escalation. Optional capabilities are skipped silently with a log entry.
 
-{List of PREEMPT items added or updated, with context on what triggered them}
-```
+#### 4.4 State Reconstruction — Counter Recovery
 
-**Where the recap goes:**
-1. Written to `.pipeline/reports/recap-{date}-{story-id}.md`
-2. If Linear available: summarized (max 2000 chars) as comment on Epic
-3. If PR exists: "What Was Built" and "Key Decisions" sections appended to PR description
-4. Referenced in orchestrator's final report
+Replace "reset all counters to 0" in state-reconstruction strategy with:
 
-**Why a separate agent instead of extending pl-700:** Single responsibility. The retrospective optimizes the pipeline. The recap explains to humans. Mixing them would make both worse — the retrospective would get bloated with prose, and the recap would get polluted with config tuning details.
+> When reconstructing counters from corrupted state:
+>
+> 1. **verify_fix_count:** Sum `fix_attempts` across all `tasks_completed` entries in checkpoint files
+> 2. **test_cycles:** Count `stage_5_notes_*.md` sections containing "Test cycle" or "test fix"
+> 3. **quality_cycles:** Count `stage_6_notes_*.md` sections containing "Quality cycle" or "review cycle"
+> 4. **validation_retries:** Count `stage_3_notes_*.md` sections containing "REVISE"
+> 5. **total_retries:** Sum of all above counters
+> 6. **Fallback:** If a counter cannot be determined from artifacts, use the **configured maximum** (conservative — assumes all retries were used). This prevents accepting extra retries beyond limits.
+>
+> Log all reconstructed values: "State reconstructed: verify_fix={N} (from checkpoint), test_cycles={N} (from notes), quality_cycles={N} (from notes), validation_retries={N} (from notes)."
 
----
-
-## 10. Linear MCP Integration
-
-### Why this matters
-
-The pipeline creates stories, epics, and tasks during planning — but they only exist in stage notes. Linear tracking gives the team visibility into pipeline progress, creates a permanent record of decisions, and enables filtering/searching across runs.
-
-### What changes
-
-**10.1 Config (added to all 12 module templates)**
-
-```yaml
-linear:
-  enabled: true
-  team: "DEV"
-  project: ""
-  labels: ["pipeline-managed"]
-```
-
-If `linear.enabled: false` or missing, skip all Linear calls. No agent should fail if Linear is unavailable.
-
-**10.2 Lifecycle**
-
-| Stage | Linear Action | Target |
-|---|---|---|
-| PLAN | Create Epic + Stories + Tasks | Epic from requirement, Stories from plan, Tasks under Stories |
-| VALIDATE | Comment on Epic: validation verdict | Epic |
-| IMPLEMENT | Move Task: Backlog → In Progress → Done | Each Task as it completes |
-| VERIFY | Comment on Epic: build/test results | Epic |
-| REVIEW | Comment on Epic: quality score + findings | Epic (per cycle) |
-| SHIP | Link PR to Epic, move Stories to In Review | Epic + Stories |
-| LEARN | Comment with retrospective summary, close Epic | Epic |
-
-**10.3 State tracking**
-
-Add to `state-schema.md`:
-```json
-{
-  "linear": {
-    "epic_id": "DEV-123",
-    "story_ids": ["DEV-124", "DEV-125"],
-    "task_ids": { "task-1": "DEV-126", "task-2": "DEV-127" }
-  }
-}
-```
-
-**10.4 Agent instruction (added to every pipeline agent)**
-
-```
-## Linear Tracking
-
-If `integrations.linear.available` is true in state.json:
-- Update the corresponding Linear issue after completing your work
-- Set status to the appropriate value for this stage
-- Add a comment summarizing your output (max 500 chars)
-- If blocked or failed: add comment explaining why
-
-If Linear is unavailable: skip silently. Never fail because Linear is down.
-```
-
-**Why Linear is optional:** Not every project uses Linear. Not every user has the MCP installed. The pipeline must work perfectly without it. Linear is an enhancement, not a dependency.
+**Downstream impact:** Orchestrator (budget checking, degraded capability checks), all agents (via state.json reads).
 
 ---
 
-## 11. Adaptive MCP Integration
+### 5. Agent Communication (`shared/agent-communication.md`)
 
-### Why this matters
+#### 5.1 PREEMPT Item Tracking
 
-The pipeline can benefit from many MCPs beyond Linear — Playwright for preview validation, Slack for notifications, Context7 for documentation, GitHub for PR creation. But requiring them would make the plugin unusable for anyone who doesn't have them all installed.
+Add new section "6. PREEMPT Item Tracking":
 
-### What changes
+> During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes:
+>
+> ```
+> PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
+> PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
+> ```
+>
+> The orchestrator reads these markers from stage notes and populates `state.json.preempt_items_status`:
+> - `{ "applied": true, "false_positive": false }` — item was used and relevant
+> - `{ "applied": false, "false_positive": true }` — item was loaded but inapplicable
+>
+> The retrospective agent reads `preempt_items_status` and:
+> 1. Increments `hit_count` in `pipeline-log.md` for applied items
+> 2. Records false positives for confidence decay acceleration (false positive = 3 unused runs toward decay)
+> 3. Logs: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"
 
-**11.1 PREFLIGHT MCP detection**
+#### 5.2 Finding Deduplication Hints — Size Cap
 
-The orchestrator checks its available tools for known MCP patterns:
+Add to existing section "2. Shared Findings Context":
 
-```
-MCP detection (PREFLIGHT):
-Check for tool name patterns in your available tools:
-- mcp__plugin_linear_linear__*     → Linear available
-- mcp__plugin_playwright_playwright__* → Playwright available
-- mcp__plugin_slack_slack__*       → Slack available
-- mcp__plugin_figma_figma__*       → Figma available
-- mcp__plugin_context7_context7__* → Context7 available
+> Cap dedup hints at **top 20 findings by severity** (all CRITICALs first, then WARNINGs, then INFOs by line number). If previous batches produced > 20 findings, include note:
+>
+> ```
+> Previous batch findings ({N} total, showing top 20 for dedup):
+> ...
+> ({N-20} additional findings omitted — focus on your domain, post-hoc dedup will catch overlaps)
+> ```
 
-Store results in state.json under "integrations".
-```
+#### 5.3 Data Flow Diagram
 
-**11.2 Suggest missing MCPs (informational, never blocking)**
-
-```
-## Optional Integrations
-
-Detected:
- Linear — task tracking enabled
- Context7 — documentation lookup enabled
-
-Not detected (install for enhanced features):
- Playwright — preview validation. Install: claude mcp add playwright -- npx -y @anthropic/mcp-playwright
- Slack — notifications. Install: claude mcp add slack -- npx -y @anthropic/mcp-slack
-
-Pipeline will run fine without these. They add capabilities, not requirements.
-```
-
-**11.3 Per-agent MCP usage**
-
-| Agent | Linear | Playwright | Slack | Context7 | GitHub |
-|---|---|---|---|---|---|
-| pl-100-orchestrator | Create Epic/Stories | — | Notify start/finish | — | — |
-| pl-200-planner | Create Tasks | — | — | Lookup docs | — |
-| pl-300-implementer | Update Task status | — | — | Lookup docs | — |
-| pl-400-quality-gate | Comment findings | — | — | — | — |
-| pl-500-test-gate | Comment test results | — | — | — | — |
-| pl-600-pr-builder | Link PR to Epic | — | Notify PR ready | — | Create PR |
-| pl-650-preview-validator | — | Smoke + E2E + Visual | — | — | — |
-| pl-700-retrospective | Close Epic + summary | — | Post summary | — | — |
-| pl-720-recap | Post recap comment | — | — | — | — |
-
-**11.4 Graceful degradation (in every agent)**
+Replace existing section "5. Data Flow Summary" with expanded version including state writes, Linear operations, PREEMPT feedback, and feedback classification:
 
 ```
-If an MCP call fails unexpectedly (was available but errored):
-- Log WARNING in stage notes
-- Continue without it
-- NEVER fail the pipeline because an optional integration is down
-- NEVER retry MCP calls more than once
+EXPLORE agent → stage_1_notes → orchestrator → PLAN dispatch prompt
+PLAN agent → stage_2_notes → orchestrator → VALIDATE dispatch prompt
+                                          ↘ Linear: create Epic/Stories/Tasks
+VALIDATE agent → stage_3_notes → orchestrator → IMPLEMENT dispatch prompt
+                                              ↘ Linear: validation verdict comment
+IMPLEMENT agent → stage_4_notes → orchestrator → state.json (preempt_items_status)
+                                               → checkpoint.json (preempt_items_used)
+VERIFY (test gate) → stage_5_notes → orchestrator → REVIEW dispatch prompt
+REVIEW batch 1 → findings → quality gate → batch 2 (top 20 dedup hints)
+REVIEW final → stage_6_notes → orchestrator → state.json (score_history)
+                                            ↘ DOCS inline
+SHIP agent → stage_8_notes → orchestrator → LEARN dispatch prompt
+                                          ↘ Linear: PR link, status
+FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
+LEARN (retro) → stage_9_notes → pipeline-log.md (PREEMPT hit counts)
+                              → pipeline-config.md (auto-tuning)
+LEARN (recap) → recap report ↘ Linear: summary comment
 ```
 
-**Why we do NOT bundle MCPs in `.mcp.json`:** Linear, Slack, Playwright all require user credentials. Auto-starting them without setup would produce auth errors on every plugin load. The plugin discovers and adapts to whatever the user has.
+**Downstream impact:** Implementer agents (PREEMPT reporting), quality gate (dedup hint cap), retrospective (PREEMPT hit count updates), feedback capture (classification).
 
 ---
 
-## 12. Plugin Manifest & Public Repo
+### 6. Error Taxonomy (`shared/error-taxonomy.md`)
 
-### Why this matters
+#### 6.1 MCP_UNAVAILABLE — Agent Instruction
 
-The plugin is distributed as a public GitHub repo via the `quantumbitcz` marketplace. The manifests need to be correct for marketplace install to work.
+Add note to MCP_UNAVAILABLE row:
 
-### What changes
+> **Agent handling:** MCP failures are NOT recovery engine domain. Agents handle inline: skip the MCP-dependent operation, log INFO in stage notes ("MCP {name} unavailable, skipping {operation}"), continue with degraded capability. Do NOT call recovery engine for MCP_UNAVAILABLE.
 
-**`plugin.json` updates:**
+#### 6.2 Error Severity Ordering
 
-```json
-{
-  "name": "dev-pipeline",
-  "version": "1.1.0",
-  "description": "Autonomous 10-stage development pipeline with multi-language support, self-healing recovery, and generalized code quality checks",
-  "author": {
-    "name": "QuantumBit s.r.o.",
-    "url": "https://github.com/quantumbitcz"
-  },
-  "repository": "https://github.com/quantumbitcz/dev-pipeline",
-  "homepage": "https://github.com/quantumbitcz/dev-pipeline",
-  "license": "Proprietary",
-  "keywords": [
-    "pipeline", "tdd", "code-review", "quality-gate", "linear",
-    "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c"
-  ],
-  "category": "development",
-  "hooks": "hooks/hooks.json"
-}
-```
+Add new section "Error Severity Ordering":
 
-Changes: version bump to 1.1.0, added `homepage`, explicit `hooks` path, added `linear` keyword.
+> When multiple errors co-occur in a stage, determine outcome by severity (highest first):
+>
+> 1. `CONFIG_INVALID` — pipeline cannot proceed
+> 2. `PERMISSION_DENIED` — system-level block
+> 3. `DISK_FULL` — resource hard limit
+> 4. `STATE_CORRUPTION` — pipeline integrity
+> 5. `DEPENDENCY_MISSING` — required tool absent
+> 6. `GIT_CONFLICT` — version control integrity
+> 7. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
+> 8. `TOOL_FAILURE` — tool-level
+> 9. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
+> 10. `NETWORK_UNAVAILABLE` — possibly transient
+> 11. `MCP_UNAVAILABLE` — optional, graceful degradation
+> 12. `PATTERN_MISSING` — planner error, non-blocking
+>
+> The highest-severity non-recoverable error determines stage outcome. Recoverable errors are attempted via recovery engine in order.
 
-**`marketplace.json`** — no changes needed. `source: "./"` is correct for a public repo where the plugin IS the repo.
+#### 6.3 NETWORK_UNAVAILABLE Permanence Detection
 
-**Installation flow (for users):**
-```
-/plugin marketplace add quantumbitcz
-/plugin install dev-pipeline@quantumbitcz
-```
+Add to NETWORK_UNAVAILABLE row:
 
-**Why version bump matters:** Claude Code caches plugins by version. If you change plugin code but don't bump the version, users won't see updates. Every release needs a version bump.
+> **Permanence heuristic:** After 3 consecutive transient-retry failures for the same endpoint within 60 seconds, reclassify as non-recoverable for that endpoint. Log: "Network to {endpoint} appears permanently unavailable after 3 retries." Continue with degraded mode. Do not consume further recovery budget for this endpoint.
+
+**Downstream impact:** All agents (MCP handling instruction), recovery engine (severity ordering, permanence detection).
 
 ---
 
-## 13. Shared Contract Updates
+### 7. Check Engine Skip Tracking
 
-### 13.1 `state-schema.md` — new fields
+#### 7.1 `shared/checks/engine.sh` Hook Behavior
 
-```json
-{
-  "version": "1.1",
-  "integrations": {
-    "linear": { "available": true, "team": "DEV" },
-    "playwright": { "available": true },
-    "slack": { "available": false },
-    "context7": { "available": true }
-  },
-  "linear": {
-    "epic_id": "DEV-123",
-    "story_ids": ["DEV-124"],
-    "task_ids": { "task-1": "DEV-126" }
-  },
-  "cost": {
-    "wall_time_seconds": 0,
-    "stages_completed": 0
-  },
-  "recovery_applied": [],
-  "scout_improvements": 0
-}
-```
+**Current:** `trap 'exit 0' ERR` silently swallows failures.
 
-**Why `version` field:** Schema evolution is inevitable. Without a version field, old state files from previous runs can't be auto-migrated. The recovery engine needs to know which schema it's reading.
+**New:** On timeout or error:
+1. Still exit 0 (do not block the file edit)
+2. Increment counter in `.pipeline/.check-engine-skipped`:
+   ```bash
+   SKIP_FILE=".pipeline/.check-engine-skipped"
+   if [ -f "$SKIP_FILE" ]; then
+     count=$(cat "$SKIP_FILE")
+     echo $((count + 1)) > "$SKIP_FILE"
+   else
+     echo 1 > "$SKIP_FILE"
+   fi
+   ```
+3. Log to stderr: `[check-engine] Hook skipped for {file} (timeout/error)`
 
-### 13.2 `scoring.md` — additions
+#### 7.2 VERIFY Phase A Integration
 
-- Add `SCOUT-*` as a tracked (non-penalty) category
-- Add time limit guidance: "Each review cycle should complete within 10 minutes"
-- Add findings cap: "If >100 raw findings before dedup, agents should return top 100 by severity with note"
-- Add score sub-bands for Linear documentation granularity (these are operational guidance, not new verdicts — the PASS/CONCERNS/FAIL verdicts remain unchanged):
-  - 95-99 (PASS): remaining INFOs documented in Linear, no follow-up tickets
-  - 80-94 (PASS): each unfixed WARNING documented in Linear with options, architectural WARNINGs get follow-up tickets
-  - 60-79 (CONCERNS): full findings posted to Linear, user asked for guidance
-  - <60 (FAIL): recommend abort or replan
+Orchestrator reads `.pipeline/.check-engine-skipped` at Stage 5 entry:
+- If present and count > 0: report in stage notes
+- Delete marker after reading
+- Informational only — VERIFY runs full checks regardless
 
-### 13.3 Health checks — new checks
-
-Add to `pre-stage-health.sh`:
-- `.claude/` directory writability (PREFLIGHT)
-- Disk space check: min 100MB free (IMPLEMENT, VERIFY)
-- Git state: no merge conflicts, no rebase in progress (IMPLEMENT)
-- Module-specific tool: Java version for JVM, Node version for JS, Python version for Python
-
-Add to `dependency-check.sh`:
-- Context7 API probe (IMPLEMENT — needed for doc prefetch)
-- Git remote reachability (SHIP — needed before PR creation)
+**Downstream impact:** Check engine script, orchestrator (VERIFY phase A).
 
 ---
 
-## 14. Agent-Specific Enhancements
+## Batch 2: Consumer Changes (Separate Implementation Phase)
 
-### 14.1 `pl-200-planner`
+After Batch 1 contracts land, these consumers update:
 
-- Add token budget per section: risk matrix max 300 tokens, stories max 500 each
-- Add: "If requirement spans multiple modules, create one story per module with explicit integration points"
-- Add: "If conventions file is unreadable, log WARNING and proceed with universal defaults"
-- Add: "Max 2 minutes brainstorming alternatives. If none clearly better, proceed as-is"
-- Add: "If task affects >20 files, it's too large — split into sub-tasks"
-
-### 14.2 `pl-210-validator`
-
-- Add per-perspective budget: ~20% of output tokens each
-- Add: "Read conventions file ONCE, cache across all 5 perspectives"
-- Add: "If >20 findings, return top 20 by severity with truncation note"
-- Add: "If conventions file missing, skip convention checks, proceed with universal checks"
-
-### 14.3 `pl-300-implementer`
-
-- Add: "Max 5 minutes per fix attempt. If stuck, try a different approach or report failure"
-- Add: "On flaky test: re-run once. If passes, proceed. If fails again, fix loop"
-- Add: "DO NOT modify files outside the task's listed file paths"
-- Change: function size from "~30-40 lines" to "max 40 lines (hard limit)"
-- Change: nesting from "~3 levels" to "max 3 levels (hard limit)"
-- Add: "Before removing or disabling any existing code, check git blame and comments to verify it wasn't intentionally placed"
-
-### 14.4 `pl-310-scaffolder`
-
-- Add: "Verify pattern file exists (`ls`) before reading. If missing, report ERROR"
-- Add: "Max 3 compilation fix attempts. After 3, report partial scaffold"
-- Add: "If generated file >400 lines, split into sub-components per module conventions"
-
-### 14.5 `pl-400-quality-gate`
-
-- Add: "If >50 deduplicated findings, return top 50 by severity. Note total count"
-- Add: oscillation detection (Section 6.5)
-- Add: "If all batches skipped (no conditions met), return PASS with WARNING: coverage gap"
-
-### 14.6 `pl-500-test-gate`
-
-- Add: command timeout (Section 6.1)
-- Add: flaky test detection (Section 6.2)
-- Add: "Coverage exception list read from module conventions, not hardcoded"
-- Add: "If >500 tests in suite, run targeted tests first (matching changed files)"
-
-### 14.7 `pl-600-pr-builder`
-
-- Add: "If `gh pr create` fails, retry once. If still fails, output manual git commands"
-- Add: "If branch has existing open PR, update existing instead of creating new"
-- Add: "Append recap's 'What Was Built' and 'Key Decisions' to PR description"
-
-### 14.8 `pl-050-project-bootstrapper`
-
-- Add: "If context7 unavailable, use latest stable from conventions file — DO NOT guess versions"
-- Add: "After scaffold: run build + test. If fails after 3 attempts, report partial scaffold"
-- Add: "If bootstrap description is ambiguous, ask ONE question to clarify language/framework"
-- Add: "Validate every generated file compiles/parses before reporting success"
-
-### 14.9 `pl-150-test-bootstrapper`
-
-- Add: "If test framework is not installed, report ERROR with install command — do not attempt to install it"
-- Add: "If coverage tool is unavailable, skip coverage report, log INFO, continue with test generation"
-- Add: "Before generating tests for a file, check if tests already exist (grep for imports of the source file in test directories)"
-- Reviewed and confirmed: existing constraints (never mock everything, realistic data, 3 fix attempts max, idempotent) are adequate
-
-### 14.10 `pl-160-migration-planner`
-
-- Add: "If context7 is unavailable for API mapping, use the library's CHANGELOG or migration guide from the repo — do not guess API equivalents"
-- Add: "If circular dependency discovered mid-migration, pause the current phase and report with dependency graph"
-- Reviewed and confirmed: existing constraints (never mix old/new API in same file, each batch own commit, pause on 3+ rollbacks) are the most rigorous of any agent — no further hardening needed
-
-### 14.11 `pl-250-contract-validator`
-
-- Add: "If contract file has no git baseline (new contract, not yet committed), treat all fields as 'added' — no breaking changes possible"
-- Add: "If `git show` fails for baseline, log WARNING and run current-state-only analysis (structure validation without diff)"
-- Reviewed and confirmed: existing 15 constraints are the most disciplined in the pipeline — no further hardening needed
-
-### 14.12 `pl-710-feedback-capture`
-
-- Add: "If conventions file is missing or unreadable, classify feedback without convention cross-reference and note the limitation"
-- Add: "If extracted rule contradicts existing conventions, flag as 'CONFLICT' severity and include both the user's feedback and the convention text"
-- Reviewed and confirmed: existing constraints (never modify CLAUDE.md, never modify code, always write feedback file) are adequate
-
-### 14.13 `pl-650-preview-validator`
-
-- Add: "If Playwright MCP becomes unreachable mid-check, stop the current check, score with available results, log which checks were skipped"
-- Add: "If preview URL returns non-200 after 3 retries (30s apart), mark as CRITICAL and skip remaining checks — do not wait indefinitely"
-- Reviewed and confirmed: existing constraints (10 min timeout, graceful degradation, max 1 fix cycle) are good but the Playwright dependency needs explicit fallback guidance since it's the only agent whose core function depends on an optional MCP
-
-### 14.14 `pipeline-init` skill
-
-- Add: "DETECT phase: validate git repo, `.claude/` writable, no existing config (or ask to overwrite)"
-- Add: "VALIDATE phase: run build AND test — report which command failed"
-- Add: "If module detection ambiguous (multiple project files), ask user which is primary"
-- Add: "After init, run `engine.sh --dry-run` to verify check engine works"
+| File | Changes |
+|------|---------|
+| `pl-100-orchestrator.md` | Adopt all new state fields, implement feedback routing, conflict algorithm, budget checking, skip reporting, total retry budget, oscillation tolerance, degraded capability checks, worktree branch collision detection, MCP mid-run health checks |
+| `pl-710-feedback-capture.md` | Add feedback classification logic (implementation vs design) |
+| `pl-700-retrospective.md` | Add PREEMPT hit count updates from `preempt_items_status`, false positive tracking |
+| `pl-400-quality-gate.md` | Adopt oscillation tolerance, dedup hint cap (top 20), critical agent gap severity |
+| `pl-300-implementer.md` | Add PREEMPT_APPLIED/PREEMPT_SKIPPED markers in stage notes |
+| `shared/checks/engine.sh` | Add skip counter on timeout/error |
+| `modules/*/known-deprecations.json` | Bootstrap known-deprecations for all 12 modules |
+| `shared/recovery/recovery-engine.md` | Already updated in Batch 1 (contract); agents adopt new budget format |
 
 ---
 
-## 15. New Skills
+## Success Criteria
 
-### 15.1 `/pipeline-status` (universal)
+After both batches are implemented:
 
-Reads `.pipeline/state.json` and latest stage notes. Shows: current stage, last run result, quality score, pending findings, Linear epic (if tracked).
-
-### 15.2 `/pipeline-reset` (universal)
-
-Safely removes `.pipeline/` directory after confirming with user. Preserves `pipeline-log.md` (learnings) — only clears run state.
-
-### 15.3 `/verify` (universal)
-
-Runs build + lint + test for the current module without a full pipeline. Reads commands from `dev-pipeline.local.md`. Quick smoke test.
-
-### 15.4 `/security-audit` (universal)
-
-Runs module-appropriate security scanner: `npm audit`, `cargo audit`, `pip-audit`, `./gradlew dependencyCheckAnalyze`, `govulncheck`. Aggregates results.
-
-### 15.5 `/codebase-health` (universal)
-
-Runs the check engine in full `--review` mode outside the pipeline context. Reports all findings across all layers.
-
-### 15.6 `/migration` (universal)
-
-Thin launcher for `pl-160-migration-planner`. Accepts migration description as input.
-
-**Why only 6 skills:** YAGNI. The audit identified 30+ possible skills, but most are speculative. These 6 cover the gaps users actually hit: "what's the pipeline doing?" (status), "start fresh" (reset), "quick check" (verify), "is it secure?" (audit), "how's the codebase?" (health), "upgrade a dependency" (migration). More can be added per-module as demand emerges.
+1. **PREEMPT feedback loop closed:** Hit counts increment after each run, false positives accelerate decay
+2. **Design-level feedback routes to PLAN:** User rejects PR with "wrong approach" → pipeline re-plans, not re-implements
+3. **Parallel conflicts are deterministic:** Explicit algorithm, no file corruption possible
+4. **Retry budget is bounded:** No run exceeds `total_retries_max` cumulative retries
+5. **Check engine failures are visible:** Skipped checks reported at VERIFY, not silently lost
+6. **Recovery budget is fair:** Transient retries don't starve critical recovery strategies
+7. **Oscillation tolerance prevents false stops:** Minor score dips don't halt the pipeline
+8. **Worktree branches don't collide:** Collision detection with suffix fallback
+9. **Convention drift is granular:** Per-section hashing reduces false positive warnings
+10. **Linear sync is tracked:** Failed operations logged, desync reported in retrospective
+11. **State reconstruction is conservative:** Counters default to max, not 0
+12. **Error severity is ordered:** Aggregation uses defined priority, not arbitrary choice
+13. **MCP handling is explicit:** Agents know to handle MCP failures inline, not via recovery engine
+14. **Network permanence is detected:** Repeated failures stop consuming recovery budget
+15. **Known deprecations bootstrap:** All 12 modules have pre-populated deprecation registries
 
 ---
 
-## 16. Deprecated File Cleanup (Already Done)
+## Risks and Mitigations
 
-The previous session already completed:
-- Removed 5 deprecated react-vite hooks (wrappers to engine.sh)
-- Removed 3 deprecated kotlin-spring scripts (wrappers to engine.sh)
-- Fixed 4 ghost agent references in module templates
-- Created `backend-performance-reviewer` and `frontend-performance-reviewer`
-- Cleaned `frontend-reviewer` (removed security/performance leaks)
-- Added performance reviewers + missing cross-cutting agents to all 12 module templates
-
----
-
-## Implementation Priority
-
-### Phase 1: Foundation (highest impact, enables everything else)
-
-1. Orchestrator hardening (Sections 1-5): forbidden actions, config validation, autonomy model, worktree, large codebase
-2. Error handling (Section 6): timeouts, flaky tests, escalation format, recovery budget
-3. State schema updates (Section 13.1): version field, integrations, Linear IDs
-4. Plugin manifest (Section 12): version bump, homepage
-
-### Phase 2: Quality & Tracking
-
-5. Score 100 philosophy (Section 7): escalation ladder, unfixable finding docs
-6. Boy Scout formalization (Section 8): SCOUT-* category, boundaries, budget
-7. Linear integration (Section 10): lifecycle, per-agent instructions
-8. MCP detection (Section 11): PREFLIGHT probe, suggestions
-
-### Phase 3: Agents & Skills
-
-9. Agent-specific enhancements (Section 14): all 14 agents (9 core + 5 reviewed-and-confirmed)
-10. Recap agent (Section 9): new `pl-720-recap`
-11. New skills (Section 15): 6 skills
-12. Health check additions (Section 13.3)
-
-### Phase 4: Module Templates
-
-13. Update all 12 module `local-template.md` files with Linear config section
-
----
-
-## File Change Summary
-
-| Category | Modify | Create |
-|---|---|---|
-| Orchestrator (`pl-100-orchestrator.md`) | 1 | 0 |
-| Pipeline agents (pl-200, pl-210, pl-300, pl-310, pl-400, pl-500, pl-600, pl-700, pl-710, pl-150, pl-160, pl-250, pl-650) | 13 | 1 (`pl-720-recap`) |
-| Review agents (6 cross-cutting: architecture, security, frontend, frontend-performance, backend-performance, infra-deploy) | 6 | 0 |
-| Skills | 0 | 6 |
-| Shared contracts (state-schema, scoring, stage-contract) | 3 | 0 |
-| Recovery engine (recovery-engine.md — add budget cap) | 1 | 0 |
-| Health checks (2 scripts) | 2 | 0 |
-| Plugin manifests (plugin.json) | 1 | 0 |
-| Module templates (12 modules) | 12 | 0 |
-| Bootstrapper + init (pl-050, pipeline-init skill) | 2 | 0 |
-| **Total** | **41** | **7** |
-
----
-
-## Phase 2 Enhancements (2026-03-22)
-
-The following enhancements were designed and implemented in the same session:
-
-1. **`--dry-run` flag** — Pipeline preview: runs PREFLIGHT→EXPLORE→PLAN→VALIDATE then stops. No worktree, no Linear, no file changes.
-2. **Parallel conflict detection** — Tasks sharing files in the same parallel group are automatically serialized. Planner also warned to avoid conflicts by design.
-3. **Timeout enforcement** — Command timeouts (configurable per-project), agent dispatch timeouts (30 min stage cap), and stage/pipeline timeouts with checkpoint-before-stop guarantee.
-4. **Pipeline observability** — Progress reporting at each stage transition (`[STAGE N/10]`), error reporting with diagnostic context, cost tracking (wall time, stages completed).
-5. **Error taxonomy** — 15 classified error types with recovery strategies in `shared/error-taxonomy.md`. Pre-classified errors skip heuristic matching in the recovery engine.
-6. **Scoring customization** — Per-project overrides for formula weights and verdict thresholds in `pipeline-config.md`. Constraints enforced at PREFLIGHT.
-7. **Agent effectiveness tracking** — Retrospective tracks per-agent metrics (time, findings, false positive rate, coverage). Auto-tuning triggers at 30% FP rate, zero findings, or >120s average.
-8. **PREEMPT lifecycle** — Confidence decay (10 unused runs: HIGH→MEDIUM→LOW→ARCHIVED), archival to bottom of pipeline-log.md, promotion trigger at 3+ applications.
-9. **Cross-project learning promotion** — Patterns appearing in 3+ runs with HIGH confidence are proposed for module-level learnings. 3+ projects triggers conventions upgrade proposal.
-10. **Convention drift detection** — SHA256 first 8 chars of conventions file stored at PREFLIGHT. Agents compare mid-run and warn if file changed.
-11. **Agent communication protocol** — Formal documentation of data flow (stage notes, shared findings context, state.json ownership, agent restrictions) in `shared/agent-communication.md`.
-12. **`/pipeline-history` skill** — View quality score trends, common findings, agent effectiveness, and PREEMPT health across runs.
-13. **`/pipeline-rollback` skill** — Safe undo with 4 modes: worktree, post-merge revert, Linear cleanup, state-only reset.
-
-### Phase 2 File Summary
-
-| Category | Files |
-|---|---|
-| Orchestrator (dry-run, conflicts, timeouts, observability, drift) | 1 modified |
-| Planner (conflict prevention) | 1 modified |
-| Quality gate (inter-batch dedup reference) | 1 modified |
-| Retrospective (effectiveness, PREEMPT lifecycle, cross-project) | 1 modified |
-| Shared contracts (error taxonomy, agent communication, scoring, state schema, recovery engine) | 5 modified/created |
-| Learnings (effectiveness template, README) | 2 modified/created |
-| Skills (pipeline-history, pipeline-rollback) | 2 created |
-| Module templates (scoring config) | 2 modified |
-| Documentation (CLAUDE.md, spec) | 2 modified |
-| **Total** | **17 files** |
+| Risk | Mitigation |
+|------|-----------|
+| State schema changes break running pipelines | Version-based forward migration (1.1 → 1.2) with safe defaults |
+| Total retry budget too low (10) stops legitimate complex runs | Configurable in pipeline-config.md, constraint allows up to 30 |
+| Feedback classification is wrong (design classified as implementation) | Default to `implementation` when ambiguous — safer, doesn't discard plan |
+| Recovery weight assignments are wrong | Weights are in contract — easy to tune per-project if needed |
+| Oscillation tolerance too generous (allows bad code through) | Default 5 is conservative; projects can set to 0 for strict mode |
