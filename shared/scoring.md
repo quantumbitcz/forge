@@ -30,6 +30,39 @@ Every pipeline run starts at 100. Each finding deducts points based on its sever
 | 0 CRITICAL, 8 WARNING, 1 INFO | 58 | FAIL |
 | 1 CRITICAL, 0 WARNING, 0 INFO | 80 | FAIL (CRITICAL present) |
 
+## Scoring Customization
+
+The default formula and thresholds can be overridden per-project in `pipeline-config.md`:
+
+    scoring:
+      critical_weight: 20
+      warning_weight: 5
+      info_weight: 2
+      pass_threshold: 80
+      concerns_threshold: 60
+
+### Resolution Order
+
+1. `pipeline-config.md` scoring values (if present)
+2. Plugin defaults (the values in this document)
+
+### Constraints
+
+These constraints are enforced at PREFLIGHT. If violated, log WARNING and use plugin defaults:
+
+- `critical_weight` must be >= 10 (CRITICALs are always serious)
+- `warning_weight` must be >= 1 (WARNINGs cannot be fully suppressed)
+- `info_weight` must be >= 0 (INFOs can be zero-weighted but not negative)
+- `pass_threshold` must be >= 60 (below 60 is always FAIL)
+- `concerns_threshold` must be < `pass_threshold`
+- `concerns_threshold` must be >= 40
+
+### When to Customize
+
+- **Stricter** (raise weights/thresholds): regulated industries, production-critical systems, shared libraries
+- **Looser** (lower weights/thresholds): prototypes, internal tools, early-stage startups
+- **Default works for most projects.** Only customize if the default scoring is causing false gates (blocking good code) or false passes (allowing bad code).
+
 ## Verdict Thresholds
 
 | Verdict | Condition | Pipeline Action |

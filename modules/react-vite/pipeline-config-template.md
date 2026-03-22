@@ -50,3 +50,11 @@ Applied by `pipeline-learner` when updating this config:
 3. If a domain appears in hotspots 3+ times -> add a domain-specific PREEMPT to pipeline-log.md
 4. If `success_rate` drops below 60% over last 5 runs -> set `auto_proceed_risk` to LOW (more cautious)
 5. If `success_rate` is 100% over last 5 runs -> set `auto_proceed_risk` to HIGH (more autonomous)
+
+# Scoring customization (uncomment to override defaults)
+# scoring:
+#   critical_weight: 20
+#   warning_weight: 5
+#   info_weight: 2
+#   pass_threshold: 80
+#   concerns_threshold: 60
