@@ -40,6 +40,16 @@ The `.pipeline/state.json` file does not exist when it should (mid-pipeline run)
 5. **Log all reconstructed counter values** with their sources (e.g., `"verify_fix_count=3 (from 3 checkpoint fix_attempts)"`, `"test_cycles=2 (from stage_5_notes)"`, `"quality_cycles=MAX(3) (undeterminable, using configured maximum)"`).
 6. **Write reconstructed state** and log: `"State reconstructed from {sources used}. Counters reconstructed from evidence or set to configured maximum."`
 
+### Post-Reconstruction Schema Validation
+
+After writing the reconstructed `state.json`, verify the `version` field:
+
+1. If `version` is missing or < `"1.3"`: apply the appropriate migration chain (1.1→1.2→1.3)
+2. If `version` is `"1.3"`: no migration needed
+3. Log: "Reconstructed state at schema version {version}. Migration applied: {yes/no}."
+
+This ensures reconstructed state files always match the current schema, regardless of what artifacts were used for reconstruction.
+
 ### 1.2 Invalid JSON in `state.json`
 
 The file exists but contains invalid JSON (parse error).

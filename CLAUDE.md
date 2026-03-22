@@ -139,7 +139,7 @@ grep -A1 "^name:" agents/*.md
 shared/checks/engine.sh --dry-run
 
 # Verify all modules have required files
-for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json} 2>&1; done
+for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} 2>&1; done
 
 # Verify Linear config in all module templates
 for m in modules/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING linear: $m"; done

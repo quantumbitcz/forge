@@ -579,6 +579,13 @@ Extract from results: steps completed vs failed, files created/modified, fix loo
 
 ### 7.6 Parallel Conflict Detection
 
+**Timing:** Conflict detection runs AFTER all scaffolders in the group have completed but BEFORE any implementer in the group is dispatched. This ensures file lists from scaffolder output are final. Sequence for each parallel group:
+
+1. Run all scaffolders in the group (serially — scaffolders are fast and their output is needed for conflict detection)
+2. Run conflict detection on the group using scaffolder output file lists
+3. Dispatch implementers for the conflict-free group (parallel up to `parallel_threshold`)
+4. After implementers complete, process any serialized sub-groups (step 1-3 recursively)
+
 BEFORE dispatching parallel group G:
 
 1. For each task in the group: read target files from scaffolder output or plan
@@ -690,6 +697,9 @@ After all batches: run `quality_gate.inline_checks` (scripts or skills from conf
 ### 9.3 Fix Cycle
 
 If score < 100 and `quality_cycles` < `quality_gate.max_review_cycles`:
+
+**Pre-dispatch budget check:** Before dispatching the implementer for quality fixes, check remaining recovery budget: if `recovery_budget.max_weight - recovery_budget.total_weight < 1.0`, log WARNING: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Quality fix dispatch may not survive a tool failure." Proceed with the dispatch but with awareness that recovery options are limited. This is informational — the pipeline doesn't skip fixes, but the warning surfaces in stage notes for the retrospective.
+
 1. Send ALL findings to `pl-300-implementer` for fixing
 2. Re-run VERIFY (Stage 5) -- but only compile + targeted tests
 3. Re-dispatch only the batch agent(s) that found issues
@@ -722,6 +732,10 @@ Track score across fix cycles using `score_history[]`. Compute delta between con
 | `abs(delta) > oscillation_tolerance` | Escalate — "Fix cycle {N} introduced regression: {score_before} → {score_after} (exceeds tolerance {oscillation_tolerance})." Post to Linear. Do not continue fixing. |
 
 See `shared/scoring.md` for the oscillation tolerance definition and configurable threshold.
+
+**Consecutive dip rule:** Track dip count across cycles. If a second dip occurs (even within tolerance), escalate immediately — do not allow a third cycle. This prevents oscillating fixes from consuming unlimited cycles.
+
+**Interaction with max_review_cycles:** Oscillation tolerance does NOT extend beyond `max_review_cycles`. If `quality_cycles >= max_review_cycles`, the run ends regardless of oscillation state. Oscillation tolerance only determines whether to escalate EARLY (before max cycles) when fixes are making things worse.
 
 Write `.pipeline/stage_6_notes_{storyId}.md` with review report, score history.
 
@@ -1335,6 +1349,8 @@ Linear availability can change mid-run. If the first Linear failure occurs after
 - Update `integrations.linear.available: false` in state.json
 - Skip all subsequent Linear operations for the rest of the run (don't retry each one)
 - This prevents accumulating timeout delays from a down Linear server
+
+**Recovery engine interaction:** Linear failures are handled by this inline resilience pattern, NOT by the recovery engine. MCP_UNAVAILABLE errors for Linear do not trigger recovery-engine invocation (per `error-taxonomy.md` MCP handling rules). The 1-retry + degrade pattern is sufficient because Linear is optional infrastructure — the pipeline's core workflow never depends on it.
 
 ---
 

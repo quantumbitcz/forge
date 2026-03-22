@@ -145,6 +145,13 @@ When project dependency versions are available (from `state.json.detected_versio
    - project version >= `since` and (`removed_in` is null or project version < `removed_in`): **WARNING**
    - project version < `since`: **INFO**
 4. **If project version is `"unknown"`**: **APPLY** with WARNING severity (conservative -- do not skip rules when version is uncertain)
+
+**Partial detection handling:** When `detected_versions` has mixed known/unknown values (e.g., `framework_version: "3.2.4"` but `language_version: "unknown"`):
+- Rules referencing `package` that matches `framework`: use `framework_version` for comparison
+- Rules referencing `package` that matches a `key_dependencies` entry: use that specific version
+- Rules referencing `package` not found in any `detected_versions` field: apply conservatively (WARNING severity)
+- The `package` field in the deprecation entry is matched against `detected_versions` keys by normalized name (lowercase, strip vendor prefix)
+
 5. **Backward compatibility**: For legacy v1 entries (missing `applies_from`/`removed_in`/`applies_to`), treat `since` as `applies_from`, set `removed_in` to null, set `applies_to` to `"*"`, and apply conservatively.
 
 ### Version Comparison

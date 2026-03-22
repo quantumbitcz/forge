@@ -101,3 +101,11 @@ The retrospective agent reads `preempt_items_status` and:
 1. Increments `hit_count` in `pipeline-log.md` for applied items
 2. Records false positives for confidence decay acceleration (false positive = 3 unused runs toward decay)
 3. Logs: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"
+
+### Retry Handling
+
+If a task fails and is retried (within `max_fix_loops`), the implementer may write PREEMPT markers for both the failed and successful attempts. When the orchestrator reads stage notes to populate `preempt_items_status`:
+
+- Use markers from the **last attempt only** (the successful one, or the final failed attempt if all attempts failed)
+- Earlier attempt markers are superseded — do not double-count
+- If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status
