@@ -1,0 +1,70 @@
+{
+  "extends": "rust",
+  "framework": "axum",
+  "additional_rules": [
+    {
+      "id": "RA-ASYNC-001",
+      "name": "blocking-call-in-async",
+      "pattern": "std::thread::sleep|std::fs::|std::io::stdin",
+      "scope_pattern": "src/handler/",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Blocking call in async handler (std::thread::sleep, std::fs, etc.) — use tokio async equivalents",
+      "fix_hint": "Replace std::thread::sleep with tokio::time::sleep, std::fs with tokio::fs, or use spawn_blocking for CPU-heavy work.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-CONV-001",
+      "name": "unwrap-in-handler",
+      "pattern": "\\.unwrap\\(\\)|\\.expect\\(",
+      "scope_pattern": "src/handler/",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "unwrap()/expect() in handler — use ? with AppError for proper error responses",
+      "fix_hint": "Replace .unwrap() with ? operator and ensure the error type implements IntoResponse via AppError.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-CONV-002",
+      "name": "unwrap-in-service",
+      "pattern": "\\.unwrap\\(\\)|\\.expect\\(",
+      "scope_pattern": "src/service/",
+      "severity": "INFO",
+      "category": "QUAL-NULL",
+      "message": "unwrap()/expect() in service — prefer returning Result with descriptive error",
+      "fix_hint": "Replace .unwrap() with .map_err() or ? and a custom error type.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-ARCH-001",
+      "name": "db-pool-in-handler",
+      "pattern": "PgPool|Pool<Postgres>",
+      "scope_pattern": "src/handler/",
+      "severity": "INFO",
+      "category": "ARCH-BOUNDARY",
+      "message": "Direct database pool usage in handler — prefer accessing DB through service layer",
+      "fix_hint": "Move database operations to a service method. Handlers should use State<Arc<AppState>> and call service methods.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Handlers must not use sqlx directly",
+      "scope_pattern": "src/handler/",
+      "forbidden_imports": [
+        "use sqlx",
+        "sqlx::query"
+      ],
+      "severity": "CRITICAL",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "model/": 200,
+      "handler/": 300
+    }
+  }
+}

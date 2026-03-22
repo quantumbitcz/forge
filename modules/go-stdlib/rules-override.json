@@ -1,0 +1,58 @@
+{
+  "extends": "go",
+  "framework": null,
+  "additional_rules": [
+    {
+      "id": "GS-CTX-001",
+      "name": "missing-context-parameter",
+      "pattern": "func\\s+\\w+\\([^)]*\\)\\s",
+      "scope_pattern": "internal/",
+      "severity": "INFO",
+      "category": "CONV-CTX",
+      "message": "Exported function without context.Context parameter — consider adding ctx for I/O operations",
+      "fix_hint": "Add `ctx context.Context` as the first parameter if this function performs any I/O (DB, HTTP, file).",
+      "example_ref": ""
+    },
+    {
+      "id": "GS-ERR-001",
+      "name": "capitalized-error-string",
+      "pattern": "errors\\.New\\(\"[A-Z]|fmt\\.Errorf\\(\"[A-Z]",
+      "scope_pattern": "",
+      "severity": "INFO",
+      "category": "CONV-ERR",
+      "message": "Error string starts with capital letter — Go convention is lowercase, no trailing punctuation",
+      "fix_hint": "Start error strings with a lowercase letter and omit trailing periods: `errors.New(\"not found\")` instead of `errors.New(\"Not found.\")`.",
+      "example_ref": ""
+    },
+    {
+      "id": "GS-CONV-001",
+      "name": "panic-in-application",
+      "pattern": "\\bpanic\\(",
+      "scope_pattern": "internal/",
+      "severity": "WARNING",
+      "category": "CONV-SAFETY",
+      "message": "panic() in application code — return errors instead of panicking",
+      "fix_hint": "Replace panic() with returning an error. Only use panic in main() or test helpers.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Handlers must not import repositories",
+      "scope_pattern": "internal/handler/",
+      "forbidden_imports": [
+        "internal/repository"
+      ],
+      "severity": "CRITICAL",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "model/": 150,
+      "handler/": 300
+    }
+  }
+}

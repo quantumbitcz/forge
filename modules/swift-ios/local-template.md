@@ -1,0 +1,76 @@
+---
+project_type: mobile
+framework: swift-ios
+module: swift-ios
+
+explore_agents:
+  primary: "feature-dev:code-explorer"
+  secondary: "Explore"
+
+commands:
+  build: "xcodebuild -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16' build"
+  build_alt: "swift build"
+  lint: "swiftlint lint"
+  test: "xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16'"
+  test_single: "xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing"
+  format: "swiftlint lint --autocorrect"
+
+scaffolder:
+  enabled: true
+  patterns:
+    view: "Sources/Features/{Feature}/Views/{Feature}View.swift"
+    viewmodel: "Sources/Features/{Feature}/ViewModels/{Feature}ViewModel.swift"
+    model: "Sources/Models/{Entity}.swift"
+    service: "Sources/Services/{Domain}Service.swift"
+    test: "Tests/{Subject}Tests.swift"
+
+quality_gate:
+  max_review_cycles: 2
+  batch_1:
+    - agent: "Code Reviewer"
+      source: builtin
+      focus: "general correctness, MVVM adherence, view complexity"
+  batch_2:
+    - agent: "pr-review-toolkit:code-reviewer"
+      source: plugin
+      focus: "CLAUDE.md adherence"
+  inline_checks: []
+
+test_gate:
+  command: "xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16'"
+  max_test_cycles: 2
+  analysis_agents:
+    - agent: "pr-review-toolkit:pr-test-analyzer"
+      source: plugin
+
+validation:
+  perspectives: [architecture, usability, performance, test_strategy, conventions]
+  max_validation_retries: 2
+
+implementation:
+  parallel_threshold: 3
+  max_fix_loops: 3
+  tdd: true
+  scaffolder_before_impl: true
+
+risk:
+  auto_proceed: MEDIUM
+
+conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/swift-ios/conventions.md"
+preempt_file: ".claude/pipeline-log.md"
+config_file: ".claude/pipeline-config.md"
+
+context7_libraries:
+  - "swift"
+  - "swiftui"
+  - "combine"
+  - "swiftdata"
+---
+
+## Swift/iOS Context
+
+SwiftUI with MVVM pattern. Views are small and composable, ViewModels use @Observable macro
+(Swift 5.9+), async/await for concurrency, SwiftData or Core Data for persistence.
+Xcode project organized by feature.
+
+Customize the scheme name and commands above to match your Xcode project.
