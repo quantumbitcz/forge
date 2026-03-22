@@ -208,3 +208,45 @@ scaffold chart/manifest -> write helm test or dry-run assertion (RED) -> impleme
 
 Improve touched manifests if: safe, small (<10 lines), local (same chart/file), convention-aligned.
 NOT in scope: refactoring unrelated charts, changing deployed APIs, modifying production values.
+
+## Dos and Don'ts
+
+### Do
+- Set resource requests AND limits for all containers — prevent noisy neighbor problems
+- Use `readinessProbe` and `livenessProbe` on all services — different endpoints if needed
+- Use `PodDisruptionBudget` for stateful and critical workloads
+- Use `NetworkPolicy` to restrict pod-to-pod communication (default deny, explicit allow)
+- Use namespaces for environment isolation (dev, staging, prod)
+- Pin image tags to SHA digests in production — never use `latest`
+- Use `ConfigMap` for non-sensitive config, `Secret` for credentials (encrypted at rest)
+
+### Don't
+- Don't run containers as root — use `securityContext.runAsNonRoot: true`
+- Don't use `hostNetwork` or `hostPID` unless absolutely necessary
+- Don't store secrets in ConfigMaps — use Kubernetes Secrets or external secret managers
+- Don't set CPU limits too low — causes throttling; prefer generous limits with accurate requests
+- Don't use `kubectl apply` with stdin in CI — use declarative YAML from git
+- Don't skip `rollingUpdate.maxUnavailable` / `maxSurge` configuration
+
+## Observability
+
+### Metrics
+- Expose Prometheus metrics on `/metrics` endpoint (use client library for your language)
+- Monitor: request rate, error rate, latency (RED method), saturation (CPU, memory, disk)
+- Set up alerts for: pod restart loops, OOM kills, persistent volume >80% usage
+
+### Logging
+- Use structured JSON logging — parseable by Loki, ELK, CloudWatch
+- Include: timestamp, level, service name, trace ID, message
+- Log to stdout/stderr — let the platform collect (not to files inside containers)
+
+### Tracing
+- Implement OpenTelemetry for distributed request tracing
+- Propagate trace context via HTTP headers (`traceparent`)
+
+## Cost Optimization
+
+- Right-size resource requests using VPA (Vertical Pod Autoscaler) recommendations
+- Use HPA (Horizontal Pod Autoscaler) for variable traffic — scale on custom metrics, not just CPU
+- Use spot/preemptible nodes for stateless, fault-tolerant workloads
+- Review unused PersistentVolumeClaims and LoadBalancer services monthly

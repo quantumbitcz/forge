@@ -241,3 +241,84 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `$state()` rune for reactive state, `$derived()` for computed values (Svelte 5+)
+- Use `$effect()` with cleanup for side effects (timers, subscriptions, event listeners)
+- Prefer snippet-based composition (`{@render}`) over slot-based for new components
+- Use `$props()` with TypeScript types for component props
+- Implement loading, error, and empty states for every data-fetching component
+- Use `+page.server.ts` for server-side data loading, `+page.ts` for universal
+- Use form actions for mutations — progressive enhancement works without JS
+
+### Don't
+- Don't use `$:` reactive statements — use `$derived()` or `$effect()` runes (Svelte 5)
+- Don't use `export let` for props — use `$props()` rune (Svelte 5)
+- Prefer reassignment over deep mutation for `$state()` objects — Svelte 5 does track deep mutations via proxies, but explicit reassignment makes intent clearer and is easier to debug
+- Don't use `onMount`/`onDestroy` — use `$effect()` with cleanup function
+- Don't fetch data in components — use load functions in `+page.ts` / `+page.server.ts`
+- Don't use `goto()` for data refresh — use `invalidateAll()` or `invalidate('tag')`
+- Don't put secrets in `+page.ts` — only `+page.server.ts` runs server-side
+
+## API Integration
+
+### Data Loading
+- **Server-side:** `+page.server.ts` `load()` for authenticated/sensitive data
+- **Universal:** `+page.ts` `load()` for public data that benefits from client-side navigation
+- **Client-only:** `$effect()` with fetch for real-time data (polling, WebSockets)
+- Always return typed data from load functions — define types in `$types.d.ts` or shared types file
+
+### Form Actions
+- Use `<form method="POST">` with `+page.server.ts` actions for mutations
+- Use `use:enhance` for progressive enhancement (works without JS, enhances with JS)
+- Return validation errors from actions — display inline with `form.errors`
+- Redirect after successful mutation to prevent resubmission
+
+### Error Handling
+- Use `+error.svelte` for route-level error pages
+- Throw `error(404, 'Not found')` from load functions for expected errors
+- Catch unexpected errors in `handleError` hook (`hooks.server.ts`)
+- Display user-friendly messages — never expose stack traces
+
+## Accessibility
+
+### Requirements
+- All interactive elements must be keyboard-accessible (Tab, Enter, Escape, Arrow keys)
+- All images need `alt` text (empty `alt=""` for decorative images)
+- Form inputs need associated `<label>` elements (or `aria-label`)
+- Color contrast: minimum 4.5:1 for normal text, 3:1 for large text (WCAG AA)
+- Use semantic HTML: `<nav>`, `<main>`, `<article>`, `<section>`, `<button>` (not `<div onclick>`)
+
+### Testing Accessibility
+- Use `@testing-library/svelte` with `getByRole`, `getByLabelText` queries
+- Run axe-core in tests: `@axe-core/playwright` for E2E
+- Test with keyboard only (no mouse) for critical flows
+
+## Performance
+
+### Loading Optimization
+- Use `<img loading="lazy">` for below-fold images
+- Preload critical fonts with `<link rel="preload">`
+- Code split at route level (SvelteKit does this automatically)
+- Use `$effect.pre()` for DOM measurements that must happen before paint
+
+### Rendering Optimization
+- Use `{#key expression}` to force re-render when identity changes (not just content)
+- Prefer `{#each items as item (item.id)}` with keyed blocks for list identity
+- Avoid expensive computations in `$derived()` — use `$derived.by()` for complex logic with caching
+- Use `{@html}` sparingly and ONLY with sanitized content (XSS risk)
+
+## Dependency Management
+
+### Package Manager
+- Use pnpm for faster installs and strict dependency resolution
+- Lock file (`pnpm-lock.yaml`) must be committed
+- Review `pnpm audit` results before adding new dependencies
+- Prefer `devDependencies` for build-only tools (Vite plugins, test libraries)
+
+### Choosing Dependencies
+- Check: last commit date, open issues, weekly downloads, bundle size (bundlephobia.com)
+- Prefer Svelte-native packages over React-wrapper ports
+- For utilities < 20 lines: write your own instead of importing a package

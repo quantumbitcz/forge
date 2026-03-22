@@ -93,3 +93,37 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `snprintf` instead of `sprintf` — always bound buffer writes
+- Check all return values — especially `malloc`, file operations, and system calls
+- Use `static` for file-scoped functions and variables — minimize global namespace
+- Use `const` wherever possible — function parameters, global data, pointers
+- Use `volatile` for hardware registers and shared ISR variables — nowhere else
+- Document memory ownership in function signatures (who allocates, who frees)
+- Use stack allocation for small, short-lived buffers — heap only when size is dynamic
+
+### Don't
+- Don't use `gets()` — removed in C11, buffer overflow risk
+- Don't use dynamic allocation (`malloc`) in ISR context — causes non-deterministic timing
+- Don't use `float` in ISR handlers — some MCUs have no FPU, causes context save overhead
+- Don't use unbounded loops in ISR — keep ISR execution under 10us where possible
+- Don't cast away `const` — redesign if needed
+- Don't use `goto` except for centralized error cleanup in functions with multiple resource acquisitions
+
+## ISR and RTOS Patterns
+
+### ISR (Interrupt Service Routine) Rules
+- Maximum ISR duration: 10us on most embedded targets
+- No `malloc`/`free` in ISR — pre-allocate all buffers
+- No `printf`/`sprintf` in ISR — use flag-and-handle pattern (set flag in ISR, process in main loop)
+- Use `volatile` for all variables shared between ISR and main context
+- Disable interrupts (critical section) for the minimum time necessary when accessing shared state
+
+### RTOS Patterns (FreeRTOS / Zephyr)
+- Use message queues for inter-task communication — avoid shared memory where possible
+- Set task priorities based on urgency, not importance: deadline-driven priority assignment
+- Use mutexes (with priority inheritance) for shared resources — not binary semaphores
+- Stack size: measure with high-water mark API, add 20% margin

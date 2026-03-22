@@ -205,3 +205,34 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `thiserror` for library errors, `anyhow` for application errors
+- Use `#[derive(Clone)]` only when types genuinely need cloning — prefer references
+- Use `Arc<T>` for shared read-only state, `Arc<Mutex<T>>` only when mutation is required
+- Use `?` operator consistently for error propagation
+- Use `tracing` crate for structured logging — not `println!` or `log`
+- Write property-based tests with `proptest` for parsing/serialization logic
+
+### Don't
+- Don't use `.unwrap()` in production code — use `?`, `.expect("reason")`, or match
+- Don't use `unsafe` unless you can prove correctness — document the safety invariant
+- Don't clone to satisfy the borrow checker — refactor ownership instead
+- Don't use `Box<dyn Error>` as error type — use concrete error enums
+- Don't ignore compiler warnings — `#![deny(warnings)]` in CI
+- Don't use `.to_string()` in hot paths — prefer `Display` or pre-allocated buffers
+
+## Ownership Anti-Patterns
+
+- **Clone-happy code:** If you find yourself `.clone()`ing everywhere, the ownership model is wrong. Refactor to use references or Arc.
+- **Lifetime annotation explosion:** If a function has 3+ lifetime parameters, consider restructuring. Often means data should be owned, not borrowed.
+- **String ownership confusion:** Use `&str` for function parameters, `String` for owned data. Don't convert between them unnecessarily.
+
+## Tokio Patterns
+
+- Use `tokio::spawn` for truly independent tasks, not for simple async composition
+- Use `tokio::select!` for racing futures (first-to-complete wins)
+- Use `CancellationToken` for graceful shutdown of long-running tasks
+- Set `worker_threads` explicitly in production — don't rely on defaults

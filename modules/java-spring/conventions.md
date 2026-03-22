@@ -130,3 +130,70 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use constructor injection exclusively — never field injection (`@Autowired` on fields)
+- Return specific DTOs from controllers, never entities
+- Use `@Transactional(readOnly = true)` for read-only queries (enables DB optimizations)
+- Validate all external input at the controller layer with `@Valid` / `@Validated`
+- Use `Optional<T>` for nullable return values from repositories, never return null
+- Prefer composition over inheritance for service logic
+- Use Spring Profiles for environment-specific configuration
+- Configure connection pool sizing explicitly (HikariCP defaults may not suit your load)
+
+### Don't
+- Don't catch `Exception` broadly — catch specific exception types
+- Don't use `@Autowired` on fields — use constructor injection (testability, immutability)
+- Don't expose entity IDs as sequential integers in APIs — use UUIDs
+- Don't put business logic in controllers — controllers only validate, delegate, and map
+- Don't use `@PostConstruct` for complex initialization — use `ApplicationRunner` or `@EventListener`
+- Don't create circular dependencies between services — refactor to extract shared logic
+- Don't use `System.out.println` — use SLF4J logger
+- Don't hardcode configuration values — use `@Value` or `@ConfigurationProperties`
+
+## Performance Anti-Patterns
+
+### N+1 Query Prevention
+- Use `@EntityGraph` or `JOIN FETCH` in JPQL for associations accessed in a loop
+- For collections: prefer batch fetching (`@BatchSize(size = 25)`) over individual loads
+- Monitor with: `spring.jpa.show-sql=true` in dev, Hibernate Statistics in tests
+- Rule: if a service method triggers more SQL statements than entities returned, it's likely N+1
+
+### Caching Strategy
+- Use `@Cacheable` for read-heavy, rarely-changing data (lookups, config, reference data)
+- Always define explicit cache names — never use default cache
+- Implement TTL-based eviction — don't rely on infinite caches
+- Use `@CacheEvict` on write operations that invalidate cached data
+- Anti-pattern: caching mutable objects — always return copies or immutable types
+
+### Connection Pool
+- Set HikariCP `maximumPoolSize` to 2x CPU cores for I/O-bound workloads
+- Set `connectionTimeout` to 10 seconds (fail fast, don't queue indefinitely)
+- Monitor with HikariCP metrics (active, idle, waiting)
+
+## Async / Reactive Patterns
+
+### When to Use @Async
+- Background tasks: email sending, report generation, audit logging
+- Always use a custom `TaskExecutor` — never rely on the default (unbounded thread creation)
+- Return `CompletableFuture<T>` for async methods that callers need to await
+
+### Common Pitfalls
+- `@Async` on private methods: does NOT work (proxy-based AOP)
+- `@Transactional` + `@Async` on the same method: transaction is lost (runs in new thread)
+- Missing `@EnableAsync`: `@Async` annotation silently ignored
+
+## Logging and Monitoring
+
+### Structured Logging
+- Use SLF4J with Logback — configure JSON format for production
+- Add MDC context for request tracing: `correlationId`, `userId`, `endpoint`
+- Log at appropriate levels: ERROR (action needed), WARN (degraded), INFO (business events), DEBUG (dev only)
+- Never log sensitive data: passwords, tokens, PII, full request bodies
+
+### Spring Boot Actuator
+- Enable `/health`, `/metrics`, `/info` endpoints
+- Secure actuator endpoints — don't expose `/env` or `/beans` in production
+- Custom health indicators for critical dependencies (database, cache, message queue)

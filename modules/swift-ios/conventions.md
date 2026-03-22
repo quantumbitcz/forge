@@ -116,3 +116,79 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `[weak self]` in closures stored by other objects (delegates, timers, notification observers)
+- Prefer `async/await` over completion handler chains for readability
+- Use `@MainActor` for all UI-updating code
+- Use `Codable` for JSON parsing — implement custom `CodingKeys` when API field names differ
+- Use `Task { }` for launching async work from synchronous contexts (button taps, lifecycle methods)
+- Prefer `@Observable` macro (iOS 17+) over `ObservableObject` + `@Published` for new code
+- Use `swift-format` or `SwiftLint` with project-specific rules
+- Keep view bodies under 30 lines — extract sub-views for independent sections
+
+### Don't
+- Don't force-unwrap (`!`) optionals unless the value is guaranteed (e.g., `IBOutlet` after `viewDidLoad`)
+- Don't use `unowned` unless you can prove the reference will never outlive the owner — `weak` is safer
+- Don't store closures that capture `self` without `[weak self]` — causes retain cycles
+- Don't use `DispatchQueue.main.async` in SwiftUI — use `@MainActor` or `MainActor.run`
+- Don't nest more than 3 levels of `if let` / `guard let` — use early returns
+- Don't use singletons for testable services — use dependency injection (protocol + init parameter)
+- Don't access `UIApplication.shared` in SwiftUI views — use `@Environment` values instead
+
+## Memory Safety
+
+### Retain Cycles
+- **Closures stored in properties:** Always capture `[weak self]` or `[unowned self]`
+- **Timer callbacks:** Timer retains its target — use `[weak self]` or invalidate timer in `deinit`
+- **Delegate patterns:** Declare delegates as `weak var delegate: SomeDelegate?`
+- **Notification observers:** Use block-based API with `[weak self]`, or use Combine publishers
+- **Detection:** Use Instruments > Leaks and Memory Graph Debugger to find cycles
+
+### Value vs Reference Types
+- Prefer `struct` for data models (value semantics, no retain cycles)
+- Use `class` when: identity matters, inheritance needed, or shared mutable state required
+- Use `actor` for thread-safe mutable state (Swift 5.5+)
+
+## Dependency Management (SPM)
+
+### Swift Package Manager
+- Prefer SPM over CocoaPods/Carthage for new projects
+- Pin to exact versions for release builds: `.exact("1.2.3")`
+- Use `.upToNextMinor` for development: allows patch updates
+- Store `Package.resolved` in git for reproducible builds
+- For local packages during development: use `path:` dependency, switch to remote before merge
+
+### Adding Dependencies
+- Evaluate: maintenance activity, issue count, Swift version compatibility, binary size impact
+- Prefer Apple-maintained packages when available (e.g., `swift-collections`, `swift-algorithms`)
+- Avoid dependencies for simple utilities — write your own if < 50 lines
+
+## Networking / API Integration
+
+### URLSession Patterns
+- Create a single shared `URLSession` configuration for your API base URL
+- Use `async/await` wrappers: `let (data, response) = try await URLSession.shared.data(for: request)`
+- Validate HTTP status codes — don't just check for `nil` error
+- Implement retry logic for 429 and 5xx responses (exponential backoff, max 3)
+- Cache responses with `URLCache` for GET requests
+
+### Error Handling for Network
+- Map HTTP errors to domain-specific error enum (`.unauthorized`, `.notFound`, `.serverError`)
+- Show user-friendly error messages — never expose raw HTTP status codes
+- Implement offline detection and queuing for write operations
+
+## Testing Strategy
+
+### What to Test
+- View models / presenters: business logic, state transitions, formatting
+- Services: API integration with mocked URLProtocol
+- Navigation: screen flow logic
+- Accessibility: VoiceOver labels, dynamic type scaling
+
+### SwiftUI Testing
+- Use `@ViewInspector` or snapshot testing for UI verification
+- Test `@Observable` / `ObservableObject` state changes directly (unit tests)
+- E2E with XCUITest for critical user flows only (login, purchase, onboarding)

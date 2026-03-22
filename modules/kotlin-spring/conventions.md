@@ -115,3 +115,67 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `data class` for DTOs and value objects — never for entities (identity matters)
+- Use sealed classes/interfaces for domain models with fixed variants
+- Prefer `when` expression (exhaustive) over `if-else` chains for type dispatch
+- Use extension functions for utility — keep them in dedicated `*Extensions.kt` files
+- Use `require()` and `check()` for preconditions instead of manual if-throw
+- Use `kotlin.Result` or sealed classes for expected failures, exceptions for unexpected ones
+- Coroutine scope: use `supervisorScope` for parallel tasks that should be independently cancellable
+
+### Don't
+- Don't use `lateinit` for nullable types — use `lazy` or nullable with `?`
+- Don't misuse scope functions: `apply` (configure), `let` (transform nullable), `run` (compute in context), `also` (side effects), `with` (non-null scope)
+- Don't use `!!` (non-null assertion) — handle nullability properly with `?.`, `?:`, or `let`
+- Don't expose mutable collections from domain models — return `List<T>` backed by `toList()`
+- Don't use `var` in data classes — all properties should be `val`
+- Don't catch `Exception` — catch specific types; Kotlin coroutines use `CancellationException` for cancellation
+- Don't mix Java `Optional` with Kotlin nullable — use Kotlin `?` in core, convert at adapter boundaries
+
+## Kotlin-Specific Anti-Patterns
+
+### Scope Function Confusion
+Use this guide:
+| Function | Object ref | Return | Use when |
+|----------|-----------|--------|----------|
+| `let` | `it` | lambda result | Null-safe chaining, transforming |
+| `run` | `this` | lambda result | Computing within object context |
+| `apply` | `this` | object | Configuring/initializing object |
+| `also` | `it` | object | Side effects (logging, validation) |
+| `with` | `this` | lambda result | Non-null object, multiple calls |
+
+### lateinit Pitfalls
+- `lateinit` cannot be used with primitive types or nullable types
+- Accessing before initialization throws `UninitializedPropertyAccessException` (not NPE)
+- Use `::property.isInitialized` check only when genuinely uncertain
+- Prefer `lazy` for computed properties, constructor init for required deps
+
+## R2DBC / Reactive Database Patterns
+
+### Connection Management
+- R2DBC connection pool: `spring.r2dbc.pool.max-size` = 2x CPU cores
+- Always use `@Transactional` on use case impls, not on adapters (see Naming Patterns table above)
+- Coroutine + R2DBC: use `CoroutineCrudRepository` — avoid bridging reactive to blocking
+
+### R2DBC Gotchas
+- R2DBC `UPDATE` sets ALL columns by default — use `@Query` for partial updates to avoid overwriting concurrent changes
+- No lazy loading in R2DBC — all associations must be explicitly fetched
+- Transactions in coroutines: use `@Transactional` on suspend functions (Spring 6+ supports this)
+- Always handle `DataIntegrityViolationException` for unique constraint violations — map to domain-specific errors
+
+## Database Performance
+
+### Query Optimization
+- Use `@Query` with explicit SQL for complex joins — avoid generated queries for multi-table operations
+- Batch inserts: use `saveAll()` with appropriate `spring.r2dbc.pool.max-size`
+- Monitor slow queries: log queries taking >100ms
+- Index strategy: index all `WHERE` clause columns, composite indexes for multi-column filters
+
+### Caching
+- Use Spring Cache abstraction (`@Cacheable`, `@CacheEvict`) for read-heavy data
+- Cache keys must be deterministic — avoid caching by mutable objects
+- Set explicit TTL — infinite caches cause stale data bugs

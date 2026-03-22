@@ -136,3 +136,113 @@ Uses Playwright MCP to screenshot a page in both light and dark mode. Checks for
 ### `/fe-react-doctor` — React codebase analysis
 
 Runs `npx -y react-doctor@latest .` to detect React anti-patterns: component complexity, hook misuse, performance issues, missing memoization. Prioritizes fixes by severity and applies project conventions (400-line file limit, entity ID keys, spread-based state updates).
+
+## Dos and Don'ts
+
+### Do
+
+- Use Error Boundaries around route-level components and lazy-loaded chunks
+- Wrap async data fetching in dedicated hooks (e.g., `useFetch`, `useQuery`) — never call `fetch` directly in components
+- Memoize expensive computations with `useMemo` — but ONLY when the computation is measurably slow (profile first)
+- Use `useCallback` for callbacks passed to memoized children — unnecessary otherwise
+- Debounce UI-only input handlers (resize, scroll) with a minimum 150ms delay; debounce network-triggering inputs (search) with 300ms minimum (see API Integration)
+- Prefer `React.lazy()` + `Suspense` for route-level code splitting
+- Use AbortController to cancel in-flight requests on component unmount
+- Prefer component files under 200 lines — extract sub-components when they have independent state or logic (hard limit is 400 lines per file, enforced by check engine)
+- Test user-visible behavior with Testing Library — `getByRole`, `getByText`, never `getByTestId` unless no semantic alternative exists
+
+### Don't
+
+- Don't use `useEffect` for derived state — use `useMemo` or compute inline
+- Don't store server data in `useState` — use a data fetching library (TanStack Query, SWR)
+- Don't create new objects/arrays in render without memoization if passed as props to memoized children
+- Don't suppress ESLint exhaustive-deps warnings — fix the dependency array instead
+- Don't use `index` as key in lists that can reorder, filter, or insert
+- Don't test implementation details (state values, internal method calls, component instances)
+- Don't mock everything — prefer integration tests that render real child components
+- Don't use `any` type — use `unknown` and narrow with type guards
+
+## Error Handling
+
+### Error Boundaries
+
+- Wrap each route in an `ErrorBoundary` component that catches render errors
+- Display a user-friendly fallback UI with a retry button
+- Log errors to your monitoring service (Sentry, LogRocket) from the boundary's `componentDidCatch`
+- Error boundaries do NOT catch: event handlers, async code, SSR, errors in the boundary itself
+
+### Async Error Handling
+
+- All `fetch` calls must handle network errors (catch block) and HTTP errors (status check)
+- Display meaningful error states — never show a blank page on API failure
+- Implement retry logic for transient failures (exponential backoff, max 3 retries)
+- Cancel pending requests on unmount with AbortController to prevent state updates on unmounted components
+
+## State Management
+
+### When to Use What
+
+- **Component state** (`useState`): form inputs, UI toggles, ephemeral state
+- **URL state** (search params, route params): filter criteria, pagination, shareable state
+- **Server state** (TanStack Query / SWR): API data with caching, refetching, optimistic updates
+- **Global client state** (Context / Zustand / Jotai): auth state, theme, feature flags — keep this minimal
+
+### Anti-Patterns
+
+- Don't duplicate server data in global state — let the data fetching library manage the cache
+- Don't use Context for frequently changing values (causes full subtree re-renders)
+- Don't create a single "God store" — prefer multiple small, focused stores
+
+## API Integration
+
+### Data Fetching
+
+- Use a fetch wrapper that standardizes: base URL, auth headers, error parsing, request/response logging
+- Implement request deduplication — identical concurrent requests should share one network call
+- Handle loading, error, and empty states for every API-consuming component
+- Paginated data: prefer cursor-based pagination over offset; use infinite scroll or "Load More" patterns
+
+### Request Lifecycle
+
+- Cancel requests on unmount (AbortController)
+- Debounce search-as-you-type requests (300ms minimum)
+- Show stale data while revalidating (stale-while-revalidate pattern)
+
+## Performance
+
+### Rendering
+
+- Profile with React DevTools before optimizing — don't guess
+- Avoid anonymous functions in JSX that cause child re-renders (extract to `useCallback` if children are memoized)
+- Virtualize long lists (>100 items) with react-window or @tanstack/react-virtual
+- Lazy-load images below the fold with `loading="lazy"` or Intersection Observer
+
+### Bundle
+
+- Route-level code splitting with `React.lazy()` and `Suspense`
+- Analyze bundle with `npx vite-bundle-visualizer` — target <200KB initial JS
+- Tree-shake: use named imports, avoid importing entire libraries
+- Prefer CSS Modules or Tailwind over runtime CSS-in-JS (styled-components, emotion) for bundle size
+
+## Testing Strategy
+
+### What to Test
+
+- User interactions: click, type, submit — test what the user sees and does
+- Conditional rendering: test both branches (loading, error, success, empty)
+- Form validation: test validation messages appear for invalid input
+- API integration: mock at the network level (MSW), not at the component level
+
+### What NOT to Test
+
+- Implementation details: internal state values, method calls, component instances
+- Styling: don't assert CSS classes or inline styles (use visual regression tools instead)
+- Third-party libraries: don't test that React Router navigates or that a date library formats correctly
+- Snapshot tests for large components: they break on every change, providing no signal
+
+### Tools
+
+- Vitest for unit/integration tests
+- Testing Library for component rendering (`@testing-library/react`)
+- MSW (Mock Service Worker) for network mocking
+- Playwright for E2E tests

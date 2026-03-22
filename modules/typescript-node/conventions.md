@@ -149,3 +149,33 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `async/await` over raw Promise chains for readability
+- Use `zod` or `joi` for runtime input validation at API boundaries
+- Use `AbortController` for cancellable operations (HTTP requests, long tasks)
+- Handle `unhandledRejection` and `uncaughtException` at process level
+- Use environment variables for all configuration — never hardcode secrets
+- Use `pino` or `winston` for structured JSON logging
+
+### Don't
+- Don't use `any` type — use `unknown` and narrow with type guards
+- Don't use `require()` in ESM projects — use `import`
+- Don't use `eval()`, `new Function()`, or `vm.runInNewContext()` — security and performance risk
+- Don't use `process.exit()` in library code — only in CLI entry points
+- Don't mix callbacks and promises — convert callbacks with `util.promisify()`
+- Don't use `setTimeout(fn, 0)` for "async" — use `setImmediate()` or `queueMicrotask()`
+
+## Async Anti-Patterns
+
+- **Unhandled rejections:** Every `async` function must have error handling or propagate with `await`
+- **Promise.all vs Promise.allSettled:** Use `Promise.all` when all must succeed, `Promise.allSettled` when partial results are acceptable
+- **Concurrent limits:** Use `p-limit` or manual semaphore for rate-limited APIs — don't fire 1000 concurrent requests
+
+## Streaming / Backpressure
+
+- Use Node.js streams for large file/data processing — don't load entire files into memory
+- Implement backpressure: check `writable.write()` return value, pause on `false`, resume on `drain`
+- Use `pipeline()` (from `stream/promises`) instead of `.pipe()` — handles errors and cleanup

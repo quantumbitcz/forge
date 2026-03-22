@@ -114,3 +114,25 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `async/await` for all route handlers (Vapor 4.50+)
+- Use `Content` protocol for request/response DTOs — validate with custom `Validatable`
+- Use `app.middleware.use()` for cross-cutting concerns (CORS, logging, auth)
+- Use `req.logger` with structured metadata for tracing
+- Group routes with `app.grouped("api", "v1")` for versioning
+
+### Don't
+- Don't use `EventLoopFuture` chains in new code — use `async/await`
+- Don't access `app` properties from within route handlers — use `req.application`
+- Don't return Fluent models directly from routes — use DTOs
+- Don't use force-try (`try!`) — handle errors with proper do-catch
+
+## Query Optimization
+
+- Use `.with(\.$relation)` for eager loading to prevent N+1 queries
+- Use `.join()` for multi-table queries instead of multiple round trips
+- Batch operations: use `.create(on:)` with arrays, not individual `.save(on:)`
+- Monitor query count per request in development — log SQL with `app.logger.logLevel = .debug`

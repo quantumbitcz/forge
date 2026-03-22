@@ -166,3 +166,42 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Return errors as the last return value — always check errors immediately
+- Use `context.Context` as first parameter for functions that do I/O or may block
+- Use `errors.Is()` and `errors.As()` for error comparison (not `==`)
+- Use `defer` for cleanup — files, locks, connections
+- Use `sync.Mutex` for shared mutable state — or prefer channels for communication
+- Use table-driven tests for input/output variations
+
+### Don't
+- Don't ignore errors with `_` — at minimum log them
+- Don't use `panic` for expected errors — only for programmer bugs (invariant violations)
+- Don't use global variables for state — use dependency injection via struct methods
+- Don't use `init()` for complex initialization — prefer explicit setup functions
+- Don't use `interface{}` (now `any`) without type assertion — narrow types as early as possible
+- Don't use goroutines without ensuring they terminate — always pass a `context.Context` for cancellation
+
+## Concurrency Safety
+
+### Goroutine Management
+- Always pass `context.Context` to goroutines for cancellation
+- Use `errgroup.Group` for parallel tasks that share error state
+- Use `sync.WaitGroup` only when you don't need error propagation
+- Detect goroutine leaks in tests with `goleak` (uber-go/goleak)
+
+### Common Data Races
+- Never read and write a map concurrently — use `sync.Map` or protect with `sync.RWMutex`
+- Slice append is not thread-safe — protect with mutex or use channels
+- Use `-race` flag in tests to detect data races: `go test -race ./...`
+
+## Performance Patterns
+
+- Profile with `pprof` before optimizing — don't guess
+- Use `sync.Pool` for frequently allocated/freed objects (buffers, structs)
+- Prefer `strings.Builder` over `+` concatenation in loops
+- Use buffered channels when producer/consumer speeds differ
+- Benchmark with `testing.B`: `go test -bench=. -benchmem`

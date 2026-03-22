@@ -141,3 +141,34 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
 NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bugs.
+
+## Dos and Don'ts
+
+### Do
+- Use `async def` for route handlers only when all I/O within is also async — FastAPI runs `def` handlers in a thread pool automatically, which is safer for sync I/O
+- Use Pydantic `model_validator` for cross-field validation
+- Use dependency injection (`Depends()`) for shared logic (auth, DB sessions, rate limiting)
+- Return typed response models from all endpoints — never return raw dicts
+- Use `BackgroundTasks` for fire-and-forget operations (email, logging)
+- Use `httpx.AsyncClient` for outbound HTTP calls — never `requests` in async context
+
+### Don't
+- Don't use synchronous I/O in async handlers — it blocks the event loop for ALL requests
+- Don't use `time.sleep()` — use `asyncio.sleep()` in async context
+- Don't return database models directly from endpoints — use response DTOs
+- Don't use global mutable state — use dependency injection or context variables
+- Don't catch `Exception` in handlers — let FastAPI's exception handlers manage errors
+- Don't use `print()` — use structured logging with `structlog` or `logging`
+
+## Async Anti-Patterns
+
+- **Blocking the event loop:** `open()`, `os.path.exists()`, `requests.get()` are all blocking. Use `aiofiles`, `asyncio.to_thread()`, `httpx.AsyncClient`
+- **CPU-bound in async:** Don't do heavy computation in async handlers — offload to `asyncio.to_thread()` or a background worker
+- **Missing await:** Forgetting `await` on a coroutine silently returns a coroutine object instead of the result
+
+## Performance
+
+- Use connection pooling for databases: `asyncpg` pool (min=5, max=20 per worker)
+- Use `orjson` for fast JSON serialization (3-10x faster than stdlib `json`)
+- Cache expensive queries with Redis or in-memory LRU cache (`@lru_cache` for pure functions)
+- Profile with `py-spy` for production bottlenecks
