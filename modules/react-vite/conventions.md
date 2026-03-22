@@ -116,3 +116,23 @@ Never show broken charts, NaN, or blank space.
 
 Prefer composable atoms (children-based) over monolithic config-object components.
 Follows the Radix/shadcn pattern.
+
+## Suggested Project Commands
+
+These are project-specific commands that should live in the consuming project's `.claude/commands/` directory, not in the pipeline plugin. Create them during `/pipeline-init` or manually:
+
+### `/fe-check-theme` — Theme token compliance scan
+
+Scans `.tsx` files for hardcoded colors (`bg-white`, `text-gray-*`, hex values) and Tailwind font-size classes (`text-sm`, `text-lg`). Reports violations with line numbers and fix suggestions (e.g., `bg-white` → `bg-background`). Quick lint — no model invocation needed.
+
+### `/fe-design-review` — Full design system review
+
+Comprehensive UI/UX review against the project's design system: typography scale, color tokens, spacing/gap scale, dark mode, responsive layout, empty states, accessibility, chart styling, interaction feedback. Returns findings with severity.
+
+### `/fe-dark-mode-check` — Light/dark mode verification
+
+Uses Playwright MCP to screenshot a page in both light and dark mode. Checks for: text readability, invisible elements (white on white), missing dark mode CSS variable fallbacks, shadow-only borders. Requires dev server running.
+
+### `/fe-react-doctor` — React codebase analysis
+
+Runs `npx -y react-doctor@latest .` to detect React anti-patterns: component complexity, hook misuse, performance issues, missing memoization. Prioritizes fixes by severity and applies project conventions (400-line file limit, entity ID keys, spread-based state updates).

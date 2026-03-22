@@ -87,7 +87,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
 - `pipeline-history` — view quality score trends, agent effectiveness, and run metrics across pipeline runs.
 - `pipeline-rollback` — safely rollback pipeline changes (worktree, merge, Linear, state).
-- `fe-*` skills (`fe-check-theme`, `fe-dark-mode-check`, `fe-design-review`, `fe-react-doctor`) — inline frontend checks. React-vite module only.
+- Frontend-specific commands (`fe-check-theme`, `fe-design-review`, `fe-dark-mode-check`, `fe-react-doctor`) are project-level — they live in the consuming project's `.claude/commands/`, not in this plugin. See `modules/react-vite/conventions.md` for descriptions.
 
 ### Hooks (`hooks/hooks.json`)
 - **Check engine** — PostToolUse on `Edit|Write`; runs `shared/checks/engine.sh --hook` (layer 1–2 fast checks on every file change).

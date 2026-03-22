@@ -124,7 +124,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 | Module directory | lowercase-with-hyphens | `python-fastapi` |
 | Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
 | Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
-| Skill directory | lowercase-with-hyphens | `fe-check-theme` |
+| Skill directory | lowercase-with-hyphens | `pipeline-status` |
 | Verification script | `check-{what}.sh` | `check-antipatterns.sh` |
 | Guard hook | `{what}-guard.sh` | `theme-guard.sh` |
 

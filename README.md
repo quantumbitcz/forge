@@ -43,9 +43,8 @@ Additional includes:
 For React + Vite + TypeScript + shadcn/ui projects.
 
 Additional includes:
-- Guard hooks: `theme-guard.sh`, `function-size-guard.sh`, `file-size-guard.sh`, `import-order-guard.sh`, `deprecation-guard.sh`
 - `known-deprecations.json` -- self-updating registry of deprecated APIs
-- Inline check skills: `/fe-check-theme`, `/fe-design-review`, `/fe-react-doctor`, `/fe-dark-mode-check`
+- Suggested project commands documented in `conventions.md`: `fe-check-theme`, `fe-design-review`, `fe-react-doctor`, `fe-dark-mode-check` (live in consuming project's `.claude/commands/`, not in this plugin)
 
 ### Other modules
 
