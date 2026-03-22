@@ -533,6 +533,9 @@ If `context7_libraries` is configured, resolve and query context7 MCP for curren
 ### 7.3 Execute Tasks
 
 For each parallel group (sequential order, groups 1 -> 2 -> 3):
+
+  **Note:** When the group has 2+ tasks, scaffolders and implementers run in separate phases — scaffolders first (serial), then conflict detection, then implementers (parallel). See section 7.6 for the complete execution sequence.
+
   For each task in the group (concurrent up to `implementation.parallel_threshold`):
 
   a. If `scaffolder_before_impl: true` in config: dispatch `pl-310-scaffolder` with task details, scaffolder patterns, conventions file path. Scaffolder generates boilerplate, types, TODO markers.
