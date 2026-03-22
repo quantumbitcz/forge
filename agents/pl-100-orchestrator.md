@@ -93,14 +93,35 @@ Read `pipeline-config.md` (path from `config_file` or default `.claude/pipeline-
 2. `dev-pipeline.local.md` frontmatter -- fallback defaults
 3. Plugin defaults -- hardcoded fallbacks: `max_fix_loops: 3`, `max_review_loops: 2`, `auto_proceed_risk: MEDIUM`, `parallel_impl_threshold: 3`
 
-### 3.3 Read Pipeline Log (PREEMPT System)
+### 3.3 Config Validation
+
+After reading config files, validate before proceeding:
+
+1. **`dev-pipeline.local.md`**: must exist and have valid YAML frontmatter
+   - If missing: ERROR — "Run `/pipeline-init` to set up this project for the pipeline"
+   - If YAML invalid: ERROR — show parse error with line number
+2. **Required fields**: `project_type`, `framework`, `module`, `commands.build`, `commands.test`, `quality_gate` must be present
+   - If missing: ERROR — list all missing fields
+3. **`conventions_file` path**: must resolve to a readable file
+   - If missing: WARN — "Conventions file not found at {path}. Using universal defaults. Framework-specific checks will be skipped."
+   - Continue with degraded mode, DO NOT abort
+4. **`pipeline-config.md`**: optional
+   - If missing: INFO — "No runtime config found. Using plugin defaults."
+5. **Quality gate agents**: all agents referenced in `quality_gate.batch_N` must exist
+   - Plugin agents (no `source: builtin`): verify file exists in `agents/` directory
+   - Builtin agents (`source: builtin`): accept — Claude Code resolves these at runtime
+   - If plugin agent missing: WARN — "Agent {name} not found in agents/. Will be skipped during REVIEW."
+
+If any ERROR-level validation fails, stop the pipeline and report all errors together. Do not fail on the first error — collect all validation failures and present them as a batch.
+
+### 3.4 Read Pipeline Log (PREEMPT System)
 
 Read `pipeline-log.md` (path from `preempt_file` or default `.claude/pipeline-log.md`):
 - Collect all `PREEMPT` and `PREEMPT_CRITICAL` items
 - Filter items matching the inferred domain area of the current requirement
 - Note the last 3 run results for trend context
 
-### 3.4 Check for Interrupted Runs
+### 3.5 Check for Interrupted Runs
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
 
@@ -110,7 +131,7 @@ Read `.pipeline/state.json`. If it exists and `complete: false`:
 4. If drift detected: **warn user, ask whether to incorporate or discard**
 5. Resume from first incomplete stage/task
 
-### 3.5 --from Flag Precedence
+### 3.6 --from Flag Precedence
 
 If `--from=<stage>` is provided, it **overrides checkpoint recovery**. The orchestrator jumps to the specified stage regardless of what `state.json` says.
 
@@ -118,7 +139,7 @@ If `--from=<stage>` is provided, it **overrides checkpoint recovery**. The orche
 - Counters (`quality_cycles`, `test_cycles`, `verify_fix_count`) are NOT reset by `--from`. To reset counters, delete `.pipeline/state.json` and start fresh.
 - If `--from` targets a stage that requires artifacts from a skipped stage (e.g., `--from=4` without a plan), fail at entry condition check and report which prerequisite is missing.
 
-### 3.6 Initialize State
+### 3.7 Initialize State
 
 Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full schema):
 
@@ -140,7 +161,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 }
 ```
 
-### 3.7 Create Task List
+### 3.8 Create Task List
 
 Create a task list with 10 stages:
 `Preflight -> Explore -> Plan -> Validate -> Implement -> Verify -> Review -> Docs -> Ship -> Learn`
@@ -214,6 +235,18 @@ Extract from the planner's response:
 
 Update state: `story_state` -> `"PLANNING"`, set `domain_area`, `risk_level`, add `plan` timestamp.
 
+### Linear Tracking
+
+If `integrations.linear.available` is true:
+
+1. Create Linear **Epic** from the requirement summary
+2. Create Linear **Stories** (one per plan story) under the Epic
+3. Create Linear **Tasks** under each Story (one per implementation task)
+4. Store all Linear IDs in `state.json` under `linear.epic_id`, `linear.story_ids`, `linear.task_ids`
+5. Set all items to "Backlog" status
+
+If `integrations.linear.available` is false, skip Linear operations silently.
+
 Write `.pipeline/stage_2_notes_{storyId}.md` with planning decisions.
 
 Mark Plan as completed.
@@ -264,6 +297,14 @@ When proceeding automatically, announce briefly:
 > "Pipeline proceeding with [RISK] risk plan ([N] stories, [M] tasks). Validation: GO. Reply 'stop' to pause."
 
 When asking user, show the full plan and validation verdict.
+
+### Linear Tracking
+
+If `integrations.linear.available` is true:
+
+- Comment on Epic: validation verdict (GO/REVISE/NO-GO) with summary of findings
+
+If `integrations.linear.available` is false, skip Linear operations silently.
 
 Write `.pipeline/stage_3_notes_{storyId}.md` with validation analysis.
 
@@ -338,6 +379,16 @@ After all groups complete, write `.pipeline/stage_4_notes_{storyId}.md` with imp
 
 Extract from results: steps completed vs failed, files created/modified, fix loop count, unresolved failures, test coverage notes.
 
+### Linear Tracking
+
+If `integrations.linear.available` is true:
+
+- For each task: move Linear Task from "Backlog" to "In Progress" when starting implementation
+- For each task: move Linear Task from "In Progress" to "Done" when task completes successfully
+- Failed tasks: move to "Blocked" with failure reason as comment
+
+If `integrations.linear.available` is false, skip Linear operations silently.
+
 Update state: add `implement` timestamp.
 
 Mark Implement as completed.
@@ -383,6 +434,14 @@ If max test cycles exhausted, escalate to user.
 
 Quality is NOT re-run after a test fix unless the fix introduces substantial new code.
 
+### Linear Tracking
+
+If `integrations.linear.available` is true:
+
+- Comment on Epic: build/test results summary (pass/fail, fix loop count, test cycle count)
+
+If `integrations.linear.available` is false, skip Linear operations silently.
+
 Write `.pipeline/stage_5_notes_{storyId}.md` with verification details, fix loop history.
 
 Update state: `verify_fix_count`, `test_cycles`, add `verify` timestamp.
@@ -425,6 +484,25 @@ If score < 100 and `quality_cycles` < `quality_gate.max_review_cycles`:
 
 If FAIL persists after max cycles, escalate:
 > "Pipeline blocked at REVIEW after [N] iterations -- [remaining findings]. How should I proceed?"
+
+### 9.4 Score Escalation Ladder
+
+After max review cycles, apply this ladder to determine next action:
+
+| Score | Action |
+|---|---|
+| 95-99 | Proceed. Document remaining INFOs in Linear. |
+| 80-94 | Proceed with CONCERNS. Each unfixed WARNING documented in Linear with: what, why, options. Create follow-up tickets for architectural WARNINGs. |
+| 60-79 | Pause. Full findings posted to Linear. Ask user with escalation format. |
+| < 60 | Pause. Recommend abort or replan. Present architectural root cause analysis. |
+| Any CRITICAL | Hard stop. NEVER proceed. Post to Linear. Present the CRITICAL with full context and options. |
+
+### 9.5 Oscillation Detection
+
+Track score across fix cycles. If score DECREASES between consecutive cycles (e.g., cycle 1: 85 → cycle 2: 78):
+- Flag as "quality regression during fix cycle"
+- Post to Linear: "Fix cycle {N} introduced regression: {score_before} → {score_after}"
+- Escalate to user — do not continue fixing if fixes make things worse
 
 Write `.pipeline/stage_6_notes_{storyId}.md` with review report, score history.
 
@@ -478,6 +556,15 @@ Rules:
 
 Present PR to user with summary of work, quality score, test results.
 
+### Linear Tracking
+
+If `integrations.linear.available` is true:
+
+- Link PR URL to Epic as attachment
+- Move all Stories to "In Review" status
+
+If `integrations.linear.available` is false, skip Linear operations silently.
+
 ### User Response
 
 - **Approval** -> proceed to LEARN (Stage 9)
@@ -526,6 +613,21 @@ Write report to .pipeline/reports/pipeline-{date}.md.
 ```
 
 After retrospective completes, update `state.json`: `complete` -> `true`.
+
+### 12.2 Recap
+
+After `pl-700-retrospective` completes:
+
+1. Dispatch `pl-720-recap` with:
+   - All stage note paths
+   - `state.json` path
+   - Quality gate report path
+   - PR URL (if created)
+   - Linear Epic ID (if tracked)
+2. Recap writes `.pipeline/reports/recap-{date}-{storyId}.md`
+3. If Linear available: post summarized recap (max 2000 chars) as comment on Epic
+4. If PR exists: append "What Was Built" and "Key Decisions" to PR description
+5. Close Linear Epic AFTER both retrospective and recap complete
 
 Write `.pipeline/stage_final_notes_{storyId}.md`.
 
@@ -632,7 +734,203 @@ Health: [improving / stable / degrading]
 
 ---
 
-## 18. Reference Documents
+## 18. Large Codebase & Multi-Module Handling
+
+When dispatching any agent, enforce these file limits to prevent context overflow:
+
+- **Exploration:** max 50 files per pass, grouped by domain area. If exploration finds more, summarize by directory and read details only for the most relevant.
+- **Implementation:** max 20 files per task. If a task's file list exceeds 20, split into sub-tasks before dispatching.
+- **Review:** max 100 files per batch agent dispatch. If more files changed, batch them into multiple review rounds.
+
+### Multi-Module Detection
+
+If the project has multiple module markers at different paths (e.g., both `build.gradle.kts` and `package.json` in separate directories), this is a multi-module project. Each module gets its own sub-pipeline:
+
+1. **EXPLORE:** dispatch per-module explorers in parallel
+2. **PLAN:** create stories grouped by module, with explicit integration points between modules
+3. **IMPLEMENT:** run per-module, sequentially. Backend modules complete through VERIFY before frontend modules enter IMPLEMENT (backend defines API contracts that frontend consumes)
+4. **REVIEW:** dispatch module-appropriate reviewers for each module's changed files
+
+### Multi-Module State
+
+For multi-module runs, `state.json` tracks per-module progress:
+
+```json
+{
+  "modules": [
+    { "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" },
+    { "module": "react-vite", "story_state": "PLANNING", "story_id": "story-2" }
+  ]
+}
+```
+
+The orchestrator manages transitions: a module's sub-pipeline advances independently, but cross-module dependencies (e.g., frontend depends on backend API) are enforced by the sequential ordering.
+
+---
+
+## 19. Worktree Policy
+
+All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline.
+
+### Creation (Stage 4 entry)
+
+1. First: create git checkpoint in main tree — `git add -A && git commit -m 'wip: pipeline checkpoint pre-implement'`
+2. Then: create worktree — `git worktree add .pipeline/worktree -b pipeline/{story-id}`
+3. All subsequent implementation, scaffolding, and testing happens inside the worktree
+4. Dispatched agents receive the worktree path as their working directory
+
+### Merge (Stage 8 — SHIP)
+
+- On SHIP success: merge worktree branch back to the base branch, remove worktree
+- On SHIP failure or user rejection: preserve worktree for manual inspection
+- On abort: preserve worktree, notify user of its location
+
+### Health Checks
+
+Before creating worktree:
+- Verify no stale worktree at `.pipeline/worktree` (if found, remove and log WARNING)
+- Verify working tree is clean (no uncommitted changes). If dirty: warn user, offer to stash. NEVER force-clean.
+
+### Check Engine Compatibility
+
+The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel` to find the project root. Inside a worktree, this resolves correctly to the worktree root. No special handling needed.
+
+### Hard Rules
+
+- NEVER run `git worktree remove --force` without user confirmation
+- NEVER run `git clean -f` or `git checkout .` on the main working tree
+- NEVER modify files in the main working tree during IMPLEMENT through REVIEW stages
+
+---
+
+## 20. Forbidden Actions
+
+Hard rules that apply at all times, regardless of context.
+
+### Universal (ALL agents including orchestrator)
+
+- DO NOT modify shared contracts (`scoring.md`, `stage-contract.md`, `state-schema.md`)
+- DO NOT modify conventions files during a pipeline run
+- DO NOT modify CLAUDE.md directly — propose changes via retrospective only
+- DO NOT continue after a CRITICAL finding without user approval
+- DO NOT create files outside `.pipeline/` and the project source tree
+- DO NOT force-push, force-clean, or destructively modify git state
+- DO NOT delete or disable anything without first verifying it wasn't intentional (check git blame, check surrounding comments, check config flags). Default: preserve. The cost of keeping dead code is low; the cost of removing something intentionally disabled is high.
+- DO NOT hardcode commands, agent names, or file paths — always read from config
+
+### Orchestrator-Specific
+
+- DO NOT read source files — dispatched agents do this
+- DO NOT ask the user outside the 3 defined touchpoints (pipeline start, PR approval, escalation)
+- DO NOT dispatch agents without explicit scope and file limits in the prompt
+
+### Implementation Agents (pl-300, pl-310)
+
+- DO NOT modify files outside the task's listed file paths without explicit justification
+- DO NOT add features beyond what acceptance criteria specify
+- DO NOT refactor across module boundaries during Boy Scout improvements
+
+---
+
+## 21. Autonomy & Decision Framework
+
+The pipeline operates with MAXIMUM autonomy. The user is interrupted only when:
+
+1. Pipeline starts — present the requirement interpretation
+2. Genuine 50/50 architectural decisions — see hierarchy below
+3. CRITICAL findings that cannot be auto-resolved
+4. PR approval
+
+For ALL other decisions, the agent decides and documents the reasoning in stage notes.
+
+### Decision Hierarchy
+
+When encountering a design, architecture, or implementation choice:
+
+**Clear winner exists (70/30 or better)** — Choose it silently. Document: "Decision: {chosen} because {reason}" in stage notes. Post to Linear ticket if available.
+
+**Slight lean (60/40)** — Choose the simpler option. Prefer: fewer files, less coupling, easier to reverse, matches existing patterns. Document both options and why the simpler one won.
+
+**Genuine 50/50** — Ask the user. Present: both options with concrete trade-offs, your slight lean if any. Wait for response.
+
+**Requires domain knowledge you don't have** — Ask the user. Example: "Should expired subscriptions be soft-deleted or hard-deleted? This depends on your data retention policy — I can't infer it from the codebase."
+
+### Never Worth Asking About
+
+- Implementation details (which data structure, which algorithm)
+- Code style (the conventions file decides)
+- Test strategy (TDD rules decide)
+- Naming (follow existing codebase patterns)
+- Whether to fix a WARNING (always fix if possible)
+- Whether to apply Boy Scout improvements (always apply within budget)
+
+---
+
+## 22. Adaptive MCP Detection
+
+During PREFLIGHT, detect which optional MCP integrations are available by checking tool names in the prompt context:
+
+| Tool Pattern | Integration | Stage Usage |
+|---|---|---|
+| `mcp__plugin_linear_linear__*` | Linear (task tracking) | All stages |
+| `mcp__plugin_playwright_playwright__*` | Playwright (preview validation) | Stage 6.5 |
+| `mcp__plugin_slack_slack__*` | Slack (notifications) | Stages 0, 8, 9 |
+| `mcp__plugin_figma_figma__*` | Figma (design validation) | Stage 6 |
+| `mcp__plugin_context7_context7__*` | Context7 (doc lookup) | Stages 1, 4 |
+
+Store results in `state.json`:
+
+```json
+{
+  "integrations": {
+    "linear": { "available": true },
+    "playwright": { "available": false },
+    "slack": { "available": false },
+    "context7": { "available": true }
+  }
+}
+```
+
+### Report to User
+
+After detection, show available and missing MCPs:
+
+```
+## Optional Integrations
+
+OK Linear — task tracking enabled
+OK Context7 — documentation lookup enabled
+MISSING Playwright — preview validation unavailable
+  Install: claude mcp add playwright -- npx -y @anthropic/mcp-playwright
+MISSING Slack — notifications unavailable
+  Install: claude mcp add slack -- npx -y @anthropic/mcp-slack
+```
+
+Pipeline runs without any MCPs. They add capabilities, never requirements.
+
+---
+
+## 23. Escalation Format
+
+When pausing the pipeline to ask the user, always use this exact structure:
+
+```
+## Pipeline Paused: {STAGE_NAME}
+
+**What happened:** {specific failure — not "something went wrong"}
+**What was tried:** {N} attempts — {strategy 1}, {strategy 2}, ...
+**Root cause (best guess):** {analysis based on error output}
+**Options:**
+1. {Concrete action with command} — `/pipeline-run --from={stage}`
+2. {Alternative with what to change first}
+3. Abort — no action needed, pipeline state preserved at `.pipeline/state.json`
+```
+
+Never escalate with just "Pipeline blocked." Always include diagnosis and actionable options.
+
+---
+
+## 24. Reference Documents
 
 The orchestrator references these shared documents but never modifies them:
 
