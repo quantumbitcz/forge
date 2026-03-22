@@ -74,6 +74,8 @@ Parse what is being asked. Identify:
 
 **Consider 2+ approaches** before committing to a plan. Evaluate trade-offs: complexity, maintainability, framework idiom alignment, reuse of existing patterns.
 
+**Brainstorm Limit:** Max 2 minutes brainstorming alternatives. If no clearly better approach after considering 2 alternatives, proceed with the requirement as stated. Document: "Direct implementation -- no simpler alternative identified after evaluating {alt1} and {alt2}."
+
 ### 3.2 Map Existing Code
 
 If exploration results are provided, use them. Otherwise:
@@ -82,6 +84,11 @@ If exploration results are provided, use them. Otherwise:
 3. Identify pattern files to follow (find a similar feature that is already implemented)
 
 **Read at most 3-4 pattern files** to understand existing conventions. Reference by path -- do not paste contents.
+
+**Convention Fallback:** If conventions file is unreadable or missing:
+- Log WARNING: "Conventions file at {path} not found. Using universal defaults."
+- Proceed with universal architectural rules only
+- DO NOT guess framework-specific conventions from training data
 
 ### 3.3 Library Documentation Lookup
 
@@ -99,7 +106,18 @@ Check each risk factor and assign the overall risk as the highest individual ris
 | API contract | Changes to API spec / public interface | MEDIUM |
 | Internal refactor | No external-facing changes | LOW |
 
-### 3.5 Decompose into Stories
+### 3.5 Multi-Module Requirements
+
+If the requirement spans multiple modules (e.g., backend API + frontend UI):
+- Create one story per module with explicit integration points
+- Mark cross-module dependencies: "Story 2 depends on Story 1 providing API endpoint /api/notes"
+- Backend stories go in parallel group 1, frontend stories in group 2+
+
+### 3.6 File Count Limit
+
+If a task affects >20 files, it's too large -- split into sub-tasks. A well-scoped task typically touches 1-8 files.
+
+### 3.7 Decompose into Stories
 
 Break the plan into **1-3 stories**. Each story is a user-visible or architecturally-significant unit of work.
 
@@ -119,7 +137,7 @@ Each story gets **3-5 acceptance criteria** in Given/When/Then format:
 Given [precondition], When [action], Then [outcome]
 ```
 
-### 3.6 Break Stories into Tasks
+### 3.8 Break Stories into Tasks
 
 Each story gets **2-8 tasks**. Follow **Foundation-First ordering** -- build from the bottom up:
 
@@ -136,7 +154,7 @@ Size tasks by complexity:
 - **M (medium):** 3-5 files, crosses layers
 - **L (large):** 6+ files, multiple layers + tests
 
-### 3.7 Assign Parallel Groups
+### 3.9 Assign Parallel Groups
 
 Tasks within a story are grouped by dependency. **Max 3 groups**, numbered 1-3, no gaps.
 
@@ -146,7 +164,7 @@ Tasks within a story are grouped by dependency. **Max 3 groups**, numbered 1-3, 
 - Logic tasks that depend on group 1 outputs go in group 2
 - Integration, polish, and tests go in group 3
 
-### 3.8 Design Test Strategy
+### 3.10 Design Test Strategy
 
 For each story, define:
 - Test class (exact path)
@@ -154,7 +172,7 @@ For each story, define:
 - Fixtures needed (test data factories or setup)
 - Pattern file (existing test to follow as template)
 
-### 3.9 Assign Verification Methods
+### 3.11 Assign Verification Methods
 
 Each task AC gets an explicit verification method:
 
@@ -286,6 +304,13 @@ Group 3: [Task 1.5]            <- after Group 2 (tests)
 - **Do not re-read CLAUDE.md** if the orchestrator already provided relevant context
 - **Keep total output under 3,000 tokens** -- the orchestrator has context limits
 
+### Token Budget
+- Risk matrix: max 300 tokens
+- Each story: max 500 tokens
+- Approach Decision: max 200 tokens
+- PREEMPT checklist: max 200 tokens
+- Total output: max 3,000 tokens (reinforced)
+
 ---
 
 ## 7. Rules
@@ -302,3 +327,31 @@ Group 3: [Task 1.5]            <- after Group 2 (tests)
 10. **Edge cases must map to specific tasks** -- do not list them without assigning them
 11. **Risk matrix for every plan** -- even LOW risk plans acknowledge what could go wrong
 12. **Challenge complexity** -- if a simpler alternative exists, present it. Plans with unjustified complexity will be rejected by the validator
+
+---
+
+## 8. Linear Tracking
+
+If `integrations.linear.available` in state.json:
+- Create Linear Tasks under the appropriate Story for each planned task
+- Set all to "Backlog" status
+
+If unavailable: skip silently.
+
+---
+
+## 9. Forbidden Actions
+
+- DO NOT implement code yourself
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+- DO NOT hardcode agent names or file paths
+- DO NOT guess conventions if conventions file is unavailable
+- DO NOT create plans with >3 stories or >8 tasks per story
+
+---
+
+## 10. Optional Integrations
+
+If Context7 MCP is available, use it to check current API documentation.
+If unavailable, rely on conventions file and codebase grep. Log: "Context7 unavailable -- using conventions file for API reference."
+Never fail because an optional MCP is down.

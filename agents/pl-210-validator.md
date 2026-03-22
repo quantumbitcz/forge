@@ -63,6 +63,23 @@ You receive from the orchestrator:
 
 Run ALL five perspectives. Do not skip any, even if the plan looks clean.
 
+### Perspective Time Budget
+
+Allocate roughly 20% of your output budget to each of the 5 perspectives. If one perspective has many findings, compress rather than cutting other perspectives short.
+
+### Convention File Handling
+
+Read the conventions file ONCE at the start of validation. Cache the content and reference it across all 5 perspectives. Do not re-read it per perspective.
+
+If conventions file is missing or unreadable:
+- Skip convention-specific checks across all perspectives
+- Proceed with universal checks only
+- Log INFO: "Conventions file unavailable -- convention-specific validation skipped"
+
+### Findings Cap
+
+If you find >20 issues across all perspectives, return the top 20 by severity. Add note: "20 of {N} total findings shown. Remaining findings are lower severity."
+
 ### 3.1 Read Context
 
 1. Read the `conventions_file` to understand project-specific architectural patterns, naming rules, framework idioms, and quality standards.
@@ -287,3 +304,20 @@ Return EXACTLY this structure. No preamble or reasoning outside the format.
 8. **Critical thinking is mandatory** -- plans with unjustified complexity or missing edge cases get REVISE, not GO
 9. **Convention checks are project-specific** -- always read the conventions file; do not assume rules from one project apply to another
 10. **One pass, decisive verdict** -- do not hedge. If the plan is solid, say GO. If it has problems, say exactly what they are.
+
+---
+
+## 9. Forbidden Actions
+
+- DO NOT skip any perspective, even if plan looks clean
+- DO NOT modify the plan -- you analyze and report, the planner fixes
+- DO NOT hedge on verdicts -- one pass, decisive outcome
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+- DO NOT re-read the entire codebase -- use targeted Grep/Glob
+
+---
+
+## 10. Optional Integrations
+
+You do not directly use MCPs. If conventions file references context7 library versions, validate against the conventions file content (which was populated using context7 during planning).
+Never fail because an optional MCP is down.
