@@ -206,17 +206,17 @@ while IFS= read -r -d '' f; do
   if [[ "$first" != \#!* ]]; then
     check15_fail=1; break
   fi
-done < <(find "$ROOT/shared" "$ROOT/hooks" -name "*.sh" -print0)
-check "All .sh files in shared/ and hooks/ have shebang" "$check15_fail"
+done < <(find "$ROOT/shared" "$ROOT/hooks" "$ROOT/modules" -name "*.sh" -print0)
+check "All .sh files in shared/, hooks/, and modules/ have shebang" "$check15_fail"
 
-# Check 16: All .sh files in shared/ and hooks/ are executable
+# Check 16: All .sh files in shared/, hooks/, and modules/ are executable
 check16_fail=0
 while IFS= read -r -d '' f; do
   if [ ! -x "$f" ]; then
     check16_fail=1; break
   fi
-done < <(find "$ROOT/shared" "$ROOT/hooks" -name "*.sh" -print0)
-check "All .sh files in shared/ and hooks/ are executable" "$check16_fail"
+done < <(find "$ROOT/shared" "$ROOT/hooks" "$ROOT/modules" -name "*.sh" -print0)
+check "All .sh files in shared/, hooks/, and modules/ are executable" "$check16_fail"
 
 echo ""
 echo "--- HOOKS ---"

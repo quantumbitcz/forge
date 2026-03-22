@@ -44,9 +44,6 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
   local state="$proj/.pipeline/state.json"
   printf '{"schema_version":"1.3","story_state":"VERIFYING","lastCheckpoint":"2000-01-01T00:00:00Z"}\n' > "$state"
 
-  # Small sleep to ensure timestamp advances
-  sleep 1
-
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
 
   assert_success

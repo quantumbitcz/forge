@@ -66,7 +66,7 @@ teardown() { rm -rf "$TEST_TEMP"; }
 # ---------------------------------------------------------------------------
 # 3. TypeScript bad → SEC-CRED or QUAL-TYPE findings
 # ---------------------------------------------------------------------------
-@test "check-engine flow: typescript-bad.tsx in hook mode emits QUAL-TYPE or CONV-LOG finding" {
+@test "check-engine flow: typescript-bad.tsx in hook mode emits QUAL-TYPE, CONV-LOG, and SEC-CRED findings" {
   local proj="$TEST_TEMP/project"
   mkdir -p "$proj/src/main"
   cp "$FIXTURE_DIR/typescript-bad.tsx" "$proj/src/main/Bad.tsx"
@@ -80,8 +80,10 @@ teardown() { rm -rf "$TEST_TEMP"; }
     bash "$ENGINE" --hook
 
   assert_success
-  # typescript-bad.tsx has `any` type (QUAL-TYPE) and console.log (CONV-LOG)
-  [[ "$output" == *"QUAL-TYPE"* || "$output" == *"CONV-LOG"* || "$output" == *"SEC-CRED"* ]]
+  # typescript-bad.tsx has `any` type (QUAL-TYPE), console.log (CONV-LOG), and hardcoded credential (SEC-CRED)
+  assert_output --partial "QUAL-TYPE"
+  assert_output --partial "CONV-LOG"
+  assert_output --partial "SEC-CRED"
 }
 
 # ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ load '../helpers/test-helpers'
 SEARCH_DIRS=(
   "$PLUGIN_ROOT/shared"
   "$PLUGIN_ROOT/hooks"
+  "$PLUGIN_ROOT/modules"
 )
 
 # Critical scripts that must exist and be executable
@@ -61,7 +62,7 @@ _all_scripts() {
 @test "script-permissions: no CRLF line endings in .sh files" {
   local failures=()
   while IFS= read -r script; do
-    if grep -qP '\r$' "$script" 2>/dev/null; then
+    if grep -q $'\r' "$script" 2>/dev/null; then
       failures+=("${script#"$PLUGIN_ROOT/"}")
     fi
   done < <(_all_scripts)
