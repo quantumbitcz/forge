@@ -54,10 +54,7 @@ quality_gate:
     - agent: fe-deprecation-scanner
       condition: "package.json or import changes"
   inline_checks:
-    - skill: "/fe-check-theme"
-    - skill: "/fe-react-doctor"
-    - skill: "/fe-design-review"
-    - skill: "/fe-dark-mode-check"
+    - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
 test_gate:
   command: "bun run test"
