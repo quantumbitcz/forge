@@ -37,7 +37,7 @@ When reporting errors, agents should structure them as:
 When an agent encounters an error:
 
 1. Classify it using the table above
-2. If RECOVERABLE is true: attempt the SUGGESTED_STRATEGY (up to recovery budget of 5 total applications)
+2. If RECOVERABLE is true: attempt the SUGGESTED_STRATEGY (within the weighted recovery budget — see `shared/recovery/recovery-engine.md`)
 3. If RECOVERABLE is false: report to orchestrator immediately using the error format
 4. The orchestrator decides: retry with different approach, skip, or escalate to user
 
@@ -47,7 +47,7 @@ The recovery engine reads the ERROR_TYPE field to select the appropriate strateg
 
 When an error arrives with a pre-classified ERROR_TYPE and SUGGESTED_STRATEGY:
 - Use the suggested strategy directly (skip heuristic classification)
-- Still respect the recovery budget (max 5 applications per run)
+- Still respect the weighted recovery budget (max 5.0 total weight per run — see `shared/recovery/recovery-engine.md` for strategy weights)
 
 When an error arrives WITHOUT classification (legacy agents or unexpected errors):
 - Fall back to the existing heuristic classification in the recovery engine
