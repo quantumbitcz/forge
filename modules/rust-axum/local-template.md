@@ -30,7 +30,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: rs-arch-reviewer
+    - agent: architecture-reviewer
       focus: "handler/service layering, state management, error handling"
     - agent: security-reviewer
       focus: "auth, unsafe usage, input validation, error leaking"

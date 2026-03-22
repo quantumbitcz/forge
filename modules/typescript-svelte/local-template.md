@@ -35,7 +35,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fe-design-reviewer
+    - agent: frontend-reviewer
       focus: "Svelte 5 rune usage, component patterns, reactivity"
     - agent: security-reviewer
       focus: "server-side auth, input validation, data exposure"

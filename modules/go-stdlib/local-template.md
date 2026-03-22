@@ -31,7 +31,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: go-arch-reviewer
+    - agent: architecture-reviewer
       focus: "handler/service/repository layering, interface boundaries"
     - agent: security-reviewer
       focus: "auth, injection, error leaking, input validation"

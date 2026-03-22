@@ -33,7 +33,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: py-arch-reviewer
+    - agent: architecture-reviewer
       focus: "router/service/repository layering violations"
     - agent: security-reviewer
       focus: "auth, injection, data exposure, CORS"
