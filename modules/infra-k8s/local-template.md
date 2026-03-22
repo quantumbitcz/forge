@@ -13,6 +13,9 @@ commands:
   test: "helm template charts/ | kubectl apply --dry-run=client -f - || docker compose up -d && docker compose down"
   test_single: "helm template charts/ --show-only"
   format: "prettier --write '**/*.yaml' '**/*.yml'"
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -61,6 +64,12 @@ implementation:
 
 risk:
   auto_proceed: LOW
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/infra-k8s/conventions.md"
 preempt_file: ".claude/pipeline-log.md"

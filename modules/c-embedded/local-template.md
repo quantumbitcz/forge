@@ -14,6 +14,9 @@ commands:
   test: "make test"
   test_alt: "ctest --test-dir build"
   format: "clang-format -i src/**/*.c src/**/*.h"
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -53,6 +56,12 @@ implementation:
 
 risk:
   auto_proceed: MEDIUM
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/c-embedded/conventions.md"
 preempt_file: ".claude/pipeline-log.md"

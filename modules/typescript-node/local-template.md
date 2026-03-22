@@ -13,6 +13,9 @@ commands:
   test: "npm test"
   test_single: "npx vitest run"
   format: "npx prettier --write ."
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -60,6 +63,12 @@ implementation:
 
 risk:
   auto_proceed: MEDIUM
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/typescript-node/conventions.md"
 preempt_file: ".claude/pipeline-log.md"

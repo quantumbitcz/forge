@@ -13,6 +13,9 @@ commands:
   test: "cargo test"
   test_single: "cargo test --test"
   format: "cargo fmt"
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -58,6 +61,12 @@ implementation:
 
 risk:
   auto_proceed: MEDIUM
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/rust-axum/conventions.md"
 preempt_file: ".claude/pipeline-log.md"

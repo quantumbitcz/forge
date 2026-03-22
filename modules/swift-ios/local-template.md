@@ -14,6 +14,9 @@ commands:
   test: "xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16'"
   test_single: "xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing"
   format: "swiftlint lint --autocorrect"
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -55,6 +58,12 @@ implementation:
 
 risk:
   auto_proceed: MEDIUM
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/swift-ios/conventions.md"
 preempt_file: ".claude/pipeline-log.md"

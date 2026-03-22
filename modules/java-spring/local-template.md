@@ -13,6 +13,9 @@ commands:
   test: "./gradlew test"
   test_single: "./gradlew test --tests"
   format: ""
+  build_timeout: 120
+  test_timeout: 300
+  lint_timeout: 60
 
 scaffolder:
   enabled: true
@@ -62,6 +65,12 @@ implementation:
 
 risk:
   auto_proceed: MEDIUM
+
+linear:
+  enabled: false
+  team: ""
+  project: ""
+  labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/java-spring/conventions.md"
 preempt_file: ".claude/pipeline-log.md"
