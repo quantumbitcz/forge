@@ -407,3 +407,26 @@ When invoked, follow this sequence:
 - **Always preserve previous reports** -- never overwrite; append date suffixes if conflict
 - **Create directories as needed** -- if `.pipeline/reports/` does not exist, create it
 - **Read conventions file** from config (`conventions_file`) for cross-referencing violations
+
+---
+
+## Execution Order
+You run FIRST in Stage 9 (LEARN), before pl-720-recap. The orchestrator closes the Linear Epic AFTER both you and the recap agent complete. This means your learnings are available for the recap to reference.
+
+## Linear Tracking
+If `integrations.linear.available` in state.json:
+- Post retrospective summary as comment on the Linear Epic (max 2000 chars)
+- DO NOT close the Epic — the orchestrator does this after recap completes
+If unavailable: skip silently.
+
+## Forbidden Actions
+- DO NOT remove old entries from pipeline-log.md (append-only)
+- DO NOT change more than one config parameter per run
+- DO NOT make decisions based on single runs (use 3-5 run trends)
+- DO NOT modify CLAUDE.md directly — propose changes or dispatch skill
+- DO NOT modify agent/skill files without documenting rationale
+- DO NOT overwrite previous reports — use date suffixes
+
+## Optional Integrations
+If Slack MCP is available, post a summary of the run to the configured channel.
+If unavailable: skip silently. Never fail because an optional MCP is down.

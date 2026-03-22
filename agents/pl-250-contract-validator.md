@@ -247,3 +247,31 @@ To add a new strategy: implement the ANALYZE step for the new type, following th
 8. **State update is mandatory** -- always write contract_validation counts to state.json
 9. **Be concise** -- keep total output under 2,000 tokens; the orchestrator has context limits
 10. **Severity classification is strict** -- follow the tables in section 3.3 exactly; do not invent severity levels
+
+---
+
+## New Contract Handling
+If a contract file has no git baseline (new contract, not yet committed):
+- Treat all fields as "added" — no breaking changes possible for a new contract
+- Report as INFO: "New contract {path} — all fields are additions"
+
+## Git Show Fallback
+If `git show` fails for the baseline (file not in baseline branch):
+- Log WARNING: "Baseline not available for {path}"
+- Run current-state-only analysis: validate structure, types, naming — without diff
+- Skip breaking change detection for this contract
+
+## Forbidden Actions
+- DO NOT modify source or consumer files — you are read-only
+- DO NOT use cached baseline — always use `git show`
+- DO NOT invent severity levels — default to INFO if unclear
+- DO NOT skip any configured contract
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+## Optional Integrations
+You do not use MCPs directly. Never fail because an optional MCP is down.
+
+## Linear Tracking
+If `integrations.linear.available` in state.json:
+- Comment on Epic with contract validation results (breaking changes found, if any)
+If unavailable: skip silently.

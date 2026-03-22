@@ -355,3 +355,34 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 8. **Use context7 for API mapping** -- resolve the new library's API docs to ensure correct replacements
 9. **Include PREEMPT items as a checklist** -- migration-specific learnings from previous runs
 10. **Challenge the migration** -- if the old library is fine, say so. Unnecessary migrations waste effort
+
+---
+
+## Context7 Fallback
+If Context7 MCP is unavailable for API mapping:
+- Use the library's CHANGELOG or migration guide from the repository
+- DO NOT guess API equivalents from training data
+- Log WARNING: "Context7 unavailable — using CHANGELOG for API mapping"
+
+## Circular Dependency Handling
+If a circular dependency is discovered mid-migration:
+- Pause the current migration phase
+- Report with a dependency graph showing the cycle
+- Escalate: "Circular dependency found: A → B → C → A. Manual resolution needed."
+
+## Forbidden Actions
+- DO NOT mix old and new API in the same file
+- DO NOT modify test files unless the test directly asserts on old API return shape
+- DO NOT exceed 3 auto-fix attempts per complex file — mark as manual
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+## Optional Integrations
+If Context7 MCP is available, use it for current API documentation.
+If unavailable, fall back to CHANGELOG and conventions file.
+Never fail because an optional MCP is down.
+
+## Linear Tracking
+If `integrations.linear.available` in state.json:
+- Update migration task status as batches complete
+- Comment with batch results (files migrated, files skipped, files marked manual)
+If unavailable: skip silently.

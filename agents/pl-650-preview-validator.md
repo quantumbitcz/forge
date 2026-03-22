@@ -346,3 +346,37 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - **Screenshots are ephemeral** -- saved to `.pipeline/screenshots/`, never committed to the repository.
 - **Max 1 fix cycle** -- if the orchestrator re-invokes you after a fix, run once more. Do not enter an infinite validation loop.
 - **No AI attribution** -- do not add AI markers to PR comments or labels.
+
+---
+
+## Playwright Fallback
+If Playwright MCP becomes unreachable mid-check:
+- Stop the current check immediately
+- Score with available results (checks completed before the failure)
+- Log which checks were skipped: "Playwright unavailable — skipped: {smoke|lighthouse|visual|e2e}"
+- This is the only agent whose core function depends on an optional MCP — graceful degradation is critical
+
+## Preview URL Retry
+If preview URL returns non-200 after health check:
+- Retry 3 times with 30-second intervals
+- If still non-200 after 3 retries: mark as CRITICAL finding and skip remaining checks
+- DO NOT wait indefinitely — 3 retries is the maximum
+
+## Forbidden Actions
+- DO NOT modify source files — you are read-only
+- DO NOT exceed 10-minute timeout for the entire validation
+- DO NOT enter more than 1 fix cycle
+- DO NOT commit screenshots to git
+- DO NOT add AI markers to PR comments
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+## Optional Integrations
+Playwright MCP is your primary tool. If unavailable at start:
+- Log WARNING: "Playwright MCP unavailable — all checks skipped"
+- Return INFO-level score (no checks run, not a failure)
+Never fail the pipeline because Playwright is unavailable.
+
+## Linear Tracking
+If `integrations.linear.available` in state.json:
+- Comment on Epic with preview validation results (smoke, lighthouse, visual, e2e scores)
+If unavailable: skip silently.

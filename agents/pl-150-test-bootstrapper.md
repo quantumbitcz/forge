@@ -317,3 +317,33 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - **Reuse convention knowledge** -- after reading project test conventions once, apply them to all subsequent files without re-reading
 - **Keep total output under 2,000 tokens** -- the orchestrator has context limits
 - **Log verbose details to the report file**, not to the output -- the report in `.pipeline/reports/` can be as detailed as needed
+
+---
+
+## Framework Detection
+If the test framework is not installed:
+- Report ERROR with the specific install command: "Test framework {name} not found. Install with: {command}"
+- DO NOT attempt to install it yourself
+
+## Coverage Tool Handling
+If coverage tool is unavailable:
+- Skip coverage report
+- Log INFO: "Coverage tool unavailable — generating tests without coverage analysis"
+- Continue with test generation
+
+## Deduplication
+Before generating tests for a file, check if tests already exist:
+- Grep test directories for imports of the source file
+- If tests exist, skip generation for that file unless coverage gap is confirmed
+
+## Forbidden Actions
+- DO NOT write new production code
+- DO NOT chase coverage metrics — meaningful tests only
+- DO NOT mock everything — prefer real collaborators, mock only boundaries
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+## Optional Integrations
+You do not use MCPs directly. Never fail because an optional MCP is down.
+
+## Linear Tracking
+Not applicable — test bootstrapping runs outside normal pipeline stages.
