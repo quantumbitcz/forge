@@ -689,7 +689,85 @@ The pipeline is a long-running workflow that can consume significant context. Ap
 
 ---
 
-## 14. State Tracking
+## 14. Agent Dispatch Rules
+
+When to use each dispatch type:
+
+### Inline (orchestrator handles directly)
+
+Use inline when the work is:
+- **Stateless** — reads config, writes state, no domain reasoning needed
+- **Fast** — completes in seconds, not minutes
+- **Orchestration-only** — file management, command execution, checkpoint writing
+
+Examples: PREFLIGHT config parsing, VERIFY Phase A (run build/lint commands), DOCS (check if docs need updating), state.json writes, checkpoint saves.
+
+**Rule:** If it takes <30 seconds and doesn't need a system prompt, do it inline.
+
+### Dedicated Plugin Agent (`agents/*.md`)
+
+Use a dedicated agent when the work:
+- **Needs a system prompt** — specific persona, rules, output format, expertise
+- **Is reusable** — same logic used across multiple pipeline runs and stages
+- **Requires domain reasoning** — architectural analysis, security review, planning
+- **Produces structured output** — findings, verdicts, plans, reports
+- **Has its own guardrails** — forbidden actions, context budget, tool restrictions
+
+Examples: `pl-200-planner` (needs planning rules), `pl-300-implementer` (needs TDD rules, Boy Scout rules, coding guardrails), `pl-400-quality-gate` (needs scoring formula, dedup logic), all review agents (need domain-specific checklists).
+
+**Rule:** If it needs a system prompt with rules and constraints, create a dedicated agent.
+
+### Builtin Claude Code Agent (`source: builtin`)
+
+Use a builtin when:
+- **Generic capability** suffices — general code review, security scanning, accessibility audit
+- **No pipeline-specific rules** needed — the agent's default behavior is what you want
+- **Broad perspective** desired — a "second opinion" without framework-specific bias
+
+Examples: `Code Reviewer` (general correctness), `Security Engineer` (broad security), `Accessibility Auditor` (WCAG checks).
+
+**Rule:** Use builtins for general-purpose tasks where pipeline-specific guardrails aren't needed. They complement (not replace) dedicated plugin agents.
+
+### Plugin Subagent (`source: plugin`)
+
+Use a plugin subagent when:
+- **Another installed plugin** provides specialized capability the pipeline doesn't have
+- **The capability is maintained externally** — updates come from the plugin author, not from us
+
+Examples: `pr-review-toolkit:code-reviewer` (CLAUDE.md adherence), `pr-review-toolkit:silent-failure-hunter` (error swallowing detection), `codebase-audit-suite:*` (deep audit agents).
+
+**Rule:** Use plugin subagents for capabilities that are maintained by other plugin teams. Don't duplicate their logic in our agents.
+
+### Config-Driven (user decides)
+
+Some dispatch decisions are left to the user's `dev-pipeline.local.md`:
+- `explore_agents` — user picks their preferred explorer
+- `quality_gate.batch_N` — user defines which reviewers run and in what order
+- `test_gate.analysis_agents` — user picks test analysis tools
+
+**Rule:** When reasonable people could disagree on which agents to use, make it configurable. The pipeline provides defaults in module templates; users override in their project config.
+
+### Decision Tree
+
+```
+Is the work <30 seconds with no reasoning needed?
+  → YES: Inline
+  → NO: Does it need pipeline-specific rules and guardrails?
+    → YES: Dedicated plugin agent (agents/*.md)
+    → NO: Is it a generic capability (review, audit, scan)?
+      → YES: Is there a builtin that does it well enough?
+        → YES: Builtin agent (source: builtin)
+        → NO: Is there an external plugin that does it?
+          → YES: Plugin subagent (source: plugin)
+          → NO: Create a dedicated plugin agent
+      → NO: Should the user decide which tool to use?
+        → YES: Config-driven (let user pick in template)
+        → NO: Dedicated plugin agent
+```
+
+---
+
+## 15. State Tracking
 
 Update `.pipeline/state.json` at **every** stage transition (see `shared/state-schema.md` for full schema):
 - Set `story_state` to the current stage's value
@@ -704,7 +782,7 @@ State files use JSON. Stage notes use markdown.
 
 ---
 
-## 15. Timeouts
+## 16. Timeouts
 
 | Scope | Limit | Action |
 |-------|-------|--------|
@@ -718,7 +796,7 @@ Timeouts are defensive -- they prevent runaway agents, not thorough work.
 
 ---
 
-## 16. Final Report
+## 17. Final Report
 
 After all stages complete, output a concise summary:
 
@@ -735,7 +813,7 @@ Health: [improving / stable / degrading]
 
 ---
 
-## 17. Pipeline Principles
+## 18. Pipeline Principles
 
 1. **Autonomy first** -- only pause for user input when risk exceeds threshold or max retries exhausted
 2. **Fail fast** -- stop at first failure, fix, re-verify from that point
@@ -754,7 +832,7 @@ Health: [improving / stable / degrading]
 
 ---
 
-## 18. Large Codebase & Multi-Module Handling
+## 19. Large Codebase & Multi-Module Handling
 
 When dispatching any agent, enforce these file limits to prevent context overflow:
 
@@ -788,7 +866,7 @@ The orchestrator manages transitions: a module's sub-pipeline advances independe
 
 ---
 
-## 19. Worktree Policy
+## 20. Worktree Policy
 
 All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline.
 
@@ -823,7 +901,7 @@ The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel` 
 
 ---
 
-## 20. Forbidden Actions
+## 21. Forbidden Actions
 
 Hard rules that apply at all times, regardless of context.
 
@@ -852,7 +930,7 @@ Hard rules that apply at all times, regardless of context.
 
 ---
 
-## 21. Autonomy & Decision Framework
+## 22. Autonomy & Decision Framework
 
 The pipeline operates with MAXIMUM autonomy. The user is interrupted only when:
 
@@ -886,7 +964,7 @@ When encountering a design, architecture, or implementation choice:
 
 ---
 
-## 22. Adaptive MCP Detection
+## 23. Adaptive MCP Detection
 
 During PREFLIGHT, detect which optional MCP integrations are available by checking tool names in the prompt context:
 
@@ -930,7 +1008,7 @@ Pipeline runs without any MCPs. They add capabilities, never requirements.
 
 ---
 
-## 23. Escalation Format
+## 24. Escalation Format
 
 When pausing the pipeline to ask the user, always use this exact structure:
 
@@ -950,7 +1028,7 @@ Never escalate with just "Pipeline blocked." Always include diagnosis and action
 
 ---
 
-## 24. Reference Documents
+## 25. Reference Documents
 
 The orchestrator references these shared documents but never modifies them:
 
