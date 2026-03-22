@@ -47,6 +47,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
+  "version": "1.1",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -62,7 +63,26 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "explore": "2026-03-21T10:02:00Z"
   },
   "last_commit_sha": "abc123def456",
-  "preempt_items_applied": ["check-openapi-before-controller"]
+  "preempt_items_applied": ["check-openapi-before-controller"],
+  "integrations": {
+    "linear": { "available": false, "team": "" },
+    "playwright": { "available": false },
+    "slack": { "available": false },
+    "figma": { "available": false },
+    "context7": { "available": false }
+  },
+  "linear": {
+    "epic_id": "",
+    "story_ids": [],
+    "task_ids": {}
+  },
+  "modules": [],
+  "cost": {
+    "wall_time_seconds": 0,
+    "stages_completed": 0
+  },
+  "recovery_applied": [],
+  "scout_improvements": 0
 }
 ```
 
@@ -83,6 +103,15 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `stage_timestamps` | object | Yes | Map of stage name (lowercase) to ISO 8601 timestamp marking when that stage started. Keys are: `"preflight"`, `"explore"`, `"plan"`, `"validate"`, `"implement"`, `"verify"`, `"review"`, `"docs"`, `"ship"`, `"learn"`. Only stages that have started appear in the map. |
 | `last_commit_sha` | string | Yes | Git commit SHA of the most recent pipeline-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
 | `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `pipeline-log.md` that were applied during this run. Populated at PREFLIGHT when matching PREEMPT items are found for the domain area. Empty array `[]` if no items match. |
+| `version` | string | Yes | Schema version string (e.g., `"1.1"`). Enables schema migration — the recovery engine checks this before parsing to ensure compatibility with the current engine version. |
+| `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
+| `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
+| `modules` | string[] | Yes | List of active module names detected at PREFLIGHT (e.g., `["kotlin-spring", "react-vite"]`). Multi-module projects list all detected modules. Used by the quality gate to determine which review batches to run. Empty array if no module detected. |
+| `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
+| `recovery_applied` | string[] | Yes | List of recovery strategy names applied during this run (e.g., `["transient-retry", "tool-diagnosis"]`). Appended each time the recovery engine applies a strategy. Used to enforce the recovery budget (max 5 total applications per run). |
+| `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
+
+**Note:** The `version` field enables schema migration. Recovery engine checks this before parsing. If the `version` field is missing (pre-1.1 state files), the recovery engine treats it as version `"1.0"` and applies forward migration (adding new fields with default values) before proceeding.
 
 ### story_state Valid Values
 

@@ -72,6 +72,8 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code) |
+| `FE-PERF-*` | Frontend performance issue (bundle size, unnecessary re-renders, unoptimized assets) |
+| `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
 Module-specific categories (e.g., `HEX-*` for kotlin-spring, `THEME-*` for react-vite) are defined in each module's `conventions.md`.
 
@@ -130,3 +132,24 @@ If a review agent times out or fails to return results:
 ```
 
 The score history (score per cycle) is included in the quality gate report so the retrospective can track improvement trends across runs.
+
+## Time Limits
+
+Each review cycle should complete within 10 minutes. If a review agent exceeds 10 minutes, treat as timeout per the partial failure handling rules.
+
+## Findings Cap
+
+If any single agent returns >100 raw findings, it should return only the top 100 by severity with a note: "{N} additional findings below threshold — truncated for context budget."
+
+After deduplication, if the quality gate has >50 unique findings, it returns the top 50 by severity in its report with a total count note.
+
+## Score Sub-Bands (Operational Guidance)
+
+These sub-bands provide granularity for Linear documentation. They do NOT change the PASS/CONCERNS/FAIL verdict thresholds.
+
+| Score Band | Verdict | Linear Documentation |
+|---|---|---|
+| 95-99 | PASS | Remaining INFOs documented. No follow-up tickets. |
+| 80-94 | PASS | Each unfixed WARNING documented with options. Architectural WARNINGs get follow-up tickets. |
+| 60-79 | CONCERNS | Full findings posted. User asked for guidance via escalation format. |
+| < 60 | FAIL | Recommend abort or replan. Architectural root cause analysis posted. |

@@ -225,7 +225,20 @@ Before each stage begins, run `shared/recovery/health-checks/pre-stage-health.sh
 
 ---
 
-## 8. Principles
+## 8. Recovery Budget
+
+Maximum 5 total strategy applications per pipeline run. The recovery engine tries strategies in priority order. After 5 total applications (across any combination of the 7 strategies), stop trying and escalate.
+
+This means in the worst case, the engine tries 5 different strategies (or the same one 5 times, or any mix). The budget prevents infinite recovery loops.
+
+If recovery itself fails (e.g., state-reconstruction runs `git log` but git is unavailable):
+1. Write minimal `state.json`: `{ "recovery_failed": true, "last_known_stage": N, "error": "description" }`
+2. Escalate to user with the standard escalation format
+3. Never enter recursive recovery (recovery of recovery)
+
+---
+
+## 9. Principles
 
 1. **Never silently discard data** — always save state before attempting recovery.
 2. **Classify before acting** — wrong classification leads to wrong strategy.

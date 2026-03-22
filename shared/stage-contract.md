@@ -12,12 +12,14 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `pl-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `pl-210-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user) |
-| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict | All tasks completed (or failed after max retries) |
+| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created | All tasks completed inside worktree (or failed after max retries) |
 | 5 | VERIFY | inline (Phase A) + `pl-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `pl-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | inline | `DOCUMENTING` | Review passed | Documentation updated if needed |
-| 8 | SHIP | `pl-600-pr-builder` | `SHIPPING` | Documentation done | PR created and presented to user |
-| 9 | LEARN | `pl-700-retrospective` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
+| 8 | SHIP | `pl-600-pr-builder` | `SHIPPING` | Documentation done | PR created and presented to user; worktree merged and cleaned up |
+| 9 | LEARN | `pl-700-retrospective` + `pl-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
+
+**Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails.
 
 ---
 
@@ -155,7 +157,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Agent(s):** `pl-310-scaffolder` + `pl-300-implementer`
 **story_state:** `IMPLEMENTING`
 
-**Entry condition:** Plan validated with GO verdict (Stage 3).
+**Entry condition:** Plan validated with GO verdict (Stage 3). Worktree created at `.pipeline/worktree` branching from pre-implement checkpoint commit.
 
 **Inputs:**
 - Validated plan with tasks and parallel groups
@@ -183,7 +185,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - `stage_4_notes_{storyId}.md` -- implementation decisions
 - Updated `state.json.last_commit_sha`
 
-**Exit condition:** All tasks completed (pass or fail after max retries). At least one task must pass for the pipeline to proceed.
+**Exit condition:** All tasks completed (pass or fail after max retries). At least one task must pass for the pipeline to proceed. All implementation completed inside worktree.
 
 ---
 
@@ -311,7 +313,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - Pull request (URL)
 - `stage_8_notes_{storyId}.md` -- PR details
 
-**Exit condition:** PR created and presented to user.
+**Exit condition:** PR created and presented to user. Worktree branch merged back to base branch and cleaned up (or preserved on failure).
 
 **On user approval:** Proceed to Stage 9 (LEARN).
 
@@ -324,7 +326,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 ### Stage 9: LEARN
 
-**Agent:** `pl-700-retrospective`
+**Agent(s):** `pl-700-retrospective` + `pl-720-recap`
 **story_state:** `LEARNING`
 
 **Entry condition:** PR approved by user. Also entered (with partial data) if PR is rejected and feedback is captured, after the re-run completes.
