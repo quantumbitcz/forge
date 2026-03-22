@@ -159,14 +159,25 @@ After reading config files, validate before proceeding:
 
 If any ERROR-level validation fails, stop the pipeline and report all errors together. Do not fail on the first error — collect all validation failures and present them as a batch.
 
-### 3.4 Read Pipeline Log (PREEMPT System)
+### 3.4 Convention Fingerprinting
+
+After reading `conventions_file`, compute a fingerprint and store in state.json:
+
+    conventions_hash: first 8 characters of SHA256 hash of conventions_file content
+
+This enables mid-run drift detection. Compute with:
+    sha256sum {conventions_file} | cut -c1-8
+
+If conventions_file is unavailable (WARN already logged), set `conventions_hash` to empty string.
+
+### 3.5 Read Pipeline Log (PREEMPT System)
 
 Read `pipeline-log.md` (path from `preempt_file` or default `.claude/pipeline-log.md`):
 - Collect all `PREEMPT` and `PREEMPT_CRITICAL` items
 - Filter items matching the inferred domain area of the current requirement
 - Note the last 3 run results for trend context
 
-### 3.5 Check for Interrupted Runs
+### 3.6 Check for Interrupted Runs
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
 
@@ -176,7 +187,7 @@ Read `.pipeline/state.json`. If it exists and `complete: false`:
 4. If drift detected: **warn user, ask whether to incorporate or discard**
 5. Resume from first incomplete stage/task
 
-### 3.6 --from Flag Precedence
+### 3.7 --from Flag Precedence
 
 If `--from=<stage>` is provided, it **overrides checkpoint recovery**. The orchestrator jumps to the specified stage regardless of what `state.json` says.
 
@@ -184,7 +195,7 @@ If `--from=<stage>` is provided, it **overrides checkpoint recovery**. The orche
 - Counters (`quality_cycles`, `test_cycles`, `verify_fix_count`) are NOT reset by `--from`. To reset counters, delete `.pipeline/state.json` and start fresh.
 - If `--from` targets a stage that requires artifacts from a skipped stage (e.g., `--from=4` without a plan), fail at entry condition check and report which prerequisite is missing.
 
-### 3.7 Initialize State
+### 3.8 Initialize State
 
 Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full schema):
 
@@ -223,11 +234,12 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
     "stages_completed": 0
   },
   "recovery_applied": [],
-  "scout_improvements": 0
+  "scout_improvements": 0,
+  "conventions_hash": ""
 }
 ```
 
-### 3.8 Create Task List
+### 3.9 Create Task List
 
 Create a task list with 10 stages:
 `Preflight -> Explore -> Plan -> Validate -> Implement -> Verify -> Review -> Docs -> Ship -> Learn`
@@ -743,6 +755,15 @@ The pipeline is a long-running workflow that can consume significant context. Ap
 - **Limit exploration depth** -- read at most 3-4 pattern files.
 - **Sub-agents within implementer** -- each sub-agent implements ONE task. Include only that task's details, not the entire plan.
 
+### Convention Drift Check
+
+Agents that read the conventions file should:
+1. After reading, compute SHA256 first 8 chars of the content
+2. Compare with `conventions_hash` in state.json
+3. If different: log WARNING — "Conventions file changed mid-run (PREFLIGHT hash: {old}, current: {new}). Using current version."
+4. Continue with the current (newer) version — do not use stale conventions
+5. If `conventions_hash` is empty (conventions file was unavailable at PREFLIGHT): skip the check
+
 ### Dispatch Prompts
 
 - **Cap at <2,000 tokens each** -- task description, constraints, file paths only.
@@ -1173,3 +1194,4 @@ The orchestrator references these shared documents but never modifies them:
 - `shared/state-schema.md` -- JSON schemas for `state.json` and `checkpoint-{storyId}.json`
 - `shared/stage-contract.md` -- stage numbers, names, transitions, entry/exit conditions, data flow
 - `shared/error-taxonomy.md` -- standard error classification types, recovery mapping, agent error reporting format
+- `shared/agent-communication.md` -- inter-agent data flow protocol, stage notes conventions, finding deduplication hints

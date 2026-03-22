@@ -80,7 +80,11 @@ For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 4. Wait for ALL agents in the batch to complete before starting the next batch
 5. Batches are sequential: batch_1, then batch_2, then batch_3, etc.
 
-### 4.2 Agent Dispatch Prompt
+### 4.2 Inter-Batch Finding Deduplication
+
+See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work.
+
+### 4.3 Agent Dispatch Prompt
 
 Each dispatched agent receives a prompt containing:
 
@@ -104,7 +108,7 @@ Where:
 - suggested fix: concrete action to resolve
 ```
 
-### 4.3 Conditional Agents
+### 4.4 Conditional Agents
 
 Agents with a `condition` field are only dispatched when the condition is met. Evaluate conditions by checking the changed file list:
 

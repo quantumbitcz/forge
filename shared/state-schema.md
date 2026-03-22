@@ -84,7 +84,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "stages_completed": 0
   },
   "recovery_applied": [],
-  "scout_improvements": 0
+  "scout_improvements": 0,
+  "conventions_hash": ""
 }
 ```
 
@@ -112,6 +113,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
 | `recovery_applied` | string[] | Yes | List of recovery strategy names applied during this run (e.g., `["transient-retry", "tool-diagnosis"]`). Appended each time the recovery engine applies a strategy. Used to enforce the recovery budget (max 5 total applications per run). |
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
+| `conventions_hash` | string | Yes | SHA256 first 8 chars of conventions_file content at PREFLIGHT. Agents compare to detect mid-run convention changes. Empty if conventions file was unavailable. |
 
 **Note:** The `version` field enables schema migration. Recovery engine checks this before parsing. If the `version` field is missing (pre-1.1 state files), the recovery engine treats it as version `"1.0"` and applies forward migration (adding new fields with default values) before proceeding.
 
