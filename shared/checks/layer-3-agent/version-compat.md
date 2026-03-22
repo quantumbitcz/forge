@@ -30,6 +30,14 @@ You report findings in the standard pipeline format so the quality gate can scor
 
 ---
 
+## 1a. Pre-Detected Versions
+
+Before performing independent version detection, read `state.json.detected_versions` (populated at PREFLIGHT). Use these as the baseline — only perform additional detection for versions not already captured (e.g., browser targets from `browserslist`, specific library sub-versions).
+
+This avoids redundant detection and ensures consistency between PREFLIGHT rule gating and REVIEW compatibility checking.
+
+---
+
 ## 2. Check 1: Dependency Version Conflicts
 
 ### 2.1 Read Dependency File

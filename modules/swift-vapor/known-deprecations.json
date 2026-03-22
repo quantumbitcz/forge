@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "req\\.content\\.decode\\(",
       "replacement": "try await req.content.decode(_:) — use async/await variant instead of synchronous decode",
       "package": "Vapor",
       "since": "4.50.0",
+      "removed_in": null,
+      "applies_from": "4.50.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "DatabaseConfigurationFactory.postgres(configuration: .init(hostname:port:username:password:database:tls:)) with SQLPostgresConfiguration",
       "package": "FluentPostgresDriver",
       "since": "4.4.0",
+      "removed_in": null,
+      "applies_from": "4.4.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "Typed field builder methods: .field(\"name\", .string, .required) instead of .custom(...) raw SQL fragments",
       "package": "FluentKit",
       "since": "4.0.0",
+      "removed_in": null,
+      "applies_from": "4.0.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "async/await — replace EventLoopFuture chains with async route handlers and try await calls",
       "package": "Vapor",
       "since": "4.50.0",
+      "removed_in": null,
+      "applies_from": "4.50.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "Structured logging with metadata: req.logger.info(\"message\", metadata: [\"key\": .string(value)]) for better observability",
       "package": "Vapor",
       "since": "4.60.0",
+      "removed_in": null,
+      "applies_from": "4.60.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

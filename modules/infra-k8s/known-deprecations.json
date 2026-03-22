@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "apiVersion:\\s*extensions/v1beta1\\s*\\nkind:\\s*Ingress",
       "replacement": "apiVersion: networking.k8s.io/v1 — extensions/v1beta1 Ingress removed in Kubernetes 1.22",
       "package": "kubernetes",
-      "since": "K8s 1.22",
+      "since": "K8s 1.14",
+      "removed_in": "K8s 1.22",
+      "applies_from": "K8s 1.14",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -13,7 +16,10 @@
       "pattern": "apiVersion:\\s*apps/v1beta1",
       "replacement": "apiVersion: apps/v1 — apps/v1beta1 removed in Kubernetes 1.16",
       "package": "kubernetes",
-      "since": "K8s 1.16",
+      "since": "K8s 1.9",
+      "removed_in": "K8s 1.16",
+      "applies_from": "K8s 1.9",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -21,7 +27,10 @@
       "pattern": "apiVersion:\\s*policy/v1beta1\\s*\\nkind:\\s*PodDisruptionBudget",
       "replacement": "apiVersion: policy/v1 — policy/v1beta1 PodDisruptionBudget removed in Kubernetes 1.25",
       "package": "kubernetes",
-      "since": "K8s 1.25",
+      "since": "K8s 1.21",
+      "removed_in": "K8s 1.25",
+      "applies_from": "K8s 1.21",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -29,7 +38,10 @@
       "pattern": "apiVersion:\\s*batch/v1beta1\\s*\\nkind:\\s*CronJob",
       "replacement": "apiVersion: batch/v1 — batch/v1beta1 CronJob removed in Kubernetes 1.25",
       "package": "kubernetes",
-      "since": "K8s 1.25",
+      "since": "K8s 1.21",
+      "removed_in": "K8s 1.25",
+      "applies_from": "K8s 1.21",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -37,7 +49,10 @@
       "pattern": "apiVersion:\\s*autoscaling/v2beta2",
       "replacement": "apiVersion: autoscaling/v2 — autoscaling/v2beta2 removed in Kubernetes 1.26",
       "package": "kubernetes",
-      "since": "K8s 1.26",
+      "since": "K8s 1.23",
+      "removed_in": "K8s 1.26",
+      "applies_from": "K8s 1.23",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -45,7 +60,10 @@
       "pattern": "kind:\\s*PodSecurityPolicy",
       "replacement": "Pod Security Standards via built-in admission controller (pod-security.kubernetes.io labels on namespaces) — PodSecurityPolicy removed in Kubernetes 1.25",
       "package": "kubernetes",
-      "since": "K8s 1.25",
+      "since": "K8s 1.21",
+      "removed_in": "K8s 1.25",
+      "applies_from": "K8s 1.21",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

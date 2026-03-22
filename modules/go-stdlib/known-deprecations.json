@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "ioutil\\.ReadAll\\b",
       "replacement": "io.ReadAll",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "os.ReadFile",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "os.MkdirTemp",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "os.CreateTemp",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "os.WriteFile",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -46,6 +61,9 @@
       "replacement": "io.NopCloser",
       "package": "io/ioutil",
       "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -54,6 +72,9 @@
       "replacement": "Use cases.Title from golang.org/x/text/cases",
       "package": "strings",
       "since": "1.18",
+      "removed_in": null,
+      "applies_from": "1.18",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

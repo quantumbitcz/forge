@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "UIWebView",
       "replacement": "WKWebView (import WebKit)",
       "package": "UIKit",
       "since": "iOS 12.0",
+      "removed_in": null,
+      "applies_from": "iOS 12.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "UIAlertController with .alert preferredStyle",
       "package": "UIKit",
       "since": "iOS 8.0",
+      "removed_in": null,
+      "applies_from": "iOS 8.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "UIWindowScene.interfaceOrientation via view.window.windowScene",
       "package": "UIKit",
       "since": "iOS 13.0",
+      "removed_in": null,
+      "applies_from": "iOS 13.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "UIListContentConfiguration via cell.contentConfiguration",
       "package": "UIKit",
       "since": "iOS 14.0",
+      "removed_in": null,
+      "applies_from": "iOS 14.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "Returns generic name without com.apple.developer.device-information.user-assigned-device-name entitlement; use alternative identification or request entitlement",
       "package": "UIKit",
       "since": "iOS 16.0",
+      "removed_in": null,
+      "applies_from": "iOS 16.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -46,6 +61,9 @@
       "replacement": "@Observable macro (import Observation) — eliminates need for NSObject conformance and @Published wrappers",
       "package": "Observation",
       "since": "iOS 17.0",
+      "removed_in": null,
+      "applies_from": "iOS 17.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "import javax\\.",
       "replacement": "Use jakarta.* packages (Spring Boot 3.0+ migrated from javax to jakarta EE)",
       "package": "jakarta.ee",
       "since": "Spring Boot 3.0",
+      "removed_in": "Spring Boot 3.0",
+      "applies_from": "Spring Boot 3.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "Define a @Bean SecurityFilterChain securityFilterChain(HttpSecurity http) instead",
       "package": "spring-security",
       "since": "Spring Security 5.7",
+      "removed_in": "Spring Security 6.0",
+      "applies_from": "Spring Security 5.7",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "Use spring.sql.init.mode (always/embedded/never)",
       "package": "spring-boot",
       "since": "Spring Boot 2.5",
+      "removed_in": "Spring Boot 3.0",
+      "applies_from": "Spring Boot 2.5",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "Use @EnableMethodSecurity (defaults to prePostEnabled=true)",
       "package": "spring-security",
       "since": "Spring Security 6.0",
+      "removed_in": null,
+      "applies_from": "Spring Security 6.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "Use .requestMatchers() (Spring Security 6.0+ removed antMatchers/mvcMatchers/regexMatchers)",
       "package": "spring-security",
       "since": "Spring Security 6.0",
+      "removed_in": "Spring Security 6.0",
+      "applies_from": "Spring Security 6.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -46,6 +61,9 @@
       "replacement": "Use RestClient (blocking, Spring 6.1+) or WebClient (reactive) for new code",
       "package": "spring-web",
       "since": "Spring 5.0",
+      "removed_in": null,
+      "applies_from": "Spring 5.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -54,6 +72,9 @@
       "replacement": "Use @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, @PatchMapping instead",
       "package": "spring-web",
       "since": "Spring 4.3",
+      "removed_in": null,
+      "applies_from": "Spring 4.3",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -62,6 +83,9 @@
       "replacement": "Use .requestMatchers() (Spring Security 6.0+ unified all matcher methods)",
       "package": "spring-security",
       "since": "Spring Security 6.0",
+      "removed_in": "Spring Security 6.0",
+      "applies_from": "Spring Security 6.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

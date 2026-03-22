@@ -49,7 +49,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.2",
+  "version": "1.3",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -110,6 +110,13 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "scout_improvements": 0,
   "conventions_hash": "",
   "conventions_section_hashes": {},
+  "detected_versions": {
+    "language": "",
+    "language_version": "",
+    "framework": "",
+    "framework_version": "",
+    "key_dependencies": {}
+  },
   "check_engine_skipped": 0,
   "dry_run": false
 }
@@ -137,7 +144,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `pipeline-log.md`. |
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `pl-710-feedback-capture` stage notes. |
 | `score_history` | number[] | Yes | Quality score per review cycle for oscillation detection. Appended after each quality gate scoring. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. Integer with default scoring weights; may be non-integer with custom weights. |
-| `version` | string | Yes | Schema version string (e.g., `"1.1"`). Enables schema migration — the recovery engine checks this before parsing to ensure compatibility with the current engine version. |
+| `version` | string | Yes | Schema version string (e.g., `"1.3"`). Enables schema migration — the recovery engine checks this before parsing to ensure compatibility with the current engine version. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | Per-module state for multi-module projects. Each entry: `{ "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. Each entry's `story_state` can also be `"FAILED"` (terminal — module failed after max retries) or `"BLOCKED"` (waiting on a dependency module to complete). Blocked modules include a `blocked_by` field with the failing module name (e.g., `{ "module": "react-vite", "story_state": "BLOCKED", "story_id": "story-2", "blocked_by": "kotlin-spring" }`). The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects (main `story_state` field is used instead). |
@@ -148,8 +155,75 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Kept for backward compatibility. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
 | `conventions_section_hashes` | object | Yes | Per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. During migration from 1.1, populated as `{ "_full": "<conventions_hash value>" }`. |
+| `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies`: map of dependency name to version string for important libraries. Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). |
 | `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
+
+### Migration State (stored in `state.json.migration` during migration runs)
+
+During migration mode (triggered by `/migration` or `/pipeline-run "migrate: ..."`), the `migration` object is added to `state.json` by `pl-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `migration_id` | string | Unique identifier for this migration run |
+| `current_version` | string | Detected or specified current version of the library being migrated |
+| `target_version` | string | Target version (auto-detected latest stable or user-specified) |
+| `migration_path` | string[] | Ordered list of intermediate versions if stepping through majors (e.g., `["3.3.0", "3.4.1"]`) |
+| `impact_analysis` | object | Breaking changes, new requirements, deprecated APIs in target (from DETECT phase) |
+| `impact_analysis.breaking_changes` | array | List of `{ "category": "<type>", "description": "...", "affected_pattern": "...", "replacement": "...", "source": "..." }` |
+| `impact_analysis.new_requirements` | string[] | Runtime/toolchain requirements introduced by the target version |
+| `impact_analysis.deprecated_apis_in_target` | array | APIs deprecated in target: `{ "pattern": "...", "replacement": "...", "severity": "WARNING" }` |
+| `impact_analysis.risk_level` | string | Overall risk assessment: `"LOW"`, `"MEDIUM"`, `"HIGH"` |
+| `current_phase` | integer | Current migration phase number (0 = DETECT, 1 = AUDIT, 2 = PREPARE, 3+ = MIGRATE, N+1 = CLEANUP, N+2 = VERIFY) |
+| `phase_name` | string | Current phase name (e.g., `"DETECT"`, `"AUDIT"`, `"PREPARE"`, `"MIGRATE:billing"`, `"CLEANUP"`, `"VERIFY"`) |
+| `total_phases` | integer | Total number of planned migration phases |
+| `batch_in_phase` | integer | Current batch number within the active phase |
+| `files_migrated` | integer | Count of successfully migrated files |
+| `files_skipped` | integer | Count of files skipped (rollback or dependency issues) |
+| `files_manual` | integer | Count of files flagged for manual intervention |
+| `files_remaining` | integer | Count of files not yet processed |
+| `rollbacks` | integer | Count of batch rollbacks across the entire migration run |
+| `last_commit_sha` | string | SHA of the most recent migration commit |
+
+Example:
+
+```json
+{
+  "story_state": "MIGRATING",
+  "migration": {
+    "migration_id": "migrate-spring-boot-3.2-to-3.4",
+    "current_version": "3.2.4",
+    "target_version": "3.4.1",
+    "migration_path": ["3.3.0", "3.4.1"],
+    "impact_analysis": {
+      "risk_level": "MEDIUM",
+      "breaking_changes": [
+        {
+          "category": "API_REMOVED",
+          "description": "RestTemplate default timeout changed",
+          "affected_pattern": "new RestTemplate()",
+          "replacement": "RestTemplate with explicit timeout config",
+          "source": "https://spring.io/blog/2024/..."
+        }
+      ],
+      "new_requirements": ["Java 17+ required (was Java 11+)"],
+      "deprecated_apis_in_target": [
+        { "pattern": "WebSecurityConfigurerAdapter", "replacement": "SecurityFilterChain bean", "severity": "WARNING" }
+      ]
+    },
+    "current_phase": 3,
+    "phase_name": "MIGRATE:billing",
+    "total_phases": 6,
+    "batch_in_phase": 2,
+    "files_migrated": 42,
+    "files_skipped": 2,
+    "files_manual": 1,
+    "files_remaining": 15,
+    "rollbacks": 1,
+    "last_commit_sha": "abc123"
+  }
+}
+```
 
 **Note:** The `version` field enables schema migration. Recovery engine checks this before parsing. If the `version` field is missing (pre-1.1 state files), the recovery engine treats it as version `"1.0"` and applies forward migration (adding new fields with default values) before proceeding.
 
@@ -171,6 +245,15 @@ When the recovery engine encounters a state.json with `version: "1.1"`, apply th
 
 All new fields use safe defaults that preserve existing behavior. The migration is idempotent — running it on an already-migrated file produces no changes.
 
+### Schema Migration: 1.2 → 1.3
+
+When the recovery engine encounters a state.json with `version: "1.2"`, apply:
+
+1. Add `detected_versions: { "language": "", "language_version": "", "framework": "", "framework_version": "", "key_dependencies": {} }`
+2. Set `version: "1.3"`
+
+This migration is idempotent.
+
 ### story_state Valid Values
 
 | Value | Stage | Description |
@@ -185,6 +268,12 @@ All new fields use safe defaults that preserve existing behavior. The migration 
 | `"DOCUMENTING"` | 7 | Documentation updates (CLAUDE.md, KDoc/TSDoc) |
 | `"SHIPPING"` | 8 | Branch creation, commit, PR |
 | `"LEARNING"` | 9 | Retrospective analysis, config tuning, report generation |
+| `"MIGRATING"` | - | Migration planner executing (DETECT/AUDIT/PREPARE/MIGRATE phases) |
+| `"MIGRATION_PAUSED"` | - | Migration paused due to rollback threshold or user intervention |
+| `"MIGRATION_CLEANUP"` | - | Removing old dependencies and shims |
+| `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
+
+Migration states are used exclusively by `pl-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
 
 ### story_state Transitions
 

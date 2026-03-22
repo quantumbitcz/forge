@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "@app\\.on_event\\(\"(startup|shutdown)\"\\)",
       "replacement": "Use lifespan context manager: @asynccontextmanager async def lifespan(app: FastAPI): ...",
       "package": "fastapi",
       "since": "0.93",
+      "removed_in": null,
+      "applies_from": "0.93",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "from pydantic import field_validator",
       "package": "pydantic",
       "since": "2.0",
+      "removed_in": null,
+      "applies_from": "2.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "model_config = ConfigDict(...)",
       "package": "pydantic",
       "since": "2.0",
+      "removed_in": null,
+      "applies_from": "2.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "Use X | None syntax instead of Optional[X]",
       "package": "python",
       "since": "3.10",
+      "removed_in": null,
+      "applies_from": "3.10",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "Use builtin types: dict, list, tuple, set, frozenset",
       "package": "python",
       "since": "3.9",
+      "removed_in": null,
+      "applies_from": "3.9",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -46,6 +61,9 @@
       "replacement": "asyncio.get_running_loop()",
       "package": "python",
       "since": "3.10",
+      "removed_in": null,
+      "applies_from": "3.10",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

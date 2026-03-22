@@ -205,6 +205,51 @@ If it exists:
 - Filter items matching the inferred domain area of the current requirement
 - Note the last 3 run results for trend context
 
+### 3.5a Detect Project Dependency Versions
+
+Detect current dependency versions from the project's package manifest files. This enables version-aware rule application — deprecation rules only trigger when the project's actual version is in the rule's applicable range.
+
+**Detection sources by module:**
+
+| Module | File | Extract |
+|--------|------|---------|
+| kotlin-spring | `build.gradle.kts` | `plugins { id("org.springframework.boot") version "X.Y.Z" }`, Kotlin version, Spring Security version |
+| java-spring | `build.gradle` or `pom.xml` | Spring Boot version, Spring Security version, Java source/target |
+| react-vite | `package.json` | React version, Vite version, TypeScript version, key libraries |
+| typescript-node | `package.json` | Node engine version, Express/NestJS version, TypeScript version |
+| typescript-svelte | `package.json` | Svelte version, SvelteKit version, TypeScript version |
+| python-fastapi | `pyproject.toml` or `requirements.txt` | Python version, FastAPI version, Pydantic version, SQLAlchemy version |
+| go-stdlib | `go.mod` | Go version, key module versions |
+| rust-axum | `Cargo.toml` | Rust edition, Axum version, Tokio version |
+| swift-ios | `Package.swift` | Swift tools version, iOS deployment target, key package versions |
+| swift-vapor | `Package.swift` | Swift tools version, Vapor version, Fluent version |
+| c-embedded | `CMakeLists.txt` or `platformio.ini` | C standard (C99/C11/C17), ESP-IDF version, platform |
+| infra-k8s | Kubernetes YAML / Helm `Chart.yaml` | `apiVersion` fields, Helm chart versions, K8s target version |
+
+**Process:**
+1. Read the module's primary manifest file (based on `module` from config)
+2. Extract version strings using regex or structured parsing
+3. Store in `state.json` under a new `detected_versions` object:
+
+```json
+"detected_versions": {
+  "language": "kotlin",
+  "language_version": "2.0.0",
+  "framework": "spring-boot",
+  "framework_version": "3.2.4",
+  "key_dependencies": {
+    "spring-security": "6.2.1",
+    "r2dbc-postgresql": "1.0.4",
+    "kotlinx-coroutines": "1.8.0"
+  }
+}
+```
+
+4. If version cannot be detected (missing file, unparseable): log WARNING, set to `"unknown"` — rules default to applying (conservative, same as v1 behavior)
+5. Pass `detected_versions` to agents in dispatch prompts where relevant (implementer, quality gate, deprecation-refresh)
+
+**For old projects:** If manifest files use outdated formats or unconventional locations, detection may fail partially. The pipeline gracefully degrades — `"unknown"` versions cause all rules to apply, which is the safest default for legacy codebases.
+
 ### 3.6 Check for Interrupted Runs
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
@@ -244,7 +289,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 
 ```json
 {
-  "version": "1.2",
+  "version": "1.3",
   "dry_run": false,
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
@@ -301,6 +346,13 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "scout_improvements": 0,
   "conventions_hash": "",
   "conventions_section_hashes": {},
+  "detected_versions": {
+    "language": "",
+    "language_version": "",
+    "framework": "",
+    "framework_version": "",
+    "key_dependencies": {}
+  },
   "check_engine_skipped": 0
 }
 ```

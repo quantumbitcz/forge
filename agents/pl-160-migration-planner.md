@@ -98,7 +98,74 @@ Read from `dev-pipeline.local.md` under the `migration` key. Apply defaults when
 
 ## 5. Migration Flow
 
+### Phase 0 -- DETECT (auto-detection of current and target versions)
+
+If the user specifies explicit versions (e.g., "migrate Spring Boot from 3.2 to 3.4"), skip to Phase 1 (AUDIT).
+
+If the user specifies only the library name (e.g., "upgrade Spring Boot" or "migrate to latest React"):
+
+1. **Detect current version:**
+   - Read `state.json.detected_versions` (populated by PREFLIGHT)
+   - If not available: parse manifest files directly (package.json, build.gradle.kts, Cargo.toml, go.mod, pyproject.toml, Package.swift)
+   - Record: `current_version`
+
+2. **Determine target version:**
+   - If Context7 MCP is available: query for latest stable release of the library
+   - If Context7 unavailable: run package manager query (e.g., `npm view {pkg} version`, `./gradlew dependencyUpdates`, `pip index versions {pkg}`)
+   - Prefer latest **stable** (no pre-release, no RC) within the same major version for safety
+   - If user explicitly asks for "latest" with no constraints: use the absolute latest stable, even if it crosses major versions
+   - Record: `target_version`
+
+3. **Determine migration path:**
+   - If major version change (e.g., 2.x → 3.x): flag as HIGH risk migration
+   - If minor version change (e.g., 3.2 → 3.4): flag as LOW-MEDIUM risk
+   - If only patch (e.g., 3.2.1 → 3.2.5): flag as LOW risk, likely no breaking changes
+   - Query Context7 for official migration guide between `current_version` → `target_version`
+   - If migration guide exists: extract breaking changes, deprecated APIs, new requirements
+   - If no guide: query CHANGELOG or release notes
+
+4. **Build version impact analysis:**
+   ```json
+   {
+     "current_version": "3.2.4",
+     "target_version": "3.4.1",
+     "migration_path": "3.2.4 → 3.3.0 → 3.4.1",
+     "risk_level": "MEDIUM",
+     "breaking_changes": [
+       {
+         "category": "API_REMOVED",
+         "description": "RestTemplate default timeout changed",
+         "affected_pattern": "new RestTemplate()",
+         "replacement": "RestTemplate with explicit timeout config",
+         "source": "https://spring.io/blog/2024/..."
+       }
+     ],
+     "new_requirements": [
+       "Java 17+ required (was Java 11+)"
+     ],
+     "deprecated_apis_in_target": [
+       { "pattern": "...", "replacement": "...", "severity": "WARNING" }
+     ]
+   }
+   ```
+
+5. **Present analysis to user** (if risk is HIGH or major version jump):
+   > "Migration analysis: {lib} {current} → {target}. Risk: {level}. Breaking changes: {count}. New requirements: {list}. Proceed?"
+
+6. **Store in migration state:**
+   ```json
+   "migration": {
+     "current_version": "3.2.4",
+     "target_version": "3.4.1",
+     "migration_path": ["3.3.0", "3.4.1"],
+     "impact_analysis": { ... },
+     ...existing fields...
+   }
+   ```
+
 ### Phase 1 -- AUDIT
+
+**Input from DETECT phase:** `current_version`, `target_version`, `breaking_changes[]`, `deprecated_apis_in_target[]`. Use these to prioritize which files to audit — files using APIs listed in `breaking_changes` are highest priority.
 
 Identify all files using the old library/pattern. Classify each by complexity:
 
@@ -221,6 +288,10 @@ The following fields are added to `.pipeline/state.json` during migration mode:
   "story_state": "MIGRATING",
   "migration": {
     "migration_id": "string",
+    "current_version": "3.2.4",
+    "target_version": "3.4.1",
+    "migration_path": ["3.3.0", "3.4.1"],
+    "impact_analysis": {},
     "current_phase": 2,
     "phase_name": "MIGRATE:billing",
     "total_phases": 5,

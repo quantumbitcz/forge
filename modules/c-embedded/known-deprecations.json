@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "sprintf\\s*\\(",
       "replacement": "snprintf(buf, sizeof(buf), ...) — prevents buffer overflow by enforcing size limit",
       "package": "libc",
       "since": "C99",
+      "removed_in": null,
+      "applies_from": "C99",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "fgets(buf, sizeof(buf), stdin) — gets() was removed in C11 due to inherent buffer overflow vulnerability",
       "package": "libc",
       "since": "C11",
+      "removed_in": "C11",
+      "applies_from": "C11",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "strtol(str, &endptr, 10) with error checking on endptr and errno — atoi has no error detection",
       "package": "libc",
       "since": "C89",
+      "removed_in": null,
+      "applies_from": "C89",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "Always check malloc return value for NULL before use; on embedded targets, consider static allocation or pool allocators",
       "package": "libc",
       "since": "C89",
+      "removed_in": null,
+      "applies_from": "C89",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "strlcpy() where available (BSD/embedded), or manually null-terminate: buf[sizeof(buf)-1] = '\\0' — strncpy does not guarantee null termination",
       "package": "libc",
       "since": "C99",
+      "removed_in": null,
+      "applies_from": "C99",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -46,6 +61,9 @@
       "replacement": "esp_event_loop_create_default() — legacy init function replaced by the new event loop API",
       "package": "esp-idf",
       "since": "ESP-IDF 4.0",
+      "removed_in": "ESP-IDF 5.0",
+      "applies_from": "ESP-IDF 4.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

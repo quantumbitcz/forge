@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "deprecations": [
     {
       "pattern": "axum::extract::Extension",
       "replacement": "axum::extract::State for shared application state",
       "package": "axum",
       "since": "0.6",
+      "removed_in": null,
+      "applies_from": "0.6",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -14,6 +17,9 @@
       "replacement": "Use plain async functions as handlers; the Handler trait is no longer used directly",
       "package": "axum",
       "since": "0.7",
+      "removed_in": null,
+      "applies_from": "0.7",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -22,6 +28,9 @@
       "replacement": "Use Router::layer() to apply middleware directly on the router",
       "package": "axum",
       "since": "0.6",
+      "removed_in": null,
+      "applies_from": "0.6",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -30,6 +39,9 @@
       "replacement": "axum::body::Body (Axum 0.7 uses its own Body type backed by http-body 1.0)",
       "package": "hyper",
       "since": "1.0",
+      "removed_in": "1.0",
+      "applies_from": "1.0",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     },
@@ -38,6 +50,9 @@
       "replacement": "Use Router::with_state() to provide State<T> instead of Extension<T>",
       "package": "axum",
       "since": "0.6",
+      "removed_in": "0.7",
+      "applies_from": "0.6",
+      "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
     }

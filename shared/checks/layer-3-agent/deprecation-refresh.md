@@ -93,31 +93,66 @@ Look for these patterns in documentation and source references:
 
 ## 5. Generate Deprecation Entries
 
-For each newly discovered deprecation, generate an entry with this exact schema:
+For each newly discovered deprecation, generate an entry with the **v2** schema:
 
 ```json
 {
-  "id": "{library}-{short-api-name}",
   "pattern": "{grep-compatible regex to find usage in source code}",
-  "library": "{library-name}",
-  "deprecated_in": "{version where deprecated, e.g. 18.0.0}",
-  "removed_in": "{version where removed, or null if not yet removed}",
   "replacement": "{recommended replacement API or approach}",
-  "source": "{URL to official deprecation notice or changelog}",
-  "severity": "{CRITICAL if removed_in <= current version, WARNING if deprecated_in <= current version, INFO otherwise}"
+  "package": "{package or library name, e.g. spring-security, pydantic}",
+  "since": "{version where deprecated, e.g. 3.0.0}",
+  "removed_in": "{version where removed, or null if not yet removed}",
+  "applies_from": "{minimum project version where this rule triggers}",
+  "applies_to": "{upper version bound, or * for all later versions}",
+  "added": "{ISO date, e.g. 2026-03-22}",
+  "addedBy": "refresh-agent"
 }
 ```
 
-Rules for the `pattern` field:
-- Must be a valid grep/ripgrep regex
-- Should match actual usage, not just imports (prefer `functionName\\(` over `import.*functionName`)
-- Escape special regex characters properly
-- Test mentally that the pattern would match real code, not produce excessive false positives
+### Field rules
 
-Rules for `severity`:
-- **CRITICAL**: The API has been removed in a version at or below the project's target/current version
-- **WARNING**: The API is deprecated in the project's current version range but not yet removed
-- **INFO**: The API is deprecated in a newer version the project has not yet upgraded to
+- **`pattern`**: Valid grep/ripgrep regex. Should match actual usage, not just imports (prefer `functionName\\(` over `import.*functionName`). Escape special regex characters. Test mentally that the pattern would match real code without excessive false positives.
+- **`replacement`**: Concise migration instruction including the replacement API name and a brief rationale.
+- **`package`**: The library or package that owns the deprecated API (e.g., `spring-security`, `pydantic`, `node:fs`).
+- **`since`**: The version in which the API was first deprecated.
+- **`removed_in`**: The version in which the API was actually removed (not just deprecated). Set to `null` if the API is deprecated but still compiles/runs.
+- **`applies_from`**: Minimum project version where this deprecation rule triggers. Typically matches `since`. Set differently when the old API still works in earlier versions (e.g., `javax.*` -> `jakarta.*` applies from Spring Boot `3.0.0` because `javax` still works in 2.x).
+- **`applies_to`**: Upper version bound. Use `"*"` for "all versions from `applies_from` onward". Set to a specific version only if the deprecation was reversed or applies to a bounded range.
+- **`added`**: ISO date when this entry was created.
+- **`addedBy`**: One of `refresh-agent` (discovered by this agent), `seed` (initial data), or `manual` (human-added).
+
+### Severity classification (computed at scan time, NOT stored in JSON)
+
+The deprecation scanner computes severity dynamically by comparing the project's current version against the entry fields:
+
+- **CRITICAL**: `removed_in` is non-null AND the project's version >= `removed_in` (the API no longer exists)
+- **WARNING**: `since` <= project's current version AND (`removed_in` is null OR project's version < `removed_in`)
+- **INFO**: The project's version < `since` (deprecation exists in a newer version the project has not yet adopted)
+
+---
+
+## 5a. Version-Gated Filtering at Scan Time
+
+When project dependency versions are available (from `state.json.detected_versions`), deprecation entries are filtered using the v2 version fields:
+
+1. **Read the project's version** for the entry's `package` from `detected_versions.key_dependencies` or `detected_versions.framework_version`.
+2. **Filter using `applies_from` / `applies_to`:**
+   - If project version < `applies_from`: **SKIP** the rule (deprecation does not apply to this version)
+   - If `applies_to` != `"*"` and project version > `applies_to`: **SKIP** the rule (deprecation no longer relevant)
+   - Otherwise: **APPLY** the rule
+3. **Compute severity using `since` / `removed_in`** (see severity classification in section 5 above):
+   - project version >= `removed_in` (non-null): **CRITICAL**
+   - project version >= `since` and (`removed_in` is null or project version < `removed_in`): **WARNING**
+   - project version < `since`: **INFO**
+4. **If project version is `"unknown"`**: **APPLY** with WARNING severity (conservative -- do not skip rules when version is uncertain)
+5. **Backward compatibility**: For legacy v1 entries (missing `applies_from`/`removed_in`/`applies_to`), treat `since` as `applies_from`, set `removed_in` to null, set `applies_to` to `"*"`, and apply conservatively.
+
+### Version Comparison
+
+Use semantic version comparison (major.minor.patch). For non-semver versions (e.g., "C11", "K8s 1.25", "ESP-IDF 4.0"):
+- Parse the numeric portion after any prefix text
+- Compare major then minor then patch
+- If unparseable: treat as `"unknown"` and apply conservatively
 
 ---
 
@@ -125,14 +160,16 @@ Rules for `severity`:
 
 When adding entries to an existing `known-deprecations.json`:
 
-1. Load the existing `entries` array.
-2. For each new entry, check if an entry with the same `pattern` already exists.
-   - If it exists and the new data has updated version info (`deprecated_in`, `removed_in`, `replacement`), update the existing entry in place.
+1. Check the top-level `"version"` field. If it is `1`, migrate to v2 first by adding `"removed_in": null`, `"applies_from": "<since>"`, and `"applies_to": "*"` to each existing entry, then set `"version": 2`.
+2. Load the existing `deprecations` array.
+3. For each new entry, check if an entry with the same `pattern` already exists.
+   - If it exists and the new data has updated version info (`since`, `removed_in`, `applies_from`, `replacement`), update the existing entry in place. Preserve the original `added` date and `addedBy`.
    - If it exists and nothing has changed, skip it.
    - If it does not exist, append it to the array.
-3. Sort entries by: severity (CRITICAL first, then WARNING, then INFO), then alphabetically by `id`.
-4. Update the top-level `last_refreshed` field to today's ISO date.
-5. Preserve any other top-level fields in the JSON (e.g., `schema_version`, `module`).
+4. Sort entries by: `package` alphabetically, then `since` ascending.
+5. Update the top-level `last_refreshed` field to today's ISO date.
+6. Ensure `"version": 2` is set at the top level.
+7. Preserve any other top-level fields in the JSON.
 
 Never remove existing entries -- they may cover versions the project has not yet upgraded past.
 
