@@ -15,6 +15,22 @@ Work through these phases in order. Do NOT skip ahead — each phase builds on t
 
 ### Phase 1: DETECT
 
+#### Pre-Validation
+
+Before scanning for stack markers, verify the environment is ready:
+
+1. **Git repository check**: Run `git rev-parse --show-toplevel`
+   - If it fails: **ERROR** — "Not a git repository. Initialize with `git init` first." Abort.
+2. **Config directory check**: Verify `.claude/` directory exists and is writable.
+   - If it does not exist, it will be created in the CONFIGURE phase — this is fine, just note it.
+   - If it exists but is not writable: **ERROR** — "`.claude/` directory is not writable. Check permissions." Abort.
+3. **Existing config check**: Check whether `.claude/dev-pipeline.local.md` already exists.
+   - If it exists: **ASK** — "Found existing `dev-pipeline.local.md`. Overwrite? (y/n)"
+   - If the user says no: abort with message "Keeping existing configuration."
+   - If the user says yes: proceed, and the CONFIGURE phase will overwrite the file.
+
+#### Stack Detection
+
 Scan the project root and immediate subdirectories for stack markers. Check for the **first match** in this priority order:
 
 | Markers | Module |
@@ -30,6 +46,18 @@ Scan the project root and immediate subdirectories for stack markers. Check for 
 | `Package.swift` + Vapor dependency | `swift-vapor` |
 | `*.xcodeproj` | `swift-ios` |
 | `Makefile` + `*.c` source files | `c-embedded` |
+
+#### Ambiguity Resolution
+
+If module detection is ambiguous — for example, both `build.gradle.kts` and `package.json` exist in the project root or subdirectories, matching multiple modules — do NOT guess. Instead:
+
+1. **ASK ONE question**: "Detected multiple frameworks: {list with matched modules}. Which is the primary module for pipeline configuration?"
+2. Use the user's answer as the primary module for all config generation.
+3. Note the other detected frameworks in the config's `related_modules` field for future multi-module support.
+
+If detection is unambiguous (only one module matches), proceed without asking.
+
+#### Supplementary Detection
 
 Also detect and note the presence of:
 - **Docker**: `docker-compose.yml`, `docker-compose.yaml`, `Dockerfile`
@@ -88,10 +116,16 @@ Show the user what files were created and their key settings. Ask: **"Config fil
 
 ### Phase 3: VALIDATE
 
-Run the following checks to confirm the setup works:
+Run the following checks to confirm the setup works. Execute BOTH build and test commands explicitly — do not skip either.
 
-1. **Build check**: Run the detected build command. Report success/failure.
-2. **Test check**: Run the detected test command. Report pass count, fail count, skip count.
+1. **Build check**: Run the exact `commands.build` value from the generated config (e.g., `./gradlew build -x test`, `pnpm build`).
+   - If it **fails**: report the exact error — "Build command failed: `{command}`. Error: {output}. Fix the build before running the pipeline."
+   - Ask whether to continue or fix first. A failing build is a hard blocker for the pipeline.
+
+2. **Test check**: Run the exact `commands.test` value from the generated config (e.g., `./gradlew test`, `pnpm test`).
+   - If it **fails**: report the exact error — "Test command failed: `{command}`. Error: {output}. This might be OK for a new project with no tests yet — the pipeline will generate tests."
+   - A failing test command is NOT a hard blocker — note the failure and continue if the user agrees.
+
 3. **Engine check**: Run `${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify` if the script exists. Report result.
 
 If any check fails:
@@ -107,6 +141,17 @@ Validation Results:
   Tests:   PASS (47 passed, 0 failed, 2 skipped)
   Engine:  PASS
 ```
+
+#### Post-Validation: Engine Dry Run
+
+After successful validation, verify the check engine works with the detected module:
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --dry-run
+```
+
+- If the dry-run **fails**: **WARN** — "Check engine dry-run failed. Hook-based checks may not work. Error: {output}". This is a warning, not a blocker — continue to the next phase.
+- If the dry-run **passes**: Report — "Check engine verified — hooks will run on every file edit."
 
 ---
 
