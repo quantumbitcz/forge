@@ -1,0 +1,46 @@
+{
+  "language": "kotlin",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "KT-DEP-001",
+      "pattern": "kotlin\\.jvm\\.Throws",
+      "library": "kotlin-stdlib",
+      "deprecated_in": "1.4",
+      "removed_in": null,
+      "replacement": "kotlin.Throws",
+      "source": "https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throws/",
+      "severity": "WARNING"
+    },
+    {
+      "id": "KT-DEP-002",
+      "pattern": "@(OptIn\\()?ExperimentalCoroutinesApi(\\))?",
+      "library": "kotlinx-coroutines",
+      "deprecated_in": "1.7",
+      "removed_in": null,
+      "replacement": "Remove annotation; API is stable since coroutines 1.7",
+      "source": "https://github.com/Kotlin/kotlinx.coroutines/releases",
+      "severity": "WARNING"
+    },
+    {
+      "id": "KT-DEP-003",
+      "pattern": "java\\.util\\.Date",
+      "library": "java-stdlib",
+      "deprecated_in": "JDK 1.1",
+      "removed_in": null,
+      "replacement": "kotlinx.datetime.Instant or kotlinx.datetime.LocalDate",
+      "source": "https://github.com/Kotlin/kotlinx-datetime",
+      "severity": "WARNING"
+    },
+    {
+      "id": "KT-DEP-004",
+      "pattern": "kotlin\\.reflect\\.jvm\\.internal",
+      "library": "kotlin-reflect",
+      "deprecated_in": "1.5",
+      "removed_in": null,
+      "replacement": "Use public kotlin.reflect API",
+      "source": "https://kotlinlang.org/docs/reflection.html",
+      "severity": "CRITICAL"
+    }
+  ]
+}

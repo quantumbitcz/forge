@@ -1,0 +1,46 @@
+{
+  "language": "java",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "JV-DEP-001",
+      "pattern": "java\\.util\\.Date",
+      "library": "java-stdlib",
+      "deprecated_in": "JDK 1.1",
+      "removed_in": null,
+      "replacement": "java.time.LocalDate, java.time.Instant, or java.time.ZonedDateTime",
+      "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html",
+      "severity": "WARNING"
+    },
+    {
+      "id": "JV-DEP-002",
+      "pattern": "Thread\\.stop\\(",
+      "library": "java-stdlib",
+      "deprecated_in": "JDK 1.2",
+      "removed_in": "24",
+      "replacement": "Use Thread.interrupt() and cooperative cancellation",
+      "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#stop()",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "JV-DEP-003",
+      "pattern": "SecurityManager",
+      "library": "java-stdlib",
+      "deprecated_in": "17",
+      "removed_in": "24",
+      "replacement": "Use platform-specific security mechanisms or container sandboxing",
+      "source": "https://openjdk.org/jeps/411",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "JV-DEP-004",
+      "pattern": "void\\s+finalize\\s*\\(",
+      "library": "java-stdlib",
+      "deprecated_in": "9",
+      "removed_in": null,
+      "replacement": "Use java.lang.ref.Cleaner or try-with-resources (AutoCloseable)",
+      "source": "https://openjdk.org/jeps/421",
+      "severity": "WARNING"
+    }
+  ]
+}

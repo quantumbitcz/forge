@@ -1,0 +1,36 @@
+{
+  "language": "swift",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "SW-DEP-001",
+      "pattern": "UIWebView",
+      "library": "UIKit",
+      "deprecated_in": "iOS 12.0",
+      "removed_in": null,
+      "replacement": "Use WKWebView from WebKit framework",
+      "source": "https://developer.apple.com/documentation/uikit/uiwebview",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "SW-DEP-002",
+      "pattern": "NSURLConnection",
+      "library": "Foundation",
+      "deprecated_in": "iOS 9.0",
+      "removed_in": null,
+      "replacement": "Use URLSession",
+      "source": "https://developer.apple.com/documentation/foundation/nsurlconnection",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "SW-DEP-003",
+      "pattern": "@UIApplicationMain",
+      "library": "UIKit",
+      "deprecated_in": "Swift 5.3",
+      "removed_in": null,
+      "replacement": "Use @main attribute",
+      "source": "https://developer.apple.com/documentation/swiftui/app",
+      "severity": "WARNING"
+    }
+  ]
+}
