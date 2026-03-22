@@ -510,3 +510,39 @@ After both batches are implemented:
 | Feedback classification is wrong (design classified as implementation) | Default to `implementation` when ambiguous — safer, doesn't discard plan |
 | Recovery weight assignments are wrong | Weights are in contract — easy to tune per-project if needed |
 | Oscillation tolerance too generous (allows bad code through) | Default 5 is conservative; projects can set to 0 for strict mode |
+
+---
+
+## Post-Implementation Addendum
+
+The following additions were made during implementation that extend beyond the original spec:
+
+### State Schema 1.2 → 1.3
+The version-aware deprecation feature required a new `detected_versions` field in state.json, triggering a schema version bump from 1.2 to 1.3. Migration chain is now: 1.1 → 1.2 → 1.3.
+
+### Version-Aware Deprecation Rules
+- `known-deprecations.json` upgraded to schema v2 with `applies_from`, `removed_in`, `applies_to` fields
+- PREFLIGHT detects project dependency versions from manifest files, stores in `state.json.detected_versions`
+- Deprecation-refresh agent gates rule severity based on project version (SKIP if below applies_from, WARNING if deprecated, CRITICAL if removed_in reached)
+- Old projects with unknown versions get conservative default (all rules apply)
+
+### Migration Auto-Detection (DETECT Phase)
+- New Phase 0 (DETECT) in pl-160-migration-planner before AUDIT
+- Auto-detects current version from manifests or `detected_versions`
+- Queries Context7/registries for latest stable target
+- Builds breaking change impact analysis
+- Migration skill supports `/migration upgrade <lib>`, `/migration upgrade all`, `/migration check`
+
+### Module Conventions Enhancement
+- All 12 module `conventions.md` files extended with Dos/Don'ts sections and framework-specific best practices (627 lines total)
+- Coverage: error handling, state management, async patterns, performance, testing, accessibility, memory safety, observability (module-appropriate)
+
+### Additional Orchestration Hardening (Cycle 2+)
+- Worktree merge conflict detection (dry-merge before actual merge)
+- Checkpoint corruption 5-stage recovery fallback
+- Linear mid-run failure resilience (retry once, then degrade)
+- Concurrent pipeline run lock (.pipeline/.lock)
+- Multi-module failure isolation (FAILED/BLOCKED states)
+- PREEMPT confidence decay formula with false-positive acceleration
+- DOCS stage large-change guidance (>15 files threshold)
+- Pipeline skills updated (pipeline-status, pipeline-reset, pipeline-rollback)

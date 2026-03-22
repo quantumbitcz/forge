@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "last_refreshed": "2026-03-22",
   "deprecations": [
     {
       "pattern": "sprintf\\s*\\(",
@@ -60,9 +61,9 @@
       "pattern": "esp_event_loop_init\\s*\\(",
       "replacement": "esp_event_loop_create_default() — legacy init function replaced by the new event loop API",
       "package": "esp-idf",
-      "since": "ESP-IDF 4.0",
-      "removed_in": "ESP-IDF 5.0",
-      "applies_from": "ESP-IDF 4.0",
+      "since": "4.0",
+      "removed_in": "5.0",
+      "applies_from": "4.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"

@@ -1,13 +1,14 @@
 {
   "version": 2,
+  "last_refreshed": "2026-03-22",
   "deprecations": [
     {
       "pattern": "export\\s+let\\s+\\w+.*(?:PageData|LayoutData|PageServerData)",
       "replacement": "Use the `$props()` rune to receive page/layout data instead of `export let` declarations",
       "package": "svelte",
-      "since": "Svelte 5",
+      "since": "5.0.0",
       "removed_in": null,
-      "applies_from": "Svelte 5",
+      "applies_from": "5.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
@@ -16,9 +17,9 @@
       "pattern": "\\$:\\s+",
       "replacement": "Use `$derived()` for reactive derivations or `$effect()` for side effects instead of `$:` reactive statements",
       "package": "svelte",
-      "since": "Svelte 5",
+      "since": "5.0.0",
       "removed_in": null,
-      "applies_from": "Svelte 5",
+      "applies_from": "5.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
@@ -27,9 +28,9 @@
       "pattern": "(?:onMount|onDestroy)\\s*\\(",
       "replacement": "Use `$effect()` with an optional cleanup return function instead of `onMount`/`onDestroy` lifecycle hooks",
       "package": "svelte",
-      "since": "Svelte 5",
+      "since": "5.0.0",
       "removed_in": null,
-      "applies_from": "Svelte 5",
+      "applies_from": "5.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
@@ -38,9 +39,9 @@
       "pattern": "<svelte:component\\s+this\\s*=",
       "replacement": "Use dynamic `{@render ...}` blocks or snippets instead of `<svelte:component this={...}>`",
       "package": "svelte",
-      "since": "Svelte 5",
+      "since": "5.0.0",
       "removed_in": null,
-      "applies_from": "Svelte 5",
+      "applies_from": "5.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
@@ -49,9 +50,9 @@
       "pattern": "createEventDispatcher\\s*\\(",
       "replacement": "Use callback props instead of `createEventDispatcher()`. Pass event handlers as props directly",
       "package": "svelte",
-      "since": "Svelte 5",
+      "since": "5.0.0",
       "removed_in": null,
-      "applies_from": "Svelte 5",
+      "applies_from": "5.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
@@ -60,9 +61,9 @@
       "pattern": "(?:beforeNavigate|afterNavigate)\\s*\\(",
       "replacement": "Use the `onNavigate` and `beforeNavigate`/`afterNavigate` hooks from `$app/navigation` with the updated SvelteKit 2 signatures",
       "package": "@sveltejs/kit",
-      "since": "SvelteKit 2",
+      "since": "2.0.0",
       "removed_in": null,
-      "applies_from": "SvelteKit 2",
+      "applies_from": "2.0.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
