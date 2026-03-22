@@ -66,10 +66,26 @@ Each cross-project learning follows this structure:
 
 ## Pruning
 
+> **Superseded by PREEMPT Lifecycle below.** The confidence decay model provides gradual deprecation instead of abrupt removal. These rules are retained for historical context.
+
 Learnings are removed from shared files when:
 - `Hit count` remains 0 over 10 consecutive runs across any project
 - The underlying framework/library version makes the learning obsolete
 - A higher-confidence learning supersedes it
+
+### Agent Effectiveness
+
+Agent performance is tracked per `agent-effectiveness-template.md` (operational guide) and `agent-effectiveness-schema.json` (data format). The retrospective updates effectiveness data after each run and checks auto-tuning triggers.
+
+### PREEMPT Lifecycle
+
+PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
+- Active items: HIGH, MEDIUM, or LOW confidence — loaded during PREFLIGHT
+- Archived items: moved to bottom of pipeline-log.md — NOT loaded during PREFLIGHT
+- Decay: 10 consecutive unused runs triggers confidence demotion
+- Promotion: 3+ applications with HIGH confidence suggests making it a permanent rule
+
+This supersedes the simple "Pruning" rules previously defined. The confidence decay model provides gradual deprecation instead of abrupt removal.
 
 ## Privacy guarantees
 

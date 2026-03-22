@@ -330,7 +330,90 @@ After 3+ pipeline runs showing the same pattern, take action:
 
 ---
 
-## 6. Feedback Consolidation
+## 6. Agent Effectiveness Analysis
+
+During retrospective, analyze review agent performance:
+
+1. Read quality gate reports from all review cycles in this run
+2. For each review agent that was dispatched:
+   - Count findings, time taken (from stage timestamps), files reviewed
+   - Estimate false positive rate from fix cycle deltas (findings that disappeared without being fixed)
+3. Update agent effectiveness data in pipeline-log.md:
+
+    ### Agent Effectiveness ({date})
+    | Agent | Runs | Avg Time | Avg Findings | FP Rate |
+    |---|---|---|---|---|
+    | architecture-reviewer | 12 | 8s | 1.2 | 5% |
+    | security-reviewer | 12 | 12s | 0.8 | 10% |
+
+4. Check auto-tuning triggers (see `shared/learnings/agent-effectiveness-template.md`)
+5. If any trigger fires, add to improvement proposals section of the pipeline report
+
+---
+
+## 7. PREEMPT Lifecycle
+
+### Confidence Decay
+
+After each run, evaluate PREEMPT items in pipeline-log.md:
+
+- Items that were matched AND applied in this run: increment `hit_count`, update `last_hit` date, reset `runs_since_last_hit` to 0
+- Items NOT matched (domain didn't match this run): increment `runs_since_last_hit`
+- Items not hit in 10 consecutive runs where their domain WAS active:
+  - HIGH → MEDIUM
+  - MEDIUM → LOW
+  - LOW → ARCHIVED
+
+### Archival
+
+When a PREEMPT item reaches ARCHIVED:
+1. Move it from the active section to an `## Archived PREEMPT Items` section at the bottom of pipeline-log.md
+2. Keep the full item text (don't delete — needed for historical context)
+3. Archived items are NOT loaded during PREFLIGHT (saves context budget)
+
+### Promotion
+
+When a PREEMPT item has been applied 3+ times with HIGH confidence:
+- Log improvement proposal: "PREEMPT {ID} has fired {N} times with HIGH confidence. Consider making it a permanent rule in conventions or rules-override.json."
+
+### Required PREEMPT Fields
+
+Each PREEMPT item must include:
+
+    ### {MODULE}-PREEMPT-{NNN}: {title}
+    - **Domain:** {area}
+    - **Pattern:** {what to do or avoid}
+    - **Confidence:** HIGH | MEDIUM | LOW
+    - **Hit count:** {N}
+    - **Last hit:** {ISO date}
+    - **Runs since last hit:** {N}
+
+---
+
+## 8. Cross-Project Learning Promotion
+
+When a PREEMPT item is promoted (3+ runs, HIGH confidence), check for module-level applicability:
+
+1. Is this pattern already in the module's learnings file (`shared/learnings/{module}.md`)?
+   - If yes: increment the module-level hit count, note the additional project
+   - If no: propose adding it to the module's learnings
+
+2. Proposal format in the pipeline report:
+
+    New module-level learning proposed:
+    - Source: project PREEMPT {ID}
+    - Pattern: {description}
+    - Confidence: HIGH (triggered {N} times)
+    - Action: Review for addition to shared/learnings/{module}.md
+
+3. The retrospective does NOT modify `shared/learnings/{module}.md` directly (shared contract). It proposes the addition in the pipeline report for human review.
+
+4. If the same pattern is proposed across 3+ different pipeline runs:
+   - Escalate: "Module-wide pattern detected across multiple runs. Consider adding to {module}/conventions.md as a permanent rule."
+
+---
+
+## 9. Feedback Consolidation
 
 Check the `.pipeline/feedback/` directory for accumulated feedback.
 
@@ -371,7 +454,7 @@ Check the `.pipeline/feedback/` directory for accumulated feedback.
 
 ---
 
-## 7. Execution Steps
+## 10. Execution Steps
 
 When invoked, follow this sequence:
 
@@ -386,15 +469,18 @@ When invoked, follow this sequence:
 9. **Assess health** -- improving/stable/degrading based on trends
 10. **Append run entry** to `pipeline-log.md`
 11. **Update metrics** in `pipeline-config.md`
-12. **Analyze for CLAUDE.md proposals** -- check for repeated violations and emerging patterns
-13. **Check skill/agent evolution needs** -- review quality gaps, scaffolding patterns
-14. **Check self-improvement triggers** -- compare against historical reports for 3+ run patterns
-15. **Consolidate feedback** (if threshold met) -- clean up the feedback directory
-16. **Summarize** -- report what was found, what was proposed, and what was updated
+12. **Analyze agent effectiveness** -- compute per-agent metrics, check auto-tuning triggers
+13. **Run PREEMPT lifecycle** -- decay confidence, archive stale items, check promotion triggers
+14. **Check cross-project promotion** -- propose module-level learnings for promoted PREEMPTs
+15. **Analyze for CLAUDE.md proposals** -- check for repeated violations and emerging patterns
+16. **Check skill/agent evolution needs** -- review quality gaps, scaffolding patterns
+17. **Check self-improvement triggers** -- compare against historical reports for 3+ run patterns
+18. **Consolidate feedback** (if threshold met) -- clean up the feedback directory
+19. **Summarize** -- report what was found, what was proposed, and what was updated
 
 ---
 
-## 8. Important Constraints
+## 11. Important Constraints
 
 - **Append-only log** -- never remove old entries from pipeline-log.md
 - **Idempotent config updates** -- re-running the retrospective on the same run should produce the same config
