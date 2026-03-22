@@ -76,7 +76,7 @@ core/
 ## Testing
 
 - **Framework:** Kotest `ShouldSpec` on JUnit Platform (not JUnit 5 directly)
-- **API tests:** `@WellplannedRestIntegrationTest` — WebTestClient + PostgreSQL + Keycloak Testcontainers
+- **API tests:** Custom `@RestIntegrationTest` annotation — WebTestClient + PostgreSQL + Keycloak Testcontainers
 - **Persistence tests:** `@PersistenceIntegrationTest` — SpringBootTest + PostgreSQL Testcontainer
 - **Factories:** `testFixtures` source set — `createUser(...)`, `createChatMessage(...)` etc.
 - **Auth:** Keycloak test realm with `test-coach`/`password` and `test-client`/`password`
