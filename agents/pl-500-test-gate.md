@@ -55,7 +55,13 @@ You receive from the orchestrator:
 
 ## 3. Step 1: Run Full Test Suite
 
-Execute the test command from config (`test_gate.command`) and capture output:
+Execute the test command from config (`test_gate.command`) and capture output.
+
+### Command Timeout
+Wrap test execution with a timeout:
+- Use `commands.test_timeout` from config (default: 300 seconds)
+- If test command exceeds timeout: kill the process, report as TOOL_FAILURE
+- Log: "Test suite timed out after {N}s -- may indicate hanging test or infinite loop"
 
 ```bash
 [test_gate.command from config]
@@ -67,9 +73,24 @@ Parse the output for:
 - **Failing test details**: file, test name, error message, expected vs. actual
 - **Duration**
 
+### Large Test Suite Handling
+If the test suite has >500 tests:
+1. First: run targeted tests only (tests matching changed files via naming convention or import analysis)
+2. If targeted tests pass: run full suite for regression
+3. If targeted tests fail: enter fix cycle without running full suite (faster feedback)
+
+### Flaky Test Detection
+On first test failure:
+1. Re-run ONLY the failing tests (use `test_gate.test_single_command` or `commands.test_single` with failing test names)
+2. If they PASS on re-run: mark as FLAKY
+   - Log WARNING: "Flaky test: {test_name} -- passed on re-run"
+   - Proceed to analysis agents (treat as PASS for pipeline purposes)
+   - Record flaky test in stage notes for retrospective
+3. If they FAIL again: genuine failure, enter normal fix cycle
+
 ### On Failure
 
-If ANY tests fail: **stop immediately**. Do NOT proceed to Step 2 (analysis agents). Return the failing test details to the orchestrator in the output format below. The orchestrator will dispatch `pl-300-implementer` to fix the failures and then re-invoke this gate.
+If ANY tests fail (confirmed non-flaky): **stop immediately**. Do NOT proceed to Step 2 (analysis agents). Return the failing test details to the orchestrator in the output format below. The orchestrator will dispatch `pl-300-implementer` to fix the failures and then re-invoke this gate.
 
 Include for each failing test:
 - File path
@@ -168,12 +189,15 @@ Tests should assert outcomes visible to users or callers (HTTP status, response 
 
 Verify that every changed source file has at least one corresponding test that exercises its exports. Use Grep to find test files that import from or reference the changed source files.
 
-Exceptions (do NOT flag as uncovered):
-- Domain model files (data classes, sealed interfaces, typed IDs) -- tested indirectly through integration tests
-- Port interfaces (just interface declarations) -- tested through adapter tests
-- Mapper files -- tested indirectly through integration tests
-- Configuration classes -- tested through integration tests
-- Migration files -- tested through integration tests
+### Coverage Exception List
+Read coverage exceptions from the module's conventions file instead of using hardcoded list. The conventions file defines which file types don't require direct test coverage (e.g., domain models, ports, mappers, migrations, config classes).
+
+If conventions file is unavailable, fall back to universal defaults:
+- Domain model files (pure data classes)
+- Port/interface definitions
+- Generated code
+- Migration files
+- Configuration classes
 
 Report genuinely uncovered changed files as WARNING findings: `file:0 | TEST-MISSING | WARNING | description | suggested fix`
 
@@ -294,7 +318,30 @@ Tests must pass before analysis. {failing} test(s) need fixing.
 
 ---
 
-## 11. Context Management
+## 11. Forbidden Actions
+- DO NOT write or fix code -- you are a coordinator
+- DO NOT proceed to analysis agents if ANY test fails (fail-fast)
+- DO NOT override verdict thresholds
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+- DO NOT skip analysis agents on re-run cycles
+
+---
+
+## 12. Linear Tracking
+If `integrations.linear.available` in state.json:
+- Comment on Epic: test results (total, passed, failed, skipped, duration)
+- If flaky tests detected, note in comment
+If unavailable: skip silently.
+
+---
+
+## 13. Optional Integrations
+You do not directly use MCPs beyond test execution commands.
+Never fail because an optional MCP is down.
+
+---
+
+## 14. Context Management
 
 - **Read test output and changed file list** -- these are your primary inputs
 - **Dispatch prompts under 2,000 tokens** -- include only file list, focus area, expected output format

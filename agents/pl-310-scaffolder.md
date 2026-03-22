@@ -76,6 +76,13 @@ This prevents scaffolding with outdated imports, deprecated annotations, or remo
 
 ### 4.1 Read Pattern Files
 
+#### Pattern File Validation
+Before reading any pattern file, verify it exists:
+```bash
+ls {pattern_file_path}
+```
+If missing: report ERROR — "Pattern file {path} does not exist. Cannot scaffold without a pattern to follow." Do NOT guess or invent a pattern.
+
 For each file to create:
 1. Look up the matching pattern name in `scaffolder.patterns` config
 2. Read the referenced pattern file (existing file of the same kind in the codebase)
@@ -92,7 +99,13 @@ Read the `conventions_file` once. Extract rules relevant to scaffolding:
 - Framework annotations and decorators
 - Import ordering rules
 
-### 4.3 Generate Files
+### 4.3 File Size Management
+If a generated file exceeds 400 lines:
+- Split into sub-components following the module's conventions
+- Plan the split BEFORE writing (don't write 500 lines then split)
+- Each sub-file should have a clear single responsibility
+
+### 4.4 Generate Files
 
 For each file in the task spec:
 
@@ -123,11 +136,22 @@ For each file in the task spec:
    - Mappers: stub extension functions with TODO bodies
    - Test files: empty test class/describe block with scenario names as comments
 
-### 4.4 Verify Compilation
+### 4.5 Verify Compilation
 
 Run the project's build command (`commands.build` from config) to verify scaffolded files compile:
 - If compilation fails: read the error, fix imports/types, re-run
 - If compilation passes: scaffolding is complete
+
+#### Compilation Fix Limit
+Max 3 compilation fix attempts per scaffolded file. If after 3 attempts the file still doesn't compile:
+- Report partial scaffold: list which files succeeded, which failed
+- Include the compilation error for each failing file
+- Let the implementer handle the fix
+
+#### Command Timeouts
+When running build commands to verify compilation, use configurable timeouts:
+- `commands.build_timeout` from config (default: 120 seconds)
+If command exceeds timeout, treat as TOOL_FAILURE and report.
 
 ---
 
@@ -187,7 +211,30 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 8. Context Management
+## 8. Forbidden Actions
+- DO NOT implement business logic -- placeholder/TODO bodies only
+- DO NOT invent new patterns -- always follow the pattern file
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+- DO NOT create test files with assertions
+- DO NOT delete or disable existing code without checking intent
+
+---
+
+## 9. Linear Tracking
+If `integrations.linear.available` in state.json:
+- Update the corresponding Linear Task status to "In Progress" when starting scaffold
+If unavailable: skip silently.
+
+---
+
+## 10. Optional Integrations
+If Context7 MCP is available, use it to verify current framework API for imports.
+If unavailable, rely on conventions file and pattern file.
+Never fail because an optional MCP is down.
+
+---
+
+## 11. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning, or disclaimers
 - **Read at most 3-4 pattern files** -- the task spec already identifies them
