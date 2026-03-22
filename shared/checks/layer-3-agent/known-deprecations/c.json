@@ -1,0 +1,36 @@
+{
+  "language": "c",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "C-DEP-001",
+      "pattern": "gets\\s*\\(",
+      "library": "libc",
+      "deprecated_in": "C99",
+      "removed_in": "C11",
+      "replacement": "Use fgets(buf, size, stdin)",
+      "source": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1548.pdf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "C-DEP-002",
+      "pattern": "sprintf\\s*\\(",
+      "library": "libc",
+      "deprecated_in": null,
+      "removed_in": null,
+      "replacement": "Use snprintf(buf, size, fmt, ...) for buffer overflow safety",
+      "source": "https://man7.org/linux/man-pages/man3/snprintf.3.html",
+      "severity": "WARNING"
+    },
+    {
+      "id": "C-DEP-003",
+      "pattern": "atoi\\s*\\(|atol\\s*\\(|atof\\s*\\(",
+      "library": "libc",
+      "deprecated_in": null,
+      "removed_in": null,
+      "replacement": "Use strtol(), strtoul(), strtod() for error handling and overflow detection",
+      "source": "https://man7.org/linux/man-pages/man3/strtol.3.html",
+      "severity": "WARNING"
+    }
+  ]
+}

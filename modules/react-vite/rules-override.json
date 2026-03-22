@@ -1,0 +1,54 @@
+{
+  "extends": "typescript",
+  "framework": "react-vite",
+  "additional_rules": [
+    {
+      "id": "FE-THEME-001",
+      "name": "hardcoded-color-class",
+      "pattern": "\\b(bg-white|bg-black|bg-gray-[0-9]+|bg-slate-[0-9]+|bg-zinc-[0-9]+|text-white|text-black|text-gray-[0-9]+|text-slate-[0-9]+)\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*<!--",
+      "scope_pattern": "src/app/components/",
+      "scope_exclude": "src/app/components/ui/",
+      "severity": "WARNING",
+      "category": "CONV-THEME",
+      "message": "Hardcoded color class — use theme tokens (bg-background, text-foreground, etc.)",
+      "fix_hint": "Replace bg-white with bg-background, bg-black with bg-foreground, bg-gray-* with bg-muted or bg-accent, text-white with text-primary-foreground, text-black with text-foreground, text-gray-* with text-muted-foreground.",
+      "example_ref": ""
+    },
+    {
+      "id": "FE-THEME-002",
+      "name": "tailwind-font-size-class",
+      "pattern": "\\btext-(xs|sm|base|lg|xl|2xl|3xl)\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*<!--",
+      "scope_pattern": "src/app/components/",
+      "scope_exclude": "src/app/components/ui/",
+      "severity": "WARNING",
+      "category": "CONV-THEME",
+      "message": "Tailwind font-size class — use inline style={{ fontSize }} with the project type scale",
+      "fix_hint": "Replace text-sm / text-lg / etc. with style={{ fontSize: '0.875rem' }} or the appropriate project type scale value.",
+      "example_ref": ""
+    },
+    {
+      "id": "FE-CONV-001",
+      "name": "import-order-violation",
+      "pattern": "^import\\s",
+      "severity": "INFO",
+      "category": "CONV-IMPORT",
+      "message": "Import order: React > third-party > @/shared > feature-local (./)",
+      "fix_hint": "Reorder imports: 1) react/react-*, 2) third-party packages, 3) @/app/components/shared, 4) relative imports (./ ../).",
+      "example_ref": "",
+      "_note": "Import order is structural (not single-line grep). Engine delegates to layer-2 linter or agent check. This rule serves as documentation for the convention."
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": ["FE-CONV-001"],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "default_override": 400
+    },
+    "function_size": {
+      "default_override": 30
+    }
+  }
+}

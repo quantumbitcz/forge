@@ -1,0 +1,58 @@
+{
+  "_match_order": "exact rule ID first, then longest glob prefix wins",
+  "detekt": {
+    "SwallowedException": "CRITICAL",
+    "TooGenericExceptionCaught": "WARNING",
+    "complexity.*": "WARNING",
+    "coroutines.*": "WARNING",
+    "exceptions.*": "WARNING",
+    "performance.*": "WARNING",
+    "style.*": "INFO"
+  },
+  "eslint": {
+    "no-eval": "CRITICAL",
+    "react-hooks/exhaustive-deps": "WARNING",
+    "@typescript-eslint/no-explicit-any": "WARNING",
+    "_severity_map": {
+      "error": "WARNING",
+      "warn": "INFO"
+    }
+  },
+  "clippy": {
+    "correctness": "CRITICAL",
+    "suspicious": "WARNING",
+    "perf": "WARNING",
+    "style": "INFO",
+    "nursery": "INFO"
+  },
+  "ruff": {
+    "S*": "WARNING",
+    "E*": "INFO",
+    "F*": "WARNING",
+    "UP*": "INFO",
+    "ASYNC*": "WARNING",
+    "B*": "WARNING"
+  },
+  "staticcheck": {
+    "SA*": "WARNING",
+    "S*": "WARNING",
+    "ST*": "INFO",
+    "QF*": "INFO"
+  },
+  "swiftlint": {
+    "error": "WARNING",
+    "warning": "INFO"
+  },
+  "checkstyle": {
+    "ERROR": "WARNING",
+    "WARNING": "INFO"
+  },
+  "clang-tidy": {
+    "error": "WARNING",
+    "warning": "INFO",
+    "modernize-*": "INFO",
+    "bugprone-*": "WARNING",
+    "cert-*": "WARNING",
+    "security-*": "CRITICAL"
+  }
+}

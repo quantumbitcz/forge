@@ -1,0 +1,36 @@
+{
+  "language": "rust",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "RS-DEP-001",
+      "pattern": "std::mem::uninitialized",
+      "library": "std",
+      "deprecated_in": "1.38",
+      "removed_in": null,
+      "replacement": "Use std::mem::MaybeUninit<T>",
+      "source": "https://doc.rust-lang.org/std/mem/fn.uninitialized.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "RS-DEP-002",
+      "pattern": "\\.trim_left\\(|\\.trim_right\\(",
+      "library": "std",
+      "deprecated_in": "1.30",
+      "removed_in": null,
+      "replacement": "Use .trim_start() and .trim_end()",
+      "source": "https://doc.rust-lang.org/std/primitive.str.html#method.trim_start",
+      "severity": "WARNING"
+    },
+    {
+      "id": "RS-DEP-003",
+      "pattern": "try!\\(",
+      "library": "std",
+      "deprecated_in": "1.39",
+      "removed_in": null,
+      "replacement": "Use the ? operator instead of try!()",
+      "source": "https://doc.rust-lang.org/edition-guide/rust-2018/error-handling-and-panics/the-question-mark-operator-for-easier-error-handling.html",
+      "severity": "WARNING"
+    }
+  ]
+}

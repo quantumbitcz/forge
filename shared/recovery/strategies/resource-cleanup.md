@@ -1,0 +1,154 @@
+---
+name: resource-cleanup
+description: Frees system resources (disk, memory, processes) and retries the failed action. Targets pipeline-managed caches and orphan processes only.
+---
+
+# Resource Cleanup Strategy
+
+Handles failures caused by resource exhaustion: disk full, memory pressure, process limits, and token budget. Frees resources by cleaning pipeline-managed caches and killing orphan processes, then retries.
+
+---
+
+## 1. Disk Space (ENOSPC / No space left on device)
+
+### 1.1 Assessment
+
+Check current disk usage:
+
+```bash
+df -h .
+du -sh .pipeline/ 2>/dev/null
+du -sh build/ .gradle/ node_modules/.cache/ 2>/dev/null
+```
+
+### 1.2 Cleanup Targets (safe to delete)
+
+Clean in this order, checking disk space after each step:
+
+| Priority | Target | Command | Typical Savings |
+|----------|--------|---------|-----------------|
+| 1 | Old pipeline reports | `find .pipeline/reports/ -name "*.md" -mtime +7 -delete` | Small |
+| 2 | Pipeline partial files | `rm -f .pipeline/partial-*.json` | Small |
+| 3 | Corrupt state backups | `rm -f .pipeline/*.corrupt.*` | Small |
+| 4 | Build caches | `rm -rf build/ .gradle/caches/ .gradle/build-cache/` | 100MB-1GB |
+| 5 | Node cache | `rm -rf node_modules/.cache/` | 50-500MB |
+| 6 | Kotlin incremental | `rm -rf build/kotlin/` | 50-200MB |
+| 7 | Test reports (old) | `find . -path "*/build/reports" -type d -exec rm -rf {} +` | 10-100MB |
+
+### 1.3 Never Delete
+
+- Source code files
+- `.pipeline/state.json` (current state)
+- `.pipeline/checkpoint-*.json` (current checkpoints)
+- `node_modules/` (dependencies, not cache)
+- `.git/` contents
+- User configuration files
+
+### 1.4 After Cleanup
+
+1. Verify space was freed: `df -h .`
+2. If sufficient space recovered (>500MB free): retry the failed action, return `RECOVERED`.
+3. If insufficient: return `ESCALATE` with disk usage report and suggestion to free space manually.
+
+---
+
+## 2. Memory / Token Budget
+
+### 2.1 Agent Token Budget
+
+When an agent approaches its context window limit:
+
+1. **Reduce prompt size:**
+   - Strip exploration results down to file paths only (remove content summaries).
+   - Remove PREEMPT items with low relevance score.
+   - Summarize previous stage notes instead of including full text.
+
+2. **Split the task:**
+   - If implementing, break remaining tasks into smaller sub-dispatches.
+   - Each sub-dispatch gets only its own task context, not the full plan.
+
+3. **Compact history:**
+   - Write current state to stage notes file.
+   - Suggest orchestrator run `/compact` to compress conversation.
+
+### 2.2 Process Memory (OOM adjacent)
+
+When the system is under memory pressure but not yet at OOM:
+
+1. **Kill orphan processes:**
+   ```bash
+   # Kill orphan Gradle daemons
+   pkill -f "GradleDaemon" 2>/dev/null
+   # Kill orphan Node processes (dev servers, watchers)
+   pkill -f "node.*--watch" 2>/dev/null
+   # Kill orphan Kotlin daemon
+   pkill -f "kotlin-daemon" 2>/dev/null
+   ```
+
+2. **Reduce parallelism:** Suggest orchestrator reduce `parallel_threshold` to 1 for remaining tasks.
+
+3. **Retry** the failed action.
+
+---
+
+## 3. Process Limits (Too many open files / fork failed)
+
+### 3.1 Open Files
+
+```bash
+# Check current limit
+ulimit -n
+# Check what's consuming file descriptors
+lsof -p $$ 2>/dev/null | wc -l
+```
+
+**Recovery:**
+1. Kill orphan processes (same as 2.2).
+2. Close unused file descriptors (Gradle daemons hold many).
+3. Retry.
+
+### 3.2 Fork Limit
+
+```bash
+# Count current processes
+ps aux | wc -l
+```
+
+**Recovery:**
+1. Kill orphan build daemons and watchers.
+2. If process count is still high: return `ESCALATE` — system-level issue.
+3. Retry.
+
+---
+
+## 4. Retry After Cleanup
+
+After freeing resources:
+
+1. Wait 2 seconds for OS to reclaim resources.
+2. Re-execute the failed action.
+3. If success: return `RECOVERED`.
+4. If same resource error: return `ESCALATE` with detailed resource report.
+5. If different error: re-classify through recovery engine.
+
+---
+
+## 5. Output
+
+Return to recovery engine:
+
+```json
+{
+  "result": "RECOVERED | ESCALATE",
+  "details": "What was cleaned and how much was freed",
+  "resources_freed": {
+    "disk_mb": 450,
+    "processes_killed": 3,
+    "caches_cleared": ["build/", ".gradle/caches/"]
+  },
+  "current_resources": {
+    "disk_free_mb": 2048,
+    "process_count": 142
+  }
+}
+```

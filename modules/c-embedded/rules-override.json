@@ -1,0 +1,48 @@
+{
+  "extends": "c",
+  "framework": "embedded",
+  "additional_rules": [
+    {
+      "id": "CE-MEM-001",
+      "name": "malloc-in-isr-or-critical",
+      "pattern": "(malloc|calloc|realloc|free)\\s*\\(",
+      "scope_pattern": "IRQHandler|_isr|_ISR|CRITICAL_SECTION",
+      "severity": "CRITICAL",
+      "category": "SEC-MEM",
+      "message": "malloc/calloc/realloc/free in ISR or critical section — dynamic allocation is forbidden in real-time critical paths",
+      "fix_hint": "Use statically allocated buffers or a pre-allocated pool. Move allocation to initialization code guarded by /* INIT-ONLY: dynamic alloc */.",
+      "example_ref": ""
+    },
+    {
+      "id": "CE-CONV-001",
+      "name": "missing-header-guard",
+      "pattern": "^(?!.*#ifndef\\s+\\w+_H).*\\.h$",
+      "scope_pattern": "include/",
+      "severity": "WARNING",
+      "category": "CONV-GUARD",
+      "message": "Header file missing include guard (#ifndef MODULE_FILENAME_H pattern)",
+      "fix_hint": "Add #ifndef MODULE_FILENAME_H / #define MODULE_FILENAME_H / #endif guard wrapping the entire header.",
+      "example_ref": ""
+    },
+    {
+      "id": "CE-PERF-001",
+      "name": "float-in-interrupt",
+      "pattern": "(float|double)\\s+\\w+",
+      "scope_pattern": "IRQHandler|_isr|_ISR",
+      "severity": "WARNING",
+      "category": "PERF-FLOAT",
+      "message": "Floating-point type in interrupt context — use fixed-point arithmetic (Q15/Q31) instead",
+      "fix_hint": "Replace float/double with fixed-point types (int16_t for Q15, int32_t for Q31) and use shift-based arithmetic.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "include/": 100,
+      "src/drivers/": 200
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "language": "go",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "GO-DEP-001",
+      "pattern": "io/ioutil",
+      "library": "go-stdlib",
+      "deprecated_in": "1.16",
+      "removed_in": null,
+      "replacement": "Use io.ReadAll, os.ReadFile, os.WriteFile, os.MkdirTemp, os.CreateTemp",
+      "source": "https://pkg.go.dev/io/ioutil",
+      "severity": "WARNING"
+    },
+    {
+      "id": "GO-DEP-002",
+      "pattern": "strings\\.Title\\(",
+      "library": "go-stdlib",
+      "deprecated_in": "1.18",
+      "removed_in": null,
+      "replacement": "Use golang.org/x/text/cases.Title()",
+      "source": "https://pkg.go.dev/strings#Title",
+      "severity": "WARNING"
+    },
+    {
+      "id": "GO-DEP-003",
+      "pattern": "rand\\.Seed\\(",
+      "library": "go-stdlib",
+      "deprecated_in": "1.20",
+      "removed_in": null,
+      "replacement": "Automatic seeding since Go 1.20; remove manual Seed() call",
+      "source": "https://pkg.go.dev/math/rand#Seed",
+      "severity": "WARNING"
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "language": "kotlin",
+  "extensions": [".kt", ".kts"],
+  "source": "detekt, SonarKotlin, kotlinlang.org best practices",
+  "rules": [
+    {
+      "id": "KT-NULL-001",
+      "name": "non-null-assertion",
+      "pattern": "!!",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*!![^\"]*\"|//.*!!",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Non-null assertion (!!) — risks NullPointerException at runtime.",
+      "fix_hint": "Replace !! with safe call (?.) or Elvis operator (?:).",
+      "example_ref": "kotlin/null-safety.md#non-null-assertion",
+      "scope": "all"
+    },
+    {
+      "id": "KT-BLOCK-001",
+      "name": "blocking-calls",
+      "pattern": "Thread\\.sleep|runBlocking",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Blocking call in reactive/coroutine codebase.",
+      "fix_hint": "Use delay() for suspending or withContext(Dispatchers.IO) for blocking I/O.",
+      "example_ref": "kotlin/coroutines.md#blocking-calls",
+      "scope": "main"
+    },
+    {
+      "id": "KT-BLOCK-002",
+      "name": "thread-executor-usage",
+      "pattern": "Thread\\(|Executors\\.|newFixedThreadPool|newCachedThreadPool|newSingleThreadExecutor|synchronized\\s*\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Thread/Executor usage — prefer structured concurrency with coroutines.",
+      "fix_hint": "Use launch, async, or withContext instead of raw threads and executors.",
+      "example_ref": "kotlin/coroutines.md#structured-concurrency",
+      "scope": "main"
+    },
+    {
+      "id": "KT-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a vault; reference via config properties.",
+      "example_ref": "kotlin/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "KT-CONV-001",
+      "name": "console-output",
+      "pattern": "println\\(|System\\.(out|err)\\.",
+      "exclude_pattern": "^\\s*//",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Console output — use a structured logger instead.",
+      "fix_hint": "Replace with logger.info/debug/warn from SLF4J or kotlin-logging.",
+      "example_ref": "kotlin/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "KT-EXCEPT-001",
+      "name": "generic-exception",
+      "pattern": "throw (Exception|RuntimeException)\\(",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Generic exception thrown — use domain-specific exception types.",
+      "fix_hint": "Define a sealed hierarchy of domain exceptions and throw the specific subtype.",
+      "example_ref": "kotlin/exceptions.md#domain-exceptions",
+      "scope": "all"
+    },
+    {
+      "id": "KT-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"\"\"",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
+      "example_ref": "kotlin/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "KT-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s+val|companion\\s+object|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a const val or companion object constant with a descriptive name.",
+      "example_ref": "kotlin/readability.md#magic-numbers",
+      "scope": "main"
+    },
+    {
+      "id": "KT-READ-003",
+      "name": "abbreviated-names",
+      "pattern": "\\b(val|var|fun)\\s+[a-z]{1,2}[0-9]*\\s*[:(=]",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\\.let\\s*\\{|\\bit\\b|lambda|->",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Abbreviated identifier name — prefer descriptive names.",
+      "fix_hint": "Rename to a descriptive name that conveys intent (exception: i, x, y in lambdas).",
+      "example_ref": "kotlin/readability.md#naming",
+      "scope": "all"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "impl/": 150,
+        "controller/": 250,
+        "mapper/": 200,
+        "test/": 500
+      },
+      "_note": "Lines of code. Use case implementations should be small and focused; tests get more room."
+    },
+    "function_size": {
+      "default": 30,
+      "_note": "Detected via awk brace-counting, not grep."
+    }
+  },
+  "boundaries": [
+    {
+      "name": "No framework or persistence imports in domain",
+      "scope_pattern": "core/domain/",
+      "forbidden_imports": [
+        "import org.springframework.data.",
+        "import org.springframework.r2dbc.",
+        "import io.r2dbc."
+      ],
+      "message": "Domain model must remain framework-free — use port interfaces and pure Kotlin types.",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/kotlin.json"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "language": "python",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "PY-DEP-001",
+      "pattern": "@asyncio\\.coroutine|asyncio\\.coroutine",
+      "library": "asyncio",
+      "deprecated_in": "3.8",
+      "removed_in": "3.11",
+      "replacement": "Use async def instead of @asyncio.coroutine decorator",
+      "source": "https://docs.python.org/3/library/asyncio-task.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PY-DEP-002",
+      "pattern": "import imp[^o]|from imp import",
+      "library": "imp",
+      "deprecated_in": "3.4",
+      "removed_in": "3.12",
+      "replacement": "Use importlib module",
+      "source": "https://docs.python.org/3/library/imp.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PY-DEP-003",
+      "pattern": "assertRaisesRegexp\\(",
+      "library": "unittest",
+      "deprecated_in": "3.2",
+      "removed_in": "3.12",
+      "replacement": "Use assertRaisesRegex() (without trailing 'p')",
+      "source": "https://docs.python.org/3/library/unittest.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PY-DEP-004",
+      "pattern": "collections\\.MutableMapping|collections\\.MutableSequence|collections\\.MutableSet",
+      "library": "collections",
+      "deprecated_in": "3.3",
+      "removed_in": "3.10",
+      "replacement": "Use collections.abc.MutableMapping, collections.abc.MutableSequence, etc.",
+      "source": "https://docs.python.org/3/library/collections.abc.html",
+      "severity": "CRITICAL"
+    }
+  ]
+}

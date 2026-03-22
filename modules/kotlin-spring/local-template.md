@@ -45,9 +45,7 @@ quality_gate:
       source: plugin
       focus: "CLAUDE.md adherence"
   inline_checks:
-    - script: "${CLAUDE_PLUGIN_ROOT}/modules/kotlin-spring/scripts/check-antipatterns.sh"
-    - script: "${CLAUDE_PLUGIN_ROOT}/modules/kotlin-spring/scripts/check-core-boundary.sh"
-    - script: "${CLAUDE_PLUGIN_ROOT}/modules/kotlin-spring/scripts/check-file-size.sh"
+    - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
 test_gate:
   command: "./gradlew test"

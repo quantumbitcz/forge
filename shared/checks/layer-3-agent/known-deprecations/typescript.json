@@ -1,0 +1,58 @@
+{
+  "language": "typescript",
+  "last_refreshed": "2026-03-22",
+  "entries": [
+    {
+      "id": "TS-DEP-001",
+      "pattern": "<Cell\\s",
+      "library": "recharts",
+      "deprecated_in": "3.0",
+      "removed_in": null,
+      "replacement": "Use the shape prop on Pie, Bar, etc. instead of Cell children",
+      "source": "https://recharts.org/en-US/guide/migration-to-3.x",
+      "migrated_from": "react-vite module",
+      "severity": "WARNING"
+    },
+    {
+      "id": "TS-DEP-002",
+      "pattern": "IconLeft|IconRight",
+      "library": "react-day-picker",
+      "deprecated_in": "9.0",
+      "removed_in": null,
+      "replacement": "Use components prop: components={{ Chevron: CustomChevron }}",
+      "source": "https://daypicker.dev/upgrading",
+      "migrated_from": "react-vite module",
+      "severity": "WARNING"
+    },
+    {
+      "id": "TS-DEP-003",
+      "pattern": "React\\.FC[^<]|React\\.FunctionComponent[^<]",
+      "library": "react",
+      "deprecated_in": "18.0",
+      "removed_in": null,
+      "replacement": "Use explicit PropsWithChildren<Props> or define children in your Props type",
+      "source": "https://react.dev/reference/react/Component",
+      "severity": "WARNING"
+    },
+    {
+      "id": "TS-DEP-004",
+      "pattern": "componentWillMount|componentWillReceiveProps|componentWillUpdate",
+      "library": "react",
+      "deprecated_in": "16.3",
+      "removed_in": null,
+      "replacement": "Use hooks (useEffect, useMemo) or UNSAFE_ prefix for class components",
+      "source": "https://react.dev/reference/react/Component#unsafe_componentwillmount",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "TS-DEP-005",
+      "pattern": "ReactDOM\\.render\\(",
+      "library": "react-dom",
+      "deprecated_in": "18.0",
+      "removed_in": null,
+      "replacement": "Use createRoot(container).render(<App />) from react-dom/client",
+      "source": "https://react.dev/blog/2022/03/08/react-18-upgrade-guide",
+      "severity": "CRITICAL"
+    }
+  ]
+}

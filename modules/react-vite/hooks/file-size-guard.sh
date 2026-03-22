@@ -1,24 +1,11 @@
-#!/bin/bash
-# PostToolUse hook: Warns when a file exceeds ~400 lines.
+#!/usr/bin/env bash
+# DEPRECATED: Use shared/checks/engine.sh instead.
+# Will be removed in the next release.
 
-filepath=$(echo "$CLAUDE_TOOL_INPUT" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+# Avoid duplicate checks if engine.sh was already invoked by plugin hook
+if [ -n "${_ENGINE_RUNNING:-}" ]; then exit 0; fi
 
-[ -z "$filepath" ] && exit 0
-
-# Resolve to absolute path if needed
-if [[ "$filepath" = /* ]]; then
-  abs="$filepath"
-else
-  abs="$(pwd)/$filepath"
-fi
-
-[ ! -f "$abs" ] && exit 0
-
-count=$(wc -l < "$abs" 2>/dev/null || echo "0")
-count=$(echo "$count" | tr -d ' ')
-
-if [ "$count" -gt 400 ]; then
-  echo "⚠ file-size-guard: $filepath has $count lines (max ~400). Consider extracting sub-components."
-fi
-
-exit 0
+echo "WARNING: $(basename "$0") is deprecated. Use engine.sh --hook instead." >&2
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" _ENGINE_RUNNING=1 exec "$PLUGIN_ROOT/shared/checks/engine.sh" --hook

@@ -1,0 +1,134 @@
+{
+  "language": "python",
+  "extensions": [".py"],
+  "source": "Ruff, Pylint, PEP 8, SonarPython",
+  "rules": [
+    {
+      "id": "PY-EXCEPT-001",
+      "name": "bare-except",
+      "pattern": "except:",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Bare except clause — catches all exceptions including SystemExit and KeyboardInterrupt.",
+      "fix_hint": "Specify an explicit exception type, e.g. except ValueError: or except Exception:.",
+      "example_ref": "python/exceptions.md#bare-except",
+      "scope": "all"
+    },
+    {
+      "id": "PY-EXCEPT-002",
+      "name": "broad-except",
+      "pattern": "except\\s+(Exception|BaseException)",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Overly broad exception catch — masks bugs by swallowing unrelated errors.",
+      "fix_hint": "Catch specific exception types relevant to the operation; re-raise or log if a broad catch is truly needed.",
+      "example_ref": "python/exceptions.md#broad-except",
+      "scope": "all"
+    },
+    {
+      "id": "PY-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|api_key)\\s*=\\s*['\"][^'\"]{3,}['\"]",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a vault; load via os.environ or a config library.",
+      "example_ref": "python/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "PY-SEC-002",
+      "name": "eval-exec-usage",
+      "pattern": "\\b(eval|exec)\\(",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-EVAL",
+      "message": "eval/exec usage — risks arbitrary code execution.",
+      "fix_hint": "Replace with ast.literal_eval for data parsing or a safer alternative; avoid dynamic code execution.",
+      "example_ref": "python/security.md#eval-exec",
+      "scope": "all"
+    },
+    {
+      "id": "PY-CONV-001",
+      "name": "print-statement",
+      "pattern": "\\bprint\\(",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Print statement — use a structured logger instead.",
+      "fix_hint": "Replace with logging.info/debug/warning from the logging module or structlog.",
+      "example_ref": "python/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "PY-MUT-001",
+      "name": "mutable-default-argument",
+      "pattern": "def\\s+\\w+\\(.*=\\s*(\\[\\]|\\{\\}|\\bset\\(\\))",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-MUT",
+      "message": "Mutable default argument — shared across all calls and causes subtle bugs.",
+      "fix_hint": "Use None as the default and create the mutable object inside the function body.",
+      "example_ref": "python/functions.md#mutable-defaults",
+      "scope": "all"
+    },
+    {
+      "id": "PY-BLOCK-001",
+      "name": "time-sleep-in-async",
+      "pattern": "time\\.sleep",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "time.sleep blocks the event loop in async code.",
+      "fix_hint": "Use asyncio.sleep() in async functions or run in a thread executor if sync sleep is unavoidable.",
+      "example_ref": "python/async.md#blocking-calls",
+      "scope": "main"
+    },
+    {
+      "id": "PY-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*#|^\\s*\"\"\"|^\\s*'''",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
+      "example_ref": "python/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "PY-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*#|\"[^\"]*\"|'[^']*'|^\\s*[A-Z_]+=",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a module-level constant with a descriptive UPPER_SNAKE_CASE name.",
+      "example_ref": "python/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "tests/": 500,
+        "test_": 500,
+        "migrations/": 600
+      },
+      "_note": "Lines of code. Test files and migrations get more room."
+    },
+    "function_size": {
+      "default": 30,
+      "_note": "Detected via AST or indent-based heuristic, not grep."
+    }
+  },
+  "boundaries": [],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/python.json"
+  }
+}

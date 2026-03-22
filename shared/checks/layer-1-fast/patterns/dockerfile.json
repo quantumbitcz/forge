@@ -1,0 +1,84 @@
+{
+  "language": "dockerfile",
+  "extensions": ["Dockerfile", ".dockerfile"],
+  "source": "Hadolint, Docker best practices, CIS Docker Benchmark",
+  "rules": [
+    {
+      "id": "DF-SEC-001",
+      "name": "missing-user-instruction",
+      "pattern": null,
+      "structural_check": "awk_no_user_instruction",
+      "severity": "WARNING",
+      "category": "SEC-ROOT",
+      "message": "No USER instruction found — container will run as root, increasing attack surface.",
+      "fix_hint": "Add a non-root user and set USER before CMD/ENTRYPOINT. Example: RUN adduser -D appuser && USER appuser",
+      "example_ref": "dockerfile/security.md#non-root",
+      "scope": "all",
+      "_note": "Structural check — detected via awk scanning for USER instruction, not regex pattern matching."
+    },
+    {
+      "id": "DF-TAG-001",
+      "name": "latest-base-image",
+      "pattern": "^FROM\\s+\\S+:latest",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "INFRA-TAG",
+      "message": "Base image uses :latest tag — builds are not reproducible and may break unexpectedly.",
+      "fix_hint": "Pin to a specific version or digest. Example: FROM node:22-alpine or FROM python:3.12-slim",
+      "example_ref": "dockerfile/images.md#pin-versions",
+      "scope": "all"
+    },
+    {
+      "id": "DF-BEST-001",
+      "name": "add-instead-of-copy",
+      "pattern": "^ADD\\s",
+      "exclude_pattern": "^\\s*#|--from=|https?://|\\.tar",
+      "severity": "INFO",
+      "category": "INFRA-BEST",
+      "message": "ADD used instead of COPY — ADD has implicit tar extraction and remote URL fetch which can be surprising.",
+      "fix_hint": "Use COPY for local file copies. Reserve ADD only for tar auto-extraction or remote URLs (prefer curl/wget for URLs).",
+      "example_ref": "dockerfile/best-practices.md#copy-over-add",
+      "scope": "all"
+    },
+    {
+      "id": "DF-BEST-002",
+      "name": "apt-get-no-recommends",
+      "pattern": "apt-get install(?!.*--no-install-recommends)",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "INFRA-SIZE",
+      "message": "apt-get install without --no-install-recommends — installs unnecessary packages, bloating image size.",
+      "fix_hint": "Add --no-install-recommends flag. Example: RUN apt-get install -y --no-install-recommends curl",
+      "example_ref": "dockerfile/best-practices.md#minimize-layers",
+      "scope": "all"
+    },
+    {
+      "id": "DF-SEC-002",
+      "name": "curl-pipe-to-shell",
+      "pattern": "curl.*\\|\\s*(ba)?sh",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "SEC-EXEC",
+      "message": "curl piped to shell — executes remote code without verification, risking supply-chain attacks.",
+      "fix_hint": "Download the script first, verify its checksum, then execute. Or use the package manager instead.",
+      "example_ref": "dockerfile/security.md#supply-chain",
+      "scope": "all"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 150,
+      "overrides": {
+        "multi-stage": 250
+      },
+      "_note": "Lines of code. Dockerfiles should be concise; multi-stage builds get more room."
+    },
+    "function_size": {
+      "_note": "Not applicable to Dockerfiles. RUN instruction complexity is checked via rule patterns."
+    }
+  },
+  "boundaries": [],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/dockerfile.json"
+  }
+}

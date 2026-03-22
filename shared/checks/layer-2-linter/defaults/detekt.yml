@@ -1,0 +1,14 @@
+build:
+  maxIssues: -1
+complexity:
+  active: true
+coroutines:
+  active: true
+exceptions:
+  active: true
+performance:
+  active: true
+style:
+  active: true
+  MaxLineLength:
+    maxLineLength: 150
