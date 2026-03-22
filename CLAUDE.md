@@ -26,6 +26,26 @@ This is a documentation-only plugin (no build step). To test changes:
 4. Run `/pipeline-run <requirement>` for a full end-to-end test
 5. Check `.pipeline/state.json` and stage notes for correct behavior
 
+### CI validation
+
+Run the validation commands from the [Validation](#validation) section in CI to catch structural issues:
+
+```bash
+# CI smoke test: verify plugin structure is intact
+set -e
+# All agents have valid frontmatter
+test "$(grep -l '^name:' agents/*.md | wc -l)" -ge 20
+# All modules have required files
+for m in modules/*/; do
+  ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} > /dev/null
+done
+# All scripts are executable
+test -z "$(find modules/ hooks/ shared/ -name '*.sh' ! -perm -111 2>/dev/null)"
+# known-deprecations are schema v2
+grep -q '"version": 1,' modules/*/known-deprecations.json && exit 1 || true
+echo "Plugin structure OK"
+```
+
 ## Key conventions
 
 ### Agent files (`agents/*.md`)
