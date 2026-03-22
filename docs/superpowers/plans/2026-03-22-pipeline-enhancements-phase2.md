@@ -822,7 +822,7 @@ View trends across pipeline runs for this project.
 ### Quality Score Trend
 | Date | Requirement | Score | Verdict | Fix Cycles | Duration |
 |------|-------------|-------|---------|------------|----------|
-| 2026-03-20 | Add coaching notes | 94/100 | PASS | 2 | 45s |
+| 2026-03-20 | Add product catalog | 94/100 | PASS | 2 | 45s |
 | 2026-03-18 | Fix billing bug | 100/100 | PASS | 0 | 22s |
 | 2026-03-15 | Add notifications | 88/100 | CONCERNS | 3 | 78s |
 

@@ -105,7 +105,7 @@ Once confirmed, generate the configuration files:
      ```
      # Pipeline Log
 
-     Accumulated learnings from pipeline runs. Updated automatically by `pipeline-learner`.
+     Accumulated learnings from pipeline runs. Updated automatically by the retrospective agent.
      ```
 
 4. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.

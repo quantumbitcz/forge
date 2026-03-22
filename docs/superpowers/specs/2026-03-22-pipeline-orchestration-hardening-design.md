@@ -244,7 +244,7 @@ Soft-delete preserves audit trail but grows the table. Hard-delete is simpler
 but loses history. Your data retention policy determines this — I can't infer it."
 
 **Requires domain knowledge** — Ask the user.
-Example: "The coaching session model has a 'status' field. What are the valid
+Example: "The order model has a 'status' field. What are the valid
 transitions? (e.g., can a cancelled session be reopened?)"
 
 ### What is NEVER worth asking about
@@ -400,7 +400,7 @@ Boy Scout improvements are logged as positive findings (no point deduction):
 
 ```
 file:line | SCOUT-CLEANUP | INFO | Extracted 45-line method into helper | Was violating 40-line limit
-file:line | SCOUT-NAMING  | INFO | Renamed `data` to `coachingSession` | Improved readability
+file:line | SCOUT-NAMING  | INFO | Renamed `data` to `orderItem` | Improved readability
 file:line | SCOUT-IMPORT  | INFO | Removed 3 unused imports | Dead code cleanup
 ```
 
