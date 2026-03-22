@@ -1,7 +1,7 @@
 # Pipeline Configuration
 
-Tunable parameters read by `/dev` orchestrator at the start of each run.
-Updated by `pipeline-learner` agent based on run metrics. Manual edits welcome.
+Tunable parameters read by the orchestrator at the start of each run.
+Updated by the retrospective agent based on run metrics. Manual edits welcome.
 
 ## Orchestration
 
@@ -22,7 +22,7 @@ Updated by `pipeline-learner` agent based on run metrics. Manual edits welcome.
 ## Domain Hotspots
 
 Domains that frequently cause issues. Pipeline applies extra verification to these.
-Updated automatically by `pipeline-learner`.
+Updated automatically by the retrospective agent.
 
 | Domain | Issue Count | Last Issue | Common Failure |
 |--------|-------------|------------|----------------|
@@ -30,7 +30,7 @@ Updated automatically by `pipeline-learner`.
 
 ## Metrics
 
-Cross-run metrics computed by `pipeline-learner`. Used for trend analysis and self-tuning.
+Cross-run metrics computed by the retrospective agent. Used for trend analysis and self-tuning.
 
 | Metric | Value | Trend |
 |--------|-------|-------|
@@ -43,7 +43,7 @@ Cross-run metrics computed by `pipeline-learner`. Used for trend analysis and se
 
 ## Auto-Tuning Rules
 
-Applied by `pipeline-learner` when updating this config:
+Applied by the retrospective agent when updating this config:
 
 1. If `avg_fix_loops` > `max_fix_loops - 0.5` for 3+ consecutive runs -> increment `max_fix_loops` by 1
 2. If `avg_fix_loops` < 1.0 for 5+ consecutive runs -> decrement `max_fix_loops` by 1 (min: 2)

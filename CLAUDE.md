@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Three-layer design with resolution flowing top-down:
 
 1. **Project config** (`.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md`) — per-project settings, mutable runtime params, and accumulated learnings. Lives in the consuming repo, not here.
-2. **Module layer** (`modules/`) — framework-specific conventions, templates, scripts, hooks, and rule overrides. 12 modules: c-embedded, go-stdlib, infra-k8s, java-spring, kotlin-spring, python-fastapi, react-vite, rust-axum, swift-ios, swift-vapor, typescript-node, typescript-svelte.
+2. **Module layer** (`modules/`) — framework-specific conventions, templates, rule overrides, and optional module-specific tooling. 12 modules: c-embedded, go-stdlib, infra-k8s, java-spring, kotlin-spring, python-fastapi, react-vite, rust-axum, swift-ios, swift-vapor, typescript-node, typescript-svelte.
 3. **Shared core** (`agents/pl-*.md`, `shared/`, `hooks/`, `skills/`) — the pipeline engine itself.
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
@@ -19,7 +19,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Key conventions
 
 ### Agent files (`agents/*.md`)
-- YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools` list.
+- YAML frontmatter is required: `name` (must match filename without `.md`), `description`. The `tools` list is required for cross-cutting review agents; pipeline agents inherit tools from the orchestrator's dispatch.
 - Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
 - Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.

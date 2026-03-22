@@ -237,7 +237,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 
 ## Agents
 
-20 agents organized by pipeline stage and cross-cutting concerns.
+23 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
@@ -258,6 +258,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 | `pl-650-preview-validator`    | 8 Ship       | Validates preview/staging deployments before merge                |
 | `pl-700-retrospective`        | 9 Learn      | Post-run analysis, learning extraction, config auto-tuning        |
 | `pl-710-feedback-capture`     | 9 Learn      | Records user corrections as structured feedback for future runs   |
+| `pl-720-recap`                | 9 Learn      | Generates a human-readable summary of the pipeline run            |
 
 ### Cross-cutting review agents
 
@@ -268,13 +269,15 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 | `frontend-reviewer` | Reviews frontend code for quality, conventions, accessibility, performance |
 | `infra-deploy-reviewer` | Reviews infrastructure and deployment configurations |
 | `infra-deploy-verifier` | Verifies infrastructure deployments and health checks |
+| `backend-performance-reviewer` | Reviews backend code for performance issues and optimization opportunities |
+| `frontend-performance-reviewer` | Reviews frontend code for performance, bundle size, and rendering efficiency |
 
 ## File inventory
 
 ```
 dev-pipeline/
   .claude-plugin/plugin.json  # Plugin manifest (registers hooks.json)
-  agents/                     # 24 agent definitions (YAML frontmatter + instructions)
+  agents/                     # 23 agent definitions (YAML frontmatter + instructions)
   skills/                     # 12 universal skills (pipeline-run, pipeline-init, verify, deploy, security-audit, etc.)
   hooks/                      # hooks.json + 2 hook scripts (pipeline-checkpoint.sh, feedback-capture.sh)
   shared/
@@ -283,6 +286,6 @@ dev-pipeline/
     learnings/                # Per-module learnings, rule + effectiveness schemas
     recovery/                 # Recovery engine + 7 strategies + health checks
   modules/                    # 12 framework modules (conventions, templates, rules-override each)
-    kotlin-spring/            # + 3 verification scripts
-    react-vite/               # + 5 guard hooks, known-deprecations.json
+    kotlin-spring/
+    react-vite/               # + known-deprecations.json
 ```
