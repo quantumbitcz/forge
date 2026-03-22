@@ -1,6 +1,6 @@
-# WellPlanned Agent Conventions Reference
+# React-Vite Agent Conventions Reference
 
-> Full details in CLAUDE.md. This is a curated subset for agent consumption.
+> Framework conventions for React + Vite + TypeScript + shadcn/ui projects. This is a curated subset for agent consumption. Customize per-project via `.claude/dev-pipeline.local.md`.
 
 ## Typography (inline style, NOT Tailwind classes)
 

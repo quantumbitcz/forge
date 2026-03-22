@@ -36,7 +36,7 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 For hexagonal architecture (ports & adapters) projects using Kotlin, Spring Boot, WebFlux, and R2DBC.
 
 Additional includes:
-- Verification scripts: `check-antipatterns.sh` (double-bang, framework imports in core), `check-core-boundary.sh` (hexagonal layer violations), `check-file-size.sh` (files over threshold)
+- Verification handled by the shared check engine via `rules-override.json` (pattern rules for hexagonal boundaries, type conventions, file size thresholds)
 
 ### react-vite
 
@@ -157,7 +157,7 @@ Resume from a specific stage:
 |   Shared core             |  agents/pl-*.md (pipeline agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings, recovery)
 |    scoring, state)        |  hooks/ (check engine hook, checkpoint, feedback capture)
-|                           |  skills/ (pipeline-run, pipeline-init, deploy, fe-*)
+|                           |  skills/ (pipeline-run, pipeline-init, deploy, verify, etc.)
 +---------------------------+
 ```
 
@@ -274,8 +274,8 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 ```
 dev-pipeline/
   .claude-plugin/plugin.json  # Plugin manifest (registers hooks.json)
-  agents/                     # 20 agent definitions (YAML frontmatter + instructions)
-  skills/                     # 8 skills (pipeline-run, pipeline-init, bootstrap-project, deploy, 4 fe-*)
+  agents/                     # 24 agent definitions (YAML frontmatter + instructions)
+  skills/                     # 12 universal skills (pipeline-run, pipeline-init, verify, deploy, security-audit, etc.)
   hooks/                      # hooks.json + 2 hook scripts (pipeline-checkpoint.sh, feedback-capture.sh)
   shared/
     scoring.md, stage-contract.md, state-schema.md  # Contracts

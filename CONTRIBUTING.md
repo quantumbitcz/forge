@@ -125,8 +125,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 | Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
 | Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
 | Skill directory | lowercase-with-hyphens | `pipeline-status` |
-| Verification script | `check-{what}.sh` | `check-antipatterns.sh` |
-| Guard hook | `{what}-guard.sh` | `theme-guard.sh` |
+| Health check script | `{what}-check.sh` | `pre-stage-health.sh`, `dependency-check.sh` |
 
 ## Pull Request Process
 
