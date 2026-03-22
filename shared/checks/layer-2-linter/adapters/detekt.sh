@@ -83,7 +83,7 @@ def map_category(rule_id):
     return 'QUAL-DETEKT'
 
 # detekt format: path/file.kt:line:col: description [RuleId]
-pat = re.compile(r'^(.+?):(\d+):\d+:\s+(.+?)\s+\[(\w+)]')
+pat = re.compile(r'^(.+?):(\d+):\d+:\s+(.+?)\s+\[([\w.]+)]')
 
 with open(raw_path) as f:
     for line in f:
