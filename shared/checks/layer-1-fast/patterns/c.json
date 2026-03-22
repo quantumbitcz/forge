@@ -78,6 +78,7 @@
       "_note": "Detected via brace-counting heuristic, not grep."
     }
   },
+  "boundaries": [],
   "deprecations": {
     "known_deprecations_file": "layer-3-agent/known-deprecations/c.json"
   }

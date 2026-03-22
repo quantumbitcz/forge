@@ -12,7 +12,8 @@
     {
       "name": "dev-pipeline",
       "description": "10-stage autonomous development pipeline: Preflight, Explore, Plan, Validate, Implement (TDD), Verify, Review, Docs, Ship, Learn. Supports Kotlin, TypeScript, Python, Go, Rust, C, Swift, Java with self-healing recovery and generalized code quality checks.",
-      "source": "./"
+      "source": "./",
+      "strict": false
     }
   ]
 }

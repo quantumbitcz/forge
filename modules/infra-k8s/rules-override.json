@@ -1,6 +1,6 @@
 {
   "extends": "yaml",
-  "description": "Infrastructure-specific rule overrides for Helm charts, K8s manifests, and Dockerfiles.",
+  "framework": "kubernetes-helm-docker",
   "additional_rules": [
     {
       "id": "IK-SEC-001",
@@ -79,5 +79,9 @@
       "fix_hint": "Add a default-deny NetworkPolicy and whitelist required ingress/egress paths.",
       "scope": "chart"
     }
-  ]
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {}
 }

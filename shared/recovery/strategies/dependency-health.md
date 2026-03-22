@@ -15,7 +15,7 @@ Run health checks before each stage begins. Required dependencies vary by stage:
 
 | Stage | Required | Optional |
 |-------|----------|----------|
-| PREFLIGHT | git | — |
+| PREFLIGHT | git, python3 | — |
 | EXPLORE | git | — |
 | PLAN | git | context7 (MCP) |
 | VALIDATE | git | — |
