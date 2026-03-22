@@ -157,6 +157,10 @@ After reading config files, validate before proceeding:
    - Builtin agents (`source: builtin`): accept — Claude Code resolves these at runtime
    - If plugin agent missing: WARN — "Agent {name} not found in agents/. Will be skipped during REVIEW."
 
+6. **Constraint validation** for configurable fields:
+   - `total_retries_max`: must be >= 5 and <= 30, default 10. If out of range: WARN — use default (10).
+   - `oscillation_tolerance`: must be >= 0 and <= 20, default 5. If out of range: WARN — use default (5).
+
 If any ERROR-level validation fails, stop the pipeline and report all errors together. Do not fail on the first error — collect all validation failures and present them as a batch.
 
 ### 3.4 Convention Fingerprinting
@@ -169,6 +173,8 @@ This enables mid-run drift detection. Compute with:
     sha256sum {conventions_file} | cut -c1-8
 
 If conventions_file is unavailable (WARN already logged), set `conventions_hash` to empty string.
+
+Additionally, parse the conventions file into sections (`##` headings). Compute SHA256 first 8 chars for each section's content. Store in `conventions_section_hashes`: `{ "architecture": "ab12cd34", "naming": "ef56gh78", ... }`. If conventions file unavailable, set to `{}`.
 
 ### 3.5 Read Pipeline Log (PREEMPT System)
 
@@ -201,7 +207,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 
 ```json
 {
-  "version": "1.1",
+  "version": "1.2",
   "dry_run": false,
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
@@ -213,9 +219,14 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "test_cycles": 0,
   "verify_fix_count": 0,
   "validation_retries": 0,
+  "total_retries": 0,
+  "total_retries_max": 10,
   "stage_timestamps": { "preflight": "<now ISO 8601>" },
   "last_commit_sha": "",
   "preempt_items_applied": [],
+  "preempt_items_status": {},
+  "feedback_classification": "",
+  "score_history": [],
   "integrations": {
     "linear": { "available": false, "team": "" },
     "playwright": { "available": false },
@@ -228,14 +239,32 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
     "story_ids": [],
     "task_ids": {}
   },
+  "linear_sync": {
+    "in_sync": true,
+    "failed_operations": []
+  },
   "modules": [],
   "cost": {
     "wall_time_seconds": 0,
     "stages_completed": 0
   },
+  "recovery_budget": {
+    "total_weight": 0.0,
+    "max_weight": 5.0,
+    "applications": []
+  },
   "recovery_applied": [],
+  "recovery": {
+    "total_failures": 0,
+    "total_recoveries": 0,
+    "degraded_capabilities": [],
+    "failures": [],
+    "budget_warning_issued": false
+  },
   "scout_improvements": 0,
-  "conventions_hash": ""
+  "conventions_hash": "",
+  "conventions_section_hashes": {},
+  "check_engine_skipped": 0
 }
 ```
 
@@ -461,15 +490,14 @@ Extract from results: steps completed vs failed, files created/modified, fix loo
 
 ### 7.6 Parallel Conflict Detection
 
-Before dispatching a parallel group, validate no file conflicts exist:
+BEFORE dispatching parallel group G:
 
-1. For each task in the group, collect the `files` list (creates + modifies)
-2. Find any files that appear in 2+ tasks within the same group
-3. If conflicts found:
-   - Log WARNING: "Conflict detected: {file} is in both Task {A} and Task {B}"
-   - Serialize the conflicting tasks: move Task {B} to a new sequential sub-group after the current group
-   - Report in stage notes: "Serialized {N} tasks due to file conflicts"
-4. If no conflicts: proceed with parallel dispatch as normal
+1. For each task in the group: read target files from scaffolder output or plan
+2. Build conflict map: `{ "path/to/file": ["T001", "T003"] }` — any path appearing in 2+ tasks is a conflict
+3. For conflicting files: keep the first task in the group, move all other conflicting tasks to a new sub-group G'
+4. Dispatch G (now conflict-free), then run conflict check on G' recursively (G' may itself contain internal conflicts requiring further splitting)
+5. Log WARNING for each conflict: "Conflict detected: {file} is in both Task {A} and Task {B}"
+6. Report in stage notes: "Serialized {N} tasks due to file conflicts across {M} sub-groups"
 
 This check runs at IMPLEMENT time, not PLAN time, because task file lists are finalized during scaffolding.
 
@@ -494,6 +522,8 @@ Mark Implement as completed.
 **story_state:** `VERIFYING`
 
 ### Phase A: Build & Lint (inline, fail-fast)
+
+First, read `.pipeline/.check-engine-skipped`. If present and count > 0: copy count to `state.json.check_engine_skipped`, report in stage notes: '{N} file edits had inline checks skipped (hook timeout/error). Running full verification now.' Delete the marker file.
 
 Run in sequence using commands from config. Stop on first failure:
 
@@ -562,7 +592,8 @@ After all batches: run `quality_gate.inline_checks` (scripts or skills from conf
 1. Collect all findings from all batches + inline checks
 2. Deduplicate by `(file, line, category)` -- keep highest severity (see `shared/scoring.md`)
 3. Score: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`
-4. Determine verdict:
+4. Append score to `state.json.score_history` (e.g., `[85, 78, 92]` across cycles)
+5. Determine verdict:
    - **PASS:** score >= 80, no CRITICALs -> proceed to DOCS
    - **CONCERNS:** score 60-79, no CRITICALs -> proceed to DOCS with findings preserved in notes
    - **FAIL:** score < 60 or any CRITICAL -> fix cycle
@@ -593,10 +624,15 @@ After max review cycles, apply this ladder to determine next action:
 
 ### 9.5 Oscillation Detection
 
-Track score across fix cycles. If score DECREASES between consecutive cycles (e.g., cycle 1: 85 → cycle 2: 78):
-- Flag as "quality regression during fix cycle"
-- Post to Linear: "Fix cycle {N} introduced regression: {score_before} → {score_after}"
-- Escalate to user — do not continue fixing if fixes make things worse
+Track score across fix cycles using `score_history[]`. Compute delta between consecutive scores (`delta = score_current - score_previous`):
+
+| Condition | Action |
+|---|---|
+| `delta >= 0` | Score improving or stable — continue normally |
+| `abs(delta) <= oscillation_tolerance` (default 5) | WARNING — "Score dipped by {abs(delta)} points (within tolerance {oscillation_tolerance})." Allow one more fix cycle. If the next cycle also dips, escalate. |
+| `abs(delta) > oscillation_tolerance` | Escalate — "Fix cycle {N} introduced regression: {score_before} → {score_after} (exceeds tolerance {oscillation_tolerance})." Post to Linear. Do not continue fixing. |
+
+See `shared/scoring.md` for the oscillation tolerance definition and configurable threshold.
 
 Write `.pipeline/stage_6_notes_{storyId}.md` with review report, score history.
 
@@ -662,7 +698,14 @@ If `integrations.linear.available` is false, skip Linear operations silently.
 ### User Response
 
 - **Approval** -> proceed to LEARN (Stage 9)
-- **Feedback/Rejection** -> dispatch `pl-710-feedback-capture` to record the correction structurally, reset `quality_cycles` and `test_cycles` to 0, re-enter Stage 4 (IMPLEMENT) with feedback context
+- **Feedback/Rejection** -> dispatch `pl-710-feedback-capture` to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `pl-710-feedback-capture`):
+
+  | Classification | Resets | Re-enter | Notes |
+  |---|---|---|---|
+  | **Implementation feedback** | `quality_cycles` = 0, `test_cycles` = 0 | Stage 4 (IMPLEMENT) with feedback context | Increment `total_retries` |
+  | **Design feedback** | `quality_cycles` = 0, `test_cycles` = 0, `verify_fix_count` = 0, `validation_retries` = 0 | Stage 2 (PLAN) with feedback as planner input | Increment `total_retries` (NOT individual loop counters) |
+
+  After incrementing `total_retries`, check total retry budget (see section 15).
 
 Write `.pipeline/stage_8_notes_{storyId}.md` with PR details.
 
@@ -857,6 +900,24 @@ Update `.pipeline/state.json` at **every** stage transition (see `shared/state-s
 - Add timestamp to `stage_timestamps`
 - Update counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`)
 
+### Total Retry Budget
+
+After incrementing any retry counter (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`), also increment `total_retries`. If `total_retries >= total_retries_max` (default 10), escalate to the user regardless of individual loop budgets:
+
+> "Pipeline exhausted total retry budget ({total_retries}/{total_retries_max}). Individual counters: quality={quality_cycles}, test={test_cycles}, verify={verify_fix_count}, validation={validation_retries}. How should I proceed?"
+
+This prevents the pipeline from running indefinitely when multiple stages each consume retries within their individual limits.
+
+### Recovery Budget
+
+Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check `recovery_budget.total_weight` against `recovery_budget.max_weight`. When `total_weight > 4.0` (80% of default max), set `recovery.budget_warning_issued` to `true` and log WARNING: "Recovery budget at {total_weight}/{max_weight} — approaching limit." When `total_weight >= max_weight`, do not invoke recovery — escalate to user instead.
+
+### Degraded Capability Check
+
+Before any MCP-dependent dispatch, check `recovery.degraded_capabilities[]`. If the needed capability is listed:
+- **Optional capability** (Linear, Playwright, Slack, Figma, Context7): skip the MCP-dependent operation silently. Log INFO in stage notes: "Skipping {capability} — marked degraded."
+- **Required capability** (build, test, git): escalate to user immediately. These cannot be skipped.
+
 Write `.pipeline/checkpoint-{storyId}.json` after each implementation task (see `shared/state-schema.md` for format).
 
 Write `.pipeline/stage_N_notes_{storyId}.md` at each stage with key decisions, artifacts, verdicts, scores, rework reasons.
@@ -987,9 +1048,10 @@ All implementation work happens in an isolated git worktree. The user's working 
 ### Creation (Stage 4 entry)
 
 1. First: create git checkpoint in main tree — `git add -A && git commit -m 'wip: pipeline checkpoint pre-implement'`
-2. Then: create worktree — `git worktree add .pipeline/worktree -b pipeline/{story-id}`
-3. All subsequent implementation, scaffolding, and testing happens inside the worktree
-4. Dispatched agents receive the worktree path as their working directory
+2. Branch collision check: run `git branch --list pipeline/{story-id}`. If the branch already exists, append epoch: `pipeline/{story-id}-{epoch}` (e.g., `pipeline/add-comments-1711234567`).
+3. Then: create worktree — `git worktree add .pipeline/worktree -b pipeline/{story-id}` (using the collision-safe branch name)
+4. All subsequent implementation, scaffolding, and testing happens inside the worktree
+5. Dispatched agents receive the worktree path as their working directory
 
 ### Merge (Stage 8 — SHIP)
 

@@ -88,6 +88,18 @@ For each step in the task:
 3. **Read dependency files** -- files created in previous steps or by the scaffolder that this step builds on.
 4. **Consider edge cases and error scenarios** BEFORE writing code, not after tests fail.
 
+### PREEMPT Item Tracking
+
+When you apply a PREEMPT item from the dispatch prompt's checklist, record it in stage notes:
+
+    PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
+
+If a PREEMPT item was provided but is not applicable to your task, record:
+
+    PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
+
+This feedback is used by the retrospective to update PREEMPT confidence scores.
+
 ### 4.2 Write Test FIRST (RED phase)
 
 When applicable (see section 4.7 for exceptions):

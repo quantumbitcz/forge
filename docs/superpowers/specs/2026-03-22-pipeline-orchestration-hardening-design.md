@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-22
 **Scope:** Contract-first hardening of shared contracts, then orchestrator + agent updates
-**Status:** Draft — awaiting spec review
+**Status:** Implemented — both batches delivered
 **Approach:** Clean Contract Evolution (Option B) — version bumps with forward migration
 
 ---
@@ -33,11 +33,11 @@ Forward migration: When recovery engine encounters `version: "1.1"` state files,
 |-------|------|---------|---------|
 | `total_retries` | integer | 0 | Cumulative retry count across all loops |
 | `total_retries_max` | integer | 10 | Global retry ceiling (configurable in pipeline-config.md) |
-| `preempt_items_status` | object | `{}` | Tracks which PREEMPT items were applied/skipped/false-positive |
+| `preempt_items_status` | object | `{}` | Tracks which PREEMPT items were applied/skipped/false-positive. Complements existing `preempt_items_applied` (which lists items *loaded* at PREFLIGHT). `preempt_items_applied` is retained as-is — it records what was loaded; `preempt_items_status` records what was actually used. |
 | `feedback_classification` | string | `""` | `""` \| `"implementation"` \| `"design"` — set by pl-710 on PR rejection |
 | `check_engine_skipped` | integer | 0 | Count of inline check engine invocations that were skipped due to timeout/error |
 | `recovery_budget` | object | see below | Weighted recovery budget tracking |
-| `score_history` | integer[] | `[]` | Quality score per review cycle for oscillation detection |
+| `score_history` | number[] | `[]` | Quality score per review cycle for oscillation detection. Integer with default weights; may be non-integer with custom scoring weights. |
 | `linear_sync` | object | see below | Tracks Linear API operation success/failure |
 | `conventions_section_hashes` | object | `{}` | Per-section SHA256 hashes (first 8 chars) for granular drift detection |
 
@@ -134,11 +134,20 @@ Replace the single-path PR rejection flow with:
 | Feedback Type | Detection Heuristic | Routing |
 |---|---|---|
 | `implementation` | References specific files, code behavior, test cases, UI details, variable names | Reset `quality_cycles` and `test_cycles` to 0 → re-enter Stage 4 (IMPLEMENT) |
-| `design` | References wrong approach, wrong decomposition, missing stories, architectural direction, "should be split", "wrong pattern" | Reset ALL counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`, `total_retries`) → re-enter Stage 2 (PLAN) with feedback as planner input |
+| `design` | References wrong approach, wrong decomposition, missing stories, architectural direction, "should be split", "wrong pattern" | Reset stage-specific counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`) to 0. Do NOT reset `total_retries` — user-driven re-plan still counts toward the global budget to prevent unbounded loops. Re-enter Stage 2 (PLAN) with feedback as planner input. |
 
 Detection responsibility: `pl-710-feedback-capture` classifies the feedback and writes `feedback_classification` to stage notes. The orchestrator reads it and sets `state.json.feedback_classification`.
 
 If classification is ambiguous, default to `implementation` (safer — doesn't discard the existing plan).
+
+**Retry Loops table update:** Add a new row to the existing retry loops table in stage-contract.md:
+
+| Loop | From → To | Counter | Max | Trigger |
+|------|-----------|---------|-----|---------|
+| PR rejection (implementation) | 8 SHIP → 4 IMPLEMENT | (none, but increments `total_retries`) | ∞ (bounded by `total_retries_max`) | User rejects with implementation feedback |
+| PR rejection (design) | 8 SHIP → 2 PLAN | (none, but increments `total_retries`) | ∞ (bounded by `total_retries_max`) | User rejects with design feedback |
+
+**Transition Diagram update:** Add `SHIPPING -> PLANNING` arrow (labeled "design feedback") alongside the existing `SHIPPING -> IMPLEMENTING` arrow in the ASCII transition diagram.
 
 #### 2.3 Stage 4 Entry Condition
 
@@ -158,8 +167,8 @@ Replace the under-specified Stage 4 section 7.6 with:
 ```
 BEFORE dispatching parallel group G:
   1. For each task T in G:
-     - If scaffolder ran: read files_created + files_modified from scaffolder output
-     - Else: read files list from plan (task.files_create + task.files_modify)
+     - If scaffolder ran: read files_created + files_modified from scaffolder output (checkpoint schema)
+     - Else: read task.files from plan (flat list of file paths the task declares it will create or modify)
   2. Build conflict map: { "path/file.kt": ["T001", "T003"] }
   3. For each file with >1 task:
      - Keep first task (by plan order) in group G
@@ -174,9 +183,11 @@ This check runs at IMPLEMENT time because task file lists are finalized during s
 
 #### 2.5 Stage 6 Oscillation Tolerance
 
+**Canonical source:** `scoring.md` section 3.1 defines the algorithm. Stage-contract.md references it. This avoids maintaining the same logic in two places.
+
 **Current:** "If score DECREASES between cycles → escalate"
 
-**New:** Track `score_history[]` in state.json. After each cycle:
+**New:** Track `score_history[]` in state.json. After each cycle (see `scoring.md` Section 3.1 for full algorithm):
 
 1. If `score_history` has < 2 entries: no check, continue
 2. `delta = current_score - previous_score`
@@ -262,7 +273,7 @@ Budget warning: When `total_weight > 4.0` (80%), set `recovery.budget_warning_is
 
 Budget exhaustion: When `total_weight >= max_weight`, escalate with full budget report.
 
-State tracking: Use `state.json.recovery_budget` object (replaces `recovery_applied` as the primary budget tracker). Keep `recovery_applied` as derived view for backward compatibility.
+State tracking: Use `state.json.recovery_budget` object (replaces `recovery_applied` as the primary budget tracker). Keep `recovery_applied` as derived view for backward compatibility. Derivation rule: `recovery_applied = recovery_budget.applications.map(a => a.strategy)` — updated at every budget write.
 
 #### 4.2 Pre-Classified Error Validation
 
@@ -280,7 +291,11 @@ Add to section 3 "Pre-Classified Errors":
 
 Add new section "Degraded Capability Handling":
 
-> After recovery returns DEGRADED, the recovery engine writes the degraded capability name to `recovery.degraded_capabilities[]`. The orchestrator MUST check this array before any capability-dependent dispatch:
+> After recovery returns DEGRADED, the recovery engine writes the degraded capability name to `recovery.degraded_capabilities[]`.
+>
+> **Capability naming convention:** Use short, lowercase names matching `state.json.integrations` keys for MCP capabilities (`"context7"`, `"linear"`, `"playwright"`, `"slack"`), and tool-type names for infrastructure capabilities (`"build"`, `"test"`, `"git"`). Existing dependency-health strategy values (e.g., `"integration-tests-skipped"`, `"coverage-analysis-unavailable"`) are legacy — the dependency-health strategy in Batch 2 should be updated to emit the new-style names. Both old and new styles are accepted by the orchestrator during the migration period; the orchestrator normalizes them by stripping everything after the first `-` and lowercasing (e.g., `"integration-tests-skipped"` → `"integration"`).
+>
+> The orchestrator MUST check `degraded_capabilities[]` before any capability-dependent dispatch:
 >
 > | Degraded Capability | Skipped Operations |
 > |---|---|
@@ -288,6 +303,7 @@ Add new section "Degraded Capability Handling":
 > | `"linear"` | All Linear tracking operations (create, update, comment) |
 > | `"playwright"` | Preview validation (Stage 8.5) |
 > | `"slack"` | Slack notifications |
+> | `"figma"` | Skip design validation (Stage 6) |
 > | `"build"` | Escalate — cannot proceed without build |
 > | `"test"` | Escalate — cannot proceed without tests |
 > | `"git"` | Escalate — cannot proceed without git |
@@ -457,7 +473,8 @@ After Batch 1 contracts land, these consumers update:
 | `pl-400-quality-gate.md` | Adopt oscillation tolerance, dedup hint cap (top 20), critical agent gap severity |
 | `pl-300-implementer.md` | Add PREEMPT_APPLIED/PREEMPT_SKIPPED markers in stage notes |
 | `shared/checks/engine.sh` | Add skip counter on timeout/error |
-| `modules/*/known-deprecations.json` | Bootstrap known-deprecations for all 12 modules |
+| `modules/*/known-deprecations.json` | Bootstrap known-deprecations for all 12 modules. Use `modules/react-vite/known-deprecations.json` as the template schema. Each module's file should contain 5-15 commonly known deprecations from that ecosystem (e.g., `javax.*` → `jakarta.*` for java-spring/kotlin-spring, Node.js deprecated APIs for typescript-node, Python 2 patterns for python-fastapi). "Bootstrap" means pre-populate with established, well-documented deprecations — not speculative ones. The layer-3 deprecation-refresh agent will maintain them incrementally after bootstrap. |
+| `shared/recovery/strategies/dependency-health.md` | Update to emit new-style capability names (short, lowercase) instead of legacy descriptive strings |
 | `shared/recovery/recovery-engine.md` | Already updated in Batch 1 (contract); agents adopt new budget format |
 
 ---

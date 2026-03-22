@@ -28,11 +28,17 @@ The `.pipeline/state.json` file does not exist when it should (mid-pipeline run)
    - `story_id`: extract from checkpoint filename or stage notes filename.
    - `story_state`: derive from highest completed stage.
    - `stage_timestamps`: approximate from file modification times.
-   - `verify_fix_count`, `quality_cycles`, `test_cycles`: set to 0 (conservative — may cause extra cycles but won't skip needed ones).
+   - `verify_fix_count`: Sum `fix_attempts` across all `tasks_completed` in checkpoint files.
+   - `test_cycles`: Count `stage_5_notes` sections containing "Test cycle" or "test fix".
+   - `quality_cycles`: Count `stage_6_notes` sections containing "Quality cycle" or "review cycle".
+   - `validation_retries`: Count `stage_3_notes` sections containing "REVISE".
+   - `total_retries`: Sum of all above counters.
+   - Fallback: If any counter is undeterminable from available evidence, use the **configured maximum** (conservative). This prevents extra retries beyond limits.
    - `complete`: false.
    - `last_commit_sha`: from `git log -1 --format=%H`.
 
-5. **Write reconstructed state** and log: `"State reconstructed from {sources used}. Counters reset to 0 (conservative)."`
+5. **Log all reconstructed counter values** with their sources (e.g., `"verify_fix_count=3 (from 3 checkpoint fix_attempts)"`, `"test_cycles=2 (from stage_5_notes)"`, `"quality_cycles=MAX(3) (undeterminable, using configured maximum)"`).
+6. **Write reconstructed state** and log: `"State reconstructed from {sources used}. Counters reconstructed from evidence or set to configured maximum."`
 
 ### 1.2 Invalid JSON in `state.json`
 
@@ -120,7 +126,7 @@ After any reconstruction or repair:
 
 - **Never silently discard changes.** If data cannot be reconstructed, escalate to the user.
 - **Preserve corrupt files.** Always copy before overwriting for post-mortem analysis.
-- **Conservative counter reset.** When counters cannot be determined, reset to 0. This may cause extra retry cycles but will never skip needed retries.
+- **Conservative counter reconstruction.** Reconstruct counters from checkpoint and stage notes evidence. When a counter is undeterminable, use the configured maximum — this prevents extra retries beyond limits rather than allowing unbounded retries.
 - **Prefer reconstruction over fresh start.** A reconstructed state that resumes mid-pipeline saves more work than starting over.
 
 ---
@@ -134,7 +140,7 @@ Return to recovery engine:
   "result": "RECOVERED | ESCALATE",
   "details": "Description of what was reconstructed and from what sources",
   "reconstruction_sources": ["checkpoint", "git_log", "stage_notes", "filesystem"],
-  "data_loss_risk": "none | counter_reset | unknown_drift",
+  "data_loss_risk": "none | counter_approximated | unknown_drift",
   "user_action_required": false,
   "corrupt_files_preserved": [".pipeline/state.json.corrupt.20260322T143000"]
 }

@@ -82,7 +82,7 @@ For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 
 ### 4.2 Inter-Batch Finding Deduplication
 
-See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work.
+See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work. Cap dedup hints at top 20 findings by severity. If > 20 findings from previous batches, include top 20 with note: "({N-20} additional findings omitted)."
 
 ### 4.3 Agent Dispatch Prompt
 
@@ -181,6 +181,8 @@ score = max(0, 100 - 20 * CRITICAL - 5 * WARNING - 2 * INFO)
 
 Every run starts at 100. Each finding deducts points based on severity. The score cannot go below 0.
 
+After scoring, append the score to the quality gate report for the orchestrator to add to `state.json.score_history`.
+
 ---
 
 ## 8. Aim for 100
@@ -260,7 +262,7 @@ If a dispatched agent fails (timeout, crash, error) but other agents in the batc
 
 - **N-1 of N agents succeed**: Score with available results. Add a note to the report: `"Agent {name} did not return results -- scoring with {N-1} of {N} agents."` Add an INFO-level finding: `<agent-name>:0 | REVIEW-GAP | INFO | Agent timed out, {focus area} not reviewed | Re-run review or inspect manually`.
 - **All agents in a batch fail**: Log the batch failure, skip to the next batch, and note the gap in coverage.
-- **Critical-focused agent fails** (e.g., security reviewer): Flag this to the orchestrator as a coverage risk in the report, so it can decide whether to re-dispatch or escalate.
+- **Critical-focused agent fails** (e.g., security reviewer): Flag this to the orchestrator as a coverage risk in the report, so it can decide whether to re-dispatch or escalate. If the timed-out agent covers a critical-focused domain (focus contains 'security', 'auth', 'injection', 'architecture', 'boundary', 'SRP', or 'DIP'), use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding.
 - **Never block the entire pipeline on a single agent failure.**
 
 ---

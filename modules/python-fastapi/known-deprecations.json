@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "deprecations": [
+    {
+      "pattern": "@app\\.on_event\\(\"(startup|shutdown)\"\\)",
+      "replacement": "Use lifespan context manager: @asynccontextmanager async def lifespan(app: FastAPI): ...",
+      "package": "fastapi",
+      "since": "0.93",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from pydantic import validator",
+      "replacement": "from pydantic import field_validator",
+      "package": "pydantic",
+      "since": "2.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "class Config:",
+      "replacement": "model_config = ConfigDict(...)",
+      "package": "pydantic",
+      "since": "2.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "Optional\\[",
+      "replacement": "Use X | None syntax instead of Optional[X]",
+      "package": "python",
+      "since": "3.10",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "typing\\.(Dict|List|Tuple|Set|FrozenSet)\\b",
+      "replacement": "Use builtin types: dict, list, tuple, set, frozenset",
+      "package": "python",
+      "since": "3.9",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "asyncio\\.get_event_loop\\(",
+      "replacement": "asyncio.get_running_loop()",
+      "package": "python",
+      "since": "3.10",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}

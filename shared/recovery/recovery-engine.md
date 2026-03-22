@@ -60,6 +60,16 @@ Classify every failure into exactly one of these 7 categories using the heuristi
 
 Errors that arrive with a pre-classified `ERROR_TYPE` and `SUGGESTED_STRATEGY` (per `shared/error-taxonomy.md`) should use those values directly instead of heuristic classification. This is the preferred path — agents should classify errors at the point of occurrence.
 
+**Validation of pre-classified errors:**
+
+When an error arrives with `ERROR_TYPE` and `SUGGESTED_STRATEGY`, validate before accepting:
+
+1. `ERROR_TYPE` must exist in `shared/error-taxonomy.md`. If unknown: log WARNING `"Unknown error type {type}. Falling back to heuristic classification."` and use heuristic classification instead.
+2. Compare `SUGGESTED_STRATEGY` with the default strategy for that `ERROR_TYPE` in the taxonomy.
+3. If mismatched: log WARNING `"Pre-classified {type} suggests {strategy}, expected {default}. Using suggested."` — the agent's suggestion is always respected when the error type is valid.
+
+The agent's suggestion is always respected unless the error type is unknown.
+
 Unclassified errors fall back to the existing heuristic classification logic.
 
 ### 3.1 TRANSIENT
@@ -198,7 +208,7 @@ Add an entry to `recovery.failures` array:
 Update in `state.json`:
 - `recovery.total_failures` — increment on every failure
 - `recovery.total_recoveries` — increment on RECOVERED or DEGRADED
-- `recovery.degraded_capabilities` — array of strings describing what's degraded (e.g., `"integration-tests-skipped"`, `"coverage-analysis-unavailable"`)
+- `recovery.degraded_capabilities` — array of short, lowercase capability names (e.g., `"test"`, `"context7"`) per the naming convention in section 7
 
 ### 5.3 Recovery Object Schema
 
@@ -225,17 +235,96 @@ Update in `state.json`:
 
 ---
 
-## 7. Pre-stage Health Checks
+## 7. Degraded Capability Handling
+
+After recovery returns `DEGRADED`, write the capability name to `recovery.degraded_capabilities[]` in `state.json`.
+
+### Naming Convention
+
+Use short, lowercase names:
+- **MCP capabilities** — match `state.json.integrations` keys: `"context7"`, `"linear"`, `"playwright"`, `"slack"`, `"figma"`.
+- **Infrastructure capabilities** — tool-type names: `"build"`, `"test"`, `"git"`.
+- **Legacy migration** — descriptive strings from `dependency-health` (e.g., `"integration-tests-skipped"`) are accepted during migration. Normalize by stripping after the first `-` and lowercasing (e.g., `"integration-tests-skipped"` → `"integration"`).
+
+### Orchestrator Dispatch Rules
+
+The orchestrator MUST check `recovery.degraded_capabilities[]` before capability-dependent dispatch:
+
+| Degraded Capability | Action |
+|---------------------|--------|
+| `"context7"` | Skip doc prefetch |
+| `"linear"` | Skip all Linear ops |
+| `"playwright"` | Skip preview validation |
+| `"slack"` | Skip notifications |
+| `"figma"` | Skip design validation |
+| `"build"` | **ESCALATE** — required capability |
+| `"test"` | **ESCALATE** — required capability |
+| `"git"` | **ESCALATE** — required capability |
+
+Required capabilities (`"build"`, `"test"`, `"git"`) cannot be degraded — if recovery marks them degraded, the orchestrator must immediately escalate to the user.
+
+---
+
+## 8. Pre-stage Health Checks
 
 Before each stage begins, run `shared/recovery/health-checks/pre-stage-health.sh <stage>` to verify required dependencies are available. If the check reports missing dependencies, attempt recovery via `dependency-health` strategy before entering the stage. If recovery fails, report to orchestrator for user escalation.
 
 ---
 
-## 8. Recovery Budget
+## 9. Recovery Budget
 
-Maximum 5 total strategy applications per pipeline run. The recovery engine tries strategies in priority order. After 5 total applications (across any combination of the 7 strategies), stop trying and escalate.
+Recovery strategies have different costs. The budget uses weighted accounting tracked in `state.json.recovery_budget`.
 
-This means in the worst case, the engine tries 5 different strategies (or the same one 5 times, or any mix). The budget prevents infinite recovery loops.
+### Strategy Weights
+
+| Strategy | Weight | Rationale |
+|----------|--------|-----------|
+| `transient-retry` | 0.5 | Cheap, likely to succeed |
+| `tool-diagnosis` | 1.0 | Standard |
+| `state-reconstruction` | 1.5 | Expensive, risk of data loss |
+| `agent-reset` | 1.0 | Standard |
+| `dependency-health` | 1.0 | Standard |
+| `resource-cleanup` | 0.5 | Cheap, low risk |
+| `graceful-stop` | 0.0 | Terminal — ends the run |
+
+### Budget Ceiling
+
+`max_weight: 5.0`. Each strategy application adds its weight to `recovery_budget.total_weight`.
+
+### Budget Warning
+
+When `total_weight > 4.0` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
+
+### Budget Exhaustion
+
+When `total_weight >= max_weight`, do not apply further strategies. Escalate to user with a full budget report listing all applications and their weights.
+
+### Backward Compatibility
+
+`recovery_applied` is maintained as a derived view: `recovery_applied = recovery_budget.applications.map(a => a.strategy)`.
+
+### Recovery Budget Schema
+
+```json
+{
+  "recovery_budget": {
+    "max_weight": 5.0,
+    "total_weight": 0.0,
+    "applications": [
+      {
+        "strategy": "transient-retry",
+        "weight": 0.5,
+        "stage": "VERIFYING",
+        "timestamp": "2026-03-22T14:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+Note: `recovery.budget_warning_issued` is set as a side effect when budget exceeds 80%.
+
+### Recovery Self-Failure
 
 If recovery itself fails (e.g., state-reconstruction runs `git log` but git is unavailable):
 1. Write minimal `state.json`: `{ "recovery_failed": true, "last_known_stage": N, "error": "description" }`
@@ -244,7 +333,7 @@ If recovery itself fails (e.g., state-reconstruction runs `git log` but git is u
 
 ---
 
-## 9. Principles
+## 10. Principles
 
 1. **Never silently discard data** — always save state before attempting recovery.
 2. **Classify before acting** — wrong classification leads to wrong strategy.

@@ -10,7 +10,22 @@ set -euo pipefail
 #   --verify            VERIFY stage (Layer 1 + Layer 2)
 #   --review            REVIEW stage (Layer 1 + Layer 2 + Layer 3 stub)
 
-trap 'exit 0' ERR
+# Track current file for error reporting
+_CURRENT_FILE=""
+
+handle_skip() {
+  local skip_file=".pipeline/.check-engine-skipped"
+  if [ -d ".pipeline" ]; then
+    local count=0
+    if [ -f "$skip_file" ]; then
+      count=$(cat "$skip_file" 2>/dev/null || echo 0)
+    fi
+    echo $((count + 1)) > "$skip_file"
+  fi
+  echo "[check-engine] Hook skipped for ${_CURRENT_FILE:-unknown} (timeout/error)" >&2
+  exit 0
+}
+trap handle_skip ERR
 
 # Prevent double execution when both plugin hook and legacy wrapper fire
 [[ -n "${_ENGINE_RUNNING:-}" ]] && exit 0
@@ -102,6 +117,7 @@ mode_hook() {
 
   [[ -z "$file" || ! -f "$file" ]] && return 0
   [[ "$file" == *"build/generated-sources"* ]] && return 0
+  _CURRENT_FILE="$file"
 
   local project_root
   project_root="$(git -C "$(dirname "$file")" rev-parse --show-toplevel 2>/dev/null || true)"
@@ -138,6 +154,7 @@ mode_verify() {
   parse_batch_args "$@"
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
+    _CURRENT_FILE="$f"
     run_layer1 "$f" "$PROJECT_ROOT"
     run_layer2 "$f" "$PROJECT_ROOT"
   done
@@ -149,6 +166,7 @@ mode_review() {
   parse_batch_args "$@"
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
+    _CURRENT_FILE="$f"
     run_layer1 "$f" "$PROJECT_ROOT"
     run_layer2 "$f" "$PROJECT_ROOT"
   done

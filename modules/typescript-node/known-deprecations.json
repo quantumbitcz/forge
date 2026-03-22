@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "deprecations": [
+    {
+      "pattern": "require\\s*\\(",
+      "replacement": "Use ESM `import` syntax instead of `require()` in ESM contexts",
+      "package": "node:module",
+      "since": "Node 16",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "new Buffer\\s*\\(|Buffer\\s*\\(",
+      "replacement": "Use `Buffer.from()`, `Buffer.alloc()`, or `Buffer.allocUnsafe()` instead of the deprecated `Buffer()` constructor",
+      "package": "node:buffer",
+      "since": "Node 6",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "url\\.parse\\s*\\(",
+      "replacement": "Use the WHATWG `new URL()` constructor instead of `url.parse()`",
+      "package": "node:url",
+      "since": "Node 10",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "fs\\.exists\\s*\\(",
+      "replacement": "Use `fs.access()` or `fs.stat()` instead of `fs.exists()` which has been deprecated since Node 1.0",
+      "package": "node:fs",
+      "since": "Node 1.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "require\\s*\\(\\s*['\"]querystring['\"]\\s*\\)",
+      "replacement": "Use the global `URLSearchParams` API instead of the legacy `querystring` module",
+      "package": "node:querystring",
+      "since": "Node 18",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "util\\.isArray\\s*\\(",
+      "replacement": "Use `Array.isArray()` instead of the deprecated `util.isArray()`",
+      "package": "node:util",
+      "since": "Node 4",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "util\\.isBuffer\\s*\\(",
+      "replacement": "Use `Buffer.isBuffer()` instead of the deprecated `util.isBuffer()`",
+      "package": "node:util",
+      "since": "Node 4",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}

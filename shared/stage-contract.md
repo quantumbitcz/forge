@@ -12,7 +12,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `pl-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `pl-210-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user) |
-| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created | All tasks completed inside worktree (or failed after max retries) |
+| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created on a unique branch; working tree clean | All tasks completed inside worktree (or failed after max retries) |
 | 5 | VERIFY | inline (Phase A) + `pl-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `pl-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | inline | `DOCUMENTING` | Review passed | Documentation updated if needed |
@@ -157,7 +157,12 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Agent(s):** `pl-310-scaffolder` + `pl-300-implementer`
 **story_state:** `IMPLEMENTING`
 
-**Entry condition:** Plan validated with GO verdict (Stage 3). Worktree created at `.pipeline/worktree` branching from pre-implement checkpoint commit.
+**Entry condition:** Plan validated with GO verdict (Stage 3). Worktree created at `.pipeline/worktree` on a unique branch; working tree clean.
+
+**Pre-entry checks:**
+1. Check `git branch --list pipeline/{story-id}` — if the branch already exists, append epoch suffix (e.g., `pipeline/{story-id}-1711100000`).
+2. Check for stale worktree at `.pipeline/worktree` — if found, remove it and log WARNING.
+3. Verify working tree is clean (`git status --porcelain` returns empty).
 
 **Inputs:**
 - Validated plan with tasks and parallel groups
@@ -169,14 +174,29 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Actions:**
 1. Git checkpoint: `git add -A && git commit -m "wip: pipeline checkpoint pre-implement"`. Record SHA in `state.json.last_commit_sha`.
 2. Documentation prefetch: resolve and query context7 libraries for current API docs.
-3. For each parallel group (sequential order):
+3. **Parallel Conflict Detection** — before dispatching each parallel group:
+   ```
+   BEFORE dispatching parallel group G:
+     1. For each task T in G:
+        - If scaffolder ran: read files_created + files_modified from scaffolder output
+        - Else: read task.files from plan (flat list of file paths)
+     2. Build conflict map: { "path/file.kt": ["T001", "T003"] }
+     3. For each file with >1 task:
+        - Keep first task (by plan order) in group G
+        - Move all other tasks claiming that file to new sub-group G'
+        - Log: "Conflict: {file} claimed by {tasks}. Serialized {moved_tasks}."
+     4. Dispatch G (now conflict-free)
+     5. After G completes, run conflict check on G' (recursive)
+     6. Report total serializations in stage notes
+   ```
+4. For each parallel group (sequential order, after conflict detection):
    - For each task in group (concurrent up to `implementation.parallel_threshold`):
      a. `pl-310-scaffolder` generates boilerplate (if `scaffolder_before_impl: true`).
      b. Write tests (RED phase -- tests that define expected behavior, expected to fail).
      c. `pl-300-implementer` writes implementation to pass tests (GREEN) + refactors.
      d. Verify with `commands.build` or `commands.test_single`.
-4. Write checkpoint (`checkpoint-{storyId}.json`) after each task.
-5. If a task fails after `max_fix_loops`: record as failed, continue with remaining tasks.
+5. Write checkpoint (`checkpoint-{storyId}.json`) after each task.
+6. If a task fails after `max_fix_loops`: record as failed, continue with remaining tasks.
 
 **Outputs:**
 - Source files (created and modified)
@@ -203,10 +223,11 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - `test_gate.analysis_agents` from config
 
 **Phase A -- Build & Lint (inline, fail-fast):**
-1. Run `commands.build` (compile check).
-2. Run `commands.lint` (lint + static analysis).
-3. Run `inline_checks` from config (module scripts or skills).
-4. On failure: analyze error, fix, re-run from failed step. Increment `verify_fix_count`. Max: `implementation.max_fix_loops`.
+1. Before running build/lint, read `.pipeline/.check-engine-skipped`. If present and count > 0: report in stage notes. Delete marker after reading. Informational only — VERIFY runs full checks regardless.
+2. Run `commands.build` (compile check).
+3. Run `commands.lint` (lint + static analysis).
+4. Run `inline_checks` from config (module scripts or skills).
+5. On failure: analyze error, fix, re-run from failed step. Increment `verify_fix_count`. Max: `implementation.max_fix_loops`.
 
 **Phase B -- Test Gate (`pl-500-test-gate`):**
 1. Run `test_gate.command` (full test suite).
@@ -241,7 +262,13 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 3. Deduplicate findings by `(file, line, category)` -- keep highest severity (see `scoring.md`).
 4. Score using formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`.
 5. If score < 100 and cycles remaining: send ALL findings to implementer, fix cycle, rescore. Increment `quality_cycles`.
-6. Determine verdict from final score.
+6. **Score Oscillation Handling** — track `score_history[]` in state.json. After each cycle (see `scoring.md` "Score Oscillation Handling" for full algorithm):
+   1. If < 2 entries: no check.
+   2. delta = current - previous.
+   3. delta >= 0: continue (score improved or held).
+   4. abs(delta) <= `oscillation_tolerance` (default 5): minor regression, allow one more cycle, log WARNING.
+   5. abs(delta) > `oscillation_tolerance`: escalate to user immediately.
+7. Determine verdict from final score.
 
 **Outputs:**
 - Quality verdict: PASS, CONCERNS, or FAIL
@@ -318,9 +345,20 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **On user approval:** Proceed to Stage 9 (LEARN).
 
 **On user rejection/feedback:**
+
+`pl-710-feedback-capture` classifies feedback into one of two paths. Default to `implementation` when ambiguous.
+
+**Path A — `implementation` feedback** (references specific files, code behavior, test cases):
 1. Dispatch `pl-710-feedback-capture` to record the correction structurally.
 2. Reset `quality_cycles` and `test_cycles` to 0.
-3. Re-enter Stage 4 (IMPLEMENT) with feedback context.
+3. Increment `total_retries` by 1.
+4. Re-enter Stage 4 (IMPLEMENT) with feedback context.
+
+**Path B — `design` feedback** (references wrong approach, wrong decomposition, missing stories, architectural direction):
+1. Dispatch `pl-710-feedback-capture` to record the correction structurally.
+2. Reset stage-specific counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`) to 0. Do NOT reset `total_retries`.
+3. Increment `total_retries` by 1.
+4. Re-enter Stage 2 (PLAN) with feedback as planner input.
 
 ---
 
@@ -383,7 +421,22 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | Build/lint fix | 5 VERIFY (Phase A) | 5 VERIFY (Phase A) | Build or lint failure | `verify_fix_count` | `implementation.max_fix_loops` (default: 3) |
 | Test fix | 5 VERIFY (Phase B) | 4 IMPLEMENT (targeted) | Test failure | `test_cycles` | `test_gate.max_test_cycles` (default: 2) |
 | Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2) |
-| PR rejection | 8 SHIP | 4 IMPLEMENT | User rejects PR | resets `quality_cycles`, `test_cycles` | No max (user-driven) |
+| PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
+| PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
+
+### Global Retry Budget
+
+All retry loops share a cumulative budget tracked in `state.json.total_retries`. Every retry increment (`validation_retries++`, `verify_fix_count++`, `test_cycles++`, `quality_cycles++`) also increments `total_retries`. PR rejection paths also directly increment `total_retries` by 1.
+
+| Field | Default | Configurable In |
+|-------|---------|-----------------|
+| `total_retries_max` | 10 | `pipeline-config.md` |
+
+When `total_retries >= total_retries_max`, the orchestrator escalates to the user regardless of which individual loop has budget remaining. Escalation format:
+
+> "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}. How should I proceed?"
+
+Constraint: `total_retries_max` must be >= 5 and <= 30. If violated, use default (10).
 
 ### Escalation Paths
 
@@ -393,6 +446,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | VERIFY Phase A exceeds max fix loops | Pipeline reports failure, user must intervene |
 | VERIFY Phase B exceeds max test cycles | Pipeline escalates to user |
 | REVIEW returns FAIL after max cycles | Pipeline escalates to user |
+| REVIEW score regression > `oscillation_tolerance` | Pipeline escalates to user immediately |
+| `total_retries >= total_retries_max` | Pipeline escalates to user with retry breakdown |
 | Risk > `auto_proceed` threshold at Stage 3 | Pipeline pauses for user plan approval |
 
 ### Transition Diagram
@@ -402,12 +457,14 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
                     |            |
                     v            |
  0 -> 1 -> 2 -> [3] -> 4 -> [5] -> [6] -> 7 -> [8] -> 9
-               GO |         ^  |         ^       |
-                  |   fail  |  |   fix   |       |
-                  +-------->+  +-------->+       |
-                               test fix          |
-                                                 |
-                          +--- user rejects -----+
+               GO |         ^  |         ^       |  |
+                  |   fail  |  |   fix   |       |  |
+                  +-------->+  +-------->+       |  |
+                  ^            test fix          |  |
+                  |                              |  |
+                  +--- design feedback ----------+  |
+                                                    |
+                          +--- impl feedback -------+
                           |
                           v
                           4 (with feedback context)

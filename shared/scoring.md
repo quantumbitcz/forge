@@ -56,6 +56,7 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 - `pass_threshold` must be >= 60 (below 60 is always FAIL)
 - `concerns_threshold` must be < `pass_threshold`
 - `concerns_threshold` must be >= 40
+- `oscillation_tolerance` must be >= 0 and <= 20
 
 ### When to Customize
 
@@ -149,6 +150,7 @@ If a review agent times out or fails to return results:
 3. **Log in stage notes.** Record which agent failed and what it was supposed to cover.
 4. **Do not lower the score** for the gap itself (the INFO finding costs -2, which is appropriate). The concern is missing coverage, not a quality problem in the code.
 5. **If a CRITICAL-focused agent fails** (e.g., security reviewer): the quality gate should flag this to the orchestrator as a coverage risk, allowing it to decide whether to re-dispatch or escalate.
+6. **Critical-domain gap severity upgrade.** If the timed-out agent covers a CRITICAL-focused domain, use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding: `{agent}:0 | REVIEW-GAP | WARNING | Critical-domain agent timed out, {focus} not reviewed | Re-run review or inspect manually`. A domain is "critical-focused" if the agent's `focus` field in batch config contains any of: "security", "auth", "injection", "architecture", "boundary", "SRP", "DIP".
 
 ## Review Cycle Flow
 
@@ -167,6 +169,25 @@ If a review agent times out or fails to return results:
 ```
 
 The score history (score per cycle) is included in the quality gate report so the retrospective can track improvement trends across runs.
+
+## Score Oscillation Handling
+
+Track `score_history[]` in `state.json` across quality cycles. After each cycle's score is computed:
+
+1. If `score_history` has < 2 entries: no oscillation check possible, continue
+2. Compute `delta = current_score - previous_score`
+3. If `delta >= 0`: improvement or stable — continue normally
+4. If `delta < 0` and `abs(delta) <= oscillation_tolerance` (default: 5): minor regression — allow one more cycle, log WARNING: "Score dipped {abs(delta)} points ({previous} → {current}). Within tolerance. Continuing."
+5. If `delta < 0` and `abs(delta) > oscillation_tolerance`: significant regression — escalate to user: "Quality regression: {previous} → {current} (delta: {delta}, tolerance: {oscillation_tolerance}). Fix cycle may be introducing new issues."
+
+### Oscillation Tolerance Configuration
+
+Configurable in `pipeline-config.md`:
+
+    scoring:
+      oscillation_tolerance: 5
+
+Constraint: `oscillation_tolerance` must be >= 0 and <= 20. If violated, log WARNING and use default (5).
 
 ## Time Limits
 

@@ -36,6 +36,14 @@ When the quality gate dispatches batch 2+ agents, it includes a summary of findi
 
 This prevents batch 2 agents from flagging the same issues batch 1 already found.
 
+### Deduplication Hint Size Cap
+
+Cap dedup hints at **top 20 findings by severity** (all CRITICALs first, then WARNINGs, then INFOs by line number). If previous batches produced > 20 findings, include note:
+
+    Previous batch findings ({N} total, showing top 20 for dedup):
+    ...
+    ({N-20} additional findings omitted — focus on your domain, post-hoc dedup will catch overlaps)
+
 ### Cross-Agent References
 
 If a review agent finds an issue that relates to another agent's domain, note it:
@@ -60,12 +68,36 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
 
     EXPLORE agent → stage_1_notes → orchestrator → PLAN dispatch prompt
     PLAN agent → stage_2_notes → orchestrator → VALIDATE dispatch prompt
+                                              ↘ Linear: create Epic/Stories/Tasks
     VALIDATE agent → stage_3_notes → orchestrator → IMPLEMENT dispatch prompt
-    IMPLEMENT agent → stage_4_notes → orchestrator → VERIFY inline
+                                                  ↘ Linear: validation verdict comment
+    IMPLEMENT agent → stage_4_notes → orchestrator → state.json (preempt_items_status)
+                                                   → checkpoint.json (preempt_items_used)
     VERIFY (test gate) → stage_5_notes → orchestrator → REVIEW dispatch prompt
-    REVIEW batch 1 → findings → quality gate → batch 2 dispatch (includes batch 1 summary)
-    REVIEW final → stage_6_notes → orchestrator → DOCS inline
+    REVIEW batch 1 → findings → quality gate → batch 2 (top 20 dedup hints)
+    REVIEW final → stage_6_notes → orchestrator → state.json (score_history)
+                                                ↘ DOCS inline
     SHIP agent → stage_8_notes → orchestrator → LEARN dispatch prompt
-    LEARN (retro + recap) → stage_9_notes → orchestrator → final report
+                                              ↘ Linear: PR link, status
+    FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
+    LEARN (retro) → stage_9_notes → pipeline-log.md (PREEMPT hit counts)
+                                  → pipeline-config.md (auto-tuning)
+    LEARN (recap) → recap report ↘ Linear: summary comment
 
 All data flows through the orchestrator. Agents are isolated. The orchestrator curates what each agent receives.
+
+## 6. PREEMPT Item Tracking
+
+During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes:
+
+    PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
+    PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
+
+The orchestrator reads these markers from stage notes and populates `state.json.preempt_items_status`:
+- `{ "applied": true, "false_positive": false }` — item was used and relevant
+- `{ "applied": false, "false_positive": true }` — item was loaded but inapplicable
+
+The retrospective agent reads `preempt_items_status` and:
+1. Increments `hit_count` in `pipeline-log.md` for applied items
+2. Records false positives for confidence decay acceleration (false positive = 3 unused runs toward decay)
+3. Logs: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"

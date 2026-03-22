@@ -60,3 +60,30 @@ If multiple errors occur in the same stage:
 - Group by ERROR_TYPE
 - The most severe (non-recoverable) determines the stage outcome
 - If a mix of recoverable and non-recoverable errors: attempt recovery for the recoverable ones, escalate for the non-recoverable ones
+
+## Error Severity Ordering
+
+When multiple errors co-occur in a stage, determine outcome by this severity order (highest first):
+
+1. `CONFIG_INVALID` — pipeline cannot proceed
+2. `PERMISSION_DENIED` — system-level block
+3. `DISK_FULL` — resource hard limit
+4. `STATE_CORRUPTION` — pipeline integrity
+5. `DEPENDENCY_MISSING` — required tool absent
+6. `GIT_CONFLICT` — version control integrity
+7. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
+8. `TOOL_FAILURE` — tool-level
+9. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
+10. `NETWORK_UNAVAILABLE` — possibly transient
+11. `MCP_UNAVAILABLE` — optional, graceful degradation
+12. `PATTERN_MISSING` — planner error, non-blocking
+
+The highest-severity non-recoverable error determines stage outcome. Recoverable errors are attempted via recovery engine in order.
+
+## MCP_UNAVAILABLE Handling
+
+MCP failures are NOT recovery engine domain. When an agent encounters MCP_UNAVAILABLE, handle gracefully inline: skip the MCP-dependent operation, log INFO in stage notes ("MCP {name} unavailable, skipping {operation}"), continue with degraded capability. Do NOT call the recovery engine for MCP_UNAVAILABLE.
+
+## Network Permanence Detection
+
+After 3 consecutive transient-retry failures for the same endpoint within 60 seconds, reclassify `NETWORK_UNAVAILABLE` as non-recoverable for that endpoint. Log: "Network to {endpoint} appears permanently unavailable after 3 retries." Continue pipeline with degraded mode for that service. Do not consume further recovery budget for this endpoint.

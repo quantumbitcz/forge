@@ -353,6 +353,18 @@ During retrospective, analyze review agent performance:
 
 ## 7. PREEMPT Lifecycle
 
+### PREEMPT Hit Count Updates
+
+Read `state.json.preempt_items_status` to update PREEMPT learnings in `pipeline-log.md`:
+
+1. For each item with `applied: true, false_positive: false`: increment `hit_count` by 1 in the corresponding PREEMPT entry
+2. For each item with `false_positive: true`: record as false positive — accelerates confidence decay (1 false positive = 3 unused runs toward decay threshold)
+3. Log effectiveness: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"
+
+Also read `state.json.linear_sync`. If `in_sync: false`, report in the retrospective: "Linear sync issues during this run: {count} failed operations. Details: {list}."
+
+Also read `state.json.score_history` and report score progression trend.
+
 ### Confidence Decay
 
 After each run, evaluate PREEMPT items in pipeline-log.md:

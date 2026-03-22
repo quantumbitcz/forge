@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "deprecations": [
+    {
+      "pattern": "UIWebView",
+      "replacement": "WKWebView (import WebKit)",
+      "package": "UIKit",
+      "since": "iOS 12.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "UIAlertView",
+      "replacement": "UIAlertController with .alert preferredStyle",
+      "package": "UIKit",
+      "since": "iOS 8.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "UIApplication\\.shared\\.statusBarOrientation",
+      "replacement": "UIWindowScene.interfaceOrientation via view.window.windowScene",
+      "package": "UIKit",
+      "since": "iOS 13.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.textLabel",
+      "replacement": "UIListContentConfiguration via cell.contentConfiguration",
+      "package": "UIKit",
+      "since": "iOS 14.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "UIDevice\\.current\\.name",
+      "replacement": "Returns generic name without com.apple.developer.device-information.user-assigned-device-name entitlement; use alternative identification or request entitlement",
+      "package": "UIKit",
+      "since": "iOS 16.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@objc\\s+class.*:\\s*NSObject.*@Published",
+      "replacement": "@Observable macro (import Observation) — eliminates need for NSObject conformance and @Published wrappers",
+      "package": "Observation",
+      "since": "iOS 17.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}

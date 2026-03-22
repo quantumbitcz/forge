@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "deprecations": [
+    {
+      "pattern": "import javax\\.",
+      "replacement": "Use jakarta.* packages (Spring Boot 3.0+ migrated from javax to jakarta EE)",
+      "package": "jakarta.ee",
+      "since": "Spring Boot 3.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@RequestMapping\\(.*method\\s*=",
+      "replacement": "Use @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, @PatchMapping instead",
+      "package": "spring-web",
+      "since": "Spring 4.3",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "WebSecurityConfigurerAdapter",
+      "replacement": "Define a @Bean fun securityFilterChain(http: HttpSecurity): SecurityFilterChain instead",
+      "package": "spring-security",
+      "since": "Spring Security 5.7",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "spring\\.datasource\\.initialization-mode",
+      "replacement": "Use spring.sql.init.mode (always/embedded/never)",
+      "package": "spring-boot",
+      "since": "Spring Boot 2.5",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "RestTemplate\\(",
+      "replacement": "Use WebClient (reactive) or RestClient (blocking, Spring 6.1+) for new code",
+      "package": "spring-web",
+      "since": "Spring 5.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "java\\.util\\.Date",
+      "replacement": "Use kotlinx.datetime.Instant or java.time.* (LocalDate, LocalDateTime, Instant)",
+      "package": "java.util",
+      "since": "Java 8",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@EnableGlobalMethodSecurity",
+      "replacement": "Use @EnableMethodSecurity (defaults to prePostEnabled=true)",
+      "package": "spring-security",
+      "since": "Spring Security 6.0",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}

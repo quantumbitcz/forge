@@ -124,14 +124,16 @@ When a dependency cannot be recovered, determine what pipeline capabilities are 
 
 | Lost Dependency | Degraded Capability | Impact |
 |-----------------|---------------------|--------|
-| Docker | Integration tests, DB-dependent tests | Skip integration tests, run unit tests only |
-| Database | DB migrations, integration tests | Skip DB-related tasks, note in review |
-| Network | Package install, PR creation, docs fetch | Proceed with local resources only |
-| gh CLI | PR creation | Commit locally, manual PR needed |
-| context7 | API docs prefetch | Use conventions file + codebase grep |
-| Playwright | Preview validation | Skip preview stage |
+| Docker | `"test"` | Skip integration tests, run unit tests only |
+| Database | `"test"` | Skip DB-related tasks, note in review |
+| Network | `"build"` | Proceed with local resources only |
+| gh CLI | `"git"` | Commit locally, manual PR needed |
+| context7 | `"context7"` | Use conventions file + codebase grep |
+| Playwright | `"playwright"` | Skip preview stage |
 
 Add each degraded capability to `state.json` `recovery.degraded_capabilities` array.
+
+> **Naming convention:** Capability names must match the short, lowercase convention defined in `shared/recovery/recovery-engine.md` section on Degraded Capability Handling. MCP capabilities use `state.json.integrations` keys (`"context7"`, `"linear"`, `"playwright"`, `"slack"`, `"figma"`). Infrastructure capabilities use tool-type names (`"build"`, `"test"`, `"git"`).
 
 ---
 
@@ -145,7 +147,7 @@ Return to recovery engine:
   "details": "Diagnosis and recovery attempt description",
   "dependency": "docker",
   "recovery_action": "Started Docker daemon, waited 20s",
-  "degraded_capabilities": ["integration-tests-skipped"],
+  "degraded_capabilities": ["test"],
   "install_suggestion": null
 }
 ```

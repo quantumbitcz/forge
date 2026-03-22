@@ -126,6 +126,27 @@ severity: { high | medium | low }
 - `medium` -- incorrect but functional, needs targeted fixes
 - `low` -- minor preference or style issue
 
+### Feedback Classification
+
+After recording the feedback, classify it into one of two types:
+
+| Type | Heuristic | Examples |
+|------|-----------|---------|
+| `implementation` | References specific files, code behavior, test cases, UI details, variable names, "this function should...", "the test needs to..." | "The auth check should use role-based access" |
+| `design` | References wrong approach, wrong decomposition, missing stories, architectural direction, "should be split", "wrong pattern", "this should be two features" | "This should be implemented as a separate service" |
+
+Write the classification to stage notes:
+
+    FEEDBACK_CLASSIFICATION: implementation
+
+or:
+
+    FEEDBACK_CLASSIFICATION: design
+
+If ambiguous, default to `implementation` (safer — doesn't discard the existing plan).
+
+The orchestrator reads this marker and sets `state.json.feedback_classification`, which determines whether the pipeline re-enters Stage 4 (IMPLEMENT) or Stage 2 (PLAN).
+
 ### Step 4: Check for Recurring Patterns
 
 After writing the feedback file:
