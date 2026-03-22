@@ -239,7 +239,7 @@ for m in modules/*/pipeline-config-template.md; do grep -q "total_retries_max" "
 
 - `plugin.json` — plugin manifest (v1.2.0). Name, version, description, author, license, category, keywords.
 - `marketplace.json` — marketplace catalog for the `quantumbitcz` marketplace. Lists `dev-pipeline` with source `"./"`.
-- Hook registration lives in `hooks/hooks.json` (3 hooks: check engine on Edit/Write, checkpoint on Skill, feedback on Stop).
+- Hooks are inlined in `plugin.json` (3 hooks: check engine on Edit/Write, checkpoint on Skill, feedback on Stop). The canonical source `hooks/hooks.json` is kept for reference but `plugin.json` is authoritative at install time.
 - Install: `/plugin marketplace add quantumbitcz/dev-pipeline` then `/plugin install dev-pipeline@quantumbitcz`.
 
 ## Governance
