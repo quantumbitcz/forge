@@ -1,0 +1,18 @@
+{
+  "name": "quantumbitcz",
+  "owner": {
+    "name": "QuantumBit s.r.o.",
+    "url": "https://github.com/quantumbitcz"
+  },
+  "metadata": {
+    "description": "Autonomous development pipeline with multi-language support",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "dev-pipeline",
+      "description": "10-stage autonomous development pipeline: Preflight, Explore, Plan, Validate, Implement (TDD), Verify, Review, Docs, Ship, Learn. Supports Kotlin, TypeScript, Python, Go, Rust, C, Swift, Java with self-healing recovery and generalized code quality checks.",
+      "source": "./"
+    }
+  ]
+}
