@@ -1,0 +1,24 @@
+{
+  "_description": "Schema for rules auto-discovered by the retrospective agent. Learned rules are added to language JSON files alongside curated rules.",
+  "learned_rule_example": {
+    "id": "KT-LEARNED-001",
+    "name": "discovered-pattern",
+    "pattern": "regex",
+    "severity": "WARNING",
+    "category": "QUAL-LEARNED",
+    "message": "description",
+    "fix_hint": "suggestion",
+    "example_ref": "",
+    "scope": "all",
+    "_learned_from": "run-{story_id}-{date}",
+    "_confidence": 0.85,
+    "_hit_count": 0,
+    "_false_positive_reports": 0
+  },
+  "_lifecycle": {
+    "discovery": "Quality gate finding not caught by Layer 1 → candidate rule generated",
+    "validation": "Run candidate against codebase: >50 hits = too broad, >3/5 false positives = low confidence",
+    "promotion": "HIGH confidence → added to rules array",
+    "pruning": "_hit_count == 0 over 10 runs OR _false_positive_reports > 3 → removed"
+  }
+}

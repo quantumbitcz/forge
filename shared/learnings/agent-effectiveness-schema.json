@@ -1,0 +1,22 @@
+{
+  "_description": "Schema for agent effectiveness metrics tracked per pipeline run. Written to .pipeline/reports/ by pl-700-retrospective.",
+  "agent_effectiveness": {
+    "{agent-name}": {
+      "runs": "integer — total runs across tracked history",
+      "avg_fix_cycles_needed": "float — average fix cycles before quality gate passes",
+      "avg_quality_score": "float — average quality gate score",
+      "common_failure_patterns": ["string — recurring issues this agent produces"],
+      "avg_time_seconds": "float — average execution time",
+      "context_resets": "integer — times agent hit context limit",
+      "false_positive_rate": "float — ratio of findings ignored by implementer",
+      "findings_accepted": "integer — findings that led to code changes",
+      "findings_ignored": "integer — findings dismissed without changes"
+    }
+  },
+  "_improvement_triggers": {
+    "avg_fix_cycles_needed > 2 for 5+ runs": "AGENT-IMPROVE: add examples for common failure patterns",
+    "false_positive_rate > 0.15 for 5+ runs": "AGENT-IMPROVE: recalibrate severity or refine detection",
+    "context_resets > 0 in 3+ of last 5 runs": "AGENT-IMPROVE: simplify prompt or split into sub-agents",
+    "findings_ignored > 30% of accepted": "AGENT-IMPROVE: recalibrate severity"
+  }
+}
