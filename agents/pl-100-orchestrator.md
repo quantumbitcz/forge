@@ -193,6 +193,14 @@ Additionally, parse the conventions file into sections (`##` headings). Compute 
 ### 3.5 Read Pipeline Log (PREEMPT System)
 
 Read `pipeline-log.md` (path from `preempt_file` or default `.claude/pipeline-log.md`):
+
+If `pipeline-log.md` does not exist (first-ever run on this project):
+- INFO: "No pipeline log found. Starting with empty PREEMPT baseline."
+- Set `preempt_items_applied` to `[]`
+- Skip trend context (no previous runs)
+- Continue — the retrospective agent will create `pipeline-log.md` at Stage 9
+
+If it exists:
 - Collect all `PREEMPT` and `PREEMPT_CRITICAL` items
 - Filter items matching the inferred domain area of the current requirement
 - Note the last 3 run results for trend context

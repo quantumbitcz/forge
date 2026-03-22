@@ -97,10 +97,11 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Adding a new module
 
 Create `modules/{name}/` with:
-- `conventions.md` — agent-readable framework conventions
+- `conventions.md` — agent-readable framework conventions (must include Dos/Don'ts section)
 - `local-template.md` — project config template (YAML frontmatter)
 - `pipeline-config-template.md` — mutable runtime params template
 - `rules-override.json` — module-specific overrides for the shared check engine (pattern rules, linter config)
+- `known-deprecations.json` — registry of deprecated APIs (auto-updated by deprecation-refresh agent, seed with 5-15 ecosystem-specific entries)
 - Optional: `scripts/check-*.sh` (verification), `hooks/*-guard.sh` (PostToolUse guards)
 
 Add a learnings file at `shared/learnings/{name}.md`. Wire the module into the local template's `quality_gate` batches.

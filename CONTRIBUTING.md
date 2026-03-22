@@ -75,10 +75,11 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 1. Create the directory structure:
    ```
    modules/{name}/
-     conventions.md              # Agent-readable framework conventions
+     conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
      local-template.md           # Project config template (YAML frontmatter)
      pipeline-config-template.md # Runtime config template
      rules-override.json         # Module-specific check engine overrides
+     known-deprecations.json     # Registry of deprecated APIs (seed with 5-15 entries)
      scripts/                    # Optional verification scripts
      hooks/                      # Optional guard hooks
    ```
