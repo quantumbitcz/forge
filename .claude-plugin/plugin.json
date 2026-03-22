@@ -13,39 +13,5 @@
     "pipeline", "tdd", "code-review", "quality-gate", "linear",
     "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c"
   ],
-  "category": "development",
-  "hooks": [
-    {
-      "event": "PostToolUse",
-      "matcher": "Edit|Write",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
-          "timeout": 5000
-        }
-      ]
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Skill",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
-          "timeout": 5000
-        }
-      ]
-    },
-    {
-      "event": "Stop",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/feedback-capture.sh",
-          "timeout": 3000
-        }
-      ]
-    }
-  ]
+  "category": "development"
 }
