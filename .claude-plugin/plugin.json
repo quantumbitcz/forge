@@ -11,5 +11,6 @@
   "keywords": [
     "pipeline", "tdd", "code-review", "quality-gate",
     "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c"
-  ]
+  ],
+  "category": "development"
 }

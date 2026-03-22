@@ -32,7 +32,7 @@ docs(shared): clarify scoring deduplication rules
 
 Common types: `feat`, `fix`, `chore`, `docs`, `refactor`
 
-Common scopes: `agents`, `shared`, `hooks`, `skills`, `kotlin-spring`, `react-vite`, module name for new modules
+Common scopes: `agents`, `shared`, `hooks`, `skills`, `kotlin-spring`, `react-vite`, `infra-k8s`, or any module name
 
 ## What You Should Know
 
@@ -43,11 +43,11 @@ Every agent in `agents/` must have frontmatter with `name` (matching filename wi
 ### Pipeline agents vs module agents
 
 - **Pipeline agents** (`pl-{NNN}-{role}`) are shared across all modules. They handle stage orchestration.
-- **Module agents** (e.g., `be-*`, `fe-*`) are framework-specific reviewers wired into the quality gate.
+- **Cross-cutting review agents** use descriptive names without a module prefix (e.g., `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`). They are wired into the quality gate and work across modules.
 
 ### Skills are the user-facing entry points
 
-Users interact via `/pipeline-run` and `/fe-*` skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
+Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/deploy`, and other skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
 
 ### State is local and gitignored
 
@@ -78,13 +78,15 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
      conventions.md              # Agent-readable framework conventions
      local-template.md           # Project config template (YAML frontmatter)
      pipeline-config-template.md # Runtime config template
+     rules-override.json         # Module-specific check engine overrides
      scripts/                    # Optional verification scripts
      hooks/                      # Optional guard hooks
    ```
-2. Create module-specific agents in `agents/` with a short prefix (e.g., `py-` for python-fastapi)
-3. Wire agents into the local template's `quality_gate` batches
-4. Add the module to `README.md` under "Available modules"
-5. Update `CLAUDE.md` under "Module specifics"
+2. Create `shared/learnings/{name}.md` for per-module learnings accumulation
+3. Review agents are cross-cutting (shared) and new modules typically do not need new agents unless they have unique review needs. If a new agent is required, use a descriptive name (e.g., `embedded-memory-reviewer`)
+4. Wire review agents into the local template's `quality_gate` batches
+5. Add the module to `README.md` under "Available modules" and update any modules list references
+6. Update `CLAUDE.md` under "Module specifics"
 
 ### Adding a new skill
 
@@ -94,18 +96,26 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 
 ### Modifying hooks
 
-1. Hooks are registered in `plugin.json` -- update the manifest if adding a new hook
-2. Hook scripts must be executable (`chmod +x`) with a shebang line
-3. Module guard hooks live in `modules/{name}/hooks/` and are referenced from the local template
+1. Hooks are registered in `hooks/hooks.json` -- update the manifest if adding a new hook
+2. Three hooks are currently registered: the check engine (`PostToolUse` on `Edit|Write`), the pipeline checkpoint (`PostToolUse` on `Skill`), and feedback capture (`Stop`)
+3. Hook scripts must be executable (`chmod +x`) with a shebang line
+4. Module guard hooks live in `modules/{name}/hooks/` and are referenced from the local template
 
 ### Modifying shared references
 
-The three files in `shared/` are contracts consumed by all agents:
+The `shared/` directory contains contracts and subsystems consumed by all agents:
+
+**Contracts:**
 - `scoring.md` -- quality scoring formula (changing this affects all review agents)
 - `stage-contract.md` -- stage definitions (changing this affects the orchestrator and all stage agents)
 - `state-schema.md` -- JSON schemas (changing this affects state reading/writing across the pipeline)
 
-> Changes to shared references are high-impact. Verify that all agents referencing the changed contract still behave correctly.
+**Subsystems:**
+- `checks/` -- 3-layer check engine that runs automated validations on file edits
+- `learnings/` -- per-module learnings accumulated from pipeline runs
+- `recovery/` -- recovery engine with strategies and health checks for pipeline resilience
+
+> Changes to shared contracts are high-impact. Verify that all agents referencing the changed contract still behave correctly. Changes to subsystems should be tested with `shared/checks/engine.sh --dry-run`.
 
 ## Naming Conventions
 
@@ -113,7 +123,7 @@ The three files in `shared/` are contracts consumed by all agents:
 |-----------|---------|---------|
 | Module directory | lowercase-with-hyphens | `python-fastapi` |
 | Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
-| Module agent | `{prefix}-{role}` | `frontend-reviewer` |
+| Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
 | Skill directory | lowercase-with-hyphens | `fe-check-theme` |
 | Verification script | `check-{what}.sh` | `check-antipatterns.sh` |
 | Guard hook | `{what}-guard.sh` | `theme-guard.sh` |
@@ -123,8 +133,9 @@ The three files in `shared/` are contracts consumed by all agents:
 1. Create a branch and make your changes
 2. Verify agent frontmatter is valid YAML
 3. Verify scripts are executable and have shebang lines
-4. Open a PR with a clear description using the PR template
-5. Get at least one review from a team member
+4. Run `shared/checks/engine.sh --dry-run` to verify check engine configuration
+5. Open a PR with a clear description using the PR template
+6. Get at least one review from a team member
 
 ## Questions?
 

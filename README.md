@@ -6,7 +6,7 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 
 ## What this is
 
-`dev-pipeline` is a shared plugin that any project can install as a Git submodule. It provides:
+`dev-pipeline` is a shared plugin installable from the `quantumbitcz` marketplace. It provides:
 
 - A **pipeline orchestrator** that coordinates 10 stages from requirement to pull request
 - **Framework modules** with conventions, review agents, scaffolder patterns, and verification scripts
@@ -29,75 +29,61 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 
 ## Available modules
 
+12 framework modules. Each module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, and `rules-override.json`. Some modules include additional scripts, hooks, or tooling.
+
 ### kotlin-spring
 
 For hexagonal architecture (ports & adapters) projects using Kotlin, Spring Boot, WebFlux, and R2DBC.
 
-Includes:
-- `conventions.md` -- curated architecture and naming rules for agent consumption
-- `local-template.md` -- project config template with Gradle commands, scaffolder patterns (domain model, use case, port, adapter, controller, migration, test), and quality gate batches
-- `pipeline-config-template.md` -- mutable runtime parameters template
+Additional includes:
 - Verification scripts: `check-antipatterns.sh` (double-bang, framework imports in core), `check-core-boundary.sh` (hexagonal layer violations), `check-file-size.sh` (files over threshold)
-- Review agents: `architecture-reviewer`, `security-reviewer`
 
 ### react-vite
 
 For React + Vite + TypeScript + shadcn/ui projects.
 
-Includes:
-- `conventions.md` -- typography scale, theming rules, component patterns for agent consumption
-- `local-template.md` -- project config template with Bun/Vite commands, scaffolder patterns (component, hook, API module, types, test), and quality gate batches with accessibility and type design reviewers
-- `pipeline-config-template.md` -- mutable runtime parameters template
+Additional includes:
 - Guard hooks: `theme-guard.sh`, `function-size-guard.sh`, `file-size-guard.sh`, `import-order-guard.sh`, `deprecation-guard.sh`
 - `known-deprecations.json` -- self-updating registry of deprecated APIs
-- Review agents: `frontend-reviewer`
 - Inline check skills: `/fe-check-theme`, `/fe-design-review`, `/fe-react-doctor`, `/fe-dark-mode-check`
+
+### Other modules
+
+| Module              | Target stack                             |
+|---------------------|------------------------------------------|
+| `c-embedded`        | C for embedded systems                   |
+| `go-stdlib`         | Go with standard library conventions     |
+| `infra-k8s`         | Kubernetes infrastructure and deployment |
+| `java-spring`       | Java with Spring Boot                    |
+| `python-fastapi`    | Python with FastAPI                      |
+| `rust-axum`         | Rust with Axum web framework             |
+| `swift-ios`         | Swift for iOS applications               |
+| `swift-vapor`       | Swift with Vapor server framework        |
+| `typescript-node`   | TypeScript with Node.js                  |
+| `typescript-svelte` | TypeScript with SvelteKit |
 
 ## Quick setup
 
-### 1. Add the plugin as a submodule
+### 1. Install from marketplace
+
+```bash
+# Add the marketplace (one-time)
+/plugin marketplace add quantumbitcz/dev-pipeline
+
+# Install the plugin
+/plugin install dev-pipeline@quantumbitcz
+```
+
+Or use the interactive plugin manager: `/plugin` → Discover tab → select `dev-pipeline`.
+
+<details>
+<summary>Alternative: install as Git submodule</summary>
 
 ```bash
 git submodule add https://github.com/quantumbitcz/dev-pipeline.git .claude/plugins/dev-pipeline
 ```
 
-### 2. Copy the module's local template
-
-```bash
-# For Kotlin/Spring:
-cp .claude/plugins/dev-pipeline/modules/kotlin-spring/local-template.md .claude/dev-pipeline.local.md
-
-# For React/Vite:
-cp .claude/plugins/dev-pipeline/modules/react-vite/local-template.md .claude/dev-pipeline.local.md
-```
-
-### 3. Copy the pipeline config template
-
-```bash
-# For Kotlin/Spring:
-cp .claude/plugins/dev-pipeline/modules/kotlin-spring/pipeline-config-template.md .claude/pipeline-config.md
-
-# For React/Vite:
-cp .claude/plugins/dev-pipeline/modules/react-vite/pipeline-config-template.md .claude/pipeline-config.md
-```
-
-### 4. Create the pipeline log
-
-```bash
-touch .claude/pipeline-log.md
-```
-
-### 5. Edit the local config
-
-Open `.claude/dev-pipeline.local.md` and customize:
-- `commands.build`, `commands.test`, etc. to match your project's build tool and module names
-- `scaffolder.patterns` to match your project's directory structure
-- `quality_gate` batches and `inline_checks` for your review needs
-- `context7_libraries` for the frameworks your project uses
-
-### 6. Wire hooks in settings
-
-Add the plugin to your `.claude/settings.json`:
+Then add to `.claude/settings.json`:
 
 ```json
 {
@@ -105,13 +91,43 @@ Add the plugin to your `.claude/settings.json`:
 }
 ```
 
-### 7. Add `.pipeline/` to `.gitignore`
+</details>
+
+### 2. Initialize project config
+
+```bash
+/pipeline-init
+```
+
+This creates `.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, and `.claude/pipeline-log.md` for your project. It auto-detects the framework module.
+
+<details>
+<summary>Manual setup (if you prefer)</summary>
+
+```bash
+# Copy the module's local template (replace <module> with your framework)
+cp .claude/plugins/dev-pipeline/modules/<module>/local-template.md .claude/dev-pipeline.local.md
+cp .claude/plugins/dev-pipeline/modules/<module>/pipeline-config-template.md .claude/pipeline-config.md
+touch .claude/pipeline-log.md
+```
+
+</details>
+
+### 3. Edit the local config
+
+Open `.claude/dev-pipeline.local.md` and customize:
+- `commands.build`, `commands.test`, etc. to match your project's build tool
+- `scaffolder.patterns` to match your project's directory structure
+- `quality_gate` batches and `inline_checks` for your review needs
+- `context7_libraries` for the frameworks your project uses
+
+### 4. Add `.pipeline/` to `.gitignore`
 
 ```bash
 echo ".pipeline/" >> .gitignore
 ```
 
-### 8. Run it
+### 5. Run it
 
 ```bash
 /pipeline-run Add plan comment feature
@@ -135,14 +151,14 @@ Resume from a specific stage:
 |   (.claude/)              |  .claude/pipeline-config.md (mutable, auto-tuned)
 |                           |  .claude/pipeline-log.md (learnings + run history)
 +---------------------------+
-|   Module                  |  modules/{kotlin-spring,react-vite}/
-|   (conventions, agents,   |  conventions.md, scripts/, hooks/
+|   Module                  |  modules/ (12 framework modules)
+|   (conventions, rules,    |  conventions.md, rules-override.json
 |    scripts, templates)    |  local-template.md, pipeline-config-template.md
 +---------------------------+
 |   Shared core             |  agents/pl-*.md (pipeline agents)
-|   (orchestrator, stages,  |  shared/ (scoring, state schema, stage contract)
-|    scoring, state)        |  hooks/ (checkpoint, feedback capture)
-|                           |  skills/pipeline-run/ (entry point)
+|   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings, recovery)
+|    scoring, state)        |  hooks/ (check engine hook, checkpoint, feedback capture)
+|                           |  skills/ (pipeline-run, pipeline-init, deploy, fe-*)
 +---------------------------+
 ```
 
@@ -200,71 +216,74 @@ modules/python-fastapi/
   conventions.md              # Agent-readable conventions for the framework
   local-template.md           # Project config template (YAML frontmatter + context)
   pipeline-config-template.md # Runtime config template
+  rules-override.json         # Module-specific rule overrides for the check engine
   scripts/                    # Optional verification scripts (must be executable with shebang)
   hooks/                      # Optional guard hooks (must be executable with shebang)
 ```
 
-### 2. Create module-specific agents
+### 2. Create a learnings file
 
-Place them in `agents/` with a module prefix:
-
-```
-agents/py-code-reviewer.md    # py- prefix for python-fastapi
-agents/py-type-checker.md
-```
-
-Agent files must have YAML frontmatter with `name` (matching filename without `.md`), `description`, and `tools` fields.
+Add `shared/learnings/python-fastapi.md` to track module-specific learnings across runs.
 
 ### 3. Wire agents into the local template
 
-Reference your agents in the `quality_gate.batch_N` section and any `inline_checks` in the local template.
+Reference the cross-cutting review agents (`architecture-reviewer`, `security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
 
 ### 4. Naming conventions
 
 - Module directory: lowercase with hyphens (`python-fastapi`)
-- Module agents: short prefix + hyphen + role (`py-code-reviewer`)
+- Review agents: descriptive names without module prefix (`architecture-reviewer`, `security-reviewer`)
 - Pipeline agents: `pl-{NNN}-{role}` (shared, not module-specific)
 - Scripts: `check-{what}.sh` or `{what}-guard.sh`
 
 ## Agents
 
-14 agents organized by pipeline stage and module affiliation.
+20 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
-| Agent | Stage | Role |
-|-------|-------|------|
-| `pl-100-orchestrator` | All | Coordinates the 10-stage lifecycle, manages state and recovery |
-| `pl-200-planner` | 2 Plan | Decomposes requirements into risk-assessed plans with stories and tasks |
-| `pl-210-validator` | 3 Validate | Validates plans across 5 perspectives, returns GO/REVISE/NO-GO |
-| `pl-300-implementer` | 4 Implement | TDD implementation -- tests first (RED), implement (GREEN), refactor |
-| `pl-310-scaffolder` | 4 Implement | Generates boilerplate with correct structure and TODO markers |
-| `pl-400-quality-gate` | 6 Review | Multi-batch quality coordinator with scoring and fix cycles |
-| `pl-500-test-gate` | 5 Verify | Test execution and coverage analysis coordinator |
-| `pl-600-pr-builder` | 8 Ship | Creates branch, commits, and PR with quality gate results |
-| `pl-700-retrospective` | 9 Learn | Post-run analysis, learning extraction, config auto-tuning |
-| `pl-710-feedback-capture` | 9 Learn | Records user corrections as structured feedback for future runs |
+| Agent                         | Stage        | Role                                                              |
+|-------------------------------|--------------|-------------------------------------------------------------------|
+| `pl-050-project-bootstrapper` | 0 Preflight  | Bootstraps new projects with module scaffolding and config        |
+| `pl-100-orchestrator`         | All          | Coordinates the 10-stage lifecycle, manages state and recovery    |
+| `pl-150-test-bootstrapper`    | 4 Implement  | Sets up test infrastructure and frameworks for new projects       |
+| `pl-160-migration-planner`    | 2 Plan       | Plans data and schema migrations as part of implementation        |
+| `pl-200-planner`              | 2 Plan       | Decomposes requirements into risk-assessed plans with stories and tasks |
+| `pl-210-validator`            | 3 Validate   | Validates plans across 5 perspectives, returns GO/REVISE/NO-GO   |
+| `pl-250-contract-validator`   | 3 Validate   | Validates API contracts and interface compatibility               |
+| `pl-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
+| `pl-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |
+| `pl-400-quality-gate`         | 6 Review     | Multi-batch quality coordinator with scoring and fix cycles       |
+| `pl-500-test-gate`            | 5 Verify     | Test execution and coverage analysis coordinator                  |
+| `pl-600-pr-builder`           | 8 Ship       | Creates branch, commits, and PR with quality gate results         |
+| `pl-650-preview-validator`    | 8 Ship       | Validates preview/staging deployments before merge                |
+| `pl-700-retrospective`        | 9 Learn      | Post-run analysis, learning extraction, config auto-tuning        |
+| `pl-710-feedback-capture`     | 9 Learn      | Records user corrections as structured feedback for future runs   |
 
-### Module agents
+### Cross-cutting review agents
 
-| Agent | Module | Role |
-|-------|--------|------|
-| `architecture-reviewer` | shared | Detects architecture pattern and reviews for compliance violations |
-| `security-reviewer` | shared | Reviews code for security vulnerabilities across all languages and frameworks |
-| `frontend-reviewer` | shared | Reviews frontend code for quality, conventions, accessibility, and performance |
+| Agent | Role |
+|---|---|
+| `architecture-reviewer` | Detects architecture pattern and reviews for compliance violations |
+| `security-reviewer` | Reviews code for security vulnerabilities across all languages and frameworks |
+| `frontend-reviewer` | Reviews frontend code for quality, conventions, accessibility, performance |
+| `infra-deploy-reviewer` | Reviews infrastructure and deployment configurations |
+| `infra-deploy-verifier` | Verifies infrastructure deployments and health checks |
 
 ## File inventory
 
 ```
 dev-pipeline/
-  plugin.json                 # Plugin manifest (hooks: checkpoint + feedback capture)
-  agents/                     # 14 agent definitions (YAML frontmatter + instructions)
-  skills/                     # 5 skills (pipeline-run + 4 fe-* inline checks)
-  hooks/                      # 2 shared hooks (pipeline-checkpoint.sh, feedback-capture.sh)
-  shared/                     # 3 reference docs (scoring.md, state-schema.md, stage-contract.md)
-  modules/
-    kotlin-spring/            # 3 scripts, 2 templates, conventions (6 files)
-    react-vite/               # 5 hooks, 2 templates, conventions, deprecation registry (9 files)
+  .claude-plugin/plugin.json  # Plugin manifest (registers hooks.json)
+  agents/                     # 20 agent definitions (YAML frontmatter + instructions)
+  skills/                     # 8 skills (pipeline-run, pipeline-init, bootstrap-project, deploy, 4 fe-*)
+  hooks/                      # hooks.json + 2 hook scripts (pipeline-checkpoint.sh, feedback-capture.sh)
+  shared/
+    scoring.md, stage-contract.md, state-schema.md  # Contracts
+    checks/                   # 3-layer generalized check engine (engine.sh, patterns, linters, agents)
+    learnings/                # Per-module learnings, rule + effectiveness schemas
+    recovery/                 # Recovery engine + 7 strategies + health checks
+  modules/                    # 12 framework modules (conventions, templates, rules-override each)
+    kotlin-spring/            # + 3 verification scripts
+    react-vite/               # + 5 guard hooks, known-deprecations.json
 ```
-
-Total: 44 files.
