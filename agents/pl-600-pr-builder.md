@@ -299,3 +299,67 @@ Please review the PR at {url} and:
 - **Exclude pipeline files** -- `.claude/`, `.pipeline/`, `build/`, `node_modules/`, `.env` never staged
 - **One PR per pipeline run** -- do not create multiple PRs
 - **Keep commits focused** -- each commit should be a logical unit that could theoretically be reverted independently
+
+---
+
+## 12. PR Creation Retry
+
+### PR Creation Retry
+If `gh pr create` fails:
+1. Retry once after 5 seconds
+2. If still fails, output manual git commands for the user:
+   ```
+   Git commands for manual PR creation:
+   git push -u origin {branch-name}
+   # Then visit: {repository-url}/compare/{base}...{branch-name}
+   ```
+3. Report as WARNING (not ERROR) -- the code is committed and pushed, just the PR creation failed
+
+---
+
+## 13. Existing PR Detection
+
+Before creating a new PR, check if the branch already has an open PR:
+```bash
+gh pr list --head {branch-name} --state open
+```
+If an open PR exists: update it (add comment with new changes summary) instead of creating a duplicate.
+
+---
+
+## 14. PR Description Enrichment
+
+After creating the PR, if recap is available at `.pipeline/reports/recap-*.md`:
+- Read the recap's "What Was Built" and "Key Decisions" sections
+- Append them to the PR body as additional context
+- Use `gh pr edit {number} --body "..."` to update
+
+---
+
+## 15. Forbidden Actions
+
+- DO NOT force-push to any branch
+- DO NOT run `git reset --hard` or `git checkout .`
+- DO NOT add Co-Authored-By or AI markers
+- DO NOT create multiple PRs per run
+- DO NOT stage .claude/, build/, node_modules/, .env, .pipeline/, *.log
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+- DO NOT delete or disable anything without checking intent
+
+---
+
+## 16. Linear Tracking
+
+If `integrations.linear.available` in state.json:
+- Link PR URL to the Linear Epic using `create_attachment`
+- Move all Stories to "In Review" status
+
+If unavailable: skip silently.
+
+---
+
+## 17. Optional Integrations
+
+If Slack MCP is available, post notification: "PR #{number} ready for review: {url}"
+If GitHub MCP is available for PR creation, prefer it over `gh` CLI.
+If unavailable: use `gh` CLI. Never fail because an optional MCP is down.

@@ -642,3 +642,71 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - **Generate files incrementally** -- write build config first, then source files, then tests, then infra
 - **Keep total output under 2,000 tokens** -- the orchestrator has context limits
 - **Log verbose details to `.pipeline/reports/bootstrap-project-{YYYY-MM-DD}.md`** -- the report file can be as detailed as needed
+
+---
+
+## 12. Context7 Fallback
+
+### Context7 Fallback
+If Context7 MCP is unavailable for version resolution:
+- Use the latest stable versions listed in the module's `conventions.md`
+- DO NOT guess versions from training data -- they may be outdated
+- Log WARNING: "Context7 unavailable -- using versions from conventions file"
+
+---
+
+## 13. Post-Scaffold Validation
+
+After scaffolding, run both build AND test commands:
+1. `commands.build` (with `commands.build_timeout`, default 120s)
+2. `commands.test` (with `commands.test_timeout`, default 300s)
+
+If either fails after 3 fix attempts:
+- Report partial scaffold: which files were created, what command failed, the error output
+- DO NOT leave the project in a broken state if you can fix it
+
+---
+
+## 14. Ambiguous Descriptions
+
+If the bootstrap description is ambiguous (e.g., "REST API" without specifying language):
+- Ask ONE clarifying question: "Which language/framework? Options: {list from available modules}"
+- If the description clearly specifies the stack, proceed without asking
+- NEVER ask more than one question -- infer everything else from conventions
+
+---
+
+## 15. Generated File Validation
+
+Validate every generated file compiles/parses before reporting success:
+- Source files: must compile (build command passes)
+- Config files (YAML, JSON): must parse (syntax check)
+- Shell scripts: must pass `bash -n` syntax check and be executable
+
+If any validation fails, fix it before reporting success.
+
+---
+
+## 16. Forbidden Actions
+
+- DO NOT hardcode versions from training data -- always use context7 or conventions file
+- DO NOT skip convention plugins (use build-logic/, parent POM, etc.)
+- DO NOT create projects without at least one passing test
+- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+---
+
+## 17. Linear Tracking
+
+If `integrations.linear.available` in state.json:
+- This agent runs outside the normal pipeline flow -- no Linear tracking needed
+
+If user requests tracking, create a single "Bootstrap {project}" task.
+
+---
+
+## 18. Optional Integrations
+
+If Context7 MCP is available, use it for version resolution (primary).
+If unavailable, fall back to conventions file versions.
+Never fail because an optional MCP is down.
