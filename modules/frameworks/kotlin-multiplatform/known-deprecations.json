@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "id\\s*\\(\\s*['\"]org\\.jetbrains\\.kotlin\\.multiplatform['\"]",
+      "replacement": "Use kotlin(\"multiplatform\") plugin alias in build.gradle.kts (Kotlin 1.7+ idiomatic form)",
+      "package": "kotlin-gradle-plugin",
+      "since": "1.7.0",
+      "removed_in": null,
+      "applies_from": "1.7.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "implementation\\s*\\(\\s*['\"]org\\.jetbrains\\.kotlin:kotlin-stdlib",
+      "replacement": "kotlin-stdlib is added automatically since Kotlin 1.8+ — explicit dependency declaration is no longer needed",
+      "package": "kotlin-stdlib",
+      "since": "1.8.0",
+      "removed_in": null,
+      "applies_from": "1.8.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "kotlin\\.native\\.cacheKind",
+      "replacement": "kotlin.native.cacheKind Gradle property is deprecated; caching is now controlled automatically by the Kotlin/Native compiler",
+      "package": "kotlin-native",
+      "since": "1.9.0",
+      "removed_in": null,
+      "applies_from": "1.9.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@Serializable.*@EncodeDefault|@EncodeDefault.*@Serializable",
+      "replacement": "Use @EncodeDefault(EncodeDefault.Mode.ALWAYS/NEVER) — the plain @EncodeDefault without mode argument is deprecated since kotlinx.serialization 1.5",
+      "package": "kotlinx-serialization",
+      "since": "1.5.0",
+      "removed_in": null,
+      "applies_from": "1.5.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "import io\\.ktor\\.client\\.features\\.",
+      "replacement": "Use import io.ktor.client.plugins.* — the features package was renamed to plugins in Ktor 2.0",
+      "package": "ktor-client-core",
+      "since": "2.0.0",
+      "removed_in": "2.0.0",
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "HttpClient\\s*\\{[^}]*install\\s*\\(\\s*JsonFeature",
+      "replacement": "Use install(ContentNegotiation) { json() } — JsonFeature was replaced by ContentNegotiation plugin in Ktor 2.0",
+      "package": "ktor-client-serialization",
+      "since": "2.0.0",
+      "removed_in": "2.0.0",
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "sourceSets\\[\"commonMain\"\\]\\.dependencies",
+      "replacement": "Use the sourceSets { commonMain.dependencies { } } DSL (Kotlin 2.0+ recommended form) for type-safe source set configuration",
+      "package": "kotlin-gradle-plugin",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "enableHierarchicalMultiplatformSupport\\s*=\\s*true",
+      "replacement": "Hierarchical multiplatform (HMPP) is enabled by default since Kotlin 1.6.20 — remove the explicit opt-in property",
+      "package": "kotlin-gradle-plugin",
+      "since": "1.6.20",
+      "removed_in": null,
+      "applies_from": "1.6.20",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}
