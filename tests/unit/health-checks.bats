@@ -57,7 +57,7 @@ DEP_CHECK="$PLUGIN_ROOT/shared/recovery/health-checks/dependency-check.sh"
 # 7. IMPLEMENT detects git merge in progress (MERGE_HEAD file present)
 @test "pre-stage-health: implement reports error when git merge is in progress" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   # Create an initial commit so the git repo is valid
   git -C "$project_dir" add .
@@ -76,7 +76,7 @@ DEP_CHECK="$PLUGIN_ROOT/shared/recovery/health-checks/dependency-check.sh"
 # 8. IMPLEMENT detects git rebase in progress (rebase-merge dir present)
 @test "pre-stage-health: implement reports error when git rebase is in progress" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   git -C "$project_dir" add .
   git -C "$project_dir" commit -q -m "init"

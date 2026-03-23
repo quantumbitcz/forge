@@ -3,21 +3,20 @@
 
 load '../helpers/test-helpers'
 
-MODULES_DIR="$PLUGIN_ROOT/modules"
+MODULES_DIR="$PLUGIN_ROOT/modules/frameworks"
 
 EXPECTED_MODULES=(
-  c-embedded
+  axum
+  embedded
+  express
+  fastapi
   go-stdlib
-  infra-k8s
-  java-spring
-  kotlin-spring
-  python-fastapi
-  react-vite
-  rust-axum
-  swift-ios
-  swift-vapor
-  typescript-node
-  typescript-svelte
+  k8s
+  react
+  spring
+  sveltekit
+  swiftui
+  vapor
 )
 
 # ---------------------------------------------------------------------------

@@ -65,8 +65,8 @@ teardown() { rm -rf "$TEST_TEMP"; }
 # 4. Regex scope /adapter/ fires for adapter path
 # ---------------------------------------------------------------------------
 @test "scope-filtering: regex scope_pattern /adapter/ fires only for adapter path" {
-  # KS-ARCH-001 (from kotlin-spring override) uses scope_pattern "/adapter/"
-  local ks_override="$PLUGIN_ROOT/modules/kotlin-spring/rules-override.json"
+  # KS-ARCH-001 (from spring override) uses scope_pattern "/adapter/"
+  local ks_override="$PLUGIN_ROOT/modules/frameworks/spring/rules-override.json"
 
   local adapter_file="$TEST_TEMP/project/src/main/kotlin/adapter/UserAdapter.kt"
   mkdir -p "$(dirname "$adapter_file")"

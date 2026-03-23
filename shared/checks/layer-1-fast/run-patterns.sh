@@ -37,14 +37,47 @@ if override_path:
     with open(override_path) as f:
         ov = json.load(f)
 
-    # Additional rules use scope_pattern instead of scope — normalize
-    for r in ov.get('additional_rules', []):
-        if 'scope_pattern' in r and 'scope' not in r:
-            r['scope'] = r['scope_pattern']
-        rules.append(r)
+    # Detect language from file extension for variant_rules selection
+    import os
+    ext_to_lang = {
+        '.kt': 'kotlin', '.kts': 'kotlin',
+        '.java': 'java',
+        '.ts': 'typescript', '.tsx': 'typescript',
+        '.js': 'typescript', '.jsx': 'typescript',
+        '.py': 'python',
+        '.go': 'go',
+        '.rs': 'rust',
+        '.c': 'c', '.h': 'c',
+        '.swift': 'swift',
+    }
+    file_lang = ext_to_lang.get(os.path.splitext(sys.argv[3] if len(sys.argv) > 3 else '')[1].lower(), '')
 
-    for b in ov.get('additional_boundaries', []):
-        boundaries.append(b)
+    # Support both flat format and new nested format (variant_rules / shared_rules)
+    if 'variant_rules' in ov or 'shared_rules' in ov:
+        # New nested format: collect from shared_rules + matching variant
+        shared = ov.get('shared_rules', {})
+        for r in shared.get('additional_rules', []):
+            if 'scope_pattern' in r and 'scope' not in r:
+                r['scope'] = r['scope_pattern']
+            rules.append(r)
+        for b in shared.get('additional_boundaries', []):
+            boundaries.append(b)
+
+        variant = ov.get('variant_rules', {}).get(file_lang, {})
+        for r in variant.get('additional_rules', []):
+            if 'scope_pattern' in r and 'scope' not in r:
+                r['scope'] = r['scope_pattern']
+            rules.append(r)
+        for b in variant.get('additional_boundaries', []):
+            boundaries.append(b)
+    else:
+        # Legacy flat format
+        for r in ov.get('additional_rules', []):
+            if 'scope_pattern' in r and 'scope' not in r:
+                r['scope'] = r['scope_pattern']
+            rules.append(r)
+        for b in ov.get('additional_boundaries', []):
+            boundaries.append(b)
 
     disabled = set(ov.get('disabled_rules', []))
     sev_overrides = ov.get('severity_overrides', {})
@@ -75,7 +108,7 @@ print('THRESHOLDS')
 print(json.dumps(thresholds))
 print('BOUNDARIES')
 print(json.dumps(boundaries))
-" "$RULES_JSON" "$OVERRIDE_JSON"
+" "$RULES_JSON" "$OVERRIDE_JSON" "$FILE"
 }
 
 # --- Scope matching ---

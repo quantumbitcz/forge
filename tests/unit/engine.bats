@@ -11,7 +11,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "hook mode: detects QUAL-NULL from TOOL_INPUT file_path" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   local kt_file="${project_dir}/src/main/kotlin/Bad.kt"
   printf 'package com.example\nval x = someValue!!\n' > "$kt_file"
@@ -47,7 +47,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "hook mode: skips files under build/generated-sources/" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   # Create a file inside build/generated-sources/ that would normally trigger findings
   local gen_dir="${project_dir}/build/generated-sources/kotlin/com/example"
@@ -69,7 +69,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "hook mode: exits 0 with empty output when _ENGINE_RUNNING=1" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   local kt_file="${project_dir}/src/main/kotlin/Bad.kt"
   printf 'package com.example\nval x = someValue!!\n' > "$kt_file"
@@ -94,7 +94,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "hook mode: skip counter mechanism writes and increments correctly" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
 
   # Build a minimal wrapper that replicates handle_skip and triggers it from
   # the main script body level (where bash ERR propagation is reliable).
@@ -183,7 +183,7 @@ EOF
 # ---------------------------------------------------------------------------
 @test "verify mode: emits findings from multiple --files-changed files" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local kt_file1="${project_dir}/src/main/kotlin/FileOne.kt"
@@ -211,7 +211,7 @@ EOF
 # ---------------------------------------------------------------------------
 @test "verify mode: skips nonexistent files without error" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local kt_file="${project_dir}/src/main/kotlin/Real.kt"
@@ -263,7 +263,7 @@ EOF
 # ---------------------------------------------------------------------------
 @test "review mode: emits Layer 3 stub message to stderr" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local kt_file="${project_dir}/src/main/kotlin/Clean.kt"

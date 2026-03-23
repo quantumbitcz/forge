@@ -11,7 +11,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "language-detection: .kt file triggers kotlin findings (QUAL-NULL)" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local kt_file="${project_dir}/src/main/kotlin/Bad.kt"
@@ -32,7 +32,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "language-detection: .tsx file triggers typescript findings (SEC-EVAL)" {
   local project_dir
-  project_dir="$(create_temp_project react-vite)"
+  project_dir="$(create_temp_project react)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local ts_file="${project_dir}/src/Dangerous.tsx"
@@ -56,7 +56,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "language-detection: .md file produces no findings (not a code language)" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local md_file="${project_dir}/README.md"
@@ -73,16 +73,16 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Module detection: kotlin-spring project + kotlin file in core/src/main
+# 4. Module detection: spring project + kotlin file in core/src/main
 #    importing from adapter triggers ARCH-BOUNDARY (from rules-override.json)
 # ---------------------------------------------------------------------------
-@test "language-detection: kotlin-spring module override applies ARCH-BOUNDARY rule" {
+@test "language-detection: spring module override applies ARCH-BOUNDARY rule" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   # Create a file in core/src/main that imports from an adapter package
-  # This matches the additional_boundaries rule in modules/kotlin-spring/rules-override.json:
+  # This matches the additional_boundaries rule in modules/frameworks/spring/rules-override.json:
   # scope_pattern: "core/src/main", forbidden_imports: ["\\.adapter\\."]
   local core_file="${project_dir}/core/src/main/kotlin/domain/UseCase.kt"
   mkdir -p "$(dirname "$core_file")"
@@ -103,7 +103,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "language-detection: module detection result is cached in .pipeline/.module-cache" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   local kt_file="${project_dir}/src/main/kotlin/Clean.kt"
@@ -122,7 +122,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   assert [ -f "${project_dir}/.pipeline/.module-cache" ]
   local cached_module
   cached_module="$(cat "${project_dir}/.pipeline/.module-cache")"
-  assert [ "$cached_module" = "kotlin-spring" ]
+  assert [ "$cached_module" = "spring" ]
 
   # Second run — cache is used (same result, file still present)
   run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
@@ -133,7 +133,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 
   local cached_module2
   cached_module2="$(cat "${project_dir}/.pipeline/.module-cache")"
-  assert [ "$cached_module2" = "kotlin-spring" ]
+  assert [ "$cached_module2" = "spring" ]
 }
 
 # ---------------------------------------------------------------------------
@@ -144,7 +144,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 @test "language-detection: engine handles all 8 known code extensions without error" {
   local project_dir
-  project_dir="$(create_temp_project kotlin-spring)"
+  project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   # Map: extension -> content that should be valid (not trigger errors, just be processed)

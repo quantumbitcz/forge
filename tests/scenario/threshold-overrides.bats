@@ -5,7 +5,7 @@ load '../helpers/test-helpers'
 
 RUN_PATTERNS="$PLUGIN_ROOT/shared/checks/layer-1-fast/run-patterns.sh"
 KOTLIN_RULES="$PLUGIN_ROOT/shared/checks/layer-1-fast/patterns/kotlin.json"
-KS_OVERRIDE="$PLUGIN_ROOT/modules/kotlin-spring/rules-override.json"
+KS_OVERRIDE="$PLUGIN_ROOT/modules/frameworks/spring/rules-override.json"
 
 setup() {
   TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-thresholds.XXXXXX")"
@@ -38,9 +38,9 @@ for i in range(305):
 }
 
 # ---------------------------------------------------------------------------
-# 2. Path-specific override: port/ gets threshold 100 (kotlin-spring)
+# 2. Path-specific override: port/ gets threshold 100 (spring)
 # ---------------------------------------------------------------------------
-@test "threshold: kotlin-spring override lowers port/ threshold to 100 lines" {
+@test "threshold: spring override lowers port/ threshold to 100 lines" {
   local kt_file="$TEST_TEMP/project/src/main/kotlin/port/BigPort.kt"
   mkdir -p "$(dirname "$kt_file")"
   # 105 comment lines — under the 300 default but above the 100 port/ threshold
@@ -57,9 +57,9 @@ for i in range(105):
 }
 
 # ---------------------------------------------------------------------------
-# 3. Path-specific override: adapter/ gets threshold 200 (kotlin-spring)
+# 3. Path-specific override: adapter/ gets threshold 200 (spring)
 # ---------------------------------------------------------------------------
-@test "threshold: kotlin-spring override sets adapter/ threshold to 200 lines" {
+@test "threshold: spring override sets adapter/ threshold to 200 lines" {
   local kt_file="$TEST_TEMP/project/src/main/kotlin/adapter/BigAdapter.kt"
   mkdir -p "$(dirname "$kt_file")"
   # 205 comment lines — above the 200 adapter/ threshold

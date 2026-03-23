@@ -48,47 +48,51 @@ create_temp_project() {
   mkdir -p "${project_dir}"
 
   case "${module}" in
-    kotlin-spring)
+    spring)
       touch "${project_dir}/build.gradle.kts"
       mkdir -p "${project_dir}/src/main/kotlin"
       ;;
-    java-spring)
+    spring-java)
       touch "${project_dir}/build.gradle.kts"
       mkdir -p "${project_dir}/src/main/java"
       ;;
-    react-vite)
+    react)
       echo '{"name":"test-app","version":"0.0.1"}' > "${project_dir}/package.json"
       touch "${project_dir}/vite.config.ts"
       ;;
-    typescript-svelte)
+    sveltekit)
       echo '{"name":"test-app","version":"0.0.1"}' > "${project_dir}/package.json"
       touch "${project_dir}/svelte.config.js"
       ;;
-    typescript-node)
+    express)
       echo '{"name":"test-app","version":"0.0.1"}' > "${project_dir}/package.json"
       ;;
-    rust-axum)
+    axum)
       printf '[package]\nname = "test-app"\nversion = "0.1.0"\nedition = "2021"\n' \
         > "${project_dir}/Cargo.toml"
       ;;
     go-stdlib)
       printf 'module example.com/test-app\n\ngo 1.21\n' > "${project_dir}/go.mod"
       ;;
-    python-fastapi)
+    fastapi)
       printf '[project]\nname = "test-app"\nversion = "0.1.0"\n' \
         > "${project_dir}/pyproject.toml"
       ;;
-    swift-vapor)
+    vapor)
       printf '// swift-tools-version:5.9\nimport PackageDescription\nlet package = Package(name: "test-app")\n' \
         > "${project_dir}/Package.swift"
       ;;
-    swift-ios)
+    swiftui)
       mkdir -p "${project_dir}/test-app.xcodeproj"
       touch "${project_dir}/test-app.xcodeproj/project.pbxproj"
       ;;
-    c-embedded)
+    embedded)
       touch "${project_dir}/Makefile"
       touch "${project_dir}/main.c"
+      ;;
+    k8s)
+      mkdir -p "${project_dir}/k8s"
+      touch "${project_dir}/k8s/deployment.yaml"
       ;;
     *)
       echo "create_temp_project: unknown module '${module}'" >&2

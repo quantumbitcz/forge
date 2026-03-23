@@ -5,7 +5,7 @@ load '../helpers/test-helpers'
 
 RUN_PATTERNS="$PLUGIN_ROOT/shared/checks/layer-1-fast/run-patterns.sh"
 KOTLIN_RULES="$PLUGIN_ROOT/shared/checks/layer-1-fast/patterns/kotlin.json"
-KS_OVERRIDE="$PLUGIN_ROOT/modules/kotlin-spring/rules-override.json"
+KS_OVERRIDE="$PLUGIN_ROOT/modules/frameworks/spring/rules-override.json"
 OVERRIDE_ADD="$PLUGIN_ROOT/tests/fixtures/overrides/add-rules.json"
 OVERRIDE_DISABLE="$PLUGIN_ROOT/tests/fixtures/overrides/disable-rules.json"
 OVERRIDE_EMPTY="$PLUGIN_ROOT/tests/fixtures/overrides/empty.json"
@@ -23,9 +23,9 @@ setup() {
 teardown() { rm -rf "$TEST_TEMP"; }
 
 # ---------------------------------------------------------------------------
-# 1. kotlin-spring adds ARCH-BOUNDARY rule (core/ importing from adapter)
+# 1. spring adds ARCH-BOUNDARY rule (core/ importing from adapter)
 # ---------------------------------------------------------------------------
-@test "module-override: kotlin-spring additional_boundaries detects core->adapter import" {
+@test "module-override: spring additional_boundaries detects core->adapter import" {
   # core/src/main matches the scope_pattern "core/src/main"
   local kt_file="$TEST_TEMP/project/core/src/main/Service.kt"
   mkdir -p "$(dirname "$kt_file")"
@@ -97,7 +97,7 @@ teardown() { rm -rf "$TEST_TEMP"; }
 # ---------------------------------------------------------------------------
 # 6. threshold_overrides: port/ files get lower file_size threshold (100)
 # ---------------------------------------------------------------------------
-@test "module-override: kotlin-spring threshold_overrides lowers port/ file size to 100" {
+@test "module-override: spring threshold_overrides lowers port/ file size to 100" {
   local kt_file="$TEST_TEMP/project/src/main/kotlin/port/BigPort.kt"
   mkdir -p "$(dirname "$kt_file")"
   # 105 comment lines so no pattern rules fire, but exceeds 100-line port threshold
