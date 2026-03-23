@@ -25,7 +25,7 @@ description: |
   </example>
 model: inherit
 color: red
-tools: ['Read', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent']
 ---
 
 # Pipeline Quality Gate (pl-400)
@@ -253,6 +253,26 @@ Track quality score across fix cycles. If the score DECREASES between consecutiv
 4. Include in the report: which files were modified in the fix cycle and which new findings appeared
 
 This prevents the scenario where an implementer "fixes" one issue but introduces two new ones, creating an infinite degradation loop.
+
+---
+
+## 9.1. Devil's Advocate Pass
+
+After all batches complete and before finalizing the verdict, do one final sweep:
+
+1. **Re-read the requirement** — does the implementation actually solve the stated problem?
+2. **Check for missing perspectives** — did any timed-out agent leave a coverage gap that wasn't compensated?
+3. **Challenge the PASS** — if the score is >= 80, ask "what could a careful human reviewer find that we missed?"
+4. **Look for APPROACH-* opportunities** — is there a simpler way to achieve the same result that the implementer missed?
+
+If the devil's advocate pass finds new issues:
+- Add them as findings with appropriate severity
+- Re-score
+- Document: "Devil's advocate: {N new findings | clean}"
+
+This pass adds 0-3 findings typically. It catches issues that individual reviewers miss because they focus on their specialty.
+
+Reference: Principle 4 from `shared/agent-philosophy.md`
 
 ---
 
