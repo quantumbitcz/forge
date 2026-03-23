@@ -1,0 +1,72 @@
+{
+  "extends": "typescript",
+  "framework": "node",
+  "additional_rules": [
+    {
+      "id": "TN-SEC-001",
+      "name": "unsanitized-input-in-db-call",
+      "pattern": "(req\\.body|req\\.params|req\\.query).*\\.(exec|query|raw|\\$queryRaw|\\$executeRaw)",
+      "scope_pattern": "src/",
+      "severity": "WARNING",
+      "category": "SEC-INJECTION",
+      "message": "Unsanitized req.body/req.params passed to database call — validate and sanitize input first",
+      "fix_hint": "Validate input with Zod/class-validator before passing to the database layer. Use parameterized queries or ORM methods, never string interpolation.",
+      "example_ref": ""
+    },
+    {
+      "id": "TN-ASYNC-001",
+      "name": "missing-next-err-in-error-handler",
+      "pattern": "catch\\s*\\(.*\\)\\s*\\{[^}]*(?!next\\()",
+      "scope_pattern": "/middleware/",
+      "severity": "WARNING",
+      "category": "ASYNC-ERROR",
+      "message": "Missing next(err) in catch block — errors may be swallowed silently",
+      "fix_hint": "Call next(err) in catch blocks within Express middleware/route handlers to propagate errors to the global error handler.",
+      "example_ref": ""
+    },
+    {
+      "id": "TN-CONV-001",
+      "name": "commonjs-require",
+      "pattern": "\\brequire\\s*\\(",
+      "scope_pattern": "src/",
+      "severity": "INFO",
+      "category": "CONV-IMPORT",
+      "message": "CommonJS require() used — prefer ESM import syntax in TypeScript",
+      "fix_hint": "Replace require('module') with import module from 'module' or import { named } from 'module'.",
+      "example_ref": ""
+    },
+    {
+      "id": "TN-CONV-002",
+      "name": "console-log-in-production",
+      "pattern": "console\\.(log|warn|error|info|debug)\\(",
+      "scope_pattern": "src/",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "console.log in production code — use a structured logger (winston, pino) instead",
+      "fix_hint": "Replace console.log/warn/error with a structured logger instance.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Routes must not import database directly",
+      "scope_pattern": "/routes/",
+      "forbidden_imports": [
+        "prisma",
+        "typeorm",
+        "mongoose",
+        "\\.model"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "dto/": 100,
+      "routes/": 150
+    }
+  }
+}

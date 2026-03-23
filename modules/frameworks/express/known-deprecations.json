@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-22",
+  "deprecations": [
+    {
+      "pattern": "require\\s*\\(",
+      "replacement": "Use ESM `import` syntax instead of `require()` in ESM contexts",
+      "package": "node:module",
+      "since": "16",
+      "removed_in": null,
+      "applies_from": "16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "new Buffer\\s*\\(|Buffer\\s*\\(",
+      "replacement": "Use `Buffer.from()`, `Buffer.alloc()`, or `Buffer.allocUnsafe()` instead of the deprecated `Buffer()` constructor",
+      "package": "node:buffer",
+      "since": "6",
+      "removed_in": null,
+      "applies_from": "6",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "url\\.parse\\s*\\(",
+      "replacement": "Use the WHATWG `new URL()` constructor instead of `url.parse()`",
+      "package": "node:url",
+      "since": "10",
+      "removed_in": null,
+      "applies_from": "10",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "fs\\.exists\\s*\\(",
+      "replacement": "Use `fs.access()` or `fs.stat()` instead of `fs.exists()` which has been deprecated since Node 1.0",
+      "package": "node:fs",
+      "since": "1.0",
+      "removed_in": null,
+      "applies_from": "1.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "require\\s*\\(\\s*['\"]querystring['\"]\\s*\\)",
+      "replacement": "Use the global `URLSearchParams` API instead of the legacy `querystring` module",
+      "package": "node:querystring",
+      "since": "18",
+      "removed_in": null,
+      "applies_from": "18",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "util\\.isArray\\s*\\(",
+      "replacement": "Use `Array.isArray()` instead of the deprecated `util.isArray()`",
+      "package": "node:util",
+      "since": "4",
+      "removed_in": null,
+      "applies_from": "4",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "util\\.isBuffer\\s*\\(",
+      "replacement": "Use `Buffer.isBuffer()` instead of the deprecated `util.isBuffer()`",
+      "package": "node:util",
+      "since": "4",
+      "removed_in": null,
+      "applies_from": "4",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}
