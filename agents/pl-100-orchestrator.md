@@ -51,6 +51,7 @@ Parse `$ARGUMENTS` for optional flags before the requirement text:
 |------|---------|--------|
 | `--from=<stage>` | `--from=verify Implement plan comments` | Skip to the specified stage |
 | `--dry-run` | `--dry-run Implement plan comments` | Run PREFLIGHT through VALIDATE, then stop with a dry-run report |
+| `--spec <path>` | `--spec .pipeline/shape/plan-2025-03-23.md` | Read a shaped spec file and use it as the requirement |
 
 **Valid `--from` values:** `preflight` (0), `explore` (1), `plan` (2), `validate` (3), `implement` (4), `verify` (5), `review` (6), `docs` (7), `ship` (8), `learn` (9)
 
@@ -61,7 +62,49 @@ When `--from` is specified:
 4. If resuming from `verify` or later, assume implementation is already done -- use the current working tree state
 5. If resuming from `implement`, re-read the plan from previous stage notes or ask user to provide it
 
-### 2.2 --dry-run Mode
+### 2.2 --spec Mode
+
+If `--spec <path>` is passed:
+
+1. **Read the spec file** at the given path. Resolve relative paths against the project root (output of `git rev-parse --show-toplevel`).
+   - If the file does not exist: **ERROR** — "Spec file not found: `{path}`. Check the path and retry." Abort.
+   - If the file is not readable: **ERROR** — "Cannot read spec file: `{path}`." Abort.
+
+2. **Parse the spec file format.** Spec files are produced by `/pipeline-shape` and contain structured Markdown:
+   - `## Epic` — the top-level feature title and description. Use this as the requirement label stored in `state.json.requirement`.
+   - `## Stories` — one or more user stories with acceptance criteria. Feed these directly to the PLAN stage planner — the planner should use the pre-shaped stories as its input rather than deriving stories from scratch.
+   - `## Technical Notes` (optional) — architectural context, constraints, decisions already made. Pass to EXPLORE and PLAN agents.
+   - `## Out of Scope` (optional) — explicit exclusions. Pass to implementer to avoid scope creep.
+   - If the spec file lacks an `## Epic` section: **WARN** — treat the entire file content as the raw requirement, same as plain-text input.
+
+3. **Store spec metadata** in `state.json`:
+   ```json
+   "spec": {
+     "source": "file",
+     "path": "/absolute/path/to/spec-file.md",
+     "epic_title": "<title from ## Epic>",
+     "story_count": <number of ## Story entries>,
+     "has_technical_notes": true/false,
+     "loaded_at": "<ISO8601>"
+   }
+   ```
+
+4. **Behavior in subsequent stages:**
+   - **EXPLORE:** Explorer agents receive the `## Technical Notes` section as additional context (if present).
+   - **PLAN:** The planner receives the full `## Stories` block. It should refine and decompose them into tasks, but MUST NOT discard acceptance criteria from the spec. It may add technical tasks (migrations, tests, infra) not in the spec.
+   - **VALIDATE:** Validator checks that the generated plan covers all acceptance criteria in the spec.
+   - **All other stages:** proceed normally.
+
+5. **Combining with other flags:** `--spec` is compatible with `--from` and `--dry-run`.
+   - `--spec path --dry-run`: loads spec, runs PREFLIGHT through VALIDATE using spec content, then stops.
+   - `--spec path --from=plan`: loads spec, skips EXPLORE, feeds spec directly to PLAN.
+
+Key rules:
+- The spec file is read once at startup (PREFLIGHT) and stored in stage notes for downstream agents.
+- If both `--spec` and inline requirement text are provided (e.g., `--spec plan.md Add extra requirement`), concatenate the spec content with the inline text — spec comes first.
+- The spec file is NEVER modified by the pipeline.
+
+### 2.3 --dry-run Mode
 
 If `--dry-run` is passed (can combine with `--from`):
 
@@ -76,6 +119,7 @@ Output a dry-run summary:
     ## Dry Run Report
 
     **Requirement:** {requirement}
+    **Spec:** {spec_path if --spec was used, else "none"}
     **Module:** {module} ({framework})
     **Risk Level:** {risk_level}
     **Validation:** {GO/REVISE/NO-GO}
@@ -102,7 +146,7 @@ Key rules:
 - `--dry-run` creates NO files outside `.pipeline/` (stage notes still written for debugging)
 - `--dry-run` creates NO Linear tickets
 - `--dry-run` creates NO git branches or worktrees
-- `--dry-run` is compatible with `--from` (e.g., `--dry-run --from=plan` skips EXPLORE)
+- `--dry-run` is compatible with `--from` and `--spec` (e.g., `--dry-run --from=plan --spec shape.md`)
 - State.json is written with `"dry_run": true` flag
 
 ### Dry-Run State Behavior

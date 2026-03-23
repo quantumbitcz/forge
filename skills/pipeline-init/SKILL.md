@@ -114,6 +114,69 @@ Show the user what files were created and their key settings. Ask: **"Config fil
 
 ---
 
+### Phase 2b: CROSS-REPO DISCOVERY
+
+After generating the project config, run the discovery chain to find related projects automatically.
+
+1. **Run discovery script:**
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/shared/discovery/discover-projects.sh" "$(pwd)" --depth 4
+   ```
+
+   This scans in order: in-project references (docker-compose.yml, .env files, CI workflow references), sibling directories (same parent, compatible stack markers), IDE project locations (JetBrains `.idea/modules.xml`, VS Code workspaces), and GitHub org repos (if `gh` CLI is authenticated).
+
+2. **Present discoveries to user:**
+   Show what was found and ask for confirmation:
+   ```
+   ## Discovered Related Projects
+
+   OK  project-fe (frontend, react) at ../project-fe  [via sibling-directory]
+   OK  project-infra (infra, k8s) at ../project-infra  [via docker-compose.yml]
+   ?   project-mobile — not found
+
+   Add these to your config? (y/n/edit)
+   ```
+
+   - `OK` — path exists and is a valid git repository
+   - `?` — referenced but not found on disk (show as informational only, do not add)
+
+3. **If user confirms (y):** Add `related_projects:` section to `dev-pipeline.local.md`:
+   ```yaml
+   related_projects:
+     frontend:
+       path: "/absolute/path/to/project-fe"
+       repo: "github.com/org/project-fe"
+       framework: react
+       detected_via: "sibling-directory"
+     infra:
+       path: "/absolute/path/to/project-infra"
+       repo: "github.com/org/project-infra"
+       framework: k8s
+       detected_via: "docker-compose.yml"
+   ```
+
+   Always use absolute paths in config. Detect the `framework` for each related project using the same stack-marker logic from Phase 1.
+
+4. **If user wants to edit (edit):** Present each discovered project as an editable entry. Allow the user to:
+   - Change the path for any entry
+   - Remove entries they don't want
+   - Add additional entries not found by discovery
+   Write the final confirmed set to config.
+
+5. **If user declines (n):** Skip silently. The pipeline works without related projects. Do not add `related_projects:` to config.
+
+6. **If discovery script is not found** (plugin not fully installed, first-time setup): skip this step silently with an INFO note — "Discovery script not available. You can add related projects manually to `dev-pipeline.local.md`."
+
+7. **Add discovery config** to `dev-pipeline.local.md` when any related projects are written:
+   ```yaml
+   discovery:
+     enabled: true
+     scan_depth: 4
+     confirmation_required: true
+   ```
+
+---
+
 ### Phase 3: VALIDATE
 
 Run the following checks to confirm the setup works. Execute BOTH build and test commands explicitly — do not skip either.
