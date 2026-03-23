@@ -91,6 +91,7 @@ echo "Plugin structure OK"
 - **Recovery engine** (`shared/recovery/recovery-engine.md`) with 7 strategies and **weighted budget**: transient-retry (0.5), tool-diagnosis (1.0), state-reconstruction (1.5), agent-reset (1.0), dependency-health (1.0), resource-cleanup (0.5), graceful-stop (0.0). Budget ceiling: 5.0 total weight. Warning at 80%.
 - **State reconstruction:** Corrupted state counters are recovered from checkpoint artifacts and stage notes. Fallback uses configured maximum (conservative), not zero.
 - Health checks (`shared/recovery/health-checks/`) run pre-stage dependency and environment validation.
+- **Cross-repo state:** `state.json.cross_repo` tracks per-project worktrees and status when `related_projects` is configured. Each entry contains `path`, `branch`, `status` (implementing | complete | failed), `files_changed`, and `pr_url`. Cleaned up by `/pipeline-rollback` or `/pipeline-reset`.
 
 ### Linear Integration (optional)
 - If Linear MCP is available, the pipeline creates an Epic with Stories and Tasks during PLAN, updates ticket statuses per stage, and posts quality findings and recap summaries as comments.
@@ -103,6 +104,14 @@ echo "Plugin structure OK"
 - Each agent uses MCPs relevant to its stage (e.g., Playwright for preview validation, Context7 for documentation lookup and migration guides).
 - **Mid-run health:** First MCP failure marks it as degraded for the rest of the run. Subsequent dispatches skip it without timeout delays.
 - No MCP is required. The pipeline adapts to whatever the user has installed and suggests missing optional MCPs.
+
+### Cross-Repo Discovery
+- During `/pipeline-init`, a 5-step discovery chain finds related projects (frontend, infra, mobile) automatically.
+- Discovery chain: in-project references → sibling directory scan → IDE project directories → GitHub org scan → user prompt.
+- Results stored in `dev-pipeline.local.md` under `related_projects:` with path, repo, framework, and detection method.
+- Configurable via `discovery:` section: `enabled`, `scan_depth` (1-4), `confirmation_required`.
+- During pipeline runs: contract validator diffs API specs cross-repo, PR builder creates linked PRs, orchestrator manages multi-repo worktrees.
+- Cross-repo state tracked in `state.json.cross_repo` — one entry per related project with `path`, `branch`, `status`, `files_changed`, and `pr_url`.
 
 ### Check engine (`shared/checks/`)
 - 3-layer generalized check engine triggered on every `Edit`/`Write` via PostToolUse hook.
@@ -138,7 +147,7 @@ echo "Plugin structure OK"
 
 ### Skills (`skills/`)
 - `pipeline-run` — the main entry point, thin launcher for the orchestrator.
-- `pipeline-init` — initializes `.claude/dev-pipeline.local.md` and `.claude/pipeline-config.md` for a consuming project.
+- `pipeline-init` — initializes `.claude/dev-pipeline.local.md` and `.claude/pipeline-config.md` for a consuming project. Runs the 5-step cross-repo discovery chain to populate `related_projects:` automatically.
 - `pipeline-status` — shows current pipeline state, quality score, retry budgets, recovery budget, Linear sync, and detected versions.
 - `pipeline-reset` — clears pipeline run state (including lock and skip counter) while preserving accumulated learnings.
 - `verify` — quick build + lint + test check without a full pipeline run.
@@ -280,6 +289,9 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 - Infra frameworks (`k8s`): `language: null` — no language layer is loaded. Only the framework layer applies.
 - The `components:` structure in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) replaces the old flat `module:` field. Old `module:` configs are not supported.
 - Framework-level `testing/` files (e.g., `modules/frameworks/spring/testing/kotest.md`) EXTEND the generic `modules/testing/kotest.md` — they add framework-specific patterns on top, they do not replace the generic file.
+- Cross-repo worktrees use alphabetical lock ordering to prevent deadlocks when multiple related projects are modified simultaneously.
+- Cross-repo PR failures don't block the main PR — main repo changes are always preserved. Failed cross-repo PRs are logged in `state.json.cross_repo` with `status: failed`.
+- Discovery results are stored with `detected_via` for audit trail — re-run `/pipeline-init` to refresh if related projects change.
 
 ## Plugin distribution (`.claude-plugin/`)
 
