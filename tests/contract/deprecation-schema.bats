@@ -17,6 +17,12 @@ EXPECTED_MODULES=(
   sveltekit
   swiftui
   vapor
+  aspnet
+  django
+  nextjs
+  gin
+  jetpack-compose
+  kotlin-multiplatform
 )
 
 # ---------------------------------------------------------------------------

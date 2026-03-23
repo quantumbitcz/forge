@@ -93,12 +93,12 @@ check "All agents have Forbidden Actions section" "$check5_fail"
 echo ""
 echo "--- MODULES ---"
 
-FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib)
+FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform)
 LANGUAGES=(kotlin java typescript python go rust swift c csharp)
 TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md)
 REQUIRED_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
 
-# Check 6: All 11 framework directories have 5 required files
+# Check 6: All 17 framework directories have 5 required files
 check6_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
   for req in "${REQUIRED_FILES[@]}"; do
@@ -107,7 +107,7 @@ for fw in "${FRAMEWORKS[@]}"; do
     fi
   done
 done
-check "All 11 framework directories have required 5 files" "$check6_fail"
+check "All 17 framework directories have required 5 files" "$check6_fail"
 
 # Check 7: All frameworks/*/conventions.md have Dos/Don'ts section (case-insensitive for don't / donts / Don'ts)
 check7_fail=0

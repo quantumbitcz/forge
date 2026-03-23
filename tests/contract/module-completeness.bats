@@ -20,6 +20,12 @@ EXPECTED_FRAMEWORKS=(
   k8s
   embedded
   go-stdlib
+  aspnet
+  django
+  nextjs
+  gin
+  jetpack-compose
+  kotlin-multiplatform
 )
 
 EXPECTED_LANGUAGES=(
@@ -57,9 +63,9 @@ REQUIRED_FILES=(
 )
 
 # ---------------------------------------------------------------------------
-# 1. All 11 framework directories exist
+# 1. All 17 framework directories exist
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 11 expected framework directories exist" {
+@test "module-completeness: all 17 expected framework directories exist" {
   local missing=()
   for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
     if [[ ! -d "$FRAMEWORKS_DIR/$fw" ]]; then
