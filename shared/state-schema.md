@@ -49,13 +49,34 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.3",
+  "version": "1.0.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
   "domain_area": "plan",
   "risk_level": "MEDIUM",
   "story_state": "IMPLEMENTING",
+  "active_component": "backend",
+  "components": {
+    "backend": {
+      "story_state": "IMPLEMENTING",
+      "conventions_hash": "ab12cd34",
+      "conventions_section_hashes": {},
+      "detected_versions": {
+        "language_version": "2.0.0",
+        "framework_version": "3.3.0"
+      }
+    },
+    "frontend": {
+      "story_state": "EXPLORING",
+      "conventions_hash": "ef56gh78",
+      "conventions_section_hashes": {},
+      "detected_versions": {
+        "language_version": "5.4.0",
+        "framework_version": "18.2.0"
+      }
+    }
+  },
   "quality_cycles": 0,
   "test_cycles": 0,
   "verify_fix_count": 0,
@@ -128,12 +149,15 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `version` | string | Yes | Schema version string (`"1.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Version 1.0.0 is a clean break; old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/pipeline-run` invocation argument. |
 | `domain_area` | string | Yes | Primary domain area affected by this change. Set by the planner at Stage 2. Examples: `"plan"`, `"billing"`, `"scheduling"`, `"inventory"`, `"communication"`, `"user"`, `"workflow"`. |
 | `risk_level` | string | Yes | Risk assessment from the planner. Valid values: `"LOW"`, `"MEDIUM"`, `"HIGH"`. Set at Stage 2, used at Stage 3 for the auto-proceed decision gate. |
-| `story_state` | string | Yes | Current pipeline stage. Valid values and transitions defined below. Updated at the start of each stage. |
+| `story_state` | string | Yes | The overall pipeline state — the highest active stage across all components. If backend is IMPLEMENTING and frontend is EXPLORING, the top-level story_state is IMPLEMENTING. Valid values and transitions defined below. Updated at the start of each stage. |
+| `active_component` | string | Yes | The component the orchestrator is currently processing. Set before dispatching agents for a component's tasks. Used by the check engine to route rules. Example: `"backend"`. |
+| `components` | object | Yes | Per-component state tracking for monorepo and multi-stack projects. Single-repo projects have one component. Keys are component names (e.g., `"backend"`, `"frontend"`); values are component state objects. See the [components section](#components-object-required) below. |
 | `quality_cycles` | integer | Yes | Number of quality review cycles completed in Stage 6 (REVIEW). Starts at 0, incremented each time the quality gate dispatches fixes and rescores. Max is `quality_gate.max_review_cycles` from config. |
 | `test_cycles` | integer | Yes | Number of test fix cycles completed in Stage 5 Phase B (test gate). Starts at 0, incremented each time failing tests are dispatched to the implementer. Max is `test_gate.max_test_cycles` from config. |
 | `verify_fix_count` | integer | Yes | Number of build/lint fix attempts in Stage 5 Phase A. Starts at 0, incremented on each compile or lint failure that triggers an auto-fix. Max is `implementation.max_fix_loops` from config. |
@@ -146,17 +170,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `pipeline-log.md`. |
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `pl-710-feedback-capture` stage notes. |
 | `score_history` | number[] | Yes | Quality score per review cycle for oscillation detection. Appended after each quality gate scoring. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. Integer with default scoring weights; may be non-integer with custom weights. |
-| `version` | string | Yes | Schema version string (e.g., `"1.3"`). Enables schema migration — the recovery engine checks this before parsing to ensure compatibility with the current engine version. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
-| `modules` | object[] | Yes | Per-module state for multi-module projects. Each entry: `{ "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. Each entry's `story_state` can also be `"FAILED"` (terminal — module failed after max retries) or `"BLOCKED"` (waiting on a dependency module to complete). Blocked modules include a `blocked_by` field with the failing module name (e.g., `{ "module": "react-vite", "story_state": "BLOCKED", "story_id": "story-2", "blocked_by": "kotlin-spring" }`). The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects (main `story_state` field is used instead). |
+| `modules` | object[] | Yes | Per-module state for multi-module projects. Each entry: `{ "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. Each entry's `story_state` can also be `"FAILED"` (terminal — module failed after max retries) or `"BLOCKED"` (waiting on a dependency module to complete). Blocked modules include a `blocked_by` field with the failing module name (e.g., `{ "module": "react-vite", "story_state": "BLOCKED", "story_id": "story-2", "blocked_by": "kotlin-spring" }`). The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects (use `components` for per-component state instead). |
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
 | `recovery_applied` | string[] | Yes | Derived view of recovery strategy names applied during this run. Derived from `recovery_budget.applications`: `recovery_applied = recovery_budget.applications.map(a => a.strategy)`. Kept for backward compatibility. Updated at every budget write. |
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.0). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight > 4.0` (80%), set `recovery.budget_warning_issued: true`. |
 | `linear_sync` | object | Yes | Tracks Linear API operation success/failure for desync detection. `in_sync`: boolean, true when all Linear operations succeeded. `failed_operations[]`: list of `{ "op": "<operation>", "error": "<message>", "timestamp": "<ISO8601>" }`. Read by retrospective to report desync. |
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Kept for backward compatibility. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
-| `conventions_section_hashes` | object | Yes | Per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. During migration from 1.1, populated as `{ "_full": "<conventions_hash value>" }`. |
+| `conventions_section_hashes` | object | Yes | Per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. |
 | `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies`: map of dependency name to version string for important libraries. Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). |
 | `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
@@ -204,6 +227,61 @@ Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metad
   }
 }
 ```
+
+---
+
+### components (object, required)
+
+Per-component state tracking for monorepo and multi-stack projects. Single-repo projects have one component.
+
+```json
+{
+  "components": {
+    "backend": {
+      "story_state": "IMPLEMENTING",
+      "conventions_hash": "ab12cd34",
+      "conventions_section_hashes": {},
+      "detected_versions": {
+        "language_version": "2.0.0",
+        "framework_version": "3.3.0"
+      }
+    },
+    "frontend": {
+      "story_state": "EXPLORING",
+      "conventions_hash": "ef56gh78",
+      "conventions_section_hashes": {},
+      "detected_versions": {
+        "language_version": "5.4.0",
+        "framework_version": "18.2.0"
+      }
+    }
+  }
+}
+```
+
+**Fields per component:**
+- `story_state` — current pipeline stage for this component (same enum as top-level)
+- `conventions_hash` — SHA256 first 8 chars of the composed convention stack
+- `conventions_section_hashes` — per-section hashes for drift detection
+- `detected_versions` — extracted from manifest files in the component path
+
+---
+
+### active_component (string, required)
+
+The component the orchestrator is currently processing. Set before dispatching agents for a component's tasks. Used by the check engine to route rules.
+
+Example: `"active_component": "backend"`
+
+---
+
+### Required Fields
+
+The following fields are required in every v1.0.0 state.json:
+
+`version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`
+
+All other fields in the Field Reference table marked "Yes" are also required; the list above is the minimum set the recovery engine validates on load.
 
 ---
 
@@ -273,34 +351,7 @@ Example:
 }
 ```
 
-**Note:** The `version` field enables schema migration. Recovery engine checks this before parsing. If the `version` field is missing (pre-1.1 state files), the recovery engine treats it as version `"1.0"` and applies forward migration (adding new fields with default values) before proceeding.
-
-### Schema Migration: 1.1 → 1.2
-
-When the recovery engine encounters a state.json with `version: "1.1"`, apply these migrations:
-
-1. Add `total_retries: 0` and `total_retries_max: 10`
-2. Add `preempt_items_status: {}`
-3. Add `feedback_classification: ""`
-4. Add `score_history: []`
-5. Add `check_engine_skipped: 0`
-6. Add `recovery_budget: { "total_weight": 0.0, "max_weight": 5.0, "applications": [] }`
-7. Add `linear_sync: { "in_sync": true, "failed_operations": [] }`
-8. Copy `conventions_hash` value into `conventions_section_hashes: { "_full": "<value>" }`
-9. Add `recovery.budget_warning_issued: false`
-10. Populate `recovery_budget.applications` from existing `recovery_applied[]` entries with weight 1.0 each (conservative estimate)
-11. Set `version: "1.2"`
-
-All new fields use safe defaults that preserve existing behavior. The migration is idempotent — running it on an already-migrated file produces no changes.
-
-### Schema Migration: 1.2 → 1.3
-
-When the recovery engine encounters a state.json with `version: "1.2"`, apply:
-
-1. Add `detected_versions: { "language": "", "language_version": "", "framework": "", "framework_version": "", "key_dependencies": {} }`
-2. Set `version: "1.3"`
-
-This migration is idempotent.
+**Note:** Version 1.0.0 is a clean break. Old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. The recovery engine checks the `version` field before parsing and will refuse to load state files with a different version.
 
 ### story_state Valid Values
 

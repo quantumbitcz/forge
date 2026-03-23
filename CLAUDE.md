@@ -83,7 +83,7 @@ echo "Plugin structure OK"
 - **Critical agent gap:** If a security/architecture reviewer times out, the coverage gap finding is upgraded from INFO to WARNING (-5 instead of -2).
 
 ### State and recovery (`shared/state-schema.md`, `shared/recovery/`)
-- State schema version: **1.3**. Migration chain: 1.1 → 1.2 → 1.3 (forward-compatible, applied by recovery engine).
+- State schema version: **1.0.0** (semver). Version 1.0.0 is a clean break — old state files from previous schema versions are incompatible; use `/pipeline-reset` to clear them.
 - Pipeline state lives in `.pipeline/` (gitignored, local only). Checkpoints are saved after each task for resume-on-interrupt.
 - **Concurrent run lock:** `.pipeline/.lock` prevents two pipeline runs on the same project. Stale detection via PID check + 24-hour timeout.
 - **Version detection:** PREFLIGHT detects project dependency versions from manifest files (build.gradle.kts, package.json, go.mod, etc.) and stores in `state.json.detected_versions`. Enables version-aware deprecation rule gating.
@@ -289,7 +289,7 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 
 - Agent `name` in frontmatter **must** match the filename without `.md` — the orchestrator uses it for dispatch.
 - Scripts must have a shebang (`#!/usr/bin/env bash`) and be `chmod +x` — hooks fail silently without this.
-- `shared/` files are contracts: changing `scoring.md`, `stage-contract.md`, or `state-schema.md` affects all agents and modules. Verify downstream impact before editing. State schema changes require a new version and migration path.
+- `shared/` files are contracts: changing `scoring.md`, `stage-contract.md`, or `state-schema.md` affects all agents and modules. Verify downstream impact before editing. State schema changes bump the semver version; because 1.0.0 is a clean break, incompatible old state files must be cleared with `/pipeline-reset`.
 - The plugin itself never touches consuming project files at development time. All runtime state goes to `.pipeline/` in the consuming repo.
 - `pipeline-config.md` is auto-tuned by the retrospective agent — manual edits may be overwritten after a run.
 - The check engine hook fires on every `Edit`/`Write` — if `shared/checks/engine.sh` is broken or non-executable, all file edits will trigger hook errors. On timeout, skip counter increments but edit succeeds.

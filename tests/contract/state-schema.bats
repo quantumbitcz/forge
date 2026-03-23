@@ -13,18 +13,18 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.3"
+# 2. Schema version is "1.0.0"
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.3 documented" {
-  grep -q '"version": "1.3"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.3" not found in state-schema.md'
+@test "state-schema: schema version 1.0.0 documented" {
+  grep -q '"version": "1.0.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.0.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
 # 3. Required fields documented
 # ---------------------------------------------------------------------------
-@test "state-schema: required fields documented (version complete story_id story_state total_retries total_retries_max)" {
-  local fields=(version complete story_id story_state total_retries total_retries_max)
+@test "state-schema: required fields documented (version complete story_id story_state components active_component total_retries total_retries_max)" {
+  local fields=(version complete story_id story_state components active_component total_retries total_retries_max)
   for field in "${fields[@]}"; do
     grep -q "\"${field}\"\|${field}" "$STATE_SCHEMA" \
       || fail "Required field $field not found in state-schema.md"
@@ -82,13 +82,23 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 9. Migration chain documented: 1.1 → 1.2 → 1.3
+# 9. v1.0.0 clean break documented: pipeline-reset required
 # ---------------------------------------------------------------------------
-@test "state-schema: migration chain 1.1 to 1.2 to 1.3 documented" {
-  grep -q "1\.1.*1\.2\|1\.1 .* 1\.2\|1\.1 →\|version.*1\.1" "$STATE_SCHEMA" \
-    || fail "Migration from 1.1 to 1.2 not documented"
-  grep -q "1\.2.*1\.3\|1\.2 .* 1\.3\|1\.2 →\|version.*1\.2" "$STATE_SCHEMA" \
-    || fail "Migration from 1.2 to 1.3 not documented"
+@test "state-schema: v1.0.0 clean break and pipeline-reset documented" {
+  grep -q "clean break\|pipeline-reset\|incompatible" "$STATE_SCHEMA" \
+    || fail "v1.0.0 clean break / pipeline-reset guidance not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 9b. components and active_component fields documented
+# ---------------------------------------------------------------------------
+@test "state-schema: components and active_component fields documented" {
+  grep -q '"components"' "$STATE_SCHEMA" \
+    || fail '"components" field not found in state-schema.md'
+  grep -q '"active_component"' "$STATE_SCHEMA" \
+    || fail '"active_component" field not found in state-schema.md'
+  grep -q "conventions_hash\|conventions_section_hashes" "$STATE_SCHEMA" \
+    || fail "component conventions_hash fields not documented"
 }
 
 # ---------------------------------------------------------------------------

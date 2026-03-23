@@ -125,7 +125,7 @@ create_temp_file() {
 
 # ---------------------------------------------------------------------------
 # create_state_json [extra_json]
-# Creates .pipeline/state.json inside TEST_TEMP/project with base v1.3 fields.
+# Creates .pipeline/state.json inside TEST_TEMP/project with base v1.0.0 fields.
 # Optionally merges extra_json (a JSON object string) on top via python/jq.
 # Prints the absolute path to the created file.
 # ---------------------------------------------------------------------------
@@ -135,12 +135,21 @@ create_state_json() {
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v1.3 state object
+  # Base v1.0.0 state object
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "schema_version": "1.3",
+  "version": "1.0.0",
   "story_state": "PREFLIGHT",
+  "active_component": "default",
+  "components": {
+    "default": {
+      "story_state": "PREFLIGHT",
+      "conventions_hash": "",
+      "conventions_section_hashes": {},
+      "detected_versions": {}
+    }
+  },
   "story_id": "TEST-001",
   "run_id": "test-run-001",
   "total_retries": 0,
