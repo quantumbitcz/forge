@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "from ['\"]pages/",
+      "replacement": "Use App Router under app/ directory (Next.js 13+)",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "getServerSideProps",
+      "replacement": "Use async Server Components with direct data fetching (App Router pattern)",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "getStaticProps",
+      "replacement": "Use fetch() with { next: { revalidate } } in Server Components for ISR",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "getStaticPaths",
+      "replacement": "Use generateStaticParams() in App Router for static path generation",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from ['\"]next/head['\"]",
+      "replacement": "Use export const metadata or generateMetadata() from the App Router Metadata API",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "_app\\.tsx|_document\\.tsx",
+      "replacement": "Use app/layout.tsx (root layout) and app/template.tsx instead",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "next/image.*loader=",
+      "replacement": "Use the built-in image optimization loader (remove custom loader unless using external CDN)",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from ['\"]next/router['\"]",
+      "replacement": "Use useRouter, usePathname, useSearchParams from next/navigation (App Router)",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "params\\.",
+      "replacement": "In Next.js 15+, params and searchParams are Promises — await them before accessing properties",
+      "package": "next",
+      "since": "15.0.0",
+      "removed_in": null,
+      "applies_from": "15.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}

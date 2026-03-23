@@ -1,0 +1,72 @@
+{
+  "extends": "typescript",
+  "framework": "nextjs",
+  "additional_rules": [
+    {
+      "id": "NX-ARCH-001",
+      "name": "use-client-on-page-without-interactivity",
+      "pattern": "^['\"]use client['\"]",
+      "scope_pattern": "app/",
+      "severity": "WARNING",
+      "category": "ARCH-COMPONENT",
+      "message": "\"use client\" directive found — verify this route segment truly requires client-side interactivity",
+      "fix_hint": "Move interactive parts to a small leaf Client Component. The page/layout itself should remain a Server Component to enable SSR and data fetching.",
+      "example_ref": ""
+    },
+    {
+      "id": "NX-ARCH-002",
+      "name": "usestate-in-potential-server-component",
+      "pattern": "\\buseState\\b",
+      "scope_pattern": "app/",
+      "severity": "INFO",
+      "category": "ARCH-COMPONENT",
+      "message": "useState detected — ensure this file has \"use client\" directive, or refactor to a Server Component",
+      "fix_hint": "If the component only fetches data (no interactivity), remove useState and use async Server Component with direct data fetching. If interactivity is required, add \"use client\" at the top of the file.",
+      "example_ref": ""
+    },
+    {
+      "id": "NX-PERF-001",
+      "name": "img-instead-of-next-image",
+      "pattern": "<img\\s",
+      "scope_pattern": "app/",
+      "severity": "WARNING",
+      "category": "PERF-IMAGE",
+      "message": "Raw <img> element — use <Image> from next/image for automatic optimization",
+      "fix_hint": "Replace <img src=\"...\" /> with <Image src=\"...\" width={...} height={...} alt=\"...\" /> from next/image. Add external hostname to next.config.ts remotePatterns if needed.",
+      "example_ref": ""
+    },
+    {
+      "id": "NX-SEC-001",
+      "name": "next-public-secret",
+      "pattern": "NEXT_PUBLIC_(?:SECRET|KEY|TOKEN|PASSWORD|PRIVATE|API_KEY)",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRETS",
+      "message": "Sensitive value in NEXT_PUBLIC_ variable — NEXT_PUBLIC_ variables are inlined at build time and visible to all clients",
+      "fix_hint": "Remove NEXT_PUBLIC_ prefix. Access this value only in Server Components, Route Handlers, or Server Actions where it is never sent to the browser.",
+      "example_ref": ""
+    },
+    {
+      "id": "NX-ARCH-003",
+      "name": "a-tag-for-internal-link",
+      "pattern": "<a\\s+href=['\"](?!http|mailto|tel|#)[^'\"]*['\"]",
+      "scope_pattern": "app/",
+      "severity": "WARNING",
+      "category": "PERF-NAV",
+      "message": "Raw <a> for internal link — use <Link> from next/link for client-side navigation",
+      "fix_hint": "Replace <a href=\"/path\"> with <Link href=\"/path\"> from next/link to enable prefetching and client-side navigation without full page reload.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "app/": 300,
+      "actions/": 150
+    },
+    "function_size": {
+      "default_override": 40
+    }
+  }
+}
