@@ -1,0 +1,138 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "import javax\\.",
+      "replacement": "Use jakarta.* packages (Spring Boot 3.0+ migrated from javax to jakarta EE)",
+      "package": "jakarta.ee",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "WebSecurityConfigurerAdapter",
+      "replacement": "Define a @Bean SecurityFilterChain instead (component-based security configuration)",
+      "package": "spring-security",
+      "since": "5.7.0",
+      "removed_in": "6.0.0",
+      "applies_from": "5.7.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "spring\\.datasource\\.initialization-mode",
+      "replacement": "Use spring.sql.init.mode (always/embedded/never)",
+      "package": "spring-boot",
+      "since": "2.5.0",
+      "removed_in": "3.0.0",
+      "applies_from": "2.5.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@EnableGlobalMethodSecurity",
+      "replacement": "Use @EnableMethodSecurity (defaults to prePostEnabled=true)",
+      "package": "spring-security",
+      "since": "6.0.0",
+      "removed_in": null,
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@RequestMapping\\(.*method\\s*=",
+      "replacement": "Use @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, @PatchMapping instead",
+      "package": "spring-web",
+      "since": "4.3.0",
+      "removed_in": null,
+      "applies_from": "4.3.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.antMatchers\\(",
+      "replacement": "Use .requestMatchers() (Spring Security 6.0+ removed antMatchers/mvcMatchers/regexMatchers)",
+      "package": "spring-security",
+      "since": "6.0.0",
+      "removed_in": "6.0.0",
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.mvcMatchers\\(",
+      "replacement": "Use .requestMatchers() (Spring Security 6.0+ unified all matcher methods)",
+      "package": "spring-security",
+      "since": "6.0.0",
+      "removed_in": "6.0.0",
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "RestTemplate\\(",
+      "replacement": "Use WebClient (reactive) or RestClient (blocking, Spring 6.1+) for new code",
+      "package": "spring-web",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "new RestTemplate\\(",
+      "replacement": "Use RestClient (blocking, Spring 6.1+) or WebClient (reactive) for new code",
+      "package": "spring-web",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "java",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "java\\.util\\.Date",
+      "replacement": "Use java.time.* (Instant, LocalDate, LocalDateTime) or kotlinx.datetime equivalents",
+      "package": "java.util",
+      "since": "8",
+      "removed_in": null,
+      "applies_from": "8",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "java\\.util\\.UUID",
+      "replacement": "Use kotlin.uuid.Uuid with typed ID wrapper in core; java.util.UUID at persistence boundary only",
+      "package": "java.util",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}
