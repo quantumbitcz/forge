@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "class Startup",
+      "replacement": "Use top-level Program.cs with WebApplicationBuilder (ASP.NET Core 6+). ConfigureServices and Configure are replaced by builder.Services and app.Use*.",
+      "package": "aspnet-core",
+      "since": "6.0.0",
+      "removed_in": null,
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "Newtonsoft\\.Json|using Newtonsoft",
+      "replacement": "Use System.Text.Json (built-in since .NET Core 3.0). Configure via builder.Services.AddControllers().AddJsonOptions().",
+      "package": "newtonsoft-json",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "IWebHostBuilder|WebHostBuilder",
+      "replacement": "Use WebApplicationBuilder (ASP.NET Core 6+): var builder = WebApplication.CreateBuilder(args);",
+      "package": "aspnet-core",
+      "since": "6.0.0",
+      "removed_in": null,
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "services\\.AddMvc\\(\\)",
+      "replacement": "Use services.AddControllers() for API-only projects or services.AddControllersWithViews() for MVC. AddMvc() is a superset that adds unnecessary overhead for APIs.",
+      "package": "aspnet-core",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "UseMvc\\(|UseRouting.*UseMvc",
+      "replacement": "Use app.MapControllers() with app.UseRouting() and app.UseEndpoints() (ASP.NET Core 3.0+), or simply app.MapControllers() in .NET 6+ minimal hosting.",
+      "package": "aspnet-core",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "Database\\.EnsureCreated\\(\\)|EnsureCreatedAsync\\(\\)",
+      "replacement": "Use Database.MigrateAsync() in non-development environments. EnsureCreated() bypasses migrations and is only safe for test databases.",
+      "package": "entity-framework-core",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "new HttpClient\\(\\)|HttpClient\\s+\\w+\\s*=\\s*new",
+      "replacement": "Use IHttpClientFactory (registered via services.AddHttpClient()) to manage HttpClient lifetimes and avoid socket exhaustion.",
+      "package": "dotnet",
+      "since": "2.1.0",
+      "removed_in": null,
+      "applies_from": "2.1.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "WebSecurityConfigurerAdapter|extends WebSecurityConfigurerAdapter",
+      "replacement": "N/A for ASP.NET — this is a Spring pattern. In ASP.NET Core use SecurityFilterChain equivalent: configure via AddAuthentication/AddAuthorization in Program.cs.",
+      "package": "aspnet-identity",
+      "since": "6.0.0",
+      "removed_in": null,
+      "applies_from": "6.0.0",
+      "applies_to": "*",
+      "language": "csharp",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}

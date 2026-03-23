@@ -1,0 +1,118 @@
+{
+  "extends": "csharp",
+  "framework": "aspnet",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "AN-ARCH-001",
+        "name": "business-logic-in-controller",
+        "pattern": "(if|switch|foreach|while).*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n",
+        "scope_pattern": "/Controllers/",
+        "severity": "WARNING",
+        "category": "ARCH-BOUNDARY",
+        "message": "Complex logic in controller — controllers should only validate, delegate, and map. Extract to a service.",
+        "fix_hint": "Move business logic to an Application service (IXxxService). The controller should call the service and map the result to an ActionResult.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-ARCH-002",
+        "name": "dbcontext-in-controller",
+        "pattern": "(AppDbContext|DbContext)\\s+\\w+",
+        "scope_pattern": "/Controllers/",
+        "severity": "CRITICAL",
+        "category": "ARCH-BOUNDARY",
+        "message": "DbContext injected directly into controller — use a repository or service instead",
+        "fix_hint": "Inject an IXxxRepository or IXxxService into the controller. Never let EF Core DbContext cross the Infrastructure boundary into the API layer.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-ARCH-003",
+        "name": "entity-in-action-return",
+        "pattern": "Task<ActionResult<[A-Z]\\w*>>(\\s|\\n).*\\n.*Repository|return.*Entity\\(",
+        "scope_pattern": "/Controllers/",
+        "severity": "WARNING",
+        "category": "ARCH-BOUNDARY",
+        "message": "EF Core entity may be returned from controller action — use a DTO/response model instead",
+        "fix_hint": "Create a XxxResponse record and map the entity to it before returning from the action method.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-SEC-001",
+        "name": "missing-authorize-attribute",
+        "pattern": "\\[HttpGet|\\[HttpPost|\\[HttpPut|\\[HttpDelete|\\[HttpPatch",
+        "scope_pattern": "/Controllers/",
+        "severity": "INFO",
+        "category": "SEC-AUTH",
+        "message": "HTTP method attribute on action — verify the controller or action has [Authorize] unless intentionally public",
+        "fix_hint": "Add [Authorize] to the controller class or verify [AllowAnonymous] is intentional on this action.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-PERF-001",
+        "name": "missing-async-tracking",
+        "pattern": "\\.Find\\(|DbSet<\\w+>\\[|context\\.\\w+\\.Where\\(",
+        "scope_pattern": "/Repositories/",
+        "severity": "INFO",
+        "category": "PERF-DB",
+        "message": "Synchronous EF Core access or missing AsNoTracking — use async methods and AsNoTracking for read-only queries",
+        "fix_hint": "Replace Find() with FindAsync(). Add AsNoTracking() for read-only queries to avoid change-tracking overhead.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-CONV-001",
+        "name": "console-write-in-production",
+        "pattern": "Console\\.(Write|WriteLine|Error)",
+        "scope_pattern": "src/",
+        "severity": "WARNING",
+        "category": "CONV-LOG",
+        "message": "Console.Write* in production code — use ILogger<T> instead",
+        "fix_hint": "Inject ILogger<T> via constructor and replace Console.Write* with _logger.LogInformation(), _logger.LogError(), etc.",
+        "example_ref": ""
+      },
+      {
+        "id": "AN-PERF-002",
+        "name": "sync-over-async",
+        "pattern": "\\.Result\\b|\\.Wait\\(\\)",
+        "scope_pattern": "src/",
+        "severity": "CRITICAL",
+        "category": "PERF-ASYNC",
+        "message": ".Result or .Wait() on async Task — can deadlock in ASP.NET Core context",
+        "fix_hint": "Use 'await' instead of .Result/.Wait(). Make the containing method async Task<T>.",
+        "example_ref": ""
+      }
+    ]
+  },
+  "additional_boundaries": [
+    {
+      "name": "Controllers must not import Infrastructure",
+      "scope_pattern": "/Controllers/",
+      "forbidden_imports": [
+        "\\.Infrastructure\\.",
+        "using.*\\.Infrastructure\\."
+      ],
+      "severity": "CRITICAL",
+      "category": "ARCH-BOUNDARY"
+    },
+    {
+      "name": "Domain must not import Application or Infrastructure",
+      "scope_pattern": "/Domain/",
+      "forbidden_imports": [
+        "\\.Application\\.",
+        "\\.Infrastructure\\.",
+        "Microsoft\\.EntityFrameworkCore",
+        "Microsoft\\.AspNetCore"
+      ],
+      "severity": "CRITICAL",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "Controllers/": 200,
+      "DTOs/": 150,
+      "Repositories/": 250
+    }
+  }
+}
