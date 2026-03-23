@@ -338,6 +338,42 @@ After creating the PR, if recap is available at `.pipeline/reports/recap-*.md`:
 
 ---
 
+### Cross-Repo Linked PRs
+
+When cross-repo changes exist (check `state.json.cross_repo`):
+
+1. **For each related project with status "complete":**
+   - Navigate to the worktree: `cd {cross_repo.{name}.path}`
+   - Stage and commit changes (same logical commit grouping as main PR)
+   - Push the branch
+   - Create PR using `gh pr create` with:
+     - Title: same as main PR, prefixed with `[cross-repo]`
+     - Body: references the main PR URL
+     - Labels: `cross-repo`, `automated`
+
+2. **Link PRs together:**
+   - In the main PR body, add a "Related PRs" section listing all cross-repo PRs
+   - In each cross-repo PR body, add "Parent PR: {main_pr_url}"
+
+3. **PR body format for cross-repo:**
+   ```markdown
+   ## Related PRs
+
+   This change spans multiple repositories:
+   - **Main:** {main_pr_url} (this PR)
+   - **Frontend:** {fe_pr_url} — type updates for API changes
+   - **Infra:** {infra_pr_url} — deployment config for new service
+
+   All PRs should be merged together. Merging one without the others may cause integration failures.
+   ```
+
+4. **If a cross-repo PR creation fails:**
+   - Log the failure in stage notes
+   - Still create the main PR (don't block on cross-repo PR failure)
+   - Add a warning in the main PR body: "Cross-repo PR for {project} could not be created: {error}"
+
+---
+
 ## 15. Forbidden Actions
 
 - DO NOT force-push to any branch
