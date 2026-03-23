@@ -126,13 +126,13 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Inputs:**
 - Plan from Stage 2
-- `validation.perspectives` from config (5 perspectives)
+- `validation.perspectives` from config (6 perspectives)
 - `conventions_file` content (module-specific conventions)
 - Source files referenced in the plan
 
 **Actions:**
-1. Run 5 validation perspectives (Architecture, Security, Edge Cases, Test Strategy, Conventions). Perspective content comes from the module's `conventions.md`.
-2. Return verdict: GO / REVISE / NO-GO.
+1. Run 6 validation perspectives (Architecture, Security, Edge Cases, Test Strategy, Conventions, Approach Quality). Perspective content comes from the module's `conventions.md`. Approach Quality evaluates whether the proposed solution is the simplest adequate approach and whether the Challenge Brief justifies complexity.
+2. Return verdict: GO / REVISE / NO-GO. Plans with missing Challenge Briefs get REVISE.
 3. On REVISE: return specific issues for the planner to address.
 
 **Outputs:**
