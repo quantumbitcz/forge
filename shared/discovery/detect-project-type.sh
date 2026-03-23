@@ -156,7 +156,16 @@ elif $has_requirements; then
 elif $has_go_mod; then
   type="backend"
   language="go"
-  framework="go"
+  framework="go-stdlib"
+fi
+
+# ASP.NET / .NET backend
+if [[ "$type" == "unknown" ]]; then
+  if ls "$DIR"/*.csproj &>/dev/null 2>&1 || [[ -f "$DIR"/*.sln ]] 2>/dev/null || ls "$DIR"/*.sln &>/dev/null 2>&1; then
+    type="backend"
+    framework="aspnet"
+    language="csharp"
+  fi
 fi
 
 # Infra: helm/k8s/terraform directories take precedence if no src code found

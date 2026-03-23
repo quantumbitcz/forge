@@ -236,7 +236,7 @@ All 17 frameworks follow the same base structure under `modules/frameworks/{name
 ### Full test suite
 
 ```bash
-# Run all tests (~233 tests, ~30s)
+# Run all tests (~247 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers

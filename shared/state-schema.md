@@ -360,7 +360,7 @@ Example:
 | `"PREFLIGHT"` | 0 | Config loading, state initialization, interrupted-run check |
 | `"EXPLORING"` | 1 | Codebase exploration agents running |
 | `"PLANNING"` | 2 | Planner decomposing requirement into stories and tasks |
-| `"VALIDATING"` | 3 | Validator reviewing plan from 5 perspectives |
+| `"VALIDATING"` | 3 | Validator reviewing plan from 6 perspectives |
 | `"IMPLEMENTING"` | 4 | Scaffolder and implementer writing code per task |
 | `"VERIFYING"` | 5 | Build, lint, and test verification |
 | `"REVIEWING"` | 6 | Quality gate agents reviewing code |

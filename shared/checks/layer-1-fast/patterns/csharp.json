@@ -1,0 +1,128 @@
+{
+  "language": "csharp",
+  "extensions": [".cs", ".csx"],
+  "source": "Roslyn analyzers, .NET best practices, OWASP .NET guidelines",
+  "rules": [
+    {
+      "id": "CS-NULL-001",
+      "name": "null-forgiving-operator",
+      "pattern": "\\!\\.",
+      "exclude_pattern": "^\\s*//|//.*\\!\\.",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Null-forgiving operator — validate nullability instead.",
+      "fix_hint": "Use null checks or nullable reference types.",
+      "scope": "all"
+    },
+    {
+      "id": "CS-SEC-001",
+      "name": "dynamic-execution",
+      "pattern": "eval\\(|Process\\.Start",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-EXEC",
+      "message": "Dynamic code execution or process spawn — validate input.",
+      "fix_hint": "Avoid dynamic execution; use parameterized approaches.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-ERR-001",
+      "name": "generic-exception-catch",
+      "pattern": "catch\\s*\\(\\s*Exception\\s",
+      "exclude_pattern": "^\\s*//|//.*catch",
+      "severity": "WARNING",
+      "category": "QUAL-ERR",
+      "message": "Catching base Exception — catch specific exception types.",
+      "fix_hint": "Catch specific exceptions (InvalidOperationException, HttpRequestException, etc.).",
+      "scope": "main"
+    },
+    {
+      "id": "CS-LOG-001",
+      "name": "console-output",
+      "pattern": "Console\\.Write",
+      "exclude_pattern": "^\\s*//|//.*Console",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "Console output in production code — use ILogger.",
+      "fix_hint": "Inject ILogger<T> and use structured logging.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-SEC-002",
+      "name": "hardcoded-credential",
+      "pattern": "\"[Pp]assword\"\\s*[:=]\\s*\"",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential.",
+      "fix_hint": "Use User Secrets, environment variables, or Azure Key Vault.",
+      "scope": "all"
+    },
+    {
+      "id": "CS-CONV-001",
+      "name": "string-concatenation-in-logging",
+      "pattern": "_logger\\.(Log|Info|Warn|Error|Debug|Trace).*\\$\"|_logger\\.(Log|Info|Warn|Error|Debug|Trace).*\\+",
+      "exclude_pattern": "^\\s*//",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "String interpolation/concatenation in logging — use structured log templates.",
+      "fix_hint": "Use _logger.LogInformation(\"Message {Param}\", param) with template placeholders.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-SEC-003",
+      "name": "sql-concatenation",
+      "pattern": "\"SELECT.*\"\\s*\\+|\"INSERT.*\"\\s*\\+|\"UPDATE.*\"\\s*\\+|\"DELETE.*\"\\s*\\+",
+      "exclude_pattern": "^\\s*//",
+      "severity": "CRITICAL",
+      "category": "SEC-SQL",
+      "message": "SQL string concatenation — risk of SQL injection.",
+      "fix_hint": "Use parameterized queries, EF Core LINQ, or Dapper with parameters.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-ASYNC-001",
+      "name": "async-void",
+      "pattern": "async\\s+void\\s+\\w+",
+      "exclude_pattern": "^\\s*//|async\\s+void\\s+On\\w+|EventHandler",
+      "severity": "WARNING",
+      "category": "QUAL-ASYNC",
+      "message": "async void method — exceptions cannot be caught by caller.",
+      "fix_hint": "Return Task instead of void. async void is only acceptable for event handlers.",
+      "scope": "all"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "Controllers/": 250,
+        "Services/": 200,
+        "Tests/": 500,
+        "Migrations/": 1000
+      },
+      "_note": "Lines of code. Controllers and services should be focused; tests and migrations get more room."
+    },
+    "function_size": {
+      "default": 30,
+      "_note": "Detected via brace-counting heuristic."
+    }
+  },
+  "boundaries": [
+    {
+      "name": "No infrastructure imports in domain layer",
+      "scope_pattern": "Domain/",
+      "forbidden_imports": [
+        "using Microsoft.EntityFrameworkCore",
+        "using System.Data.SqlClient",
+        "using Microsoft.AspNetCore"
+      ],
+      "message": "Domain layer must remain infrastructure-free — use interfaces and pure C# types.",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "deprecations": {
+    "known_deprecations_file": "layer-3-agent/known-deprecations/csharp.json"
+  }
+}

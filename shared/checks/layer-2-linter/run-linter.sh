@@ -25,7 +25,7 @@ declare -A PRIMARY FALLBACK
 PRIMARY=(
   [kotlin]=detekt      [java]=checkstyle   [typescript]=eslint
   [python]=ruff        [go]=go-vet         [rust]=clippy
-  [c]=clang-tidy       [swift]=swiftlint
+  [c]=clang-tidy       [swift]=swiftlint   [csharp]=dotnet-format
 )
 FALLBACK=(
   [kotlin]=ktlint      [java]=spotbugs     [typescript]=biome

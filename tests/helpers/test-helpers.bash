@@ -94,6 +94,58 @@ create_temp_project() {
       mkdir -p "${project_dir}/k8s"
       touch "${project_dir}/k8s/deployment.yaml"
       ;;
+    aspnet)
+      cat > "${project_dir}/TestApp.csproj" <<'CSPROJ'
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+</Project>
+CSPROJ
+      ;;
+    django)
+      printf '#!/usr/bin/env python\nimport os, sys\nif __name__ == "__main__":\n    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")\n' \
+        > "${project_dir}/manage.py"
+      printf 'django>=5.0\n' > "${project_dir}/requirements.txt"
+      ;;
+    nextjs)
+      echo '{"name":"test-app","version":"0.0.1","dependencies":{"next":"14.0.0","react":"18.2.0"}}' \
+        > "${project_dir}/package.json"
+      printf '/** @type {import("next").NextConfig} */\nconst nextConfig = {};\nmodule.exports = nextConfig;\n' \
+        > "${project_dir}/next.config.js"
+      ;;
+    gin)
+      printf 'module example.com/test-app\n\ngo 1.21\n\nrequire github.com/gin-gonic/gin v1.9.1\n' \
+        > "${project_dir}/go.mod"
+      ;;
+    jetpack-compose)
+      cat > "${project_dir}/build.gradle.kts" <<'GRADLE'
+plugins {
+    id("com.android.application")
+    kotlin("android")
+}
+android {
+    compileSdk = 34
+    buildFeatures { compose = true }
+}
+dependencies {
+    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.compose.material3:material3:1.1.0")
+}
+GRADLE
+      ;;
+    kotlin-multiplatform)
+      mkdir -p "${project_dir}/src/commonMain"
+      cat > "${project_dir}/build.gradle.kts" <<'GRADLE'
+plugins {
+    kotlin("multiplatform") version "2.0.0"
+}
+kotlin {
+    jvm()
+    js(IR) { browser() }
+}
+GRADLE
+      ;;
     *)
       echo "create_temp_project: unknown module '${module}'" >&2
       return 1

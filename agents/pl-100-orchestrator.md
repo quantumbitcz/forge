@@ -257,20 +257,26 @@ Detect current dependency versions from the project's package manifest files. Th
 
 **Detection sources by module:**
 
-| Module | File | Extract |
-|--------|------|---------|
-| kotlin-spring | `build.gradle.kts` | `plugins { id("org.springframework.boot") version "X.Y.Z" }`, Kotlin version, Spring Security version |
-| java-spring | `build.gradle` or `pom.xml` | Spring Boot version, Spring Security version, Java source/target |
-| react-vite | `package.json` | React version, Vite version, TypeScript version, key libraries |
-| typescript-node | `package.json` | Node engine version, Express/NestJS version, TypeScript version |
-| typescript-svelte | `package.json` | Svelte version, SvelteKit version, TypeScript version |
-| python-fastapi | `pyproject.toml` or `requirements.txt` | Python version, FastAPI version, Pydantic version, SQLAlchemy version |
+| Framework | File | Extract |
+|-----------|------|---------|
+| spring (Kotlin) | `build.gradle.kts` | `plugins { id("org.springframework.boot") version "X.Y.Z" }`, Kotlin version, Spring Security version |
+| spring (Java) | `build.gradle` or `pom.xml` | Spring Boot version, Spring Security version, Java source/target |
+| react | `package.json` | React version, Vite version, TypeScript version, key libraries |
+| express | `package.json` | Node engine version, Express/NestJS version, TypeScript version |
+| sveltekit | `package.json` | Svelte version, SvelteKit version, TypeScript version |
+| nextjs | `package.json` | Next.js version, React version, TypeScript version |
+| fastapi | `pyproject.toml` or `requirements.txt` | Python version, FastAPI version, Pydantic version, SQLAlchemy version |
+| django | `requirements.txt` or `pyproject.toml` | Python version, Django version, DRF version |
 | go-stdlib | `go.mod` | Go version, key module versions |
-| rust-axum | `Cargo.toml` | Rust edition, Axum version, Tokio version |
-| swift-ios | `Package.swift` | Swift tools version, iOS deployment target, key package versions |
-| swift-vapor | `Package.swift` | Swift tools version, Vapor version, Fluent version |
-| c-embedded | `CMakeLists.txt` or `platformio.ini` | C standard (C99/C11/C17), ESP-IDF version, platform |
-| infra-k8s | Kubernetes YAML / Helm `Chart.yaml` | `apiVersion` fields, Helm chart versions, K8s target version |
+| gin | `go.mod` | Go version, Gin version, key module versions |
+| axum | `Cargo.toml` | Rust edition, Axum version, Tokio version |
+| swiftui | `Package.swift` | Swift tools version, iOS deployment target, key package versions |
+| vapor | `Package.swift` | Swift tools version, Vapor version, Fluent version |
+| jetpack-compose | `build.gradle.kts` | Kotlin version, Compose version, AGP version |
+| kotlin-multiplatform | `build.gradle.kts` | Kotlin version, target platforms, key library versions |
+| aspnet | `.csproj` | .NET SDK version, target framework, NuGet package versions |
+| embedded | `CMakeLists.txt` or `platformio.ini` | C standard (C99/C11/C17), ESP-IDF version, platform |
+| k8s | Kubernetes YAML / Helm `Chart.yaml` | `apiVersion` fields, Helm chart versions, K8s target version |
 
 **Process:**
 1. Read the module's primary manifest file (based on `module` from config)

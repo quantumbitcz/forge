@@ -49,6 +49,7 @@ detect_language() {
     .py)               echo "python" ;;
     .go)               echo "go" ;;
     .rs)               echo "rust" ;;
+    .cs|.csx)          echo "csharp" ;;
     .c|.h)             echo "c" ;;
     .swift)            echo "swift" ;;
   esac
@@ -80,6 +81,7 @@ detect_module() {
     elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
     elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swiftui"
     elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="embedded"
+    elif ls "$project_root"/*.csproj &>/dev/null 2>&1; then module="aspnet"
     fi
   fi
 

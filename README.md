@@ -289,7 +289,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `pl-150-test-bootstrapper`    | 4 Implement  | Sets up test infrastructure and frameworks for new projects       |
 | `pl-160-migration-planner`    | 2 Plan       | Plans data and schema migrations as part of implementation        |
 | `pl-200-planner`              | 2 Plan       | Decomposes requirements into risk-assessed plans with stories and tasks |
-| `pl-210-validator`            | 3 Validate   | Validates plans across 5 perspectives, returns GO/REVISE/NO-GO   |
+| `pl-210-validator`            | 3 Validate   | Validates plans across 6 perspectives, returns GO/REVISE/NO-GO   |
 | `pl-250-contract-validator`   | 3 Validate   | Validates API contracts and interface compatibility               |
 | `pl-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
 | `pl-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |
