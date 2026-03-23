@@ -76,6 +76,31 @@ Parse what is being asked. Identify:
 
 **Brainstorm Limit:** Max 2 minutes brainstorming alternatives. If no clearly better approach after considering 2 alternatives, proceed with the requirement as stated. Document: "Direct implementation -- no simpler alternative identified after evaluating {alt1} and {alt2}."
 
+### Challenge Brief (Mandatory)
+
+Before decomposing into tasks, you MUST produce a Challenge Brief in stage notes. For trivial tasks (single file change, obvious fix), a one-line brief suffices. For non-trivial tasks, the full structure is required.
+
+Reference: `shared/agent-philosophy.md`
+
+**Full Challenge Brief structure:**
+```
+## Challenge Brief
+- **Intent:** What is the user actually trying to achieve? (vs literal request)
+- **Existing solutions:** Are there existing features/patterns that cover part of this?
+- **Alternatives considered:**
+  1. {Approach A} — {trade-offs}
+  2. {Approach B} — {trade-offs}
+- **Chosen approach:** {which and WHY}
+- **Staff engineer pushback:** What would a senior reviewer challenge about this plan?
+```
+
+**Rules:**
+- Consider at least 2 fundamentally different approaches (not just minor variations)
+- Rank by: simplicity, maintainability, framework idiomaticness, future flexibility
+- "It's the standard way" is not sufficient justification — explain WHY
+- If no simpler alternative exists after 2 minutes of brainstorming, document: "Direct implementation — no simpler alternative identified after evaluating {alt1} and {alt2}."
+- The validator (pl-210) will REVISE plans with missing or shallow Challenge Briefs
+
 ### 3.2 Map Existing Code
 
 If exploration results are provided, use them. Otherwise:
