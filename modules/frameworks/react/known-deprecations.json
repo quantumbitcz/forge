@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-22",
+  "deprecations": [
+    {
+      "pattern": "<Cell ",
+      "replacement": "Use shape prop on parent component (Bar, Area, etc.)",
+      "package": "recharts",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-21",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "IconLeft|IconRight",
+      "replacement": "Use Chevron component instead",
+      "package": "react-day-picker",
+      "since": "9.0.0",
+      "removed_in": "9.0.0",
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "added": "2026-03-21",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ReactDOM\\.render\\(",
+      "replacement": "Use createRoot().render() from react-dom/client",
+      "package": "react-dom",
+      "since": "18.0.0",
+      "removed_in": null,
+      "applies_from": "18.0.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "PropTypes\\.",
+      "replacement": "Use TypeScript types or runtime validation with zod",
+      "package": "react",
+      "since": "15.5.0",
+      "removed_in": null,
+      "applies_from": "15.5.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "componentWillMount",
+      "replacement": "Use componentDidMount or useEffect hook",
+      "package": "react",
+      "since": "16.3.0",
+      "removed_in": null,
+      "applies_from": "16.3.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "componentWillReceiveProps",
+      "replacement": "Use getDerivedStateFromProps or useEffect hook",
+      "package": "react",
+      "since": "16.3.0",
+      "removed_in": null,
+      "applies_from": "16.3.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "findDOMNode",
+      "replacement": "Use useRef hook or createRef",
+      "package": "react-dom",
+      "since": "16.3.0",
+      "removed_in": null,
+      "applies_from": "16.3.0",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}
