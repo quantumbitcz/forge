@@ -64,6 +64,9 @@ echo "Plugin structure OK"
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
 - The recap agent (`pl-720-recap`) generates a human-readable summary of each pipeline run during Stage 9 (LEARN), after the retrospective.
 - **Worktree isolation:** All implementation runs in a git worktree (`.pipeline/worktree`). The user's working tree is never modified during pipeline execution. Branch collision is detected at creation time (epoch suffix fallback).
+- **Critical thinking:** All agents reference `shared/agent-philosophy.md` — shared principles for challenging assumptions, considering alternatives, and seeking disconfirming evidence.
+- **Challenge Brief:** The planner (`pl-200-planner`) must produce a Challenge Brief section in every plan, documenting the considered alternative approaches and justification for the chosen one. The validator (`pl-210-validator`) returns REVISE if the Challenge Brief is missing.
+- **Approach quality:** `APPROACH-*` is a finding category for solution quality issues (suboptimal pattern, unnecessary complexity, missed simplification). Scored as INFO (-2). Recurring APPROACH findings (3+ times) are escalated to convention rules by the retrospective.
 
 ### Stage contracts (`shared/stage-contract.md`)
 - Every stage has defined entry conditions, exit conditions, and data flow. Agents must comply with the contract.
@@ -146,6 +149,7 @@ echo "Plugin structure OK"
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
 - `pipeline-history` — view quality score trends, agent effectiveness, and run metrics across pipeline runs.
 - `pipeline-rollback` — safely rollback pipeline changes (worktree, merge, Linear, state). Detects preconditions before offering modes.
+- `pipeline-shape` — collaboratively shapes features into structured specs with epics, stories, and acceptance criteria via `pl-010-shaper`. Produces `.pipeline/specs/` files consumable by `pipeline-run --spec`.
 - Frontend-specific commands (`fe-check-theme`, `fe-design-review`, `fe-dark-mode-check`, `fe-react-doctor`) are project-level — they live in the consuming project's `.claude/commands/`, not in this plugin. See `modules/frameworks/react/conventions.md` for descriptions.
 
 ### Hooks (`hooks/hooks.json`)
