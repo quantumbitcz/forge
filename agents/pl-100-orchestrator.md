@@ -296,6 +296,69 @@ Detect current dependency versions from the project's package manifest files. Th
 
 **For old projects:** If manifest files use outdated formats or unconventional locations, detection may fail partially. The pipeline gracefully degrades — `"unknown"` versions cause all rules to apply, which is the safest default for legacy codebases.
 
+### 3.5b Multi-Component Convention Resolution
+
+If `components:` is present in `dev-pipeline.local.md`, resolve a full convention stack for each named component. This block runs after version detection and before the interrupted-run check.
+
+For each component entry (e.g., `backend`, `frontend`, `infra`):
+
+1. **Language layer:** `${CLAUDE_PLUGIN_ROOT}/modules/languages/${component.language}.md`
+   - Skip if `language` is null (e.g., pure infra/k8s component)
+2. **Framework layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/conventions.md`
+   - Skip if `framework` is null or `"stdlib"` (language-only project)
+3. **Variant layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/variants/${component.variant}.md`
+   - Skip if no `variant` specified or file does not exist
+4. **Framework testing layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/testing/${component.testing}.md`
+   - Skip if no framework-specific testing file exists
+5. **Generic testing layer:** `${CLAUDE_PLUGIN_ROOT}/modules/testing/${component.testing}.md`
+   - Always load if `testing` is specified
+6. **Shared testing layers:**
+   - `modules/testing/testcontainers.md` — load if the component's stack involves a database
+   - `modules/testing/playwright.md` — load if the component has `e2e` configured
+
+**Validation:** After resolving paths, verify each one exists on disk.
+- Missing **optional** file (variant, framework-testing): log WARNING, skip the layer.
+- Missing **required** file (language, framework conventions): log ERROR, continue collecting all errors, then abort PREFLIGHT if any ERRORs remain.
+
+**Conflict resolution order (most specific wins):** variant > framework-testing > framework > language > testing.
+
+Store resolved paths in `state.json` under `components`:
+
+```json
+{
+  "components": {
+    "backend": {
+      "convention_stack": [
+        "modules/languages/kotlin.md",
+        "modules/frameworks/spring/conventions.md",
+        "modules/frameworks/spring/variants/kotlin.md",
+        "modules/frameworks/spring/testing/kotest.md",
+        "modules/testing/kotest.md",
+        "modules/testing/testcontainers.md"
+      ],
+      "story_state": "PREFLIGHT",
+      "conventions_hash": "",
+      "detected_versions": {}
+    },
+    "frontend": {
+      "convention_stack": [
+        "modules/languages/typescript.md",
+        "modules/frameworks/react/conventions.md",
+        "modules/testing/vitest.md",
+        "modules/testing/playwright.md"
+      ],
+      "story_state": "PREFLIGHT",
+      "conventions_hash": "",
+      "detected_versions": {}
+    }
+  }
+}
+```
+
+Compute `conventions_hash` per component (SHA256 first 8 chars of the concatenated convention stack content, in resolution order). Store in `components.{name}.conventions_hash`. Used for per-component drift detection.
+
+**Single-component projects:** If `components:` is absent, this section is skipped entirely. The existing `conventions_file` / `detected_versions` flow applies unchanged.
+
 ### 3.6 Check for Interrupted Runs
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
@@ -656,6 +719,21 @@ BEFORE dispatching parallel group G:
 
 This check runs at IMPLEMENT time, not PLAN time, because task file lists are finalized during scaffolding.
 
+### 7.7 Component-Scoped Dispatch
+
+For **multi-component projects** (where `state.json.components` is populated), apply these rules when dispatching implementer agents:
+
+1. **Set active component:** before each task dispatch, set `state.json.components.{name}.story_state` to `"IMPLEMENTING"`.
+2. **Scope the convention stack:** include ONLY the active component's `convention_stack` paths in the dispatch prompt. Do not pass other components' conventions to the same dispatch.
+3. **Scope commands:** include ONLY the active component's `commands` (build, test, lint, test_single). Never mix commands from different components in one dispatch.
+4. **Set working directory context:** pass the component's `path` as the working directory in the dispatch prompt. Agents must not touch files outside that path unless the task explicitly spans components.
+
+**Cross-component tasks** (e.g., an API change that requires a matching type update in the frontend):
+1. Process the **primary component** first (typically backend — it defines the contract).
+2. After the primary component's task completes through VERIFY, process **dependent components** in dependency order.
+3. Each dependent-component dispatch uses that component's convention stack and commands exclusively.
+4. Cross-component tasks are always serialized — never dispatch two components' tasks in parallel when one depends on the other's output.
+
 ### Linear Tracking
 
 If `integrations.linear.available` is true:
@@ -713,6 +791,19 @@ If max test cycles exhausted, escalate to user.
 
 Quality is NOT re-run after a test fix unless the fix introduces substantial new code.
 
+### Phase C: Per-Component Verification (multi-component projects only)
+
+For projects where `state.json.components` is populated, VERIFY runs per component rather than globally:
+
+1. **Identify changed components:** for each component in `state.json.components`, check whether any files under `component.path` were created or modified during IMPLEMENT. Only components with changes undergo verification.
+2. **Phase A per component:** for each changed component, run that component's `commands.build` then `commands.lint`. Stop on first failure within a component and enter the fix loop using that component's `commands` exclusively.
+3. **Phase B per component:** run each changed component's `commands.test` (or `test_gate.command` if overridden per component) separately. Test failures in one component do not block verification of other independent components.
+4. **Independence rule:** a component that passes VERIFY is not re-verified because another component fails, unless the second component's fix touches the first component's files.
+5. **Completion condition:** the VERIFY stage completes successfully only when ALL changed components have passed both Phase A and Phase B.
+6. **State updates:** set `state.json.components.{name}.story_state` to `"VERIFYING"` while running, `"VERIFIED"` on pass, `"FAILED"` on exhausted fix loops.
+
+For **single-component projects**, this section is skipped — Phase A and Phase B run as documented above using the global `commands`.
+
 ### Linear Tracking
 
 If `integrations.linear.available` is true:
@@ -752,6 +843,20 @@ After all batches: run `quality_gate.inline_checks` (scripts or skills from conf
    - **PASS:** score >= 80, no CRITICALs -> proceed to DOCS
    - **CONCERNS:** score 60-79, no CRITICALs -> proceed to DOCS with findings preserved in notes
    - **FAIL:** score < 60 or any CRITICAL -> fix cycle
+
+### 9.2a Component-Aware Quality Gate (multi-component projects)
+
+For projects where `state.json.components` is populated, the quality gate dispatch applies these rules:
+
+1. **Full file list:** collect changed files across ALL components and pass the complete list to the quality gate. The quality gate is responsible for routing findings back to the correct component.
+2. **Convention stack per file:** when dispatching review agents, annotate each changed file with its owning component's convention stack. Review agents use the annotated stack to apply the right rules per file.
+3. **Backend-scoped review agents** (`architecture-reviewer`, `backend-performance-reviewer`): dispatched with only the backend component's changed files and its convention stack. They do not review frontend or infra files.
+4. **Frontend-scoped review agents** (`frontend-reviewer`, `frontend-performance-reviewer`): dispatched with only the frontend component's changed files and its convention stack.
+5. **Cross-cutting review agents** (`security-reviewer`, and any agent without an explicit component scope in config): dispatched with the full changed file list across all components.
+6. **Unified scoring:** all findings from all review agents are merged and scored as a single pool using the standard formula (`100 - 20*CRITICAL - 5*WARNING - 2*INFO`). There is one score and one verdict per review cycle — not per component. This keeps escalation and oscillation detection simple.
+7. **Finding annotation:** each finding in stage notes includes `component: {name}` for traceability during fix cycles and retrospective analysis.
+
+For **single-component projects**, this section is skipped — batch dispatch proceeds as documented in 9.1.
 
 ### 9.3 Fix Cycle
 
