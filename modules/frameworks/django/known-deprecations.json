@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "from django\\.conf\\.urls import url",
+      "replacement": "Use from django.urls import path() or re_path() for regex patterns. url() was removed in Django 4.0.",
+      "package": "django",
+      "since": "3.1.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.1.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "django\\.conf\\.urls\\.url\\(",
+      "replacement": "Use django.urls.path() for string patterns or django.urls.re_path() for regex. url() was removed in Django 4.0.",
+      "package": "django",
+      "since": "3.1.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.1.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "default_app_config\\s*=",
+      "replacement": "default_app_config in __init__.py is no longer needed. Django 3.2+ auto-discovers AppConfig via the apps module. Remove the assignment.",
+      "package": "django",
+      "since": "3.2.0",
+      "removed_in": null,
+      "applies_from": "3.2.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from django\\.contrib\\.postgres\\.fields import JSONField",
+      "replacement": "Use django.db.models.JSONField (built-in since Django 3.1, works on all databases). The PostgreSQL-specific JSONField was removed in Django 4.0.",
+      "package": "django",
+      "since": "3.1.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.1.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "NullBooleanField",
+      "replacement": "Use BooleanField(null=True) instead. NullBooleanField was deprecated in Django 4.0 and removed in Django 5.0.",
+      "package": "django",
+      "since": "4.0.0",
+      "removed_in": "5.0.0",
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from django\\.utils\\.translation import ugettext|ugettext_lazy|ugettext_noop",
+      "replacement": "Use gettext, gettext_lazy, or ngettext instead. The ugettext* aliases were removed in Django 4.0.",
+      "package": "django",
+      "since": "3.0.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "BaseCommand\\.requires_system_checks\\s*=\\s*False",
+      "replacement": "Use requires_system_checks = [] (empty list) in Django 3.2+ instead of the boolean False. The boolean form was deprecated in 3.2.",
+      "package": "django",
+      "since": "3.2.0",
+      "removed_in": null,
+      "applies_from": "3.2.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from rest_framework\\.decorators import list_route|detail_route",
+      "replacement": "Use @action(detail=False) or @action(detail=True) decorators. list_route and detail_route were removed in DRF 3.10.",
+      "package": "djangorestframework",
+      "since": "3.9.0",
+      "removed_in": "3.10.0",
+      "applies_from": "3.9.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}

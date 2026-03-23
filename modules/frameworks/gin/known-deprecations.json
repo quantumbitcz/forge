@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "gin\\.Default\\(",
+      "replacement": "Use gin.New() with explicit gin.Recovery() and gin.Logger() middleware for full control",
+      "package": "github.com/gin-gonic/gin",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.Bind\\(",
+      "replacement": "Use c.ShouldBind() — c.Bind() calls c.AbortWithError on failure, bypassing your error handler",
+      "package": "github.com/gin-gonic/gin",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.BindJSON\\(",
+      "replacement": "Use c.ShouldBindJSON() — BindJSON calls c.AbortWithError on failure, bypassing your error handler",
+      "package": "github.com/gin-gonic/gin",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "gin\\.H\\{[^}]{80,}",
+      "replacement": "Use a typed response struct instead of gin.H{} for complex or repeated response shapes",
+      "package": "github.com/gin-gonic/gin",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "gin\\.SetMode\\(",
+      "replacement": "Set GIN_MODE environment variable or configure mode per engine — avoid global gin.SetMode() in library code",
+      "package": "github.com/gin-gonic/gin",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.ReadAll\\b",
+      "replacement": "io.ReadAll (deprecated in Go 1.16)",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}

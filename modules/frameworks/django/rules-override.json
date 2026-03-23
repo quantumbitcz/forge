@@ -1,0 +1,104 @@
+{
+  "extends": "python",
+  "framework": "django",
+  "additional_rules": [
+    {
+      "id": "DJ-ARCH-001",
+      "name": "business-logic-in-view",
+      "pattern": "def\\s+(create|update|delete|process|calculate|generate|send|validate)_\\w+\\s*\\(",
+      "scope_pattern": "/views\\.py$|/api/views\\.py$",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY",
+      "message": "Business logic method defined in view/viewset — move to a service module",
+      "fix_hint": "Create a {app}/services.py file and move business logic there. The view should only call the service and serialize the result.",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-ARCH-002",
+      "name": "orm-in-view-without-service",
+      "pattern": "\\.objects\\.(filter|get|create|update|delete|exclude|annotate|aggregate)\\(",
+      "scope_pattern": "/views\\.py$|/api/views\\.py$",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY",
+      "message": "Direct ORM query in view — use a service or model manager method instead",
+      "fix_hint": "Move ORM queries to services.py or a custom model manager. Views should delegate data access, not perform it directly.",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-PERF-001",
+      "name": "missing-select-related",
+      "pattern": "for\\s+\\w+\\s+in\\s+\\w+.*:\\s*\\n.*\\w+\\.\\w+\\.",
+      "scope_pattern": "src/|apps/|\\w+/services\\.py$",
+      "severity": "WARNING",
+      "category": "PERF-DB",
+      "message": "Loop over queryset with attribute access — likely N+1 query. Use select_related() or prefetch_related().",
+      "fix_hint": "Add .select_related('field') or .prefetch_related('field') to the queryset before the loop.",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-SEC-001",
+      "name": "raw-sql-with-format",
+      "pattern": "\\.raw\\(.*%.*\\)|cursor\\.execute\\(.*%.*\\)|cursor\\.execute\\(.*\\.format\\(",
+      "scope_pattern": "src/|apps/",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "Raw SQL with string formatting — SQL injection risk. Use parameterized queries.",
+      "fix_hint": "Use .raw('SELECT ... WHERE id = %s', [user_id]) or cursor.execute('... WHERE id = %s', [user_id]) with a separate params list.",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-SEC-002",
+      "name": "mark-safe-usage",
+      "pattern": "mark_safe\\(",
+      "scope_pattern": "src/|apps/",
+      "severity": "WARNING",
+      "category": "SEC-XSS",
+      "message": "mark_safe() used — verify this is not applied to user-supplied content",
+      "fix_hint": "Only use mark_safe() on strings generated entirely by trusted code. User input must be escaped first with django.utils.html.escape().",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-MAINT-001",
+      "name": "irreversible-migration",
+      "pattern": "RunPython\\([^,)]+\\)",
+      "scope_pattern": "/migrations/",
+      "severity": "WARNING",
+      "category": "MAINT-MIGRATION",
+      "message": "RunPython migration without reverse_code — migration is not reversible",
+      "fix_hint": "Add a reverse_code argument: RunPython(forwards_func, reverse_code=backwards_func). Use RunPython.noop for intentionally irreversible migrations with explicit documentation.",
+      "example_ref": ""
+    },
+    {
+      "id": "DJ-CONV-001",
+      "name": "print-in-production",
+      "pattern": "\\bprint\\s*\\(",
+      "scope_pattern": "src/|apps/|\\w+/services\\.py$|\\w+/views\\.py$",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "print() in application code — use structured logging instead",
+      "fix_hint": "Replace print() with logger = logging.getLogger(__name__) and logger.info() / logger.error().",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Views must not import from other app models directly",
+      "scope_pattern": "/views\\.py$",
+      "forbidden_imports": [
+        "from\\s+\\w+\\.models\\s+import",
+        "import\\s+\\w+\\.models"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "serializers.py": 300,
+      "models.py": 400,
+      "services.py": 350
+    }
+  }
+}
