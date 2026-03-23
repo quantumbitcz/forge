@@ -650,15 +650,15 @@ After each fix round:
 | **Language conventions** | 10 language files extracted from existing modules |
 | **Gap review** | 3-pass audit after implementation |
 
-### 8.1 State Schema Changes (v1.3 → v1.4)
+### 8.1 State Schema Changes (semver reset to v1.0.0)
 
-**New version:** 1.4. Migration path: 1.3 → 1.4 (forward-compatible).
+**New version:** 1.0.0 (semver reset — aligns with plugin v1.0.0). Previous schema versions (1.1, 1.2, 1.3) are superseded. No migration from old schemas — this is a clean break.
 
 **New/modified fields:**
 
 ```json
 {
-  "version": "1.4",
+  "version": "1.0.0",
   "components": {
     "backend": {
       "story_state": "IMPLEMENTING",
@@ -683,7 +683,7 @@ After each fix round:
 }
 ```
 
-**Key changes from v1.3:**
+**Key changes from previous schema:**
 - `story_state` moves inside `components.{name}` (per-component state tracking)
 - Top-level `story_state` remains as the "overall" state (highest active stage across all components)
 - `conventions_hash` and `detected_versions` move inside components
@@ -691,7 +691,7 @@ After each fix round:
 - New `active_component` field indicating which component the orchestrator is currently processing
 - `conventions_section_hashes` replaced by per-component `conventions_hash` (section-level hashing remains but is computed from the composed convention stack, not a single file)
 
-**Migration from v1.3:** Recovery engine applies migration automatically. Single-component v1.3 state is wrapped into `components: { app: { ...existing fields... } }`.
+**No migration from old schemas.** This is a clean break aligned with the module restructuring. Old `.pipeline/state.json` files are incompatible — `/pipeline-reset` clears them.
 
 ### 8.2 Test Suite Migration
 
