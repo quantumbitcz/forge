@@ -13,7 +13,7 @@ Three-layer design with resolution flowing top-down:
 1. **Project config** (`.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md`) — per-project settings, mutable runtime params, and accumulated learnings. Lives in the consuming repo, not here.
 2. **Module layer** (`modules/`) — three sublayers for convention composition:
    - `modules/languages/` — 9 language files (kotlin, java, typescript, python, go, rust, swift, c, csharp): language-level idioms, type conventions, and baseline rules.
-   - `modules/frameworks/` — 11 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib), each with `conventions.md`, config files, `variants/` for language-specific overrides, and `testing/` for framework-specific test patterns.
+   - `modules/frameworks/` — 17 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform), each with `conventions.md`, config files, `variants/` for language-specific overrides, and `testing/` for framework-specific test patterns.
    - `modules/testing/` — 11 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright).
    Convention composition order (most specific wins): variant > framework-testing > framework > language > testing.
 3. **Shared core** (`agents/pl-*.md`, `shared/`, `hooks/`, `skills/`) — the pipeline engine itself.
@@ -186,7 +186,7 @@ Add a learnings file at `shared/learnings/{name}.md`. Wire the framework into th
 
 ## Module specifics
 
-All 11 frameworks follow the same base structure under `modules/frameworks/{name}/` (`conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, `known-deprecations.json`). Each `conventions.md` includes a Dos/Don'ts section with framework-specific best practices. Language-level conventions live in `modules/languages/{lang}.md` and are composed on top of the framework layer at runtime. Detailed notes below for frameworks with non-obvious conventions:
+All 17 frameworks follow the same base structure under `modules/frameworks/{name}/` (`conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, `known-deprecations.json`). Each `conventions.md` includes a Dos/Don'ts section with framework-specific best practices. Language-level conventions live in `modules/languages/{lang}.md` and are composed on top of the framework layer at runtime. Detailed notes below for frameworks with non-obvious conventions:
 
 ### spring (`modules/frameworks/spring/`)
 - Kotlin variant (`variants/kotlin.md`): hexagonal architecture with sealed interface hierarchy (`XxxPersisted`, `XxxNotPersisted`, `XxxId`), ports & adapters pattern.
@@ -212,6 +212,24 @@ All 11 frameworks follow the same base structure under `modules/frameworks/{name
 ### swiftui (`modules/frameworks/swiftui/`)
 - Memory safety: `[weak self]` in stored closures, delegates as `weak var`. Prefer `struct` for data models, `actor` for thread-safe state.
 - SPM preferred over CocoaPods. Pin to exact versions for releases.
+
+### aspnet (`modules/frameworks/aspnet/`)
+- Clean Architecture: Controllers → Services → Repositories. EF Core with migrations. xUnit + FluentAssertions testing.
+
+### django (`modules/frameworks/django/`)
+- MTV + DRF: apps as bounded contexts, Django ORM with `select_related`/`prefetch_related`. pytest + factory_boy testing.
+
+### nextjs (`modules/frameworks/nextjs/`)
+- App Router with Server/Client Components. Server Actions for mutations. Vitest + Playwright testing.
+
+### gin (`modules/frameworks/gin/`)
+- Handler → Service → Repository with middleware chains. Interface-driven DI. Go testing + testify.
+
+### jetpack-compose (`modules/frameworks/jetpack-compose/`)
+- MVVM with Composables → ViewModels → Repositories. StateFlow, Hilt DI. Compose testing + Robolectric.
+
+### kotlin-multiplatform (`modules/frameworks/kotlin-multiplatform/`)
+- Shared `commonMain` + platform modules. Ktor Client, kotlinx.serialization, Koin DI. Kotest in commonTest.
 
 ## Validation
 
