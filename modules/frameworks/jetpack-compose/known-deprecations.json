@@ -1,0 +1,114 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-23",
+  "deprecations": [
+    {
+      "pattern": "LiveData",
+      "replacement": "Use StateFlow in ViewModel and collectAsStateWithLifecycle() in Composable",
+      "package": "androidx.lifecycle",
+      "since": "2.4.0",
+      "removed_in": null,
+      "applies_from": "2.4.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "collectAsState\\(\\)",
+      "replacement": "Use collectAsStateWithLifecycle() from lifecycle-runtime-compose for lifecycle-aware collection",
+      "package": "androidx.lifecycle:lifecycle-runtime-compose",
+      "since": "2.6.0",
+      "removed_in": null,
+      "applies_from": "2.6.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "AsyncTask",
+      "replacement": "Use Kotlin coroutines with viewModelScope.launch or lifecycleScope.launch",
+      "package": "android.os",
+      "since": "1.0.0",
+      "removed_in": "11.0",
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "findViewById",
+      "replacement": "No view binding needed in Compose — reference state and composables directly",
+      "package": "android.view",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "startActivityForResult",
+      "replacement": "Use Activity Result API: registerForActivityResult() with ActivityResultContracts.*",
+      "package": "androidx.activity",
+      "since": "1.2.0",
+      "removed_in": null,
+      "applies_from": "1.2.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "setContent\\s*\\{[^}]*xml|inflate",
+      "replacement": "Use Compose setContent {} with composable functions — no XML layout inflation in Compose apps",
+      "package": "androidx.compose.ui",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@Preview.*widthDp.*heightDp",
+      "replacement": "Use @PreviewScreenSizes or @PreviewFontScales multi-preview annotations (Compose 1.4+) for systematic previews",
+      "package": "androidx.compose.ui.tooling.preview",
+      "since": "1.4.0",
+      "removed_in": null,
+      "applies_from": "1.4.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "Scaffold\\(.*content\\s*=",
+      "replacement": "Use Scaffold trailing lambda content parameter directly (deprecated named content= parameter removed in Compose 1.4)",
+      "package": "androidx.compose.material3",
+      "since": "1.1.0",
+      "removed_in": "1.4.0",
+      "applies_from": "1.1.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "rememberNavController.*\\.navigate\\(.*route\\s*=\\s*\"",
+      "replacement": "Use type-safe navigation routes with @Serializable data objects/classes instead of string routes (Navigation 2.8+)",
+      "package": "androidx.navigation",
+      "since": "2.8.0",
+      "removed_in": null,
+      "applies_from": "2.8.0",
+      "applies_to": "*",
+      "language": "kotlin",
+      "added": "2026-03-23",
+      "addedBy": "seed"
+    }
+  ]
+}

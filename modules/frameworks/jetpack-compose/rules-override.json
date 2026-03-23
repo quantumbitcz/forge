@@ -1,0 +1,82 @@
+{
+  "extends": "jetpack-compose",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "JC-ARCH-001",
+        "name": "livedata-in-viewmodel",
+        "pattern": "MutableLiveData|LiveData<",
+        "scope_pattern": "src/main",
+        "severity": "WARNING",
+        "category": "ARCH-STATE",
+        "message": "LiveData in ViewModel — use MutableStateFlow / StateFlow instead",
+        "fix_hint": "Replace MutableLiveData<T> with MutableStateFlow<T> and expose as StateFlow<T> via .asStateFlow(). Collect in Composable with collectAsStateWithLifecycle().",
+        "example_ref": ""
+      },
+      {
+        "id": "JC-ARCH-002",
+        "name": "mutable-state-in-composable",
+        "pattern": "mutableStateOf\\(",
+        "scope_pattern": "ui/screens",
+        "severity": "WARNING",
+        "category": "ARCH-STATE",
+        "message": "mutableStateOf() used in Composable file — state should be hoisted to ViewModel; use remember { mutableStateOf() } only for local UI state (focus, expand/collapse)",
+        "fix_hint": "Move meaningful state to ViewModel as MutableStateFlow. If this is local UI state (e.g., dropdown expanded), wrap in remember { mutableStateOf(false) } and document why it's not in ViewModel.",
+        "example_ref": ""
+      },
+      {
+        "id": "JC-ARCH-003",
+        "name": "side-effect-in-composition",
+        "pattern": "viewModelScope\\.launch|lifecycleScope\\.launch|GlobalScope\\.launch",
+        "scope_pattern": "ui/screens",
+        "severity": "CRITICAL",
+        "category": "ARCH-EFFECT",
+        "message": "Coroutine launched directly in Composable file — use LaunchedEffect, rememberCoroutineScope, or handle in ViewModel",
+        "fix_hint": "Replace direct launch in composable scope with LaunchedEffect(key) { } for lifecycle-tied effects, or rememberCoroutineScope().launch { } for user-triggered actions. Fire-and-forget logic belongs in ViewModel.",
+        "example_ref": ""
+      },
+      {
+        "id": "JC-ARCH-004",
+        "name": "repository-in-composable",
+        "pattern": "Repository\\(",
+        "scope_pattern": "ui/screens",
+        "severity": "CRITICAL",
+        "category": "ARCH-BOUNDARY",
+        "message": "Repository instantiated or injected directly in Composable file — repositories must only be accessed from ViewModel",
+        "fix_hint": "Inject the repository into the ViewModel via Hilt (@HiltViewModel + @Inject constructor). The Composable should only interact with the ViewModel.",
+        "example_ref": ""
+      },
+      {
+        "id": "JC-PERF-001",
+        "name": "lazy-list-missing-key",
+        "pattern": "items\\([^,)]+\\)\\s*\\{",
+        "scope_pattern": "src/main",
+        "severity": "WARNING",
+        "category": "PERF-COMPOSE",
+        "message": "LazyColumn/LazyRow items() call appears to be missing a key parameter — this causes unnecessary recompositions",
+        "fix_hint": "Add a stable key: items(items, key = { it.id }) { item -> ... }. The key must be stable and unique per item.",
+        "example_ref": ""
+      },
+      {
+        "id": "JC-ACCESS-001",
+        "name": "image-missing-content-description",
+        "pattern": "Image\\(.*contentDescription\\s*=\\s*null",
+        "scope_pattern": "src/main",
+        "severity": "WARNING",
+        "category": "A11Y-COMPOSE",
+        "message": "Image composable has null contentDescription — provide a meaningful description or explicit null only for decorative images",
+        "fix_hint": "Set contentDescription to a descriptive string for informative images, or set it to null with a comment explaining it is purely decorative.",
+        "example_ref": ""
+      }
+    ]
+  },
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "ui/screens/": 400,
+      "ui/components/": 200,
+      "ui/viewmodels/": 200
+    }
+  }
+}
