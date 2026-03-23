@@ -11,7 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Three-layer design with resolution flowing top-down:
 
 1. **Project config** (`.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md`) — per-project settings, mutable runtime params, and accumulated learnings. Lives in the consuming repo, not here.
-2. **Module layer** (`modules/`) — framework-specific conventions, templates, rule overrides, and optional module-specific tooling. 12 modules: c-embedded, go-stdlib, infra-k8s, java-spring, kotlin-spring, python-fastapi, react-vite, rust-axum, swift-ios, swift-vapor, typescript-node, typescript-svelte.
+2. **Module layer** (`modules/`) — three sublayers for convention composition:
+   - `modules/languages/` — 9 language files (kotlin, java, typescript, python, go, rust, swift, c, csharp): language-level idioms, type conventions, and baseline rules.
+   - `modules/frameworks/` — 11 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib), each with `conventions.md`, config files, `variants/` for language-specific overrides, and `testing/` for framework-specific test patterns.
+   - `modules/testing/` — 11 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright).
+   Convention composition order (most specific wins): variant > framework-testing > framework > language > testing.
 3. **Shared core** (`agents/pl-*.md`, `shared/`, `hooks/`, `skills/`) — the pipeline engine itself.
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
@@ -35,14 +39,18 @@ Run the validation commands from the [Validation](#validation) section in CI to 
 set -e
 # All agents have valid frontmatter
 test "$(grep -l '^name:' agents/*.md | wc -l)" -ge 20
-# All modules have required files
-for m in modules/*/; do
+# All frameworks have required files
+for m in modules/frameworks/*/; do
   ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} > /dev/null
 done
+# Language files exist
+test "$(ls modules/languages/*.md | wc -l)" -ge 9
+# Testing files exist
+test "$(ls modules/testing/*.md | wc -l)" -ge 11
 # All scripts are executable
 test -z "$(find modules/ hooks/ shared/ -name '*.sh' ! -perm -111 2>/dev/null)"
 # known-deprecations are schema v2
-grep -q '"version": 1,' modules/*/known-deprecations.json && exit 1 || true
+grep -q '"version": 1,' modules/frameworks/*/known-deprecations.json && exit 1 || true
 echo "Plugin structure OK"
 ```
 
@@ -50,6 +58,7 @@ echo "Plugin structure OK"
 
 ### Agent files (`agents/*.md`)
 - YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools`. The `tools` list defines which tools the agent can use when dispatched — agents that dispatch other agents (orchestrator, quality-gate, test-gate) **must** include `Agent` in their tools list.
+- Project module configuration uses a `components:` structure in `dev-pipeline.local.md` with `language:`, `framework:`, `variant:`, and `testing:` fields (replaces the old flat `module:` field). PREFLIGHT reads this to determine which convention layers to load.
 - Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
 - Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
@@ -101,14 +110,14 @@ echo "Plugin structure OK"
 - **Skip tracking:** If the hook times out, a counter in `.pipeline/.check-engine-skipped` is incremented. VERIFY Phase A reads and reports the count.
 - Output format standardized in `output-format.md`.
 
-### Deprecation registries (`modules/*/known-deprecations.json`)
+### Deprecation registries (`modules/frameworks/*/known-deprecations.json`)
 - **Schema v2** with version-aware fields: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`.
 - `applies_from`: minimum project version where the rule triggers. `removed_in`: version where the API was removed (null if only deprecated). `applies_to`: upper bound (usually `"*"`).
 - Rules are skipped when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Unknown project versions → conservative (all rules apply).
 - Auto-updated by the deprecation-refresh agent during PREFLIGHT via Context7 and package registries.
 
 ### Learnings (`shared/learnings/`)
-- Per-module learnings files (e.g., `kotlin-spring.md`, `react-vite.md`) — accumulated patterns from past runs.
+- Per-framework learnings files (e.g., `spring.md`, `react.md`) — accumulated patterns from past runs.
 - JSON schemas: `rule-learning-schema.json` (check rule evolution), `agent-effectiveness-schema.json` (agent performance tracking).
 
 ### Error taxonomy (`shared/error-taxonomy.md`)
@@ -144,43 +153,50 @@ echo "Plugin structure OK"
 - `pipeline-checkpoint.sh` — PostToolUse on `Skill`; saves checkpoint after each Skill execution.
 - `feedback-capture.sh` — Stop hook; captures user feedback on session exit.
 
-## Adding a new module
+## Adding a new framework
 
-Create `modules/{name}/` with:
+Create `modules/frameworks/{name}/` with:
 - `conventions.md` — agent-readable framework conventions (must include Dos/Don'ts section)
-- `local-template.md` — project config template (YAML frontmatter)
+- `local-template.md` — project config template (YAML frontmatter, using `components:` structure)
 - `pipeline-config-template.md` — mutable runtime params template (must include `total_retries_max` and `oscillation_tolerance`)
-- `rules-override.json` — module-specific overrides for the shared check engine (pattern rules, linter config)
+- `rules-override.json` — framework-specific overrides for the shared check engine (pattern rules, linter config)
 - `known-deprecations.json` — registry of deprecated APIs in schema v2 (`applies_from`, `removed_in`, `applies_to` fields required). Seed with 5-15 ecosystem-specific entries. Auto-updated by deprecation-refresh agent.
+- Optional: `variants/{language}.md` — language-specific convention overrides (e.g., `variants/kotlin.md` under the spring framework)
+- Optional: `testing/{test-framework}.md` — framework-specific test patterns that extend the generic testing file
 - Optional: `scripts/check-*.sh` (verification), `hooks/*-guard.sh` (PostToolUse guards)
 
-Add a learnings file at `shared/learnings/{name}.md`. Wire the module into the local template's `quality_gate` batches.
+Add a learnings file at `shared/learnings/{name}.md`. Wire the framework into the local template's `quality_gate` batches.
+
+**If adding a new language** (not just a framework), also create `modules/languages/{lang}.md` with language-level idioms, type conventions, and baseline rules.
+
+**If adding a new testing framework**, also create `modules/testing/{test-framework}.md` with generic (framework-agnostic) test patterns for that testing tool.
 
 ## Module specifics
 
-All 12 modules follow the same structure (`conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, `known-deprecations.json`). Each `conventions.md` includes a Dos/Don'ts section with language/framework-specific best practices. Detailed notes below for modules with non-obvious conventions:
+All 11 frameworks follow the same base structure under `modules/frameworks/{name}/` (`conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, `known-deprecations.json`). Each `conventions.md` includes a Dos/Don'ts section with framework-specific best practices. Language-level conventions live in `modules/languages/{lang}.md` and are composed on top of the framework layer at runtime. Detailed notes below for frameworks with non-obvious conventions:
 
-### kotlin-spring
-- Hexagonal architecture: sealed interface hierarchy (`XxxPersisted`, `XxxNotPersisted`, `XxxId`), ports & adapters pattern.
-- Core uses Kotlin types (`kotlin.uuid.Uuid`, `kotlinx.datetime.Instant`); persistence layer uses Java types.
+### spring (`modules/frameworks/spring/`)
+- Kotlin variant (`variants/kotlin.md`): hexagonal architecture with sealed interface hierarchy (`XxxPersisted`, `XxxNotPersisted`, `XxxId`), ports & adapters pattern.
+- Kotlin variant: core uses Kotlin types (`kotlin.uuid.Uuid`, `kotlinx.datetime.Instant`); persistence layer uses Java types.
 - Reactive stack: WebFlux + R2DBC + CoroutineCrudRepository.
 - `@Transactional` on use case impls only, never on adapters. R2DBC UPDATE sets all columns — use `@Query` for partial updates.
 
-### react-vite
+### react (`modules/frameworks/react/`)
 - Typography via inline `style={{ fontSize }}`, not Tailwind `text-*` classes.
 - Colors via theme tokens (`bg-background`, `text-foreground`), never hardcoded hex.
 - Check engine enforces: theme tokens, function size (~30 lines), file size (~400 lines, prefer ~200 per component), import order, no deprecated APIs.
 - Error Boundaries required around route-level components. State management: server data in TanStack Query/SWR, not useState.
 
-### c-embedded
+### embedded (`modules/frameworks/embedded/`)
 - Real-time safety: no `malloc`/`printf`/`float` in ISR handlers, maximum 10us ISR duration.
 - `volatile` for all ISR-shared variables. RTOS: message queues for inter-task communication, mutexes with priority inheritance.
 
-### infra-k8s
+### k8s (`modules/frameworks/k8s/`)
+- `language: null` — infra framework with no language layer loaded.
 - All containers: resource requests AND limits, readiness + liveness probes, non-root `securityContext`.
 - Pin image tags to SHA digests in production. Observability: Prometheus metrics, structured JSON logging, OpenTelemetry tracing.
 
-### swift-ios
+### swiftui (`modules/frameworks/swiftui/`)
 - Memory safety: `[weak self]` in stored closures, delegates as `weak var`. Prefer `struct` for data models, `actor` for thread-safe state.
 - SPM preferred over CocoaPods. Pin to exact versions for releases.
 
@@ -216,20 +232,26 @@ grep -A1 "^name:" agents/*.md
 # Dry-run the check engine
 shared/checks/engine.sh --dry-run
 
-# Verify all modules have required files
-for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} 2>&1; done
+# Verify all frameworks have required files
+for m in modules/frameworks/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} 2>&1; done
+
+# Verify language files exist
+ls modules/languages/*.md
+
+# Verify testing files exist
+ls modules/testing/*.md
 
 # Verify known-deprecations are schema v2
-grep '"version"' modules/*/known-deprecations.json
+grep '"version"' modules/frameworks/*/known-deprecations.json
 
-# Verify Linear config in all module templates
-for m in modules/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING linear: $m"; done
+# Verify Linear config in all framework templates
+for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING linear: $m"; done
 
 # Verify all agents have Forbidden Actions section
 grep -l "Forbidden Actions" agents/*.md | wc -l
 
 # Verify pipeline-config templates have new fields
-for m in modules/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING total_retries_max: $m"; done
+for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING total_retries_max: $m"; done
 ```
 
 ## Gotchas
@@ -249,6 +271,11 @@ for m in modules/*/pipeline-config-template.md; do grep -q "total_retries_max" "
 - `known-deprecations.json` uses schema v2 — entries without `applies_from`/`removed_in`/`applies_to` are treated as v1 and apply universally (backward compatible).
 - Version detection may fail partially for old projects or unusual build configurations. Unknown versions → all rules apply (conservative default).
 - Concurrent pipeline runs on the same project are blocked by `.pipeline/.lock`. Stale locks (>24h or dead PID) are automatically cleaned.
+- Convention composition order is: variant > framework-testing > framework > language > testing. The most specific layer wins on any conflicting rule.
+- Framework-less projects (`framework: go-stdlib` or `framework: null` in `components:`): skip the framework and variant layers. Only language + testing conventions are loaded.
+- Infra frameworks (`k8s`): `language: null` — no language layer is loaded. Only the framework layer applies.
+- The `components:` structure in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) replaces the old flat `module:` field. Old `module:` configs are not supported.
+- Framework-level `testing/` files (e.g., `modules/frameworks/spring/testing/kotest.md`) EXTEND the generic `modules/testing/kotest.md` — they add framework-specific patterns on top, they do not replace the generic file.
 
 ## Plugin distribution (`.claude-plugin/`)
 
