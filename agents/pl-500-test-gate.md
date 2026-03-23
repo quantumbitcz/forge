@@ -148,6 +148,16 @@ The quality gate does not prescribe which agents to use -- the project config do
 
 ---
 
+### Infrastructure Test Commands
+For infra components (framework: k8s), standard test suites don't apply. Instead:
+- Run `helm lint` for chart validation
+- Run `helm template` to verify manifest generation
+- If configured: run `terraform test` or `terraform plan` for Terraform projects
+- These commands come from the component's `commands.test` config -- the test gate treats them like any test command
+- Analysis agents are NOT dispatched for infra tests (no coverage analysis applies)
+
+---
+
 ## 5. Step 3: Direct Test Quality Checks
 
 Perform these checks directly (not via agents) using Grep and Glob on test files corresponding to changed source files. These checks enforce the pipeline's test quality philosophy.

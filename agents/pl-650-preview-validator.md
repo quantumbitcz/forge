@@ -351,6 +351,13 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
+### Backend Health Checks (if co-deployed)
+If the preview environment includes backend APIs:
+1. Check health endpoint: `curl {preview_url}/health` or `{preview_url}/actuator/health`
+2. Verify API endpoints respond with expected status codes (200 for GET, 401 for protected routes)
+3. Log any 5xx errors as CRITICAL findings
+4. This is a smoke check only -- full API testing is handled by the test gate
+
 ## Playwright Fallback
 If Playwright MCP becomes unreachable mid-check:
 - Stop the current check immediately

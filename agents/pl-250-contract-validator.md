@@ -263,6 +263,12 @@ If `git show` fails for the baseline (file not in baseline branch):
 - Run current-state-only analysis: validate structure, types, naming — without diff
 - Skip breaking change detection for this contract
 
+### Mobile API Contracts
+Mobile apps (React Native, Flutter, Jetpack Compose, SwiftUI) typically consume REST APIs via OpenAPI specs or gRPC via Protobuf definitions. When `related_projects` includes a mobile project:
+- Check if the mobile project contains generated API clients (e.g., `openapi-generator` output, Retrofit interfaces, Alamofire API definitions)
+- Breaking changes in REST APIs affect mobile clients the same as web frontends
+- gRPC/Protobuf changes: check `.proto` files for backward compatibility (field numbering, removed fields)
+
 ### Cross-Repo Contract Validation
 
 When `related_projects` is configured and this agent is dispatched:

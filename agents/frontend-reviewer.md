@@ -132,6 +132,15 @@ Apply the rules matching the detected framework:
 - **Reactive forms**: Prefer `FormBuilder` with typed forms over template-driven forms for complex validation
 - **Lazy loading**: Route-level components should be lazy-loaded via `loadComponent`
 
+### Mobile Framework Detection
+In addition to web frameworks, detect mobile UI frameworks:
+- **React Native:** `react-native` in package.json dependencies, `.native.tsx` files
+- **Flutter:** `pubspec.yaml` with `flutter` SDK dependency
+- **Jetpack Compose:** `build.gradle.kts` with `compose` dependencies, `@Composable` annotations
+- **SwiftUI:** `.swift` files with `import SwiftUI`, `View` protocol conformance
+
+For mobile frameworks, apply similar principles as web (accessibility, component structure, state management) but with platform-specific rules from the framework conventions.
+
 ---
 
 ## 6. How to Review
