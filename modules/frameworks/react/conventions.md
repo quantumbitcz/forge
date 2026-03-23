@@ -119,6 +119,45 @@ Never mutate state directly -- always spread or clone. Use helper functions for 
 - Tree-shake: use named imports, avoid importing entire libraries
 - Prefer Tailwind over runtime CSS-in-JS for bundle size
 
+## Testing
+
+### Test Framework
+- **Vitest** as the test runner with **Testing Library** (`@testing-library/react`) for component tests
+- `jsdom` or `happy-dom` as the test environment
+- **MSW** (Mock Service Worker) for API mocking — intercept at the network level, not in components
+
+### Integration Test Patterns
+- Render the full component tree for feature tests — avoid shallow rendering
+- Use `renderWithProviders()` helper that wraps components with required context (router, query client, theme)
+- Mock API calls at the MSW handler level — components use real hooks and fetching logic
+- Test user flows end-to-end within a page: fill form, submit, verify success/error UI
+
+### What to Test
+- User-visible behavior: what the user sees and can interact with
+- Conditional rendering based on data states (loading, error, empty, populated)
+- Form validation and submission flows
+- Error boundaries: verify fallback UI appears on component error
+- Accessibility: keyboard navigation, ARIA attributes on interactive elements
+
+### What NOT to Test
+- React internals (that `useState` updates, that `useEffect` fires)
+- Component re-render counts or internal state values
+- Third-party library behavior (e.g., that TanStack Query caches)
+- CSS classes or styling details — test visible outcomes instead
+
+### Example Test Structure
+```
+src/app/components/{feature}/
+  FeatureComponent.tsx
+  FeatureComponent.test.tsx     # co-located test
+src/test/
+  setup.ts                      # vitest setup, MSW server init
+  handlers/                     # MSW request handlers
+  utils/renderWithProviders.tsx  # shared render helper
+```
+
+For general Vitest patterns, see `modules/testing/vitest.md`.
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

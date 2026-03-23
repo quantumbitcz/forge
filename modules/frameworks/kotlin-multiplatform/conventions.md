@@ -108,6 +108,51 @@
 - Platform source sets: thin wrappers — business logic belongs in `commonMain`.
 - No `TODO("Not implemented")` stubs in `actual` declarations — fail fast with a descriptive exception.
 
+## Testing
+
+### Test Framework
+- **Kotest** or **kotlin.test** in `commonTest` for cross-platform test execution
+- **kotlinx-coroutines-test** (`runTest`) for testing suspend functions and Flow-based APIs
+- Use fakes/stubs over MockK in `commonTest` — MockK may not work on all Kotlin/Native targets
+
+### Integration Test Patterns
+- Write the vast majority of tests in `commonTest` — they run on ALL configured platforms automatically
+- Platform-specific behavior tests go in `androidUnitTest`, `iosTest`, or `jsTest` source sets
+- Test Ktor client by providing a `MockEngine` with predefined responses in `commonTest`
+- Test SQLDelight repositories against in-memory SQLite drivers provided per platform
+- Verify `expect`/`actual` implementations in platform test source sets
+
+### What to Test
+- Business logic in `commonMain` (primary focus) — use case methods, domain validation, state transformations
+- Ktor client wrappers: request construction, response parsing, error mapping
+- SQLDelight repository methods: CRUD operations, query correctness
+- Flow/StateFlow emissions: verify state transitions using `Turbine` or `runTest` collectors
+- Serialization: roundtrip `@Serializable` classes with `Json.encodeToString` / `Json.decodeFromString`
+
+### What NOT to Test
+- `expect`/`actual` resolution — the compiler verifies this at build time
+- Ktor engine internals or `ContentNegotiation` plugin behavior
+- SQLDelight generated query code — test your repository wrappers
+- `kotlinx.serialization` handling of standard Kotlin types (String, Int, Boolean)
+- Koin module resolution — if the app starts, DI works
+
+### Example Test Structure
+```
+shared/
+  src/commonTest/kotlin/
+    domain/
+      UserUseCaseTest.kt           # business logic tests
+    data/
+      UserRepositoryTest.kt        # SQLDelight in-memory tests
+      UserApiServiceTest.kt        # Ktor MockEngine tests
+  src/androidUnitTest/kotlin/
+    PlatformSpecificTest.kt        # Android-only actual tests
+  src/iosTest/kotlin/
+    PlatformSpecificTest.kt        # iOS-only actual tests
+```
+
+For general Kotest patterns, see `modules/testing/kotest.md`.
+
 ## TDD Flow
 
 ```

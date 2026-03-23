@@ -134,6 +134,45 @@
 - No `print()` in production code — use `logging.getLogger(__name__)`
 - No bare `except:` — always name exception types
 
+## Testing
+
+### Test Framework
+- **pytest** with **pytest-django** for test discovery, database access marks, and fixtures
+- **DRF test client** (`APIClient`) for endpoint integration tests
+- **factory_boy** for test data generation — avoid raw fixtures for complex object graphs
+
+### Integration Test Patterns
+- Use `APIClient` to test full request/response cycles through DRF ViewSets and serializers
+- Mark database tests with `@pytest.mark.django_db` — tests without this mark cannot access the DB
+- Use **Testcontainers** for integration tests requiring a real PostgreSQL; Django test DB for unit-level tests
+- Test Celery tasks synchronously using `CELERY_ALWAYS_EAGER=True` or `celery.contrib.pytest` fixtures
+
+### What to Test
+- Service-layer business rules (primary focus) — test in isolation from HTTP layer
+- API endpoint contracts: status codes, response shape, validation error messages
+- Permission checks: test that unauthorized users get 403/401
+- QuerySet methods in custom managers — verify correct filtering and annotations
+- Data migrations: test `RunPython` forward and reverse code
+
+### What NOT to Test
+- Django ORM generates correct SQL — the ORM is tested by Django itself
+- DRF serialization of basic types (str, int, bool)
+- Django model field validation for standard field types (CharField max_length, EmailField format)
+- Admin site auto-generated views unless customized
+
+### Example Test Structure
+```
+{app}/tests/
+  conftest.py               # app-level fixtures, factories
+  test_services.py           # unit tests for business logic
+  test_views.py              # DRF endpoint integration tests
+  test_serializers.py        # complex validation logic only
+  test_models.py             # custom manager/queryset tests
+  factories.py               # factory_boy definitions
+```
+
+For general pytest patterns, see `modules/testing/pytest.md`.
+
 ## TDD Flow
 
 ```

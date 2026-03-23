@@ -98,6 +98,54 @@
 - Cache expensive queries with Redis or in-memory LRU cache
 - Profile with `py-spy` for production bottlenecks
 
+## Testing
+
+### Test Framework
+- **pytest** with **pytest-asyncio** for async test support
+- **httpx** `AsyncClient` with `ASGITransport` for testing FastAPI endpoints without a running server
+- **factory_boy** or custom fixtures for test data generation
+
+### Integration Test Patterns
+- Use `AsyncClient` with the FastAPI app instance for full-stack endpoint tests
+- Override dependencies via `app.dependency_overrides[get_db] = get_test_db` for test isolation
+- Use **Testcontainers** (`testcontainers-python`) with a real PostgreSQL instance for database tests
+- Test async service methods directly with `pytest.mark.asyncio`
+
+### What to Test
+- Endpoint request/response contracts: status codes, response shapes, validation errors
+- Service-layer business rules with mocked repositories
+- Repository queries against a real database (via Testcontainers)
+- Custom exception handlers: verify structured error responses
+
+### What NOT to Test
+- Pydantic type validation (e.g., that `str` field rejects `int`) — Pydantic guarantees this
+- `Depends()` resolution mechanics — FastAPI handles this
+- SQLAlchemy column type mapping
+- OpenAPI schema generation
+
+### Example Test Structure
+```
+tests/
+  conftest.py                  # fixtures: app, async_client, test_db
+  test_routers/
+    test_user_router.py        # endpoint integration tests
+  test_services/
+    test_user_service.py       # unit tests with mocked repos
+  test_repositories/
+    test_user_repository.py    # Testcontainers DB tests
+```
+
+For general pytest patterns, see `modules/testing/pytest.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., Pydantic validates types, `Depends()` resolution, automatic OpenAPI generation)
+- Do NOT test SQLAlchemy column mapping or Alembic migration mechanics
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

@@ -119,6 +119,43 @@ Map domain exceptions at the controller boundary. Services throw domain-specific
 - Prefer interface-based injection for services and ports
 - Use meta-annotations (`@UseCase`, `@Adapter`) over generic `@Component`/`@Service` when the project defines them
 
+## Testing
+
+### Test Framework
+- **Kotest ShouldSpec** for Kotlin Spring projects; **JUnit 5** for Java Spring projects
+- Use `@SpringBootTest` for full integration tests; `@WebMvcTest` / `@WebFluxTest` for controller-layer slices
+- Use `@DataJpaTest` / `@DataR2dbcTest` for repository-layer tests with an embedded or Testcontainers database
+
+### Integration Test Patterns
+- Controller tests: use `MockMvc` (MVC) or `WebTestClient` (WebFlux) to verify request/response contracts
+- Service tests: unit-test with mocked repository interfaces (MockK for Kotlin, Mockito for Java)
+- Repository tests: use **Testcontainers** with a real database engine — avoid H2 for anything beyond trivial cases
+- End-to-end: `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebTestClient` for full stack validation
+
+### What to Test
+- Business rules in service/use-case layer (primary focus)
+- Request validation, error mapping, and HTTP status codes at the controller layer
+- Database queries and constraint handling at the repository layer
+- Security rules: endpoint access control, ownership verification
+
+### What NOT to Test
+- Spring DI wiring (if the app starts, DI works)
+- Framework-provided serialization of standard types
+- Default Spring Security filter chain behavior (e.g., 401 for missing credentials)
+- Getter/setter code in DTOs or entities
+
+### Example Test Structure
+```
+src/test/kotlin/{package}/
+  controller/XxxControllerTest.kt    # @WebMvcTest / @WebFluxTest
+  service/XxxServiceTest.kt          # unit test with mocks
+  repository/XxxRepositoryTest.kt    # @DataJpaTest + Testcontainers
+  integration/XxxIntegrationTest.kt  # @SpringBootTest full stack
+```
+
+For general Kotest/JUnit 5 patterns, see `modules/testing/kotest.md` and `modules/testing/junit5.md`.
+For Testcontainers usage, see `modules/testing/testcontainers.md`.
+
 ## TDD Flow
 
 ```

@@ -103,6 +103,55 @@ Services/
 - Store `Package.resolved` in git for reproducible builds
 - Prefer Apple-maintained packages when available
 
+## Testing
+
+### Test Framework
+- **XCTest** for unit and integration tests; **Swift Testing** (`@Test`, `#expect`) for Swift 5.10+/Xcode 16+
+- **ViewInspector** for SwiftUI view unit tests (inspect view hierarchy without running on device)
+- **XCUITest** for end-to-end UI automation
+
+### Integration Test Patterns
+- Test ViewModels as plain Kotlin/Swift classes — inject mock services, verify state transitions
+- Use `ViewInspector` to assert view content based on ViewModel state (loading, error, populated)
+- Mock networking with `URLProtocol` subclass or protocol-based abstraction
+- Use `@MainActor` test methods for ViewModel tests that update UI state
+
+### What to Test
+- ViewModel state transitions and business logic (primary focus)
+- Service-layer networking: request construction, response parsing, error mapping
+- Navigation: verify ViewModel emits correct navigation events
+- Persistence: SwiftData/CoreData CRUD operations with in-memory store
+
+### What NOT to Test
+- SwiftUI renders views correctly (SwiftUI guarantees this)
+- `@State` / `@Observable` reactivity mechanics — the framework handles this
+- SPM dependency resolution
+- Standard SwiftUI modifiers behavior (e.g., `.padding()`, `.font()`)
+
+### Example Test Structure
+```
+Tests/
+  ViewModelTests/
+    UserProfileViewModelTests.swift  # ViewModel unit tests
+  ServiceTests/
+    AuthServiceTests.swift           # network/service tests
+  UITests/
+    UserProfileUITests.swift         # XCUITest end-to-end
+  Mocks/
+    MockAuthService.swift            # protocol-based mocks
+```
+
+For general XCTest patterns, see `modules/testing/xctest.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., SwiftUI renders views, `@State` updates trigger re-render)
+- Do NOT test standard modifier behavior or SPM dependency resolution
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

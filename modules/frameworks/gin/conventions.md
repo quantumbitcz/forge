@@ -183,6 +183,48 @@ Follow Go conventions: short variable names in functions, unexported by default,
 - Log errors with full context before returning sanitized response
 - Never log sensitive data: tokens, passwords, PII
 
+## Testing
+
+### Test Framework
+- **Go standard `testing` package** — no external test framework needed
+- **`httptest`** for HTTP handler and middleware integration tests
+- **`testcontainers-go`** for database integration tests with real PostgreSQL
+- **`gomock`** or hand-written fakes for mocking service interfaces
+
+### Integration Test Patterns
+- Use `httptest.NewRecorder()` + `gin.CreateTestContext()` for handler unit tests
+- Use `httptest.NewServer(router)` for full integration tests through the middleware stack
+- Test middleware behavior by constructing a test Gin engine with the middleware and a dummy handler
+- Use table-driven tests for input/output variations across endpoint parameters
+
+### What to Test
+- Handler request/response contracts: status codes, JSON shapes, validation error messages
+- Service-layer business logic with mocked repository interfaces
+- Middleware behavior: auth rejection, CORS headers, rate limiting responses
+- Request binding: verify `ShouldBindJSON` / `ShouldBindQuery` error handling
+- Repository queries against a real database (via Testcontainers)
+
+### What NOT to Test
+- Gin returns 404 for unmatched routes or 405 for wrong HTTP methods — Gin handles this
+- Gin middleware chain execution order — trust the framework
+- `validator/v10` validates standard tags (e.g., `required`, `email`) correctly
+- `encoding/json` marshals standard types
+
+### Example Test Structure
+```
+internal/
+  handler/
+    user_handler.go
+    user_handler_test.go         # httptest + gin.CreateTestContext
+  service/
+    user_service.go
+    user_service_test.go         # unit tests with mocked repos
+  middleware/
+    auth_middleware_test.go      # middleware isolation tests
+```
+
+For general Go testing patterns, see `modules/testing/go-testing.md`.
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

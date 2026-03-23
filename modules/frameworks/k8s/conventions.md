@@ -123,6 +123,18 @@ Every deployment must define:
 - OpenTelemetry for distributed tracing
 - Propagate trace context via HTTP headers
 
+## Validation (in lieu of Testing)
+
+K8s infrastructure uses schema validation and deployment verification instead of traditional unit tests:
+- `helm lint` for chart validation — catches template syntax errors and missing required values
+- `helm template` for manifest generation verification — render and inspect output without deploying
+- `kubectl apply --dry-run=server` for API server validation — verifies the manifest is accepted by the cluster
+- `helm test` for post-deployment smoke tests — verify deployed services respond correctly
+- **Trivy** / **Checkov** for security scanning — detect misconfigurations, missing security contexts, over-privileged containers
+- **kube-linter** for best practice enforcement — resource limits, probes, labels
+- **Conftest** (OPA) for custom policy validation against rendered manifests
+- **Pluto** for deprecation detection — identify removed/deprecated API versions before cluster upgrades
+
 ## TDD Flow (Infrastructure)
 
 scaffold chart/manifest -> write helm test or dry-run assertion (RED) -> implement templates (GREEN) -> lint and refactor

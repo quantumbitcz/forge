@@ -139,6 +139,53 @@ Map domain exceptions in the global exception handler middleware. Services throw
 - Use `IOptions<T>` for configuration objects — inject `IOptions<MyOptions>` not raw `IConfiguration`
 - Avoid `IServiceProvider` in application code — it is the service-locator anti-pattern
 
+## Testing
+
+### Test Framework
+- **xUnit** (preferred) or **NUnit** for unit and integration tests
+- **FluentAssertions** for readable, expressive assertions
+- **WebApplicationFactory<Program>** for in-process integration tests against the full ASP.NET pipeline
+- **Testcontainers** (`Testcontainers.MsSql` / `Testcontainers.PostgreSql`) for database integration tests
+
+### Integration Test Patterns
+- Use `WebApplicationFactory<Program>` to spin up the app in-process — no TCP server needed
+- Override services via `WithWebHostBuilder(b => b.ConfigureServices(...))` for test isolation
+- Use `HttpClient` from the factory to test full request/response cycles through middleware and controllers
+- Test EF Core repositories against a real database via Testcontainers — avoid mocking `DbContext`
+- Use `IOptions<T>` overrides for test-specific configuration
+
+### What to Test
+- Service-layer business logic with mocked repository interfaces (primary focus)
+- Controller endpoint contracts: status codes, ProblemDetails responses, validation errors
+- Authorization policies: verify 401/403 responses for unauthorized/forbidden requests
+- EF Core repository queries: correct LINQ translation, include paths, pagination
+- Global exception handler: verify ProblemDetails shape for domain exceptions
+
+### What NOT to Test
+- ASP.NET returns 404 for unmatched routes or 405 for wrong HTTP methods — the framework does this
+- Model binding deserializes JSON to DTOs — `[ApiController]` handles this automatically
+- EF Core conventions (table naming, key detection) — EF Core is tested by Microsoft
+- `ILogger<T>` formats log messages correctly
+- FluentValidation / DataAnnotation attribute validation for standard rules (Required, MaxLength)
+
+### Example Test Structure
+```
+Tests/
+  UnitTests/
+    Services/
+      UserServiceTests.cs          # unit tests with mocked repos
+  IntegrationTests/
+    Controllers/
+      UserControllerTests.cs       # WebApplicationFactory tests
+    Repositories/
+      UserRepositoryTests.cs       # Testcontainers DB tests
+    Helpers/
+      CustomWebApplicationFactory.cs
+```
+
+For general xUnit/NUnit patterns, see `modules/testing/xunit-nunit.md`.
+For Testcontainers usage, see `modules/testing/testcontainers.md`.
+
 ## TDD Flow
 
 ```

@@ -101,6 +101,55 @@
 - Never hardcode credentials or connection strings
 - Use structured logging: `req.logger` with metadata
 
+## Testing
+
+### Test Framework
+- **XCTest** for unit and integration tests; **Swift Testing** (`@Test`, `#expect`) for Swift 5.10+
+- **XCTVapor** (built into Vapor) for in-process HTTP testing without a running server
+
+### Integration Test Patterns
+- Use `Application.testable()` to create an in-process test app — no TCP server needed
+- Use `app.test(.GET, "/api/v1/users")` to test full request/response cycles through middleware and routes
+- Configure an in-memory SQLite database (`Fluent + SQLiteKit`) for fast test execution
+- Use **Testcontainers** for integration tests requiring a real PostgreSQL instance
+
+### What to Test
+- Route handler contracts: status codes, JSON response shapes, validation errors
+- Repository logic: CRUD operations and query correctness against a test database
+- Middleware behavior: auth rejection, error transformation
+- Service-layer business rules with mocked repository protocols
+- Model validation: test `Validatable` conformance for DTOs
+
+### What NOT to Test
+- Vapor routes requests to the correct handler (Vapor guarantees this)
+- Fluent model property wrapper behavior (`@Field`, `@Parent`)
+- `Content` protocol encoding/decoding for standard types
+- `Abort` produces the correct HTTP status code — Vapor handles this
+
+### Example Test Structure
+```
+Tests/AppTests/
+  Controllers/
+    UserControllerTests.swift      # XCTVapor integration tests
+  Services/
+    UserServiceTests.swift         # unit tests with mocked repos
+  Repositories/
+    UserRepositoryTests.swift      # in-memory DB tests
+  Helpers/
+    TestApplication.swift          # shared test app factory
+```
+
+For general XCTest patterns, see `modules/testing/xctest.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., Vapor routes requests correctly, `Abort` maps to HTTP status)
+- Do NOT test Fluent property wrapper behavior or `Content` encoding for standard types
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

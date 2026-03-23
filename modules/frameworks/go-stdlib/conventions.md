@@ -125,6 +125,59 @@ migrations/                  # SQL migration files
 - Prefer `strings.Builder` over `+` in loops
 - Benchmark with `testing.B`: `go test -bench=. -benchmem`
 
+## Testing
+
+### Test Framework
+- **Go standard `testing` package** — no external test framework needed
+- **`httptest`** for HTTP handler and middleware integration tests
+- **`testcontainers-go`** for database integration tests with real PostgreSQL/MySQL
+- **`gomock`** or hand-written fakes for mocking service interfaces
+
+### Integration Test Patterns
+- Use `httptest.NewServer(handler)` or `httptest.NewRecorder()` for handler integration tests
+- Test middleware by composing it with a test handler and verifying request/response transformation
+- Use table-driven tests (`[]struct{ name string; ... }`) for input/output variations
+- Use `testcontainers-go` for repository tests against a real database — avoid in-memory stubs for SQL logic
+- Test context propagation: pass `context.WithTimeout` and verify cancellation is respected
+
+### What to Test
+- Handler request/response contracts: status codes, JSON response shapes, error responses
+- Service-layer business logic with mocked repository interfaces
+- Repository queries against a real database (via Testcontainers)
+- Error wrapping: verify `errors.Is()` and `errors.As()` work through the error chain
+- Goroutine safety: run tests with `-race` flag
+
+### What NOT to Test
+- `net/http` parses headers, query params, or request bodies — the stdlib does this
+- `http.ServeMux` routes to the correct handler (Go 1.22+ enhanced routing is well-tested)
+- `encoding/json` marshals standard types correctly
+- `context.WithTimeout` cancels after the timeout — the stdlib guarantees this
+
+### Example Test Structure
+```
+internal/
+  handler/
+    user_handler.go
+    user_handler_test.go         # httptest integration tests
+  service/
+    user_service.go
+    user_service_test.go         # unit tests with mocked repos
+  repository/
+    user_repository.go
+    user_repository_test.go      # Testcontainers DB tests
+```
+
+For general Go testing patterns, see `modules/testing/go-testing.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., `net/http` parses headers, `json.Marshal` handles standard types)
+- Do NOT test stdlib context mechanics or `http.ServeMux` routing resolution
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

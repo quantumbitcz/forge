@@ -109,6 +109,55 @@
 - Use `CancellationToken` for graceful shutdown
 - CPU-heavy work goes to `tokio::task::spawn_blocking`
 
+## Testing
+
+### Test Framework
+- **Rust built-in test framework** (`#[cfg(test)]` modules) for unit tests
+- **tokio::test** (`#[tokio::test]`) for async handler and service tests
+- **reqwest** or **axum::test** helpers for integration tests against a running app
+- **proptest** / **quickcheck** for property-based tests on serialization and parsing logic
+
+### Integration Test Patterns
+- Spin up the Axum router with a test `AppState` containing a real or in-memory database pool
+- Use `axum::body::Body` and `tower::ServiceExt::oneshot()` to test handlers without starting a TCP server
+- Use **sqlx** test fixtures or Testcontainers for database integration tests
+- Test middleware behavior by composing the full router layer stack
+
+### What to Test
+- Handler request/response contracts: status codes, JSON response shapes, error responses
+- Service-layer business logic with mocked repository traits
+- Error type mapping: verify `IntoResponse` produces correct HTTP status codes
+- Database queries via SQLx against a test database
+- Serde: roundtrip serialization/deserialization of DTOs
+
+### What NOT to Test
+- Axum routing mechanics (that Axum returns 404 for unmatched routes, 405 for wrong methods)
+- Tower middleware ordering internals
+- SQLx compile-time query verification (the compiler does this)
+- `serde` derive behavior for standard types
+
+### Example Test Structure
+```
+src/
+  handler/user.rs        # handler functions
+  handler/user_test.rs   # or #[cfg(test)] mod tests { }
+  service/user.rs
+tests/
+  integration/
+    user_api.rs          # full-stack integration tests
+```
+
+For general Rust test patterns, see `modules/testing/rust-test.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., Axum returns 404 for unmatched routes, Tower layer ordering)
+- Do NOT test SQLx compile-time query checking or serde derive for standard types
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

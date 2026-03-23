@@ -114,6 +114,55 @@
 - Profile with Node.js inspector before optimizing
 - Use `cluster` module or process manager for multi-core utilization
 
+## Testing
+
+### Test Framework
+- **Vitest** (preferred) or **Jest** as the test runner
+- **supertest** for HTTP integration tests against Express/NestJS apps
+- **MSW** (Mock Service Worker) for mocking external API calls at the network level
+
+### Integration Test Patterns
+- Use `supertest(app)` to test full request/response cycles through Express middleware and routes
+- NestJS: use `Test.createTestingModule()` to build isolated modules with overridden providers
+- Test middleware in isolation by constructing mock `req`/`res`/`next` objects
+- Use **Testcontainers** for database integration tests; Prisma/TypeORM test utilities for schema setup
+
+### What to Test
+- Service-layer business logic with mocked repositories (primary focus)
+- API endpoint contracts: status codes, response shapes, validation error responses
+- Middleware behavior: auth rejection, validation failure, error transformation
+- Error handling: verify global error handler produces structured error responses
+
+### What NOT to Test
+- Express calls middleware in the correct order (Express guarantees this)
+- Express parses JSON bodies (built-in `express.json()` is tested by Express itself)
+- NestJS DI container resolves providers correctly
+- Zod/Joi schema parsing for basic types — test complex cross-field validations only
+
+### Example Test Structure
+```
+src/
+  routes/user.routes.ts
+  services/user.service.ts
+  services/user.service.test.ts      # co-located unit test
+tests/
+  integration/
+    user.api.test.ts                  # supertest integration
+  helpers/
+    app.ts                            # test app factory
+```
+
+For general Vitest patterns, see `modules/testing/vitest.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., Express calls middleware in order, NestJS resolves providers)
+- Do NOT test basic Zod/Joi type validation or Express body parsing
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

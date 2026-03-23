@@ -177,6 +177,53 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 - Image priority: set `priority` on above-the-fold images to preload
 - Route prefetching: `<Link prefetch>` fetches on hover (default in production)
 
+## Testing
+
+### Test Framework
+- **Vitest** as the test runner with **Testing Library** (`@testing-library/react`) for component tests
+- **Playwright** for end-to-end tests (Next.js recommended E2E framework)
+- **MSW** (Mock Service Worker) for mocking API calls at the network level
+
+### Integration Test Patterns
+- Test Client Components with Testing Library `render()` — mock Server Component data via props
+- Test Server Actions by importing and calling them directly with mock `FormData`
+- Test Route Handlers by importing the `GET`/`POST` functions and passing mock `NextRequest` objects
+- Use Playwright for full-page E2E tests: navigation, form submissions, SSR verification
+- Mock `next/headers` and `next/navigation` via Vitest module mocks
+
+### What to Test
+- Client Component rendering: correct UI for loading, error, empty, and populated states
+- Server Action validation: verify `fail()` responses for invalid input, success for valid input
+- Route Handler contracts: status codes, response shapes, error handling
+- Data fetching: verify `revalidatePath()` / `revalidateTag()` is called after mutations
+- User interactions: form submissions, navigation, dynamic content updates
+
+### What NOT to Test
+- Next.js routes pages based on file-system convention — the framework handles this
+- Server Component rendering pipeline internals (RSC serialization, streaming mechanics)
+- `next/image` optimization or `next/font` loading behavior
+- ISR/SSG revalidation timing accuracy
+- Metadata API generates correct `<head>` tags — trust the framework
+
+### Example Test Structure
+```
+app/{route}/
+  page.tsx
+  page.test.tsx                    # co-located tests for Client Components
+actions/
+  user.ts
+  user.test.ts                     # Server Action unit tests
+app/api/{resource}/
+  route.ts
+  route.test.ts                    # Route Handler tests
+tests/
+  e2e/
+    user-flow.spec.ts              # Playwright E2E tests
+```
+
+For general Vitest patterns, see `modules/testing/vitest.md`.
+For Playwright E2E patterns, see `modules/testing/playwright.md`.
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

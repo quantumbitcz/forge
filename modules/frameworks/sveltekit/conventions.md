@@ -109,6 +109,57 @@ Do **not** use `writable()` / `readable()` / `derived()` from `svelte/store` in 
 - Prefer `{#each items as item (item.id)}` with keyed blocks for list identity
 - Use `{@html}` sparingly and ONLY with sanitized content (XSS risk)
 
+## Testing
+
+### Test Framework
+- **Vitest** as the test runner with **Testing Library** (`@testing-library/svelte`) for component tests
+- **Playwright** for end-to-end tests (SvelteKit's recommended E2E framework)
+- **MSW** (Mock Service Worker) for mocking API calls at the network level
+
+### Integration Test Patterns
+- Use `render()` from Testing Library to mount components with props and verify rendered output
+- Mock SvelteKit modules (`$app/navigation`, `$app/stores`) via Vitest module mocks
+- Test load functions by importing and calling them directly with mock `RequestEvent` objects
+- Use Playwright for form action flows and full-page navigation tests
+
+### What to Test
+- Component rendering based on props and reactive state
+- User interactions: click handlers, form submissions, keyboard navigation
+- Load function data fetching: correct data returned for given params and auth state
+- Form action validation: verify `fail()` responses for invalid input
+- Error handling: `+error.svelte` renders for thrown `error()` in load functions
+
+### What NOT to Test
+- Svelte renders components (Svelte guarantees this)
+- `$state` reactivity triggers re-render — the compiler handles this
+- SvelteKit file-based routing resolves correctly
+- Built-in CSRF protection on form actions
+
+### Example Test Structure
+```
+src/lib/components/
+  Button.svelte
+  Button.test.ts                   # co-located component test
+src/routes/{route}/
+  +page.server.ts
+  +page.server.test.ts             # load function / action tests
+tests/
+  e2e/
+    user-flow.spec.ts              # Playwright E2E tests
+```
+
+For general Vitest patterns, see `modules/testing/vitest.md`.
+For Playwright E2E patterns, see `modules/testing/playwright.md`.
+
+## Smart Test Rules
+
+- No duplicate tests — grep existing tests before writing new ones
+- Test business behavior, not implementation details
+- Do NOT test framework guarantees (e.g., Svelte renders components, `$state` reactivity, SvelteKit routing)
+- Do NOT test built-in CSRF protection or SvelteKit's file-based route resolution
+- Each test scenario covers a unique code path
+- Fewer meaningful tests > high coverage of trivial code
+
 ## TDD Flow
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor

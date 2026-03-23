@@ -114,6 +114,49 @@ UI layer emits events upward; state flows down. No bidirectional data binding.
 - No business logic in Composables — delegate to ViewModel.
 - No `System.out.println` / `print` — use `Timber` or `android.util.Log` sparingly in debug builds only.
 
+## Testing
+
+### Test Framework
+- **JUnit 5** or **Kotest** for ViewModel unit tests (pure Kotlin, no Android dependencies)
+- **Compose UI Test** (`createComposeRule()`) for composable behavior tests
+- **Paparazzi** for screenshot/snapshot tests — verify visual regressions without a device
+- **Turbine** for `StateFlow` / `SharedFlow` emission assertions
+
+### Integration Test Patterns
+- ViewModel tests are pure Kotlin — inject fake repositories, assert `UiState` emissions via Turbine
+- Compose UI tests: use `composeTestRule.setContent { }` to mount screens with mock ViewModels
+- Use `onNodeWithTag()` for stable test targeting across localization changes
+- Test navigation by verifying ViewModel emits navigation events — do not test `NavController` directly
+- Use `Hilt` test rules (`HiltAndroidRule`) for full-stack integration tests with real DI
+
+### What to Test
+- ViewModel state transitions: loading, success, error states (primary focus)
+- Composable rendering: correct content displayed for each `UiState` branch
+- User interactions: button clicks trigger ViewModel actions, form input updates state
+- Navigation events: ViewModel emits correct route on user action
+- Accessibility: content descriptions, touch target sizes, semantic structure
+
+### What NOT to Test
+- Compose renders composables (Compose guarantees this)
+- `remember` retains values across recompositions — the framework handles this
+- Hilt injects the correct ViewModel — if the screen renders, DI works
+- Material 3 theme token resolution
+- Recomposition internals (skip counts, composition order)
+
+### Example Test Structure
+```
+src/test/kotlin/{package}/
+  viewmodel/
+    UserProfileViewModelTest.kt    # pure Kotlin unit tests
+src/androidTest/kotlin/{package}/
+  ui/
+    UserProfileScreenTest.kt       # Compose UI tests
+  screenshot/
+    UserProfileScreenshotTest.kt   # Paparazzi snapshot tests
+```
+
+For general JUnit 5/Kotest patterns, see `modules/testing/junit5.md` and `modules/testing/kotest.md`.
+
 ## TDD Flow
 
 ```
