@@ -477,6 +477,16 @@ Extract from the planner's response:
 
 Update state: `story_state` -> `"PLANNING"`, set `domain_area`, `risk_level`, add `plan` timestamp.
 
+### Cross-Repo Task Detection
+
+When `related_projects` is configured in `dev-pipeline.local.md`, the planner should additionally:
+
+1. Check if any planned tasks affect API contracts (OpenAPI specs, shared types, proto files, GraphQL schemas)
+2. For each affected contract, identify related projects that consume or produce the contract
+3. Create cross-repo tasks for each affected related project (e.g., "Update frontend types for new API field")
+4. Tag cross-repo tasks with `cross_repo: true` and `target_project: {project_name}` in the plan
+5. Group cross-repo tasks into a final parallel group that runs AFTER the main repo implementation completes
+
 ### Linear Tracking
 
 If `integrations.linear.available` is true:
@@ -1261,6 +1271,42 @@ The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel` 
 - NEVER run `git worktree remove --force` without user confirmation
 - NEVER run `git clean -f` or `git checkout .` on the main working tree
 - NEVER modify files in the main working tree during IMPLEMENT through REVIEW stages
+
+### Cross-Repo Worktree Management
+
+When `related_projects` is configured in `dev-pipeline.local.md` and the plan includes cross-repo tasks:
+
+**Worktree creation:**
+- Each related project gets its own worktree at `{related_project_path}/.pipeline/worktree`
+- Branch naming: `feat/{feature-name}-cross-{timestamp}`
+- Same collision detection as main worktree (epoch suffix fallback)
+- Acquire locks in alphabetical order by project name (prevents deadlocks)
+
+**State tracking:** Add to `state.json`:
+```json
+{
+  "cross_repo": {
+    "frontend": {
+      "path": "/abs/path/project-fe/.pipeline/worktree",
+      "branch": "feat/add-api-types-cross-1711187200",
+      "status": "implementing",
+      "files_changed": []
+    }
+  }
+}
+```
+
+**Partial failure handling:**
+1. Main repo changes are preserved (not rolled back) on cross-repo failure
+2. Failed cross-repo worktree is left in place for manual inspection
+3. Stage notes document the partial failure with details
+4. PR for main repo is created with a note: "Cross-repo changes for {project} failed — manual intervention needed"
+5. `/pipeline-rollback` handles multi-repo cleanup independently
+
+**Lock management:**
+- Each related project gets its own `.pipeline/.lock`
+- Locks acquired in alphabetical order by project name
+- Stale lock detection: same 24h + PID check as main repo
 
 ---
 
