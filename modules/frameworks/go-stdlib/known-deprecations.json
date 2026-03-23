@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-22",
+  "deprecations": [
+    {
+      "pattern": "ioutil\\.ReadAll\\b",
+      "replacement": "io.ReadAll",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.ReadFile\\b",
+      "replacement": "os.ReadFile",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.TempDir\\b",
+      "replacement": "os.MkdirTemp",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.TempFile\\b",
+      "replacement": "os.CreateTemp",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.WriteFile\\b",
+      "replacement": "os.WriteFile",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "ioutil\\.NopCloser\\b",
+      "replacement": "io.NopCloser",
+      "package": "io/ioutil",
+      "since": "1.16",
+      "removed_in": null,
+      "applies_from": "1.16",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "strings\\.Title\\b",
+      "replacement": "Use cases.Title from golang.org/x/text/cases",
+      "package": "strings",
+      "since": "1.18",
+      "removed_in": null,
+      "applies_from": "1.18",
+      "applies_to": "*",
+      "added": "2026-03-22",
+      "addedBy": "seed"
+    }
+  ]
+}

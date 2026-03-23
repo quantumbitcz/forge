@@ -1,0 +1,43 @@
+{
+  "extends": "swift",
+  "framework": "ios",
+  "additional_rules": [
+    {
+      "id": "SI-UI-001",
+      "name": "view-body-exceeding-50-lines",
+      "pattern": "var body:\\s*some View",
+      "scope_pattern": "Views/",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "View body exceeding 50 lines — extract subviews into smaller composable structs",
+      "fix_hint": "Break the view body into smaller extracted subviews. Each subview should have a single responsibility and be under 50 lines.",
+      "example_ref": ""
+    },
+    {
+      "id": "SI-CONV-001",
+      "name": "uikit-import-in-swiftui-view",
+      "pattern": "import UIKit",
+      "scope_pattern": "Views/",
+      "severity": "INFO",
+      "category": "CONV-COMPAT",
+      "message": "UIKit import in SwiftUI view — prefer pure SwiftUI APIs for consistency",
+      "fix_hint": "Replace UIKit usage with SwiftUI equivalents. If UIKit is required, wrap it in a UIViewRepresentable and move it to a separate file.",
+      "example_ref": ""
+    },
+    {
+      "id": "SI-PERF-001",
+      "name": "heavy-computation-in-view-body",
+      "pattern": "(for\\s+.*\\s+in\\s+|while\\s+|reduce\\(|map\\(|filter\\(|sorted\\()",
+      "scope_pattern": "Views/",
+      "severity": "WARNING",
+      "category": "PERF-UI",
+      "message": "Heavy computation in view body — offload to ViewModel or use .task {} modifier for async work",
+      "fix_hint": "Move the computation to the ViewModel and expose the result as a published property. Use .task {} for async operations.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {}
+}
