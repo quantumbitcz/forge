@@ -118,7 +118,9 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "key_dependencies": {}
   },
   "check_engine_skipped": 0,
-  "dry_run": false
+  "dry_run": false,
+  "cross_repo": {},
+  "spec": null
 }
 ```
 
@@ -158,6 +160,52 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies`: map of dependency name to version string for important libraries. Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). |
 | `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
+| `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
+| `spec` | object\|null | No | Present when pipeline was invoked with `--spec <path>`. Contains `path`, `epic_title`, `story_count`, and `loaded_at`. `null` when not using spec-driven invocation. See the [spec section](#spec-object-optional) above. |
+
+### cross_repo (object, optional)
+
+Tracks worktrees and status for changes in related projects. Only populated when `related_projects` is configured and cross-repo tasks exist.
+
+```json
+{
+  "cross_repo": {
+    "{project_name}": {
+      "path": "string — absolute path to worktree in related project",
+      "branch": "string — branch name created for cross-repo changes",
+      "status": "string — implementing | complete | failed",
+      "files_changed": ["string — list of files modified"],
+      "pr_url": "string | null — PR URL if created"
+    }
+  }
+}
+```
+
+**Lifecycle:**
+- Created when orchestrator creates a cross-repo worktree during IMPLEMENT
+- Updated to `complete` when cross-repo implementation succeeds
+- Updated to `failed` on errors
+- `pr_url` populated during SHIP if PR creation succeeds
+- Cleaned up by `/pipeline-rollback` or `/pipeline-reset`
+
+---
+
+### spec (object, optional)
+
+Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metadata.
+
+```json
+{
+  "spec": {
+    "path": "string — path to the spec file",
+    "epic_title": "string — extracted epic title",
+    "story_count": "number — count of stories in spec",
+    "loaded_at": "string — ISO 8601 timestamp"
+  }
+}
+```
+
+---
 
 ### Migration State (stored in `state.json.migration` during migration runs)
 
