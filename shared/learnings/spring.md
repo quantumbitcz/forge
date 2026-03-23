@@ -19,3 +19,6 @@
 - **Pattern:** Core module uses Kotlin types; persistence layer uses Java types. Never mix.
 - **Confidence:** HIGH
 - **Hit count:** 0
+# Cross-Project Learnings: java-spring
+
+## PREEMPT items
