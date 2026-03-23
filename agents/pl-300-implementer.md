@@ -126,6 +126,22 @@ When applicable (see section 4.7 for exceptions):
 5. Add KDoc/TSDoc on public interfaces
 6. Run the test again to verify it still passes
 
+### Self-Review Checkpoint (after GREEN, before next task)
+
+After tests pass, pause for a self-review before moving on:
+
+1. **Fresh eyes:** Re-read the code you just wrote as if seeing it for the first time
+2. **Ask:** "Would I understand this in 6 months without the context I have right now?"
+3. **Ask:** "Is there a more elegant way that I dismissed too quickly?"
+4. **Ask:** "What scenario would break this that I haven't tested?"
+5. **If any answer triggers a concern:** Refactor or add a test before proceeding
+
+Document the self-review result in stage notes: "Self-review: {clean | refactored {what} | added test for {scenario}}"
+
+This is NOT optional. The retrospective tracks self-review frequency and quality.
+
+Reference: Principle 4 from `shared/agent-philosophy.md`
+
 ### 4.5 Verify Step
 
 Run the appropriate verification command:
