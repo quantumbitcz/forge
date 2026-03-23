@@ -9,6 +9,12 @@ set -euo pipefail
 #   --hook              PostToolUse hook (single file, Layer 1 only)
 #   --verify            VERIFY stage (Layer 1 + Layer 2)
 #   --review            REVIEW stage (Layer 1 + Layer 2 + Layer 3 stub)
+#
+# Multi-component routing:
+#   When .pipeline/.component-cache exists, the engine matches the file's
+#   path prefix against the cache to load the correct rules-override.json
+#   for the owning component's framework.  Falls back to detect_module()
+#   for single-component projects (fully backward compatible).
 
 # Track current file for error reporting
 _CURRENT_FILE=""
@@ -84,6 +90,175 @@ detect_module() {
   echo "$module"
 }
 
+# --- Component-aware framework resolution ---
+# resolve_component <file_path> <project_root>
+# Returns: framework name for the component that owns this file, or "" if the
+# file belongs to no component (e.g. root-level infra files).
+#
+# Resolution order:
+#   1. .pipeline/.component-cache  (path_prefix=framework, one entry per line)
+#   2. Parse components: block in dev-pipeline.local.md
+#   3. Fall back to detect_module() — preserves single-component behavior
+#
+# Component cache format (written by the orchestrator at PREFLIGHT):
+#   be=spring
+#   fe=react
+# Each line is <relative_path_prefix>=<framework>.  The prefix is matched
+# as a leading path segment of the file's path relative to project_root.
+#
+# Edge cases:
+#   - File at project root (no subdirectory component) → first/default component
+#   - File outside all component paths                 → "" (no framework rules)
+#   - Single-component project (no cache, no components: block) → detect_module()
+resolve_component() {
+  local file_path="$1"
+  local project_root="$2"
+
+  [[ -z "$project_root" ]] && return
+
+  local cache_file="${project_root}/.pipeline/.component-cache"
+  local cfg="${project_root}/.claude/dev-pipeline.local.md"
+
+  # --- 1. Fast path: component cache exists ---
+  if [[ -f "$cache_file" ]]; then
+    # Derive the path of the file relative to project_root so we can compare
+    # against the stored prefix keys.
+    local rel_path=""
+    if [[ "$file_path" == "${project_root}"/* ]]; then
+      rel_path="${file_path#"${project_root}/"}"
+    else
+      rel_path="$file_path"
+    fi
+
+    # Walk each cache entry; find the longest matching prefix (most specific).
+    local best_prefix="" best_framework=""
+    while IFS='=' read -r prefix framework || [[ -n "$prefix" ]]; do
+      # Skip empty lines and comment lines
+      [[ -z "$prefix" || "$prefix" == \#* ]] && continue
+      # Match: rel_path starts with prefix followed by / or is exactly prefix
+      if [[ "$rel_path" == "${prefix}" || "$rel_path" == "${prefix}/"* ]]; then
+        # Prefer the longest matching prefix
+        if [[ ${#prefix} -gt ${#best_prefix} ]]; then
+          best_prefix="$prefix"
+          best_framework="$framework"
+        fi
+      fi
+    done < "$cache_file"
+
+    if [[ -n "$best_framework" ]]; then
+      echo "$best_framework"
+      return
+    fi
+
+    # File matched no component path — root-level file or outside all components.
+    # Return "" so the caller can skip framework-specific rules.
+    echo ""
+    return
+  fi
+
+  # --- 2. Parse components: block from dev-pipeline.local.md ---
+  # Look for a multi-component config. The YAML block looks like:
+  #   components:
+  #     backend:
+  #       path: be
+  #       framework: spring
+  #     frontend:
+  #       path: fe
+  #       framework: react
+  # We do a simple line-by-line parse (no full YAML parser required):
+  # collect (path, framework) pairs from indented sub-blocks under components:.
+  if [[ -f "$cfg" ]]; then
+    local in_components=0
+    local in_component_block=0
+    local current_path="" current_framework="" found_any=0
+    local best_comp_prefix="" best_comp_framework="" comp_indent=""
+
+    # Derive relative path for matching
+    local rel_path=""
+    if [[ "$file_path" == "${project_root}"/* ]]; then
+      rel_path="${file_path#"${project_root}/"}"
+    else
+      rel_path="$file_path"
+    fi
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      # Detect YAML frontmatter boundary (--- lines): if we hit a second ---
+      # after the opening one, stop reading (end of frontmatter)
+      [[ "$line" == "---" && $in_components -eq 0 ]] && continue
+
+      # Detect top-level "components:" key (zero indentation)
+      if [[ "$line" =~ ^components:[[:space:]]*$ ]]; then
+        in_components=1
+        continue
+      fi
+
+      # If we were in components: block and hit another top-level key, stop
+      if [[ $in_components -eq 1 && "$line" =~ ^[a-zA-Z] && ! "$line" =~ ^[[:space:]] ]]; then
+        in_components=0
+        in_component_block=0
+        continue
+      fi
+
+      [[ $in_components -eq 0 ]] && continue
+
+      # Detect named component block (2-space indent + name + colon)
+      if [[ "$line" =~ ^[[:space:]]{2}([a-zA-Z_][a-zA-Z0-9_-]*):[[:space:]]*$ ]]; then
+        # Save previous component if we have both path and framework
+        if [[ -n "$current_path" && -n "$current_framework" ]]; then
+          found_any=1
+          if [[ "$rel_path" == "${current_path}" || "$rel_path" == "${current_path}/"* ]]; then
+            if [[ ${#current_path} -gt ${#best_comp_prefix} ]]; then
+              best_comp_prefix="$current_path"
+              best_comp_framework="$current_framework"
+            fi
+          fi
+        fi
+        current_path=""
+        current_framework=""
+        in_component_block=1
+        continue
+      fi
+
+      [[ $in_component_block -eq 0 ]] && continue
+
+      # Parse path: and framework: within a component block (4-space indent)
+      if [[ "$line" =~ ^[[:space:]]{4}path:[[:space:]]*(.+)$ ]]; then
+        current_path="${BASH_REMATCH[1]}"
+        # Strip inline comments and trailing whitespace
+        current_path="${current_path%%#*}"
+        current_path="${current_path%"${current_path##*[! ]}"}"
+        continue
+      fi
+      if [[ "$line" =~ ^[[:space:]]{4}framework:[[:space:]]*(.+)$ ]]; then
+        current_framework="${BASH_REMATCH[1]}"
+        current_framework="${current_framework%%#*}"
+        current_framework="${current_framework%"${current_framework##*[! ]}"}"
+        continue
+      fi
+    done < "$cfg"
+
+    # Handle the last component entry
+    if [[ -n "$current_path" && -n "$current_framework" ]]; then
+      found_any=1
+      if [[ "$rel_path" == "${current_path}" || "$rel_path" == "${current_path}/"* ]]; then
+        if [[ ${#current_path} -gt ${#best_comp_prefix} ]]; then
+          best_comp_prefix="$current_path"
+          best_comp_framework="$current_framework"
+        fi
+      fi
+    fi
+
+    if [[ $found_any -eq 1 ]]; then
+      # Multi-component config found; return best match or "" for unmatched files
+      echo "$best_comp_framework"
+      return
+    fi
+  fi
+
+  # --- 3. Single-component fallback ---
+  detect_module "$project_root"
+}
+
 # --- Run Layer 1 on a single file ---
 run_layer1() {
   local file="$1" project_root="${2:-}"
@@ -95,7 +270,7 @@ run_layer1() {
 
   local module="" override=""
   if [[ -n "$project_root" ]]; then
-    module="$(detect_module "$project_root")"
+    module="$(resolve_component "$file" "$project_root")"
     [[ -n "$module" && -f "$PLUGIN_ROOT/modules/frameworks/${module}/rules-override.json" ]] && \
       override="$PLUGIN_ROOT/modules/frameworks/${module}/rules-override.json"
   fi
