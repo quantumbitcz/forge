@@ -1,0 +1,61 @@
+# TypeScript Language Conventions
+
+## Type System
+
+- Enable `strict: true` in `tsconfig.json` — this activates `strictNullChecks`, `noImplicitAny`, `strictFunctionTypes`, and more.
+- Enable `noUncheckedIndexedAccess: true` — index access (`arr[0]`, `obj[key]`) returns `T | undefined`, forcing explicit null handling.
+- Never use `any` — use `unknown` and narrow with type guards (`typeof`, `instanceof`, `in`, custom predicates).
+- Use `as const` for literal type inference: `const STATUS = { ACTIVE: 'active', INACTIVE: 'inactive' } as const`.
+- Use discriminated unions for tagged variants: `{ type: 'success'; data: T } | { type: 'error'; message: string }`.
+- Use template literal types for string unions: `type EventName = \`on${Capitalize<string>}\``.
+- Utility types: `Partial<T>`, `Required<T>`, `Pick<T, K>`, `Omit<T, K>`, `Record<K, V>`, `Readonly<T>`, `ReturnType<F>`, `Parameters<F>`.
+- Prefer interface for object shapes that may be extended; prefer `type` alias for unions, intersections, and computed types.
+
+## Null Safety / Error Handling
+
+- Represent absence with `undefined` (not `null`) for optional fields — or declare them optional with `?`.
+- Use optional chaining (`?.`) and nullish coalescing (`??`) rather than manual null checks.
+- For error values, prefer discriminated union returns (`{ ok: true; value: T } | { ok: false; error: E }`) over throwing for expected failures.
+- Throwing is appropriate for programmer errors and unrecoverable conditions.
+- Never use non-null assertion (`!`) unless the nullability is a known TypeScript limitation (e.g., post-null-check in closures) — document why.
+
+## Async / Concurrency
+
+- Use `async/await` over raw Promise chains — it is more readable and errors propagate naturally.
+- Every `async` function must either handle errors internally or propagate them via `await` — no floating promises.
+- `Promise.all` when all operations must succeed; `Promise.allSettled` when partial results are acceptable.
+- Use `AbortController` to cancel in-flight async operations on timeout or unmount.
+- For rate-limited concurrency (e.g., batch API calls), use a semaphore or `p-limit` — do not fire hundreds of concurrent requests.
+- Handle `unhandledRejection` at process/application level for non-awaited promises.
+
+## Import Order
+
+1. Runtime/framework imports (e.g., `react`, `node:fs`)
+2. Third-party packages
+3. Internal shared/barrel imports (e.g., `@/shared`)
+4. Feature-local imports
+5. Type-only imports (`import type { ... }`)
+
+Use ESM `import` syntax — never `require()` in TypeScript projects targeting ES modules.
+
+## Naming Idioms
+
+- Types and interfaces: `PascalCase`.
+- Variables, functions, methods: `camelCase`.
+- Constants with literal intent: `UPPER_SNAKE_CASE` (or `camelCase` if module-private).
+- Generic type parameters: single uppercase letter (`T`, `K`, `V`) or descriptive (`TItem`, `TKey`).
+- Boolean variables/properties: `isX`, `hasX`, `canX`, `shouldX`.
+- Files: `camelCase.ts` for utilities/services, `PascalCase.ts` for class/component files.
+
+## Anti-Patterns
+
+- **`any` type:** Silently disables type checking for everything downstream. Use `unknown` and narrow.
+- **Non-null assertion (`!`) without justification:** Deferred runtime crash. Fix the type or add a guard.
+- **Mixing `null` and `undefined`:** Pick one convention per codebase. TypeScript optional (`?`) implies `undefined`.
+- **`require()` in ESM projects:** Breaks module semantics and tree-shaking. Always use `import`.
+- **Unhandled floating promises:** `someAsyncFn()` without `await` or `.catch()` silently swallows errors.
+- **`Promise.all` for independent operations that should continue on partial failure:** Use `Promise.allSettled` instead.
+- **Overly broad catch blocks catching `unknown`:** Narrow the error type before accessing properties (`err instanceof Error`).
+- **Type assertions (`as Foo`) to paper over mismatches:** Fix the type mismatch properly; `as` only suppresses the check.
+- **`index` as array key in lists that can reorder or filter:** Causes incorrect reconciliation and state bugs.
+- **`var` declarations:** Always use `const` (default) or `let` (when reassignment is required). `var` has function scope and hoisting behavior that causes subtle bugs.
