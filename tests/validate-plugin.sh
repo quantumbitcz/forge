@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Structural validation for the dev-pipeline plugin.
 # Zero dependencies beyond bash + jq.
-# Prints PASS/FAIL for each of 25 checks. Exits 1 if any check fails.
+# Prints PASS/FAIL for each of 27 checks. Exits 1 if any check fails.
 
 set -euo pipefail
 
@@ -93,24 +93,29 @@ check "All agents have Forbidden Actions section" "$check5_fail"
 echo ""
 echo "--- MODULES ---"
 
-MODULES=(c-embedded go-stdlib infra-k8s java-spring kotlin-spring python-fastapi react-vite rust-axum swift-ios swift-vapor typescript-node typescript-svelte)
+FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib)
+LANGUAGES=(kotlin java typescript python go rust swift c csharp)
+TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md)
 REQUIRED_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
 
-# Check 6: All 12 modules have 5 required files
+# Check 6: All 11 framework directories have 5 required files
 check6_fail=0
-for mod in "${MODULES[@]}"; do
+for fw in "${FRAMEWORKS[@]}"; do
   for req in "${REQUIRED_FILES[@]}"; do
-    if [ ! -f "$ROOT/modules/$mod/$req" ]; then
+    if [ ! -f "$ROOT/modules/frameworks/$fw/$req" ]; then
       check6_fail=1; break 2
     fi
   done
 done
-check "All 12 modules have required 5 files" "$check6_fail"
+check "All 11 framework directories have required 5 files" "$check6_fail"
 
-# Check 7: All conventions.md have Dos/Don'ts section (case-insensitive for don't / donts / Don'ts)
+# Check 7: All frameworks/*/conventions.md have Dos/Don'ts section (case-insensitive for don't / donts / Don'ts)
 check7_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/conventions.md"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/conventions.md"
+  if [ ! -f "$f" ]; then
+    check7_fail=1; break
+  fi
   if ! grep -qiE "don'?ts?" "$f"; then
     check7_fail=1; break
   fi
@@ -119,8 +124,8 @@ check "All conventions.md have Dos/Don'ts section" "$check7_fail"
 
 # Check 8: All pipeline-config-template.md have total_retries_max
 check8_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/pipeline-config-template.md"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/pipeline-config-template.md"
   if ! grep -q "total_retries_max" "$f"; then
     check8_fail=1; break
   fi
@@ -129,8 +134,8 @@ check "All pipeline-config-template.md have total_retries_max" "$check8_fail"
 
 # Check 9: All pipeline-config-template.md have oscillation_tolerance
 check9_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/pipeline-config-template.md"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/pipeline-config-template.md"
   if ! grep -q "oscillation_tolerance" "$f"; then
     check9_fail=1; break
   fi
@@ -139,21 +144,39 @@ check "All pipeline-config-template.md have oscillation_tolerance" "$check9_fail
 
 # Check 10: All local-template.md have linear: section
 check10_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/local-template.md"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/local-template.md"
   if ! grep -q "linear:" "$f"; then
     check10_fail=1; break
   fi
 done
 check "All local-template.md have linear: section" "$check10_fail"
 
+# Check 10a: All 9 language files exist in modules/languages/
+check10a_fail=0
+for lang in "${LANGUAGES[@]}"; do
+  if [ ! -f "$ROOT/modules/languages/$lang.md" ]; then
+    check10a_fail=1; break
+  fi
+done
+check "All 9 language files exist in modules/languages/" "$check10a_fail"
+
+# Check 10b: All 11 testing files exist in modules/testing/
+check10b_fail=0
+for tf in "${TESTING_FILES[@]}"; do
+  if [ ! -f "$ROOT/modules/testing/$tf" ]; then
+    check10b_fail=1; break
+  fi
+done
+check "All 11 testing files exist in modules/testing/" "$check10b_fail"
+
 echo ""
 echo "--- JSON ---"
 
 # Check 11: All rules-override.json valid JSON
 check11_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/rules-override.json"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/rules-override.json"
   if ! jq empty "$f" 2>/dev/null; then
     check11_fail=1; break
   fi
@@ -162,8 +185,8 @@ check "All rules-override.json are valid JSON" "$check11_fail"
 
 # Check 12: All known-deprecations.json valid JSON
 check12_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/known-deprecations.json"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/known-deprecations.json"
   if ! jq empty "$f" 2>/dev/null; then
     check12_fail=1; break
   fi
@@ -172,8 +195,8 @@ check "All known-deprecations.json are valid JSON" "$check12_fail"
 
 # Check 13: All known-deprecations.json have "version": 2
 check13_fail=0
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/known-deprecations.json"
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/known-deprecations.json"
   ver=$(jq -r '.version // empty' "$f" 2>/dev/null)
   if [ "$ver" != "2" ]; then
     check13_fail=1; break
@@ -184,9 +207,8 @@ check 'All known-deprecations.json have "version": 2' "$check13_fail"
 # Check 14: All deprecation entries have required v2 fields
 check14_fail=0
 REQUIRED_DEP_FIELDS=(pattern replacement package since applies_from applies_to)
-for mod in "${MODULES[@]}"; do
-  f="$ROOT/modules/$mod/known-deprecations.json"
-  entry_count=$(jq '.deprecations | length' "$f" 2>/dev/null)
+for fw in "${FRAMEWORKS[@]}"; do
+  f="$ROOT/modules/frameworks/$fw/known-deprecations.json"
   for field in "${REQUIRED_DEP_FIELDS[@]}"; do
     missing=$(jq --arg field "$field" '[.deprecations[] | select(has($field) | not)] | length' "$f" 2>/dev/null)
     if [ "$missing" -gt 0 ]; then
@@ -314,14 +336,14 @@ check "Pattern rule IDs are unique within each language file" "$check23_fail"
 echo ""
 echo "--- LEARNINGS ---"
 
-# Check 24: shared/learnings/{module}.md exists for each module
+# Check 24: shared/learnings/{framework}.md exists for each framework
 check24_fail=0
-for mod in "${MODULES[@]}"; do
-  if [ ! -f "$ROOT/shared/learnings/$mod.md" ]; then
+for fw in "${FRAMEWORKS[@]}"; do
+  if [ ! -f "$ROOT/shared/learnings/$fw.md" ]; then
     check24_fail=1; break
   fi
 done
-check "shared/learnings/{module}.md exists for each module" "$check24_fail"
+check "shared/learnings/{framework}.md exists for each framework" "$check24_fail"
 
 echo ""
 echo "--- VERSION ---"

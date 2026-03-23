@@ -1,24 +1,51 @@
 #!/usr/bin/env bats
-# Contract tests: module directory completeness.
+# Contract tests: module directory completeness (three-layer structure).
 
 load '../helpers/test-helpers'
 
-MODULES_DIR="$PLUGIN_ROOT/modules"
+FRAMEWORKS_DIR="$PLUGIN_ROOT/modules/frameworks"
+LANGUAGES_DIR="$PLUGIN_ROOT/modules/languages"
+TESTING_DIR="$PLUGIN_ROOT/modules/testing"
 LEARNINGS_DIR="$PLUGIN_ROOT/shared/learnings"
 
-EXPECTED_MODULES=(
-  c-embedded
+EXPECTED_FRAMEWORKS=(
+  spring
+  react
+  fastapi
+  axum
+  swiftui
+  vapor
+  express
+  sveltekit
+  k8s
+  embedded
   go-stdlib
-  infra-k8s
-  java-spring
-  kotlin-spring
-  python-fastapi
-  react-vite
-  rust-axum
-  swift-ios
-  swift-vapor
-  typescript-node
-  typescript-svelte
+)
+
+EXPECTED_LANGUAGES=(
+  kotlin
+  java
+  typescript
+  python
+  go
+  rust
+  swift
+  c
+  csharp
+)
+
+EXPECTED_TESTING_FILES=(
+  kotest.md
+  junit5.md
+  vitest.md
+  jest.md
+  pytest.md
+  go-testing.md
+  xctest.md
+  rust-test.md
+  xunit-nunit.md
+  testcontainers.md
+  playwright.md
 )
 
 REQUIRED_FILES=(
@@ -30,34 +57,34 @@ REQUIRED_FILES=(
 )
 
 # ---------------------------------------------------------------------------
-# 1. All 12 modules exist
+# 1. All 11 framework directories exist
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 12 expected modules exist" {
+@test "module-completeness: all 11 expected framework directories exist" {
   local missing=()
-  for module in "${EXPECTED_MODULES[@]}"; do
-    if [[ ! -d "$MODULES_DIR/$module" ]]; then
-      missing+=("$module")
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
+    if [[ ! -d "$FRAMEWORKS_DIR/$fw" ]]; then
+      missing+=("$fw")
     fi
   done
   if (( ${#missing[@]} > 0 )); then
-    fail "Missing module directories: ${missing[*]}"
+    fail "Missing framework directories: ${missing[*]}"
   fi
 }
 
 # ---------------------------------------------------------------------------
-# 2. Each module has 5 required files
+# 2. Each framework has 5 required files
 # ---------------------------------------------------------------------------
-@test "module-completeness: each module has all 5 required files" {
+@test "module-completeness: each framework has all 5 required files" {
   local failures=()
-  for module in "${EXPECTED_MODULES[@]}"; do
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
     for required_file in "${REQUIRED_FILES[@]}"; do
-      if [[ ! -f "$MODULES_DIR/$module/$required_file" ]]; then
-        failures+=("$module/$required_file")
+      if [[ ! -f "$FRAMEWORKS_DIR/$fw/$required_file" ]]; then
+        failures+=("$fw/$required_file")
       fi
     done
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "Missing required module files: ${failures[*]}"
+    fail "Missing required framework files: ${failures[*]}"
   fi
 }
 
@@ -66,18 +93,18 @@ REQUIRED_FILES=(
 # ---------------------------------------------------------------------------
 @test "module-completeness: conventions.md has Don'ts section" {
   local failures=()
-  for module in "${EXPECTED_MODULES[@]}"; do
-    local conv_file="$MODULES_DIR/$module/conventions.md"
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
+    local conv_file="$FRAMEWORKS_DIR/$fw/conventions.md"
     if [[ ! -f "$conv_file" ]]; then
       continue
     fi
     # Look for case-insensitive variant of "don't" or "donts" or "Do Not"
     if ! grep -qiE "don'?t|do not" "$conv_file"; then
-      failures+=("$module")
+      failures+=("$fw")
     fi
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "conventions.md missing Don'ts section in modules: ${failures[*]}"
+    fail "conventions.md missing Don'ts section in frameworks: ${failures[*]}"
   fi
 }
 
@@ -86,8 +113,8 @@ REQUIRED_FILES=(
 # ---------------------------------------------------------------------------
 @test "module-completeness: pipeline-config-template has total_retries_max and oscillation_tolerance" {
   local failures=()
-  for module in "${EXPECTED_MODULES[@]}"; do
-    local tmpl="$MODULES_DIR/$module/pipeline-config-template.md"
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
+    local tmpl="$FRAMEWORKS_DIR/$fw/pipeline-config-template.md"
     if [[ ! -f "$tmpl" ]]; then
       continue
     fi
@@ -95,7 +122,7 @@ REQUIRED_FILES=(
     grep -q "total_retries_max" "$tmpl" || missing_fields+=("total_retries_max")
     grep -q "oscillation_tolerance" "$tmpl" || missing_fields+=("oscillation_tolerance")
     if (( ${#missing_fields[@]} > 0 )); then
-      failures+=("$module: missing ${missing_fields[*]}")
+      failures+=("$fw: missing ${missing_fields[*]}")
     fi
   done
   if (( ${#failures[@]} > 0 )); then
@@ -108,31 +135,61 @@ REQUIRED_FILES=(
 # ---------------------------------------------------------------------------
 @test "module-completeness: local-template has linear: section" {
   local failures=()
-  for module in "${EXPECTED_MODULES[@]}"; do
-    local tmpl="$MODULES_DIR/$module/local-template.md"
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
+    local tmpl="$FRAMEWORKS_DIR/$fw/local-template.md"
     if [[ ! -f "$tmpl" ]]; then
       continue
     fi
     if ! grep -q "linear:" "$tmpl"; then
-      failures+=("$module")
+      failures+=("$fw")
     fi
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "local-template missing linear: section in modules: ${failures[*]}"
+    fail "local-template missing linear: section in frameworks: ${failures[*]}"
   fi
 }
 
 # ---------------------------------------------------------------------------
-# 6. Learnings file exists per module
+# 6. Learnings file exists per framework
 # ---------------------------------------------------------------------------
-@test "module-completeness: learnings file exists for each module" {
+@test "module-completeness: learnings file exists for each framework" {
   local missing=()
-  for module in "${EXPECTED_MODULES[@]}"; do
-    if [[ ! -f "$LEARNINGS_DIR/$module.md" ]]; then
-      missing+=("$module")
+  for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$fw.md" ]]; then
+      missing+=("$fw")
     fi
   done
   if (( ${#missing[@]} > 0 )); then
     fail "Missing learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 7. All 9 language files exist in modules/languages/
+# ---------------------------------------------------------------------------
+@test "module-completeness: all 9 language files exist in modules/languages/" {
+  local missing=()
+  for lang in "${EXPECTED_LANGUAGES[@]}"; do
+    if [[ ! -f "$LANGUAGES_DIR/$lang.md" ]]; then
+      missing+=("$lang.md")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing language files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 8. All 11 testing files exist in modules/testing/
+# ---------------------------------------------------------------------------
+@test "module-completeness: all 11 testing files exist in modules/testing/" {
+  local missing=()
+  for tf in "${EXPECTED_TESTING_FILES[@]}"; do
+    if [[ ! -f "$TESTING_DIR/$tf" ]]; then
+      missing+=("$tf")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing testing files: ${missing[*]}"
   fi
 }
