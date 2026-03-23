@@ -263,6 +263,25 @@ If `git show` fails for the baseline (file not in baseline branch):
 - Run current-state-only analysis: validate structure, types, naming — without diff
 - Skip breaking change detection for this contract
 
+### Cross-Repo Contract Validation
+
+When `related_projects` is configured and this agent is dispatched:
+
+1. **Identify contracts:** Find API spec files (openapi.yml, openapi.yaml, api-spec.yml, proto files, graphql schemas) in the current repo
+2. **Find consumer specs:** Check related projects for matching consumer specs or generated types
+3. **Diff:** Compare the current change against the baseline in related repos
+4. **Classify changes:**
+   - Field additions (optional) → INFO (safe)
+   - Field additions (required) → WARNING (breaking for existing consumers)
+   - Field removals → CRITICAL (breaking)
+   - Type changes → CRITICAL (breaking)
+   - New endpoints → INFO (safe)
+   - Removed endpoints → CRITICAL (breaking)
+5. **Consumer impact analysis:** For breaking changes, check if the consumer actually uses the affected field/endpoint. Downgrade to WARNING if unused.
+6. **Report format:** Standard findings format with `CONTRACT-*` category
+
+Access related project files via their `path` from `related_projects` config (read-only during validation).
+
 ## Forbidden Actions
 - DO NOT modify source or consumer files — you are read-only
 - DO NOT use cached baseline — always use `git show`
