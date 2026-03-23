@@ -359,6 +359,25 @@ Compute `conventions_hash` per component (SHA256 first 8 chars of the concatenat
 
 **Single-component projects:** If `components:` is absent, this section is skipped entirely. The existing `conventions_file` / `detected_versions` flow applies unchanged.
 
+### 3.5c Check Coverage Baseline (Test Bootstrapper)
+
+If `test_bootstrapper` is configured in `dev-pipeline.local.md` and `test_bootstrapper.enabled: true`:
+
+1. Run the test command with coverage: `{commands.test} --coverage` or framework-equivalent
+   - If coverage command fails or is not configured: skip this check, log INFO
+2. Parse coverage percentage from output
+3. Compare against `test_bootstrapper.coverage_threshold` (default: 30%)
+4. If coverage < threshold:
+   - Log INFO: "Coverage {X}% below threshold {Y}% — dispatching test bootstrapper"
+   - Dispatch `pl-150-test-bootstrapper` with: project root, target coverage, component convention stack
+   - Wait for bootstrapper to complete
+   - Re-run coverage to verify improvement
+   - Proceed to Stage 1 (EXPLORE) regardless of whether threshold was reached (bootstrapper does its best)
+5. If coverage >= threshold: proceed normally
+6. If `test_bootstrapper` is not configured or `enabled: false`: skip entirely
+
+This step is optional and only triggers when explicitly configured. It runs AFTER convention resolution (3.5b) so the bootstrapper gets the correct convention stack.
+
 ### 3.6 Check for Interrupted Runs
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
