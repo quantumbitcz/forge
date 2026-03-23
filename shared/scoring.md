@@ -109,9 +109,12 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code) |
 | `FE-PERF-*` | Frontend performance issue (bundle size, unnecessary re-renders, unoptimized assets) |
+| `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
 Module-specific categories (e.g., `HEX-*` for kotlin-spring, `THEME-*` for react-vite) are defined in each module's `conventions.md`.
+
+**APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
 
 ## Deduplication Rules
 
