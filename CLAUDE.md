@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`dev-pipeline` is a Claude Code plugin (v1.2.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/pipeline-run` skill which dispatches `pl-100-orchestrator`.
+`dev-pipeline` is a Claude Code plugin (v1.0.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/pipeline-run` skill which dispatches `pl-100-orchestrator`.
 
 ## Architecture
 
@@ -252,7 +252,7 @@ for m in modules/*/pipeline-config-template.md; do grep -q "total_retries_max" "
 
 ## Plugin distribution (`.claude-plugin/`)
 
-- `plugin.json` — plugin manifest (v1.2.0). Name, version, description, author, license, category, keywords.
+- `plugin.json` — plugin manifest (v1.0.0). Name, version, description, author, license, category, keywords.
 - `marketplace.json` — marketplace catalog for the `quantumbitcz` marketplace. Lists `dev-pipeline` with source `"./"`.
 - Hooks are auto-discovered from `hooks/hooks.json` (3 hooks: check engine on Edit/Write, checkpoint on Skill, feedback on Stop). The `plugin.json` has NO hooks field — hooks live exclusively in `hooks/hooks.json`.
 - Install: `/plugin marketplace add quantumbitcz/dev-pipeline` then `/plugin install dev-pipeline@quantumbitcz`.
