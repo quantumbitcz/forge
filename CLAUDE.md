@@ -189,13 +189,13 @@ All 12 modules follow the same structure (`conventions.md`, `local-template.md`,
 ### Full test suite
 
 ```bash
-# Run all tests (~172 tests, ~30s)
+# Run all tests (~233 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
 ./tests/run-all.sh structural   # Plugin integrity (25 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (73 tests)
-./tests/run-all.sh contract     # Document contract compliance (35 tests)
+./tests/run-all.sh unit         # Shell script behavior (82 tests)
+./tests/run-all.sh contract     # Document contract compliance (87 tests)
 ./tests/run-all.sh scenario     # Multi-script integration (39 tests)
 ```
 

@@ -38,7 +38,7 @@ Common scopes: `agents`, `shared`, `hooks`, `skills`, `kotlin-spring`, `react-vi
 
 ### Agent files require YAML frontmatter
 
-Every agent in `agents/` must have frontmatter with `name` (matching filename without `.md`), `description`, and `tools` list. The orchestrator uses these fields to dispatch agents.
+Every agent in `agents/` must have frontmatter with `name` (matching filename without `.md`) and `description`. The `tools` list is required for cross-cutting review agents; pipeline agents inherit tools from the orchestrator's dispatch. The orchestrator uses these fields to dispatch agents.
 
 ### Pipeline agents vs module agents
 
@@ -51,7 +51,7 @@ Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/de
 
 ### State is local and gitignored
 
-All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema.
+All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.3). Changes to the state schema require a new version number and a forward-compatible migration path (see the migration chain in `state-schema.md`: 1.1 -> 1.2 -> 1.3).
 
 ## Making Changes
 
@@ -77,9 +77,9 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
    modules/{name}/
      conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
      local-template.md           # Project config template (YAML frontmatter)
-     pipeline-config-template.md # Runtime config template
+     pipeline-config-template.md # Runtime config template (must include total_retries_max and oscillation_tolerance)
      rules-override.json         # Module-specific check engine overrides
-     known-deprecations.json     # Registry of deprecated APIs (seed with 5-15 entries)
+     known-deprecations.json     # Registry of deprecated APIs (schema v2 with applies_from/removed_in/applies_to fields, seed with 5-15 entries)
      scripts/                    # Optional verification scripts
      hooks/                      # Optional guard hooks
    ```
@@ -131,11 +131,15 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 ## Pull Request Process
 
 1. Create a branch and make your changes
-2. Verify agent frontmatter is valid YAML
-3. Verify scripts are executable and have shebang lines
-4. Run `shared/checks/engine.sh --dry-run` to verify check engine configuration
-5. Open a PR with a clear description using the PR template
-6. Get at least one review from a team member
+2. Run the test suite and verify all tests pass:
+   ```bash
+   ./tests/run-all.sh
+   ```
+3. Verify agent frontmatter is valid YAML
+4. Verify scripts are executable and have shebang lines
+5. Run `shared/checks/engine.sh --dry-run` to verify check engine configuration
+6. Open a PR with a clear description using the PR template
+7. Get at least one review from a team member
 
 ## Questions?
 
