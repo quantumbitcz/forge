@@ -49,7 +49,7 @@ echo "Plugin structure OK"
 ## Key conventions
 
 ### Agent files (`agents/*.md`)
-- YAML frontmatter is required: `name` (must match filename without `.md`), `description`. The `tools` list is required for cross-cutting review agents; pipeline agents inherit tools from the orchestrator's dispatch.
+- YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools`. The `tools` list defines which tools the agent can use when dispatched — agents that dispatch other agents (orchestrator, quality-gate, test-gate) **must** include `Agent` in their tools list.
 - Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
 - Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
@@ -87,7 +87,7 @@ echo "Plugin structure OK"
 - Graceful degradation: pipeline runs without Linear when MCP is unavailable.
 
 ### Adaptive MCP Detection
-- PREFLIGHT detects available MCPs (Linear, Playwright, Slack, Context7, Figma) by checking tool availability.
+- The `pipeline-run` skill detects available MCPs (Linear, Playwright, Slack, Context7, Figma) in the main session context and passes results to the orchestrator via the dispatch prompt. Fallback: orchestrator reads `.mcp.json` directly.
 - Each agent uses MCPs relevant to its stage (e.g., Playwright for preview validation, Context7 for documentation lookup and migration guides).
 - **Mid-run health:** First MCP failure marks it as degraded for the rest of the run. Subsequent dispatches skip it without timeout delays.
 - No MCP is required. The pipeline adapts to whatever the user has installed and suggests missing optional MCPs.
@@ -137,7 +137,7 @@ echo "Plugin structure OK"
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
 - `pipeline-history` — view quality score trends, agent effectiveness, and run metrics across pipeline runs.
 - `pipeline-rollback` — safely rollback pipeline changes (worktree, merge, Linear, state). Detects preconditions before offering modes.
-- Frontend-specific commands (`fe-check-theme`, `fe-design-review`, `fe-dark-mode-check`, `fe-react-doctor`) are project-level — they live in the consuming project's `.claude/commands/`, not in this plugin. See `modules/react-vite/conventions.md` for descriptions.
+- Frontend-specific commands (`fe-check-theme`, `fe-design-review`, `fe-dark-mode-check`, `fe-react-doctor`) are project-level — they live in the consuming project's `.claude/commands/`, not in this plugin. See `modules/frameworks/react/conventions.md` for descriptions.
 
 ### Hooks (`hooks/hooks.json`)
 - **Check engine** — PostToolUse on `Edit|Write`; runs `shared/checks/engine.sh --hook` (layer 1-2 fast checks on every file change). On timeout: increments skip counter, exits 0 (never blocks edits).

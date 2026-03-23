@@ -35,17 +35,17 @@ Scan the project root and immediate subdirectories for stack markers. Check for 
 
 | Markers | Module |
 |---------|--------|
-| `build.gradle.kts` + Kotlin source files (`*.kt`) | `kotlin-spring` |
-| `build.gradle.kts` + Java source files (`*.java`) | `java-spring` |
-| `package.json` + `vite.config.*` + react dependency | `react-vite` |
-| `package.json` + `svelte.config.*` | `typescript-svelte` |
-| `package.json` (no framework markers above) | `typescript-node` |
-| `Cargo.toml` | `rust-axum` |
+| `build.gradle.kts` + Kotlin source files (`*.kt`) | `spring` |
+| `build.gradle.kts` + Java source files (`*.java`) | `spring` |
+| `package.json` + `vite.config.*` + react dependency | `react` |
+| `package.json` + `svelte.config.*` | `sveltekit` |
+| `package.json` (no framework markers above) | `express` |
+| `Cargo.toml` | `axum` |
 | `go.mod` | `go-stdlib` |
-| `pyproject.toml` + fastapi dependency | `python-fastapi` |
-| `Package.swift` + Vapor dependency | `swift-vapor` |
-| `*.xcodeproj` | `swift-ios` |
-| `Makefile` + `*.c` source files | `c-embedded` |
+| `pyproject.toml` + fastapi dependency | `fastapi` |
+| `Package.swift` + Vapor dependency | `vapor` |
+| `*.xcodeproj` | `swiftui` |
+| `Makefile` + `*.c` source files | `embedded` |
 
 #### Ambiguity Resolution
 
@@ -69,8 +69,8 @@ Also detect and note the presence of:
 Present findings in a clear summary table:
 
 ```
-Detected stack:     react-vite
-Module:             modules/react-vite
+Detected stack:     react
+Module:             modules/frameworks/react
 Package manager:    pnpm
 Test framework:     Vitest
 Linters:            ESLint, Prettier
@@ -89,7 +89,7 @@ Wait for confirmation before continuing. If the user corrects something, adjust 
 
 Once confirmed, generate the configuration files:
 
-1. **Read the module template**: Read `${CLAUDE_PLUGIN_ROOT}/modules/{detected_module}/local-template.md` to get the template content.
+1. **Read the module template**: Read `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/local-template.md` to get the template content.
 
 2. **Fill in detected values**: Replace template placeholders with detected project-specific values:
    - Build command (e.g., `./gradlew build -x test`, `pnpm build`, `cargo build`)
@@ -100,7 +100,7 @@ Once confirmed, generate the configuration files:
 
 3. **Write config files**:
    - Copy filled template to `.claude/dev-pipeline.local.md`
-   - If `${CLAUDE_PLUGIN_ROOT}/modules/{detected_module}/pipeline-config-template.md` exists, copy it to `.claude/pipeline-config.md`
+   - If `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/pipeline-config-template.md` exists, copy it to `.claude/pipeline-config.md`
    - Create `.claude/pipeline-log.md` with this content:
      ```
      # Pipeline Log
@@ -209,7 +209,7 @@ If the user provides related repos:
    related_repos:
      - path: "../frontend-app"
        role: frontend
-       module: react-vite
+       module: react
      - path: "../api-contracts"
        role: contracts
        openapi: "openapi.yaml"
@@ -247,7 +247,7 @@ Present a final summary:
 Pipeline initialized successfully!
 
   Project:    my-awesome-app
-  Module:     kotlin-spring
+  Module:     spring
   Config:     .claude/dev-pipeline.local.md
               .claude/pipeline-config.md
               .claude/pipeline-log.md

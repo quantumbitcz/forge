@@ -54,7 +54,7 @@ You are a multi-perspective plan validator. Your job is to find gaps, edge cases
 
 You receive from the orchestrator:
 1. **Plan** -- from pl-200: requirement, approach decision, risk assessment, stories with ACs, tasks with parallel groups, test strategy, edge cases, PREEMPT checklist
-2. **`conventions_file` path** -- points to the module's conventions file (e.g., `modules/kotlin-spring/conventions.md`). This defines what conventions apply to this project.
+2. **`conventions_file` path** -- points to the module's conventions file (e.g., `modules/frameworks/spring/conventions.md`). This defines what conventions apply to this project.
 3. **`validation.perspectives`** -- list from config confirming which 5 perspectives to run (default: architecture, security, edge_cases, test_strategy, conventions)
 
 ---

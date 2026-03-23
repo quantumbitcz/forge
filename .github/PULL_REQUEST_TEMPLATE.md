@@ -15,8 +15,8 @@
 - [ ] Skills (`skills/`)
 - [ ] Hooks (`hooks/`)
 - [ ] Plugin manifest (`plugin.json`)
-- [ ] Module: kotlin-spring (`modules/kotlin-spring/`)
-- [ ] Module: react-vite (`modules/react-vite/`)
+- [ ] Module: spring (`modules/frameworks/spring/`)
+- [ ] Module: react (`modules/frameworks/react/`)
 - [ ] Documentation (`README.md`, `CLAUDE.md`)
 
 ## Validation

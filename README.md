@@ -315,12 +315,12 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Adding a new module
 
-To support a new framework (e.g., `python-fastapi`):
+To support a new framework (e.g., `fastapi`):
 
 ### 1. Create the directory structure
 
 ```
-modules/python-fastapi/
+modules/frameworks/fastapi/
   conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
   local-template.md           # Project config template (YAML frontmatter + context)
   pipeline-config-template.md # Runtime config template (must include total_retries_max, oscillation_tolerance)
@@ -332,7 +332,7 @@ modules/python-fastapi/
 
 ### 2. Create a learnings file
 
-Add `shared/learnings/python-fastapi.md` to track module-specific learnings across runs.
+Add `shared/learnings/fastapi.md` to track module-specific learnings across runs.
 
 ### 3. Wire agents into the local template
 
@@ -340,7 +340,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 
 ### 4. Naming conventions
 
-- Module directory: lowercase with hyphens (`python-fastapi`)
+- Module directory: `modules/frameworks/{name}`, lowercase with hyphens (`fastapi`, `go-stdlib`)
 - Review agents: descriptive names without module prefix (`architecture-reviewer`, `security-reviewer`)
 - Pipeline agents: `pl-{NNN}-{role}` (shared, not module-specific)
 - Scripts: `check-{what}.sh` or `{what}-guard.sh`
@@ -439,20 +439,22 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 12 framework modules
-    c-embedded/
-    go-stdlib/
-    infra-k8s/
-    java-spring/
-    kotlin-spring/
-    python-fastapi/
-    react-vite/
-    rust-axum/
-    swift-ios/
-    swift-vapor/
-    typescript-node/
-    typescript-svelte/
-    (each contains: conventions.md, local-template.md,
+  modules/                              # 11 framework modules + language/testing registries
+    frameworks/                         # Per-framework conventions and config
+      axum/
+      embedded/
+      express/
+      fastapi/
+      go-stdlib/
+      k8s/
+      react/
+      spring/
+      sveltekit/
+      swiftui/
+      vapor/
+    languages/                          # Per-language deprecation registries
+    testing/                            # Per-testing-framework deprecation registries
+    (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
   tests/                                # 4-tier test suite (~233 tests)

@@ -63,17 +63,17 @@ detect_module() {
   [[ -f "$cfg" ]] && module="$(grep -m1 '^module:' "$cfg" 2>/dev/null | sed 's/^module:[[:space:]]*//' || true)"
 
   if [[ -z "$module" ]]; then
-    if [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/kotlin &>/dev/null 2>&1; then module="kotlin-spring"
-    elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/java &>/dev/null 2>&1; then module="java-spring"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then module="react-vite"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/svelte.config.* &>/dev/null 2>&1; then module="typescript-svelte"
-    elif [[ -f "$project_root/package.json" ]]; then module="typescript-node"
-    elif [[ -f "$project_root/Cargo.toml" ]]; then module="rust-axum"
+    if [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/kotlin &>/dev/null 2>&1; then module="spring"
+    elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/java &>/dev/null 2>&1; then module="spring"
+    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then module="react"
+    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/svelte.config.* &>/dev/null 2>&1; then module="sveltekit"
+    elif [[ -f "$project_root/package.json" ]]; then module="express"
+    elif [[ -f "$project_root/Cargo.toml" ]]; then module="axum"
     elif [[ -f "$project_root/go.mod" ]]; then module="go-stdlib"
-    elif [[ -f "$project_root/pyproject.toml" ]]; then module="python-fastapi"
-    elif [[ -f "$project_root/Package.swift" ]]; then module="swift-vapor"
-    elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swift-ios"
-    elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="c-embedded"
+    elif [[ -f "$project_root/pyproject.toml" ]]; then module="fastapi"
+    elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
+    elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swiftui"
+    elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="embedded"
     fi
   fi
 
@@ -96,8 +96,8 @@ run_layer1() {
   local module="" override=""
   if [[ -n "$project_root" ]]; then
     module="$(detect_module "$project_root")"
-    [[ -n "$module" && -f "$PLUGIN_ROOT/modules/${module}/rules-override.json" ]] && \
-      override="$PLUGIN_ROOT/modules/${module}/rules-override.json"
+    [[ -n "$module" && -f "$PLUGIN_ROOT/modules/frameworks/${module}/rules-override.json" ]] && \
+      override="$PLUGIN_ROOT/modules/frameworks/${module}/rules-override.json"
   fi
 
   if [[ -n "$override" ]]; then

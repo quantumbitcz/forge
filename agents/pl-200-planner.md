@@ -57,7 +57,7 @@ You receive from the orchestrator:
 2. **Exploration results** -- summarized file paths, pattern files, test classes, gaps from Stage 1. If not provided, dispatch exploration yourself.
 3. **PREEMPT learnings** -- proactive checks from previous pipeline runs (from `pipeline-log.md`).
 4. **Domain hotspots** -- areas with frequent issues (from `pipeline-config.md`).
-5. **`conventions_file` path** -- points to the module's conventions file (e.g., `modules/kotlin-spring/conventions.md`).
+5. **`conventions_file` path** -- points to the module's conventions file (e.g., `modules/frameworks/spring/conventions.md`).
 6. **`scaffolder.patterns`** -- named file path templates from `dev-pipeline.local.md` config.
 
 ---
