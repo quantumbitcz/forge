@@ -49,7 +49,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -132,11 +132,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "conventions_hash": "",
   "conventions_section_hashes": {},
   "detected_versions": {
-    "language": "",
-    "language_version": "",
-    "framework": "",
-    "framework_version": "",
-    "key_dependencies": {}
+    "language": "kotlin",
+    "language_version": "2.1.0",
+    "framework": "spring",
+    "framework_version": "3.4.1",
+    "key_dependencies": {
+      "exposed-core": "0.48.0",
+      "kafka-clients": "3.7.0",
+      "flyway-core": "10.8.1",
+      "caffeine": "3.1.8"
+    }
   },
   "check_engine_skipped": 0,
   "dry_run": false,
@@ -149,7 +154,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Version 1.0.0 is a clean break; old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. |
+| `version` | string | Yes | Schema version string (`"1.1.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Version 1.0.0 is a clean break; old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. v1.1.0 extends v1.0.0 with `convention_stack` arrays per component and `key_dependencies` in `detected_versions`. Old v1.0.0 state files are forward-compatible — missing fields default to empty. No `/pipeline-reset` required. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/pipeline-run` invocation argument. |
@@ -180,7 +185,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Kept for backward compatibility. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
 | `conventions_section_hashes` | object | Yes | Per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. |
-| `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies`: map of dependency name to version string for important libraries. Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). |
+| `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies` (v1.1.0): map of dependency name to version string for all detected libraries across all layers (language, framework, databases, messaging, persistence, testing). Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). Example: `{ "exposed-core": "0.48.0", "kafka-clients": "3.7.0", "flyway-core": "10.8.1", "caffeine": "3.1.8" }` |
 | `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
@@ -259,11 +264,43 @@ Per-component state tracking for monorepo and multi-stack projects. Single-repo 
 }
 ```
 
+Extended example (v1.1.0) showing `path` and `convention_stack`:
+
+```json
+"components": {
+  "backend": {
+    "path": "services/user-service",
+    "convention_stack": [
+      "modules/languages/kotlin.md",
+      "modules/frameworks/spring/conventions.md",
+      "modules/frameworks/spring/variants/kotlin.md",
+      "modules/databases/postgresql.md",
+      "modules/frameworks/spring/databases/postgresql.md",
+      "modules/persistence/exposed.md",
+      "modules/frameworks/spring/persistence/exposed.md",
+      "modules/messaging/kafka.md",
+      "modules/frameworks/spring/messaging/kafka.md",
+      "modules/testing/kotest.md",
+      "modules/frameworks/spring/testing/kotest.md"
+    ],
+    "story_state": "PREFLIGHT",
+    "conventions_hash": "",
+    "conventions_section_hashes": {},
+    "detected_versions": {
+      "language_version": "2.1.0",
+      "framework_version": "3.4.1"
+    }
+  }
+}
+```
+
 **Fields per component:**
 - `story_state` — current pipeline stage for this component (same enum as top-level)
 - `conventions_hash` — SHA256 first 8 chars of the composed convention stack
 - `conventions_section_hashes` — per-section hashes for drift detection
 - `detected_versions` — extracted from manifest files in the component path
+- `convention_stack` (optional, v1.1.0) — array of resolved convention file paths in composition order. Populated by PREFLIGHT. Empty array if not yet resolved.
+- `path` (optional, v1.1.0) — relative path prefix for this component. Used by the check engine for per-file convention routing. Required in multi-service mode. Defaults to project root in single-service mode.
 
 ---
 
@@ -277,7 +314,7 @@ Example: `"active_component": "backend"`
 
 ### Required Fields
 
-The following fields are required in every v1.0.0 state.json:
+The following fields are required in every v1.1.0 state.json:
 
 `version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`
 
