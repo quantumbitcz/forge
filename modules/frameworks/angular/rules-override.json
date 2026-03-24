@@ -1,0 +1,88 @@
+{
+  "extends": "typescript",
+  "framework": "angular",
+  "additional_rules": [
+    {
+      "id": "NG-STANDALONE-001",
+      "name": "ngmodule-declaration",
+      "pattern": "@NgModule\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-ANGULAR",
+      "message": "NgModule detected — prefer standalone components for new code",
+      "fix_hint": "Replace NgModule-based components with standalone: true in the @Component decorator. Move imports array to the component's imports field."
+    },
+    {
+      "id": "NG-SIGNAL-001",
+      "name": "legacy-decorator-input",
+      "pattern": "@Input\\(\\s*\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-ANGULAR",
+      "message": "Legacy @Input() decorator — prefer signal input() function",
+      "fix_hint": "Replace @Input() foo: T with foo = input<T>() or foo = input.required<T>() from @angular/core."
+    },
+    {
+      "id": "NG-SIGNAL-002",
+      "name": "legacy-decorator-output",
+      "pattern": "@Output\\(\\s*\\)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-ANGULAR",
+      "message": "Legacy @Output() decorator — prefer signal output() function",
+      "fix_hint": "Replace @Output() myEvent = new EventEmitter<T>() with myEvent = output<T>() from @angular/core."
+    },
+    {
+      "id": "NG-CD-001",
+      "name": "missing-onpush",
+      "pattern": "@Component\\(",
+      "exclude_pattern": "ChangeDetectionStrategy\\.OnPush",
+      "severity": "WARNING",
+      "category": "CONV-ANGULAR",
+      "message": "Component may be missing OnPush change detection — set changeDetection: ChangeDetectionStrategy.OnPush",
+      "fix_hint": "Add changeDetection: ChangeDetectionStrategy.OnPush to the @Component decorator. Ensure template reads only signals or pure pipes.",
+      "_note": "This is a structural check — engine delegates to layer-2 linter or agent. Rule documents the convention."
+    },
+    {
+      "id": "NG-RX-001",
+      "name": "manual-subscribe",
+      "pattern": "\\.subscribe\\s*\\(",
+      "exclude_pattern": "takeUntilDestroyed|unsubscribe|spec\\.ts|test\\.ts",
+      "severity": "WARNING",
+      "category": "CONV-ANGULAR",
+      "message": "Manual .subscribe() detected — prefer toSignal() or takeUntilDestroyed() to prevent memory leaks",
+      "fix_hint": "Use toSignal(observable$) for template consumption or pipe(takeUntilDestroyed(this.destroyRef)) for long-lived subscriptions."
+    },
+    {
+      "id": "NG-PIPE-001",
+      "name": "async-pipe-usage",
+      "pattern": "\\| async",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-ANGULAR",
+      "message": "async pipe detected — prefer toSignal() for OnPush-compatible reactive templates",
+      "fix_hint": "Replace '| async' with toSignal(observable$, { initialValue: ... }) in the component class. Works transparently with OnPush."
+    },
+    {
+      "id": "NG-INJECT-001",
+      "name": "constructor-injection",
+      "pattern": "constructor\\s*\\([^)]*private|constructor\\s*\\([^)]*public|constructor\\s*\\([^)]*protected|constructor\\s*\\([^)]*readonly",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\\.spec\\.ts",
+      "severity": "INFO",
+      "category": "CONV-ANGULAR",
+      "message": "Constructor injection detected — prefer inject() function for tree-shakeable DI",
+      "fix_hint": "Replace constructor(private service: MyService) with private service = inject(MyService) as a class field."
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "default_override": 400
+    },
+    "function_size": {
+      "default_override": 30
+    }
+  }
+}
