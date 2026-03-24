@@ -290,27 +290,25 @@ step3_ide_directories() {
   local ide_dirs=()
   local home="${HOME:-/tmp}"
 
-  # JetBrains IDEs (macOS/Linux: ~/XxxProjects, Windows: ~/XxxProjects or Documents)
-  for d in "$home/IdeaProjects" "$home/WebstormProjects" "$home/PycharmProjects" \
-           "$home/GolandProjects" "$home/CLionProjects" "$home/RiderProjects" \
-           "$home/AndroidStudioProjects" "$home/RustroverProjects" \
-           "$home/PhpstormProjects" "$home/DataGripProjects" "$home/DataSpellProjects" \
-           "$home/AppCodeProjects" "$home/FleetProjects" "$home/AquaProjects" \
-           "$home/WrightProjects" \
-           # VS Code / Cursor / Windsurf / Zed
-           "$home/VSCodeProjects" "$home/vscode-projects" \
-           "$home/CursorProjects" "$home/cursor-projects" \
-           "$home/WindsurfProjects" \
-           "$home/ZedProjects" \
-           # Xcode
-           "$home/XcodeProjects" \
-           # Eclipse / NetBeans
-           "$home/eclipse-workspace" "$home/NetBeansProjects" \
-           # Generic conventions (all platforms)
-           "$home/Projects" "$home/Developer" "$home/Development" \
-           "$home/workspace" "$home/Workspace" \
-           "$home/repos" "$home/Repos" "$home/git" "$home/src" "$home/code" \
-           "$home/Code"; do
+  # IDE project directories: JetBrains (IntelliJ, WebStorm, PyCharm, GoLand, CLion, Rider,
+  # Android Studio, RustRover, PhpStorm, DataGrip, DataSpell, AppCode, Fleet, Aqua, Wright),
+  # VS Code, Cursor, Windsurf, Zed, Xcode, Eclipse, NetBeans, plus generic conventions.
+  for d in \
+    "$home/IdeaProjects" "$home/WebstormProjects" "$home/PycharmProjects" \
+    "$home/GolandProjects" "$home/CLionProjects" "$home/RiderProjects" \
+    "$home/AndroidStudioProjects" "$home/RustroverProjects" \
+    "$home/PhpstormProjects" "$home/DataGripProjects" "$home/DataSpellProjects" \
+    "$home/AppCodeProjects" "$home/FleetProjects" "$home/AquaProjects" \
+    "$home/WrightProjects" \
+    "$home/VSCodeProjects" "$home/vscode-projects" \
+    "$home/CursorProjects" "$home/cursor-projects" \
+    "$home/WindsurfProjects" "$home/ZedProjects" \
+    "$home/XcodeProjects" \
+    "$home/eclipse-workspace" "$home/NetBeansProjects" \
+    "$home/Projects" "$home/Developer" "$home/Development" \
+    "$home/workspace" "$home/Workspace" \
+    "$home/repos" "$home/Repos" "$home/git" "$home/src" "$home/code" \
+    "$home/Code"; do
     [[ -d "$d" ]] && ide_dirs+=("$d")
   done
 
