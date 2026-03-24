@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Structural validation for the dev-pipeline plugin.
 # Zero dependencies beyond bash + jq.
-# Prints PASS/FAIL for each of 27 checks. Exits 1 if any check fails.
+# Prints PASS/FAIL for each of 28 checks. Exits 1 if any check fails.
 
 set -euo pipefail
 
@@ -357,6 +357,21 @@ if [ -z "$plugin_ver" ] || [ -z "$claude_ver" ] || [ "$plugin_ver" != "$claude_v
   check25_fail=1
 fi
 check "plugin.json version matches CLAUDE.md version ($plugin_ver == $claude_ver)" "$check25_fail"
+
+# --- CROSSCUTTING LAYERS ---
+echo ""
+echo "--- CROSSCUTTING LAYERS ---"
+
+LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability)
+
+check26_fail=0
+for layer in "${LAYERS[@]}"; do
+  if [[ ! -d "$ROOT/modules/$layer" ]]; then
+    echo "    Missing layer directory: modules/$layer"
+    check26_fail=1
+  fi
+done
+check "All crosscutting layer directories exist" "$check26_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
