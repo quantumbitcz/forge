@@ -11,11 +11,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Three-layer design with resolution flowing top-down:
 
 1. **Project config** (`.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md`) — per-project settings, mutable runtime params, and accumulated learnings. Lives in the consuming repo, not here.
-2. **Module layer** (`modules/`) — three sublayers for convention composition:
+2. **Module layer** (`modules/`) — sublayers for convention composition:
    - `modules/languages/` — 9 language files (kotlin, java, typescript, python, go, rust, swift, c, csharp): language-level idioms, type conventions, and baseline rules.
-   - `modules/frameworks/` — 17 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform), each with `conventions.md`, config files, `variants/` for language-specific overrides, and `testing/` for framework-specific test patterns.
+   - `modules/frameworks/` — 17 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform), each with `conventions.md`, config files, `variants/` for language-specific overrides, and subdirectories for framework-specific bindings (e.g., `testing/`, `persistence/`, `messaging/`).
    - `modules/testing/` — 11 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright).
-   Convention composition order (most specific wins): variant > framework-testing > framework > language > testing.
+   - `modules/databases/` — database engine best practices (query patterns, indexing, connection pooling).
+   - `modules/persistence/` — ORM/mapping patterns (entity design, repository conventions, transaction boundaries).
+   - `modules/migrations/` — schema migration tool patterns (versioning, rollback, zero-downtime strategies).
+   - `modules/api-protocols/` — API protocol patterns (REST, GraphQL, gRPC, WebSocket conventions).
+   - `modules/messaging/` — event-driven patterns (producers, consumers, dead-letter queues, idempotency).
+   - `modules/caching/` — cache strategy patterns (TTL, invalidation, cache-aside, write-through).
+   - `modules/search/` — full-text search patterns (indexing, query building, relevance tuning).
+   - `modules/storage/` — object storage patterns (upload flows, presigned URLs, lifecycle policies).
+   - `modules/auth/` — authentication/authorization patterns (JWT, OAuth2, RBAC, ABAC).
+   - `modules/observability/` — metrics, tracing, and logging patterns (OpenTelemetry, structured logging, alerting).
+   Convention composition order (most specific wins): variant > framework-binding > framework > language > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
 3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 29 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), and frontend design theory.
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
@@ -59,7 +69,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 **Agent file rules:**
 - YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes).
-- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field.
+- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Optional crosscutting layer fields: `database`, `persistence`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`. All optional — omit to skip. Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks.
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
@@ -71,7 +81,7 @@ Read source files for full details. Key facts:
 
 - **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. `SCOUT-*` findings: no deduction. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `pl-710-feedback-capture`.
-- **State schema** (`state-schema.md`): Version **1.0.0** (clean break — old files incompatible, use `/pipeline-reset`). State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
+- **State schema** (`state-schema.md`): Version **1.1.0**. v1.0.0 was a clean break — old files from pre-1.0 schema versions are incompatible; use `/pipeline-reset` to clear them. v1.1.0 is an additive extension of v1.0.0 — no `/pipeline-reset` required. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.0 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 15 types, 12-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
 - **Agent communication** (`agent-communication.md`): All data flows through orchestrator via stage notes. Agents are isolated — cannot dispatch others, write state, or message user. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
@@ -123,6 +133,14 @@ Add `shared/learnings/{name}.md`. Wire into the local template's `quality_gate` 
 
 **New language?** Also add `modules/languages/{lang}.md`. **New testing framework?** Also add `modules/testing/{test-framework}.md`.
 
+## Adding a new layer module
+
+Create `modules/{layer}/{name}.md` with the standard structure (Overview, Architecture Patterns, Configuration, Performance, Security, Testing, Dos, Don'ts). Optionally add `{name}.rules-override.json` and `{name}.known-deprecations.json`.
+
+Create framework bindings under `modules/frameworks/{fw}/{layer}/{name}.md` for each applicable framework.
+
+Add a learnings file at `shared/learnings/{name}.md`.
+
 ## Module-specific gotchas
 
 All 17 frameworks share the same base structure — see their `conventions.md` for details. Only non-obvious conventions listed here:
@@ -156,7 +174,7 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 
 - Agent `name` in frontmatter **must** match filename without `.md` — orchestrator dispatch depends on it.
 - Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this.
-- `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. State schema changes require `/pipeline-reset`.
+- `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 clean break) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
 - The plugin never touches consuming project files. Runtime state goes to `.pipeline/`.
 - `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten.
 - If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds.
@@ -166,7 +184,7 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 - Orchestrator enforces parallel task conflict detection at IMPLEMENT — scaffolders serial first, then conflict detection, then implementers parallel. Shared-file tasks auto-serialized.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes.
 - `known-deprecations.json` v1 entries (without `applies_from`) apply universally (backward compatible). Unknown project versions → all rules apply.
-- Framework-level `testing/` files EXTEND generic `modules/testing/` — they don't replace.
+- Framework-level binding files (e.g., `testing/`, `persistence/`, `messaging/`) EXTEND their corresponding generic layer files — they don't replace.
 - Framework-less projects (`go-stdlib` or `framework: null`): only language + testing layers. Infra frameworks (`k8s`): `language: null`, only framework layer.
 - Cross-repo: PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks. Discovery results stored with `detected_via` — re-run `/pipeline-init` to refresh.
 
