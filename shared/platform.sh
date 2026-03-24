@@ -90,6 +90,11 @@ suggest_docker_start() {
 }
 
 # ── Temp Directory ───────────────────────────────────────────────────────────
+#
+# Scripts that source platform.sh should use these helpers. Linter adapters
+# (shared/checks/layer-2-linter/adapters/) and hooks intentionally use the
+# inline pattern ${TMPDIR:-${TMP:-${TEMP:-/tmp}}} directly to avoid the
+# overhead of sourcing this file on every Edit/Write hook invocation.
 
 # Returns a safe temp directory path that works on all platforms.
 pipeline_tmpdir() {
@@ -111,7 +116,12 @@ pipeline_mktempdir() {
 # ── sed Compatibility ────────────────────────────────────────────────────────
 
 # In-place sed that works on both BSD (macOS) and GNU (Linux) sed.
+# Avoids the `-i` flag which differs between BSD (`-i ''`) and GNU (`-i`).
 # Usage: portable_sed 's/old/new/g' file.txt
+#
+# Note: hooks and linter adapters intentionally do NOT source this file — they
+# use inline temp-file-and-mv patterns for the same effect, avoiding the overhead
+# of sourcing platform.sh on every Edit/Write or Skill invocation.
 portable_sed() {
   local expr="$1" file="$2"
   local tmp

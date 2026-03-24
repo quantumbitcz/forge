@@ -331,9 +331,7 @@ step3_ide_directories() {
   fi
 
   if [[ "$PIPELINE_OS" == "linux" ]]; then
-    # Linux: XDG, lowercase conventions
-    local xdg_projects="${XDG_PROJECTS_DIR:-}"
-    [[ -n "$xdg_projects" && -d "$xdg_projects" ]] && ide_dirs+=("$xdg_projects")
+    # Linux: lowercase conventions common on Linux desktops
     for d in "$home/projects" "$home/dev" "$home/devel"; do
       [[ -d "$d" ]] && ide_dirs+=("$d")
     done
