@@ -61,6 +61,18 @@ Extract library names and their current pinned or range versions. Group them by 
 
 ---
 
+## 2a. Extended Registry Discovery
+
+In addition to scanning `modules/frameworks/{fw}/known-deprecations.json`, also scan:
+1. Generic layer registries: `modules/{layer}/{value}.known-deprecations.json` for each active layer in the component's config.
+2. Framework binding registries: `modules/frameworks/{fw}/{layer}/{value}.known-deprecations.json` for each active binding.
+
+Discovery order: framework registry → binding registries → generic layer registries.
+
+In multi-service mode, run discovery per-component using each component's detected versions for gating.
+
+---
+
 ## 3. Check Freshness and Skip If Recent
 
 For each module's `known-deprecations.json` (find them with Glob: `**/known-deprecations.json`):
