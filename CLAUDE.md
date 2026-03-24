@@ -58,7 +58,7 @@ This is a documentation-only plugin (no build step). To test changes:
 **Review agents** (9, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`.
 
 **Agent file rules:**
-- YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list.
+- YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes).
 - Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field.
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.

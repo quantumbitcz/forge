@@ -285,7 +285,10 @@ step3_ide_directories() {
 
   local ide_dirs=()
   local home="${HOME:-/tmp}"
-  for d in "$home/IdeaProjects" "$home/Projects" "$home/Developer" "$home/workspace" "$home/repos"; do
+  for d in "$home/IdeaProjects" "$home/WebstormProjects" "$home/PycharmProjects" \
+           "$home/GolandProjects" "$home/CLionProjects" "$home/RiderProjects" \
+           "$home/AndroidStudioProjects" "$home/RustroverProjects" \
+           "$home/Projects" "$home/Developer" "$home/workspace" "$home/repos"; do
     [[ -d "$d" ]] && ide_dirs+=("$d")
   done
 

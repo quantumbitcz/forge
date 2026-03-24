@@ -18,7 +18,7 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate']
 ---
 
 # Pipeline Orchestrator (pl-100)
@@ -519,12 +519,32 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 }
 ```
 
-### 3.9 Create Task List
+### 3.9 Create Visual Task Tracker
 
-Create a task list with 10 stages:
-`Preflight -> Explore -> Plan -> Validate -> Implement -> Verify -> Review -> Docs -> Ship -> Learn`
+Use `TaskCreate` to create one task per pipeline stage. This gives the user a real-time visual progress tracker with checkboxes that update as stages complete.
 
-Mark Preflight as completed. If `--from` skips stages, mark those as "skipped".
+Create all 10 tasks upfront in a single batch:
+
+```
+TaskCreate: subject="Stage 0: Preflight",      description="Load config, detect versions, apply learnings",           activeForm="Running preflight checks"
+TaskCreate: subject="Stage 1: Explore",         description="Map domain models, tests, and patterns",                  activeForm="Exploring codebase"
+TaskCreate: subject="Stage 2: Plan",            description="Risk-assessed implementation plan with stories and tasks", activeForm="Planning implementation"
+TaskCreate: subject="Stage 3: Validate",        description="6-perspective plan validation",                            activeForm="Validating plan"
+TaskCreate: subject="Stage 4: Implement",       description="TDD loop: scaffold, RED, GREEN, REFACTOR",                activeForm="Implementing (TDD)"
+TaskCreate: subject="Stage 5: Verify",          description="Build, lint, static analysis, full test suite",            activeForm="Verifying build and tests"
+TaskCreate: subject="Stage 6: Review",          description="Multi-agent quality review with scoring",                  activeForm="Reviewing quality"
+TaskCreate: subject="Stage 7: Docs",            description="Update docs, KDoc/TSDoc on new public interfaces",         activeForm="Updating documentation"
+TaskCreate: subject="Stage 8: Ship",            description="Branch, commit, PR with quality gate results",             activeForm="Creating pull request"
+TaskCreate: subject="Stage 9: Learn",           description="Retrospective, config tuning, trend tracking",             activeForm="Running retrospective"
+```
+
+**Stage lifecycle — update tasks as you progress:**
+- When **entering** a stage: `TaskUpdate(taskId, status="in_progress")`
+- When **completing** a stage: `TaskUpdate(taskId, status="completed")`
+- If `--from` skips stages: immediately mark skipped stages as `completed` (they show as done)
+- If a stage fails and the pipeline escalates: leave the failing task as `in_progress` (shows the user where it stopped)
+
+Mark Preflight as `in_progress` now (it was just completed inline). After Preflight completes, mark it `completed` and move on.
 
 Record run start: requirement summary, timestamp, domain area (inferred from requirement).
 
@@ -532,7 +552,7 @@ Record run start: requirement summary, timestamp, domain area (inferred from req
 
 ## 4. Stage 1: EXPLORE (dispatch agents)
 
-**story_state:** `EXPLORING`
+**story_state:** `EXPLORING` | **TaskUpdate:** Mark "Stage 0: Preflight" → `completed`, Mark "Stage 1: Explore" → `in_progress`
 
 Dispatch exploration agents configured in `dev-pipeline.local.md` under `explore_agents`. Default: `feature-dev:code-explorer` (primary) + `Explore` (secondary, subagent_type=Explore).
 
@@ -565,7 +585,7 @@ Mark Explore as completed.
 
 ## 5. Stage 2: PLAN (dispatch pl-200-planner)
 
-**story_state:** `PLANNING`
+**story_state:** `PLANNING` | **TaskUpdate:** Mark "Stage 1: Explore" → `completed`, Mark "Stage 2: Plan" → `in_progress`
 
 Dispatch `pl-200-planner` with a **<2,000 token** prompt:
 
@@ -623,7 +643,7 @@ Mark Plan as completed.
 
 ## 6. Stage 3: VALIDATE (dispatch pl-210-validator)
 
-**story_state:** `VALIDATING`
+**story_state:** `VALIDATING` | **TaskUpdate:** Mark "Stage 2: Plan" → `completed`, Mark "Stage 3: Validate" → `in_progress`
 
 Dispatch `pl-210-validator` with a **<2,000 token** prompt:
 
@@ -717,7 +737,7 @@ Mark Validate as completed.
 
 ## 7. Stage 4: IMPLEMENT (dispatch pl-310-scaffolder + pl-300-implementer)
 
-**story_state:** `IMPLEMENTING`
+**story_state:** `IMPLEMENTING` | **TaskUpdate:** Mark "Stage 3: Validate" → `completed`, Mark "Stage 4: Implement" → `in_progress`
 
 If `dry_run` is true in state.json, skip this stage and all subsequent stages. The pipeline already output the dry-run report after VALIDATE.
 
@@ -877,7 +897,7 @@ Mark Implement as completed.
 
 ## 8. Stage 5: VERIFY (Phase A inline + Phase B dispatch)
 
-**story_state:** `VERIFYING`
+**story_state:** `VERIFYING` | **TaskUpdate:** Mark "Stage 4: Implement" → `completed`, Mark "Stage 5: Verify" → `in_progress`
 
 ### Phase A: Build & Lint (inline, fail-fast)
 
@@ -947,7 +967,7 @@ Mark Verify as completed.
 
 ## 9. Stage 6: REVIEW (dispatch pl-400-quality-gate)
 
-**story_state:** `REVIEWING`
+**story_state:** `REVIEWING` | **TaskUpdate:** Mark "Stage 5: Verify" → `completed`, Mark "Stage 6: Review" → `in_progress`
 
 ### 9.1 Batch Dispatch
 
@@ -1056,7 +1076,7 @@ Mark Review as completed.
 
 ## 10. Stage 7: DOCS (inline)
 
-**story_state:** `DOCUMENTING`
+**story_state:** `DOCUMENTING` | **TaskUpdate:** Mark "Stage 6: Review" → `completed`, Mark "Stage 7: Docs" → `in_progress`
 
 Check if documentation needs updating:
 
@@ -1088,7 +1108,7 @@ Mark Docs as completed.
 
 ## 11. Stage 8: SHIP (dispatch pl-600-pr-builder)
 
-**story_state:** `SHIPPING`
+**story_state:** `SHIPPING` | **TaskUpdate:** Mark "Stage 7: Docs" → `completed`, Mark "Stage 8: Ship" → `in_progress`
 
 Dispatch `pl-600-pr-builder` with:
 
@@ -1153,7 +1173,7 @@ Mark Ship as completed.
 
 ## 12. Stage 9: LEARN (dispatch pl-700-retrospective)
 
-**story_state:** `LEARNING`
+**story_state:** `LEARNING` | **TaskUpdate:** Mark "Stage 8: Ship" → `completed`, Mark "Stage 9: Learn" → `in_progress`
 
 Dispatch `pl-700-retrospective` with a **<2,000 token** summary:
 
@@ -1204,7 +1224,7 @@ After `pl-700-retrospective` completes:
 
 Write `.pipeline/stage_final_notes_{storyId}.md`.
 
-Mark Learn as completed.
+**TaskUpdate:** Mark "Stage 9: Learn" → `completed`. All 10 task checkboxes should now show as done.
 
 ---
 
