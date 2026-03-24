@@ -74,4 +74,22 @@ When Context7 is unavailable, fallback to:
 3. Known-deprecations.json entries matching the version range
 4. Conservative migration (compile, test, fix iteratively)
 
-$ARGUMENTS
+## Dispatch Instructions
+
+You are a thin launcher. Your ONLY job is to dispatch the migration planner agent.
+
+1. **Parse input**: The user's argument (everything after `/migration`) is the migration description — a free-text string like "Upgrade Spring Boot from 3.2 to 3.4" or "Migrate from Moment.js to date-fns". It may also be a keyword command like `check` or `upgrade all`.
+
+2. **Detect available MCPs**: Before dispatching, check whether Context7 is available by looking for `mcp__plugin_context7_context7__*` tool patterns. Include this in the dispatch prompt so the planner knows whether to use Context7 for migration guide lookups.
+
+3. **Dispatch the migration planner**: Use the Agent tool to invoke `pl-160-migration-planner` with the following prompt:
+
+   > Plan and execute migration: `{user_input}`
+   >
+   > Context7 available: `{yes|no}`
+
+   Where `{user_input}` is the raw text the user provided.
+
+4. **Do nothing else**: Do not analyze dependencies, modify files, or make migration decisions. The migration planner handles detection, auditing, migration, cleanup, and verification autonomously.
+
+5. **Relay the result**: When the migration planner completes, relay its final output (migration summary, rollback instructions, or escalation) back to the user unchanged.

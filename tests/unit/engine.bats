@@ -259,9 +259,9 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
-# 13. review mode emits Layer 3 stub message to stderr
+# 13. review mode runs Layer 1 + 2 on clean file (Layer 3 handled by agent dispatch)
 # ---------------------------------------------------------------------------
-@test "review mode: emits Layer 3 stub message to stderr" {
+@test "review mode: runs Layer 1 + 2 and succeeds on clean file" {
   local project_dir
   project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
@@ -276,9 +276,12 @@ EOF
       --files-changed "$kt_file"
 
   assert_success
-  # Layer 3 stub message goes to stderr — bats captures it in $output only when using run
-  # The message is written to &2, so we check it in output (bats merges stdout+stderr by default)
-  assert_output --partial "Layer 3"
+  # Layer 3 (agent intelligence) is now handled by agent dispatch, not shell.
+  # Review mode runs Layer 1 + 2 only; clean file should produce no check findings.
+  # The "No linter available" INFO message from Layer 2 is expected (no detekt in test env).
+  local findings
+  findings="$(printf '%s\n' "$output" | grep -v '^INFO:' || true)"
+  assert_no_findings "$findings"
 }
 
 # ---------------------------------------------------------------------------

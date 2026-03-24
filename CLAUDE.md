@@ -86,7 +86,7 @@ Read source files for full details. Key facts:
 - **Error taxonomy** (`error-taxonomy.md`): 15 types, 12-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
 - **Agent communication** (`agent-communication.md`): All data flows through orchestrator via stage notes. Agents are isolated — cannot dispatch others, write state, or message user. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion — shared by all frontend agents.
-- **Learnings** (`learnings/`): Per-framework files + JSON schemas (`rule-learning-schema.json`, `agent-effectiveness-schema.json`) for tracking check rule evolution and agent performance.
+- **Learnings** (`learnings/`): Per-module files (frameworks, languages, testing frameworks, crosscutting layers) + JSON schemas (`rule-learning-schema.json`, `agent-effectiveness-schema.json`) for tracking check rule evolution and agent performance.
 - **Version detection:** PREFLIGHT detects dependency versions from manifest files (build.gradle.kts, package.json, go.mod, etc.) → `state.json.detected_versions`. Enables version-gated deprecation rules.
 - **Convention drift:** Detected mid-run via per-section SHA256 hash comparison. Agents only react to changes in their relevant section.
 - **Global retry budget:** Cumulative `total_retries` counter (default max: 10, configurable). Prevents unbounded cascades.
@@ -129,9 +129,9 @@ Create `modules/frameworks/{name}/` with:
 - `known-deprecations.json` — schema v2 (`applies_from`, `removed_in`, `applies_to` required). Seed 5-15 entries.
 - Optional: `variants/{language}.md`, `testing/{test-framework}.md`, `scripts/check-*.sh`, `hooks/*-guard.sh`
 
-Add `shared/learnings/{name}.md`. Wire into the local template's `quality_gate` batches.
+Add `shared/learnings/{name}.md`. Wire into the local template's `quality_gate` batches. Update test arrays: `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`.
 
-**New language?** Also add `modules/languages/{lang}.md`. **New testing framework?** Also add `modules/testing/{test-framework}.md`.
+**New language?** Also add `modules/languages/{lang}.md` and `shared/learnings/{lang}.md`. **New testing framework?** Also add `modules/testing/{test-framework}.md` and `shared/learnings/{test-framework}.md`.
 
 ## Adding a new layer module
 
@@ -168,10 +168,11 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 Manual debugging:
 ```bash
 grep -A1 "^name:" agents/*.md                    # List agents
-shared/checks/engine.sh --dry-run                 # Dry-run check engine
+shared/checks/engine.sh --verify --project-root . --files-changed src/Main.kt  # Verify mode (also: --hook, --review)
 grep -L "Forbidden Actions" agents/*.md           # Find non-compliant agents
 for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING: $m"; done
 for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING: $m"; done
+for m in spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte kotlin java typescript python go rust swift c csharp kotest junit5 vitest jest pytest go-testing xctest rust-test xunit-nunit testcontainers playwright databases persistence migrations api-protocols messaging caching search storage auth observability; do [ -f "shared/learnings/$m.md" ] || echo "MISSING: learnings/$m.md"; done
 ```
 
 ## Gotchas
@@ -191,6 +192,7 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 - Framework-level binding files (e.g., `testing/`, `persistence/`, `messaging/`) EXTEND their corresponding generic layer files — they don't replace.
 - Framework-less projects (`go-stdlib` or `framework: null`): only language + testing layers. Infra frameworks (`k8s`): `language: null`, only framework layer.
 - Cross-repo: PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks. Discovery results stored with `detected_via` — re-run `/pipeline-init` to refresh.
+- **Test array drift:** Framework/language/testing lists are duplicated in `tests/validate-plugin.sh` and `tests/contract/module-completeness.bats`. Adding a module without updating both arrays causes silent validation gaps — checks pass but skip the new module.
 
 ## Plugin distribution (`.claude-plugin/`)
 

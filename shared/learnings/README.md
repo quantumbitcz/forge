@@ -7,7 +7,7 @@ The adaptive learning system operates across two dimensions — per-project and 
 | Scope | Location | Lifecycle |
 |-------|----------|-----------|
 | Per-project | `.claude/pipeline-log.md` (consuming repo) | Grows with each pipeline run; never leaves the project |
-| Cross-project | `shared/learnings/{module}.md` (this plugin repo) | Curated by retrospective agent; ships with the plugin |
+| Cross-project | `shared/learnings/{module}.md` (this plugin repo) | One file per framework, language, testing framework, and crosscutting layer. Curated by retrospective agent; ships with the plugin |
 
 ## Learning classification
 

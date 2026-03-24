@@ -205,16 +205,16 @@ Validation Results:
   Engine:  PASS
 ```
 
-#### Post-Validation: Engine Dry Run
+#### Post-Validation: Engine Verify
 
 After successful validation, verify the check engine works with the detected module:
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --dry-run
+${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify --project-root "${PROJECT_ROOT}" --files-changed "."
 ```
 
-- If the dry-run **fails**: **WARN** — "Check engine dry-run failed. Hook-based checks may not work. Error: {output}". This is a warning, not a blocker — continue to the next phase.
-- If the dry-run **passes**: Report — "Check engine verified — hooks will run on every file edit."
+- If the verify **fails**: **WARN** — "Check engine verify failed. Hook-based checks may not work. Error: {output}". This is a warning, not a blocker — continue to the next phase.
+- If the verify **passes**: Report — "Check engine verified — hooks will run on every file edit."
 
 ---
 

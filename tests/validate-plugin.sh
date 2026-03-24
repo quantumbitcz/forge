@@ -93,12 +93,12 @@ check "All agents have Forbidden Actions section" "$check5_fail"
 echo ""
 echo "--- MODULES ---"
 
-FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform)
+FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte)
 LANGUAGES=(kotlin java typescript python go rust swift c csharp)
 TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md)
 REQUIRED_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
 
-# Check 6: All 17 framework directories have 5 required files
+# Check 6: All 21 framework directories have 5 required files
 check6_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
   for req in "${REQUIRED_FILES[@]}"; do
@@ -107,7 +107,7 @@ for fw in "${FRAMEWORKS[@]}"; do
     fi
   done
 done
-check "All 17 framework directories have required 5 files" "$check6_fail"
+check "All 21 framework directories have required 5 files" "$check6_fail"
 
 # Check 7: All frameworks/*/conventions.md have Dos/Don'ts section (case-insensitive for don't / donts / Don'ts)
 check7_fail=0
@@ -351,7 +351,7 @@ echo "--- VERSION ---"
 # Check 25: plugin.json version matches CLAUDE.md version
 check25_fail=0
 plugin_ver=$(jq -r '.version' "$ROOT/.claude-plugin/plugin.json" 2>/dev/null)
-# CLAUDE.md refers to version as "v1.2.0" — strip leading v for comparison
+# CLAUDE.md refers to version as "v1.0.0" — strip leading v for comparison
 claude_ver=$(grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' "$ROOT/CLAUDE.md" | head -1 | sed 's/^v//')
 if [ -z "$plugin_ver" ] || [ -z "$claude_ver" ] || [ "$plugin_ver" != "$claude_ver" ]; then
   check25_fail=1

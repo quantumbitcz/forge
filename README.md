@@ -317,13 +317,17 @@ modules/frameworks/fastapi/
 
 ### 2. Create a learnings file
 
-Add `shared/learnings/fastapi.md` to track module-specific learnings across runs.
+Add `shared/learnings/fastapi.md` to track module-specific learnings across runs. For new languages, also add `shared/learnings/{lang}.md`. For new testing frameworks, also add `shared/learnings/{test-framework}.md`.
 
-### 3. Wire agents into the local template
+### 3. Update test arrays
+
+Add the module name to `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`. Skipping this step causes silent validation gaps — tests pass but skip the new module.
+
+### 4. Wire agents into the local template
 
 Reference the cross-cutting review agents (`architecture-reviewer`, `security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
 
-### 4. Naming conventions
+### 5. Naming conventions
 
 - Module directory: `modules/frameworks/{name}`, lowercase with hyphens (`fastapi`, `go-stdlib`)
 - Review agents: descriptive names without module prefix (`architecture-reviewer`, `security-reviewer`)
@@ -395,9 +399,9 @@ dev-pipeline/
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.0.0 (clean break from prior versions)
+    state-schema.md                     # State schema v1.1.0 (additive extension of v1.0.0)
     checks/                             # 3-layer generalized check engine
-      engine.sh                         #   Main engine script (--hook mode, --dry-run mode)
+      engine.sh                         #   Main engine script (--hook, --verify, --review modes)
       test-engine.sh                    #   Engine test harness
       output-format.md                  #   Standardized output format spec
       layer-1-fast/                     #   Regex-based pattern matching (sub-second)
@@ -416,7 +420,7 @@ dev-pipeline/
         python/ rust/ swift/ typescript/
     learnings/                          # Per-module learnings + schemas
       README.md                         #   Learnings system overview
-      {framework-name}.md               #   21+ framework learnings files
+      {module-name}.md                  #   Framework, language, testing, and layer learnings files
       agent-effectiveness-template.md   #   Template for agent performance tracking
       rule-learning-schema.json         #   Check rule evolution tracking
       agent-effectiveness-schema.json   #   Agent performance tracking

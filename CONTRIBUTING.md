@@ -83,11 +83,12 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
      scripts/                    # Optional verification scripts
      hooks/                      # Optional guard hooks
    ```
-2. Create `shared/learnings/{name}.md` for per-module learnings accumulation
+2. Create `shared/learnings/{name}.md` for per-module learnings accumulation. For new languages, also add `shared/learnings/{lang}.md`. For new testing frameworks, also add `shared/learnings/{test-framework}.md`.
 3. Review agents are cross-cutting (shared) and new modules typically do not need new agents unless they have unique review needs. If a new agent is required, use a descriptive name (e.g., `embedded-memory-reviewer`)
 4. Wire review agents into the local template's `quality_gate` batches
-5. Add the module to `README.md` under "Available modules" and update any modules list references
-6. Update `CLAUDE.md` under "Module specifics"
+5. Update test arrays: `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`
+6. Add the module to `README.md` under "Available modules" and update any modules list references
+7. Update `CLAUDE.md` under "Module specifics"
 
 ### Adding a new layer module (database, persistence, messaging, etc.)
 
@@ -124,7 +125,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 - `learnings/` -- per-module learnings accumulated from pipeline runs
 - `recovery/` -- recovery engine with strategies and health checks for pipeline resilience
 
-> Changes to shared contracts are high-impact. Verify that all agents referencing the changed contract still behave correctly. Changes to subsystems should be tested with `shared/checks/engine.sh --dry-run`.
+> Changes to shared contracts are high-impact. Verify that all agents referencing the changed contract still behave correctly. Changes to subsystems should be tested with `shared/checks/engine.sh --verify --project-root . --files-changed <file>`.
 
 ## Naming Conventions
 
@@ -145,7 +146,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
    ```
 3. Verify agent frontmatter is valid YAML
 4. Verify scripts are executable and have shebang lines
-5. Run `shared/checks/engine.sh --dry-run` to verify check engine configuration
+5. Run `shared/checks/engine.sh --verify --project-root . --files-changed <changed-file>` to verify check engine configuration
 6. Open a PR with a clear description using the PR template
 7. Get at least one review from a team member
 

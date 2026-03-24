@@ -8,6 +8,19 @@ LANGUAGES_DIR="$PLUGIN_ROOT/modules/languages"
 TESTING_DIR="$PLUGIN_ROOT/modules/testing"
 LEARNINGS_DIR="$PLUGIN_ROOT/shared/learnings"
 
+EXPECTED_LAYERS=(
+  databases
+  persistence
+  migrations
+  api-protocols
+  messaging
+  caching
+  search
+  storage
+  auth
+  observability
+)
+
 EXPECTED_FRAMEWORKS=(
   spring
   react
@@ -26,6 +39,10 @@ EXPECTED_FRAMEWORKS=(
   gin
   jetpack-compose
   kotlin-multiplatform
+  angular
+  nestjs
+  vue
+  svelte
 )
 
 EXPECTED_LANGUAGES=(
@@ -63,9 +80,9 @@ REQUIRED_FILES=(
 )
 
 # ---------------------------------------------------------------------------
-# 1. All 17 framework directories exist
+# 1. All 21 framework directories exist
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 17 expected framework directories exist" {
+@test "module-completeness: all 21 expected framework directories exist" {
   local missing=()
   for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
     if [[ ! -d "$FRAMEWORKS_DIR/$fw" ]]; then
@@ -197,5 +214,51 @@ REQUIRED_FILES=(
   done
   if (( ${#missing[@]} > 0 )); then
     fail "Missing testing files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 9. Learnings file exists per language
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each language" {
+  local missing=()
+  for lang in "${EXPECTED_LANGUAGES[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$lang.md" ]]; then
+      missing+=("$lang")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing language learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 10. Learnings file exists per testing framework
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each testing framework" {
+  local missing=()
+  for tf in "${EXPECTED_TESTING_FILES[@]}"; do
+    local name="${tf%.md}"
+    if [[ ! -f "$LEARNINGS_DIR/$name.md" ]]; then
+      missing+=("$name")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing testing learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 11. Learnings file exists per crosscutting layer
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each crosscutting layer" {
+  local missing=()
+  for layer in "${EXPECTED_LAYERS[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$layer.md" ]]; then
+      missing+=("$layer")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing crosscutting layer learnings files: ${missing[*]}"
   fi
 }
