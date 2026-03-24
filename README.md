@@ -86,7 +86,7 @@ Then add to `.claude/settings.json`:
 
 ## Available modules
 
-17 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, 11 testing framework files under `modules/testing/`, and 10 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, and `modules/observability/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
+21 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, 11 testing framework files under `modules/testing/`, and 10 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, and `modules/observability/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
 
 | Framework | Target stack |
 |-----------|-------------|
@@ -107,6 +107,10 @@ Then add to `.claude/settings.json`:
 | `aspnet` | .NET with ASP.NET Core (Clean Architecture, EF Core) |
 | `embedded` | C for embedded systems (real-time safety, ISR conventions, RTOS) |
 | `k8s` | Kubernetes infrastructure (resource limits, probes, security contexts) |
+| `angular` | TypeScript + Angular 17+ (standalone components, signals, NgRx SignalStore) |
+| `nestjs` | TypeScript + NestJS (module-based DI, decorators, microservices transport) |
+| `vue` | TypeScript + Vue 3 / Nuxt 3 (Composition API, Pinia, server routes) |
+| `svelte` | TypeScript + Svelte 5 (runes, standalone SPAs, no SvelteKit) |
 
 All modules include conventions with a Dos/Don'ts section, config templates, check engine rule overrides, and a version-aware deprecation registry (`known-deprecations.json`).
 
@@ -178,7 +182,7 @@ touch .claude/pipeline-log.md
 |   (.claude/)              |  .claude/pipeline-config.md (mutable, auto-tuned)
 |                           |  .claude/pipeline-log.md (learnings + run history)
 +---------------------------+
-|   Module                  |  modules/ (17 framework modules)
+|   Module                  |  modules/ (21 framework modules)
 |   (conventions, rules,    |  conventions.md, rules-override.json
 |    deprecations, scripts) |  known-deprecations.json, local-template.md
 |                           |  pipeline-config-template.md
@@ -412,7 +416,7 @@ dev-pipeline/
         python/ rust/ swift/ typescript/
     learnings/                          # Per-module learnings + schemas
       README.md                         #   Learnings system overview
-      {framework-name}.md               #   17+ framework learnings files
+      {framework-name}.md               #   21+ framework learnings files
       agent-effectiveness-template.md   #   Template for agent performance tracking
       rule-learning-schema.json         #   Check rule evolution tracking
       agent-effectiveness-schema.json   #   Agent performance tracking
@@ -429,12 +433,12 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 17 framework modules + 9 languages + 11 testing + 10 crosscutting layers
+  modules/                              # 21 framework modules + 9 languages + 11 testing + 10 crosscutting layers
     frameworks/                         # Per-framework conventions and config
-      aspnet/ axum/ django/ embedded/ express/ fastapi/
+      angular/ aspnet/ axum/ django/ embedded/ express/ fastapi/
       gin/ go-stdlib/ jetpack-compose/ k8s/
-      kotlin-multiplatform/ nextjs/ react/ spring/
-      sveltekit/ swiftui/ vapor/
+      kotlin-multiplatform/ nestjs/ nextjs/ react/ spring/
+      sveltekit/ svelte/ swiftui/ vapor/ vue/
     languages/                          # Per-language idioms, type conventions, and baseline rules
     testing/                            # Per-testing-framework generic test patterns
     databases/                          # Database engine best practices

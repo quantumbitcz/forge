@@ -13,7 +13,7 @@ Three-layer design with resolution flowing top-down:
 1. **Project config** (`.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, `.claude/pipeline-log.md`) — per-project settings, mutable runtime params, and accumulated learnings. Lives in the consuming repo, not here.
 2. **Module layer** (`modules/`) — sublayers for convention composition:
    - `modules/languages/` — 9 language files (kotlin, java, typescript, python, go, rust, swift, c, csharp): language-level idioms, type conventions, and baseline rules.
-   - `modules/frameworks/` — 17 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform), each with `conventions.md`, config files, `variants/` for language-specific overrides, and subdirectories for framework-specific bindings (e.g., `testing/`, `persistence/`, `messaging/`).
+   - `modules/frameworks/` — 21 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform, angular, nestjs, vue, svelte), each with `conventions.md`, config files, `variants/` for language-specific overrides, and subdirectories for framework-specific bindings (e.g., `testing/`, `persistence/`, `messaging/`).
    - `modules/testing/` — 11 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright).
    - `modules/databases/` — database engine best practices (query patterns, indexing, connection pooling).
    - `modules/persistence/` — ORM/mapping patterns (entity design, repository conventions, transaction boundaries).
@@ -143,13 +143,17 @@ Add a learnings file at `shared/learnings/{name}.md`.
 
 ## Module-specific gotchas
 
-All 17 frameworks share the same base structure — see their `conventions.md` for details. Only non-obvious conventions listed here:
+All 21 frameworks share the same base structure — see their `conventions.md` for details. Only non-obvious conventions listed here:
 
 - **spring**: Kotlin variant uses hexagonal architecture with sealed interface hierarchy (`XxxPersisted`/`XxxNotPersisted`/`XxxId`), ports & adapters. Core uses Kotlin types; persistence uses Java types. Reactive stack: WebFlux + R2DBC + CoroutineCrudRepository. `@Transactional` on use case impls only. R2DBC UPDATE sets all columns — use `@Query` for partial updates.
 - **react**: Typography via inline `style={{ fontSize }}`, not Tailwind `text-*`. Colors via theme tokens, never hardcoded hex. Error Boundaries at route level. Server data in TanStack Query/SWR, not useState.
 - **embedded**: No `malloc`/`printf`/`float` in ISR handlers, max 10us duration. `volatile` for ISR-shared variables.
 - **k8s**: `language: null` — no language layer loaded. Pin image tags to SHA digests in prod.
 - **swiftui**: `[weak self]` in stored closures. SPM over CocoaPods. Pin exact versions for releases.
+- **angular**: Standalone components, signals, OnPush change detection by default, NgRx SignalStore for state management.
+- **nestjs**: Module-based DI, decorators, Pipes/Guards/Interceptors pattern, microservices transport layer.
+- **vue**: Composition API + `<script setup>`, Pinia for state, Nuxt auto-imports, `useFetch`/`useAsyncData` for data fetching.
+- **svelte**: Svelte 5 runes (`$state`/`$derived`/`$effect`), standalone SPAs — distinct from SvelteKit (no SSR/routing layer).
 
 ## Validation
 
