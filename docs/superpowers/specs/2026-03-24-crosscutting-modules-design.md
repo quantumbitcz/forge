@@ -160,7 +160,9 @@ All new fields are optional. If omitted, the layer is not loaded. This maintains
 
 ### 2.2 Multi-Service Monorepo Config
 
-For monorepos, the existing `components:` block is extended to hold named entries with `path:` and their own technology stacks. This is a natural evolution of the existing multi-component support in `state.json.components`:
+For monorepos, the existing `components:` block is extended to hold named entries with `path:` and their own technology stacks. This is a natural evolution of the existing multi-component support in `state.json.components`.
+
+> **Note:** This example is illustrative of the full vision. Some referenced frameworks (NestJS, Angular) are created in Phase 6. Until then, use only existing frameworks in your config.
 
 ```yaml
 components:
@@ -266,14 +268,14 @@ A project may declare both if Redis serves both roles. The generic modules cover
    a. Load the generic module: `modules/{layer}/{value}.md`
    b. Load the framework binding if it exists: `modules/frameworks/{framework}/{layer}/{value}.md`
 4. Compose all loaded layers in precedence order (Section 1.3).
-5. Store resolved convention stack in `state.json.resolved_conventions`.
+5. Store resolved convention stack in `state.json.components[name].convention_stack` (extending the existing field with new layer paths).
 
 ### 3.2 Multi-Service Mode (Named `components:` entries)
 
 1. Detect multi-service mode (entries have `path:` fields).
 2. Validate each entry's `path:` exists.
 3. For each entry, resolve its full convention stack (same as 3.1).
-4. Store per-component stacks in `state.json.components[name].resolved_conventions`.
+4. Store per-component stacks in `state.json.components[name].convention_stack` (same field name as existing architecture).
 5. Build a path-prefix-to-component lookup table for runtime convention resolution.
 6. Run layer combination validation (Section 2.5) and log warnings.
 
@@ -283,13 +285,34 @@ PREFLIGHT detects versions for new layers from manifest files:
 
 | Layer | Detection Source |
 |-------|-----------------|
+| database | Docker Compose service images (`postgres:16`, `mysql:8`), connection driver versions in manifests |
 | persistence | `build.gradle.kts` (implementation deps), `package.json` (dependencies), `pyproject.toml` (dependencies), `Cargo.toml` (dependencies) |
+| migrations | Same manifest files — look for flyway-core, liquibase-core, alembic, prisma, knex, diesel, sqlx |
 | messaging | Same manifest files — look for kafka-clients, amqplib, aiokafka, etc. |
 | caching | Same manifest files — look for caffeine, ioredis, redis-py, etc. |
 | search | Same manifest files — look for elasticsearch, opensearch, meilisearch client libs |
 | observability | Same manifest files — look for opentelemetry-*, micrometer-*, prom-client, etc. |
+| auth | Same manifest files — look for spring-security-oauth2, passport, python-jose, keycloak-admin-client, etc. |
 
-Detected versions are stored in `state.json.detected_versions` (extending the existing version detection). Version-gated deprecation rules in layer-specific `known-deprecations.json` use these versions.
+Detected versions are stored in `state.json.detected_versions.key_dependencies` (extending the existing map). Example:
+
+```json
+"detected_versions": {
+  "language": "kotlin",
+  "language_version": "2.1.0",
+  "framework": "spring",
+  "framework_version": "3.4.1",
+  "key_dependencies": {
+    "hibernate-core": "6.4.2",
+    "flyway-core": "10.8.1",
+    "kafka-clients": "3.7.0",
+    "caffeine": "3.1.8",
+    "opentelemetry-api": "1.35.0"
+  }
+}
+```
+
+Version-gated deprecation rules in layer-specific `known-deprecations.json` use these versions via the `applies_from` / `removed_in` fields.
 
 ### 3.4 Runtime Convention Lookup
 
@@ -307,6 +330,7 @@ The check engine operates in hook mode (every Edit/Write). Loading and merging m
 2. The check engine hook reads only the cached file for the file's owning component.
 3. Merge semantics: framework-binding overrides > generic-layer overrides > framework overrides > shared defaults. Array fields (patterns) are concatenated. Object fields are deep-merged. `"disabled": true` suppresses a rule from any lower layer.
 4. Cache invalidation: the cache is rebuilt at PREFLIGHT and whenever the orchestrator detects a convention drift (SHA256 comparison).
+5. The existing `.pipeline/.component-cache` (path-prefix → framework mapping) is extended to map path prefixes to component names: `services/user-service=user-service`. The engine uses the component name to load `.rules-cache-{component}.json`. The old `path_prefix=framework` format is deprecated.
 
 ### 3.6 Deprecation Registry Discovery
 
@@ -523,7 +547,7 @@ Framework-specific additions to the generic layer.
 | Angular | TypeScript + Angular 17+ | Standalone components, signals, NgRx/SignalStore, lazy-loaded routes, OnPush, strict templates, Nx monorepo support |
 | NestJS | TypeScript + NestJS | Module-based architecture, decorators, DI container, Pipes/Guards/Interceptors, microservices transport, GraphQL code-first vs. schema-first |
 | Vue/Nuxt | TypeScript + Vue 3 / Nuxt 3 | Composition API, `<script setup>`, Pinia state, Nuxt auto-imports, server routes, Nitro engine, `useFetch`/`useAsyncData` |
-| Svelte | TypeScript + Svelte 5 | Runes (`$state`, `$derived`, `$effect`, `$props`), component composition, `{#snippet}`, minimal abstraction, no virtual DOM patterns |
+| Svelte | TypeScript + Svelte 5 (standalone SPAs without SvelteKit) | Runes (`$state`, `$derived`, `$effect`, `$props`), component composition, `{#snippet}`, Vite-based build, client-side routing. Note: the existing `sveltekit` module covers the full-stack meta-framework. This module is for standalone Svelte SPAs — a niche but valid use case (widget libraries, embedded UIs, Electron apps). |
 
 Each new framework module includes: `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, `known-deprecations.json`, plus applicable bindings under `testing/`, `persistence/`, `api-protocols/`, etc.
 
@@ -679,7 +703,45 @@ Frontend frameworks get only client-relevant bindings. Backend frameworks get th
 - New fields are all optional — omitting them skips the layer entirely.
 - Existing framework `conventions.md` files retain their current database/persistence sections. These are progressively replaced by references to the new layer modules across phases.
 - Multi-service mode is an extension of the existing `components:` structure, not a replacement. Existing multi-component configs (with `path:` and `convention_stack`) continue to work.
-- **State schema:** bumps to **v1.1.0** (non-breaking additive change). New fields: `state.json.components[name].resolved_conventions` and `.pipeline/.rules-cache-{component}.json`. Old v1.0.0 state files are forward-compatible — missing fields default to empty. No `/pipeline-reset` required.
+- **State schema:** bumps to **v1.1.0** (non-breaking additive change). Old v1.0.0 state files are forward-compatible — missing fields default to empty. No `/pipeline-reset` required.
+
+State schema v1.1.0 additions:
+
+```json
+{
+  "version": "1.1.0",
+  "components": {
+    "user-service": {
+      "path": "services/user-service",
+      "convention_stack": [
+        "modules/languages/kotlin.md",
+        "modules/frameworks/spring/conventions.md",
+        "modules/frameworks/spring/variants/kotlin.md",
+        "modules/databases/postgresql.md",
+        "modules/frameworks/spring/databases/postgresql.md",
+        "modules/persistence/exposed.md",
+        "modules/frameworks/spring/persistence/exposed.md",
+        "modules/messaging/kafka.md",
+        "modules/frameworks/spring/messaging/kafka.md"
+      ],
+      "story_state": "PREFLIGHT"
+    }
+  },
+  "detected_versions": {
+    "language": "kotlin",
+    "language_version": "2.1.0",
+    "framework": "spring",
+    "framework_version": "3.4.1",
+    "key_dependencies": {
+      "exposed-core": "0.48.0",
+      "kafka-clients": "3.7.0",
+      "flyway-core": "10.8.1"
+    }
+  }
+}
+```
+
+New cache files: `.pipeline/.rules-cache-{component}.json` (merged check engine rules per component), `.pipeline/.component-cache` (path-prefix → component name mapping, extended from old format).
 
 ### 11.1 Worktree and Cross-Repo Clarification
 
