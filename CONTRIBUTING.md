@@ -51,7 +51,7 @@ Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/de
 
 ### State is local and gitignored
 
-All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.0.0). Version 1.0.0 is a clean break -- old state files from previous schema versions are incompatible. Use `/pipeline-reset` to clear them.
+All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.1.0). Version 1.0.0 was a clean break -- old state files from pre-1.0 schema versions are incompatible; use `/pipeline-reset` to clear them. v1.1.0 is an additive extension of v1.0.0 -- no `/pipeline-reset` required.
 
 ## Making Changes
 
@@ -88,6 +88,14 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 4. Wire review agents into the local template's `quality_gate` batches
 5. Add the module to `README.md` under "Available modules" and update any modules list references
 6. Update `CLAUDE.md` under "Module specifics"
+
+### Adding a new layer module (database, persistence, messaging, etc.)
+
+1. Create `modules/{layer}/{name}.md` with the required structure (Overview, Architecture Patterns, Configuration, Performance, Security, Testing, Dos, Don'ts).
+2. Optionally add `{name}.rules-override.json` and `{name}.known-deprecations.json` alongside the `.md` file.
+3. Create framework bindings: `modules/frameworks/{fw}/{layer}/{name}.md` for each applicable framework.
+4. Add `shared/learnings/{name}.md` for per-layer learnings.
+5. Run `./tests/run-all.sh` to verify structural integrity.
 
 ### Adding a new skill
 

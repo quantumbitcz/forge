@@ -86,7 +86,7 @@ Then add to `.claude/settings.json`:
 
 ## Available modules
 
-17 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, and 11 testing framework files under `modules/testing/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific testing patterns.
+17 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, 11 testing framework files under `modules/testing/`, and 10 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, and `modules/observability/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
 
 | Framework | Target stack |
 |-----------|-------------|
@@ -429,7 +429,7 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 17 framework modules + 9 languages + 11 testing
+  modules/                              # 17 framework modules + 9 languages + 11 testing + 10 crosscutting layers
     frameworks/                         # Per-framework conventions and config
       aspnet/ axum/ django/ embedded/ express/ fastapi/
       gin/ go-stdlib/ jetpack-compose/ k8s/
@@ -437,6 +437,16 @@ dev-pipeline/
       sveltekit/ swiftui/ vapor/
     languages/                          # Per-language idioms, type conventions, and baseline rules
     testing/                            # Per-testing-framework generic test patterns
+    databases/                          # Database engine best practices
+    persistence/                        # ORM/mapping patterns
+    migrations/                         # Schema migration tool patterns
+    api-protocols/                      # API protocol patterns (REST, GraphQL, gRPC, WebSocket)
+    messaging/                          # Event-driven patterns
+    caching/                            # Cache strategy patterns
+    search/                             # Full-text search patterns
+    storage/                            # Object storage patterns
+    auth/                               # Authentication/authorization patterns
+    observability/                      # Metrics, tracing, and logging patterns
     (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
