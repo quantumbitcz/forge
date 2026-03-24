@@ -1,0 +1,116 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-24",
+  "deprecations": [
+    {
+      "pattern": "defineComponent\\s*\\(",
+      "replacement": "Use <script setup lang=\"ts\"> with defineProps<T>() and defineEmits<T>() generics instead",
+      "package": "vue",
+      "since": "3.2.0",
+      "removed_in": null,
+      "applies_from": "3.2.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "createApp.*\\.use\\(Vuex",
+      "replacement": "Replace Vuex with Pinia (defineStore with Setup Store syntax)",
+      "package": "vuex",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from ['\"]vue-router['\"].*createWebHashHistory",
+      "replacement": "Use createWebHistory() — hash-based history is discouraged for Nuxt projects (Nuxt manages routing)",
+      "package": "vue-router",
+      "since": "4.0.0",
+      "removed_in": null,
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\.sync\\b",
+      "replacement": "Use v-model with defineModel() (Vue 3.4+) or explicit v-model:propName syntax",
+      "package": "vue",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\$listeners",
+      "replacement": "Use v-bind=\"$attrs\" — $listeners was merged into $attrs in Vue 3",
+      "package": "vue",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\$children",
+      "replacement": "Use template refs (ref=\"childRef\") to access child component instances",
+      "package": "vue",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from ['\"]@nuxtjs/composition-api['\"]",
+      "replacement": "Use Nuxt 3 built-in Composition API — @nuxtjs/composition-api was for Nuxt 2 only",
+      "package": "@nuxtjs/composition-api",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "useAsyncData\\([^,]+,\\s*[^,]+\\)(?!.*key)",
+      "replacement": "Always provide an explicit key as the first argument to useAsyncData to avoid cache collisions",
+      "package": "nuxt",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "process\\.server|process\\.client",
+      "replacement": "Use import.meta.server / import.meta.client (Nuxt 3.9+) instead of process.server/process.client",
+      "package": "nuxt",
+      "since": "3.9.0",
+      "removed_in": null,
+      "applies_from": "3.9.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from ['\"]nuxt3['\"]|from ['\"]#app['\"].*useFetch",
+      "replacement": "Import from 'nuxt/app' or rely on auto-imports — the nuxt3 package alias is removed",
+      "package": "nuxt",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    }
+  ]
+}

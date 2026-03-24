@@ -1,0 +1,96 @@
+{
+  "extends": "typescript",
+  "framework": "vue",
+  "additional_rules": [
+    {
+      "id": "VUE-ARCH-001",
+      "name": "options-api-usage",
+      "pattern": "export default \\{[\\s\\S]*?(?:data\\s*\\(|methods\\s*:|computed\\s*:|components\\s*:|watch\\s*:|mounted\\s*\\(|created\\s*\\()",
+      "scope_pattern": ".(vue|ts|js)$",
+      "severity": "WARNING",
+      "category": "ARCH-COMPONENT",
+      "message": "Options API pattern detected — use Composition API with <script setup lang=\"ts\"> exclusively",
+      "fix_hint": "Migrate to <script setup lang=\"ts\">. Replace data() with ref()/reactive(), methods with plain functions, computed: with computed(), lifecycle hooks with onMounted()/onCreated() etc. Pinia replaces Vuex options.",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-ARCH-002",
+      "name": "this-dollar-access",
+      "pattern": "\\bthis\\.\\$",
+      "scope_pattern": ".(vue|ts|js)$",
+      "severity": "WARNING",
+      "category": "ARCH-COMPONENT",
+      "message": "this.$ access detected — in <script setup> there is no 'this'; use Nuxt/Vue composables directly",
+      "fix_hint": "Replace this.$router with useRouter(), this.$route with useRoute(), this.$store with the relevant Pinia store, this.$emit with the emit function from defineEmits().",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-ARCH-003",
+      "name": "ref-value-in-template",
+      "pattern": "\\.value\\b",
+      "scope_pattern": ".(vue)$",
+      "severity": "INFO",
+      "category": "ARCH-COMPONENT",
+      "message": "Potential .value access in template — Vue auto-unwraps refs in <template>, .value is only needed in <script>",
+      "fix_hint": "In <template>, access reactive refs directly (e.g., {{ count }} not {{ count.value }}). The .value suffix is required only inside <script setup> and composables.",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-SEC-001",
+      "name": "v-html-usage",
+      "pattern": "v-html\\s*=",
+      "scope_pattern": ".(vue)$",
+      "severity": "WARNING",
+      "category": "SEC-XSS",
+      "message": "v-html directive found — ensure content is from a trusted source and sanitized to prevent XSS",
+      "fix_hint": "If the content is user-supplied or from an external API, sanitize it with DOMPurify before rendering. If only static or developer-controlled content, document the trust assumption.",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-SEC-002",
+      "name": "runtime-config-public-secret",
+      "pattern": "runtimeConfig\\.public\\.(?:secret|key|token|password|apiKey|api_key)",
+      "scope_pattern": ".(ts|js|vue)$",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRETS",
+      "message": "Sensitive value in runtimeConfig.public — runtimeConfig.public is exposed to the client bundle",
+      "fix_hint": "Move secrets to runtimeConfig (server-only). Access via useRuntimeConfig() in server routes and server plugins only. Client-safe config belongs in runtimeConfig.public.",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-PERF-001",
+      "name": "img-instead-of-nuxt-img",
+      "pattern": "<img\\s",
+      "scope_pattern": ".(vue)$",
+      "severity": "WARNING",
+      "category": "PERF-IMAGE",
+      "message": "Raw <img> element — use <NuxtImg> from @nuxt/image for automatic optimization",
+      "fix_hint": "Replace <img src=\"...\" /> with <NuxtImg src=\"...\" width=\"...\" height=\"...\" alt=\"...\" /> for automatic WebP conversion, lazy loading, and responsive sizing.",
+      "example_ref": ""
+    },
+    {
+      "id": "VUE-ARCH-004",
+      "name": "a-tag-for-internal-link",
+      "pattern": "<a\\s+href=['\"](?!http|mailto|tel|#)[^'\"]*['\"]",
+      "scope_pattern": ".(vue)$",
+      "severity": "WARNING",
+      "category": "PERF-NAV",
+      "message": "Raw <a> for internal link — use <NuxtLink> for client-side navigation with prefetching",
+      "fix_hint": "Replace <a href=\"/path\"> with <NuxtLink to=\"/path\"> to enable client-side routing, prefetching, and active link classes.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "pages/": 200,
+      "components/": 300,
+      "server/api/": 150
+    },
+    "function_size": {
+      "default_override": 40
+    }
+  }
+}
