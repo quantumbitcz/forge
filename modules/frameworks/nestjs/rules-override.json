@@ -1,0 +1,116 @@
+{
+  "extends": "typescript",
+  "framework": "nestjs",
+  "additional_rules": [
+    {
+      "id": "NS-DI-001",
+      "name": "missing-injectable-decorator",
+      "pattern": "^export class \\w+Service(?!.*@Injectable)",
+      "scope_pattern": "\\.service\\.ts$",
+      "severity": "WARNING",
+      "category": "CONV-DI",
+      "message": "Service class missing @Injectable() decorator — NestJS cannot resolve it as a provider",
+      "fix_hint": "Add @Injectable() decorator immediately above the class declaration. Import it from '@nestjs/common'.",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-CTRL-001",
+      "name": "direct-response-send",
+      "pattern": "(res\\.send|res\\.json|res\\.status)\\s*\\(",
+      "scope_pattern": "\\.controller\\.ts$",
+      "severity": "WARNING",
+      "category": "CONV-CTRL",
+      "message": "Direct res.send()/res.json() in NestJS controller — return values from the method instead",
+      "fix_hint": "Remove @Res() injection and return the value directly from the controller method. NestJS serializes the return value automatically. Reserve @Res() for streaming or SSE use cases.",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-DTO-001",
+      "name": "any-type-in-dto",
+      "pattern": ":\\s*any\\b",
+      "scope_pattern": "\\.dto\\.ts$",
+      "severity": "WARNING",
+      "category": "CONV-TYPE",
+      "message": "any type in DTO class — DTOs must be fully typed for ValidationPipe to work correctly",
+      "fix_hint": "Replace 'any' with a specific type or interface. Use 'unknown' if the type is truly dynamic, then narrow it in the service layer.",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-LOG-001",
+      "name": "console-log-in-service",
+      "pattern": "console\\.(log|warn|error|info|debug)\\(",
+      "scope_pattern": "src/",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "console.log in NestJS code — use NestJS Logger instead",
+      "fix_hint": "Replace console.log/warn/error with: private readonly logger = new Logger(ClassName.name); then this.logger.log(...) / this.logger.error(...).",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-CFG-001",
+      "name": "direct-process-env-in-service",
+      "pattern": "process\\.env\\.",
+      "scope_pattern": "src/(?!main\\.ts|app\\.module\\.ts)",
+      "severity": "INFO",
+      "category": "CONV-CONFIG",
+      "message": "Direct process.env access outside bootstrap — inject ConfigService instead",
+      "fix_hint": "Inject ConfigService from '@nestjs/config' and use this.configService.get<string>('KEY'). Never read process.env directly in services, controllers, or guards.",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-CTRL-002",
+      "name": "business-logic-in-controller",
+      "pattern": "await.*\\.(save|update|delete|create|findOne|findMany|query)\\(",
+      "scope_pattern": "\\.controller\\.ts$",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY",
+      "message": "Database call detected directly in controller — delegate data access to a service",
+      "fix_hint": "Move the database call into a service method and inject the service into the controller. Controllers should only parse requests, delegate to services, and return responses.",
+      "example_ref": ""
+    },
+    {
+      "id": "NS-MOD-001",
+      "name": "missing-module-barrel",
+      "pattern": "from '\\.\\./(\\w+)/(\\w+)'",
+      "scope_pattern": "src/",
+      "severity": "INFO",
+      "category": "CONV-IMPORT",
+      "message": "Deep relative import into another module — prefer barrel index.ts imports",
+      "fix_hint": "Add or update the target module's index.ts to re-export the necessary symbols, then import from the module root: from '../users' instead of '../users/users.service'.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Controllers must not import repositories or entities directly",
+      "scope_pattern": "\\.controller\\.ts$",
+      "forbidden_imports": [
+        "\\.repository",
+        "\\.entity",
+        "prisma",
+        "typeorm",
+        "mongoose"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    },
+    {
+      "name": "Services must not import controllers",
+      "scope_pattern": "\\.service\\.ts$",
+      "forbidden_imports": [
+        "\\.controller"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "dto/": 80,
+      "controller": 150,
+      "module": 60
+    }
+  }
+}

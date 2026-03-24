@@ -1,0 +1,116 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-24",
+  "deprecations": [
+    {
+      "pattern": "from '@nestjs/common/decorators/core/reflect\\.metadata'",
+      "replacement": "Import reflect-metadata directly: import 'reflect-metadata' in your entry file",
+      "package": "@nestjs/common",
+      "since": "9.0.0",
+      "removed_in": "11.0.0",
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "app\\.useLogger\\(false\\)",
+      "replacement": "Use app.useLogger(new Logger()) or pass a custom logger; passing false is deprecated",
+      "package": "@nestjs/core",
+      "since": "9.0.0",
+      "removed_in": null,
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "forwardRef\\(\\(\\)\\s*=>\\s*TypeOrmModule\\)",
+      "replacement": "Use TypeOrmModule.forFeature([]) directly — forwardRef with TypeOrmModule is not needed in NestJS v10+",
+      "package": "@nestjs/typeorm",
+      "since": "10.0.0",
+      "removed_in": null,
+      "applies_from": "10.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@nestjs/swagger.*ApiModelProperty",
+      "replacement": "Replace @ApiModelProperty() with @ApiProperty() — renamed in @nestjs/swagger v4",
+      "package": "@nestjs/swagger",
+      "since": "4.0.0",
+      "removed_in": "5.0.0",
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from 'nestjs-typegoose'",
+      "replacement": "Use @nestjs/mongoose with @Schema()/@Prop() decorators — nestjs-typegoose is unmaintained",
+      "package": "nestjs-typegoose",
+      "since": "9.0.0",
+      "removed_in": null,
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from '@nestjs/microservices/transport/redis\\.transport'",
+      "replacement": "Import Transport from '@nestjs/microservices' top-level; internal paths are not stable",
+      "package": "@nestjs/microservices",
+      "since": "9.0.0",
+      "removed_in": null,
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "synchronize\\s*:\\s*true",
+      "replacement": "Set synchronize: false and use migrations — synchronize:true drops/alters columns in production without warning",
+      "package": "@nestjs/typeorm",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "1.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from 'cache-manager-redis-store'",
+      "replacement": "Use cache-manager-ioredis-yet or @keyv/redis with @nestjs/cache-manager v2+ — cache-manager-redis-store is incompatible with cache-manager v5",
+      "package": "cache-manager-redis-store",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "CacheModule\\.register\\(",
+      "replacement": "Use CacheModule.registerAsync() with useFactory to inject ConfigService for type-safe cache configuration",
+      "package": "@nestjs/cache-manager",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "from '@nestjs/graphql'.*Resolver.*without.*ObjectType",
+      "replacement": "Code-first resolvers require @ObjectType() on the return type class — missing decorator causes runtime schema build failure",
+      "package": "@nestjs/graphql",
+      "since": "10.0.0",
+      "removed_in": null,
+      "applies_from": "10.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    }
+  ]
+}
