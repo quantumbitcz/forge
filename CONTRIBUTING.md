@@ -26,13 +26,13 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 feat(agents): add pl-350-migration-checker agent
 fix(hooks): correct checkpoint timestamp format
-chore(react-vite): update known-deprecations.json
+chore(react): update known-deprecations.json
 docs(shared): clarify scoring deduplication rules
 ```
 
 Common types: `feat`, `fix`, `chore`, `docs`, `refactor`
 
-Common scopes: `agents`, `shared`, `hooks`, `skills`, `kotlin-spring`, `react-vite`, `infra-k8s`, or any module name
+Common scopes: `agents`, `shared`, `hooks`, `skills`, `spring`, `react`, `k8s`, or any module name
 
 ## What You Should Know
 
@@ -51,7 +51,7 @@ Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/de
 
 ### State is local and gitignored
 
-All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.3). Changes to the state schema require a new version number and a forward-compatible migration path (see the migration chain in `state-schema.md`: 1.1 -> 1.2 -> 1.3).
+All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.0.0). Version 1.0.0 is a clean break -- old state files from previous schema versions are incompatible. Use `/pipeline-reset` to clear them.
 
 ## Making Changes
 
@@ -74,9 +74,9 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 
 1. Create the directory structure:
    ```
-   modules/{name}/
+   modules/frameworks/{name}/
      conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
-     local-template.md           # Project config template (YAML frontmatter)
+     local-template.md           # Project config template (YAML frontmatter, using components: structure)
      pipeline-config-template.md # Runtime config template (must include total_retries_max and oscillation_tolerance)
      rules-override.json         # Module-specific check engine overrides
      known-deprecations.json     # Registry of deprecated APIs (schema v2 with applies_from/removed_in/applies_to fields, seed with 5-15 entries)
@@ -100,7 +100,7 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 1. Hooks are registered in `hooks/hooks.json` -- update the manifest if adding a new hook
 2. Three hooks are currently registered: the check engine (`PostToolUse` on `Edit|Write`), the pipeline checkpoint (`PostToolUse` on `Skill`), and feedback capture (`Stop`)
 3. Hook scripts must be executable (`chmod +x`) with a shebang line
-4. Module guard hooks live in `modules/{name}/hooks/` and are referenced from the local template
+4. Module guard hooks live in `modules/frameworks/{name}/hooks/` and are referenced from the local template
 
 ### Modifying shared references
 
@@ -122,7 +122,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 
 | Component | Pattern | Example |
 |-----------|---------|---------|
-| Module directory | lowercase-with-hyphens | `python-fastapi` |
+| Module directory | `modules/frameworks/{name}` | `fastapi`, `go-stdlib` |
 | Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
 | Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
 | Skill directory | lowercase-with-hyphens | `pipeline-status` |

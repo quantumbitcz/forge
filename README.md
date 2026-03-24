@@ -1,28 +1,53 @@
 # dev-pipeline
 
-Reusable autonomous development pipeline for Claude Code.
+> Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-A Claude Code plugin that orchestrates a 10-stage development pipeline with framework-specific modules. Point it at a feature, bugfix, or refactor, and it handles exploration, planning, implementation (TDD), verification, quality review, documentation, PR creation, and self-improvement -- fully autonomously.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **dev-pipeline** fixes this by orchestrating 29 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
-## What this is
+## Quick start
 
-`dev-pipeline` is a shared plugin (v1.0.0) installable from the `quantumbitcz` marketplace. It provides:
+```bash
+# 1. Install the plugin
+/plugin marketplace add quantumbitcz/dev-pipeline
+/plugin install dev-pipeline@quantumbitcz
 
-- A **pipeline orchestrator** that coordinates 10 stages from requirement to pull request
-- **Framework modules** with conventions, review agents, scaffolder patterns, deprecation registries, and verification scripts
-- **Self-improving infrastructure** that tracks metrics, extracts learnings, and auto-tunes parameters across runs
+# 2. Initialize your project (auto-detects framework)
+/pipeline-init
+
+# 3. Add .pipeline/ to .gitignore
+echo ".pipeline/" >> .gitignore
+
+# 4. Run it
+/pipeline-run Add user dashboard with activity feed
+```
+
+<details>
+<summary>Alternative: install as Git submodule</summary>
+
+```bash
+git submodule add https://github.com/quantumbitcz/dev-pipeline.git .claude/plugins/dev-pipeline
+```
+
+Then add to `.claude/settings.json`:
+
+```json
+{
+  "plugins": [".claude/plugins/dev-pipeline"]
+}
+```
+
+</details>
 
 ## Key features
 
-- **Worktree isolation** -- All implementation runs in a git worktree (`.pipeline/worktree`). Your working tree is never modified during pipeline execution.
-- **Self-healing recovery** -- 7 recovery strategies with weighted budget (transient-retry, tool-diagnosis, state-reconstruction, agent-reset, dependency-health, resource-cleanup, graceful-stop). Budget ceiling: 5.0 total weight.
-- **3-layer check engine** -- Fires on every Edit/Write via PostToolUse hook. Layer 1: fast regex patterns (sub-second). Layer 2: framework-aware linters. Layer 3: AI-driven agents dispatched by the orchestrator (`pl-140-deprecation-refresh` during PREFLIGHT, `version-compat-reviewer` during REVIEW) with version-gated rules.
-- **PREEMPT system** -- Learnings from past runs are proactively applied to matching domains in new runs. Confidence decay prevents stale learnings from persisting.
-- **Adaptive MCP detection** -- Auto-detects available MCPs (Linear, Playwright, Slack, Context7, Figma) at PREFLIGHT and adapts behavior per stage. No MCP is required.
-- **Version-aware deprecation rules** -- Schema v2 registries with `applies_from`, `removed_in`, and `applies_to` fields. Rules only fire when the project version matches.
-- **Concurrent run protection** -- `.pipeline/.lock` prevents parallel pipeline runs on the same project. Stale locks are auto-cleaned via PID check and 24-hour timeout.
-- **Global retry budget** -- All retry loops share a cumulative counter (configurable max, default 10) to prevent unbounded retry cascades.
-- **Frontend design quality** -- Creative polish agent (`pl-320-frontend-polisher`) adds animations, micro-interactions, and visual refinement after implementation. Design review (`frontend-design-reviewer`) and accessibility review (`frontend-a11y-reviewer`) validate design system compliance, responsive behavior (375px/768px/1280px), dark mode, WCAG 2.2 AA, and visual coherence. Design theory guardrails (`shared/frontend-design-theory.md`) encode Gestalt principles, visual hierarchy, color theory, typography, spacing, motion, and anti-AI-look standards.
+- **Worktree isolation** -- Your working tree is never modified. All implementation runs in a git worktree (`.pipeline/worktree`).
+- **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.0) handle transient failures, tool issues, and state corruption automatically.
+- **3-layer check engine** -- Fires on every Edit/Write. Fast regex patterns (sub-second), framework-aware linters, and AI-driven agents with version-gated deprecation rules.
+- **Self-improving** -- Learnings from past runs are proactively applied to future runs via the PREEMPT system. Confidence decay prevents stale learnings from persisting.
+- **Adaptive MCP detection** -- Auto-detects Linear, Playwright, Slack, Context7, and Figma at PREFLIGHT. No MCP is required -- the pipeline degrades gracefully.
+- **Version-aware deprecations** -- Schema v2 registries with `applies_from` and `removed_in` fields. Rules only fire when the project version matches.
+- **Frontend design quality** -- Creative polish, WCAG 2.2 AA audits, design system compliance, and responsive validation across breakpoints.
+- **Concurrent run protection** -- Lock file prevents parallel runs. Global retry budget (default 10) prevents unbounded cascades.
 
 ### The 10 stages
 
@@ -99,88 +124,47 @@ The pipeline auto-detects available MCP servers at PREFLIGHT and adapts its beha
 
 Configure Linear integration in `.claude/dev-pipeline.local.md` under the `linear:` section (disabled by default).
 
-## Quick setup
+## Setup details
 
-### 1. Install from marketplace
+After running the [Quick start](#quick-start) above, customize your project:
 
-```bash
-# Add the marketplace (one-time)
-/plugin marketplace add quantumbitcz/dev-pipeline
+### Configure your project
 
-# Install the plugin
-/plugin install dev-pipeline@quantumbitcz
-```
-
-Or use the interactive plugin manager: `/plugin` -> Discover tab -> select `dev-pipeline`.
-
-<details>
-<summary>Alternative: install as Git submodule</summary>
-
-```bash
-git submodule add https://github.com/quantumbitcz/dev-pipeline.git .claude/plugins/dev-pipeline
-```
-
-Then add to `.claude/settings.json`:
-
-```json
-{
-  "plugins": [".claude/plugins/dev-pipeline"]
-}
-```
-
-</details>
-
-### 2. Initialize project config
-
-```bash
-/pipeline-init
-```
-
-This creates `.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, and `.claude/pipeline-log.md` for your project. It auto-detects the framework module.
-
-<details>
-<summary>Manual setup (if you prefer)</summary>
-
-```bash
-# Copy the module's local template (replace <module> with your framework)
-cp .claude/plugins/dev-pipeline/modules/<module>/local-template.md .claude/dev-pipeline.local.md
-cp .claude/plugins/dev-pipeline/modules/<module>/pipeline-config-template.md .claude/pipeline-config.md
-touch .claude/pipeline-log.md
-```
-
-</details>
-
-### 3. Edit the local config
-
-Open `.claude/dev-pipeline.local.md` and customize:
-- `commands.build`, `commands.test`, etc. to match your project's build tool
-- `scaffolder.patterns` to match your project's directory structure
+Open `.claude/dev-pipeline.local.md` and set:
+- `commands.build`, `commands.test`, etc. to match your build tool
+- `scaffolder.patterns` to match your directory structure
 - `quality_gate` batches and `inline_checks` for your review needs
 - `context7_libraries` for the frameworks your project uses
 
-### 4. Add `.pipeline/` to `.gitignore`
+Add `.pipeline/` to `.gitignore`:
 
 ```bash
 echo ".pipeline/" >> .gitignore
 ```
 
-### 5. Run it
+<details>
+<summary>Manual setup (without /pipeline-init)</summary>
 
 ```bash
+# Copy the module's local template (replace <module> with your framework)
+cp .claude/plugins/dev-pipeline/modules/frameworks/<module>/local-template.md .claude/dev-pipeline.local.md
+cp .claude/plugins/dev-pipeline/modules/frameworks/<module>/pipeline-config-template.md .claude/pipeline-config.md
+touch .claude/pipeline-log.md
+```
+
+</details>
+
+### Usage examples
+
+```bash
+# Full pipeline run
 /pipeline-run Add plan comment feature
 /pipeline-run Fix 404 on client group endpoint
-/pipeline-run Refactor booking validation
-```
 
-Dry-run (PREFLIGHT through VALIDATE without implementation -- no worktree, no Linear tickets, no file changes):
-
-```bash
+# Dry-run (PREFLIGHT through VALIDATE — no worktree, no Linear tickets, no file changes)
 /pipeline-run --dry-run "Add user dashboard"
-```
 
-Resume from a specific stage:
-
-```bash
+# Resume from a specific stage
 /pipeline-run "Add plan versioning" --from=implement
 ```
 
@@ -199,10 +183,10 @@ Resume from a specific stage:
 |    deprecations, scripts) |  known-deprecations.json, local-template.md
 |                           |  pipeline-config-template.md
 +---------------------------+
-|   Shared core             |  agents/pl-*.md (pipeline agents)
+|   Shared core             |  agents/ (29 pipeline + review agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings, recovery)
 |    scoring, state)        |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (12 user-facing commands)
+|                           |  skills/ (13 user-facing commands)
 +---------------------------+
 ```
 
@@ -230,7 +214,7 @@ The pipeline pauses and escalates to the user when:
 Defines the project's identity and tooling. Checked into git. Rarely changes.
 
 Key sections:
-- `project_type` / `framework` / `module` -- project identity
+- `components` -- project identity (`language`, `framework`, `variant`, `testing`)
 - `commands` -- build, lint, test, format commands
 - `scaffolder.patterns` -- file path templates for code generation
 - `quality_gate` -- review agent batches and inline checks
@@ -257,13 +241,13 @@ Key sections:
 The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
 
 ```bash
-# Run all tests (~233 tests, ~30s)
+# Run all tests (~248 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (25 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (82 tests)
-./tests/run-all.sh contract     # Document contract compliance (87 tests)
+./tests/run-all.sh structural   # Plugin integrity (27 checks, no bats needed)
+./tests/run-all.sh unit         # Shell script behavior (92 tests)
+./tests/run-all.sh contract     # Document contract compliance (90 tests)
 ./tests/run-all.sh scenario     # Multi-script integration (39 tests)
 ```
 
@@ -276,7 +260,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | Agent                         | Stage        | Role                                                              |
 |-------------------------------|--------------|-------------------------------------------------------------------|
 | `pl-010-shaper`               | Pre-pipeline | Feature spec shaping (epics, stories, AC)                         |
-| `pl-050-project-bootstrapper` | 0 Preflight  | Bootstraps new projects with module scaffolding and config        |
+| `pl-050-project-bootstrapper` | Pre-pipeline | Bootstraps new projects with module scaffolding and config        |
 | `pl-100-orchestrator`         | All          | Coordinates the 10-stage lifecycle, manages state and recovery    |
 | `pl-140-deprecation-refresh`  | 0 Preflight  | Refreshes `known-deprecations.json` via Context7                  |
 | `pl-150-test-bootstrapper`    | 0 Preflight  | Bootstraps test coverage when below threshold                     |
@@ -451,12 +435,12 @@ dev-pipeline/
       gin/ go-stdlib/ jetpack-compose/ k8s/
       kotlin-multiplatform/ nextjs/ react/ spring/
       sveltekit/ swiftui/ vapor/
-    languages/                          # Per-language deprecation registries
-    testing/                            # Per-testing-framework deprecation registries
+    languages/                          # Per-language idioms, type conventions, and baseline rules
+    testing/                            # Per-testing-framework generic test patterns
     (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
-  tests/                                # 4-tier test suite (~233 tests)
+  tests/                                # 4-tier test suite (~248 tests)
     run-all.sh                          #   Test runner (all tiers or individual)
     validate-plugin.sh                  #   Structural validation (no bats needed)
     fixtures/                           #   Test fixture data
