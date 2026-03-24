@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-24",
+  "deprecations": [
+    {
+      "pattern": "\\$:\\s+",
+      "replacement": "Use `$derived()` for reactive derivations or `$effect()` for side effects instead of `$:` reactive statements",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "export\\s+let\\s+\\w+",
+      "replacement": "Use the `$props()` rune to declare component props instead of `export let`",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "createEventDispatcher\\s*\\(",
+      "replacement": "Use callback props instead of `createEventDispatcher()`. Pass event handlers (e.g., `onclick`, `onSelect`) as props via `$props()`",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\$\\$props|\\$\\$restProps",
+      "replacement": "Use rest spreading in `$props()` instead of `$$props`/`$$restProps`: `let { knownProp, ...rest } = $props()`",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": "5.0.0",
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "(?:onMount|onDestroy)\\s*\\(",
+      "replacement": "Use `$effect()` with an optional cleanup return function instead of `onMount`/`onDestroy` lifecycle hooks",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "<slot(?:\\s|>|/>)",
+      "replacement": "Use `{#snippet}` and `{@render}` blocks for content projection instead of `<slot>` in Svelte 5",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "on:[a-z]+\\s*=",
+      "replacement": "Use standard DOM event attributes (`onclick`, `oninput`, `onchange`) instead of Svelte `on:event` directive syntax in Svelte 5",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "<svelte:component\\s+this\\s*=",
+      "replacement": "Use dynamic component rendering with a variable or `{#snippet}` blocks instead of `<svelte:component this={...}>` in Svelte 5",
+      "package": "svelte",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "added": "2026-03-24",
+      "addedBy": "seed"
+    }
+  ]
+}
