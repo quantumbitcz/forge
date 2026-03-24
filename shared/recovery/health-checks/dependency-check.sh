@@ -6,6 +6,11 @@
 
 set -euo pipefail
 
+# Source platform helpers
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../platform.sh
+source "$SCRIPT_DIR/../../platform.sh"
+
 DEP="${1:-}"
 
 if [[ -z "$DEP" ]]; then
@@ -26,7 +31,7 @@ case "$DEP" in
     if docker info &>/dev/null; then
       echo "OK"
     else
-      echo "UNAVAILABLE: Docker daemon is not running (try: open -a Docker or sudo systemctl start docker)"
+      echo "UNAVAILABLE: Docker daemon is not running (try: $(suggest_docker_start))"
     fi
     ;;
 
@@ -88,7 +93,7 @@ case "$DEP" in
 
   gh|github)
     if ! command -v gh &>/dev/null; then
-      echo "UNAVAILABLE: gh command not found (install: brew install gh)"
+      echo "UNAVAILABLE: gh command not found (install: $(suggest_install gh))"
       exit 0
     fi
     if gh auth status &>/dev/null; then
@@ -102,7 +107,7 @@ case "$DEP" in
     if command -v node &>/dev/null; then
       echo "OK"
     else
-      echo "UNAVAILABLE: node not found (install: brew install node or use nvm)"
+      echo "UNAVAILABLE: node not found (install: $(suggest_install node) or use nvm)"
     fi
     ;;
 

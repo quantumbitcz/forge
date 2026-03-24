@@ -11,7 +11,7 @@ SEVERITY_MAP="${3:?}"
 
 command -v golangci-lint &>/dev/null || exit 1
 
-RAW=$(mktemp); trap 'rm -f "$RAW"' EXIT
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX"); trap 'rm -f "$RAW"' EXIT
 
 RC=0
 (cd "$PROJECT_ROOT" && golangci-lint run --out-format json "$TARGET" 2>/dev/null) > "$RAW" || RC=$?

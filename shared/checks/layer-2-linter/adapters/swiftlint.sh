@@ -14,7 +14,7 @@ SEVERITY_MAP="${3:?}"
 command -v swiftlint &>/dev/null || exit 1
 
 # --- run linter ---
-RAW=$(mktemp)
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX")
 trap 'rm -f "$RAW"' EXIT
 
 RC=0

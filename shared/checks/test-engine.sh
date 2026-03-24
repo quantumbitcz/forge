@@ -33,7 +33,7 @@ assert_silent() {
 echo "=== Check Engine Integration Tests ==="
 
 # Setup: temp project with realistic directory structure
-TMPDIR=$(mktemp -d)
+TMPDIR=$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/dev-pipeline-test.XXXXXX")
 trap "rm -rf $TMPDIR" EXIT
 mkdir -p "$TMPDIR/src/main/kotlin/core/domain"
 mkdir -p "$TMPDIR/src/test/kotlin"

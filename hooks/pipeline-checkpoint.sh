@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # PostToolUse hook (Skill): Updates pipeline state timestamp after skill invocations.
 # Best-effort — fails silently.
 
@@ -7,7 +7,7 @@
   [ ! -f "$STATE_FILE" ] && exit 0
 
   timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-  tmp=$(mktemp)
+  tmp=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/pipeline-ckpt.XXXXXX")
   if command -v python3 &>/dev/null; then
     python3 -c "
 import json, sys

@@ -12,7 +12,7 @@ SEVERITY_MAP="${3:?}"
 command -v go &>/dev/null || exit 1
 HAS_SC=false; command -v staticcheck &>/dev/null && HAS_SC=true
 
-RAW=$(mktemp); trap 'rm -f "$RAW"' EXIT
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX"); trap 'rm -f "$RAW"' EXIT
 RC=0
 if [[ "$HAS_SC" == true ]]; then
   (cd "$PROJECT_ROOT" && staticcheck ./... 2>&1) > "$RAW" || RC=$?

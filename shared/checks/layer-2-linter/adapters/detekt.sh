@@ -26,7 +26,7 @@ if [[ "$HAS_GRADLE" == false && "$HAS_DETEKT_CLI" == false ]]; then
 fi
 
 # --- run linter ---
-RAW=$(mktemp)
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX")
 trap 'rm -f "$RAW"' EXIT
 
 RC=0

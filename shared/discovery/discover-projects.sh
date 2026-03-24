@@ -8,6 +8,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DETECT_TYPE="$SCRIPT_DIR/detect-project-type.sh"
 
+# Source platform helpers
+# shellcheck source=../platform.sh
+source "$SCRIPT_DIR/../platform.sh"
+
 PROJECT_ROOT="${1:-$(pwd)}"
 DEPTH=2
 
@@ -310,29 +314,32 @@ step3_ide_directories() {
     [[ -d "$d" ]] && ide_dirs+=("$d")
   done
 
-  # Windows: also check Documents and common drive roots (via Git Bash / WSL / MSYS2)
-  if [[ -d "$home/Documents" ]]; then
+  # Platform-specific paths (skip irrelevant checks per OS)
+  if [[ "$PIPELINE_OS" == "windows" ]]; then
+    # Windows: Documents, Visual Studio, GitHub Desktop, drive roots
     for d in "$home/Documents/Projects" "$home/Documents/repos" \
-             "$home/Documents/Visual Studio" "$home/Documents/Visual Studio 2022/Projects" \
+             "$home/Documents/Visual Studio 2022/Projects" \
              "$home/Documents/Visual Studio 2019/Projects" \
              "$home/Documents/Visual Studio Code Projects" \
-             "$home/Documents/GitHub" "$home/Documents/source/repos"; do
+             "$home/Documents/GitHub" "$home/Documents/source/repos" \
+             "$home/source/repos"; do
+      [[ -d "$d" ]] && ide_dirs+=("$d")
+    done
+    for drv in /c /d /e C: D: E:; do
+      for d in "$drv/dev" "$drv/projects" "$drv/repos" "$drv/src" "$drv/code" "$drv/git"; do
+        [[ -d "$d" ]] && ide_dirs+=("$d")
+      done
+    done
+  fi
+
+  if [[ "$PIPELINE_OS" == "linux" ]]; then
+    # Linux: XDG, lowercase conventions
+    local xdg_projects="${XDG_PROJECTS_DIR:-}"
+    [[ -n "$xdg_projects" && -d "$xdg_projects" ]] && ide_dirs+=("$xdg_projects")
+    for d in "$home/projects" "$home/dev" "$home/devel"; do
       [[ -d "$d" ]] && ide_dirs+=("$d")
     done
   fi
-  # Windows drive roots (C:/dev, D:/projects, etc.)
-  for drv in /c /d /e C: D: E:; do
-    for d in "$drv/dev" "$drv/projects" "$drv/repos" "$drv/src" "$drv/code" "$drv/git"; do
-      [[ -d "$d" ]] && ide_dirs+=("$d")
-    done
-  done
-
-  # Linux: XDG and common conventions
-  local xdg_projects="${XDG_PROJECTS_DIR:-}"
-  [[ -n "$xdg_projects" && -d "$xdg_projects" ]] && ide_dirs+=("$xdg_projects")
-  for d in "$home/projects" "$home/dev" "$home/devel"; do
-    [[ -d "$d" ]] && ide_dirs+=("$d")
-  done
 
   for ide_dir in "${ide_dirs[@]+"${ide_dirs[@]}"}"; do
     local project

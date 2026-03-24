@@ -14,7 +14,7 @@ HAS_GRADLE=false; HAS_CLI=false
 command -v checkstyle &>/dev/null && HAS_CLI=true
 [[ "$HAS_GRADLE" == false && "$HAS_CLI" == false ]] && exit 1
 
-RAW=$(mktemp); trap 'rm -f "$RAW"' EXIT
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX"); trap 'rm -f "$RAW"' EXIT
 RC=0
 if [[ "$HAS_GRADLE" == true ]]; then
   (cd "$PROJECT_ROOT" && ./gradlew checkstyleMain -q 2>/dev/null) > "$RAW" || RC=$?

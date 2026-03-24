@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Stop event hook: Appends a timestamped line to the feedback log when a session ends.
 # Best-effort — fails silently.
 

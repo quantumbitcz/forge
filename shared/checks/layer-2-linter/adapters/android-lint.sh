@@ -21,8 +21,8 @@ if [[ "$HAS_GRADLEW" == false ]]; then
 fi
 
 # --- run linters ---
-RAW_LINT=$(mktemp)
-RAW_DETEKT=$(mktemp)
+RAW_LINT=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX")
+RAW_DETEKT=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX")
 trap 'rm -f "$RAW_LINT" "$RAW_DETEKT"' EXIT
 
 # Run Android Lint (XML output for machine parsing)

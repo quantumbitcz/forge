@@ -11,7 +11,7 @@ SEVERITY_MAP="${3:?}"
 
 command -v clang-tidy &>/dev/null || exit 1
 
-RAW=$(mktemp); trap 'rm -f "$RAW"' EXIT
+RAW=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/linter.XXXXXX"); trap 'rm -f "$RAW"' EXIT
 EXTRA_ARGS=()
 [[ -f "$PROJECT_ROOT/compile_commands.json" ]] && EXTRA_ARGS+=(-p "$PROJECT_ROOT")
 
