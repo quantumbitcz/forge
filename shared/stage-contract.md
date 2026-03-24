@@ -8,7 +8,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
-| 0 | PREFLIGHT | inline | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement | Config loaded, state.json initialized, task list created |
+| 0 | PREFLIGHT | inline | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement | Config loaded, convention stacks resolved per component, rule caches generated, state initialized |
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `pl-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `pl-210-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user) |
@@ -50,13 +50,19 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 5. Apply `--from` flag if provided (overrides checkpoint recovery).
 6. Initialize `.pipeline/state.json` with all counters at 0.
 7. Create task list (10 stages).
+8. Detect config mode (flat vs. multi-service components:)
+9. Resolve convention stacks per component (language, framework, variant, testing + optional crosscutting layers: database, persistence, migrations, api_protocol, messaging, caching, search, storage, auth, observability)
+10. Run layer combination validation, log warnings for nonsensical configurations
+11. Detect versions for all layers from manifest files, store in detected_versions.key_dependencies
+12. Generate per-component rule cache (.pipeline/.rules-cache-{component}.json)
+13. Write component path mapping (.pipeline/.component-cache)
 
 **Outputs:**
 - Initialized `.pipeline/state.json`
 - Parsed config (passed as context to subsequent stages)
 - Matched PREEMPT items (recorded in `preempt_items_applied`)
 
-**Exit condition:** Config loaded, state initialized, no unresolved interrupted-run conflicts.
+**Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized.
 
 ---
 
