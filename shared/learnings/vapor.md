@@ -1,3 +1,3 @@
-# Cross-Project Learnings: swift-vapor
+# Cross-Project Learnings: vapor
 
 ## PREEMPT items

@@ -24,7 +24,8 @@ components:
   ios:
     path: "iosApp/"
     language: swift
-    framework: swift-ios
+    framework: swiftui
+    variant: swift
     testing: xctest
     commands:
       build: "xcodebuild build -scheme iosApp -sdk iphonesimulator"
@@ -85,7 +86,7 @@ test_gate:
       source: plugin
 
 validation:
-  perspectives: [architecture, security, edge_cases, test_strategy, conventions]
+  perspectives: [architecture, security, edge_cases, test_strategy, conventions, approach_quality]
   max_validation_retries: 2
 
 implementation:

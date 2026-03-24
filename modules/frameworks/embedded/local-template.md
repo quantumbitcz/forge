@@ -52,7 +52,7 @@ test_gate:
       source: plugin
 
 validation:
-  perspectives: [architecture, memory_safety, real_time, test_strategy, conventions]
+  perspectives: [architecture, memory_safety, real_time, test_strategy, conventions, approach_quality]
   max_validation_retries: 2
 
 implementation:

@@ -8,7 +8,7 @@ set -euo pipefail
 # Modes:
 #   --hook              PostToolUse hook (single file, Layer 1 only)
 #   --verify            VERIFY stage (Layer 1 + Layer 2)
-#   --review            REVIEW stage (Layer 1 + Layer 2 + Layer 3 stub)
+#   --review            REVIEW stage (Layer 1 + Layer 2; Layer 3 handled by agent dispatch)
 #
 # Multi-component routing:
 #   When .pipeline/.component-cache exists, the engine matches the file's
@@ -347,7 +347,10 @@ mode_review() {
     run_layer1 "$f" "$PROJECT_ROOT"
     run_layer2 "$f" "$PROJECT_ROOT"
   done
-  echo "# Layer 3 (agent intelligence) not yet implemented" >&2
+  # Layer 3 (agent intelligence) is handled by dedicated agent dispatch, not shell execution.
+  # - pl-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
+  # - version-compat-reviewer: dispatched during REVIEW via quality gate batches
+  # See agents/pl-140-deprecation-refresh.md and agents/version-compat-reviewer.md
 }
 
 # --- Main dispatch ---

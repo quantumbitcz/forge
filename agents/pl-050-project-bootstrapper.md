@@ -577,7 +577,8 @@ Update `.pipeline/state.json` with:
   "story_state": "PREFLIGHT",
   "mode": "bootstrap-project",
   "bootstrap_project": {
-    "framework": "kotlin-spring",
+    "framework": "spring",
+    "language": "kotlin",
     "architecture": "hexagonal",
     "build_system": "gradle-composite",
     "database": "postgresql",

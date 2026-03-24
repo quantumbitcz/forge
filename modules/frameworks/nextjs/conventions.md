@@ -160,6 +160,46 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 - External image domains must be listed in `next.config.ts` `remotePatterns`
 - Never use `<img>` for content images
 
+## Animation & Motion
+
+Reference `shared/frontend-design-theory.md` for design theory guardrails.
+
+### Library Preference
+- **Simple transitions**: CSS transitions with `transition-property: transform, opacity`
+- **Component transitions**: Framer Motion (`motion/react`) -- NOTE: only works in Client Components (`"use client"`)
+- **Route transitions**: `next-view-transitions` package or CSS View Transitions API
+- **Complex sequences**: GSAP with `useGSAP` hook (Client Components only)
+- **CSS-only**: loading spinners, skeleton pulses, hover effects (works in Server Components via CSS)
+
+### Key Constraint
+Server Components cannot use Framer Motion or any client-side animation library. Animation logic must live in Client Components. Keep Server Components for data fetching, Client Components for interactivity and motion.
+
+### Standards
+- Spring physics over cubic-bezier for natural feel
+- Timing: <100ms feedback, 150-200ms micro-interactions, 200-350ms transitions, 300-500ms sequences
+- Only animate `transform` and `opacity` (GPU-composited)
+- REQUIRED: `prefers-reduced-motion` support for all animations
+- One orchestrated moment per page beats scattered effects
+
+## Multi-Viewport Design
+
+### Breakpoints
+- Mobile: 375px | Tablet: 768px | Desktop: 1280px | Wide: 1536px+
+
+### Mobile (375px)
+- Touch targets >= 44px, single-column reflow, 16px min body text
+- Use `next/image` with `sizes` prop for responsive image serving
+
+### Tablet (768px)
+- Adaptive layout (not scaled mobile), touch+hover hybrid
+
+### Desktop (1280px+)
+- Hover states, generous whitespace, full navigation
+- Use `next/image` `priority` prop for above-fold hero images
+
+### Cross-Viewport
+- Same information hierarchy at all sizes, 8pt grid spacing, `next/image` for all responsive images
+
 ## Security
 
 - Server Actions include built-in CSRF protection via Origin header validation

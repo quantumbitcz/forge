@@ -44,11 +44,11 @@ The `.pipeline/state.json` file does not exist when it should (mid-pipeline run)
 
 After writing the reconstructed `state.json`, verify the `version` field:
 
-1. If `version` is missing or < `"1.3"`: apply the appropriate migration chain (1.1→1.2→1.3)
-2. If `version` is `"1.3"`: no migration needed
-3. Log: "Reconstructed state at schema version {version}. Migration applied: {yes/no}."
+1. If `version` is missing or != `"1.0.0"`: the state file is from an incompatible schema. Discard and reinitialize from the orchestrator's section 3.8 template. Log: "Incompatible state version {version}, reinitializing."
+2. If `version` is `"1.0.0"`: no migration needed.
+3. Log: "Reconstructed state at schema version {version}."
 
-This ensures reconstructed state files always match the current schema, regardless of what artifacts were used for reconstruction.
+Version 1.0.0 is a clean break — there is no migration chain. Incompatible old state files must be cleared with `/pipeline-reset`.
 
 ### 1.2 Invalid JSON in `state.json`
 

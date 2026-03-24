@@ -1,6 +1,6 @@
 {
   "extends": "typescript",
-  "framework": "react-vite",
+  "framework": "react",
   "additional_rules": [
     {
       "id": "FE-THEME-001",

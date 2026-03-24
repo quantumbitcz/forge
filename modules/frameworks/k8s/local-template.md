@@ -56,7 +56,7 @@ test_gate:
       source: plugin
 
 validation:
-  perspectives: [security, resource_limits, networking, rollback_safety, conventions]
+  perspectives: [security, resource_limits, networking, rollback_safety, conventions, approach_quality]
   max_validation_retries: 2
 
 implementation:

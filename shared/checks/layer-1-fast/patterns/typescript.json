@@ -98,6 +98,54 @@
       "fix_hint": "Define a const with a descriptive name.",
       "example_ref": "typescript/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "TS-DESIGN-001",
+      "name": "hardcoded-hex-color",
+      "pattern": "['\"]#[0-9a-fA-F]{3,8}['\"]|:\\s*#[0-9a-fA-F]{3,8}\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|theme|token|--[a-z]|palette|var\\(|colors?\\s*[:=]|_note|_comment",
+      "severity": "WARNING",
+      "category": "DESIGN-TOKEN",
+      "message": "Hardcoded hex color — use a theme token or CSS custom property instead.",
+      "fix_hint": "Replace with a semantic token (e.g., bg-background, text-foreground) or CSS var(--color-*).",
+      "example_ref": "typescript/design-tokens.md#hardcoded-colors",
+      "scope": "main"
+    },
+    {
+      "id": "TS-DESIGN-002",
+      "name": "hardcoded-rgb-color",
+      "pattern": "rgba?\\(\\s*\\d+",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|theme|token|var\\(|--[a-z]|palette",
+      "severity": "WARNING",
+      "category": "DESIGN-TOKEN",
+      "message": "Hardcoded rgb/rgba color — use a theme token or CSS custom property.",
+      "fix_hint": "Replace with a CSS var(--color-*) or theme token.",
+      "example_ref": "typescript/design-tokens.md#hardcoded-colors",
+      "scope": "main"
+    },
+    {
+      "id": "TS-DESIGN-003",
+      "name": "animation-layout-property",
+      "pattern": "transition:\\s*[^;]*(width|height|top|left|right|bottom|margin|padding)",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|max-width|max-height|min-width|min-height",
+      "severity": "WARNING",
+      "category": "DESIGN-MOTION",
+      "message": "Animating layout property — causes expensive reflow. Use transform/opacity instead.",
+      "fix_hint": "Replace with transform: translate/scale or opacity transitions for GPU-composited animation.",
+      "example_ref": "typescript/animation.md#gpu-animation",
+      "scope": "main"
+    },
+    {
+      "id": "TS-DESIGN-004",
+      "name": "missing-reduced-motion-hint",
+      "pattern": "@keyframes\\s+\\w+",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "DESIGN-MOTION",
+      "message": "CSS keyframes animation defined — ensure prefers-reduced-motion is respected nearby.",
+      "fix_hint": "Add @media (prefers-reduced-motion: reduce) { animation: none; } for this keyframe.",
+      "example_ref": "typescript/animation.md#reduced-motion",
+      "scope": "main"
     }
   ],
   "thresholds": {

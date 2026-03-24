@@ -15,16 +15,18 @@ Run security vulnerability scanners appropriate for the current module.
 
 2. Run the appropriate scanner based on module:
 
-   | Module | Scanner Command | Fallback |
-   |--------|----------------|----------|
-   | react-vite, typescript-node, typescript-svelte | `npm audit --json` or `bun audit` | `npx auditjs` |
-   | kotlin-spring, java-spring | `./gradlew dependencyCheckAnalyze` | Manual check of build.gradle.kts |
-   | python-fastapi | `pip-audit` or `safety check` | `pip list --outdated` |
-   | rust-axum | `cargo audit` | `cargo deny check` |
-   | go-stdlib | `govulncheck ./...` | `go list -m -json all` |
-   | swift-ios, swift-vapor | Manual review of Package.resolved | — |
-   | c-embedded | `cppcheck --enable=all src/` | — |
-   | infra-k8s | `trivy config .` or `kubeaudit all` | `helm lint charts/` |
+   | Framework | Scanner Command | Fallback |
+   |-----------|----------------|----------|
+   | react, nextjs, sveltekit, express | `npm audit --json` or `bun audit` | `npx auditjs` |
+   | spring (kotlin or java) | `./gradlew dependencyCheckAnalyze` | Manual check of build.gradle.kts |
+   | fastapi, django | `pip-audit` or `safety check` | `pip list --outdated` |
+   | axum | `cargo audit` | `cargo deny check` |
+   | go-stdlib, gin | `govulncheck ./...` | `go list -m -json all` |
+   | swiftui, vapor | Manual review of Package.resolved | — |
+   | jetpack-compose, kotlin-multiplatform | `./gradlew dependencyCheckAnalyze` | Manual check of build.gradle.kts |
+   | aspnet | `dotnet list package --vulnerable` | Manual check of .csproj |
+   | embedded | `cppcheck --enable=all src/` | — |
+   | k8s | `trivy config .` or `kubeaudit all` | `helm lint charts/` |
 
 3. Aggregate results:
    ```

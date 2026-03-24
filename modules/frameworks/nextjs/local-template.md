@@ -56,6 +56,10 @@ quality_gate:
     - agent: "Accessibility Auditor"
       source: builtin
       focus: "WCAG 2.2 AA, keyboard nav, screen reader"
+    - agent: frontend-design-reviewer
+      focus: "design tokens, spatial hierarchy, responsive, dark mode, visual coherence"
+    - agent: frontend-a11y-reviewer
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, missing error.tsx boundaries"
@@ -79,7 +83,7 @@ test_gate:
       source: plugin
 
 validation:
-  perspectives: [architecture, security, edge_cases, test_strategy, conventions]
+  perspectives: [architecture, security, edge_cases, test_strategy, conventions, approach_quality]
   max_validation_retries: 2
 
 implementation:
@@ -87,6 +91,11 @@ implementation:
   max_fix_loops: 3
   tdd: true
   scaffolder_before_impl: true
+
+frontend_polish:
+  enabled: true
+  aesthetic_direction: ""
+  viewport_targets: [375, 768, 1280]
 
 risk:
   auto_proceed: MEDIUM

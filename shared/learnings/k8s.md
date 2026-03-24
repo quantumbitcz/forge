@@ -1,3 +1,3 @@
-# Cross-Project Learnings: infra-k8s
+# Cross-Project Learnings: k8s
 
 ## PREEMPT items

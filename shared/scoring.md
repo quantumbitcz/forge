@@ -112,7 +112,7 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
-Module-specific categories (e.g., `HEX-*` for kotlin-spring, `THEME-*` for react-vite) are defined in each module's `conventions.md`.
+Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
 
@@ -182,6 +182,16 @@ Track `score_history[]` in `state.json` across quality cycles. After each cycle'
 3. If `delta >= 0`: improvement or stable — continue normally
 4. If `delta < 0` and `abs(delta) <= oscillation_tolerance` (default: 5): minor regression — allow one more cycle, log WARNING: "Score dipped {abs(delta)} points ({previous} → {current}). Within tolerance. Continuing."
 5. If `delta < 0` and `abs(delta) > oscillation_tolerance`: significant regression — escalate to user: "Quality regression: {previous} → {current} (delta: {delta}, tolerance: {oscillation_tolerance}). Fix cycle may be introducing new issues."
+
+### Consecutive Dip Rule
+
+Track dip count across cycles. A "dip" is any cycle where `delta < 0`. If a second consecutive dip occurs (even within tolerance), escalate immediately — do not allow a third cycle. This prevents oscillating fixes from consuming unlimited cycles.
+
+- First dip within tolerance: allow one more cycle (per rule 4 above)
+- Second consecutive dip (regardless of magnitude): escalate to user
+- A non-dip cycle (delta >= 0) resets the dip counter to 0
+
+**Interaction with max_review_cycles:** Oscillation tolerance does NOT extend beyond `max_review_cycles`. If `quality_cycles >= max_review_cycles`, the run ends regardless of oscillation state. Oscillation tolerance only determines whether to escalate EARLY (before max cycles) when fixes are making things worse.
 
 ### Oscillation Tolerance Configuration
 

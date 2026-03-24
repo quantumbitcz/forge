@@ -1,4 +1,4 @@
-# Cross-Project Learnings: react-vite
+# Cross-Project Learnings: react
 
 ## PREEMPT items
 

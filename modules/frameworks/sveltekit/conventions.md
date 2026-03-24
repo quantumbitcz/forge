@@ -87,6 +87,48 @@ Do **not** use `writable()` / `readable()` / `derived()` from `svelte/store` in 
 - Form actions: return `fail(status, data)` for validation errors
 - Global: `handleError` hook in `hooks.server.ts`
 
+## Animation & Motion
+
+Reference `shared/frontend-design-theory.md` for design theory guardrails.
+
+### Library Preference
+- **Simple transitions**: Svelte built-in directives -- `transition:fade`, `in:fly`, `out:slide`, `transition:scale`
+- **Spring physics**: `spring()` from `svelte/motion` -- native to Svelte, no external deps
+- **Tweened values**: `tweened()` from `svelte/motion` for smooth numeric transitions
+- **Complex sequences**: GSAP for timeline choreography and scroll-driven effects
+- **CSS-only**: hover effects, loading spinners, skeleton pulses
+
+### Svelte-Specific Patterns
+- Use `animate:flip` for list reordering animations
+- Custom transitions via `transition:` directive with factory functions
+- Check `prefers-reduced-motion` via `$effect` + `window.matchMedia('(prefers-reduced-motion: reduce)')`
+- `crossfade()` from `svelte/transition` for shared-element transitions between lists
+
+### Standards
+- Spring physics preferred (Svelte springs are lightweight and performant)
+- Timing: <100ms feedback, 150-200ms micro-interactions, 200-350ms transitions, 300-500ms sequences
+- Only animate `transform` and `opacity` (GPU-composited)
+- REQUIRED: `prefers-reduced-motion` support for all animations
+- One orchestrated moment per page beats scattered effects
+
+## Multi-Viewport Design
+
+### Breakpoints
+- Mobile: 375px | Tablet: 768px | Desktop: 1280px | Wide: 1536px+
+
+### Mobile (375px)
+- Touch targets >= 44px, single-column reflow, 16px min body text
+- Use `<img loading="lazy">` with `srcset` for responsive images
+
+### Tablet (768px)
+- Adaptive layout (not scaled mobile), touch+hover hybrid
+
+### Desktop (1280px+)
+- Hover states, generous whitespace, full navigation
+
+### Cross-Viewport
+- Same information hierarchy at all sizes, 8pt grid spacing, responsive images with `srcset`
+
 ## Security
 
 - Sensitive logic in `+page.server.ts` or `src/lib/server/` -- never in client-accessible code

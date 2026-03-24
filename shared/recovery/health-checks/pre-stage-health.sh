@@ -88,12 +88,15 @@ case "$STAGE" in
     if [[ "$free_kb" -lt 102400 ]]; then
       echo "ERROR: Less than 100MB free disk space ($((free_kb / 1024))MB available)" >&2
     fi
-    # Module-specific tool check
-    module=""
-    [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && \
-      module="$(grep -m1 '^module:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/^module:[[:space:]]*//' || true)"
-    case "$module" in
-      kotlin-spring|java-spring)
+    # Framework-specific tool check (reads components: structure from local config)
+    framework=""
+    language=""
+    [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && {
+      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
+      language="$(grep -m1 'language:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*language:[[:space:]]*//' || true)"
+    }
+    case "$framework" in
+      spring|jetpack-compose|kotlin-multiplatform)
         if command -v java &>/dev/null; then
           java_ver=$(java -version 2>&1 | head -1)
           echo "INFO: Java: $java_ver" >&2
@@ -101,18 +104,46 @@ case "$STAGE" in
           echo "WARN: Java not found — JVM builds may fail" >&2
         fi
         ;;
-      react-vite|typescript-node|typescript-svelte)
+      react|nextjs|sveltekit|express)
         if command -v node &>/dev/null; then
           echo "INFO: Node: $(node --version)" >&2
         else
           echo "WARN: Node not found — JS/TS builds may fail" >&2
         fi
         ;;
-      python-fastapi)
+      fastapi|django)
         if command -v python3 &>/dev/null; then
           echo "INFO: Python: $(python3 --version)" >&2
         else
           echo "WARN: Python3 not found — Python builds may fail" >&2
+        fi
+        ;;
+      axum)
+        if command -v cargo &>/dev/null; then
+          echo "INFO: Cargo: $(cargo --version)" >&2
+        else
+          echo "WARN: Cargo not found — Rust builds may fail" >&2
+        fi
+        ;;
+      gin|go-stdlib)
+        if command -v go &>/dev/null; then
+          echo "INFO: Go: $(go version)" >&2
+        else
+          echo "WARN: Go not found — Go builds may fail" >&2
+        fi
+        ;;
+      swiftui|vapor)
+        if command -v swift &>/dev/null; then
+          echo "INFO: Swift: $(swift --version 2>&1 | head -1)" >&2
+        else
+          echo "WARN: Swift not found — Swift builds may fail" >&2
+        fi
+        ;;
+      aspnet)
+        if command -v dotnet &>/dev/null; then
+          echo "INFO: .NET: $(dotnet --version)" >&2
+        else
+          echo "WARN: dotnet not found — .NET builds may fail" >&2
         fi
         ;;
     esac

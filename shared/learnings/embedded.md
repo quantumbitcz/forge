@@ -1,3 +1,3 @@
-# Cross-Project Learnings: c-embedded
+# Cross-Project Learnings: embedded
 
 ## PREEMPT items

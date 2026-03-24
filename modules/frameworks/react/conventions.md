@@ -100,6 +100,77 @@ Never mutate state directly -- always spread or clone. Use helper functions for 
 - Color must not be only status indicator -- pair with icons
 - Focus rings visible on keyboard navigation
 
+## Animation & Motion
+
+Reference `shared/frontend-design-theory.md` for design theory guardrails (Gestalt, hierarchy, color, spacing, motion principles).
+
+### Library Preference
+- **Simple transitions** (hover, reveal, toggle): CSS transitions with `transition-property: transform, opacity`
+- **Component transitions** (mount/unmount, layout shifts): Framer Motion (`motion/react`) -- `animate`, `exit`, `layout` props
+- **Complex sequences** (scroll-driven, orchestrated page loads): GSAP with `useGSAP` hook for timeline choreography
+- **CSS-only** when no React dependency needed (loading spinners, skeleton pulses)
+
+### Timing Standards
+- Instant feedback (button press, toggle): < 100ms
+- Micro-interaction (hover state, tooltip): 150-200ms
+- UI transition (panel open, element reveal): 200-350ms
+- Page transition (route change, staggered load): 300-500ms total sequence
+- Stagger between group elements: 50-80ms offset
+
+### Easing
+- Prefer spring physics (Framer Motion `type: "spring"`) over cubic-bezier for natural feel
+- Standard spring: `{ stiffness: 300, damping: 30, mass: 1 }`
+- Gentle spring: `{ stiffness: 200, damping: 25, mass: 1.2 }`
+- Never use `linear` easing for UI motion -- it feels mechanical
+
+### Performance Rules
+- Only animate `transform` and `opacity` -- GPU-composited, no layout recalc
+- Use `will-change` sparingly -- only on elements about to animate, remove after
+- Target 60fps -- if animation jank occurs, simplify or remove
+- Intersection Observer for scroll-triggered effects, NOT scroll event listeners
+- Test on low-end devices
+
+### Accessibility
+- REQUIRED: All animations must respect `prefers-reduced-motion`
+- Framer Motion: use `useReducedMotion()` hook to conditionally skip animations
+- Never use animation as the ONLY indicator of state change
+- Provide `@media (prefers-reduced-motion: reduce)` fallback in CSS
+
+### Anti-AI-Look Standards
+- ONE well-orchestrated animation moment per page (staggered reveal on load) beats scattered effects
+- Every animation must have purpose: guide attention, confirm action, show relationship, or create continuity
+- No bouncing logos, spinning icons, or decorative motion without functional intent
+
+## Multi-Viewport Design
+
+### Breakpoints
+- Mobile: 375px (iPhone SE baseline)
+- Tablet: 768px
+- Desktop: 1280px
+- Wide: 1536px+ (optional)
+
+### Mobile Requirements (375px)
+- Touch targets: minimum 44x44px (padding counts)
+- Single-column reflow -- no horizontal scrolling
+- Bottom navigation for primary actions (thumb-zone friendly)
+- Font size: minimum 16px body text (prevents iOS zoom on focus)
+- Full-width inputs and buttons
+
+### Tablet Requirements (768px)
+- NOT just scaled-up mobile -- adapt layout (sidebar + content, split views)
+- Touch AND hover support
+- Cards can go 2-column, complex forms side-by-side
+
+### Desktop Requirements (1280px+)
+- Hover states on all interactive elements
+- Generous whitespace
+- Sidebar navigation, multi-column layouts, data tables with full columns
+
+### Cross-Viewport Consistency
+- Same information hierarchy across all viewports
+- Consistent spacing rhythm (8pt grid at all sizes)
+- Images: use `<picture>` with `srcset` or responsive image component
+
 ## Security
 
 - Sanitize all content before rendering as raw HTML

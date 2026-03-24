@@ -1,6 +1,6 @@
 # ASP.NET Core + xUnit Testing Patterns
 
-> ASP.NET Core-specific testing patterns for xUnit. Extends `modules/testing/xunit.md`.
+> ASP.NET Core-specific testing patterns for xUnit. Extends `modules/testing/xunit-nunit.md`.
 > Generic xUnit conventions (Fact, Theory, FluentAssertions, Moq) are NOT repeated here.
 
 ## Integration Tests with WebApplicationFactory

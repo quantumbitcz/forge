@@ -447,6 +447,7 @@ Constraint: `total_retries_max` must be >= 5 and <= 30. If violated, use default
 | VERIFY Phase B exceeds max test cycles | Pipeline escalates to user |
 | REVIEW returns FAIL after max cycles | Pipeline escalates to user |
 | REVIEW score regression > `oscillation_tolerance` | Pipeline escalates to user immediately |
+| REVIEW two consecutive score dips (even within tolerance) | Pipeline escalates to user immediately |
 | `total_retries >= total_retries_max` | Pipeline escalates to user with retry breakdown |
 | Risk > `auto_proceed` threshold at Stage 3 | Pipeline pauses for user plan approval |
 

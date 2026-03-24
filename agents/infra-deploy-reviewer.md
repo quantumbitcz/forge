@@ -1,6 +1,6 @@
 ---
 name: infra-deploy-reviewer
-description: Reviews Helm charts, K8s manifests, Terraform configs, and Dockerfiles for security, reliability, scalability, and observability best practices. Runs during REVIEW stage as part of infra-k8s quality gate.
+description: Reviews Helm charts, K8s manifests, Terraform configs, and Dockerfiles for security, reliability, scalability, and observability best practices. Runs during REVIEW stage as part of k8s quality gate.
 tools: ["Read", "Bash", "Glob", "Grep"]
 ---
 

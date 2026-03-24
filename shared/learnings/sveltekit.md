@@ -1,3 +1,3 @@
-# Cross-Project Learnings: typescript-svelte
+# Cross-Project Learnings: sveltekit
 
 ## PREEMPT items

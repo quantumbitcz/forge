@@ -1,3 +1,3 @@
-# Cross-Project Learnings: rust-axum
+# Cross-Project Learnings: axum
 
 ## PREEMPT items

@@ -302,6 +302,30 @@ Detect current dependency versions from the project's package manifest files. Th
 
 **For old projects:** If manifest files use outdated formats or unconventional locations, detection may fail partially. The pipeline gracefully degrades — `"unknown"` versions cause all rules to apply, which is the safest default for legacy codebases.
 
+### 3.5a+ Deprecation Refresh (dispatch pl-140-deprecation-refresh)
+
+After version detection, optionally refresh the deprecation registries so downstream checks use up-to-date data. This step is **advisory** — failures never block the pipeline.
+
+**Condition:** Only dispatch if Context7 MCP is available (detected in 3.4) AND `detected_versions` contains at least one non-`"unknown"` version. Skip silently otherwise.
+
+Dispatch `pl-140-deprecation-refresh` with:
+
+```
+Refresh deprecation registries for this project.
+
+Detected versions:
+[detected_versions from state.json]
+
+Module frameworks in use:
+[list of component frameworks from config]
+
+Plugin root: ${CLAUDE_PLUGIN_ROOT}
+```
+
+**On success:** Log the refresh summary (entries added/updated). The updated `known-deprecations.json` files are used by Layer 1 pattern checks and the implementer's deprecation awareness.
+
+**On failure/timeout:** Log INFO: `"Deprecation refresh skipped — {reason}."` Continue to convention resolution. Do NOT invoke the recovery engine — this agent is advisory.
+
 ### 3.5b Multi-Component Convention Resolution
 
 If `components:` is present in `dev-pipeline.local.md`, resolve a full convention stack for each named component. This block runs after version detection and before the interrupted-run check.
@@ -423,14 +447,15 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 
 ```json
 {
-  "version": "1.3",
-  "dry_run": false,
+  "version": "1.0.0",
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
   "requirement": "<original requirement verbatim>",
   "domain_area": "",
   "risk_level": "",
   "story_state": "PREFLIGHT",
+  "active_component": "",
+  "components": {},
   "quality_cycles": 0,
   "test_cycles": 0,
   "verify_fix_count": 0,
@@ -487,7 +512,10 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
     "framework_version": "",
     "key_dependencies": {}
   },
-  "check_engine_skipped": 0
+  "check_engine_skipped": 0,
+  "dry_run": false,
+  "cross_repo": {},
+  "spec": null
 }
 ```
 
@@ -605,7 +633,7 @@ Validate this implementation plan:
 Plan (summarized):
 [requirement, risk, steps with file paths, parallel groups, test strategy]
 
-Validation perspectives: [from config -- default 5: Architecture, Security, Edge Cases, Test Strategy, Conventions]
+Validation perspectives: [from config -- default 6: Architecture, Security, Edge Cases, Test Strategy, Conventions, Approach Quality]
 Conventions file: [path from config]
 Domain area: [area]
 Risk level: [from plan]
@@ -620,6 +648,39 @@ Risk level: [from plan]
 | **NO-GO** | Show findings to user and ask for guidance. Pipeline pauses. |
 
 Increment `validation_retries` on each REVISE verdict.
+
+### Contract Validation (conditional, dispatch pl-250-contract-validator)
+
+After plan validation passes (GO), check if cross-repo contract validation is needed.
+
+**Condition:** Dispatch only when ALL of the following are true:
+1. `related_projects` is configured in `dev-pipeline.local.md` (at least one entry)
+2. The plan includes tasks that affect API contracts (OpenAPI specs, shared types, proto files, GraphQL schemas) — check file paths in the plan for patterns like `*.proto`, `*api*spec*`, `*openapi*`, `*graphql*`, `*schema*`, or files in shared contract directories
+3. `pl-210-validator` returned GO (do not run contract validation on REVISE or NO-GO)
+
+Dispatch `pl-250-contract-validator` with:
+
+```
+Validate API contract changes in this plan:
+
+Affected contract files:
+[list of contract-related file paths from the plan]
+
+Related projects:
+[related_projects entries from config — name, path, framework]
+
+Plan summary:
+[requirement + tasks affecting contracts]
+```
+
+**Process verdict:**
+
+| Verdict | Action |
+|---------|--------|
+| **SAFE** | Proceed to decision gate — no breaking contract changes detected |
+| **BREAKING** | Add contract findings to stage notes. If all breaking changes have corresponding cross-repo tasks in the plan, proceed with WARNING. If breaking changes lack consumer-side tasks, return to `pl-200-planner` for plan amendment (counts toward `validation_retries`). |
+
+**If not dispatched** (conditions not met): skip silently, proceed to decision gate.
 
 ### Decision Gate
 
@@ -669,6 +730,16 @@ git add -A && git commit -m "wip: pipeline checkpoint pre-implement" --allow-emp
 ```
 
 Record the SHA in `state.json.last_commit_sha`.
+
+### 7.1a Create Worktree
+
+Create an isolated worktree for all implementation work (see section 20 for full policy):
+
+1. **Branch collision check:** `git branch --list pipeline/{story-id}`. If exists, append epoch suffix: `pipeline/{story-id}-{epoch}`.
+2. **Stale worktree check:** If `.pipeline/worktree` exists, remove it and log WARNING.
+3. **Create worktree:** `git worktree add .pipeline/worktree -b pipeline/{story-id}` (using collision-safe branch name).
+4. All subsequent implementation, scaffolding, and testing happens inside the worktree.
+5. Dispatched agents receive the worktree path as their working directory.
 
 ### 7.2 Documentation Prefetch
 
@@ -758,6 +829,35 @@ For **multi-component projects** (where `state.json.components` is populated), a
 2. After the primary component's task completes through VERIFY, process **dependent components** in dependency order.
 3. Each dependent-component dispatch uses that component's convention stack and commands exclusively.
 4. Cross-component tasks are always serialized — never dispatch two components' tasks in parallel when one depends on the other's output.
+
+### 7.8 Frontend Creative Polish (conditional, dispatch pl-320-frontend-polisher)
+
+After `pl-300-implementer` completes a task for a frontend component, optionally dispatch the creative polisher for visual refinement.
+
+**Condition:** Only dispatch when ALL of the following are true:
+1. The completed task created or modified `.tsx`, `.jsx`, `.svelte`, or `.vue` component files
+2. The component's framework is `react`, `nextjs`, or `sveltekit`
+3. `frontend_polish.enabled` is true in the component's config (default: true for frontend components)
+
+Dispatch `pl-320-frontend-polisher` with:
+
+```
+Polish this frontend implementation:
+
+Changed component files: [list of .tsx/.jsx/.svelte files from the completed task]
+Conventions file: [component's convention stack path]
+Design direction: [from frontend_polish.aesthetic_direction if configured, else "professional and distinctive"]
+Viewport targets: [from frontend_polish.viewport_targets, default: 375, 768, 1280]
+Design theory: ${CLAUDE_PLUGIN_ROOT}/shared/frontend-design-theory.md
+
+Constraints:
+- DO NOT change business logic or break tests
+- Run test command after changes: [component's commands.test]
+```
+
+**On success:** Tests still pass + visual polish applied. Proceed to next task or VERIFY.
+
+**On failure/timeout:** Log WARNING: `"Frontend polish skipped — {reason}."` Proceed without polish. The implementation is already correct and tested — polish is enhancement, not correctness. Do NOT invoke the recovery engine.
 
 ### Linear Tracking
 
@@ -857,6 +957,26 @@ Read `quality_gate` config. For each `batch_N` defined in config:
 3. Partial failure: proceed with available results, note coverage gap (see `shared/scoring.md`)
 
 After all batches: run `quality_gate.inline_checks` (scripts or skills from config).
+
+### 9.1a Version Compatibility Check (dispatch version-compat-reviewer)
+
+After all quality gate batches and inline checks complete, dispatch `version-compat-reviewer` as a cross-cutting review agent. This runs independently of the config-driven batch system because version compatibility is a universal concern across all frameworks.
+
+**Condition:** Only dispatch when `detected_versions` in state.json contains at least one non-`"unknown"` version. Skip silently otherwise.
+
+Dispatch `version-compat-reviewer` with:
+
+```
+Analyze version compatibility for this project:
+
+Changed files: [list from quality gate]
+Detected versions: [detected_versions from state.json]
+Conventions file: [path from config]
+```
+
+Merge the returned findings into the quality gate's finding pool before scoring (section 9.2). Findings use the `QUAL-COMPAT` category and follow the standard unified format.
+
+**On failure/timeout:** Log INFO-level coverage gap: `"version-compat-reviewer timed out — version compatibility not reviewed."` Proceed to scoring without version-compat findings. If the agent covers a critical domain (it does — dependency conflicts can cause runtime failures), use WARNING severity (-5) for the coverage gap finding per `shared/scoring.md` critical agent gap rule.
 
 ### 9.2 Score and Verdict
 
@@ -1347,8 +1467,8 @@ For multi-module runs, `state.json` tracks per-module progress:
 ```json
 {
   "modules": [
-    { "module": "kotlin-spring", "story_state": "IMPLEMENTING", "story_id": "story-1" },
-    { "module": "react-vite", "story_state": "PLANNING", "story_id": "story-2" }
+    { "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" },
+    { "module": "react", "story_state": "PLANNING", "story_id": "story-2" }
   ]
 }
 ```
@@ -1624,7 +1744,7 @@ At each stage transition, output a concise progress line:
 
 Examples:
 ```
-[STAGE 0/10] PREFLIGHT — complete (2s) — module: kotlin-spring, risk: MEDIUM
+[STAGE 0/10] PREFLIGHT — complete (2s) — framework: spring, risk: MEDIUM
 [STAGE 1/10] EXPLORE — complete (15s) — 12 files analyzed, 3 patterns found
 [STAGE 2/10] PLAN — complete (8s) — 2 stories, 5 tasks, 2 parallel groups
 [STAGE 3/10] VALIDATE — complete (6s) — verdict: GO

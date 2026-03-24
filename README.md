@@ -16,12 +16,13 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 
 - **Worktree isolation** -- All implementation runs in a git worktree (`.pipeline/worktree`). Your working tree is never modified during pipeline execution.
 - **Self-healing recovery** -- 7 recovery strategies with weighted budget (transient-retry, tool-diagnosis, state-reconstruction, agent-reset, dependency-health, resource-cleanup, graceful-stop). Budget ceiling: 5.0 total weight.
-- **3-layer check engine** -- Fires on every Edit/Write via PostToolUse hook. Layer 1: fast regex patterns (sub-second). Layer 2: framework-aware linters. Layer 3: AI-driven deprecation refresh with version-gated rules.
+- **3-layer check engine** -- Fires on every Edit/Write via PostToolUse hook. Layer 1: fast regex patterns (sub-second). Layer 2: framework-aware linters. Layer 3: AI-driven agents dispatched by the orchestrator (`pl-140-deprecation-refresh` during PREFLIGHT, `version-compat-reviewer` during REVIEW) with version-gated rules.
 - **PREEMPT system** -- Learnings from past runs are proactively applied to matching domains in new runs. Confidence decay prevents stale learnings from persisting.
 - **Adaptive MCP detection** -- Auto-detects available MCPs (Linear, Playwright, Slack, Context7, Figma) at PREFLIGHT and adapts behavior per stage. No MCP is required.
 - **Version-aware deprecation rules** -- Schema v2 registries with `applies_from`, `removed_in`, and `applies_to` fields. Rules only fire when the project version matches.
 - **Concurrent run protection** -- `.pipeline/.lock` prevents parallel pipeline runs on the same project. Stale locks are auto-cleaned via PID check and 24-hour timeout.
 - **Global retry budget** -- All retry loops share a cumulative counter (configurable max, default 10) to prevent unbounded retry cascades.
+- **Frontend design quality** -- Creative polish agent (`pl-320-frontend-polisher`) adds animations, micro-interactions, and visual refinement after implementation. Design review (`frontend-design-reviewer`) and accessibility review (`frontend-a11y-reviewer`) validate design system compliance, responsive behavior (375px/768px/1280px), dark mode, WCAG 2.2 AA, and visual coherence. Design theory guardrails (`shared/frontend-design-theory.md`) encode Gestalt principles, visual hierarchy, color theory, typography, spacing, motion, and anti-AI-look standards.
 
 ### The 10 stages
 
@@ -30,7 +31,7 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 | 0 | Preflight | Load config, detect interrupted runs, detect versions, apply learnings |
 | 1 | Explore | Map domain models, tests, and patterns relevant to the requirement |
 | 2 | Plan | Risk-assessed implementation plan with stories, tasks, parallel groups |
-| 3 | Validate | 5-perspective validation (architecture, security, edge cases, tests, conventions) |
+| 3 | Validate | 6-perspective validation (architecture, security, edge cases, tests, conventions, approach quality) |
 | 4 | Implement | TDD loop per task -- scaffold, write tests (RED), implement (GREEN), refactor |
 | 5 | Verify | Build, lint, static analysis, full test suite |
 | 6 | Review | Multi-agent quality review with scoring and fix cycles |
@@ -40,7 +41,7 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 
 ## Available skills
 
-12 skills provide the user-facing interface to the pipeline and its subsystems.
+13 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -53,44 +54,34 @@ A Claude Code plugin that orchestrates a 10-stage development pipeline with fram
 | `/migration` | Plan and execute library/framework migrations (auto-detect versions, explicit versions, `upgrade all`, `check` dry-run, Context7 integration) |
 | `/bootstrap-project` | Scaffold a new project from a module template |
 | `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
+| `/pipeline-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
 | `/verify` | Quick build + lint + test check without a full pipeline run |
 
 ## Available modules
 
-12 framework modules. Each module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, or tooling.
+17 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, and 11 testing framework files under `modules/testing/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific testing patterns.
 
-### kotlin-spring
-
-For hexagonal architecture (ports & adapters) projects using Kotlin, Spring Boot, WebFlux, and R2DBC.
-
-Additional includes:
-- Verification handled by the shared check engine via `rules-override.json` (pattern rules for hexagonal boundaries, type conventions, file size thresholds)
-- `known-deprecations.json` with version-aware rules for Spring Boot and Kotlin APIs
-
-### react-vite
-
-For React + Vite + TypeScript + shadcn/ui projects.
-
-Additional includes:
-- `known-deprecations.json` -- self-updating registry of deprecated APIs (React, Vite, TanStack, etc.)
-- Suggested project commands documented in `conventions.md`: `fe-check-theme`, `fe-design-review`, `fe-react-doctor`, `fe-dark-mode-check` (live in consuming project's `.claude/commands/`, not in this plugin)
-
-### Other modules
-
-| Module              | Target stack                             |
-|---------------------|------------------------------------------|
-| `c-embedded`        | C for embedded systems (real-time safety rules, ISR conventions) |
-| `go-stdlib`         | Go with standard library conventions     |
-| `infra-k8s`        | Kubernetes infrastructure and deployment (resource limits, probes, security contexts) |
-| `java-spring`       | Java with Spring Boot                    |
-| `python-fastapi`    | Python with FastAPI                      |
-| `rust-axum`         | Rust with Axum web framework             |
-| `swift-ios`         | Swift for iOS applications (memory safety, SPM) |
-| `swift-vapor`       | Swift with Vapor server framework        |
-| `typescript-node`   | TypeScript with Node.js                  |
-| `typescript-svelte` | TypeScript with SvelteKit                |
+| Framework | Target stack |
+|-----------|-------------|
+| `spring` | Kotlin/Java with Spring Boot (hexagonal architecture, WebFlux, R2DBC). Variants: `kotlin`, `java` |
+| `react` | React + Vite + TypeScript + shadcn/ui. Design tokens, animation & motion conventions |
+| `nextjs` | Next.js with App Router, Server/Client Components, Server Actions |
+| `sveltekit` | SvelteKit with TypeScript |
+| `express` | Express/NestJS with TypeScript |
+| `fastapi` | Python with FastAPI and Pydantic |
+| `django` | Python with Django + DRF (apps as bounded contexts) |
+| `gin` | Go with Gin web framework |
+| `go-stdlib` | Go with standard library conventions |
+| `axum` | Rust with Axum + Tokio |
+| `swiftui` | Swift for iOS/macOS applications (memory safety, SPM) |
+| `vapor` | Swift with Vapor server framework |
+| `jetpack-compose` | Android with Jetpack Compose + MVVM + Hilt |
+| `kotlin-multiplatform` | KMP shared module + platform targets (Ktor, Koin, SQLDelight) |
+| `aspnet` | .NET with ASP.NET Core (Clean Architecture, EF Core) |
+| `embedded` | C for embedded systems (real-time safety, ISR conventions, RTOS) |
+| `k8s` | Kubernetes infrastructure (resource limits, probes, security contexts) |
 
 All modules include conventions with a Dos/Don'ts section, config templates, check engine rule overrides, and a version-aware deprecation registry (`known-deprecations.json`).
 
@@ -101,7 +92,7 @@ The pipeline auto-detects available MCP servers at PREFLIGHT and adapts its beha
 | Integration | What it does | Used by |
 |-------------|-------------|---------|
 | **Linear** | Creates Epics, Stories, and Tasks during PLAN. Updates ticket statuses per stage. Posts quality findings and recap summaries as comments. Mid-run failures retry once, then degrade silently. | Orchestrator, planner, quality gate, retrospective |
-| **Context7** | Documentation lookup for migration guides, breaking changes, and API references. Powers the deprecation-refresh agent in the check engine. | Migration planner, deprecation refresh, implementer |
+| **Context7** | Documentation lookup for migration guides, breaking changes, and API references. Powers `pl-140-deprecation-refresh` (PREFLIGHT) and `version-compat-reviewer` (REVIEW). | Migration planner, deprecation refresh, version compat reviewer, implementer |
 | **Playwright** | Preview/staging deployment validation before merge. Visual regression checks. | Preview validator |
 | **Slack** | Notifications and status updates (configured via consuming project). | PR builder, retrospective |
 | **Figma** | Design reference and component mapping (configured via consuming project). | Frontend reviewer |
@@ -203,7 +194,7 @@ Resume from a specific stage:
 |   (.claude/)              |  .claude/pipeline-config.md (mutable, auto-tuned)
 |                           |  .claude/pipeline-log.md (learnings + run history)
 +---------------------------+
-|   Module                  |  modules/ (12 framework modules)
+|   Module                  |  modules/ (17 framework modules)
 |   (conventions, rules,    |  conventions.md, rules-override.json
 |    deprecations, scripts) |  known-deprecations.json, local-template.md
 |                           |  pipeline-config-template.md
@@ -278,25 +269,28 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-23 agents organized by pipeline stage and cross-cutting concerns.
+29 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
 | Agent                         | Stage        | Role                                                              |
 |-------------------------------|--------------|-------------------------------------------------------------------|
+| `pl-010-shaper`               | Pre-pipeline | Feature spec shaping (epics, stories, AC)                         |
 | `pl-050-project-bootstrapper` | 0 Preflight  | Bootstraps new projects with module scaffolding and config        |
 | `pl-100-orchestrator`         | All          | Coordinates the 10-stage lifecycle, manages state and recovery    |
-| `pl-150-test-bootstrapper`    | 4 Implement  | Sets up test infrastructure and frameworks for new projects       |
-| `pl-160-migration-planner`    | 2 Plan       | Plans data and schema migrations as part of implementation        |
+| `pl-140-deprecation-refresh`  | 0 Preflight  | Refreshes `known-deprecations.json` via Context7                  |
+| `pl-150-test-bootstrapper`    | 0 Preflight  | Bootstraps test coverage when below threshold                     |
+| `pl-160-migration-planner`    | 0 Preflight  | Library/framework migration planning                              |
 | `pl-200-planner`              | 2 Plan       | Decomposes requirements into risk-assessed plans with stories and tasks |
 | `pl-210-validator`            | 3 Validate   | Validates plans across 6 perspectives, returns GO/REVISE/NO-GO   |
-| `pl-250-contract-validator`   | 3 Validate   | Validates API contracts and interface compatibility               |
+| `pl-250-contract-validator`   | 3 Validate   | Cross-repo API contract breaking change detection                 |
 | `pl-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
 | `pl-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |
+| `pl-320-frontend-polisher`    | 4 Implement  | Creative frontend polish (animations, responsive, dark mode)      |
 | `pl-400-quality-gate`         | 6 Review     | Multi-batch quality coordinator with scoring and fix cycles       |
 | `pl-500-test-gate`            | 5 Verify     | Test execution and coverage analysis coordinator                  |
 | `pl-600-pr-builder`           | 8 Ship       | Creates branch, commits, and PR with quality gate results         |
-| `pl-650-preview-validator`    | 8 Ship       | Validates preview/staging deployments before merge                |
+| `pl-650-preview-validator`    | 8 Ship       | Preview deployment validation (Lighthouse, visual regression)     |
 | `pl-700-retrospective`        | 9 Learn      | Post-run analysis, learning extraction, config auto-tuning        |
 | `pl-710-feedback-capture`     | 9 Learn      | Records user corrections as structured feedback for future runs   |
 | `pl-720-recap`                | 9 Learn      | Generates a human-readable summary of the pipeline run            |
@@ -305,13 +299,16 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 | Agent | Role |
 |---|---|
-| `architecture-reviewer` | Detects architecture pattern and reviews for compliance violations |
-| `security-reviewer` | Reviews code for security vulnerabilities across all languages and frameworks |
-| `frontend-reviewer` | Reviews frontend code for quality, conventions, accessibility, performance |
-| `infra-deploy-reviewer` | Reviews infrastructure and deployment configurations |
-| `infra-deploy-verifier` | Verifies infrastructure deployments and health checks |
-| `backend-performance-reviewer` | Reviews backend code for performance issues and optimization opportunities |
-| `frontend-performance-reviewer` | Reviews frontend code for performance, bundle size, and rendering efficiency |
+| `architecture-reviewer` | Architecture patterns, SRP, DIP, boundaries |
+| `security-reviewer` | OWASP, auth, injection, secrets |
+| `frontend-reviewer` | Frontend code quality, conventions, framework rules |
+| `frontend-design-reviewer` | Design system compliance, visual hierarchy, Figma comparison |
+| `frontend-a11y-reviewer` | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
+| `frontend-performance-reviewer` | Bundle size, rendering, lazy loading, code splitting |
+| `backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
+| `version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
+| `infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
+| `infra-deploy-verifier` | Deployment health verification |
 
 ## Adding a new module
 
@@ -355,9 +352,11 @@ dev-pipeline/
   .claude-plugin/
     plugin.json                         # Plugin manifest (v1.0.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
-  agents/                               # 23 agent definitions (YAML frontmatter + instructions)
+  agents/                               # 29 agent definitions (YAML frontmatter + instructions)
+    pl-010-shaper.md
     pl-050-project-bootstrapper.md
     pl-100-orchestrator.md
+    pl-140-deprecation-refresh.md
     pl-150-test-bootstrapper.md
     pl-160-migration-planner.md
     pl-200-planner.md
@@ -365,6 +364,7 @@ dev-pipeline/
     pl-250-contract-validator.md
     pl-300-implementer.md
     pl-310-scaffolder.md
+    pl-320-frontend-polisher.md
     pl-400-quality-gate.md
     pl-500-test-gate.md
     pl-600-pr-builder.md
@@ -375,11 +375,14 @@ dev-pipeline/
     architecture-reviewer.md
     security-reviewer.md
     frontend-reviewer.md
+    frontend-design-reviewer.md
+    frontend-a11y-reviewer.md
     frontend-performance-reviewer.md
     backend-performance-reviewer.md
+    version-compat-reviewer.md
     infra-deploy-reviewer.md
     infra-deploy-verifier.md
-  skills/                               # 12 user-facing skills
+  skills/                               # 13 user-facing skills
     bootstrap-project/
     codebase-health/
     deploy/
@@ -389,6 +392,7 @@ dev-pipeline/
     pipeline-reset/
     pipeline-rollback/
     pipeline-run/
+    pipeline-shape/
     pipeline-status/
     security-audit/
     verify/
@@ -398,10 +402,12 @@ dev-pipeline/
     feedback-capture.sh                 #   Stop -- captures user feedback on session exit
   shared/
     agent-communication.md              # Inter-agent data flow contract
+    agent-philosophy.md                 # Critical thinking principles for all agents
     error-taxonomy.md                   # 15 standard error types with recovery strategies
+    frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.3 (migration chain: 1.1 -> 1.2 -> 1.3)
+    state-schema.md                     # State schema v1.0.0 (clean break from prior versions)
     checks/                             # 3-layer generalized check engine
       engine.sh                         #   Main engine script (--hook mode, --dry-run mode)
       test-engine.sh                    #   Engine test harness
@@ -413,16 +419,16 @@ dev-pipeline/
         adapters/                       #     Per-language linter adapters
         config/                         #     Linter configurations
         defaults/                       #     Default linter settings
-      layer-3-agent/                    #   AI-driven deprecation refresh and version compat
-        deprecation-refresh.md
-        version-compat.md
+      layer-3-agent/                    #   Redirect stubs (agents live in agents/)
+        deprecation-refresh.md          #     -> agents/pl-140-deprecation-refresh.md
+        version-compat.md               #     -> agents/version-compat-reviewer.md
         known-deprecations/
       examples/                         #   Per-language pattern examples
         c/ go/ java/ kotlin/
         python/ rust/ swift/ typescript/
     learnings/                          # Per-module learnings + schemas
       README.md                         #   Learnings system overview
-      {module-name}.md                  #   12 module learnings files
+      {framework-name}.md               #   17+ framework learnings files
       agent-effectiveness-template.md   #   Template for agent performance tracking
       rule-learning-schema.json         #   Check rule evolution tracking
       agent-effectiveness-schema.json   #   Agent performance tracking
@@ -439,19 +445,12 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 11 framework modules + language/testing registries
+  modules/                              # 17 framework modules + 9 languages + 11 testing
     frameworks/                         # Per-framework conventions and config
-      axum/
-      embedded/
-      express/
-      fastapi/
-      go-stdlib/
-      k8s/
-      react/
-      spring/
-      sveltekit/
-      swiftui/
-      vapor/
+      aspnet/ axum/ django/ embedded/ express/ fastapi/
+      gin/ go-stdlib/ jetpack-compose/ k8s/
+      kotlin-multiplatform/ nextjs/ react/ spring/
+      sveltekit/ swiftui/ vapor/
     languages/                          # Per-language deprecation registries
     testing/                            # Per-testing-framework deprecation registries
     (each framework contains: conventions.md, local-template.md,

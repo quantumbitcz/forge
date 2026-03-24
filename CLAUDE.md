@@ -20,6 +20,18 @@ Three-layer design with resolution flowing top-down:
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
 
+## Quick start
+
+```bash
+# Verify everything is intact after cloning
+./tests/validate-plugin.sh          # 27 structural checks, ~2s
+./tests/run-all.sh                  # Full test suite, ~30s
+
+# To test in a consuming project
+ln -s "$(pwd)" /path/to/project/.claude/plugins/dev-pipeline
+cd /path/to/project && claude       # then run /pipeline-init
+```
+
 ## Development workflow
 
 This is a documentation-only plugin (no build step). To test changes:
@@ -32,35 +44,64 @@ This is a documentation-only plugin (no build step). To test changes:
 
 ### CI validation
 
-Run the validation commands from the [Validation](#validation) section in CI to catch structural issues:
-
 ```bash
-# CI smoke test: verify plugin structure is intact
+# Option 1: Full structural validation (recommended)
+./tests/validate-plugin.sh    # 27 checks, ~2s
+
+# Option 2: Inline smoke test for minimal CI
 set -e
-# All agents have valid frontmatter
-test "$(grep -l '^name:' agents/*.md | wc -l)" -ge 20
-# All frameworks have required files
+test "$(grep -l '^name:' agents/*.md | wc -l)" -ge 25
 for m in modules/frameworks/*/; do
   ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} > /dev/null
 done
-# Language files exist
 test "$(ls modules/languages/*.md | wc -l)" -ge 9
-# Testing files exist
 test "$(ls modules/testing/*.md | wc -l)" -ge 11
-# All scripts are executable
 test -z "$(find modules/ hooks/ shared/ -name '*.sh' ! -perm -111 2>/dev/null)"
-# known-deprecations are schema v2
 grep -q '"version": 1,' modules/frameworks/*/known-deprecations.json && exit 1 || true
 echo "Plugin structure OK"
 ```
 
 ## Key conventions
 
+### Agent inventory (29 agents)
+
+| Agent | Stage | Role |
+|-------|-------|------|
+| `pl-010-shaper` | Pre-pipeline | Feature spec shaping (epics, stories, AC) |
+| `pl-050-project-bootstrapper` | Pre-pipeline | New project scaffolding from module template |
+| `pl-100-orchestrator` | All | Coordinator — dispatches all other agents |
+| `pl-140-deprecation-refresh` | 0 PREFLIGHT | Refreshes `known-deprecations.json` via Context7 |
+| `pl-150-test-bootstrapper` | 0 PREFLIGHT | Bootstraps test coverage when below threshold |
+| `pl-160-migration-planner` | 0 PREFLIGHT | Library/framework migration planning |
+| `pl-200-planner` | 2 PLAN | Implementation planning with Challenge Brief |
+| `pl-210-validator` | 3 VALIDATE | Plan validation (6 perspectives) |
+| `pl-250-contract-validator` | 3 VALIDATE | Cross-repo API contract breaking change detection |
+| `pl-300-implementer` | 4 IMPLEMENT | TDD implementation (RED → GREEN → REFACTOR) |
+| `pl-310-scaffolder` | 4 IMPLEMENT | File structure scaffolding before implementation |
+| `pl-320-frontend-polisher` | 4 IMPLEMENT | Creative frontend polish (animations, responsive, dark mode) |
+| `pl-400-quality-gate` | 6 REVIEW | Multi-batch review coordinator, scoring, verdicts |
+| `pl-500-test-gate` | 5 VERIFY | Test execution and analysis coordinator |
+| `pl-600-pr-builder` | 8 SHIP | PR creation with linked cross-repo PRs |
+| `pl-650-preview-validator` | 8 SHIP | Preview deployment validation (Lighthouse, visual regression) |
+| `pl-700-retrospective` | 9 LEARN | Post-run analysis, convention evolution, learnings |
+| `pl-710-feedback-capture` | 9 LEARN | User feedback recording on session exit |
+| `pl-720-recap` | 9 LEARN | Human-readable run summary |
+| `architecture-reviewer` | 6 REVIEW | Architecture patterns, SRP, DIP, boundaries |
+| `security-reviewer` | 6 REVIEW | OWASP, auth, injection, secrets |
+| `frontend-reviewer` | 6 REVIEW | Frontend code quality, conventions, framework rules |
+| `frontend-design-reviewer` | 6 REVIEW | Design system compliance, visual hierarchy, Figma comparison |
+| `frontend-a11y-reviewer` | 6 REVIEW | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
+| `frontend-performance-reviewer` | 6 REVIEW | Bundle size, rendering, lazy loading, code splitting |
+| `backend-performance-reviewer` | 6 REVIEW | DB queries, caching, algorithms, N+1 |
+| `version-compat-reviewer` | 6 REVIEW | Dependency conflicts, language features, runtime API removals |
+| `infra-deploy-reviewer` | 6 REVIEW | K8s, Helm, Terraform, Docker configuration |
+| `infra-deploy-verifier` | 8 SHIP | Deployment health verification |
+
 ### Agent files (`agents/*.md`)
 - YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools`. The `tools` list defines which tools the agent can use when dispatched — agents that dispatch other agents (orchestrator, quality-gate, test-gate) **must** include `Agent` in their tools list.
 - Project module configuration uses a `components:` structure in `dev-pipeline.local.md` with `language:`, `framework:`, `variant:`, and `testing:` fields (replaces the old flat `module:` field). PREFLIGHT reads this to determine which convention layers to load.
 - Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
-- Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
+- Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`, `version-compat-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`.
 - The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
 - The recap agent (`pl-720-recap`) generates a human-readable summary of each pipeline run during Stage 9 (LEARN), after the retrospective.
 - **Worktree isolation:** All implementation runs in a git worktree (`.pipeline/worktree`). The user's working tree is never modified during pipeline execution. Branch collision is detected at creation time (epoch suffix fallback).
@@ -110,14 +151,22 @@ echo "Plugin structure OK"
 - Discovery chain: in-project references → sibling directory scan → IDE project directories → GitHub org scan → user prompt.
 - Results stored in `dev-pipeline.local.md` under `related_projects:` with path, repo, framework, and detection method.
 - Configurable via `discovery:` section: `enabled`, `scan_depth` (1-4), `confirmation_required`.
-- During pipeline runs: contract validator diffs API specs cross-repo, PR builder creates linked PRs, orchestrator manages multi-repo worktrees.
+- During pipeline runs: `pl-250-contract-validator` diffs API specs cross-repo (dispatched conditionally during VALIDATE when plan touches contracts), PR builder creates linked PRs, orchestrator manages multi-repo worktrees.
 - Cross-repo state tracked in `state.json.cross_repo` — one entry per related project with `path`, `branch`, `status`, `files_changed`, and `pr_url`.
+
+### Frontend design (`shared/frontend-design-theory.md`)
+- Design theory guardrails shared by all frontend agents: Gestalt principles, visual hierarchy, color theory (60/30/10 rule), typography rules, 8pt spacing grid, motion principles, and anti-AI guardrails.
+- `pl-320-frontend-polisher` runs after `pl-300-implementer` for frontend component tasks (conditional on `frontend_polish.enabled`). Adds animations, micro-interactions, responsive polish, dark mode refinement. Does NOT change business logic or break tests.
+- `frontend-design-reviewer` evaluates design system compliance, visual hierarchy, spatial composition, responsive behavior (375px/768px/1280px), dark mode, and optional Figma MCP comparison during REVIEW.
+- `frontend-a11y-reviewer` performs deep WCAG 2.2 AA audits: color contrast analysis, ARIA tree validation, focus management, touch targets, screen reader compatibility during REVIEW.
+- Convention files for React, NextJS, and SvelteKit include Animation & Motion and Multi-Viewport Design sections.
+- Check engine Layer 1 patterns enforce design tokens (hardcoded hex/rgb detection) and animation performance (layout property animation, prefers-reduced-motion hints).
 
 ### Check engine (`shared/checks/`)
 - 3-layer generalized check engine triggered on every `Edit`/`Write` via PostToolUse hook.
 - **Layer 1 — Fast patterns** (`layer-1-fast/`): regex-based pattern matching, sub-second.
 - **Layer 2 — Linter** (`layer-2-linter/`): framework-aware linter adapters with configurable defaults.
-- **Layer 3 — Agent** (`layer-3-agent/`): AI-driven deprecation refresh and version compatibility checks. **Version-gated:** rules only fire when project version >= `applies_from` in the deprecation entry.
+- **Layer 3 — Agent** (`layer-3-agent/`): AI-driven checks dispatched by the orchestrator and quality gate (not by `engine.sh`). Two agents: `pl-140-deprecation-refresh` (refreshes `known-deprecations.json` during PREFLIGHT via Context7 and package registries) and `version-compat-reviewer` (analyzes dependency conflicts, language feature compatibility, and runtime API removals — dispatched by the orchestrator during REVIEW after quality gate batches complete). **Version-gated:** deprecation rules only fire when project version >= `applies_from` in the deprecation entry.
 - Modules customize checks via `rules-override.json` (per-module overrides of shared defaults).
 - **Skip tracking:** If the hook times out, a counter in `.pipeline/.check-engine-skipped` is incremented. VERIFY Phase A reads and reports the count.
 - Output format standardized in `output-format.md`.
@@ -126,7 +175,7 @@ echo "Plugin structure OK"
 - **Schema v2** with version-aware fields: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`.
 - `applies_from`: minimum project version where the rule triggers. `removed_in`: version where the API was removed (null if only deprecated). `applies_to`: upper bound (usually `"*"`).
 - Rules are skipped when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Unknown project versions → conservative (all rules apply).
-- Auto-updated by the deprecation-refresh agent during PREFLIGHT via Context7 and package registries.
+- Auto-updated by `pl-140-deprecation-refresh` during PREFLIGHT via Context7 and package registries (conditional on Context7 availability and detected versions).
 
 ### Learnings (`shared/learnings/`)
 - Per-framework learnings files (e.g., `spring.md`, `react.md`) — accumulated patterns from past runs.
@@ -173,7 +222,7 @@ Create `modules/frameworks/{name}/` with:
 - `local-template.md` — project config template (YAML frontmatter, using `components:` structure)
 - `pipeline-config-template.md` — mutable runtime params template (must include `total_retries_max` and `oscillation_tolerance`)
 - `rules-override.json` — framework-specific overrides for the shared check engine (pattern rules, linter config)
-- `known-deprecations.json` — registry of deprecated APIs in schema v2 (`applies_from`, `removed_in`, `applies_to` fields required). Seed with 5-15 ecosystem-specific entries. Auto-updated by deprecation-refresh agent.
+- `known-deprecations.json` — registry of deprecated APIs in schema v2 (`applies_from`, `removed_in`, `applies_to` fields required). Seed with 5-15 ecosystem-specific entries. Auto-updated by `pl-140-deprecation-refresh`.
 - Optional: `variants/{language}.md` — language-specific convention overrides (e.g., `variants/kotlin.md` under the spring framework)
 - Optional: `testing/{test-framework}.md` — framework-specific test patterns that extend the generic testing file
 - Optional: `scripts/check-*.sh` (verification), `hooks/*-guard.sh` (PostToolUse guards)
@@ -213,83 +262,58 @@ All 17 frameworks follow the same base structure under `modules/frameworks/{name
 - Memory safety: `[weak self]` in stored closures, delegates as `weak var`. Prefer `struct` for data models, `actor` for thread-safe state.
 - SPM preferred over CocoaPods. Pin to exact versions for releases.
 
-### aspnet (`modules/frameworks/aspnet/`)
-- Clean Architecture: Controllers → Services → Repositories. EF Core with migrations. xUnit + FluentAssertions testing.
+### Other frameworks (standard patterns, see their `conventions.md` for details)
 
-### django (`modules/frameworks/django/`)
-- MTV + DRF: apps as bounded contexts, Django ORM with `select_related`/`prefetch_related`. pytest + factory_boy testing.
-
-### nextjs (`modules/frameworks/nextjs/`)
-- App Router with Server/Client Components. Server Actions for mutations. Vitest + Playwright testing.
-
-### gin (`modules/frameworks/gin/`)
-- Handler → Service → Repository with middleware chains. Interface-driven DI. Go testing + testify.
-
-### jetpack-compose (`modules/frameworks/jetpack-compose/`)
-- MVVM with Composables → ViewModels → Repositories. StateFlow, Hilt DI. Compose testing + Robolectric.
-
-### kotlin-multiplatform (`modules/frameworks/kotlin-multiplatform/`)
-- Shared `commonMain` + platform modules. Ktor Client, kotlinx.serialization, Koin DI. Kotest in commonTest.
+| Framework | Architecture | Testing |
+|-----------|-------------|---------|
+| aspnet | Clean Architecture: Controllers → Services → Repositories, EF Core | xUnit + FluentAssertions |
+| django | MTV + DRF: apps as bounded contexts, Django ORM | pytest + factory_boy |
+| nextjs | App Router, Server/Client Components, Server Actions | Vitest + Playwright |
+| gin | Handler → Service → Repository, middleware chains, interface DI | Go testing + testify |
+| jetpack-compose | MVVM: Composables → ViewModels → Repositories, Hilt DI | Compose testing + Robolectric |
+| kotlin-multiplatform | Shared `commonMain` + platform modules, Ktor Client, Koin DI | Kotest in commonTest |
 
 ## Validation
 
 ### Full test suite
 
 ```bash
-# Run all tests (~247 tests, ~30s)
+# Run all tests (~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (25 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (82 tests)
-./tests/run-all.sh contract     # Document contract compliance (87 tests)
-./tests/run-all.sh scenario     # Multi-script integration (39 tests)
+./tests/run-all.sh structural   # Plugin integrity (27 checks, no bats needed)
+./tests/run-all.sh unit         # Shell script behavior (8 test files)
+./tests/run-all.sh contract     # Document contract compliance (11 test files)
+./tests/run-all.sh scenario     # Multi-script integration (7 test files)
 ```
 
 ### Manual checks
 
-To verify changes:
+Most checks are covered by `./tests/validate-plugin.sh`. These additional checks are useful when debugging:
 
 ```bash
-# Check agent frontmatter is valid YAML
-head -5 agents/*.md
-
-# Verify scripts are executable
-find modules/ hooks/ shared/ -name "*.sh" ! -perm -111
-
-# List all agents and their descriptions
+# List all agents with descriptions
 grep -A1 "^name:" agents/*.md
 
 # Dry-run the check engine
 shared/checks/engine.sh --dry-run
 
-# Verify all frameworks have required files
-for m in modules/frameworks/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json,known-deprecations.json} 2>&1; done
-
-# Verify language files exist
-ls modules/languages/*.md
-
-# Verify testing files exist
-ls modules/testing/*.md
-
-# Verify known-deprecations are schema v2
-grep '"version"' modules/frameworks/*/known-deprecations.json
-
 # Verify Linear config in all framework templates
-for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING linear: $m"; done
+for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING: $m"; done
+
+# Verify pipeline-config templates have required fields
+for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING: $m"; done
 
 # Verify all agents have Forbidden Actions section
-grep -l "Forbidden Actions" agents/*.md | wc -l
-
-# Verify pipeline-config templates have new fields
-for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING total_retries_max: $m"; done
+grep -L "Forbidden Actions" agents/*.md
 ```
 
 ## Gotchas
 
 - Agent `name` in frontmatter **must** match the filename without `.md` — the orchestrator uses it for dispatch.
 - Scripts must have a shebang (`#!/usr/bin/env bash`) and be `chmod +x` — hooks fail silently without this.
-- `shared/` files are contracts: changing `scoring.md`, `stage-contract.md`, or `state-schema.md` affects all agents and modules. Verify downstream impact before editing. State schema changes bump the semver version; because 1.0.0 is a clean break, incompatible old state files must be cleared with `/pipeline-reset`.
+- `shared/` files are contracts: changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents and modules. Verify downstream impact before editing. State schema changes bump the semver version; because 1.0.0 is a clean break, incompatible old state files must be cleared with `/pipeline-reset`.
 - The plugin itself never touches consuming project files at development time. All runtime state goes to `.pipeline/` in the consuming repo.
 - `pipeline-config.md` is auto-tuned by the retrospective agent — manual edits may be overwritten after a run.
 - The check engine hook fires on every `Edit`/`Write` — if `shared/checks/engine.sh` is broken or non-executable, all file edits will trigger hook errors. On timeout, skip counter increments but edit succeeds.

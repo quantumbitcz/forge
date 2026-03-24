@@ -1,3 +1,3 @@
-# Cross-Project Learnings: python-fastapi
+# Cross-Project Learnings: fastapi
 
 ## PREEMPT items
