@@ -326,6 +326,14 @@ Plugin root: ${CLAUDE_PLUGIN_ROOT}
 
 **On failure/timeout:** Log INFO: `"Deprecation refresh skipped — {reason}."` Continue to convention resolution. Do NOT invoke the recovery engine — this agent is advisory.
 
+### 3.5a Config Mode Detection
+
+Detect whether `components:` is flat (single-service) or nested (multi-service):
+- **Flat mode:** `components:` contains scalar fields (`language`, `framework`, etc.). Wrap in a default component named after `project_type` (e.g., `backend`).
+- **Multi-service mode:** `components:` contains named entries, each with a `path:` field. Resolve each component independently.
+
+Both modes produce the same `state.json.components` structure with named entries.
+
 ### 3.5b Multi-Component Convention Resolution
 
 If `components:` is present in `dev-pipeline.local.md`, resolve a full convention stack for each named component. This block runs after version detection and before the interrupted-run check.
@@ -345,6 +353,33 @@ For each component entry (e.g., `backend`, `frontend`, `infra`):
 6. **Shared testing layers:**
    - `modules/testing/testcontainers.md` — load if the component's stack involves a database
    - `modules/testing/playwright.md` — load if the component has `e2e` configured
+
+### Optional Layer Fields in `components:`
+
+| Field | Module Directory | Binding Directory |
+|-------|-----------------|-------------------|
+| `database` | `modules/databases/{value}.md` | `modules/frameworks/{fw}/databases/{value}.md` |
+| `persistence` | `modules/persistence/{value}.md` | `modules/frameworks/{fw}/persistence/{value}.md` |
+| `migrations` | `modules/migrations/{value}.md` | `modules/frameworks/{fw}/migrations/{value}.md` |
+| `api_protocol` | `modules/api-protocols/{value}.md` | `modules/frameworks/{fw}/api-protocols/{value}.md` |
+| `messaging` | `modules/messaging/{value}.md` | `modules/frameworks/{fw}/messaging/{value}.md` |
+| `caching` | `modules/caching/{value}.md` | `modules/frameworks/{fw}/caching/{value}.md` |
+| `search` | `modules/search/{value}.md` | `modules/frameworks/{fw}/search/{value}.md` |
+| `storage` | `modules/storage/{value}.md` | `modules/frameworks/{fw}/storage/{value}.md` |
+| `auth` | `modules/auth/{value}.md` | `modules/frameworks/{fw}/auth/{value}.md` |
+| `observability` | `modules/observability/{value}.md` | `modules/frameworks/{fw}/observability/{value}.md` |
+
+7. **Optional layer resolution:** For each optional field present in the component config (`database`, `persistence`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`):
+   a. Generic module: `${CLAUDE_PLUGIN_ROOT}/modules/{layer}/{value}.md` — add to stack if file exists.
+   b. Framework binding: `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{framework}/{layer}/{value}.md` — add to stack if file exists.
+
+   Files that do not exist are silently skipped (layers are populated incrementally across phases).
+
+8. **Layer combination validation:** Check for nonsensical configurations and log WARNINGs (do not block):
+   - Frontend frameworks (react, nextjs, sveltekit, svelte, angular, vue) with `database:` or `persistence:` → WARN
+   - SQL persistence (hibernate, jooq, exposed, sqlalchemy, prisma, typeorm, drizzle, django-orm) with document database (mongodb, dynamodb, cassandra) → WARN
+   - Mobile frameworks (swiftui, jetpack-compose) with `messaging:` → WARN
+   - Infra frameworks (k8s) with any layer except `observability:` → WARN
 
 **Validation:** After resolving paths, verify each one exists on disk.
 - Missing **optional** file (variant, framework-testing): log WARNING, skip the layer.
@@ -389,7 +424,19 @@ Compute `conventions_hash` per component (SHA256 first 8 chars of the concatenat
 
 **Single-component projects:** If `components:` is absent, this section is skipped entirely. The existing `conventions_file` / `detected_versions` flow applies unchanged.
 
-### 3.5c Check Coverage Baseline (Test Bootstrapper)
+### 3.5c Check Engine Rule Cache
+
+After resolving all convention stacks, generate per-component rule caches for the check engine:
+
+1. For each component, collect all `rules-override.json` files from the convention stack:
+   - Framework: `modules/frameworks/{fw}/rules-override.json`
+   - Each active layer binding: `modules/frameworks/{fw}/{layer}/{value}.rules-override.json` (if exists)
+   - Each active generic layer: `modules/{layer}/{value}.rules-override.json` (if exists)
+2. Deep-merge all collected rules (later layers override earlier ones).
+3. Write merged result to `.pipeline/.rules-cache-{component}.json`.
+4. Write component path mapping to `.pipeline/.component-cache` (format: `path_prefix=component_name`).
+
+### 3.5d Check Coverage Baseline (Test Bootstrapper)
 
 If `test_bootstrapper` is configured in `dev-pipeline.local.md` and `test_bootstrapper.enabled: true`:
 
@@ -548,6 +595,14 @@ Mark Preflight as `in_progress` now (it was just completed inline). After Prefli
 
 Record run start: requirement summary, timestamp, domain area (inferred from requirement).
 
+### Runtime Convention Lookup
+
+When any stage needs conventions for a specific file path:
+1. Match the file path against `state.json.components` entries by longest `path:` prefix match.
+2. If matched: use that component's `convention_stack`.
+3. If not matched: check for a `shared:` component. If present, use its stack.
+4. If still not matched: use language-level conventions only (safe default).
+
 ---
 
 ## 4. Stage 1: EXPLORE (dispatch agents)
@@ -622,6 +677,15 @@ When `related_projects` is configured in `dev-pipeline.local.md`, the planner sh
 3. Create cross-repo tasks for each affected related project (e.g., "Update frontend types for new API field")
 4. Tag cross-repo tasks with `cross_repo: true` and `target_project: {project_name}` in the plan
 5. Group cross-repo tasks into a final parallel group that runs AFTER the main repo implementation completes
+
+### Multi-Service Task Decomposition
+
+In multi-service mode (components with `path:` entries), the planner must:
+1. Identify which services are affected by the requirement.
+2. Create per-service tasks — each task targets exactly one service.
+3. Tag each task with its `component` name (e.g., `component: user-service`).
+4. Note cross-service dependencies in the task ordering (e.g., "payment-service event schema" must be defined before "notification-service consumer").
+5. Shared libraries (`shared:` component) get their own tasks if the requirement affects them.
 
 ### Linear Tracking
 
@@ -850,6 +914,14 @@ For **multi-component projects** (where `state.json.components` is populated), a
 3. Each dependent-component dispatch uses that component's convention stack and commands exclusively.
 4. Cross-component tasks are always serialized — never dispatch two components' tasks in parallel when one depends on the other's output.
 
+### 7.7a Multi-Service Implementation Context
+
+When dispatching implementers for multi-service tasks:
+1. Set working directory context to the task's component `path:` (e.g., `services/user-service`).
+2. Load the component's `convention_stack` from `state.json.components[task.component]`.
+3. Pass the correct scaffolder patterns, build commands, and test commands for that component.
+4. The implementer must not touch files outside its component's path unless the task explicitly spans components.
+
 ### 7.8 Frontend Creative Polish (conditional, dispatch pl-320-frontend-polisher)
 
 After `pl-300-implementer` completes a task for a frontend component, optionally dispatch the creative polisher for visual refinement.
@@ -1022,6 +1094,14 @@ For projects where `state.json.components` is populated, the quality gate dispat
 7. **Finding annotation:** each finding in stage notes includes `component: {name}` for traceability during fix cycles and retrospective analysis.
 
 For **single-component projects**, this section is skipped — batch dispatch proceeds as documented in 9.1.
+
+### 9.2b Multi-Service Review Context
+
+When dispatching quality gate reviewers for multi-service projects:
+1. For each changed file, resolve its owning component via path-prefix matching.
+2. Annotate each file with its component's convention_stack in the dispatch prompt.
+3. Reviewers apply the correct rules per file — a PR touching both Kotlin and TypeScript services gets the right conventions for each file.
+4. Cross-service consistency checks: if the requirement spans services, verify event schemas match, API contracts align, and shared types are consistent.
 
 ### 9.3 Fix Cycle
 
