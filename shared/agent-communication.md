@@ -109,3 +109,13 @@ If a task fails and is retried (within `max_fix_loops`), the implementer may wri
 - Use markers from the **last attempt only** (the successful one, or the final failed attempt if all attempts failed)
 - Earlier attempt markers are superseded — do not double-count
 - If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status
+
+## 7. Convention File Composition
+
+When an agent receives a convention stack with both generic and framework-binding files for the same layer (e.g., `modules/persistence/exposed.md` + `modules/frameworks/spring/persistence/exposed.md`), compose them as follows:
+
+- **Additive sections** (Dos, Don'ts, Patterns, Architecture Patterns): binding entries are appended to generic entries. Both apply.
+- **Override sections** (Configuration, Integration Setup, Scaffolder Patterns): binding content replaces generic content for that section.
+- **Contradiction rule:** when the binding explicitly contradicts the generic (e.g., different implementation strategy), the binding wins. When the binding adds without contradicting, both apply.
+
+Agents read BOTH files: generic first (for foundational patterns), then binding (for framework-specific adaptations).
