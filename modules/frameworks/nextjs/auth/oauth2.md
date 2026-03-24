@@ -89,13 +89,13 @@ app/
   dashboard/                    # protected area
 ```
 
-## Dos
+## Additional Dos
 - Store `AUTH_SECRET` in `.env.local`; rotate it via `npx auth secret`
 - Use `session: { strategy: 'jwt' }` for stateless deployments (Vercel edge)
 - Extend the `Session` type via module augmentation to add custom fields (`role`, `userId`)
 - Use middleware for broad protection; use `auth()` in individual Server Components for fine-grained checks
 
-## Don'ts
+## Additional Don'ts
 - Don't access session in Client Components via `useSession` for security-critical checks — verify server-side
 - Don't commit `AUTH_SECRET` or OAuth `CLIENT_SECRET` values to the repo
 - Don't call `signIn()` / `signOut()` in Client Components directly — wrap in Server Actions
