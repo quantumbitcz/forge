@@ -285,10 +285,52 @@ step3_ide_directories() {
 
   local ide_dirs=()
   local home="${HOME:-/tmp}"
+
+  # JetBrains IDEs (macOS/Linux: ~/XxxProjects, Windows: ~/XxxProjects or Documents)
   for d in "$home/IdeaProjects" "$home/WebstormProjects" "$home/PycharmProjects" \
            "$home/GolandProjects" "$home/CLionProjects" "$home/RiderProjects" \
            "$home/AndroidStudioProjects" "$home/RustroverProjects" \
-           "$home/Projects" "$home/Developer" "$home/workspace" "$home/repos"; do
+           "$home/PhpstormProjects" "$home/DataGripProjects" "$home/DataSpellProjects" \
+           "$home/AppCodeProjects" "$home/FleetProjects" "$home/AquaProjects" \
+           "$home/WrightProjects" \
+           # VS Code / Cursor / Windsurf / Zed
+           "$home/VSCodeProjects" "$home/vscode-projects" \
+           "$home/CursorProjects" "$home/cursor-projects" \
+           "$home/WindsurfProjects" \
+           "$home/ZedProjects" \
+           # Xcode
+           "$home/XcodeProjects" \
+           # Eclipse / NetBeans
+           "$home/eclipse-workspace" "$home/NetBeansProjects" \
+           # Generic conventions (all platforms)
+           "$home/Projects" "$home/Developer" "$home/Development" \
+           "$home/workspace" "$home/Workspace" \
+           "$home/repos" "$home/Repos" "$home/git" "$home/src" "$home/code" \
+           "$home/Code"; do
+    [[ -d "$d" ]] && ide_dirs+=("$d")
+  done
+
+  # Windows: also check Documents and common drive roots (via Git Bash / WSL / MSYS2)
+  if [[ -d "$home/Documents" ]]; then
+    for d in "$home/Documents/Projects" "$home/Documents/repos" \
+             "$home/Documents/Visual Studio" "$home/Documents/Visual Studio 2022/Projects" \
+             "$home/Documents/Visual Studio 2019/Projects" \
+             "$home/Documents/Visual Studio Code Projects" \
+             "$home/Documents/GitHub" "$home/Documents/source/repos"; do
+      [[ -d "$d" ]] && ide_dirs+=("$d")
+    done
+  fi
+  # Windows drive roots (C:/dev, D:/projects, etc.)
+  for drv in /c /d /e C: D: E:; do
+    for d in "$drv/dev" "$drv/projects" "$drv/repos" "$drv/src" "$drv/code" "$drv/git"; do
+      [[ -d "$d" ]] && ide_dirs+=("$d")
+    done
+  done
+
+  # Linux: XDG and common conventions
+  local xdg_projects="${XDG_PROJECTS_DIR:-}"
+  [[ -n "$xdg_projects" && -d "$xdg_projects" ]] && ide_dirs+=("$xdg_projects")
+  for d in "$home/projects" "$home/dev" "$home/devel"; do
     [[ -d "$d" ]] && ide_dirs+=("$d")
   done
 
