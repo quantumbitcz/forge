@@ -1,0 +1,41 @@
+{
+  "npm": {
+    "pg": "postgresql", "mysql2": "mysql", "mongodb": "mongodb",
+    "redis": "redis", "ioredis": "redis",
+    "passport": "passport", "@auth0/nextjs-auth0": "auth0",
+    "@sentry/node": "sentry", "dd-trace": "datadog",
+    "kafkajs": "kafka", "amqplib": "rabbitmq",
+    "prisma": "prisma", "typeorm": "typeorm", "sequelize": "sequelize",
+    "elasticsearch": "elasticsearch", "typesense": "typesense",
+    "@supabase/supabase-js": "supabase-auth"
+  },
+  "maven": {
+    "org.springframework.boot:spring-boot-starter-data-jpa": "hibernate",
+    "org.postgresql:postgresql": "postgresql",
+    "io.sentry:sentry-spring-boot-starter": "sentry",
+    "org.apache.kafka:kafka-clients": "kafka"
+  },
+  "pip": {
+    "sqlalchemy": "sqlalchemy", "django": "django-orm",
+    "psycopg2": "postgresql", "pymongo": "mongodb",
+    "sentry-sdk": "sentry", "celery": "rabbitmq"
+  },
+  "gems": {
+    "pg": "postgresql", "mysql2": "mysql",
+    "activerecord": "active-record", "sequel": "postgresql",
+    "sentry-ruby": "sentry", "bunny": "rabbitmq"
+  },
+  "hex": {
+    "ecto": "ecto", "postgrex": "postgresql",
+    "sentry": "sentry", "broadway_kafka": "kafka"
+  },
+  "cargo": {
+    "sqlx": "sqlx", "diesel": "diesel", "sea-orm": "sea-orm",
+    "tokio-postgres": "postgresql", "sentry": "sentry"
+  },
+  "nuget": {
+    "Npgsql": "postgresql", "Dapper": "dapper",
+    "Microsoft.EntityFrameworkCore": "efcore",
+    "Sentry.AspNetCore": "sentry", "Confluent.Kafka": "kafka"
+  }
+}

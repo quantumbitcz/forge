@@ -1,0 +1,30 @@
+{
+  "canonical_testing": {
+    "kotlin": "kotest",
+    "java": "junit5",
+    "typescript": "vitest",
+    "python": "pytest",
+    "go": "go-testing",
+    "rust": "rust-test",
+    "swift": "xctest",
+    "csharp": "xunit-nunit",
+    "ruby": "rspec",
+    "php": "phpunit",
+    "dart": "flutter-test",
+    "elixir": "exunit",
+    "scala": "scalatest"
+  },
+  "canonical_persistence": {
+    "ruby": "active-record",
+    "elixir": "ecto",
+    "python": "sqlalchemy",
+    "rust": "diesel",
+    "go": "gorm",
+    "csharp": "efcore",
+    "kotlin": "exposed",
+    "java": "hibernate",
+    "typescript": "prisma",
+    "swift": "fluent",
+    "php": "eloquent"
+  }
+}
