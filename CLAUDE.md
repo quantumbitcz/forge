@@ -172,7 +172,7 @@ shared/checks/engine.sh --verify --project-root . --files-changed src/Main.kt  #
 grep -L "Forbidden Actions" agents/*.md           # Find non-compliant agents
 for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING: $m"; done
 for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING: $m"; done
-for m in spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte kotlin java typescript python go rust swift c csharp kotest junit5 vitest jest pytest go-testing xctest rust-test xunit-nunit testcontainers playwright databases persistence migrations api-protocols messaging caching search storage auth observability; do [ -f "shared/learnings/$m.md" ] || echo "MISSING: learnings/$m.md"; done
+for m in spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte kotlin java typescript python go rust swift c csharp ruby php dart elixir scala cpp kotest junit5 vitest jest pytest go-testing xctest rust-test xunit-nunit testcontainers playwright cypress cucumber databases persistence migrations api-protocols messaging caching search storage auth observability sqlserver mariadb neo4j cockroachdb influxdb firestore firebase-auth cognito passport saml typesense algolia google-pubsub mqtt sequelize mikro-orm sea-orm dapper sentry datadog cloudflare-r2 dbmate atlas sequelize-migrations mikro-orm-migrations varnish; do [ -f "shared/learnings/$m.md" ] || echo "MISSING: learnings/$m.md"; done
 ```
 
 ## Gotchas

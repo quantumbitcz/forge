@@ -55,6 +55,12 @@ EXPECTED_LANGUAGES=(
   swift
   c
   csharp
+  ruby
+  php
+  dart
+  elixir
+  scala
+  cpp
 )
 
 EXPECTED_TESTING_FILES=(
@@ -69,6 +75,8 @@ EXPECTED_TESTING_FILES=(
   xunit-nunit.md
   testcontainers.md
   playwright.md
+  cypress.md
+  cucumber.md
 )
 
 REQUIRED_FILES=(
