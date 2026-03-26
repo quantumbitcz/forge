@@ -200,7 +200,7 @@ REQUIRED_FILES=(
 # ---------------------------------------------------------------------------
 # 7. All 9 language files exist in modules/languages/
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 9 language files exist in modules/languages/" {
+@test "module-completeness: all expected language files exist in modules/languages/" {
   local missing=()
   for lang in "${EXPECTED_LANGUAGES[@]}"; do
     if [[ ! -f "$LANGUAGES_DIR/$lang.md" ]]; then
@@ -215,7 +215,7 @@ REQUIRED_FILES=(
 # ---------------------------------------------------------------------------
 # 8. All 11 testing files exist in modules/testing/
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 11 testing files exist in modules/testing/" {
+@test "module-completeness: all expected testing files exist in modules/testing/" {
   local missing=()
   for tf in "${EXPECTED_TESTING_FILES[@]}"; do
     if [[ ! -f "$TESTING_DIR/$tf" ]]; then
@@ -270,5 +270,47 @@ REQUIRED_FILES=(
   done
   if (( ${#missing[@]} > 0 )); then
     fail "Missing crosscutting layer learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 12. Every crosscutting module file has a matching learnings file
+# ---------------------------------------------------------------------------
+@test "module-completeness: every crosscutting module has a learnings file" {
+  local missing=()
+  for layer in "${EXPECTED_LAYERS[@]}"; do
+    local layer_dir="$PLUGIN_ROOT/modules/$layer"
+    [[ -d "$layer_dir" ]] || continue
+    for f in "$layer_dir"/*.md; do
+      [[ -f "$f" ]] || continue
+      local name
+      name=$(basename "$f" .md)
+      if [[ ! -f "$LEARNINGS_DIR/$name.md" ]]; then
+        missing+=("$layer/$name")
+      fi
+    done
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Crosscutting modules missing learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 13. All language files have Dos and Don'ts sections
+# ---------------------------------------------------------------------------
+@test "module-completeness: all language files have Dos and Don'ts sections" {
+  local failures=()
+  for lang in "${EXPECTED_LANGUAGES[@]}"; do
+    local lang_file="$LANGUAGES_DIR/$lang.md"
+    [[ -f "$lang_file" ]] || continue
+    if ! grep -q "^## Dos" "$lang_file"; then
+      failures+=("$lang: missing Dos")
+    fi
+    if ! grep -qiE "^## Don" "$lang_file"; then
+      failures+=("$lang: missing Don'ts")
+    fi
+  done
+  if (( ${#failures[@]} > 0 )); then
+    fail "Language files missing Dos/Don'ts: ${failures[*]}"
   fi
 }
