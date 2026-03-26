@@ -29,8 +29,7 @@ A dual-purpose Neo4j knowledge graph that gives pipeline agents structural under
 | `TestingFramework` | `name`, `file_path` | Testing module (kotest, jest, rspec...) |
 | `LayerModule` | `name`, `layer`, `file_path` | Crosscutting module (postgresql in databases, jwt in auth, kafka in messaging...) |
 | `FrameworkBinding` | `name`, `framework`, `layer`, `file_path` | Framework-specific binding (spring/persistence/hibernate.md) |
-| `Agent` | `name`, `role`, `file_path` | Pipeline or review agent (pl-100-orchestrator, security-reviewer...) |
-| `Reviewer` | `name`, `file_path`, `batch_position` | Subset of Agent dispatched by quality gate |
+| `Agent` | `name`, `role`, `file_path` | Pipeline or review agent. Review agents get dual labels `:Agent:Reviewer` |
 | `SharedContract` | `name`, `file_path` | Core contracts (scoring.md, stage-contract.md, state-schema.md) |
 | `CheckRule` | `id`, `severity`, `category`, `file_path` | Check engine rules (QUAL-NULL, SEC-CRED...) |
 | `Learnings` | `name`, `file_path` | Per-module learnings file |
@@ -47,9 +46,9 @@ A dual-purpose Neo4j knowledge graph that gives pipeline agents structural under
 | `CANONICAL_PERSISTENCE` | `Language` | `LayerModule` | Language's canonical ORM (ruby->active-record, elixir->ecto) |
 | `READS` | `Agent` | `SharedContract` | Agent depends on a shared contract |
 | `DISPATCHES` | `Agent` | `Agent` | Agent dispatches another agent |
-| `REVIEWS_LAYER` | `Reviewer` | `LayerModule` | Reviewer specializes in a layer |
+| `REVIEWS_LAYER` | `Agent:Reviewer` | `LayerModule` | Reviewer specializes in a layer |
 | `HAS_LEARNINGS` | `LayerModule` | `Learnings` | Module has a learnings file |
-| `DEFINED_IN` | `CheckRule` | `LayerModule` | Check rule defined in a module's rules-override |
+| `RULE_DEFINED_IN` | `CheckRule` | `LayerModule` | Check rule defined in a module's rules-override |
 | `OVERRIDES_RULE` | `FrameworkBinding` | `CheckRule` | Binding overrides a check rule |
 
 ### Project Codebase Graph (dynamic, built at init)
@@ -71,11 +70,11 @@ A dual-purpose Neo4j knowledge graph that gives pipeline agents structural under
 | `IMPORTS` | `ProjectFile` | `ProjectFile` | File imports another file |
 | `BELONGS_TO` | `ProjectFile` | `ProjectPackage` | File is in a package/directory |
 | `USES_CONVENTION` | `ProjectFile` | `FrameworkBinding` or `LayerModule` | File uses a convention module |
-| `DEFINED_IN` | `ProjectClass` | `ProjectFile` | Class defined in file |
+| `CLASS_IN_FILE` | `ProjectClass` | `ProjectFile` | Class defined in file |
 | `EXTENDS_CLASS` | `ProjectClass` | `ProjectClass` | Class extends another (enriched) |
 | `IMPLEMENTS` | `ProjectClass` | `ProjectClass` | Class implements interface (enriched) |
 | `CALLS` | `ProjectFunction` | `ProjectFunction` | Function calls another (enriched) |
-| `DEFINED_IN` | `ProjectFunction` | `ProjectClass` | Function defined in class |
+| `FUNCTION_IN_CLASS` | `ProjectFunction` | `ProjectClass` | Function defined in class |
 | `MAPS_TO` | `ProjectDependency` | `LayerModule` | Links deps to our modules |
 
 ### Cross-Graph Connections
@@ -333,7 +332,7 @@ RETURN changed, collect(DISTINCT dependent.path) AS direct_dependents,
 ```
 
 ```cypher
-MATCH (entity:ProjectClass {name: $className})<-[:DEFINED_IN]-(f:ProjectFile)
+MATCH (entity:ProjectClass {name: $className})-[:CLASS_IN_FILE]->(f:ProjectFile)
 MATCH (consumer:ProjectFile)-[:IMPORTS]->(f)
 OPTIONAL MATCH (consumer)-[:USES_CONVENTION]->(conv)
 RETURN consumer.path, collect(conv.name) AS conventions
@@ -376,18 +375,23 @@ RETURN a.name, a.role
 
 ### Agent Access
 
-Agents that need graph queries get `neo4j-mcp` in their tools list. The orchestrator:
-1. Checks `state.json.integrations.neo4j.available` at PREFLIGHT
-2. If available, pre-queries common patterns (blast radius, convention stack) into `graph_context` in stage notes
-3. Downstream agents receive `graph_context` without needing to re-query
+**Only the orchestrator (`pl-100-orchestrator`) gets `neo4j-mcp` in its tools list.** It pre-queries common patterns at stage boundaries and passes results as `graph_context` in stage notes. This avoids adding Neo4j MCP as a dependency to all 29 agents. Specifically:
 
-If Neo4j is unavailable, agents fall back to grep/glob analysis (current behavior).
+| Stage | Orchestrator pre-queries | Passed to |
+|---|---|---|
+| PREFLIGHT | Convention stack resolution, dependency-to-module mapping | All downstream agents via stage notes |
+| EXPLORE | Blast radius for requirement scope, enriched symbol data | `pl-200-planner` |
+| PLAN | Impact analysis for planned changes | `pl-210-validator`, `pl-250-contract-validator` |
+| IMPLEMENT | Per-task file dependency graph | `pl-300-implementer`, `pl-310-scaffolder` |
+| REVIEW | Architectural boundary graph for changed files | `pl-400-quality-gate` → review agents |
+
+If Neo4j is unavailable, `state.json.integrations.neo4j.available` is `false` and all agents fall back to grep/glob analysis (current behavior). No agent fails due to missing graph data.
 
 ## Skills
 
 | Skill | Trigger | Purpose |
 |---|---|---|
-| `graph-init` | Called by `pipeline-init` when `graph.enabled: true` | Start Neo4j container, import seed, build project graph |
+| `graph-init` | `/graph-init` or called by `pipeline-init` when `graph.enabled: true` | Start Neo4j container, import seed, build project graph. User-facing: can be invoked standalone to set up the graph without running the full pipeline. Idempotent: skips steps already completed (container running, seed imported). Requires `pipeline-init` to have run first (needs `dev-pipeline.local.md` for component config). |
 | `graph-status` | `/graph-status` | Show node counts, last build SHA, enrichment coverage, container health |
 | `graph-query` | `/graph-query <cypher>` | Interactive Cypher query for ad-hoc exploration |
 | `graph-rebuild` | `/graph-rebuild` | Full rebuild of project graph (when incremental gets stale) |
@@ -398,7 +402,7 @@ Graph updates happen at **stage boundaries**, not on every file edit:
 
 - PREFLIGHT: `incremental-update.sh` runs once
 - VERIFY: `incremental-update.sh` runs once (captures implementation changes)
-- Seed regeneration: pre-commit hook in the plugin repo when `modules/`, `agents/`, or `shared/` change
+- Seed regeneration: git pre-commit hook (`.githooks/pre-commit`, not the plugin's `hooks/hooks.json`) in the plugin repo when `modules/`, `agents/`, or `shared/` change. The existing `PostToolUse` hooks on `Edit|Write` are intentionally NOT extended for graph updates — stage-boundary batching is more efficient.
 
 ## Testing
 
