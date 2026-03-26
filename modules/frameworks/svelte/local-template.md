@@ -109,3 +109,9 @@ Data fetching via service modules + TanStack Query (`@tanstack/svelte-query`) fo
 
 Customize the commands above to match your project's package manager (npm, yarn, pnpm, or bun).
 Use `svelte-package` in library mode when building a publishable component library.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

@@ -138,3 +138,9 @@ Android and iOS apps consume `shared` as a Gradle dependency / XCFramework respe
 Each platform provides `actual` implementations and wires Koin platform modules at startup.
 
 Customize `components`, `commands`, and `scaffolder.patterns` to match your project layout.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

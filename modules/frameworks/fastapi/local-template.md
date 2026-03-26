@@ -103,3 +103,9 @@ for request/response validation. Dependency injection via Depends().
 
 Persistence layer is configurable via `components.persistence`. Customize along with commands
 and scaffolder patterns to match your project.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

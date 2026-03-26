@@ -26,7 +26,7 @@ Layered design with resolution flowing top-down:
    - `modules/auth/` — authentication/authorization patterns (JWT, OAuth2, RBAC, ABAC).
    - `modules/observability/` — metrics, tracing, and logging patterns (OpenTelemetry, structured logging, alerting).
    Convention composition order (most specific wins): variant > framework-binding > framework > language > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 29 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), and frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 29 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
 
@@ -98,6 +98,10 @@ Read source files for full details. Key facts:
 - **MCP detection**: `pipeline-run` detects available MCPs (Linear, Playwright, Slack, Context7, Figma). First failure marks MCP as degraded for the run. No MCP required.
 - **Cross-repo**: 5-step discovery during `/pipeline-init`. Contract validation (`pl-250-contract-validator`), linked PRs, multi-repo worktrees during runs. State in `state.json.cross_repo`. Configurable via `discovery:` section.
 
+### Knowledge Graph (optional, `graph:` in `dev-pipeline.local.md`)
+
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j.
+
 ### Check engine (`shared/checks/`)
 
 3-layer engine triggered on every `Edit`/`Write` via PostToolUse hook:
@@ -111,9 +115,9 @@ Read source files for full details. Key facts:
 
 **Schema v2**: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`. Rules skip when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated by `pl-140-deprecation-refresh` during PREFLIGHT.
 
-### Skills (13 in `skills/`)
+### Skills (17 in `skills/`)
 
-`pipeline-run` (main entry), `pipeline-init`, `pipeline-status`, `pipeline-reset`, `pipeline-rollback`, `pipeline-history`, `pipeline-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
+`pipeline-run` (main entry), `pipeline-init`, `pipeline-status`, `pipeline-reset`, `pipeline-rollback`, `pipeline-history`, `pipeline-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
 
 ### Hooks (`hooks/hooks.json`)
 

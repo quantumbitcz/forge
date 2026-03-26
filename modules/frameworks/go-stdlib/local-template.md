@@ -101,3 +101,9 @@ Persistence layer configurable via components.persistence.
 Error wrapping with %w, table-driven tests, no global mutable state.
 
 Customize the commands above to match your project's router library and build configuration.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

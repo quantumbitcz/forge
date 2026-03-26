@@ -96,3 +96,9 @@ GitOps workflow with ArgoCD or Flux. Secrets managed externally (never in values
 Local development via Docker Compose with health checks and named volumes.
 
 Customize the commands above to match your project's chart paths and build tooling.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

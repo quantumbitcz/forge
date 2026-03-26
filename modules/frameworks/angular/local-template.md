@@ -127,3 +127,9 @@ NgRx SignalStore for feature state. Lazy-loaded routes via `loadComponent`/`load
 `@defer` for below-fold and heavy UI sections.
 
 Customize the commands above to match your project's package manager and scripts.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

@@ -106,3 +106,9 @@ Server-side data loading via +page.server.ts load functions.
 Form actions for progressive enhancement. Shared state in .svelte.ts files.
 
 Customize the commands above to match your project's package manager (npm, yarn, pnpm, or bun).
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

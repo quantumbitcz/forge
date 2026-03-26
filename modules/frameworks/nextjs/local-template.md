@@ -131,3 +131,9 @@ Next.js App Router with TypeScript. Default to Server Components; add `"use clie
 Server Actions for mutations (always validate with Zod). `next/image` for all images. Metadata API (never `next/head`).
 
 Customize the commands above to match your project's package manager and scripts.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474

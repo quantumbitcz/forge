@@ -121,3 +121,9 @@ React + Vite + TypeScript + shadcn/ui. Theme tokens via CSS custom properties.
 Inline fontSize (never Tailwind text-* classes). Radix/shadcn composition pattern.
 
 Customize the commands above to match your project's package manager and scripts.
+
+graph:
+  enabled: false          # set to true to enable Neo4j knowledge graph
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
