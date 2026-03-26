@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Regenerate seed.cypher when plugin modules change
+if git diff --cached --name-only | grep -qE '^(modules|agents|shared)/'; then
+  if [ -x "./shared/graph/generate-seed.sh" ]; then
+    echo "Regenerating graph seed (modules/agents/shared changed)..."
+    ./shared/graph/generate-seed.sh
+    git add shared/graph/seed.cypher
+  fi
+fi
