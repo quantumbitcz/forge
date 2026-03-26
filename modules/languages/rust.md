@@ -69,3 +69,21 @@
 - **Lifetime annotation explosion:** 3+ explicit lifetimes in one signature is a design smell — consider owned types.
 - **`Box<dyn Error>` in library APIs:** Loses error type information. Use typed error enums with `thiserror`.
 - **Ignoring `#![deny(warnings)]`:** Rust compiler warnings are almost always correct. Fix them rather than suppress.
+
+## Dos
+- Use `?` operator for error propagation — clean, composable, and the idiomatic Rust pattern.
+- Use `enum` with `thiserror` for typed error hierarchies in libraries.
+- Use `clippy` in CI (`cargo clippy -- -D warnings`) — it catches idiomatic issues the compiler doesn't.
+- Use `impl Into<T>` / `impl AsRef<T>` for flexible function parameters.
+- Use `#[derive(...)]` for `Debug`, `Clone`, `PartialEq` — don't implement manually unless necessary.
+- Use `Arc<Mutex<T>>` for shared mutable state across threads — prefer `tokio::sync::Mutex` in async.
+- Use `cargo fmt` for consistent formatting — no style debates needed.
+
+## Don'ts
+- Don't use `.unwrap()` in production code — it panics on `None`/`Err`; use `?` or explicit matching.
+- Don't use `unsafe` without a documented safety invariant — every `unsafe` block needs a comment proving correctness.
+- Don't fight the borrow checker with excessive `.clone()` — redesign data ownership instead.
+- Don't use `std::thread::sleep` in async contexts — use `tokio::time::sleep`.
+- Don't use `Box<dyn Error>` in library APIs — use typed error enums for downstream matching.
+- Don't suppress compiler warnings — Rust warnings are almost always correct and actionable.
+- Don't use `String` when `&str` suffices — avoid unnecessary heap allocations.

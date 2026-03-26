@@ -14,7 +14,7 @@ Layered design with resolution flowing top-down:
 2. **Module layer** (`modules/`) — sublayers for convention composition:
    - `modules/languages/` — 15 language files (kotlin, java, typescript, python, go, rust, swift, c, csharp, ruby, php, dart, elixir, scala, cpp): language-level idioms, type conventions, and baseline rules.
    - `modules/frameworks/` — 21 framework directories (spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform, angular, nestjs, vue, svelte), each with `conventions.md`, config files, `variants/` for language-specific overrides, and subdirectories for framework-specific bindings (e.g., `testing/`, `persistence/`, `messaging/`).
-   - `modules/testing/` — 13 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright, cypress, cucumber).
+   - `modules/testing/` — 15 generic testing framework files (kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright, cypress, cucumber, k6, detox).
    - `modules/databases/` — database engine best practices (query patterns, indexing, connection pooling).
    - `modules/persistence/` — ORM/mapping patterns (entity design, repository conventions, transaction boundaries).
    - `modules/migrations/` — schema migration tool patterns (versioning, rollback, zero-downtime strategies).

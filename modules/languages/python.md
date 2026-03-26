@@ -56,3 +56,21 @@
 - **`import *`:** Pollutes the namespace and makes it impossible to trace where names come from. Always use explicit imports.
 - **Missing `await` on a coroutine:** Silently returns a coroutine object instead of executing it — type checkers and `asyncio` debug mode catch this.
 - **`isinstance` chains as poor-man's dispatch:** Use a dispatch dictionary, `functools.singledispatch`, or a proper class hierarchy.
+
+## Dos
+- Use `from __future__ import annotations` at the top of every module for forward references.
+- Use `dataclasses` (with `frozen=True` for immutability) for data containers over manual `__init__`.
+- Use f-strings for string formatting — never `%` formatting or `.format()`.
+- Use `pathlib.Path` over `os.path` for file system operations.
+- Use `async def` for all I/O-bound functions and `asyncio.gather()` for concurrency.
+- Use context managers (`with` statement) for resource management — files, connections, locks.
+- Use `ruff` for linting and formatting — it replaces `flake8`, `isort`, and `black` in one tool.
+
+## Don'ts
+- Don't use bare `except:` — it catches `SystemExit` and `KeyboardInterrupt`, breaking normal control flow.
+- Don't use mutable default arguments (`def fn(items=[])`) — they're shared across calls.
+- Don't use `print()` in production — use `logging` or `structlog` with appropriate levels.
+- Don't use synchronous I/O in async contexts — it blocks the entire event loop.
+- Don't use `import *` — it pollutes the namespace and makes tracing imports impossible.
+- Don't use `global` variables for runtime state — use dependency injection or `contextvars`.
+- Don't use `assert` for input validation — assertions are stripped in optimized mode (`-O`).

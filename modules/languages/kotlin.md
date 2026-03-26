@@ -55,3 +55,21 @@ Use the right scope function for the intent — confusion leads to bugs:
 - **Catching `Exception` broadly:** Catch specific types. Especially in coroutines — do not catch `CancellationException` unless you re-throw it.
 - **`var` instead of `val`:** Default to `val`; use `var` only when reassignment is genuinely required.
 - **Global mutable state:** Avoid `object` singletons with mutable state — use dependency injection instead.
+
+## Dos
+- Use `val` by default — immutability prevents entire classes of concurrency bugs.
+- Use `sealed class`/`sealed interface` for exhaustive `when` expressions — the compiler enforces completeness.
+- Use `data class` for value objects — `equals`, `hashCode`, `copy`, and `toString` are generated.
+- Use coroutines with structured concurrency (`coroutineScope`, `supervisorScope`) — never `GlobalScope`.
+- Use extension functions to add behavior without inheritance — keeps classes focused.
+- Use `require`/`check`/`error` for preconditions — they throw `IllegalArgumentException`/`IllegalStateException` with clear messages.
+- Use `?.let { }` or `?.run { }` for null-safe operations instead of `if (x != null)` blocks.
+
+## Don'ts
+- Don't catch `CancellationException` without re-throwing — it breaks structured concurrency cancellation.
+- Don't use `!!` (not-null assertion) — it throws `NullPointerException` at runtime; use `?.` or `requireNotNull`.
+- Don't use `var` in `data class` properties — it defeats value semantics and `copy()` behavior.
+- Don't expose `MutableList`/`MutableMap` from public APIs — return read-only `List`/`Map` via `.toList()`.
+- Don't use `object` singletons for stateful services — use dependency injection for testability.
+- Don't use `runBlocking` in coroutine contexts — it blocks the thread and can cause deadlocks.
+- Don't use Java's `synchronized` with coroutines — use `Mutex` from `kotlinx.coroutines.sync`.

@@ -63,3 +63,21 @@
 - **`class` for all types by default:** Value types (`struct`) are simpler, thread-safe by default, and have no retain cycle risk. Choose `class` intentionally.
 - **Singletons for testable services:** Singletons cannot be replaced in tests. Use protocol-based dependency injection.
 - **Deeply nested `if let` / `guard let` chains:** More than 3 levels signals the need for refactoring into smaller functions or a different optional-handling strategy.
+
+## Dos
+- Use `struct` by default — value types are simpler, thread-safe, and have no retain cycle risk.
+- Use `guard let` for early returns — it flattens control flow and makes the happy path clear.
+- Use `[weak self]` in stored closures to prevent retain cycles.
+- Use `async`/`await` with structured concurrency (`TaskGroup`, `async let`) over GCD.
+- Use `@MainActor` for UI-bound code instead of `DispatchQueue.main.async`.
+- Use protocols for dependency injection and testability — not singletons.
+- Use SPM (Swift Package Manager) over CocoaPods for dependency management.
+
+## Don'ts
+- Don't force-unwrap (`!`) without strong justification — it crashes at runtime with unhelpful messages.
+- Don't use `unowned` when the lifecycle isn't guaranteed — it crashes on deallocation; prefer `weak`.
+- Don't use `class` by default — choose it intentionally when reference semantics are needed.
+- Don't use singletons for testable services — they can't be replaced in unit tests.
+- Don't use `DispatchQueue.main.async` in `@MainActor` code — it creates mixed concurrency models.
+- Don't nest more than 3 `if let` / `guard let` — refactor into smaller functions.
+- Don't use `Any` or `AnyObject` without type narrowing — it defeats the type system.

@@ -72,3 +72,21 @@ Every header must use an include guard:
 - **Type-punning via pointer cast:** Violates strict aliasing. Use `memcpy` or a `union` for safe type punning.
 - **Magic numbers:** Replace with named `#define` constants or `enum` values — describe intent, not value.
 - **No `volatile` on ISR-shared variables:** The compiler may optimize away reads/writes to variables it doesn't know are modified by interrupts.
+
+## Dos
+- Use `snprintf` over `sprintf` — always bound buffer writes to prevent overflows.
+- Use `static` for file-scoped functions and variables — minimize the global symbol table.
+- Use `const` for read-only data — it enables compiler optimizations and documents intent.
+- Use `volatile` for variables shared between ISR and main context.
+- Build with `-Wall -Wextra -Werror -pedantic` — zero warnings is a hard requirement.
+- Use `goto` only for centralized error cleanup in functions with multiple resource acquisitions.
+- Use `stdint.h` types (`uint32_t`, `int16_t`) instead of platform-dependent `int`/`long`.
+
+## Don'ts
+- Don't use `malloc` in ISR handlers or time-critical paths — non-deterministic timing and fragmentation risk.
+- Don't use `float` in ISR handlers on MCUs without FPU — use fixed-point arithmetic.
+- Don't use `gets()` — it was removed in C11 for buffer overflow vulnerability.
+- Don't use implicit function declarations — always include the correct header.
+- Don't use pointer casts for type punning — it violates strict aliasing; use `memcpy` instead.
+- Don't use magic numbers — replace with named `#define` constants or `enum` values.
+- Don't use `sprintf`, `strcpy`, or other unbounded string functions — use their `n`-bounded variants.

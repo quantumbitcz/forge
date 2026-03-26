@@ -61,3 +61,21 @@
 - **Goroutine leaks:** Goroutines without a termination condition or context cancellation run forever. Always ensure goroutines can exit.
 - **String concatenation in loops:** Use `strings.Builder` — `+` in a loop is O(n²).
 - **Unused imports:** Go compilation fails on unused imports — this is enforced, not a convention.
+
+## Dos
+- Return errors as the last return value — Go's error handling convention: `result, err := fn()`.
+- Use `context.Context` as the first parameter for functions that do I/O or need cancellation.
+- Use `defer` for cleanup — file handles, mutexes, response bodies.
+- Use `errgroup.Group` for managing concurrent goroutine lifecycles with error propagation.
+- Use `go vet`, `staticcheck`, and `golangci-lint` in CI — they catch bugs the compiler misses.
+- Use `table-driven tests` for comprehensive test coverage with minimal code duplication.
+- Use `io.Reader`/`io.Writer` interfaces for composable I/O — avoid concrete types in function signatures.
+
+## Don'ts
+- Don't ignore errors (`result, _ := fn()`) — always check and handle or propagate them.
+- Don't use `panic` for expected errors — it's for programmer bugs only; return `error` instead.
+- Don't use `interface{}` / `any` without immediate type assertion — it loses type safety.
+- Don't use `init()` for complex initialization — it runs implicitly on import and is hard to test.
+- Don't leak goroutines — every goroutine must have a termination condition or context cancellation.
+- Don't use package-level mutable `var` for runtime state — pass dependencies through constructors.
+- Don't use `string` concatenation in loops — use `strings.Builder` (O(n) vs O(n²)).

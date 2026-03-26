@@ -59,3 +59,21 @@ Use ESM `import` syntax — never `require()` in TypeScript projects targeting E
 - **Type assertions (`as Foo`) to paper over mismatches:** Fix the type mismatch properly; `as` only suppresses the check.
 - **`index` as array key in lists that can reorder or filter:** Causes incorrect reconciliation and state bugs.
 - **`var` declarations:** Always use `const` (default) or `let` (when reassignment is required). `var` has function scope and hoisting behavior that causes subtle bugs.
+
+## Dos
+- Use `const` by default — mutability should be the exception, not the rule.
+- Use discriminated unions (`type Result = { ok: true; data: T } | { ok: false; error: Error }`) for type-safe error handling.
+- Use `unknown` instead of `any` — it forces type narrowing before use.
+- Use `satisfies` (TS 4.9+) for type-checking expressions without widening the inferred type.
+- Use `readonly` on arrays, tuples, and object properties that shouldn't be mutated.
+- Use `as const` for literal type inference on configuration objects.
+- Use `strict: true` in `tsconfig.json` — it enables all strict type-checking options.
+
+## Don'ts
+- Don't use `any` — it silently disables type checking for everything downstream.
+- Don't use `!` (non-null assertion) without strong justification — it defers crashes to runtime.
+- Don't use `require()` in ESM projects — it breaks module semantics and tree-shaking.
+- Don't use `var` — use `const` or `let`; `var` has function scope and hoisting bugs.
+- Don't use `enum` for simple string unions — use `type Status = "active" | "inactive"` instead.
+- Don't leave floating promises without `await` or `.catch()` — errors are silently swallowed.
+- Don't use type assertions (`as Foo`) to paper over mismatches — fix the underlying type.

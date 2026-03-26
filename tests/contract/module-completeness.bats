@@ -77,6 +77,8 @@ EXPECTED_TESTING_FILES=(
   playwright.md
   cypress.md
   cucumber.md
+  k6.md
+  detox.md
 )
 
 REQUIRED_FILES=(

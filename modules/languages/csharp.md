@@ -83,3 +83,21 @@
 - **Mutable shared state in static fields:** Thread-unsafe without explicit synchronization. Use dependency injection for shared services.
 - **`string.Format` over interpolation:** Harder to read, more error-prone with index mismatches. Use `$""` interpolation.
 - **Magic numbers/strings:** Replace with named constants, `enum` values, or `static readonly` fields with intent-describing names.
+
+## Dos
+- Use `record` (C# 9+) for immutable value objects — auto-generated equality, hashing, and deconstruction.
+- Use `required` properties (C# 11+) to enforce initialization at construction time.
+- Use pattern matching (`is`, `switch` expressions) for type-safe branching.
+- Use `async`/`await` throughout — never mix sync and async code.
+- Use LINQ for collection transformations — it's declarative and composable.
+- Use nullable reference types (`#nullable enable`) to catch null bugs at compile time.
+- Use `IAsyncDisposable` and `await using` for async resource cleanup.
+
+## Don'ts
+- Don't use `async void` methods — exceptions escape the caller's try/catch; only acceptable for event handlers.
+- Don't use `.Result` or `.Wait()` on async tasks — it can deadlock when a synchronization context is present.
+- Don't use `null!` to silence nullable warnings — fix the underlying nullability model.
+- Don't catch `Exception` broadly — it swallows `OutOfMemoryException` and other fatal errors.
+- Don't use mutable shared state in static fields — thread-unsafe without explicit synchronization.
+- Don't use `string.Format` when `$""` interpolation is available — it's harder to read.
+- Don't use `dynamic` unless interop requires it — it disables compile-time type checking.

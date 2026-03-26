@@ -56,3 +56,21 @@
 - **`new Date()` / `System.currentTimeMillis()` for domain timestamps:** Use `java.time.Instant.now()` — testable, unambiguous, timezone-aware.
 - **Circular service dependencies:** Indicates missing abstraction. Extract a shared domain service or event to break the cycle.
 - **`System.out.println` in production:** Use SLF4J (`LoggerFactory.getLogger(...)`) with structured logging.
+
+## Dos
+- Use `record` (Java 16+) for immutable data carriers — auto-generated `equals`, `hashCode`, `toString`.
+- Use `Optional<T>` for return types that may be absent — never for parameters or fields.
+- Use `var` (Java 10+) for local variables when the type is obvious from the right-hand side.
+- Use `Stream` API for collection transformations — declarative, parallelizable, composable.
+- Use `java.time` (`Instant`, `LocalDate`, `ZonedDateTime`) — never `Date` or `Calendar`.
+- Use `sealed` classes/interfaces (Java 17+) with pattern matching for exhaustive type hierarchies.
+- Use `try-with-resources` for all `AutoCloseable` resources — never manually close in `finally`.
+
+## Don'ts
+- Don't use raw types (`List` instead of `List<String>`) — they bypass compile-time type checking.
+- Don't catch `Exception` or `Throwable` broadly — catch the most specific exception type you can handle.
+- Don't use `null` to represent "empty" — use `Optional` for returns, empty collections for lists.
+- Don't use `System.out.println` for logging — use SLF4J with structured context.
+- Don't use mutable static fields — they create hidden global state and thread-safety issues.
+- Don't use `new Date()` for timestamps — use `Instant.now()` for unambiguous UTC timestamps.
+- Don't use `==` to compare objects (except primitives) — use `.equals()` or `Objects.equals()`.
