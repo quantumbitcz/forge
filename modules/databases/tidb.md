@@ -60,6 +60,43 @@ tiup playground --tag myapp --db 1 --pd 1 --kv 3 --tiflash 1
 mysql://app:pass@tidb.internal:4000/mydb?charset=utf8mb4
 ```
 
+## Performance
+
+**EXPLAIN ANALYZE for distributed plans:**
+```sql
+EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 123 ORDER BY created_at DESC LIMIT 20;
+```
+Look for: `TableFullScan` (missing index), cross-region reads, coprocessor timeouts.
+
+**Batch DML for bulk operations:**
+```sql
+-- TiDB processes batch DML more efficiently than row-by-row
+INSERT INTO events (type, payload) VALUES ('a', '{}'), ('b', '{}'), ...;
+```
+
+**Coprocessor pushdown:** TiDB pushes predicates and aggregations to TiKV — design queries to maximize pushdown for reduced network overhead.
+
+## Security
+
+**Least-privilege users:**
+```sql
+CREATE USER 'app'@'%' IDENTIFIED BY '...';
+GRANT SELECT, INSERT, UPDATE, DELETE ON mydb.* TO 'app'@'%';
+```
+
+**TLS encryption:** Enable TLS for client connections and configure `require_secure_transport`.
+
+**SQL injection prevention:** Use parameterized queries — TiDB is MySQL-compatible, so all MySQL driver parameterization works.
+
+## Testing
+
+Use **Testcontainers** or `tiup playground` for integration tests:
+```bash
+tiup playground --tag test --db 1 --pd 1 --kv 1
+```
+
+Test transaction retry logic explicitly — optimistic transaction conflicts are more common than in single-node MySQL. Verify TiFlash queries return correct results for analytics workloads.
+
 ## Dos
 - Use `AUTO_RANDOM` instead of `AUTO_INCREMENT` for primary keys — avoids write hotspots.
 - Use TiFlash replicas for analytics queries — keeps OLTP and OLAP workloads separated.

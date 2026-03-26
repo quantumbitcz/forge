@@ -68,6 +68,32 @@ grafana:
     GF_USERS_ALLOW_SIGN_UP: "false"
 ```
 
+## Performance
+
+**Query optimization:** Use `$__interval` and `$__rate_interval` template variables — they auto-adjust to the dashboard time range, preventing over-fetching data points.
+
+**Dashboard loading time:** Limit panels to 15-20 per dashboard. Use dashboard links to separate detail views from overview dashboards.
+
+**Caching:** Enable Grafana's query caching for data sources that support it. Configure per-data-source cache TTL.
+
+## Security
+
+**Authentication:** Integrate with OAuth2/OIDC (Google, GitHub, Okta) or LDAP for SSO. Disable default admin account after initial setup.
+
+**RBAC:** Use teams and folder-level permissions to restrict dashboard access. Use data source permissions to limit who can query sensitive data.
+
+**API key management:** Use service accounts with limited roles for programmatic access. Rotate API keys regularly.
+
+## Testing
+
+**Dashboard validation:**
+```bash
+# Lint dashboards with grafana-dashboard-linter
+grafana-dashboard-linter lint dashboards/*.json
+```
+
+Use Grafana's built-in dashboard versioning to track changes. Test dashboard loading with `curl` against the Grafana API to verify all panels render without errors.
+
 ## Dos
 - Use dashboard-as-code (Jsonnet/Terraform/provisioned JSON) for all production dashboards.
 - Use variables (`$service`, `$environment`) to make dashboards reusable across services.

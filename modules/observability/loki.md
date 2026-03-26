@@ -81,6 +81,40 @@ limits_config:
   max_streams_per_user: 10000
 ```
 
+## Performance
+
+**Query optimization:** Always start LogQL queries with label matchers — `{app="order-service"}` is fast, `{} |= "error"` scans everything.
+
+**Chunk size and retention:** Configure chunk target size (1.5 MB default) and retention period to balance query speed vs storage cost.
+
+**Parallel queries:** Loki splits queries across time ranges and parallelizes them. Longer time ranges benefit from more query parallelism.
+
+**Caching:** Enable chunk cache (memcached/Redis) and results cache for repeated queries.
+
+## Security
+
+**Authentication:** Use Grafana's built-in auth or a reverse proxy for Loki API access. Never expose Loki's HTTP API (3100) without authentication.
+
+**Multi-tenancy:** Enable `auth_enabled: true` and use the `X-Scope-OrgID` header to isolate tenants.
+
+**Network isolation:** Loki's internal components (ingester, querier, distributor) should communicate on a private network.
+
+## Testing
+
+```bash
+# Local Loki + Promtail for testing
+docker run -p 3100:3100 grafana/loki:3.0.0
+```
+
+Test log ingestion by sending JSON logs via the push API:
+```bash
+curl -X POST http://localhost:3100/loki/api/v1/push \
+  -H 'Content-Type: application/json' \
+  -d '{"streams":[{"stream":{"app":"test"},"values":[["'$(date +%s)000000000'","test log entry"]]}]}'
+```
+
+Verify LogQL queries return expected results. Test label cardinality stays within limits.
+
 ## Dos
 - Use low-cardinality labels only (service, environment, namespace, level) — labels drive Loki's index.
 - Use structured JSON logging — Loki's `| json` parser extracts fields at query time.

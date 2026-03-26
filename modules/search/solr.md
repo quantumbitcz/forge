@@ -67,6 +67,43 @@ bin/solr create -c products -s 3 -rf 2
 </updateHandler>
 ```
 
+## Performance
+
+**Use filter queries (`fq`) for cacheable filters:**
+```
+/select?q=headphones&fq=category:Electronics&fq=price:[0 TO 100]
+```
+Filter queries are cached independently from the main query, dramatically improving repeated filter performance.
+
+**Warming queries:** Configure `firstSearcher` and `newSearcher` listeners to pre-warm caches after commits.
+
+**Shard sizing:** Target 10-50GB per shard. Too many small shards waste overhead; too few large shards cause uneven load.
+
+## Security
+
+**Authentication and authorization:**
+```
+# security.json
+{ "authentication": { "class": "solr.BasicAuthPlugin", "credentials": { "admin": "..." } },
+  "authorization": { "class": "solr.RuleBasedAuthorizationPlugin", "permissions": [...] } }
+```
+
+**Enable TLS** for all Solr connections. Never expose Solr ports (8983) directly to the internet.
+
+**Parameterized queries:** Use Solr's parameter substitution (`{!param}`) to prevent injection.
+
+## Testing
+
+Use a local Solr Docker container for integration tests:
+```yaml
+solr:
+  image: solr:9
+  ports: ["8983:8983"]
+  command: solr-precreate test-core
+```
+
+Test schema changes, query relevance, and facet correctness. Verify that custom analyzers produce expected tokenization.
+
 ## Dos
 - Use explicit schemas (managed-schema) — avoid schemaless mode in production.
 - Use SolrCloud (ZooKeeper-managed) for distributed deployments — standalone Solr doesn't scale.

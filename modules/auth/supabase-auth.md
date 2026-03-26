@@ -73,6 +73,42 @@ END;
 $$;
 ```
 
+## Performance
+
+**Token caching:** Supabase SDK caches tokens and auto-refreshes. Don't call `getUser()` on every request — check the cached session first.
+
+**Minimize RLS policy complexity:** Complex policies with subqueries run on every row access. Keep policies simple and index the columns used in policy expressions.
+
+**Use `auth.uid()` in indexes:**
+```sql
+CREATE INDEX idx_posts_user ON posts(user_id) WHERE user_id IS NOT NULL;
+```
+
+## Security
+
+**Never disable RLS on tables with user data.** Supabase API endpoints expose tables directly — RLS is your access control layer.
+
+**Validate data shape in RLS policies:**
+```sql
+CREATE POLICY "Insert valid posts" ON posts FOR INSERT
+  WITH CHECK (auth.uid() = user_id AND length(title) > 0 AND length(title) <= 500);
+```
+
+**Use `service_role` key only in trusted server environments** — it bypasses all RLS policies.
+
+**Enable email confirmation** and CAPTCHA for sign-up to prevent bot accounts.
+
+## Testing
+
+**Use Supabase CLI for local development:**
+```bash
+supabase init
+supabase start
+# Local Supabase instance with auth, database, storage
+```
+
+Test RLS policies by authenticating as different users and verifying access restrictions. Use `supabase test db` for database-level testing.
+
 ## Dos
 - Use Row-Level Security policies for data access control — they're enforced at the database level.
 - Use `auth.uid()` in RLS policies to reference the authenticated user.

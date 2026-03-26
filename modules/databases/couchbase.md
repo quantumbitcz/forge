@@ -49,6 +49,53 @@ couchbase:
     COUCHBASE_ADMINISTRATOR_PASSWORD: password
 ```
 
+## Performance
+
+**Use EXPLAIN for N1QL query analysis:**
+```sql
+EXPLAIN SELECT * FROM myapp WHERE type = "user" AND email = "alice@example.com";
+```
+Look for: `PrimaryScan` (missing index), `IntersectScan` (consider compound index).
+
+**Index design — covered indexes:**
+```sql
+CREATE INDEX idx_users_email ON myapp(email) WHERE type = "user";
+CREATE INDEX idx_orders_user ON myapp(userId, total) WHERE type = "order";
+```
+
+**Memory-first architecture:** Couchbase serves KV ops from the managed cache (bucket RAM quota). Size RAM to hold the working set. Cache misses hit disk and add latency.
+
+**Use `subdoc` operations for partial reads/writes:**
+```javascript
+await collection.mutateIn("user::123", [couchbase.MutateInSpec.upsert("lastLogin", new Date().toISOString())]);
+const result = await collection.lookupIn("user::123", [couchbase.LookupInSpec.get("email")]);
+```
+
+## Security
+
+**RBAC (role-based access control):**
+```sql
+CREATE USER app_user IDENTIFIED BY 'strong-password';
+GRANT data_reader, data_writer ON myapp TO app_user;
+```
+
+**TLS encryption:** Enable TLS for client connections and inter-node communication. Use `couchbases://` (TLS) instead of `couchbase://`.
+
+**Parameterized N1QL queries:** Always use `$param` placeholders — never concatenate user input into N1QL strings.
+
+**Audit logging:** Enable audit events for data access and admin operations in the Security settings.
+
+## Testing
+
+Use **Testcontainers** for integration tests:
+```javascript
+const container = new CouchbaseContainer("couchbase:7.2").withBucket({ name: "test" });
+await container.start();
+const cluster = await couchbase.connect(container.getConnectionString(), { username: "Administrator", password: "password" });
+```
+
+Test KV operations, N1QL queries, and full-text search separately. Verify index effectiveness with `EXPLAIN`.
+
 ## Dos
 - Use KV operations for single-document access — they're 10x faster than N1QL queries.
 - Use scopes and collections to organize documents by type — replaces the `type` field pattern.

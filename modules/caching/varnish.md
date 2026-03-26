@@ -100,6 +100,49 @@ varnish:
     -p default_grace=3600
 ```
 
+## Performance
+
+**Monitor cache hit ratio:**
+```bash
+varnishstat -1 | grep -E "MAIN.cache_hit|MAIN.cache_miss"
+# Target: > 80% hit ratio for cacheable traffic
+```
+
+**Grace mode for availability:** Set `beresp.grace` to serve stale content during backend outages — users get slightly stale data instead of errors.
+
+**Tune thread pools:** Adjust `thread_pool_min`, `thread_pool_max`, and `thread_pool_timeout` for your workload.
+
+## Security
+
+**Restrict management port (6082):** Never expose the Varnish CLI port to the internet — it allows arbitrary VCL changes and cache purging.
+
+**ACLs for PURGE/BAN operations:** Restrict cache invalidation to trusted internal IPs only.
+
+**Strip sensitive headers:**
+```vcl
+sub vcl_deliver {
+    unset resp.http.X-Powered-By;
+    unset resp.http.Server;
+}
+```
+
+## Testing
+
+```bash
+# Test cache behavior
+curl -sI http://localhost | grep X-Cache
+# X-Cache: HIT or MISS
+```
+
+Use `varnishtest` (VTC files) for automated VCL testing:
+```vtc
+varnishtest "Cache static assets"
+server s1 { rxreq; txresp -body "hello" } -start
+varnish v1 -vcl+backend { } -start
+client c1 { txreq -url "/style.css"; rxresp; expect resp.http.X-Cache == "MISS" } -run
+client c2 { txreq -url "/style.css"; rxresp; expect resp.http.X-Cache == "HIT" } -run
+```
+
 ## Dos
 - Use grace mode (`beresp.grace`) to serve stale content during backend outages — improves availability.
 - Strip `Set-Cookie` from cached responses — prevents session hijacking via shared cookies.

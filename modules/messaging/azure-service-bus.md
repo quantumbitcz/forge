@@ -74,6 +74,51 @@ resource queue 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-preview' = {
 }
 ```
 
+## Performance
+
+**Prefetch for throughput:**
+```csharp
+var processor = client.CreateProcessor("orders-queue", new ServiceBusProcessorOptions {
+    MaxConcurrentCalls = 10,
+    PrefetchCount = 20
+});
+```
+
+**Batch send for reduced overhead:**
+```csharp
+using var batch = await sender.CreateMessageBatchAsync();
+foreach (var order in orders) batch.TryAddMessage(new ServiceBusMessage(JsonSerializer.Serialize(order)));
+await sender.SendMessagesAsync(batch);
+```
+
+**Premium tier for predictable latency:** Standard tier shares resources; Premium provides dedicated compute with consistent sub-10ms latency.
+
+## Security
+
+**Managed identity (recommended over connection strings):**
+```csharp
+var client = new ServiceBusClient("my-sb-ns.servicebus.windows.net", new DefaultAzureCredential());
+```
+
+**Shared Access Policies (least privilege):** Create separate SAS keys for senders (Send) and receivers (Listen). Never use the RootManageSharedAccessKey in applications.
+
+**Private endpoints:** Use Azure Private Link to restrict Service Bus access to your VNet.
+
+## Testing
+
+```csharp
+// Use Testcontainers with Azure Service Bus emulator (preview)
+// Or use a dedicated test namespace
+var client = new ServiceBusClient(testConnectionString);
+var sender = client.CreateSender("test-queue");
+await sender.SendMessageAsync(new ServiceBusMessage("test"));
+var receiver = client.CreateReceiver("test-queue");
+var msg = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(5));
+Assert.NotNull(msg);
+```
+
+Use a dedicated test Service Bus namespace — never test against production. Test dead-letter routing, session ordering, and message TTL explicitly.
+
 ## Dos
 - Use dead-letter queues for all queues/subscriptions — poison messages need a destination.
 - Use sessions for FIFO ordering — Service Bus doesn't guarantee order without sessions.

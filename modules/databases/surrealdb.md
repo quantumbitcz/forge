@@ -49,6 +49,43 @@ surreal start --log trace --user root --pass root --bind 0.0.0.0:8000 file:data.
 docker run --rm -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root file:/data/db.surreal
 ```
 
+## Performance
+
+**Use `DEFINE INDEX` for frequently queried fields:**
+```sql
+DEFINE INDEX idx_user_email ON user FIELDS email UNIQUE;
+DEFINE INDEX idx_order_status ON order FIELDS status;
+```
+
+**Pagination with `START` and `LIMIT`:**
+```sql
+SELECT * FROM order ORDER BY created_at DESC LIMIT 20 START 40;
+```
+
+**Use `PARALLEL` for concurrent subqueries** when SurrealDB supports it in your version.
+
+## Security
+
+**Scoped access with `DEFINE SCOPE`:**
+```sql
+DEFINE SCOPE user SESSION 24h
+  SIGNUP (CREATE user SET email = $email, password = crypto::argon2::generate($password))
+  SIGNIN (SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password));
+```
+
+**Never expose root credentials.** Create namespace/database-level users with minimal permissions.
+
+**Use `DEFINE TOKEN` for JWT-based authentication** with external identity providers.
+
+## Testing
+
+```bash
+# Local test instance
+surreal start --user root --pass test memory
+```
+
+Use an in-memory SurrealDB instance for integration tests. Test graph traversals, live queries, and permission scopes explicitly.
+
 ## Dos
 - Use record IDs (`table:id`) for direct record access — they're fast and type-safe.
 - Use `RELATE` for graph relationships — SurrealDB handles graph traversals natively.
