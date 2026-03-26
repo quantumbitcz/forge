@@ -55,7 +55,25 @@
         "prisma",
         "typeorm",
         "mongoose",
-        "\\.model"
+        "drizzle",
+        "\\.model",
+        "\\.entity",
+        "\\.repository"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    },
+    {
+      "name": "Controllers must not import database directly",
+      "scope_pattern": "/controllers/",
+      "forbidden_imports": [
+        "prisma",
+        "typeorm",
+        "mongoose",
+        "drizzle",
+        "\\.model",
+        "\\.entity",
+        "\\.repository"
       ],
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY"

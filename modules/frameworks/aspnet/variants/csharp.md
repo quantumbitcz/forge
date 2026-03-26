@@ -33,7 +33,7 @@
 - Declare framework-wide global usings in a `GlobalUsings.cs` file at project root:
   ```csharp
   global using Microsoft.AspNetCore.Mvc;
-  global using Microsoft.EntityFrameworkCore;
+  // global using Microsoft.EntityFrameworkCore;  // if using EF Core
   global using Application.Interfaces;
   ```
 - Use global usings for frequently imported namespaces — avoids repetition, not a substitute for understanding dependencies
@@ -73,12 +73,13 @@
   ```
 - Do not mix controllers and Minimal APIs in the same bounded context
 
-## LINQ in EF Core Queries
+## LINQ in Data Access
 
-- Use method syntax for EF Core LINQ — composable and consistent
-- Call `AsNoTracking()` on all read-only queries before projection
+- Use method syntax for LINQ — composable and consistent
+- For EF Core: call `AsNoTracking()` on all read-only queries before projection
 - Use `Select()` projections to DTO types at the query boundary — avoids over-fetching
 - Materialize with `ToListAsync()` / `FirstOrDefaultAsync()` — never enumerate `IQueryable` in a loop
+- Specific persistence patterns (EF Core, Dapper, etc.) are in the `persistence/` binding file
 
 ## Package Structure
 
@@ -87,7 +88,7 @@ src/
   MyApp.Api/            # Controllers, Minimal API endpoints, Program.cs
   MyApp.Application/    # Service interfaces, use cases, DTOs
   MyApp.Domain/         # Entities, value objects, domain exceptions
-  MyApp.Infrastructure/ # EF Core DbContext, repositories, external clients
+  MyApp.Infrastructure/ # DbContext/repositories, external clients (persistence depends on choice)
 tests/
   MyApp.Api.Tests/      # Integration tests (WebApplicationFactory)
   MyApp.Application.Tests/  # Unit tests (mocked repos)

@@ -9,7 +9,7 @@
 | `routes` | Express routers or NestJS controllers, request parsing | middleware, controller/service |
 | `controllers` | Request/response orchestration (thin) | service |
 | `services` | Business logic | repository/model |
-| `models` | Database schemas (Prisma, TypeORM, Mongoose) | -- |
+| `models` | Database models/schemas (depends on `persistence:` choice) | -- |
 | `middleware` | Auth, validation, error handling, logging | -- |
 | `config` | Environment variables, app configuration | -- |
 
@@ -55,7 +55,7 @@
 | Controller | `xxx.controller.ts` | NestJS or thin Express controller |
 | Service | `xxx.service.ts` | Business logic |
 | Middleware | `xxx.middleware.ts` | Express middleware function |
-| Model | `xxx.model.ts` | Prisma schema, TypeORM entity |
+| Model | `xxx.model.ts` | Database model/entity (depends on `persistence:` choice) |
 | DTO / Schema | `xxx.dto.ts` or `xxx.schema.ts` | Zod schemas or class-validator DTOs |
 
 ## Environment Configuration
@@ -97,10 +97,11 @@
 
 ## Data Access
 
-- **Prisma:** Schema in `prisma/schema.prisma`, migrations via `prisma migrate`
-- **TypeORM:** Entities with decorators, migrations in `migrations/`
+> Specific ORM/ODM patterns are in the `persistence/` binding files. This section covers generic data access conventions.
+
 - Always use ORM/ODM methods or parameterized queries -- no raw string SQL
 - Pagination: accept `page` and `limit`, return `{ data, total, page, limit }`
+- See the persistence binding file for schema definition, migration, and query patterns specific to your `persistence:` choice
 
 ## Streaming / Backpressure
 
@@ -125,7 +126,7 @@
 - Use `supertest(app)` to test full request/response cycles through Express middleware and routes
 - NestJS: use `Test.createTestingModule()` to build isolated modules with overridden providers
 - Test middleware in isolation by constructing mock `req`/`res`/`next` objects
-- Use **Testcontainers** for database integration tests; Prisma/TypeORM test utilities for schema setup
+- Use **Testcontainers** for database integration tests; use persistence-layer test utilities for schema setup (depends on `persistence:` choice)
 
 ### What to Test
 - Service-layer business logic with mocked repositories (primary focus)

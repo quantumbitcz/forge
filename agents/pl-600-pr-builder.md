@@ -125,7 +125,7 @@ git add core/src/main/kotlin/.../impl/plan/ICreatePlanCommentUseCaseImpl.kt
 git commit -m "feat(plan): implement create plan comment use case"
 
 # Persistence adapter + migration
-git add adapter/output/postgresql/...
+git add adapter/output/persistence/...
 git commit -m "feat(plan): add plan comment persistence adapter and migration"
 
 # API controller + mapper + tests

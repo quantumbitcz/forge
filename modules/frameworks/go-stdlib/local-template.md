@@ -5,6 +5,7 @@ components:
   framework: go-stdlib
   variant: go
   testing: go-testing
+  persistence: gorm
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -75,22 +76,28 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/go-stdlib/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/go-stdlib/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/go-stdlib/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/go-stdlib/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "go-std"
-  - "gin"
-  - "echo"
-  - "chi"
-  - "sqlx"
   - "testify"
+  # Persistence — uncomment based on components.persistence:
+  # gorm (default):
+  - "gorm"
+  # sqlx (uncomment and remove gorm):
+  # - "sqlx"
 ---
 
 ## Go/Stdlib Backend Context
 
 Handler/Service/Repository layering with interface-driven design and context propagation.
 All exported I/O functions accept context.Context as the first parameter.
+Persistence layer configurable via components.persistence.
 Error wrapping with %w, table-driven tests, no global mutable state.
 
 Customize the commands above to match your project's router library and build configuration.

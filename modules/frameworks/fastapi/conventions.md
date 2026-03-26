@@ -8,17 +8,17 @@
 |-------|---------------|--------------|
 | `routers/` | HTTP endpoints, request validation, response serialization | services |
 | `services/` | Business logic, orchestration, transaction boundaries | repositories, models |
-| `repositories/` | Data access, SQLAlchemy queries | models, database session |
-| `models/` | SQLAlchemy ORM models (database schema) | SQLAlchemy only |
+| `repositories/` | Data access, database queries | models, database session |
+| `models/` | ORM/database models (schema definition depends on `persistence:` choice) | persistence layer only |
 | `schemas/` | Pydantic models for request/response validation | Pydantic only |
-| `migrations/` | Alembic database migrations | models |
+| `migrations/` | Database migrations (tool depends on `persistence:` choice) | models |
 
 **Dependency rule:** Routers never import from repositories directly. Services mediate all data access.
 
 ## Async by Default
 
 - All endpoint handlers use `async def` when performing async I/O
-- All database operations use `AsyncSession` from SQLAlchemy
+- All database operations use async patterns (specifics depend on `persistence:` choice)
 - Background tasks use `BackgroundTasks` or Celery/ARQ for heavy work
 - Use `asyncio.gather()` for concurrent I/O, never `threading`
 
@@ -26,7 +26,7 @@
 
 - Use `Depends()` for all cross-cutting concerns: DB sessions, auth, config
 - Define reusable dependencies in `dependencies/` or `deps.py`
-- Scoped sessions via `async_session_maker` yielded from a dependency
+- Scoped DB sessions yielded from a dependency
 - Never instantiate services/repositories at module level
 
 ## Pydantic Models (Schemas)
@@ -37,18 +37,15 @@
 - Separate schemas: `XxxCreate`, `XxxUpdate`, `XxxResponse`, `XxxInDB`
 - Use `Field()` for validation constraints and OpenAPI documentation
 
-## SQLAlchemy Async
+## Data Access
 
-- Use `DeclarativeBase` with `mapped_column()` and `Mapped[]` type annotations
-- All queries through `AsyncSession` -- `session.execute(select(...))`, not legacy Query API
-- Relationships use `lazy="selectin"` or explicit eager loading -- never lazy loading in async
-- Use `selectinload()` / `joinedload()` for relationship prefetching
+Data access patterns depend on `components.persistence` — see the persistence binding file for details.
 
-## Alembic Migrations
-
-- Auto-generate with `alembic revision --autogenerate -m "description"`
-- Always review generated migrations before applying
-- Downgrade path required for every migration
+**Shared rules (all persistence layers):**
+- All queries through async session/connection when using async I/O
+- Parameterized queries only — no string interpolation in SQL
+- Repository methods return domain types, not raw rows or ORM internals
+- Migrations must have a downgrade/rollback path
 
 ## Naming Patterns
 
@@ -93,7 +90,7 @@
 
 ## Performance
 
-- Connection pooling: `asyncpg` pool (min=5, max=20 per worker)
+- Connection pooling: configure pool sizing per persistence driver (e.g., `asyncpg` min=5, max=20 per worker)
 - Use `orjson` for fast JSON serialization (3-10x faster than stdlib)
 - Cache expensive queries with Redis or in-memory LRU cache
 - Profile with `py-spy` for production bottlenecks
@@ -120,7 +117,7 @@
 ### What NOT to Test
 - Pydantic type validation (e.g., that `str` field rejects `int`) — Pydantic guarantees this
 - `Depends()` resolution mechanics — FastAPI handles this
-- SQLAlchemy column type mapping
+- ORM column type mapping (persistence layer guarantees this)
 - OpenAPI schema generation
 
 ### Example Test Structure
@@ -142,7 +139,7 @@ For general pytest patterns, see `modules/testing/pytest.md`.
 - No duplicate tests — grep existing tests before writing new ones
 - Test business behavior, not implementation details
 - Do NOT test framework guarantees (e.g., Pydantic validates types, `Depends()` resolution, automatic OpenAPI generation)
-- Do NOT test SQLAlchemy column mapping or Alembic migration mechanics
+- Do NOT test ORM column mapping or migration tool mechanics
 - Each test scenario covers a unique code path
 - Fewer meaningful tests > high coverage of trivial code
 

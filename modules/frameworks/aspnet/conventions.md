@@ -10,7 +10,7 @@
 | `Controllers/` | HTTP endpoints, request validation, response mapping | Application services |
 | `Application/` | Business logic, use cases, service interfaces | Domain |
 | `Domain/` | Entities, value objects, domain exceptions | None |
-| `Infrastructure/` | EF Core DbContext, repositories, external integrations | Application, Domain |
+| `Infrastructure/` | Database context, repositories, external integrations | Application, Domain |
 | `Program.cs` | Entry point, DI composition, middleware pipeline | All |
 
 **Dependency rule:** Domain never imports from Application or Infrastructure. Application depends on Domain only. Controllers depend on Application services, never on Infrastructure directly. Domain entities never leak into API responses — always map to DTOs/response models.
@@ -24,7 +24,7 @@
 | Service impl | `XxxService` | Registered in DI container |
 | Repository interface | `IXxxRepository` | — |
 | Repository impl | `XxxRepository` | Registered as `Scoped` |
-| Entity | `Xxx` (no suffix) | EF Core conventions or `[Table]` |
+| Entity | `Xxx` (no suffix) | Persistence conventions or `[Table]` |
 | Request DTO | `CreateXxxRequest` / `UpdateXxxRequest` | Validation attributes |
 | Response DTO | `XxxResponse` | `record` preferred |
 | Mapper | `XxxMappingProfile` (AutoMapper) or `XxxMapper` (static) | — |
@@ -71,16 +71,16 @@ Map domain exceptions in the global exception handler middleware. Services throw
 ## Performance
 
 ### Connection Pooling
-- EF Core uses its own connection pool via ADO.NET; configure `MaxPoolSize` in the connection string
-- For high-throughput apps: tune `min pool size` and `max pool size` based on workload
-- Monitor with health checks and EF Core metrics
+- Configure connection pooling via the persistence layer; tune `MaxPoolSize` / pool sizes in the connection string
+- For high-throughput apps: tune min and max pool sizes based on workload
+- Monitor with health checks and persistence-layer metrics
 
 ### N+1 Prevention
-- Use `Include()` / `ThenInclude()` for related data needed in a single query
-- Use `Select()` projections to avoid loading full entities when only a subset of columns is needed
-- Never use `LazyLoadingProxies` in production APIs — it silently triggers N+1 queries
-- Use `AsNoTracking()` for read-only queries — removes change tracking overhead
-- Rule: if a loop calls the database, you likely have N+1 — extract to a single query with `Contains()`
+- Eagerly load related data needed in a single query (depends on `persistence:` choice — see persistence binding file for specifics)
+- Use projections to avoid loading full entities when only a subset of columns is needed
+- Avoid lazy-loading proxies in production APIs — they silently trigger N+1 queries
+- Use read-only/no-tracking modes for queries that don't need change tracking (depends on `persistence:` choice)
+- Rule: if a loop calls the database, you likely have N+1 — extract to a single batch query
 
 ### Caching
 - Use `IMemoryCache` for in-process caching; `IDistributedCache` (Redis) for multi-instance apps
@@ -104,37 +104,39 @@ Map domain exceptions in the global exception handler middleware. Services throw
 - Use `CreatedAtAction()` for 201 responses — includes `Location` header pointing to the created resource
 - Minimal APIs for simple endpoints: `app.MapGet("/ping", () => "pong")` — no controller overhead
 
-## Database (Entity Framework Core)
+## Database
+
+> Specific ORM/data-access patterns (EF Core, Dapper, etc.) are in the `persistence/` binding files. This section covers generic database conventions.
 
 ### Migrations
-- Code-first migrations: `dotnet ef migrations add {Description}` / `dotnet ef database update`
+- Use code-first or SQL-based migrations depending on `persistence:` choice
 - Never modify an applied migration — create a new one
 - Migration naming: descriptive PascalCase — `AddUserEmailIndex`, `CreateOrdersTable`
 - Run migrations at app startup only in development; use dedicated migration tooling in production
 
-### DbContext
-- One `DbContext` per bounded context — never share a `DbContext` across application modules
-- Register as `Scoped` (the default in `AddDbContext`) — never Singleton or Transient
-- Use `DbContext` pooling (`AddDbContextPool`) for high-throughput scenarios
-- Never use `DbContext` directly in controllers — go through repositories or services
+### Data Context
+- One data context per bounded context — never share across application modules
+- Register as `Scoped` — never Singleton or Transient
+- Use context pooling for high-throughput scenarios (if supported by the persistence layer)
+- Never use the data context directly in controllers — go through repositories or services
 
 ### Data Access
-- Parameterized queries via LINQ — never string-concatenate SQL fragments
-- `AsNoTracking()` for read-only operations
-- Explicit loading via `Entry(entity).Collection(x => x.Items).LoadAsync()` for conditional association loading
-- Audit fields: implement `SaveChangesAsync` override or `ISaveChangesInterceptor` for `CreatedAt`/`UpdatedAt`
-- Use `IQueryable<T>` return types in repository interfaces only when callers need further composition
+- Parameterized queries only — never string-concatenate SQL fragments
+- Use read-only/no-tracking modes for queries that don't modify data (depends on `persistence:` choice)
+- Use explicit or eager loading for associations — avoid lazy loading in production APIs
+- Audit fields (`CreatedAt`/`UpdatedAt`): implement via persistence-layer interceptors or overrides
+- Return composable query types from repository interfaces only when callers need further composition
 
 ### Transactions
-- EF Core wraps each `SaveChangesAsync()` in a transaction automatically
-- Multi-step operations needing atomicity: use `IDbContextTransaction` via `BeginTransactionAsync()`
-- `@Transactional` equivalent: wrap in a service method; keep transaction scope minimal
+- Most persistence layers wrap each save operation in a transaction automatically
+- Multi-step operations needing atomicity: use explicit transactions via the persistence layer's transaction API
+- Keep transaction scope minimal — wrap in a service method
 - Never swallow exceptions in a transaction scope — this prevents rollback
 
 ## Dependency Injection
 
 - **Constructor injection only** — never property injection or service locator (`IServiceProvider.GetService`)
-- Lifetimes: `Scoped` for services with per-request state (e.g., repositories, DbContext wrappers); `Transient` for stateless; `Singleton` for thread-safe, truly shared instances
+- Lifetimes: `Scoped` for services with per-request state (e.g., repositories, data context wrappers); `Transient` for stateless; `Singleton` for thread-safe, truly shared instances
 - Register dependencies in `Program.cs` or via extension methods (`services.AddApplicationServices()`)
 - Use `IOptions<T>` for configuration objects — inject `IOptions<MyOptions>` not raw `IConfiguration`
 - Avoid `IServiceProvider` in application code — it is the service-locator anti-pattern
@@ -151,20 +153,20 @@ Map domain exceptions in the global exception handler middleware. Services throw
 - Use `WebApplicationFactory<Program>` to spin up the app in-process — no TCP server needed
 - Override services via `WithWebHostBuilder(b => b.ConfigureServices(...))` for test isolation
 - Use `HttpClient` from the factory to test full request/response cycles through middleware and controllers
-- Test EF Core repositories against a real database via Testcontainers — avoid mocking `DbContext`
+- Test persistence repositories against a real database via Testcontainers — avoid mocking the data context
 - Use `IOptions<T>` overrides for test-specific configuration
 
 ### What to Test
 - Service-layer business logic with mocked repository interfaces (primary focus)
 - Controller endpoint contracts: status codes, ProblemDetails responses, validation errors
 - Authorization policies: verify 401/403 responses for unauthorized/forbidden requests
-- EF Core repository queries: correct LINQ translation, include paths, pagination
+- Repository queries: correct query translation, include paths, pagination (depends on `persistence:` choice)
 - Global exception handler: verify ProblemDetails shape for domain exceptions
 
 ### What NOT to Test
 - ASP.NET returns 404 for unmatched routes or 405 for wrong HTTP methods — the framework does this
 - Model binding deserializes JSON to DTOs — `[ApiController]` handles this automatically
-- EF Core conventions (table naming, key detection) — EF Core is tested by Microsoft
+- Persistence-layer conventions (table naming, key detection) — tested by the library vendor
 - `ILogger<T>` formats log messages correctly
 - FluentValidation / DataAnnotation attribute validation for standard rules (Required, MaxLength)
 
@@ -201,10 +203,10 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
 - Test behavior, not implementation — tests should survive internal refactoring
 - No duplicate scenarios — each test covers a distinct case
-- Do not test framework internals (ASP.NET model binding, EF Core conventions)
+- Do not test framework internals (ASP.NET model binding, persistence-layer conventions)
 - One logical assertion concept per test; use FluentAssertions for readability
 - Prefer integration tests for controller layer via `WebApplicationFactory<Program>`
-- Use EF Core in-memory or Testcontainers for repository tests — avoid mocking DbContext
+- Use in-memory databases or Testcontainers for repository tests — avoid mocking the data context
 
 ## Logging and Monitoring
 
@@ -224,24 +226,24 @@ NOT in scope: refactoring unrelated files, changing APIs, fixing pre-existing bu
 
 ### Do
 - Use constructor injection exclusively — never service locator or property injection
-- Return specific response DTOs from controllers, never EF Core entities
+- Return specific response DTOs from controllers, never persistence entities
 - Use `async Task<T>` for all I/O-bound methods — propagate `CancellationToken`
 - Use `[ApiController]` on all API controllers — enables automatic validation and binding
 - Validate all input at the controller layer with data annotations or FluentValidation
 - Use `IOptions<T>` for configuration — not raw `IConfiguration` injection
-- Use `AddDbContext<T>` with Scoped lifetime (the default) for EF Core
+- Register the persistence data context with Scoped lifetime (depends on `persistence:` choice — see persistence binding file)
 - Configure connection pooling explicitly for production workloads
 - Use `ProblemDetails` for all error responses — never return raw strings or custom shapes
-- Use `AsNoTracking()` for all read-only queries
+- Use read-only/no-tracking modes for all read-only queries (depends on `persistence:` choice)
 
 ### Don't
 - Don't use `.Result` or `.Wait()` on async tasks — risks deadlock in ASP.NET contexts
 - Don't put business logic in controllers — controllers validate, delegate, and map only
-- Don't expose EF Core entity IDs as sequential integers — use UUIDs
-- Don't use `LazyLoadingProxies` in production — silently causes N+1 queries
+- Don't expose persistence entity IDs as sequential integers — use UUIDs
+- Don't use lazy-loading proxies in production — silently causes N+1 queries
 - Don't use `Console.Write*` — use `ILogger<T>`
 - Don't use `IServiceProvider.GetService()` in application code — use constructor injection
-- Don't use Singleton lifetime for services with EF Core DbContext dependencies — will cause concurrency issues
+- Don't use Singleton lifetime for services with scoped persistence dependencies (e.g., data context) — will cause concurrency issues
 - Don't catch `Exception` broadly in controllers — let the global exception handler middleware manage it
 - Don't store secrets in `appsettings.json` — use User Secrets or environment variables
 - Don't use `AllowAnyOrigin()` combined with `AllowCredentials()` in CORS — it is rejected by browsers and is a security risk

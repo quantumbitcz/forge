@@ -25,7 +25,17 @@
       "example_ref": ""
     }
   ],
-  "additional_boundaries": [],
+  "additional_boundaries": [
+    {
+      "name": "Controllers must not import Models directly",
+      "scope_pattern": "Controllers/",
+      "forbidden_imports": [
+        "^import\\s+Models$"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
   "disabled_rules": [],
   "severity_overrides": {},
   "threshold_overrides": {}

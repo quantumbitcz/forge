@@ -5,6 +5,7 @@ components:
   framework: aspnet
   variant: csharp
   testing: xunit
+  persistence: efcore        # efcore (only supported option currently)
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -82,27 +83,31 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/persistence/${components.persistence}.md"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "aspnet-core"
-  - "entity-framework-core"
   - "aspnet-identity"
   - "xunit"
   - "fluentassertions"
+  # Persistence — uncomment based on components.persistence:
+  # efcore (default):
+  - "entity-framework-core"
 ---
 
 ## ASP.NET Core Backend Context
 
 ASP.NET Core with Clean Architecture (Controllers → Application → Domain → Infrastructure).
 DTOs at controller boundary; entities never leak to API. Constructor injection only.
-EF Core for data access with code-first migrations.
+
+Persistence layer is configurable via `components.persistence`.
 
 ### Variant: C# (default)
 Nullable reference types enabled. Record DTOs for requests/responses.
 Primary constructors for services. Options pattern for configuration.
 
-Customize `components.language`, `components.variant`, `components.testing`, commands,
-and scaffolder patterns to match your project layout.
+Customize `components.language`, `components.variant`, `components.testing`, `components.persistence`,
+commands, and scaffolder patterns to match your project layout.

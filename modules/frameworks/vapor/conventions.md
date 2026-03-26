@@ -7,11 +7,11 @@
 | Layer | Responsibility | Dependencies |
 |-------|---------------|--------------|
 | `Controllers/` | Route handlers, request validation, response mapping | Models, Repositories, DTOs |
-| `Models/` | Fluent models, migrations | Fluent |
-| `Repositories/` | Data access abstraction (protocol + Fluent impl) | Models |
+| `Models/` | Persistence models, migrations | Depends on `persistence:` choice |
+| `Repositories/` | Data access abstraction (protocol + persistence impl) | Models |
 | `DTOs/` | Request/response types conforming to `Content` | -- |
 | `Middleware/` | Cross-cutting concerns (auth, logging, error handling) | Vapor |
-| `Migrations/` | Database schema migrations | Fluent |
+| `Migrations/` | Database schema migrations | Depends on `persistence:` choice |
 
 **Dependency rule:** Controllers never access the database directly. All data access goes through repository protocols.
 
@@ -23,13 +23,14 @@
 - Return `Content`-conforming types directly -- Vapor handles JSON encoding
 - Always validate input: use `Validatable` protocol or manual checks
 
-## Fluent ORM
+## Data Access
 
-- Models are `final class` conforming to `Model` and `Content` (where appropriate)
-- Use `@ID(key: .id)` with `UUID` for primary keys
-- Field property wrappers: `@Field`, `@OptionalField`, `@Timestamp`, `@Parent`, `@Children`, `@Siblings`
-- Eager-load relationships explicitly: `User.query(on: db).with(\.$posts).all()`
-- Never use raw SQL unless Fluent query builder is insufficient
+> Specific ORM patterns (Fluent, etc.) are in the `persistence/` binding files. This section covers generic data access conventions.
+
+- Models use UUID primary keys
+- Eager-load relationships explicitly to prevent N+1 queries
+- Prefer the persistence layer's query builder over raw SQL
+- See the persistence binding file for model definition, property wrappers, and query patterns specific to your `persistence:` choice
 
 ## Content Protocol
 
@@ -61,7 +62,7 @@
 | DTO (request) | `Create{Entity}DTO` | `CreateUserDTO` |
 | DTO (response) | `{Entity}Response` | `UserResponse` |
 | Repository protocol | `{Entity}Repository` | `UserRepository` |
-| Repository impl | `Fluent{Entity}Repository` | `FluentUserRepository` |
+| Repository impl | `{Persistence}{Entity}Repository` | `PostgresUserRepository` |
 | Migration | `Create{Entity}` | `CreateUser` |
 | Middleware | `{Purpose}Middleware` | `AuthMiddleware` |
 
@@ -85,14 +86,14 @@
 ## Migrations
 
 - One migration per structural change. Never modify an existing migration after deployment
-- Use `SchemaBuilder`: `database.schema("users").id().field("name", .string, .required).create()`
-- Reverse migration in `revert(on:)` for rollback support
+- Use the persistence layer's migration API (see persistence binding file for syntax)
+- Always implement reverse/revert migrations for rollback support
 
 ## Query Optimization
 
-- Use `.with(\.$relation)` for eager loading to prevent N+1 queries
-- Use `.join()` for multi-table queries instead of multiple round trips
-- Batch operations: use `.create(on:)` with arrays, not individual `.save(on:)`
+- Eager-load relationships to prevent N+1 queries (syntax depends on `persistence:` choice)
+- Use joins for multi-table queries instead of multiple round trips
+- Use batch operations for bulk inserts — avoid individual saves in a loop
 
 ## Security
 
@@ -110,7 +111,7 @@
 ### Integration Test Patterns
 - Use `Application.testable()` to create an in-process test app — no TCP server needed
 - Use `app.test(.GET, "/api/v1/users")` to test full request/response cycles through middleware and routes
-- Configure an in-memory SQLite database (`Fluent + SQLiteKit`) for fast test execution
+- Configure an in-memory database for fast test execution (depends on `persistence:` choice)
 - Use **Testcontainers** for integration tests requiring a real PostgreSQL instance
 
 ### What to Test
@@ -122,7 +123,7 @@
 
 ### What NOT to Test
 - Vapor routes requests to the correct handler (Vapor guarantees this)
-- Fluent model property wrapper behavior (`@Field`, `@Parent`)
+- Persistence model property wrapper behavior (tested by the library vendor)
 - `Content` protocol encoding/decoding for standard types
 - `Abort` produces the correct HTTP status code — Vapor handles this
 
@@ -146,7 +147,7 @@ For general XCTest patterns, see `modules/testing/xctest.md`.
 - No duplicate tests — grep existing tests before writing new ones
 - Test business behavior, not implementation details
 - Do NOT test framework guarantees (e.g., Vapor routes requests correctly, `Abort` maps to HTTP status)
-- Do NOT test Fluent property wrapper behavior or `Content` encoding for standard types
+- Do NOT test persistence model property wrapper behavior or `Content` encoding for standard types
 - Each test scenario covers a unique code path
 - Fewer meaningful tests > high coverage of trivial code
 
@@ -166,5 +167,5 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 ### Don't
 - Don't use `EventLoopFuture` chains in new code -- use `async/await`
 - Don't access `app` properties from within route handlers -- use `req.application`
-- Don't return Fluent models directly from routes -- use DTOs
+- Don't return persistence models directly from routes -- use DTOs
 - Don't use force-try (`try!`) -- handle errors with proper do-catch

@@ -26,12 +26,12 @@
     },
     {
       "id": "PF-ARCH-001",
-      "name": "sqlalchemy-import-in-router",
-      "pattern": "import\\s+sqlalchemy|from\\s+sqlalchemy",
+      "name": "persistence-import-in-router",
+      "pattern": "import\\s+(sqlalchemy|tortoise|sqlmodel)|from\\s+(sqlalchemy|tortoise|databases|sqlmodel)",
       "scope_pattern": "routers/",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY",
-      "message": "SQLAlchemy import in router — routers should not access the database layer directly",
+      "message": "Persistence layer import in router — routers should not access the database layer directly",
       "fix_hint": "Move database access to a repository or service. Routers should only depend on services.",
       "example_ref": ""
     },

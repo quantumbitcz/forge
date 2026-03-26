@@ -5,6 +5,7 @@ components:
   framework: nestjs
   variant: typescript
   testing: vitest
+  persistence: typeorm       # typeorm | prisma | mongoose
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -82,6 +83,10 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nestjs/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nestjs/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nestjs/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nestjs/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
@@ -90,11 +95,16 @@ context7_libraries:
   - "nestjs/config"
   - "nestjs/swagger"
   - "nestjs/passport"
-  - "nestjs/typeorm"
   - "class-validator"
   - "class-transformer"
-  - "prisma"
   - "typescript"
+  # Persistence — uncomment based on components.persistence:
+  # typeorm (default):
+  - "nestjs/typeorm"
+  # prisma (uncomment and remove nestjs/typeorm):
+  # - "prisma"
+  # mongoose (uncomment and remove nestjs/typeorm):
+  # - "nestjs/mongoose"
 ---
 
 ## NestJS Backend Context
@@ -103,4 +113,5 @@ Module-based architecture with explicit DI wiring. Controllers are thin request/
 all business logic lives in services. Validation via `ValidationPipe` with `class-validator` DTOs.
 Never read `process.env` directly — always use `ConfigService`. Never use `console.log` — use NestJS `Logger`.
 
+Persistence layer is configurable via `components.persistence` (typeorm, prisma, mongoose).
 Customize the commands above to match your project's package manager (npm, yarn, pnpm, or bun).

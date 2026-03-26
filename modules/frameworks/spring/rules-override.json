@@ -26,6 +26,39 @@
           "example_ref": ""
         },
         {
+          "id": "SP-KT-PLACE-001",
+          "name": "data-class-in-controller",
+          "pattern": "^(data class|data object|value class)\\s+\\w+",
+          "scope_pattern": "/controller/",
+          "severity": "WARNING",
+          "category": "ARCH-PLACE",
+          "message": "Data class defined in controller file — move to domain/ (commands), schemas/ (DTOs), or adapter/input/api/mapper/",
+          "fix_hint": "Extract the data class to its own file in the appropriate package: domain/ for domain types, or mapper/ for API DTOs.",
+          "example_ref": ""
+        },
+        {
+          "id": "SP-KT-PLACE-002",
+          "name": "mapper-in-controller",
+          "pattern": "fun\\s+\\w+\\.to(Response|Domain|Entity|Command|Dto)\\(",
+          "scope_pattern": "/controller/",
+          "severity": "WARNING",
+          "category": "ARCH-PLACE",
+          "message": "Mapper extension function in controller file — move to mapper/ package",
+          "fix_hint": "Extract mapper extensions to a dedicated XxxMapper.kt file in the mapper/ package.",
+          "example_ref": ""
+        },
+        {
+          "id": "SP-KT-PLACE-003",
+          "name": "controller-annotation-in-non-controller",
+          "pattern": "^\\s*@(RestController|Controller|RequestMapping)",
+          "scope_pattern": "/(domain|impl|port|mapper|entity|repository)/",
+          "severity": "CRITICAL",
+          "category": "ARCH-PLACE",
+          "message": "Controller annotation in non-controller package — violates hexagonal architecture",
+          "fix_hint": "Move this class to adapter/input/api/controller/ package.",
+          "example_ref": ""
+        },
+        {
           "id": "SP-KT-CONV-001",
           "name": "console-output-in-production-kt",
           "pattern": "(println|print\\(|System\\.out|System\\.err)",
@@ -71,6 +104,28 @@
           "category": "ARCH-BOUNDARY",
           "message": "Entity returned from controller — use a DTO (Response record) instead",
           "fix_hint": "Create a response DTO (e.g., XxxResponse record) and map the entity to it before returning from the controller.",
+          "example_ref": ""
+        },
+        {
+          "id": "SP-JV-PLACE-001",
+          "name": "record-dto-in-controller-java",
+          "pattern": "(public|private)?\\s+record\\s+\\w+(Request|Response|Dto|DTO)\\s*\\(",
+          "scope_pattern": "/controller/",
+          "severity": "WARNING",
+          "category": "ARCH-PLACE",
+          "message": "DTO record defined in controller file — move to dto/ package",
+          "fix_hint": "Extract the record to a dedicated file in the dto/ or mapper/ package.",
+          "example_ref": ""
+        },
+        {
+          "id": "SP-JV-PLACE-002",
+          "name": "controller-annotation-in-non-controller-java",
+          "pattern": "^\\s*@(RestController|Controller)",
+          "scope_pattern": "/(entity|repository|service|model|dto|mapper)/",
+          "severity": "CRITICAL",
+          "category": "ARCH-PLACE",
+          "message": "Controller annotation in non-controller package — violates architecture",
+          "fix_hint": "Move this class to the controller/ package.",
           "example_ref": ""
         },
         {

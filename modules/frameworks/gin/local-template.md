@@ -5,6 +5,7 @@ components:
   framework: gin
   variant: go
   testing: go-testing
+  persistence: gorm
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -81,6 +82,7 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/persistence/${components.persistence}.md"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
@@ -90,8 +92,12 @@ context7_libraries:
   - "go-std"
   - "testify"
   - "testcontainers-go"
+  # Persistence — uncomment based on components.persistence:
+  # gorm (default):
+  - "gorm"
   - "golang-migrate"
-  - "sqlx"
+  # sqlx (uncomment and remove gorm):
+  # - "sqlx"          # uncomment if persistence: sqlx
 ---
 
 ## Go + Gin Backend Context

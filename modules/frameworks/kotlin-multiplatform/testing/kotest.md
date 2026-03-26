@@ -121,7 +121,7 @@ class FakeXxxRepository : XxxRepository {
 | Use cases / domain logic | `commonTest` | Kotest ShouldSpec, fakes, `runTest` |
 | Repository (shared) | `commonTest` | Kotest, fake data sources |
 | `actual` implementations | Platform test source sets | Platform-specific test tools |
-| SQLDelight queries | `commonTest` + in-memory driver | SQLDelight `JdbcSqliteDriver` (JVM), `NativeSqliteDriver` (iOS) |
+| Persistence queries | `commonTest` + in-memory driver | In-memory drivers per platform (depends on `persistence:` choice) |
 | Ktor API client | `commonTest` | `MockEngine` from `ktor-client-mock` |
 | Full platform integration | Android instrumented / iOS XCTest | Espresso / XCUITest |
 

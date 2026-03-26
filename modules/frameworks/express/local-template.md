@@ -5,6 +5,7 @@ components:
   framework: express
   variant: typescript
   testing: vitest
+  persistence: prisma        # prisma | typeorm | drizzle | mongoose
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -76,21 +77,33 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/express/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/express/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/express/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/express/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "express"
-  - "nestjs"
-  - "prisma"
   - "typescript"
   - "zod"
+  # Persistence — uncomment based on components.persistence:
+  # prisma (default):
+  - "prisma"
+  # typeorm (uncomment and remove prisma):
+  # - "typeorm"
+  # drizzle (uncomment and remove prisma):
+  # - "drizzle-orm"
+  # mongoose (uncomment and remove prisma):
+  # - "mongoose"
 ---
 
 ## TypeScript/Node.js Backend Context
 
-Layered architecture (routes -> controllers -> services -> models) with Express or NestJS.
+Layered architecture (routes -> controllers -> services -> models) with Express.
 Services own business logic. Input validation at middleware/DTO layer.
 ESM imports only -- no CommonJS require() in TypeScript files.
 
+Persistence layer is configurable via `components.persistence` (prisma, typeorm, drizzle, mongoose).
 Customize the commands above to match your project's package manager (npm, yarn, pnpm, or bun).

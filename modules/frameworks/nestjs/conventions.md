@@ -9,9 +9,9 @@
 | `modules/` | Feature boundaries, DI wiring | `@Module()` class |
 | `controllers/` | Request parsing, response shaping (thin) | `@Controller()` class |
 | `services/` | Business logic | `@Injectable()` class |
-| `repositories/` | Data access, persistence | `@Injectable()` class (or TypeORM repo injection) |
+| `repositories/` | Data access, persistence | `@Injectable()` class (or repository injection via `persistence:` choice) |
 | `dto/` | Input/output shapes, validation | Plain class with `class-validator` decorators |
-| `entities/` | Database models | TypeORM/Prisma/Mongoose schema |
+| `entities/` | Database models/schemas | Depends on `persistence:` choice (see persistence binding file) |
 | `guards/` | Auth, role enforcement | `CanActivate` impl |
 | `interceptors/` | Transform, logging, caching | `NestInterceptor` impl |
 | `filters/` | Exception mapping to HTTP responses | `ExceptionFilter` impl |
@@ -28,7 +28,7 @@ Every domain feature gets its own module:
 ```typescript
 // users/users.module.ts
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [/* persistence module registration — depends on persistence: choice */],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository],
   exports: [UsersService],          // only export what other modules need
@@ -346,6 +346,6 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 - Don't put business logic in controllers — delegate everything to services
 - Don't import one feature module's service directly into another feature's module; use `exports:` + `imports:` wiring
 - Don't use `any` in DTOs or service method signatures
-- Don't use `@InjectRepository(Entity)` without `TypeOrmModule.forFeature([Entity])` in the same module
-- Don't use `synchronize: true` with TypeORM in any environment other than a throw-away local dev DB
+- Don't use persistence repository injection without registering the entity in the same module (depends on `persistence:` choice)
+- Don't use auto-sync/auto-schema features in any environment other than a throw-away local dev DB
 - Don't bypass `ValidationPipe` by accepting untyped `@Body()`

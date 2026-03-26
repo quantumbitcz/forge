@@ -2,17 +2,11 @@
 
 > Extends `modules/frameworks/spring/conventions.md` with Java-specific Spring patterns.
 > General Java idioms are in `modules/languages/java.md` — not duplicated here.
+> Web stack patterns (MVC vs WebFlux) are in `web/{mvc,webflux}.md`.
+> Persistence patterns (Hibernate, R2DBC, jOOQ, Exposed) are in `persistence/{name}.md`.
 
-## Entity & DTO Pattern
+## DTO Pattern
 
-**JPA Entities:**
-- `@Entity` + `@Table` + `@Id` + `@GeneratedValue` (UUID strategy preferred)
-- `@Column` for explicit column mapping; `@CreatedDate` / `@LastModifiedDate` via Spring Data auditing
-- Lifecycle callbacks: `@PrePersist`, `@PreUpdate` or auditing annotations
-- Relationships: prefer `FetchType.LAZY`; use `@EntityGraph` for controlled eager fetching
-- `equals` / `hashCode` based on business key or ID — never on all fields
-
-**DTOs:**
 - Use Java records for immutable response and request types: `record XxxResponse(UUID id, String name, ...)`
 - Separate request and response: `CreateXxxRequest`, `UpdateXxxRequest`, `XxxResponse`
 - Validation annotations (`@NotNull`, `@NotBlank`, `@Size`, `@Valid`) on request DTOs, not on entities
@@ -31,7 +25,7 @@
 |----------|---------------------|
 | Service interface | `XxxService` |
 | Service impl | `XxxServiceImpl` with `@Service` + `@Transactional` |
-| Repository | extends `JpaRepository<XxxEntity, UUID>` |
+| Repository | extends Spring Data repository (type depends on `persistence:` — see binding file) |
 | Mapper | `XxxMapper` with `@Component` or MapStruct `@Mapper(componentModel = "spring")` |
 | Config | `XxxConfig` with `@Configuration` |
 
@@ -42,8 +36,8 @@ com.example.app/
   controller/         # REST controllers
   service/            # Service interfaces
   service/impl/       # Service implementations
-  repository/         # Spring Data JPA repositories
-  entity/             # JPA entities
+  repository/         # Spring Data repositories
+  entity/             # Persistence entities (type depends on persistence choice)
   dto/                # Request/response records
   mapper/             # Entity <-> DTO mappers
   config/             # Spring configuration classes

@@ -89,7 +89,8 @@
         "\\.entity",
         "prisma",
         "typeorm",
-        "mongoose"
+        "mongoose",
+        "drizzle"
       ],
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY"

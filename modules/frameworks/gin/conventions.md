@@ -137,11 +137,11 @@ func ErrorMiddleware() gin.HandlerFunc {
 
 ## Database Patterns
 
-- `database/sql` with `pgx/v5` driver for PostgreSQL; `sqlx` for scan-to-struct
-- GORM: use sparingly — prefer raw SQL for complex queries, GORM for CRUD
-- Connection pooling: set `MaxOpenConns`, `MaxIdleConns`, `ConnMaxLifetime` explicitly
+> Specific driver and ORM patterns (`database/sql` + `pgx`, GORM, `sqlx`, etc.) are in the `persistence/` binding files. This section covers generic database conventions.
+
+- Connection pooling: configure max open connections, max idle connections, and connection max lifetime explicitly
 - Parameterized queries only — never string interpolation in SQL
-- Migrations with golang-migrate: `migrate -path ./migrations -database $DATABASE_URL up`
+- Use a migration tool appropriate to your `persistence:` choice (see persistence binding file)
 - Always pass `context.Context` to database calls for cancellation/timeout propagation
 
 ## Security

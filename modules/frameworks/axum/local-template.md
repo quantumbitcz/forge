@@ -5,6 +5,7 @@ components:
   framework: axum
   variant: rust
   testing: rust-test
+  persistence: sqlx        # sqlx (default) | diesel
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -74,22 +75,28 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/axum/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/axum/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/axum/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/axum/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "axum"
   - "tokio"
-  - "sqlx"
   - "serde"
   - "tower"
   - "thiserror"
+  # Persistence (depends on components.persistence):
+  - "sqlx"              # sqlx (default)
+  # - "diesel"          # uncomment if persistence: diesel
 ---
 
 ## Rust/Axum Backend Context
 
 Handler functions with typed extractors, Tower middleware, shared state via Arc<AppState>.
-Error handling with thiserror + IntoResponse. Database access through SQLx with compile-time query checking.
+Error handling with thiserror + IntoResponse. Persistence layer configurable via `components.persistence`.
 All I/O is async on Tokio runtime -- no blocking calls in handlers.
 
 Customize the commands above to match your project's workspace and feature flags.

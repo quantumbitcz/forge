@@ -84,6 +84,9 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/svelte/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/svelte/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/svelte/testing/${components.testing}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 

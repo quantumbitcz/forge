@@ -7,6 +7,7 @@ components:
     framework: kotlin-multiplatform
     variant: kotlin
     testing: kotest
+    persistence: sqldelight
     commands:
       build: "./gradlew :shared:build"
       test: "./gradlew :shared:allTests"
@@ -107,6 +108,7 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/kotlin-multiplatform/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/kotlin-multiplatform/variants/${components.shared.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/kotlin-multiplatform/testing/${components.shared.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/kotlin-multiplatform/persistence/${components.shared.persistence}.md"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.shared.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
@@ -117,6 +119,7 @@ context7_libraries:
   - "kotlinx-serialization"
   - "kotlinx-coroutines"
   - "koin"
+  # Persistence (depends on components.persistence):
   - "sqldelight"
 ---
 
@@ -124,7 +127,7 @@ context7_libraries:
 
 KMP project with shared business logic in `commonMain`. Platform UIs (Android/iOS/Web) consume shared
 repositories, use cases, and view models. Ktor for networking, `kotlinx.serialization` for JSON,
-SQLDelight for cross-platform persistence, Koin for DI.
+cross-platform persistence (configurable via `components.persistence`), Koin for DI.
 
 ### Shared Module (default)
 `commonMain` contains domain models, repository interfaces, implementations, Ktor API services,

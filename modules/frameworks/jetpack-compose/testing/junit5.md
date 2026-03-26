@@ -158,5 +158,5 @@ class XxxScreenshotTest {
 | Screen (stateless content composable) | Compose UI test | `createComposeRule()`, Robolectric |
 | Screen (with ViewModel) | Instrumented / Robolectric | `createAndroidComposeRule<Activity>()` |
 | ViewModel | Unit | JUnit 5, Mockito, `UnconfinedTestDispatcher` |
-| Repository | Unit / Integration | Mockito for data sources; Room in-memory DB for integration |
+| Repository | Unit / Integration | Mockito for data sources; in-memory DB for integration (depends on `persistence:`) |
 | Visual regression | Screenshot | Paparazzi |

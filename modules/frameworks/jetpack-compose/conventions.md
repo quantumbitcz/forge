@@ -10,7 +10,7 @@
 | `ui/` | Composables, screens, components | ViewModel only (via `hiltViewModel()`) |
 | `viewmodel/` | UI state, event handling, business logic orchestration | Repositories, UseCases |
 | `repository/` | Data access abstraction, caching strategy | DataSources |
-| `datasource/` | Network, database, local storage | Retrofit, Room, DataStore |
+| `datasource/` | Network, database, local storage | Retrofit, persistence layer (depends on `persistence:`), DataStore |
 
 **Dependency rule:** Composables never call repositories or data sources directly — always via ViewModel.
 UI layer emits events upward; state flows down. No bidirectional data binding.

@@ -22,7 +22,7 @@
         "severity": "CRITICAL",
         "category": "ARCH-BOUNDARY",
         "message": "DbContext injected directly into controller — use a repository or service instead",
-        "fix_hint": "Inject an IXxxRepository or IXxxService into the controller. Never let EF Core DbContext cross the Infrastructure boundary into the API layer.",
+        "fix_hint": "Inject an IXxxRepository or IXxxService into the controller. Never let the persistence context cross the Infrastructure boundary into the API layer.",
         "example_ref": ""
       },
       {
@@ -32,7 +32,7 @@
         "scope_pattern": "/Controllers/",
         "severity": "WARNING",
         "category": "ARCH-BOUNDARY",
-        "message": "EF Core entity may be returned from controller action — use a DTO/response model instead",
+        "message": "Persistence entity may be returned from controller action — use a DTO/response model instead",
         "fix_hint": "Create a XxxResponse record and map the entity to it before returning from the action method.",
         "example_ref": ""
       },
@@ -54,7 +54,7 @@
         "scope_pattern": "/Repositories/",
         "severity": "INFO",
         "category": "PERF-DB",
-        "message": "Synchronous EF Core access or missing AsNoTracking — use async methods and AsNoTracking for read-only queries",
+        "message": "Synchronous data access or missing AsNoTracking — use async methods and AsNoTracking for read-only queries",
         "fix_hint": "Replace Find() with FindAsync(). Add AsNoTracking() for read-only queries to avoid change-tracking overhead.",
         "example_ref": ""
       },

@@ -20,7 +20,7 @@
 |----------|---------|------------|
 | Controller | `XxxController` | `@RestController` + `@RequestMapping` |
 | Service / Use case | `XxxService` or `IXxxUseCase` | `@Service` / custom `@UseCase` |
-| Repository | `XxxRepository` | extends Spring Data repository |
+| Repository | `XxxRepository` | extends Spring Data repository (type depends on `persistence:` choice) |
 | Entity | `XxxEntity` | `@Entity`/`@Table` + `@Id` + `@Column` |
 | Request DTO | `CreateXxxRequest` / `UpdateXxxRequest` | validation annotations |
 | Response DTO | `XxxResponse` | immutable |
@@ -64,13 +64,12 @@ Map domain exceptions at the controller boundary. Services throw domain-specific
 ## Performance
 
 ### Connection Pooling
-- Set pool size to 2x CPU cores for I/O-bound workloads (HikariCP `maximumPoolSize` / R2DBC `max-size`)
+- Set pool size to 2x CPU cores for I/O-bound workloads — specific config depends on `persistence:` choice (see binding file)
 - Set connection timeout to 10 seconds — fail fast, do not queue indefinitely
 - Monitor pool metrics (active, idle, waiting)
 
 ### N+1 Prevention
-- For JPA: use `@EntityGraph` or `JOIN FETCH` for associations accessed in loops; batch fetching with `@BatchSize`
-- For R2DBC: no lazy loading exists — all associations must be explicitly fetched
+- Specific prevention strategies depend on `persistence:` choice — see the persistence binding file for patterns
 - Rule: if a method triggers more SQL statements than entities returned, suspect N+1
 - Monitor with query logging in dev, statistics in tests
 
@@ -123,14 +122,15 @@ Map domain exceptions at the controller boundary. Services throw domain-specific
 
 ### Test Framework
 - **Kotest ShouldSpec** for Kotlin Spring projects; **JUnit 5** for Java Spring projects
-- Use `@SpringBootTest` for full integration tests; `@WebMvcTest` / `@WebFluxTest` for controller-layer slices
-- Use `@DataJpaTest` / `@DataR2dbcTest` for repository-layer tests with an embedded or Testcontainers database
+- Use `@SpringBootTest` for full integration tests
+- Controller slice: `@WebMvcTest` (when `web: mvc`) or `@WebFluxTest` (when `web: webflux`)
+- Repository slice: `@DataJpaTest` (when `persistence: hibernate`) or `@DataR2dbcTest` (when `persistence: r2dbc`)
 
 ### Integration Test Patterns
-- Controller tests: use `MockMvc` (MVC) or `WebTestClient` (WebFlux) to verify request/response contracts
+- Controller tests: use `MockMvc` (when `web: mvc`) or `WebTestClient` (when `web: webflux`) to verify request/response contracts
 - Service tests: unit-test with mocked repository interfaces (MockK for Kotlin, Mockito for Java)
 - Repository tests: use **Testcontainers** with a real database engine — avoid H2 for anything beyond trivial cases
-- End-to-end: `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebTestClient` for full stack validation
+- End-to-end: `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebTestClient` (works with both MVC and WebFlux)
 
 ### What to Test
 - Business rules in service/use-case layer (primary focus)
@@ -147,9 +147,9 @@ Map domain exceptions at the controller boundary. Services throw domain-specific
 ### Example Test Structure
 ```
 src/test/kotlin/{package}/
-  controller/XxxControllerTest.kt    # @WebMvcTest / @WebFluxTest
+  controller/XxxControllerTest.kt    # @WebMvcTest or @WebFluxTest (depends on web: choice)
   service/XxxServiceTest.kt          # unit test with mocks
-  repository/XxxRepositoryTest.kt    # @DataJpaTest + Testcontainers
+  repository/XxxRepositoryTest.kt    # @DataJpaTest or @DataR2dbcTest (depends on persistence: choice)
   integration/XxxIntegrationTest.kt  # @SpringBootTest full stack
 ```
 

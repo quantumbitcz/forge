@@ -69,7 +69,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 **Agent file rules:**
 - YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes).
-- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Optional crosscutting layer fields: `database`, `persistence`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`. All optional — omit to skip. Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks.
+- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Framework-specific stack fields: `web` (e.g., `mvc | webflux` for Spring), `persistence` (e.g., `hibernate | r2dbc` for Spring, `prisma | typeorm` for Express — distinct from the generic crosscutting `persistence` layer in `modules/persistence/`). Optional crosscutting layer fields: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`. All optional — omit to skip. Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks.
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
@@ -145,7 +145,7 @@ Add a learnings file at `shared/learnings/{name}.md`.
 
 All 21 frameworks share the same base structure — see their `conventions.md` for details. Only non-obvious conventions listed here:
 
-- **spring**: Kotlin variant uses hexagonal architecture with sealed interface hierarchy (`XxxPersisted`/`XxxNotPersisted`/`XxxId`), ports & adapters. Core uses Kotlin types; persistence uses Java types. Reactive stack: WebFlux + R2DBC + CoroutineCrudRepository. `@Transactional` on use case impls only. R2DBC UPDATE sets all columns — use `@Query` for partial updates.
+- **spring**: Kotlin variant uses hexagonal architecture with sealed interface hierarchy (`XxxPersisted`/`XxxNotPersisted`/`XxxId`), ports & adapters. Core uses Kotlin types; persistence uses Java types. Web stack (`web: mvc | webflux`) and persistence (`persistence: hibernate | r2dbc | jooq | exposed`) are independent choices — variant files are language-only. `@Transactional` on use case impls only.
 - **react**: Typography via inline `style={{ fontSize }}`, not Tailwind `text-*`. Colors via theme tokens, never hardcoded hex. Error Boundaries at route level. Server data in TanStack Query/SWR, not useState.
 - **embedded**: No `malloc`/`printf`/`float` in ISR handlers, max 10us duration. `volatile` for ISR-shared variables.
 - **k8s**: `language: null` — no language layer loaded. Pin image tags to SHA digests in prod.

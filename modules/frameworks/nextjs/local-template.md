@@ -5,6 +5,7 @@ components:
   framework: nextjs
   variant: typescript
   testing: vitest
+  persistence: prisma
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -109,6 +110,7 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/persistence/${components.persistence}.md"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
@@ -118,6 +120,8 @@ context7_libraries:
   - "react"
   - "react-dom"
   - "zod"
+  # Persistence (depends on components.persistence):
+  - "prisma"
   - "msw"
 ---
 

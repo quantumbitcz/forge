@@ -5,6 +5,7 @@ components:
   framework: jetpack-compose
   variant: kotlin
   testing: junit5        # junit5 (default for Android)
+  persistence: room
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -83,6 +84,7 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/persistence/${components.persistence}.md"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
@@ -94,6 +96,8 @@ context7_libraries:
   - "kotlin"
   - "kotlinx-coroutines"
   - "material3"
+  # Persistence (depends on components.persistence):
+  - "room"
 ---
 
 ## Jetpack Compose Android Context

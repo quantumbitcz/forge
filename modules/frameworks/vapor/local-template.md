@@ -5,6 +5,7 @@ components:
   framework: vapor
   variant: swift
   testing: xctest
+  persistence: fluent
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -75,12 +76,17 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/vapor/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/vapor/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/vapor/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/vapor/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "swift"
   - "vapor"
+  # Persistence (depends on components.persistence):
   - "fluent"
   - "swift-nio"
 ---
@@ -88,7 +94,7 @@ context7_libraries:
 ## Swift/Vapor Backend Context
 
 Server-side Swift with Vapor framework. Repository pattern for data access,
-Fluent ORM for persistence, async/await throughout. DTOs conform to Content protocol.
-Middleware handles cross-cutting concerns.
+persistence configurable via `components.persistence`, async/await throughout.
+DTOs conform to Content protocol. Middleware handles cross-cutting concerns.
 
 Customize the commands above to match your project's package structure.

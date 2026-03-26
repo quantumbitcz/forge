@@ -5,6 +5,7 @@
 ### KS-PREEMPT-001: R2DBC updates all columns
 - **Domain:** persistence
 - **Pattern:** R2DBC update adapters must fetch-then-set to preserve @CreatedDate/@LastModifiedDate
+- **Applies when:** `persistence: r2dbc`
 - **Confidence:** HIGH
 - **Hit count:** 0
 

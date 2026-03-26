@@ -11,7 +11,7 @@
 ## Protocol-Based Repositories
 
 - Define repository protocols at the consumer (controller) side
-- Fluent implementations conform to the protocol
+- Persistence implementations conform to the protocol (type depends on `persistence:` choice)
 - Enables easy swapping for testing (in-memory, mock)
 
 ```swift
@@ -20,7 +20,7 @@ protocol UserRepository {
     func save(_ user: User, on db: Database) async throws
 }
 
-struct FluentUserRepository: UserRepository {
+struct PostgresUserRepository: UserRepository {
     func find(_ id: UUID, on db: Database) async throws -> User? {
         try await User.find(id, on: db)
     }

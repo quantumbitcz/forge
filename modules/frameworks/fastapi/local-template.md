@@ -5,6 +5,7 @@ components:
   framework: fastapi
   variant: python
   testing: pytest
+  persistence: sqlalchemy    # sqlalchemy (only supported option currently)
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -77,22 +78,28 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/fastapi/conventions.md"
+conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/fastapi/variants/${components.variant}.md"
+conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/fastapi/testing/${components.testing}.md"
+conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/fastapi/persistence/${components.persistence}.md"
+language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 
 context7_libraries:
   - "fastapi"
-  - "sqlalchemy"
   - "pydantic"
-  - "alembic"
   - "pytest"
   - "uvicorn"
+  # Persistence — uncomment based on components.persistence:
+  # sqlalchemy (default):
+  - "sqlalchemy"
+  - "alembic"
 ---
 
 ## Python/FastAPI Backend Context
 
-Router/Service/Repository layering with async-first design (FastAPI + SQLAlchemy async).
-All endpoints use Pydantic models for request/response validation. Dependency injection via Depends().
-Database access through AsyncSession with Alembic migrations.
+Router/Service/Repository layering with async-first design. All endpoints use Pydantic models
+for request/response validation. Dependency injection via Depends().
 
-Customize the commands above to match your project's package manager and entry point.
+Persistence layer is configurable via `components.persistence`. Customize along with commands
+and scaffolder patterns to match your project.

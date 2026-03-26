@@ -34,6 +34,28 @@
       "message": "panic() in application code — return errors instead of panicking",
       "fix_hint": "Replace panic() with returning an error. Only use panic in main() or test helpers.",
       "example_ref": ""
+    },
+    {
+      "id": "GS-PLACE-001",
+      "name": "dto-struct-in-handler",
+      "pattern": "^type\\s+\\w+(Request|Response|DTO|Params|Input|Output)\\s+struct\\s*\\{",
+      "scope_pattern": "internal/handler/",
+      "severity": "WARNING",
+      "category": "ARCH-PLACE",
+      "message": "Request/Response struct defined in handler file — move to model/ or a dedicated dto/ package",
+      "fix_hint": "Extract the struct to internal/model/ (domain types) or a handler-level dto package. Handler structs (e.g., UserHandler) are fine in handler files.",
+      "example_ref": ""
+    },
+    {
+      "id": "GS-PLACE-002",
+      "name": "sql-query-in-handler",
+      "pattern": "(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE)\\s+",
+      "scope_pattern": "internal/handler/",
+      "severity": "CRITICAL",
+      "category": "ARCH-PLACE",
+      "message": "SQL query in handler file — database access belongs in repository layer",
+      "fix_hint": "Move the SQL query to a repository method in internal/repository/.",
+      "example_ref": ""
     }
   ],
   "additional_boundaries": [

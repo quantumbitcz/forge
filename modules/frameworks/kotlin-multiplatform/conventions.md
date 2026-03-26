@@ -68,10 +68,10 @@
 
 ## Persistence
 
-- **SQLDelight** for cross-platform relational database — generates type-safe Kotlin from SQL.
-- `Database` objects defined in `commonMain`; platform drivers (`AndroidSqliteDriver`, `NativeSqliteDriver`) injected per platform.
+- Cross-platform persistence library configured via `components.persistence` — see persistence binding file for details.
+- Database objects defined in `commonMain`; platform drivers injected per platform via DI.
 - **Multiplatform Settings** (russhwolf) for key-value storage (`SharedPreferences` on Android, `NSUserDefaults` on iOS).
-- Avoid Room (Android-only) and CoreData (iOS-only) in shared code.
+- Avoid platform-only persistence (Room on Android, CoreData on iOS) in shared code — use cross-platform solutions.
 
 ## Concurrency
 
@@ -89,7 +89,7 @@
 | Platform actual class | `actual class PlatformLogger` | In each platform source set |
 | Koin module | `val featureModule = module { }` | In `commonMain` or platform source set |
 | Ktor API service | `XxxApiService` | In `commonMain/data/remote/` |
-| SQLDelight DAO | `XxxQueries` | Auto-generated from `.sq` files |
+| Persistence DAO | `XxxQueries` / `XxxDao` | Naming depends on `persistence:` choice |
 | Repository interface | `XxxRepository` | In `commonMain`, implemented in `commonMain` or platform |
 
 ## Build Configuration
@@ -119,20 +119,20 @@
 - Write the vast majority of tests in `commonTest` — they run on ALL configured platforms automatically
 - Platform-specific behavior tests go in `androidUnitTest`, `iosTest`, or `jsTest` source sets
 - Test Ktor client by providing a `MockEngine` with predefined responses in `commonTest`
-- Test SQLDelight repositories against in-memory SQLite drivers provided per platform
+- Test persistence repositories against in-memory drivers provided per platform
 - Verify `expect`/`actual` implementations in platform test source sets
 
 ### What to Test
 - Business logic in `commonMain` (primary focus) — use case methods, domain validation, state transformations
 - Ktor client wrappers: request construction, response parsing, error mapping
-- SQLDelight repository methods: CRUD operations, query correctness
+- Persistence repository methods: CRUD operations, query correctness
 - Flow/StateFlow emissions: verify state transitions using `Turbine` or `runTest` collectors
 - Serialization: roundtrip `@Serializable` classes with `Json.encodeToString` / `Json.decodeFromString`
 
 ### What NOT to Test
 - `expect`/`actual` resolution — the compiler verifies this at build time
 - Ktor engine internals or `ContentNegotiation` plugin behavior
-- SQLDelight generated query code — test your repository wrappers
+- Persistence layer generated code — test your repository wrappers
 - `kotlinx.serialization` handling of standard Kotlin types (String, Int, Boolean)
 - Koin module resolution — if the app starts, DI works
 
@@ -143,7 +143,7 @@ shared/
     domain/
       UserUseCaseTest.kt           # business logic tests
     data/
-      UserRepositoryTest.kt        # SQLDelight in-memory tests
+      UserRepositoryTest.kt        # persistence in-memory tests
       UserApiServiceTest.kt        # Ktor MockEngine tests
   src/androidUnitTest/kotlin/
     PlatformSpecificTest.kt        # Android-only actual tests
@@ -169,7 +169,7 @@ scaffold -> write tests (RED in commonTest) -> implement in commonMain (GREEN) -
 - Test behaviour in `commonTest` — platform-specific behavior tested in platform test source sets.
 - Use fakes/stubs over MockK in `commonTest` — MockK may not work on all Kotlin/Native targets.
 - `runTest` (from `kotlinx-coroutines-test`) for coroutine tests in `commonTest`.
-- Do not test Ktor internals or SQLDelight generated code — test your wrappers and repositories.
+- Do not test Ktor internals or persistence generated code — test your wrappers and repositories.
 - Run `./gradlew allTests` to verify across all configured platforms before shipping.
 
 ## Boy Scout Rule
@@ -184,7 +184,7 @@ NOT in scope: moving platform code to `commonMain` without test coverage, changi
 - Use `kotlinx.serialization` for all serialization needs
 - Inject platform dispatchers — never hardcode `Dispatchers.Main` in `commonMain`
 - Prefer interfaces + Koin DI over `expect`/`actual` for platform variation
-- Define SQL schema in SQLDelight `.sq` files — use generated queries, not raw strings
+- Define persistence schema using the chosen library's conventions — use generated/type-safe queries, not raw strings
 - Run `./gradlew allTests` to validate all platform targets
 - Use SKIE or equivalent to create clean Swift APIs from Kotlin/Coroutines
 - Pin Kotlin version and all KMP library versions to the same BOM or matrix entry

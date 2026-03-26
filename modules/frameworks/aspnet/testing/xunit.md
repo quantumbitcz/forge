@@ -69,7 +69,7 @@ public async Task GetUser_ReturnsNotFound_WhenUserDoesNotExist()
 }
 ```
 
-## Repository / EF Core Tests with Testcontainers
+## Repository / Persistence Tests with Testcontainers
 
 ```csharp
 public class UserRepositoryTests : IAsyncLifetime
@@ -143,7 +143,7 @@ public class UserServiceTests
 | Controller (API) | Integration | `WebApplicationFactory` + `HttpClient` |
 | Controller (unit) | Unit | NSubstitute/Moq + direct instantiation |
 | Service | Unit | NSubstitute/Moq, no ASP.NET context |
-| Repository | Integration | Testcontainers PostgreSQL + EF Core |
+| Repository | Integration | Testcontainers PostgreSQL + persistence layer |
 | Mapper | Unit | Direct static method calls |
 
 ## Sharing Testcontainers Across Tests
