@@ -37,7 +37,7 @@ SELECT user.name, items.product.name FROM order;
 LIVE SELECT * FROM order WHERE status = 'pending';
 ```
 
-**Anti-pattern — using SurrealDB for workloads requiring battle-tested ACID guarantees at scale: SurrealDB is evolving rapidly. For financial transactions or regulatory-critical data, use PostgreSQL or CockroachDB until SurrealDB's transaction model matures.
+**Anti-pattern — using SurrealDB for workloads requiring battle-tested ACID guarantees at scale:** SurrealDB is evolving rapidly. For financial transactions or regulatory-critical data, use PostgreSQL or CockroachDB until SurrealDB's transaction model matures.
 
 ## Configuration
 

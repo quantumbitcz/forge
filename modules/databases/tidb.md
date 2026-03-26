@@ -48,7 +48,7 @@ GROUP BY day
 ORDER BY day;
 ```
 
-**Anti-pattern — using AUTO_INCREMENT in distributed mode: AUTO_INCREMENT creates write hotspots on a single TiKV region. Use AUTO_RANDOM for distributed writes.
+**Anti-pattern — using AUTO_INCREMENT in distributed mode:** AUTO_INCREMENT creates write hotspots on a single TiKV region. Use AUTO_RANDOM for distributed writes.
 
 ## Configuration
 
@@ -108,7 +108,7 @@ Test transaction retry logic explicitly — optimistic transaction conflicts are
 
 ## Don'ts
 - Don't use `AUTO_INCREMENT` as primary key in high-write tables — it creates hotspots.
-- Don't ignore transaction model differences — TiDB uses optimistic by default (configurable to pessimistic).
+- Don't ignore transaction model differences — TiDB uses pessimistic by default since v3.0.8 (configurable to optimistic); optimistic mode requires application-side retry logic.
 - Don't assume MySQL feature parity — some features (stored procedures, triggers) have limitations.
 - Don't skip TiFlash for analytics — running OLAP on TiKV impacts OLTP performance.
 - Don't use TiDB for tiny datasets — the distributed overhead isn't justified for small workloads.

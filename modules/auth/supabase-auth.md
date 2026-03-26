@@ -17,13 +17,13 @@ import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 // Sign up
-const { data, error } = await supabase.auth.signUp({ email, password });
+const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
 
 // Sign in
-const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
 // Social login
-const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({ provider: "google" });
 
 // Get current user
 const { data: { user } } = await supabase.auth.getUser();

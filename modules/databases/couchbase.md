@@ -35,7 +35,7 @@ const result = await cluster.searchQuery("product-search",
   { fields: ["name", "description"], limit: 20 });
 ```
 
-**Anti-pattern — storing all document types in the default collection without type discrimination: Use scopes and collections (Couchbase 7.0+) to separate document types. Without them, use a `type` field and create appropriate indexes.
+**Anti-pattern — storing all document types in the default collection without type discrimination:** Use scopes and collections (Couchbase 7.0+) to separate document types. Without them, use a `type` field and create appropriate indexes.
 
 ## Configuration
 

@@ -60,8 +60,8 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 
 passport.use(new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET,
-    algorithms: ["HS256"]
+    secretOrKey: process.env.JWT_SECRET,  // For RS256 (preferred in production), use secretOrKeyProvider with JWKS
+    algorithms: ["HS256"]  // Use RS256 for production — HS256 shown for simplicity
   },
   async (payload, done) => {
     const user = await userRepository.findById(payload.sub);
@@ -148,8 +148,9 @@ const hash = await bcrypt.hash(password, 12);
 
 **CSRF protection for session-based auth:**
 ```javascript
-import csrf from "csurf";
-app.use(csrf({ cookie: true }));
+import { doubleCsrf } from "csrf-csrf";
+const { doubleCsrfProtection } = doubleCsrf({ getSecret: () => process.env.CSRF_SECRET });
+app.use(doubleCsrfProtection);
 ```
 
 **Rate limit authentication endpoints:**
