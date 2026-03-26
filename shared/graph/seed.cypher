@@ -489,9 +489,9 @@ MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: '
 CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-rest', framework: 'kotlin-multiplatform', layer: 'api-protocols', file_path: 'modules/frameworks/kotlin-multiplatform/api-protocols/rest.md'});
 MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-rest'}), (m:LayerModule {name: 'rest'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-rest'}) CREATE (f)-[:HAS_BINDING]->(b);
-CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-cache', framework: 'kotlin-multiplatform', layer: 'caching', file_path: 'modules/frameworks/kotlin-multiplatform/caching/cache.md'});
-MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-cache'}), (m:LayerModule {name: 'cache'}) CREATE (b)-[:EXTENDS]->(m);
-MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-cache'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-in-memory', framework: 'kotlin-multiplatform', layer: 'caching', file_path: 'modules/frameworks/kotlin-multiplatform/caching/in-memory.md'});
+MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-in-memory'}), (m:LayerModule {name: 'in-memory'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-in-memory'}) CREATE (f)-[:HAS_BINDING]->(b);
 CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-oauth2', framework: 'kotlin-multiplatform', layer: 'auth', file_path: 'modules/frameworks/kotlin-multiplatform/auth/oauth2.md'});
 MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-oauth2'}), (m:LayerModule {name: 'oauth2'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-oauth2'}) CREATE (f)-[:HAS_BINDING]->(b);
