@@ -95,7 +95,7 @@ echo "--- MODULES ---"
 
 FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte)
 LANGUAGES=(kotlin java typescript python go rust swift c csharp ruby php dart elixir scala cpp)
-TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md cypress.md cucumber.md k6.md detox.md)
+TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md cypress.md cucumber.md k6.md detox.md rspec.md phpunit.md exunit.md scalatest.md)
 REQUIRED_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
 
 # Check 6: All 21 framework directories have 5 required files
@@ -168,7 +168,7 @@ for tf in "${TESTING_FILES[@]}"; do
     check10b_fail=1; break
   fi
 done
-check "All 15 testing files exist in modules/testing/" "$check10b_fail"
+check "All 19 testing files exist in modules/testing/" "$check10b_fail"
 
 echo ""
 echo "--- JSON ---"

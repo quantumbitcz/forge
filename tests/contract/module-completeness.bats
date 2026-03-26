@@ -79,6 +79,10 @@ EXPECTED_TESTING_FILES=(
   cucumber.md
   k6.md
   detox.md
+  rspec.md
+  phpunit.md
+  exunit.md
+  scalatest.md
 )
 
 REQUIRED_FILES=(
