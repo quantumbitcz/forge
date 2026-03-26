@@ -143,6 +143,7 @@ Injected into consuming project's `.mcp.json` during `graph-init`:
 | `/pipeline-run` PREFLIGHT | `incremental-update.sh` — git diff since last build SHA, add/remove/update file nodes |
 | `/pipeline-run` EXPLORE | `enrich-symbols.sh` — tree-sitter/regex parsing for files in current requirement scope |
 | `/pipeline-run` IMPLEMENT | Agents query graph for impact analysis before writing code |
+| `/pipeline-run` VERIFY | `incremental-update.sh` — captures implementation changes in the graph |
 | `/pipeline-reset` | Destroy container + volume, clean `.pipeline/graph/` |
 | Container crash | Auto-restart via Docker, or rebuild from seed + cached project snapshot |
 
