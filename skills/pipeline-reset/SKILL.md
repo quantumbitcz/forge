@@ -13,6 +13,14 @@ Clear the pipeline run state so you can start fresh.
 1. Confirm with user: "This will remove the `.pipeline/` directory (run state, checkpoints, stage notes). Learnings in `.claude/pipeline-log.md` are preserved. Proceed? (y/n)"
 
 2. If confirmed:
+
+   ## Graph Cleanup
+
+   Before removing `.pipeline/`:
+   1. If `.pipeline/docker-compose.neo4j.yml` exists:
+      - Run `docker compose -f .pipeline/docker-compose.neo4j.yml down -v` to stop container and remove volume
+      - This prevents orphaned Docker containers and volumes
+
    - Remove `.pipeline/` directory: `rm -rf .pipeline/`
    - Report what was cleaned: state.json, checkpoint files, stage notes, reports
    - Confirm: "Pipeline state cleared. Learnings preserved in `.claude/pipeline-log.md`. Ready for a fresh run with `/pipeline-run`."

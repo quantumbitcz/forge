@@ -18,7 +18,7 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'neo4j-mcp']
 ---
 
 # Pipeline Orchestrator (pl-100)
@@ -162,6 +162,22 @@ Dry-run populates state.json fields normally for stages 0-3:
 - `total_retries`: tracks validation retries only (0-2)
 - `recovery_budget`: tracks any recovery during stages 0-3
 - `conventions_hash`, `conventions_section_hashes`: computed normally
+
+---
+
+## Graph Context (Optional)
+
+When `state.json.integrations.neo4j.available` is true, the orchestrator pre-queries the Neo4j knowledge graph at stage boundaries and passes results as `graph_context` in stage notes. This gives downstream agents structural codebase understanding without requiring Neo4j MCP access.
+
+| Stage | Pre-queries | Passed to |
+|---|---|---|
+| PREFLIGHT | Convention stack resolution, dependency-to-module mapping | All downstream agents |
+| EXPLORE | Blast radius for requirement scope, enriched symbol data | pl-200-planner |
+| PLAN | Impact analysis for planned changes | pl-210-validator, pl-250-contract-validator |
+| IMPLEMENT | Per-task file dependency graph | pl-300-implementer, pl-310-scaffolder |
+| REVIEW | Architectural boundary graph for changed files | pl-400-quality-gate → review agents |
+
+See `shared/graph/query-patterns.md` for the Cypher templates used. If Neo4j is unavailable, all stages proceed normally using grep/glob-based analysis.
 
 ---
 

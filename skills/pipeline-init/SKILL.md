@@ -302,6 +302,17 @@ If nothing to clean up, skip this phase silently.
 
 ---
 
+### Phase 6b: GRAPH INITIALIZATION (optional)
+
+## Graph Initialization (Optional)
+
+If `graph.enabled` is `true` in the generated `dev-pipeline.local.md`:
+1. Invoke `/graph-init` to start Neo4j container, seed plugin graph, and build project graph
+2. If graph-init fails (Docker not available, port conflict, etc.), warn the user but continue — graph is optional
+3. Set `integrations.neo4j.available` based on the result
+
+---
+
 ### Phase 7: REPORT
 
 Present a final summary:
