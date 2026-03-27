@@ -54,6 +54,18 @@ This is a documentation-only plugin (no build step). To test changes:
 4. Run `/pipeline-run <requirement>` for a full end-to-end test
 5. Check `.pipeline/state.json` and stage notes for correct behavior
 
+## Key entry points
+
+| To understand...   | Read                                                              |
+|--------------------|-------------------------------------------------------------------|
+| Pipeline flow      | `shared/stage-contract.md` (10 stages, entry/exit conditions)     |
+| Orchestrator logic | `agents/pl-100-orchestrator.md` (state machine, dispatch rules)   |
+| Quality scoring    | `shared/scoring.md` (formula, verdicts, thresholds)               |
+| State persistence  | `shared/state-schema.md` (v1.1.0 JSON schema)                    |
+| Error handling     | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
+| Agent design       | `shared/agent-philosophy.md` + `shared/agent-communication.md`    |
+| Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
+
 ## Key conventions
 
 ### Agents (29 total, in `agents/*.md`)
@@ -87,7 +99,7 @@ Read source files for full details. Key facts:
 - **State schema** (`state-schema.md`): Version **1.1.0**. v1.0.0 was a clean break — old files from pre-1.0 schema versions are incompatible; use `/pipeline-reset` to clear them. v1.1.0 is an additive extension of v1.0.0 — no `/pipeline-reset` required. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.0 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 15 types, 12-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
-- **Agent communication** (`agent-communication.md`): All data flows through orchestrator via stage notes. Agents are isolated — cannot dispatch others, write state, or message user. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
+- **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (pl-400, pl-500, pl-600, pl-200, pl-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion — shared by all frontend agents.
 - **Learnings** (`learnings/`): Per-module files (frameworks, languages, testing frameworks, crosscutting layers) + JSON schemas (`rule-learning-schema.json`, `agent-effectiveness-schema.json`) for tracking check rule evolution and agent performance.
 - **Version detection:** PREFLIGHT detects dependency versions from manifest files (build.gradle.kts, package.json, go.mod, etc.) → `state.json.detected_versions`. Enables version-gated deprecation rules.
@@ -103,7 +115,7 @@ Read source files for full details. Key facts:
 
 ### Knowledge Graph (optional, `graph:` in `dev-pipeline.local.md`)
 
-Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j.
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j.
 
 ### Check engine (`shared/checks/`)
 
@@ -179,7 +191,21 @@ shared/checks/engine.sh --verify --project-root . --files-changed src/Main.kt  #
 grep -L "Forbidden Actions" agents/*.md           # Find non-compliant agents
 for m in modules/frameworks/*/local-template.md; do grep -q "linear:" "$m" || echo "MISSING: $m"; done
 for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_retries_max" "$m" || echo "MISSING: $m"; done
-for m in spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte kotlin java typescript python go rust swift c csharp ruby php dart elixir scala cpp kotest junit5 vitest jest pytest go-testing xctest rust-test xunit-nunit testcontainers playwright cypress cucumber databases persistence migrations api-protocols messaging caching search storage auth observability sqlserver mariadb neo4j cockroachdb influxdb firestore firebase-auth cognito passport saml typesense algolia google-pubsub mqtt sequelize mikro-orm sea-orm dapper sentry datadog cloudflare-r2 dbmate atlas sequelize-migrations mikro-orm-migrations varnish azure-service-bus solr couchbase surrealdb tidb supabase-auth grafana loki k6 detox rspec phpunit exunit scalatest ecto active-record zeromq rest websocket gradle maven cmake ant bazel sbt bun github-actions gitlab-ci jenkins circleci azure-pipelines bitbucket-pipelines tekton docker docker-compose docker-swarm helm k3s microk8s openshift rancher podman argocd fluxcd; do [ -f "shared/learnings/$m.md" ] || echo "MISSING: learnings/$m.md"; done
+
+# Verify all modules have learnings files (auto-discovers from disk)
+for dir in modules/languages modules/testing modules/databases modules/persistence \
+           modules/migrations modules/api-protocols modules/messaging modules/caching \
+           modules/search modules/storage modules/auth modules/observability \
+           modules/build-systems modules/ci-cd modules/container-orchestration; do
+  for f in "$dir"/*.md; do
+    name=$(basename "$f" .md)
+    [ -f "shared/learnings/$name.md" ] || echo "MISSING: learnings/$name.md"
+  done
+done
+for fw in modules/frameworks/*/; do
+  name=$(basename "$fw")
+  [ -f "shared/learnings/$name.md" ] || echo "MISSING: learnings/$name.md"
+done
 ```
 
 ## Gotchas
