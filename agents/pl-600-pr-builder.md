@@ -383,6 +383,8 @@ When cross-repo changes exist (check `state.json.cross_repo`):
 - DO NOT stage .claude/, build/, node_modules/, .env, .pipeline/, *.log
 - DO NOT modify shared contracts, conventions, or CLAUDE.md
 - DO NOT delete or disable anything without checking intent
+- DO NOT use `git revert` on commits created by other agents or previous pipeline runs
+- DO NOT use `git push --force-with-lease` — it still rewrites remote history and can destroy others' work
 
 ---
 
