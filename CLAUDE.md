@@ -136,7 +136,7 @@ Create `modules/frameworks/{name}/` with:
 - `known-deprecations.json` — schema v2 (`applies_from`, `removed_in`, `applies_to` required). Seed 5-15 entries.
 - Optional: `variants/{language}.md`, `testing/{test-framework}.md`, `scripts/check-*.sh`, `hooks/*-guard.sh`
 
-Add `shared/learnings/{name}.md`. Wire into the local template's `quality_gate` batches. Update test arrays: `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`.
+Add `shared/learnings/{name}.md`. Wire into the local template's `quality_gate` batches. Bump the corresponding `MIN_*` constant in `tests/lib/module-lists.bash` (module arrays are auto-discovered from disk).
 
 **New language?** Also add `modules/languages/{lang}.md` and `shared/learnings/{lang}.md`. **New testing framework?** Also add `modules/testing/{test-framework}.md` and `shared/learnings/{test-framework}.md`.
 
@@ -167,9 +167,9 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
 ./tests/run-all.sh structural       # 34 checks, no bats needed
-./tests/run-all.sh unit             # 8 test files
-./tests/run-all.sh contract         # 11 test files
-./tests/run-all.sh scenario         # 7 test files
+./tests/run-all.sh unit             # 10 test files
+./tests/run-all.sh contract         # 13 test files
+./tests/run-all.sh scenario         # 8 test files
 ```
 
 Manual debugging:
