@@ -6,6 +6,10 @@ components:
   variant: kotlin
   testing: junit5        # junit5 (default for Android)
   persistence: room
+  # build_system: gradle         # gradle
+  # ci: github-actions           # github-actions | gitlab-ci
+  # container: ~                 # N/A for Android app
+  # orchestrator: ~              # N/A for Android app
 
 explore_agents:
   primary: "feature-dev:code-explorer"
