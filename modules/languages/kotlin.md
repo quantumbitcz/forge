@@ -80,6 +80,5 @@ Use the right scope function for the intent — confusion leads to bugs:
 - Don't use `if-else` chains on type checks — use `when` with sealed type exhaustive matching.
 - Don't use Java's `Stream` API — use Kotlin stdlib collection operations (`map`, `filter`, `fold`) or `Sequence` for lazy evaluation.
 - Don't use `Optional<T>` — use nullable types `T?` with `?.`, `?:`, `let`.
-- Don't use `synchronized` blocks — use `Mutex` from `kotlinx.coroutines.sync` or other coroutine-safe patterns.
 - Don't use Java `Iterable`/`Iterator` — use Kotlin `Sequence` for lazy evaluation.
 - Don't use checked exception patterns — use `Result<T>` or sealed class error hierarchies.
