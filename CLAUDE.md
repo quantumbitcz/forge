@@ -36,7 +36,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Quick start
 
 ```bash
-./tests/validate-plugin.sh          # 28 structural checks, ~2s
+./tests/validate-plugin.sh          # 34 structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
 
 # To test in a consuming project
@@ -166,7 +166,7 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
-./tests/run-all.sh structural       # 28 checks, no bats needed
+./tests/run-all.sh structural       # 34 checks, no bats needed
 ./tests/run-all.sh unit             # 8 test files
 ./tests/run-all.sh contract         # 11 test files
 ./tests/run-all.sh scenario         # 7 test files
@@ -199,7 +199,7 @@ for m in spring react fastapi axum swiftui vapor express sveltekit k8s embedded 
 - Framework-level binding files (e.g., `testing/`, `persistence/`, `messaging/`) EXTEND their corresponding generic layer files — they don't replace.
 - Framework-less projects (`go-stdlib` or `framework: null`): only language + testing layers. Infra frameworks (`k8s`): `language: null`, only framework layer.
 - Cross-repo: PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks. Discovery results stored with `detected_via` — re-run `/pipeline-init` to refresh.
-- **Test array drift:** Framework/language/testing lists are duplicated in `tests/validate-plugin.sh` and `tests/contract/module-completeness.bats`. Adding a module without updating both arrays causes silent validation gaps — checks pass but skip the new module.
+- **Test module counts:** Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Minimum count guards (e.g., `MIN_FRAMEWORKS=21`) catch accidental deletions. When intentionally adding modules, bump the corresponding `MIN_*` constant in `module-lists.bash`.
 
 ## Plugin distribution (`.claude-plugin/`)
 

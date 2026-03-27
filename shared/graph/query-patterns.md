@@ -55,8 +55,8 @@ Identifies which files consume a specific class or entity, and which conventions
 // What breaks if I change a specific class/entity?
 MATCH (entity:ProjectClass {name: $className})-[:CLASS_IN_FILE]->(f:ProjectFile)
 MATCH (consumer:ProjectFile)-[:IMPORTS]->(f)
-OPTIONAL MATCH (consumer)-[:USES_CONVENTION]->(conv)
-RETURN consumer.path, collect(conv.name) AS conventions
+OPTIONAL MATCH (pc:ProjectConfig)-[:USES_CONVENTION]->(conv)
+RETURN consumer.path, collect(DISTINCT conv.name) AS project_conventions
 ```
 
 **Parameters:**

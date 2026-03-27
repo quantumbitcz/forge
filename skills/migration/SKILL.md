@@ -48,6 +48,13 @@ When versions are not explicitly specified:
 
     Proceed with LOW-risk upgrades? (HIGH-risk requires explicit confirmation)
 
+## Prerequisites
+
+Before dispatching the migration planner, verify:
+
+1. **Git repository:** Run `git rev-parse --is-inside-work-tree`. If not: "Not a git repository."
+2. **Clean working tree recommended:** Run `git status --porcelain`. If dirty, warn: "You have uncommitted changes. Migrations create commits per batch — consider committing or stashing first."
+
 ## What happens
 
 The migration planner will:

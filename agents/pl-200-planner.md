@@ -1,7 +1,7 @@
 ---
 name: pl-200-planner
 description: |
-  Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups. Reads conventions and scaffolder patterns from dev-pipeline.local.md config. Dispatches code-explorer and code-architect for codebase analysis.
+  Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups. Reads conventions and scaffolder patterns from dev-pipeline.local.md config. Uses sub-agents for codebase exploration and architecture analysis when exploration results are not provided.
 
   <example>
   Context: The pipeline has finished exploring the codebase and needs an implementation plan.
@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: blue
-tools: ['Read', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ---
 
 # Pipeline Planner (pl-200)

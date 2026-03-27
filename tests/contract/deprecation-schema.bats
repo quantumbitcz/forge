@@ -3,27 +3,14 @@
 
 load '../helpers/test-helpers'
 
+# Module lists discovered from disk (single source of truth: tests/lib/module-lists.bash)
+# shellcheck source=../lib/module-lists.bash
+source "$PLUGIN_ROOT/tests/lib/module-lists.bash"
+
 MODULES_DIR="$PLUGIN_ROOT/modules/frameworks"
 
-EXPECTED_MODULES=(
-  axum
-  embedded
-  express
-  fastapi
-  go-stdlib
-  k8s
-  react
-  spring
-  sveltekit
-  swiftui
-  vapor
-  aspnet
-  django
-  nextjs
-  gin
-  jetpack-compose
-  kotlin-multiplatform
-)
+# All frameworks have known-deprecations.json (verified by structural checks)
+EXPECTED_MODULES=("${DISCOVERED_FRAMEWORKS[@]}")
 
 # ---------------------------------------------------------------------------
 # Helper: run a python3 validation over all deprecation files

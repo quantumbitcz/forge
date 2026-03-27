@@ -125,6 +125,6 @@ pipeline_mktempdir() {
 portable_sed() {
   local expr="$1" file="$2"
   local tmp
-  tmp="$(pipeline_mktemp)"
+  tmp="$(pipeline_mktemp)" || { echo "portable_sed: failed to create temp file" >&2; return 1; }
   sed "$expr" "$file" > "$tmp" && mv "$tmp" "$file"
 }

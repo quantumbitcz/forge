@@ -10,15 +10,17 @@ Run the pipeline's check engine outside of a pipeline run to assess codebase hea
 
 ## What to do
 
-1. Find the check engine script (it's in the plugin directory):
+1. Verify the project is a git repository: run `git rev-parse --is-inside-work-tree`. If not: "Not a git repository."
+
+2. Find the check engine script (it's in the plugin directory):
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --review
    ```
 
-2. If the engine script is not executable or not found:
+3. If the engine script is not executable or not found:
    - Report: "Check engine not available. Verify the dev-pipeline plugin is installed."
 
-3. Parse the engine output and report:
+4. Parse the engine output and report:
    ```
    ## Codebase Health Report
 

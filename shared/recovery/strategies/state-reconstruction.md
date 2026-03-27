@@ -33,7 +33,7 @@ The `.pipeline/state.json` file does not exist when it should (mid-pipeline run)
    - `quality_cycles`: Count `stage_6_notes` sections containing "Quality cycle" or "review cycle".
    - `validation_retries`: Count `stage_3_notes` sections containing "REVISE".
    - `total_retries`: Sum of all above counters.
-   - Fallback: If any counter is undeterminable from available evidence, use the **configured maximum** (conservative). This prevents extra retries beyond limits.
+   - Fallback: If any counter is undeterminable from available evidence, use its **configured maximum** (conservative). Specific mappings: `validation_retries` → `validation.max_validation_retries` (default 2), `verify_fix_count` → `implementation.max_fix_loops` (default 3), `test_cycles` → `test_gate.max_test_cycles` (default 2), `quality_cycles` → `quality_gate.max_review_cycles` (default 2). This prevents extra retries beyond limits.
    - `complete`: false.
    - `last_commit_sha`: from `git log -1 --format=%H`.
 

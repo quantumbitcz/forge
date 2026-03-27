@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: green
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Agent', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ---
 
 # Pipeline Scaffolder (pl-310)

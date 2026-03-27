@@ -6,6 +6,8 @@ tools:
   - Glob
   - Grep
   - Bash
+  - mcp__plugin_context7_context7__resolve-library-id
+  - mcp__plugin_context7_context7__query-docs
 ---
 
 You are an architecture reviewer that detects the project's architecture pattern and reviews code changes for compliance violations.

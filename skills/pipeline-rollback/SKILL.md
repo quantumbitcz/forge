@@ -16,10 +16,12 @@ Ask the user which type of rollback they need, then execute:
 
 Before presenting rollback options, detect the current state:
 
-1. Check if `.pipeline/worktree` exists → Mode 1 available (pre-merge rollback)
-2. Check if `.pipeline/state.json` exists and `complete: true` → Mode 2 available (post-merge revert)
-3. Check git log for pipeline merge commits → Mode 2 available
-4. Only present modes that are actually available based on detection
+1. **Check for uncommitted changes**: Run `git status --porcelain`. If there are uncommitted changes, warn:
+   "Warning: You have uncommitted changes. Rollback operations (especially `git reset --hard` or `git revert`) may affect your working tree. Consider committing or stashing first."
+2. Check if `.pipeline/worktree` exists → Mode 1 available (pre-merge rollback)
+3. Check if `.pipeline/state.json` exists and `complete: true` → Mode 2 available (post-merge revert)
+4. Check git log for pipeline merge commits → Mode 2 available
+5. Only present modes that are actually available based on detection
 
 ### Mode 1: Rollback Worktree (most common)
 

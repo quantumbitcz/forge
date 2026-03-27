@@ -20,7 +20,10 @@ The user's argument (everything after `/deploy`) determines the action:
 | `/deploy preview` | Deploy preview environment for current PR |
 | `/deploy rollback` | Rollback to previous version |
 | `/deploy status` | Check deployment status |
+| `/deploy --dry-run staging` | Show what would happen without executing |
 | `/deploy` (no args) | Show deployment config and available environments |
+
+If `--dry-run` is present in the arguments, execute in dry-run mode: resolve all variables, display the full command that would be executed, show the confirmation prompt (if applicable), but do NOT execute the command. Safety guards (Section 5) still apply in dry-run mode — display any warnings that would be shown during a real deploy. Display: "DRY RUN — no changes made." If `--dry-run` is used without specifying an environment, treat it as `/deploy` (show configuration).
 
 ### 2. Read Configuration
 

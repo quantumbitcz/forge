@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Structural validation for the dev-pipeline plugin.
 # Zero dependencies beyond bash + jq.
-# Prints PASS/FAIL for each of 28 checks. Exits 1 if any check fails.
+# Prints PASS/FAIL for each check. Exits 1 if any check fails.
 
 set -euo pipefail
 
@@ -93,10 +93,19 @@ check "All agents have Forbidden Actions section" "$check5_fail"
 echo ""
 echo "--- MODULES ---"
 
-FRAMEWORKS=(spring react fastapi axum swiftui vapor express sveltekit k8s embedded go-stdlib aspnet django nextjs gin jetpack-compose kotlin-multiplatform angular nestjs vue svelte)
-LANGUAGES=(kotlin java typescript python go rust swift c csharp ruby php dart elixir scala cpp)
-TESTING_FILES=(kotest.md junit5.md vitest.md jest.md pytest.md go-testing.md xctest.md rust-test.md xunit-nunit.md testcontainers.md playwright.md cypress.md cucumber.md k6.md detox.md rspec.md phpunit.md exunit.md scalatest.md)
-REQUIRED_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
+# Module lists discovered from disk (single source of truth)
+# shellcheck source=lib/module-lists.bash
+PLUGIN_ROOT="$ROOT" source "$SCRIPT_DIR/lib/module-lists.bash"
+
+FRAMEWORKS=("${DISCOVERED_FRAMEWORKS[@]}")
+LANGUAGES=("${DISCOVERED_LANGUAGES[@]}")
+TESTING_FILES=("${DISCOVERED_TESTING_FILES[@]}")
+REQUIRED_FILES=("${REQUIRED_FRAMEWORK_FILES[@]}")
+
+# Guard against accidental module deletions
+guard_min_count "frameworks" "${#FRAMEWORKS[@]}" "$MIN_FRAMEWORKS" || { FAIL=$((FAIL + 1)); }
+guard_min_count "languages" "${#LANGUAGES[@]}" "$MIN_LANGUAGES" || { FAIL=$((FAIL + 1)); }
+guard_min_count "testing files" "${#TESTING_FILES[@]}" "$MIN_TESTING_FILES" || { FAIL=$((FAIL + 1)); }
 
 # Check 6: All 21 framework directories have 5 required files
 check6_fail=0
@@ -107,7 +116,7 @@ for fw in "${FRAMEWORKS[@]}"; do
     fi
   done
 done
-check "All 21 framework directories have required 5 files" "$check6_fail"
+check "All ${#FRAMEWORKS[@]} framework directories have required 5 files" "$check6_fail"
 
 # Check 7: All frameworks/*/conventions.md have Dos/Don'ts section (case-insensitive for don't / donts / Don'ts)
 check7_fail=0
@@ -159,7 +168,7 @@ for lang in "${LANGUAGES[@]}"; do
     check10a_fail=1; break
   fi
 done
-check "All 15 language files exist in modules/languages/" "$check10a_fail"
+check "All ${#LANGUAGES[@]} language files exist in modules/languages/" "$check10a_fail"
 
 # Check 10b: All 11 testing files exist in modules/testing/
 check10b_fail=0
@@ -168,7 +177,7 @@ for tf in "${TESTING_FILES[@]}"; do
     check10b_fail=1; break
   fi
 done
-check "All 19 testing files exist in modules/testing/" "$check10b_fail"
+check "All ${#TESTING_FILES[@]} testing files exist in modules/testing/" "$check10b_fail"
 
 echo ""
 echo "--- JSON ---"
@@ -362,10 +371,15 @@ check "plugin.json version matches CLAUDE.md version ($plugin_ver == $claude_ver
 echo ""
 echo "--- CROSSCUTTING LAYERS ---"
 
-LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability)
-BUILD_SYSTEMS=(gradle maven cmake ant bazel sbt bun)
-CI_PLATFORMS=(github-actions gitlab-ci jenkins circleci azure-pipelines bitbucket-pipelines tekton)
-CONTAINER_ORCH=(docker docker-compose docker-swarm helm k3s microk8s openshift rancher podman argocd fluxcd)
+LAYERS=("${DISCOVERED_LAYERS[@]}")
+BUILD_SYSTEMS=("${DISCOVERED_BUILD_SYSTEMS[@]}")
+CI_PLATFORMS=("${DISCOVERED_CI_PLATFORMS[@]}")
+CONTAINER_ORCH=("${DISCOVERED_CONTAINER_ORCH[@]}")
+
+# Guard against accidental deletions in new layers
+guard_min_count "build systems" "${#BUILD_SYSTEMS[@]}" "$MIN_BUILD_SYSTEMS" || { FAIL=$((FAIL + 1)); }
+guard_min_count "CI/CD platforms" "${#CI_PLATFORMS[@]}" "$MIN_CI_PLATFORMS" || { FAIL=$((FAIL + 1)); }
+guard_min_count "container orchestration" "${#CONTAINER_ORCH[@]}" "$MIN_CONTAINER_ORCH" || { FAIL=$((FAIL + 1)); }
 
 check26_fail=0
 for layer in "${LAYERS[@]}"; do
@@ -387,7 +401,7 @@ for bs in "${BUILD_SYSTEMS[@]}"; do
     check27_fail=1
   fi
 done
-check "All 7 build system generic modules exist" "$check27_fail"
+check "All ${#BUILD_SYSTEMS[@]} build system generic modules exist" "$check27_fail"
 
 # Check 28: All build system learnings files exist
 check28_fail=0
@@ -410,7 +424,7 @@ for ci in "${CI_PLATFORMS[@]}"; do
     check29_fail=1
   fi
 done
-check "All 7 CI/CD platform generic modules exist" "$check29_fail"
+check "All ${#CI_PLATFORMS[@]} CI/CD platform generic modules exist" "$check29_fail"
 
 # Check 30: All CI/CD platform learnings files exist
 check30_fail=0
@@ -433,7 +447,7 @@ for co in "${CONTAINER_ORCH[@]}"; do
     check31_fail=1
   fi
 done
-check "All 11 container orchestration generic modules exist" "$check31_fail"
+check "All ${#CONTAINER_ORCH[@]} container orchestration generic modules exist" "$check31_fail"
 
 # Check 32: All container orchestration learnings files exist
 check32_fail=0

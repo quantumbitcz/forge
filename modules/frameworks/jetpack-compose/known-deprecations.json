@@ -34,7 +34,7 @@
       "removed_in": "11.0",
       "applies_from": "1.0.0",
       "applies_to": "*",
-      "language": null,
+      "language": "kotlin",
       "added": "2026-03-23",
       "addedBy": "seed"
     },
@@ -46,7 +46,7 @@
       "removed_in": null,
       "applies_from": "1.0.0",
       "applies_to": "*",
-      "language": null,
+      "language": "kotlin",
       "added": "2026-03-23",
       "addedBy": "seed"
     },
@@ -58,7 +58,7 @@
       "removed_in": null,
       "applies_from": "1.2.0",
       "applies_to": "*",
-      "language": null,
+      "language": "kotlin",
       "added": "2026-03-23",
       "addedBy": "seed"
     },

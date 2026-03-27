@@ -25,7 +25,7 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Skill']
 ---
 
 # Pipeline Retrospective (pl-700)

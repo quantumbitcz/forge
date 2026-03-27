@@ -293,7 +293,7 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 ### Budget Warning
 
-When `total_weight > 4.0` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
+When `total_weight >= 4.0` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
 
 ### Budget Exhaustion
 

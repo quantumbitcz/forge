@@ -25,7 +25,7 @@ description: |
   </example>
 model: inherit
 color: red
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'Skill']
 ---
 
 # Pipeline Quality Gate (pl-400)

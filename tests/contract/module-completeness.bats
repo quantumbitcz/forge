@@ -3,134 +3,40 @@
 
 load '../helpers/test-helpers'
 
+# Module lists discovered from disk (single source of truth: tests/lib/module-lists.bash)
+# shellcheck source=../lib/module-lists.bash
+source "$PLUGIN_ROOT/tests/lib/module-lists.bash"
+
 FRAMEWORKS_DIR="$PLUGIN_ROOT/modules/frameworks"
 LANGUAGES_DIR="$PLUGIN_ROOT/modules/languages"
 TESTING_DIR="$PLUGIN_ROOT/modules/testing"
 LEARNINGS_DIR="$PLUGIN_ROOT/shared/learnings"
 
-EXPECTED_LAYERS=(
-  databases
-  persistence
-  migrations
-  api-protocols
-  messaging
-  caching
-  search
-  storage
-  auth
-  observability
-)
-
-EXPECTED_FRAMEWORKS=(
-  spring
-  react
-  fastapi
-  axum
-  swiftui
-  vapor
-  express
-  sveltekit
-  k8s
-  embedded
-  go-stdlib
-  aspnet
-  django
-  nextjs
-  gin
-  jetpack-compose
-  kotlin-multiplatform
-  angular
-  nestjs
-  vue
-  svelte
-)
-
-EXPECTED_LANGUAGES=(
-  kotlin
-  java
-  typescript
-  python
-  go
-  rust
-  swift
-  c
-  csharp
-  ruby
-  php
-  dart
-  elixir
-  scala
-  cpp
-)
-
-EXPECTED_TESTING_FILES=(
-  kotest.md
-  junit5.md
-  vitest.md
-  jest.md
-  pytest.md
-  go-testing.md
-  xctest.md
-  rust-test.md
-  xunit-nunit.md
-  testcontainers.md
-  playwright.md
-  cypress.md
-  cucumber.md
-  k6.md
-  detox.md
-  rspec.md
-  phpunit.md
-  exunit.md
-  scalatest.md
-)
-
-EXPECTED_BUILD_SYSTEMS=(
-  gradle
-  maven
-  cmake
-  ant
-  bazel
-  sbt
-  bun
-)
-
-EXPECTED_CI_PLATFORMS=(
-  github-actions
-  gitlab-ci
-  jenkins
-  circleci
-  azure-pipelines
-  bitbucket-pipelines
-  tekton
-)
-
-EXPECTED_CONTAINER_ORCH=(
-  docker
-  docker-compose
-  docker-swarm
-  helm
-  k3s
-  microk8s
-  openshift
-  rancher
-  podman
-  argocd
-  fluxcd
-)
-
-REQUIRED_FILES=(
-  conventions.md
-  local-template.md
-  pipeline-config-template.md
-  rules-override.json
-  known-deprecations.json
-)
+EXPECTED_FRAMEWORKS=("${DISCOVERED_FRAMEWORKS[@]}")
+EXPECTED_LANGUAGES=("${DISCOVERED_LANGUAGES[@]}")
+EXPECTED_TESTING_FILES=("${DISCOVERED_TESTING_FILES[@]}")
+EXPECTED_LAYERS=("${DISCOVERED_LAYERS[@]}")
+EXPECTED_BUILD_SYSTEMS=("${DISCOVERED_BUILD_SYSTEMS[@]}")
+EXPECTED_CI_PLATFORMS=("${DISCOVERED_CI_PLATFORMS[@]}")
+EXPECTED_CONTAINER_ORCH=("${DISCOVERED_CONTAINER_ORCH[@]}")
+REQUIRED_FILES=("${REQUIRED_FRAMEWORK_FILES[@]}")
 
 # ---------------------------------------------------------------------------
-# 1. All 21 framework directories exist
+# 0. Minimum count guards (catch accidental deletions)
 # ---------------------------------------------------------------------------
-@test "module-completeness: all 21 expected framework directories exist" {
+@test "module-completeness: minimum module counts not violated" {
+  guard_min_count "frameworks" "${#EXPECTED_FRAMEWORKS[@]}" "$MIN_FRAMEWORKS"
+  guard_min_count "languages" "${#EXPECTED_LANGUAGES[@]}" "$MIN_LANGUAGES"
+  guard_min_count "testing files" "${#EXPECTED_TESTING_FILES[@]}" "$MIN_TESTING_FILES"
+  guard_min_count "build systems" "${#EXPECTED_BUILD_SYSTEMS[@]}" "$MIN_BUILD_SYSTEMS"
+  guard_min_count "CI/CD platforms" "${#EXPECTED_CI_PLATFORMS[@]}" "$MIN_CI_PLATFORMS"
+  guard_min_count "container orchestration" "${#EXPECTED_CONTAINER_ORCH[@]}" "$MIN_CONTAINER_ORCH"
+}
+
+# ---------------------------------------------------------------------------
+# 1. All framework directories discovered from disk exist
+# ---------------------------------------------------------------------------
+@test "module-completeness: all discovered framework directories exist" {
   local missing=()
   for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
     if [[ ! -d "$FRAMEWORKS_DIR/$fw" ]]; then

@@ -51,7 +51,13 @@ detect_language() {
     .rs)               echo "rust" ;;
     .cs|.csx)          echo "csharp" ;;
     .c|.h)             echo "c" ;;
+    .cpp|.cc|.cxx|.hpp) echo "cpp" ;;
     .swift)            echo "swift" ;;
+    .rb)               echo "ruby" ;;
+    .php)              echo "php" ;;
+    .dart)             echo "dart" ;;
+    .ex|.exs)          echo "elixir" ;;
+    .scala|.sc)        echo "scala" ;;
   esac
 }
 

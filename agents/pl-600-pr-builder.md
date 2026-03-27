@@ -25,7 +25,7 @@ description: |
   </example>
 model: inherit
 color: blue
-tools: ['Read', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent']
 ---
 
 # Pipeline PR Builder (pl-600)

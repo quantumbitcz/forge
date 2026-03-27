@@ -11,6 +11,12 @@ You are the graph rebuilder. Your job is to wipe all project-derived nodes from 
 
 ---
 
+### Step 0: VERIFY GIT REPOSITORY
+
+Run `git rev-parse --is-inside-work-tree`. If not a git repository: **ERROR** — "Not a git repository." Abort.
+
+---
+
 ### Step 1: CHECK AVAILABILITY
 
 Run the health check script:
