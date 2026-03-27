@@ -6,6 +6,10 @@ components:
   variant: swift
   testing: xctest
   persistence: fluent
+  # build_system: spm           # spm (Swift Package Manager)
+  # ci: github-actions         # github-actions | gitlab-ci
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm
 
 explore_agents:
   primary: "feature-dev:code-explorer"
