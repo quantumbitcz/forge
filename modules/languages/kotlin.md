@@ -73,3 +73,13 @@ Use the right scope function for the intent — confusion leads to bugs:
 - Don't use `object` singletons for stateful services — use dependency injection for testability.
 - Don't use `runBlocking` in coroutine contexts — it blocks the thread and can cause deadlocks.
 - Don't use Java's `synchronized` with coroutines — use `Mutex` from `kotlinx.coroutines.sync`.
+- Don't use the Builder pattern — use named/default arguments + `copy()` on data classes.
+- Don't use the null-object pattern — use sealed classes/interfaces with an explicit `None` variant.
+- Don't create static utility classes — use top-level functions or extension functions.
+- Don't write explicit getter/setter methods — use properties with custom `get()`/`set()` if needed.
+- Don't use `if-else` chains on type checks — use `when` with sealed type exhaustive matching.
+- Don't use Java's `Stream` API — use Kotlin stdlib collection operations (`map`, `filter`, `fold`) or `Sequence` for lazy evaluation.
+- Don't use `Optional<T>` — use nullable types `T?` with `?.`, `?:`, `let`.
+- Don't use `synchronized` blocks — use `Mutex` from `kotlinx.coroutines.sync` or other coroutine-safe patterns.
+- Don't use Java `Iterable`/`Iterator` — use Kotlin `Sequence` for lazy evaluation.
+- Don't use checked exception patterns — use `Result<T>` or sealed class error hierarchies.
