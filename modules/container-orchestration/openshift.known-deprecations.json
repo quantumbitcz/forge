@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-27",
+  "deprecations": [
+    {
+      "pattern": "DeploymentConfig",
+      "replacement": "Use standard Kubernetes Deployment (apps/v1) instead of DeploymentConfig — DeploymentConfig is deprecated since OpenShift 4.14",
+      "package": "openshift",
+      "since": "4.14",
+      "removed_in": null,
+      "applies_from": "4.14",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "template\\.openshift\\.io",
+      "replacement": "Consider using Helm charts or Kustomize overlays instead of OpenShift templates — templates are a legacy mechanism with limited templating capabilities",
+      "package": "openshift",
+      "since": "4.0",
+      "removed_in": null,
+      "applies_from": "4.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "oc\\s+new-app.*--strategy=source",
+      "replacement": "Source-to-Image (S2I) builds via BuildConfig are being superseded by Tekton (OpenShift Pipelines) and external CI — use Tekton pipelines for new projects",
+      "package": "openshift",
+      "since": "4.10",
+      "removed_in": null,
+      "applies_from": "4.10",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "extensions/v1beta1",
+      "replacement": "extensions/v1beta1 API group is removed — use apps/v1 for Deployments, networking.k8s.io/v1 for Ingress, policy/v1 for PodDisruptionBudgets",
+      "package": "kubernetes",
+      "since": "1.16.0",
+      "removed_in": "1.22.0",
+      "applies_from": "1.16.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "PodSecurityPolicy",
+      "replacement": "PodSecurityPolicy is removed in Kubernetes 1.25 — use OpenShift SCCs or Kubernetes Pod Security Standards (pod-security.kubernetes.io labels)",
+      "package": "kubernetes",
+      "since": "1.21.0",
+      "removed_in": "1.25.0",
+      "applies_from": "1.21.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "oc\\s+adm\\s+policy\\s+add-scc-to-group.*system:serviceaccounts",
+      "replacement": "Granting SCCs to all service accounts in a namespace is overly broad — grant to specific service accounts instead",
+      "package": "openshift",
+      "since": "4.0",
+      "removed_in": null,
+      "applies_from": "4.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "oc\\s+new-build",
+      "replacement": "BuildConfig-based builds are a legacy pattern — prefer Tekton Pipelines or external CI/CD for new projects",
+      "package": "openshift",
+      "since": "4.10",
+      "removed_in": null,
+      "applies_from": "4.10",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    }
+  ]
+}
