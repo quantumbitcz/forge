@@ -1,0 +1,57 @@
+{
+  "extends": "docker",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "CONT-DOCKER-001",
+        "name": "from-latest-tag",
+        "pattern": "FROM\\s+\\S+:latest",
+        "scope_pattern": "Dockerfile*",
+        "severity": "WARNING",
+        "category": "CONV-INFRA",
+        "message": "FROM with :latest tag — pin to a specific version or SHA digest for reproducible builds",
+        "fix_hint": "Replace :latest with a specific version tag (e.g., :21-jre-alpine) or SHA digest (@sha256:...)"
+      },
+      {
+        "id": "CONT-DOCKER-002",
+        "name": "missing-healthcheck",
+        "pattern": "^(?!.*HEALTHCHECK).*ENTRYPOINT",
+        "scope_pattern": "Dockerfile*",
+        "severity": "WARNING",
+        "category": "CONV-INFRA",
+        "message": "Dockerfile has ENTRYPOINT but no HEALTHCHECK — orchestrators cannot detect unhealthy containers",
+        "fix_hint": "Add a HEALTHCHECK instruction: HEALTHCHECK --interval=30s --timeout=5s CMD wget --spider http://localhost:PORT/health || exit 1"
+      },
+      {
+        "id": "CONT-DOCKER-003",
+        "name": "running-as-root",
+        "pattern": "^(?!.*USER\\s).*ENTRYPOINT",
+        "scope_pattern": "Dockerfile*",
+        "severity": "WARNING",
+        "category": "CONV-INFRA",
+        "message": "Dockerfile has no USER instruction — container will run as root",
+        "fix_hint": "Add a non-root user: RUN addgroup --system app && adduser --system --ingroup app app, then USER app before ENTRYPOINT"
+      },
+      {
+        "id": "CONT-DOCKER-004",
+        "name": "add-instead-of-copy",
+        "pattern": "^ADD\\s+(?!.*\\.tar)",
+        "scope_pattern": "Dockerfile*",
+        "severity": "INFO",
+        "category": "CONV-INFRA",
+        "message": "ADD used for non-archive file — use COPY for predictable behavior",
+        "fix_hint": "Replace ADD with COPY unless you need tar extraction or remote URL fetching"
+      },
+      {
+        "id": "CONT-DOCKER-005",
+        "name": "env-secret-in-dockerfile",
+        "pattern": "(ENV|ARG)\\s+(PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)\\s*=",
+        "scope_pattern": "Dockerfile*",
+        "severity": "CRITICAL",
+        "category": "CONV-INFRA",
+        "message": "Secret value in ENV/ARG instruction — secrets persist in image layers and are visible via docker inspect",
+        "fix_hint": "Use BuildKit secret mounts: RUN --mount=type=secret,id=mysecret cat /run/secrets/mysecret"
+      }
+    ]
+  }
+}
