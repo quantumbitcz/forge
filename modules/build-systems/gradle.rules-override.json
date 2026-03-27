@@ -1,0 +1,57 @@
+{
+  "extends": "gradle",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "BUILD-GRADLE-001",
+        "name": "hardcoded-version-in-build",
+        "pattern": "version\\s*=\\s*\"[0-9]",
+        "scope_pattern": "*.gradle.kts",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Hardcoded version string in build script — use version catalog (libs.versions.toml)",
+        "fix_hint": "Move version to gradle/libs.versions.toml and reference via libs.* accessor"
+      },
+      {
+        "id": "BUILD-GRADLE-002",
+        "name": "allprojects-subprojects-block",
+        "pattern": "(allprojects|subprojects)\\s*\\{",
+        "scope_pattern": "*.gradle.kts",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "allprojects/subprojects block detected — use convention plugins in build-logic/ instead",
+        "fix_hint": "Extract shared configuration into a convention plugin under build-logic/src/main/kotlin/ and apply it in each module"
+      },
+      {
+        "id": "BUILD-GRADLE-003",
+        "name": "eager-task-creation",
+        "pattern": "tasks\\.create\\b|\\btask\\s*\\(",
+        "scope_pattern": "*.gradle.kts",
+        "severity": "INFO",
+        "category": "CONV-BUILD",
+        "message": "Eager task creation — use tasks.register() for lazy task avoidance",
+        "fix_hint": "Replace tasks.create() or task() with tasks.register() to defer task instantiation until needed"
+      },
+      {
+        "id": "BUILD-GRADLE-004",
+        "name": "deprecated-dependency-configuration",
+        "pattern": "\\b(compile|runtime|testCompile|testRuntime)\\s*\\(",
+        "scope_pattern": "*.gradle.kts",
+        "severity": "CRITICAL",
+        "category": "CONV-BUILD",
+        "message": "Deprecated dependency configuration — removed in Gradle 7.0",
+        "fix_hint": "Replace compile→implementation, runtime→runtimeOnly, testCompile→testImplementation, testRuntime→testRuntimeOnly"
+      },
+      {
+        "id": "BUILD-GRADLE-005",
+        "name": "ext-property-for-version",
+        "pattern": "(ext\\[|by extra|val \\w+Version\\s*=\\s*\")",
+        "scope_pattern": "*.gradle.kts",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Version managed via ext/extra property — use version catalog (libs.versions.toml) for type-safe, IDE-supported version management",
+        "fix_hint": "Move version to [versions] section in gradle/libs.versions.toml and use libs.* accessors"
+      }
+    ]
+  }
+}
