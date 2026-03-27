@@ -91,3 +91,6 @@
 - Don't use `Any` as a catch-all type — use generics or sealed hierarchies.
 - Don't use implicit conversions (Scala 2) — they hide type transformations and confuse readers.
 - Don't write Scala like Java — embrace functional patterns, immutability, and the type system.
+- Don't use `null` — use `Option[T]` for optional values.
+- Don't import Java collections — use `scala.collection.immutable` equivalents.
+- Don't write Java-style `for` loops with indices — use `for`-comprehensions or collection operations.

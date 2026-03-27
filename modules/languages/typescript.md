@@ -77,3 +77,6 @@ Use ESM `import` syntax — never `require()` in TypeScript projects targeting E
 - Don't use `enum` for simple string unions — use `type Status = "active" | "inactive"` instead.
 - Don't leave floating promises without `await` or `.catch()` — errors are silently swallowed.
 - Don't use type assertions (`as Foo`) to paper over mismatches — fix the underlying type.
+- Don't use barrel index re-exports creating circular dependencies — import directly from source modules.
+- Don't write Java-style class hierarchies — prefer union types + type guards or discriminated unions.
+- Don't use `implements` on every class — TypeScript has structural typing, explicit `implements` is only needed for documentation.

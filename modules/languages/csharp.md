@@ -101,3 +101,6 @@
 - Don't use mutable shared state in static fields — thread-unsafe without explicit synchronization.
 - Don't use `string.Format` when `$""` interpolation is available — it's harder to read.
 - Don't use `dynamic` unless interop requires it — it disables compile-time type checking.
+- Don't write Java-style `IFooService`/`FooService` pairs for everything — only create an interface when multiple implementations exist or for testability at system boundaries.
+- Don't use `class` for DTOs — use `record` (C# 9+) for immutable data carriers.
+- Don't write `Task.Result` or `.Wait()` — use `await` consistently; mixing sync and async causes deadlocks.

@@ -82,3 +82,6 @@
 - Don't use `using namespace std;` in headers — it pollutes every file that includes the header.
 - Don't use `volatile` for thread synchronization — use `std::atomic` or mutexes.
 - Don't use `std::endl` for line endings — it flushes the buffer; use `'\n'` instead.
+- Don't write C-style `void*` + casts — use templates or `std::variant`.
+- Don't use `new`/`delete` — use `std::unique_ptr` and `std::make_unique`.
+- Don't write C-style error codes — use exceptions or `std::expected` (C++23).

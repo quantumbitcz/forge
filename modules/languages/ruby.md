@@ -71,3 +71,6 @@
 - Don't put logic in `initialize` beyond assignment — use factory methods or builder patterns for complex construction.
 - Don't use `Thread.new` for background work in web processes — use Sidekiq or GoodJob.
 - Don't chain more than 3-4 method calls without intermediate variables — it hampers debugging.
+- Don't write Java-style `attr_accessor` + manual `initialize` when `Struct` or `Data.define` (Ruby 3.2+) works.
+- Don't create single-use `Class.new` — Ruby blocks and lambdas replace most patterns.
+- Don't write explicit `return` at the end of methods — last expression is the return value.
