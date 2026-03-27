@@ -6,6 +6,10 @@ components:
   variant: csharp
   testing: xunit
   persistence: efcore        # efcore (only supported option currently)
+  # build_system: dotnet       # dotnet (msbuild)
+  # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd | openshift
 
 explore_agents:
   primary: "feature-dev:code-explorer"
