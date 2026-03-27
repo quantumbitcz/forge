@@ -5,6 +5,10 @@ components:
   framework: angular
   variant: typescript
   testing: vitest
+  # build_system: bun           # bun
+  # ci: github-actions           # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines
+  # container: docker            # docker | docker-compose
+  # orchestrator: ~              # N/A for standalone frontend
 
 explore_agents:
   primary: "feature-dev:code-explorer"
