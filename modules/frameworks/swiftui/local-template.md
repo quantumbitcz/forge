@@ -5,6 +5,9 @@ components:
   framework: swiftui
   variant: swift
   testing: xctest
+  # ci: github-actions           # github-actions | gitlab-ci
+  # container: ~                 # N/A for iOS app
+  # orchestrator: ~              # N/A for iOS app
 
 explore_agents:
   primary: "feature-dev:code-explorer"
