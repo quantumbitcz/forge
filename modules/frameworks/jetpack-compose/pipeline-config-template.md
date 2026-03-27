@@ -21,6 +21,9 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | architecture-reviewer | true | secondary | MVVM boundary violations, composable responsibility — findings merged into quality-gate |
 | security-reviewer | true | secondary | Data exposure, insecure storage — findings merged into quality-gate |
 | frontend-reviewer | true | secondary | Compose best practices, recomposition, accessibility — findings merged into quality-gate |
+| infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
+
+<!-- Applicable build-system bindings: gradle -->
 
 ## Domain Hotspots
 

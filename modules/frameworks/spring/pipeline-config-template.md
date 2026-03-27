@@ -20,6 +20,9 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
 | architecture-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
 | security-reviewer | true | secondary | Auth/data exposure — findings merged into quality-gate |
+| infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
+
+<!-- Applicable build-system bindings: gradle, maven, ant -->
 
 ## Domain Hotspots
 
