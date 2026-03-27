@@ -6,6 +6,10 @@ components:
   variant: typescript
   testing: vitest
   persistence: prisma        # prisma | typeorm | drizzle | mongoose
+  # build_system: npm          # npm | yarn | pnpm | bun
+  # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd
 
 explore_agents:
   primary: "feature-dev:code-explorer"
