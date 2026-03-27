@@ -85,6 +85,40 @@ EXPECTED_TESTING_FILES=(
   scalatest.md
 )
 
+EXPECTED_BUILD_SYSTEMS=(
+  gradle
+  maven
+  cmake
+  ant
+  bazel
+  sbt
+  bun
+)
+
+EXPECTED_CI_PLATFORMS=(
+  github-actions
+  gitlab-ci
+  jenkins
+  circleci
+  azure-pipelines
+  bitbucket-pipelines
+  tekton
+)
+
+EXPECTED_CONTAINER_ORCH=(
+  docker
+  docker-compose
+  docker-swarm
+  helm
+  k3s
+  microk8s
+  openshift
+  rancher
+  podman
+  argocd
+  fluxcd
+)
+
 REQUIRED_FILES=(
   conventions.md
   local-template.md
@@ -316,5 +350,95 @@ REQUIRED_FILES=(
   done
   if (( ${#failures[@]} > 0 )); then
     fail "Language files missing Dos/Don'ts: ${failures[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 14. All build system generic modules exist
+# ---------------------------------------------------------------------------
+@test "module-completeness: all expected build system modules exist" {
+  local missing=()
+  for bs in "${EXPECTED_BUILD_SYSTEMS[@]}"; do
+    if [[ ! -f "$PLUGIN_ROOT/modules/build-systems/$bs.md" ]]; then
+      missing+=("$bs")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing build system modules: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 15. Learnings file exists per build system
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each build system" {
+  local missing=()
+  for bs in "${EXPECTED_BUILD_SYSTEMS[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$bs.md" ]]; then
+      missing+=("$bs")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing build system learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 16. All CI/CD platform generic modules exist
+# ---------------------------------------------------------------------------
+@test "module-completeness: all expected CI/CD platform modules exist" {
+  local missing=()
+  for ci in "${EXPECTED_CI_PLATFORMS[@]}"; do
+    if [[ ! -f "$PLUGIN_ROOT/modules/ci-cd/$ci.md" ]]; then
+      missing+=("$ci")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing CI/CD platform modules: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 17. Learnings file exists per CI/CD platform
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each CI/CD platform" {
+  local missing=()
+  for ci in "${EXPECTED_CI_PLATFORMS[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$ci.md" ]]; then
+      missing+=("$ci")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing CI/CD platform learnings files: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 18. All container orchestration generic modules exist
+# ---------------------------------------------------------------------------
+@test "module-completeness: all expected container orchestration modules exist" {
+  local missing=()
+  for co in "${EXPECTED_CONTAINER_ORCH[@]}"; do
+    if [[ ! -f "$PLUGIN_ROOT/modules/container-orchestration/$co.md" ]]; then
+      missing+=("$co")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing container orchestration modules: ${missing[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 19. Learnings file exists per container orchestration tool
+# ---------------------------------------------------------------------------
+@test "module-completeness: learnings file exists for each container orchestration tool" {
+  local missing=()
+  for co in "${EXPECTED_CONTAINER_ORCH[@]}"; do
+    if [[ ! -f "$LEARNINGS_DIR/$co.md" ]]; then
+      missing+=("$co")
+    fi
+  done
+  if (( ${#missing[@]} > 0 )); then
+    fail "Missing container orchestration learnings files: ${missing[*]}"
   fi
 }

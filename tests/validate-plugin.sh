@@ -363,6 +363,9 @@ echo ""
 echo "--- CROSSCUTTING LAYERS ---"
 
 LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability)
+BUILD_SYSTEMS=(gradle maven cmake ant bazel sbt bun)
+CI_PLATFORMS=(github-actions gitlab-ci jenkins circleci azure-pipelines bitbucket-pipelines tekton)
+CONTAINER_ORCH=(docker docker-compose docker-swarm helm k3s microk8s openshift rancher podman argocd fluxcd)
 
 check26_fail=0
 for layer in "${LAYERS[@]}"; do
@@ -372,6 +375,75 @@ for layer in "${LAYERS[@]}"; do
   fi
 done
 check "All crosscutting layer directories exist" "$check26_fail"
+
+echo ""
+echo "--- BUILD SYSTEMS ---"
+
+# Check 27: All build system generic modules exist
+check27_fail=0
+for bs in "${BUILD_SYSTEMS[@]}"; do
+  if [ ! -f "$ROOT/modules/build-systems/$bs.md" ]; then
+    echo "    Missing: modules/build-systems/$bs.md"
+    check27_fail=1
+  fi
+done
+check "All 7 build system generic modules exist" "$check27_fail"
+
+# Check 28: All build system learnings files exist
+check28_fail=0
+for bs in "${BUILD_SYSTEMS[@]}"; do
+  if [ ! -f "$ROOT/shared/learnings/$bs.md" ]; then
+    echo "    Missing: shared/learnings/$bs.md"
+    check28_fail=1
+  fi
+done
+check "All build system learnings files exist" "$check28_fail"
+
+echo ""
+echo "--- CI/CD PLATFORMS ---"
+
+# Check 29: All CI/CD platform generic modules exist
+check29_fail=0
+for ci in "${CI_PLATFORMS[@]}"; do
+  if [ ! -f "$ROOT/modules/ci-cd/$ci.md" ]; then
+    echo "    Missing: modules/ci-cd/$ci.md"
+    check29_fail=1
+  fi
+done
+check "All 7 CI/CD platform generic modules exist" "$check29_fail"
+
+# Check 30: All CI/CD platform learnings files exist
+check30_fail=0
+for ci in "${CI_PLATFORMS[@]}"; do
+  if [ ! -f "$ROOT/shared/learnings/$ci.md" ]; then
+    echo "    Missing: shared/learnings/$ci.md"
+    check30_fail=1
+  fi
+done
+check "All CI/CD platform learnings files exist" "$check30_fail"
+
+echo ""
+echo "--- CONTAINER ORCHESTRATION ---"
+
+# Check 31: All container orchestration generic modules exist
+check31_fail=0
+for co in "${CONTAINER_ORCH[@]}"; do
+  if [ ! -f "$ROOT/modules/container-orchestration/$co.md" ]; then
+    echo "    Missing: modules/container-orchestration/$co.md"
+    check31_fail=1
+  fi
+done
+check "All 11 container orchestration generic modules exist" "$check31_fail"
+
+# Check 32: All container orchestration learnings files exist
+check32_fail=0
+for co in "${CONTAINER_ORCH[@]}"; do
+  if [ ! -f "$ROOT/shared/learnings/$co.md" ]; then
+    echo "    Missing: shared/learnings/$co.md"
+    check32_fail=1
+  fi
+done
+check "All container orchestration learnings files exist" "$check32_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
