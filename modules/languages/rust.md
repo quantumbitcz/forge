@@ -78,6 +78,8 @@
 - Use `#[derive(...)]` for `Debug`, `Clone`, `PartialEq` — don't implement manually unless necessary.
 - Use `Arc<Mutex<T>>` for shared mutable state across threads — prefer `tokio::sync::Mutex` in async.
 - Use `cargo fmt` for consistent formatting — no style debates needed.
+- All bindings are immutable by default — use `mut` only when mutation is genuinely required. Let the compiler guide you.
+- Prefer `&T` (shared/immutable borrow) over `&mut T` unless mutation is necessary.
 
 ## Don'ts
 - Don't use `.unwrap()` in production code — it panics on `None`/`Err`; use `?` or explicit matching.
@@ -87,3 +89,8 @@
 - Don't use `Box<dyn Error>` in library APIs — use typed error enums for downstream matching.
 - Don't suppress compiler warnings — Rust warnings are almost always correct and actionable.
 - Don't use `String` when `&str` suffices — avoid unnecessary heap allocations.
+- Don't mark variables `mut` preemptively — let the compiler tell you when you need it.
+- Don't reach for `Cell`/`RefCell` as a first resort for interior mutability — redesign data flow first.
+- Don't write C-style manual state machines — use enums with `match` for exhaustive state handling.
+- Don't use `Arc<Mutex<T>>` as the default concurrency primitive — consider channels (`mpsc`, `crossbeam`) first.
+- Don't write Java-style trait hierarchies — keep traits focused and use trait bounds for composition.
