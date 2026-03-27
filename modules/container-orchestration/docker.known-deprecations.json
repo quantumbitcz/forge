@@ -1,0 +1,126 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-27",
+  "deprecations": [
+    {
+      "pattern": "docker-compose\\s",
+      "replacement": "Use 'docker compose' (V2 plugin) — the standalone docker-compose binary (V1) is deprecated since July 2023 and no longer maintained",
+      "package": "docker-compose",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "--link\\s",
+      "replacement": "Use Docker networks instead of --link — legacy container linking is deprecated and does not work with Docker Swarm or Compose V2 networks",
+      "package": "docker",
+      "since": "1.9.0",
+      "removed_in": null,
+      "applies_from": "1.9.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "^MAINTAINER\\s",
+      "replacement": "Use LABEL org.opencontainers.image.authors='name' — MAINTAINER instruction is deprecated since Docker 1.13",
+      "package": "docker",
+      "since": "1.13.0",
+      "removed_in": null,
+      "applies_from": "1.13.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "DOCKER_BUILDKIT=0",
+      "replacement": "The legacy builder (DOCKER_BUILDKIT=0) is deprecated since Docker 23.0 — BuildKit is the default and only supported builder",
+      "package": "docker",
+      "since": "23.0.0",
+      "removed_in": null,
+      "applies_from": "23.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "version:\\s*['\"]2",
+      "replacement": "Compose file format version 2.x is deprecated — use the top-level format without a version key (Compose V2 infers the format)",
+      "package": "docker-compose",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "version:\\s*['\"]3",
+      "replacement": "The explicit version key in Compose files is deprecated — Compose V2 infers the format automatically; remove the version field",
+      "package": "docker-compose",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "docker\\s+build\\s+(?!.*buildx)",
+      "replacement": "Consider using 'docker buildx build' for advanced features (multi-platform, remote builders, advanced caching) — docker build delegates to BuildKit but lacks buildx-specific features",
+      "package": "docker",
+      "since": "19.03.0",
+      "removed_in": null,
+      "applies_from": "19.03.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "aufs|devicemapper",
+      "replacement": "AUFS and devicemapper storage drivers are deprecated — use overlay2 (default since Docker 18.09)",
+      "package": "docker",
+      "since": "18.09.0",
+      "removed_in": "25.0.0",
+      "applies_from": "18.09.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "docker\\s+swarm\\s+init.*--live-restore",
+      "replacement": "Live restore is not compatible with Docker Swarm mode — use standalone daemon config for live restore",
+      "package": "docker",
+      "since": "17.06.0",
+      "removed_in": null,
+      "applies_from": "17.06.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\\bADD\\s+https?://",
+      "replacement": "ADD with remote URLs is deprecated in Dockerfile — use COPY with a preceding RUN curl/wget for explicit control and caching",
+      "package": "docker",
+      "since": "20.10.0",
+      "removed_in": null,
+      "applies_from": "20.10.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    }
+  ]
+}

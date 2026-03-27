@@ -74,3 +74,6 @@
 - Don't use mutable static fields — they create hidden global state and thread-safety issues.
 - Don't use `new Date()` for timestamps — use `Instant.now()` for unambiguous UTC timestamps.
 - Don't use `==` to compare objects (except primitives) — use `.equals()` or `Objects.equals()`.
+- Don't avoid modern Java features — use records (16+), sealed classes (17+), pattern matching (21+). Pre-Java 17 patterns are legacy.
+- Don't write utility classes with `private` constructor — use static methods on relevant domain types or consider if a record fits.
+- Don't use raw `Map<String, Object>` for structured data — define a record.

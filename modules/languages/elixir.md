@@ -81,6 +81,8 @@
 - Use `@spec` and `@type` annotations and run Dialyzer in CI.
 - Use `mix format` for consistent code style — it's built into the language toolchain.
 - Use `with` for composing multiple fallible operations — it replaces nested `case` statements.
+- All data structures are immutable — every transformation returns a new value. Embrace pipe operator `|>` chains for data transformations.
+- Use Agent or GenServer for managed mutable state — these provide controlled, process-isolated mutation.
 
 ## Don'ts
 - Don't use `String.to_atom/1` with user input — atoms are never garbage collected.
@@ -90,3 +92,8 @@
 - Don't use `Enum` functions on large datasets that could be lazy — use `Stream` for lazy evaluation.
 - Don't block `GenServer` callbacks with slow operations — delegate to Tasks.
 - Don't use `:erlang.apply/3` or `Code.eval_string` with user input — it enables arbitrary code execution.
+- Don't use Process dictionary as a mutable state workaround — it's invisible to other processes and untraceable.
+- Don't use ETS as a substitute for properly designed GenServer state unless you need concurrent read access from multiple processes.
+- Don't write OOP-style GenServer with massive state — decompose into smaller, focused processes.
+- Don't chain `Enum.map |> Enum.filter |> Enum.reduce` — use `for` comprehensions for multi-step transforms with filtering.
+- Don't create deep module hierarchies mimicking Java packages — keep modules flat and descriptive.

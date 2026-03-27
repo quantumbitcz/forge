@@ -63,6 +63,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
 - Agents cannot read other agents' in-progress work (isolation enforced by separate dispatch)
 - Agents cannot send messages to the user (only the orchestrator presents to user)
 - Agents cannot modify shared contracts (scoring.md, state-schema.md, etc.)
+- Agents cannot undo, revert, or overwrite work produced by another agent — if an agent detects a conflict with another agent's output, it MUST report the conflict in stage notes and let the orchestrator decide the resolution strategy.
 
 ## 5. Data Flow Summary
 

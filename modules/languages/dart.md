@@ -79,3 +79,6 @@
 - Don't use `print()` for logging — use the `logging` package or a structured logging solution.
 - Don't use mutable top-level variables — they create hidden global state.
 - Don't ignore `dart analyze` warnings — they indicate real code quality issues.
+- Don't write Java-style `Builder` pattern — use named parameters with required/optional + `copyWith()` methods.
+- Don't use `Object` when generics fit — Dart has full generics, use them.
+- Don't create `Singleton` pattern manually — use top-level variables or `late final`.

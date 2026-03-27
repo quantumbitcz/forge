@@ -8,6 +8,10 @@ components:
     variant: kotlin
     testing: kotest
     persistence: sqldelight
+    # build_system: gradle       # gradle
+    # ci: github-actions         # github-actions | gitlab-ci
+    # container: ~               # N/A for multiplatform library
+    # orchestrator: ~            # N/A for multiplatform library
     commands:
       build: "./gradlew :shared:build"
       test: "./gradlew :shared:allTests"

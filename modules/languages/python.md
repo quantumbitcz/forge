@@ -74,3 +74,6 @@
 - Don't use `import *` — it pollutes the namespace and makes tracing imports impossible.
 - Don't use `global` variables for runtime state — use dependency injection or `contextvars`.
 - Don't use `assert` for input validation — assertions are stripped in optimized mode (`-O`).
+- Don't write Java-style `AbstractBaseFactory` class hierarchies — use `Protocol` + `@dataclass` for structural subtyping.
+- Don't use `@staticmethod` when a module-level function works — classes are not namespaces in Python.
+- Don't create single-method classes — use plain functions; closures replace most strategy/command patterns.

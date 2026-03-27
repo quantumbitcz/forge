@@ -81,3 +81,6 @@
 - Don't use `DispatchQueue.main.async` in `@MainActor` code — it creates mixed concurrency models.
 - Don't nest more than 3 `if let` / `guard let` — refactor into smaller functions.
 - Don't use `Any` or `AnyObject` without type narrowing — it defeats the type system.
+- Don't write ObjC-style delegate pattern when Combine or async/await fits the use case.
+- Don't use `@objc` unless Objective-C interop is genuinely required.
+- Don't create `Manager`/`Helper` classes — use value types and protocols.

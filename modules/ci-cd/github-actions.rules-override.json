@@ -1,0 +1,47 @@
+{
+  "extends": "github-actions",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "CI-GHA-001",
+        "name": "unpinned-third-party-action",
+        "pattern": "uses:\\s+[^/]+/[^@]+@v\\d|uses:\\s+[^/]+/[^@]+@main|uses:\\s+[^/]+/[^@]+@master|uses:\\s+[^/]+/[^@]+@latest",
+        "scope_pattern": ".github/workflows/*.yml",
+        "severity": "WARNING",
+        "category": "CONV-CI",
+        "message": "Third-party action pinned to mutable tag — pin to full commit SHA for supply chain security",
+        "fix_hint": "Replace @vN tag with @<full-sha> and add a version comment (e.g., # v4.1.7)"
+      },
+      {
+        "id": "CI-GHA-002",
+        "name": "missing-permissions-block",
+        "pattern": "^on:\\s*$|^on:$",
+        "scope_pattern": ".github/workflows/*.yml",
+        "severity": "WARNING",
+        "category": "CONV-CI",
+        "message": "Workflow may be missing explicit permissions block — default GITHUB_TOKEN permissions are overly broad",
+        "fix_hint": "Add a top-level 'permissions:' block with minimum required permissions (start with contents: read)"
+      },
+      {
+        "id": "CI-GHA-003",
+        "name": "secrets-in-run-expression",
+        "pattern": "\\$\\{\\{\\s*secrets\\.[^}]+\\}\\}",
+        "scope_pattern": ".github/workflows/*.yml",
+        "severity": "INFO",
+        "category": "CONV-CI",
+        "message": "Secret used in expression context — ensure it is not interpolated directly in run: steps (expression injection risk)",
+        "fix_hint": "Pass secrets via env: block and reference as $SECRET_NAME in run: steps instead of inline ${{ secrets.* }}"
+      },
+      {
+        "id": "CI-GHA-004",
+        "name": "pull-request-target-with-checkout",
+        "pattern": "pull_request_target",
+        "scope_pattern": ".github/workflows/*.yml",
+        "severity": "CRITICAL",
+        "category": "CONV-CI",
+        "message": "pull_request_target event detected — verify workflow does NOT checkout PR head code (security risk: attacker-controlled code with secret access)",
+        "fix_hint": "Use pull_request event for building PR code, or ensure checkout defaults to base branch. For secret access, use workflow_run pattern."
+      }
+    ]
+  }
+}

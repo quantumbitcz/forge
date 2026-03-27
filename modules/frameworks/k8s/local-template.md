@@ -5,6 +5,9 @@ components:
   framework: k8s
   variant: ~
   testing: ~
+  # ci: github-actions           # github-actions | gitlab-ci | jenkins
+  # container: ~                 # N/A (k8s IS the orchestrator)
+  # orchestrator: argocd         # argocd | fluxcd | k3s | microk8s
 
 explore_agents:
   primary: "feature-dev:code-explorer"

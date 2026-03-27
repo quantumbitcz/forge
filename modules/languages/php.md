@@ -73,3 +73,6 @@
 - Don't use `==` for comparisons — type juggling produces surprising results (`"0" == false`, `"" == 0`).
 - Don't put business logic in controllers — use services, handlers, or use case classes.
 - Don't use `var` for class properties — use typed properties with visibility modifiers.
+- Don't write Java-style getter/setter methods when `readonly` properties (PHP 8.1+) or constructor promotion works.
+- Don't create `AbstractBaseService` class hierarchies — use composition and interfaces.
+- Don't use `array` for everything — use typed DTOs with `readonly class` (PHP 8.2+).

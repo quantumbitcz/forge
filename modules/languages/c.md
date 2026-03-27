@@ -90,3 +90,6 @@ Every header must use an include guard:
 - Don't use pointer casts for type punning — it violates strict aliasing; use `memcpy` instead.
 - Don't use magic numbers — replace with named `#define` constants or `enum` values.
 - Don't use `sprintf`, `strcpy`, or other unbounded string functions — use their `n`-bounded variants.
+- Don't write C++-style OOP with function pointer tables unless the abstraction boundary is genuinely needed — prefer simple data + functions.
+- Don't create deep abstraction layers — C thrives with flat, transparent data structures.
+- Don't use `void*` callbacks when a typed function pointer with context struct works.

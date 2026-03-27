@@ -1,0 +1,114 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-27",
+  "deprecations": [
+    {
+      "pattern": "<modelVersion>4\\.0\\.0</modelVersion>",
+      "replacement": "Maven 4.x introduces modelVersion 4.1.0 with build/consumer POM split — plan migration when upgrading to Maven 4",
+      "package": "maven",
+      "since": "4.0.0-alpha-1",
+      "removed_in": null,
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "maven-compiler-plugin</artifactId>\\s*<version>2\\.",
+      "replacement": "Use maven-compiler-plugin 3.13+ — version 2.x does not support Java 9+ module system, release flag, or incremental compilation",
+      "package": "org.apache.maven.plugins",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "maven-deploy-plugin</artifactId>\\s*<version>2\\.",
+      "replacement": "Use maven-deploy-plugin 3.1+ — version 2.x lacks atomic deploy, retry support, and proper error handling",
+      "package": "org.apache.maven.plugins",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "<source>1\\.[5-8]</source>",
+      "replacement": "Use <release> instead of <source>/<target> — the release flag validates against the target JDK API surface, preventing accidental use of newer APIs",
+      "package": "maven-compiler-plugin",
+      "since": "3.6.0",
+      "removed_in": null,
+      "applies_from": "3.6.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "maven-site-plugin</artifactId>\\s*<version>[12]\\.",
+      "replacement": "Use maven-site-plugin 4.0+ — versions 1.x/2.x use legacy Doxia rendering with known security issues",
+      "package": "org.apache.maven.plugins",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "<packaging>ejb</packaging>",
+      "replacement": "EJB packaging is deprecated — use spring-boot-maven-plugin or quarkus-maven-plugin for modern application packaging",
+      "package": "maven",
+      "since": "3.5.0",
+      "removed_in": null,
+      "applies_from": "3.5.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "plexus-container-default",
+      "replacement": "Plexus IoC is replaced by Eclipse Sisu in Maven 3.x — plugins using plexus-container-default directly are incompatible with Maven 4",
+      "package": "org.codehaus.plexus",
+      "since": "3.0.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "maven-archetype-plugin</artifactId>\\s*<version>2\\.",
+      "replacement": "Use maven-archetype-plugin 3.2+ — version 2.x has unresolved partial generation bugs and poor Groovy script support",
+      "package": "org.apache.maven.plugins",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@deprecated.*AbstractMojo",
+      "replacement": "Custom Mojo development should use maven-plugin-annotations 3.13+ with @Mojo annotation instead of Javadoc-based annotations",
+      "package": "org.apache.maven.plugin-tools",
+      "since": "3.0.0",
+      "removed_in": "4.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    }
+  ]
+}

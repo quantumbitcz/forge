@@ -1,0 +1,47 @@
+{
+  "extends": "helm",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "CONT-HELM-001",
+        "name": "latest-image-tag-in-values",
+        "pattern": "tag:\\s*['\"]?latest['\"]?",
+        "scope_pattern": "values*.yaml",
+        "severity": "WARNING",
+        "category": "CONV-INFRA",
+        "message": "Image tag 'latest' in Helm values — use a specific version or appVersion for reproducible deployments",
+        "fix_hint": "Set image.tag to a specific version (e.g., '1.2.3') or leave empty to use Chart.appVersion"
+      },
+      {
+        "id": "CONT-HELM-002",
+        "name": "secrets-in-values",
+        "pattern": "(password|secret|token|apiKey|api_key):\\s*['\"][^{]",
+        "scope_pattern": "values*.yaml",
+        "severity": "CRITICAL",
+        "category": "CONV-INFRA",
+        "message": "Plaintext secret in Helm values file — secrets committed to Git are a security risk",
+        "fix_hint": "Use Sealed Secrets, External Secrets Operator, or SOPS-encrypted values files for secret management"
+      },
+      {
+        "id": "CONT-HELM-003",
+        "name": "missing-resource-limits",
+        "pattern": "containers:\\s*\\n\\s+-\\s+name:",
+        "scope_pattern": "templates/deployment.yaml",
+        "severity": "WARNING",
+        "category": "CONV-INFRA",
+        "message": "Container definition may be missing resource limits — set resources.limits for CPU and memory",
+        "fix_hint": "Add resources: {{ toYaml .Values.resources | nindent 12 }} to the container spec and define defaults in values.yaml"
+      },
+      {
+        "id": "CONT-HELM-004",
+        "name": "missing-values-schema",
+        "pattern": "Chart\\.yaml",
+        "scope_pattern": "Chart.yaml",
+        "severity": "INFO",
+        "category": "CONV-INFRA",
+        "message": "Consider adding values.schema.json for chart values validation",
+        "fix_hint": "Create values.schema.json with JSON Schema defining required fields, types, and constraints for values.yaml"
+      }
+    ]
+  }
+}

@@ -6,6 +6,10 @@ components:
   variant: go
   testing: go-testing
   persistence: gorm
+  # build_system: go            # go
+  # ci: github-actions         # github-actions | gitlab-ci
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd | openshift
 
 explore_agents:
   primary: "feature-dev:code-explorer"

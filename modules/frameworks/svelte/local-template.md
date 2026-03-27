@@ -5,6 +5,10 @@ components:
   framework: svelte
   variant: typescript
   testing: vitest
+  # build_system: bun           # bun
+  # ci: github-actions           # github-actions | gitlab-ci
+  # container: docker            # docker
+  # orchestrator: ~              # N/A for standalone SPA
 
 explore_agents:
   primary: "feature-dev:code-explorer"

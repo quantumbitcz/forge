@@ -7,6 +7,10 @@ components:
   testing: kotest           # kotest | junit5-assertj
   web: mvc                  # mvc | webflux
   persistence: hibernate    # hibernate | r2dbc | jooq | exposed
+  # build_system: gradle      # gradle | maven
+  # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm | k3s | microk8s | openshift | rancher | argocd | fluxcd
 
 explore_agents:
   primary: "feature-dev:code-explorer"
