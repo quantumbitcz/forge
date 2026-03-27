@@ -70,6 +70,10 @@
 - Use `go vet`, `staticcheck`, and `golangci-lint` in CI — they catch bugs the compiler misses.
 - Use `table-driven tests` for comprehensive test coverage with minimal code duplication.
 - Use `io.Reader`/`io.Writer` interfaces for composable I/O — avoid concrete types in function signatures.
+- Prefer value receivers over pointer receivers for small, immutable types — value semantics prevent mutation side effects.
+- Return copies of internal slices and maps from exported methods — never expose mutable internals.
+- Use `const` for all compile-time constants.
+- Design structs with unexported fields + constructor functions to enforce invariants.
 
 ## Don'ts
 - Don't ignore errors (`result, _ := fn()`) — always check and handle or propagate them.
@@ -79,3 +83,9 @@
 - Don't leak goroutines — every goroutine must have a termination condition or context cancellation.
 - Don't use package-level mutable `var` for runtime state — pass dependencies through constructors.
 - Don't use `string` concatenation in loops — use `strings.Builder` (O(n) vs O(n²)).
+- Don't return pointers to internal state — callers can mutate your data through the pointer.
+- Don't use package-level `var` for values that never change after init — use `const` or unexported variables with accessor functions.
+- Don't write Java-style interface hierarchies — accept interfaces, return structs.
+- Don't use `init()` for dependency injection — pass dependencies explicitly via constructors.
+- Don't wrap errors without adding context — use `fmt.Errorf("doing X: %w", err)`.
+- Don't create an interface before you have two implementations — let interfaces emerge from usage.
