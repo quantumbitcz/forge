@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-03-27",
+  "deprecations": [
+    {
+      "pattern": "apiVersion:\\s*v1\\b",
+      "replacement": "Use apiVersion: v2 in Chart.yaml — v1 is the Helm 2 format; Helm 3 requires v2 for features like dependencies and type fields",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "helm\\s+init",
+      "replacement": "helm init was a Helm 2 command for installing Tiller — Helm 3 has no server-side component; remove this command",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "helm\\s+serve",
+      "replacement": "helm serve was removed in Helm 3 — use ChartMuseum, Harbor, or OCI registries for chart hosting",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "crd-install",
+      "replacement": "The crd-install hook is removed in Helm 3 — place CRD files in the crds/ directory instead; they are applied before chart templates",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "requirements\\.yaml",
+      "replacement": "requirements.yaml is deprecated in Helm 3 — move dependencies to the dependencies field in Chart.yaml",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "tillerNamespace|TILLER",
+      "replacement": "Tiller was removed in Helm 3 — all release state is stored as Kubernetes secrets in the target namespace",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "helm\\s+delete\\s+--purge",
+      "replacement": "The --purge flag is removed in Helm 3 — helm uninstall always removes release records (use --keep-history to preserve them)",
+      "package": "helm",
+      "since": "3.0.0",
+      "removed_in": "3.0.0",
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "extensions/v1beta1.*Deployment",
+      "replacement": "extensions/v1beta1 Deployment is removed — use apps/v1 Deployment (removed in Kubernetes 1.16)",
+      "package": "kubernetes",
+      "since": "1.16.0",
+      "removed_in": "1.16.0",
+      "applies_from": "1.9.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-03-27",
+      "addedBy": "seed"
+    }
+  ]
+}
