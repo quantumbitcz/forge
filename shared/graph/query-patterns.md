@@ -53,6 +53,7 @@ Identifies which files consume a specific class or entity, and which conventions
 
 ```cypher
 // What breaks if I change a specific class/entity?
+// Note: project_conventions is project-wide (USES_CONVENTION lives on ProjectConfig, not per-file)
 MATCH (entity:ProjectClass {name: $className})-[:CLASS_IN_FILE]->(f:ProjectFile)
 MATCH (consumer:ProjectFile)-[:IMPORTS]->(f)
 OPTIONAL MATCH (pc:ProjectConfig)-[:USES_CONVENTION]->(conv)

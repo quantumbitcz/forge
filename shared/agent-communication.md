@@ -58,7 +58,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
 
 ## 4. What Agents CANNOT Do
 
-- Agents cannot dispatch other agents (only the orchestrator dispatches)
+- Agents cannot dispatch agents in other stages (all inter-stage data flows through the orchestrator via stage notes). However, coordinator agents (quality gate, test gate, PR builder, planner, scaffolder) may dispatch sub-agents within their own stage for specialized analysis or feedback capture.
 - Agents cannot write to state.json (only the orchestrator writes state)
 - Agents cannot read other agents' in-progress work (isolation enforced by separate dispatch)
 - Agents cannot send messages to the user (only the orchestrator presents to user)
