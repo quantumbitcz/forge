@@ -6,6 +6,10 @@ components:
   variant: rust
   testing: rust-test
   persistence: sqlx        # sqlx (default) | diesel
+  # build_system: cargo        # cargo
+  # ci: github-actions         # github-actions | gitlab-ci
+  # container: docker          # docker | docker-compose | podman
+  # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd
 
 explore_agents:
   primary: "feature-dev:code-explorer"
