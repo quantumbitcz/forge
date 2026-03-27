@@ -5,6 +5,10 @@ components:
   framework: embedded
   variant: c
   testing: ~
+  # build_system: cmake          # cmake
+  # ci: github-actions           # github-actions | gitlab-ci
+  # container: ~                 # N/A for embedded firmware
+  # orchestrator: ~              # N/A for embedded firmware
 
 explore_agents:
   primary: "feature-dev:code-explorer"
