@@ -10,14 +10,14 @@
 
 <!-- Check all that apply -->
 - [ ] Pipeline agents (`agents/pl-*.md`)
-- [ ] Module agents (`agents/be-*`, `agents/fe-*`)
+- [ ] Review agents (`agents/*-reviewer.md`, `agents/*-verifier.md`)
 - [ ] Shared references (`shared/`)
 - [ ] Skills (`skills/`)
 - [ ] Hooks (`hooks/`)
 - [ ] Plugin manifest (`plugin.json`)
-- [ ] Module: spring (`modules/frameworks/spring/`)
-- [ ] Module: react (`modules/frameworks/react/`)
-- [ ] Documentation (`README.md`, `CLAUDE.md`)
+- [ ] Framework modules (`modules/frameworks/`)
+- [ ] Crosscutting layer modules (`modules/languages/`, `modules/testing/`, `modules/build-systems/`, etc.)
+- [ ] Documentation (`README.md`, `CLAUDE.md`, `CONTRIBUTING.md`)
 
 ## Validation
 

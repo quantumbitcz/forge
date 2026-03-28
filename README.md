@@ -66,7 +66,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-13 skills provide the user-facing interface to the pipeline and its subsystems.
+17 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -83,10 +83,14 @@ Then add to `.claude/settings.json`:
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
 | `/verify` | Quick build + lint + test check without a full pipeline run |
+| `/graph-init` | Initialize the Neo4j knowledge graph (Docker-managed, opt-in) |
+| `/graph-status` | Show knowledge graph connection status and node/relationship counts |
+| `/graph-query` | Run Cypher queries against the knowledge graph |
+| `/graph-rebuild` | Rebuild the knowledge graph from the current codebase |
 
 ## Available modules
 
-21 framework modules under `modules/frameworks/`, 9 language files under `modules/languages/`, 11 testing framework files under `modules/testing/`, and 10 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, and `modules/observability/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
+21 framework modules under `modules/frameworks/`, 15 language files under `modules/languages/`, 19 testing framework files under `modules/testing/`, and 13 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, `modules/observability/`, `modules/build-systems/`, `modules/ci-cd/`, and `modules/container-orchestration/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
 
 | Framework | Target stack |
 |-----------|-------------|
@@ -182,15 +186,16 @@ touch .claude/pipeline-log.md
 |   (.claude/)              |  .claude/pipeline-config.md (mutable, auto-tuned)
 |                           |  .claude/pipeline-log.md (learnings + run history)
 +---------------------------+
-|   Module                  |  modules/ (21 framework modules)
-|   (conventions, rules,    |  conventions.md, rules-override.json
-|    deprecations, scripts) |  known-deprecations.json, local-template.md
-|                           |  pipeline-config-template.md
+|   Module                  |  modules/ (21 frameworks, 15 languages, 19 testing,
+|   (conventions, rules,    |  13 crosscutting layers incl. build-systems,
+|    deprecations, scripts) |  ci-cd, container-orchestration)
+|                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
 |   Shared core             |  agents/ (29 pipeline + review agents)
-|   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings, recovery)
-|    scoring, state)        |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (13 user-facing commands)
+|   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
+|    scoring, state)        |  recovery, graph, discovery)
+|                           |  hooks/ (check engine, checkpoint, feedback capture)
+|                           |  skills/ (17 user-facing commands)
 +---------------------------+
 ```
 
@@ -245,14 +250,14 @@ Key sections:
 The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
 
 ```bash
-# Run all tests (~248 tests, ~30s)
+# Run all tests (~289 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (28 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (92 tests)
-./tests/run-all.sh contract     # Document contract compliance (90 tests)
-./tests/run-all.sh scenario     # Multi-script integration (39 tests)
+./tests/run-all.sh structural   # Plugin integrity (34 checks, no bats needed)
+./tests/run-all.sh unit         # Shell script behavior (99 tests)
+./tests/run-all.sh contract     # Document contract compliance (114 tests)
+./tests/run-all.sh scenario     # Multi-script integration (42 tests)
 ```
 
 ## Agents
@@ -319,9 +324,9 @@ modules/frameworks/fastapi/
 
 Add `shared/learnings/fastapi.md` to track module-specific learnings across runs. For new languages, also add `shared/learnings/{lang}.md`. For new testing frameworks, also add `shared/learnings/{test-framework}.md`.
 
-### 3. Update test arrays
+### 3. Update test minimum counts
 
-Add the module name to `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`. Skipping this step causes silent validation gaps — tests pass but skip the new module.
+Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Bump the corresponding `MIN_*` constant (e.g., `MIN_FRAMEWORKS`) to catch accidental deletions. Skipping this step means the new module is tested but accidental removal goes undetected.
 
 ### 4. Wire agents into the local template
 
@@ -374,10 +379,14 @@ dev-pipeline/
     version-compat-reviewer.md
     infra-deploy-reviewer.md
     infra-deploy-verifier.md
-  skills/                               # 13 user-facing skills
+  skills/                               # 17 user-facing skills
     bootstrap-project/
     codebase-health/
     deploy/
+    graph-init/
+    graph-query/
+    graph-rebuild/
+    graph-status/
     migration/
     pipeline-history/
     pipeline-init/
@@ -418,6 +427,21 @@ dev-pipeline/
       examples/                         #   Per-language pattern examples
         c/ go/ java/ kotlin/
         python/ rust/ swift/ typescript/
+    discovery/                          # Cross-repo project discovery
+      detect-project-type.sh            #   Framework/language auto-detection
+      discover-projects.sh              #   Multi-repo discovery
+    graph/                              # Knowledge graph (opt-in, Neo4j)
+      schema.md                         #   Node types, relationships, lifecycle
+      query-patterns.md                 #   Cypher query templates
+      seed.cypher                       #   Pre-computed module relationship seed
+      generate-seed.sh                  #   Generates seed.cypher from module data
+      canonical-pairings.json           #   Module relationship data
+      dependency-map.json               #   Module dependency data
+      build-project-graph.sh            #   Build graph from codebase
+      enrich-symbols.sh                 #   Enrich graph with symbol analysis
+      incremental-update.sh             #   Incremental graph updates
+      neo4j-health.sh                   #   Neo4j health checks
+      docker-compose.neo4j.yml          #   Docker-managed Neo4j instance
     learnings/                          # Per-module learnings + schemas
       README.md                         #   Learnings system overview
       {module-name}.md                  #   Framework, language, testing, and layer learnings files
@@ -437,7 +461,7 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 21 framework modules + 9 languages + 11 testing + 10 crosscutting layers
+  modules/                              # 21 frameworks + 15 languages + 19 testing + 13 crosscutting layers
     frameworks/                         # Per-framework conventions and config
       angular/ aspnet/ axum/ django/ embedded/ express/ fastapi/
       gin/ go-stdlib/ jetpack-compose/ k8s/
@@ -455,15 +479,18 @@ dev-pipeline/
     storage/                            # Object storage patterns
     auth/                               # Authentication/authorization patterns
     observability/                      # Metrics, tracing, and logging patterns
+    build-systems/                      # Build tool patterns (Gradle, Maven, CMake, Bazel, etc.)
+    ci-cd/                              # CI/CD platform patterns (GitHub Actions, GitLab CI, etc.)
+    container-orchestration/            # Container/orchestration patterns (Docker, Helm, ArgoCD, etc.)
     (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
-  tests/                                # 4-tier test suite (~248 tests)
+  tests/                                # 4-tier test suite (~289 tests)
     run-all.sh                          #   Test runner (all tiers or individual)
     validate-plugin.sh                  #   Structural validation (no bats needed)
     fixtures/                           #   Test fixture data
     helpers/                            #   Shared test helpers
-    lib/                                #   bats-core, bats-assert, bats-support
+    lib/                                #   bats-core, bats-assert, bats-support, module-lists.bash
   CLAUDE.md
   CONTRIBUTING.md
   SECURITY.md

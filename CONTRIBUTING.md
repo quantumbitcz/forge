@@ -86,7 +86,7 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 2. Create `shared/learnings/{name}.md` for per-module learnings accumulation. For new languages, also add `shared/learnings/{lang}.md`. For new testing frameworks, also add `shared/learnings/{test-framework}.md`.
 3. Review agents are cross-cutting (shared) and new modules typically do not need new agents unless they have unique review needs. If a new agent is required, use a descriptive name (e.g., `embedded-memory-reviewer`)
 4. Wire review agents into the local template's `quality_gate` batches
-5. Update test arrays: `FRAMEWORKS` in `tests/validate-plugin.sh` and `EXPECTED_FRAMEWORKS` in `tests/contract/module-completeness.bats`
+5. Update test minimum counts: bump the corresponding `MIN_*` constant in `tests/lib/module-lists.bash` (module lists are auto-discovered from disk)
 6. Add the module to `README.md` under "Available modules" and update any modules list references
 7. Update `CLAUDE.md` under "Module specifics"
 
