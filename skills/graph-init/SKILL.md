@@ -77,7 +77,7 @@ Run this in a loop (every 3 seconds) until it exits 0 or 60 seconds have elapsed
 Check for the seed marker node to determine if the seed has already been imported:
 
 ```bash
-echo "MATCH (n:_SeedMarker {id: 'dev-pipeline-seed-v1'}) RETURN count(n)" | \
+echo "MATCH (n:_SeedMarker {id: 'dev-pipeline-seed-v2'}) RETURN count(n)" | \
   docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
 ```
 

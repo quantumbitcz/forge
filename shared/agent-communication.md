@@ -81,7 +81,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     SHIP agent → stage_8_notes → orchestrator → LEARN dispatch prompt
                                               ↘ Linear: PR link, status
     FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
-    LEARN (retro) → stage_9_notes → pipeline-log.md (PREEMPT hit counts)
+    LEARN (retro) → stage_final_notes → pipeline-log.md (PREEMPT hit counts)
                                   → pipeline-config.md (auto-tuning)
     LEARN (recap) → recap report ↘ Linear: summary comment
 

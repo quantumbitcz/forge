@@ -13,7 +13,6 @@ Resolves all convention bindings available for a given framework and language co
 ```cypher
 // Given a framework and language, find all available convention bindings
 MATCH (f:Framework {name: $framework})-[:HAS_BINDING]->(b:FrameworkBinding)
-WHERE b.layer IN ['persistence', 'auth', 'observability', 'testing', 'databases']
 OPTIONAL MATCH (b)-[:EXTENDS]->(m:LayerModule)
 OPTIONAL MATCH (f)-[:HAS_VARIANT]->(l:Language {name: $language})
 RETURN f, b, m, l ORDER BY b.layer
@@ -153,4 +152,4 @@ RETURN a.name, a.role
 ```
 
 **Parameters:**
-- `$contractName` — Filename of the shared contract without path prefix (e.g., `"scoring.md"`, `"stage-contract.md"`, `"state-schema.md"`, `"frontend-design-theory.md"`).
+- `$contractName` — Name of the shared contract without path prefix or `.md` extension (e.g., `"scoring"`, `"stage-contract"`, `"state-schema"`, `"frontend-design-theory"`).

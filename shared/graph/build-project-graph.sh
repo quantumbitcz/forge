@@ -711,7 +711,7 @@ for line in block.strip().split('\n'):
       testing)
         echo "MATCH (pc:ProjectConfig {project: '$(cypher_escape "$PROJECT_ROOT")'}), (t:TestingFramework {name: '$(cypher_escape "$val")'}) CREATE (pc)-[:USES_CONVENTION]->(t);"
         ;;
-      database|persistence|migrations|api_protocol|messaging|caching|search|storage|auth|observability)
+      database|persistence|migrations|api_protocol|messaging|caching|search|storage|auth|observability|build_system|ci|container|orchestrator)
         echo "MATCH (pc:ProjectConfig {project: '$(cypher_escape "$PROJECT_ROOT")'}), (m:LayerModule {name: '$(cypher_escape "$val")'}) CREATE (pc)-[:USES_CONVENTION]->(m);"
         ;;
     esac

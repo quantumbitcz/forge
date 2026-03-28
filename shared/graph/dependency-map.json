@@ -7,23 +7,33 @@
     "kafkajs": "kafka", "amqplib": "rabbitmq",
     "prisma": "prisma", "typeorm": "typeorm", "sequelize": "sequelize",
     "elasticsearch": "elasticsearch", "typesense": "typesense",
-    "@supabase/supabase-js": "supabase-auth"
+    "@supabase/supabase-js": "supabase-auth",
+    "@actions/core": "github-actions", "@actions/github": "github-actions",
+    "dockerode": "docker", "docker-compose": "docker-compose",
+    "@kubernetes/client-node": "k8s"
   },
   "maven": {
     "org.springframework.boot:spring-boot-starter-data-jpa": "hibernate",
     "org.postgresql:postgresql": "postgresql",
     "io.sentry:sentry-spring-boot-starter": "sentry",
-    "org.apache.kafka:kafka-clients": "kafka"
+    "org.apache.kafka:kafka-clients": "kafka",
+    "com.spotify:dockerfile-maven-plugin": "docker",
+    "io.fabric8:docker-maven-plugin": "docker",
+    "io.fabric8:kubernetes-client": "k8s",
+    "com.google.cloud.tools:jib-maven-plugin": "docker"
   },
   "pip": {
     "sqlalchemy": "sqlalchemy", "django": "django-orm",
     "psycopg2": "postgresql", "pymongo": "mongodb",
-    "sentry-sdk": "sentry", "celery": "rabbitmq"
+    "sentry-sdk": "sentry", "celery": "rabbitmq",
+    "docker": "docker", "docker-compose": "docker-compose",
+    "kubernetes": "k8s"
   },
   "gems": {
     "pg": "postgresql", "mysql2": "mysql",
     "activerecord": "active-record", "sequel": "postgresql",
-    "sentry-ruby": "sentry", "bunny": "rabbitmq"
+    "sentry-ruby": "sentry", "bunny": "rabbitmq",
+    "docker-api": "docker"
   },
   "hex": {
     "ecto": "ecto", "postgrex": "postgresql",
@@ -31,11 +41,13 @@
   },
   "cargo": {
     "sqlx": "sqlx", "diesel": "diesel", "sea-orm": "sea-orm",
-    "tokio-postgres": "postgresql", "sentry": "sentry"
+    "tokio-postgres": "postgresql", "sentry": "sentry",
+    "bollard": "docker", "kube": "k8s"
   },
   "nuget": {
     "Npgsql": "postgresql", "Dapper": "dapper",
     "Microsoft.EntityFrameworkCore": "efcore",
-    "Sentry.AspNetCore": "sentry", "Confluent.Kafka": "kafka"
+    "Sentry.AspNetCore": "sentry", "Confluent.Kafka": "kafka",
+    "Docker.DotNet": "docker", "KubernetesClient": "k8s"
   }
 }

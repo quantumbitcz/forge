@@ -4,7 +4,7 @@ components:
   language: kotlin          # kotlin | java
   framework: spring
   variant: kotlin           # kotlin | java (matches language)
-  testing: kotest           # kotest | junit5-assertj
+  testing: kotest           # kotest | junit5
   web: mvc                  # mvc | webflux
   persistence: hibernate    # hibernate | r2dbc | jooq | exposed
   # build_system: gradle      # gradle | maven

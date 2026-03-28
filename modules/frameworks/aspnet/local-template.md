@@ -4,7 +4,7 @@ components:
   language: csharp
   framework: aspnet
   variant: csharp
-  testing: xunit
+  testing: xunit-nunit
   persistence: efcore        # efcore (only supported option currently)
   # build_system: dotnet       # dotnet (msbuild)
   # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton

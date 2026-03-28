@@ -19,7 +19,7 @@ Created by `generate-seed.sh` from the plugin's module/agent/shared directory st
 | `Framework` | `name`, `file_path` | Framework module (e.g., `spring`, `react`) |
 | `TestingFramework` | `name`, `file_path` | Testing framework module (e.g., `kotest`, `vitest`) |
 | `FrameworkBinding` | `name`, `framework`, `layer`, `file_path` | Framework-specific binding for a crosscutting layer |
-| `LayerModule` | `name`, `layer`, `file_path` | Generic crosscutting layer module (e.g., `postgresql` in `databases`) |
+| `LayerModule` | `name`, `layer`, `file_path` | Generic crosscutting layer module (e.g., `postgresql` in `databases`). `layer` values: `databases`, `persistence`, `migrations`, `api-protocols`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build-systems`, `ci-cd`, `container-orchestration` |
 | `Agent` | `name`, `role`, `file_path` | Pipeline or review agent. `role` is `pipeline`, `reviewer`, or `other` |
 | `Agent:Reviewer` | `name`, `role`, `file_path` | Review agent (dual-labeled with both `Agent` and `Reviewer`) |
 | `SharedContract` | `name`, `file_path` | Shared contract file (e.g., `agent-communication`, `scoring`) |
@@ -57,6 +57,7 @@ Created by `generate-seed.sh`.
 | `CANONICAL_PERSISTENCE` | `Language` → `LayerModule` | Language's canonical persistence layer |
 | `PAIRS_WITH` | `Framework` → `TestingFramework` | Framework commonly paired with testing framework |
 | `DISPATCHES` | `Agent` → `Agent` | Agent dispatches another agent |
+| `READS` | `Agent` → `SharedContract` | Agent references a shared contract file |
 | `OVERRIDES_RULE` | `FrameworkBinding` → `CheckRule` | Framework binding overrides a shared check rule |
 | `HAS_LEARNINGS` | `*` → `Learnings` | Node has an associated learnings file |
 

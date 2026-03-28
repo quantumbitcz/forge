@@ -73,21 +73,35 @@ detect_module() {
   fi
 
   local module=""
-  [[ -f "$cfg" ]] && module="$(grep -m1 '^module:' "$cfg" 2>/dev/null | sed 's/^module:[[:space:]]*//' || true)"
+  if [[ -f "$cfg" ]]; then
+    # Try components.framework first (current format), fall back to legacy module: field
+    module="$(grep -m1 '^[[:space:]]*framework:' "$cfg" 2>/dev/null | sed 's/^[[:space:]]*framework:[[:space:]]*//' || true)"
+    [[ -z "$module" ]] && module="$(grep -m1 '^module:' "$cfg" 2>/dev/null | sed 's/^module:[[:space:]]*//' || true)"
+  fi
 
   if [[ -z "$module" ]]; then
-    if [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/kotlin &>/dev/null 2>&1; then module="spring"
+    if [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'org\.jetbrains\.compose|androidx\.compose' "$project_root/build.gradle.kts" 2>/dev/null; then module="jetpack-compose"
+    elif [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'org\.jetbrains\.kotlin\.multiplatform|kotlin\("multiplatform"\)' "$project_root/build.gradle.kts" 2>/dev/null; then module="kotlin-multiplatform"
+    elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/kotlin &>/dev/null 2>&1; then module="spring"
     elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/java &>/dev/null 2>&1; then module="spring"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then module="react"
+    elif [[ -f "$project_root/angular.json" ]]; then module="angular"
+    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/next.config.* &>/dev/null 2>&1; then module="nextjs"
     elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/svelte.config.* &>/dev/null 2>&1; then module="sveltekit"
+    elif [[ -f "$project_root/package.json" ]] && [[ -f "$project_root/nest-cli.json" ]]; then module="nestjs"
+    elif [[ -f "$project_root/package.json" ]] && grep -q '"vue"' "$project_root/package.json" 2>/dev/null; then module="vue"
+    elif [[ -f "$project_root/package.json" ]] && grep -q '"svelte"' "$project_root/package.json" 2>/dev/null; then module="svelte"
+    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then module="react"
     elif [[ -f "$project_root/package.json" ]]; then module="express"
     elif [[ -f "$project_root/Cargo.toml" ]]; then module="axum"
+    elif [[ -f "$project_root/go.mod" ]] && grep -q 'gin-gonic/gin' "$project_root/go.mod" 2>/dev/null; then module="gin"
     elif [[ -f "$project_root/go.mod" ]]; then module="go-stdlib"
+    elif [[ -f "$project_root/manage.py" ]]; then module="django"
     elif [[ -f "$project_root/pyproject.toml" ]]; then module="fastapi"
     elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
     elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swiftui"
     elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="embedded"
     elif ls "$project_root"/*.csproj &>/dev/null 2>&1; then module="aspnet"
+    elif ls "$project_root"/*.yaml &>/dev/null 2>&1 && grep -ql 'apiVersion:' "$project_root"/*.yaml 2>/dev/null; then module="k8s"
     fi
   fi
 
@@ -308,7 +322,7 @@ mode_hook() {
   local file=""
   file="$(echo "${TOOL_INPUT:-}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)" || true
   if [[ -z "$file" ]]; then
-    file="$(echo "${TOOL_INPUT:-}" | grep -oE '"file_path"\s*:\s*"[^"]*"' | head -1 | sed 's/.*"file_path"\s*:\s*"//; s/"$//' || true)"
+    file="$(echo "${TOOL_INPUT:-}" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//; s/"$//' || true)"
   fi
 
   [[ -z "$file" || ! -f "$file" ]] && return 0

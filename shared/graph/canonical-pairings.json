@@ -10,7 +10,6 @@
     "csharp": "xunit-nunit",
     "ruby": "rspec",
     "php": "phpunit",
-    "dart": "flutter-test",
     "elixir": "exunit",
     "scala": "scalatest"
   },
@@ -24,7 +23,6 @@
     "kotlin": "exposed",
     "java": "hibernate",
     "typescript": "prisma",
-    "swift": "fluent",
-    "php": "eloquent"
+    "swift": "fluent"
   }
 }
