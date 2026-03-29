@@ -76,6 +76,13 @@ MIN_CI_PLATFORMS=7
 MIN_CONTAINER_ORCH=11
 MIN_LAYERS=10
 
+DISCOVERED_DOC_BINDINGS=()
+for d in "$PLUGIN_ROOT"/modules/frameworks/*/documentation/; do
+  [[ -d "$d" ]] && DISCOVERED_DOC_BINDINGS+=("$(basename "$(dirname "$d")")")
+done
+
+MIN_DOCUMENTATION_BINDINGS=21
+
 # guard_min_count <label> <actual> <minimum>
 # Returns 0 if actual >= minimum, 1 otherwise. Prints message on failure.
 guard_min_count() {
