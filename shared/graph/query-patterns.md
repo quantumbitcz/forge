@@ -153,3 +153,94 @@ RETURN a.name, a.role
 
 **Parameters:**
 - `$contractName` — Name of the shared contract without path prefix or `.md` extension (e.g., `"scoring"`, `"stage-contract"`, `"state-schema"`, `"frontend-design-theory"`).
+
+---
+
+### 9. Documentation Impact
+
+**Used during:** PLAN
+
+Identifies all documentation sections, decisions, and constraints that reference a changed file. The orchestrator runs this before dispatching `pl-200-planner` so the plan includes documentation update tasks alongside code changes.
+
+```cypher
+MATCH (changed:ProjectFile {path: $filePath})
+MATCH (ds:DocSection)-[:DESCRIBES]->(changed)
+MATCH (ds)-[:SECTION_OF]->(df:DocFile)
+OPTIONAL MATCH (dd:DocDecision)-[:DECIDES]->(changed)
+OPTIONAL MATCH (dc:DocConstraint)-[:CONSTRAINS]->(changed)
+RETURN df.path, ds.name, dd.summary, dc.summary
+```
+
+**Parameters:**
+- `$filePath` — Repo-relative path of the file being changed (e.g., `"src/domain/User.kt"`).
+
+---
+
+### 10. Stale Docs Detection
+
+**Used during:** REVIEW
+
+Finds documentation sections whose content hash is older than the last modification time of the code file they describe. Surfaced by the documentation reviewer to flag docs that may no longer match the implementation.
+
+```cypher
+MATCH (ds:DocSection)-[:DESCRIBES]->(pf:ProjectFile)
+WHERE pf.last_modified > ds.content_hash_updated
+RETURN ds.name, ds.file_path, pf.path AS stale_for_file
+```
+
+**Parameters:**
+- None.
+
+---
+
+### 11. Decision Traceability
+
+**Used during:** VALIDATE
+
+Retrieves all active (non-superseded) architectural decisions that apply to a given package path or class. The orchestrator runs this before dispatching `pl-210-validator` to surface decisions the implementation must honour.
+
+```cypher
+MATCH (dd:DocDecision)-[:DECIDES]->(target)
+WHERE target.path STARTS WITH $packagePath OR target.name = $className
+OPTIONAL MATCH (dd)<-[:SUPERSEDES]-(newer:DocDecision)
+WHERE newer IS NULL
+RETURN dd.id, dd.summary, dd.status, dd.confidence, target.path
+```
+
+**Parameters:**
+- `$packagePath` — Package path prefix to match (e.g., `"src/domain/"`). Pass an empty string to skip package matching.
+- `$className` — Simple class name to match (e.g., `"PaymentService"`). Pass an empty string to skip class matching.
+
+---
+
+### 12. Contradiction Report
+
+**Used during:** REVIEW
+
+Returns all `CONTRADICTS` edges in the graph, showing which documentation source conflicts with which code entity. Created by the consistency reviewer during the REVIEW stage.
+
+```cypher
+MATCH (source)-[:CONTRADICTS]->(target)
+RETURN labels(source)[0] AS source_type, COALESCE(source.summary, source.name) AS source_desc,
+       target.path AS code_target, source.file_path AS doc_source
+```
+
+**Parameters:**
+- None.
+
+---
+
+### 13. Documentation Coverage Gap
+
+**Used during:** DOCUMENTING
+
+Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `pl-720-recap` a prioritized list of under-documented areas.
+
+```cypher
+MATCH (pp:ProjectPackage)
+WHERE NOT (pp)<-[:DESCRIBES]-(:DocSection)
+RETURN pp.name, pp.path ORDER BY pp.path
+```
+
+**Parameters:**
+- None.

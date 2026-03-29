@@ -39,6 +39,19 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 | `ProjectClass` | `name`, `file_path`, `kind` | Class, interface, struct, trait, or object definition. `kind` values: `class`, `interface`, `struct`, `trait`, `object`, `module` |
 | `ProjectFunction` | `name`, `file_path` | Function or method definition |
 | `ProjectConfig` | `project`, `language` | Project configuration node linking to plugin conventions via `dev-pipeline.local.md` |
+| `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title`, `cross_repo` | A documentation file. `cross_repo` (boolean, default `false`) is `true` for docs discovered in related projects. |
+| `DocSection` | `name`, `file_path`, `heading_level`, `start_line`, `end_line`, `content_hash`, `content_hash_updated` | A section within a doc file (parsed from heading hierarchy). `content_hash_updated` is an ISO8601 timestamp of when the hash was last computed. |
+| `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence`, `extracted_at` | Architectural/design decision extracted from ADRs or inline markers. `extracted_at` is ISO8601 timestamp of extraction. |
+| `DocConstraint` | `id`, `file_path`, `summary`, `scope`, `confidence` | Constraint/rule extracted from documentation |
+| `DocDiagram` | `path`, `format`, `diagram_type`, `source_file` | Generated or discovered diagram |
+
+**`doc_type` values:** `readme`, `adr`, `architecture`, `api-spec`, `runbook`, `onboarding`, `design-doc`, `migration-guide`, `changelog`, `contributing`, `user-guide`, `business-spec`, `other`
+
+**`format` values:** `markdown`, `openapi-yaml`, `openapi-json`, `asciidoc`, `rst`, `plaintext`, `external-ref`
+
+**`confidence` values:** `HIGH` (explicit markers like ADR format), `MEDIUM` (heuristic extraction), `LOW` (weak pattern matches)
+
+**`DocDecision.status` values:** `proposed`, `accepted`, `deprecated`, `superseded`
 
 ---
 
@@ -73,6 +86,14 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh`.
 | `EXTENDS_CLASS` | `ProjectClass` → `ProjectClass` | Class extends or implements another class |
 | `MAPS_TO` | `ProjectDependency` → `LayerModule`/`Framework`/`TestingFramework` | Dependency maps to a plugin module (via `dependency-map.json`) |
 | `USES_CONVENTION` | `ProjectConfig` → `Language`/`Framework`/`TestingFramework`/`LayerModule` | Project uses a plugin convention (from `dev-pipeline.local.md` components) |
+| `DESCRIBES` | `DocSection` → `ProjectFile`/`ProjectPackage`/`ProjectClass` | Documentation describes a code entity |
+| `SECTION_OF` | `DocSection` → `DocFile` | Section belongs to a document |
+| `DECIDES` | `DocDecision` → `ProjectFile`/`ProjectPackage` | Decision applies to code scope |
+| `CONSTRAINS` | `DocConstraint` → `ProjectFile`/`ProjectPackage`/`ProjectClass` | Constraint restricts code entity evolution |
+| `CONTRADICTS` | `DocSection`/`DocDecision`/`DocConstraint` → `ProjectFile`/`ProjectClass` | Detected inconsistency (created by consistency reviewer) |
+| `DIAGRAMS` | `DocDiagram` → `DocFile`/`ProjectPackage` | Diagram visualizes a doc or code structure |
+| `SUPERSEDES` | `DocDecision` → `DocDecision` | Later decision replaces an earlier one |
+| `DOC_IMPORTS` | `DocFile` → `DocFile` | Doc references another doc (cross-links) |
 
 ---
 
