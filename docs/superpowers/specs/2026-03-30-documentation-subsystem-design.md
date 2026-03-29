@@ -65,9 +65,9 @@ LEARN ──► retrospective tracks doc generation effectiveness
 
 | Label | Properties | Description |
 |-------|-----------|-------------|
-| `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title` | A documentation file in the project |
+| `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title`, `cross_repo` | A documentation file. `cross_repo` (boolean, default `false`) is `true` for docs discovered in related projects. |
 | `DocSection` | `name`, `file_path`, `heading_level`, `start_line`, `end_line`, `content_hash`, `content_hash_updated` | A section within a doc file (parsed from heading hierarchy). `content_hash_updated` is an ISO8601 timestamp of when the hash was last computed. |
-| `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence` | Architectural/design decision extracted from ADRs or inline markers |
+| `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence`, `extracted_at` | Architectural/design decision extracted from ADRs or inline markers. `extracted_at` is ISO8601 timestamp of extraction. |
 | `DocConstraint` | `id`, `file_path`, `summary`, `scope`, `confidence` | Constraint/rule extracted from documentation |
 | `DocDiagram` | `path`, `format`, `diagram_type`, `source_file` | Generated or discovered diagram |
 
@@ -76,6 +76,10 @@ LEARN ──► retrospective tracks doc generation effectiveness
 **`format` values:** `markdown`, `openapi-yaml`, `openapi-json`, `asciidoc`, `rst`, `plaintext`, `external-ref`
 
 **`confidence` values:** `HIGH` (explicit markers like ADR format), `MEDIUM` (heuristic extraction), `LOW` (weak pattern matches)
+
+**`DocDecision.status` values:** `proposed`, `accepted`, `deprecated`, `superseded`. ADRs with explicit "Status:" headers are parsed directly. Decisions without explicit status default to `accepted`.
+
+**Confidence upgrade mechanism:** LOW → MEDIUM when the same decision/constraint is extracted consistently across 3+ pipeline runs without user override. MEDIUM → HIGH when the user explicitly confirms via `/docs-generate --confirm-decisions` (interactive review of MEDIUM-confidence extractions). Users can also downgrade or dismiss via the same command. Confidence changes are logged in `generation_history`.
 
 ### New Relationships
 
@@ -138,6 +142,49 @@ RETURN pp.name, pp.path ORDER BY pp.path
 
 **Stage:** PREFLIGHT (dispatched after convention stack resolution, step 14)
 **Tools:** `Read`, `Glob`, `Grep`, `Bash`
+
+### PREFLIGHT Stage Contract Change
+
+The current stage contract declares PREFLIGHT as "inline (orchestrator logic, no sub-agent dispatch)." This design changes PREFLIGHT to dispatch `pl-130-docs-discoverer` as a sub-agent, following the precedent set by Stage 5 (VERIFY) which also mixes inline logic with agent dispatch (inline Phase A + `pl-500-test-gate` Phase B). The stage contract overview table must be updated:
+
+```
+| 0 | PREFLIGHT | inline + `pl-130-docs-discoverer` | `PREFLIGHT` | ... | ... |
+```
+
+The discoverer is dispatched **after** all inline config resolution (steps 1-13) is complete, so it receives fully resolved config as input. This maintains the principle that PREFLIGHT config resolution is deterministic and inline — only the documentation discovery step is delegated.
+
+### No-Graph Fallback
+
+The discoverer operates in two modes depending on Neo4j availability:
+
+1. **Graph mode** (Neo4j available): Full processing — creates `Doc*` nodes and relationships in the graph. All Cypher queries available to downstream agents.
+2. **Index mode** (Neo4j unavailable): Writes `.pipeline/docs-index.json` — a flat JSON file containing the same data that would be in the graph (files, sections, decisions, constraints, linkages). Downstream agents read this file instead of querying Neo4j. The consistency reviewer and generator both support this fallback.
+
+```json
+{
+  "files": [{ "path": "docs/architecture.md", "doc_type": "architecture", "format": "markdown", "title": "..." }],
+  "sections": [{ "name": "Authentication", "file_path": "docs/architecture.md", "heading_level": 2, "content_hash": "..." }],
+  "decisions": [{ "id": "ADR-001", "file_path": "docs/adr/001-use-rest.md", "summary": "...", "status": "accepted", "confidence": "HIGH" }],
+  "constraints": [{ "id": "CONST-001", "file_path": "docs/architecture.md", "summary": "...", "scope": "src/domain/", "confidence": "MEDIUM" }],
+  "linkages": [{ "source_type": "section", "source_id": "Authentication", "target_path": "src/auth/" }]
+}
+```
+
+### Discovery Scope Limits
+
+For large monorepos, unbounded `**/*.md` scanning can be expensive. Configurable limits:
+
+```yaml
+documentation:
+  discovery:
+    max_files: 500          # skip discovery with WARNING if exceeded
+    max_file_size_kb: 512   # skip files larger than this
+    exclude_patterns:        # additional glob exclusions beyond defaults
+      - "vendor/**"
+      - "third_party/**"
+```
+
+If `max_files` is exceeded, the discoverer logs WARNING with the count and skips. The user can raise the limit or add exclusions. Default exclusions always apply: `node_modules/`, `.pipeline/`, `build/`, `dist/`, `.git/`.
 
 ### Discovery Targets
 
@@ -269,18 +316,60 @@ quality_gate:
 | Diagrams | C4 (context, container, component), sequence, ER as Mermaid | Graph relationships, class hierarchy, API flows |
 | User guides | Feature docs, how-to guides | Acceptance criteria, UI components, API endpoints |
 
+### Worktree Context
+
+In pipeline mode, the generator runs at Stage 7 inside `.pipeline/worktree` — the same worktree used by the implementer. All generated/updated documentation files are written to the worktree, not the user's working tree. This ensures:
+- Documentation changes are included in the PR alongside code changes
+- The user's working tree is never modified (existing contract)
+- Documentation and code changes are atomically committed together
+
+In standalone mode (`/docs-generate`), the generator writes directly to the user's working tree since there is no pipeline worktree.
+
+### Pipeline Mode Generation Guardrails
+
+Pipeline mode is **conservative by default** — it prioritizes updating existing docs over creating new ones. This prevents unexpected file creation during automated runs.
+
+**Always (unconditional):**
+- Update existing docs affected by changed files (graph-guided)
+- Verify KDoc/TSDoc on all new public interfaces
+- Update changelog with this run's changes
+- Update OpenAPI spec if API endpoints changed
+
+**Conditional creation (only when `auto_generate.<type>` is `true` in config):**
+- Generate ADRs for significant decisions (see criteria below)
+- Generate missing docs for new modules/packages
+- Generate diagrams for new architecture components
+
+**Never in pipeline mode:**
+- Full documentation suite bootstrap (use `/docs-generate --all` for that)
+- Runbook or user guide creation (always standalone-only)
+
+This replaces the old inline rule "Do NOT create new documentation files unless explicitly requested" with a configurable approach.
+
+### ADR Significance Criteria
+
+The planner creates "Generate ADR" sub-tasks when a decision meets **2+ of these criteria**:
+
+1. **Alternatives evaluated** — the Challenge Brief documents 2+ considered alternatives
+2. **Cross-cutting impact** — the decision affects 3+ packages or 2+ architectural layers
+3. **Irreversibility** — the decision would be expensive to reverse (new framework, data model change, API contract change)
+4. **Security/compliance** — the decision has security or compliance implications
+5. **Precedent-setting** — the decision establishes a pattern that future work should follow
+
+Single-file refactors or routine implementation choices do not generate ADRs.
+
 ### Generation Strategy
 
-1. **Assess** — read graph `DocFile` nodes, check existing coverage
-2. **Determine need** — pipeline mode: diff-driven. Standalone mode: coverage-driven
+1. **Assess** — read graph `DocFile` nodes (or `.pipeline/docs-index.json` in index mode), check existing coverage
+2. **Determine need** — pipeline mode: diff-driven with guardrails above. Standalone mode: coverage-driven, user-selected types
 3. **Plan** — build doc plan: files to create/update, sections needed
 4. **Generate** — for each document:
-   - Read source code (graph-guided)
+   - Read source code (graph-guided or file-scan in index mode)
    - Read framework doc conventions (`modules/documentation/` + binding)
    - Generate using template
    - For updates: merge with existing, preserve user-maintained fences
-5. **Diagrams** — Mermaid embedded in markdown. C4 for architecture, sequence for flows, ER for domain
-6. **Update graph** — create/update `Doc*` nodes and relationships
+5. **Diagrams** — Mermaid embedded in markdown. C4 for architecture, sequence for flows, ER for domain. Validate Mermaid syntax with `mmdc --validate` if mermaid-cli is available; skip validation with INFO if not installed.
+6. **Update graph** — create/update `Doc*` nodes and relationships (or update `.pipeline/docs-index.json`)
 7. **Export** — push to external systems via MCP if configured
 
 ### User-Maintained Section Protection
@@ -300,7 +389,24 @@ documentation:
       enabled: false
 ```
 
-Uses available MCP servers. If unavailable, writes locally + INFO log.
+Export is extensible via MCP. No built-in Confluence/Notion MCPs exist today — export requires the user to configure compatible MCP servers in their `.mcp.json`. When `export.<target>.enabled` is `true` but no matching MCP is available, the generator writes files locally and logs WARNING — "Export target '{target}' configured but no MCP server available. Files written to `{output_dir}` instead."
+
+Future MCP servers for Confluence/Notion/wiki platforms can be integrated without spec changes — the generator calls them via the standard MCP tool pattern. The `export` config maps target names to MCP server tool prefixes.
+
+### External Reference Validation
+
+`DocFile` nodes with `format: external-ref` store URLs discovered in project documentation. During discovery:
+- URLs are stored but NOT validated (no HTTP calls during PREFLIGHT — too slow and may require auth)
+- The `/docs-generate --coverage` report includes external refs with a note: "External references not validated — verify accessibility manually"
+- Future enhancement: optional `--validate-external-refs` flag on `/docs-generate` that HEAD-requests each URL and reports dead links
+
+### Cross-Repo Documentation Awareness
+
+If `related_projects` are configured (from `pipeline-init` cross-repo discovery):
+- The discoverer scans related project roots for `README.md` and `docs/` (shallow scan, not full discovery)
+- Creates `DocFile` nodes with a `cross_repo: true` property for cross-repo docs
+- The consistency reviewer can flag when changes in the current project contradict documentation in a related project (e.g., changing an API endpoint that a related frontend project's docs reference)
+- Cross-repo doc findings are always WARNING (never CRITICAL) — the current project shouldn't fail its pipeline for another project's docs
 
 ### Output
 
@@ -334,6 +440,7 @@ description: >
 | `--export` | `/docs-generate --all --export` | Generate + push to external systems |
 | `--coverage` | `/docs-generate --coverage` | Report only — coverage gaps, no generation |
 | `--from-code <path>` | `/docs-generate --from-code src/domain/` | Generate docs from specific code path |
+| `--confirm-decisions` | `/docs-generate --confirm-decisions` | Interactive review of MEDIUM-confidence decisions/constraints — upgrade to HIGH or dismiss |
 
 ### Interactive Flow (no arguments)
 
@@ -359,9 +466,19 @@ description: >
 3. Ask: "What would you like to generate? (all / pick from list / specific type)"
 4. Dispatch `pl-350-docs-generator` in standalone mode
 
+### Standalone Framework Detection
+
+When running without pipeline config (`dev-pipeline.local.md` absent), the skill needs to determine which framework doc conventions to load:
+
+1. **If `dev-pipeline.local.md` exists:** read `components.framework` directly — exact match.
+2. **If absent:** run the same stack detection logic from `pipeline-init` Phase 1 (marker file scan) to infer the framework. Use the detected framework's doc conventions.
+3. **If detection fails:** fall back to `modules/documentation/conventions.md` (generic conventions only, no framework binding). Log INFO — "No framework detected. Using generic documentation conventions."
+
+This ensures `/docs-generate` works in any project, even without prior `/pipeline-init`.
+
 ### Independence
 
-No worktrees, no state.json dependency, no pipeline config required. Reads `dev-pipeline.local.md` if present for output paths and export targets.
+No worktrees, no state.json dependency. Reads `dev-pipeline.local.md` if present for output paths, framework, and export targets. Works without it via auto-detection (see above).
 
 ---
 
@@ -505,6 +622,10 @@ documentation:
     user_guides: false
     migration_guides: true
   external_sources: []
+  discovery:
+    max_files: 500
+    max_file_size_kb: 512
+    exclude_patterns: []
   export:
     confluence:
       enabled: false
@@ -520,6 +641,13 @@ documentation:
 ## 11. State Schema v2.0.0
 
 Clean break from v1.1.0. Requires `/pipeline-reset`.
+
+### New `.pipeline/` files
+
+| File | Created By | Purpose |
+|------|-----------|---------|
+| `docs-index.json` | `pl-130-docs-discoverer` | Flat JSON index of discovered docs — fallback when Neo4j unavailable |
+| `stage_0_docs_discovery.md` | `pl-130-docs-discoverer` | Human-readable discovery summary |
 
 ### New `documentation` field
 
@@ -612,23 +740,43 @@ Documentation Coverage: 78% (+18% from this run)
 
 - Orchestrator dispatches `pl-130-docs-discoverer` at PREFLIGHT
 - Orchestrator dispatches `pl-350-docs-generator` at DOCUMENTING (not inline)
+- Stage contract Stage 0 agent field includes `pl-130-docs-discoverer`
 - Quality gate batch includes `docs-consistency-reviewer`
 - Stage contract Stage 7 agent is `pl-350-docs-generator`
-- State schema includes `documentation` field
-- Graph schema includes `DocFile`, `DocSection`, `DocDecision`, `DocConstraint` nodes
+- State schema version is `2.0.0`
+- State schema includes `documentation` field with all required subfields
+- Graph schema includes `DocFile` (with `cross_repo`), `DocSection` (with `content_hash_updated`), `DocDecision` (with `extracted_at`, `status`), `DocConstraint`, `DocDiagram` nodes
+- Graph schema includes all 8 new relationships
+- Query patterns include 5 new documentation Cypher queries
 - Scoring handles `DOC-*` finding categories
+- Scoring handles `SCOUT-DOC-*` (no deduction) for LOW confidence
 - Validation has 7 perspectives including Documentation Consistency
+- `docs-index.json` schema matches graph node structure
+- Pipeline-init `documentation:` config includes `discovery:` limits
 
 ### Scenario Tests (new)
 
 - Discoverer finds docs and populates graph
+- Discoverer writes `docs-index.json` when Neo4j unavailable
+- Discoverer respects `max_files` limit and logs WARNING when exceeded
+- Discoverer classifies ADRs by content heuristic ("## Status: Accepted")
+- Discoverer extracts DocDecision with correct status enum values
 - Consistency reviewer detects decision violation → CRITICAL
 - Consistency reviewer detects stale doc → WARNING
+- Consistency reviewer flags cross-repo doc inconsistency → WARNING (not CRITICAL)
+- Consistency reviewer falls back to file-based analysis without Neo4j
 - Generator creates README from undocumented codebase
 - Generator respects user-maintained fences
+- Generator writes to worktree in pipeline mode, working tree in standalone mode
+- Generator skips runbook/user-guide creation in pipeline mode
+- Generator validates Mermaid syntax when mermaid-cli available
 - `/docs-generate --coverage` reports gaps without generating
+- `/docs-generate --confirm-decisions` upgrades MEDIUM → HIGH confidence
+- `/docs-generate` auto-detects framework without `dev-pipeline.local.md`
 - Deferred discovery catches newly added docs on next run
-- Graceful degradation: no Neo4j → file-based fallback
+- Graceful degradation: no Neo4j → `docs-index.json` fallback
+- ADR significance: planner creates ADR task when 2+ criteria met
+- ADR significance: planner does not create ADR for single-file refactor
 
 ### Existing Test Updates
 
