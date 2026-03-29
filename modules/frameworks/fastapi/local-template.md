@@ -54,6 +54,8 @@ quality_gate:
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
+    - agent: docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
 
 test_gate:
   command: "uv run pytest"
@@ -88,6 +90,33 @@ conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/fastapi/persi
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
+
+documentation:
+  enabled: true
+  output_dir: docs/
+  auto_generate:
+    readme: true
+    architecture: true
+    adrs: true
+    api_docs: true
+    onboarding: true
+    changelogs: true
+    diagrams: true
+    domain_docs: true
+    runbooks: false
+    user_guides: false
+    migration_guides: true
+  discovery:
+    max_files: 500
+    max_file_size_kb: 512
+    exclude_patterns: []
+  external_sources: []
+  export:
+    confluence:
+      enabled: false
+    notion:
+      enabled: false
+  user_maintained_marker: "<!-- user-maintained -->"
 
 context7_libraries:
   - "fastapi"

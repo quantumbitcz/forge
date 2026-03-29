@@ -75,6 +75,8 @@ quality_gate:
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "Server Action types, page prop types, discriminated unions"
+    - agent: docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
@@ -118,6 +120,33 @@ conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/persis
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
+
+documentation:
+  enabled: true
+  output_dir: docs/
+  auto_generate:
+    readme: true
+    architecture: true
+    adrs: true
+    api_docs: false
+    onboarding: true
+    changelogs: true
+    diagrams: true
+    domain_docs: true
+    runbooks: false
+    user_guides: false
+    migration_guides: true
+  discovery:
+    max_files: 500
+    max_file_size_kb: 512
+    exclude_patterns: []
+  external_sources: []
+  export:
+    confluence:
+      enabled: false
+    notion:
+      enabled: false
+  user_maintained_marker: "<!-- user-maintained -->"
 
 context7_libraries:
   - "next"

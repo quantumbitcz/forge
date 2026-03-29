@@ -48,6 +48,8 @@ quality_gate:
     - agent: "Security Engineer"
       source: builtin
       focus: "secrets exposure, RBAC, pod security, network policies, image provenance"
+    - agent: docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
@@ -85,6 +87,33 @@ infra:
   max_verification_tier: 2
   cluster_tool: kind
   compose_file: deploy/docker-compose.yml
+
+documentation:
+  enabled: true
+  output_dir: docs/
+  auto_generate:
+    readme: true
+    architecture: true
+    adrs: true
+    api_docs: false
+    onboarding: true
+    changelogs: true
+    diagrams: true
+    domain_docs: true
+    runbooks: true
+    user_guides: false
+    migration_guides: true
+  discovery:
+    max_files: 500
+    max_file_size_kb: 512
+    exclude_patterns: []
+  external_sources: []
+  export:
+    confluence:
+      enabled: false
+    notion:
+      enabled: false
+  user_maintained_marker: "<!-- user-maintained -->"
 
 context7_libraries:
   - "kubernetes"
