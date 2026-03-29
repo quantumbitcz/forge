@@ -66,6 +66,23 @@ Also detect and note the presence of:
 - **Linters**: ESLint, Detekt, ktlint, Clippy, golangci-lint, Ruff, SwiftLint, etc.
 - **OpenAPI spec**: `openapi.yaml`, `openapi.json`, `swagger.yaml`, `swagger.json` (search recursively)
 
+#### Documentation Detection
+
+Scan for documentation files beyond OpenAPI:
+- **Markdown docs**: Count `.md` files in `docs/`, `documentation/`, `wiki/`, `guides/` directories
+- **ADRs**: Check for `adr/`, `docs/adr/`, `docs/decisions/` directories; count files matching `NNN-*.md` or `ADR-*.md`
+- **Runbooks**: Check for files/dirs named `runbook`, `playbook`, `operations`
+- **Changelogs**: Check for `CHANGELOG.md`, `CHANGES.md`, `HISTORY.md`
+- **Architecture docs**: Check for files named `architecture.md`, `design.md`, `technical.md`
+- **External references**: Scan top-level markdown files for URLs pointing to Confluence, Notion, or wiki platforms
+
+Add to the summary table:
+
+```
+Documentation:      {N} files ({breakdown by type})
+External docs:      {list or "none detected"}
+```
+
 Present findings in a clear summary table:
 
 ```
@@ -77,11 +94,25 @@ Linters:            ESLint, Prettier
 Docker:             docker-compose.yml (3 services)
 CI/CD:              GitHub Actions (2 workflows)
 OpenAPI:            docs/openapi.yaml
+Documentation:      14 files (3 ADRs, 1 OpenAPI, 2 runbooks, 8 guides)
+External docs:      Confluence (2 spaces referenced)
 ```
 
 Ask the user: **"Does this look correct? Should I proceed with the `{module}` module?"**
 
 Wait for confirmation before continuing. If the user corrects something, adjust accordingly.
+
+#### Documentation Sources Prompt
+
+After stack confirmation, if any documentation files were detected, ask:
+
+> "Found {N} documentation files. Are there additional docs I should know about? (external wikis, Confluence spaces, Notion pages, shared drives) You can also add these later — the pipeline picks up new docs automatically on each run."
+
+If the user provides URLs or paths:
+- Store them for inclusion in the `documentation.external_sources` array during Phase 2 configuration.
+- Accept any format: URLs, file paths, or just descriptions.
+
+If the user says no or skips: proceed without additional sources.
 
 ---
 
@@ -108,7 +139,11 @@ Once confirmed, generate the configuration files:
      Accumulated learnings from pipeline runs. Updated automatically by the retrospective agent.
      ```
 
-4. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
+4. **Documentation config**: If the module's `local-template.md` includes a `documentation:` section (all modules now do), populate detected values:
+   - Set `external_sources` from any URLs the user provided in the documentation prompt
+   - The `auto_generate` defaults come from the template — no detection-based overrides needed
+
+5. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
 
 Show the user what files were created and their key settings. Ask: **"Config files written. Want me to validate the setup?"**
 
@@ -310,6 +345,7 @@ If `graph.enabled` is `true` in the generated `dev-pipeline.local.md`:
 1. Invoke `/graph-init` to start Neo4j container, seed plugin graph, and build project graph
 2. If graph-init fails (Docker not available, port conflict, etc.), warn the user but continue — graph is optional
 3. Set `integrations.neo4j.available` based on the result
+4. If graph initialization is enabled and completes successfully, dispatch `pl-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
 
 ---
 
