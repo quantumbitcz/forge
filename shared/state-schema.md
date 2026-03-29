@@ -14,6 +14,7 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 |   +-- summary.md                      # Consolidated feedback (created when >20 entries)
 |   +-- {date}-{topic}.md              # Individual feedback files (YYYY-MM-DD-topic.md)
 |   +-- archive/                        # Incorporated feedback moved here
++-- docs-index.json                     # Documentation index (fallback when Neo4j unavailable)
 +-- reports/
     +-- pipeline-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by pl-720-recap)
@@ -24,6 +25,7 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 | File | Created At | Updated By | Survives Conversation? | Committed to Git? |
 |------|-----------|-----------|----------------------|-------------------|
 | `state.json` | Stage 0 (PREFLIGHT) | Orchestrator (every stage transition) | Yes (enables recovery) | No |
+| `docs-index.json` | Stage 0 (PREFLIGHT) | `pl-130-docs-discoverer` | Yes | No |
 | `checkpoint-*.json` | Stage 4 (IMPLEMENT) | Orchestrator (after each task) | Yes (enables resume) | No |
 | `stage_N_notes_*.md` | Each stage | Stage agent | Yes | No |
 | `stage_final_notes_*.md` | Stage 9 (LEARN) | Retrospective agent | Yes | No |
@@ -49,7 +51,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "2.0.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -147,7 +149,19 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "check_engine_skipped": 0,
   "dry_run": false,
   "cross_repo": {},
-  "spec": null
+  "spec": null,
+  "documentation": {
+    "last_discovery_timestamp": "",
+    "files_discovered": 0,
+    "sections_parsed": 0,
+    "decisions_extracted": 0,
+    "constraints_extracted": 0,
+    "code_linkages": 0,
+    "coverage_gaps": [],
+    "stale_sections": 0,
+    "external_refs": [],
+    "generation_history": []
+  }
 }
 ```
 
@@ -155,7 +169,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.1.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Version 1.0.0 is a clean break; old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. v1.1.0 extends v1.0.0 with `convention_stack` arrays per component and `key_dependencies` in `detected_versions`. Old v1.0.0 state files are forward-compatible — missing fields default to empty. No `/pipeline-reset` required. |
+| `version` | string | Yes | Schema version string (`"2.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Schema version 2.0.0 is a clean break from v1.1.0 — adds `documentation` field as a required top-level object. Old state files from v1.x are incompatible — use `/pipeline-reset` to clear them. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/pipeline-run` invocation argument. |
@@ -191,6 +205,17 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
 | `spec` | object\|null | No | Present when pipeline was invoked with `--spec <path>`. Contains `path`, `epic_title`, `story_count`, and `loaded_at`. `null` when not using spec-driven invocation. See the [spec section](#spec-object-optional) above. |
+| `documentation` | object | Yes | Documentation subsystem state. Populated by `pl-130-docs-discoverer` at PREFLIGHT and updated by `pl-350-docs-generator` at DOCUMENTING. |
+| `documentation.last_discovery_timestamp` | string | Yes | ISO8601 of last discovery run |
+| `documentation.files_discovered` | number | Yes | Count of doc files found |
+| `documentation.sections_parsed` | number | Yes | Count of parsed sections |
+| `documentation.decisions_extracted` | number | Yes | Count of DocDecision entities |
+| `documentation.constraints_extracted` | number | Yes | Count of DocConstraint entities |
+| `documentation.code_linkages` | number | Yes | Count of DESCRIBES/DECIDES/CONSTRAINS relationships |
+| `documentation.coverage_gaps` | array | Yes | Package paths with no doc coverage |
+| `documentation.stale_sections` | number | Yes | Count of stale sections |
+| `documentation.external_refs` | array | Yes | External doc URLs |
+| `documentation.generation_history` | array | Yes | Array of generation run records |
 
 ### cross_repo (object, optional)
 
@@ -315,7 +340,7 @@ Example: `"active_component": "backend"`
 
 ### Required Fields
 
-The following fields are required in every v1.1.0 state.json:
+The following fields are required in every v2.0.0 state.json:
 
 `version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`
 

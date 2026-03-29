@@ -116,6 +116,21 @@ Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are d
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
 
+### DOC-* Findings (Documentation Consistency)
+
+Reported by `docs-consistency-reviewer` during REVIEW stage.
+
+| Category | Severity | Deduction | Description |
+|----------|----------|-----------|-------------|
+| `DOC-DECISION-*` | CRITICAL (HIGH confidence) / WARNING (MEDIUM) | -20 / -5 | Code violates a documented architectural decision |
+| `DOC-CONSTRAINT-*` | CRITICAL (HIGH confidence) / WARNING (MEDIUM) | -20 / -5 | Code violates a documented constraint |
+| `DOC-STALE-*` | WARNING | -5 | Documentation section describes changed files but is no longer accurate |
+| `DOC-MISSING-*` | INFO | -2 | New public API or module has no documentation coverage |
+| `DOC-DIAGRAM-*` | INFO | -2 | Diagram covers changed packages and may need update |
+| `DOC-CROSSREF-*` | WARNING | -5 | Two documentation sections describe the same entity with contradictory content |
+
+**LOW confidence handling:** Decisions and constraints with `confidence: LOW` appear as `SCOUT-DOC-*` findings (no score deduction). They are informational only until confidence is upgraded to MEDIUM or HIGH.
+
 ## Deduplication Rules
 
 After all review batches and inline checks complete, findings are deduplicated before scoring.
