@@ -452,6 +452,19 @@ After resolving all convention stacks, generate per-component rule caches for th
 3. Write merged result to `.pipeline/.rules-cache-{component}.json`.
 4. Write component path mapping to `.pipeline/.component-cache` (format: `path_prefix=component_name`).
 
+### 3.5c+ Documentation Discovery (dispatch pl-130-docs-discoverer)
+
+14. If `documentation.enabled` is `true` (default): dispatch `pl-130-docs-discoverer` with:
+    - Project root path
+    - Documentation config from `dev-pipeline.local.md` `documentation:` section
+    - Graph availability from `state.json.integrations.neo4j.available`
+    - Previous discovery timestamp from `state.json.documentation.last_discovery_timestamp`
+    - Related projects from `dev-pipeline.local.md` `related_projects:`
+15. Write discovery summary to `stage_0_docs_discovery.md`
+16. Store discovery metrics in `state.json.documentation` (files_discovered, sections_parsed, decisions_extracted, constraints_extracted, code_linkages, coverage_gaps, stale_sections, external_refs)
+
+**On failure/timeout:** Log INFO: `"Documentation discovery skipped — {reason}."` Continue. Do NOT invoke the recovery engine — this step is advisory. Set `state.json.documentation` to `{}`.
+
 ### 3.5d Check Coverage Baseline (Test Bootstrapper)
 
 If `test_bootstrapper` is configured in `dev-pipeline.local.md` and `test_bootstrapper.enabled: true`:
@@ -646,6 +659,10 @@ List test classes with scenarios. Check for coverage gaps.
 
 Dispatch both in parallel. Collect and **summarize** results -- file paths, pattern files, test classes, identified gaps. Do NOT keep raw agent output.
 
+**Documentation context:** If documentation was discovered at PREFLIGHT (check `state.json.documentation.files_discovered > 0`):
+- Include doc discovery summary (`stage_0_docs_discovery.md`) in exploration context
+- If architecture docs exist, explorers should validate code structure against documented architecture rather than re-inferring it from scratch
+
 Write `.pipeline/stage_1_notes_{storyId}.md` with the exploration summary.
 
 Update state: `story_state` -> `"EXPLORING"`, add `explore` timestamp.
@@ -675,6 +692,12 @@ Domain hotspots:
 Conventions file: [path from config]
 Scaffolder patterns: [from config]
 ```
+
+**Documentation decision traceability:** If graph is available and documentation was discovered:
+- Run "Decision Traceability" query for packages in the plan scope
+- Include `DocDecision` and `DocConstraint` summaries in planner input
+- Planner should note when tasks conflict with existing decisions → create "Generate ADR" sub-task
+- ADR sub-tasks are created when a decision meets 2+ significance criteria: alternatives evaluated (Challenge Brief has 2+ alternatives), cross-cutting impact (3+ packages or 2+ layers), irreversibility, security/compliance implications, precedent-setting
 
 Extract from the planner's response:
 - **Risk level** (LOW / MEDIUM / HIGH)
@@ -1057,6 +1080,12 @@ Mark Verify as completed.
 
 **story_state:** `REVIEWING` | **TaskUpdate:** Mark "Stage 5: Verify" → `completed`, Mark "Stage 6: Review" → `in_progress`
 
+### 9.0 Pre-Query Documentation Context
+
+Before dispatching `pl-400-quality-gate`:
+- If graph available: run "Documentation Impact" and "Stale Docs Detection" queries
+- Include results in quality gate context alongside changed files
+
 ### 9.1 Batch Dispatch
 
 Read `quality_gate` config. For each `batch_N` defined in config:
@@ -1170,31 +1199,34 @@ Mark Review as completed.
 
 ---
 
-## 10. Stage 7: DOCS (inline)
+## 10. Stage 7: DOCS (dispatch pl-350-docs-generator)
 
 **story_state:** `DOCUMENTING` | **TaskUpdate:** Mark "Stage 6: Review" → `completed`, Mark "Stage 7: Docs" → `in_progress`
 
-Check if documentation needs updating:
+Dispatch `pl-350-docs-generator` with:
 
-1. **CLAUDE.md / conventions** -- If the implementation introduces a new gotcha, convention, or pattern that future sessions need to know, add it to the relevant section. Only add genuinely non-obvious information.
-2. **API documentation** -- If new endpoints were added, verify descriptions and examples are present (OpenAPI for BE, TSDoc for FE).
-3. **Migration comments** -- If the migration is non-trivial, add a SQL comment explaining WHY.
-4. **KDoc/TSDoc** -- Verify all new public interfaces have documentation (should already be done by implementer, but double-check).
+```
+Changed files: [list from implementation checkpoints]
+Quality verdict: [PASS/CONCERNS] with score [N]
+Plan stage notes: [Challenge Brief content for ADR generation]
+Doc discovery summary: [from stage_0_docs_discovery.md]
+Documentation config: [from dev-pipeline.local.md documentation: section]
+Framework conventions: [path to documentation conventions]
+Mode: pipeline
+```
 
-Do NOT create new documentation files (README, design docs) unless the requirement explicitly asks for it.
+Rules:
+- Update docs affected by changed files (graph-guided)
+- Generate ADRs for significant decisions from the plan
+- Update changelog with this run's changes
+- Update OpenAPI spec if API endpoints changed
+- Verify KDoc/TSDoc on all new public interfaces
+- Generate missing docs for new modules if auto_generate is enabled
+- Respect user-maintained fences
+- Export to configured targets if export.enabled
+- Write all output to .pipeline/worktree
 
-### Large Change Documentation
-
-If the implementation touched more than 15 files (check `checkpoint-{storyId}.json` total `files_created` + `files_modified`):
-
-1. Verify ALL new public interfaces have KDoc/TSDoc (not just spot-check)
-2. If new API endpoints were added, verify OpenAPI spec is updated (if applicable)
-3. If new migrations exist, verify each has a comment explaining WHY
-4. Log in stage notes: "Large change ({N} files). Documentation verification: {pass/issues_found}."
-
-For standard changes (≤ 15 files), the current inline verification is sufficient.
-
-Write `.pipeline/stage_7_notes_{storyId}.md` with documentation changes made.
+Write `.pipeline/stage_7_notes_{storyId}.md` with documentation generation summary.
 
 Update state: add `docs` timestamp.
 
@@ -1215,12 +1247,14 @@ Changed files: [list from implementation]
 Quality verdict: [PASS/CONCERNS] with score [N]
 Test results: [pass/fail summary]
 Story metadata: requirement=[req], risk=[level]
+Stage 7 notes: [path to stage_7_notes_{storyId}.md]
 
 Rules:
 - Branch: feat/* | fix/* | refactor/* based on requirement type
 - Exclude: .claude/, build/, .env, .pipeline/, node_modules/
 - Conventional commit (no AI attribution, no Co-Authored-By)
 - PR body: Summary, Quality Gate (verdict + score), Test Plan, Pipeline Run metrics
+- PR body section "## Documentation": coverage percentage and delta, files created/updated, ADRs generated (from stage_7_notes)
 ```
 
 Present PR to user with summary of work, quality score, test results.

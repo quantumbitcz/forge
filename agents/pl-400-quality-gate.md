@@ -72,6 +72,10 @@ You receive from the orchestrator:
 
 Agent batches are defined entirely by the project's `dev-pipeline.local.md` config under `quality_gate.batch_N`. You do NOT hardcode which agents to run -- read the config.
 
+### 4.0 Documentation Context
+
+`docs-consistency-reviewer` is a standard reviewer that may be configured in any `batch_N` entry. It receives documentation context (doc discovery summary and stale docs detection results) pre-queried by the orchestrator and passed in the dispatch prompt alongside the changed files. No special handling required — treat it like any other configured review agent.
+
 ### 4.1 Batch Execution
 
 For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:

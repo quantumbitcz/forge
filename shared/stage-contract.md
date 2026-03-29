@@ -8,14 +8,14 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
-| 0 | PREFLIGHT | inline | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement | Config loaded, convention stacks resolved per component, rule caches generated, state initialized |
+| 0 | PREFLIGHT | inline + `pl-130-docs-discoverer` | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered |
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `pl-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `pl-210-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user) |
 | 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created on a unique branch; working tree clean | All tasks completed inside worktree (or failed after max retries) |
 | 5 | VERIFY | inline (Phase A) + `pl-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `pl-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
-| 7 | DOCS | inline | `DOCUMENTING` | Review passed | Documentation updated if needed |
+| 7 | DOCS | `pl-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
 | 8 | SHIP | `pl-600-pr-builder` | `SHIPPING` | Documentation done | PR created and presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `pl-700-retrospective` + `pl-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
@@ -27,7 +27,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 ### Stage 0: PREFLIGHT
 
-**Agent:** Inline (orchestrator logic, no sub-agent dispatch)
+**Agent:** Inline + `pl-130-docs-discoverer` (documentation discovery dispatched after config resolution)
 **story_state:** `PREFLIGHT`
 
 **Entry condition:** User invokes `/pipeline-run` with a requirement string.
@@ -56,13 +56,14 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 11. Detect versions for all layers from manifest files, store in detected_versions.key_dependencies
 12. Generate per-component rule cache (.pipeline/.rules-cache-{component}.json)
 13. Write component path mapping (.pipeline/.component-cache)
+14. If `documentation.enabled` is `true` (default): dispatch `pl-130-docs-discoverer` with project root, documentation config, graph availability, previous discovery timestamp, and related projects. Write discovery summary to `stage_0_docs_discovery.md`. Store metrics in `state.json.documentation`.
 
 **Outputs:**
 - Initialized `.pipeline/state.json`
 - Parsed config (passed as context to subsequent stages)
 - Matched PREEMPT items (recorded in `preempt_items_applied`)
 
-**Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized.
+**Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered (or skipped if `documentation.enabled` is `false`).
 
 ---
 
@@ -294,28 +295,36 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 ### Stage 7: DOCS
 
-**Agent:** Inline (orchestrator logic)
+**Agent:** `pl-350-docs-generator`
 **story_state:** `DOCUMENTING`
 
 **Entry condition:** Review passed with PASS or CONCERNS verdict (Stage 6).
 
 **Inputs:**
 - Changed files from implementation
-- Review findings (especially DOC-* category)
-- Current CLAUDE.md content
-- Module conventions
+- Quality verdict and score from Stage 6
+- Plan stage notes (Challenge Brief content for ADR generation)
+- Doc discovery summary (`stage_0_docs_discovery.md`)
+- Documentation config from `dev-pipeline.local.md` `documentation:` section
+- Framework conventions
 
 **Actions:**
-1. Update CLAUDE.md if new patterns or gotchas were introduced.
-2. Verify API documentation (OpenAPI descriptions for BE, TSDoc for FE).
-3. Add KDoc/TSDoc on all new public interfaces.
-4. No new documentation files unless explicitly requested by the user.
+1. Dispatch `pl-350-docs-generator` with changed files, quality verdict, plan notes, discovery summary, documentation config, and framework conventions.
+2. Generator updates docs affected by changed files (graph-guided if available).
+3. Generator creates ADRs for significant decisions from the plan.
+4. Generator updates changelog with this run's changes.
+5. Generator updates OpenAPI spec if API endpoints changed.
+6. Generator verifies KDoc/TSDoc on all new public interfaces.
+7. Generator creates missing docs for new modules if `auto_generate` is enabled.
+8. All output written to `.pipeline/worktree`.
 
 **Outputs:**
-- Updated documentation files (if applicable)
-- `stage_7_notes_{storyId}.md` -- documentation changes made
+- Generated/updated documentation files in worktree
+- `stage_7_notes_{storyId}.md` -- documentation generation summary
+- Updated knowledge graph documentation nodes (if graph available)
+- Updated docs index (`.pipeline/docs-index.json`)
 
-**Exit condition:** Documentation is current. No new public interfaces lack documentation.
+**Exit condition:** Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained.
 
 ---
 
