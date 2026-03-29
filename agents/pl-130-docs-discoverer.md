@@ -381,7 +381,53 @@ After completing discovery, write a stage note for the orchestrator. The note mu
 
 ---
 
-## 6. Coverage Gap Detection
+## 6. Confidence Lifecycle
+
+Confidence values for extracted decisions and constraints evolve across pipeline runs.
+
+### Automatic upgrade: LOW → MEDIUM
+
+When the discoverer extracts the same decision or constraint consistently across 3+ consecutive pipeline runs without user override, upgrade its confidence from LOW to MEDIUM.
+
+Criteria for "same extraction":
+- Same `id` (for ADR-sourced decisions) or same `summary` hash (for heuristic extractions — SHA256 first 8 chars of the normalized `text` field)
+- Extracted in 3+ consecutive runs without being dismissed or overridden
+
+Track extraction consistency via `extracted_at` timestamps in the graph (on `DocDecision`/`DocConstraint` nodes) or via a `confidence_history` field in the fallback index entry. When upgrading, set `confidence: "MEDIUM"` and log:
+`"Confidence upgraded LOW → MEDIUM for {id}: consistent extraction across {N} runs"`
+
+### Manual upgrade: MEDIUM → HIGH
+
+Users run `/docs-generate --confirm-decisions` to interactively review MEDIUM-confidence decisions and constraints. The skill presents each one and lets the user:
+- Upgrade to HIGH
+- Keep as MEDIUM
+- Dismiss (remove entirely)
+
+On upgrade, set `confidence: "HIGH"` in the graph or index and log to `generation_history`.
+
+### Downgrade and dismissal
+
+Users can downgrade HIGH → MEDIUM or dismiss (remove) any decision or constraint via `--confirm-decisions`. Dismissed items are recorded in `generation_history` with `reason: "user_dismissed"` to prevent re-extraction in the next run. On the next discovery run, check dismissed IDs against newly extracted items — skip any that were previously dismissed.
+
+### Tracking
+
+Confidence changes are logged in `state.json.documentation.generation_history` entries with a `confidence_changes` array:
+
+```json
+{
+  "confidence_changes": [
+    {"id": "ADR-001", "from": "MEDIUM", "to": "HIGH", "reason": "user_confirmed"},
+    {"id": "CONST-003", "from": "LOW", "to": "MEDIUM", "reason": "consistent_extraction_3_runs"},
+    {"id": "DEC-007", "from": "HIGH", "to": null, "reason": "user_dismissed"}
+  ]
+}
+```
+
+Valid `reason` values: `user_confirmed`, `user_dismissed`, `consistent_extraction_3_runs`.
+
+---
+
+## 7. Coverage Gap Detection
 
 After linking docs to code, identify source packages and modules that have NO documentation references:
 
@@ -393,7 +439,7 @@ Coverage gaps are informational only — they are passed to the Docs stage (Stag
 
 ---
 
-## 7. Error Handling
+## 8. Error Handling
 
 - If a file cannot be read (permissions, encoding error): log INFO and skip the file — never fail
 - If Neo4j is unavailable mid-run: fall back to index mode, log WARNING, continue
@@ -403,7 +449,7 @@ Coverage gaps are informational only — they are passed to the Docs stage (Stag
 
 ---
 
-## 8. Forbidden Actions
+## 9. Forbidden Actions
 
 - DO NOT generate, write, or modify any documentation files
 - DO NOT write to the working tree — only write to `.pipeline/docs-index.json` and `state.json`

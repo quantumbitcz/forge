@@ -160,7 +160,14 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "coverage_gaps": [],
     "stale_sections": 0,
     "external_refs": [],
-    "generation_history": []
+    "generation_history": [
+      {
+        "run_id": "",
+        "timestamp": "",
+        "types_generated": [],
+        "confidence_changes": []
+      }
+    ]
   }
 }
 ```
@@ -215,7 +222,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.coverage_gaps` | array | Yes | Package paths with no doc coverage |
 | `documentation.stale_sections` | number | Yes | Count of stale sections |
 | `documentation.external_refs` | array | Yes | External doc URLs |
-| `documentation.generation_history` | array | Yes | Array of generation run records |
+| `documentation.generation_history` | array | Yes | Array of generation run records. Each entry may include a `confidence_changes` array (see below). |
+| `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
 
 ### cross_repo (object, optional)
 

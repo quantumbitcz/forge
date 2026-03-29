@@ -74,9 +74,18 @@ Coverage: {X}/{total} doc types present
 
 #### `--confirm-decisions` (interactive review before generation)
 
-List all MEDIUM-confidence decisions identified during discovery (e.g., inferred audience, assumed scope, guessed module boundaries). For each:
-- Show the decision and its basis
-- Prompt the user to upgrade to HIGH confidence (accept) or dismiss (skip that section)
+List all MEDIUM-confidence decisions and constraints identified during discovery (e.g., inferred audience, assumed scope, guessed module boundaries). For each item, show its text, source file, and basis for extraction. Prompt the user to choose:
+
+1. **Upgrade to HIGH** — the decision or constraint is confirmed as authoritative; set `confidence: "HIGH"` in the graph/index
+2. **Keep as MEDIUM** — leave unchanged, continue to next item
+3. **Dismiss** — remove the item entirely; record in `generation_history` with `reason: "user_dismissed"` so it is not re-extracted on subsequent runs
+
+Users may also downgrade a HIGH-confidence item to MEDIUM using the same interactive flow (present all HIGH items if `--include-high` is also passed).
+
+After the review loop:
+- Write all confidence upgrades and dismissals to the graph (Cypher `SET` on `DocDecision`/`DocConstraint` nodes) or to `.pipeline/docs-index.json`
+- Append a `generation_history` entry with a `confidence_changes` array listing every change made: `{ "id": "<id>", "from": "<old>", "to": "<new or null>", "reason": "<reason>" }`
+- Log a summary: `"Confirmed {N} decisions as HIGH, dismissed {M} items"`
 
 Continue to the generation step once the user has reviewed all MEDIUM items.
 
