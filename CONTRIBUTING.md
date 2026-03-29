@@ -51,7 +51,7 @@ Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/de
 
 ### State is local and gitignored
 
-All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.1.0). Version 1.0.0 was a clean break -- old state files from pre-1.0 schema versions are incompatible; use `/pipeline-reset` to clear them. v1.1.0 is an additive extension of v1.0.0 -- no `/pipeline-reset` required.
+All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v2.0.0). v2.0.0 is a clean break from v1.x — use `/pipeline-reset` to clear old state. Version 1.0.0 was a clean break from pre-1.0 schema versions. v1.1.0 was an additive extension of v1.0.0.
 
 ## Making Changes
 
@@ -103,6 +103,13 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 1. Create `skills/{skill-name}/SKILL.md` with YAML frontmatter
 2. Skills should be thin launchers that dispatch agents or run inline checks
 3. Update `README.md` if the skill is user-facing
+
+### Adding documentation bindings
+
+1. Create `modules/frameworks/{name}/documentation/conventions.md` with framework-specific documentation rules
+2. Optionally add `templates/` subdirectory with framework-specific templates
+3. Update `shared/learnings/{name}.md` with documentation generation effectiveness tracking
+4. Verify: `[ -f modules/frameworks/{name}/documentation/conventions.md ] && echo "OK"`
 
 ### Modifying hooks
 

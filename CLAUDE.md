@@ -28,8 +28,9 @@ Layered design with resolution flowing top-down:
    - `modules/build-systems/` — 7 build tool files (gradle, maven, cmake, ant, bazel, sbt, bun): build automation patterns, dependency management, multi-module structures, caching strategies.
    - `modules/ci-cd/` — 7 CI/CD platform files (github-actions, gitlab-ci, jenkins, circleci, azure-pipelines, bitbucket-pipelines, tekton): pipeline patterns, secrets management, caching, artifact handling.
    - `modules/container-orchestration/` — 11 container/orchestration tool files (docker, docker-compose, docker-swarm, helm, k3s, microk8s, openshift, rancher, podman, argocd, fluxcd): container builds, deployment patterns, GitOps workflows.
+   - `modules/documentation/` — documentation conventions layer (doc structure, ADR patterns, API docs, changelog standards, cross-reference rules).
    Convention composition order (most specific wins): variant > framework-binding > framework > language > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 29 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 32 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
 
 Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin hardcoded defaults.
 
@@ -61,42 +62,44 @@ This is a documentation-only plugin (no build step). To test changes:
 | Pipeline flow      | `shared/stage-contract.md` (10 stages, entry/exit conditions)     |
 | Orchestrator logic | `agents/pl-100-orchestrator.md` (state machine, dispatch rules)   |
 | Quality scoring    | `shared/scoring.md` (formula, verdicts, thresholds)               |
-| State persistence  | `shared/state-schema.md` (v1.1.0 JSON schema)                    |
+| State persistence  | `shared/state-schema.md` (v2.0.0 JSON schema)                    |
 | Error handling     | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design       | `shared/agent-philosophy.md` + `shared/agent-communication.md`    |
 | Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
 
 ## Key conventions
 
-### Agents (29 total, in `agents/*.md`)
+### Agents (32 total, in `agents/*.md`)
 
 **Pipeline agents** (`pl-{NNN}-{role}` naming):
 - Pre-pipeline: `pl-010-shaper`, `pl-050-project-bootstrapper`
 - Orchestration: `pl-100-orchestrator` (coordinator — dispatches all others, never writes code)
-- Preflight: `pl-140-deprecation-refresh`, `pl-150-test-bootstrapper`, `pl-160-migration-planner`
+- Preflight: `pl-130-docs-discoverer`, `pl-140-deprecation-refresh`, `pl-150-test-bootstrapper`, `pl-160-migration-planner`
 - Plan/Validate: `pl-200-planner`, `pl-210-validator`, `pl-250-contract-validator`
 - Implement: `pl-300-implementer`, `pl-310-scaffolder`, `pl-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
+- Docs (Stage 7): `pl-350-docs-generator`
 - Verify/Review: `pl-400-quality-gate`, `pl-500-test-gate`
 - Ship: `pl-600-pr-builder`, `pl-650-preview-validator`, `infra-deploy-verifier`
 - Learn: `pl-700-retrospective`, `pl-710-feedback-capture`, `pl-720-recap`
 
-**Review agents** (9, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`.
+**Review agents** (10, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
 
 **Agent file rules:**
 - YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes).
-- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Framework-specific stack fields: `web` (e.g., `mvc | webflux` for Spring), `persistence` (e.g., `hibernate | r2dbc` for Spring, `prisma | typeorm` for Express — distinct from the generic crosscutting `persistence` layer in `modules/persistence/`). Optional crosscutting layer fields: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`. All optional — omit to skip. Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks.
+- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Framework-specific stack fields: `web` (e.g., `mvc | webflux` for Spring), `persistence` (e.g., `hibernate | r2dbc` for Spring, `prisma | typeorm` for Express — distinct from the generic crosscutting `persistence` layer in `modules/persistence/`). Optional crosscutting layer fields: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`. All optional — omit to skip. Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks. Documentation config: `documentation:` section in `dev-pipeline.local.md` controls doc generation behavior (e.g., `documentation.enabled`, `documentation.style`, `documentation.targets`).
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
+- **DOC-* findings:** Documentation quality issues (missing ADRs, stale references, broken cross-links) scored as INFO (-2) by `docs-consistency-reviewer`. 3+ recurrences → escalated to doc convention rules by retrospective.
 - All agents reference `shared/agent-philosophy.md` for critical thinking principles.
 
 ### Core contracts (in `shared/`)
 
 Read source files for full details. Key facts:
 
-- **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. `SCOUT-*` findings: no deduction. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING.
+- **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. `SCOUT-*` findings: no deduction. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, frontend, performance (frontend + backend), version-compat, infra-deploy, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `pl-710-feedback-capture`.
-- **State schema** (`state-schema.md`): Version **1.1.0**. v1.0.0 was a clean break — old files from pre-1.0 schema versions are incompatible; use `/pipeline-reset` to clear them. v1.1.0 is an additive extension of v1.0.0 — no `/pipeline-reset` required. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
+- **State schema** (`state-schema.md`): Version **2.0.0**. v2.0.0 is a clean break from v1.x — old state files are incompatible; use `/pipeline-reset` to clear them. v1.0.0 was a clean break from pre-1.0 schema versions. v1.1.0 was an additive extension of v1.0.0. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.0 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 15 types, 12-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
 - **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (pl-400, pl-500, pl-600, pl-200, pl-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
@@ -115,7 +118,7 @@ Read source files for full details. Key facts:
 
 ### Knowledge Graph (optional, `graph:` in `dev-pipeline.local.md`)
 
-Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j.
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `pl-130-docs-discoverer` and `pl-350-docs-generator` to track documentation coverage and relationships.
 
 ### Check engine (`shared/checks/`)
 
@@ -130,9 +133,9 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 **Schema v2**: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`. Rules skip when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated by `pl-140-deprecation-refresh` during PREFLIGHT.
 
-### Skills (17 in `skills/`)
+### Skills (18 in `skills/`)
 
-`pipeline-run` (main entry), `pipeline-init`, `pipeline-status`, `pipeline-reset`, `pipeline-rollback`, `pipeline-history`, `pipeline-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
+`pipeline-run` (main entry), `pipeline-init`, `pipeline-status`, `pipeline-reset`, `pipeline-rollback`, `pipeline-history`, `pipeline-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
 
 ### Hooks (`hooks/hooks.json`)
 
@@ -212,7 +215,8 @@ done
 
 - Agent `name` in frontmatter **must** match filename without `.md` — orchestrator dispatch depends on it.
 - Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this.
-- `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 clean break) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
+- `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 and v2.0.0 clean breaks) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
+- State schema v2.0.0 is a clean break from v1.x — run `/pipeline-reset` to clear old state.
 - The plugin never touches consuming project files. Runtime state goes to `.pipeline/`.
 - `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten.
 - If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds.
