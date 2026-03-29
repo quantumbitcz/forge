@@ -20,7 +20,8 @@ if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
 fi
 
-LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability build-systems ci-cd container-orchestration)
+# documentation layer included so Step 5/6 auto-create LayerModule and FrameworkBinding nodes for modules/documentation/
+LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability build-systems ci-cd container-orchestration documentation)
 BINDING_LAYERS=("${LAYERS[@]}" testing)
 
 # --- JSON parsing helper ---
@@ -63,6 +64,11 @@ emit "CREATE INDEX IF NOT EXISTS FOR (pf:ProjectFile) ON (pf.path);"
 emit "CREATE INDEX IF NOT EXISTS FOR (pc:ProjectClass) ON (pc.name);"
 emit "CREATE INDEX IF NOT EXISTS FOR (pd:ProjectDependency) ON (pd.name);"
 emit "CREATE INDEX IF NOT EXISTS FOR (pp:ProjectPackage) ON (pp.path);"
+emit "CREATE INDEX IF NOT EXISTS FOR (df:DocFile) ON (df.path);"
+emit "CREATE INDEX IF NOT EXISTS FOR (ds:DocSection) ON (ds.file_path);"
+emit "CREATE INDEX IF NOT EXISTS FOR (dd:DocDecision) ON (dd.id);"
+emit "CREATE INDEX IF NOT EXISTS FOR (dc:DocConstraint) ON (dc.id);"
+emit "CREATE INDEX IF NOT EXISTS FOR (dg:DocDiagram) ON (dg.path);"
 emit_blank
 
 # ============================================================================
