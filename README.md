@@ -56,7 +56,7 @@ Then add to `.claude/settings.json`:
 | 0 | Preflight | Load config, detect interrupted runs, detect versions, apply learnings |
 | 1 | Explore | Map domain models, tests, and patterns relevant to the requirement |
 | 2 | Plan | Risk-assessed implementation plan with stories, tasks, parallel groups |
-| 3 | Validate | 6-perspective validation (architecture, security, edge cases, tests, conventions, approach quality) |
+| 3 | Validate | 7-perspective validation (architecture, security, edge cases, tests, conventions, approach quality, documentation consistency) |
 | 4 | Implement | TDD loop per task -- scaffold, write tests (RED), implement (GREEN), refactor |
 | 5 | Verify | Build, lint, static analysis, full test suite |
 | 6 | Review | Multi-agent quality review with scoring and fix cycles |
@@ -275,7 +275,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `pl-150-test-bootstrapper`    | 0 Preflight  | Bootstraps test coverage when below threshold                     |
 | `pl-160-migration-planner`    | 0 Preflight  | Library/framework migration planning                              |
 | `pl-200-planner`              | 2 Plan       | Decomposes requirements into risk-assessed plans with stories and tasks |
-| `pl-210-validator`            | 3 Validate   | Validates plans across 6 perspectives, returns GO/REVISE/NO-GO   |
+| `pl-210-validator`            | 3 Validate   | Validates plans across 7 perspectives, returns GO/REVISE/NO-GO   |
 | `pl-250-contract-validator`   | 3 Validate   | Cross-repo API contract breaking change detection                 |
 | `pl-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
 | `pl-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |

@@ -233,7 +233,7 @@ Before creating a new `CONTRADICTS` edge, run the Contradiction Report query (pa
 
 If Neo4j is unavailable, fall back to file-based analysis:
 
-1. Check for `docs/docs-index.json` — a pre-generated index of documentation sections and their described files. Use it to map changed files to documentation sources.
+1. Check for `.pipeline/docs-index.json` — a pre-generated index of documentation sections and their described files. Use it to map changed files to documentation sources.
 2. Fall back to grep-based discovery: search for references to changed class names, endpoint paths, and configuration keys across all `*.md`, `*.adoc`, `*.rst`, and `*.txt` files under `docs/`.
 3. Scan for ADR files via glob: `docs/adr/**/*.md`, `docs/decisions/**/*.md`, `ADR-*.md`.
 4. Scan for constraint documents: `CONSTRAINTS.md`, `docs/constraints/**/*.md`.

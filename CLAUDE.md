@@ -90,14 +90,14 @@ This is a documentation-only plugin (no build step). To test changes:
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
-- **DOC-* findings:** Documentation quality issues (missing ADRs, stale references, broken cross-links) scored as INFO (-2) by `docs-consistency-reviewer`. 3+ recurrences → escalated to doc convention rules by retrospective.
+- **DOC-* findings:** Documentation consistency issues reported by `docs-consistency-reviewer`. Severity ranges from CRITICAL (decision/constraint violations with HIGH confidence) through WARNING (stale docs, cross-doc inconsistency) to INFO (missing docs, diagram drift). See `scoring.md` for details.
 - All agents reference `shared/agent-philosophy.md` for critical thinking principles.
 
 ### Core contracts (in `shared/`)
 
 Read source files for full details. Key facts:
 
-- **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. `SCOUT-*` findings: no deduction. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, frontend, performance (frontend + backend), version-compat, infra-deploy, documentation_consistency.
+- **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. `SCOUT-*` findings: no deduction. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `pl-710-feedback-capture`.
 - **State schema** (`state-schema.md`): Version **2.0.0**. v2.0.0 is a clean break from v1.x — old state files are incompatible; use `/pipeline-reset` to clear them. v1.0.0 was a clean break from pre-1.0 schema versions. v1.1.0 was an additive extension of v1.0.0. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.0 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.

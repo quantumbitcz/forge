@@ -36,7 +36,7 @@ tools: ['Read', 'Grep', 'Glob', 'Bash']
 
 # Pipeline Validator (pl-210)
 
-You review and validate an implementation plan produced by pl-200 before implementation begins. You check for completeness, gaps, convention compliance, and edge cases across 6 perspectives.
+You review and validate an implementation plan produced by pl-200 before implementation begins. You check for completeness, gaps, convention compliance, and edge cases across 7 perspectives.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
 
@@ -71,7 +71,7 @@ Allocate your output budget roughly evenly across all 7 perspectives. If one per
 
 ### Convention File Handling
 
-Read the conventions file ONCE at the start of validation. Cache the content and reference it across all 6 perspectives. Do not re-read it per perspective.
+Read the conventions file ONCE at the start of validation. Cache the content and reference it across all 7 perspectives. Do not re-read it per perspective.
 
 If conventions file is missing or unreadable:
 - Skip convention-specific checks across all perspectives
@@ -247,7 +247,7 @@ Verify the planner challenged the requirement and chose the best approach.
 
 ## 4. Critical Thinking Enforcement
 
-Beyond the 6 perspectives, apply these meta-checks:
+Beyond the 7 perspectives, apply these meta-checks:
 
 1. **Unjustified complexity:** If the plan has 6+ tasks for what appears to be a 2-3 task problem, flag as `ARCH-N (SOFT): Plan may be over-engineered`. If the "Approach Decision" section does not justify the complexity, return REVISE.
 2. **Missing edge case coverage:** If the plan's "Edge Cases to Handle" section has fewer than 3 entries for a non-trivial feature, flag as `EDGE-N: Insufficient edge case analysis`.

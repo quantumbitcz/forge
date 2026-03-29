@@ -135,7 +135,7 @@ For each file from Step 1, assign a `doc_type`:
 | `doc_type` | Classification rule |
 |-----------|---------------------|
 | `adr` | Path contains `adr`, `adrs`, or `decisions`; or filename matches `ADR-NNN` or `adr-NNN` pattern |
-| `openapi` | Filename matches `openapi.*` or `swagger.*`; or YAML/JSON content has top-level `openapi:` or `swagger:` key |
+| `api-spec` | Filename matches `openapi.*` or `swagger.*`; or YAML/JSON content has top-level `openapi:` or `swagger:` key |
 | `architecture` | Path contains `architecture` or `arch`; or filename is `ARCHITECTURE.md` |
 | `runbook` | Path contains `runbook` or `ops`; or filename starts with `runbook-` |
 | `changelog` | Filename is `CHANGELOG.*`, `CHANGES.*`, `HISTORY.*`, or `RELEASES.*` |
@@ -246,7 +246,7 @@ SET s.heading = $heading,
     s.line_start = $line_start
 
 // Relationship
-MERGE (d)-[:HAS_SECTION]->(s)
+MERGE (s)-[:SECTION_OF]->(d)
 ```
 
 **Semantic content:**
@@ -260,7 +260,7 @@ CREATE (dec:DocDecision {
   section_heading: $section_heading
 })
 MERGE (s:DocSection {id: $section_id})
-MERGE (s)-[:CONTAINS_DECISION]->(dec)
+MERGE (s)-[:DECIDES]->(dec)
 
 // Constraint node
 CREATE (con:DocConstraint {
@@ -269,7 +269,7 @@ CREATE (con:DocConstraint {
   source_file: $source_file,
   section_heading: $section_heading
 })
-MERGE (s)-[:CONTAINS_CONSTRAINT]->(con)
+MERGE (s)-[:CONSTRAINS]->(con)
 ```
 
 **Code linkages:**
