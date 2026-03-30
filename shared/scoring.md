@@ -59,11 +59,15 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 - `concerns_threshold` must be >= 40
 - `pass_threshold - concerns_threshold` must be >= 10 (ensure distinct verdict bands — prevents overlap where a score falls into both PASS and CONCERNS)
 - `oscillation_tolerance` must be >= 0 and <= 20
+- `convergence.max_iterations` must be >= 3 and <= 20 (below 3 defeats convergence; above 20 is runaway)
+- `convergence.plateau_threshold` must be >= 0 and <= 10 (0 = any improvement counts; 10 = very loose)
+- `convergence.plateau_patience` must be >= 1 and <= 5 (1 = stop at first plateau; 5 = very patient)
+- `convergence.target_score` must be >= `pass_threshold` and <= 100 (cannot target below the pass bar)
 
 **Verdict band derivation:** When thresholds are customized, verdict bands adjust automatically:
 - PASS: score >= `pass_threshold` AND 0 CRITICALs remaining after all fix cycles
 - CONCERNS: score >= `concerns_threshold` AND score < `pass_threshold` AND 0 CRITICALs remaining after all fix cycles
-- FAIL: score < `concerns_threshold` OR any CRITICAL remaining after `max_review_cycles`
+- FAIL: score < `concerns_threshold` OR any CRITICAL remaining after convergence exhaustion (plateau + max_iterations)
 
 Note: CRITICALs trigger fix cycles (per Aim-for-100 policy) before determining the final verdict. A CRITICAL in cycle 1 does NOT immediately produce FAIL — it is sent to the implementer for fixing first.
 

@@ -97,6 +97,17 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "feedback_classification": "",
   "feedback_loop_count": 0,
   "score_history": [],
+  "convergence": {
+    "phase": "correctness",
+    "phase_iterations": 0,
+    "total_iterations": 0,
+    "plateau_count": 0,
+    "last_score_delta": 0,
+    "convergence_state": "IMPROVING",
+    "phase_history": [],
+    "safety_gate_passed": false,
+    "unfixable_findings": []
+  },
   "integrations": {
     "linear": { "available": false, "team": "" },
     "playwright": { "available": false },
@@ -201,6 +212,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `pl-710-feedback-capture` stage notes. |
 | `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches the previous one. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 cross-stage re-entry validation). |
 | `score_history` | number[] | Yes | Quality score per review cycle for oscillation detection. Appended after each quality gate scoring. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. Integer with default scoring weights; may be non-integer with custom weights. |
+| `convergence` | object | Yes | Convergence engine state. Tracks two-phase iteration progress (correctness → perfection → safety gate). See `shared/convergence-engine.md` for full algorithm. Initialized at PREFLIGHT with all counters at 0. |
+| `convergence.phase` | string | Yes | Current convergence phase. Valid values: `"correctness"` (Phase 1 — IMPLEMENT ↔ VERIFY), `"perfection"` (Phase 2 — IMPLEMENT ↔ REVIEW), `"safety_gate"` (final VERIFY after Phase 2). Transitions managed by the convergence engine. |
+| `convergence.phase_iterations` | integer | Yes | Iteration count within the current phase. Resets to 0 on phase transition. |
+| `convergence.total_iterations` | integer | Yes | Cumulative iteration count across all phases. Never resets. Feeds into `total_retries` budget — each increment also increments `total_retries`. |
+| `convergence.plateau_count` | integer | Yes | Consecutive Phase 2 cycles where score improved by <= `plateau_threshold`. Resets to 0 on any improvement > `plateau_threshold`. When >= `plateau_patience`, convergence is declared. |
+| `convergence.last_score_delta` | integer | Yes | Score change from the previous cycle (`current_score - previous_score`). 0 on first cycle. Used for convergence state classification. |
+| `convergence.convergence_state` | string | Yes | Current convergence classification. Valid values: `"IMPROVING"` (score increasing meaningfully), `"PLATEAUED"` (score stalled — convergence declared), `"REGRESSING"` (score dropped beyond tolerance — escalate). |
+| `convergence.phase_history` | array | Yes | Append-only log of completed phases. Each entry: `{ "phase": "<name>", "iterations": <int>, "outcome": "converged"\|"failed"\|"escalated", "duration_seconds": <int> }`. Used by retrospective for trend analysis. |
+| `convergence.safety_gate_passed` | boolean | Yes | `true` when the final VERIFY after Phase 2 passes. `false` until then. If safety gate fails, phase transitions back to correctness and this resets to `false`. |
+| `convergence.unfixable_findings` | array | Yes | Findings that survived all iterations with documented rationale. Each entry: `{ "category": "<CATEGORY-CODE>", "file": "<path>", "line": <int>, "severity": "<CRITICAL\|WARNING\|INFO>", "reason": "<why not fixed>", "options": ["<option1>", "<option2>"] }`. Populated when Phase 2 converges below target. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). The `neo4j` integration includes `last_build_sha` (SHA of the commit the graph was built from) and `node_count` (total nodes in the graph) — set by the `graph-init` skill; when available, the orchestrator pre-queries graph context at stage boundaries. Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | Per-module state for multi-module projects. Each entry: `{ "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. Each entry's `story_state` can also be `"FAILED"` (terminal — module failed after max retries) or `"BLOCKED"` (waiting on a dependency module to complete). Blocked modules include a `blocked_by` field with the failing module name (e.g., `{ "module": "react", "story_state": "BLOCKED", "story_id": "story-2", "blocked_by": "spring" }`). The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects (use `components` for per-component state instead). |
