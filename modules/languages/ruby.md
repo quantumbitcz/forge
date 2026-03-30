@@ -46,6 +46,39 @@
 - Dangerous methods (mutate in place): `sort!`, `strip!`, `delete!` — bang suffix.
 - Attribute accessors: `attr_reader :name`, `attr_accessor :email`.
 
+## Logging
+
+- Use **SemanticLogger** (`semantic_logger` gem) — high-performance structured logger with JSON output, named tags, and built-in metric support.
+- Alternative: **Lograge** (`lograge` gem) for Rails request log simplification + stdlib `Logger` for basic needs.
+- Configure at application startup:
+  ```ruby
+  require 'semantic_logger'
+  SemanticLogger.default_level = :info
+  SemanticLogger.add_appender(io: $stdout, formatter: :json)
+  ```
+- Include the logger mixin per class:
+  ```ruby
+  class OrderService
+    include SemanticLogger::Loggable
+
+    def create_order(user_id:, items:)
+      logger.info("Order created", order_id: order.id, user_id: user_id)
+    end
+  end
+  ```
+- Use named tags for request-scoped context (correlation ID, trace ID):
+  ```ruby
+  SemanticLogger.named_tagged(correlation_id: correlation_id, trace_id: trace_id) do
+    # All log entries within this block include these tags
+  end
+  ```
+- Use the block form for expensive log messages — the block is only evaluated if the level is enabled:
+  ```ruby
+  logger.debug { "Complex state: #{expensive_computation}" }
+  ```
+- Never use `puts`, `p`, or `pp` for logging — they lack levels, structure, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`:user_id`, `:order_id`) instead.
+
 ## Anti-Patterns
 
 - **God objects** — classes with too many responsibilities. Use mixins (`include`) or composition to decompose.

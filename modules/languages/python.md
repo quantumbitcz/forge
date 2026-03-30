@@ -46,6 +46,46 @@
 - Boolean variables/properties: `is_x`, `has_x`, `can_x`.
 - Type aliases: `PascalCase` (e.g., `UserId = NewType('UserId', int)`).
 
+## Logging
+
+- Use **structlog** (`structlog`) — wraps the stdlib `logging` module with structured, key-value logging and composable processors.
+- Alternative: stdlib `logging` with **python-json-logger** (`python-json-logger`) for JSON output without a new API.
+- Configure once at application startup:
+  ```python
+  import structlog
+
+  structlog.configure(
+      processors=[
+          structlog.contextvars.merge_contextvars,
+          structlog.stdlib.add_log_level,
+          structlog.processors.TimeStamper(fmt="iso"),
+          structlog.processors.JSONRenderer(),
+      ],
+      wrapper_class=structlog.stdlib.BoundLogger,
+      logger_factory=structlog.stdlib.LoggerFactory(),
+  )
+  ```
+- Obtain a logger per module:
+  ```python
+  import structlog
+
+  logger = structlog.get_logger(__name__)
+  ```
+- Use keyword arguments for structured fields — never f-strings in log messages:
+  ```python
+  # Correct — structured, searchable
+  logger.info("order_created", order_id=order.id, user_id=user.id)
+
+  # Wrong — unstructured, unsearchable
+  logger.info(f"Order {order.id} created by {user.id}")
+  ```
+- Use `structlog.contextvars` for request-scoped context (correlation ID, trace ID) — set once in middleware:
+  ```python
+  structlog.contextvars.bind_contextvars(correlation_id=correlation_id, trace_id=trace_id)
+  ```
+- Never use `print()` for logging — it lacks levels, structure, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`user_id`, `order_id`) instead.
+
 ## Anti-Patterns
 
 - **Mutable default arguments:** `def fn(items=[])` shares the same list across all calls. Use `None` and assign inside the function.

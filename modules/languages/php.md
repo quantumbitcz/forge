@@ -48,6 +48,38 @@
 - Interfaces: `PascalCase` (no `I` prefix — `UserRepository`, not `IUserRepository`).
 - Abstract classes: prefix with `Abstract`: `AbstractController`.
 
+## Logging
+
+- Use **Monolog** (`monolog/monolog`) — the de facto PHP logging library, PSR-3 compliant, with 60+ handlers for any output target.
+- Always code against the **PSR-3** interface (`Psr\Log\LoggerInterface`) — decouples application code from the logging implementation.
+- In frameworks: Laravel and Symfony ship Monolog by default and expose it via PSR-3.
+- Inject `LoggerInterface` via constructor — never instantiate loggers directly:
+  ```php
+  public function __construct(
+      private readonly LoggerInterface $logger,
+  ) {}
+
+  public function createOrder(CreateOrderCommand $command): Order
+  {
+      $this->logger->info('Order created', [
+          'order_id' => $order->id,
+          'user_id' => $command->userId,
+      ]);
+  }
+  ```
+- Use context arrays for structured data — never string interpolation:
+  ```php
+  // Correct — structured, searchable
+  $this->logger->info('Order created', ['order_id' => $order->id]);
+
+  // Wrong — baked into message, unsearchable
+  $this->logger->info("Order {$order->id} created");
+  ```
+- Use Monolog's `JsonFormatter` or `LogstashFormatter` for structured JSON output in production.
+- Use Monolog processors to inject request-scoped context (correlation ID, trace ID) automatically into every log record.
+- Never use `echo`, `print`, `var_dump()`, or `error_log()` for logging — they lack levels, structure, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **No `declare(strict_types=1)`** — without it, PHP silently coerces `"123"` to `123`, masking type errors.

@@ -1,0 +1,119 @@
+{
+  "language": "ruby",
+  "extensions": [".rb"],
+  "source": "RuboCop, Ruby Style Guide, OWASP Ruby",
+  "rules": [
+    {
+      "id": "RB-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bputs\\s|\\bputs\\(|\\bp\\s+\\w|\\bpp\\s+\\w",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "puts/p/pp — use a structured logger (SemanticLogger, Logger) instead.",
+      "fix_hint": "Replace with logger.info/debug/warn from SemanticLogger or Rails.logger.",
+      "example_ref": "ruby/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "RB-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|api_key)\\s*=\\s*['\"][^'\"]{3,}['\"]",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables; load via ENV['KEY'] or Rails credentials.",
+      "example_ref": "ruby/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "RB-SEC-002",
+      "name": "code-execution",
+      "pattern": "\\beval\\(|\\bclass_eval\\b.*\\buser|\\binstance_eval\\b.*\\bparams",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-EXEC",
+      "message": "Dynamic code execution — risks arbitrary code execution.",
+      "fix_hint": "Replace with define_method, send, or a dispatch hash for safe dynamic behavior.",
+      "example_ref": "ruby/security.md#code-execution",
+      "scope": "all"
+    },
+    {
+      "id": "RB-EXCEPT-001",
+      "name": "rescue-exception",
+      "pattern": "rescue\\s+Exception",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "rescue Exception — catches SignalException, SystemExit, and NoMemoryError.",
+      "fix_hint": "Rescue StandardError or specific exception types instead.",
+      "example_ref": "ruby/exceptions.md#rescue-exception",
+      "scope": "all"
+    },
+    {
+      "id": "RB-EXCEPT-002",
+      "name": "rescue-nil",
+      "pattern": "rescue\\s*nil|rescue\\s*=>\\s*nil",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Silent rescue — swallows all errors without handling.",
+      "fix_hint": "Name the exception class and at minimum log the error.",
+      "example_ref": "ruby/exceptions.md#silent-rescue",
+      "scope": "all"
+    },
+    {
+      "id": "RB-QUAL-001",
+      "name": "global-variable",
+      "pattern": "\\$[a-zA-Z_]\\w*\\s*=",
+      "exclude_pattern": "^\\s*#|\\$stdout|\\$stderr|\\$LOAD_PATH|\\$VERBOSE|\\$DEBUG",
+      "severity": "WARNING",
+      "category": "QUAL-STATE",
+      "message": "Global variable assignment — creates invisible coupling between modules.",
+      "fix_hint": "Use dependency injection, configuration objects, or module-level constants.",
+      "example_ref": "ruby/state.md#global-variables",
+      "scope": "main"
+    },
+    {
+      "id": "RB-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{8,}\\S",
+      "exclude_pattern": "^\\s*#|^\\s*end$",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "fix_hint": "Extract inner logic into named methods or use guard clauses (return unless).",
+      "example_ref": "ruby/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "RB-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*#|[A-Z_]+\\s*=|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a UPPER_SNAKE_CASE constant with a descriptive name.",
+      "example_ref": "ruby/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "spec/": 500,
+        "test/": 500,
+        "_spec.rb": 500,
+        "_test.rb": 500
+      }
+    },
+    "function_size": {
+      "default": 25
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}

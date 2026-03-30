@@ -48,7 +48,14 @@ if override_path:
         '.go': 'go',
         '.rs': 'rust',
         '.c': 'c', '.h': 'c',
+        '.cs': 'csharp', '.csx': 'csharp',
+        '.cpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp', '.hpp': 'cpp',
         '.swift': 'swift',
+        '.rb': 'ruby',
+        '.php': 'php',
+        '.dart': 'dart',
+        '.ex': 'elixir', '.exs': 'elixir',
+        '.scala': 'scala', '.sc': 'scala',
     }
     file_lang = ext_to_lang.get(os.path.splitext(sys.argv[3] if len(sys.argv) > 3 else '')[1].lower(), '')
 

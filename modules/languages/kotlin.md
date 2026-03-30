@@ -46,6 +46,41 @@ Use the right scope function for the intent — confusion leads to bugs:
 | `also`   | `it`      | object      | Side effects (logging, validation)     |
 | `with`   | `this`    | lambda result | Non-null object with multiple calls   |
 
+## Logging
+
+- Use **kotlin-logging** (`io.github.oshai:kotlin-logging-jvm`) — wraps SLF4J with Kotlin idioms and lambda-based lazy evaluation.
+- Backend: **Logback** (`ch.qos.logback:logback-classic`) with JSON encoder (`net.logstash.logback:logstash-logback-encoder`) for structured output.
+- Obtain a logger per class using the top-level factory:
+  ```kotlin
+  private val logger = KotlinLogging.logger {}
+  ```
+- Use lambda syntax for all log calls — the message is only constructed if the level is enabled:
+  ```kotlin
+  logger.info { "Order created: orderId=${order.id}" }
+  logger.debug { "Payment details: provider=${payment.provider}, amount=${payment.amount}" }
+  logger.error(exception) { "Payment failed: orderId=${order.id}" }
+  ```
+- Use MDC for request-scoped context (correlation ID, trace ID) — set once in a filter/interceptor, not per call site:
+  ```kotlin
+  MDC.put("correlation_id", correlationId)
+  try { chain.proceed(request) } finally { MDC.clear() }
+  ```
+- For coroutines, use `MDCContext()` from `kotlinx-coroutines-slf4j` to propagate MDC across coroutine boundaries:
+  ```kotlin
+  withContext(MDCContext()) {
+      // MDC values are available in this coroutine and its children
+  }
+  ```
+- Never use `println()` for operational logging — it lacks levels, structure, and MDC context.
+- Never log with string concatenation or string templates outside a lambda — use the lambda syntax which skips evaluation when the level is disabled.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+- Use `also` scope function for inline logging during transformation chains:
+  ```kotlin
+  findUser(id)
+      ?.also { logger.debug { "Found user: id=${it.id}" } }
+      ?.let { createOrder(it) }
+  ```
+
 ## Anti-Patterns
 
 - **`!!` usage:** Every `!!` is a deferred `NullPointerException`. Fix the nullability model instead.

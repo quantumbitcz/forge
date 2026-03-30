@@ -57,6 +57,45 @@
 - Namespaces: `lowercase` (`my_project::utils`).
 - Template parameters: `PascalCase` (`template<typename ValueType>`).
 
+## Logging
+
+- Use **spdlog** (`gabime/spdlog`) — fast, header-only C++ logging library with structured output, `{fmt}`-based formatting, and async support.
+- Alternative: **quill** (`odygrd/quill`) for ultra-low-latency logging in performance-critical systems.
+- Initialize at application startup:
+  ```cpp
+  #include <spdlog/spdlog.h>
+  #include <spdlog/sinks/stdout_color_sinks.h>
+
+  auto logger = spdlog::stdout_color_mt("app");
+  spdlog::set_default_logger(logger);
+  spdlog::set_level(spdlog::level::info);
+  // JSON pattern for structured output
+  spdlog::set_pattern(R"({"timestamp":"%Y-%m-%dT%H:%M:%S.%f","level":"%l","message":"%v"})");
+  ```
+- Use `{fmt}`-based formatting — arguments are only evaluated if the level is enabled:
+  ```cpp
+  spdlog::info("Order created: order_id={}, user_id={}", order.id, user.id);
+  spdlog::error("Payment failed: order_id={}, error={}", order.id, err.what());
+  ```
+- Use `SPDLOG_DEBUG(...)` / `SPDLOG_TRACE(...)` macros for compile-time elimination of debug/trace logs in release builds.
+- Use async logging for I/O-heavy applications to prevent logging from blocking application threads:
+  ```cpp
+  #include <spdlog/async.h>
+  auto async_logger = spdlog::create_async<spdlog::sinks::stdout_color_sink_mt>("async");
+  ```
+- For request-scoped context propagation, use thread-local storage or pass a context-enriched logger through the call chain:
+  ```cpp
+  // Thread-local context (set once per request in middleware)
+  thread_local std::string correlation_id;
+
+  // Or create a named logger with context
+  auto request_logger = spdlog::default_logger()->clone("req");
+  request_logger->set_pattern(
+      R"({"timestamp":"%Y-%m-%dT%H:%M:%S.%f","level":"%l","correlation_id":")" + correlation_id + R"(","message":"%v"})");
+  ```
+- Never use `std::cout`, `std::cerr`, or `printf` for operational logging — they lack levels, structure, and thread safety guarantees.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **Manual memory management** — use smart pointers and RAII; raw `new`/`delete` is almost never needed in modern C++.

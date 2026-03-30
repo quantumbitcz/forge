@@ -54,6 +54,34 @@
 - `guard` for early exit — the happy path reads linearly.
 - Use `access control` deliberately: `private` for implementation details, `internal` (default) for module use, `public` for package/library APIs.
 
+## Logging
+
+- Use **swift-log** (`apple/swift-log`) — Apple's official server-side logging API with pluggable backends.
+- For Apple platforms (iOS/macOS), use **`os.Logger`** (`os` framework) — integrates with Console.app and Instruments with near-zero overhead when logs are not collected.
+- Initialize a logger per subsystem:
+  ```swift
+  // Server-side (swift-log)
+  import Logging
+  let logger = Logger(label: "com.myapp.orders")
+
+  // Apple platforms (os.Logger)
+  import os
+  let logger = Logger(subsystem: "com.myapp", category: "orders")
+  ```
+- Use string interpolation with privacy controls (`os.Logger`) — sensitive data is redacted automatically in production:
+  ```swift
+  logger.info("Order created: orderId=\(order.id, privacy: .public), userId=\(user.id, privacy: .private)")
+  ```
+- Use structured metadata with swift-log:
+  ```swift
+  var logger = Logger(label: "com.myapp.orders")
+  logger[metadataKey: "correlationId"] = "\(correlationId)"
+  logger.info("Order created", metadata: ["orderId": "\(order.id)"])
+  ```
+- Never use `print()` or `debugPrint()` for operational logging — they lack levels, metadata, and are stripped inconsistently across build configurations.
+- Never log PII (email, name, phone), credentials (tokens, passwords), or financial data. On Apple platforms, use `privacy: .private` for user-identifiable data — it is redacted in production logs but visible during debugging.
+- Use `Logger.MetadataValue` for structured values, not string interpolation in metadata keys.
+
 ## Anti-Patterns
 
 - **Force-unwrap (`!`) without justification:** Crashes at runtime with an unhelpful message. Use `guard let`, optional chaining, or `??` with a default.

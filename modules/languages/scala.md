@@ -66,6 +66,37 @@
 - Packages: `lowercase.dotted` (`com.myapp.users`).
 - Boolean methods: `isEmpty`, `isValid`, `hasPermission`.
 
+## Logging
+
+- Use **scala-logging** (`com.typesafe.scala-logging:scala-logging`) — wraps SLF4J with Scala macros for compile-time lazy evaluation of log arguments.
+- Backend: **Logback** (`ch.qos.logback:logback-classic`) with JSON encoder (`net.logstash.logback:logstash-logback-encoder`).
+- For **Cats Effect** projects: use **log4cats** (`org.typelevel:log4cats-slf4j`). For **ZIO** projects: use `zio-logging`.
+- Mix in the `LazyLogging` trait per class:
+  ```scala
+  import com.typesafe.scalalogging.LazyLogging
+
+  class OrderService extends LazyLogging:
+    def createOrder(userId: UserId, items: List[Item]): Either[OrderError, Order] =
+      logger.info(s"Order created: orderId=${order.id}, userId=$userId")
+  ```
+- For Cats Effect, use `Slf4jLogger` for referentially transparent logging:
+  ```scala
+  import org.typelevel.log4cats.slf4j.Slf4jLogger
+
+  for
+    logger <- Slf4jLogger.create[IO]
+    _      <- logger.info(s"Order created: orderId=${order.id}")
+  yield ()
+  ```
+- Use MDC for request-scoped context — same JVM pattern (SLF4J MDC):
+  ```scala
+  MDC.put("correlation_id", correlationId)
+  try process(request) finally MDC.clear()
+  ```
+- `scala-logging` macros eliminate the performance cost of disabled log levels at compile time — string interpolation is not evaluated if the level is off.
+- Never use `println` for logging — it lacks levels, structure, and MDC context.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **Using `null`** — Scala has `Option[T]`; `null` bypasses the type system entirely.

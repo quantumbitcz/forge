@@ -54,6 +54,43 @@
 - Libraries: `snake_case`.
 - Boolean variables: `isActive`, `hasPermission`, `canDelete`.
 
+## Logging
+
+- Use the **`logging`** package (`package:logging`) — the official Dart logging API with hierarchical loggers and level filtering.
+- For Flutter development, add **`logger`** (`package:logger`) for readable dev-time output with pretty-printing.
+- Configure once at app startup:
+  ```dart
+  import 'package:logging/logging.dart';
+
+  void configureLogging() {
+    Logger.root.level = Level.INFO;
+    Logger.root.onRecord.listen((record) {
+      // Production: emit structured JSON to stdout
+      // Development: pretty-print with timestamp and level
+    });
+  }
+  ```
+- Obtain a logger per class or library:
+  ```dart
+  final _logger = Logger('OrderService');
+
+  void createOrder(String userId, List<Item> items) {
+    _logger.info('Order created: orderId=${order.id}, userId=$userId');
+  }
+  ```
+- Use `Logger.root.onRecord` handlers to format output as JSON for production or pretty-print for development — swap formatters without changing application code.
+- Dart's `logging` package does not support structured key-value fields natively. Embed structured data in the message string or use a custom `LogRecord` handler that parses and indexes fields for your log aggregator.
+- For request-scoped context, use hierarchical logger names or `Zone` values to propagate correlation IDs:
+  ```dart
+  runZoned(() {
+    // All loggers in this zone inherit the correlation ID
+    _logger.info('Processing request');
+  }, zoneValues: {'correlationId': correlationId});
+  ```
+- In Flutter, be aware that `print()` output may appear in device logs accessible to other apps on some platforms — never log sensitive data even during development.
+- Never use `print()` or `debugPrint()` for operational logging — they lack levels, hierarchy, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **Using `dynamic` everywhere** — disables type checking entirely. Use `Object?` when you truly need an any-type.

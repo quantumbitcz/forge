@@ -47,6 +47,34 @@
 - Factory methods: `of(...)`, `from(...)`, `create(...)` as static factory convention.
 - Test classes: `XxxTest` (unit) or `XxxIT` (integration).
 
+## Logging
+
+- Use **SLF4J** (`org.slf4j:slf4j-api`) as the logging facade — decouples application code from the logging implementation.
+- Backend: **Logback** (`ch.qos.logback:logback-classic`) with JSON encoder (`net.logstash.logback:logstash-logback-encoder`) for structured output.
+- Obtain a logger per class:
+  ```java
+  private static final Logger log = LoggerFactory.getLogger(MyService.class);
+  ```
+- Use parameterized messages — SLF4J evaluates arguments only when the level is enabled:
+  ```java
+  log.info("Order created: orderId={}", order.getId());
+  log.debug("Payment details: provider={}, amount={}", payment.getProvider(), payment.getAmount());
+  log.error("Payment failed: orderId={}", order.getId(), exception);
+  ```
+- Use MDC for request-scoped context (correlation ID, trace ID) — set once in a filter, cleared in `finally`:
+  ```java
+  MDC.put("correlation_id", correlationId);
+  try { chain.doFilter(request, response); }
+  finally { MDC.clear(); }
+  ```
+- Use fluent logging API (SLF4J 2.0+) for conditional structured fields:
+  ```java
+  log.atDebug().addKeyValue("itemCount", items.size()).log("Processing batch");
+  ```
+- Never use `System.out.println`, `System.err.println`, or `printStackTrace()` — they bypass structured logging, lack levels, and cannot be routed or filtered.
+- Never use string concatenation in log messages (`log.debug("user=" + user)`) — it evaluates regardless of log level. Use parameterized messages.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+
 ## Anti-Patterns
 
 - **Field injection (`@Autowired` on fields):** Hides dependencies, breaks testability, and cannot use `final`. Always use constructor injection.

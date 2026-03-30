@@ -1,0 +1,130 @@
+{
+  "language": "scala",
+  "extensions": [".scala", ".sc"],
+  "source": "Scalafix, WartRemover, Scala Style Guide",
+  "rules": [
+    {
+      "id": "SC-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bprintln\\(|\\bprint\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "println — use a structured logger (scala-logging, log4cats) instead.",
+      "fix_hint": "Replace with logger.info/debug/warn from scala-logging (LazyLogging trait).",
+      "example_ref": "scala/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "SC-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apiKey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables or a config library (Typesafe Config, PureConfig).",
+      "example_ref": "scala/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "SC-NULL-001",
+      "name": "null-usage",
+      "pattern": "\\bnull\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*null[^\"]*\"",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "null usage — use Option[T] instead; null bypasses the type system.",
+      "fix_hint": "Replace with Option[T], None, or Some(value).",
+      "example_ref": "scala/null-safety.md#option",
+      "scope": "all"
+    },
+    {
+      "id": "SC-BLOCK-001",
+      "name": "await-result",
+      "pattern": "Await\\.result|Await\\.ready",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Await.result blocks threads — can cause deadlocks in concurrent code.",
+      "fix_hint": "Use map/flatMap/for-comprehensions on Future; use IO/ZIO for referentially transparent async.",
+      "example_ref": "scala/concurrency.md#await",
+      "scope": "main"
+    },
+    {
+      "id": "SC-EXCEPT-001",
+      "name": "catch-wildcard",
+      "pattern": "case\\s+_\\s*=>",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Catch-all pattern — catches all exceptions without discrimination.",
+      "fix_hint": "Match specific exception types or use NonFatal(_) from scala.util.control.",
+      "example_ref": "scala/exceptions.md#catch-wildcard",
+      "scope": "all"
+    },
+    {
+      "id": "SC-QUAL-001",
+      "name": "return-statement",
+      "pattern": "\\breturn\\s",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "QUAL-IDIOM",
+      "message": "Explicit return — in Scala, the last expression is the return value.",
+      "fix_hint": "Remove return; restructure so the desired value is the last expression.",
+      "example_ref": "scala/idioms.md#return",
+      "scope": "main"
+    },
+    {
+      "id": "SC-QUAL-002",
+      "name": "any-type",
+      "pattern": ":\\s*Any\\b|\\[Any\\]",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*\"",
+      "severity": "WARNING",
+      "category": "QUAL-TYPE",
+      "message": "Any type defeats type safety — use generics or sealed hierarchies.",
+      "fix_hint": "Replace with a generic type parameter [A] or a sealed trait.",
+      "example_ref": "scala/type-safety.md#any",
+      "scope": "all"
+    },
+    {
+      "id": "SC-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{8,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use for-comprehensions.",
+      "example_ref": "scala/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "SC-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|val\\s|def\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a val with a descriptive PascalCase name (Scala convention).",
+      "example_ref": "scala/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "test/": 500,
+        "Spec.scala": 500,
+        "Test.scala": 500
+      }
+    },
+    "function_size": {
+      "default": 30
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}

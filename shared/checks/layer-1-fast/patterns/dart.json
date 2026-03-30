@@ -1,0 +1,117 @@
+{
+  "language": "dart",
+  "extensions": [".dart"],
+  "source": "dart analyze, Effective Dart, Flutter best practices",
+  "rules": [
+    {
+      "id": "DT-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bprint\\(|\\bdebugPrint\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "print()/debugPrint() — use the logging package for structured logging.",
+      "fix_hint": "Replace with Logger('Name').info() from package:logging.",
+      "example_ref": "dart/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "DT-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|apikey|apiKey)\\s*=\\s*'[^']{3,}'|(password|secret|token|apikey|apiKey)\\s*=\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables, dart-define, or a secure storage solution.",
+      "example_ref": "dart/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "DT-NULL-001",
+      "name": "null-assertion-abuse",
+      "pattern": "\\w+!\\.",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|!=",
+      "severity": "WARNING",
+      "category": "QUAL-NULL",
+      "message": "Null assertion (!) — throws at runtime if value is null.",
+      "fix_hint": "Use null-aware operators (?., ??, ??=) or explicit null checks instead.",
+      "example_ref": "dart/null-safety.md#null-assertion",
+      "scope": "all"
+    },
+    {
+      "id": "DT-QUAL-001",
+      "name": "dynamic-type",
+      "pattern": ":\\s*dynamic\\b|<dynamic>|as\\s+dynamic",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-TYPE",
+      "message": "dynamic type disables type checking — use Object? or a specific type.",
+      "fix_hint": "Replace with a typed parameter, Object?, or generic type parameter.",
+      "example_ref": "dart/type-safety.md#dynamic",
+      "scope": "all"
+    },
+    {
+      "id": "DT-EXCEPT-001",
+      "name": "catch-error",
+      "pattern": "\\bon\\s+Error\\s+catch|catch\\s*\\(.*Error\\b",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|FormatException|StateError|ArgumentError",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Catching Error — Error represents programming bugs, not recoverable conditions.",
+      "fix_hint": "Catch specific Exception subtypes; let Errors propagate to crash reporting.",
+      "example_ref": "dart/exceptions.md#catch-error",
+      "scope": "all"
+    },
+    {
+      "id": "DT-BLOCK-001",
+      "name": "sync-io",
+      "pattern": "readAsStringSync|readAsBytesSync|writeAsStringSync|writeAsBytesSync|existsSync|createSync|deleteSync",
+      "exclude_pattern": "^\\s*//|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "PERF-BLOCK",
+      "message": "Synchronous I/O — blocks the event loop. Use async variants.",
+      "fix_hint": "Replace with the async version (readAsString, writeAsString, etc.).",
+      "example_ref": "dart/async.md#sync-io",
+      "scope": "main"
+    },
+    {
+      "id": "DT-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{8,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*'|^\\s*\"",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use early returns.",
+      "example_ref": "dart/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "DT-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s|final\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a const or final variable with a descriptive name.",
+      "example_ref": "dart/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "test/": 500,
+        "_test.dart": 500
+      }
+    },
+    "function_size": {
+      "default": 30
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}

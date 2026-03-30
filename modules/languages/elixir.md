@@ -65,6 +65,36 @@
 - Dangerous functions: `delete!`, `update!` — trailing `!` (may raise).
 - Private functions: `defp` keyword, no underscore prefix.
 
+## Logging
+
+- Use the built-in **`Logger`** module (stdlib) — part of Elixir, no external dependency, supports structured metadata out of the box.
+- For JSON output in production: **LoggerJSON** (`logger_json` hex package) as the formatter backend.
+- Configure in `config/config.exs`:
+  ```elixir
+  config :logger, :default_handler,
+    config: [type: :standard_io],
+    level: :info
+
+  # For JSON output in production:
+  config :logger, :default_handler,
+    config: [
+      formatter: {LoggerJSON.Formatters.Basic, []}
+    ]
+  ```
+- Use structured metadata — set request-scoped context once in a Plug/middleware:
+  ```elixir
+  Logger.metadata(correlation_id: correlation_id, trace_id: trace_id)
+  Logger.info("Order created", order_id: order.id, user_id: user.id)
+  ```
+- Use the anonymous function form for expensive log messages — the function is only called if the level is enabled:
+  ```elixir
+  Logger.debug(fn -> "Complex state: #{inspect(complex_data)}" end)
+  ```
+- Logger metadata is process-scoped (bound to the BEAM process) — set it once in a Plug/middleware and it propagates through the entire request lifecycle automatically.
+- Use `Logger.warning/2` (not `Logger.warn/2`, which is deprecated since Elixir 1.15).
+- Never use `IO.puts`, `IO.inspect`, or `dbg` for operational logging — they lack levels, metadata, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **Long process mailboxes** — a process receiving messages faster than it processes them causes memory issues. Use backpressure (GenStage, Flow) or load shedding.

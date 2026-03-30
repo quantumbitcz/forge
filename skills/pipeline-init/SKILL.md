@@ -253,15 +253,66 @@ ${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify --project-root "${PROJECT
 
 ---
 
-### Phase 4: HEALTH SCAN (optional)
+### Phase 4: BASELINE AUDIT
 
-Ask the user: **"Would you like me to run a full codebase health scan? This checks code quality, linting, and dependency vulnerabilities."**
+Run a three-tier audit to check the codebase against the plugin's convention rules. Step 1 is mandatory; Steps 2 and 3 are prompted.
+
+#### Step 1: Convention Scan (mandatory)
+
+This step always runs — no user prompt. It takes under 5 seconds.
+
+1. **Discover source files:**
+   ```bash
+   PROJECT_ROOT=$(git rev-parse --show-toplevel)
+   SOURCE_FILES=$(git -C "$PROJECT_ROOT" ls-files --cached --others --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|csx|cpp|cc|cxx|hpp|swift|rb|php|dart|ex|exs|scala|sc)$')
+   FILE_COUNT=$(echo "$SOURCE_FILES" | wc -l | tr -d ' ')
+   ```
+
+2. **Run Layer 1 + Layer 2 checks** on all discovered files:
+   ```bash
+   echo "$SOURCE_FILES" | while read -r f; do
+     "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh" --review --project-root "$PROJECT_ROOT" --files-changed "$PROJECT_ROOT/$f"
+   done
+   ```
+
+3. **Parse and present findings.** Count by severity and category. Calculate quality score: `100 - 20*CRITICAL - 5*WARNING - 2*INFO`.
+
+   Display:
+   ```
+   Convention Scan Results:
+     Files scanned:    {count}
+     Languages:        {breakdown}
+
+     | Category        | CRITICAL | WARNING | INFO |
+     |-----------------|----------|---------|------|
+     | Security        | {n}      | {n}     | {n}  |
+     | Conventions     | {n}      | {n}     | {n}  |
+     | Code Quality    | {n}      | {n}     | {n}  |
+     | Performance     | {n}      | {n}     | {n}  |
+     | Architecture    | {n}      | {n}     | {n}  |
+
+     Quality Score: {score}/100 ({PASS|CONCERNS|FAIL})
+   ```
+
+   If any CRITICAL findings exist, list them immediately:
+   ```
+   CRITICAL findings (must fix before pipeline runs):
+     1. src/config/AppConfig.kt:15 | SEC-CRED | Possible hardcoded credential detected.
+   ```
+
+4. **Save report** to `.pipeline/baseline-report.md` with all findings grouped by severity. This file is always written regardless of what the user chooses next.
+
+   Map category prefixes: `SEC-*` → Security, `CONV-*` → Conventions, `QUAL-*` → Code Quality, `PERF-*` → Performance, `ARCH-*`/`DESIGN-*` → Architecture.
+
+#### Step 2: Deeper Analysis (optional)
+
+Ask: **"Want me to also run linters and dependency audit? This uses your project's configured linters and checks for known vulnerabilities."**
 
 If the user accepts:
 
-1. **Layer 1 — Static analysis**: Run linter/check commands on all source files using the detected linters. If no linters are configured, note this as a recommendation.
+1. **Linter run**: Run linter/check commands on all source files using the detected linters from Phase 1. If no linters are configured, note this as a recommendation.
 
-2. **Layer 2 — Dependency audit**: Run the appropriate audit tool:
+2. **Dependency audit**: Run the appropriate audit tool:
    - `npm audit` / `pnpm audit` / `yarn audit` (Node.js)
    - `cargo audit` (Rust — install if missing)
    - `pip-audit` (Python — install if missing)
@@ -269,24 +320,61 @@ If the user accepts:
    - `govulncheck ./...` (Go — if installed)
    - Note if no audit tool is available
 
-3. **Present findings** as a summary table:
+3. **Append findings** to the report and update the summary table.
 
+If declined, skip silently.
+
+#### Step 3: Deep Convention Analysis (optional)
+
+Ask: **"Want me to run a deep convention analysis? This uses AI to check your code against all language and framework best practices (logging patterns, error handling, async conventions). It takes longer but catches issues that pattern matching can't."**
+
+If the user accepts:
+
+1. **Load conventions:** Read the detected language module from `${CLAUDE_PLUGIN_ROOT}/modules/languages/{detected_language}.md` and the framework module from `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/conventions.md`.
+
+2. **Select representative files:** Choose up to 20 source files, prioritizing:
+   - Application entry points (main, Application, index)
+   - Service/use-case classes
+   - Configuration files
+   - Core domain models
+   - API controllers/handlers
+
+3. **Analyze each file** against the loaded conventions. Check for:
+   - Correct logging library usage (e.g., kotlin-logging vs raw SLF4J)
+   - Structured logging patterns (lambda syntax, parameterized messages, structured fields)
+   - Context propagation (MDC in coroutines, child loggers, metadata)
+   - Error handling alignment with language conventions
+   - Framework-specific convention adherence
+   - Async/concurrency patterns
+
+4. **Report findings** with `DEEP-*` category prefix:
    ```
-   Health Scan Results:
-   | Category          | Critical | Warning | Info |
-   |-------------------|----------|---------|------|
-   | Linting           | 0        | 12      | 34   |
-   | Dependencies      | 1        | 3       | 0    |
-   | Code conventions  | 0        | 5       | 8    |
+   Deep Convention Analysis:
+     Files analyzed:   {n} of {total} (representative sample)
+
+     Findings:
+     1. src/service/OrderService.kt:3 | DEEP-LOG | WARNING |
+        Using SLF4J LoggerFactory directly — use kotlin-logging (KotlinLogging.logger {})
+     2. src/api/UserController.kt:15 | DEEP-CONV | INFO |
+        MDC not cleared in finally block — risk of context bleed
    ```
 
-4. **Offer remediation options**:
-   - `[1]` Fix CRITICAL issues only
-   - `[2]` Fix all WARNING and above
-   - `[3]` Save report to `.pipeline/health-report.md` for later
-   - `[4]` Skip — proceed without fixing
+5. **Append** deep analysis findings to `.pipeline/baseline-report.md`.
 
-If the user chooses to fix issues, address them methodically: fix, re-run the specific check, confirm resolution. Do NOT run the full scan again after each fix.
+If declined, skip silently.
+
+#### Remediation
+
+After all completed tiers, if any findings were reported, offer:
+
+```
+  [1] Fix CRITICAL issues only
+  [2] Fix all WARNING and above
+  [3] Save report only (already saved to .pipeline/baseline-report.md)
+  [4] Skip — proceed without fixing
+```
+
+If the user chooses to fix ([1] or [2]): address issues methodically — fix each issue, re-run the specific check on the affected file, confirm resolution. Do NOT re-run the full scan after each fix.
 
 ---
 

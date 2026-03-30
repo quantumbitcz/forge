@@ -1,0 +1,130 @@
+{
+  "language": "php",
+  "extensions": [".php"],
+  "source": "PHPStan, Psalm, PSR-12, OWASP PHP",
+  "rules": [
+    {
+      "id": "PH-CONV-001",
+      "name": "console-output",
+      "pattern": "\\becho\\s|\\bprint\\s|\\bvar_dump\\(|\\bprint_r\\(|\\berror_log\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "echo/print/var_dump — use a PSR-3 logger (Monolog) instead.",
+      "fix_hint": "Inject Psr\\Log\\LoggerInterface and use $logger->info/debug/warning.",
+      "example_ref": "php/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "PH-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|api_key|apikey)\\s*=\\s*['\"][^'\"]{3,}['\"]",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables; load via getenv() or framework config.",
+      "example_ref": "php/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "PH-SEC-002",
+      "name": "code-execution",
+      "pattern": "\\beval\\(|\\bexec\\(|\\bshell_exec\\(|\\bsystem\\(|\\bpassthru\\(",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-EXEC",
+      "message": "Dynamic code/command execution — high risk of injection.",
+      "fix_hint": "Avoid dynamic execution; use escapeshellarg() if shell commands are unavoidable.",
+      "example_ref": "php/security.md#code-execution",
+      "scope": "all"
+    },
+    {
+      "id": "PH-SEC-003",
+      "name": "sql-concatenation",
+      "pattern": "\"SELECT.*\"\\s*\\.|\"INSERT.*\"\\s*\\.|\"UPDATE.*\"\\s*\\.|\"DELETE.*\"\\s*\\.",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-SQL",
+      "message": "SQL string concatenation — risk of SQL injection.",
+      "fix_hint": "Use PDO prepared statements with parameterized queries.",
+      "example_ref": "php/security.md#sql-injection",
+      "scope": "all"
+    },
+    {
+      "id": "PH-EXCEPT-001",
+      "name": "catch-throwable",
+      "pattern": "catch\\s*\\(\\s*\\\\?Throwable\\s",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Catching \\Throwable — catches Error (OOM, type errors) along with exceptions.",
+      "fix_hint": "Catch \\Exception or specific exception types; let fatal Errors propagate.",
+      "example_ref": "php/exceptions.md#catch-throwable",
+      "scope": "all"
+    },
+    {
+      "id": "PH-QUAL-001",
+      "name": "loose-comparison",
+      "pattern": "[^!=<>]==[^=]",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|===",
+      "severity": "INFO",
+      "category": "QUAL-TYPE",
+      "message": "Loose comparison (==) — type juggling produces surprising results in PHP.",
+      "fix_hint": "Use strict comparison (===) to avoid type coercion.",
+      "example_ref": "php/type-safety.md#strict-comparison",
+      "scope": "all"
+    },
+    {
+      "id": "PH-QUAL-002",
+      "name": "error-suppression",
+      "pattern": "@\\$|@\\w+\\(|@\\\\",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|@param|@return|@var|@throws|@method|@property",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "@ error suppression operator — hides bugs and makes debugging impossible.",
+      "fix_hint": "Remove @ and handle the error explicitly with try/catch or null checks.",
+      "example_ref": "php/exceptions.md#error-suppression",
+      "scope": "all"
+    },
+    {
+      "id": "PH-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|^\\s*'|^\\s*\"",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "fix_hint": "Extract inner logic into named methods or use early returns.",
+      "example_ref": "php/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "PH-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|const\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a class constant or const with a descriptive name.",
+      "example_ref": "php/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "tests/": 500,
+        "Test.php": 500,
+        "migrations/": 600
+      }
+    },
+    "function_size": {
+      "default": 30
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}

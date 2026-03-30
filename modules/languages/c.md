@@ -63,6 +63,33 @@ Every header must use an include guard:
 - Build with `-Wall -Wextra -Werror -pedantic` — zero warnings is a hard requirement, not a goal.
 - Minimal includes: each `.c` file includes only the headers it directly needs.
 
+## Logging
+
+- C has no standard logging library. Choose based on target environment:
+  - **Embedded/bare-metal:** Custom `LOG_*` macros wrapping UART/SWO/RTT output with compile-time level filtering.
+  - **POSIX applications:** **zlog** (`HardySimpson/zlog`) for high-performance structured logging, or **log.c** (`rxi/log.c`) for minimal footprint.
+  - **Daemon processes:** `syslog(3)` via `<syslog.h>` for system log integration.
+- Define log level macros with compile-time filtering to eliminate disabled levels entirely:
+  ```c
+  #ifndef LOG_LEVEL
+  #define LOG_LEVEL LOG_LEVEL_INFO
+  #endif
+
+  #define LOG_ERROR(fmt, ...) do { if (LOG_LEVEL <= LOG_LEVEL_ERROR) \
+      log_write(LOG_LEVEL_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__); } while(0)
+  #define LOG_WARN(fmt, ...)  do { if (LOG_LEVEL <= LOG_LEVEL_WARN)  \
+      log_write(LOG_LEVEL_WARN,  __FILE__, __LINE__, fmt, ##__VA_ARGS__); } while(0)
+  #define LOG_INFO(fmt, ...)  do { if (LOG_LEVEL <= LOG_LEVEL_INFO)  \
+      log_write(LOG_LEVEL_INFO,  __FILE__, __LINE__, fmt, ##__VA_ARGS__); } while(0)
+  #define LOG_DEBUG(fmt, ...) do { if (LOG_LEVEL <= LOG_LEVEL_DEBUG) \
+      log_write(LOG_LEVEL_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__); } while(0)
+  ```
+- Always include source location (`__FILE__`, `__LINE__`) in log macros — essential for embedded debugging where stack traces may be unavailable.
+- Use `snprintf`-based formatting in log implementations — never `sprintf` (buffer overflow risk).
+- In ISR context, buffer log data to a ring buffer and flush from the main loop — never perform I/O (UART writes, file writes) in interrupt handlers.
+- Never use `printf` directly for production logging — it lacks levels, is not filterable, and has no timestamp.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). In embedded contexts, even debug builds are vulnerable — logs can be captured via JTAG/SWO probes.
+
 ## Anti-Patterns
 
 - **`malloc` in time-critical or ISR context:** Non-deterministic timing, fragmentation risk. Pre-allocate all buffers.

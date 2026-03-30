@@ -51,6 +51,38 @@
 - Use `sync.Once` only for genuine one-time initialization, not as a lazy-loading shortcut.
 - `gofmt` and `goimports` are non-negotiable — no manual formatting discussions.
 
+## Logging
+
+- Use **`log/slog`** (stdlib, Go 1.21+) — structured, leveled logging built into the standard library with no external dependency.
+- For performance-critical hot paths: **zerolog** (`github.com/rs/zerolog`) or **zap** (`go.uber.org/zap`) offer zero-allocation logging.
+- Initialize a structured JSON handler at application startup:
+  ```go
+  handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+  slog.SetDefault(slog.New(handler))
+  ```
+- Use structured key-value pairs — never `fmt.Sprintf` in log messages:
+  ```go
+  // Correct — structured, searchable
+  slog.Info("order created", "order_id", order.ID, "user_id", user.ID)
+
+  // Wrong — unstructured, unsearchable
+  slog.Info(fmt.Sprintf("Order %s created by %s", order.ID, user.ID))
+  ```
+- Use `slog.With()` to create loggers with request-scoped context:
+  ```go
+  logger := slog.With("correlation_id", correlationID, "trace_id", traceID)
+  logger.Info("processing request", "path", r.URL.Path)
+  ```
+- Pass context-enriched loggers via `context.Context` using middleware or a custom context key.
+- Use `slog.LogAttrs` for performance-critical paths — avoids allocations for key-value pairs:
+  ```go
+  slog.LogAttrs(ctx, slog.LevelInfo, "order created",
+      slog.String("order_id", order.ID),
+      slog.Int("item_count", len(order.Items)))
+  ```
+- Never use `fmt.Println`, `log.Println` (stdlib `log`), or `log.Fatal` in production — they lack structure and levels.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userID`, `orderID`) instead.
+
 ## Anti-Patterns
 
 - **Ignoring errors:** `result, _ := fn()` hides failures. Check all errors.

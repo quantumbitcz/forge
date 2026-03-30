@@ -73,6 +73,43 @@
 - Async methods: suffix with `Async` (e.g., `GetUserAsync`).
 - Boolean properties: `IsX`, `HasX`, `CanX`.
 
+## Logging
+
+- Use **`Microsoft.Extensions.Logging`** (`ILogger<T>`) — the built-in DI-friendly logging abstraction in .NET.
+- Structured backend: **Serilog** (`Serilog` + `Serilog.Extensions.Logging`) with JSON sink for structured output.
+- Inject `ILogger<T>` via constructor — never create loggers manually:
+  ```csharp
+  public class OrderService(ILogger<OrderService> logger)
+  {
+      public async Task<Order> CreateOrderAsync(CreateOrderCommand cmd)
+      {
+          logger.LogInformation("Order created: {OrderId} for {UserId}", order.Id, cmd.UserId);
+      }
+  }
+  ```
+- Use **message templates** (not string interpolation) — Serilog/MEL captures named properties as structured data:
+  ```csharp
+  // Correct — structured, queryable as separate fields
+  logger.LogInformation("Order created: {OrderId} for {UserId}", order.Id, user.Id);
+
+  // Wrong — baked into the message string, not queryable
+  logger.LogInformation($"Order created: {order.Id} for {user.Id}");
+  ```
+- Use `[LoggerMessage]` source generator (.NET 6+) for high-performance, zero-allocation logging:
+  ```csharp
+  [LoggerMessage(Level = LogLevel.Information, Message = "Order created: {OrderId}")]
+  static partial void LogOrderCreated(ILogger logger, string orderId);
+  ```
+- Use scopes for request-level context (correlation ID, trace ID):
+  ```csharp
+  using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId }))
+  {
+      // All log entries within this scope include CorrelationId
+  }
+  ```
+- Never use `Console.WriteLine` for logging — it lacks levels, structure, and DI integration.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`OrderId`, `UserId`) instead.
+
 ## Anti-Patterns
 
 - **`async void` methods:** Exceptions escape the caller's `try/catch`. Only acceptable for event handlers; always wrap the body in a `try/catch`.

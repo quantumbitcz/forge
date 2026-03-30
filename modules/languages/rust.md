@@ -59,6 +59,37 @@
 - Conversion methods: `to_xxx()` (borrows, cheap), `into_xxx()` (consumes, potentially allocating), `as_xxx()` (cheap reference cast).
 - Builder pattern: `XxxBuilder` with fluent `.with_field(value)` methods, `.build() -> Result<Xxx>`.
 
+## Logging
+
+- Use the **`tracing`** crate (`tracing` + `tracing-subscriber`) — structured, span-based, async-aware instrumentation for Rust.
+- Alternative: `log` crate + `env_logger` for simpler applications without span or async needs.
+- Initialize the subscriber once at application startup:
+  ```rust
+  use tracing_subscriber::{fmt, EnvFilter};
+
+  tracing_subscriber::fmt()
+      .json()
+      .with_env_filter(EnvFilter::from_default_env())
+      .with_target(true)
+      .init();
+  ```
+- Use macros for log events with structured fields:
+  ```rust
+  tracing::info!(order_id = %order.id, user_id = %user.id, "order created");
+  tracing::error!(error = ?err, order_id = %order.id, "payment failed");
+  ```
+- Use spans to track the lifetime of operations (especially async):
+  ```rust
+  #[tracing::instrument(skip(db), fields(user_id = %user_id))]
+  async fn create_order(db: &Pool, user_id: Uuid, items: Vec<Item>) -> Result<Order> {
+      // All log events within this function automatically include user_id
+  }
+  ```
+- Use the `#[instrument]` attribute macro on async functions — it creates a span that persists across `.await` points and automatically records function entry/exit.
+- Use `skip` and `skip_all` in `#[instrument]` to exclude sensitive parameters from span fields.
+- Never use `println!` or `eprintln!` for operational logging — they lack structure, levels, and span context.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+
 ## Anti-Patterns
 
 - **Clone-happy code:** Calling `.clone()` everywhere indicates wrong ownership structure. Redesign with references or `Arc`.

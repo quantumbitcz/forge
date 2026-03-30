@@ -47,6 +47,36 @@ Use ESM `import` syntax — never `require()` in TypeScript projects targeting E
 - Boolean variables/properties: `isX`, `hasX`, `canX`, `shouldX`.
 - Files: `camelCase.ts` for utilities/services, `PascalCase.ts` for class/component files.
 
+## Logging
+
+- Use **pino** (`pino`) — the fastest Node.js structured logger, outputs JSON by default, async-safe.
+- Alternative: **winston** for projects requiring multiple transports and format customization.
+- Create a shared logger instance:
+  ```typescript
+  import pino from 'pino';
+
+  export const logger = pino({
+    level: process.env.LOG_LEVEL ?? 'info',
+    formatters: { level: (label) => ({ level: label }) },
+  });
+  ```
+- Create child loggers with request-scoped context (correlation ID, trace ID):
+  ```typescript
+  const requestLogger = logger.child({ correlationId, traceId });
+  requestLogger.info({ orderId: order.id }, 'Order created');
+  ```
+- Use structured fields as the first argument — never string interpolation:
+  ```typescript
+  // Correct — structured, searchable
+  logger.info({ userId, action: 'login' }, 'User logged in');
+
+  // Wrong — unstructured, unsearchable
+  logger.info(`User ${userId} logged in`);
+  ```
+- For Express/Fastify, use `pino-http` middleware to auto-log requests with correlation IDs and response times.
+- Never use `console.log`, `console.warn`, or `console.error` in production code — they lack structure, levels, and routing.
+- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+
 ## Anti-Patterns
 
 - **`any` type:** Silently disables type checking for everything downstream. Use `unknown` and narrow.

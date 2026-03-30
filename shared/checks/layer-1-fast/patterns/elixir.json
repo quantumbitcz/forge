@@ -1,0 +1,117 @@
+{
+  "language": "elixir",
+  "extensions": [".ex", ".exs"],
+  "source": "Credo, Dialyzer, Elixir best practices",
+  "rules": [
+    {
+      "id": "EX-CONV-001",
+      "name": "console-output",
+      "pattern": "\\bIO\\.(puts|inspect|write)\\(|\\bdbg\\(",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "IO.puts/IO.inspect/dbg — use Logger for structured logging.",
+      "fix_hint": "Replace with Logger.info/debug/warning from the built-in Logger module.",
+      "example_ref": "elixir/logging.md#structured-logging",
+      "scope": "main"
+    },
+    {
+      "id": "EX-SEC-001",
+      "name": "hardcoded-credentials",
+      "pattern": "(password|secret|token|api_key):\\s*\"[^\"]{3,}\"",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-CRED",
+      "message": "Possible hardcoded credential detected.",
+      "fix_hint": "Move secrets to environment variables; load via System.get_env/1 or runtime config.",
+      "example_ref": "elixir/security.md#credentials",
+      "scope": "main"
+    },
+    {
+      "id": "EX-SEC-002",
+      "name": "atom-from-user-input",
+      "pattern": "String\\.to_atom\\(",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-ATOM",
+      "message": "String.to_atom/1 — atoms are never garbage collected; unbounded creation causes memory exhaustion.",
+      "fix_hint": "Use String.to_existing_atom/1 or keep data as strings.",
+      "example_ref": "elixir/security.md#atom-exhaustion",
+      "scope": "all"
+    },
+    {
+      "id": "EX-SEC-003",
+      "name": "code-execution",
+      "pattern": "Code\\.eval_string|Code\\.eval_quoted|:erlang\\.apply",
+      "exclude_pattern": "^\\s*#",
+      "severity": "CRITICAL",
+      "category": "SEC-EXEC",
+      "message": "Dynamic code execution — risks arbitrary code execution.",
+      "fix_hint": "Avoid dynamic code execution; use pattern matching or module attributes instead.",
+      "example_ref": "elixir/security.md#code-execution",
+      "scope": "all"
+    },
+    {
+      "id": "EX-CONV-002",
+      "name": "deprecated-logger-warn",
+      "pattern": "Logger\\.warn\\(",
+      "exclude_pattern": "^\\s*#",
+      "severity": "INFO",
+      "category": "CONV-DEPREC",
+      "message": "Logger.warn/2 is deprecated since Elixir 1.15 — use Logger.warning/2.",
+      "fix_hint": "Replace Logger.warn with Logger.warning.",
+      "example_ref": "elixir/logging.md#logger-warning",
+      "scope": "all"
+    },
+    {
+      "id": "EX-QUAL-001",
+      "name": "bare-spawn",
+      "pattern": "\\bspawn\\(",
+      "exclude_pattern": "^\\s*#|Task\\.|spawn_link|spawn_monitor",
+      "severity": "WARNING",
+      "category": "QUAL-PROC",
+      "message": "Bare spawn — unsupervised processes can crash silently.",
+      "fix_hint": "Use Task.Supervisor, DynamicSupervisor, or supervised GenServer instead.",
+      "example_ref": "elixir/otp.md#supervised-processes",
+      "scope": "main"
+    },
+    {
+      "id": "EX-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{8,}\\S",
+      "exclude_pattern": "^\\s*#|^\\s*\"|^\\s*~",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "fix_hint": "Extract inner logic into named functions or use with/case for composition.",
+      "example_ref": "elixir/readability.md#nesting",
+      "scope": "all"
+    },
+    {
+      "id": "EX-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*#|@\\w+\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a module attribute for clarity.",
+      "fix_hint": "Define a module attribute (@max_retries 5) with a descriptive name.",
+      "example_ref": "elixir/readability.md#magic-numbers",
+      "scope": "main"
+    }
+  ],
+  "thresholds": {
+    "file_size": {
+      "default": 300,
+      "overrides": {
+        "test/": 500,
+        "_test.exs": 500
+      }
+    },
+    "function_size": {
+      "default": 30
+    }
+  },
+  "boundaries": [],
+  "deprecations": {}
+}
