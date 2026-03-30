@@ -38,7 +38,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Quick start
 
 ```bash
-./tests/validate-plugin.sh          # 34 structural checks, ~2s
+./tests/validate-plugin.sh          # 33 structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
 
 # To test in a consuming project
@@ -88,7 +88,12 @@ This is a documentation-only plugin (no build step). To test changes:
 
 **Agent file rules:**
 - YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes).
-- Module config uses `components:` in `dev-pipeline.local.md` (`language:`, `framework:`, `variant:`, `testing:`) — replaces old flat `module:` field. Framework-specific stack fields: `web` (e.g., `mvc | webflux` for Spring), `persistence` (e.g., `hibernate | r2dbc` for Spring, `prisma | typeorm` for Express — distinct from the generic crosscutting `persistence` layer in `modules/persistence/`). Optional crosscutting layer fields: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip. `code_quality` is a list (e.g., `[detekt, ktlint, jacoco]`) unlike other single-value crosscutting fields — projects compose multiple quality tools. Supports simple string form (`- jacoco`) or object form with external ruleset config (`- tool: detekt\n  ruleset:\n    type: external\n    source: "git@..."`). Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks. Documentation config: `documentation:` section in `dev-pipeline.local.md` controls doc generation behavior (e.g., `documentation.enabled`, `documentation.output_dir`, `documentation.auto_generate`, `documentation.discovery`, `documentation.external_sources`, `documentation.export`, `documentation.user_maintained_marker`).
+- Module config uses `components:` in `dev-pipeline.local.md` — core fields: `language:`, `framework:`, `variant:`, `testing:`.
+  - Framework-specific stack fields: `web` (e.g., `mvc | webflux`), `persistence` (e.g., `hibernate | r2dbc` — distinct from crosscutting `modules/persistence/`).
+  - Optional crosscutting layers: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip.
+  - `code_quality` is a list (`[detekt, ktlint, jacoco]`) unlike single-value crosscutting fields. Supports string form or object form with external ruleset config.
+  - Multi-service mode: `components:` entries with `path:` fields for monorepo per-service stacks.
+  - Documentation config: `documentation:` section controls doc generation (`enabled`, `output_dir`, `auto_generate`, `discovery`, `external_sources`, `export`, `user_maintained_marker`).
 - **Worktree isolation:** All implementation runs in `.pipeline/worktree`. User's working tree is never modified. Branch collision uses epoch suffix fallback.
 - **Challenge Brief:** Every plan must include one (considered alternatives + justification). Validator returns REVISE if missing.
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
@@ -184,10 +189,11 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
-./tests/run-all.sh structural       # 34 checks, no bats needed
+./tests/run-all.sh structural       # 33 checks, no bats needed
 ./tests/run-all.sh unit             # 10 test files
-./tests/run-all.sh contract         # 13 test files
-./tests/run-all.sh scenario         # 8 test files
+./tests/run-all.sh contract         # 15 test files
+./tests/run-all.sh scenario         # 10 test files
+./tests/lib/bats-core/bin/bats tests/unit/scoring.bats  # Single test file
 ```
 
 Manual debugging:
@@ -219,7 +225,6 @@ done
 - Agent `name` in frontmatter **must** match filename without `.md` — orchestrator dispatch depends on it.
 - Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this.
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 and v2.0.0 clean breaks) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
-- State schema v2.0.0 is a clean break from v1.x — run `/pipeline-reset` to clear old state.
 - The plugin never touches consuming project files. Runtime state goes to `.pipeline/`.
 - `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten.
 - If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds.
