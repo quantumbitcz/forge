@@ -17,6 +17,8 @@ set -euo pipefail
 # ============================================================================
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../platform.sh
+source "${PLUGIN_ROOT}/shared/platform.sh"
 PROJECT_ROOT=""
 
 # --- Argument parsing ---
@@ -141,14 +143,9 @@ file_size() {
 }
 
 # --- Helper: get last modified date (YYYY-MM-DD) ---
+# Delegates to portable_file_date from platform.sh (BSD stat → GNU stat+date → perl → python3 → git → today)
 file_date() {
-  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null && return
-  local epoch
-  epoch=$(stat -c '%Y' "$PROJECT_ROOT/$1" 2>/dev/null) && {
-    date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
-    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
-  }
-  git -C "$PROJECT_ROOT" log -1 --format='%as' -- "$1" 2>/dev/null || date '+%Y-%m-%d'
+  portable_file_date "$PROJECT_ROOT/$1"
 }
 
 # --- Build file set for import resolution ---
@@ -176,12 +173,9 @@ parse_imports_ts() {
   local file="$1"
   grep -oE "(from|import) +['\"](\./|\.\./)[^'\"]+['\"]" "$PROJECT_ROOT/$file" 2>/dev/null | \
     sed -E "s/(from|import) +['\"]//; s/['\"]$//" | while IFS= read -r imp; do
+      [[ -z "$imp" ]] && continue
       local resolved
-      resolved="$(cd "$PROJECT_ROOT/$(dirname "$file")" 2>/dev/null && python3 -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$imp" "$PROJECT_ROOT" 2>/dev/null || echo "")"
-      if [[ -z "$resolved" ]]; then
-        resolved="$(dirname "$file")/$imp"
-        resolved="$(python3 -c "import os.path; print(os.path.normpath('$resolved'))" 2>/dev/null || echo "$resolved")"
-      fi
+      resolved="$(portable_normalize_path "$(dirname "$file")/$imp")"
       local target
       target="$(resolve_file "$resolved")"
       [[ -n "$target" ]] && echo "$target"
@@ -221,10 +215,12 @@ parse_imports_go() {
   local file="$1"
   local mod_path=""
   if [[ -f "$PROJECT_ROOT/go.mod" ]]; then
-    mod_path="$(head -1 "$PROJECT_ROOT/go.mod" | sed 's/^module //')"
+    mod_path="$(head -1 "$PROJECT_ROOT/go.mod" | sed 's/^module //' | tr -d '[:space:]')"
   fi
   [[ -z "$mod_path" ]] && return
-  grep -oE "\"${mod_path}/[^\"]+\"" "$PROJECT_ROOT/$file" 2>/dev/null | \
+  # Escape dots in module path for grep regex
+  local mod_pattern="${mod_path//./\\.}"
+  grep -oE "\"${mod_pattern}/[^\"]+\"" "$PROJECT_ROOT/$file" 2>/dev/null | \
     tr -d '"' | while IFS= read -r imp; do
       local rel="${imp#${mod_path}/}"
       local target
@@ -248,9 +244,9 @@ parse_imports_ruby() {
   local file="$1"
   grep -oE "require_relative +['\"][^'\"]+['\"]" "$PROJECT_ROOT/$file" 2>/dev/null | \
     sed -E "s/require_relative +['\"]//; s/['\"]$//" | while IFS= read -r imp; do
+      [[ -z "$imp" ]] && continue
       local candidate
-      candidate="$(dirname "$file")/${imp}"
-      candidate="$(python3 -c "import os.path; print(os.path.normpath('$candidate'))" 2>/dev/null || echo "$candidate")"
+      candidate="$(portable_normalize_path "$(dirname "$file")/$imp")"
       local target
       target="$(resolve_file "$candidate")"
       [[ -n "$target" ]] && echo "$target"
@@ -272,8 +268,11 @@ parse_imports_elixir() {
   local file="$1"
   grep -oE "alias +[A-Z][a-zA-Z0-9_.]*" "$PROJECT_ROOT/$file" 2>/dev/null | \
     sed 's/^alias //' | while IFS= read -r mod; do
-      local path_candidate
-      path_candidate="$(python3 -c "
+      [[ -z "$mod" ]] && continue
+      local path_candidate=""
+      # Try python3 for accurate CamelCase → snake_case conversion
+      if command -v python3 &>/dev/null; then
+        path_candidate="$(python3 -c "
 import re
 mod = '${mod}'
 parts = mod.split('.')
@@ -282,7 +281,31 @@ for p in parts:
     s = re.sub(r'([A-Z])', r'_\1', p).lower().lstrip('_')
     snake_parts.append(s)
 print('lib/' + '/'.join(snake_parts))
-" 2>/dev/null)"
+" 2>/dev/null || echo "")"
+      fi
+      # Bash fallback: lowercase and insert underscores before capitals (Bash 3.2+)
+      if [[ -z "$path_candidate" ]]; then
+        local result="lib"
+        local IFS='.' part
+        for part in $mod; do
+          local snake=""
+          local i char lower prev_upper=false
+          for ((i = 0; i < ${#part}; i++)); do
+            char="${part:$i:1}"
+            if [[ "$char" =~ [A-Z] ]]; then
+              [[ $i -gt 0 && "$prev_upper" == false ]] && snake="${snake}_"
+              lower="$(printf '%s' "$char" | tr 'A-Z' 'a-z')"
+              snake="${snake}${lower}"
+              prev_upper=true
+            else
+              snake="${snake}${char}"
+              prev_upper=false
+            fi
+          done
+          result="${result}/${snake}"
+        done
+        path_candidate="$result"
+      fi
       local target
       target="$(resolve_file "$path_candidate")"
       [[ -n "$target" ]] && echo "$target"

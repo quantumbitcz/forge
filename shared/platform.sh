@@ -78,13 +78,28 @@ suggest_install() {
   esac
 }
 
+# ── WSL Detection ────────────────────────────────────────────────────────────
+
+# Returns 0 (true) if running inside WSL, 1 (false) otherwise.
+# Useful when scripts need WSL-specific behaviour beyond what detect_os provides
+# (detect_os returns 'windows' for both native Windows shells and WSL).
+is_wsl() {
+  [[ -f /proc/version ]] && grep -qi 'microsoft\|wsl' /proc/version 2>/dev/null
+}
+
 # ── Docker Start Suggestion ──────────────────────────────────────────────────
 
 suggest_docker_start() {
   case "$PIPELINE_OS" in
     darwin)  printf 'open -a Docker' ;;
     linux)   printf 'sudo systemctl start docker' ;;
-    windows) printf 'start Docker Desktop from the Start menu' ;;
+    windows)
+      if is_wsl; then
+        printf 'start Docker Desktop on the Windows host (or: powershell.exe -Command "Start-Process Docker")'
+      else
+        printf 'start Docker Desktop from the Start menu'
+      fi
+      ;;
     *)       printf 'start the Docker daemon' ;;
   esac
 }
@@ -111,6 +126,75 @@ pipeline_mktemp() {
 # Usage: tmpdir=$(pipeline_mktempdir)
 pipeline_mktempdir() {
   mktemp -d "$(pipeline_tmpdir)/dev-pipeline.XXXXXX"
+}
+
+# ── Path Normalisation ───────────────────────────────────────────────────────
+
+# Resolves ./ // and .. segments in a path without touching the filesystem.
+# Uses python3 when available; falls back to pure Bash (3.2+).
+# Usage: normalized=$(portable_normalize_path "src/utils/../models/user.ts")
+portable_normalize_path() {
+  local input="$1"
+  # Fast path: if no special segments, return as-is
+  if [[ "$input" != *".."* && "$input" != *"./"* && "$input" != *"//"* ]]; then
+    printf '%s' "$input"
+    return
+  fi
+  # Try python3 first (handles all edge cases)
+  if command -v python3 &>/dev/null; then
+    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
+  fi
+  # Bash fallback: resolve ./ // and .. segments (Bash 3.2+)
+  input="${input#./}"
+  while [[ "$input" == *"//"* ]]; do input="${input//\/\//\/}"; done
+  local IFS='/' segment
+  local -a stack=()
+  local n=0 leading_dots=0
+  for segment in $input; do
+    case "$segment" in
+      ..)
+        if [[ $n -gt 0 ]]; then
+          n=$((n - 1))
+        else
+          leading_dots=$((leading_dots + 1))
+        fi
+        ;;
+      .|'') ;;
+      *) stack[$n]="$segment"; n=$((n + 1)) ;;
+    esac
+  done
+  local result="" i
+  for ((i = 0; i < leading_dots; i++)); do
+    result="${result:+$result/}.."
+  done
+  for ((i = 0; i < n; i++)); do
+    result="${result:+$result/}${stack[$i]}"
+  done
+  printf '%s' "$result"
+}
+
+# ── Portable File Date ──────────────────────────────────────────────────────
+
+# Returns the last-modified date (YYYY-MM-DD) for a file, cross-platform.
+# Cascade: BSD stat → GNU stat+date → perl → python3 → git log → today.
+# Usage: mod_date=$(portable_file_date "/absolute/path/to/file")
+portable_file_date() {
+  local filepath="$1"
+  # 1. BSD stat (macOS)
+  stat -f '%Sm' -t '%Y-%m-%d' "$filepath" 2>/dev/null && return
+  # 2. GNU stat + GNU date
+  local epoch
+  epoch=$(stat -c '%Y' "$filepath" 2>/dev/null) && {
+    date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
+    # 3. perl (widely available, lighter than python3)
+    perl -e "use POSIX qw(strftime); print strftime('%Y-%m-%d', localtime($epoch))" 2>/dev/null && return
+    # 4. python3
+    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
+  }
+  # 5. git log (works in any git repo)
+  git log -1 --format='%as' -- "$filepath" 2>/dev/null && return
+  # 6. Ultimate fallback: today
+  date '+%Y-%m-%d'
 }
 
 # ── sed Compatibility ────────────────────────────────────────────────────────

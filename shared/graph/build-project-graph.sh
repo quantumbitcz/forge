@@ -18,6 +18,8 @@ set -euo pipefail
 # ============================================================================
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../platform.sh
+source "${PLUGIN_ROOT}/shared/platform.sh"
 PROJECT_ROOT=""
 
 # --- Argument parsing ---
@@ -84,17 +86,9 @@ file_size() {
 }
 
 # --- Helper: get last modified date (YYYY-MM-DD) ---
+# Delegates to portable_file_date from platform.sh (BSD stat → GNU stat+date → perl → python3 → git → today)
 file_date() {
-  # Cross-platform: try macOS stat, then GNU stat, then git log, then fallback
-  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null && return
-  local epoch
-  epoch=$(stat -c '%Y' "$PROJECT_ROOT/$1" 2>/dev/null) && {
-    # GNU date -d @epoch; if unavailable, use python3 or awk
-    date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
-    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
-  }
-  # Fallback: use git log for the file's last modification date
-  git -C "$PROJECT_ROOT" log -1 --format='%as' -- "$1" 2>/dev/null || date '+%Y-%m-%d'
+  portable_file_date "$PROJECT_ROOT/$1"
 }
 
 # --- Helper: determine language from extension ---
@@ -121,17 +115,10 @@ ext_to_lang() {
   esac
 }
 
-# --- Helper: normalize a path (remove ../ and ./ segments) ---
+# --- Helper: normalize a path (remove ../ ./ and // segments) ---
+# Delegates to portable_normalize_path from platform.sh
 normalize_path() {
-  # Cross-platform: try python3, then bash-only normalization
-  if command -v python3 &>/dev/null; then
-    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$1" 2>/dev/null && return
-  fi
-  # Bash fallback: simple cleanup of ./ and // segments
-  local p="$1"
-  while [[ "$p" == *"//"* ]]; do p="${p//\/\//\/}"; done
-  p="${p#./}"
-  printf '%s' "$p"
+  portable_normalize_path "$1"
 }
 
 # --- Helper: resolve a path and check if it exists in FILE_SET ---
