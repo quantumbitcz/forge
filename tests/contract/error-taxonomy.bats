@@ -13,9 +13,9 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. All 18 error types are defined
+# 2. All 20 error types are defined
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: all 18 error types are defined" {
+@test "error-taxonomy: all 20 error types are defined" {
   local types=(
     TOOL_FAILURE
     BUILD_FAILURE
@@ -35,6 +35,8 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
     LOCK_FILE_CONFLICT
     FLAKY_TEST
     VERSION_MISMATCH
+    DEPRECATION_WARNING
+    BUDGET_EXHAUSTED
   )
   for t in "${types[@]}"; do
     grep -q "$t" "$ERROR_TAXONOMY" || fail "Error type $t not found in error-taxonomy.md"
@@ -53,12 +55,12 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Error severity ordering has 14 levels (numbered list 1-14)
+# 4. Error severity ordering has 16 levels (numbered list 1-16)
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: severity ordering has 14 levels" {
+@test "error-taxonomy: severity ordering has 16 levels" {
   local count
   count=$(grep -cE '^[0-9]+\. `' "$ERROR_TAXONOMY" || true)
-  assert_equal "$count" "14"
+  assert_equal "$count" "16"
 }
 
 # ---------------------------------------------------------------------------

@@ -65,6 +65,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered (or skipped if `documentation.enabled` is `false`).
 
+**Documentation discovery failure:** If `documentation.enabled` is `true` but `pl-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents (pl-350-docs-generator, docs-consistency-reviewer) check this flag and operate with degraded documentation context — they skip cross-referencing and coverage gap analysis but still generate docs for changed files.
+
 ---
 
 ### Stage 1: EXPLORE
@@ -151,7 +153,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **On REVISE:** Loop back to Stage 2 (PLANNING). Increment `validation_retries`. Max retries: `validation.max_validation_retries` (default: 2). After max retries with continued REVISE, escalate as NO-GO.
 
-**On NO-GO:** Escalate to user. Pipeline pauses.
+**On NO-GO:** Escalate to user. Pipeline pauses. If the user does not respond within 24 hours (configurable via `validation.no_go_timeout_hours`, default: 24), the orchestrator auto-aborts: clean up the worktree if created, set `state.json.complete = true` with `abort_reason: "NO-GO timeout"`, and log a WARNING in stage notes. The stale timeout is checked by PREFLIGHT of any subsequent `/pipeline-run` invocation (not by a background process).
 
 **Decision gate:** Compare plan `risk_level` against `risk.auto_proceed` from config:
 - Risk <= threshold: proceed automatically on GO.
@@ -396,6 +398,18 @@ When feedback contains signals from both categories, count the signals. If desig
 2. Reset stage-specific counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`) to 0. Do NOT reset `total_retries`.
 3. Increment `total_retries` by 1.
 4. Re-enter Stage 2 (PLAN) with feedback as planner input.
+
+**Cross-stage re-entry validation:**
+
+Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
+
+1. **Worktree availability:** If re-entering Stage 4 (implementation path), verify `.pipeline/worktree` still exists and is a valid git worktree. If the worktree was cleaned up (e.g., by a previous ship attempt), recreate it from the pipeline branch before dispatching the implementer.
+2. **Feedback loop detection:** Track `state.json.feedback_loop_count` — incremented on each PR rejection re-entry. If the same `feedback_classification` (e.g., `"design"`) is received 2 consecutive times (i.e., user rejected → re-plan → re-implement → re-ship → rejected again with same classification), escalate:
+
+   > "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred. Options: (1) Provide more specific guidance, (2) Abort and start fresh, (3) Override and proceed."
+
+   Reset `feedback_loop_count` to 0 when `feedback_classification` changes between rejections.
+3. **Scaffold outputs:** If re-entering Stage 4, verify that scaffolder outputs from the initial implementation are still present in the worktree. If missing (e.g., worktree was recreated), re-run the scaffolder before dispatching the implementer.
 
 ---
 

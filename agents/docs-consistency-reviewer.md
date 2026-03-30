@@ -60,6 +60,7 @@ On dispatch you receive:
 - **Graph context** (when Neo4j is available) — pre-queried `DocDecision` and `DocConstraint` nodes linked to the changed files, stale `DocSection` nodes, and existing `CONTRADICTS` edges from prior runs
 - **Previous batch findings** — top-20 findings from earlier review agents in this quality gate run (used to avoid re-reporting)
 - **Discovery summary** — cross-repo context from `state.json.cross_repo` when available
+- **Discovery error flag** — check `state.json.documentation.discovery_error`: if `true`, documentation discovery failed at PREFLIGHT. In this case, skip cross-document reference checks (Section 3.4) and coverage gap analysis (Section 3.5) — these depend on discovery data. Still perform decision/constraint violation checks (Sections 3.2-3.3) against files found via grep-based fallback.
 
 ---
 

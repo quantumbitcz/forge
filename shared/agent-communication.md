@@ -22,6 +22,16 @@ Each stage writes `.pipeline/stage_N_notes_{storyId}.md`. Downstream stages can 
 - Raw tool output (extract structured data)
 - Conversation history or reasoning traces
 
+### Stage Notes Size Budget
+
+Stage notes should stay under **2,000 tokens** to prevent context cascading in downstream dispatch prompts. If a stage produces more content:
+
+1. **Findings:** Deduplicate to top 20 by severity before writing. Include total count: "20 of {N} findings shown."
+2. **File listings:** Reference by directory pattern (e.g., `src/domain/**`) instead of listing every file.
+3. **Metrics:** Use a compact table format, not prose.
+
+The **retrospective** (Stage 9) reads all stage notes (0-8). With the 2K cap, 9 stage notes total ~18K tokens — well within dispatch limits. Feedback files and reports are read separately by the retrospective agent (not included in the orchestrator dispatch prompt). If a project has accumulated many feedback entries (>20), the retrospective reads only `feedback/summary.md` (the consolidated file).
+
 ## 2. Shared Findings Context (within REVIEW stage)
 
 During REVIEW, multiple agent batches run sequentially. To reduce duplicate work, the quality gate includes previous batch findings in subsequent dispatch prompts.

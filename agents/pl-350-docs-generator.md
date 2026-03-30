@@ -54,7 +54,7 @@ You receive from the orchestrator:
 2. **Quality verdict and score** — from Stage 6 review
 3. **Stage 2 plan notes** — `stage_2_notes_{storyId}.md`, including Challenge Brief and decision rationale
 4. **Stage 4 notes** — `stage_4_notes_{storyId}.md`, for implementation decisions
-5. **Doc discovery summary** — existing docs inventory (paths, types, sizes)
+5. **Doc discovery summary** — existing docs inventory (paths, types, sizes). Check `state.json.documentation.discovery_error`: if `true`, discovery failed at PREFLIGHT — skip cross-document reference checks and coverage gap analysis, but still generate docs for changed files.
 6. **Documentation config** — `documentation:` section from `dev-pipeline.local.md` (`auto_generate`, `coverage_threshold`, `adr_enabled`, `diagram_enabled`)
 7. **Framework conventions** — resolved `conventions_file` path for the project stack
 8. **Story ID** — for naming stage notes file

@@ -34,6 +34,8 @@ When reporting errors, agents should structure them as:
 | LOCK_FILE_CONFLICT | Lock file (yarn.lock, Cargo.lock) divergence or corruption | Yes | resource-cleanup |
 | FLAKY_TEST | Test passes on re-run after initial failure | Yes | transient-retry |
 | VERSION_MISMATCH | Required tool/runtime version not met (e.g., Java 8 found, Java 11+ required) | No | none (user must fix) |
+| DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `pl-140-deprecation-refresh` | Maybe | graceful-stop (log WARNING, do not block pipeline) |
+| BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.0) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
 
 ## Usage by Agents
 
@@ -81,7 +83,9 @@ When multiple errors co-occur in a stage, determine outcome by this severity ord
 11. `FLAKY_TEST` — non-deterministic test failure (transient)
 12. `NETWORK_UNAVAILABLE` — possibly transient
 13. `MCP_UNAVAILABLE` — optional, graceful degradation
-14. `PATTERN_MISSING` — planner error, non-blocking
+14. `DEPRECATION_WARNING` — informational, non-blocking (logged for retrospective)
+15. `BUDGET_EXHAUSTED` — recovery system limit reached
+16. `PATTERN_MISSING` — planner error, non-blocking
 
 The highest-severity non-recoverable error determines stage outcome. Recoverable errors are attempted via recovery engine in order.
 
