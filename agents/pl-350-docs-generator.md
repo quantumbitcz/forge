@@ -203,9 +203,9 @@ Use PlantUML only when the required diagram type cannot be expressed in Mermaid.
 
 If knowledge graph is enabled (`graph.enabled: true` in `dev-pipeline.local.md`):
 
-- Add `Document` nodes for each new doc created (type, path, generated_at)
-- Add `DOCUMENTS` relationships from the relevant code nodes to their doc nodes
-- Update `coverage` property on existing `Document` nodes
+- Add `DocFile` nodes for each new doc created (doc_type, path, format, last_modified)
+- Add `DESCRIBES` relationships from `DocSection` nodes to the relevant code nodes (`ProjectFile`/`ProjectPackage`/`ProjectClass`)
+- Update `last_modified` property on existing `DocFile` nodes
 
 Update `docs/index.md` (or `docs/README.md`) if it exists — add entries for newly created files.
 

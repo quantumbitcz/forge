@@ -140,11 +140,15 @@ For each file from Step 1, assign a `doc_type`:
 | `runbook` | Path contains `runbook` or `ops`; or filename starts with `runbook-` |
 | `changelog` | Filename is `CHANGELOG.*`, `CHANGES.*`, `HISTORY.*`, or `RELEASES.*` |
 | `readme` | Filename is `README.md` or `README.*` |
-| `user_guide` | Path contains `user-guide`, `guides`, or `tutorials` |
-| `diagram` | Extension is `.puml`, `.plantuml`, `.drawio`, `.mermaid`, or `.d2` |
-| `rst` | Extension is `.rst` |
-| `asciidoc` | Extension is `.adoc` or `.asciidoc` |
-| `general` | All other markdown/text files not matching above rules |
+| `user-guide` | Path contains `user-guide`, `guides`, or `tutorials` |
+| `onboarding` | Path contains `onboarding` or `getting-started`; or filename starts with `onboarding-` |
+| `design-doc` | Path contains `design-doc` or `rfc`; or filename starts with `design-` |
+| `migration-guide` | Path contains `migration` or `upgrade`; or filename starts with `migration-` or `upgrade-` |
+| `contributing` | Filename is `CONTRIBUTING.md` or `CONTRIBUTING.*` |
+| `business-spec` | Path contains `spec`, `requirements`, or `business`; or filename matches `*-spec.md` |
+| `other` | All other markdown/text files not matching above rules |
+
+**Note on file formats:** Extensions `.rst` and `.adoc`/`.asciidoc` determine the `format` property (values: `rst`, `asciidoc`), not the `doc_type`. Classify these files by their content/path using the rules above. Diagram source files (`.puml`, `.plantuml`, `.drawio`, `.mermaid`, `.d2`) are recorded as `DocDiagram` nodes, not `DocFile` nodes — classify the parent doc by its `doc_type`.
 
 ### Step 3: Parse Sections
 
@@ -176,7 +180,7 @@ Look for these signals (case-insensitive):
 Assign confidence:
 - **HIGH**: Section is classified as `adr` AND heading contains `decision` or `status: accepted`
 - **MEDIUM**: Heading contains decision keywords OR body contains decision phrases AND section is in an `architecture` or `adr` file
-- **LOW**: Body contains decision phrases in a `general` or `readme` file
+- **LOW**: Body contains decision phrases in an `other` or `readme` file
 
 Record: `{ type: "decision", text: <first 300 chars of section body>, confidence: HIGH|MEDIUM|LOW, source_file, section_heading, line_start }`
 
@@ -186,7 +190,7 @@ Look for these signals (case-insensitive):
 - Headings containing: `constraint`, `limitation`, `requirement`, `must`, `shall`, `non-functional`, `nfr`
 - Section body containing phrases: `"must not"`, `"shall not"`, `"is required"`, `"is prohibited"`, `"maximum"`, `"minimum"` followed by a specific value, `"SLA"`, `"latency"`, `"throughput"`
 
-Assign confidence using the same rules as DocDecision (HIGH for dedicated constraint sections, MEDIUM for structured docs, LOW for inline mentions in general docs).
+Assign confidence using the same rules as DocDecision (HIGH for dedicated constraint sections, MEDIUM for structured docs, LOW for inline mentions in `other`-typed docs).
 
 Record: `{ type: "constraint", text: <first 300 chars>, confidence: HIGH|MEDIUM|LOW, source_file, section_heading, line_start }`
 
@@ -234,50 +238,61 @@ Write discovery results to Neo4j using Cypher. Use MERGE on natural keys to ensu
 // Doc file node
 MERGE (d:DocFile {path: $path})
 SET d.doc_type = $doc_type,
+    d.format = $format,
     d.content_hash = $hash,
-    d.word_count = $word_count,
-    d.last_indexed = $timestamp
+    d.last_modified = $timestamp,
+    d.title = $title
 
-// Doc section node
-MERGE (s:DocSection {id: $section_id})
-SET s.heading = $heading,
-    s.level = $level,
-    s.word_count = $word_count,
-    s.line_start = $line_start
+// Doc section node (MERGE on file_path + name)
+MERGE (s:DocSection {file_path: $file_path, name: $heading})
+SET s.heading_level = $level,
+    s.start_line = $line_start,
+    s.end_line = $line_end,
+    s.content_hash = $content_hash,
+    s.content_hash_updated = $timestamp
 
-// Relationship
+// Section belongs to doc file
 MERGE (s)-[:SECTION_OF]->(d)
 ```
 
 **Semantic content:**
 
 ```cypher
-// Decision node
+// Decision node — linked to code entities via DECIDES
 CREATE (dec:DocDecision {
-  text: $text,
+  id: $decision_id,
+  file_path: $source_file,
+  summary: $text,
+  status: $status,
   confidence: $confidence,
-  source_file: $source_file,
-  section_heading: $section_heading
+  extracted_at: $timestamp
 })
-MERGE (s:DocSection {id: $section_id})
-MERGE (s)-[:DECIDES]->(dec)
 
-// Constraint node
+// DECIDES goes FROM DocDecision TO code entity (ProjectFile/ProjectPackage)
+MATCH (target:ProjectFile {path: $code_path})
+MERGE (dec)-[:DECIDES]->(target)
+
+// Constraint node — linked to code entities via CONSTRAINS
 CREATE (con:DocConstraint {
-  text: $text,
-  confidence: $confidence,
-  source_file: $source_file,
-  section_heading: $section_heading
+  id: $constraint_id,
+  file_path: $source_file,
+  summary: $text,
+  scope: $scope,
+  confidence: $confidence
 })
-MERGE (s)-[:CONSTRAINS]->(con)
+
+// CONSTRAINS goes FROM DocConstraint TO code entity (ProjectFile/ProjectPackage/ProjectClass)
+MATCH (target:ProjectFile {path: $code_path})
+MERGE (con)-[:CONSTRAINS]->(target)
 ```
 
 **Code linkages:**
 
 ```cypher
-MERGE (ca:CodeArtifact {path: $code_artifact_path, artifact_type: $artifact_type})
-MERGE (s:DocSection {id: $section_id})
-MERGE (s)-[:DOCUMENTS {confidence: $confidence}]->(ca)
+// DESCRIBES goes FROM DocSection TO code entity (ProjectFile/ProjectPackage/ProjectClass)
+MATCH (s:DocSection {file_path: $doc_file_path, name: $section_heading})
+MATCH (target:ProjectFile {path: $code_artifact_path})
+MERGE (s)-[:DESCRIBES {confidence: $confidence}]->(target)
 ```
 
 ### Index Mode (no Neo4j)

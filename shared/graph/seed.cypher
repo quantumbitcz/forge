@@ -14,6 +14,11 @@ CREATE INDEX IF NOT EXISTS FOR (pf:ProjectFile) ON (pf.path);
 CREATE INDEX IF NOT EXISTS FOR (pc:ProjectClass) ON (pc.name);
 CREATE INDEX IF NOT EXISTS FOR (pd:ProjectDependency) ON (pd.name);
 CREATE INDEX IF NOT EXISTS FOR (pp:ProjectPackage) ON (pp.path);
+CREATE INDEX IF NOT EXISTS FOR (df:DocFile) ON (df.path);
+CREATE INDEX IF NOT EXISTS FOR (ds:DocSection) ON (ds.file_path);
+CREATE INDEX IF NOT EXISTS FOR (dd:DocDecision) ON (dd.id);
+CREATE INDEX IF NOT EXISTS FOR (dc:DocConstraint) ON (dc.id);
+CREATE INDEX IF NOT EXISTS FOR (dg:DocDiagram) ON (dg.path);
 
 // --- Languages ---
 CREATE (:Language {name: 'c', file_path: 'modules/languages/c.md'});
@@ -236,6 +241,8 @@ CREATE (:LayerModule {name: 'microk8s', layer: 'container-orchestration', file_p
 CREATE (:LayerModule {name: 'openshift', layer: 'container-orchestration', file_path: 'modules/container-orchestration/openshift.md'});
 CREATE (:LayerModule {name: 'podman', layer: 'container-orchestration', file_path: 'modules/container-orchestration/podman.md'});
 CREATE (:LayerModule {name: 'rancher', layer: 'container-orchestration', file_path: 'modules/container-orchestration/rancher.md'});
+CREATE (:LayerModule {name: 'conventions', layer: 'documentation', file_path: 'modules/documentation/conventions.md'});
+CREATE (:LayerModule {name: 'diagram-patterns', layer: 'documentation', file_path: 'modules/documentation/diagram-patterns.md'});
 
 // --- Framework Bindings ---
 CREATE (:FrameworkBinding {name: 'angular-graphql', framework: 'angular', layer: 'api-protocols', file_path: 'modules/frameworks/angular/api-protocols/graphql.md'});
@@ -277,6 +284,9 @@ MATCH (f:Framework {name: 'angular'}), (b:FrameworkBinding {name: 'angular-docke
 CREATE (:FrameworkBinding {name: 'angular-podman', framework: 'angular', layer: 'container-orchestration', file_path: 'modules/frameworks/angular/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'angular-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'angular'}), (b:FrameworkBinding {name: 'angular-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'angular-conventions', framework: 'angular', layer: 'documentation', file_path: 'modules/frameworks/angular/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'angular-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'angular'}), (b:FrameworkBinding {name: 'angular-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'angular'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'aspnet-postgresql', framework: 'aspnet', layer: 'databases', file_path: 'modules/frameworks/aspnet/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'aspnet-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -356,6 +366,9 @@ MATCH (f:Framework {name: 'aspnet'}), (b:FrameworkBinding {name: 'aspnet-openshi
 CREATE (:FrameworkBinding {name: 'aspnet-rancher', framework: 'aspnet', layer: 'container-orchestration', file_path: 'modules/frameworks/aspnet/container-orchestration/rancher.md'});
 MATCH (b:FrameworkBinding {name: 'aspnet-rancher'}), (m:LayerModule {name: 'rancher'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'aspnet'}), (b:FrameworkBinding {name: 'aspnet-rancher'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'aspnet-conventions', framework: 'aspnet', layer: 'documentation', file_path: 'modules/frameworks/aspnet/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'aspnet-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'aspnet'}), (b:FrameworkBinding {name: 'aspnet-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'aspnet'}), (t:TestingFramework {name: 'xunit-nunit'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'axum-postgresql', framework: 'axum', layer: 'databases', file_path: 'modules/frameworks/axum/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'axum-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -426,6 +439,9 @@ MATCH (f:Framework {name: 'axum'}), (b:FrameworkBinding {name: 'axum-helm'}) CRE
 CREATE (:FrameworkBinding {name: 'axum-podman', framework: 'axum', layer: 'container-orchestration', file_path: 'modules/frameworks/axum/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'axum-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'axum'}), (b:FrameworkBinding {name: 'axum-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'axum-conventions', framework: 'axum', layer: 'documentation', file_path: 'modules/frameworks/axum/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'axum-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'axum'}), (b:FrameworkBinding {name: 'axum-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'axum'}), (t:TestingFramework {name: 'rust-test'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'django-postgresql', framework: 'django', layer: 'databases', file_path: 'modules/frameworks/django/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'django-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -502,6 +518,9 @@ MATCH (f:Framework {name: 'django'}), (b:FrameworkBinding {name: 'django-openshi
 CREATE (:FrameworkBinding {name: 'django-podman', framework: 'django', layer: 'container-orchestration', file_path: 'modules/frameworks/django/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'django-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'django'}), (b:FrameworkBinding {name: 'django-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'django-conventions', framework: 'django', layer: 'documentation', file_path: 'modules/frameworks/django/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'django-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'django'}), (b:FrameworkBinding {name: 'django-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'django'}), (t:TestingFramework {name: 'pytest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'embedded-cmake', framework: 'embedded', layer: 'build-systems', file_path: 'modules/frameworks/embedded/build-systems/cmake.md'});
 MATCH (b:FrameworkBinding {name: 'embedded-cmake'}), (m:LayerModule {name: 'cmake'}) CREATE (b)-[:EXTENDS]->(m);
@@ -512,6 +531,9 @@ MATCH (f:Framework {name: 'embedded'}), (b:FrameworkBinding {name: 'embedded-git
 CREATE (:FrameworkBinding {name: 'embedded-gitlab-ci', framework: 'embedded', layer: 'ci-cd', file_path: 'modules/frameworks/embedded/ci-cd/gitlab-ci.md'});
 MATCH (b:FrameworkBinding {name: 'embedded-gitlab-ci'}), (m:LayerModule {name: 'gitlab-ci'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'embedded'}), (b:FrameworkBinding {name: 'embedded-gitlab-ci'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'embedded-conventions', framework: 'embedded', layer: 'documentation', file_path: 'modules/frameworks/embedded/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'embedded-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'embedded'}), (b:FrameworkBinding {name: 'embedded-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 CREATE (:FrameworkBinding {name: 'express-postgresql', framework: 'express', layer: 'databases', file_path: 'modules/frameworks/express/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'express-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'express'}), (b:FrameworkBinding {name: 'express-postgresql'}) CREATE (f)-[:HAS_BINDING]->(b);
@@ -605,6 +627,9 @@ MATCH (f:Framework {name: 'express'}), (b:FrameworkBinding {name: 'express-opens
 CREATE (:FrameworkBinding {name: 'express-podman', framework: 'express', layer: 'container-orchestration', file_path: 'modules/frameworks/express/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'express-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'express'}), (b:FrameworkBinding {name: 'express-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'express-conventions', framework: 'express', layer: 'documentation', file_path: 'modules/frameworks/express/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'express-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'express'}), (b:FrameworkBinding {name: 'express-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'express'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'fastapi-postgresql', framework: 'fastapi', layer: 'databases', file_path: 'modules/frameworks/fastapi/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'fastapi-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -687,6 +712,9 @@ MATCH (f:Framework {name: 'fastapi'}), (b:FrameworkBinding {name: 'fastapi-podma
 CREATE (:FrameworkBinding {name: 'fastapi-rancher', framework: 'fastapi', layer: 'container-orchestration', file_path: 'modules/frameworks/fastapi/container-orchestration/rancher.md'});
 MATCH (b:FrameworkBinding {name: 'fastapi-rancher'}), (m:LayerModule {name: 'rancher'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'fastapi'}), (b:FrameworkBinding {name: 'fastapi-rancher'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'fastapi-conventions', framework: 'fastapi', layer: 'documentation', file_path: 'modules/frameworks/fastapi/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'fastapi-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'fastapi'}), (b:FrameworkBinding {name: 'fastapi-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'fastapi'}), (t:TestingFramework {name: 'pytest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'gin-postgresql', framework: 'gin', layer: 'databases', file_path: 'modules/frameworks/gin/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'gin-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -748,6 +776,9 @@ MATCH (f:Framework {name: 'gin'}), (b:FrameworkBinding {name: 'gin-helm'}) CREAT
 CREATE (:FrameworkBinding {name: 'gin-podman', framework: 'gin', layer: 'container-orchestration', file_path: 'modules/frameworks/gin/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'gin-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'gin'}), (b:FrameworkBinding {name: 'gin-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'gin-conventions', framework: 'gin', layer: 'documentation', file_path: 'modules/frameworks/gin/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'gin-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'gin'}), (b:FrameworkBinding {name: 'gin-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'gin'}), (t:TestingFramework {name: 'go-testing'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'go-stdlib-postgresql', framework: 'go-stdlib', layer: 'databases', file_path: 'modules/frameworks/go-stdlib/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'go-stdlib-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -815,6 +846,9 @@ MATCH (f:Framework {name: 'go-stdlib'}), (b:FrameworkBinding {name: 'go-stdlib-p
 CREATE (:FrameworkBinding {name: 'go-stdlib-rancher', framework: 'go-stdlib', layer: 'container-orchestration', file_path: 'modules/frameworks/go-stdlib/container-orchestration/rancher.md'});
 MATCH (b:FrameworkBinding {name: 'go-stdlib-rancher'}), (m:LayerModule {name: 'rancher'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'go-stdlib'}), (b:FrameworkBinding {name: 'go-stdlib-rancher'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'go-stdlib-conventions', framework: 'go-stdlib', layer: 'documentation', file_path: 'modules/frameworks/go-stdlib/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'go-stdlib-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'go-stdlib'}), (b:FrameworkBinding {name: 'go-stdlib-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'go-stdlib'}), (t:TestingFramework {name: 'go-testing'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'jetpack-compose-sqlite', framework: 'jetpack-compose', layer: 'databases', file_path: 'modules/frameworks/jetpack-compose/databases/sqlite.md'});
 MATCH (b:FrameworkBinding {name: 'jetpack-compose-sqlite'}), (m:LayerModule {name: 'sqlite'}) CREATE (b)-[:EXTENDS]->(m);
@@ -846,6 +880,9 @@ MATCH (f:Framework {name: 'jetpack-compose'}), (b:FrameworkBinding {name: 'jetpa
 CREATE (:FrameworkBinding {name: 'jetpack-compose-gitlab-ci', framework: 'jetpack-compose', layer: 'ci-cd', file_path: 'modules/frameworks/jetpack-compose/ci-cd/gitlab-ci.md'});
 MATCH (b:FrameworkBinding {name: 'jetpack-compose-gitlab-ci'}), (m:LayerModule {name: 'gitlab-ci'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'jetpack-compose'}), (b:FrameworkBinding {name: 'jetpack-compose-gitlab-ci'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'jetpack-compose-conventions', framework: 'jetpack-compose', layer: 'documentation', file_path: 'modules/frameworks/jetpack-compose/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'jetpack-compose-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'jetpack-compose'}), (b:FrameworkBinding {name: 'jetpack-compose-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'jetpack-compose'}), (t:TestingFramework {name: 'junit5'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'k8s-opentelemetry', framework: 'k8s', layer: 'observability', file_path: 'modules/frameworks/k8s/observability/opentelemetry.md'});
 MATCH (b:FrameworkBinding {name: 'k8s-opentelemetry'}), (m:LayerModule {name: 'opentelemetry'}) CREATE (b)-[:EXTENDS]->(m);
@@ -898,6 +935,9 @@ MATCH (f:Framework {name: 'k8s'}), (b:FrameworkBinding {name: 'k8s-openshift'}) 
 CREATE (:FrameworkBinding {name: 'k8s-rancher', framework: 'k8s', layer: 'container-orchestration', file_path: 'modules/frameworks/k8s/container-orchestration/rancher.md'});
 MATCH (b:FrameworkBinding {name: 'k8s-rancher'}), (m:LayerModule {name: 'rancher'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'k8s'}), (b:FrameworkBinding {name: 'k8s-rancher'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'k8s-conventions', framework: 'k8s', layer: 'documentation', file_path: 'modules/frameworks/k8s/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'k8s-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'k8s'}), (b:FrameworkBinding {name: 'k8s-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-sqlite', framework: 'kotlin-multiplatform', layer: 'databases', file_path: 'modules/frameworks/kotlin-multiplatform/databases/sqlite.md'});
 MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-sqlite'}), (m:LayerModule {name: 'sqlite'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-sqlite'}) CREATE (f)-[:HAS_BINDING]->(b);
@@ -928,6 +968,9 @@ MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: '
 CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-gitlab-ci', framework: 'kotlin-multiplatform', layer: 'ci-cd', file_path: 'modules/frameworks/kotlin-multiplatform/ci-cd/gitlab-ci.md'});
 MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-gitlab-ci'}), (m:LayerModule {name: 'gitlab-ci'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-gitlab-ci'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'kotlin-multiplatform-conventions', framework: 'kotlin-multiplatform', layer: 'documentation', file_path: 'modules/frameworks/kotlin-multiplatform/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'kotlin-multiplatform-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'kotlin-multiplatform'}), (b:FrameworkBinding {name: 'kotlin-multiplatform-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'kotlin-multiplatform'}), (t:TestingFramework {name: 'kotest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'nestjs-postgresql', framework: 'nestjs', layer: 'databases', file_path: 'modules/frameworks/nestjs/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'nestjs-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1022,6 +1065,9 @@ MATCH (f:Framework {name: 'nestjs'}), (b:FrameworkBinding {name: 'nestjs-openshi
 CREATE (:FrameworkBinding {name: 'nestjs-podman', framework: 'nestjs', layer: 'container-orchestration', file_path: 'modules/frameworks/nestjs/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'nestjs-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'nestjs'}), (b:FrameworkBinding {name: 'nestjs-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'nestjs-conventions', framework: 'nestjs', layer: 'documentation', file_path: 'modules/frameworks/nestjs/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'nestjs-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'nestjs'}), (b:FrameworkBinding {name: 'nestjs-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'nestjs'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'nextjs-prisma', framework: 'nextjs', layer: 'persistence', file_path: 'modules/frameworks/nextjs/persistence/prisma.md'});
 MATCH (b:FrameworkBinding {name: 'nextjs-prisma'}), (m:LayerModule {name: 'prisma'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1086,6 +1132,9 @@ MATCH (f:Framework {name: 'nextjs'}), (b:FrameworkBinding {name: 'nextjs-helm'})
 CREATE (:FrameworkBinding {name: 'nextjs-podman', framework: 'nextjs', layer: 'container-orchestration', file_path: 'modules/frameworks/nextjs/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'nextjs-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'nextjs'}), (b:FrameworkBinding {name: 'nextjs-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'nextjs-conventions', framework: 'nextjs', layer: 'documentation', file_path: 'modules/frameworks/nextjs/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'nextjs-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'nextjs'}), (b:FrameworkBinding {name: 'nextjs-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'nextjs'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'react-graphql', framework: 'react', layer: 'api-protocols', file_path: 'modules/frameworks/react/api-protocols/graphql.md'});
 MATCH (b:FrameworkBinding {name: 'react-graphql'}), (m:LayerModule {name: 'graphql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1126,6 +1175,9 @@ MATCH (f:Framework {name: 'react'}), (b:FrameworkBinding {name: 'react-docker'})
 CREATE (:FrameworkBinding {name: 'react-podman', framework: 'react', layer: 'container-orchestration', file_path: 'modules/frameworks/react/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'react-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'react'}), (b:FrameworkBinding {name: 'react-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'react-conventions', framework: 'react', layer: 'documentation', file_path: 'modules/frameworks/react/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'react-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'react'}), (b:FrameworkBinding {name: 'react-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'react'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'spring-postgresql', framework: 'spring', layer: 'databases', file_path: 'modules/frameworks/spring/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'spring-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1238,6 +1290,9 @@ MATCH (f:Framework {name: 'spring'}), (b:FrameworkBinding {name: 'spring-podman'
 CREATE (:FrameworkBinding {name: 'spring-rancher', framework: 'spring', layer: 'container-orchestration', file_path: 'modules/frameworks/spring/container-orchestration/rancher.md'});
 MATCH (b:FrameworkBinding {name: 'spring-rancher'}), (m:LayerModule {name: 'rancher'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'spring'}), (b:FrameworkBinding {name: 'spring-rancher'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'spring-conventions', framework: 'spring', layer: 'documentation', file_path: 'modules/frameworks/spring/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'spring-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'spring'}), (b:FrameworkBinding {name: 'spring-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'spring'}), (t:TestingFramework {name: 'junit5'}) CREATE (f)-[:PAIRS_WITH]->(t);
 MATCH (f:Framework {name: 'spring'}), (t:TestingFramework {name: 'kotest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'svelte-rest', framework: 'svelte', layer: 'api-protocols', file_path: 'modules/frameworks/svelte/api-protocols/rest.md'});
@@ -1258,6 +1313,9 @@ MATCH (f:Framework {name: 'svelte'}), (b:FrameworkBinding {name: 'svelte-gitlab-
 CREATE (:FrameworkBinding {name: 'svelte-docker', framework: 'svelte', layer: 'container-orchestration', file_path: 'modules/frameworks/svelte/container-orchestration/docker.md'});
 MATCH (b:FrameworkBinding {name: 'svelte-docker'}), (m:LayerModule {name: 'docker'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'svelte'}), (b:FrameworkBinding {name: 'svelte-docker'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'svelte-conventions', framework: 'svelte', layer: 'documentation', file_path: 'modules/frameworks/svelte/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'svelte-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'svelte'}), (b:FrameworkBinding {name: 'svelte-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'svelte'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'sveltekit-rest', framework: 'sveltekit', layer: 'api-protocols', file_path: 'modules/frameworks/sveltekit/api-protocols/rest.md'});
 MATCH (b:FrameworkBinding {name: 'sveltekit-rest'}), (m:LayerModule {name: 'rest'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1289,6 +1347,9 @@ MATCH (f:Framework {name: 'sveltekit'}), (b:FrameworkBinding {name: 'sveltekit-h
 CREATE (:FrameworkBinding {name: 'sveltekit-podman', framework: 'sveltekit', layer: 'container-orchestration', file_path: 'modules/frameworks/sveltekit/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'sveltekit-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'sveltekit'}), (b:FrameworkBinding {name: 'sveltekit-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'sveltekit-conventions', framework: 'sveltekit', layer: 'documentation', file_path: 'modules/frameworks/sveltekit/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'sveltekit-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'sveltekit'}), (b:FrameworkBinding {name: 'sveltekit-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'sveltekit'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'swiftui-github-actions', framework: 'swiftui', layer: 'ci-cd', file_path: 'modules/frameworks/swiftui/ci-cd/github-actions.md'});
 MATCH (b:FrameworkBinding {name: 'swiftui-github-actions'}), (m:LayerModule {name: 'github-actions'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1296,6 +1357,9 @@ MATCH (f:Framework {name: 'swiftui'}), (b:FrameworkBinding {name: 'swiftui-githu
 CREATE (:FrameworkBinding {name: 'swiftui-gitlab-ci', framework: 'swiftui', layer: 'ci-cd', file_path: 'modules/frameworks/swiftui/ci-cd/gitlab-ci.md'});
 MATCH (b:FrameworkBinding {name: 'swiftui-gitlab-ci'}), (m:LayerModule {name: 'gitlab-ci'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'swiftui'}), (b:FrameworkBinding {name: 'swiftui-gitlab-ci'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'swiftui-conventions', framework: 'swiftui', layer: 'documentation', file_path: 'modules/frameworks/swiftui/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'swiftui-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'swiftui'}), (b:FrameworkBinding {name: 'swiftui-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'swiftui'}), (t:TestingFramework {name: 'xctest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'vapor-postgresql', framework: 'vapor', layer: 'databases', file_path: 'modules/frameworks/vapor/databases/postgresql.md'});
 MATCH (b:FrameworkBinding {name: 'vapor-postgresql'}), (m:LayerModule {name: 'postgresql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1339,6 +1403,9 @@ MATCH (f:Framework {name: 'vapor'}), (b:FrameworkBinding {name: 'vapor-helm'}) C
 CREATE (:FrameworkBinding {name: 'vapor-podman', framework: 'vapor', layer: 'container-orchestration', file_path: 'modules/frameworks/vapor/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'vapor-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'vapor'}), (b:FrameworkBinding {name: 'vapor-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'vapor-conventions', framework: 'vapor', layer: 'documentation', file_path: 'modules/frameworks/vapor/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'vapor-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'vapor'}), (b:FrameworkBinding {name: 'vapor-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'vapor'}), (t:TestingFramework {name: 'xctest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 CREATE (:FrameworkBinding {name: 'vue-graphql', framework: 'vue', layer: 'api-protocols', file_path: 'modules/frameworks/vue/api-protocols/graphql.md'});
 MATCH (b:FrameworkBinding {name: 'vue-graphql'}), (m:LayerModule {name: 'graphql'}) CREATE (b)-[:EXTENDS]->(m);
@@ -1379,11 +1446,15 @@ MATCH (f:Framework {name: 'vue'}), (b:FrameworkBinding {name: 'vue-docker'}) CRE
 CREATE (:FrameworkBinding {name: 'vue-podman', framework: 'vue', layer: 'container-orchestration', file_path: 'modules/frameworks/vue/container-orchestration/podman.md'});
 MATCH (b:FrameworkBinding {name: 'vue-podman'}), (m:LayerModule {name: 'podman'}) CREATE (b)-[:EXTENDS]->(m);
 MATCH (f:Framework {name: 'vue'}), (b:FrameworkBinding {name: 'vue-podman'}) CREATE (f)-[:HAS_BINDING]->(b);
+CREATE (:FrameworkBinding {name: 'vue-conventions', framework: 'vue', layer: 'documentation', file_path: 'modules/frameworks/vue/documentation/conventions.md'});
+MATCH (b:FrameworkBinding {name: 'vue-conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (b)-[:EXTENDS]->(m);
+MATCH (f:Framework {name: 'vue'}), (b:FrameworkBinding {name: 'vue-conventions'}) CREATE (f)-[:HAS_BINDING]->(b);
 MATCH (f:Framework {name: 'vue'}), (t:TestingFramework {name: 'vitest'}) CREATE (f)-[:PAIRS_WITH]->(t);
 
 // --- Agents ---
 CREATE (:Agent:Reviewer {name: 'architecture-reviewer', role: 'reviewer', file_path: 'agents/architecture-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'backend-performance-reviewer', role: 'reviewer', file_path: 'agents/backend-performance-reviewer.md'});
+CREATE (:Agent:Reviewer {name: 'docs-consistency-reviewer', role: 'reviewer', file_path: 'agents/docs-consistency-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'frontend-a11y-reviewer', role: 'reviewer', file_path: 'agents/frontend-a11y-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'frontend-design-reviewer', role: 'reviewer', file_path: 'agents/frontend-design-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'frontend-performance-reviewer', role: 'reviewer', file_path: 'agents/frontend-performance-reviewer.md'});
@@ -1393,6 +1464,7 @@ CREATE (:Agent {name: 'infra-deploy-verifier', role: 'other', file_path: 'agents
 CREATE (:Agent {name: 'pl-010-shaper', role: 'pipeline', file_path: 'agents/pl-010-shaper.md'});
 CREATE (:Agent {name: 'pl-050-project-bootstrapper', role: 'pipeline', file_path: 'agents/pl-050-project-bootstrapper.md'});
 CREATE (:Agent {name: 'pl-100-orchestrator', role: 'orchestrator', file_path: 'agents/pl-100-orchestrator.md'});
+CREATE (:Agent {name: 'pl-130-docs-discoverer', role: 'pipeline', file_path: 'agents/pl-130-docs-discoverer.md'});
 CREATE (:Agent {name: 'pl-140-deprecation-refresh', role: 'pipeline', file_path: 'agents/pl-140-deprecation-refresh.md'});
 CREATE (:Agent {name: 'pl-150-test-bootstrapper', role: 'pipeline', file_path: 'agents/pl-150-test-bootstrapper.md'});
 CREATE (:Agent {name: 'pl-160-migration-planner', role: 'pipeline', file_path: 'agents/pl-160-migration-planner.md'});
@@ -1402,6 +1474,7 @@ CREATE (:Agent {name: 'pl-250-contract-validator', role: 'pipeline', file_path: 
 CREATE (:Agent {name: 'pl-300-implementer', role: 'pipeline', file_path: 'agents/pl-300-implementer.md'});
 CREATE (:Agent {name: 'pl-310-scaffolder', role: 'pipeline', file_path: 'agents/pl-310-scaffolder.md'});
 CREATE (:Agent {name: 'pl-320-frontend-polisher', role: 'pipeline', file_path: 'agents/pl-320-frontend-polisher.md'});
+CREATE (:Agent {name: 'pl-350-docs-generator', role: 'pipeline', file_path: 'agents/pl-350-docs-generator.md'});
 CREATE (:Agent {name: 'pl-400-quality-gate', role: 'pipeline', file_path: 'agents/pl-400-quality-gate.md'});
 CREATE (:Agent {name: 'pl-500-test-gate', role: 'pipeline', file_path: 'agents/pl-500-test-gate.md'});
 CREATE (:Agent {name: 'pl-600-pr-builder', role: 'pipeline', file_path: 'agents/pl-600-pr-builder.md'});
@@ -1414,6 +1487,7 @@ CREATE (:Agent:Reviewer {name: 'version-compat-reviewer', role: 'reviewer', file
 
 // --- Agent DISPATCHES edges ---
 MATCH (a:Agent {name: 'pl-160-migration-planner'}), (b:Agent {name: 'pl-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'pl-400-quality-gate'}), (b:Agent {name: 'docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (b:Agent {name: 'pl-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-500-test-gate'}), (b:Agent {name: 'pl-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-600-pr-builder'}), (b:Agent {name: 'pl-710-feedback-capture'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1435,6 +1509,10 @@ CREATE (:SharedContract {name: 'state-schema', file_path: 'shared/state-schema.m
 // --- Agent READS SharedContract edges ---
 MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'backend-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'frontend-a11y-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'frontend-a11y-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'frontend-design-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
@@ -1451,6 +1529,11 @@ MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'fronten
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-140-deprecation-refresh'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-140-deprecation-refresh'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-140-deprecation-refresh'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
@@ -1467,6 +1550,7 @@ MATCH (a:Agent {name: 'pl-320-frontend-polisher'}), (c:SharedContract {name: 'fr
 MATCH (a:Agent {name: 'pl-320-frontend-polisher'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-320-frontend-polisher'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-320-frontend-polisher'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-350-docs-generator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
@@ -1746,6 +1830,7 @@ CREATE (:Learnings {name: 'cloudflare-r2', file_path: 'shared/learnings/cloudfla
 CREATE (:Learnings {name: 'cmake', file_path: 'shared/learnings/cmake.md'});
 CREATE (:Learnings {name: 'cockroachdb', file_path: 'shared/learnings/cockroachdb.md'});
 CREATE (:Learnings {name: 'cognito', file_path: 'shared/learnings/cognito.md'});
+CREATE (:Learnings {name: 'conventions', file_path: 'shared/learnings/conventions.md'});
 CREATE (:Learnings {name: 'couchbase', file_path: 'shared/learnings/couchbase.md'});
 CREATE (:Learnings {name: 'cpp', file_path: 'shared/learnings/cpp.md'});
 CREATE (:Learnings {name: 'csharp', file_path: 'shared/learnings/csharp.md'});
@@ -1757,6 +1842,7 @@ CREATE (:Learnings {name: 'databases', file_path: 'shared/learnings/databases.md
 CREATE (:Learnings {name: 'datadog', file_path: 'shared/learnings/datadog.md'});
 CREATE (:Learnings {name: 'dbmate', file_path: 'shared/learnings/dbmate.md'});
 CREATE (:Learnings {name: 'detox', file_path: 'shared/learnings/detox.md'});
+CREATE (:Learnings {name: 'diagram-patterns', file_path: 'shared/learnings/diagram-patterns.md'});
 CREATE (:Learnings {name: 'diesel', file_path: 'shared/learnings/diesel.md'});
 CREATE (:Learnings {name: 'django-migrations', file_path: 'shared/learnings/django-migrations.md'});
 CREATE (:Learnings {name: 'django-orm', file_path: 'shared/learnings/django-orm.md'});
@@ -1764,6 +1850,7 @@ CREATE (:Learnings {name: 'django', file_path: 'shared/learnings/django.md'});
 CREATE (:Learnings {name: 'docker-compose', file_path: 'shared/learnings/docker-compose.md'});
 CREATE (:Learnings {name: 'docker-swarm', file_path: 'shared/learnings/docker-swarm.md'});
 CREATE (:Learnings {name: 'docker', file_path: 'shared/learnings/docker.md'});
+CREATE (:Learnings {name: 'documentation', file_path: 'shared/learnings/documentation.md'});
 CREATE (:Learnings {name: 'drizzle', file_path: 'shared/learnings/drizzle.md'});
 CREATE (:Learnings {name: 'dynamodb', file_path: 'shared/learnings/dynamodb.md'});
 CREATE (:Learnings {name: 'ecto', file_path: 'shared/learnings/ecto.md'});
@@ -2039,6 +2126,10 @@ MATCH (l:Learnings {name: 'cognito'}), (m:LayerModule {name: 'cognito'}) CREATE 
 MATCH (l:Learnings {name: 'cognito'}), (t:TestingFramework {name: 'cognito'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'cognito'}), (la:Language {name: 'cognito'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'cognito'}), (f:Framework {name: 'cognito'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'conventions'}), (m:LayerModule {name: 'conventions'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'conventions'}), (t:TestingFramework {name: 'conventions'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'conventions'}), (la:Language {name: 'conventions'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'conventions'}), (f:Framework {name: 'conventions'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'couchbase'}), (m:LayerModule {name: 'couchbase'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'couchbase'}), (t:TestingFramework {name: 'couchbase'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'couchbase'}), (la:Language {name: 'couchbase'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
@@ -2083,6 +2174,10 @@ MATCH (l:Learnings {name: 'detox'}), (m:LayerModule {name: 'detox'}) CREATE (m)-
 MATCH (l:Learnings {name: 'detox'}), (t:TestingFramework {name: 'detox'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'detox'}), (la:Language {name: 'detox'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'detox'}), (f:Framework {name: 'detox'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'diagram-patterns'}), (m:LayerModule {name: 'diagram-patterns'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'diagram-patterns'}), (t:TestingFramework {name: 'diagram-patterns'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'diagram-patterns'}), (la:Language {name: 'diagram-patterns'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'diagram-patterns'}), (f:Framework {name: 'diagram-patterns'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'diesel'}), (m:LayerModule {name: 'diesel'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'diesel'}), (t:TestingFramework {name: 'diesel'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'diesel'}), (la:Language {name: 'diesel'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
@@ -2111,6 +2206,10 @@ MATCH (l:Learnings {name: 'docker'}), (m:LayerModule {name: 'docker'}) CREATE (m
 MATCH (l:Learnings {name: 'docker'}), (t:TestingFramework {name: 'docker'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'docker'}), (la:Language {name: 'docker'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'docker'}), (f:Framework {name: 'docker'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'documentation'}), (m:LayerModule {name: 'documentation'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'documentation'}), (t:TestingFramework {name: 'documentation'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'documentation'}), (la:Language {name: 'documentation'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'documentation'}), (f:Framework {name: 'documentation'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'drizzle'}), (m:LayerModule {name: 'drizzle'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'drizzle'}), (t:TestingFramework {name: 'drizzle'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'drizzle'}), (la:Language {name: 'drizzle'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
