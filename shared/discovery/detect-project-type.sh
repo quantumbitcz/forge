@@ -190,10 +190,11 @@ detected_code_quality=()
 if [[ -f "$DIR/.editorconfig" ]] && grep -q "ktlint_" "$DIR/.editorconfig" 2>/dev/null; then
   detected_code_quality+=("ktlint")
 fi
-if ls "$DIR/eslint.config."* &>/dev/null 2>&1 || ls "$DIR/.eslintrc."* &>/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]]; then
+if ls "$DIR/eslint.config."* &>/dev/null 2>&1 || ls "$DIR/.eslintrc."* &>/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]] || \
+   ( [[ -f "$DIR/package.json" ]] && grep -q '"eslintConfig"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("eslint")
 fi
-[[ -f "$DIR/biome.json" ]] && detected_code_quality+=("biome")
+[[ -f "$DIR/biome.json" ]] || [[ -f "$DIR/biome.jsonc" ]] && detected_code_quality+=("biome")
 if [[ -f "$DIR/ruff.toml" ]] || ( [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.ruff\]" "$DIR/pyproject.toml" 2>/dev/null ); then
   detected_code_quality+=("ruff")
 fi
@@ -205,12 +206,22 @@ fi
 [[ -f "$DIR/phpstan.neon" || -f "$DIR/phpstan.neon.dist" ]] && detected_code_quality+=("phpstan")
 [[ -f "$DIR/analysis_options.yaml" ]] && detected_code_quality+=("dart-analyzer")
 [[ -f "$DIR/.scalafmt.conf" ]] && detected_code_quality+=("scalafmt")
+[[ -f "$DIR/.scalafix.conf" ]] && detected_code_quality+=("scalafix")
 if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
   detected_code_quality+=("roslyn-analyzers")
 fi
+[[ -f "$DIR/checkstyle.xml" ]] && detected_code_quality+=("checkstyle")
+[[ -f "$DIR/pmd.xml" ]] || [[ -f "$DIR/ruleset.xml" ]] && detected_code_quality+=("pmd")
+[[ -f "$DIR/spotbugs-exclude.xml" ]] && detected_code_quality+=("spotbugs")
+if [[ -f "$DIR/build.gradle.kts" ]] && grep -q "errorprone" "$DIR/build.gradle.kts" 2>/dev/null; then
+  detected_code_quality+=("errorprone")
+fi
+[[ -f "$DIR/.pylintrc" ]] || [[ -f "$DIR/pylintrc" ]] && detected_code_quality+=("pylint")
+[[ -f "$DIR/mypy.ini" ]] || [[ -f "$DIR/.mypy.ini" ]] && detected_code_quality+=("mypy")
 
 # Formatting
-if ls "$DIR/.prettierrc"* &>/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]]; then
+if ls "$DIR/.prettierrc"* &>/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]] || \
+   ( [[ -f "$DIR/package.json" ]] && grep -q '"prettier"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("prettier")
 fi
 if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.black\]" "$DIR/pyproject.toml" 2>/dev/null; then
@@ -231,7 +242,8 @@ if [[ -f "$DIR/.nycrc" || -f "$DIR/.nycrc.json" ]] || \
    ( [[ -f "$DIR/package.json" ]] && grep -q '"nyc"\|"c8"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("istanbul")
 fi
-if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.coverage\]" "$DIR/pyproject.toml" 2>/dev/null; then
+if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.coverage\]" "$DIR/pyproject.toml" 2>/dev/null || \
+   [[ -f "$DIR/.coveragerc" ]]; then
   detected_code_quality+=("coverage-py")
 fi
 if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then

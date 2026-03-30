@@ -18,6 +18,8 @@ uv tool install ruff
 ruff --version   # e.g., ruff 0.9.x
 ```
 
+### Configuration Patterns
+
 **pyproject.toml is the preferred config location:**
 ```toml
 [tool.ruff]

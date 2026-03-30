@@ -568,7 +568,7 @@ If any step fails:
 
 ---
 
-## 7. Auto-Init Pipeline
+## 8. Auto-Init Pipeline
 
 After the project builds and tests pass:
 

@@ -69,11 +69,11 @@ Also detect and note the presence of:
 
 Scan for configured code quality tools by checking for config files:
 
-**Linting/Analysis:** `.detekt.yml` → detekt, `.editorconfig` with `ktlint_*` → ktlint, `eslint.config.*` or `.eslintrc.*` → eslint, `biome.json` → biome, `ruff.toml` or `[tool.ruff]` in `pyproject.toml` → ruff, `.golangci.yml` → golangci-lint, `clippy.toml` → clippy, `.swiftlint.yml` → swiftlint, `.credo.exs` → credo, `.rubocop.yml` → rubocop, `phpstan.neon` → phpstan, `analysis_options.yaml` → dart-analyzer, `.scalafmt.conf` → scalafmt, roslyn analyzer packages in `.csproj` → roslyn-analyzers
+**Linting/Analysis:** `.detekt.yml` → detekt, `.editorconfig` with `ktlint_*` → ktlint, `eslint.config.*` or `.eslintrc.*` or `eslintConfig` in `package.json` → eslint, `biome.json` or `biome.jsonc` → biome, `ruff.toml` or `[tool.ruff]` in `pyproject.toml` → ruff, `.golangci.yml` → golangci-lint, `clippy.toml` → clippy, `.swiftlint.yml` → swiftlint, `.credo.exs` → credo, `.rubocop.yml` → rubocop, `phpstan.neon` → phpstan, `analysis_options.yaml` → dart-analyzer, `.scalafmt.conf` → scalafmt, `.scalafix.conf` → scalafix, roslyn analyzer packages in `.csproj` → roslyn-analyzers, `checkstyle.xml` → checkstyle, `pmd.xml` or `ruleset.xml` → pmd, `spotbugs-exclude.xml` → spotbugs, `errorprone` in `build.gradle.kts` → errorprone, `.pylintrc` or `pylintrc` → pylint, `mypy.ini` or `.mypy.ini` → mypy
 
-**Formatting:** `.prettierrc.*` → prettier, `[tool.black]` in `pyproject.toml` → black, `spotless` in `build.gradle.kts` → spotless, `rustfmt.toml` → rustfmt
+**Formatting:** `.prettierrc.*` or `prettier` key in `package.json` → prettier, `[tool.black]` in `pyproject.toml` → black, `spotless` in `build.gradle.kts` → spotless, `rustfmt.toml` → rustfmt
 
-**Coverage:** `jacoco` in build files → jacoco, `nyc` or `c8` config → istanbul, `[tool.coverage]` in `pyproject.toml` → coverage-py, `coverlet` in `.csproj` → coverlet
+**Coverage:** `jacoco` in build files → jacoco, `nyc` or `c8` config → istanbul, `[tool.coverage]` in `pyproject.toml` or `.coveragerc` → coverage-py, `coverlet` in `.csproj` → coverlet
 
 **Security:** `dependencyCheck` in build files → owasp-dependency-check, `.snyk` → snyk, `.trivy.yaml` → trivy
 

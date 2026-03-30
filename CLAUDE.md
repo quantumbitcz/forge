@@ -202,7 +202,7 @@ for m in modules/frameworks/*/pipeline-config-template.md; do grep -q "total_ret
 for dir in modules/languages modules/testing modules/databases modules/persistence \
            modules/migrations modules/api-protocols modules/messaging modules/caching \
            modules/search modules/storage modules/auth modules/observability \
-           modules/build-systems modules/ci-cd modules/container-orchestration; do
+           modules/build-systems modules/ci-cd modules/container-orchestration modules/code-quality; do
   for f in "$dir"/*.md; do
     name=$(basename "$f" .md)
     [ -f "shared/learnings/$name.md" ] || echo "MISSING: learnings/$name.md"
