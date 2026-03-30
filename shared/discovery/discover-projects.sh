@@ -82,11 +82,18 @@ get_git_remote() {
 
 normalize_repo_url() {
   local url="$1"
-  # Strip ssh prefix, trailing .git, etc.
+  # Strip all known scheme prefixes
   url="${url#git@}"
   url="${url#https://}"
+  url="${url#http://}"
+  url="${url#git://}"
+  url="${url#ssh://}"
+  url="${url#file://}"
+  url="${url#git@}"     # strip git@ that may survive after scheme (e.g. ssh://git@host)
   url="${url%.git}"
   url="${url/://}"   # git@github.com:org/repo -> github.com/org/repo
+  # Strip trailing slash
+  url="${url%/}"
   printf '%s' "$url"
 }
 

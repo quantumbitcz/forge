@@ -22,11 +22,25 @@ _CURRENT_FILE=""
 handle_skip() {
   local skip_file=".pipeline/.check-engine-skipped"
   if [ -d ".pipeline" ]; then
-    local count=0
-    if [ -f "$skip_file" ]; then
-      count=$(cat "$skip_file" 2>/dev/null || echo 0)
+    # Atomic increment: use flock if available, else mkdir-based lock
+    if command -v flock &>/dev/null; then
+      (
+        flock -w 2 9 || exit 0  # Lock timeout: skip increment (best-effort counter)
+        local count=0
+        [ -f "$skip_file" ] && count=$(cat "$skip_file" 2>/dev/null || echo 0)
+        echo $((count + 1)) > "$skip_file"
+      ) 9>"${skip_file}.lock"
+      rm -f "${skip_file}.lock" 2>/dev/null || true
+    else
+      local lock_dir="${skip_file}.lockdir"
+      if mkdir "$lock_dir" 2>/dev/null; then
+        local count=0
+        [ -f "$skip_file" ] && count=$(cat "$skip_file" 2>/dev/null || echo 0)
+        echo $((count + 1)) > "$skip_file"
+        rmdir "$lock_dir" 2>/dev/null
+      fi
+      # If lock fails, skip the increment — best-effort counter
     fi
-    echo $((count + 1)) > "$skip_file"
   fi
   echo "[check-engine] Hook skipped for ${_CURRENT_FILE:-unknown} (timeout/error)" >&2
   exit 0

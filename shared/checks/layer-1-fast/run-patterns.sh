@@ -140,8 +140,8 @@ in_scope() {
       return 1
       ;;
     *)
-      # Treat as regex against file path
-      if echo "$filepath" | grep -qE "$scope"; then
+      # Treat as regex against file path; silently fail for invalid regex
+      if echo "$filepath" | grep -qE "$scope" 2>/dev/null; then
         return 0
       fi
       return 1
@@ -199,7 +199,7 @@ for r in rules:
     fi
 
     # Check scope_exclude — skip if file matches exclusion pattern
-    if [[ -n "$scope_exclude" ]] && echo "$FILE" | grep -qE "$scope_exclude"; then
+    if [[ -n "$scope_exclude" ]] && echo "$FILE" | grep -qE "$scope_exclude" 2>/dev/null; then
       continue
     fi
 
