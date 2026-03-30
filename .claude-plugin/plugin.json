@@ -13,7 +13,8 @@
     "pipeline", "tdd", "code-review", "quality-gate", "linear",
     "kotlin", "typescript", "python", "go", "rust", "swift", "java", "c",
     "cpp", "csharp", "dart", "elixir", "php", "ruby", "scala",
-    "documentation", "graph", "migration", "testing"
+    "documentation", "graph", "migration", "testing",
+    "bootstrap", "code-quality", "crosscutting", "knowledge-graph"
   ],
   "category": "development"
 }
