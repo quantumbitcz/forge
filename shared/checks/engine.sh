@@ -105,10 +105,8 @@ detect_module() {
     elif [[ -f "$project_root/package.json" ]] && grep -q '"vue"' "$project_root/package.json" 2>/dev/null; then module="vue"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"svelte"' "$project_root/package.json" 2>/dev/null; then module="svelte"
     elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then
-      # Distinguish Vite-based frameworks by package.json deps
-      if grep -qE '"react"|"@vitejs/plugin-react"' "$project_root/package.json" 2>/dev/null; then module="react"
-      else module="react"  # fallback — most Vite projects are React
-      fi
+      # Vue and Svelte already handled above; remaining Vite projects default to react
+      module="react"
     elif [[ -f "$project_root/package.json" ]]; then module="express"
     elif [[ -f "$project_root/Cargo.toml" ]]; then module="axum"
     elif [[ -f "$project_root/go.mod" ]] && grep -q 'gin-gonic/gin' "$project_root/go.mod" 2>/dev/null; then module="gin"

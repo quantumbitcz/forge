@@ -91,7 +91,7 @@ Then add to `.claude/settings.json`:
 
 ## Available modules
 
-21 framework modules under `modules/frameworks/`, 15 language files under `modules/languages/`, 19 testing framework files under `modules/testing/`, and 13 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, `modules/observability/`, `modules/build-systems/`, `modules/ci-cd/`, and `modules/container-orchestration/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
+21 framework modules under `modules/frameworks/`, 15 language files under `modules/languages/`, 19 testing framework files under `modules/testing/`, and 15 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, `modules/observability/`, `modules/build-systems/`, `modules/ci-cd/`, `modules/container-orchestration/`, `modules/documentation/`, and `modules/code-quality/`. Each framework module provides `conventions.md`, `local-template.md`, `pipeline-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
 
 | Framework | Target stack |
 |-----------|-------------|
@@ -188,8 +188,8 @@ touch .claude/pipeline-log.md
 |                           |  .claude/pipeline-log.md (learnings + run history)
 +---------------------------+
 |   Module                  |  modules/ (21 frameworks, 15 languages, 19 testing,
-|   (conventions, rules,    |  13 crosscutting layers incl. build-systems,
-|    deprecations, scripts) |  ci-cd, container-orchestration)
+|   (conventions, rules,    |  15 crosscutting layers incl. build-systems,
+|    deprecations, scripts) |  ci-cd, container-orchestration, documentation, code-quality)
 |                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
 |   Shared core             |  agents/ (32 pipeline + review agents)
@@ -251,14 +251,14 @@ Key sections:
 The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
 
 ```bash
-# Run all tests (~289 tests, ~30s)
+# Run all tests (~332 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
 ./tests/run-all.sh structural   # Plugin integrity (34 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (99 tests)
-./tests/run-all.sh contract     # Document contract compliance (114 tests)
-./tests/run-all.sh scenario     # Multi-script integration (42 tests)
+./tests/run-all.sh unit         # Shell script behavior (98 tests)
+./tests/run-all.sh contract     # Document contract compliance (136 tests)
+./tests/run-all.sh scenario     # Multi-script integration (64 tests)
 ```
 
 ## Agents
@@ -357,6 +357,7 @@ dev-pipeline/
     pl-010-shaper.md
     pl-050-project-bootstrapper.md
     pl-100-orchestrator.md
+    pl-130-docs-discoverer.md
     pl-140-deprecation-refresh.md
     pl-150-test-bootstrapper.md
     pl-160-migration-planner.md
@@ -383,10 +384,12 @@ dev-pipeline/
     version-compat-reviewer.md
     infra-deploy-reviewer.md
     infra-deploy-verifier.md
-  skills/                               # 17 user-facing skills
+    docs-consistency-reviewer.md
+  skills/                               # 18 user-facing skills
     bootstrap-project/
     codebase-health/
     deploy/
+    docs-generate/
     graph-init/
     graph-query/
     graph-rebuild/
@@ -408,11 +411,11 @@ dev-pipeline/
   shared/
     agent-communication.md              # Inter-agent data flow contract
     agent-philosophy.md                 # Critical thinking principles for all agents
-    error-taxonomy.md                   # 15 standard error types with recovery strategies
+    error-taxonomy.md                   # 20 standard error types with recovery strategies
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.1.0 (additive extension of v1.0.0)
+    state-schema.md                     # State schema v2.0.0 (clean break from v1.x)
     checks/                             # 3-layer generalized check engine
       engine.sh                         #   Main engine script (--hook, --verify, --review modes)
       test-engine.sh                    #   Engine test harness
@@ -465,7 +468,7 @@ dev-pipeline/
       health-checks/                    #   Pre-stage validation scripts
         pre-stage-health.sh
         dependency-check.sh
-  modules/                              # 21 frameworks + 15 languages + 19 testing + 13 crosscutting layers
+  modules/                              # 21 frameworks + 15 languages + 19 testing + 15 crosscutting layers
     frameworks/                         # Per-framework conventions and config
       angular/ aspnet/ axum/ django/ embedded/ express/ fastapi/
       gin/ go-stdlib/ jetpack-compose/ k8s/
@@ -486,10 +489,12 @@ dev-pipeline/
     build-systems/                      # Build tool patterns (Gradle, Maven, CMake, Bazel, etc.)
     ci-cd/                              # CI/CD platform patterns (GitHub Actions, GitLab CI, etc.)
     container-orchestration/            # Container/orchestration patterns (Docker, Helm, ArgoCD, etc.)
+    documentation/                      # Documentation conventions (doc structure, ADR patterns, cross-references)
+    code-quality/                       # Code quality tooling (~70 tools: linters, formatters, coverage, security scanners)
     (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
-  tests/                                # 4-tier test suite (~289 tests)
+  tests/                                # 4-tier test suite (~332 tests)
     run-all.sh                          #   Test runner (all tiers or individual)
     validate-plugin.sh                  #   Structural validation (no bats needed)
     fixtures/                           #   Test fixture data
