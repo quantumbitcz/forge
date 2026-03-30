@@ -63,8 +63,21 @@ Also detect and note the presence of:
 - **Docker**: `docker-compose.yml`, `docker-compose.yaml`, `Dockerfile`
 - **CI/CD**: `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`, `bitbucket-pipelines.yml`
 - **Test framework**: JUnit, Jest, Vitest, pytest, go test, cargo test, XCTest, etc.
-- **Linters**: ESLint, Detekt, ktlint, Clippy, golangci-lint, Ruff, SwiftLint, etc.
 - **OpenAPI spec**: `openapi.yaml`, `openapi.json`, `swagger.yaml`, `swagger.json` (search recursively)
+
+#### Code Quality Tool Detection
+
+Scan for configured code quality tools by checking for config files:
+
+**Linting/Analysis:** `.detekt.yml` → detekt, `.editorconfig` with `ktlint_*` → ktlint, `eslint.config.*` or `.eslintrc.*` → eslint, `biome.json` → biome, `ruff.toml` or `[tool.ruff]` in `pyproject.toml` → ruff, `.golangci.yml` → golangci-lint, `clippy.toml` → clippy, `.swiftlint.yml` → swiftlint, `.credo.exs` → credo, `.rubocop.yml` → rubocop, `phpstan.neon` → phpstan, `analysis_options.yaml` → dart-analyzer, `.scalafmt.conf` → scalafmt, roslyn analyzer packages in `.csproj` → roslyn-analyzers
+
+**Formatting:** `.prettierrc.*` → prettier, `[tool.black]` in `pyproject.toml` → black, `spotless` in `build.gradle.kts` → spotless, `rustfmt.toml` → rustfmt
+
+**Coverage:** `jacoco` in build files → jacoco, `nyc` or `c8` config → istanbul, `[tool.coverage]` in `pyproject.toml` → coverage-py, `coverlet` in `.csproj` → coverlet
+
+**Security:** `dependencyCheck` in build files → owasp-dependency-check, `.snyk` → snyk, `.trivy.yaml` → trivy
+
+Present detected tools in the summary table.
 
 #### Documentation Detection
 
@@ -90,7 +103,7 @@ Detected stack:     react
 Module:             modules/frameworks/react
 Package manager:    pnpm
 Test framework:     Vitest
-Linters:            ESLint, Prettier
+Code quality:       ESLint (lint), Prettier (format), istanbul (coverage)
 Docker:             docker-compose.yml (3 services)
 CI/CD:              GitHub Actions (2 workflows)
 OpenAPI:            docs/openapi.yaml
@@ -113,6 +126,18 @@ If the user provides URLs or paths:
 - Accept any format: URLs, file paths, or just descriptions.
 
 If the user says no or skips: proceed without additional sources.
+
+---
+
+### Phase 1.5: Code Quality Recommendations
+
+#### Code Quality Recommendations
+
+1. Compare detected tools against `code_quality_recommended` from framework's `local-template.md`
+2. Present missing tools with descriptions, offer: `all / pick / skip`
+3. For overlapping tools (prettier vs biome, eslint vs biome, owasp vs snyk vs trivy), present as alternatives
+4. After selection, ask about external rulesets (default baseline / custom rules / shared config from external repo)
+5. Ask about CI/CD integration: `Also configure these tools in your CI/CD pipeline? (yes / no)`
 
 ---
 
@@ -139,11 +164,18 @@ Once confirmed, generate the configuration files:
      Accumulated learnings from pipeline runs. Updated automatically by the retrospective agent.
      ```
 
-4. **Documentation config**: If the module's `local-template.md` includes a `documentation:` section (all modules now do), populate detected values:
+4. **Code Quality Scaffolding**: For each accepted tool from Phase 1.5:
+   - **Project setup:** Add build dependency, generate baseline config, wire into build commands
+   - **CI/CD setup (if accepted):** Add pipeline steps for linting, coverage reports, threshold enforcement
+   - Config patterns sourced from `modules/code-quality/{tool}.md` → Installation & Setup and CI Integration sections
+   - Do NOT modify existing configs, force declined tools, or scaffold conflicting tools without resolution
+   - Record accepted tools in the `code_quality` list in `dev-pipeline.local.md` (simple string form `- jacoco` or object form with external ruleset `- tool: detekt\n  ruleset:\n    type: external\n    source: "..."`)
+
+5. **Documentation config**: If the module's `local-template.md` includes a `documentation:` section (all modules now do), populate detected values:
    - Set `external_sources` from any URLs the user provided in the documentation prompt
    - The `auto_generate` defaults come from the template — no detection-based overrides needed
 
-5. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
+6. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
 
 Show the user what files were created and their key settings. Ask: **"Config files written. Want me to validate the setup?"**
 
