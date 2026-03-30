@@ -148,6 +148,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     }
   },
   "check_engine_skipped": 0,
+  "mode": "standard",
   "dry_run": false,
   "cross_repo": {},
   "spec": null,
@@ -212,6 +213,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `conventions_section_hashes` | object | Yes | Per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. |
 | `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies` (v1.1.0): map of dependency name to version string for all detected libraries across all layers (language, framework, databases, messaging, persistence, testing). Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). Example: `{ "exposed-core": "0.48.0", "kafka-clients": "3.7.0", "flyway-core": "10.8.1", "caffeine": "3.1.8" }` |
 | `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
+| `mode` | string | Yes | Pipeline execution mode detected from requirement prefix. Valid values: `"standard"` (default), `"migration"` (requirement starts with `migrate:` or `migration:`), `"bootstrap"` (requirement starts with `bootstrap:`). Determines which planner agent is dispatched at Stage 2. |
 | `abort_reason` | string | No | Reason the pipeline was aborted. Set when the orchestrator auto-aborts (e.g., `"NO-GO timeout"`, `"budget exhausted"`). Empty string or absent when not aborted. Present only in terminal state (`complete: true`). |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |

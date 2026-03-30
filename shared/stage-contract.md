@@ -475,6 +475,30 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 
+### Migration Mode
+
+The orchestrator detects the pipeline mode from the requirement prefix at PREFLIGHT (section 3.0 in `pl-100-orchestrator.md`). Mode is stored in `state.json.mode`.
+
+**Migration mode** (`migrate:` / `migration:` prefix):
+
+1. At Stage 2, `pl-160-migration-planner` is dispatched instead of `pl-200-planner`
+2. Stage 1 (EXPLORE) runs normally — migration-planner supersedes exploration results with its own schema and data audit
+3. The migration planner uses dedicated states: `MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`
+4. These states replace `IMPLEMENTING` in the `story_state` field during migration execution
+5. Migration mode follows the same stage structure (0-9) but Stage 4 uses the migration planner's execution strategy (phased migration with rollback checkpoints)
+6. The `/migration` skill dispatches `pl-160-migration-planner` directly for standalone use outside the pipeline
+
+See `agents/pl-160-migration-planner.md` for the full migration state machine, rollback strategy, and phased execution model.
+
+**Bootstrap mode** (`bootstrap:` prefix):
+
+1. At Stage 2, `pl-050-project-bootstrapper` is dispatched instead of `pl-200-planner`
+2. Stage 1 (EXPLORE) runs with reduced scope — for new projects, exploration confirms the empty/minimal state
+3. Stages 3-6 run normally but with reduced scope (new project has no existing code to validate against, no legacy patterns to review)
+4. The `/bootstrap-project` skill dispatches `pl-050-project-bootstrapper` directly for standalone use outside the pipeline
+
+See `agents/pl-050-project-bootstrapper.md` for supported project types and scaffolding capabilities.
+
 ### Targeted Re-Implementation
 
 When a fix cycle re-enters Stage 4 (IMPLEMENT) from Stage 5 or Stage 6, the implementation is **targeted** — scoped to only the files and issues identified by the preceding stage.

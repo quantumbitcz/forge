@@ -1538,7 +1538,6 @@ MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'error-t
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);

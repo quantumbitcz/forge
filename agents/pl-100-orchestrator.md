@@ -185,6 +185,20 @@ See `shared/graph/query-patterns.md` for the Cypher templates used. If Neo4j is 
 
 **story_state:** `PREFLIGHT`
 
+### 3.0 Requirement Mode Detection
+
+Before reading config, detect the requirement mode from the user's input:
+
+| Prefix | Mode | Effect |
+|--------|------|--------|
+| `bootstrap:` / `Bootstrap:` | Bootstrap | Dispatch `pl-050-project-bootstrapper` at Stage 2 instead of `pl-200-planner`. Stages 3-6 may be simplified (no existing code to validate/review). |
+| `migrate:` / `migration:` | Migration | Dispatch `pl-160-migration-planner` at Stage 2 instead of `pl-200-planner`. Uses migration-specific states (MIGRATING, etc.). |
+| (anything else) | Standard | Normal pipeline flow with `pl-200-planner`. |
+
+Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, or `"bootstrap"`).
+
+**Note:** `pl-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/pipeline-shape` skill as a pre-pipeline phase.
+
 ### 3.1 Read Project Config
 
 Read `.claude/dev-pipeline.local.md` and parse YAML frontmatter. Extract:
@@ -525,10 +539,11 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
   "requirement": "<original requirement verbatim>",
+  "mode": "standard",
   "domain_area": "",
   "risk_level": "",
   "story_state": "PREFLIGHT",
@@ -545,6 +560,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "preempt_items_applied": [],
   "preempt_items_status": {},
   "feedback_classification": "",
+  "feedback_loop_count": 0,
   "score_history": [],
   "integrations": {
     "linear": { "available": false, "team": "" },
@@ -593,7 +609,20 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "check_engine_skipped": 0,
   "dry_run": false,
   "cross_repo": {},
-  "spec": null
+  "spec": null,
+  "documentation": {
+    "discovery_error": false,
+    "last_discovery_timestamp": "",
+    "files_discovered": 0,
+    "sections_parsed": 0,
+    "decisions_extracted": 0,
+    "constraints_extracted": 0,
+    "code_linkages": 0,
+    "coverage_gaps": [],
+    "stale_sections": 0,
+    "external_refs": [],
+    "generation_history": []
+  }
 }
 ```
 
@@ -673,9 +702,29 @@ Mark Explore as completed.
 
 ---
 
-## 5. Stage 2: PLAN (dispatch pl-200-planner)
+## 5. Stage 2: PLAN (dispatch pl-200-planner or pl-160-migration-planner)
 
 **story_state:** `PLANNING` | **TaskUpdate:** Mark "Stage 1: Explore" → `completed`, Mark "Stage 2: Plan" → `in_progress`
+
+### Migration Mode Detection
+
+Check `state.json.mode` (set at PREFLIGHT section 3.0):
+
+**If `mode == "migration"`:**
+1. Dispatch `pl-160-migration-planner` instead of `pl-200-planner`
+2. The migration planner uses its own state machine (MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY) — see `pl-160-migration-planner.md` for details
+3. The requirement has already been stripped of the `migrate:` / `migration:` prefix at PREFLIGHT
+
+**If `mode == "bootstrap"`:**
+1. Dispatch `pl-050-project-bootstrapper` instead of `pl-200-planner`
+2. The bootstrapper infers project structure, build system, and architecture from the requirement description — see `pl-050-project-bootstrapper.md` for details
+3. The requirement has already been stripped of the `bootstrap:` prefix at PREFLIGHT
+4. After bootstrapping completes, Stages 3-6 run normally but with reduced scope (new project has no existing code to validate against)
+
+**If `mode == "standard"` (default):**
+Proceed with the standard `pl-200-planner` dispatch below.
+
+### Standard Planning (mode == "standard")
 
 Dispatch `pl-200-planner` with a **<2,000 token** prompt:
 
@@ -1284,6 +1333,18 @@ If `integrations.linear.available` is true:
 - Move all Stories to "In Review" status
 
 If `integrations.linear.available` is false, skip Linear operations silently.
+
+### Preview Validation (conditional)
+
+If `preview.enabled` is `true` in `dev-pipeline.local.md` and the PR was created successfully:
+
+1. Wait for preview URL to become available (from CI/CD webhook or `preview.url_pattern` config)
+2. Dispatch `pl-650-preview-validator` with: PR number, preview URL, smoke test routes, Lighthouse thresholds, Playwright test paths
+3. pl-650 posts results as a PR comment (smoke tests, Lighthouse audit, visual regression, E2E)
+4. If verdict is FAIL: add `preview-failed` label to PR, include findings in user presentation
+5. If verdict is PASS or CONCERNS: proceed to user response
+
+If `preview.enabled` is not configured or `false`: skip preview validation.
 
 ### User Response
 
