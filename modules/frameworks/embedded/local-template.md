@@ -9,6 +9,8 @@ components:
   # ci: github-actions           # github-actions | gitlab-ci
   # container: ~                 # N/A for embedded firmware
   # orchestrator: ~              # N/A for embedded firmware
+  code_quality: []
+  code_quality_recommended: [clang-tidy, cppcheck, llvm-cov, doxygen]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -78,6 +80,8 @@ linear:
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/embedded/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/embedded/variants/${components.variant}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/embedded/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"

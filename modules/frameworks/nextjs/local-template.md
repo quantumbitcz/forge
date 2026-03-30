@@ -10,6 +10,8 @@ components:
   # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines
   # container: docker          # docker | docker-compose | podman
   # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd
+  code_quality: []
+  code_quality_recommended: [eslint, prettier, istanbul, npm-audit]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -117,6 +119,8 @@ conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/conventions.m
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/testing/${components.testing}.md"
 conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/persistence/${components.persistence}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/nextjs/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"

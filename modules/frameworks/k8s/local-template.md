@@ -8,6 +8,8 @@ components:
   # ci: github-actions           # github-actions | gitlab-ci | jenkins
   # container: ~                 # N/A (k8s IS the orchestrator)
   # orchestrator: argocd         # argocd | fluxcd | k3s | microk8s
+  code_quality: []
+  code_quality_recommended: [trivy]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -80,6 +82,8 @@ linear:
   labels: ["pipeline-managed"]
 
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/conventions.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/code-quality/"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
 

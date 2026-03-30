@@ -10,6 +10,8 @@ components:
   # ci: github-actions         # github-actions | gitlab-ci
   # container: docker          # docker | docker-compose | podman
   # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd
+  code_quality: []
+  code_quality_recommended: [golangci-lint, go-cover, godoc, govulncheck]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -89,6 +91,8 @@ conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/conventions.md"
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/testing/${components.testing}.md"
 conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/persistence/${components.persistence}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/gin/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"

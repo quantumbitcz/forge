@@ -11,6 +11,8 @@ components:
   # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton
   # container: docker          # docker | docker-compose | podman
   # orchestrator: helm         # helm | k3s | microk8s | openshift | rancher | argocd | fluxcd
+  code_quality: []
+  code_quality_recommended: [detekt, ktlint, jacoco, dokka, owasp-dependency-check, spotless, pitest]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -94,6 +96,8 @@ conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/spring/variants/$
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/spring/testing/${components.testing}.md"
 conventions_web: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/spring/web/${components.web}.md"
 conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/spring/persistence/${components.persistence}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/spring/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"
