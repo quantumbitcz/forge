@@ -13,10 +13,23 @@
       "findings_ignored": "integer — findings dismissed without changes"
     }
   },
+  "convergence_metrics": {
+    "total_runs_with_convergence": "integer — runs that used the convergence engine",
+    "avg_iterations_to_converge": "float — average total_iterations across runs",
+    "avg_phase1_iterations": "float — average iterations in correctness phase",
+    "avg_phase2_iterations": "float — average iterations in perfection phase",
+    "perfect_score_rate": "float — ratio of runs reaching target_score exactly",
+    "plateau_rate": "float — ratio of runs that converged via plateau (not target)",
+    "safety_gate_failure_rate": "float — ratio of runs where safety gate failed",
+    "avg_final_score": "float — average score at convergence"
+  },
   "_improvement_triggers": {
     "avg_fix_cycles_needed > 2 for 5+ runs": "AGENT-IMPROVE: add examples for common failure patterns",
     "false_positive_rate > 0.15 for 5+ runs": "AGENT-IMPROVE: recalibrate severity or refine detection",
     "context_resets > 0 in 3+ of last 5 runs": "AGENT-IMPROVE: simplify prompt or split into sub-agents",
-    "findings_ignored > 30% of accepted": "AGENT-IMPROVE: recalibrate severity"
+    "findings_ignored > 30% of accepted": "AGENT-IMPROVE: recalibrate severity",
+    "plateau_rate > 0.5 for 5+ runs": "CONVERGENCE-TUNE: raise plateau_patience or lower plateau_threshold",
+    "safety_gate_failure_rate > 0.2 for 5+ runs": "CONVERGENCE-TUNE: consider running targeted tests in Phase 2",
+    "avg_iterations_to_converge > 6 for 5+ runs": "CONVERGENCE-TUNE: lower max_iterations, investigate recurring findings"
   }
 }

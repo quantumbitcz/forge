@@ -257,6 +257,14 @@ On FAIL:
 
 If max cycles exhausted and still FAIL, escalate to user.
 
+### Convergence Engine Context
+
+The test gate operates within Phase 1 (Correctness) of the convergence engine (`shared/convergence-engine.md`). The test gate's PASS/FAIL verdict is consumed by the convergence engine to determine phase transitions:
+- **PASS:** Convergence engine transitions from Phase 1 to Phase 2 (perfection)
+- **FAIL:** Convergence engine keeps Phase 1 active, dispatches IMPLEMENT for fixes
+
+The test gate's `max_test_cycles` remains the inner cap. The convergence engine manages the outer iteration budget via `convergence.total_iterations`.
+
 ---
 
 ## 9. Partial Failure Handling
