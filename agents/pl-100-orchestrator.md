@@ -1178,12 +1178,12 @@ Merge the returned findings into the quality gate's finding pool before scoring 
 
 1. Collect all findings from all batches + inline checks
 2. Deduplicate by `(file, line, category)` -- keep highest severity (see `shared/scoring.md`)
-3. Score: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`
+3. Score: `max(0, 100 - critical_weight*CRITICAL - warning_weight*WARNING - info_weight*INFO)` (weights from `pipeline-config.md` scoring section; defaults: 20/5/2)
 4. Append score to `state.json.score_history` (e.g., `[85, 78, 92]` across cycles)
-5. Determine verdict:
-   - **PASS:** score >= 80, no CRITICALs -> proceed to DOCS
-   - **CONCERNS:** score 60-79, no CRITICALs -> proceed to DOCS with findings preserved in notes
-   - **FAIL:** score < 60 or any CRITICAL -> fix cycle
+5. Determine verdict (thresholds from `pipeline-config.md` scoring section, defaults from `shared/scoring.md`):
+   - **PASS:** score >= `pass_threshold` (default 80), no CRITICALs -> proceed to DOCS
+   - **CONCERNS:** score >= `concerns_threshold` (default 60) and < `pass_threshold`, no CRITICALs -> proceed to DOCS with findings preserved in notes
+   - **FAIL:** score < `concerns_threshold` or any CRITICAL -> fix cycle
 
 ### 9.2a Component-Aware Quality Gate (multi-component projects)
 

@@ -284,12 +284,12 @@ Reference: Principle 4 from `shared/agent-philosophy.md`
 
 ## 10. Verdict Thresholds
 
-Apply the verdict AFTER fix attempts are exhausted (not on the first scoring):
+Apply the verdict AFTER fix attempts are exhausted (not on the first scoring). Thresholds are defaults from `shared/scoring.md` — customizable via `pipeline-config.md` `scoring:` section:
 
 ```
-PASS:     score >= 80 AND 0 CRITICALs
-CONCERNS: score 60-79 AND 0 CRITICALs  -> proceed, issues tracked in stage notes
-FAIL:     score < 60 OR any CRITICAL remaining after max cycles -> escalate to user
+PASS:     score >= pass_threshold (default 80) AND 0 CRITICALs
+CONCERNS: score >= concerns_threshold (default 60) AND < pass_threshold AND 0 CRITICALs  -> proceed, issues tracked in stage notes
+FAIL:     score < concerns_threshold OR any CRITICAL remaining after max cycles -> escalate to user
 ```
 
 If PASS or CONCERNS, the full finding list is preserved in stage notes for the retrospective to analyze. Even PASS with findings < 100 means findings are documented.
@@ -420,7 +420,7 @@ If `integrations.linear.available` is true in state.json:
 
 - DO NOT read source files — dispatched agents do the analysis
 - DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT override verdict thresholds — they come from shared/scoring.md
+- DO NOT hardcode verdict thresholds — read from `pipeline-config.md` scoring section (defaults in `shared/scoring.md`)
 - DO NOT truncate findings without noting the total count
 - DO NOT skip deduplication under any circumstances
 - DO NOT delete or disable findings without checking if they were intentional (e.g., a finding marked as "accepted" in a previous cycle)
