@@ -106,71 +106,49 @@ Check Helm chart structure and templating:
 
 ## Output Format
 
-Return EXACTLY this structure (quality-gate merges these findings):
+Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
 ```
-## Infrastructure Review Findings
-
-### Summary
-- Security: [PASS/FAIL] ([N] findings)
-- Reliability: [PASS/FAIL] ([N] findings)
-- Scalability: [PASS/WARN] ([N] findings)
-- Observability: [PASS/WARN] ([N] findings)
-- Docker: [PASS/WARN] ([N] findings)
-- Helm: [PASS/WARN] ([N] findings)
-
-### Findings
-
-file:line | INFRA-SEC-001 | CRITICAL | description | suggested fix
-file:line | INFRA-REL-001 | WARNING  | description | suggested fix
-file:line | INFRA-SCA-001 | INFO     | description | suggested fix
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 ```
 
-### Category Codes
+If no issues found, return: `PASS | score: {N}`
 
-Use these category codes for findings:
+Category codes:
 
-| Prefix | Domain | Examples |
-|--------|--------|----------|
-| `INFRA-SEC` | Security | RBAC, privileged containers, secrets, network policies, TLS |
-| `INFRA-REL` | Reliability | Resource limits, probes, PDBs, topology spread, graceful shutdown |
-| `INFRA-SCA` | Scalability | HPA, VPA, cluster autoscaler, StatefulSet scaling |
-| `INFRA-OBS` | Observability | Metrics, logging, tracing, alerting |
-| `INFRA-DOC` | Docker | Multi-stage, non-root, base images, layer caching, secrets |
-| `INFRA-HLM` | Helm | Values schema, defaults, templates, metadata |
-| `INFRA-TF`  | Terraform | State backend, provider pinning, module structure |
+| Prefix | Domain |
+|--------|--------|
+| `INFRA-SEC` | Security (RBAC, privileged containers, secrets, network policies, TLS) |
+| `INFRA-REL` | Reliability (resource limits, probes, PDBs, topology spread, graceful shutdown) |
+| `INFRA-SCA` | Scalability (HPA, VPA, cluster autoscaler, StatefulSet scaling) |
+| `INFRA-OBS` | Observability (metrics, logging, tracing, alerting) |
+| `INFRA-DOC` | Docker (multi-stage, non-root, base images, layer caching, secrets) |
+| `INFRA-HLM` | Helm (values schema, defaults, templates, metadata) |
+| `INFRA-TF`  | Terraform (state backend, provider pinning, module structure) |
 
-### Severity Rules
-
+**Severity rules:**
 - Hardcoded secrets, privileged containers, missing readiness probes, Terraform local state -> **CRITICAL**
 - Missing resource limits, missing liveness probes, no NetworkPolicy, hardcoded replicas, `:latest` tags, non-root user missing, full base images -> **WARNING**
-- Missing startup probes, missing `.dockerignore`, layer ordering, missing Helm schema, tracing not configured, topology spread missing in staging -> **INFO**
+- Missing startup probes, missing `.dockerignore`, layer ordering, missing Helm schema, tracing not configured -> **INFO**
 
-If no issues found in a category, report PASS. Do not invent issues for files you have not reviewed.
+Then provide a summary with PASS/FAIL per category (Security, Reliability, Scalability, Observability, Docker, Helm).
 
 ---
 
 ## Forbidden Actions
 
-- DO NOT modify source files -- you are read-only
-- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT modify conventions files or CLAUDE.md
-- DO NOT invent findings -- only report confirmed issues with evidence
-- DO NOT delete or disable anything without checking if it was intentional (check git blame, check comments)
-- DO NOT hardcode file paths or agent names -- read from config
+Read-only agent. No source file, shared contract, conventions, or CLAUDE.md modifications. Evidence-based findings only — never invent issues. Check git blame before flagging intentional patterns. No hardcoded paths or agent names.
+
+Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ---
 
 ## Linear Tracking
 
-Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
-
-You do NOT interact with Linear directly.
+Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 
 ## Optional Integrations
 
-If Context7 MCP is available, use it to verify current API patterns and framework best practices.
-If unavailable, rely on the conventions file and codebase grep for pattern verification.
-Never fail because an optional MCP is down.
+Use Context7 MCP for API/framework verification when available; fall back to conventions file + grep. Never fail due to MCP unavailability.

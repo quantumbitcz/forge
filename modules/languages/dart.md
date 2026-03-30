@@ -89,7 +89,7 @@
   ```
 - In Flutter, be aware that `print()` output may appear in device logs accessible to other apps on some platforms — never log sensitive data even during development.
 - Never use `print()` or `debugPrint()` for operational logging — they lack levels, hierarchy, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

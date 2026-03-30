@@ -182,24 +182,19 @@ Do NOT report cross-repo cross-doc inconsistencies as `CRITICAL` — cap at `WAR
 
 ## 5. Finding Format
 
-Report findings one per line in this exact format:
+Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
 ```
-file:line | DOC-{CATEGORY}-{NNN} | {SEVERITY} | {description} | {fix_hint}
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 ```
 
-Where:
-- `file` — relative path from project root. For stale/diagram/crossref findings, use the documentation file path, not the code file
-- `line` — line number in the referenced file (0 if file-level)
-- `DOC-{CATEGORY}` — one of: `DOC-DECISION`, `DOC-CONSTRAINT`, `DOC-STALE`, `DOC-MISSING`, `DOC-DIAGRAM`, `DOC-CROSSREF`
-- `{NNN}` — sequential 3-digit number within this review run (001, 002, ...)
-- `SEVERITY` — `CRITICAL`, `WARNING`, or `INFO`
-- `description` — what is inconsistent and why it matters; cite the doc source (e.g., "ADR-003 states X but code does Y")
-- `fix_hint` — concrete action: update doc, add ADR, align code to decision, etc.
+If no issues found, return: `PASS | score: {N}`
 
-**Scout prefix:** Use `SCOUT-DOC-{CATEGORY}-{NNN}` for LOW confidence findings. Scout findings are reported for visibility but carry no score deduction. Never report LOW confidence findings as scored `DOC-*` findings.
+Category codes: `DOC-DECISION`, `DOC-CONSTRAINT`, `DOC-STALE`, `DOC-MISSING`, `DOC-DIAGRAM`, `DOC-CROSSREF`. Append sequential 3-digit number (`-{NNN}`) per run.
 
-**Severity rules:**
+**Agent-specific rules:**
+- For stale/diagram/crossref findings, use the documentation file path (not the code file)
+- Use `SCOUT-DOC-{CATEGORY}-{NNN}` prefix for LOW confidence findings (no score deduction)
 - `CRITICAL` — HIGH confidence code directly violates an accepted decision or named constraint
 - `WARNING` — MEDIUM confidence violation, or stale documentation, or cross-doc inconsistency
 - `INFO` — missing documentation, diagram drift, or any finding where the code is not wrong — just underdocumented
@@ -293,14 +288,10 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ## Linear Tracking
 
-Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
-
-You do NOT interact with Linear directly.
+Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 
 ## Optional Integrations
 
-If Context7 MCP is available, use it to verify current documentation patterns for frameworks and libraries referenced in the changed code.
-If unavailable, rely on the local documentation files and grep-based discovery.
-Never fail because an optional MCP is down.
+Use Context7 MCP for documentation pattern verification when available; fall back to local docs + grep. Never fail due to MCP unavailability.

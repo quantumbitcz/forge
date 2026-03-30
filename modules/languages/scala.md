@@ -95,7 +95,7 @@
   ```
 - `scala-logging` macros eliminate the performance cost of disabled log levels at compile time — string interpolation is not evaluated if the level is off.
 - Never use `println` for logging — it lacks levels, structure, and MDC context.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

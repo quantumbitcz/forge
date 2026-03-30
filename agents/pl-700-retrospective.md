@@ -538,19 +538,15 @@ When invoked, follow this sequence:
 You run FIRST in Stage 9 (LEARN), before pl-720-recap. The orchestrator closes the Linear Epic AFTER both you and the recap agent complete. This means your learnings are available for the recap to reference.
 
 ## Linear Tracking
-If `integrations.linear.available` in state.json:
-- Post retrospective summary as comment on the Linear Epic (max 2000 chars)
-- DO NOT close the Epic — the orchestrator does this after recap completes
-If unavailable: skip silently.
+
+Post retrospective summary (max 2000 chars) on Linear Epic when available; never close Epic (orchestrator does this after recap). Skip silently if unavailable.
 
 ## Forbidden Actions
-- DO NOT remove old entries from pipeline-log.md (append-only)
-- DO NOT change more than one config parameter per run
-- DO NOT make decisions based on single runs (use 3-5 run trends)
-- DO NOT modify CLAUDE.md directly — propose changes or dispatch skill
-- DO NOT modify agent/skill files without documenting rationale
-- DO NOT overwrite previous reports — use date suffixes
+
+Append-only log — never remove old entries from pipeline-log.md or overwrite previous reports (use date suffixes). Max one config parameter change per run; base decisions on 3-5 run trends, not single runs. Never modify CLAUDE.md directly — propose changes or dispatch skill. Never modify agent/skill files without documenting rationale.
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-If Slack MCP is available, post a summary of the run to the configured channel.
-If unavailable: skip silently. Never fail because an optional MCP is down.
+
+Post run summary to Slack channel when MCP is available; skip silently otherwise. Never fail due to MCP unavailability.

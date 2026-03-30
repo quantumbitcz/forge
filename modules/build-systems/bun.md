@@ -2,13 +2,11 @@
 
 ## Overview
 
-Bun is an all-in-one JavaScript/TypeScript toolkit that combines a runtime, bundler, test runner, and package manager into a single native binary. Built in Zig with JavaScriptCore (the WebKit JS engine) instead of V8, Bun prioritizes speed -- package installs are 10-30x faster than npm, bundling is 10-100x faster than webpack/esbuild for typical projects, and the test runner starts in milliseconds compared to Jest's multi-second startup. Bun aims to be a drop-in replacement for Node.js, npm, webpack, and Jest, reducing the JavaScript toolchain from 4-5 separate tools to one.
+All-in-one JS/TS toolkit — runtime, bundler, test runner, and package manager in a single native binary (Zig + JavaScriptCore). Package installs 10-30x faster than npm, bundling 10-100x faster than webpack/esbuild, test runner starts in milliseconds. Drop-in Node.js replacement (~95% npm compatibility).
 
-Use Bun when starting new JavaScript/TypeScript projects that want minimal toolchain complexity, when build performance is a priority (large frontend codebases, monorepos with many packages), when the project can tolerate Bun's younger ecosystem (fewer battle-tested production deployments than Node.js), or when the team wants to eliminate the configuration overhead of webpack/Vite + Jest/Vitest + npm/pnpm. Bun's workspace management handles monorepo dependency hoisting, linking, and script execution with significantly less configuration than npm workspaces or pnpm.
-
-Do not use Bun for projects that depend heavily on Node.js-specific APIs that Bun has not yet implemented (check Bun's compatibility page), for projects deployed to environments where only Node.js is available (AWS Lambda's default runtime, many PaaS providers), or for projects where the team needs the maturity and ecosystem breadth of Node.js. Bun's Node.js compatibility is high (approximately 95% of npm packages work) but not complete -- native addons, some Node.js stream edge cases, and certain node: module behaviors differ. For projects with strict production stability requirements, use Node.js as the runtime and selectively use Bun as a development tool (bundler, test runner, package manager).
-
-Key differentiators from the Node.js ecosystem: (1) Single binary -- Bun replaces node + npm/pnpm/yarn + webpack/vite/esbuild + jest/vitest with one tool. No devDependencies needed for the build toolchain itself. (2) Native speed -- Bun is compiled to native code (Zig + C), not interpreted JavaScript. Package installs leverage system-level I/O and hardlinks. The bundler and transpiler are native, not JavaScript-based. (3) First-class TypeScript -- Bun transpiles TypeScript natively without tsc, ts-node, or tsx. Run .ts files directly: `bun run app.ts`. (4) Built-in SQLite -- `bun:sqlite` provides a native SQLite driver without npm packages. (5) Macro system -- `with { type: "macro" }` import attribute runs code at bundle time, enabling compile-time code generation.
+- **Use for:** new JS/TS projects wanting minimal toolchain, monorepos needing fast installs/builds, teams eliminating webpack+Jest+npm config overhead
+- **Avoid for:** projects needing full Node.js API coverage (native addons, some stream edge cases), environments limited to Node.js (AWS Lambda default, many PaaS), strict production stability requirements
+- **vs Node.js ecosystem:** single binary replaces 4-5 tools, native-speed transpiler/bundler, first-class TypeScript (no tsc/ts-node), built-in SQLite, compile-time macros
 
 ## Architecture Patterns
 

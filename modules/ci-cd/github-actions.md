@@ -2,13 +2,11 @@
 
 ## Overview
 
-GitHub Actions is a CI/CD platform integrated directly into GitHub that executes workflows defined in YAML files within the `.github/workflows/` directory. Workflows are triggered by repository events (push, pull_request, release, schedule, `workflow_dispatch` for manual triggers, and `repository_dispatch` for external triggers). Each workflow runs on GitHub-hosted runners (Ubuntu, macOS, Windows) or self-hosted runners, with jobs executing in isolated virtual environments that are destroyed after each run.
+GitHub-integrated CI/CD platform executing YAML workflows in `.github/workflows/`, triggered by repository events. Jobs run on GitHub-hosted (Ubuntu/macOS/Windows) or self-hosted runners in ephemeral environments.
 
-Use GitHub Actions when the project is hosted on GitHub and the team wants CI/CD tightly coupled with pull request workflows, code review, and release management. GitHub Actions excels at PR-gated builds, multi-platform testing (matrix strategies across OS and language versions), and automated releases. Its marketplace of 20,000+ community actions accelerates common tasks (caching, deployment, notification), and its deep integration with GitHub's API (check runs, deployments, environments, OIDC) eliminates the authentication friction that plagues external CI systems.
-
-Do not use GitHub Actions for workloads that require persistent build agents with warm caches (use Jenkins or self-hosted runners), extremely long-running jobs exceeding the 6-hour limit (use dedicated build infrastructure), or organizations with strict air-gapped requirements where no SaaS CI is acceptable (use Tekton or Jenkins). For GitLab-hosted repositories, use GitLab CI instead — cross-platform mirroring adds complexity without benefit. For teams already invested in CircleCI or Azure Pipelines with extensive orb/template libraries, the migration cost may outweigh the integration benefits.
-
-Key differentiators: (1) First-class GitHub integration — status checks, deployments, environments, and OIDC tokens are native, not bolted on. (2) Reusable workflows (`workflow_call`) enable organizational standardization without requiring a separate plugin/orb system. (3) Composite actions package multi-step logic into reusable units versioned alongside application code. (4) OIDC authentication eliminates long-lived cloud credentials for AWS, GCP, and Azure deployments. (5) Matrix strategies test across OS, language version, and dependency combinations with a single job definition. (6) Concurrency controls prevent redundant runs and resource contention without external tooling.
+- **Use for:** GitHub-hosted projects, PR-gated builds, multi-platform matrix testing, automated releases, OIDC-based cloud deployments
+- **Avoid for:** persistent warm-cache agents (use Jenkins), jobs exceeding 6-hour limit, air-gapped environments, GitLab-hosted repos (use GitLab CI)
+- **Key features:** reusable workflows (`workflow_call`), composite actions, native OIDC (no long-lived cloud credentials), matrix strategies, concurrency controls, 20,000+ marketplace actions
 
 ## Architecture Patterns
 

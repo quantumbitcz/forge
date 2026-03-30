@@ -88,7 +88,7 @@
 - Use the `#[instrument]` attribute macro on async functions — it creates a span that persists across `.await` points and automatically records function entry/exit.
 - Use `skip` and `skip_all` in `#[instrument]` to exclude sensitive parameters from span fields.
 - Never use `println!` or `eprintln!` for operational logging — they lack structure, levels, and span context.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

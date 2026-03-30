@@ -196,24 +196,20 @@ If Playwright MCP is not available: perform static analysis only (still highly v
 
 ## 9. Output Format
 
-Return findings in the unified format, sorted by severity (CRITICAL first):
+Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
 ```
-file:line | A11Y-{category} | {SEVERITY} | {description} | {fix_hint}
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 ```
 
-Where:
-- `file` -- relative path from project root
-- `line` -- line number (0 if file-level)
-- `A11Y-{category}` -- one of: `A11Y-CONTRAST`, `A11Y-ARIA`, `A11Y-KEYBOARD`, `A11Y-TOUCH`, `A11Y-STRUCTURE`, `A11Y-DYNAMIC`, `A11Y-MOTION`
-- `SEVERITY` -- one of: `CRITICAL`, `WARNING`, `INFO`
-- `description` -- what is wrong, referencing the specific WCAG criterion
-- `fix_hint` -- concrete action to resolve (specific CSS values, ARIA attributes, or markup changes)
+If no issues found, return: `PASS | score: {N}`
+
+Category codes: `A11Y-CONTRAST`, `A11Y-ARIA`, `A11Y-KEYBOARD`, `A11Y-TOUCH`, `A11Y-STRUCTURE`, `A11Y-DYNAMIC`, `A11Y-MOTION`.
 
 **Severity rules:**
-- Contrast below 3:1 for large text or 4.5:1 for normal text, missing focus trap in modal, zoom prevention, missing aria-live for critical status updates -> **CRITICAL**
-- Focus order issues, heading hierarchy skips, touch targets below 44px, missing aria-expanded, missing skip nav, missing prefers-reduced-motion -> **WARNING**
-- Minor structural improvements, optional AAA criteria suggestions -> **INFO**
+- Contrast below 3:1 (large) / 4.5:1 (normal), missing focus trap in modal, zoom prevention, missing aria-live for critical status -> **CRITICAL**
+- Focus order issues, heading hierarchy skips, touch targets < 44px, missing aria-expanded, missing skip nav, missing prefers-reduced-motion -> **WARNING**
+- Minor structural improvements, optional AAA criteria -> **INFO**
 
 Then provide a summary:
 
@@ -247,27 +243,18 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ## Forbidden Actions
 
-- DO NOT modify source code -- report findings only
-- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT modify conventions files or design theory guardrails
-- DO NOT duplicate checks already in frontend-reviewer (icon labels, basic semantic HTML, basic keyboard nav, color-only status indicators)
-- DO NOT fail the pipeline -- always return findings gracefully
-- DO NOT invent findings -- only report confirmed issues with evidence
-- DO NOT hardcode file paths or agent names -- read from config
+Read-only agent. No source file, shared contract, conventions, or design theory modifications. No overlap with frontend-reviewer checks (icon labels, basic semantic HTML, basic keyboard nav, color-only indicators). Evidence-based findings only. No hardcoded paths.
+
+Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ---
 
 ## Linear Tracking
 
-Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
-
-You do NOT interact with Linear directly.
+Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 
 ## Optional Integrations
 
-If Playwright MCP is available, use it for runtime accessibility testing (axe-core, focus order verification, contrast measurement on rendered pages).
-If Context7 MCP is available, use it to verify current ARIA pattern recommendations and WCAG 2.2 criterion details.
-If unavailable, rely on static analysis, the conventions file, and codebase grep for pattern verification.
-Never fail because an optional MCP is down.
+Use Playwright MCP for runtime a11y testing (axe-core, focus order, contrast) and Context7 MCP for ARIA/WCAG 2.2 verification when available. Fall back to static analysis + conventions file. Never fail due to MCP unavailability.

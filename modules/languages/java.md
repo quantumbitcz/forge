@@ -73,7 +73,7 @@
   ```
 - Never use `System.out.println`, `System.err.println`, or `printStackTrace()` — they bypass structured logging, lack levels, and cannot be routed or filtered.
 - Never use string concatenation in log messages (`log.debug("user=" + user)`) — it evaluates regardless of log level. Use parameterized messages.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

@@ -78,7 +78,7 @@
 - Use Monolog's `JsonFormatter` or `LogstashFormatter` for structured JSON output in production.
 - Use Monolog processors to inject request-scoped context (correlation ID, trace ID) automatically into every log record.
 - Never use `echo`, `print`, `var_dump()`, or `error_log()` for logging — they lack levels, structure, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

@@ -2,13 +2,11 @@
 
 ## Overview
 
-ArgoCD is a declarative, GitOps-based continuous delivery tool for Kubernetes. It continuously monitors Git repositories containing Kubernetes manifests (plain YAML, Helm charts, Kustomize overlays, or Jsonnet) and reconciles the desired state defined in Git with the actual state in the target Kubernetes cluster. When drift is detected, ArgoCD can automatically sync the cluster to match Git, or alert operators for manual approval. ArgoCD is a CNCF graduated project and the most widely adopted GitOps tool for Kubernetes.
+Declarative GitOps continuous delivery tool for Kubernetes (CNCF graduated). Monitors Git repos (YAML, Helm, Kustomize, Jsonnet) and reconciles desired state with cluster state, auto-syncing or alerting on drift.
 
-Use ArgoCD when the organization follows GitOps principles (Git as the single source of truth for cluster state), when deploying applications to one or more Kubernetes clusters, when needing audit trails for every deployment (Git commit history), and when requiring multi-environment promotion workflows (dev → staging → production). ArgoCD excels at managing the deployment side of CI/CD — it is not a CI tool (it does not build images or run tests) but rather a CD tool that deploys pre-built artifacts defined in Git.
-
-Do not use ArgoCD for non-Kubernetes deployments — it is Kubernetes-native and has no support for VMs, serverless, or other deployment targets. Do not use ArgoCD as a CI system — it cannot build container images, run tests, or compile code; pair it with a CI system (GitHub Actions, GitLab CI, Jenkins, Tekton). Do not use ArgoCD for simple single-application deployments where `kubectl apply` or `helm upgrade` executed in a CI pipeline provides sufficient automation — ArgoCD adds operational complexity (its own deployment, RBAC, networking) that must be justified by the GitOps benefits.
-
-Key differentiators: (1) The Application CRD provides a declarative way to define what should be deployed, where, and from which Git source. (2) ApplicationSet automates Application generation across clusters, environments, and repositories using generators (Git, Cluster, Matrix, Merge, Pull Request). (3) Sync strategies (auto/manual, with sync waves and sync windows) provide fine-grained control over when and how deployments happen. (4) The web UI provides real-time visualization of application health, sync status, resource trees, and diff views. (5) Multi-cluster support deploys to any Kubernetes cluster from a single ArgoCD instance. (6) SSO integration (OIDC, LDAP, SAML, GitHub, GitLab) provides enterprise authentication.
+- **Use for:** GitOps workflows (Git as single source of truth), multi-cluster K8s deployments, audit trails via Git history, multi-environment promotion (dev -> staging -> prod)
+- **Avoid for:** non-Kubernetes targets (VMs, serverless), CI tasks (building images, running tests — pair with a CI system), simple single-app deployments where `kubectl apply` suffices
+- **Key differentiators:** Application CRD for declarative deploy definitions; ApplicationSet generators (Git, Cluster, Matrix, PR) for multi-cluster/env automation; sync waves + sync windows for deployment control; real-time web UI with health/diff views; multi-cluster from single instance; SSO (OIDC, LDAP, SAML)
 
 ## Architecture Patterns
 

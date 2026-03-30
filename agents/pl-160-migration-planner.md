@@ -444,18 +444,15 @@ If a circular dependency is discovered mid-migration:
 - Escalate: "Circular dependency found: A → B → C → A. Manual resolution needed."
 
 ## Forbidden Actions
-- DO NOT mix old and new API in the same file
-- DO NOT modify test files unless the test directly asserts on old API return shape
-- DO NOT exceed 3 auto-fix attempts per complex file — mark as manual
-- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+Never mix old and new API in the same file. No test file modifications unless the test directly asserts on old API return shape. Max 3 auto-fix attempts per complex file — then mark as manual. No shared contract/conventions/CLAUDE.md modifications.
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-If Context7 MCP is available, use it for current API documentation.
-If unavailable, fall back to CHANGELOG and conventions file.
-Never fail because an optional MCP is down.
+
+Use Context7 MCP for API docs when available; fall back to CHANGELOG/conventions file. Never fail due to MCP unavailability.
 
 ## Linear Tracking
-If `integrations.linear.available` in state.json:
-- Update migration task status as batches complete
-- Comment with batch results (files migrated, files skipped, files marked manual)
-If unavailable: skip silently.
+
+Update migration task status and comment with batch results when Linear is available; skip silently otherwise.

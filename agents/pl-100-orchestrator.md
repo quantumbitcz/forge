@@ -403,6 +403,8 @@ For each component entry (e.g., `backend`, `frontend`, `infra`):
 
 **Conflict resolution order (most specific wins):** variant > framework-testing > framework > language > testing.
 
+**Convention stack size cap:** If a component's resolved stack exceeds **12 files**, log a WARNING: `"Convention stack for {component} has {N} files (cap: 12). Consider splitting into sub-components or removing unused optional layers."` Continue with the full stack — this is advisory, not blocking. Rationale: 12 files at ~150 avg lines ≈ 1,800 lines ≈ 2,500 tokens, roughly 2.5% of a 100K context window. Beyond this, convention context competes with the agent's working memory for code analysis.
+
 Store resolved paths in `state.json` under `components`:
 
 ```json

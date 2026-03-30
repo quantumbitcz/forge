@@ -93,7 +93,7 @@
 - Logger metadata is process-scoped (bound to the BEAM process) — set it once in a Plug/middleware and it propagates through the entire request lifecycle automatically.
 - Use `Logger.warning/2` (not `Logger.warn/2`, which is deprecated since Elixir 1.15).
 - Never use `IO.puts`, `IO.inspect`, or `dbg` for operational logging — they lack levels, metadata, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

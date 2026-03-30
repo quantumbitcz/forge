@@ -75,7 +75,7 @@ Use ESM `import` syntax — never `require()` in TypeScript projects targeting E
   ```
 - For Express/Fastify, use `pino-http` middleware to auto-log requests with correlation IDs and response times.
 - Never use `console.log`, `console.warn`, or `console.error` in production code — they lack structure, levels, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

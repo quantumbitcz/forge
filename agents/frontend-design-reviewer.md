@@ -179,19 +179,15 @@ This section is advisory only -- all findings are INFO severity.
 
 ## 10. Output Format
 
-Return findings in this exact format, one per line, sorted by severity (CRITICAL first):
+Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
 ```
-file:line | DESIGN-{category} | {SEVERITY} | {description} | {fix_hint}
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 ```
 
-Where:
-- `file` -- relative path from project root
-- `line` -- line number (0 if file-level)
-- `DESIGN-{category}` -- one of: `DESIGN-TOKEN`, `DESIGN-LAYOUT`, `DESIGN-RESPONSIVE`, `DESIGN-THEME`, `DESIGN-MOTION`, `DESIGN-HIERARCHY`, `DESIGN-FIGMA`
-- `SEVERITY` -- one of: `CRITICAL`, `WARNING`, `INFO`
-- `description` -- what is wrong and why it matters
-- `fix_hint` -- concrete action to resolve
+If no issues found, return: `PASS | score: {N}`
+
+Category codes: `DESIGN-TOKEN`, `DESIGN-LAYOUT`, `DESIGN-RESPONSIVE`, `DESIGN-THEME`, `DESIGN-MOTION`, `DESIGN-HIERARCHY`, `DESIGN-FIGMA`.
 
 Then provide a summary:
 
@@ -219,28 +215,18 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ## 11. Forbidden Actions
 
-- DO NOT modify source code -- report findings only
-- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT modify conventions files or design theory guardrails
-- DO NOT fail the pipeline -- always return findings gracefully
-- DO NOT duplicate checks that frontend-reviewer already covers (security, hook rules, component patterns)
-- DO NOT invent findings -- only report confirmed issues with evidence
-- DO NOT hardcode file paths or agent names -- read from config
+Read-only agent. No source, shared contract, conventions, or design theory modifications. Never fail the pipeline — return findings gracefully. No overlap with frontend-reviewer scope (security, hook rules, component patterns). Evidence-based findings only. No hardcoded paths.
+
+Canonical base: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ---
 
 ## Linear Tracking
 
-Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
-
-You do NOT interact with Linear directly.
+Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 
 ## Optional Integrations
 
-If Figma MCP is available, use it for design-to-code comparison (section 8).
-If Playwright MCP is available, use it for multi-viewport screenshot evidence (section 6).
-If Context7 MCP is available, use it to verify current design system patterns and component API conventions.
-If any MCP is unavailable, degrade gracefully -- skip the dependent section and log an INFO note.
-Never fail because an optional MCP is down.
+Use Figma MCP for design comparison (§8), Playwright for viewport screenshots (§6), Context7 for design system/component API verification. Degrade gracefully per MCP — skip dependent section + log INFO. Never fail due to MCP unavailability.

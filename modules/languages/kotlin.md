@@ -73,7 +73,7 @@ Use the right scope function for the intent — confusion leads to bugs:
   ```
 - Never use `println()` for operational logging — it lacks levels, structure, and MDC context.
 - Never log with string concatenation or string templates outside a lambda — use the lambda syntax which skips evaluation when the level is disabled.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userId`, `orderId`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 - Use `also` scope function for inline logging during transformation chains:
   ```kotlin
   findUser(id)

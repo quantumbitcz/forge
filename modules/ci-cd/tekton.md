@@ -2,13 +2,11 @@
 
 ## Overview
 
-Tekton is a Kubernetes-native CI/CD framework that defines pipelines as Custom Resource Definitions (CRDs). Pipelines, Tasks, and Runs are first-class Kubernetes resources managed by the Kubernetes API server, stored in etcd, and executed as pods on the cluster. Tekton's architecture treats CI/CD as a Kubernetes workload — pipelines benefit from Kubernetes' scheduling, resource management, autoscaling, RBAC, and observability infrastructure without any additional CI-specific infrastructure.
+Kubernetes-native CI/CD framework using CRDs (Tasks, Pipelines, Runs as pods). Pipelines run as K8s workloads, leveraging cluster scheduling, RBAC, and observability.
 
-Use Tekton when the organization is Kubernetes-native and wants CI/CD pipelines to run as Kubernetes workloads, when supply chain security (SLSA provenance, signed attestations via Tekton Chains) is a first-class requirement, or when the team needs maximum flexibility in pipeline execution (custom task images, sidecar containers, workspace sharing via PVCs). Tekton excels at building cloud-native applications where the CI/CD infrastructure and the deployment target share the same Kubernetes cluster, enabling tight integration with service meshes, secrets management (Vault, Sealed Secrets), and GitOps controllers (Argo CD, Flux).
-
-Do not use Tekton for teams without Kubernetes expertise — the learning curve is steep compared to YAML-configured SaaS CI platforms. Do not use Tekton for small projects where a hosted CI service (GitHub Actions, GitLab CI) provides sufficient capability with zero infrastructure overhead. Do not use Tekton when the organization cannot maintain Kubernetes infrastructure (control plane upgrades, node scaling, storage provisioning) — the operational cost of running Tekton is the operational cost of running Kubernetes.
-
-Key differentiators: (1) Kubernetes-native — pipelines are CRDs, executed as pods, managed by `kubectl`. (2) Tekton Chains provides automatic SLSA provenance generation and artifact signing, the strongest supply chain security story in CI/CD. (3) Tekton Triggers enable event-driven pipeline execution from webhooks, Git events, and custom sources. (4) TektonHub provides a catalog of reusable tasks contributed by the community. (5) Complete separation of pipeline definition (Tasks, Pipelines) from execution (TaskRuns, PipelineRuns) enables GitOps-managed CI/CD. (6) Workspaces backed by PVCs, ConfigMaps, or Secrets provide flexible data sharing between tasks.
+- **Use for:** K8s-native orgs, supply chain security (SLSA via Tekton Chains), custom task images, workspace sharing via PVCs
+- **Avoid for:** teams without K8s expertise, small projects (use GitHub Actions/GitLab CI), orgs that can't maintain K8s infrastructure
+- **Key features:** Tekton Chains (SLSA provenance + artifact signing), Tekton Triggers (event-driven), TektonHub (reusable tasks), GitOps-compatible pipeline definitions, workspace data sharing via PVCs/ConfigMaps/Secrets
 
 ## Architecture Patterns
 

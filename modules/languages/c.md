@@ -88,7 +88,7 @@ Every header must use an include guard:
 - Use `snprintf`-based formatting in log implementations — never `sprintf` (buffer overflow risk).
 - In ISR context, buffer log data to a ring buffer and flush from the main loop — never perform I/O (UART writes, file writes) in interrupt handlers.
 - Never use `printf` directly for production logging — it lacks levels, is not filterable, and has no timestamp.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). In embedded contexts, even debug builds are vulnerable — logs can be captured via JTAG/SWO probes.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`. In embedded contexts, even debug builds are vulnerable — logs can be captured via JTAG/SWO probes.
 
 ## Anti-Patterns
 

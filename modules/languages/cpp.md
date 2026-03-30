@@ -94,7 +94,7 @@
       R"({"timestamp":"%Y-%m-%dT%H:%M:%S.%f","level":"%l","correlation_id":")" + correlation_id + R"(","message":"%v"})");
   ```
 - Never use `std::cout`, `std::cerr`, or `printf` for operational logging — they lack levels, structure, and thread safety guarantees.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs only.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

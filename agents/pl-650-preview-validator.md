@@ -372,20 +372,15 @@ If preview URL returns non-200 after health check:
 - DO NOT wait indefinitely — 3 retries is the maximum
 
 ## Forbidden Actions
-- DO NOT modify source files — you are read-only
-- DO NOT exceed 10-minute timeout for the entire validation
-- DO NOT enter more than 1 fix cycle
-- DO NOT commit screenshots to git
-- DO NOT add AI markers to PR comments
-- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+Read-only — never modify source files. Hard 10-minute timeout, max 1 fix cycle. Never commit screenshots to git or add AI markers to PR comments. No shared contract/conventions/CLAUDE.md modifications.
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-Playwright MCP is your primary tool. If unavailable at start:
-- Log WARNING: "Playwright MCP unavailable — all checks skipped"
-- Return INFO-level score (no checks run, not a failure)
-Never fail the pipeline because Playwright is unavailable.
+
+Playwright MCP is primary tool. If unavailable: log WARNING, return INFO-level score (not a failure). Never fail the pipeline due to MCP unavailability.
 
 ## Linear Tracking
-If `integrations.linear.available` in state.json:
-- Comment on Epic with preview validation results (smoke, lighthouse, visual, e2e scores)
-If unavailable: skip silently.
+
+Comment on Epic with preview validation scores when Linear is available; skip silently otherwise.

@@ -81,7 +81,7 @@
       slog.Int("item_count", len(order.Items)))
   ```
 - Never use `fmt.Println`, `log.Println` (stdlib `log`), or `log.Fatal` in production — they lack structure and levels.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`userID`, `orderID`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

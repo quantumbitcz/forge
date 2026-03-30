@@ -2,13 +2,11 @@
 
 ## Overview
 
-GitLab CI/CD is a continuous integration and delivery platform built directly into GitLab that defines pipelines in a single `.gitlab-ci.yml` file at the repository root. Pipelines consist of stages (sequential phases) containing jobs (parallel units of work) that execute on GitLab Runners — shared SaaS runners, group runners, or self-managed runners deployed on any infrastructure. GitLab CI's tight integration with merge requests, container registry, package registry, environments, and the security scanning suite makes it a comprehensive DevSecOps platform rather than just a CI engine.
+CI/CD platform built into GitLab, defined in `.gitlab-ci.yml`. Pipelines use stages (sequential) containing jobs (parallel) on GitLab Runners. Integrates with merge requests, container/package registries, environments, and security scanning as a unified DevSecOps platform.
 
-Use GitLab CI when the project is hosted on GitLab (SaaS or self-managed) and the team benefits from a unified platform for source control, CI/CD, container registry, artifact management, and security scanning. GitLab CI excels at complex multi-project pipelines (triggering downstream builds across repositories), review apps (ephemeral environments per merge request), and compliance pipelines (organization-enforced stages that project pipelines cannot skip). Its DAG pipeline mode (`needs:` keyword) enables fine-grained dependency graphs that break the sequential stage model when parallel execution across stages is needed.
-
-Do not use GitLab CI for GitHub-hosted projects (use GitHub Actions for native integration), for teams requiring extensive third-party CI marketplace integrations (GitLab's component catalog is smaller than GitHub's marketplace), or for organizations that need CI/CD decoupled from source control (use Jenkins or Tekton). For extremely large monorepos with thousands of pipelines, GitLab's pipeline processing can become a bottleneck — consider Bazel Remote Execution or specialized build systems at that scale.
-
-Key differentiators: (1) DAG pipelines with `needs:` break the sequential stage model, allowing jobs to start as soon as their dependencies complete regardless of stage ordering. (2) Include/Extends composition enables DRY pipeline configuration through remote templates, local files, and abstract job definitions. (3) Multi-project pipelines trigger downstream builds with artifact passing across repositories. (4) Parent-child pipelines dynamically generate child pipeline YAML at runtime. (5) Review apps create ephemeral environments per merge request with automatic cleanup. (6) Compliance pipelines enforce organizational standards that individual projects cannot override.
+- **Use for:** GitLab-hosted projects needing unified source + CI/CD + registry + security, multi-project pipelines, review apps (ephemeral envs per MR), compliance pipelines
+- **Avoid for:** GitHub-hosted projects (use Actions), teams needing large third-party marketplace, CI/CD decoupled from source control (use Jenkins/Tekton), extremely large monorepos
+- **Key differentiators:** DAG pipelines (`needs:`) break sequential stage model for 30-60% faster runs; Include/Extends for DRY config via remote templates; multi-project and parent-child pipelines with cross-repo artifact passing; review apps with auto-cleanup; compliance pipelines enforcing org standards
 
 ## Architecture Patterns
 

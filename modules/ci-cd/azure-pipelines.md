@@ -2,13 +2,11 @@
 
 ## Overview
 
-Azure Pipelines is a CI/CD service within Azure DevOps that defines pipelines in YAML files (`azure-pipelines.yml`) or through the classic editor UI. Pipelines consist of stages (sequential phases), jobs (units of work within stages), and steps (individual commands or tasks). Jobs execute on Microsoft-hosted agents (Ubuntu, macOS, Windows) or self-hosted agents deployed on any infrastructure. Azure Pipelines integrates deeply with the Azure ecosystem (Azure Resource Manager, Key Vault, Container Registry, Kubernetes Service) while also supporting GitHub, Bitbucket, and other Git providers as source repositories.
+CI/CD service within Azure DevOps using YAML pipelines (`azure-pipelines.yml`) with stages, jobs, and steps. Runs on Microsoft-hosted (Ubuntu/macOS/Windows) or self-hosted agents with deep Azure ecosystem integration.
 
-Use Azure Pipelines when the organization is invested in the Azure ecosystem (Azure AD for identity, Azure Key Vault for secrets, AKS for Kubernetes), when the team uses Azure DevOps for work item tracking and artifact management, or when the project requires multi-platform builds across Windows, Linux, and macOS with Microsoft-maintained toolchains (.NET SDK, Visual Studio Build Tools). Azure Pipelines excels at enterprise scenarios: environment approvals with multi-tier gates, template-based pipeline standardization across hundreds of repositories, and integration with Azure governance tools (Policy, Defender for Cloud).
-
-Do not use Azure Pipelines for GitHub-hosted open-source projects where the team wants maximum community integration (GitHub Actions provides better OSS contributor experience). Do not use Azure Pipelines when the organization has no Azure footprint — the value proposition diminishes significantly outside the Azure ecosystem. For Kubernetes-native CI/CD where pipelines should be Kubernetes CRDs, consider Tekton instead.
-
-Key differentiators: (1) Templates with `extends:` enforce organizational pipeline standards that projects cannot bypass — the most powerful compliance mechanism among CI/CD platforms. (2) Multi-stage pipelines model the entire delivery lifecycle (build, test, deploy-staging, deploy-prod) in a single YAML file with environment-based approvals. (3) Variable groups with Key Vault integration provide centralized secret management with automatic rotation. (4) Environments with deployment strategies (runOnce, rolling, canary) provide native deployment orchestration. (5) Service connections abstract cloud provider authentication into reusable, auditable connection objects.
+- **Use for:** Azure-invested orgs (AD, Key Vault, AKS), multi-platform builds with MS toolchains (.NET, VS Build Tools), enterprise compliance with template-enforced standards across repos
+- **Avoid for:** GitHub-hosted OSS (GitHub Actions has better contributor UX), orgs with no Azure footprint, Kubernetes-native CI/CD (use Tekton)
+- **Key differentiators:** `extends:` templates enforce org-wide pipeline standards projects cannot bypass; multi-stage YAML models full delivery lifecycle with environment approvals; Variable Groups + Key Vault for centralized secret management; native deployment strategies (rolling, canary) via Environments
 
 ## Architecture Patterns
 

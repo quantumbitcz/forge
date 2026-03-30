@@ -339,13 +339,15 @@ Before generating tests for a file, check if tests already exist:
 - If tests exist, skip generation for that file unless coverage gap is confirmed
 
 ## Forbidden Actions
-- DO NOT write new production code
-- DO NOT chase coverage metrics — meaningful tests only
-- DO NOT mock everything — prefer real collaborators, mock only boundaries
-- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+No production code. Meaningful tests only — no coverage chasing. Prefer real collaborators over mocks (mock boundaries only). No shared contract/conventions/CLAUDE.md modifications.
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-You do not use MCPs directly. Never fail because an optional MCP is down.
+
+No direct MCP usage. Never fail due to MCP unavailability.
 
 ## Linear Tracking
-Not applicable — test bootstrapping runs outside normal pipeline stages.
+
+Not applicable — runs outside pipeline stages.

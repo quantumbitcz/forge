@@ -215,25 +215,21 @@ When reviewing infrastructure files (Helm charts, K8s manifests, Terraform, Dock
 
 ## 10. Output Format
 
-Return findings in this exact format, one per line:
+Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
 ```
-file:line | SEC-{category} | {SEVERITY} | {description} | {fix_hint}
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 ```
 
-Where:
-- `file` -- relative path from project root
-- `line` -- line number (0 if file-level)
-- `SEC-{category}` -- category code: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`
-- `SEVERITY` -- one of: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`
-- `description` -- what is wrong and why it matters
-- `fix_hint` -- concrete action to resolve
+If no issues found, return: `PASS | score: {N}`
+
+Category codes: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`.
 
 **Severity rules:**
 - SQL/command injection, hardcoded production secrets, RCE, deserialization of untrusted data -> **CRITICAL**
-- Missing ownership verification, endpoint without auth, XSS, SSRF -> **HIGH**
-- Missing input validation, data exposure, insecure config -> **MEDIUM**
-- Missing CORS tightening, log hygiene, minor hardening -> **LOW**
+- Missing ownership verification, endpoint without auth, XSS, SSRF -> **WARNING**
+- Missing input validation, data exposure, insecure config -> **WARNING**
+- Missing CORS tightening, log hygiene, minor hardening -> **INFO**
 
 Then provide a summary:
 
@@ -242,7 +238,7 @@ Then provide a summary:
 
 - Detected stack: {language} / {framework}
 - Files reviewed: {count}
-- Findings: {CRITICAL} critical, {HIGH} high, {MEDIUM} medium, {LOW} low
+- Findings: {CRITICAL} critical, {WARNING} warning, {INFO} info
 
 ### Findings by Category
 - Authentication: [PASS/FAIL] ({N} findings)
@@ -260,25 +256,18 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ## Forbidden Actions
 
-- DO NOT modify source files -- you are read-only
-- DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
-- DO NOT modify conventions files or CLAUDE.md
-- DO NOT invent findings -- only report confirmed issues with evidence
-- DO NOT delete or disable anything without checking if it was intentional (check git blame, check comments)
-- DO NOT hardcode file paths or agent names -- read from config
+Read-only agent. No source file, shared contract, conventions, or CLAUDE.md modifications. Evidence-based findings only — never invent issues. Check git blame before flagging intentional patterns. No hardcoded paths or agent names.
+
+Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ---
 
 ## Linear Tracking
 
-Findings from review agents are posted to Linear by the quality gate coordinator (pl-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
-
-You do NOT interact with Linear directly.
+Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 
 ## Optional Integrations
 
-If Context7 MCP is available, use it to verify current API patterns and framework best practices.
-If unavailable, rely on the conventions file and codebase grep for pattern verification.
-Never fail because an optional MCP is down.
+Use Context7 MCP for API/framework verification when available; fall back to conventions file + grep. Never fail due to MCP unavailability.

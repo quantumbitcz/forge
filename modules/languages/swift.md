@@ -79,7 +79,7 @@
   logger.info("Order created", metadata: ["orderId": "\(order.id)"])
   ```
 - Never use `print()` or `debugPrint()` for operational logging — they lack levels, metadata, and are stripped inconsistently across build configurations.
-- Never log PII (email, name, phone), credentials (tokens, passwords), or financial data. On Apple platforms, use `privacy: .private` for user-identifiable data — it is redacted in production logs but visible during debugging.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`. On Apple platforms, use `privacy: .private` for user-identifiable data — redacted in production logs, visible during debugging.
 - Use `Logger.MetadataValue` for structured values, not string interpolation in metadata keys.
 
 ## Anti-Patterns

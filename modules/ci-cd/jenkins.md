@@ -2,13 +2,11 @@
 
 ## Overview
 
-Jenkins is an open-source automation server written in Java that orchestrates CI/CD pipelines defined in `Jenkinsfile` (Pipeline-as-Code) or configured through its web UI. Jenkins runs on any infrastructure — bare metal, VMs, containers, or Kubernetes — and executes builds on a controller node or distributed agent nodes. Its plugin ecosystem (1,800+ plugins) integrates with virtually every source control system, build tool, deployment target, and notification service in existence.
+Open-source automation server orchestrating CI/CD via `Jenkinsfile` (Pipeline-as-Code). Runs on any infrastructure (bare metal, VMs, containers, K8s) with controller-agent distributed execution and 1,800+ plugins.
 
-Use Jenkins when the organization requires full control over the CI/CD infrastructure (air-gapped environments, on-premise data centers, regulatory compliance requiring self-hosted systems), when the team needs to support heterogeneous build environments (Linux, Windows, macOS, ARM agents with specific toolchains), or when the existing investment in Jenkins infrastructure and shared libraries makes migration cost-prohibitive. Jenkins excels at long-running build pipelines (no job timeout limits), complex orchestration with human approval gates, and integration with legacy systems through its extensive plugin catalog.
-
-Do not use Jenkins for new greenfield projects on GitHub (use GitHub Actions) or GitLab (use GitLab CI) — the native CI/CD integrations provide better developer experience with less operational overhead. Do not use Jenkins when the team lacks the capacity to manage Jenkins infrastructure (controller upgrades, plugin compatibility, agent provisioning, backup, security patching). Jenkins requires dedicated operational effort that SaaS CI platforms eliminate. For Kubernetes-native workloads where the pipeline itself should be declarative and cloud-native, consider Tekton instead.
-
-Key differentiators: (1) Complete infrastructure ownership — Jenkins runs wherever the organization needs it, with no SaaS dependency. (2) Shared libraries provide organization-wide pipeline logic reusable across hundreds of repositories. (3) The plugin ecosystem is unmatched in breadth, covering every conceivable integration. (4) Multibranch pipelines automatically discover branches and pull requests, creating pipeline instances per branch. (5) The controller-agent architecture scales horizontally with dynamic agent provisioning on Kubernetes, Docker, or cloud VMs. (6) Blue Ocean provides a modern visualization layer for pipeline execution.
+- **Use for:** air-gapped/on-premise environments, heterogeneous build agents (Linux/Windows/macOS/ARM), long-running pipelines (no timeout limits), complex orchestration with approval gates
+- **Avoid for:** new greenfield projects on GitHub/GitLab (use native CI), teams without capacity to manage Jenkins infrastructure, K8s-native declarative pipelines (use Tekton)
+- **Key features:** shared libraries (org-wide pipeline reuse), multibranch pipeline auto-discovery, horizontal scaling via dynamic agent provisioning (K8s/Docker/cloud VMs), 1,800+ plugin ecosystem
 
 ## Architecture Patterns
 

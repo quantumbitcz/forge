@@ -84,7 +84,7 @@
   structlog.contextvars.bind_contextvars(correlation_id=correlation_id, trace_id=trace_id)
   ```
 - Never use `print()` for logging — it lacks levels, structure, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`user_id`, `order_id`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

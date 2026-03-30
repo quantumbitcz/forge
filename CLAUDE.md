@@ -66,6 +66,7 @@ This is a documentation-only plugin (no build step). To test changes:
 | Error handling     | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design       | `shared/agent-philosophy.md` + `shared/agent-communication.md`    |
 | Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
+| Token management   | `shared/agent-defaults.md` (shared constraints) + `shared/logging-rules.md` (cross-cutting logging) |
 
 ## Key conventions
 
@@ -92,6 +93,7 @@ This is a documentation-only plugin (no build step). To test changes:
 - **APPROACH-* findings:** Solution quality issues scored as INFO (-2). 3+ recurrences → escalated to convention rules by retrospective.
 - **DOC-* findings:** Documentation consistency issues reported by `docs-consistency-reviewer`. Severity ranges from CRITICAL (decision/constraint violations with HIGH confidence) through WARNING (stale docs, cross-doc inconsistency) to INFO (missing docs, diagram drift). See `scoring.md` for details.
 - All agents reference `shared/agent-philosophy.md` for critical thinking principles.
+- **Token management:** Agent `.md` files are the subagent's system prompt — every line costs tokens. Standard reviewer constraints (Forbidden Actions, Linear Tracking, Optional Integrations) are compressed inline with a canonical reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md` instead of duplicating. Cross-cutting logging rules live in `shared/logging-rules.md`, referenced by language modules. Convention stack soft cap: 12 files per component (advisory WARNING, not blocking). Module overview sections should be max 15 lines — lead with actionable rules, not tool philosophy.
 
 ### Core contracts (in `shared/`)
 

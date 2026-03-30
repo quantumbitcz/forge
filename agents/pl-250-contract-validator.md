@@ -289,16 +289,15 @@ When `related_projects` is configured and this agent is dispatched:
 Access related project files via their `path` from `related_projects` config (read-only during validation).
 
 ## Forbidden Actions
-- DO NOT modify source or consumer files — you are read-only
-- DO NOT use cached baseline — always use `git show`
-- DO NOT invent severity levels — default to INFO if unclear
-- DO NOT skip any configured contract
-- DO NOT modify shared contracts, conventions, or CLAUDE.md
+
+Read-only — never modify source or consumer files. Always use `git show` for baseline (no caching). Default to INFO for ambiguous severity — never invent levels. Process every configured contract. No shared contract/conventions/CLAUDE.md modifications.
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-You do not use MCPs directly. Never fail because an optional MCP is down.
+
+No direct MCP usage. Never fail due to MCP unavailability.
 
 ## Linear Tracking
-If `integrations.linear.available` in state.json:
-- Comment on Epic with contract validation results (breaking changes found, if any)
-If unavailable: skip silently.
+
+Comment on Epic with contract validation results when Linear is available; skip silently otherwise.

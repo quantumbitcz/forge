@@ -2,13 +2,11 @@
 
 ## Overview
 
-Gradle is a polyglot build automation tool built on the JVM that uses a directed acyclic graph (DAG) of tasks to model builds declaratively while retaining the full power of Kotlin (or Groovy) for imperative escape hatches. It is the default build system for Android, the dominant choice for Kotlin and modern Java projects, and a strong option for any JVM-centric polyglot codebase. Gradle's incremental compilation, build caching (local and remote), configuration cache, and parallel execution make it dramatically faster than Maven on multi-module projects, especially once the dependency graph exceeds a dozen modules.
+JVM build automation tool using a task DAG with Kotlin DSL. Default for Android and Kotlin; dominant in modern Java. Dramatically faster than Maven on multi-module projects via incremental compilation, build caching (local/remote), configuration cache, and parallel execution.
 
-Use Gradle when the project is JVM-based (Kotlin, Java, Scala, Groovy), targets Android, or needs a highly customizable build pipeline that outgrows declarative-only tools. Gradle's plugin ecosystem covers code generation (protobuf, OpenAPI, jOOQ), container image building (Jib, Docker), native compilation (GraalVM), and deployment (Kubernetes, AWS). For multi-language monorepos that include JVM alongside TypeScript or Python, Gradle can orchestrate the non-JVM parts via exec tasks, though it adds overhead compared to language-native tools.
-
-Do not use Gradle for pure JavaScript/TypeScript projects (use npm/pnpm/Bun), pure Python projects (use uv/poetry/pip), pure Go projects (use the Go toolchain), or pure Rust projects (use Cargo). In those ecosystems, Gradle adds configuration complexity without meaningful benefit. For simple single-module Java libraries that will never grow, Maven's zero-config convention-over-configuration may be sufficient — but even there, Gradle's Kotlin DSL provides better IDE support (autocompletion, refactoring, type safety) than Maven's XML.
-
-Key differentiators from Maven: (1) Gradle uses a task DAG rather than a fixed lifecycle, so builds only execute what is actually needed. (2) The configuration cache serializes the resolved task graph and reuses it across builds, skipping all script evaluation — Maven has no equivalent. (3) Build caching (local and remote) stores task outputs keyed by input hashes, enabling cross-machine cache hits that Maven's `-o` flag cannot replicate. (4) Kotlin DSL provides compile-time type safety, IDE autocompletion, and refactoring support that XML-based POMs fundamentally cannot offer. (5) Convention plugins allow sharing build logic across modules without the coupling problems of Maven parent POMs. (6) Gradle's Worker API enables parallelism within a single task, not just across modules.
+- **Use for:** JVM projects (Kotlin, Java, Scala), Android, polyglot monorepos with JVM core, highly customizable pipelines
+- **Avoid for:** pure JS/TS (use npm/pnpm/Bun), pure Python (use uv/poetry), pure Go, pure Rust (use Cargo)
+- **vs Maven:** task DAG vs fixed lifecycle, configuration cache, build caching, Kotlin DSL type safety, composable convention plugins vs parent POM inheritance
 
 ## Architecture Patterns
 

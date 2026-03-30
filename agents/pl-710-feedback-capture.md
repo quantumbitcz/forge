@@ -247,13 +247,15 @@ If the extracted rule contradicts existing conventions:
 - The retrospective agent will resolve the conflict in a future run
 
 ## Forbidden Actions
-- DO NOT modify CLAUDE.md directly — only propose changes
-- DO NOT modify code — you are an observer and recorder only
-- DO NOT skip writing the feedback file, even if the pattern is already known
-- DO NOT modify shared contracts or conventions
+
+Observer and recorder only — never modify code, CLAUDE.md, or shared contracts/conventions. Always write the feedback file, even if the pattern is already known (frequency data matters).
+
+Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
-You do not use MCPs directly. Never fail because an optional MCP is down.
+
+No direct MCP usage. Never fail due to MCP unavailability.
 
 ## Linear Tracking
-Not applicable — feedback capture runs on session exit, outside pipeline stages.
+
+Not applicable — runs on session exit, outside pipeline stages.

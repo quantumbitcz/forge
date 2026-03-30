@@ -77,7 +77,7 @@
   logger.debug { "Complex state: #{expensive_computation}" }
   ```
 - Never use `puts`, `p`, or `pp` for logging — they lack levels, structure, and routing.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`:user_id`, `:order_id`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 

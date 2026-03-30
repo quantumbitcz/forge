@@ -108,7 +108,7 @@
   }
   ```
 - Never use `Console.WriteLine` for logging — it lacks levels, structure, and DI integration.
-- Never log PII (email, name, phone), credentials (tokens, passwords, API keys), or financial data (card numbers). Log internal IDs (`OrderId`, `UserId`) instead.
+- PII/credential/financial data logging rules: see `shared/logging-rules.md`.
 
 ## Anti-Patterns
 
