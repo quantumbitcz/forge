@@ -1903,7 +1903,6 @@ CREATE (:Agent:Reviewer {name: 'version-compat-reviewer', role: 'reviewer', file
 // --- Agent DISPATCHES edges ---
 MATCH (a:Agent {name: 'pl-160-migration-planner'}), (b:Agent {name: 'pl-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (b:Agent {name: 'docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'pl-400-quality-gate'}), (b:Agent {name: 'pl-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-500-test-gate'}), (b:Agent {name: 'pl-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-600-pr-builder'}), (b:Agent {name: 'pl-710-feedback-capture'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'pl-700-retrospective'}), (b:Agent {name: 'architecture-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1916,6 +1915,7 @@ MATCH (a:Agent {name: 'pl-700-retrospective'}), (b:Agent {name: 'security-review
 CREATE (:SharedContract {name: 'agent-communication', file_path: 'shared/agent-communication.md'});
 CREATE (:SharedContract {name: 'agent-defaults', file_path: 'shared/agent-defaults.md'});
 CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-philosophy.md'});
+CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
 CREATE (:SharedContract {name: 'error-taxonomy', file_path: 'shared/error-taxonomy.md'});
 CREATE (:SharedContract {name: 'frontend-design-theory', file_path: 'shared/frontend-design-theory.md'});
 CREATE (:SharedContract {name: 'logging-rules', file_path: 'shared/logging-rules.md'});
@@ -1949,6 +1949,7 @@ MATCH (a:Agent {name: 'infra-deploy-verifier'}), (c:SharedContract {name: 'agent
 MATCH (a:Agent {name: 'pl-010-shaper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'error-taxonomy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
@@ -1980,8 +1981,10 @@ MATCH (a:Agent {name: 'pl-320-frontend-polisher'}), (c:SharedContract {name: 'st
 MATCH (a:Agent {name: 'pl-350-docs-generator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-400-quality-gate'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-500-test-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-500-test-gate'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-600-pr-builder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-650-preview-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-650-preview-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
