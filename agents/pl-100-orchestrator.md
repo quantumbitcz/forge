@@ -560,6 +560,17 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "verify_fix_count": 0,
   "validation_retries": 0,
   "total_retries": 0,
+  "convergence": {
+    "phase": "correctness",
+    "phase_iterations": 0,
+    "total_iterations": 0,
+    "plateau_count": 0,
+    "last_score_delta": 0,
+    "convergence_state": "IMPROVING",
+    "phase_history": [],
+    "safety_gate_passed": false,
+    "unfixable_findings": []
+  },
   "total_retries_max": 10,
   "stage_timestamps": { "preflight": "<now ISO 8601>" },
   "last_commit_sha": "",
@@ -1133,6 +1144,16 @@ Update state: `verify_fix_count`, `test_cycles`, add `verify` timestamp.
 
 Mark Verify as completed.
 
+### Convergence Engine Integration
+
+After IMPLEMENT completes, the orchestrator enters the convergence loop defined in `shared/convergence-engine.md`. The engine coordinates Stages 5 and 6 as two phases:
+
+1. **Enter Phase 1 (Correctness):** Dispatch VERIFY (this stage). If VERIFY passes, the engine transitions to Phase 2.
+2. **Phase 1 failure:** If VERIFY fails, dispatch IMPLEMENT with failure details, then re-dispatch VERIFY. The engine tracks `convergence.phase_iterations` and `convergence.total_iterations`.
+3. **Phase transition:** On VERIFY pass, set `convergence.phase = "perfection"`, reset `convergence.phase_iterations = 0`, append to `convergence.phase_history`.
+
+Each Phase 1 iteration increments both `convergence.total_iterations` and `total_retries`. If `total_retries >= total_retries_max`, escalate regardless of convergence state.
+
 ---
 
 ## 9. Stage 6: REVIEW (dispatch pl-400-quality-gate)
@@ -1207,20 +1228,23 @@ When dispatching quality gate reviewers for multi-service projects:
 3. Reviewers apply the correct rules per file — a PR touching both Kotlin and TypeScript services gets the right conventions for each file.
 4. Cross-service consistency checks: if the requirement spans services, verify event schemas match, API contracts align, and shared types are consistent.
 
-### 9.3 Fix Cycle
+### 9.3 Convergence-Driven Fix Cycle
 
-If score < 100 and `quality_cycles` < `quality_gate.max_review_cycles`:
+Fix cycles are driven by the convergence engine (`shared/convergence-engine.md`). After scoring:
 
-**Pre-dispatch budget check:** Before dispatching the implementer for quality fixes, check remaining recovery budget: if `recovery_budget.max_weight - recovery_budget.total_weight < 1.0`, log WARNING: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Quality fix dispatch may not survive a tool failure." Proceed with the dispatch but with awareness that recovery options are limited. This is informational — the pipeline doesn't skip fixes, but the warning surfaces in stage notes for the retrospective.
+1. Read `convergence.phase` (must be `"perfection"` — Phase 2)
+2. Compute `delta = score - previous_score` (0 if first cycle)
+3. Evaluate convergence state:
+   - **Score >= `target_score`:** transition to `"safety_gate"`. Dispatch VERIFY (Stage 5) one final time.
+   - **IMPROVING** (delta > `plateau_threshold`): reset `plateau_count`, send ALL findings to `pl-300-implementer`, increment `convergence.phase_iterations` and `convergence.total_iterations` and `quality_cycles` and `total_retries`, re-dispatch REVIEW.
+   - **PLATEAUED** (`plateau_count >= plateau_patience`): apply score escalation ladder (section 9.4), document unfixable findings in `convergence.unfixable_findings`, transition to `"safety_gate"`.
+   - **REGRESSING** (delta < 0, abs(delta) > `oscillation_tolerance`): escalate immediately.
+4. On transition to `"safety_gate"`: dispatch VERIFY (Stage 5 — full build + lint + tests). If VERIFY passes, set `convergence.safety_gate_passed = true`, proceed to DOCS. If VERIFY fails, transition back to `"correctness"` (Phase 1) — Phase 2 fixes broke something.
 
-1. Send ALL findings to `pl-300-implementer` for fixing
-2. Re-run VERIFY (Stage 5) -- but only compile + targeted tests
-3. Re-dispatch only the batch agent(s) that found issues
-4. Increment `quality_cycles`
-5. Rescore
+**Pre-dispatch budget check:** Before dispatching implementer, check `total_retries` against `total_retries_max`. If within 1 of max, log WARNING in stage notes.
 
-If FAIL persists after max cycles, escalate:
-> "Pipeline blocked at REVIEW after [N] iterations -- [remaining findings]. How should I proceed?"
+If convergence exhausted (`total_iterations >= max_iterations`) and score still < target:
+> "Pipeline converged at score {score}/{target_score} after {total_iterations} iterations. {unfixable_count} unfixable findings documented. Proceeding per score escalation ladder."
 
 ### 9.4 Score Escalation Ladder
 
@@ -1234,21 +1258,17 @@ After max review cycles, apply this ladder to determine next action:
 | < 60 | Pause. Recommend abort or replan. Present architectural root cause analysis. |
 | Any CRITICAL | Hard stop. NEVER proceed. Post to Linear. Present the CRITICAL with full context and options. |
 
-### 9.5 Oscillation Detection
+### 9.5 Oscillation Detection (via Convergence Engine)
 
-Track score across fix cycles using `score_history[]`. Compute delta between consecutive scores (`delta = score_current - score_previous`):
+Oscillation detection is now part of the convergence engine's REGRESSING state (see `shared/convergence-engine.md`). The orchestrator:
 
-| Condition | Action |
-|---|---|
-| `delta >= 0` | Score improving or stable — continue normally |
-| `abs(delta) <= oscillation_tolerance` (default 5) | WARNING — "Score dipped by {abs(delta)} points (within tolerance {oscillation_tolerance})." Allow one more fix cycle. If the next cycle also dips, escalate. |
-| `abs(delta) > oscillation_tolerance` | Escalate — "Fix cycle {N} introduced regression: {score_before} → {score_after} (exceeds tolerance {oscillation_tolerance})." Post to Linear. Do not continue fixing. |
+1. After each REVIEW scoring, computes `delta = score_current - score_previous` using `score_history[]`
+2. If `delta < 0` and `abs(delta) > oscillation_tolerance`: set `convergence.convergence_state = "REGRESSING"`, escalate to user
+3. If `delta < 0` and `abs(delta) <= oscillation_tolerance`: allow one more cycle (plateau_count increments). Second consecutive dip escalates.
 
-See `shared/scoring.md` for the oscillation tolerance definition and configurable threshold.
+**Interaction with max_iterations:** Oscillation tolerance does NOT extend beyond `convergence.max_iterations`. If `total_iterations >= max_iterations`, the run ends regardless of oscillation state.
 
-**Consecutive dip rule:** Track dip count across cycles. If a second dip occurs (even within tolerance), escalate immediately — do not allow a third cycle. This prevents oscillating fixes from consuming unlimited cycles.
-
-**Interaction with max_review_cycles:** Oscillation tolerance does NOT extend beyond `max_review_cycles`. If `quality_cycles >= max_review_cycles`, the run ends regardless of oscillation state. Oscillation tolerance only determines whether to escalate EARLY (before max cycles) when fixes are making things worse.
+Track convergence state in stage notes: `"Convergence: {state} (iteration {N}/{max}, delta {delta}, plateau {plateau_count}/{patience})"`.
 
 Write `.pipeline/stage_6_notes_{storyId}.md` with review report, score history.
 
@@ -1564,12 +1584,13 @@ Update `.pipeline/state.json` at **every** stage transition (see `shared/state-s
 - Set `story_state` to the current stage's value
 - Add timestamp to `stage_timestamps`
 - Update counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`)
+- Update convergence fields (`convergence.phase_iterations`, `convergence.total_iterations`, `convergence.plateau_count`, `convergence.convergence_state`, `convergence.last_score_delta`)
 
 ### Total Retry Budget
 
 After incrementing any retry counter (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`), also increment `total_retries`. If `total_retries >= total_retries_max` (default 10), escalate to the user regardless of individual loop budgets:
 
-> "Pipeline exhausted total retry budget ({total_retries}/{total_retries_max}). Individual counters: quality={quality_cycles}, test={test_cycles}, verify={verify_fix_count}, validation={validation_retries}. How should I proceed?"
+> "Pipeline exhausted total retry budget ({total_retries}/{total_retries_max}). Convergence: phase={convergence.phase}, iterations={convergence.total_iterations}, state={convergence.convergence_state}. Individual counters: quality={quality_cycles}, test={test_cycles}, verify={verify_fix_count}, validation={validation_retries}. How should I proceed?"
 
 This prevents the pipeline from running indefinitely when multiple stages each consume retries within their individual limits.
 
