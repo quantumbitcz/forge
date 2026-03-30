@@ -38,7 +38,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Quick start
 
 ```bash
-./tests/validate-plugin.sh          # 33 structural checks, ~2s
+./tests/validate-plugin.sh          # 34 structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
 
 # To test in a consuming project
@@ -189,7 +189,7 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
-./tests/run-all.sh structural       # 33 checks, no bats needed
+./tests/run-all.sh structural       # 34 checks, no bats needed
 ./tests/run-all.sh unit             # 10 test files
 ./tests/run-all.sh contract         # 15 test files
 ./tests/run-all.sh scenario         # 10 test files

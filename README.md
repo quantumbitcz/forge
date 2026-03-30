@@ -196,7 +196,7 @@ touch .claude/pipeline-log.md
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (17 user-facing commands)
+|                           |  skills/ (18 user-facing commands)
 +---------------------------+
 ```
 

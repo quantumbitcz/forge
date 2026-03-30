@@ -145,6 +145,8 @@ portable_normalize_path() {
     python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
   fi
   # Bash fallback: resolve ./ // and .. segments (Bash 3.2+)
+  local is_absolute=0
+  [[ "$input" == /* ]] && is_absolute=1 && input="${input#/}"
   input="${input#./}"
   while [[ "$input" == *"//"* ]]; do input="${input//\/\//\/}"; done
   local IFS='/' segment
@@ -170,6 +172,7 @@ portable_normalize_path() {
   for ((i = 0; i < n; i++)); do
     result="${result:+$result/}${stack[$i]}"
   done
+  [[ $is_absolute -eq 1 ]] && result="/$result"
   printf '%s' "$result"
 }
 
