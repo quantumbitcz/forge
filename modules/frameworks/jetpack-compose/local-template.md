@@ -10,6 +10,8 @@ components:
   # ci: github-actions           # github-actions | gitlab-ci
   # container: ~                 # N/A for Android app
   # orchestrator: ~              # N/A for Android app
+  code_quality: []
+  code_quality_recommended: [detekt, ktlint, jacoco, dokka, owasp-dependency-check, spotless]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -91,6 +93,8 @@ conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/conv
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/testing/${components.testing}.md"
 conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/persistence/${components.persistence}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"

@@ -51,3 +51,7 @@ These apply to ALL agents (pipeline and review):
 - **Evidence-based findings only** -- never invent or speculate
 - **Graceful MCP degradation** -- never fail because an optional MCP is unavailable
 - **Output budget** -- keep total output under 2,000 tokens unless agent-specific limit differs
+
+### Convention Stack Layers
+
+Agents loading conventions for a component resolve these layers in order (most specific wins): variant → framework-binding → framework → language → code-quality → generic-layer → testing. The `code_quality` field is a list; each tool in the list loads its generic file (`modules/code-quality/{tool}.md`) and framework binding (`modules/frameworks/{fw}/code-quality/{tool}.md`) if it exists.

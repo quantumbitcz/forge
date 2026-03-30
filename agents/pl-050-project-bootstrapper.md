@@ -504,7 +504,54 @@ For every project, regardless of stack, generate these files with real, working 
 
 ---
 
-## 6. Validate
+## 6. Code Quality Scaffolding
+
+After generating the essential project files, apply code quality tooling based on the tools selected during the `/pipeline-init` flow (passed via bootstrap description or state). If bootstrapping without a prior init flow, apply the default tools for the detected stack from `modules/code-quality/`.
+
+### 6.1 Accepted Tools
+
+Read accepted tools from the `code_quality` list in `.claude/dev-pipeline.local.md` (if already generated) or infer the recommended set from the framework's `local-template.md` (`code_quality_recommended` field). Apply each tool as follows:
+
+1. **Read the tool module**: `${CLAUDE_PLUGIN_ROOT}/modules/code-quality/{tool}.md` — focus on the **Installation & Setup** and **Configuration Patterns** sections.
+2. **Add build dependency**: Add the tool's dependency to the project's build manifest (e.g., Gradle plugin, npm devDependency, pyproject.toml dev dependency).
+3. **Generate baseline config**: Create the tool's config file (e.g., `detekt.yml`, `.eslintrc`, `ruff.toml`) using the recommended baseline from the Configuration Patterns section. Use the project's actual source paths.
+4. **Wire into build commands**: Add lint/format/coverage targets to the build system so `./gradlew check`, `pnpm lint`, `cargo clippy`, etc. execute the tool.
+
+### 6.2 External Ruleset Configuration
+
+If the accepted tool includes an external ruleset (`ruleset.type: external` in `dev-pipeline.local.md`):
+- Clone or reference the shared config from `ruleset.source`
+- Extend the baseline config to import the external ruleset
+- Add `TODO: verify external ruleset is accessible in CI` comment
+
+### 6.3 CI/CD Integration
+
+If the user accepted CI/CD integration during Phase 1.5 of pipeline-init:
+- Read the **CI Integration** section of `modules/code-quality/{tool}.md`
+- Add pipeline steps to `.github/workflows/ci.yml` (or equivalent) for:
+  - Linting: fail the build on lint errors
+  - Coverage: upload reports, enforce threshold (use tool default or project-configured threshold)
+  - Security scanning: upload results to GitHub Security tab if available
+- Do NOT add duplicate steps if the CI file already has a matching step for the tool
+
+### 6.4 Conflict Resolution
+
+For overlapping tools in the same category, scaffold only one:
+- **prettier vs biome**: if both accepted, use biome (superset — handles lint + format)
+- **eslint vs biome (lint)**: if both accepted, warn and use biome for lint if biome also selected
+- **owasp vs snyk vs trivy**: scaffold all — they have complementary scope (JVM deps vs SaaS scanning vs container scanning)
+- Report any resolved conflicts in the bootstrap output
+
+### 6.5 Constraints
+
+- Do NOT modify existing tool configs — only create new ones or extend via `extends`/`inherit` mechanisms
+- Do NOT force declined tools
+- Do NOT scaffold conflicting tools without resolution (see 6.4)
+- Log each scaffolded tool to `.pipeline/reports/bootstrap-project-{YYYY-MM-DD}.md`
+
+---
+
+## 7. Validate
 
 After scaffolding all files:
 
@@ -521,7 +568,7 @@ If any step fails:
 
 ---
 
-## 7. Auto-Init Pipeline
+## 8. Auto-Init Pipeline
 
 After the project builds and tests pass:
 
@@ -531,7 +578,7 @@ After the project builds and tests pass:
 
 ---
 
-## 8. Constraints
+## 9. Constraints
 
 ### Use Context7 for Versions
 - **Always** resolve library versions via context7 before generating build files
@@ -568,7 +615,7 @@ After the project builds and tests pass:
 
 ---
 
-## 9. State Management
+## 10. State Management
 
 Update `.pipeline/state.json` with:
 
@@ -591,7 +638,8 @@ Update `.pipeline/state.json` with:
     ],
     "build_status": "PASS",
     "test_status": "PASS",
-    "pipeline_init": "DONE"
+    "pipeline_init": "DONE",
+    "code_quality": ["detekt", "ktlint", "jacoco"]
   }
 }
 ```
@@ -600,7 +648,7 @@ Update fields as each phase completes. This enables resume-on-interrupt.
 
 ---
 
-## 10. Output Format
+## 11. Output Format
 
 Return EXACTLY this structure. No preamble, reasoning, or explanation outside the format.
 
@@ -620,6 +668,11 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Test files: {count}
 - Config files: {count}
 
+### Code Quality
+- Tools: {list of scaffolded tools}
+- CI integration: {yes/no}
+- External rulesets: {list or "none"}
+
 ### Validation
 - Build: {PASS/FAIL}
 - Tests: {PASS/FAIL} ({count} passed)
@@ -638,7 +691,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 11. Context Management
+## 12. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning traces, or disclaimers
 - **Use context7 on demand** -- resolve versions as you generate each build file, not all upfront
@@ -648,7 +701,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 12. Context7 Fallback
+## 13. Context7 Fallback
 
 ### Context7 Fallback
 If Context7 MCP is unavailable for version resolution:
@@ -658,7 +711,7 @@ If Context7 MCP is unavailable for version resolution:
 
 ---
 
-## 13. Post-Scaffold Validation
+## 14. Post-Scaffold Validation
 
 After scaffolding, run both build AND test commands:
 1. `commands.build` (with `commands.build_timeout`, default 120s)
@@ -670,7 +723,7 @@ If either fails after 3 fix attempts:
 
 ---
 
-## 14. Ambiguous Descriptions
+## 15. Ambiguous Descriptions
 
 If the bootstrap description is ambiguous (e.g., "REST API" without specifying language):
 - Ask ONE clarifying question: "Which language/framework? Options: {list from available modules}"
@@ -679,7 +732,7 @@ If the bootstrap description is ambiguous (e.g., "REST API" without specifying l
 
 ---
 
-## 15. Generated File Validation
+## 16. Generated File Validation
 
 Validate every generated file compiles/parses before reporting success:
 - Source files: must compile (build command passes)
@@ -690,7 +743,7 @@ If any validation fails, fix it before reporting success.
 
 ---
 
-## 16. Forbidden Actions
+## 17. Forbidden Actions
 
 - DO NOT hardcode versions from training data -- always use context7 or conventions file
 - DO NOT skip convention plugins (use build-logic/, parent POM, etc.)
@@ -699,7 +752,7 @@ If any validation fails, fix it before reporting success.
 
 ---
 
-## 17. Linear Tracking
+## 18. Linear Tracking
 
 If `integrations.linear.available` in state.json:
 - This agent runs outside the normal pipeline flow -- no Linear tracking needed
@@ -708,7 +761,7 @@ If user requests tracking, create a single "Bootstrap {project}" task.
 
 ---
 
-## 18. Optional Integrations
+## 19. Optional Integrations
 
 If Context7 MCP is available, use it for version resolution (primary).
 If unavailable, fall back to conventions file versions.

@@ -10,6 +10,8 @@ components:
   # ci: github-actions         # github-actions | gitlab-ci | jenkins | circleci | azure-pipelines | bitbucket-pipelines | tekton
   # container: docker          # docker | docker-compose | podman
   # orchestrator: helm         # helm | docker-swarm | argocd | fluxcd | openshift
+  code_quality: []
+  code_quality_recommended: [roslyn-analyzers, dotnet-format, coverlet, xmldoc, dotnet-audit, stryker]
 
 explore_agents:
   primary: "feature-dev:code-explorer"
@@ -90,6 +92,8 @@ conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/conventions.m
 conventions_variant: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/variants/${components.variant}.md"
 conventions_testing: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/testing/${components.testing}.md"
 conventions_persistence: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/persistence/${components.persistence}.md"
+conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
+conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/aspnet/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/pipeline-log.md"
 config_file: ".claude/pipeline-config.md"

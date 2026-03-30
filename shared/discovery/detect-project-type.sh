@@ -181,4 +181,93 @@ if [[ "$type" == "unknown" ]]; then
   fi
 fi
 
-printf '{"type":"%s","framework":"%s","language":"%s"}\n' "$type" "$framework" "$language"
+# ── Code quality tool detection ───────────────────────────────────────────────
+
+detected_code_quality=()
+
+# Linting / analysis
+[[ -f "$DIR/.detekt.yml" || -f "$DIR/detekt.yml" ]] && detected_code_quality+=("detekt")
+if [[ -f "$DIR/.editorconfig" ]] && grep -q "ktlint_" "$DIR/.editorconfig" 2>/dev/null; then
+  detected_code_quality+=("ktlint")
+fi
+if ls "$DIR/eslint.config."* &>/dev/null 2>&1 || ls "$DIR/.eslintrc."* &>/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]] || \
+   ( [[ -f "$DIR/package.json" ]] && grep -q '"eslintConfig"' "$DIR/package.json" 2>/dev/null ); then
+  detected_code_quality+=("eslint")
+fi
+[[ -f "$DIR/biome.json" ]] || [[ -f "$DIR/biome.jsonc" ]] && detected_code_quality+=("biome")
+if [[ -f "$DIR/ruff.toml" ]] || ( [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.ruff\]" "$DIR/pyproject.toml" 2>/dev/null ); then
+  detected_code_quality+=("ruff")
+fi
+[[ -f "$DIR/.golangci.yml" || -f "$DIR/.golangci.yaml" ]] && detected_code_quality+=("golangci-lint")
+[[ -f "$DIR/clippy.toml" || -f "$DIR/.clippy.toml" ]] && detected_code_quality+=("clippy")
+[[ -f "$DIR/.swiftlint.yml" || -f "$DIR/.swiftlint.yaml" ]] && detected_code_quality+=("swiftlint")
+[[ -f "$DIR/.credo.exs" ]] && detected_code_quality+=("credo")
+[[ -f "$DIR/.rubocop.yml" || -f "$DIR/.rubocop.yaml" ]] && detected_code_quality+=("rubocop")
+[[ -f "$DIR/phpstan.neon" || -f "$DIR/phpstan.neon.dist" ]] && detected_code_quality+=("phpstan")
+[[ -f "$DIR/analysis_options.yaml" ]] && detected_code_quality+=("dart-analyzer")
+[[ -f "$DIR/.scalafmt.conf" ]] && detected_code_quality+=("scalafmt")
+[[ -f "$DIR/.scalafix.conf" ]] && detected_code_quality+=("scalafix")
+if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
+  detected_code_quality+=("roslyn-analyzers")
+fi
+[[ -f "$DIR/checkstyle.xml" ]] && detected_code_quality+=("checkstyle")
+[[ -f "$DIR/pmd.xml" ]] || [[ -f "$DIR/ruleset.xml" ]] && detected_code_quality+=("pmd")
+[[ -f "$DIR/spotbugs-exclude.xml" ]] && detected_code_quality+=("spotbugs")
+if [[ -f "$DIR/build.gradle.kts" ]] && grep -q "errorprone" "$DIR/build.gradle.kts" 2>/dev/null; then
+  detected_code_quality+=("errorprone")
+fi
+[[ -f "$DIR/.pylintrc" ]] || [[ -f "$DIR/pylintrc" ]] && detected_code_quality+=("pylint")
+[[ -f "$DIR/mypy.ini" ]] || [[ -f "$DIR/.mypy.ini" ]] && detected_code_quality+=("mypy")
+
+# Formatting
+if ls "$DIR/.prettierrc"* &>/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]] || \
+   ( [[ -f "$DIR/package.json" ]] && grep -q '"prettier"' "$DIR/package.json" 2>/dev/null ); then
+  detected_code_quality+=("prettier")
+fi
+if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.black\]" "$DIR/pyproject.toml" 2>/dev/null; then
+  detected_code_quality+=("black")
+fi
+if [[ -f "$DIR/build.gradle.kts" ]] && grep -q "spotless" "$DIR/build.gradle.kts" 2>/dev/null; then
+  detected_code_quality+=("spotless")
+fi
+[[ -f "$DIR/rustfmt.toml" || -f "$DIR/.rustfmt.toml" ]] && detected_code_quality+=("rustfmt")
+
+# Coverage
+if ( [[ -f "$DIR/build.gradle.kts" ]] && grep -q "jacoco" "$DIR/build.gradle.kts" 2>/dev/null ) || \
+   ( [[ -f "$DIR/build.gradle" ]] && grep -q "jacoco" "$DIR/build.gradle" 2>/dev/null ) || \
+   ( [[ -f "$DIR/pom.xml" ]] && grep -q "jacoco" "$DIR/pom.xml" 2>/dev/null ); then
+  detected_code_quality+=("jacoco")
+fi
+if [[ -f "$DIR/.nycrc" || -f "$DIR/.nycrc.json" ]] || \
+   ( [[ -f "$DIR/package.json" ]] && grep -q '"nyc"\|"c8"' "$DIR/package.json" 2>/dev/null ); then
+  detected_code_quality+=("istanbul")
+fi
+if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.coverage\]" "$DIR/pyproject.toml" 2>/dev/null || \
+   [[ -f "$DIR/.coveragerc" ]]; then
+  detected_code_quality+=("coverage-py")
+fi
+if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then
+  detected_code_quality+=("coverlet")
+fi
+
+# Security / dependency scanning
+if ( [[ -f "$DIR/build.gradle.kts" ]] && grep -q "dependencyCheck" "$DIR/build.gradle.kts" 2>/dev/null ) || \
+   ( [[ -f "$DIR/build.gradle" ]] && grep -q "dependencyCheck" "$DIR/build.gradle" 2>/dev/null ) || \
+   ( [[ -f "$DIR/pom.xml" ]] && grep -q "dependency-check" "$DIR/pom.xml" 2>/dev/null ); then
+  detected_code_quality+=("owasp-dependency-check")
+fi
+[[ -f "$DIR/.snyk" ]] && detected_code_quality+=("snyk")
+[[ -f "$DIR/.trivy.yaml" || -f "$DIR/trivy.yaml" ]] && detected_code_quality+=("trivy")
+
+# Build code_quality JSON array
+code_quality_json="["
+first=true
+for tool in "${detected_code_quality[@]}"; do
+  $first || code_quality_json+=","
+  code_quality_json+="\"$tool\""
+  first=false
+done
+code_quality_json+="]"
+
+printf '{"type":"%s","framework":"%s","language":"%s","code_quality":%s}\n' \
+  "$type" "$framework" "$language" "$code_quality_json"
