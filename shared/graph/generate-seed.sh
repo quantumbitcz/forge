@@ -20,8 +20,8 @@ if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
 fi
 
-# documentation layer included so Step 5/6 auto-create LayerModule and FrameworkBinding nodes for modules/documentation/
-LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability build-systems ci-cd container-orchestration documentation)
+# documentation and code-quality layers included so Step 5/6 auto-create LayerModule and FrameworkBinding nodes
+LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability build-systems ci-cd container-orchestration documentation code-quality)
 BINDING_LAYERS=("${LAYERS[@]}" testing)
 
 # --- JSON parsing helper ---

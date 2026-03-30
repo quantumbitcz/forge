@@ -642,7 +642,7 @@ Create all 10 tasks upfront in a single batch:
 TaskCreate: subject="Stage 0: Preflight",      description="Load config, detect versions, apply learnings",           activeForm="Running preflight checks"
 TaskCreate: subject="Stage 1: Explore",         description="Map domain models, tests, and patterns",                  activeForm="Exploring codebase"
 TaskCreate: subject="Stage 2: Plan",            description="Risk-assessed implementation plan with stories and tasks", activeForm="Planning implementation"
-TaskCreate: subject="Stage 3: Validate",        description="6-perspective plan validation",                            activeForm="Validating plan"
+TaskCreate: subject="Stage 3: Validate",        description="7-perspective plan validation",                            activeForm="Validating plan"
 TaskCreate: subject="Stage 4: Implement",       description="TDD loop: scaffold, RED, GREEN, REFACTOR",                activeForm="Implementing (TDD)"
 TaskCreate: subject="Stage 5: Verify",          description="Build, lint, static analysis, full test suite",            activeForm="Verifying build and tests"
 TaskCreate: subject="Stage 6: Review",          description="Multi-agent quality review with scoring",                  activeForm="Reviewing quality"
@@ -813,7 +813,7 @@ Validate this implementation plan:
 Plan (summarized):
 [requirement, risk, steps with file paths, parallel groups, test strategy]
 
-Validation perspectives: [from config -- default 6: Architecture, Security, Edge Cases, Test Strategy, Conventions, Approach Quality]
+Validation perspectives: [from config -- default 7: Architecture, Security, Edge Cases, Test Strategy, Conventions, Approach Quality, Documentation Consistency]
 Conventions file: [path from config]
 Domain area: [area]
 Risk level: [from plan]

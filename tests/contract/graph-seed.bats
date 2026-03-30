@@ -6,7 +6,7 @@ load '../helpers/test-helpers'
 SEED_FILE="$PLUGIN_ROOT/shared/graph/seed.cypher"
 GENERATOR="$PLUGIN_ROOT/shared/graph/generate-seed.sh"
 
-LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability)
+LAYERS=(databases persistence migrations api-protocols messaging caching search storage auth observability build-systems ci-cd container-orchestration documentation code-quality)
 
 # ---------------------------------------------------------------------------
 # 1. seed-freshness: dry-run output must match committed seed.cypher
