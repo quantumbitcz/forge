@@ -129,6 +129,8 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 
 **Subsystems:**
 - `checks/` -- 3-layer check engine that runs automated validations on file edits
+- `discovery/` -- cross-repo project discovery and project type detection
+- `graph/` -- Neo4j knowledge graph builder, enricher, and query patterns (opt-in)
 - `learnings/` -- per-module learnings accumulated from pipeline runs
 - `recovery/` -- recovery engine with strategies and health checks for pipeline resilience
 

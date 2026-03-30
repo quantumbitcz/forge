@@ -54,11 +54,14 @@ GRAPH_DIR="${PROJECT_ROOT}/.pipeline/graph"
 mkdir -p "$GRAPH_DIR"
 ENRICHED_FILE="${GRAPH_DIR}/.enriched-files"
 
-# --- Helper: escape single quotes for Cypher ---
+# --- Helper: escape strings for Cypher ---
 cypher_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
   printf '%s' "$s"
 }
 

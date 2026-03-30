@@ -13,9 +13,9 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. All 15 error types are defined
+# 2. All 18 error types are defined
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: all 15 error types are defined" {
+@test "error-taxonomy: all 18 error types are defined" {
   local types=(
     TOOL_FAILURE
     BUILD_FAILURE
@@ -32,6 +32,9 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
     PERMISSION_DENIED
     MCP_UNAVAILABLE
     PATTERN_MISSING
+    LOCK_FILE_CONFLICT
+    FLAKY_TEST
+    VERSION_MISMATCH
   )
   for t in "${types[@]}"; do
     grep -q "$t" "$ERROR_TAXONOMY" || fail "Error type $t not found in error-taxonomy.md"
@@ -46,16 +49,16 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
   # Check that the error types appear in table rows that include | (table cells)
   local found_table_rows
   found_table_rows=$(grep -c '|.*\(tool-diagnosis\|agent-reset\|state-reconstruction\|dependency-health\|transient-retry\|resource-cleanup\|graceful\|none\)' "$ERROR_TAXONOMY" || true)
-  [[ "$found_table_rows" -ge 15 ]] || fail "Expected at least 15 table rows with recovery strategies, got $found_table_rows"
+  [[ "$found_table_rows" -ge 18 ]] || fail "Expected at least 18 table rows with recovery strategies, got $found_table_rows"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Error severity ordering has 12 levels (numbered list 1-12)
+# 4. Error severity ordering has 14 levels (numbered list 1-14)
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: severity ordering has 12 levels" {
+@test "error-taxonomy: severity ordering has 14 levels" {
   local count
   count=$(grep -cE '^[0-9]+\. `' "$ERROR_TAXONOMY" || true)
-  assert_equal "$count" "12"
+  assert_equal "$count" "14"
 }
 
 # ---------------------------------------------------------------------------
@@ -70,13 +73,14 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 6. PATTERN_MISSING is lowest severity (position 12)
+# 6. PATTERN_MISSING is lowest severity (last position)
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: PATTERN_MISSING is severity level 12 (lowest)" {
+@test "error-taxonomy: PATTERN_MISSING is lowest severity (last position)" {
+  # Find the highest-numbered severity level and verify it references PATTERN_MISSING
   local last_item
-  last_item=$(grep -E '^12\. ' "$ERROR_TAXONOMY")
+  last_item=$(grep -E '^[0-9]+\. ' "$ERROR_TAXONOMY" | tail -1)
   printf '%s' "$last_item" | grep -q "PATTERN_MISSING" \
-    || fail "Severity level 12 does not reference PATTERN_MISSING: $last_item"
+    || fail "Last severity level does not reference PATTERN_MISSING: $last_item"
 }
 
 # ---------------------------------------------------------------------------

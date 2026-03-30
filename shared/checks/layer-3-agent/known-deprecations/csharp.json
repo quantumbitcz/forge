@@ -1,0 +1,56 @@
+{
+  "language": "csharp",
+  "last_refreshed": "2026-03-30",
+  "entries": [
+    {
+      "id": "CS-DEP-001",
+      "pattern": "WebClient\\b",
+      "library": "System.Net",
+      "deprecated_in": ".NET 4.5",
+      "removed_in": null,
+      "replacement": "HttpClient",
+      "source": "https://learn.microsoft.com/en-us/dotnet/api/system.net.webclient",
+      "severity": "WARNING"
+    },
+    {
+      "id": "CS-DEP-002",
+      "pattern": "BinaryFormatter\\b",
+      "library": "System.Runtime.Serialization",
+      "deprecated_in": ".NET 5.0",
+      "removed_in": "net9.0",
+      "replacement": "System.Text.Json or MessagePack",
+      "source": "https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-security-guide",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CS-DEP-003",
+      "pattern": "Thread\\.Abort\\b",
+      "library": "System.Threading",
+      "deprecated_in": ".NET 5.0",
+      "removed_in": "net5.0",
+      "replacement": "CancellationToken cooperative cancellation",
+      "source": "https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/5.0/thread-abort-obsolete",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CS-DEP-004",
+      "pattern": "Hashtable\\b|ArrayList\\b",
+      "library": "System.Collections",
+      "deprecated_in": ".NET 2.0",
+      "removed_in": null,
+      "replacement": "Dictionary<TKey,TValue> or List<T>",
+      "source": "https://learn.microsoft.com/en-us/dotnet/standard/collections/",
+      "severity": "WARNING"
+    },
+    {
+      "id": "CS-DEP-005",
+      "pattern": "AppDomain\\.CreateDomain\\b",
+      "library": "System",
+      "deprecated_in": ".NET 5.0",
+      "removed_in": "net5.0",
+      "replacement": "AssemblyLoadContext",
+      "source": "https://learn.microsoft.com/en-us/dotnet/core/porting/net-framework-tech-unavailable",
+      "severity": "CRITICAL"
+    }
+  ]
+}

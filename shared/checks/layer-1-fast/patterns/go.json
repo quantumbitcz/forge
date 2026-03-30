@@ -86,6 +86,40 @@
       "fix_hint": "Define a package-level const with a descriptive name.",
       "example_ref": "go/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "GO-GOROUTINE-001",
+      "pattern": "go\\s+func\\s*\\(",
+      "severity": "INFO",
+      "category": "QUAL-GOROUTINE",
+      "message": "Goroutine launched without lifecycle management — verify context cancellation or WaitGroup tracking",
+      "scope": "main",
+      "exclude_pattern": "go\\s+func\\s*\\(ctx\\s"
+    },
+    {
+      "id": "GO-DEFER-001",
+      "pattern": "defer\\s+.*\\.Close\\(\\)",
+      "severity": "INFO",
+      "category": "QUAL-RESOURCE",
+      "message": "Deferred Close() without error check — consider wrapping: defer func() { if err := x.Close(); err != nil { log(err) } }()",
+      "scope": "all"
+    },
+    {
+      "id": "GO-CTX-001",
+      "pattern": "context\\.Background\\(\\)",
+      "severity": "INFO",
+      "category": "QUAL-CTX",
+      "message": "context.Background() used — prefer propagating parent context from caller for proper cancellation",
+      "scope": "main",
+      "exclude_pattern": "func\\s+main\\(|func\\s+init\\("
+    },
+    {
+      "id": "GO-SEC-SQL-001",
+      "pattern": "fmt\\.Sprintf\\(.*SELECT|fmt\\.Sprintf\\(.*INSERT|fmt\\.Sprintf\\(.*UPDATE|fmt\\.Sprintf\\(.*DELETE",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "SQL query built with fmt.Sprintf — use parameterized queries to prevent SQL injection",
+      "scope": "all"
     }
   ],
   "thresholds": {

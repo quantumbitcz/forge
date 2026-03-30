@@ -153,6 +153,40 @@ case "$DEP" in
     echo "OK"
     ;;
 
+  neo4j)
+    # Check if Docker is available first (Neo4j runs in a container)
+    if ! command -v docker &>/dev/null; then
+      echo "UNAVAILABLE: docker command not found — Neo4j runs in a container (install: $(suggest_install docker))"
+      exit 0
+    fi
+    if ! docker info &>/dev/null; then
+      echo "UNAVAILABLE: Docker daemon is not running — cannot check Neo4j container"
+      exit 0
+    fi
+    # Check if pipeline-neo4j container is running
+    container_status="$(docker inspect -f '{{.State.Status}}' pipeline-neo4j 2>/dev/null || true)"
+    if [[ "$container_status" != "running" ]]; then
+      if [[ -z "$container_status" ]]; then
+        echo "UNAVAILABLE: pipeline-neo4j container does not exist (run: /graph-init to create it)"
+      else
+        echo "DEGRADED: pipeline-neo4j container exists but status is '$container_status' (expected: running)"
+      fi
+      exit 0
+    fi
+    # Check bolt port 7687 connectivity
+    if command -v nc &>/dev/null; then
+      if nc -z -w 3 localhost 7687 2>/dev/null; then
+        echo "OK"
+      else
+        echo "DEGRADED: pipeline-neo4j container is running but bolt port 7687 is not reachable"
+      fi
+    elif (echo >/dev/tcp/localhost/7687) 2>/dev/null; then
+      echo "OK"
+    else
+      echo "DEGRADED: pipeline-neo4j container is running but bolt port 7687 is not reachable"
+    fi
+    ;;
+
   git-remote|remote)
     project_root="${2:-$(pwd)}"
     remote_url="$(git -C "$project_root" remote get-url origin 2>/dev/null || true)"
@@ -171,7 +205,7 @@ case "$DEP" in
     ;;
 
   *)
-    echo "UNAVAILABLE: unknown dependency '$DEP' (supported: docker, database, network, gh, node, gradle, playwright, context7, git-remote)"
+    echo "UNAVAILABLE: unknown dependency '$DEP' (supported: docker, database, network, gh, node, gradle, playwright, context7, neo4j, git-remote)"
     ;;
 esac
 

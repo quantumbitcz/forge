@@ -523,6 +523,8 @@ If Linear is unavailable: skip silently. Never fail because Linear is down.
 - DO NOT hardcode environment-specific values, credentials, or API keys
 - DO NOT use exceptions for control flow
 - DO NOT use raw threads or `Thread.sleep` / `setTimeout` — use framework concurrency primitives
+- **DO NOT** write to any path outside the project root or worktree directory. Before every Write/Edit operation, verify the target path is within the designated worktree at `.pipeline/worktree`.
+- **DO NOT** execute `git push --force`, `git reset --hard`, or any destructive git operations.
 
 ---
 

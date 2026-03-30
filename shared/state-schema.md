@@ -333,6 +333,7 @@ Extended example (v1.1.0) showing `path` and `convention_stack`:
 - `conventions_hash` — SHA256 first 8 chars of the composed convention stack
 - `conventions_section_hashes` — per-section hashes for drift detection
 - `detected_versions` — extracted from manifest files in the component path
+- `score_history` — `number[]`, default `[]`. Per-component quality score history for oscillation tracking. Populated during REVIEW.
 - `convention_stack` (optional, v1.1.0) — array of resolved convention file paths in composition order. Populated by PREFLIGHT. Empty array if not yet resolved.
 - `path` (optional, v1.1.0) — relative path prefix for this component. Used by the check engine for per-file convention routing. Required in multi-service mode. Defaults to project root in single-service mode.
 

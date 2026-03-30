@@ -7,8 +7,15 @@ if ! docker info > /dev/null 2>&1; then
   exit 1
 fi
 
-# Check if the pipeline-neo4j container is running
-CONTAINER_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
+# Check if the pipeline-neo4j container is running (with timeout to prevent hangs)
+CONTAINER_STATUS=""
+if command -v timeout &>/dev/null; then
+  CONTAINER_STATUS=$(timeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
+elif command -v gtimeout &>/dev/null; then
+  CONTAINER_STATUS=$(gtimeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
+else
+  CONTAINER_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
+fi
 
 if [ "$CONTAINER_STATUS" != "running" ]; then
   echo '{"available": false, "reason": "container not running"}'
@@ -16,10 +23,17 @@ if [ "$CONTAINER_STATUS" != "running" ]; then
 fi
 
 # Check health status
-HEALTH_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
+HEALTH_STATUS=""
+if command -v timeout &>/dev/null; then
+  HEALTH_STATUS=$(timeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
+elif command -v gtimeout &>/dev/null; then
+  HEALTH_STATUS=$(gtimeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
+else
+  HEALTH_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
+fi
 
 if [ "$HEALTH_STATUS" != "healthy" ]; then
-  echo '{"available": false, "reason": "container not running"}'
+  echo "{\"available\": false, \"reason\": \"container unhealthy (status: ${HEALTH_STATUS:-unknown})\"}"
   exit 1
 fi
 

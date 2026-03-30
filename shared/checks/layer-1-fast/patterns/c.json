@@ -62,6 +62,22 @@
       "fix_hint": "Extract inner logic into named functions or use early returns / goto cleanup pattern.",
       "example_ref": "c/readability.md#nesting",
       "scope": "all"
+    },
+    {
+      "id": "C-SEC-FORMAT-001",
+      "pattern": "printf\\s*\\(\\s*[a-zA-Z_]",
+      "severity": "WARNING",
+      "category": "SEC-FORMAT",
+      "message": "printf() with variable format string — potential format string vulnerability, use printf(\"%s\", var) instead",
+      "scope": "all"
+    },
+    {
+      "id": "C-QUAL-MEMORY-001",
+      "pattern": "malloc\\s*\\([^)]+\\)(?!.*free)",
+      "severity": "INFO",
+      "category": "QUAL-MEMORY",
+      "message": "malloc() without nearby free() — verify memory is properly freed to prevent leaks",
+      "scope": "all"
     }
   ],
   "thresholds": {

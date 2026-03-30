@@ -28,9 +28,12 @@ When reporting errors, agents should structure them as:
 | GIT_CONFLICT | Merge conflict or dirty working tree | No | resource-cleanup |
 | DISK_FULL | Insufficient disk space | No | resource-cleanup |
 | NETWORK_UNAVAILABLE | External service unreachable (GitHub, context7, Linear) | Maybe | transient-retry |
-| PERMISSION_DENIED | File or directory not writable | No | none (user must fix) |
+| PERMISSION_DENIED | File or directory not writable | No | tool-diagnosis (executable files only), else user must fix |
 | MCP_UNAVAILABLE | Optional MCP server not responding | Yes | graceful degradation (not a recovery strategy — agent handles inline) |
 | PATTERN_MISSING | Referenced pattern file doesn't exist | No | none (planner must fix) |
+| LOCK_FILE_CONFLICT | Lock file (yarn.lock, Cargo.lock) divergence or corruption | Yes | resource-cleanup |
+| FLAKY_TEST | Test passes on re-run after initial failure | Yes | transient-retry |
+| VERSION_MISMATCH | Required tool/runtime version not met (e.g., Java 8 found, Java 11+ required) | No | none (user must fix) |
 
 ## Usage by Agents
 
@@ -68,15 +71,17 @@ When multiple errors co-occur in a stage, determine outcome by this severity ord
 1. `CONFIG_INVALID` — pipeline cannot proceed
 2. `PERMISSION_DENIED` — system-level block
 3. `DISK_FULL` — resource hard limit
-4. `STATE_CORRUPTION` — pipeline integrity
-5. `DEPENDENCY_MISSING` — required tool absent
-6. `GIT_CONFLICT` — version control integrity
-7. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
-8. `TOOL_FAILURE` — tool-level
-9. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
-10. `NETWORK_UNAVAILABLE` — possibly transient
-11. `MCP_UNAVAILABLE` — optional, graceful degradation
-12. `PATTERN_MISSING` — planner error, non-blocking
+4. `VERSION_MISMATCH` — required tool/runtime version not met
+5. `STATE_CORRUPTION` — pipeline integrity
+6. `DEPENDENCY_MISSING` — required tool absent
+7. `GIT_CONFLICT` / `LOCK_FILE_CONFLICT` — version control / lock file integrity
+8. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
+9. `TOOL_FAILURE` — tool-level
+10. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
+11. `FLAKY_TEST` — non-deterministic test failure (transient)
+12. `NETWORK_UNAVAILABLE` — possibly transient
+13. `MCP_UNAVAILABLE` — optional, graceful degradation
+14. `PATTERN_MISSING` — planner error, non-blocking
 
 The highest-severity non-recoverable error determines stage outcome. Recoverable errors are attempted via recovery engine in order.
 

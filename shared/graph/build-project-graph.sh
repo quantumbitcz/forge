@@ -72,6 +72,9 @@ cypher_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
   printf '%s' "$s"
 }
 
@@ -82,10 +85,16 @@ file_size() {
 
 # --- Helper: get last modified date (YYYY-MM-DD) ---
 file_date() {
-  # macOS stat
-  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null \
-    || stat -c '%Y' "$PROJECT_ROOT/$1" 2>/dev/null | xargs -I{} date -d @{} '+%Y-%m-%d' 2>/dev/null \
-    || date '+%Y-%m-%d'
+  # Cross-platform: try macOS stat, then GNU stat, then git log, then fallback
+  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null && return
+  local epoch
+  epoch=$(stat -c '%Y' "$PROJECT_ROOT/$1" 2>/dev/null) && {
+    # GNU date -d @epoch; if unavailable, use python3 or awk
+    date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
+    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
+  }
+  # Fallback: use git log for the file's last modification date
+  git -C "$PROJECT_ROOT" log -1 --format='%as' -- "$1" 2>/dev/null || date '+%Y-%m-%d'
 }
 
 # --- Helper: determine language from extension ---
@@ -114,7 +123,15 @@ ext_to_lang() {
 
 # --- Helper: normalize a path (remove ../ and ./ segments) ---
 normalize_path() {
-  python3 -c "import os.path; print(os.path.normpath('$1'))" 2>/dev/null || echo "$1"
+  # Cross-platform: try python3, then bash-only normalization
+  if command -v python3 &>/dev/null; then
+    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$1" 2>/dev/null && return
+  fi
+  # Bash fallback: simple cleanup of ./ and // segments
+  local p="$1"
+  while [[ "$p" == *"//"* ]]; do p="${p//\/\//\/}"; done
+  p="${p#./}"
+  printf '%s' "$p"
 }
 
 # --- Helper: resolve a path and check if it exists in FILE_SET ---

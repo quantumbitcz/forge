@@ -26,6 +26,17 @@ The process was killed by the OS or container runtime due to memory exhaustion.
 
 If all remediation fails: return `ESCALATE` with message recommending the user increase available memory or close other applications.
 
+#### Test-Specific OOM Recovery
+
+When OOM occurs during test execution (Phase B of VERIFY), apply different strategies than build OOM:
+
+1. **Reduce test parallelism:** Lower `--workers` / `--forks` count (default: halve current value)
+2. **Run tests in batches:** Split test suite into groups, execute sequentially
+3. **Exclude memory-intensive tests:** Identify and defer integration/E2E tests to a separate run
+4. **Do NOT reduce JVM/Node heap:** Test processes need memory for assertions and fixtures
+
+Recovery sequence: reduce parallelism → batch execution → exclude heavy tests → escalate
+
 ### Exit 139 — Segmentation Fault (SIGSEGV)
 
 A tool crashed due to a memory access violation.

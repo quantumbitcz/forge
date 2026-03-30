@@ -2,7 +2,7 @@
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **dev-pipeline** fixes this by orchestrating 29 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **dev-pipeline** fixes this by orchestrating 32 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -66,7 +66,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-17 skills provide the user-facing interface to the pipeline and its subsystems.
+18 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -87,6 +87,7 @@ Then add to `.claude/settings.json`:
 | `/graph-status` | Show knowledge graph connection status and node/relationship counts |
 | `/graph-query` | Run Cypher queries against the knowledge graph |
 | `/graph-rebuild` | Rebuild the knowledge graph from the current codebase |
+| `/docs-generate` | Generate or update project documentation (standalone or pipeline mode, coverage reporting, framework-aware) |
 
 ## Available modules
 
@@ -191,7 +192,7 @@ touch .claude/pipeline-log.md
 |    deprecations, scripts) |  ci-cd, container-orchestration)
 |                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
-|   Shared core             |  agents/ (29 pipeline + review agents)
+|   Shared core             |  agents/ (32 pipeline + review agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
@@ -262,7 +263,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-29 agents organized by pipeline stage and cross-cutting concerns.
+32 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
@@ -271,6 +272,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `pl-010-shaper`               | Pre-pipeline | Feature spec shaping (epics, stories, AC)                         |
 | `pl-050-project-bootstrapper` | Pre-pipeline | Bootstraps new projects with module scaffolding and config        |
 | `pl-100-orchestrator`         | All          | Coordinates the 10-stage lifecycle, manages state and recovery    |
+| `pl-130-docs-discoverer`      | 0 Preflight  | Discovers and indexes project documentation                       |
 | `pl-140-deprecation-refresh`  | 0 Preflight  | Refreshes `known-deprecations.json` via Context7                  |
 | `pl-150-test-bootstrapper`    | 0 Preflight  | Bootstraps test coverage when below threshold                     |
 | `pl-160-migration-planner`    | 0 Preflight  | Library/framework migration planning                              |
@@ -280,6 +282,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `pl-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
 | `pl-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |
 | `pl-320-frontend-polisher`    | 4 Implement  | Creative frontend polish (animations, responsive, dark mode)      |
+| `pl-350-docs-generator`       | 7 Docs       | Generates/updates documentation, ADRs, changelogs, API specs     |
 | `pl-400-quality-gate`         | 6 Review     | Multi-batch quality coordinator with scoring and fix cycles       |
 | `pl-500-test-gate`            | 5 Verify     | Test execution and coverage analysis coordinator                  |
 | `pl-600-pr-builder`           | 8 Ship       | Creates branch, commits, and PR with quality gate results         |
@@ -302,6 +305,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
 | `infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
 | `infra-deploy-verifier` | Deployment health verification |
+| `docs-consistency-reviewer` | Documentation accuracy, cross-doc consistency, decision/constraint violations |
 
 ## Adding a new module
 
@@ -349,7 +353,7 @@ dev-pipeline/
   .claude-plugin/
     plugin.json                         # Plugin manifest (v1.0.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
-  agents/                               # 29 agent definitions (YAML frontmatter + instructions)
+  agents/                               # 32 agent definitions (YAML frontmatter + instructions)
     pl-010-shaper.md
     pl-050-project-bootstrapper.md
     pl-100-orchestrator.md

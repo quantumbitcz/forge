@@ -59,8 +59,33 @@ case "$STAGE" in
       echo "WARN: .claude/ directory is not writable" >&2
     fi
     ;;
-  explore|plan|validate|review|docs|learn)
+  explore|plan|validate|docs|learn)
     # No required external deps beyond the agent runtime
+    ;;
+  review)
+    # Verify changed files from implementation are readable
+    if [[ -d "$PROJECT_ROOT/.pipeline/worktree" ]]; then
+      worktree_files="$(git -C "$PROJECT_ROOT/.pipeline/worktree" diff --name-only HEAD~1 2>/dev/null || true)"
+      if [[ -n "$worktree_files" ]]; then
+        while IFS= read -r f; do
+          full_path="$PROJECT_ROOT/.pipeline/worktree/$f"
+          if [[ ! -r "$full_path" ]]; then
+            echo "WARN: Changed file not readable: $f" >&2
+          fi
+        done <<< "$worktree_files"
+      fi
+    fi
+    # Check convention file exists
+    conventions_file=""
+    [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && {
+      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
+    }
+    if [[ -n "${framework:-}" && "$framework" != "null" ]]; then
+      conventions_path="$PROJECT_ROOT/.claude/plugins/dev-pipeline/modules/frameworks/$framework/conventions.md"
+      if [[ ! -f "$conventions_path" ]]; then
+        echo "WARN: Convention file not found for framework '$framework'" >&2
+      fi
+    fi
     ;;
   implement)
     check_cmd "git"
@@ -154,6 +179,15 @@ case "$STAGE" in
     if ! command -v gh &>/dev/null; then
       echo "OK (note: gh CLI not found — PR creation will be skipped)"
       exit 0
+    fi
+    # Check gh CLI is authenticated
+    if ! gh auth status &>/dev/null 2>&1; then
+      echo "WARN: gh CLI is not authenticated — PR creation will fail (run: gh auth login)" >&2
+    fi
+    # Check git remote is configured
+    remote_url="$(git -C "$PROJECT_ROOT" remote get-url origin 2>/dev/null || true)"
+    if [[ -z "$remote_url" ]]; then
+      echo "WARN: No git remote 'origin' configured — push and PR creation will fail" >&2
     fi
     ;;
   preview)

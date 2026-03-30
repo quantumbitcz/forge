@@ -420,6 +420,12 @@ Each PREEMPT item must include:
     - **Last hit:** {ISO date}
     - **Runs since last hit:** {N}
 
+**Initial confidence for new PREEMPT items:**
+- Items extracted from a single failed run: **MEDIUM** (needs validation across multiple runs)
+- Items extracted from a pattern seen in 2+ runs: **HIGH** (already validated by recurrence)
+- Items manually suggested by user feedback: **HIGH** (user-validated)
+- Items from cross-project learning promotion: **MEDIUM** (may not apply to this project's specifics)
+
 ---
 
 ## 8. Cross-Project Learning Promotion

@@ -25,9 +25,12 @@ LAYERS=(databases persistence migrations api-protocols messaging caching search 
 BINDING_LAYERS=("${LAYERS[@]}" testing)
 
 # --- JSON parsing helper ---
-# Uses python3 for JSON parsing (jq as fallback)
+# Uses python3 for JSON parsing (warns on failure, returns empty)
 json_parse() {
-  python3 -c "$1" 2>/dev/null
+  python3 -c "$1" 2>/dev/null || {
+    echo "[generate-seed] Warning: Python parsing failed" >&2
+    return 0
+  }
 }
 
 # --- Output buffer ---

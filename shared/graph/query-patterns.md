@@ -164,8 +164,8 @@ Identifies all documentation sections, decisions, and constraints that reference
 
 ```cypher
 MATCH (changed:ProjectFile {path: $filePath})
-MATCH (ds:DocSection)-[:DESCRIBES]->(changed)
-MATCH (ds)-[:SECTION_OF]->(df:DocFile)
+OPTIONAL MATCH (ds:DocSection)-[:DESCRIBES]->(changed)
+OPTIONAL MATCH (ds)-[:SECTION_OF]->(df:DocFile)
 OPTIONAL MATCH (dd:DocDecision)-[:DECIDES]->(changed)
 OPTIONAL MATCH (dc:DocConstraint)-[:CONSTRAINS]->(changed)
 RETURN df.path, ds.name, dd.summary, dc.summary
@@ -221,7 +221,7 @@ Returns all `CONTRADICTS` edges in the graph, showing which documentation source
 
 ```cypher
 MATCH (source)-[:CONTRADICTS]->(target)
-RETURN labels(source)[0] AS source_type, COALESCE(source.summary, source.name) AS source_desc,
+RETURN head(labels(source)) AS source_type, COALESCE(source.summary, source.name) AS source_desc,
        target.path AS code_target, source.file_path AS doc_source
 ```
 

@@ -223,6 +223,10 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Entry condition:** Implementation complete (Stage 4 -- all tasks attempted).
 
+**Entry guard:** At least one implementation task must have completed successfully. If all tasks failed after max retries, the orchestrator escalates to the user instead of entering VERIFY:
+
+> "All implementation tasks failed. No code to verify. Breakdown: {failed_tasks}. Options: (1) Review errors and re-plan, (2) Re-run from Stage 4 with adjusted approach, (3) Abort pipeline."
+
 **Inputs:**
 - `commands.build`, `commands.lint`, `commands.format` from config
 - `inline_checks` from config (scripts or skills)
@@ -247,7 +251,13 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - `stage_5_notes_{storyId}.md` -- verification details, fix loop history
 - Updated counters: `verify_fix_count`, `test_cycles`
 
-**Exit condition:** Build passes, lint passes, all tests pass. If Phase A exceeds max fix loops, pipeline reports failure. If Phase B exceeds max test cycles, pipeline escalates to user.
+**Exit condition:** Build passes, lint passes, all tests pass.
+
+**Phase A failure escalation:** If `verify_fix_count >= max_fix_loops`, the pipeline escalates to the user. Each Phase A retry increments `total_retries`. Escalation format:
+
+> "Build/lint fix loop exhausted ({verify_fix_count}/{max_fix_loops}). Last error: {error_summary}. Options: (1) Fix manually and resume from Stage 5, (2) Re-plan from Stage 2, (3) Abort pipeline."
+
+**Phase B failure escalation:** If `test_cycles >= max_test_cycles`, the pipeline escalates to the user.
 
 ---
 
@@ -361,7 +371,19 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **On user rejection/feedback:**
 
-`pl-710-feedback-capture` classifies feedback into one of two paths. Default to `implementation` when ambiguous.
+`pl-710-feedback-capture` classifies feedback into one of two paths using these heuristics. Default to `implementation` when ambiguous.
+
+**Design feedback signals** (route to Stage 2 — PLAN):
+- References: architecture, approach, decomposition, scope, strategy, wrong decision, missing story
+- Structural: "should have split into N tasks", "this needs a different approach", "wrong abstraction"
+- Scope: "missing feature X", "should also handle Y", "need to add Z endpoint"
+
+**Implementation feedback signals** (route to Stage 4 — IMPLEMENT):
+- References: specific files, line numbers, test cases, class names, function names
+- Behavioral: "this function should return X", "test doesn't cover Y", "logic is wrong at Z"
+- Quality: "error handling missing for X", "needs null check", "performance issue in loop"
+
+When feedback contains signals from both categories, count the signals. If design signals outnumber implementation signals by 2:1 or more, classify as design. Otherwise, classify as implementation (safer — less disruption).
 
 **Path A — `implementation` feedback** (references specific files, code behavior, test cases):
 1. Dispatch `pl-710-feedback-capture` to record the correction structurally.
@@ -438,6 +460,26 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2) |
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
+
+### Targeted Re-Implementation
+
+When a fix cycle re-enters Stage 4 (IMPLEMENT) from Stage 5 or Stage 6, the implementation is **targeted** — scoped to only the files and issues identified by the preceding stage.
+
+**Test fix (Stage 5 Phase B → Stage 4):**
+- Implementer receives the list of failing tests and their error details.
+- Scope: only files whose tests failed. Do not re-scaffold.
+- Implementer must not modify test files (focus on fixing implementation to pass existing tests).
+
+**Quality fix (Stage 6 → Stage 4):**
+- Implementer receives the deduplicated finding list organized by file.
+- Scope: only files mentioned in quality findings. Do not re-scaffold.
+- Implementer addresses findings in severity order (CRITICAL first, then WARNING, then INFO).
+
+**Constraints for both paths:**
+- The scaffolder is NOT re-run (scaffolding completed in the initial Stage 4 pass).
+- Changes are made in the existing worktree (no new branch).
+- After targeted fixes, the pipeline returns to the originating stage (5 or 6) for re-verification.
+- Conflict detection is skipped (single-task targeted fixes don't need it).
 
 ### Global Retry Budget
 

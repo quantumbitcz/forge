@@ -100,11 +100,14 @@ if [[ -z "$SOURCE_CHANGES" ]]; then
   exit 0
 fi
 
-# --- Helper: escape single quotes for Cypher ---
+# --- Helper: escape strings for Cypher ---
 cypher_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
   printf '%s' "$s"
 }
 
@@ -139,7 +142,13 @@ file_size() {
 
 # --- Helper: get last modified date (YYYY-MM-DD) ---
 file_date() {
-  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null || date '+%Y-%m-%d'
+  stat -f '%Sm' -t '%Y-%m-%d' "$PROJECT_ROOT/$1" 2>/dev/null && return
+  local epoch
+  epoch=$(stat -c '%Y' "$PROJECT_ROOT/$1" 2>/dev/null) && {
+    date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
+    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
+  }
+  git -C "$PROJECT_ROOT" log -1 --format='%as' -- "$1" 2>/dev/null || date '+%Y-%m-%d'
 }
 
 # --- Build file set for import resolution ---
@@ -168,7 +177,7 @@ parse_imports_ts() {
   grep -oE "(from|import) +['\"](\./|\.\./)[^'\"]+['\"]" "$PROJECT_ROOT/$file" 2>/dev/null | \
     sed -E "s/(from|import) +['\"]//; s/['\"]$//" | while IFS= read -r imp; do
       local resolved
-      resolved="$(cd "$PROJECT_ROOT/$(dirname "$file")" && realpath --relative-to="$PROJECT_ROOT" "$imp" 2>/dev/null || echo "")"
+      resolved="$(cd "$PROJECT_ROOT/$(dirname "$file")" 2>/dev/null && python3 -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$imp" "$PROJECT_ROOT" 2>/dev/null || echo "")"
       if [[ -z "$resolved" ]]; then
         resolved="$(dirname "$file")/$imp"
         resolved="$(python3 -c "import os.path; print(os.path.normpath('$resolved'))" 2>/dev/null || echo "$resolved")"
@@ -307,6 +316,7 @@ parse_imports_csharp() {
 # --- Helper: emit Cypher for creating a file node + import edges ---
 emit_file_create() {
   local file="$1"
+  [[ -f "$PROJECT_ROOT/$file" ]] || return 0  # Skip deleted files
   local lang size mod_date
   lang="$(ext_to_lang "$file")"
   size="$(file_size "$file")"

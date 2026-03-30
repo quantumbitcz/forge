@@ -110,6 +110,22 @@
       "fix_hint": "Define a module-level constant with a descriptive UPPER_SNAKE_CASE name.",
       "example_ref": "python/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "PY-SEC-SQL-001",
+      "pattern": "f['\"].*SELECT.*\\{|f['\"].*INSERT.*\\{|f['\"].*UPDATE.*\\{|f['\"].*DELETE.*\\{",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "SQL query built with f-string — use parameterized queries to prevent SQL injection",
+      "scope": "all"
+    },
+    {
+      "id": "PY-SEC-PATH-001",
+      "pattern": "os\\.path\\.join\\(.*request\\.|os\\.path\\.join\\(.*input\\(",
+      "severity": "WARNING",
+      "category": "SEC-PATH",
+      "message": "Path construction from user input — validate and sanitize to prevent path traversal",
+      "scope": "all"
     }
   ],
   "thresholds": {

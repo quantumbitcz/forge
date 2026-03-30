@@ -112,7 +112,15 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
-Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`.
+Additional category codes for specialized review domains:
+
+| Code | Meaning |
+|------|---------|
+| `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
+| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions) |
+| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility) |
+
+Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Projects may define additional project-specific categories in their `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
 
@@ -137,7 +145,7 @@ After all review batches and inline checks complete, findings are deduplicated b
 
 ### Deduplication Key
 
-Findings are grouped by the tuple `(file, line, category)`. When multiple findings share the same key:
+Findings are grouped by the tuple `(file, line, category)`. In multi-component projects, the deduplication key is `(component, file, line, category)` — the same issue in different components represents separate fixes and is not deduplicated. When multiple findings share the same key:
 
 1. **Keep the highest severity.** If one agent reports WARNING and another reports CRITICAL for the same location and category, the CRITICAL survives.
 2. **Preserve the most detailed description.** Among findings with the same key, keep the one with the longest description (it is likely the most actionable).
@@ -205,6 +213,14 @@ Track dip count across cycles. A "dip" is any cycle where `delta < 0`. If a seco
 - First dip within tolerance: allow one more cycle (per rule 4 above)
 - Second consecutive dip (regardless of magnitude): escalate to user
 - A non-dip cycle (delta >= 0) resets the dip counter to 0
+
+### Per-Component Oscillation Tracking
+
+In multi-component projects, the quality gate tracks score history per component in addition to the unified score. If any single component shows two consecutive score dips while the unified score appears stable or improving, the quality gate logs a WARNING:
+
+> "Component '{name}' shows regression ({previous} → {current}) masked by improvements in other components. Investigating component-specific oscillation."
+
+This prevents a scenario where one component steadily regresses while another improves, masking the regression in the unified score. The unified oscillation rules still apply to the aggregate score.
 
 **Interaction with max_review_cycles:** Oscillation tolerance does NOT extend beyond `max_review_cycles`. If `quality_cycles >= max_review_cycles`, the run ends regardless of oscillation state. Oscillation tolerance only determines whether to escalate EARLY (before max cycles) when fixes are making things worse.
 

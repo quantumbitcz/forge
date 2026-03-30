@@ -1010,6 +1010,8 @@ Mark Implement as completed.
 
 **story_state:** `VERIFYING` | **TaskUpdate:** Mark "Stage 4: Implement" → `completed`, Mark "Stage 5: Verify" → `in_progress`
 
+**Entry guard:** Before entering Stage 5, verify that at least one implementation task completed successfully. If all tasks failed after max retries, escalate to user per `stage-contract.md` Stage 5 entry guard. Do NOT proceed to VERIFY with zero successful tasks.
+
 ### Phase A: Build & Lint (inline, fail-fast)
 
 First, read `.pipeline/.check-engine-skipped`. If present and count > 0: copy count to `state.json.check_engine_skipped`, report in stage notes: '{N} file edits had inline checks skipped (hook timeout/error). Running full verification now.' Delete the marker file.
@@ -1393,6 +1395,14 @@ Agents that read the conventions file should:
 4. Continue with the current (newer) version — do not use stale conventions
 5. If `conventions_hash` is empty (conventions file was unavailable at PREFLIGHT): skip the check
 
+**Section-level drift detection (optional optimization):**
+
+When agents only care about specific sections of the conventions file (e.g., implementer only cares about "Architecture" and "Testing" sections), they MAY compare individual section hashes from `conventions_section_hashes` against re-computed section hashes. This avoids false warnings when unrelated sections changed. If per-section checking is used:
+1. Compute SHA256 first 8 chars of each relevant section
+2. Compare with matching key in `conventions_section_hashes`
+3. If only irrelevant sections changed: log INFO instead of WARNING
+4. If relevant sections changed: log WARNING and use current version
+
 ### Dispatch Prompts
 
 - **Cap at <2,000 tokens each** -- task description, constraints, file paths only.
@@ -1695,6 +1705,8 @@ When `related_projects` is configured in `dev-pipeline.local.md` and the plan in
   }
 }
 ```
+
+**Cross-repo timeout:** Each cross-repo project's implementation is limited to `cross_repo.timeout_minutes` (default: 30 minutes). If exceeded, the cross-repo task is marked as failed with `status: "timeout"` and the main PR proceeds without it. Timeout is checked per-project, not globally.
 
 **Partial failure handling:**
 1. Main repo changes are preserved (not rolled back) on cross-repo failure

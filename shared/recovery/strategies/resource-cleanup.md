@@ -133,7 +133,40 @@ After freeing resources:
 
 ---
 
-## 5. Output
+## 5. Git Conflict Recovery
+
+When `GIT_CONFLICT` errors are classified by the recovery engine:
+
+**Detection criteria:**
+- `git status` shows "both modified", "both added", or "both deleted" entries
+- `git merge --abort` or `git rebase --abort` available (mid-merge/rebase state)
+- `.git/MERGE_HEAD` or `.git/REBASE_HEAD` exists
+
+**Recovery actions (sequential):**
+
+1. **Abort in-progress merge/rebase:**
+   - If `.git/MERGE_HEAD` exists: `git merge --abort`
+   - If `.git/REBASE_HEAD` exists: `git rebase --abort`
+   - Verify clean state: `git status --porcelain` returns empty
+
+2. **Worktree conflict (Stage 4/8):**
+   - If conflict is in `.pipeline/worktree`: remove and recreate worktree
+   - Re-run from the conflicting stage with fresh worktree
+   - Log: "Worktree conflict recovered by recreating worktree"
+
+3. **Base branch divergence (Stage 8):**
+   - If base branch moved ahead: attempt `git rebase` onto latest base
+   - On rebase conflict: escalate to user with file list
+   - Log conflict details for manual resolution
+
+**Escalation:** If all recovery attempts fail, escalate to user with:
+> "Git conflict unresolvable by recovery engine. Conflicting files: {file_list}. Options: (1) Resolve manually, (2) Recreate worktree from scratch, (3) Abort pipeline."
+
+**Weight:** 0.5 (same as other resource-cleanup operations)
+
+---
+
+## 6. Output
 
 Return to recovery engine:
 
