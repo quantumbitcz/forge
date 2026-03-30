@@ -47,10 +47,17 @@ if $has_package_json; then
   type="frontend"
 
   if [[ -f "$DIR/vite.config.ts" || -f "$DIR/vite.config.js" || -f "$DIR/vite.config.mts" ]]; then
-    # Distinguish React vs SvelteKit both using Vite
+    # Distinguish Vite-based frameworks by their config files
     if [[ -f "$DIR/svelte.config.js" || -f "$DIR/svelte.config.ts" ]]; then
       framework="sveltekit"
+    elif grep -qE '"vue"|"@vitejs/plugin-vue"' "$DIR/package.json" 2>/dev/null; then
+      framework="vue"
+    elif grep -qE '"svelte"|"@sveltejs/vite-plugin-svelte"' "$DIR/package.json" 2>/dev/null; then
+      framework="svelte"
+    elif grep -qE '"react"|"@vitejs/plugin-react"' "$DIR/package.json" 2>/dev/null; then
+      framework="react"
     else
+      # Vite without a recognized framework — default to react (most common)
       framework="react"
     fi
   elif [[ -f "$DIR/next.config.js" || -f "$DIR/next.config.ts" || -f "$DIR/next.config.mjs" ]]; then

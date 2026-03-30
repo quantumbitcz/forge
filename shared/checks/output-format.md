@@ -21,7 +21,30 @@ file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 
 ### Delimiter
 
-Pipe `|` with spaces. If message or hint contains `|`, escape as `\|`.
+Pipe `|` with spaces (` | `). Escaping rules:
+- Literal `|` in message or fix_hint: escape as `\|`
+- Literal `\` in message or fix_hint: escape as `\\`
+- Literal newline in message or fix_hint: replace with `\n` (backslash + 'n')
+
+Parsing: split on ` | `, then for message and fix_hint fields:
+1. Replace `\\` → `\` (backslash first)
+2. Replace `\|` → `|` (pipe second)
+3. Replace `\n` → newline (newline third)
+
+Note: the literal two-character sequence `\n` (backslash + letter n) in source text cannot be losslessly round-tripped — it will decode as a newline. This is acceptable because `\n` does not occur naturally in finding messages or fix hints.
+
+### Empty Findings
+
+If a check layer finds no issues: output nothing to stdout and exit 0. Do NOT emit a special "clean" finding.
+
+### Missing Fields
+
+All five fields are required in every finding line. If a check cannot determine a field:
+- `file`: use `?` if unknown
+- `line`: use `0` for file-level or unknown
+- `CATEGORY-CODE`: use a linter-default category (e.g., `TS-LINT-ESLINT`)
+- `SEVERITY`: use mapped default or `INFO`
+- `fix_hint`: use empty string `""` if no suggestion available
 
 ### Deduplication
 

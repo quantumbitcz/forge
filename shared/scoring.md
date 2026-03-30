@@ -52,11 +52,20 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 
 - `critical_weight` must be >= 10 (CRITICALs are always serious)
 - `warning_weight` must be >= 1 (WARNINGs cannot be fully suppressed)
+- `warning_weight` must be > `info_weight` (WARNINGs must be strictly more impactful than INFOs)
 - `info_weight` must be >= 0 (INFOs can be zero-weighted but not negative)
 - `pass_threshold` must be >= 60 (below 60 is always FAIL)
 - `concerns_threshold` must be < `pass_threshold`
 - `concerns_threshold` must be >= 40
+- `pass_threshold - concerns_threshold` must be >= 10 (ensure distinct verdict bands — prevents overlap where a score falls into both PASS and CONCERNS)
 - `oscillation_tolerance` must be >= 0 and <= 20
+
+**Verdict band derivation:** When thresholds are customized, verdict bands adjust automatically:
+- PASS: score >= `pass_threshold` AND 0 CRITICALs remaining after all fix cycles
+- CONCERNS: score >= `concerns_threshold` AND score < `pass_threshold` AND 0 CRITICALs remaining after all fix cycles
+- FAIL: score < `concerns_threshold` OR any CRITICAL remaining after `max_review_cycles`
+
+Note: CRITICALs trigger fix cycles (per Aim-for-100 policy) before determining the final verdict. A CRITICAL in cycle 1 does NOT immediately produce FAIL — it is sent to the implementer for fixing first.
 
 ### When to Customize
 
@@ -198,7 +207,7 @@ The score history (score per cycle) is included in the quality gate report so th
 
 ## Score Oscillation Handling
 
-Track `score_history[]` in `state.json` across quality cycles. After each cycle's score is computed:
+Track `score_history[]` in `state.json` across quality cycles. Initialized as `[]` at PREFLIGHT. After each cycle's score is computed, append it to the array FIRST, then run the oscillation check:
 
 1. If `score_history` has < 2 entries: no oscillation check possible, continue
 2. Compute `delta = current_score - previous_score`
@@ -222,7 +231,10 @@ In multi-component projects, the quality gate tracks score history per component
 
 This prevents a scenario where one component steadily regresses while another improves, masking the regression in the unified score. The unified oscillation rules still apply to the aggregate score.
 
-**Interaction with max_review_cycles:** Oscillation tolerance does NOT extend beyond `max_review_cycles`. If `quality_cycles >= max_review_cycles`, the run ends regardless of oscillation state. Oscillation tolerance only determines whether to escalate EARLY (before max cycles) when fixes are making things worse.
+**Interaction with max_review_cycles:** Oscillation checks run BEFORE the max_review_cycles guard. Priority order:
+1. If a second consecutive dip is detected AND `quality_cycles < max_review_cycles`: escalate immediately (oscillation overrides remaining cycles)
+2. If `quality_cycles >= max_review_cycles`: end the run regardless of oscillation state (hard stop)
+3. If both conditions are true simultaneously (second dip occurs on the final cycle): end the run — do not trigger a separate escalation, since the max-cycles message already communicates the situation
 
 ### Oscillation Tolerance Configuration
 

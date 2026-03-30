@@ -68,7 +68,7 @@ detect_module() {
   local cache="$project_root/.pipeline/.module-cache"
   local cfg="$project_root/.claude/dev-pipeline.local.md"
 
-  if [[ -f "$cache" ]] && { [[ ! -f "$cfg" ]] || [[ "$cache" -nt "$cfg" ]]; }; then
+  if [[ -f "$cache" && -s "$cache" ]] && { [[ ! -f "$cfg" ]] || [[ "$cache" -nt "$cfg" ]]; }; then
     cat "$cache"; return
   fi
 
@@ -90,7 +90,11 @@ detect_module() {
     elif [[ -f "$project_root/package.json" ]] && [[ -f "$project_root/nest-cli.json" ]]; then module="nestjs"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"vue"' "$project_root/package.json" 2>/dev/null; then module="vue"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"svelte"' "$project_root/package.json" 2>/dev/null; then module="svelte"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then module="react"
+    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then
+      # Distinguish Vite-based frameworks by package.json deps
+      if grep -qE '"react"|"@vitejs/plugin-react"' "$project_root/package.json" 2>/dev/null; then module="react"
+      else module="react"  # fallback — most Vite projects are React
+      fi
     elif [[ -f "$project_root/package.json" ]]; then module="express"
     elif [[ -f "$project_root/Cargo.toml" ]]; then module="axum"
     elif [[ -f "$project_root/go.mod" ]] && grep -q 'gin-gonic/gin' "$project_root/go.mod" 2>/dev/null; then module="gin"
