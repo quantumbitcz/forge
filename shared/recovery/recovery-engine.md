@@ -295,9 +295,11 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 When `total_weight >= 4.0` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
 
+When `total_weight >= 4.5` (90% of budget), escalate to user in stage notes: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Pipeline is operating with minimal safety margin. Remaining capacity: {max_weight - total_weight}. Consider manual review before continuing."
+
 ### Budget Exhaustion
 
-When `total_weight >= max_weight`, do not apply further strategies. Escalate to user with a full budget report listing all applications and their weights.
+When `total_weight >= max_weight`, do not apply further strategies. Report `BUDGET_EXHAUSTED` error (see `error-taxonomy.md`). Escalate to user with a full budget report listing all applications and their weights.
 
 ### Backward Compatibility
 

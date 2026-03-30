@@ -115,8 +115,18 @@ The retrospective agent reads `preempt_items_status` and:
 
 ### Retry Handling
 
-If a task fails and is retried (within `max_fix_loops`), the implementer may write PREEMPT markers for both the failed and successful attempts. When the orchestrator reads stage notes to populate `preempt_items_status`:
+If a task fails and is retried (within `max_fix_loops`), the implementer may write PREEMPT markers for both the failed and successful attempts. To ensure reliable tracking:
 
+**Implementer convention:** Write markers under attempt headers in stage notes:
+```
+## Attempt 1 (2026-03-22T14:30:00Z)
+PREEMPT_APPLIED: check-openapi-before-controller — applied at api/UserController.kt:15
+## Attempt 2 (2026-03-22T14:35:00Z)
+PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller was removed in refactor)
+```
+
+**Orchestrator convention:** When reading stage notes to populate `preempt_items_status`:
+- Parse attempt sections by header (## Attempt N)
 - Use markers from the **last attempt only** (the successful one, or the final failed attempt if all attempts failed)
 - Earlier attempt markers are superseded — do not double-count
 - If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status

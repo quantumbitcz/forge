@@ -385,7 +385,11 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - Behavioral: "this function should return X", "test doesn't cover Y", "logic is wrong at Z"
 - Quality: "error handling missing for X", "needs null check", "performance issue in loop"
 
-When feedback contains signals from both categories, count the signals. If design signals outnumber implementation signals by 2:1 or more, classify as design. Otherwise, classify as implementation (safer — less disruption).
+When feedback contains signals from both categories, count the signals:
+- Design signals outnumber implementation signals by 2:1 or more → classify as `design`
+- Implementation signals outnumber design signals, or ratio is roughly equal → classify as `implementation` (safer — less disruption)
+- If the feedback contains a clear scope change (e.g., "split into 2 features", "add a new endpoint") regardless of signal count → classify as `design`
+- If ambiguous and the user's feedback is short (< 3 sentences), prefer `implementation` — short feedback typically targets specific code issues
 
 **Path A — `implementation` feedback** (references specific files, code behavior, test cases):
 1. Dispatch `pl-710-feedback-capture` to record the correction structurally.

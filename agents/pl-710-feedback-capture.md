@@ -241,10 +241,17 @@ If conventions file is missing or unreadable:
 - Note in the feedback file: "Convention cross-reference skipped — file unavailable"
 
 ## Conflict Detection
-If the extracted rule contradicts existing conventions:
+
+**Convention conflicts:** If the extracted rule contradicts existing conventions:
 - Flag as CONFLICT severity in the feedback file
 - Include both: the user's feedback text AND the contradicting convention text
 - The retrospective agent will resolve the conflict in a future run
+
+**Feedback contradictions:** When writing feedback, scan the 5 most recent entries in `.pipeline/feedback/` for contradictions (same file/pattern/domain, opposite guidance). If found:
+- Flag as CONTRADICTION severity in the feedback file
+- Include both: the current feedback AND the contradicting prior feedback entry (with date)
+- Log WARNING in stage notes: "Contradictory feedback detected: '{current}' vs '{prior}' — user review recommended before next re-implementation"
+- The orchestrator should present this warning to the user before re-entering Stage 2 or 4
 
 ## Forbidden Actions
 

@@ -179,6 +179,12 @@ When `state.json.integrations.neo4j.available` is true, the orchestrator pre-que
 
 See `shared/graph/query-patterns.md` for the Cypher templates used. If Neo4j is unavailable, all stages proceed normally using grep/glob-based analysis.
 
+**Mid-run graph failure:** If a graph query fails after Neo4j was initially available (e.g., container stopped, connection lost):
+1. Mark `state.json.integrations.neo4j.available = false` for the remainder of the run
+2. Log WARNING in stage notes: "Neo4j became unavailable mid-run. Falling back to grep/glob analysis."
+3. Do NOT invoke recovery engine for graph failures — handle inline as graceful degradation
+4. Continue the pipeline without graph context for all subsequent stages
+
 ---
 
 ## 3. Stage 0: PREFLIGHT (inline)
