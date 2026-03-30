@@ -110,3 +110,31 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   grep -q "storyId\|story_id" "$STATE_SCHEMA" \
     || fail "storyId field for checkpoint not documented"
 }
+
+# ---------------------------------------------------------------------------
+# convergence object documented in state schema
+# ---------------------------------------------------------------------------
+@test "state-schema: convergence object documented" {
+  grep -q '"convergence"' "$STATE_SCHEMA" \
+    || fail "convergence object not found in state schema"
+}
+
+# ---------------------------------------------------------------------------
+# convergence required fields documented
+# ---------------------------------------------------------------------------
+@test "state-schema: convergence fields documented (phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed unfixable_findings)" {
+  local fields=(phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed unfixable_findings)
+  for field in "${fields[@]}"; do
+    grep -q "convergence\.${field}\|convergence.*${field}" "$STATE_SCHEMA" \
+      || fail "convergence field $field not documented in state-schema.md"
+  done
+}
+
+# ---------------------------------------------------------------------------
+# convergence phase valid values documented
+# ---------------------------------------------------------------------------
+@test "state-schema: convergence phase valid values correctness perfection safety_gate documented" {
+  grep -q '"correctness"' "$STATE_SCHEMA" || fail 'convergence phase "correctness" not documented'
+  grep -q '"perfection"' "$STATE_SCHEMA"  || fail 'convergence phase "perfection" not documented'
+  grep -q '"safety_gate"' "$STATE_SCHEMA" || fail 'convergence phase "safety_gate" not documented'
+}

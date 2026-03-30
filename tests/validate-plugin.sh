@@ -460,6 +460,34 @@ done
 check "All container orchestration learnings files exist" "$check32_fail"
 
 echo ""
+echo "--- CONVERGENCE ENGINE ---"
+
+# ── CONVERGENCE ENGINE ──────────────────────────────────────────────────────
+check33_fail=0
+if [[ ! -f "$ROOT/shared/convergence-engine.md" ]]; then
+  echo "  FAIL: shared/convergence-engine.md does not exist"
+  check33_fail=1
+else
+  for section in "Convergence States" "Two-Phase Model" "Algorithm" "Configuration" "PREFLIGHT Constraints"; do
+    if ! grep -q "$section" "$ROOT/shared/convergence-engine.md"; then
+      echo "  FAIL: convergence-engine.md missing section: $section"
+      check33_fail=1
+    fi
+  done
+fi
+check "Convergence engine exists with required sections" "$check33_fail"
+
+# Check 34: All pipeline-config-template.md have convergence: section
+check34_fail=0
+for f in "$ROOT"/modules/frameworks/*/pipeline-config-template.md; do
+  if ! grep -q "convergence:" "$f"; then
+    echo "  FAIL: $(basename "$(dirname "$f")")/pipeline-config-template.md missing convergence section"
+    check34_fail=1
+  fi
+done
+check "All pipeline config templates have convergence section" "$check34_fail"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
 
