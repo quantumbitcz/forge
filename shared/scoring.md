@@ -83,7 +83,7 @@ Note: CRITICALs trigger fix cycles (per Aim-for-100 policy) before determining t
 |---------|-----------|----------------|
 | **PASS** | score >= 80 AND 0 CRITICALs | Proceed to next stage |
 | **CONCERNS** | score 60-79 AND 0 CRITICALs | Proceed, but send ALL findings to implementer for fixing. The pipeline continues, but improvements are expected. |
-| **FAIL** | score < 60 OR any CRITICAL remaining after max review cycles | Escalate to user. Pipeline pauses until user decides. |
+| **FAIL** | score < 60 OR any CRITICAL remaining after convergence exhaustion | Escalate to user. Pipeline pauses until user decides. |
 
 ### Aim-for-100 Policy
 
@@ -132,6 +132,7 @@ Additional category codes for specialized review domains:
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
 | `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions) |
 | `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility) |
+| `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
 
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Projects may define additional project-specific categories in their `conventions.md`.
 
@@ -265,9 +266,9 @@ After deduplication, if the quality gate has >50 unique findings, it returns the
 
 ## Score Sub-Bands (Operational Guidance)
 
-These sub-bands provide granularity for Linear documentation. They do NOT change the PASS/CONCERNS/FAIL verdict thresholds.
+These sub-bands provide granularity for documentation and reporting. When Linear is integrated, findings are posted as Linear issues. When Linear is unavailable, findings are documented in stage notes and the retrospective report. Sub-bands do NOT change the PASS/CONCERNS/FAIL verdict thresholds.
 
-| Score Band | Verdict | Linear Documentation |
+| Score Band | Verdict | Documentation |
 |---|---|---|
 | 95-99 | PASS | Remaining INFOs documented. No follow-up tickets. |
 | 80-94 | PASS | Each unfixed WARNING documented with options. Architectural WARNINGs get follow-up tickets. |

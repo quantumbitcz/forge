@@ -96,8 +96,8 @@ detect_module() {
   if [[ -z "$module" ]]; then
     if [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'org\.jetbrains\.compose|androidx\.compose' "$project_root/build.gradle.kts" 2>/dev/null; then module="jetpack-compose"
     elif [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'org\.jetbrains\.kotlin\.multiplatform|kotlin\("multiplatform"\)' "$project_root/build.gradle.kts" 2>/dev/null; then module="kotlin-multiplatform"
-    elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/kotlin &>/dev/null 2>&1; then module="spring"
-    elif [[ -f "$project_root/build.gradle.kts" ]] && ls "$project_root"/src/main/java &>/dev/null 2>&1; then module="spring"
+    elif [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle.kts" 2>/dev/null; then module="spring"
+    elif [[ -f "$project_root/build.gradle" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle" 2>/dev/null; then module="spring"
     elif [[ -f "$project_root/angular.json" ]]; then module="angular"
     elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/next.config.* &>/dev/null 2>&1; then module="nextjs"
     elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/svelte.config.* &>/dev/null 2>&1; then module="sveltekit"
@@ -107,12 +107,16 @@ detect_module() {
     elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then
       # Vue and Svelte already handled above; remaining Vite projects default to react
       module="react"
+    # Bare package.json defaults to express for linter module selection (intentional —
+    # detect-project-type.sh requires explicit evidence, but engine.sh needs a module for rules)
     elif [[ -f "$project_root/package.json" ]]; then module="express"
-    elif [[ -f "$project_root/Cargo.toml" ]]; then module="axum"
+    # Rust/Python: require framework evidence to avoid false positives. Projects without
+    # a recognized framework get no module — only language-level Layer 1 rules apply.
+    elif [[ -f "$project_root/Cargo.toml" ]] && grep -q 'axum' "$project_root/Cargo.toml" 2>/dev/null; then module="axum"
     elif [[ -f "$project_root/go.mod" ]] && grep -q 'gin-gonic/gin' "$project_root/go.mod" 2>/dev/null; then module="gin"
     elif [[ -f "$project_root/go.mod" ]]; then module="go-stdlib"
     elif [[ -f "$project_root/manage.py" ]]; then module="django"
-    elif [[ -f "$project_root/pyproject.toml" ]]; then module="fastapi"
+    elif [[ -f "$project_root/pyproject.toml" ]] && grep -q 'fastapi' "$project_root/pyproject.toml" 2>/dev/null; then module="fastapi"
     elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
     elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swiftui"
     elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="embedded"

@@ -216,7 +216,7 @@ If the test command is not configured or fails to start, log a WARNING and skip.
 Score all findings using the unified formula from `scoring.md`:
 
 ```
-score = 100 - (20 * CRITICAL_COUNT) - (5 * WARNING_COUNT) - (2 * INFO_COUNT)
+score = max(0, 100 - (20 * CRITICAL_COUNT) - (5 * WARNING_COUNT) - (2 * INFO_COUNT))
 ```
 
 Determine verdict:

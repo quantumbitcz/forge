@@ -8,15 +8,15 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
-| 0 | PREFLIGHT | inline + `pl-130-docs-discoverer` | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered |
+| 0 | PREFLIGHT | inline + `pl-130-docs-discoverer` + conditional: `pl-140-deprecation-refresh`, `pl-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/pipeline-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established |
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `pl-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
-| 3 | VALIDATE | `pl-210-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user) |
-| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created on a unique branch; working tree clean | All tasks completed inside worktree (or failed after max retries) |
+| 3 | VALIDATE | `pl-210-validator` + conditional: `pl-250-contract-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user); cross-repo contracts validated if applicable |
+| 4 | IMPLEMENT | `pl-310-scaffolder` + `pl-300-implementer` + conditional: `pl-320-frontend-polisher` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created on a unique branch; working tree clean | All tasks completed inside worktree (or failed after max retries) |
 | 5 | VERIFY | inline (Phase A) + `pl-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `pl-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `pl-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
-| 8 | SHIP | `pl-600-pr-builder` | `SHIPPING` | Documentation done | PR created and presented to user; worktree merged and cleaned up |
+| 8 | SHIP | `pl-600-pr-builder` + conditional: `pl-650-preview-validator`, `infra-deploy-verifier` | `SHIPPING` | Documentation done | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `pl-700-retrospective` + `pl-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
 **Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails.
@@ -475,7 +475,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | Plan revision | 3 VALIDATE | 2 PLAN | REVISE verdict | `validation_retries` | `validation.max_validation_retries` (default: 2) |
 | Build/lint fix | 5 VERIFY (Phase A) | 5 VERIFY (Phase A) | Build or lint failure | `verify_fix_count` | `implementation.max_fix_loops` (default: 3) |
 | Test fix | 5 VERIFY (Phase B) | 4 IMPLEMENT (targeted) | Test failure | `test_cycles` | `test_gate.max_test_cycles` (default: 2) |
-| Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2) |
+| Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2; effective default: 1 when convergence active) |
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 

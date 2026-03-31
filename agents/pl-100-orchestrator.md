@@ -1215,7 +1215,7 @@ For projects where `state.json.components` is populated, the quality gate dispat
 3. **Backend-scoped review agents** (`architecture-reviewer`, `backend-performance-reviewer`): dispatched with only the backend component's changed files and its convention stack. They do not review frontend or infra files.
 4. **Frontend-scoped review agents** (`frontend-reviewer`, `frontend-performance-reviewer`): dispatched with only the frontend component's changed files and its convention stack.
 5. **Cross-cutting review agents** (`security-reviewer`, and any agent without an explicit component scope in config): dispatched with the full changed file list across all components.
-6. **Unified scoring:** all findings from all review agents are merged and scored as a single pool using the standard formula (`100 - 20*CRITICAL - 5*WARNING - 2*INFO`). There is one score and one verdict per review cycle — not per component. This keeps escalation and oscillation detection simple.
+6. **Unified scoring:** all findings from all review agents are merged and scored as a single pool using the standard formula (`max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`). There is one score and one verdict per review cycle — not per component. This keeps escalation and oscillation detection simple.
 7. **Finding annotation:** each finding in stage notes includes `component: {name}` for traceability during fix cycles and retrospective analysis.
 
 For **single-component projects**, this section is skipped — batch dispatch proceeds as documented in 9.1.
@@ -1371,6 +1371,17 @@ If `preview.enabled` is `true` in `dev-pipeline.local.md` and the PR was created
 5. If verdict is PASS or CONCERNS: proceed to user response
 
 If `preview.enabled` is not configured or `false`: skip preview validation.
+
+### Infrastructure Deployment Verification (Conditional)
+
+If any component has `framework: k8s` or `container_orchestration:` config in `dev-pipeline.local.md`:
+
+1. Dispatch `infra-deploy-verifier` with: changed manifests, deployment target, container images, Helm charts
+2. `infra-deploy-verifier` performs tiered verification: static analysis (lint, template) → container build → cluster validation (if available)
+3. If verdict is FAIL: include findings in user presentation, recommend manifest fixes
+4. If verdict is PASS or CONCERNS: proceed
+
+If no infrastructure components are configured: skip infrastructure verification.
 
 ### User Response
 

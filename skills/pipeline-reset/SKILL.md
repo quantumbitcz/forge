@@ -20,6 +20,9 @@ Clear the pipeline run state so you can start fresh.
    1. If `.pipeline/docker-compose.neo4j.yml` exists:
       - Run `docker compose -f .pipeline/docker-compose.neo4j.yml down -v` to stop container and remove volume
       - This prevents orphaned Docker containers and volumes
+   2. If `.pipeline/worktree` exists and is a git worktree:
+      - Run `git worktree remove .pipeline/worktree --force` to cleanly remove the worktree
+      - This prevents dangling worktree entries in `.git/worktrees/`
 
    - Remove `.pipeline/` directory: `rm -rf .pipeline/`
    - Report what was cleaned: state.json, checkpoint files, stage notes, reports

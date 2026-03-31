@@ -152,7 +152,7 @@ step1_inproject_references() {
     [[ -f "$f" ]] || continue
     while IFS= read -r line; do
       local ctx
-      ctx="$(printf '%s' "$line" | grep -oE 'context:\s*\S+' | awk '{print $2}' | head -1 || true)"
+      ctx="$(printf '%s' "$line" | grep -oE 'context:[[:space:]]*[^[:space:]]+' | awk '{print $2}' | head -1 || true)"
       if [[ -n "$ctx" && "$ctx" != "." ]]; then
         local abs
         abs="$(cd "$root" && cd "$ctx" 2>/dev/null && pwd || true)"
@@ -165,8 +165,8 @@ step1_inproject_references() {
   if [[ -d "$root/.github/workflows" ]]; then
     while IFS= read -r line; do
       local repo_ref
-      repo_ref="$(printf '%s' "$line" | grep -oE "repository:\s*['\"]?[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+" \
-        | sed "s/repository:\s*['\"]*//" | head -1 || true)"
+      repo_ref="$(printf '%s' "$line" | grep -oE "repository:[[:space:]]*['\"]?[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+" \
+        | sed "s/repository:[[:space:]]*['\"]*//" | head -1 || true)"
       if [[ -n "$repo_ref" ]]; then
         # Try to resolve to a local path via git remote matching
         local sibling_name
@@ -219,7 +219,7 @@ except: pass
   if [[ -f "$root/settings.gradle.kts" ]]; then
     while IFS= read -r line; do
       local inc
-      inc="$(printf '%s' "$line" | grep -oE 'includeBuild\s*\(["\x27][^"\x27]+["\x27]\)' \
+      inc="$(printf '%s' "$line" | grep -oE 'includeBuild[[:space:]]*\(["\x27][^"\x27]+["\x27]\)' \
         | grep -oE '"[^"]+"|'"'"'[^'"'"']+'"'" | tr -d '"'"'" || true)"
       if [[ -n "$inc" ]]; then
         local abs

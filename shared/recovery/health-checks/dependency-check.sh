@@ -195,7 +195,7 @@ case "$DEP" in
       echo "OK"
       exit 0
     fi
-    if timeout 5 git -C "$project_root" ls-remote --exit-code origin HEAD &>/dev/null; then
+    if portable_timeout 5 git -C "$project_root" ls-remote --exit-code origin HEAD &>/dev/null; then
       echo "INFO: Git remote reachable: $remote_url" >&2
       echo "OK"
     else

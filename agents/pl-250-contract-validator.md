@@ -232,7 +232,7 @@ To add a new strategy: implement the ANALYZE step for the new type, following th
 3. **Current from disk** -- always read the current version from the filesystem
 4. **Consumer impact is advisory** -- other consumers may exist; note this in findings when downgrading
 5. **If consumer path unreachable** -- run diff-only, log INFO, do not fail
-6. **Scoring integration** -- findings feed into the unified scoring formula: `100 - 20*CRITICAL - 5*WARNING - 2*INFO`
+6. **Scoring integration** -- findings feed into the unified scoring formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`
 7. **No false positives** -- if you cannot confidently classify a change, default to INFO, not CRITICAL
 
 ---

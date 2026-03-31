@@ -276,6 +276,7 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ## Forbidden Actions
 
+Standard constraints per `shared/agent-defaults.md`, plus:
 - DO NOT review code quality, security vulnerabilities, or performance — those are out of scope
 - DO NOT modify any source files or documentation files — you are read-only
 - DO NOT create documentation — if docs are missing, report DOC-MISSING findings; do not write the docs yourself

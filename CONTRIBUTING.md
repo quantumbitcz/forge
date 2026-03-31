@@ -77,9 +77,11 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
    modules/frameworks/{name}/
      conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
      local-template.md           # Project config template (YAML frontmatter, using components: structure)
-     pipeline-config-template.md # Runtime config template (must include total_retries_max and oscillation_tolerance)
+     pipeline-config-template.md # Runtime config template (must include total_retries_max, oscillation_tolerance, and convergence section)
      rules-override.json         # Module-specific check engine overrides
      known-deprecations.json     # Registry of deprecated APIs (schema v2 with applies_from/removed_in/applies_to fields, seed with 5-15 entries)
+     variants/{language}.md      # Optional language-specific overrides
+     testing/{test-framework}.md # Optional testing framework bindings
      scripts/                    # Optional verification scripts
      hooks/                      # Optional guard hooks
    ```
@@ -149,9 +151,10 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 ## Pull Request Process
 
 1. Create a branch and make your changes
-2. Run the test suite and verify all tests pass:
+2. Run the structural checks and the full test suite:
    ```bash
-   ./tests/run-all.sh
+   ./tests/validate-plugin.sh          # Quick structural checks (~2s)
+   ./tests/run-all.sh                  # Full test suite (~30s)
    ```
 3. Verify agent frontmatter is valid YAML
 4. Verify scripts are executable and have shebang lines

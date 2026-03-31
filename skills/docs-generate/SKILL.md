@@ -53,7 +53,7 @@ Multiple `--type` flags may be combined. `--from-code` applies as a scope filter
 ### Step 2: Run Discovery
 
 - If `.pipeline/docs-index.json` exists and was last modified less than 1 hour ago → use it directly (skip re-discovery).
-- Otherwise → dispatch `pl-130-docs-discoverer` to scan the codebase and produce a fresh `docs-index.json`.
+- Otherwise → use the Agent tool to dispatch `pl-130-docs-discoverer` to scan the codebase and produce a fresh `docs-index.json`.
 
 ### Step 3: Handle Arguments
 
@@ -91,7 +91,7 @@ Continue to the generation step once the user has reviewed all MEDIUM items.
 
 #### `--all` or `--type <type>`
 
-Dispatch `pl-350-docs-generator` in standalone mode with:
+Use the Agent tool to dispatch `pl-350-docs-generator` in standalone mode with:
 - `mode: standalone` (no pipeline state, no worktree)
 - `types`: the requested type(s), or all types if `--all`
 - `framework`: detected framework (or `null` if unknown)

@@ -67,11 +67,18 @@ if $has_package_json; then
   elif [[ -f "$DIR/angular.json" ]]; then
     framework="angular"
     language="typescript"
+  elif [[ -f "$DIR/nest-cli.json" ]]; then
+    type="backend"
+    framework="nestjs"
+  elif grep -qE '"express"' "$DIR/package.json" 2>/dev/null; then
+    type="backend"
+    framework="express"
   else
-    # Could still be a backend Node project — check for src/main pattern
-    if [[ -d "$DIR/src/main" ]]; then
+    # Could still be a backend Node project — check for src/main pattern or server-like markers
+    # Fastify/Koa/Hapi mapped to express (closest available framework module)
+    if [[ -d "$DIR/src/main" ]] || grep -qE '"fastify"|"koa"|"hapi"' "$DIR/package.json" 2>/dev/null; then
       type="backend"
-      framework="node"
+      framework="express"
     fi
   fi
 fi
@@ -163,12 +170,16 @@ elif $has_requirements; then
 elif $has_go_mod; then
   type="backend"
   language="go"
-  framework="go-stdlib"
+  if grep -q 'gin-gonic/gin' "$DIR/go.mod" 2>/dev/null; then
+    framework="gin"
+  else
+    framework="go-stdlib"
+  fi
 fi
 
 # ASP.NET / .NET backend
 if [[ "$type" == "unknown" ]]; then
-  if ls "$DIR"/*.csproj &>/dev/null 2>&1 || [[ -f "$DIR"/*.sln ]] 2>/dev/null || ls "$DIR"/*.sln &>/dev/null 2>&1; then
+  if ls "$DIR"/*.csproj &>/dev/null 2>&1 || ls "$DIR"/*.sln &>/dev/null 2>&1; then
     type="backend"
     framework="aspnet"
     language="csharp"
@@ -269,7 +280,7 @@ fi
 # Build code_quality JSON array
 code_quality_json="["
 first=true
-for tool in "${detected_code_quality[@]}"; do
+for tool in ${detected_code_quality[@]+"${detected_code_quality[@]}"}; do
   $first || code_quality_json+=","
   code_quality_json+="\"$tool\""
   first=false

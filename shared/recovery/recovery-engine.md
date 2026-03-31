@@ -135,8 +135,9 @@ An external service or tool that the pipeline depends on is unavailable.
 - Docker daemon not running (`Cannot connect to the Docker daemon`)
 - Database unreachable (`connection refused` on DB port)
 - GitHub API unreachable (`gh` command fails with network error)
-- MCP server not responding
 - npm/gradle registry unreachable
+
+**Exclusion:** MCP server failures (`MCP_UNAVAILABLE`) are NOT classified here — they are handled inline by agents per `error-taxonomy.md`. If an unclassified error's stderr mentions MCP, check whether it is a pre-classified `MCP_UNAVAILABLE` before applying this heuristic.
 
 **Strategy:** `dependency-health`
 

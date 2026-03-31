@@ -29,6 +29,7 @@ State transitions:
 
 Key behaviors:
 
+- **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `pl-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
 - **Phase 1 inner cap** is `max_test_cycles`, managed by `pl-500-test-gate`. The convergence engine tracks `total_iterations` across both phases.
@@ -81,16 +82,20 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
         -> safety_gate_passed = true
         -> CONVERGED, proceed to DOCS (Stage 7)
       ELSE:
-        -> transition back to "correctness", reset phase_iterations to 0
+        -> safety_gate_failures += 1
+        -> IF safety_gate_failures >= 2: ESCALATE (cross-phase oscillation detected)
+        -> ELSE: transition back to "correctness", reset phase_iterations to 0
         -> increment total_iterations
 ```
 
 **Global budget interaction:** Every `total_iterations` increment also increments `state.json.total_retries`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of convergence state.
 
-**Score escalation ladder** (applies when Phase 2 converges below target):
-- Score 95-99: proceed quietly to safety gate
-- Score 80-94: proceed with CONCERNS verdict, findings preserved in stage notes
-- Score < 80: escalate to user
+**Consecutive Dip Rule interaction:** The quality gate's per-cycle Consecutive Dip Rule (see `scoring.md`) operates within a single convergence iteration. If two consecutive inner cycles show score dips, the quality gate escalates *within* that iteration. The convergence engine's `REGRESSING` state detects dips *across* iterations (via `oscillation_tolerance`). Both mechanisms are complementary: the inner rule catches intra-iteration oscillation, the outer state catches inter-iteration regression.
+
+**Score escalation ladder** (applies when Phase 2 converges below target via PLATEAUED):
+- Score >= `pass_threshold` (default 80): proceed to safety gate with PASS verdict. Findings preserved in stage notes. Sub-band guidance: 95-99 = no follow-up tickets; 80-94 = architectural WARNINGs get follow-up tickets.
+- Score >= `concerns_threshold` AND < `pass_threshold` (default 60-79): CONCERNS verdict. Full findings posted. Escalate to user for guidance before proceeding.
+- Score < `concerns_threshold` (default < 60): FAIL verdict. Escalate to user. Recommend abort or replan.
 
 ## Configuration
 
@@ -152,6 +157,7 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
       }
     ],
     "safety_gate_passed": false,
+    "safety_gate_failures": 0,
     "unfixable_findings": []
   }
 }
@@ -169,6 +175,7 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 | `convergence_state` | `"IMPROVING"` \| `"PLATEAUED"` \| `"REGRESSING"` | Current convergence state |
 | `phase_history` | array | Append-only log of completed phases for retrospective analysis |
 | `safety_gate_passed` | boolean | Whether the final VERIFY after Phase 2 succeeded |
+| `safety_gate_failures` | integer | Consecutive safety gate failures. Escalate at >= 2 (cross-phase oscillation). Resets to 0 on safety gate pass. |
 | `unfixable_findings` | array | Findings that survived all iterations (see format below) |
 
 **Unfixable finding format:**

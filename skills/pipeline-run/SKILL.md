@@ -1,6 +1,6 @@
 ---
 name: pipeline-run
-description: Run the full development pipeline for a story or feature. Accepts a description or --from=<stage> to resume.
+description: Run the full development pipeline for a story or feature. Accepts --from=<stage> to resume, --dry-run for PREFLIGHT→VALIDATE only, or --spec <path> for shaped specs.
 ---
 
 # /pipeline-run — Pipeline Entry Point
@@ -9,13 +9,10 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
 ## Instructions
 
-1. **Parse input**: The user's argument (everything after `/pipeline-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". Check for an optional `--from=<stage>` flag (e.g., `--from=implement`) which signals the orchestrator to resume from that stage.
-
-   Check for a `--spec <path>` flag. If present, the path points to a shaped spec file (produced by `/pipeline-shape`). Pass it to the orchestrator:
-
-   > Execute the full development pipeline for spec: `{spec_path}`
-   >
-   > Available MCPs: `{detected_mcps}`
+1. **Parse input**: The user's argument (everything after `/pipeline-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". Check for optional flags:
+   - `--from=<stage>` (e.g., `--from=implement`) — resume from that stage
+   - `--dry-run` — run PREFLIGHT through VALIDATE only, no implementation or file changes
+   - `--spec <path>` — use a shaped spec file (produced by `/pipeline-shape`). When present, pass it to the orchestrator with: `Execute the full development pipeline for spec: {spec_path}`
 
 2. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
 

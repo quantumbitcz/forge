@@ -1,6 +1,6 @@
 # Error Taxonomy
 
-Standard error classification for all pipeline agents. Every error reported to the orchestrator or recovery engine should use this format.
+Standard error classification for all pipeline agents (21 types). Every error reported to the orchestrator or recovery engine should use this format.
 
 ## Error Format
 
@@ -34,7 +34,8 @@ When reporting errors, agents should structure them as:
 | LOCK_FILE_CONFLICT | Lock file (yarn.lock, Cargo.lock) divergence or corruption | Yes | resource-cleanup |
 | FLAKY_TEST | Test passes on re-run after initial failure | Yes | transient-retry |
 | VERSION_MISMATCH | Required tool/runtime version not met (e.g., Java 8 found, Java 11+ required) | No | none (user must fix) |
-| DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `pl-140-deprecation-refresh` | Maybe | graceful-stop (log WARNING, do not block pipeline) |
+| DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `pl-140-deprecation-refresh` | N/A | none (inline handling: log WARNING in stage notes, do not block pipeline, do not invoke recovery engine). Retrospective tracks accumulation. |
+| WORKTREE_FAILURE | Worktree creation, branch collision, or stale worktree cleanup failed | Yes | resource-cleanup |
 | BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.0) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
 
 ## Usage by Agents
@@ -76,15 +77,15 @@ When multiple errors co-occur in a stage, determine outcome by this severity ord
 4. `VERSION_MISMATCH` — required tool/runtime version not met
 5. `STATE_CORRUPTION` — pipeline integrity
 6. `DEPENDENCY_MISSING` — required tool absent
-7. `GIT_CONFLICT` / `LOCK_FILE_CONFLICT` — version control / lock file integrity
+7. `GIT_CONFLICT` / `LOCK_FILE_CONFLICT` / `WORKTREE_FAILURE` — version control / lock file / worktree integrity
 8. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
 9. `TOOL_FAILURE` — tool-level
 10. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
 11. `FLAKY_TEST` — non-deterministic test failure (transient)
-12. `NETWORK_UNAVAILABLE` — possibly transient
-13. `MCP_UNAVAILABLE` — optional, graceful degradation
-14. `DEPRECATION_WARNING` — informational, non-blocking (logged for retrospective)
-15. `BUDGET_EXHAUSTED` — recovery system limit reached
+12. `BUDGET_EXHAUSTED` — recovery system limit reached (no further recovery possible)
+13. `NETWORK_UNAVAILABLE` — possibly transient
+14. `MCP_UNAVAILABLE` — optional, graceful degradation
+15. `DEPRECATION_WARNING` — informational, non-blocking (logged for retrospective)
 16. `PATTERN_MISSING` — planner error, non-blocking
 
 The highest-severity non-recoverable error determines stage outcome. Recoverable errors are attempted via recovery engine in order.

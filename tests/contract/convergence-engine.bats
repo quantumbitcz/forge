@@ -98,3 +98,21 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
   grep -qi "safety.*gate.*fail.*correctness\|back to.*correctness\|transition.*back.*correctness\|routes to Phase 1" "$ENGINE" \
     || fail "Safety gate failure -> correctness transition not documented"
 }
+
+# ---------------------------------------------------------------------------
+# 11. Safety gate failures counter for cross-phase oscillation prevention
+# ---------------------------------------------------------------------------
+@test "convergence-engine: safety gate failures counter documents escalation at >= 2" {
+  grep -q "safety_gate_failures" "$ENGINE" \
+    || fail "safety_gate_failures counter not documented"
+  grep -qi "oscillation\|>= 2\|ESCALATE" "$ENGINE" \
+    || fail "Cross-phase oscillation escalation not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 12. analysis_pass definition documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: analysis_pass definition documented" {
+  grep -q "analysis_pass" "$ENGINE" \
+    || fail "analysis_pass definition not documented"
+}

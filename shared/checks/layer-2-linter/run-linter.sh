@@ -29,14 +29,17 @@ PRIMARY=(
 )
 FALLBACK=(
   [kotlin]=ktlint      [java]=spotbugs     [typescript]=biome
-  [python]=pylint      [c]=cppcheck
+  [python]=pylint      [c]=cppcheck        [go]=golangci-lint
 )
 
 # Resolve the linter binary name for command -v checks
 resolve_bin() {
   case "$1" in
-    clippy) echo "cargo" ;;
-    *)      echo "$1" ;;
+    clippy)        echo "cargo" ;;
+    go-vet)        echo "go" ;;
+    dotnet-format) echo "dotnet" ;;
+    checkstyle)    echo "java" ;;
+    *)             echo "$1" ;;
   esac
 }
 

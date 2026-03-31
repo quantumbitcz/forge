@@ -215,3 +215,20 @@ portable_sed() {
   tmp="$(pipeline_mktemp)" || { echo "portable_sed: failed to create temp file" >&2; return 1; }
   sed "$expr" "$file" > "$tmp" && mv "$tmp" "$file"
 }
+
+# ── timeout Compatibility ───────────────────────────────────────────────────
+
+# Cross-platform timeout wrapper. Uses GNU timeout, then macOS gtimeout
+# (from coreutils), then falls back to running without a timeout.
+# Usage: portable_timeout <seconds> <command> [args...]
+portable_timeout() {
+  local seconds="$1"; shift
+  if command -v timeout &>/dev/null; then
+    timeout "$seconds" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$seconds" "$@"
+  else
+    # No timeout available — run without time limit
+    "$@"
+  fi
+}

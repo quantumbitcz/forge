@@ -19,7 +19,7 @@ load "${PLUGIN_ROOT}/tests/lib/bats-assert/load"
 
 setup() {
   # Unique temp dir per test to avoid cross-test pollution
-  TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-dev-pipeline.XXXXXX")"
+  TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-dev-pipeline.XXXXXX")"
 
   # Dedicated bin dir for mock executables; prepended to PATH
   MOCK_BIN="${TEST_TEMP}/mock-bin"
@@ -49,11 +49,11 @@ create_temp_project() {
 
   case "${module}" in
     spring)
-      touch "${project_dir}/build.gradle.kts"
+      printf 'plugins { id("org.springframework.boot") }\n' > "${project_dir}/build.gradle.kts"
       mkdir -p "${project_dir}/src/main/kotlin"
       ;;
     spring-java)
-      touch "${project_dir}/build.gradle.kts"
+      printf 'plugins { id("org.springframework.boot") }\n' > "${project_dir}/build.gradle.kts"
       mkdir -p "${project_dir}/src/main/java"
       ;;
     react)
@@ -68,14 +68,14 @@ create_temp_project() {
       echo '{"name":"test-app","version":"0.0.1"}' > "${project_dir}/package.json"
       ;;
     axum)
-      printf '[package]\nname = "test-app"\nversion = "0.1.0"\nedition = "2021"\n' \
+      printf '[package]\nname = "test-app"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\naxum = "0.7"\n' \
         > "${project_dir}/Cargo.toml"
       ;;
     go-stdlib)
       printf 'module example.com/test-app\n\ngo 1.21\n' > "${project_dir}/go.mod"
       ;;
     fastapi)
-      printf '[project]\nname = "test-app"\nversion = "0.1.0"\n' \
+      printf '[project]\nname = "test-app"\nversion = "0.1.0"\ndependencies = ["fastapi>=0.100"]\n' \
         > "${project_dir}/pyproject.toml"
       ;;
     vapor)

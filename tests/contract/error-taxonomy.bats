@@ -13,9 +13,9 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. All 20 error types are defined
+# 2. All 21 error types are defined
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: all 20 error types are defined" {
+@test "error-taxonomy: all 21 error types are defined" {
   local types=(
     TOOL_FAILURE
     BUILD_FAILURE
@@ -36,6 +36,7 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
     FLAKY_TEST
     VERSION_MISMATCH
     DEPRECATION_WARNING
+    WORKTREE_FAILURE
     BUDGET_EXHAUSTED
   )
   for t in "${types[@]}"; do

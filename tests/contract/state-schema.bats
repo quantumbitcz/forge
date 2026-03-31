@@ -122,8 +122,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # convergence required fields documented
 # ---------------------------------------------------------------------------
-@test "state-schema: convergence fields documented (phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed unfixable_findings)" {
-  local fields=(phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed unfixable_findings)
+@test "state-schema: convergence fields documented (phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed safety_gate_failures unfixable_findings)" {
+  local fields=(phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed safety_gate_failures unfixable_findings)
   for field in "${fields[@]}"; do
     grep -q "convergence\.${field}\|convergence.*${field}" "$STATE_SCHEMA" \
       || fail "convergence field $field not documented in state-schema.md"

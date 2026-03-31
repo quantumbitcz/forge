@@ -19,16 +19,19 @@ Run security vulnerability scanners appropriate for the current module.
 
    | Framework | Scanner Command | Fallback |
    |-----------|----------------|----------|
-   | react, nextjs, sveltekit, express | `npm audit --json` or `bun audit` | `npx auditjs` |
+   | react, nextjs, sveltekit, express, angular, nestjs, vue, svelte | `npm audit --json` or `pnpm audit --json` or `bun audit` | `npx auditjs` |
    | spring (kotlin or java) | `./gradlew dependencyCheckAnalyze` | Manual check of build.gradle.kts |
    | fastapi, django | `pip-audit` or `safety check` | `pip list --outdated` |
    | axum | `cargo audit` | `cargo deny check` |
    | go-stdlib, gin | `govulncheck ./...` | `go list -m -json all` |
    | swiftui, vapor | Manual review of Package.resolved | — |
-   | jetpack-compose, kotlin-multiplatform | `./gradlew dependencyCheckAnalyze` | Manual check of build.gradle.kts |
+   | jetpack-compose, kotlin-multiplatform, scala (sbt) | `./gradlew dependencyCheckAnalyze` or `sbt dependencyCheck` | Manual check of build file |
    | aspnet | `dotnet list package --vulnerable` | Manual check of .csproj |
    | embedded | `cppcheck --enable=all src/` | — |
    | k8s | `trivy config .` or `kubeaudit all` | `helm lint charts/` |
+   | ruby | `bundler-audit check` or `bundle audit` | `gem list --outdated` |
+   | php | `composer audit` or `local-php-security-checker` | `composer outdated` |
+   | elixir | `mix deps.audit` or `mix sobelow` | `mix hex.audit` |
 
 4. Aggregate results:
    ```

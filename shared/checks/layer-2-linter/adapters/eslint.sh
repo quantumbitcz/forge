@@ -76,17 +76,23 @@ with open(raw_path) as f:
     except json.JSONDecodeError:
         sys.exit(0)
 
+project_root = sys.argv[3] if len(sys.argv) > 3 else ''
+
 for entry in results:
     filepath = entry.get('filePath', '?')
+    # Convert absolute paths to project-relative per output-format.md
+    if project_root and filepath.startswith(project_root):
+        filepath = filepath[len(project_root):].lstrip('/')
     for msg in entry.get('messages', []):
         line = msg.get('line', 0)
         rule_id = msg.get('ruleId', '')
         eslint_sev = msg.get('severity', 1)
-        message = msg.get('message', '').replace('|', '-')
+        # Escape pipe characters per output-format.md (use \\| not replacement)
+        message = msg.get('message', '').replace('|', '\\|')
         severity = lookup_severity(rule_id, eslint_sev)
         category = map_category(rule_id)
         hint = f'eslint rule {rule_id}' if rule_id else 'eslint parse error'
         print(f'{filepath}:{line} | {category} | {severity} | {message} | {hint}')
-" "$SEVERITY_MAP" "$RAW"
+" "$SEVERITY_MAP" "$RAW" "$PROJECT_ROOT"
 
 exit 0

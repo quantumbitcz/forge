@@ -251,14 +251,14 @@ Key sections:
 The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
 
 ```bash
-# Run all tests (~332 tests, ~30s)
+# Run all tests (~357 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (34 checks, no bats needed)
+./tests/run-all.sh structural   # Plugin integrity (36 checks, no bats needed)
 ./tests/run-all.sh unit         # Shell script behavior (98 tests)
-./tests/run-all.sh contract     # Document contract compliance (136 tests)
-./tests/run-all.sh scenario     # Multi-script integration (64 tests)
+./tests/run-all.sh contract     # Document contract compliance (151 tests)
+./tests/run-all.sh scenario     # Multi-script integration (72 tests)
 ```
 
 ## Agents
@@ -494,7 +494,7 @@ dev-pipeline/
     (each framework contains: conventions.md, local-template.md,
      pipeline-config-template.md, rules-override.json,
      known-deprecations.json)
-  tests/                                # 4-tier test suite (~332 tests)
+  tests/                                # 4-tier test suite (~357 tests)
     run-all.sh                          #   Test runner (all tiers or individual)
     validate-plugin.sh                  #   Structural validation (no bats needed)
     fixtures/                           #   Test fixture data

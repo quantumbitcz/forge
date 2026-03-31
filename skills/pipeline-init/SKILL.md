@@ -307,7 +307,7 @@ This step always runs — no user prompt. It takes under 5 seconds.
    done
    ```
 
-3. **Parse and present findings.** Count by severity and category. Calculate quality score: `100 - 20*CRITICAL - 5*WARNING - 2*INFO`.
+3. **Parse and present findings.** Count by severity and category. Calculate quality score: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`.
 
    Display:
    ```
@@ -334,7 +334,7 @@ This step always runs — no user prompt. It takes under 5 seconds.
 
 4. **Save report** to `.pipeline/baseline-report.md` with all findings grouped by severity. This file is always written regardless of what the user chooses next.
 
-   Map category prefixes: `SEC-*` → Security, `CONV-*` → Conventions, `QUAL-*` → Code Quality, `PERF-*` → Performance, `ARCH-*`/`DESIGN-*` → Architecture.
+   Map category prefixes: `ARCH-*` → Architecture, `SEC-*` → Security, `PERF-*` → Performance, `TEST-*` → Test Quality, `CONV-*` → Conventions, `DOC-*` → Documentation, `QUAL-*` → Code Quality, `FE-PERF-*` → Frontend Perf, `APPROACH-*` → Approach, `A11Y-*` → Accessibility, `DEPS-*` → Dependencies, `COMPAT-*` → Compatibility. `SCOUT-*` findings have no deduction.
 
 #### Step 2: Deeper Analysis (optional)
 
@@ -410,33 +410,30 @@ If the user chooses to fix ([1] or [2]): address issues methodically — fix eac
 
 ---
 
-### Phase 5: RELATED REPOS (optional)
+### Phase 5: MANUAL RELATED REPOS (optional — only if Phase 2b found nothing)
+
+**Skip this phase entirely if Phase 2b already configured `related_projects:` in the config.** This phase only fires as a manual fallback.
 
 Ask the user: **"Does this project work with related repositories (e.g., frontend, backend, infrastructure, API contracts)? I can configure cross-repo validation."**
 
 If the user provides related repos:
 
 1. **Verify each path** exists and is a valid git repository.
-2. **Auto-detect role** for each repo:
-   - Contains `package.json` + UI framework → `frontend`
-   - Contains `build.gradle.kts` / `Cargo.toml` / `go.mod` / `pyproject.toml` → `backend`
-   - Contains `terraform/` / `pulumi/` / `helm/` / `k8s/` → `infrastructure`
-   - Contains OpenAPI spec → `contracts`
-3. **Store in config**: Add a `related_repos` section to `.claude/dev-pipeline.local.md`:
+2. **Auto-detect role** for each repo using the same stack-marker logic from Phase 1.
+3. **Store in config**: Add entries to the `related_projects:` section in `.claude/dev-pipeline.local.md` (same format as Phase 2b):
    ```yaml
-   related_repos:
-     - path: "../frontend-app"
-       role: frontend
-       module: react
-     - path: "../api-contracts"
-       role: contracts
-       openapi: "openapi.yaml"
+   related_projects:
+     frontend:
+       path: "/absolute/path/to/frontend-app"
+       repo: "github.com/org/frontend-app"
+       framework: react
+       detected_via: "manual"
    ```
-4. **Contract validation**: If an OpenAPI spec is found in a related contracts repo, add `contract_validation` config:
+4. **Contract validation**: If an OpenAPI spec is found in a related project, add `contract_validation` config:
    ```yaml
    contract_validation:
      enabled: true
-     spec_path: "../api-contracts/openapi.yaml"
+     spec_path: "/absolute/path/to/api-contracts/openapi.yaml"
      check_on: [VERIFY, REVIEW]
    ```
 

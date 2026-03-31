@@ -31,9 +31,9 @@ Run the pipeline's check engine in full review mode across the entire project to
    ```
    file:line | CATEGORY | SEVERITY | message | fix_hint
    ```
-   Collect all output lines. Count findings by severity (CRITICAL, WARNING, INFO) and by category prefix (SEC-*, CONV-*, QUAL-*, PERF-*, ARCH-*, DESIGN-*).
+   Collect all output lines. Count findings by severity (CRITICAL, WARNING, INFO) and by category prefix (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*, FE-PERF-*, APPROACH-*, A11Y-*, DEPS-*, COMPAT-*).
 
-5. **Calculate quality score:** Use the scoring formula: `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. Determine verdict: PASS (>= 80), CONCERNS (60-79), FAIL (< 60 or any CRITICAL).
+5. **Calculate quality score:** Use the scoring formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. Determine verdict: PASS (>= 80), CONCERNS (60-79), FAIL (< 60 or any CRITICAL).
 
 6. **Present the report:**
 
@@ -50,13 +50,20 @@ Run the pipeline's check engine in full review mode across the entire project to
    - INFO: {count}
 
    ### Findings by Category
-   | Category        | CRITICAL | WARNING | INFO |
-   |-----------------|----------|---------|------|
-   | Security        | {n}      | {n}     | {n}  |
-   | Conventions     | {n}      | {n}     | {n}  |
-   | Code Quality    | {n}      | {n}     | {n}  |
-   | Performance     | {n}      | {n}     | {n}  |
-   | Architecture    | {n}      | {n}     | {n}  |
+   | Category           | CRITICAL | WARNING | INFO |
+   |--------------------|----------|---------|------|
+   | Architecture       | {n}      | {n}     | {n}  |
+   | Security           | {n}      | {n}     | {n}  |
+   | Performance        | {n}      | {n}     | {n}  |
+   | Test Quality       | {n}      | {n}     | {n}  |
+   | Conventions        | {n}      | {n}     | {n}  |
+   | Documentation      | {n}      | {n}     | {n}  |
+   | Code Quality       | {n}      | {n}     | {n}  |
+   | Frontend Perf      | {n}      | {n}     | {n}  |
+   | Approach           | {n}      | {n}     | {n}  |
+   | Accessibility      | {n}      | {n}     | {n}  |
+   | Dependencies       | {n}      | {n}     | {n}  |
+   | Compatibility      | {n}      | {n}     | {n}  |
 
    ### Quality Score
    Score: {score}/100 ({verdict})
@@ -66,11 +73,19 @@ Run the pipeline's check engine in full review mode across the entire project to
    ```
 
    Map category prefixes to human-readable names:
+   - `ARCH-*` → Architecture
    - `SEC-*` → Security
-   - `CONV-*` → Conventions
-   - `QUAL-*` → Code Quality
    - `PERF-*` → Performance
-   - `ARCH-*`, `DESIGN-*` → Architecture
+   - `TEST-*` → Test Quality
+   - `CONV-*` → Conventions
+   - `DOC-*` → Documentation
+   - `QUAL-*` → Code Quality
+   - `FE-PERF-*` → Frontend Perf
+   - `APPROACH-*` → Approach
+   - `A11Y-*` → Accessibility
+   - `DEPS-*` → Dependencies
+   - `COMPAT-*` → Compatibility
+   - `SCOUT-*` → omit from table (no deduction, tracked separately)
 
 ## Important
 - Do NOT fix issues — only report them

@@ -82,7 +82,7 @@ This is a documentation-only plugin (no build step). To test changes:
 - Implement: `pl-300-implementer`, `pl-310-scaffolder`, `pl-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs (Stage 7): `pl-350-docs-generator`
 - Verify/Review: `pl-400-quality-gate`, `pl-500-test-gate`
-- Ship: `pl-600-pr-builder`, `pl-650-preview-validator`, `infra-deploy-verifier`
+- Ship: `pl-600-pr-builder`, `pl-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `pl-700-retrospective`, `pl-710-feedback-capture`, `pl-720-recap`
 
 **Review agents** (10, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
@@ -106,11 +106,11 @@ This is a documentation-only plugin (no build step). To test changes:
 
 Read source files for full details. Key facts:
 
-- **Scoring** (`scoring.md`): `100 - 20*CRITICAL - 5*WARNING - 2*INFO`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL. 13 shared category prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `FE-PERF-*`, `APPROACH-*`, `SCOUT-*` (no deduction), `A11Y-*`, `DEPS-*`, `COMPAT-*`. Agent-specific categories (`BE-PERF-*`, `FE-*`, `INFRA-*`, `CONTRACT-*`) defined in their respective agents. Component-aware deduplication: key is `(component, file, line, category)` in multi-component projects — same issue in different components is not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Convergence engine: two-phase iteration (correctness → perfection → safety gate) replaces hard-capped fix cycles. See `shared/convergence-engine.md`. Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
+- **Scoring** (`scoring.md`): `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL remaining after convergence exhaustion. 14 shared category prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `FE-PERF-*`, `APPROACH-*`, `SCOUT-*` (no deduction), `A11Y-*`, `DEPS-*`, `COMPAT-*`, `REVIEW-GAP`. Agent-specific categories (`BE-PERF-*`, `FE-*`, `INFRA-*`, `CONTRACT-*`) defined in their respective agents. Component-aware deduplication: key is `(component, file, line, category)` in multi-component projects — same issue in different components is not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Convergence engine: two-phase iteration (correctness → perfection → safety gate) replaces hard-capped fix cycles. See `shared/convergence-engine.md`. Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `pl-710-feedback-capture`.
 - **State schema** (`state-schema.md`): Version **2.0.0**. v2.0.0 is a clean break from v1.x — old state files are incompatible; use `/pipeline-reset` to clear them. v1.0.0 was a clean break from pre-1.0 schema versions. v1.1.0 was an additive extension of v1.0.0. State in `.pipeline/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when pl-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout).
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.0 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
-- **Error taxonomy** (`error-taxonomy.md`): 20 types, 16-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
+- **Error taxonomy** (`error-taxonomy.md`): 21 types, 16-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable.
 - **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (pl-400, pl-500, pl-600, pl-200, pl-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion — shared by all frontend agents.
 - **Learnings** (`learnings/`): Per-module files (frameworks, languages, testing frameworks, crosscutting layers) + JSON schemas (`rule-learning-schema.json`, `agent-effectiveness-schema.json`) for tracking check rule evolution and agent performance.
@@ -192,8 +192,8 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 ./tests/run-all.sh                  # Full suite (~30s)
 ./tests/run-all.sh structural       # 36 checks, no bats needed
 ./tests/run-all.sh unit             # 10 test files
-./tests/run-all.sh contract         # 15 test files
-./tests/run-all.sh scenario         # 10 test files
+./tests/run-all.sh contract         # 16 test files
+./tests/run-all.sh scenario         # 11 test files
 ./tests/lib/bats-core/bin/bats tests/unit/scoring.bats  # Single test file
 ```
 

@@ -1928,6 +1928,7 @@ MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent
 MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'backend-performance-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'backend-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
@@ -1996,6 +1997,7 @@ MATCH (a:Agent {name: 'pl-710-feedback-capture'}), (c:SharedContract {name: 'age
 MATCH (a:Agent {name: 'pl-720-recap'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'security-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'security-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'version-compat-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'version-compat-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'version-compat-reviewer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'version-compat-reviewer'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
@@ -2432,7 +2434,6 @@ CREATE (:Learnings {name: 'r2dbc', file_path: 'shared/learnings/r2dbc.md'});
 CREATE (:Learnings {name: 'rabbitmq', file_path: 'shared/learnings/rabbitmq.md'});
 CREATE (:Learnings {name: 'rancher', file_path: 'shared/learnings/rancher.md'});
 CREATE (:Learnings {name: 'react', file_path: 'shared/learnings/react.md'});
-CREATE (:Learnings {name: 'redis-cache', file_path: 'shared/learnings/redis-cache.md'});
 CREATE (:Learnings {name: 'redis-streams', file_path: 'shared/learnings/redis-streams.md'});
 CREATE (:Learnings {name: 'redis', file_path: 'shared/learnings/redis.md'});
 CREATE (:Learnings {name: 'rest', file_path: 'shared/learnings/rest.md'});
@@ -3303,10 +3304,6 @@ MATCH (l:Learnings {name: 'react'}), (m:LayerModule {name: 'react'}) CREATE (m)-
 MATCH (l:Learnings {name: 'react'}), (t:TestingFramework {name: 'react'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'react'}), (la:Language {name: 'react'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'react'}), (f:Framework {name: 'react'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
-MATCH (l:Learnings {name: 'redis-cache'}), (m:LayerModule {name: 'redis-cache'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
-MATCH (l:Learnings {name: 'redis-cache'}), (t:TestingFramework {name: 'redis-cache'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
-MATCH (l:Learnings {name: 'redis-cache'}), (la:Language {name: 'redis-cache'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
-MATCH (l:Learnings {name: 'redis-cache'}), (f:Framework {name: 'redis-cache'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'redis-streams'}), (m:LayerModule {name: 'redis-streams'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'redis-streams'}), (t:TestingFramework {name: 'redis-streams'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'redis-streams'}), (la:Language {name: 'redis-streams'}) CREATE (la)-[:HAS_LEARNINGS]->(l);

@@ -229,7 +229,7 @@ When checking whether an API is removed in the target runtime:
 
 ## 5. Finding Output Format
 
-Report each finding on one line in the unified format:
+Per `shared/checks/output-format.md`. Report each finding on one line in the unified format:
 
 ```
 file:line | QUAL-COMPAT | SEVERITY | description | fix_hint
@@ -311,6 +311,7 @@ Return EXACTLY this structure. No preamble or explanation outside the format.
 
 ## 9. Forbidden Actions
 
+Standard constraints per `shared/agent-defaults.md`, plus:
 - DO NOT modify source code -- report findings only
 - DO NOT modify shared contracts (`scoring.md`, `stage-contract.md`, `state-schema.md`)
 - DO NOT modify conventions files or deprecation registries
