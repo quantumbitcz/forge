@@ -64,3 +64,11 @@ Applied by the retrospective when updating this config:
 #   pass_threshold: 80
 #   concerns_threshold: 60
 #   oscillation_tolerance: 5  # Score regression tolerance for quality cycles (0-20)
+
+# Convergence engine (defaults work for most projects)
+# convergence:
+#   max_iterations: 8       # Hard safety valve across both phases (3-20)
+#   plateau_threshold: 2    # Score delta <= this = "no progress" (0-10)
+#   plateau_patience: 2     # Consecutive plateaus before convergence (1-5)
+#   target_score: 100       # Score target (80-100, must be >= pass_threshold)
+#   safety_gate: true       # Run VERIFY after Phase 2

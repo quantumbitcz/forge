@@ -207,17 +207,11 @@ After scoring, append the score to the quality gate report for the orchestrator 
 
 ## 8. Aim for 100
 
-The quality gate always returns ALL findings to the implementer -- CRITICALs, WARNINGs, and INFOs -- not just blocking issues. The implementer fixes all fixable issues. After fixes, re-score.
+The quality gate always returns ALL findings — CRITICALs, WARNINGs, and INFOs — not just blocking issues. The implementer fixes all fixable issues.
 
-The fix-and-rescore cycle continues until one of these conditions is met:
+The **convergence engine** (`shared/convergence-engine.md`) decides whether to iterate based on score trajectory (improving, plateaued, or regressing). The quality gate does NOT manage fix cycles itself — it scores, returns findings, and the orchestrator's convergence engine determines the next action.
 
-1. **Score = 100**: All findings resolved. Proceed immediately.
-2. **Score < 100 but all remaining findings are unfixable**: False positives, intentional trade-offs, or issues requiring architectural changes beyond the task scope. Proceed with a note in stage notes explaining what was left and why.
-3. **Max cycles reached**: `quality_gate.max_review_cycles` from config (fallback: 2). Proceed with current score. Remaining issues logged for retrospective.
-
-### Unfixable Finding Documentation
-
-When a finding survives all fix cycles, document it in the quality gate report AND post to Linear (if available) with this structure:
+When the convergence engine declares convergence below target (PLATEAUED), document each unfixable finding:
 
 #### Unfixed Finding: {CATEGORY-CODE}
 
@@ -239,26 +233,13 @@ For each unfixed finding, determine whether a follow-up Linear ticket should be 
 
 ## 9. Fix Cycles
 
-When fix cycles are needed:
+Fix cycles are managed by the convergence engine (`shared/convergence-engine.md`), not by this agent. When the orchestrator re-invokes this gate after a fix cycle:
 
-1. Send ALL findings (not just CRITICALs) to the orchestrator for `pl-300-implementer` dispatch
-2. After implementer fixes, the orchestrator re-invokes this gate with updated changed files
-3. Re-run from the beginning: dispatch batches, run inline checks, deduplicate, score
-4. Each cycle increments `quality_cycles` in pipeline state
-5. Max cycles: `quality_gate.max_review_cycles` from config
+1. Re-run from the beginning: dispatch batches, run inline checks, deduplicate, score
+2. On re-run, dispatch all batch agents again (not just the ones that found issues). Fixes may introduce new problems that other agents catch.
+3. Return the full report to the orchestrator — the convergence engine evaluates the score trajectory and decides whether to iterate again.
 
-On re-run after fixes, dispatch all batch agents again (not just the ones that found issues). Fixes may introduce new problems that other agents catch.
-
-### Oscillation Detection
-
-Track quality score across fix cycles. If the score DECREASES between consecutive cycles (e.g., cycle 1: 85 → cycle 2: 78):
-
-1. Flag as "quality regression during fix cycle"
-2. Post to Linear (if available): "Fix cycle {N} introduced regression: {score_before} → {score_after}. New findings: {list}"
-3. Escalate to user using the standard escalation format — do not continue fixing if fixes are making things worse
-4. Include in the report: which files were modified in the fix cycle and which new findings appeared
-
-This prevents the scenario where an implementer "fixes" one issue but introduces two new ones, creating an infinite degradation loop.
+The quality gate's `max_review_cycles` config serves as the inner cap per convergence iteration (how many re-dispatches within one iteration). The convergence engine manages the outer loop.
 
 ---
 

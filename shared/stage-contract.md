@@ -255,6 +255,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Build passes, lint passes, all tests pass.
 
+**Convergence role:** Stage 5 serves as Phase 1 (Correctness) of the convergence engine. The orchestrator enters Phase 1 after IMPLEMENT completes. When VERIFY passes (tests green), the convergence engine transitions to Phase 2 (Perfection → Stage 6). Stage 5 is also the safety gate — re-invoked after Phase 2 converges to catch regressions. See `shared/convergence-engine.md`.
+
 **Phase A failure escalation:** If `verify_fix_count >= max_fix_loops`, the pipeline escalates to the user. Each Phase A retry increments `total_retries`. Escalation format:
 
 > "Build/lint fix loop exhausted ({verify_fix_count}/{max_fix_loops}). Last error: {error_summary}. Options: (1) Fix manually and resume from Stage 5, (2) Re-plan from Stage 2, (3) Abort pipeline."
@@ -280,14 +282,12 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 2. Run `quality_gate.inline_checks` (scripts or skills).
 3. Deduplicate findings by `(file, line, category)` -- keep highest severity (see `scoring.md`).
 4. Score using formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`.
-5. If score < 100 and cycles remaining: send ALL findings to implementer, fix cycle, rescore. Increment `quality_cycles`.
-6. **Score Oscillation Handling** — track `score_history[]` in state.json. After each cycle (see `scoring.md` "Score Oscillation Handling" for full algorithm):
-   1. If < 2 entries: no check.
-   2. delta = current - previous.
-   3. delta >= 0: continue (score improved or held).
-   4. abs(delta) <= `oscillation_tolerance` (default 5): minor regression, allow one more cycle, log WARNING.
-   5. abs(delta) > `oscillation_tolerance`: escalate to user immediately.
-7. Determine verdict from final score.
+5. Return score and findings to the orchestrator. The **convergence engine** decides whether to iterate (see `shared/convergence-engine.md`):
+   - Score = `target_score` → transition to safety gate (VERIFY one more time)
+   - Score improving → dispatch IMPLEMENT with findings, then REVIEW again
+   - Score plateaued → declare convergence, proceed to safety gate with documented unfixables
+   - Score regressing beyond `oscillation_tolerance` → escalate to user
+6. **Score Oscillation Handling** — integrated into convergence engine's REGRESSING state detection. See `convergence-engine.md` algorithm.
 
 **Outputs:**
 - Quality verdict: PASS, CONCERNS, or FAIL
@@ -295,13 +295,13 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - Score history (score per cycle)
 - `stage_6_notes_{storyId}.md` -- review report
 
-**Exit condition (PASS):** Score >= 80, no CRITICALs. Proceed to Stage 7.
+**Exit condition (converged at target):** Score = `target_score` (default 100) and safety gate passed. Proceed to Stage 7.
 
-**Exit condition (CONCERNS):** Score 60-79, no CRITICALs. Proceed to Stage 7 with findings preserved in notes.
+**Exit condition (converged below target):** Score plateaued below target. Apply score escalation ladder: 95-99 proceed quietly, 80-94 proceed with CONCERNS, 60-79 escalate, <60 recommend abort. Safety gate must still pass.
 
-**On FAIL:** If cycles remain, loop: dispatch implementer with findings, return to review. If max cycles reached: escalate to user.
+**Exit condition (FAIL):** Any CRITICAL remaining after convergence exhaustion → escalate to user.
 
-**On fix cycle:** Loop back to Stage 4 context (implementer fixes), then re-verify (Stage 5), then re-review (Stage 6). Increment `quality_cycles`.
+**On fix cycle:** Convergence engine dispatches IMPLEMENT with findings, then REVIEW again. Increment `quality_cycles` (inner cap) and `convergence.total_iterations` (outer cap). See `shared/convergence-engine.md`.
 
 ---
 
@@ -478,6 +478,8 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2) |
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
+
+> **Convergence engine note:** The quality fix loop above describes the inner cycle (per convergence iteration). The outer loop is managed by the convergence engine with `convergence.max_iterations` (default: 8) as the hard cap and plateau detection as the normal exit. See `shared/convergence-engine.md`.
 
 ### Migration Mode
 
