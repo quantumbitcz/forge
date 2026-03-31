@@ -32,7 +32,7 @@ Key behaviors:
 - **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `pl-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
-- **Phase 1 inner cap** is `max_test_cycles`, managed by `pl-500-test-gate`. The convergence engine tracks `total_iterations` across both phases.
+- **Phase 1 inner cap** is `max_test_cycles`, enforced only for **test failures** (not build/lint failures). When tests fail, the convergence engine checks `phase_iterations >= max_test_cycles` (see algorithm ELSE branch). When build/lint fails (PHASE_A_FAILURE), only the global `max_iterations` cap applies — build failures are typically resolved in 1-2 attempts and don't need a separate inner cap. `pl-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
 - **Phase 2 inner cap** is `max_review_cycles`, managed by `pl-400-quality-gate`. When convergence is active, `max_review_cycles` defaults to 1 per convergence iteration -- the convergence engine handles the outer loop.
 
 ## Algorithm
@@ -43,14 +43,21 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
   MATCH phase:
 
     "correctness":
-      IF verify_result.tests_pass AND verify_result.analysis_pass:
+      IF verify_result is PHASE_A_FAILURE (build/lint failed before tests ran):
+        -> increment phase_iterations, increment total_iterations
+        -> IF total_iterations >= max_iterations: ESCALATE
+        -> ELSE: dispatch IMPLEMENT with build/lint errors, then VERIFY again
+        (analysis_pass is not evaluated — Phase B did not run)
+
+      ELSE IF verify_result.tests_pass AND verify_result.analysis_pass:
         -> transition to "perfection", reset phase_iterations to 0
       ELSE:
         -> increment phase_iterations, increment total_iterations
-        -> IF total_iterations >= max_iterations: ESCALATE
+        -> IF phase_iterations >= max_test_cycles: ESCALATE
+           (Phase 1 inner cap — prevents unbounded test-fix loops
+            within a single correctness phase, independent of total budget)
+        -> ELSE IF total_iterations >= max_iterations: ESCALATE
         -> ELSE: dispatch IMPLEMENT with failure details, then VERIFY again
-        (Phase 1 inner cap is max_test_cycles, managed by pl-500.
-         The convergence engine tracks total_iterations across both phases.)
 
     "perfection":
       score = review_result.score
@@ -89,6 +96,8 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
 ```
 
 **Global budget interaction:** Every `total_iterations` increment also increments `state.json.total_retries`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of convergence state.
+
+**Phase timeout:** Individual phases do not have explicit time limits — the convergence engine relies on iteration caps (`max_test_cycles` for Phase 1, `max_review_cycles` for Phase 2, `max_iterations` globally) and the global retry budget (`total_retries_max`) to bound execution. Wall-clock time is tracked in `state.json.cost.wall_time_seconds` for retrospective analysis but is not used as a termination condition. If the orchestrator detects no progress (e.g., identical errors across 3 consecutive iterations), it should escalate without waiting for budget exhaustion.
 
 **Consecutive Dip Rule interaction:** The quality gate's per-cycle Consecutive Dip Rule (see `scoring.md`) operates within a single convergence iteration. If two consecutive inner cycles show score dips, the quality gate escalates *within* that iteration. The convergence engine's `REGRESSING` state detects dips *across* iterations (via `oscillation_tolerance`). Both mechanisms are complementary: the inner rule catches intra-iteration oscillation, the outer state catches inter-iteration regression.
 

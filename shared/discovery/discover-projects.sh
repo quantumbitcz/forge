@@ -147,12 +147,14 @@ step1_inproject_references() {
     done < "$f"
   done
 
-  # docker-compose: build contexts
+  # docker-compose: build contexts (handles quoted and unquoted paths)
   for f in "$root/docker-compose.yml" "$root/docker-compose.yaml"; do
     [[ -f "$f" ]] || continue
     while IFS= read -r line; do
       local ctx
-      ctx="$(printf '%s' "$line" | grep -oE 'context:[[:space:]]*[^[:space:]]+' | awk '{print $2}' | head -1 || true)"
+      # Match context: with optional quotes (single or double) around the value
+      ctx="$(printf '%s' "$line" | grep -oE "context:[[:space:]]*['\"]?[^'\"[:space:]]+['\"]?" \
+        | sed "s/context:[[:space:]]*//; s/^['\"]//; s/['\"]$//" | head -1 || true)"
       if [[ -n "$ctx" && "$ctx" != "." ]]; then
         local abs
         abs="$(cd "$root" && cd "$ctx" 2>/dev/null && pwd || true)"
@@ -183,7 +185,7 @@ step1_inproject_references() {
     [[ -f "$f" ]] || continue
     while IFS= read -r line; do
       local val
-      val="$(printf '%s' "$line" | grep -E '^[A-Z_]+(REPO|URL)=' | cut -d= -f2- | tr -d '"' || true)"
+      val="$(printf '%s' "$line" | grep -E '^[A-Z_]+(REPO|URL)[[:space:]]*=' | sed 's/^[^=]*=[[:space:]]*//' | tr -d "\"'" || true)"
       if [[ -n "$val" ]]; then
         local sibling_name
         sibling_name="$(basename "$val" .git)"
@@ -421,11 +423,14 @@ step4_github_org_scan() {
     host="$(printf '%s' "$norm_remote" | cut -d/ -f1)"
     local remote_path="$host/$org/$repo_name"
 
-    # Already in results? skip
+    # Already in results? skip — check if repo name or remote path matches any seen entry
     local found=false
     local p
     for p in "${seen_paths[@]+"${seen_paths[@]}"}"; do
-      [[ "$(get_git_remote "$p" 2>/dev/null | xargs -I{} sh -c 'echo {}' | sed 's|git@||;s|https://||;s|\.git$||;s|:|/|')" == "$remote_path" ]] && found=true
+      local p_basename
+      p_basename="$(basename "$p")"
+      # Simple name-based dedup: if we already discovered a project with the same repo name, skip
+      [[ "$p_basename" == "$repo_name" ]] && found=true && break
     done
     $found && continue
 

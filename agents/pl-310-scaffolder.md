@@ -70,6 +70,14 @@ Before creating any files, load current framework/library documentation:
 2. Verify that planned imports, annotations, and type signatures use current (non-deprecated) APIs
 3. If context7 is unavailable: fall back to conventions file + codebase grep for import patterns, but log a warning
 
+**New dependency additions:** If scaffolding requires adding new dependencies to build files (package.json, build.gradle.kts, Cargo.toml, go.mod, etc.):
+
+1. **ALWAYS resolve the latest compatible version** via Context7 (`resolve-library-id` → `query-docs`) BEFORE writing the dependency entry
+2. Verify compatibility with detected project versions (from `state.json.detected_versions`)
+3. Use the latest stable release — never pre-release, RC, or snapshot versions
+4. If Context7 is unavailable: use WebSearch to check the official package registry, then verify compatibility
+5. **Never write dependency versions from training data** — always verify against the current registry
+
 This prevents scaffolding with outdated imports, deprecated annotations, or removed framework types.
 
 ---

@@ -316,7 +316,8 @@ Per-component state tracking for monorepo and multi-stack projects. Single-repo 
       "detected_versions": {
         "language_version": "2.0.0",
         "framework_version": "3.3.0"
-      }
+      },
+      "score_history": [85, 92, 95]
     },
     "frontend": {
       "story_state": "EXPLORING",
@@ -325,7 +326,8 @@ Per-component state tracking for monorepo and multi-stack projects. Single-repo 
       "detected_versions": {
         "language_version": "5.4.0",
         "framework_version": "18.2.0"
-      }
+      },
+      "score_history": []
     }
   }
 }
@@ -541,7 +543,7 @@ Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) af
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `storyId` | string | Yes | Story identifier matching `state.json.story_id`. Used to correlate checkpoint with the run. |
-| `stage` | integer | Yes | Pipeline stage number (0-9) at which this checkpoint was written. Typically `4` (IMPLEMENT), but may be updated during VERIFY/REVIEW retry loops. |
+| `stage` | integer | Yes | Pipeline stage number (0-9) at which this checkpoint was written. Typically `4` (IMPLEMENT), but may be updated during VERIFY/REVIEW retry loops. During targeted re-implementation (Stage 5→4 or Stage 6→4), the stage field is set to `4` while the targeted fix runs, then reverts to the originating stage (5 or 6) when control returns. The `story_state` in `state.json` tracks the logical stage, while the checkpoint `stage` tracks where the last physical task completion occurred. |
 | `current_group` | integer | Yes | The parallel group currently being executed (1-indexed). Groups are sequential; tasks within a group may be parallel. Valid range: 1 to max 3 (plan defines up to 3 parallel groups). |
 | `tasks_completed` | array | Yes | List of completed task objects. Each object contains the fields described below. Ordered by completion time. |
 | `tasks_completed[].taskId` | string | Yes | Task identifier from the plan (e.g., `"T001"`, `"T002"`). |

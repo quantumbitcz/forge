@@ -157,8 +157,33 @@ emit() {
   echo "${DISPLAY_PATH}:${line} | ${category} | ${severity} | ${message} | ${fix_hint}"
 }
 
+# --- Binary file detection ---
+# Skip binary files to avoid corrupted grep output
+is_binary_file() {
+  # Check for null bytes in first 8KB — reliable binary indicator
+  # Uses python3 (already a dependency) instead of grep -P (not available on macOS)
+  if python3 -c "import sys; sys.exit(0 if b'\\x00' in open(sys.argv[1],'rb').read(8192) else 1)" "$1" 2>/dev/null; then
+    return 0
+  fi
+  # Fallback: check file command output (if available)
+  if command -v file &>/dev/null; then
+    local ftype
+    ftype="$(file --brief --mime-type "$1" 2>/dev/null || true)"
+    case "$ftype" in
+      text/*|application/json|application/xml|application/javascript) return 1 ;;
+      application/octet-stream|image/*|audio/*|video/*) return 0 ;;
+    esac
+  fi
+  return 1
+}
+
 # --- Main ---
 main() {
+  # Skip binary files entirely
+  if is_binary_file "$FILE"; then
+    exit 0
+  fi
+
   local config
   config="$(build_merged_config)"
 
@@ -249,28 +274,88 @@ print(json.dumps(t.get('file_size', {}).get('overrides', {})))
   local file_size_threshold="$file_size_default"
   local override_threshold
   override_threshold="$(python3 -c "
-import json, sys
+import json, sys, re
 overrides = json.loads(sys.argv[1])
 filepath = sys.argv[2]
 for key, val in overrides.items():
-    if key in filepath:
-        print(val)
-        sys.exit(0)
+    # Normalize key: strip trailing slashes to prevent double-slash regex issues
+    normalized = key.rstrip('/')
+    # Match as path component (e.g., 'build' matches 'src/build/Main.java'
+    # but not 'mybuild/settings.xml') or as regex if it contains regex chars
+    if re.search(r'[*+?\\[\\]()^$|]', normalized):
+        # Regex pattern — use as-is
+        if re.search(normalized, filepath):
+            print(val)
+            sys.exit(0)
+    else:
+        # Path component match — must be bounded by / or start/end of string
+        pattern = r'(^|/)' + re.escape(normalized) + r'(/|$)'
+        if re.search(pattern, filepath):
+            print(val)
+            sys.exit(0)
 " "$file_size_overrides_json" "$FILE" 2>/dev/null || true)"
   if [[ -n "$override_threshold" ]]; then
     file_size_threshold="$override_threshold"
   fi
 
   # Awk pass: line count + function size tracking
-  # NOTE: Function boundary detection is currently Kotlin-only (matches `fun ` declarations).
-  # Other languages need their own patterns (def for Python, func for Go, fn for Rust, etc.).
-  # File size checking works for all languages. This is a known Phase 1 limitation.
+  # Function boundary detection uses per-language awk patterns (no shell variable escaping).
+  # Patterns avoid literal parens to prevent awk regex portability issues (macOS awk vs gawk).
+  # Supports Kotlin, Java, Python, Go, Rust, TypeScript/JS, Swift, and C#.
+  # Limitation: TS/JS class methods and typed arrow functions are not detected (regex limitation).
+  # File size checking works for all languages.
+  local file_ext="${FILE##*.}"
+
   awk -v display_path="$DISPLAY_PATH" \
       -v file_thresh="$file_size_threshold" \
-      -v func_thresh="$func_size_default" '
+      -v func_thresh="$func_size_default" \
+      -v lang="$file_ext" '
   BEGIN { func_start=0; func_name="" }
-  # Track Kotlin fun declarations
-  /^[[:space:]]*(override )?((suspend|private|public|internal|protected|open|abstract) )*(fun )/ {
+
+  # Per-language function boundary detection — no literal parens in regex
+  # to avoid awk portability issues with shell variable escaping
+  lang == "kt" || lang == "kts" {
+    if ($0 ~ /^[[:space:]]*(override )?(suspend |private |public |internal |protected |open |abstract )*(fun )[a-zA-Z]/) {
+      handle_func()
+    }
+  }
+  lang == "java" {
+    if ($0 ~ /^[[:space:]]*(public |private |protected |static |abstract |final |synchronized |native )+(void|int|long|boolean|String|[A-Z][a-zA-Z0-9]*) +[a-z][a-zA-Z0-9]*[[:space:]]*[({]/) {
+      handle_func()
+    }
+  }
+  lang == "py" {
+    if ($0 ~ /^[[:space:]]*(async[[:space:]]+)?def[[:space:]]+[a-zA-Z_]/) {
+      handle_func()
+    }
+  }
+  lang == "go" {
+    if ($0 ~ /^func[[:space:]]/) {
+      handle_func()
+    }
+  }
+  lang == "rs" {
+    if ($0 ~ /^[[:space:]]*(pub |async |unsafe )*fn[[:space:]]+[a-zA-Z_]/) {
+      handle_func()
+    }
+  }
+  lang == "ts" || lang == "tsx" || lang == "js" || lang == "jsx" {
+    if ($0 ~ /^[[:space:]]*(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+[a-zA-Z_$]/) {
+      handle_func()
+    }
+  }
+  lang == "swift" {
+    if ($0 ~ /^[[:space:]]*(override |private |public |internal |open |static |class |mutating |nonmutating )*(func )[a-zA-Z_]/) {
+      handle_func()
+    }
+  }
+  lang == "cs" || lang == "csx" {
+    if ($0 ~ /^[[:space:]]*(public |private |protected |internal |static |virtual |override |abstract |async |sealed )+(void|int|long|bool|string|Task|[A-Z][a-zA-Z0-9]*) +[A-Z][a-zA-Z0-9]*[[:space:]]*[({]/) {
+      handle_func()
+    }
+  }
+
+  function handle_func() {
     if (func_start > 0) {
       func_len = NR - func_start
       if (func_len > func_thresh) {
@@ -281,9 +366,25 @@ for key, val in overrides.items():
     line = $0
     gsub(/^[[:space:]]+/, "", line)
     func_name = line
-    sub(/\(.*/, "", func_name)
-    sub(/.* fun /, "", func_name)
+    # Go: handle receiver methods BEFORE stripping parens
+    # e.g., "func (r *MyType) MethodName(x int) int {" → strip receiver first
+    if (lang == "go") {
+      sub(/^func[[:space:]]+\([^)]*\)[[:space:]]+/, "func ", func_name)
+    }
+    # Strip everything from first ( or { onward (args, body)
+    sub(/[({].*/, "", func_name)
+    # Extract just the function name by stripping known keyword prefixes
+    # Generic: strip common function keywords and modifiers
+    sub(/.*(fun |func |fn |def |function )/, "", func_name)
+    # C#/Java: strip return type — take last space-delimited word
+    if (lang == "cs" || lang == "csx" || lang == "java") {
+      n = split(func_name, parts, /[[:space:]]+/)
+      if (n > 0) func_name = parts[n]
+    }
+    # Trim remaining whitespace
+    gsub(/[[:space:]]+$/, "", func_name)
   }
+
   END {
     # Check last function
     if (func_start > 0) {

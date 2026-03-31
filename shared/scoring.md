@@ -133,8 +133,11 @@ Additional category codes for specialized review domains:
 | `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions) |
 | `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
+| `DESIGN-TOKEN` | Frontend design token violation (hardcoded hex/rgb instead of theme tokens) |
+| `DESIGN-MOTION` | Frontend animation performance issue (non-GPU-accelerated properties, missing will-change) |
+| `INFRA-*` | Infrastructure/deployment issue — subcategories: `INFRA-SEC` (security), `INFRA-REL` (reliability), `INFRA-SCA` (scalability), `INFRA-OBS` (observability), `INFRA-DOC` (Docker), `INFRA-HLM` (Helm), `INFRA-TF` (Terraform) |
 
-Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Projects may define additional project-specific categories in their `conventions.md`.
+Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
 

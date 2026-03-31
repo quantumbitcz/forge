@@ -213,6 +213,12 @@ resolve_component() {
   #       framework: react
   # We do a simple line-by-line parse (no full YAML parser required):
   # collect (path, framework) pairs from indented sub-blocks under components:.
+  #
+  # Known limitation: assumes 2-space indentation for component names and
+  # 4-space indentation for path/framework fields. Projects using 4-space
+  # or tab-based YAML indentation will have multi-component detection fail
+  # silently, falling back to detect_module(). All pipeline-generated
+  # templates use 2-space indent so this only affects manually edited configs.
   if [[ -f "$cfg" ]]; then
     local in_components=0
     local in_component_block=0

@@ -117,6 +117,15 @@ elif $has_pom; then
     framework="java"
   fi
 
+# Jetpack Compose mobile (before generic android — compose is more specific)
+# Check both Kotlin DSL (build.gradle.kts) and Groovy DSL (build.gradle)
+elif ($has_gradle_kts || $has_gradle) && \
+     { grep -qE 'org\.jetbrains\.compose|androidx\.compose' "$DIR/build.gradle.kts" 2>/dev/null || \
+       grep -qE 'org\.jetbrains\.compose|androidx\.compose' "$DIR/build.gradle" 2>/dev/null; }; then
+  type="mobile"
+  framework="jetpack-compose"
+  language="kotlin"
+
 # Android mobile
 elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle.kts" 2>/dev/null; then
   type="mobile"
@@ -183,6 +192,15 @@ if [[ "$type" == "unknown" ]]; then
     type="backend"
     framework="aspnet"
     language="csharp"
+  fi
+fi
+
+# Embedded C/C++ (Makefile + C source files, no higher-level framework detected)
+if [[ "$type" == "unknown" ]]; then
+  if [[ -f "$DIR/Makefile" || -f "$DIR/CMakeLists.txt" ]] && compgen -G "$DIR"/*.c >/dev/null 2>&1; then
+    type="embedded"
+    framework="embedded"
+    language="c"
   fi
 fi
 

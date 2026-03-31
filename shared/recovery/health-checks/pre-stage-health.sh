@@ -42,6 +42,32 @@ detect_build_tool() {
     else
       missing+=("npm or pnpm")
     fi
+  elif [[ -f "Cargo.toml" ]]; then
+    check_cmd "cargo"
+  elif [[ -f "go.mod" ]]; then
+    check_cmd "go"
+  elif [[ -f "pyproject.toml" || -f "setup.py" || -f "requirements.txt" ]]; then
+    check_cmd "python3"
+  elif [[ -f "Makefile" ]] && compgen -G "./*.c" >/dev/null 2>&1; then
+    # C project with Makefile
+    check_cmd "make"
+    check_cmd "cc"
+  elif [[ -f "CMakeLists.txt" ]]; then
+    check_cmd "cmake"
+  elif compgen -G "./*.csproj" >/dev/null 2>&1 || compgen -G "./*.sln" >/dev/null 2>&1; then
+    check_cmd "dotnet"
+  elif [[ -f "Gemfile" ]]; then
+    check_cmd "bundle"
+  elif [[ -f "composer.json" ]]; then
+    check_cmd "composer"
+  elif [[ -f "mix.exs" ]]; then
+    check_cmd "mix"
+  elif [[ -f "build.sbt" ]]; then
+    check_cmd "sbt"
+  elif [[ -f "pubspec.yaml" ]]; then
+    check_cmd "dart"
+  elif [[ -f "Package.swift" ]]; then
+    check_cmd "swift"
   fi
 }
 

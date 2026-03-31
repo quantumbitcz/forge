@@ -16,7 +16,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 5 | VERIFY | inline (Phase A) + `pl-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `pl-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `pl-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
-| 8 | SHIP | `pl-600-pr-builder` + conditional: `pl-650-preview-validator`, `infra-deploy-verifier` | `SHIPPING` | Documentation done | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
+| 8 | SHIP | `pl-600-pr-builder` + conditional: `pl-650-preview-validator`, `infra-deploy-verifier`, `pl-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `pl-700-retrospective` + `pl-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
 **Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails.
@@ -227,7 +227,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Entry guard:** At least one implementation task must have completed successfully. If all tasks failed after max retries, the orchestrator escalates to the user instead of entering VERIFY:
 
-> "All implementation tasks failed. No code to verify. Breakdown: {failed_tasks}. Options: (1) Review errors and re-plan, (2) Re-run from Stage 4 with adjusted approach, (3) Abort pipeline."
+The orchestrator **escalates via AskUserQuestion** with header "Blocked", question "All implementation tasks failed. No code to verify. Breakdown: {failed_tasks}.", options: "Re-plan" (review errors and redesign approach from Stage 2), "Retry" (re-run from Stage 4 with adjusted approach), "Abort" (stop the pipeline run).
 
 **Inputs:**
 - `commands.build`, `commands.lint`, `commands.format` from config
@@ -255,13 +255,13 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Build passes, lint passes, all tests pass.
 
-**Convergence role:** Stage 5 serves as Phase 1 (Correctness) of the convergence engine. The orchestrator enters Phase 1 after IMPLEMENT completes. When VERIFY passes (tests green), the convergence engine transitions to Phase 2 (Perfection → Stage 6). Stage 5 is also the safety gate — re-invoked after Phase 2 converges to catch regressions. See `shared/convergence-engine.md`.
+**Convergence role:** Stage 5 serves as Phase 1 (Correctness) of the convergence engine. The orchestrator enters Phase 1 after IMPLEMENT completes. Phase 1 exits when `verify_result.tests_pass AND verify_result.analysis_pass` — where `analysis_pass` is `true` when all Phase B analysis agents return without CRITICAL findings and the overall verdict is not FAIL (see `convergence-engine.md` for the full definition). If Phase A fails (build/lint error), Phase B does not run and `analysis_pass` is not evaluated — the convergence engine routes back to IMPLEMENT with build/lint errors. When VERIFY passes fully, the convergence engine transitions to Phase 2 (Perfection → Stage 6). Stage 5 is also the safety gate — re-invoked after Phase 2 converges to catch regressions. See `shared/convergence-engine.md`.
 
 **Phase A failure escalation:** If `verify_fix_count >= max_fix_loops`, the pipeline escalates to the user. Each Phase A retry increments `total_retries`. Escalation format:
 
-> "Build/lint fix loop exhausted ({verify_fix_count}/{max_fix_loops}). Last error: {error_summary}. Options: (1) Fix manually and resume from Stage 5, (2) Re-plan from Stage 2, (3) Abort pipeline."
+The orchestrator **escalates via AskUserQuestion** with header "Blocked", question "Build/lint fix loop exhausted ({verify_fix_count}/{max_fix_loops}). Last error: {error_summary}.", options: "Fix manually" (fix the issue and resume from Stage 5), "Re-plan" (go back to Stage 2 and redesign the approach), "Abort" (stop the pipeline run).
 
-**Phase B failure escalation:** If `test_cycles >= max_test_cycles`, the pipeline escalates to the user.
+**Phase B failure escalation:** If `test_cycles >= max_test_cycles`, the orchestrator **escalates via AskUserQuestion** with header "Blocked", question "Test fix loop exhausted ({test_cycles}/{max_test_cycles}). Failing tests: {test_summary}.", options: "Fix manually" (fix the failing tests and resume from Stage 5), "Re-plan" (go back to Stage 2 and redesign the approach), "Abort" (stop the pipeline run).
 
 ---
 
@@ -297,7 +297,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition (converged at target):** Score = `target_score` (default 100) and safety gate passed. Proceed to Stage 7.
 
-**Exit condition (converged below target):** Score plateaued below target. Apply score escalation ladder: 95-99 proceed quietly, 80-94 proceed with CONCERNS, 60-79 escalate, <60 recommend abort. Safety gate must still pass.
+**Exit condition (converged below target):** Score plateaued below target. Apply score escalation ladder from `convergence-engine.md`: 95-99 proceed quietly (no follow-up tickets), 80-94 proceed with CONCERNS (architectural WARNINGs get follow-up tickets), 60-79 escalate to user for guidance, <60 recommend abort. Safety gate must still pass.
 
 **Exit condition (FAIL):** Any CRITICAL remaining after convergence exhaustion → escalate to user.
 
@@ -408,9 +408,9 @@ When feedback contains signals from both categories, count the signals:
 Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 
 1. **Worktree availability:** If re-entering Stage 4 (implementation path), verify `.pipeline/worktree` still exists and is a valid git worktree. If the worktree was cleaned up (e.g., by a previous ship attempt), recreate it from the pipeline branch before dispatching the implementer.
-2. **Feedback loop detection:** Track `state.json.feedback_loop_count` — incremented on each PR rejection re-entry. If the same `feedback_classification` (e.g., `"design"`) is received 2 consecutive times (i.e., user rejected → re-plan → re-implement → re-ship → rejected again with same classification), escalate:
+2. **Feedback loop detection:** Track `state.json.feedback_loop_count` — incremented on each PR rejection re-entry. "Same classification" means the string value of `feedback_classification` matches the previous rejection (e.g., both `"design"` or both `"implementation"`) — it does NOT require the same specific issue, only the same category. If the same `feedback_classification` is received 2 consecutive times (i.e., user rejected → re-plan → re-implement → re-ship → rejected again with same classification), escalate:
 
-   > "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred. Options: (1) Provide more specific guidance, (2) Abort and start fresh, (3) Override and proceed."
+   The orchestrator **escalates via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred.", options: "Guide" (provide more specific guidance for the next attempt), "Start fresh" (abort and begin a new pipeline run), "Override" (proceed with the current state despite recurring feedback).
 
    Reset `feedback_loop_count` to 0 when `feedback_classification` changes between rejections.
 3. **Scaffold outputs:** If re-entering Stage 4, verify that scaffolder outputs from the initial implementation are still present in the worktree. If missing (e.g., worktree was recreated), re-run the scaffolder before dispatching the implementer.
@@ -458,6 +458,8 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 
 **Exit condition:** Run logged, config updated, report written. Pipeline complete.
 
+**pipeline-log.md format:** Each run entry is appended as a markdown block (append-only — never modify old entries). Format: `### Run: [DATE] -- [requirement summary]` header followed by bold-labeled fields: `Result` (SUCCESS/SUCCESS_WITH_FIXES/FAILED), `Risk level`, `Domain area`, `Fix loops` (with verify/review breakdown), `Stages` (per-stage ok/fail), `Failures` (what failed, how fixed, preventable?), `Review findings` (per-agent), `Learnings` (PREEMPT/PATTERN/TUNING entries), `Implementation notes`, `Pipeline health` (trend assessment). See `pl-700-retrospective.md` section 2a for the full template. PREEMPT items track confidence decay: 10 domain-matched unused runs → HIGH → MEDIUM → LOW → ARCHIVED; 1 false positive = 3 unused runs.
+
 ---
 
 ## Transitions
@@ -475,7 +477,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | Plan revision | 3 VALIDATE | 2 PLAN | REVISE verdict | `validation_retries` | `validation.max_validation_retries` (default: 2) |
 | Build/lint fix | 5 VERIFY (Phase A) | 5 VERIFY (Phase A) | Build or lint failure | `verify_fix_count` | `implementation.max_fix_loops` (default: 3) |
 | Test fix | 5 VERIFY (Phase B) | 4 IMPLEMENT (targeted) | Test failure | `test_cycles` | `test_gate.max_test_cycles` (default: 2) |
-| Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2; effective default: 1 when convergence active) |
+| Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2; set to 1 when convergence is active — the convergence engine manages the outer loop) |
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 
@@ -520,7 +522,7 @@ When a fix cycle re-enters Stage 4 (IMPLEMENT) from Stage 5 or Stage 6, the impl
 - Implementer addresses findings in severity order (CRITICAL first, then WARNING, then INFO).
 
 **Constraints for both paths:**
-- The scaffolder is NOT re-run (scaffolding completed in the initial Stage 4 pass).
+- The scaffolder is NOT re-run (scaffolding completed in the initial Stage 4 pass). **Exception:** If scaffolder outputs are missing from the worktree (e.g., worktree was recreated after a failure), re-run the scaffolder before dispatching the implementer. See Stage 8 cross-stage re-entry validation point 3.
 - Changes are made in the existing worktree (no new branch).
 - After targeted fixes, the pipeline returns to the originating stage (5 or 6) for re-verification.
 - Conflict detection is skipped (single-task targeted fixes don't need it).
@@ -535,7 +537,7 @@ All retry loops share a cumulative budget tracked in `state.json.total_retries`.
 
 When `total_retries >= total_retries_max`, the orchestrator escalates to the user regardless of which individual loop has budget remaining. Escalation format:
 
-> "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}. How should I proceed?"
+The orchestrator **escalates via AskUserQuestion** with header "Budget", question "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}.", options: "Continue" (increase budget and keep iterating), "Ship as-is" (create PR with current state), "Abort" (stop the pipeline run).
 
 Constraint: `total_retries_max` must be >= 5 and <= 30. If violated, use default (10).
 

@@ -49,11 +49,25 @@ docker ps --filter "name=pipeline-neo4j" --format "{{.Names}}"
 ```
 
 - If `pipeline-neo4j` appears in output: **skip** this step — container is already running.
-- If not running: start it:
+- If not running: first check if the Neo4j image exists locally:
+
+```bash
+docker image inspect neo4j:5-community >/dev/null 2>&1
+```
+
+- If image NOT present: pull it explicitly first. This may take a moment on first run:
+
+```bash
+docker pull neo4j:5-community
+```
+
+- Then start the container:
 
 ```bash
 docker compose -f .pipeline/docker-compose.neo4j.yml up -d
 ```
+
+**Important:** The image tag `neo4j:5-community` uses a major-version floating tag, which always resolves to the latest 5.x release. This is intentional — Neo4j 5.x is backward-compatible within the major version. Do NOT pin to a specific patch version as it would require manual updates.
 
 ---
 

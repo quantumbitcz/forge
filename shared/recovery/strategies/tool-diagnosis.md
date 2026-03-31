@@ -28,12 +28,12 @@ If all remediation fails: return `ESCALATE` with message recommending the user i
 
 #### Test-Specific OOM Recovery
 
-When OOM occurs during test execution (Phase B of VERIFY), apply different strategies than build OOM:
+When OOM occurs during test execution (Phase B of VERIFY), apply different strategies than build OOM. The key distinction: **build OOM** typically means the compiler/linker needs more memory (reduce scope or adjust heap), while **test OOM** typically means too many test processes running concurrently (reduce parallelism, not heap).
 
 1. **Reduce test parallelism:** Lower `--workers` / `--forks` count (default: halve current value)
 2. **Run tests in batches:** Split test suite into groups, execute sequentially
 3. **Exclude memory-intensive tests:** Identify and defer integration/E2E tests to a separate run
-4. **Do NOT reduce JVM/Node heap:** Test processes need memory for assertions and fixtures
+4. **Do NOT reduce per-process heap** (JVM `-Xmx`, Node `--max-old-space-size`): Unlike build processes, test processes need their full heap for assertions, fixtures, and in-memory test databases. Reducing heap causes test failures, not OOM resolution. Instead, reduce the *number* of concurrent test processes.
 
 Recovery sequence: reduce parallelism → batch execution → exclude heavy tests → escalate
 

@@ -145,9 +145,11 @@ or:
 
     FEEDBACK_CLASSIFICATION: design
 
-If ambiguous, default to `implementation` (safer — doesn't discard the existing plan).
+If ambiguous, default to `implementation` (safer — doesn't discard the existing plan). However, if the feedback explicitly mentions scope changes (e.g., "add a new endpoint", "split into two features", "this needs a different approach entirely"), classify as `design` even if implementation-level details are also present.
 
-The orchestrator reads this marker and sets `state.json.feedback_classification`, which determines whether the pipeline re-enters Stage 4 (IMPLEMENT) or Stage 2 (PLAN).
+**Edge case — architectural placement feedback** (e.g., "validation should not be in the controller, it belongs in the use case"): This is `implementation` because it references specific files and can be fixed by moving code without re-planning. Only classify as `design` if the feedback implies the decomposition itself is wrong (e.g., "this should be a separate service" or "the approach is fundamentally wrong").
+
+The orchestrator reads this marker and sets `state.json.feedback_classification`, which determines whether the pipeline re-enters Stage 4 (IMPLEMENT) or Stage 2 (PLAN). If the classification turns out to be wrong (detected via feedback loop — same classification rejected 2+ consecutive times), the orchestrator escalates via AskUserQuestion.
 
 ### Step 4: Check for Recurring Patterns
 

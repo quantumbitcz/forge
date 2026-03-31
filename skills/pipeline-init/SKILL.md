@@ -25,9 +25,9 @@ Before scanning for stack markers, verify the environment is ready:
    - If it does not exist, it will be created in the CONFIGURE phase — this is fine, just note it.
    - If it exists but is not writable: **ERROR** — "`.claude/` directory is not writable. Check permissions." Abort.
 3. **Existing config check**: Check whether `.claude/dev-pipeline.local.md` already exists.
-   - If it exists: **ASK** — "Found existing `dev-pipeline.local.md`. Overwrite? (y/n)"
-   - If the user says no: abort with message "Keeping existing configuration."
-   - If the user says yes: proceed, and the CONFIGURE phase will overwrite the file.
+   - If it exists: **ASK via AskUserQuestion** with header "Config", question "Found existing `dev-pipeline.local.md`. What should I do?", options: "Overwrite" (description: "Replace existing config with freshly detected settings") and "Keep existing" (description: "Abort initialization and preserve current configuration").
+   - If the user chooses "Keep existing": abort with message "Keeping existing configuration."
+   - If the user chooses "Overwrite": proceed, and the CONFIGURE phase will overwrite the file.
 
 #### Stack Detection
 
@@ -51,7 +51,7 @@ Scan the project root and immediate subdirectories for stack markers. Check for 
 
 If module detection is ambiguous — for example, both `build.gradle.kts` and `package.json` exist in the project root or subdirectories, matching multiple modules — do NOT guess. Instead:
 
-1. **ASK ONE question**: "Detected multiple frameworks: {list with matched modules}. Which is the primary module for pipeline configuration?"
+1. **ASK via AskUserQuestion** with header "Framework", question "Detected multiple frameworks. Which is the primary module for pipeline configuration?", options: one per detected framework (label: framework name, description: matched markers that triggered the detection). Max 4 options.
 2. Use the user's answer as the primary module for all config generation.
 3. Note the other detected frameworks in the config's `related_modules` field for future multi-module support.
 
@@ -111,9 +111,9 @@ Documentation:      14 files (3 ADRs, 1 OpenAPI, 2 runbooks, 8 guides)
 External docs:      Confluence (2 spaces referenced)
 ```
 
-Ask the user: **"Does this look correct? Should I proceed with the `{module}` module?"**
+**ASK via AskUserQuestion** with header "Confirm", question "Does this detected stack look correct? Should I proceed with the `{module}` module?", options: "Proceed" (description: "Stack detection looks correct, continue to configuration") and "Adjust" (description: "Something is wrong — I'll provide corrections").
 
-Wait for confirmation before continuing. If the user corrects something, adjust accordingly.
+Wait for confirmation before continuing. If the user chooses "Adjust", ask what needs to change and adjust accordingly.
 
 #### Documentation Sources Prompt
 
@@ -134,10 +134,10 @@ If the user says no or skips: proceed without additional sources.
 #### Code Quality Recommendations
 
 1. Compare detected tools against `code_quality_recommended` from framework's `local-template.md`
-2. Present missing tools with descriptions, offer: `all / pick / skip`
-3. For overlapping tools (prettier vs biome, eslint vs biome, owasp vs snyk vs trivy), present as alternatives
+2. Present missing tools with descriptions, **ASK via AskUserQuestion** with header "Quality", question "Which recommended code quality tools should I add?", options: "Add all" (description: "Install all {N} recommended tools"), "Pick individually" (description: "Let me choose which tools to add"), "Skip" (description: "Don't add any code quality tools").
+3. For overlapping tools (prettier vs biome, eslint vs biome, owasp vs snyk vs trivy), **ASK via AskUserQuestion** with header "Tooling", question "Found overlapping tools — which do you prefer?", options: one per alternative (label: tool name, description: trade-offs).
 4. After selection, ask about external rulesets (default baseline / custom rules / shared config from external repo)
-5. Ask about CI/CD integration: `Also configure these tools in your CI/CD pipeline? (yes / no)`
+5. **ASK via AskUserQuestion** with header "CI/CD", question "Also configure these tools in your CI/CD pipeline?", options: "Yes" (description: "Add linting, coverage, and quality checks to CI pipeline"), "No" (description: "Only configure locally, skip CI integration").
 
 ---
 
@@ -177,7 +177,7 @@ Once confirmed, generate the configuration files:
 
 6. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
 
-Show the user what files were created and their key settings. Ask: **"Config files written. Want me to validate the setup?"**
+Show the user what files were created and their key settings. **ASK via AskUserQuestion** with header "Validate", question "Config files written. Want me to validate the setup?", options: "Validate" (description: "Run build, test, and engine checks to verify everything works (Recommended)"), "Skip" (description: "Skip validation — I'll test it myself later").
 
 ---
 
@@ -201,7 +201,7 @@ After generating the project config, run the discovery chain to find related pro
    OK  project-infra (infra, k8s) at ../project-infra  [via docker-compose.yml]
    ?   project-mobile — not found
 
-   Add these to your config? (y/n/edit)
+   **ASK via AskUserQuestion** with header "Projects", question "Add these related projects to your config?", options: "Add all" (description: "Add all discovered projects to cross-repo config"), "Edit" (description: "Let me review and adjust the list before adding"), "Skip" (description: "Don't configure cross-repo — I'll do it later").
    ```
 
    - `OK` — path exists and is a valid git repository
@@ -338,7 +338,7 @@ This step always runs — no user prompt. It takes under 5 seconds.
 
 #### Step 2: Deeper Analysis (optional)
 
-Ask: **"Want me to also run linters and dependency audit? This uses your project's configured linters and checks for known vulnerabilities."**
+**ASK via AskUserQuestion** with header "Analysis", question "Want me to run a deeper analysis with linters and dependency audit?", options: "Run analysis" (description: "Use project linters and check for known vulnerabilities (Recommended)"), "Skip" (description: "Skip deeper analysis — convention scan is sufficient").
 
 If the user accepts:
 
@@ -358,7 +358,7 @@ If declined, skip silently.
 
 #### Step 3: Deep Convention Analysis (optional)
 
-Ask: **"Want me to run a deep convention analysis? This uses AI to check your code against all language and framework best practices (logging patterns, error handling, async conventions). It takes longer but catches issues that pattern matching can't."**
+**ASK via AskUserQuestion** with header "Deep scan", question "Want me to run a deep AI-powered convention analysis? Checks logging, error handling, async patterns against best practices. Takes longer but catches issues pattern matching can't.", options: "Run deep scan" (description: "Analyze up to 20 representative files against full convention rules"), "Skip" (description: "Skip deep analysis — proceed to remediation").
 
 If the user accepts:
 
@@ -397,16 +397,13 @@ If declined, skip silently.
 
 #### Remediation
 
-After all completed tiers, if any findings were reported, offer:
+After all completed tiers, if any findings were reported, **ASK via AskUserQuestion** with header "Remediate", question "How should I handle the findings from the baseline audit?", options:
+- "Fix CRITICAL only" (description: "Auto-fix only CRITICAL severity issues — safest option")
+- "Fix WARNING+" (description: "Auto-fix all WARNING and CRITICAL issues")
+- "Save report" (description: "Already saved to .pipeline/baseline-report.md — review later")
+- "Skip" (description: "Proceed without fixing anything")
 
-```
-  [1] Fix CRITICAL issues only
-  [2] Fix all WARNING and above
-  [3] Save report only (already saved to .pipeline/baseline-report.md)
-  [4] Skip — proceed without fixing
-```
-
-If the user chooses to fix ([1] or [2]): address issues methodically — fix each issue, re-run the specific check on the affected file, confirm resolution. Do NOT re-run the full scan after each fix.
+If the user chooses to fix: address issues methodically — fix each issue, re-run the specific check on the affected file, confirm resolution. Do NOT re-run the full scan after each fix.
 
 ---
 
@@ -458,11 +455,19 @@ If nothing to clean up, skip this phase silently.
 
 ## Graph Initialization (Optional)
 
-If `graph.enabled` is `true` in the generated `dev-pipeline.local.md`:
-1. Invoke `/graph-init` to start Neo4j container, seed plugin graph, and build project graph
-2. If graph-init fails (Docker not available, port conflict, etc.), warn the user but continue — graph is optional
-3. Set `integrations.neo4j.available` based on the result
-4. If graph initialization is enabled and completes successfully, dispatch `pl-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
+If `graph.enabled` is `true` in the generated `dev-pipeline.local.md` (this is the default — enabled by default per CLAUDE.md):
+
+1. **Check Docker availability**: Run `docker info` to verify Docker is running.
+   - If Docker is NOT available: skip graph init with a note — "Docker is not running. Graph features will be disabled. Start Docker and run `/graph-init` later to enable."
+   - If Docker IS available: **always proceed** — the Neo4j image will be pulled automatically if not already present. Do NOT skip just because the image is missing.
+
+2. **Invoke `/graph-init`** to start the Neo4j container (pulling the image if needed), import the plugin seed, and build the project codebase graph.
+
+3. If graph-init fails due to a **non-Docker issue** (port conflict, disk space, timeout, etc.), warn the user but continue — graph is optional. Suggest: "Run `/graph-init` later to retry."
+
+4. Set `integrations.neo4j.available` based on the result.
+
+5. If graph initialization completes successfully, dispatch `pl-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
 
 ---
 

@@ -275,6 +275,8 @@ FAIL:     score < concerns_threshold OR any CRITICAL remaining after max cycles 
 
 If PASS or CONCERNS, the full finding list is preserved in stage notes for the retrospective to analyze. Even PASS with findings < 100 means findings are documented.
 
+**Convergence engine interaction:** These verdict thresholds apply to the quality gate's scoring output. The convergence engine (see `shared/convergence-engine.md`) manages the outer iteration loop and applies its own score escalation ladder when Phase 2 plateaus below target. The quality gate returns the score and findings; the orchestrator and convergence engine decide whether to iterate, proceed, or escalate. The quality gate does NOT make iteration decisions itself.
+
 ---
 
 ## 11. Partial Failure Handling
@@ -283,7 +285,7 @@ If a dispatched agent fails (timeout, crash, error) but other agents in the batc
 
 - **N-1 of N agents succeed**: Score with available results. Add a note to the report: `"Agent {name} did not return results -- scoring with {N-1} of {N} agents."` Add an INFO-level finding: `<agent-name>:0 | REVIEW-GAP | INFO | Agent timed out, {focus area} not reviewed | Re-run review or inspect manually`.
 - **All agents in a batch fail**: Log the batch failure, skip to the next batch, and note the gap in coverage.
-- **Critical-focused agent fails** (e.g., security reviewer): Flag this to the orchestrator as a coverage risk in the report, so it can decide whether to re-dispatch or escalate. If the timed-out agent covers a critical-focused domain (focus contains 'security', 'auth', 'injection', 'architecture', 'boundary', 'SRP', or 'DIP'), use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding.
+- **Critical-focused agent fails** (e.g., security reviewer): Flag this to the orchestrator as a coverage risk in the report, so it can decide whether to re-dispatch or escalate. If the timed-out agent covers a critical-focused domain (focus contains 'security', 'auth', 'injection', 'architecture', 'boundary', 'SRP', 'DIP', 'performance', 'scalability', 'version', 'compat', 'dependency', or 'infra'), use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding.
 - **Never block the entire pipeline on a single agent failure.**
 
 ---

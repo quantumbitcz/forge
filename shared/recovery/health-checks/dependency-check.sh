@@ -144,7 +144,10 @@ case "$DEP" in
   context7)
     # Quick probe — attempt to check if context7 MCP is responsive
     # This is a passive check; we can't call MCP from bash.
-    # Instead, check if the tool list mentions context7 (passed via env)
+    # The CONTEXT7_AVAILABLE env var is set by the orchestrator (pl-100) at PREFLIGHT
+    # when MCP detection probes the context7 server. The orchestrator sets this to "1"
+    # before spawning any subprocess that needs to know about MCP availability.
+    # See: state.json.integrations.context7.available (authoritative source).
     if [[ -n "${CONTEXT7_AVAILABLE:-}" ]]; then
       echo "INFO: Context7 MCP reported as available" >&2
     else

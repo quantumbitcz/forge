@@ -32,8 +32,12 @@ else
   HEALTH_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
 fi
 
-if [ "$HEALTH_STATUS" != "healthy" ]; then
-  echo "{\"available\": false, \"reason\": \"container unhealthy (status: ${HEALTH_STATUS:-unknown})\"}"
+if [ -z "$HEALTH_STATUS" ]; then
+  # Container has no health check configured — treat as unknown, not failed
+  echo '{"available": false, "reason": "container health status unknown (no health check configured)"}'
+  exit 1
+elif [ "$HEALTH_STATUS" != "healthy" ]; then
+  echo "{\"available\": false, \"reason\": \"container unhealthy (status: ${HEALTH_STATUS})\"}"
   exit 1
 fi
 

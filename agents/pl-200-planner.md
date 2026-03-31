@@ -121,6 +121,8 @@ If exploration results are provided, use them. Otherwise:
 
 Use context7 MCP (`resolve-library-id` then `query-docs`) to check current API documentation for frameworks and libraries involved in the plan. This prevents planning around deprecated or outdated APIs. If context7 is unavailable, rely on the conventions file and codebase grep, but note the limitation.
 
+**New dependency planning:** If the plan introduces a NEW library/dependency not currently in the project, explicitly note in the task specification: "Resolve latest compatible version of `{library}` via Context7 before implementation." This ensures the implementer and scaffolder verify the version rather than relying on training data. The planner itself should verify the library exists and is compatible with the project's detected framework version (from `state.json.detected_versions`).
+
 ### 3.4 Risk Assessment
 
 Check each risk factor and assign the overall risk as the highest individual risk:

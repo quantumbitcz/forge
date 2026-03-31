@@ -75,6 +75,14 @@ Before writing any code, load current framework/library documentation:
 3. Check for breaking changes in the specific framework versions the project uses
 4. If context7 is unavailable: fall back to conventions file + codebase grep for patterns, but log a warning
 
+**New dependency version resolution:** If a task requires adding a NEW library/dependency not already in the project:
+
+1. **ALWAYS resolve the latest compatible version** via Context7 (`resolve-library-id` → `query-docs`) BEFORE adding the dependency to build files
+2. Check compatibility with the project's existing framework version (from `state.json.detected_versions`)
+3. Prefer the latest stable release (no pre-release, no RC) within the compatible version range
+4. If Context7 is unavailable: check the library's official docs or package registry (npm, Maven Central, PyPI, crates.io) using WebSearch/WebFetch, then verify compatibility
+5. **Never use a version from training data** — always verify against the current registry. Training data may be months or years behind
+
 This prevents using deprecated methods, outdated APIs, or antipatterns from training data. Especially critical for fast-moving frameworks.
 
 ---

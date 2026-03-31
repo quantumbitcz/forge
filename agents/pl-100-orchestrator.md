@@ -18,7 +18,7 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'neo4j-mcp']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'neo4j-mcp']
 ---
 
 # Pipeline Orchestrator (pl-100)
@@ -533,7 +533,7 @@ Before initializing state, check for a concurrent pipeline run:
 3. Check if the lock is stale:
    - If `started` is > 24 hours ago: treat as stale, remove lock, continue
    - If the PID is no longer running (check with `kill -0 <pid>` or `ps -p <pid>`): treat as stale, remove lock, continue
-4. If lock is active: warn user: "Another pipeline run is active (started {time}, requirement: '{req}'). Running concurrently may corrupt state. Options: (1) Wait for the other run to complete, (2) Force takeover (kills other run's state), (3) Abort."
+4. If lock is active: **escalate via AskUserQuestion** with header "Lock", question "Another pipeline run is active (started {time}, requirement: '{req}'). Running concurrently may corrupt state.", options: "Wait" (description: "Wait for the other run to complete before starting"), "Force takeover" (description: "Kill the other run's state and start fresh"), "Abort" (description: "Cancel this pipeline invocation").
 5. If no lock or stale lock: create `.pipeline/.lock` with current session info
 6. Clean up: delete `.pipeline/.lock` at LEARN stage completion or on graceful-stop
 
@@ -888,7 +888,7 @@ After validation passes (GO), compare plan `risk_level` against `auto_proceed_ri
 When proceeding automatically, announce briefly:
 > "Pipeline proceeding with [RISK] risk plan ([N] stories, [M] tasks). Validation: GO. Reply 'stop' to pause."
 
-When asking user, show the full plan and validation verdict.
+When asking the user for plan approval, show the full plan and validation verdict, then **use AskUserQuestion** with header "Plan", question "The plan has been validated. How would you like to proceed?", options: "Approve" (description: "Proceed with this plan — start implementation"), "Revise" (description: "I have feedback — please adjust the plan"), "Abort" (description: "Cancel the pipeline run").
 
 ### Linear Tracking
 
@@ -1096,8 +1096,7 @@ Run in sequence using commands from config. Stop on first failure:
 3. Re-run from the failed step (not from the beginning)
 4. Increment `verify_fix_count`
 
-**Max:** `implementation.max_fix_loops` from config. If exhausted, escalate:
-> "Pipeline blocked at VERIFY after [N] fix attempts -- [error summary]. How should I proceed?"
+**Max:** `implementation.max_fix_loops` from config. If exhausted, **escalate via AskUserQuestion** with header "Blocked", question "Pipeline blocked at VERIFY after {N} fix attempts. Last error: {error_summary}. How should I proceed?", options: "Fix manually" (description: "I'll fix the issue, then resume from Stage 5"), "Re-plan" (description: "Go back to Stage 2 and redesign the approach"), "Abort" (description: "Stop the pipeline run").
 
 ### Phase B: Test Gate (dispatch pl-500-test-gate)
 
@@ -1601,7 +1600,7 @@ Update `.pipeline/state.json` at **every** stage transition (see `shared/state-s
 
 After incrementing any retry counter (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`), also increment `total_retries`. If `total_retries >= total_retries_max` (default 10), escalate to the user regardless of individual loop budgets:
 
-> "Pipeline exhausted total retry budget ({total_retries}/{total_retries_max}). Convergence: phase={convergence.phase}, iterations={convergence.total_iterations}, state={convergence.convergence_state}. Individual counters: quality={quality_cycles}, test={test_cycles}, verify={verify_fix_count}, validation={validation_retries}. How should I proceed?"
+Present the retry breakdown, then **escalate via AskUserQuestion** with header "Budget", question "Pipeline exhausted retry budget ({total_retries}/{total_retries_max}). Convergence: {phase}, {total_iterations} iterations, {state}. How should I proceed?", options: "Continue" (description: "Increase budget and continue — I believe progress is being made"), "Ship as-is" (description: "Skip remaining fixes, create PR with current state"), "Abort" (description: "Stop the pipeline run and clean up").
 
 This prevents the pipeline from running indefinitely when multiple stages each consume retries within their individual limits.
 
