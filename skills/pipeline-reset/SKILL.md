@@ -10,7 +10,10 @@ Clear the pipeline run state so you can start fresh.
 
 ## What to do
 
-1. Confirm with user: "This will remove the `.pipeline/` directory (run state, checkpoints, stage notes). Learnings in `.claude/pipeline-log.md` are preserved. Proceed? (y/n)"
+1. Use `AskUserQuestion` to confirm with the user:
+   - Header: "Pipeline Reset"
+   - Question: "This will remove the `.pipeline/` directory (run state, checkpoints, stage notes). Learnings in `.claude/pipeline-log.md` are preserved."
+   - Options: "Reset — remove .pipeline/ and start fresh" / "Cancel — keep current state"
 
 2. If confirmed:
 

@@ -66,10 +66,15 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
       IF score >= target_score:
         -> transition to "safety_gate"
 
+      ELSE IF total_iterations >= max_iterations:
+        -> ESCALATE (global cap applies to perfection phase too)
+
       ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance:
         -> convergence_state = "REGRESSING", ESCALATE
 
-      ELSE IF delta <= plateau_threshold:
+      ELSE IF delta <= plateau_threshold AND phase_iterations > 0:
+        // Note: phase_iterations > 0 prevents the very first perfection cycle
+        // from counting toward plateau (delta is hardcoded to 0 on first cycle)
         -> plateau_count += 1
         -> IF plateau_count >= plateau_patience:
             convergence_state = "PLATEAUED"
@@ -91,7 +96,7 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
       ELSE:
         -> safety_gate_failures += 1
         -> IF safety_gate_failures >= 2: ESCALATE (cross-phase oscillation detected)
-        -> ELSE: transition back to "correctness", reset phase_iterations to 0
+        -> ELSE: transition back to "correctness", reset phase_iterations to 0, reset plateau_count to 0
         -> increment total_iterations
 ```
 
@@ -180,9 +185,9 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 | `phase_iterations` | integer | Iterations in current phase; resets to 0 on phase transition |
 | `total_iterations` | integer | Cumulative iterations across all phases; never resets; feeds into `total_retries` |
 | `plateau_count` | integer | Consecutive cycles with improvement <= `plateau_threshold`; resets on meaningful improvement |
-| `last_score_delta` | integer | Score change from previous perfection cycle (0 if first cycle) |
+| `last_score_delta` | number | Score change from previous perfection cycle (0 if first cycle). May be non-integer with custom scoring weights. |
 | `convergence_state` | `"IMPROVING"` \| `"PLATEAUED"` \| `"REGRESSING"` | Current convergence state |
-| `phase_history` | array | Append-only log of completed phases for retrospective analysis |
+| `phase_history` | array | Append-only log of completed phases for retrospective analysis. Each entry has `outcome`: `"converged"` (target reached or plateau accepted), `"escalated"` (cap hit, regression, or user escalation), or `"restarted"` (safety gate failure triggered correctness restart). |
 | `safety_gate_passed` | boolean | Whether the final VERIFY after Phase 2 succeeded |
 | `safety_gate_failures` | integer | Consecutive safety gate failures. Escalate at >= 2 (cross-phase oscillation). Resets to 0 on safety gate pass. |
 | `unfixable_findings` | array | Findings that survived all iterations (see format below) |

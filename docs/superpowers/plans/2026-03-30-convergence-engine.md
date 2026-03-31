@@ -104,7 +104,7 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
       ELSE:
         → transition back to "correctness"
         → reset phase_iterations to 0
-        → append to phase_history: { phase: "safety_gate", iterations: 1, outcome: "failed", duration_seconds }
+        → append to phase_history: { phase: "safety_gate", iterations: 1, outcome: "restarted", duration_seconds }
 ```
 
 ## Configuration
@@ -222,7 +222,7 @@ In `shared/state-schema.md`, after the `score_history` row (line 203), add these
 | `convergence.plateau_count` | integer | Yes | Consecutive Phase 2 cycles where score improved by <= `plateau_threshold`. Resets to 0 on any improvement > `plateau_threshold`. When >= `plateau_patience`, convergence is declared. |
 | `convergence.last_score_delta` | integer | Yes | Score change from the previous cycle (`current_score - previous_score`). 0 on first cycle. Used for convergence state classification. |
 | `convergence.convergence_state` | string | Yes | Current convergence classification. Valid values: `"IMPROVING"` (score increasing meaningfully), `"PLATEAUED"` (score stalled — convergence declared), `"REGRESSING"` (score dropped beyond tolerance — escalate). |
-| `convergence.phase_history` | array | Yes | Append-only log of completed phases. Each entry: `{ "phase": "<name>", "iterations": <int>, "outcome": "converged"\|"failed"\|"escalated", "duration_seconds": <int> }`. Used by retrospective for trend analysis. |
+| `convergence.phase_history` | array | Yes | Append-only log of completed phases. Each entry: `{ "phase": "<name>", "iterations": <int>, "outcome": "converged"\|"escalated"\|"restarted", "duration_seconds": <int> }`. Used by retrospective for trend analysis. |
 | `convergence.safety_gate_passed` | boolean | Yes | `true` when the final VERIFY after Phase 2 passes. `false` until then. If safety gate fails, phase transitions back to correctness and this resets to `false`. |
 | `convergence.unfixable_findings` | array | Yes | Findings that survived all iterations with documented rationale. Each entry: `{ "category": "<CATEGORY-CODE>", "file": "<path>", "line": <int>, "severity": "<CRITICAL\|WARNING\|INFO>", "reason": "<why not fixed>", "options": ["<option1>", "<option2>"] }`. Populated when Phase 2 converges below target. |
 ```

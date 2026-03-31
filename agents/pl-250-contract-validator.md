@@ -191,19 +191,16 @@ Return EXACTLY this structure. No preamble or reasoning outside the format.
 
 ---
 
-## 6. State Updates
+## 6. Stage Notes Output
 
-After completing analysis, update `state.json` with:
+After completing analysis, include the following summary in stage notes (the orchestrator writes these counts to `state.json` — agents never write state directly per `agent-communication.md`):
 
-```json
-{
-  "contract_validation": {
-    "contracts_checked": 0,
-    "breaking_changes": 0,
-    "warnings": 0,
-    "infos": 0
-  }
-}
+```
+CONTRACT_VALIDATION_SUMMARY:
+  contracts_checked: 0
+  breaking_changes: 0
+  warnings: 0
+  infos: 0
 ```
 
 Counts reflect final (post-consumer-impact-adjustment) severities.

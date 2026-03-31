@@ -101,7 +101,7 @@ with open(raw_path) as f:
         if level in ('note', 'help'):
             continue
 
-        text = msg.get('message', '').replace('|', '-')
+        text = msg.get('message', '').replace('|', '\\\\|')
         code_obj = msg.get('code')
         lint_name = ''
         if code_obj and isinstance(code_obj, dict):

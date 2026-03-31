@@ -35,17 +35,28 @@ Scan the project root and immediate subdirectories for stack markers. Check for 
 
 | Markers | Module |
 |---------|--------|
-| `build.gradle.kts` + Kotlin source files (`*.kt`) | `spring` |
-| `build.gradle.kts` + Java source files (`*.java`) | `spring` |
+| `build.gradle.kts` + `compose` dependency (Android/Compose) | `jetpack-compose` |
+| `build.gradle.kts` + `kotlin("multiplatform")` or KMP plugin | `kotlin-multiplatform` |
+| `build.gradle.kts` + `spring-boot` / `org.springframework` | `spring` |
+| `build.gradle` + `spring-boot` / `org.springframework` | `spring` |
+| `angular.json` | `angular` |
+| `package.json` + `next.config.*` | `nextjs` |
+| `package.json` + `svelte.config.*` + `@sveltejs/kit` dependency | `sveltekit` |
+| `package.json` + `nest-cli.json` | `nestjs` |
+| `package.json` + `vue` dependency | `vue` |
+| `package.json` + `svelte` dependency (no `@sveltejs/kit`) | `svelte` |
 | `package.json` + `vite.config.*` + react dependency | `react` |
-| `package.json` + `svelte.config.*` | `sveltekit` |
 | `package.json` (no framework markers above) | `express` |
-| `Cargo.toml` | `axum` |
-| `go.mod` | `go-stdlib` |
+| `Cargo.toml` + `axum` dependency | `axum` |
+| `go.mod` + `gin-gonic/gin` dependency | `gin` |
+| `go.mod` (no framework markers above) | `go-stdlib` |
+| `manage.py` or `pyproject.toml` + django dependency | `django` |
 | `pyproject.toml` + fastapi dependency | `fastapi` |
 | `Package.swift` + Vapor dependency | `vapor` |
 | `*.xcodeproj` | `swiftui` |
+| `*.csproj` or `*.sln` | `aspnet` |
 | `Makefile` + `*.c` source files | `embedded` |
+| Helm charts / K8s manifests / Terraform dirs | `k8s` |
 
 #### Ambiguity Resolution
 
@@ -207,7 +218,7 @@ After generating the project config, run the discovery chain to find related pro
    - `OK` — path exists and is a valid git repository
    - `?` — referenced but not found on disk (show as informational only, do not add)
 
-3. **If user confirms (y):** Add `related_projects:` section to `dev-pipeline.local.md`:
+3. **If user chooses "Add all":** Add `related_projects:` section to `dev-pipeline.local.md`:
    ```yaml
    related_projects:
      frontend:

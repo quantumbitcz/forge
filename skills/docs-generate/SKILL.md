@@ -131,7 +131,8 @@ If `--export` was passed and external systems are configured, report export stat
 
 ## Important
 
-- Do NOT create `.pipeline/` or `state.json` — this skill operates entirely outside pipeline state.
+- Do NOT create `state.json` — this skill does not interact with pipeline run state.
+- This skill reads/writes `.pipeline/docs-index.json` for documentation discovery but does not touch `state.json` or checkpoint files.
 - Do NOT create a worktree — all writes go directly to the project working tree.
 - If generation produces no useful content for a doc type (e.g., no API endpoints found for `api-spec`), skip that type and log INFO "Skipped {type}: no source content found."
-- This skill may be run at any time, including mid-pipeline — it does not interact with pipeline state.
+- This skill may be run at any time, including mid-pipeline.

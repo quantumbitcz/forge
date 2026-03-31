@@ -68,7 +68,7 @@ for issue in data.get('Issues') or []:
     fp = pos.get('Filename', '?')
     ln = pos.get('Line', 0)
     linter = issue.get('FromLinter', '')
-    text = issue.get('Text', '').replace('|', '-')
+    text = issue.get('Text', '').replace('|', '\\\\|')
     severity = lookup_severity(linter, text)
     category = map_category(linter)
     hint = f'golangci-lint/{linter}' if linter else 'golangci-lint'

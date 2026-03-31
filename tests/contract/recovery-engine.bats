@@ -127,3 +127,16 @@ CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
       || fail "Result code $result not found in recovery-engine.md"
   done
 }
+
+# ---------------------------------------------------------------------------
+# 11. Error type to recovery category mapping table exists
+# ---------------------------------------------------------------------------
+@test "recovery-engine: error type to recovery category mapping table exists" {
+  grep -q "Error Type to Recovery Category Mapping" "$RECOVERY_ENGINE" \
+    || fail "Mapping table section not found in recovery-engine.md"
+  # Verify key entries exist in the mapping
+  grep -q "CONTEXT_OVERFLOW.*RESOURCE_EXHAUSTION" "$RECOVERY_ENGINE" \
+    || fail "CONTEXT_OVERFLOW to RESOURCE_EXHAUSTION mapping not found"
+  grep -q "BUILD_FAILURE.*orchestrator fix loop" "$RECOVERY_ENGINE" \
+    || fail "BUILD_FAILURE to orchestrator fix loop mapping not found"
+}

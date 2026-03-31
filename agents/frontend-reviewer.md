@@ -1,6 +1,8 @@
 ---
 name: frontend-reviewer
 description: Reviews frontend code for quality, conventions, accessibility, and performance across React, Svelte, Vue, Angular, and vanilla JS/TS. Detects the frontend framework from project structure and applies framework-specific rules.
+model: inherit
+color: blue
 tools:
   - Read
   - Glob

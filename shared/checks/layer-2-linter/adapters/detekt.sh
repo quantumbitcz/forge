@@ -92,7 +92,7 @@ with open(raw_path) as f:
             continue
         filepath, lineno, message, rule_id = m.group(1), m.group(2), m.group(3), m.group(4)
         # Escape pipe characters per output-format.md
-        message = message.replace('|', '\\|')
+        message = message.replace('|', '\\\\|')
         severity = lookup_severity(rule_id)
         category = map_category(rule_id)
         hint = f'detekt rule {rule_id}'

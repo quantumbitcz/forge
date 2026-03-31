@@ -91,7 +91,11 @@ normalize_repo_url() {
   url="${url#file://}"
   url="${url#git@}"     # strip git@ that may survive after scheme (e.g. ssh://git@host)
   url="${url%.git}"
-  url="${url/://}"   # git@github.com:org/repo -> github.com/org/repo
+  # Convert SSH-style colon separator to slash (host:org/repo → host/org/repo)
+  # Only when colon is NOT part of :// (scheme separator already stripped above)
+  if [[ "$url" == *:*/* && "$url" != *://* ]]; then
+    url="${url/:///}"
+  fi
   # Strip trailing slash
   url="${url%/}"
   printf '%s' "$url"

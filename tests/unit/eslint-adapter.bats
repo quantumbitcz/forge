@@ -66,7 +66,7 @@ for entry in results:
         line = msg.get('line', 0)
         rule_id = msg.get('ruleId', '')
         eslint_sev = msg.get('severity', 1)
-        message = msg.get('message', '').replace('|', '-')
+        message = msg.get('message', '').replace('|', '\\\\|')
         severity = lookup_severity(rule_id, eslint_sev)
         category = map_category(rule_id)
         hint = f'eslint rule {rule_id}' if rule_id else 'eslint parse error'

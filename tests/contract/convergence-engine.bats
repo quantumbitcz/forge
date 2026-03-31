@@ -116,3 +116,35 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
   grep -q "analysis_pass" "$ENGINE" \
     || fail "analysis_pass definition not documented"
 }
+
+# ---------------------------------------------------------------------------
+# 13. max_iterations guard in perfection phase
+# ---------------------------------------------------------------------------
+@test "convergence-engine: perfection phase has max_iterations guard" {
+  grep -q "total_iterations >= max_iterations" "$ENGINE" \
+    || fail "max_iterations guard not documented in perfection phase"
+}
+
+# ---------------------------------------------------------------------------
+# 14. First-cycle plateau prevention (phase_iterations > 0)
+# ---------------------------------------------------------------------------
+@test "convergence-engine: first-cycle plateau prevention documented" {
+  grep -q "phase_iterations > 0" "$ENGINE" \
+    || fail "First-cycle plateau prevention (phase_iterations > 0) not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 15. plateau_count reset on safety gate restart
+# ---------------------------------------------------------------------------
+@test "convergence-engine: plateau_count reset on safety gate failure" {
+  grep -qi "reset plateau_count" "$ENGINE" \
+    || fail "plateau_count reset on safety gate -> correctness transition not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 16. PHASE_A_FAILURE handling path documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: PHASE_A_FAILURE handling documented" {
+  grep -q "PHASE_A_FAILURE" "$ENGINE" \
+    || fail "PHASE_A_FAILURE handling path not documented"
+}

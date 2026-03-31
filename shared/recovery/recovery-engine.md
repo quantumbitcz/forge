@@ -72,6 +72,35 @@ The agent's suggestion is always respected unless the error type is unknown.
 
 Unclassified errors fall back to the existing heuristic classification logic.
 
+### Error Type to Recovery Category Mapping
+
+When a pre-classified error arrives, map its `ERROR_TYPE` to a recovery category using this table:
+
+| Error Type | Recovery Category | Strategy | Notes |
+|---|---|---|---|
+| TOOL_FAILURE | TOOL_FAILURE | tool-diagnosis | Tool/binary crash |
+| BUILD_FAILURE | — | — | Code-level; routed to orchestrator fix loop, not recovery engine |
+| TEST_FAILURE | — | — | Code-level; routed to orchestrator fix loop, not recovery engine |
+| LINT_FAILURE | — | — | Code-level; routed to orchestrator fix loop, not recovery engine |
+| AGENT_TIMEOUT | AGENT_FAILURE | agent-reset | |
+| AGENT_ERROR | AGENT_FAILURE | agent-reset | Reclassify sub-errors first (see taxonomy) |
+| CONTEXT_OVERFLOW | RESOURCE_EXHAUSTION | resource-cleanup | Token/context limit |
+| STATE_CORRUPTION | STATE_CORRUPTION | state-reconstruction | |
+| DEPENDENCY_MISSING | EXTERNAL_DEPENDENCY | dependency-health | |
+| CONFIG_INVALID | UNRECOVERABLE | graceful-stop | User must fix |
+| GIT_CONFLICT | RESOURCE_EXHAUSTION | resource-cleanup | |
+| DISK_FULL | RESOURCE_EXHAUSTION | resource-cleanup | |
+| NETWORK_UNAVAILABLE | TRANSIENT | transient-retry | 3 consecutive failures → UNRECOVERABLE |
+| PERMISSION_DENIED | TOOL_FAILURE or UNRECOVERABLE | tool-diagnosis or graceful-stop | Binary → tool-diagnosis; filesystem → graceful-stop |
+| MCP_UNAVAILABLE | — | — | Handled inline by agents, not recovery engine |
+| PATTERN_MISSING | UNRECOVERABLE | graceful-stop | |
+| LOCK_FILE_CONFLICT | RESOURCE_EXHAUSTION | resource-cleanup | |
+| FLAKY_TEST | TRANSIENT | transient-retry | |
+| VERSION_MISMATCH | UNRECOVERABLE | graceful-stop | User must fix |
+| DEPRECATION_WARNING | — | — | Inline handling only |
+| WORKTREE_FAILURE | RESOURCE_EXHAUSTION | resource-cleanup | |
+| BUDGET_EXHAUSTED | UNRECOVERABLE | graceful-stop | Terminal; raised by recovery engine itself |
+
 ### 3.1 TRANSIENT
 
 Temporary failures that are likely to succeed on retry.

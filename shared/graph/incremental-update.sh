@@ -16,6 +16,12 @@ set -euo pipefail
 #   - May exec build-project-graph.sh for full rebuild if no prior build
 # ============================================================================
 
+# Requires Bash 4.0+ (uses associative arrays)
+if (( BASH_VERSINFO[0] < 4 )); then
+  echo "[incremental-update] Bash 4.0+ required (found ${BASH_VERSION}). Cannot update graph." >&2
+  exit 1
+fi
+
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"

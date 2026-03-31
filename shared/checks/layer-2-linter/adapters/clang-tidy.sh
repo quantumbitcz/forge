@@ -47,6 +47,7 @@ with open(sys.argv[2]) as f:
         if not m: continue
         fp, ln, diag_sev, msg, check = m.groups()
         if diag_sev == 'note': continue
+        msg = msg.replace('|', '\\\\|')
         print(f'{fp}:{ln} | {map_cat(check)} | {lookup_sev(check, diag_sev)} | {msg} | clang-tidy [{check}]')
 " "$SEVERITY_MAP" "$RAW"
 exit 0

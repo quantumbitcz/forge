@@ -34,7 +34,7 @@ echo "=== Check Engine Integration Tests ==="
 
 # Setup: temp project with realistic directory structure
 TEST_TMPDIR=$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/dev-pipeline-test.XXXXXX")
-trap "rm -rf $TEST_TMPDIR" EXIT
+trap 'rm -rf "$TEST_TMPDIR"' EXIT
 mkdir -p "$TEST_TMPDIR/src/main/kotlin/core/domain"
 mkdir -p "$TEST_TMPDIR/src/test/kotlin"
 mkdir -p "$TEST_TMPDIR/build/generated-sources"

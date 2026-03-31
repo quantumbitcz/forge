@@ -1,5 +1,7 @@
 ---
 name: docs-consistency-reviewer
+model: inherit
+color: white
 description: |
   Reviews code changes for consistency with documented architectural decisions, constraints, and existing documentation. Reports DOC-* findings when code contradicts, invalidates, or leaves stale any project documentation. Supports graph-based and file-based analysis modes.
 

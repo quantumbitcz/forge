@@ -137,7 +137,7 @@ elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle"
   language="java"
 
 # iOS mobile
-elif $has_package_swift && ls "$DIR"/*.xcodeproj 2>/dev/null | grep -q .; then
+elif $has_package_swift && compgen -G "$DIR"/*.xcodeproj >/dev/null 2>&1; then
   type="mobile"
   language="swift"
   if grep -q -i "vapor" "$DIR/Package.swift" 2>/dev/null; then
@@ -146,7 +146,7 @@ elif $has_package_swift && ls "$DIR"/*.xcodeproj 2>/dev/null | grep -q .; then
   else
     framework="swiftui"
   fi
-elif ls "$DIR"/*.xcodeproj 2>/dev/null | grep -q .; then
+elif compgen -G "$DIR"/*.xcodeproj >/dev/null 2>&1; then
   type="mobile"
   framework="swiftui"
   language="swift"
@@ -226,7 +226,7 @@ detected_code_quality=()
 if [[ -f "$DIR/.editorconfig" ]] && grep -q "ktlint_" "$DIR/.editorconfig" 2>/dev/null; then
   detected_code_quality+=("ktlint")
 fi
-if ls "$DIR/eslint.config."* &>/dev/null 2>&1 || ls "$DIR/.eslintrc."* &>/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]] || \
+if compgen -G "$DIR/eslint.config."* >/dev/null 2>&1 || compgen -G "$DIR/.eslintrc."* >/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]] || \
    ( [[ -f "$DIR/package.json" ]] && grep -q '"eslintConfig"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("eslint")
 fi
@@ -243,7 +243,7 @@ fi
 [[ -f "$DIR/analysis_options.yaml" ]] && detected_code_quality+=("dart-analyzer")
 [[ -f "$DIR/.scalafmt.conf" ]] && detected_code_quality+=("scalafmt")
 [[ -f "$DIR/.scalafix.conf" ]] && detected_code_quality+=("scalafix")
-if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
+if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
   detected_code_quality+=("roslyn-analyzers")
 fi
 [[ -f "$DIR/checkstyle.xml" ]] && detected_code_quality+=("checkstyle")
@@ -256,7 +256,7 @@ fi
 [[ -f "$DIR/mypy.ini" || -f "$DIR/.mypy.ini" ]] && detected_code_quality+=("mypy")
 
 # Formatting
-if ls "$DIR/.prettierrc"* &>/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]] || \
+if compgen -G "$DIR/.prettierrc"* >/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]] || \
    ( [[ -f "$DIR/package.json" ]] && grep -q '"prettier"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("prettier")
 fi
@@ -275,14 +275,14 @@ if ( [[ -f "$DIR/build.gradle.kts" ]] && grep -q "jacoco" "$DIR/build.gradle.kts
   detected_code_quality+=("jacoco")
 fi
 if [[ -f "$DIR/.nycrc" || -f "$DIR/.nycrc.json" ]] || \
-   ( [[ -f "$DIR/package.json" ]] && grep -q '"nyc"\|"c8"' "$DIR/package.json" 2>/dev/null ); then
+   ( [[ -f "$DIR/package.json" ]] && grep -qE '"nyc"|"c8"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("istanbul")
 fi
 if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.coverage\]" "$DIR/pyproject.toml" 2>/dev/null || \
    [[ -f "$DIR/.coveragerc" ]]; then
   detected_code_quality+=("coverage-py")
 fi
-if ls "$DIR"/*.csproj &>/dev/null 2>&1 && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then
+if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then
   detected_code_quality+=("coverlet")
 fi
 

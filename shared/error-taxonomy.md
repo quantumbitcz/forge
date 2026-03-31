@@ -1,6 +1,6 @@
 # Error Taxonomy
 
-Standard error classification for all pipeline agents (21 types). Every error reported to the orchestrator or recovery engine should use this format.
+Standard error classification for all pipeline agents (22 types). Every error reported to the orchestrator or recovery engine should use this format.
 
 ## Error Format
 
@@ -16,19 +16,20 @@ When reporting errors, agents should structure them as:
 
 | Type | Meaning | Recoverable? | Default Strategy |
 |---|---|---|---|
-| TOOL_FAILURE | Shell command failed or tool crashed (build, test, lint) | Yes | tool-diagnosis |
-| BUILD_FAILURE | Compilation error | Yes | tool-diagnosis |
-| TEST_FAILURE | Test assertion failed | Yes | tool-diagnosis |
-| LINT_FAILURE | Linter reported errors | Yes | tool-diagnosis |
+| TOOL_FAILURE | Shell command failed or tool crashed (exit code != 0 due to tool malfunction, not code errors) | Yes | tool-diagnosis |
+| BUILD_FAILURE | Compilation error (code-level — the build tool ran correctly but found code errors). If the build tool itself crashed, classify as TOOL_FAILURE instead. | Yes | orchestrator fix loop (NOT recovery engine) |
+| TEST_FAILURE | Test assertion failed (code-level — the test runner ran correctly but assertions failed). If the test runner crashed, classify as TOOL_FAILURE instead. | Yes | orchestrator fix loop (NOT recovery engine) |
+| LINT_FAILURE | Linter reported violations (code-level — the linter ran correctly but found issues). If the linter crashed, classify as TOOL_FAILURE instead. | Yes | orchestrator fix loop (NOT recovery engine) |
 | AGENT_TIMEOUT | Dispatched agent didn't return in time | Yes | agent-reset |
-| AGENT_ERROR | Dispatched agent returned an error | Maybe | agent-reset |
+| AGENT_ERROR | Dispatched agent returned an error. If agent output contains a classifiable sub-error (TOOL_FAILURE, BUILD_FAILURE, etc.), reclassify as that sub-error type. Otherwise, treat as recoverable and route to agent-reset. | Maybe | agent-reset |
+| CONTEXT_OVERFLOW | Agent context window approaching or exceeding token limit. Detected when agent output is truncated or agent reports token pressure. | Yes | resource-cleanup (reduce prompt scope, split task, compact history) |
 | STATE_CORRUPTION | state.json or checkpoint unreadable | Yes | state-reconstruction |
 | DEPENDENCY_MISSING | Required tool/binary not found | No | dependency-health |
 | CONFIG_INVALID | dev-pipeline.local.md malformed or missing required fields | No | none (user must fix) |
 | GIT_CONFLICT | Merge conflict or dirty working tree | No | resource-cleanup |
 | DISK_FULL | Insufficient disk space | No | resource-cleanup |
 | NETWORK_UNAVAILABLE | External service unreachable (GitHub, context7, Linear) | Maybe | transient-retry |
-| PERMISSION_DENIED | File or directory not writable | No | tool-diagnosis (executable files only), else user must fix |
+| PERMISSION_DENIED | File or directory not writable, or binary not executable. If a binary/script is not executable (exit code 126): recoverable via tool-diagnosis (`chmod +x`). If a file/directory write permission failure: non-recoverable (user must fix). | Maybe | tool-diagnosis (binary/script) or none (filesystem) |
 | MCP_UNAVAILABLE | Optional MCP server not responding | Yes | graceful degradation (not a recovery strategy — agent handles inline) |
 | PATTERN_MISSING | Referenced pattern file doesn't exist | No | none (planner must fix) |
 | LOCK_FILE_CONFLICT | Lock file (yarn.lock, Cargo.lock) divergence or corruption | Yes | resource-cleanup |
@@ -77,12 +78,12 @@ When multiple errors co-occur in a stage, determine outcome by this severity ord
 4. `VERSION_MISMATCH` — required tool/runtime version not met
 5. `STATE_CORRUPTION` — pipeline integrity
 6. `DEPENDENCY_MISSING` — required tool absent
-7. `GIT_CONFLICT` / `LOCK_FILE_CONFLICT` / `WORKTREE_FAILURE` — version control / lock file / worktree integrity
-8. `AGENT_TIMEOUT` / `AGENT_ERROR` — agent-level
-9. `TOOL_FAILURE` — tool-level
-10. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (retry loops)
-11. `FLAKY_TEST` — non-deterministic test failure (transient)
-12. `BUDGET_EXHAUSTED` — recovery system limit reached (no further recovery possible)
+7. `BUDGET_EXHAUSTED` — recovery system limit reached (terminal, no further recovery possible)
+8. `GIT_CONFLICT` / `LOCK_FILE_CONFLICT` / `WORKTREE_FAILURE` — version control / lock file / worktree integrity
+9. `AGENT_TIMEOUT` / `AGENT_ERROR` / `CONTEXT_OVERFLOW` — agent-level
+10. `TOOL_FAILURE` — tool-level
+11. `BUILD_FAILURE` / `TEST_FAILURE` / `LINT_FAILURE` — code-level (orchestrator fix loops, not recovery engine)
+12. `FLAKY_TEST` — non-deterministic test failure (transient)
 13. `NETWORK_UNAVAILABLE` — possibly transient
 14. `MCP_UNAVAILABLE` — optional, graceful degradation
 15. `DEPRECATION_WARNING` — informational, non-blocking (logged for retrospective)
@@ -97,3 +98,17 @@ MCP failures are NOT recovery engine domain. When an agent encounters MCP_UNAVAI
 ## Network Permanence Detection
 
 After 3 consecutive transient-retry failures for the same endpoint within 60 seconds, reclassify `NETWORK_UNAVAILABLE` as non-recoverable for that endpoint. Log: "Network to {endpoint} appears permanently unavailable after 3 retries." Continue pipeline with degraded mode for that service. Do not consume further recovery budget for this endpoint.
+
+## Scoring Side-Effects
+
+Some error types produce scoring findings in addition to (or instead of) triggering the recovery engine:
+
+| Error Type | Scoring Effect | Category | Severity | Condition |
+|---|---|---|---|---|
+| AGENT_TIMEOUT | REVIEW-GAP finding when review agent times out | `REVIEW-GAP` | INFO (WARNING for critical-domain agents) | REVIEW stage only |
+| AGENT_ERROR | REVIEW-GAP finding when review agent fails | `REVIEW-GAP` | INFO (WARNING for critical-domain agents) | REVIEW stage only |
+| MCP_UNAVAILABLE | No scoring deduction — inline degradation only | — | — | All stages |
+| DEPRECATION_WARNING | May produce `DEPS-*` findings if severe | `DEPS-*` | WARNING | PREFLIGHT |
+| BUDGET_EXHAUSTED | No direct scoring — triggers pipeline abort | — | — | — |
+
+Cross-reference: see `shared/scoring.md` section "Partial Failure Handling" for REVIEW-GAP rules.

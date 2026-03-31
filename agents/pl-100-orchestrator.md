@@ -1606,7 +1606,7 @@ This prevents the pipeline from running indefinitely when multiple stages each c
 
 ### Recovery Budget
 
-Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check `recovery_budget.total_weight` against `recovery_budget.max_weight`. When `total_weight > 4.0` (80% of default max), set `recovery.budget_warning_issued` to `true` and log WARNING: "Recovery budget at {total_weight}/{max_weight} — approaching limit." When `total_weight >= max_weight`, do not invoke recovery — escalate to user instead.
+Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check `recovery_budget.total_weight` against `recovery_budget.max_weight`. When `total_weight >= 4.0` (80% of default max), set `recovery.budget_warning_issued` to `true` and log WARNING: "Recovery budget at {total_weight}/{max_weight} — approaching limit." When `total_weight >= max_weight`, do not invoke recovery — escalate to user instead.
 
 ### Degraded Capability Check
 

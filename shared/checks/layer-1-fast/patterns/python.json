@@ -1,6 +1,8 @@
 {
   "language": "python",
-  "extensions": [".py"],
+  "extensions": [
+    ".py"
+  ],
   "source": "Ruff, Pylint, PEP 8, SonarPython",
   "rules": [
     {
@@ -10,7 +12,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Bare except clause — catches all exceptions including SystemExit and KeyboardInterrupt.",
+      "message": "Bare except clause \u2014 catches all exceptions including SystemExit and KeyboardInterrupt.",
       "fix_hint": "Specify an explicit exception type, e.g. except ValueError: or except Exception:.",
       "example_ref": "python/exceptions.md#bare-except",
       "scope": "all"
@@ -22,7 +24,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Overly broad exception catch — masks bugs by swallowing unrelated errors.",
+      "message": "Overly broad exception catch \u2014 masks bugs by swallowing unrelated errors.",
       "fix_hint": "Catch specific exception types relevant to the operation; re-raise or log if a broad catch is truly needed.",
       "example_ref": "python/exceptions.md#broad-except",
       "scope": "all"
@@ -46,7 +48,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-EVAL",
-      "message": "eval/exec usage — risks arbitrary code execution.",
+      "message": "eval/exec usage \u2014 risks arbitrary code execution.",
       "fix_hint": "Replace with ast.literal_eval for data parsing or a safer alternative; avoid dynamic code execution.",
       "example_ref": "python/security.md#eval-exec",
       "scope": "all"
@@ -58,7 +60,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Print statement — use a structured logger instead.",
+      "message": "Print statement \u2014 use a structured logger instead.",
       "fix_hint": "Replace with logging.info/debug/warning from the logging module or structlog.",
       "example_ref": "python/logging.md#structured-logging",
       "scope": "main"
@@ -70,7 +72,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-MUT",
-      "message": "Mutable default argument — shared across all calls and causes subtle bugs.",
+      "message": "Mutable default argument \u2014 shared across all calls and causes subtle bugs.",
       "fix_hint": "Use None as the default and create the mutable object inside the function body.",
       "example_ref": "python/functions.md#mutable-defaults",
       "scope": "all"
@@ -94,7 +96,7 @@
       "exclude_pattern": "^\\s*#|^\\s*\"\"\"|^\\s*'''",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
       "example_ref": "python/readability.md#nesting",
       "scope": "all"
@@ -106,7 +108,7 @@
       "exclude_pattern": "^\\s*#|\"[^\"]*\"|'[^']*'|^\\s*[A-Z_]+=",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a module-level constant with a descriptive UPPER_SNAKE_CASE name.",
       "example_ref": "python/readability.md#magic-numbers",
       "scope": "main"
@@ -116,16 +118,20 @@
       "pattern": "f['\"].*SELECT.*\\{|f['\"].*INSERT.*\\{|f['\"].*UPDATE.*\\{|f['\"].*DELETE.*\\{",
       "severity": "CRITICAL",
       "category": "SEC-INJECTION",
-      "message": "SQL query built with f-string — use parameterized queries to prevent SQL injection",
-      "scope": "all"
+      "message": "SQL query built with f-string \u2014 use parameterized queries to prevent SQL injection",
+      "scope": "all",
+      "name": "sql-injection-risk",
+      "fix_hint": "Use parameterized queries instead of string formatting"
     },
     {
       "id": "PY-SEC-PATH-001",
       "pattern": "os\\.path\\.join\\(.*request\\.|os\\.path\\.join\\(.*input\\(",
       "severity": "WARNING",
       "category": "SEC-PATH",
-      "message": "Path construction from user input — validate and sanitize to prevent path traversal",
-      "scope": "all"
+      "message": "Path construction from user input \u2014 validate and sanitize to prevent path traversal",
+      "scope": "all",
+      "name": "path-traversal-risk",
+      "fix_hint": "Use pathlib and validate paths against allowed directories"
     }
   ],
   "thresholds": {

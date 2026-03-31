@@ -78,7 +78,8 @@ emit_blank
 # Step 1: Languages
 # ============================================================================
 emit "// --- Languages ---"
-for f in $(ls "${PLUGIN_ROOT}"/modules/languages/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/modules/languages/*.md; do
+  [[ -e "$f" ]] || continue
   name="$(basename "$f" .md)"
   rel="modules/languages/${name}.md"
   emit "CREATE (:Language {name: '${name}', file_path: '${rel}'});"
@@ -89,7 +90,8 @@ emit_blank
 # Step 2: Frameworks
 # ============================================================================
 emit "// --- Frameworks ---"
-for f in $(ls "${PLUGIN_ROOT}"/modules/frameworks/*/conventions.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/modules/frameworks/*/conventions.md; do
+  [[ -e "$f" ]] || continue
   fw_dir="$(dirname "$f")"
   name="$(basename "$fw_dir")"
   rel="modules/frameworks/${name}/conventions.md"
@@ -101,7 +103,8 @@ emit_blank
 # Step 3: Variants (Framework -> Language HAS_VARIANT edges)
 # ============================================================================
 emit "// --- Variants ---"
-for f in $(ls "${PLUGIN_ROOT}"/modules/frameworks/*/variants/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/modules/frameworks/*/variants/*.md; do
+  [[ -e "$f" ]] || continue
   lang="$(basename "$f" .md)"
   fw_dir="$(dirname "$(dirname "$f")")"
   fw="$(basename "$fw_dir")"
@@ -113,7 +116,8 @@ emit_blank
 # Step 4: Testing Frameworks
 # ============================================================================
 emit "// --- Testing Frameworks ---"
-for f in $(ls "${PLUGIN_ROOT}"/modules/testing/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/modules/testing/*.md; do
+  [[ -e "$f" ]] || continue
   name="$(basename "$f" .md)"
   rel="modules/testing/${name}.md"
   emit "CREATE (:TestingFramework {name: '${name}', file_path: '${rel}'});"
@@ -125,7 +129,8 @@ emit_blank
 # ============================================================================
 emit "// --- Layer Modules ---"
 for layer in "${LAYERS[@]}"; do
-  for f in $(ls "${PLUGIN_ROOT}/modules/${layer}"/*.md 2>/dev/null | sort); do
+  for f in "${PLUGIN_ROOT}/modules/${layer}"/*.md; do
+    [[ -e "$f" ]] || continue
     name="$(basename "$f" .md)"
     rel="modules/${layer}/${name}.md"
     emit "CREATE (:LayerModule {name: '${name}', layer: '${layer}', file_path: '${rel}'});"
@@ -137,12 +142,14 @@ emit_blank
 # Step 6: Framework Bindings
 # ============================================================================
 emit "// --- Framework Bindings ---"
-for fw_dir in $(ls -d "${PLUGIN_ROOT}"/modules/frameworks/*/ 2>/dev/null | sort); do
+for fw_dir in "${PLUGIN_ROOT}"/modules/frameworks/*/; do
+  [[ -d "$fw_dir" ]] || continue
   fw="$(basename "$fw_dir")"
   for layer in "${BINDING_LAYERS[@]}"; do
     layer_dir="${fw_dir}${layer}"
     [[ -d "$layer_dir" ]] || continue
-    for f in $(ls "${layer_dir}"/*.md 2>/dev/null | sort); do
+    for f in "${layer_dir}"/*.md; do
+      [[ -e "$f" ]] || continue
       module_name="$(basename "$f" .md)"
       binding_name="${fw}-${module_name}"
       rel="modules/frameworks/${fw}/${layer}/${module_name}.md"
@@ -168,11 +175,13 @@ emit "// --- Agents ---"
 
 # Collect all agent names first (for DISPATCHES matching)
 declare -a AGENT_NAMES=()
-for f in $(ls "${PLUGIN_ROOT}"/agents/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/agents/*.md; do
+  [[ -e "$f" ]] || continue
   AGENT_NAMES+=("$(basename "$f" .md)")
 done
 
-for f in $(ls "${PLUGIN_ROOT}"/agents/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/agents/*.md; do
+  [[ -e "$f" ]] || continue
   # Parse YAML frontmatter for name
   agent_name="$(basename "$f" .md)"
   rel="agents/${agent_name}.md"
@@ -198,7 +207,8 @@ emit_blank
 
 # DISPATCHES edges (best-effort: look for agent names referenced in files with Agent tool)
 emit "// --- Agent DISPATCHES edges ---"
-for f in $(ls "${PLUGIN_ROOT}"/agents/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/agents/*.md; do
+  [[ -e "$f" ]] || continue
   agent_name="$(basename "$f" .md)"
 
   # Only check files that have Agent in their tools list
@@ -221,7 +231,8 @@ emit_blank
 # Step 8: Shared Contracts
 # ============================================================================
 emit "// --- Shared Contracts ---"
-for f in $(ls "${PLUGIN_ROOT}"/shared/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/shared/*.md; do
+  [[ -e "$f" ]] || continue
   name="$(basename "$f" .md)"
   rel="shared/${name}.md"
   emit "CREATE (:SharedContract {name: '${name}', file_path: '${rel}'});"
@@ -234,11 +245,13 @@ emit_blank
 emit "// --- Agent READS SharedContract edges ---"
 # Collect shared contract names
 declare -a CONTRACT_NAMES=()
-for f in $(ls "${PLUGIN_ROOT}"/shared/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/shared/*.md; do
+  [[ -e "$f" ]] || continue
   CONTRACT_NAMES+=("$(basename "$f" .md)")
 done
 
-for f in $(ls "${PLUGIN_ROOT}"/agents/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/agents/*.md; do
+  [[ -e "$f" ]] || continue
   agent_name="$(basename "$f" .md)"
   # Get body after frontmatter
   body="$(sed '1,/^---$/d; 1,/^---$/d' "$f")"
@@ -256,7 +269,8 @@ emit_blank
 # Step 9: Check Rules (from rules-override.json)
 # ============================================================================
 emit "// --- Check Rules ---"
-for f in $(ls "${PLUGIN_ROOT}"/modules/frameworks/*/rules-override.json 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/modules/frameworks/*/rules-override.json; do
+  [[ -e "$f" ]] || continue
   fw_dir="$(dirname "$f")"
   fw="$(basename "$fw_dir")"
   rel="modules/frameworks/${fw}/rules-override.json"
@@ -294,7 +308,8 @@ emit_blank
 # Step 10: Learnings
 # ============================================================================
 emit "// --- Learnings ---"
-for f in $(ls "${PLUGIN_ROOT}"/shared/learnings/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/shared/learnings/*.md; do
+  [[ -e "$f" ]] || continue
   name="$(basename "$f" .md)"
   rel="shared/learnings/${name}.md"
   emit "CREATE (:Learnings {name: '${name}', file_path: '${rel}'});"
@@ -302,7 +317,8 @@ done
 emit_blank
 
 emit "// --- Learnings edges ---"
-for f in $(ls "${PLUGIN_ROOT}"/shared/learnings/*.md 2>/dev/null | sort); do
+for f in "${PLUGIN_ROOT}"/shared/learnings/*.md; do
+  [[ -e "$f" ]] || continue
   name="$(basename "$f" .md)"
   # Try to match to LayerModule, TestingFramework, Language, or Framework
   emit "MATCH (l:Learnings {name: '${name}'}), (m:LayerModule {name: '${name}'}) CREATE (m)-[:HAS_LEARNINGS]->(l);"

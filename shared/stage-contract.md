@@ -93,6 +93,11 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Exploration results summarized and available for the planner.
 
+**On failure/timeout:** Exploration is advisory, not blocking. If all exploration agents time out or fail:
+1. Log WARNING in stage notes: `"Exploration failed: {reason}. Proceeding with degraded context."`
+2. Set `state.json.exploration_degraded: true`
+3. Proceed to Stage 2 (PLAN). The planner operates with reduced context — it may produce a less optimal plan.
+
 ---
 
 ### Stage 2: PLAN
@@ -337,6 +342,12 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 - Updated docs index (`.pipeline/docs-index.json`)
 
 **Exit condition:** Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained.
+
+**On failure/timeout:** Documentation generation is best-effort. If `pl-350-docs-generator` times out or fails:
+1. Log WARNING in stage notes: `"DOC generation failed: {reason}. Proceeding to SHIP without generated docs."`
+2. Set `state.json.documentation.generation_error: true`
+3. Proceed to Stage 8 (SHIP). Missing documentation is not blocking — it can be addressed in a follow-up.
+4. The retrospective (Stage 9) will flag the documentation failure for the user.
 
 ---
 

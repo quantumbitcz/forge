@@ -8,6 +8,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Check for required dependency
+if ! command -v jq &>/dev/null; then
+  echo "ERROR: jq is required but not found. Install it:" >&2
+  echo "  macOS:   brew install jq" >&2
+  echo "  Linux:   sudo apt install jq (or your package manager)" >&2
+  echo "  Windows: choco install jq" >&2
+  exit 1
+fi
+
 PASS=0
 FAIL=0
 

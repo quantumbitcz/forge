@@ -172,7 +172,8 @@ Findings are grouped by the tuple `(file, line, category)`. In multi-component p
 
 ```
 1. Collect all findings from all batch agents + inline checks
-2. Group by (file, line, category)
+2. Group by (component, file, line, category)
+   — For single-component projects, component is omitted (equivalent to a constant)
 3. For each group:
    a. Select finding with highest severity
    b. If tie: select finding with longest description
@@ -182,7 +183,7 @@ Findings are grouped by the tuple `(file, line, category)`. In multi-component p
 
 ### Cross-File Deduplication
 
-Findings at different lines in the same file with the same category are NOT deduplicated -- they represent distinct issues. Only exact `(file, line, category)` matches are grouped.
+Findings at different lines in the same file with the same category are NOT deduplicated -- they represent distinct issues. Only exact `(component, file, line, category)` matches are grouped.
 
 ## Partial Failure Handling
 

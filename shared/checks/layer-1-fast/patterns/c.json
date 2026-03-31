@@ -1,6 +1,9 @@
 {
   "language": "c",
-  "extensions": [".c", ".h"],
+  "extensions": [
+    ".c",
+    ".h"
+  ],
   "source": "clang-tidy, cppcheck, CERT C Coding Standard",
   "rules": [
     {
@@ -10,7 +13,7 @@
       "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "WARNING",
       "category": "SEC-MEM",
-      "message": "malloc() call — ensure corresponding free() exists to prevent memory leaks.",
+      "message": "malloc() call \u2014 ensure corresponding free() exists to prevent memory leaks.",
       "fix_hint": "Verify every malloc has a matching free on all code paths, including error paths.",
       "example_ref": "c/memory.md#malloc-free",
       "scope": "all"
@@ -22,8 +25,8 @@
       "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "CRITICAL",
       "category": "SEC-OVERFLOW",
-      "message": "Unsafe function with buffer overflow risk — use bounds-checked alternative.",
-      "fix_hint": "Replace gets→fgets, sprintf→snprintf, strcpy→strncpy or strlcpy, strcat→strncat or strlcat.",
+      "message": "Unsafe function with buffer overflow risk \u2014 use bounds-checked alternative.",
+      "fix_hint": "Replace gets\u2192fgets, sprintf\u2192snprintf, strcpy\u2192strncpy or strlcpy, strcat\u2192strncat or strlcat.",
       "example_ref": "c/security.md#buffer-overflow",
       "scope": "all"
     },
@@ -46,7 +49,7 @@
       "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "printf() in production code — use a logging framework instead.",
+      "message": "printf() in production code \u2014 use a logging framework instead.",
       "fix_hint": "Replace with syslog(), a project-specific logger, or guard with a debug/verbose flag.",
       "example_ref": "c/logging.md#structured-logging",
       "scope": "main"
@@ -58,7 +61,7 @@
       "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / goto cleanup pattern.",
       "example_ref": "c/readability.md#nesting",
       "scope": "all"
@@ -68,16 +71,20 @@
       "pattern": "printf\\s*\\(\\s*[a-zA-Z_]",
       "severity": "WARNING",
       "category": "SEC-FORMAT",
-      "message": "printf() with variable format string — potential format string vulnerability, use printf(\"%s\", var) instead",
-      "scope": "all"
+      "message": "printf() with variable format string \u2014 potential format string vulnerability, use printf(\"%s\", var) instead",
+      "scope": "all",
+      "name": "format-string-vulnerability",
+      "fix_hint": "Use a literal format string or validate user-provided format strings"
     },
     {
       "id": "C-QUAL-MEMORY-001",
       "pattern": "malloc\\s*\\([^)]+\\)(?!.*free)",
       "severity": "INFO",
       "category": "QUAL-MEMORY",
-      "message": "malloc() without nearby free() — verify memory is properly freed to prevent leaks",
-      "scope": "all"
+      "message": "malloc() without nearby free() \u2014 verify memory is properly freed to prevent leaks",
+      "scope": "all",
+      "name": "malloc-without-free",
+      "fix_hint": "Verify every malloc has a matching free on all code paths"
     }
   ],
   "thresholds": {

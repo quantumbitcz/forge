@@ -1,6 +1,8 @@
 ---
 name: architecture-reviewer
 description: Detects the project's architecture pattern and reviews code for compliance. Supports hexagonal/ports-and-adapters, clean architecture, layered/N-tier, MVC, microservices, and modular monolith. For existing projects, auto-detects from structure. For new projects, the module conventions define the expected pattern.
+model: inherit
+color: cyan
 tools:
   - Read
   - Glob

@@ -7,8 +7,15 @@ set -euo pipefail
 #
 # Usage: run-linter.sh <language> <project-root> <file-or-dir> <severity-map>
 # Exit:  always 0
+# Requires: Bash 4.0+ (uses associative arrays)
 
 trap 'exit 0' ERR
+
+# Guard: associative arrays require Bash 4.0+
+if (( BASH_VERSINFO[0] < 4 )); then
+  echo "[run-linter] Bash 4.0+ required (found ${BASH_VERSION}). Skipping Layer 2." >&2
+  exit 0
+fi
 
 LANGUAGE="${1:-}"
 PROJECT_ROOT="${2:-}"

@@ -1,6 +1,8 @@
 {
   "language": "go",
-  "extensions": [".go"],
+  "extensions": [
+    ".go"
+  ],
   "source": "go vet, staticcheck, golangci-lint",
   "rules": [
     {
@@ -10,7 +12,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "QUAL-ERR",
-      "message": "Explicitly discarded error return value — may hide failures.",
+      "message": "Explicitly discarded error return value \u2014 may hide failures.",
       "fix_hint": "Handle the error: check with if err != nil or wrap with fmt.Errorf.",
       "example_ref": "go/errors.md#discarded-error",
       "scope": "all"
@@ -22,7 +24,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "fmt.Print in non-test code — use a structured logger instead.",
+      "message": "fmt.Print in non-test code \u2014 use a structured logger instead.",
       "fix_hint": "Replace with log/slog or a structured logging library (e.g. zap, zerolog).",
       "example_ref": "go/logging.md#structured-logging",
       "scope": "main"
@@ -46,7 +48,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "panic() usage — crashes the entire program; prefer returning errors.",
+      "message": "panic() usage \u2014 crashes the entire program; prefer returning errors.",
       "fix_hint": "Return an error instead of panicking; reserve panic for truly unrecoverable situations in init.",
       "example_ref": "go/errors.md#panic",
       "scope": "main"
@@ -58,7 +60,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "INFO",
       "category": "PERF-BLOCK",
-      "message": "time.Sleep call — acceptable in Go but verify it is intentional.",
+      "message": "time.Sleep call \u2014 acceptable in Go but verify it is intentional.",
       "fix_hint": "Consider using a ticker, timer, or context-based cancellation for more responsive shutdown.",
       "example_ref": "go/concurrency.md#sleep",
       "scope": "main"
@@ -70,7 +72,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
       "example_ref": "go/readability.md#nesting",
       "scope": "all"
@@ -82,7 +84,7 @@
       "exclude_pattern": "^\\s*//|\"[^\"]*\"|const\\s",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a package-level const with a descriptive name.",
       "example_ref": "go/readability.md#magic-numbers",
       "scope": "main"
@@ -92,34 +94,42 @@
       "pattern": "go\\s+func\\s*\\(",
       "severity": "INFO",
       "category": "QUAL-GOROUTINE",
-      "message": "Goroutine launched without lifecycle management — verify context cancellation or WaitGroup tracking",
+      "message": "Goroutine launched without lifecycle management \u2014 verify context cancellation or WaitGroup tracking",
       "scope": "main",
-      "exclude_pattern": "go\\s+func\\s*\\(ctx\\s"
+      "exclude_pattern": "go\\s+func\\s*\\(ctx\\s",
+      "name": "unmanaged-goroutine",
+      "fix_hint": "Ensure goroutine lifecycle is managed via context cancellation or sync.WaitGroup"
     },
     {
       "id": "GO-DEFER-001",
       "pattern": "defer\\s+.*\\.Close\\(\\)",
       "severity": "INFO",
       "category": "QUAL-RESOURCE",
-      "message": "Deferred Close() without error check — consider wrapping: defer func() { if err := x.Close(); err != nil { log(err) } }()",
-      "scope": "all"
+      "message": "Deferred Close() without error check \u2014 consider wrapping: defer func() { if err := x.Close(); err != nil { log(err) } }()",
+      "scope": "all",
+      "name": "deferred-close-unchecked",
+      "fix_hint": "Wrap deferred Close() to check and log the returned error"
     },
     {
       "id": "GO-CTX-001",
       "pattern": "context\\.Background\\(\\)",
       "severity": "INFO",
       "category": "QUAL-CTX",
-      "message": "context.Background() used — prefer propagating parent context from caller for proper cancellation",
+      "message": "context.Background() used \u2014 prefer propagating parent context from caller for proper cancellation",
       "scope": "main",
-      "exclude_pattern": "func\\s+main\\(|func\\s+init\\("
+      "exclude_pattern": "func\\s+main\\(|func\\s+init\\(",
+      "name": "missing-context-propagation",
+      "fix_hint": "Accept context.Context as first parameter and propagate it"
     },
     {
       "id": "GO-SEC-SQL-001",
       "pattern": "fmt\\.Sprintf\\(.*SELECT|fmt\\.Sprintf\\(.*INSERT|fmt\\.Sprintf\\(.*UPDATE|fmt\\.Sprintf\\(.*DELETE",
       "severity": "CRITICAL",
       "category": "SEC-INJECTION",
-      "message": "SQL query built with fmt.Sprintf — use parameterized queries to prevent SQL injection",
-      "scope": "all"
+      "message": "SQL query built with fmt.Sprintf \u2014 use parameterized queries to prevent SQL injection",
+      "scope": "all",
+      "name": "sql-injection-risk",
+      "fix_hint": "Use parameterized queries with ? placeholders"
     }
   ],
   "thresholds": {

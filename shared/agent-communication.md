@@ -87,7 +87,9 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     VERIFY (test gate) → stage_5_notes → orchestrator → REVIEW dispatch prompt
     REVIEW batch 1 → findings → quality gate → batch 2 (top 20 dedup hints)
     REVIEW final → stage_6_notes → orchestrator → state.json (score_history)
-                                                ↘ DOCS inline
+    DOCS agent → stage_7_notes → orchestrator → state.json (documentation)
+                                              ← changed files, quality verdict, plan notes,
+                                                discovery summary (stage_0_docs_discovery.md)
     SHIP agent → stage_8_notes → orchestrator → LEARN dispatch prompt
                                               ↘ Linear: PR link, status
     FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
@@ -96,6 +98,20 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     LEARN (recap) → recap report ↘ Linear: summary comment
 
 All data flows through the orchestrator. Agents are isolated. The orchestrator curates what each agent receives.
+
+### Conditional Agents
+
+The following agents are dispatched conditionally and receive data from the orchestrator only when their trigger conditions are met:
+
+| Agent | Stage | Trigger | Receives | Outputs |
+|-------|-------|---------|----------|---------|
+| `pl-320-frontend-polisher` | 4 (IMPLEMENT) | `frontend_polish.enabled` in config AND frontend component detected | Changed frontend files, design theory, theme tokens | Polished files, `FE-*` findings in stage notes |
+| `pl-650-preview-validator` | 8 (SHIP) | Preview/staging URL configured in `ship:` config | PR URL, preview URL | Validation results in stage notes |
+| `infra-deploy-verifier` | 8 (SHIP) | K8s/infra files in changeset | Changed infra files, Helm charts | Verification results in stage notes |
+| `pl-130-docs-discoverer` | 0 (PREFLIGHT) | Always (part of preflight) | Project root, config | `stage_0_docs_discovery.md`, docs-index.json |
+| `pl-140-deprecation-refresh` | 0 (PREFLIGHT) | Always (part of preflight) | Detected versions, known-deprecations.json | Updated deprecation rules |
+| `pl-150-test-bootstrapper` | 0 (PREFLIGHT) | No test infrastructure detected | Project root, framework conventions | Bootstrapped test config, stage notes |
+| `docs-consistency-reviewer` | 6 (REVIEW) | Documentation exists in project | Changed files, docs-index.json, discovery summary | `DOC-*` findings |
 
 ## 6. PREEMPT Item Tracking
 

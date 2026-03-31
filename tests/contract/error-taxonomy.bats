@@ -13,9 +13,9 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. All 21 error types are defined
+# 2. All 22 error types are defined
 # ---------------------------------------------------------------------------
-@test "error-taxonomy: all 21 error types are defined" {
+@test "error-taxonomy: all 22 error types are defined" {
   local types=(
     TOOL_FAILURE
     BUILD_FAILURE
@@ -23,6 +23,7 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
     LINT_FAILURE
     AGENT_TIMEOUT
     AGENT_ERROR
+    CONTEXT_OVERFLOW
     STATE_CORRUPTION
     DEPENDENCY_MISSING
     CONFIG_INVALID
@@ -52,7 +53,7 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
   # Check that the error types appear in table rows that include | (table cells)
   local found_table_rows
   found_table_rows=$(grep -c '|.*\(tool-diagnosis\|agent-reset\|state-reconstruction\|dependency-health\|transient-retry\|resource-cleanup\|graceful\|none\)' "$ERROR_TAXONOMY" || true)
-  [[ "$found_table_rows" -ge 18 ]] || fail "Expected at least 18 table rows with recovery strategies, got $found_table_rows"
+  [[ "$found_table_rows" -ge 19 ]] || fail "Expected at least 19 table rows with recovery strategies, got $found_table_rows"
 }
 
 # ---------------------------------------------------------------------------
@@ -129,4 +130,22 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
     || fail "Error Aggregation section not found"
   grep -q "Group by ERROR_TYPE\|Group by\|group by ERROR_TYPE\|group by" "$ERROR_TAXONOMY" \
     || fail "Group-by ERROR_TYPE aggregation rule not mentioned"
+}
+
+# ---------------------------------------------------------------------------
+# 11. Scoring side-effects section exists with cross-reference
+# ---------------------------------------------------------------------------
+@test "error-taxonomy: scoring side-effects section documents REVIEW-GAP" {
+  grep -q "Scoring Side-Effects" "$ERROR_TAXONOMY" \
+    || fail "Scoring Side-Effects section not found"
+  grep -q "REVIEW-GAP" "$ERROR_TAXONOMY" \
+    || fail "REVIEW-GAP scoring side-effect not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 12. CONTEXT_OVERFLOW error type exists
+# ---------------------------------------------------------------------------
+@test "error-taxonomy: CONTEXT_OVERFLOW error type documented" {
+  grep -q "CONTEXT_OVERFLOW" "$ERROR_TAXONOMY" \
+    || fail "CONTEXT_OVERFLOW error type not found"
 }

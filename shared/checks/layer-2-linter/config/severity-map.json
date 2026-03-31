@@ -54,5 +54,21 @@
     "bugprone-*": "WARNING",
     "cert-*": "WARNING",
     "security-*": "CRITICAL"
+  },
+  "dotnet-format": {
+    "error": "WARNING",
+    "warning": "INFO",
+    "info": "INFO",
+    "hidden": "INFO"
+  },
+  "golangci-lint": {
+    "error": "WARNING",
+    "warning": "INFO"
+  },
+  "android-lint": {
+    "Fatal": "CRITICAL",
+    "Error": "WARNING",
+    "Warning": "INFO",
+    "Information": "INFO"
   }
 }

@@ -1970,6 +1970,7 @@ MATCH (a:Agent {name: 'pl-160-migration-planner'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'pl-160-migration-planner'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-200-planner'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-210-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-250-contract-validator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-250-contract-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-250-contract-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-300-implementer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);

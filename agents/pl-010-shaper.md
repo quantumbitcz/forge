@@ -16,7 +16,7 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion']
 ---
 
 # Feature Shaper (pl-010)

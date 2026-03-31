@@ -1,6 +1,8 @@
 ---
 name: frontend-performance-reviewer
 description: Reviews frontend code for performance issues including bundle size, rendering efficiency, lazy loading, and resource optimization. Detects the frontend framework and applies framework-specific performance patterns.
+model: inherit
+color: blue
 tools:
   - Read
   - Glob

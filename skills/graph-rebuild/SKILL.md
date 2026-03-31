@@ -35,10 +35,10 @@ Inform the user what will happen:
 
 "This will delete all project nodes (`ProjectFile`, `ProjectClass`, `ProjectFunction`, `ProjectPackage`, `ProjectDependency`) and rebuild them from the current codebase. The plugin seed graph will not be affected."
 
-Ask: **"Proceed with graph rebuild? (y/n)"**
-
-- If the user says no: abort with "Rebuild cancelled."
-- If the user says yes: continue.
+Use `AskUserQuestion` to confirm:
+- Header: "Graph Rebuild"
+- Question: "This will delete all project graph nodes and rebuild them from the current codebase. The plugin seed graph is not affected."
+- Options: "Rebuild — delete project nodes and rebuild from codebase" / "Cancel — keep current graph"
 
 ---
 

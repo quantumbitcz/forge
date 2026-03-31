@@ -30,7 +30,8 @@ handle_skip() {
         [ -f "$skip_file" ] && count=$(cat "$skip_file" 2>/dev/null || echo 0)
         echo $((count + 1)) > "$skip_file"
       ) 9>"${skip_file}.lock"
-      rm -f "${skip_file}.lock" 2>/dev/null || true
+      # Lock file intentionally not removed — avoids TOCTOU race with concurrent flock callers.
+      # The file is in .pipeline/ (gitignored) so it is harmless to leave behind.
     else
       local lock_dir="${skip_file}.lockdir"
       if mkdir "$lock_dir" 2>/dev/null; then

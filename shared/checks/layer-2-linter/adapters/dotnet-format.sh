@@ -74,7 +74,7 @@ with open(raw_path) as f:
         filepath, line_no, raw_sev, diag_id, message = m.groups()
         severity = lookup_severity(diag_id, raw_sev)
         category = map_category(diag_id)
-        message = message.replace('|', '-')
+        message = message.replace('|', '\\\\|')
         hint = f'dotnet diagnostic {diag_id}'
         print(f'{filepath}:{line_no} | {category} | {severity} | {message} | {hint}')
 " "$SEVERITY_MAP" "$RAW"

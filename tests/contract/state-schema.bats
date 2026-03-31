@@ -138,3 +138,44 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   grep -q '"perfection"' "$STATE_SCHEMA"  || fail 'convergence phase "perfection" not documented'
   grep -q '"safety_gate"' "$STATE_SCHEMA" || fail 'convergence phase "safety_gate" not documented'
 }
+
+# ---------------------------------------------------------------------------
+# convergence phase_history outcome values documented
+# ---------------------------------------------------------------------------
+@test "state-schema: phase_history outcome values converged escalated restarted documented" {
+  grep -q '"converged"' "$STATE_SCHEMA"  || fail 'phase_history outcome "converged" not documented'
+  grep -q '"escalated"' "$STATE_SCHEMA"  || fail 'phase_history outcome "escalated" not documented'
+  grep -q '"restarted"' "$STATE_SCHEMA"  || fail 'phase_history outcome "restarted" not documented'
+}
+
+# ---------------------------------------------------------------------------
+# new state fields from iteration 1 fixes documented
+# ---------------------------------------------------------------------------
+@test "state-schema: exploration_degraded field documented" {
+  grep -q "exploration_degraded" "$STATE_SCHEMA" || fail "exploration_degraded not documented in state-schema.md"
+}
+
+@test "state-schema: documentation.generation_error field documented" {
+  grep -q "generation_error" "$STATE_SCHEMA" || fail "documentation.generation_error not documented in state-schema.md"
+}
+
+@test "state-schema: last_score_delta typed as number not integer" {
+  grep "last_score_delta" "$STATE_SCHEMA" | grep -q "number" || fail "last_score_delta should be typed as number (not integer)"
+}
+
+# ---------------------------------------------------------------------------
+# v2.0.0 fixture validation
+# ---------------------------------------------------------------------------
+@test "state-schema: v2.0.0 fixture is valid JSON with correct version" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+  [[ -f "$fixture" ]] || fail "v2.0.0 fixture not found"
+  jq -e '.version == "2.0.0"' "$fixture" >/dev/null || fail "v2.0.0 fixture has wrong version"
+}
+
+@test "state-schema: v2.0.0 fixture has all required top-level fields" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+  local fields=(version complete story_id story_state components active_component total_retries total_retries_max mode convergence)
+  for field in "${fields[@]}"; do
+    jq -e "has(\"$field\")" "$fixture" >/dev/null || fail "v2.0.0 fixture missing required field: $field"
+  done
+}
