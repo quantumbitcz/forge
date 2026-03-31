@@ -156,6 +156,12 @@ context7_libraries:
   - "zod"
   - "@nuxt/image"
   - "@vue/test-utils"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Vue 3 / Nuxt 3 Frontend Context
@@ -163,9 +169,3 @@ context7_libraries:
 Nuxt 3 with TypeScript. Use `<script setup lang="ts">` exclusively — no Options API. Leverage Nuxt auto-imports (do not manually import Vue/Nuxt core APIs). `useFetch` with stable keys for SSR-safe data fetching. Pinia Setup Stores for global state. Zod validation in all server routes. `<NuxtImg>` for images, `<NuxtLink>` for internal navigation.
 
 Customize the commands above to match your project's package manager and scripts.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

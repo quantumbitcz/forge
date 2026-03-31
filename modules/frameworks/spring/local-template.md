@@ -143,6 +143,12 @@ context7_libraries:
   - "spring-data-jpa"
   # r2dbc (uncomment and remove spring-data-jpa):
   # - "spring-data-r2dbc"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Spring Boot Backend Context
@@ -163,9 +169,3 @@ Web stack and persistence are independent choices configured via `components.web
 | Type-safe SQL | mvc | jooq | Blocking, generated DSL, no ORM |
 | Kotlin DSL | mvc | exposed | Blocking, Kotlin-native table DSL |
 | Mixed | webflux | jooq | Reactive web + blocking DB on boundedElastic |
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

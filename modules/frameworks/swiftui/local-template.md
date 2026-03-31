@@ -120,6 +120,12 @@ context7_libraries:
   - "swiftui"
   - "combine"
   - "swiftdata"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Swift/iOS Context
@@ -129,9 +135,3 @@ SwiftUI with MVVM pattern. Views are small and composable, ViewModels use @Obser
 Xcode project organized by feature.
 
 Customize the scheme name and commands above to match your Xcode project.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

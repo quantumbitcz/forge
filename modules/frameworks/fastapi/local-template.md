@@ -131,6 +131,12 @@ context7_libraries:
   # sqlalchemy (default):
   - "sqlalchemy"
   - "alembic"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Python/FastAPI Backend Context
@@ -140,9 +146,3 @@ for request/response validation. Dependency injection via Depends().
 
 Persistence layer is configurable via `components.persistence`. Customize along with commands
 and scaffolder patterns to match your project.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

@@ -135,6 +135,12 @@ context7_libraries:
   - "material3"
   # Persistence (depends on components.persistence):
   - "room"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Jetpack Compose Android Context
@@ -148,9 +154,3 @@ Kotlin coroutines for async operations. `viewModelScope.launch` for ViewModel wo
 `StateFlow` updated via `_uiState.update { it.copy(...) }`. Sealed `UiEvent` for one-shot navigation/snackbar events.
 
 Customize `components.variant`, `components.testing`, commands, and scaffolder patterns to match your project.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

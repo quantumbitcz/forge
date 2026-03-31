@@ -116,6 +116,12 @@ documentation:
 context7_libraries:
   - "posix"
   - "cmsis"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Embedded C Context
@@ -125,9 +131,3 @@ errno checking, const correctness, header guards, and real-time safety constrain
 Cross-compiled for target hardware; tests run on host via Unity/CMock.
 
 Customize the commands above to match your project's build system (make or cmake).
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

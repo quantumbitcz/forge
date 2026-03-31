@@ -142,6 +142,12 @@ context7_libraries:
   # - "prisma"
   # mongoose (uncomment and remove nestjs/typeorm):
   # - "nestjs/mongoose"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## NestJS Backend Context
@@ -152,9 +158,3 @@ Never read `process.env` directly — always use `ConfigService`. Never use `con
 
 Persistence layer is configurable via `components.persistence` (typeorm, prisma, mongoose).
 Customize the commands above to match your project's package manager (npm, yarn, pnpm, or bun).
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

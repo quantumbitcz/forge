@@ -83,7 +83,7 @@ Then add to `.claude/settings.json`:
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
 | `/verify` | Quick build + lint + test check without a full pipeline run |
-| `/graph-init` | Initialize the Neo4j knowledge graph (Docker-managed, opt-in) |
+| `/graph-init` | Initialize the Neo4j knowledge graph (Docker-managed, enabled by default) |
 | `/graph-status` | Show knowledge graph connection status and node/relationship counts |
 | `/graph-query` | Run Cypher queries against the knowledge graph |
 | `/graph-rebuild` | Rebuild the knowledge graph from the current codebase |
@@ -437,7 +437,7 @@ dev-pipeline/
     discovery/                          # Cross-repo project discovery
       detect-project-type.sh            #   Framework/language auto-detection
       discover-projects.sh              #   Multi-repo discovery
-    graph/                              # Knowledge graph (opt-in, Neo4j)
+    graph/                              # Knowledge graph (Neo4j, enabled by default)
       schema.md                         #   Node types, relationships, lifecycle
       query-patterns.md                 #   Cypher query templates
       seed.cypher                       #   Pre-computed module relationship seed

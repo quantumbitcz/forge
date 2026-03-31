@@ -126,6 +126,12 @@ context7_libraries:
   # Persistence (depends on components.persistence):
   - "fluent"
   - "swift-nio"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Swift/Vapor Backend Context
@@ -135,9 +141,3 @@ persistence configurable via `components.persistence`, async/await throughout.
 DTOs conform to Content protocol. Middleware handles cross-cutting concerns.
 
 Customize the commands above to match your project's package structure.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

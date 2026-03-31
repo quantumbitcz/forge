@@ -128,6 +128,12 @@ context7_libraries:
   # Persistence (depends on components.persistence):
   - "sqlx"              # sqlx (default)
   # - "diesel"          # uncomment if persistence: diesel
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Rust/Axum Backend Context
@@ -137,9 +143,3 @@ Error handling with thiserror + IntoResponse. Persistence layer configurable via
 All I/O is async on Tokio runtime -- no blocking calls in handlers.
 
 Customize the commands above to match your project's workspace and feature flags.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

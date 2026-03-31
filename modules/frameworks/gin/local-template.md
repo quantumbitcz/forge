@@ -135,6 +135,12 @@ context7_libraries:
   - "golang-migrate"
   # sqlx (uncomment and remove gorm):
   # - "sqlx"          # uncomment if persistence: sqlx
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Go + Gin Backend Context
@@ -144,9 +150,3 @@ Handler/Service/Repository layering with interface-driven design. gin.New() with
 Centralized error handling via middleware. No global state; all dependencies wired in main().
 
 Customize the commands above to match your project's Go version and available linters.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474

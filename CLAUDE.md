@@ -125,9 +125,9 @@ Read source files for full details. Key facts:
 - **MCP detection**: `pipeline-run` detects available MCPs (Linear, Playwright, Slack, Context7, Figma). First failure marks MCP as degraded for the run. No MCP required.
 - **Cross-repo**: 5-step discovery during `/pipeline-init`. Contract validation (`pl-250-contract-validator`), linked PRs, multi-repo worktrees during runs. State in `state.json.cross_repo`. Configurable via `discovery:` section.
 
-### Knowledge Graph (optional, `graph:` in `dev-pipeline.local.md`)
+### Knowledge Graph (`graph:` in `dev-pipeline.local.md`)
 
-Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Opt-in — set `graph.enabled: true`. See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `pl-130-docs-discoverer` and `pl-350-docs-generator` to track documentation coverage and relationships.
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.pipeline/`, accessed by orchestrator via Neo4j MCP. Enabled by default — set `graph.enabled: false` to disable (e.g., if Docker is unavailable). See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `pl-130-docs-discoverer` and `pl-350-docs-generator` to track documentation coverage and relationships.
 
 ### Check engine (`shared/checks/`)
 

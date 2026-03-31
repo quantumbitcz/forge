@@ -134,6 +134,12 @@ context7_libraries:
   - "celery"
   - "pytest-django"
   - "factory-boy"
+
+graph:
+  enabled: true           # set to false if Docker is unavailable
+  enrich_symbols: true
+  neo4j_port: 7687
+  neo4j_http_port: 7474
 ---
 
 ## Django Backend Context
@@ -148,9 +154,3 @@ factory_boy for test data. ruff for linting/formatting.
 
 Customize `components.variant`, `components.testing`, commands,
 and scaffolder patterns to match your project layout.
-
-graph:
-  enabled: false          # set to true to enable Neo4j knowledge graph
-  enrich_symbols: true
-  neo4j_port: 7687
-  neo4j_http_port: 7474
