@@ -479,6 +479,8 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 
+> **Convergence engine note:** The quality fix loop above describes the inner cycle (per convergence iteration). The outer loop is managed by the convergence engine with `convergence.max_iterations` (default: 8) as the hard cap and plateau detection as the normal exit. See `shared/convergence-engine.md`.
+
 ### Migration Mode
 
 The orchestrator detects the pipeline mode from the requirement prefix at PREFLIGHT (section 3.0 in `pl-100-orchestrator.md`). Mode is stored in `state.json.mode`.

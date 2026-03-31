@@ -1248,7 +1248,7 @@ If convergence exhausted (`total_iterations >= max_iterations`) and score still 
 
 ### 9.4 Score Escalation Ladder
 
-After max review cycles, apply this ladder to determine next action:
+After convergence exhaustion (plateau or max_iterations reached), apply this ladder to determine next action:
 
 | Score | Action |
 |---|---|

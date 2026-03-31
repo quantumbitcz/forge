@@ -193,6 +193,8 @@ If a review agent times out or fails to return results:
 
 ## Review Cycle Flow
 
+> **Note:** This describes the quality gate's inner cycle per convergence iteration. The outer convergence loop is managed by `shared/convergence-engine.md`.
+
 ```
 1. Dispatch all batch agents (parallel within each batch, sequential across batches)
 2. Run inline checks
@@ -210,6 +212,8 @@ If a review agent times out or fails to return results:
 The score history (score per cycle) is included in the quality gate report so the retrospective can track improvement trends across runs.
 
 ## Score Oscillation Handling
+
+> **Note:** When the convergence engine is active (default), oscillation detection is handled by the convergence engine's REGRESSING state (see `shared/convergence-engine.md`). The description below applies to the quality gate's per-cycle scoring within a single convergence iteration.
 
 Track `score_history[]` in `state.json` across quality cycles. Initialized as `[]` at PREFLIGHT. After each cycle's score is computed, append it to the array FIRST, then run the oscillation check:
 

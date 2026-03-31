@@ -68,12 +68,12 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
             -> apply score escalation ladder (existing scoring sub-bands)
             -> proceed to "safety_gate" with documented unfixables
         -> ELSE:
-            -> increment total_iterations
+            -> increment phase_iterations, increment total_iterations
             -> dispatch IMPLEMENT with findings, then REVIEW again
 
       ELSE:
         -> plateau_count = 0, convergence_state = "IMPROVING"
-        -> increment total_iterations
+        -> increment phase_iterations, increment total_iterations
         -> dispatch IMPLEMENT with findings, then REVIEW again
 
     "safety_gate":
