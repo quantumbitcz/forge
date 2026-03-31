@@ -179,7 +179,7 @@ fi
 
 # ASP.NET / .NET backend
 if [[ "$type" == "unknown" ]]; then
-  if ls "$DIR"/*.csproj &>/dev/null 2>&1 || ls "$DIR"/*.sln &>/dev/null 2>&1; then
+  if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 || compgen -G "$DIR"/*.sln >/dev/null 2>&1; then
     type="backend"
     framework="aspnet"
     language="csharp"

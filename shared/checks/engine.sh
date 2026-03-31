@@ -99,12 +99,12 @@ detect_module() {
     elif [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle.kts" 2>/dev/null; then module="spring"
     elif [[ -f "$project_root/build.gradle" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle" 2>/dev/null; then module="spring"
     elif [[ -f "$project_root/angular.json" ]]; then module="angular"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/next.config.* &>/dev/null 2>&1; then module="nextjs"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/svelte.config.* &>/dev/null 2>&1; then module="sveltekit"
+    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/next.config.* >/dev/null 2>&1; then module="nextjs"
+    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/svelte.config.* >/dev/null 2>&1; then module="sveltekit"
     elif [[ -f "$project_root/package.json" ]] && [[ -f "$project_root/nest-cli.json" ]]; then module="nestjs"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"vue"' "$project_root/package.json" 2>/dev/null; then module="vue"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"svelte"' "$project_root/package.json" 2>/dev/null; then module="svelte"
-    elif [[ -f "$project_root/package.json" ]] && ls "$project_root"/vite.config.* &>/dev/null 2>&1; then
+    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/vite.config.* >/dev/null 2>&1; then
       # Vue and Svelte already handled above; remaining Vite projects default to react
       module="react"
     # Bare package.json defaults to express for linter module selection (intentional —
@@ -118,10 +118,10 @@ detect_module() {
     elif [[ -f "$project_root/manage.py" ]]; then module="django"
     elif [[ -f "$project_root/pyproject.toml" ]] && grep -q 'fastapi' "$project_root/pyproject.toml" 2>/dev/null; then module="fastapi"
     elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
-    elif ls "$project_root"/*.xcodeproj &>/dev/null 2>&1; then module="swiftui"
-    elif [[ -f "$project_root/Makefile" ]] && ls "$project_root"/*.c &>/dev/null 2>&1; then module="embedded"
-    elif ls "$project_root"/*.csproj &>/dev/null 2>&1; then module="aspnet"
-    elif ls "$project_root"/*.yaml &>/dev/null 2>&1 && grep -ql 'apiVersion:' "$project_root"/*.yaml 2>/dev/null; then module="k8s"
+    elif compgen -G "$project_root"/*.xcodeproj >/dev/null 2>&1; then module="swiftui"
+    elif [[ -f "$project_root/Makefile" ]] && compgen -G "$project_root"/*.c >/dev/null 2>&1; then module="embedded"
+    elif compgen -G "$project_root"/*.csproj >/dev/null 2>&1; then module="aspnet"
+    elif compgen -G "$project_root"/*.yaml >/dev/null 2>&1 && grep -ql 'apiVersion:' "$project_root"/*.yaml 2>/dev/null; then module="k8s"
     fi
   fi
 
