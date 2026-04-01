@@ -285,6 +285,28 @@ if [ "$has_stop" != "true" ] && [ "$has_stop_nested" != "true" ]; then
 fi
 check "hooks/hooks.json has PostToolUse and Stop event types" "$check18_fail"
 
+# Check 18b: All hook command scripts exist, are executable, and have shebangs
+check18b_fail=0
+# Extract command paths from hooks.json, replacing ${CLAUDE_PLUGIN_ROOT} with $ROOT
+while IFS= read -r cmd; do
+  [[ -z "$cmd" ]] && continue
+  # Get just the script path (first word before any arguments)
+  script_path="${cmd%% *}"
+  # Replace ${CLAUDE_PLUGIN_ROOT} with the actual root
+  script_path="${script_path/\$\{CLAUDE_PLUGIN_ROOT\}/$ROOT}"
+  if [[ ! -f "$script_path" ]]; then
+    echo "    DETAIL: Hook script not found: $script_path" >&2
+    check18b_fail=1
+  elif [[ ! -x "$script_path" ]]; then
+    echo "    DETAIL: Hook script not executable: $script_path (run: chmod +x $script_path)" >&2
+    check18b_fail=1
+  elif ! head -1 "$script_path" | grep -q '^#!'; then
+    echo "    DETAIL: Hook script missing shebang: $script_path (add: #!/usr/bin/env bash)" >&2
+    check18b_fail=1
+  fi
+done < <(jq -r '.. | objects | select(has("command")) | .command' "$HOOKS_JSON" 2>/dev/null)
+check "All hook command scripts exist, are executable, and have shebangs" "$check18b_fail"
+
 echo ""
 echo "--- SKILLS ---"
 
