@@ -215,16 +215,16 @@ resolve_component() {
   # We do a simple line-by-line parse (no full YAML parser required):
   # collect (path, framework) pairs from indented sub-blocks under components:.
   #
-  # Known limitation: assumes 2-space indentation for component names and
-  # 4-space indentation for path/framework fields. Projects using 4-space
-  # or tab-based YAML indentation will have multi-component detection fail
-  # silently, falling back to detect_module(). All pipeline-generated
-  # templates use 2-space indent so this only affects manually edited configs.
+  # Indentation: expects 2-space for component names and 4-space for path/framework
+  # fields. If non-standard indentation is detected, a WARNING is emitted to stderr
+  # and the parser falls back to detect_module() (single-component mode).
+  # All pipeline-generated templates use 2-space indent.
   if [[ -f "$cfg" ]]; then
     local in_components=0
     local in_component_block=0
     local current_path="" current_framework="" found_any=0
-    local best_comp_prefix="" best_comp_component="" comp_indent=""
+    local best_comp_prefix="" best_comp_component=""
+    local indent_warned=0
 
     # Derive relative path for matching
     local rel_path=""
@@ -253,6 +253,20 @@ resolve_component() {
       fi
 
       [[ $in_components -eq 0 ]] && continue
+
+      # --- Indentation validation ---
+      # Detect non-2-space indentation inside components: block.
+      # Tabs or 3+/4+-space component names indicate non-standard formatting.
+      if [[ $indent_warned -eq 0 && $in_component_block -eq 0 ]]; then
+        if [[ "$line" =~ ^$'\t' ]]; then
+          echo "[check-engine] WARNING: Tab indentation detected in components: block of dev-pipeline.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /pipeline-init to regenerate config." >&2
+          indent_warned=1
+        elif [[ "$line" =~ ^[[:space:]]{3,}[a-zA-Z_] && ! "$line" =~ ^[[:space:]]{2}[a-zA-Z_] ]]; then
+          # Line has 3+ leading spaces but NOT exactly 2 — non-standard indent
+          echo "[check-engine] WARNING: Non-standard indentation detected in components: block of dev-pipeline.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /pipeline-init to regenerate config." >&2
+          indent_warned=1
+        fi
+      fi
 
       # Detect named component block (2-space indent + name + colon)
       if [[ "$line" =~ ^[[:space:]]{2}([a-zA-Z_][a-zA-Z0-9_-]*):[[:space:]]*$ ]]; then
