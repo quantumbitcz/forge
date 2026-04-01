@@ -57,7 +57,14 @@ fi
 
 # --- Ensure output directories ---
 GRAPH_DIR="${PROJECT_ROOT}/.pipeline/graph"
-mkdir -p "$GRAPH_DIR"
+if ! mkdir -p "$GRAPH_DIR" 2>/dev/null; then
+  echo "Error: Cannot create $GRAPH_DIR — check directory permissions" >&2
+  exit 1
+fi
+if [[ ! -w "$GRAPH_DIR" ]]; then
+  echo "Error: $GRAPH_DIR is not writable" >&2
+  exit 1
+fi
 
 UNRESOLVED_LOG="${GRAPH_DIR}/.unresolved-imports.log"
 : > "$UNRESOLVED_LOG"
@@ -86,9 +93,11 @@ cypher_escape() {
   printf '%s' "$s"
 }
 
-# --- Helper: get file size ---
+# --- Helper: get file size (returns 0 if file is unreadable/missing) ---
 file_size() {
-  wc -c < "$PROJECT_ROOT/$1" 2>/dev/null | tr -d ' '
+  local sz
+  sz=$(wc -c < "$PROJECT_ROOT/$1" 2>/dev/null | tr -d ' ')
+  printf '%s' "${sz:-0}"
 }
 
 # --- Helper: get last modified date (YYYY-MM-DD) ---
