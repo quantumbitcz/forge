@@ -223,24 +223,62 @@ done
 
 ## Gotchas
 
+### Structural rules
+
 - Agent `name` in frontmatter **must** match filename without `.md` — orchestrator dispatch depends on it.
 - Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this.
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 and v2.0.0 clean breaks) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
 - The plugin never touches consuming project files. Runtime state goes to `.pipeline/`.
 - `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten.
+
+### Check engine
+
 - If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds.
 - `rules-override.json` extends (not replaces) shared defaults. Use `"disabled": true` to suppress.
 - `engine.sh` multi-component YAML parsing assumes 2-space indentation (component names at 2-space, path/framework at 4-space). Manually edited configs with different indentation will silently fall back to single-component detection. Pipeline-generated templates always use 2-space.
-- PREFLIGHT constraints — scoring: `critical_weight >= 10`, `warning_weight >= 1`, `warning_weight > info_weight`, `info_weight >= 0`, `pass_threshold >= 60`, `concerns_threshold >= 40`, `concerns_threshold < pass_threshold`, `pass_threshold - concerns_threshold >= 10`, `oscillation_tolerance` 0-20. Global retry budget: `total_retries_max` 5-30.
-- PREFLIGHT constraints — convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100.
-- PREEMPT confidence decay: 10 domain-matched unused runs → HIGH → MEDIUM → LOW → ARCHIVED. 1 false positive = 3 unused runs. Archived items are not loaded at PREFLIGHT.
-- Orchestrator enforces parallel task conflict detection at IMPLEMENT — scaffolders serial first, then conflict detection, then implementers parallel. Shared-file tasks auto-serialized.
-- `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes.
 - `known-deprecations.json` v1 entries (without `applies_from`) apply universally (backward compatible). Unknown project versions → all rules apply.
+
+### PREFLIGHT constraints
+
+- Scoring: `critical_weight >= 10`, `warning_weight >= 1`, `warning_weight > info_weight`, `info_weight >= 0`, `pass_threshold >= 60`, `concerns_threshold >= 40`, `concerns_threshold < pass_threshold`, `pass_threshold - concerns_threshold >= 10`, `oscillation_tolerance` 0-20. Global retry budget: `total_retries_max` 5-30.
+- Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100.
+
+### Pipeline modes
+
+- **Greenfield projects:** `/pipeline-init` detects empty projects and offers three paths: Bootstrap (dispatch `pl-050-project-bootstrapper`), Select stack manually (choose from available frameworks), or Skip. Unknown/null detection on non-empty projects also triggers manual framework selection. See `pipeline-init` SKILL.md Greenfield Detection section.
+- **Bootstrap mode:** Stage 4 (IMPLEMENT) is skipped — all files created by bootstrapper in Stage 2. Stage 3 uses bootstrap-scoped validation (no conventions check, no Challenge Brief required). Stage 6 uses reduced reviewer set (`architecture-reviewer` + `security-reviewer` only). Quality target is `pass_threshold`, not 100.
+- **Migration mode:** All 10 stages run. Stage 2 uses `pl-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
+- `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.pipeline/.lock`, no checkpoint files, no `lastCheckpoint` updates.
+
+### Convergence & review
+
+- PREEMPT confidence decay: 10 domain-matched unused runs → HIGH → MEDIUM → LOW → ARCHIVED. 1 false positive = 3 unused runs. Archived items are not loaded at PREFLIGHT.
+- **Convergence safety gate restart:** Resets `phase_iterations`, `plateau_count`, `last_score_delta`, `convergence_state` to initial values. Does NOT reset `total_iterations` or `score_history`. See `convergence-engine.md` safety_gate section.
+- **PLATEAUED transition:** Score >= `pass_threshold` proceeds directly to safety gate. Score in CONCERNS range escalates to user first. Score in FAIL range recommends abort — does NOT proceed to safety gate.
+- **Preview validator gating:** When `preview.block_merge: true`, FAIL verdict blocks Stage 8 progression. Orchestrator loops: implement fix → verify → re-validate preview (max `preview.max_fix_loops`, default 1).
+
+### Implementation & shipping
+
+- Orchestrator enforces parallel task conflict detection at IMPLEMENT — scaffolders serial first, then conflict detection, then implementers parallel. Shared-file tasks auto-serialized.
+- **Feedback loop detection:** `previous_feedback_classification` tracks the preceding PR rejection category. When same classification occurs 2+ consecutive times, orchestrator escalates with Loop/Guide/Start fresh/Override options. `feedback_loop_count` is incremented by orchestrator (not just initialized to 0).
+
+### Module & framework resolution
+
 - Framework-level binding files (e.g., `testing/`, `persistence/`, `messaging/`) EXTEND their corresponding generic layer files — they don't replace.
 - Framework-less projects (`go-stdlib` or `framework: null`): only language + testing layers. Infra frameworks (`k8s`): `language: null`, only framework layer.
-- Cross-repo: PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks. Discovery results stored with `detected_via` — re-run `/pipeline-init` to refresh.
-- Cross-repo timeout: 30 minutes per project (configurable via `cross_repo.timeout_minutes`). Exceeded → task marked failed, main PR unaffected.
+
+### Cross-repo
+
+- PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks. Discovery results stored with `detected_via` — re-run `/pipeline-init` to refresh.
+- Timeout: 30 minutes per project (configurable via `cross_repo.timeout_minutes`). Exceeded → task marked failed, main PR unaffected.
+
+### State schema
+
+- **`modules` vs `components`:** `components` = per-service state within a single monorepo. `modules` = per-repo state across related repositories. Both can be active simultaneously.
+- **`recovery_applied` is deprecated** — derived at write time from `recovery_budget.applications`. Do not write independently.
+
+### Testing
+
 - **Test module counts:** Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Minimum count guards (e.g., `MIN_FRAMEWORKS=21`) catch accidental deletions. When intentionally adding modules, bump the corresponding `MIN_*` constant in `module-lists.bash`.
 
 ## Plugin distribution (`.claude-plugin/`)
