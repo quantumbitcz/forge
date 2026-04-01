@@ -81,8 +81,15 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
         -> plateau_count += 1
         -> IF plateau_count >= plateau_patience:
             convergence_state = "PLATEAUED"
-            -> apply score escalation ladder (existing scoring sub-bands)
-            -> proceed to "safety_gate" with documented unfixables
+            -> apply score escalation ladder (existing scoring sub-bands):
+               - score >= pass_threshold: transition directly to "safety_gate"
+                 (do NOT dispatch another IMPLEMENT — the score is acceptable)
+               - score >= concerns_threshold AND < pass_threshold: ESCALATE to user
+                 with CONCERNS verdict before transitioning to safety_gate
+                 (user may choose to accept, guide further fixes, or abort)
+               - score < concerns_threshold: ESCALATE to user with FAIL verdict
+                 (recommend abort or replan — do NOT proceed to safety_gate)
+            -> document unfixable findings in convergence.unfixable_findings
         -> ELSE:
             -> increment phase_iterations, increment total_iterations
             -> dispatch IMPLEMENT with findings, then REVIEW again
@@ -99,7 +106,18 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
       ELSE:
         -> safety_gate_failures += 1
         -> IF safety_gate_failures >= 2: ESCALATE (cross-phase oscillation detected)
-        -> ELSE: transition back to "correctness", reset phase_iterations to 0, reset plateau_count to 0
+        -> ELSE:
+           -> transition back to "correctness"
+           -> reset phase_iterations to 0
+           -> reset plateau_count to 0
+           -> reset last_score_delta to 0
+           -> reset convergence_state to "IMPROVING"
+           -> append phase_history entry: { phase: "safety_gate", outcome: "restarted" }
+           -> NOTE: score_history is NOT cleared — it carries across phases for
+              retrospective analysis. The perfection phase uses last_score_delta
+              (reset to 0) for its own delta calculations, not score_history.
+           -> NOTE: total_iterations is NOT reset — it counts across all phases
+              including restarts. The global cap (max_iterations) applies cumulatively.
         -> increment total_iterations
 ```
 
@@ -113,6 +131,12 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
 - Score >= `pass_threshold` (default 80): proceed to safety gate with PASS verdict. Findings preserved in stage notes. Sub-band guidance: 95-99 = no follow-up tickets; 80-94 = architectural WARNINGs get follow-up tickets.
 - Score >= `concerns_threshold` AND < `pass_threshold` (default 60-79): CONCERNS verdict. Full findings posted. Escalate to user for guidance before proceeding.
 - Score < `concerns_threshold` (default < 60): FAIL verdict. Escalate to user. Recommend abort or replan.
+
+**Precedence between oscillation detection and score escalation ladder:**
+The REGRESSING state and the score escalation ladder serve different purposes and do NOT conflict:
+- **REGRESSING** (oscillation_tolerance check) fires on score *drops between iterations* that exceed tolerance — this is a **trajectory signal** meaning "we're going backwards." It triggers immediately, regardless of absolute score.
+- **Score escalation ladder** fires when convergence reaches **PLATEAUED** — this is a **terminal verdict** meaning "we've stopped improving." It determines what happens next based on absolute score.
+- If a single iteration shows both a drop exceeding tolerance AND would trigger plateau (e.g., score oscillating around threshold), **REGRESSING takes priority** — it is checked first in the algorithm (line `ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance` precedes the plateau check). This prevents the pipeline from declaring "plateau" when the score is actually declining.
 
 ## Configuration
 
@@ -190,7 +214,7 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 | `plateau_count` | integer | Consecutive cycles with improvement <= `plateau_threshold`; resets on meaningful improvement |
 | `last_score_delta` | number | Score change from previous perfection cycle (0 if first cycle). May be non-integer with custom scoring weights. |
 | `convergence_state` | `"IMPROVING"` \| `"PLATEAUED"` \| `"REGRESSING"` | Current convergence state |
-| `phase_history` | array | Append-only log of completed phases for retrospective analysis. Each entry has `outcome`: `"converged"` (target reached or plateau accepted), `"escalated"` (cap hit, regression, or user escalation), or `"restarted"` (safety gate failure triggered correctness restart). |
+| `phase_history` | array | Append-only log of completed phases for retrospective analysis. Each entry has `outcome`: `"converged"` (target reached or plateau accepted), `"escalated"` (cap hit, regression, or user escalation), or `"restarted"` (safety gate failure triggered correctness restart). Capped at 50 entries per run. Resets to `[]` at PREFLIGHT for each new run. |
 | `safety_gate_passed` | boolean | Whether the final VERIFY after Phase 2 succeeded |
 | `safety_gate_failures` | integer | Consecutive safety gate failures. Escalate at >= 2 (cross-phase oscillation). Resets to 0 on safety gate pass. |
 | `unfixable_findings` | array | Findings that survived all iterations (see format below) |
