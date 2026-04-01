@@ -45,10 +45,11 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
     "correctness":
       IF verify_result is PHASE_A_FAILURE (build/lint failed before tests ran):
         -> increment verify_fix_count, increment phase_iterations, increment total_iterations
-        -> IF verify_fix_count >= max_fix_loops: ESCALATE
+        -> IF total_iterations >= max_iterations: ESCALATE
+           (Global cap always checked first — takes precedence over inner caps)
+        -> ELSE IF verify_fix_count >= max_fix_loops: ESCALATE
            (Phase A inner cap — prevents unbounded build/lint fix loops,
             consistent with stage-contract.md escalation rules)
-        -> ELSE IF total_iterations >= max_iterations: ESCALATE
         -> ELSE: dispatch IMPLEMENT with build/lint errors, then VERIFY again
         (analysis_pass is not evaluated — Phase B did not run)
 
@@ -56,10 +57,11 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
         -> transition to "perfection", reset phase_iterations to 0
       ELSE:
         -> increment phase_iterations, increment total_iterations
-        -> IF phase_iterations >= max_test_cycles: ESCALATE
+        -> IF total_iterations >= max_iterations: ESCALATE
+           (Global cap always checked first — takes precedence over inner caps)
+        -> ELSE IF phase_iterations >= max_test_cycles: ESCALATE
            (Phase 1 inner cap — prevents unbounded test-fix loops
             within a single correctness phase, independent of total budget)
-        -> ELSE IF total_iterations >= max_iterations: ESCALATE
         -> ELSE: dispatch IMPLEMENT with failure details, then VERIFY again
 
     "perfection":
@@ -123,6 +125,8 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
 
 **Global budget interaction:** Every `total_iterations` increment also increments `state.json.total_retries`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of convergence state.
 
+**SCOUT-* finding filtering:** When the quality gate returns findings to the convergence engine, filter out `SCOUT-*` findings before dispatching to the implementer. SCOUT items represent improvements already made — they do not affect the score and should not be re-sent as "fixes to make." SCOUT findings are preserved in stage notes for recap and retrospective purposes only.
+
 **Phase timeout:** Individual phases do not have explicit time limits — the convergence engine relies on iteration caps (`max_test_cycles` for Phase 1, `max_review_cycles` for Phase 2, `max_iterations` globally) and the global retry budget (`total_retries_max`) to bound execution. Wall-clock time is tracked in `state.json.cost.wall_time_seconds` for retrospective analysis but is not used as a termination condition. If the orchestrator detects no progress (e.g., identical errors across 3 consecutive iterations), it should escalate without waiting for budget exhaustion.
 
 **Consecutive Dip Rule interaction:** The quality gate's per-cycle Consecutive Dip Rule (see `scoring.md`) operates within a single convergence iteration. If two consecutive inner cycles show score dips, the quality gate escalates *within* that iteration. The convergence engine's `REGRESSING` state detects dips *across* iterations (via `oscillation_tolerance`). Both mechanisms are complementary: the inner rule catches intra-iteration oscillation, the outer state catches inter-iteration regression.
@@ -174,6 +178,7 @@ The convergence engine reads from and interacts with existing pipeline configura
 | `max_review_cycles` | `quality_gate:` in `pipeline-config.md` | Becomes Phase 2 inner cap per convergence iteration. Defaults to 1 when convergence is active -- the convergence engine handles the outer loop. |
 | `max_test_cycles` | `test_gate:` in `pipeline-config.md` | Stays as-is. Phase 1 inner cap, managed by `pl-500-test-gate`. |
 | `oscillation_tolerance` | `scoring:` in `pipeline-config.md` | Read from scoring section. **NOT** duplicated into `convergence:` config. Used by the perfection phase for regression detection. |
+| `implementation.max_fix_loops` | `pipeline-config.md` implementation section | Phase A (build/lint) inner cap. Prevents unbounded build/lint fix loops within VERIFY. Default: 3. |
 | `total_retries_max` | `pipeline-config.md` top-level | Still applies globally. Every convergence iteration increments `total_retries`. |
 
 ## State Schema

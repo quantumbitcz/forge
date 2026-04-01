@@ -319,7 +319,7 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 ### Budget Ceiling
 
-`max_weight: 5.5`. Each strategy application adds its weight to `recovery_budget.total_weight`. The ceiling accommodates applying every non-terminal strategy exactly once (total: 5.5).
+`max_weight: 5.5`. Each strategy application adds its weight to `recovery_budget.total_weight`. The ceiling equals the sum of all non-terminal strategy weights (0.5 + 1.0 + 1.5 + 1.0 + 1.0 + 0.5 = 5.5), providing enough capacity for flexible recovery across multiple distinct failure types — e.g., 2-3 transient retries + 1 tool diagnosis + 1 state reconstruction — while preventing unbounded recovery attempts.
 
 ### Inter-Strategy Cascade
 

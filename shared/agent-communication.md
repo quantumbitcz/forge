@@ -99,6 +99,8 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
 
 All data flows through the orchestrator. Agents are isolated. The orchestrator curates what each agent receives.
 
+**Checkpoint persistence:** The orchestrator writes `checkpoint-{storyId}.json` after each Stage 4 task completion for resume capability. Checkpoints are orchestrator-internal state — agents do not read or write checkpoints directly.
+
 ### Conditional Agents
 
 The following agents are dispatched conditionally and receive data from the orchestrator only when their trigger conditions are met:
@@ -115,7 +117,7 @@ The following agents are dispatched conditionally and receive data from the orch
 
 ## 6. PREEMPT Item Tracking
 
-During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes:
+During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes. PREEMPT producers are: `pl-300-implementer` (primary — receives PREEMPT items for the implementation domain), `pl-310-scaffolder` (when PREEMPT items reference scaffold patterns), and `pl-320-frontend-polisher` (when PREEMPT items reference frontend patterns). If multiple agents report on the same PREEMPT item, the orchestrator uses the marker from the **last agent to complete** (since later agents may override earlier work).
 
     PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
     PREEMPT_SKIPPED: {item-id} — not applicable ({reason})

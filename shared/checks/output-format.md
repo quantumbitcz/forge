@@ -48,7 +48,9 @@ All five fields are required in every finding line. If a check cannot determine 
 
 ### Deduplication
 
-Deduplication key: `(file, line, category)`. When duplicates exist across layers, keep the finding with the highest severity and the longest description.
+The check engine deduplicates findings across its three layers using the key `(file, line, category)`. When duplicates exist across layers, keep the finding with the highest severity and the longest description.
+
+Note: This is layer-level deduplication — it merges findings from Layer 1, 2, and 3 for the same file. The quality gate performs a second deduplication pass at scoring time with component awareness: `(component, file, line, category)` in multi-component projects. See `scoring.md` for scoring-level deduplication rules.
 
 ### Multi-line findings
 

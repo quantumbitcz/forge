@@ -260,7 +260,12 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 
 **Exit condition:** Build passes, lint passes, all tests pass.
 
-**Convergence role:** Stage 5 serves as Phase 1 (Correctness) of the convergence engine. The orchestrator enters Phase 1 after IMPLEMENT completes. Phase 1 exits when `verify_result.tests_pass AND verify_result.analysis_pass` — where `analysis_pass` is `true` when all Phase B analysis agents return without CRITICAL findings and the overall verdict is not FAIL (see `convergence-engine.md` for the full definition). If Phase A fails (build/lint error), Phase B does not run and `analysis_pass` is not evaluated — the convergence engine routes back to IMPLEMENT with build/lint errors. When VERIFY passes fully, the convergence engine transitions to Phase 2 (Perfection → Stage 6). Stage 5 is also the safety gate — re-invoked after Phase 2 converges to catch regressions. See `shared/convergence-engine.md`.
+**Convergence role:** Stage 5 serves as Phase 1 (Correctness) of the convergence engine. The orchestrator enters Phase 1 after IMPLEMENT completes. Phase 1 exits when `verify_result.tests_pass AND verify_result.analysis_pass` — where `analysis_pass` is `true` when all Phase B analysis agents return without CRITICAL findings and the overall verdict is not FAIL (see `convergence-engine.md` for the full definition). If Phase A fails (build/lint error), Phase B does not run and `analysis_pass` is not evaluated — this is classified as `PHASE_A_FAILURE` and the convergence engine routes back to IMPLEMENT with build/lint errors. When VERIFY passes fully, the convergence engine transitions to Phase 2 (Perfection → Stage 6). Stage 5 is also the safety gate — re-invoked after Phase 2 converges to catch regressions. See `shared/convergence-engine.md`.
+
+**Verify result classification:** The verify stage produces one of three outcomes consumed by the convergence engine:
+- **PHASE_A_FAILURE**: Build or lint failed before tests ran. Phase B (test gate) is not executed. `analysis_pass` is not evaluated. Routes to IMPLEMENT with build/lint errors.
+- **Tests fail** (`tests_pass: false`): Build/lint passed but tests failed. Routes to IMPLEMENT with failing test details.
+- **Full pass** (`tests_pass: true AND analysis_pass: true`): All verification passed. Transitions to Phase 2 (Perfection) or confirms safety gate.
 
 **Phase A failure escalation:** If `verify_fix_count >= max_fix_loops`, the pipeline escalates to the user. Each Phase A retry increments `total_retries`. Escalation format:
 
@@ -302,7 +307,15 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 
 **Exit condition (converged at target):** Score = `target_score` (default 100) and safety gate passed. Proceed to Stage 7.
 
-**Exit condition (converged below target):** Score plateaued below target. Apply score escalation ladder from `convergence-engine.md`: 95-99 proceed quietly (no follow-up tickets), 80-94 proceed with CONCERNS (architectural WARNINGs get follow-up tickets), 60-79 escalate to user for guidance, <60 recommend abort. Safety gate must still pass.
+**Exit condition (converged below target):** Score plateaued below target. The convergence engine applies the score escalation ladder (see `convergence-engine.md`):
+
+| Plateau Score | Verdict | Action |
+|---|---|---|
+| >= `pass_threshold` (default 80) | PASS | Proceed directly to safety gate. Sub-band 95-99: no follow-up tickets. Sub-band 80-94: architectural WARNINGs get follow-up tickets. |
+| >= `concerns_threshold` AND < `pass_threshold` (default 60-79) | CONCERNS | Escalate to user for guidance before proceeding to safety gate. User may accept, guide further fixes, or abort. |
+| < `concerns_threshold` (default < 60) | FAIL | Escalate to user. Recommend abort or replan. Do NOT proceed to safety gate. |
+
+Safety gate must still pass after plateau acceptance. Unfixable findings are documented in `convergence.unfixable_findings`.
 
 **Exit condition (FAIL):** Any CRITICAL remaining after convergence exhaustion → escalate to user.
 
