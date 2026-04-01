@@ -255,7 +255,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (36 checks, no bats needed)
+./tests/run-all.sh structural   # Plugin integrity (39 checks, no bats needed)
 ./tests/run-all.sh unit         # Shell script behavior (98 tests)
 ./tests/run-all.sh contract     # Document contract compliance (151 tests)
 ./tests/run-all.sh scenario     # Multi-script integration (72 tests)

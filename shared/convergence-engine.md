@@ -56,7 +56,7 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
   MATCH phase:
 
     "correctness":
-      IF verify_result is PHASE_A_FAILURE (build/lint failed before tests ran):
+      IF verify_result.is_phase_a_failure (build/lint failed before tests ran):
         -> increment verify_fix_count, increment phase_iterations, increment total_iterations
         -> IF total_iterations >= max_iterations: ESCALATE
            (Global cap always checked first — takes precedence over inner caps)

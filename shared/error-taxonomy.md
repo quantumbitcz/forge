@@ -54,7 +54,7 @@ The recovery engine reads the ERROR_TYPE field to select the appropriate strateg
 
 When an error arrives with a pre-classified ERROR_TYPE and SUGGESTED_STRATEGY:
 - Use the suggested strategy directly (skip heuristic classification)
-- Still respect the weighted recovery budget (max 5.0 total weight per run — see `shared/recovery/recovery-engine.md` for strategy weights)
+- Still respect the weighted recovery budget (max 5.5 total weight per run — see `shared/recovery/recovery-engine.md` for strategy weights)
 
 When an error arrives WITHOUT classification (legacy agents or unexpected errors):
 - Fall back to the existing heuristic classification in the recovery engine
