@@ -219,6 +219,7 @@ create_state_json() {
   "preempt_items_applied": [],
   "preempt_items_status": {},
   "feedback_classification": "",
+  "previous_feedback_classification": "",
   "feedback_loop_count": 0,
   "score_history": [],
   "convergence": {

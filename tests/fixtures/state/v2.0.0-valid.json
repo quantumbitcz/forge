@@ -22,7 +22,19 @@
   },
   "total_retries": 2,
   "total_retries_max": 10,
+  "stage_timestamps": {
+    "preflight": "2026-01-01T00:00:00Z",
+    "explore": "2026-01-01T00:02:00Z"
+  },
+  "last_commit_sha": "abc123def456",
   "lastCheckpoint": "2026-01-01T00:00:00Z",
+  "preempt_items_applied": [],
+  "preempt_items_status": {},
+  "feedback_classification": "",
+  "previous_feedback_classification": "",
+  "feedback_loop_count": 0,
+  "conventions_hash": "",
+  "conventions_section_hashes": {},
   "detected_versions": {
     "language_version": "1.9.0",
     "framework_version": "3.2.0"
@@ -45,11 +57,12 @@
     "unfixable_findings": []
   },
   "integrations": {
-    "linear": false,
-    "playwright": false,
-    "slack": false,
-    "context7": false,
-    "figma": false
+    "linear": { "available": false, "team": "" },
+    "playwright": { "available": false },
+    "slack": { "available": false },
+    "context7": { "available": false },
+    "figma": { "available": false },
+    "neo4j": { "available": false, "last_build_sha": "", "node_count": 0 }
   },
   "linear": {
     "epic_id": "",
@@ -72,6 +85,8 @@
   },
   "recovery_applied": [],
   "recovery": {
+    "total_failures": 0,
+    "total_recoveries": 0,
     "degraded_capabilities": [],
     "failures": [],
     "budget_warning_issued": false

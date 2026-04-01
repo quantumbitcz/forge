@@ -111,3 +111,37 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
   [[ "$count" -ge 3 ]] \
     || fail "Expected at least 3 escalation mentions, found $count"
 }
+
+# ---------------------------------------------------------------------------
+# 11. Bootstrap mode stage definitions
+# ---------------------------------------------------------------------------
+@test "stage-contract: bootstrap mode defined with stage-by-stage behavior" {
+  grep -q "Bootstrap mode" "$STAGE_CONTRACT" \
+    || fail "Bootstrap mode not documented in stage-contract.md"
+  grep -q "Stage 4.*IMPLEMENT.*Skip\|Skip.*entirely\|skipped" "$STAGE_CONTRACT" \
+    || fail "Bootstrap mode does not document Stage 4 skip"
+  grep -qi "reduced reviewer\|architecture-reviewer.*security-reviewer" "$STAGE_CONTRACT" \
+    || fail "Bootstrap mode does not document reduced reviewer set at Stage 6"
+}
+
+# ---------------------------------------------------------------------------
+# 12. Migration mode stage definitions
+# ---------------------------------------------------------------------------
+@test "stage-contract: migration mode defined with per-stage behavior" {
+  grep -q "Migration mode" "$STAGE_CONTRACT" \
+    || fail "Migration mode not documented in stage-contract.md"
+  grep -q "MIGRATING" "$STAGE_CONTRACT" \
+    || fail "MIGRATING state not documented in migration mode"
+  grep -q "pl-160-migration-planner" "$STAGE_CONTRACT" \
+    || fail "pl-160-migration-planner not referenced in migration mode"
+}
+
+# ---------------------------------------------------------------------------
+# 13. Feedback loop detection documented
+# ---------------------------------------------------------------------------
+@test "stage-contract: feedback loop detection with escalation options" {
+  grep -q "feedback_loop_count" "$STAGE_CONTRACT" \
+    || fail "feedback_loop_count not documented in stage-contract.md"
+  grep -q "Guide.*Start fresh.*Override" "$STAGE_CONTRACT" \
+    || fail "Feedback loop escalation options not documented"
+}

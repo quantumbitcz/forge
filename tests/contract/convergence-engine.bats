@@ -196,3 +196,42 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
   grep -q "pl-700-retrospective" "$ENGINE" \
     || fail "pl-700-retrospective not referenced in auto-tuning section"
 }
+
+# ---------------------------------------------------------------------------
+# 22. Safety gate restart resets last_score_delta and convergence_state
+# ---------------------------------------------------------------------------
+@test "convergence-engine: safety gate restart resets last_score_delta" {
+  grep -q "reset last_score_delta" "$ENGINE" \
+    || fail "Safety gate restart does not specify last_score_delta reset"
+}
+
+@test "convergence-engine: safety gate restart resets convergence_state to IMPROVING" {
+  grep -q 'reset convergence_state to "IMPROVING"' "$ENGINE" \
+    || fail "Safety gate restart does not specify convergence_state reset"
+}
+
+# ---------------------------------------------------------------------------
+# 23. PLATEAUED transition specifies score-based routing
+# ---------------------------------------------------------------------------
+@test "convergence-engine: PLATEAUED transition routes by score band" {
+  grep -q "pass_threshold.*safety_gate\|transition directly to.*safety_gate" "$ENGINE" \
+    || fail "PLATEAUED transition does not specify score >= pass_threshold routing"
+  grep -qi "concerns.*ESCALATE\|ESCALATE.*user" "$ENGINE" \
+    || fail "PLATEAUED transition does not specify CONCERNS escalation"
+}
+
+# ---------------------------------------------------------------------------
+# 24. Phase_history trimming documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: phase_history capped at 50 entries" {
+  grep -q "50 entries\|Capped at 50" "$ENGINE" \
+    || fail "phase_history 50-entry cap not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 25. Oscillation vs escalation precedence documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: REGRESSING takes precedence over PLATEAUED" {
+  grep -qi "REGRESSING takes priority\|REGRESSING.*checked first\|precedence" "$ENGINE" \
+    || fail "Oscillation vs escalation precedence not documented"
+}

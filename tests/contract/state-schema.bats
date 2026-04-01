@@ -179,3 +179,31 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
     jq -e "has(\"$field\")" "$fixture" >/dev/null || fail "v2.0.0 fixture missing required field: $field"
   done
 }
+
+@test "state-schema: v2.0.0 fixture has feedback loop fields" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+  jq -e 'has("feedback_classification")' "$fixture" >/dev/null \
+    || fail "v2.0.0 fixture missing feedback_classification"
+  jq -e 'has("previous_feedback_classification")' "$fixture" >/dev/null \
+    || fail "v2.0.0 fixture missing previous_feedback_classification"
+  jq -e 'has("feedback_loop_count")' "$fixture" >/dev/null \
+    || fail "v2.0.0 fixture missing feedback_loop_count"
+}
+
+@test "state-schema: v2.0.0 fixture has proper integrations object structure" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+  jq -e '.integrations.linear | has("available")' "$fixture" >/dev/null \
+    || fail "integrations.linear missing .available field (stale boolean schema?)"
+  jq -e '.integrations.neo4j | has("available")' "$fixture" >/dev/null \
+    || fail "integrations.neo4j missing .available field"
+}
+
+@test "state-schema: previous_feedback_classification documented" {
+  grep -q "previous_feedback_classification" "$PLUGIN_ROOT/shared/state-schema.md" \
+    || fail "previous_feedback_classification not documented in state-schema.md"
+}
+
+@test "state-schema: bootstrap mode documented" {
+  grep -q '"bootstrap"' "$PLUGIN_ROOT/shared/state-schema.md" \
+    || fail "bootstrap mode value not documented in state-schema.md"
+}
