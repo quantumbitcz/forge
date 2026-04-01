@@ -166,13 +166,15 @@ case "$DEP" in
       echo "UNAVAILABLE: Docker daemon is not running — cannot check Neo4j container"
       exit 0
     fi
-    # Check if pipeline-neo4j container is running
-    container_status="$(docker inspect -f '{{.State.Status}}' pipeline-neo4j 2>/dev/null || true)"
+    # Container name: configurable via NEO4J_CONTAINER env var, default pipeline-neo4j
+    neo4j_container="${NEO4J_CONTAINER:-pipeline-neo4j}"
+    # Check if container is running
+    container_status="$(docker inspect -f '{{.State.Status}}' "$neo4j_container" 2>/dev/null || true)"
     if [[ "$container_status" != "running" ]]; then
       if [[ -z "$container_status" ]]; then
-        echo "UNAVAILABLE: pipeline-neo4j container does not exist (run: /graph-init to create it)"
+        echo "UNAVAILABLE: $neo4j_container container does not exist (run: /graph-init to create it)"
       else
-        echo "DEGRADED: pipeline-neo4j container exists but status is '$container_status' (expected: running)"
+        echo "DEGRADED: $neo4j_container container exists but status is '$container_status' (expected: running)"
       fi
       exit 0
     fi
@@ -181,12 +183,12 @@ case "$DEP" in
       if nc -z -w 3 localhost 7687 2>/dev/null; then
         echo "OK"
       else
-        echo "DEGRADED: pipeline-neo4j container is running but bolt port 7687 is not reachable"
+        echo "DEGRADED: $neo4j_container container is running but bolt port 7687 is not reachable"
       fi
     elif (echo >/dev/tcp/localhost/7687) 2>/dev/null; then
       echo "OK"
     else
-      echo "DEGRADED: pipeline-neo4j container is running but bolt port 7687 is not reachable"
+      echo "DEGRADED: $neo4j_container container is running but bolt port 7687 is not reachable"
     fi
     ;;
 

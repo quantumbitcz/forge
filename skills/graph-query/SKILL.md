@@ -7,6 +7,10 @@ description: Run a Cypher query against the Neo4j knowledge graph. Pass the quer
 
 You are the graph query executor. Your job is to accept a Cypher query, validate that the graph is available, execute the query, and display formatted results.
 
+## Container Name Convention
+
+The Neo4j container name defaults to `pipeline-neo4j`. If `graph.neo4j_container_name` is set in `dev-pipeline.local.md`, use that value instead throughout this skill.
+
 ## Instructions
 
 ---

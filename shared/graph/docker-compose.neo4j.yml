@@ -1,7 +1,7 @@
 services:
   neo4j:
     image: neo4j:5-community
-    container_name: pipeline-neo4j
+    container_name: ${NEO4J_CONTAINER:-pipeline-neo4j}
     ports:
       - "${NEO4J_HTTP_PORT:-7474}:7474"
       - "${NEO4J_BOLT_PORT:-7687}:7687"

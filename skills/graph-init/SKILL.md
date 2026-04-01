@@ -7,6 +7,10 @@ description: Initialize Neo4j knowledge graph. Starts Docker container, imports 
 
 You are the graph initializer. Your job is to start the Neo4j container, import the plugin seed data, and build the project codebase graph. Be idempotent — detect what is already done and skip those steps.
 
+## Container Name Convention
+
+The Neo4j container name defaults to `pipeline-neo4j`. It can be customized via the `NEO4J_CONTAINER` environment variable or `graph.neo4j_container_name` in `dev-pipeline.local.md`. Throughout this skill, `pipeline-neo4j` refers to the resolved container name. If `graph.neo4j_container_name` is set in config, use that value instead.
+
 ## Instructions
 
 Work through these steps in order.

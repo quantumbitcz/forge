@@ -7,6 +7,10 @@ description: Show Neo4j knowledge graph status — node counts, container health
 
 You are the graph status reporter. Your job is to display the current state of the Neo4j knowledge graph: container health, node and relationship counts, last build SHA, and enrichment coverage.
 
+## Container Name Convention
+
+The Neo4j container name defaults to `pipeline-neo4j`. If `graph.neo4j_container_name` is set in `dev-pipeline.local.md`, use that value instead throughout this skill.
+
 ## Instructions
 
 ---
