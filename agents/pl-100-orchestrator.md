@@ -146,6 +146,9 @@ Key rules:
 - `--dry-run` creates NO files outside `.pipeline/` (stage notes still written for debugging)
 - `--dry-run` creates NO Linear tickets
 - `--dry-run` creates NO git branches or worktrees
+- `--dry-run` does NOT acquire `.pipeline/.lock` (concurrent dry-runs are safe — they only read project state and write stage notes)
+- `--dry-run` does NOT write checkpoint files (`checkpoint-*.json`) — there is nothing to recover
+- `--dry-run` does NOT trigger the `pipeline-checkpoint.sh` PostToolUse hook (no `lastCheckpoint` updates)
 - `--dry-run` is compatible with `--from` and `--spec` (e.g., `--dry-run --from=plan --spec shape.md`)
 - State.json is written with `"dry_run": true` flag
 
@@ -197,7 +200,7 @@ Before reading config, detect the requirement mode from the user's input:
 
 | Prefix | Mode | Effect |
 |--------|------|--------|
-| `bootstrap:` / `Bootstrap:` | Bootstrap | Dispatch `pl-050-project-bootstrapper` at Stage 2 instead of `pl-200-planner`. Stages 3-6 may be simplified (no existing code to validate/review). |
+| `bootstrap:` / `Bootstrap:` | Bootstrap | Dispatch `pl-050-project-bootstrapper` at Stage 2. Stage 3 uses bootstrap-scoped validation. Stage 4 is skipped (scaffolding done in Stage 2). Stage 6 uses reduced reviewer set. See `stage-contract.md` Bootstrap Mode. |
 | `migrate:` / `migration:` | Migration | Dispatch `pl-160-migration-planner` at Stage 2 instead of `pl-200-planner`. Uses migration-specific states (MIGRATING, etc.). |
 | (anything else) | Standard | Normal pipeline flow with `pl-200-planner`. |
 
@@ -573,6 +576,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
     "convergence_state": "IMPROVING",
     "phase_history": [],
     "safety_gate_passed": false,
+    "safety_gate_failures": 0,
     "unfixable_findings": []
   },
   "total_retries_max": 10,
@@ -581,6 +585,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   "preempt_items_applied": [],
   "preempt_items_status": {},
   "feedback_classification": "",
+  "previous_feedback_classification": "",
   "feedback_loop_count": 0,
   "score_history": [],
   "integrations": {
@@ -740,7 +745,11 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
 1. Dispatch `pl-050-project-bootstrapper` instead of `pl-200-planner`
 2. The bootstrapper infers project structure, build system, and architecture from the requirement description — see `pl-050-project-bootstrapper.md` for details
 3. The requirement has already been stripped of the `bootstrap:` prefix at PREFLIGHT
-4. After bootstrapping completes, Stages 3-6 run normally but with reduced scope (new project has no existing code to validate against)
+4. After bootstrapping completes:
+   - **Stage 3 (VALIDATE):** Use bootstrap-scoped perspectives only: build compiles, tests pass, Docker config valid, architecture matches pattern. Skip: conventions check, approach quality, documentation consistency. Challenge Brief NOT required.
+   - **Stage 4 (IMPLEMENT):** **Skip entirely** — the bootstrapper already created all files. Transition directly from VALIDATE (GO) to VERIFY.
+   - **Stage 5 (VERIFY):** Runs normally — build + lint + tests must pass.
+   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `architecture-reviewer` + `security-reviewer` only. Quality target is `pass_threshold` (not 100).
 
 **If `mode == "standard"` (default):**
 Proceed with the standard `pl-200-planner` dispatch below.
@@ -763,6 +772,9 @@ Domain hotspots:
 
 Conventions file: [path from config]
 Scaffolder patterns: [from config]
+
+Spec stories (from --spec):
+[## Stories block from spec file if --spec was used, else omit this section entirely]
 ```
 
 **Documentation decision traceability:** If graph is available and documentation was discovered:
@@ -1370,8 +1382,10 @@ If `preview.enabled` is `true` in `dev-pipeline.local.md` and the PR was created
 1. Wait for preview URL to become available (from CI/CD webhook or `preview.url_pattern` config)
 2. Dispatch `pl-650-preview-validator` with: PR number, preview URL, smoke test routes, Lighthouse thresholds, Playwright test paths
 3. pl-650 posts results as a PR comment (smoke tests, Lighthouse audit, visual regression, E2E)
-4. If verdict is FAIL: add `preview-failed` label to PR, include findings in user presentation
-5. If verdict is PASS or CONCERNS: proceed to user response
+4. **Gating behavior** based on `preview.block_merge` config (default: `false`):
+   - If `block_merge: false` (default): verdict is advisory only. FAIL → add `preview-failed` label, include findings in user presentation, but proceed to user response.
+   - If `block_merge: true`: FAIL verdict **blocks stage progression**. The orchestrator loops: dispatch `pl-300-implementer` with preview findings, re-run VERIFY (safety check), re-dispatch preview validator. Max `preview.max_fix_loops` (default: 1) attempts. After exhaustion, escalate to user with the preview failure details.
+5. If verdict is PASS or CONCERNS: proceed to user response.
 
 If `preview.enabled` is not configured or `false`: skip preview validation.
 
@@ -1390,6 +1404,15 @@ If no infrastructure components are configured: skip infrastructure verification
 
 - **Approval** -> proceed to LEARN (Stage 9)
 - **Feedback/Rejection** -> dispatch `pl-710-feedback-capture` to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `pl-710-feedback-capture`):
+
+  **Feedback loop detection** (before re-entering any stage):
+  1. Read the new `feedback_classification` from `state.json` (set by `pl-710-feedback-capture`).
+  2. Compare to `state.json.previous_feedback_classification`:
+     - If same classification (e.g., both `"design"` or both `"implementation"`): increment `feedback_loop_count`.
+     - If different classification: reset `feedback_loop_count` to 0.
+  3. Update `state.json.previous_feedback_classification` to the current `feedback_classification`.
+  4. If `feedback_loop_count >= 2`: **escalate via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {feedback_loop_count} consecutive times.", options: "Guide" (provide specific guidance — the user's text will be prepended to the next stage's input as high-priority context), "Start fresh" (abort current run and begin new `/pipeline-run`), "Override" (proceed with current state despite recurring feedback — reset `feedback_loop_count` to 0 and continue).
+  5. If not escalating, proceed with re-entry below.
 
   | Classification | Resets | Re-enter | Notes |
   |---|---|---|---|
