@@ -421,7 +421,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 1. **Worktree availability:** If re-entering Stage 4 (implementation path), verify `.pipeline/worktree` still exists and is a valid git worktree. If the worktree was cleaned up (e.g., by a previous ship attempt), recreate it from the pipeline branch before dispatching the implementer.
 2. **Feedback loop detection:** Track `state.json.feedback_loop_count` — incremented on each PR rejection re-entry. "Same classification" means the string value of `feedback_classification` matches the previous rejection (e.g., both `"design"` or both `"implementation"`) — it does NOT require the same specific issue, only the same category. If the same `feedback_classification` is received 2 consecutive times (i.e., user rejected → re-plan → re-implement → re-ship → rejected again with same classification), escalate:
 
-   The orchestrator **escalates via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred.", options: "Guide" (provide more specific guidance for the next attempt), "Start fresh" (abort and begin a new pipeline run), "Override" (proceed with the current state despite recurring feedback).
+   The orchestrator **escalates via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred.", options: "Guide" (provide specific guidance — the user's text will be prepended to the next stage's input as high-priority context), "Start fresh" (abort current run and begin a new `/pipeline-run`), "Override" (proceed with current state despite recurring feedback — reset `feedback_loop_count` to 0 and continue).
 
    Reset `feedback_loop_count` to 0 when `feedback_classification` changes between rejections.
 3. **Scaffold outputs:** If re-entering Stage 4, verify that scaffolder outputs from the initial implementation are still present in the worktree. If missing (e.g., worktree was recreated), re-run the scaffolder before dispatching the implementer.
@@ -500,21 +500,36 @@ The orchestrator detects the pipeline mode from the requirement prefix at PREFLI
 
 **Migration mode** (`migrate:` / `migration:` prefix):
 
-1. At Stage 2, `pl-160-migration-planner` is dispatched instead of `pl-200-planner`
-2. Stage 1 (EXPLORE) runs normally — migration-planner supersedes exploration results with its own schema and data audit
-3. The migration planner uses dedicated states: `MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`
-4. These states replace `IMPLEMENTING` in the `story_state` field during migration execution
-5. Migration mode follows the same stage structure (0-9) but Stage 4 uses the migration planner's execution strategy (phased migration with rollback checkpoints)
-6. The `/migration` skill dispatches `pl-160-migration-planner` directly for standalone use outside the pipeline
+1. Stage 0 (PREFLIGHT): Runs normally. Detects current dependency versions for migration version targeting.
+2. Stage 1 (EXPLORE): Runs normally — explores current usage of the library/framework being migrated.
+3. Stage 2 (PLAN): `pl-160-migration-planner` is dispatched instead of `pl-200-planner`. Produces a phased migration plan with rollback checkpoints. Uses Context7 to fetch migration guides for the target version.
+4. Stage 3 (VALIDATE): Runs normally with all 7 perspectives. The validator checks migration feasibility: breaking changes identified, rollback plan exists, data migration strategy defined.
+5. Stage 4 (IMPLEMENT): Uses the migration planner's execution strategy (phased migration with rollback checkpoints). The `story_state` cycles through migration-specific states:
+   - `MIGRATING` — actively applying migration changes
+   - `MIGRATION_PAUSED` — paused at a checkpoint, awaiting verification
+   - `MIGRATION_CLEANUP` — removing deprecated code paths after successful migration
+   - `MIGRATION_VERIFY` — running verification against the migrated codebase
+   These states replace `IMPLEMENTING` in `story_state` during migration execution.
+6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass after migration.
+7. Stage 6 (REVIEW): Runs normally with full reviewer set. `version-compat-reviewer` is especially important — verifies no deprecated APIs remain.
+8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. Documentation updates include migration notes and upgraded version references.
+
+The `/migration` skill dispatches `pl-160-migration-planner` directly for standalone use outside the pipeline.
 
 See `agents/pl-160-migration-planner.md` for the full migration state machine, rollback strategy, and phased execution model.
 
 **Bootstrap mode** (`bootstrap:` prefix):
 
-1. At Stage 2, `pl-050-project-bootstrapper` is dispatched instead of `pl-200-planner`
-2. Stage 1 (EXPLORE) runs with reduced scope — for new projects, exploration confirms the empty/minimal state
-3. Stages 3-6 run normally but with reduced scope (new project has no existing code to validate against, no legacy patterns to review)
-4. The `/bootstrap-project` skill dispatches `pl-050-project-bootstrapper` directly for standalone use outside the pipeline
+1. Stage 0 (PREFLIGHT): Runs normally. If no `dev-pipeline.local.md` exists yet, PREFLIGHT uses plugin defaults and defers config generation to the bootstrapper.
+2. Stage 1 (EXPLORE): Runs with reduced scope — confirms empty/minimal state. If no source files exist, exploration completes immediately with `"greenfield: true"` in stage notes.
+3. Stage 2 (PLAN): `pl-050-project-bootstrapper` is dispatched instead of `pl-200-planner`. The bootstrapper performs requirements gathering, architecture decisions, and scaffolding. It auto-runs `/pipeline-init` at the end.
+4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
+5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
+6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Only dispatches: `architecture-reviewer` (verify scaffold structure), `security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `backend-performance-reviewer` (no business logic yet), `docs-consistency-reviewer` (no docs baseline), `version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean.
+8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
+
+The `/bootstrap-project` skill dispatches `pl-050-project-bootstrapper` directly for standalone use outside the pipeline.
 
 See `agents/pl-050-project-bootstrapper.md` for supported project types and scaffolding capabilities.
 
