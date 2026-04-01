@@ -41,7 +41,7 @@ Then add to `.claude/settings.json`:
 ## Key features
 
 - **Worktree isolation** -- Your working tree is never modified. All implementation runs in a git worktree (`.pipeline/worktree`).
-- **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.0) handle transient failures, tool issues, and state corruption automatically.
+- **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.5) handle transient failures, tool issues, and state corruption automatically.
 - **3-layer check engine** -- Fires on every Edit/Write. Fast regex patterns (sub-second), framework-aware linters, and AI-driven agents with version-gated deprecation rules.
 - **Self-improving** -- Learnings from past runs are proactively applied to future runs via the PREEMPT system. Confidence decay prevents stale learnings from persisting.
 - **Adaptive MCP detection** -- Auto-detects Linear, Playwright, Slack, Context7, and Figma at PREFLIGHT. No MCP is required -- the pipeline degrades gracefully.
@@ -351,7 +351,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 ```
 dev-pipeline/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.0.0)
+    plugin.json                         # Plugin manifest (v1.3.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 32 agent definitions (YAML frontmatter + instructions)
     pl-010-shaper.md
@@ -456,7 +456,7 @@ dev-pipeline/
       rule-learning-schema.json         #   Check rule evolution tracking
       agent-effectiveness-schema.json   #   Agent performance tracking
     recovery/                           # Recovery engine + strategies
-      recovery-engine.md                #   7 strategies, weighted budget (ceiling 5.0)
+      recovery-engine.md                #   7 strategies, weighted budget (ceiling 5.5)
       strategies/                       #   Individual strategy definitions
         transient-retry.md (0.5)
         tool-diagnosis.md (1.0)
