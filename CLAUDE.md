@@ -229,13 +229,13 @@ done
 - Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this.
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact. Breaking state schema changes (like the v1.0.0 and v2.0.0 clean breaks) require `/pipeline-reset`; additive changes (like v1.1.0) do not.
 - The plugin never touches consuming project files. Runtime state goes to `.pipeline/`.
-- `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten.
+- `pipeline-config.md` is auto-tuned by retrospective — manual edits may be overwritten. Wrap parameters in `<!-- locked -->` / `<!-- /locked -->` fences to protect them from auto-tuning.
 
 ### Check engine
 
-- If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds.
+- If `engine.sh` is broken/non-executable, all edits trigger hook errors. On timeout, skip counter increments but edit succeeds. Hook scripts are validated at plugin installation (shebang + executable permission checks in `validate-plugin.sh`).
 - `rules-override.json` extends (not replaces) shared defaults. Use `"disabled": true` to suppress.
-- `engine.sh` multi-component YAML parsing assumes 2-space indentation (component names at 2-space, path/framework at 4-space). Manually edited configs with different indentation will silently fall back to single-component detection. Pipeline-generated templates always use 2-space.
+- `engine.sh` multi-component YAML parsing expects 2-space indentation (component names at 2-space, path/framework at 4-space). Non-standard indentation (tabs, 4-space) now emits a WARNING to stderr and falls back to single-component detection. Pipeline-generated templates always use 2-space.
 - `known-deprecations.json` v1 entries (without `applies_from`) apply universally (backward compatible). Unknown project versions → all rules apply.
 
 ### PREFLIGHT constraints

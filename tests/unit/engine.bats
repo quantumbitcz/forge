@@ -531,3 +531,68 @@ CFG_EOF
   # Engine runs without framework override — language patterns still apply
   assert_output --partial "QUAL-NULL"
 }
+
+# ---------------------------------------------------------------------------
+# 22. resolve_component: tab indentation in components: block emits WARNING
+# ---------------------------------------------------------------------------
+@test "resolve_component: tab indentation in components: emits WARNING to stderr" {
+  local project_dir
+  project_dir="$(create_temp_project spring)"
+  mkdir -p "${project_dir}/.claude"
+
+  # Write config with tab-indented components block
+  cat > "${project_dir}/.claude/dev-pipeline.local.md" <<'YAML'
+---
+components:
+	backend:
+		path: be
+		framework: spring
+---
+YAML
+
+  local kt_file="${project_dir}/be/src/Main.kt"
+  mkdir -p "$(dirname "$kt_file")"
+  printf 'val x = 1\n' > "$kt_file"
+
+  run env \
+    TOOL_INPUT="{\"file_path\": \"${kt_file}\"}" \
+    CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
+    bash "$ENGINE" --hook
+
+  assert_success
+  # WARNING should be in stderr (captured by bats run as combined output)
+  assert_output --partial "WARNING"
+  assert_output --partial "Tab indentation"
+}
+
+# ---------------------------------------------------------------------------
+# 23. resolve_component: 4-space indentation in components: emits WARNING
+# ---------------------------------------------------------------------------
+@test "resolve_component: non-standard indentation in components: emits WARNING to stderr" {
+  local project_dir
+  project_dir="$(create_temp_project spring)"
+  mkdir -p "${project_dir}/.claude"
+
+  # Write config with 4-space indented components block
+  cat > "${project_dir}/.claude/dev-pipeline.local.md" <<'YAML'
+---
+components:
+    backend:
+        path: be
+        framework: spring
+---
+YAML
+
+  local kt_file="${project_dir}/be/src/Main.kt"
+  mkdir -p "$(dirname "$kt_file")"
+  printf 'val x = 1\n' > "$kt_file"
+
+  run env \
+    TOOL_INPUT="{\"file_path\": \"${kt_file}\"}" \
+    CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
+    bash "$ENGINE" --hook
+
+  assert_success
+  assert_output --partial "WARNING"
+  assert_output --partial "Non-standard indentation"
+}
