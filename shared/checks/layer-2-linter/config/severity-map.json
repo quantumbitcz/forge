@@ -70,5 +70,40 @@
     "Error": "WARNING",
     "Warning": "INFO",
     "Information": "INFO"
+  },
+  "credo": {
+    "consistency": "INFO",
+    "design": "WARNING",
+    "readability": "INFO",
+    "refactor": "WARNING",
+    "warning": "WARNING"
+  },
+  "dart-analyzer": {
+    "error": "WARNING",
+    "warning": "INFO",
+    "info": "INFO",
+    "lint": "INFO"
+  },
+  "go-vet": {
+    "_severity_map": {
+      "error": "WARNING"
+    }
+  },
+  "phpstan": {
+    "_severity_map": {
+      "error": "WARNING"
+    }
+  },
+  "rubocop": {
+    "Fatal": "CRITICAL",
+    "Error": "WARNING",
+    "Warning": "INFO",
+    "Convention": "INFO",
+    "Refactor": "INFO"
+  },
+  "scalafmt": {
+    "_severity_map": {
+      "error": "WARNING"
+    }
   }
 }
