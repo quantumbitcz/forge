@@ -142,7 +142,7 @@ portable_normalize_path() {
   fi
   # Try python3 first (handles all edge cases)
   if command -v python3 &>/dev/null; then
-    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
+    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" -- "$input" 2>/dev/null && return
   fi
   # Bash fallback: resolve ./ // and .. segments (Bash 3.2+)
   local is_absolute=0
@@ -222,7 +222,7 @@ portable_sed() {
 # (from coreutils), then falls back to running without a timeout.
 # Usage: portable_timeout <seconds> <command> [args...]
 portable_timeout() {
-  local seconds="$1"; shift
+  local seconds="${1:?portable_timeout: missing seconds argument}"; shift
   if command -v timeout &>/dev/null; then
     timeout "$seconds" "$@"
   elif command -v gtimeout &>/dev/null; then
