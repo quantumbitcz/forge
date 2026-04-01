@@ -9,9 +9,11 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
 ## Instructions
 
-1. **Parse input**: The user's argument (everything after `/pipeline-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". Check for optional flags:
+1. **Parse input**: The user's argument (everything after `/pipeline-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". If no requirement text is provided (empty input after stripping flags), ask the user: "What would you like to build? Provide a feature description, e.g., 'Add plan versioning endpoint'." Do not dispatch the orchestrator with empty input.
+
+   Check for optional flags:
    - `--from=<stage>` (e.g., `--from=implement`) — resume from that stage
-   - `--dry-run` — run PREFLIGHT through VALIDATE only, no implementation or file changes
+   - `--dry-run` — run PREFLIGHT through VALIDATE only. No implementation, no file changes, no `.pipeline/` state files, no `.pipeline/.lock`, no checkpoint files, no `lastCheckpoint` updates. The orchestrator handles these constraints.
    - `--spec <path>` — use a shaped spec file (produced by `/pipeline-shape`). When present, pass it to the orchestrator with: `Execute the full development pipeline for spec: {spec_path}`
 
 2. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
