@@ -192,7 +192,7 @@ portable_file_date() {
     # 3. perl (widely available, lighter than python3)
     perl -e "use POSIX qw(strftime); print strftime('%Y-%m-%d', localtime($epoch))" 2>/dev/null && return
     # 4. python3
-    python3 -c "import datetime; print(datetime.datetime.utcfromtimestamp($epoch).strftime('%Y-%m-%d'))" 2>/dev/null && return
+    python3 -c "import datetime,sys; print(datetime.datetime.fromtimestamp(int(sys.argv[1]), tz=datetime.timezone.utc).strftime('%Y-%m-%d'))" "$epoch" 2>/dev/null && return
   }
   # 5. git log (works in any git repo)
   git log -1 --format='%as' -- "$filepath" 2>/dev/null && return

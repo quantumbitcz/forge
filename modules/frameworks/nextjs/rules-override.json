@@ -55,6 +55,26 @@
       "message": "Raw <a> for internal link — use <Link> from next/link for client-side navigation",
       "fix_hint": "Replace <a href=\"/path\"> with <Link href=\"/path\"> from next/link to enable prefetching and client-side navigation without full page reload.",
       "example_ref": ""
+    },
+    {
+      "id": "STRUCT-NX-001",
+      "name": "server-action-outside-actions",
+      "pattern": "^['\"]use server['\"]",
+      "scope_exclude": "actions/|app/.*/(action|server)",
+      "severity": "INFO",
+      "category": "STRUCT-PLACE",
+      "message": "Server Action defined outside actions/ directory — consider co-locating server actions in an actions/ directory or alongside the route",
+      "fix_hint": "Move server action to actions/ directory or a file next to the route that uses it."
+    },
+    {
+      "id": "STRUCT-NX-002",
+      "name": "api-route-naming",
+      "pattern": "export\\s+(async\\s+)?function\\s+(GET|POST|PUT|DELETE|PATCH)\\s*\\(",
+      "scope_exclude": "app/api/|pages/api/",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "Next.js API route handler defined outside app/api/ directory",
+      "fix_hint": "Move API route handlers to app/api/[endpoint]/route.ts for App Router or pages/api/ for Pages Router."
     }
   ],
   "additional_boundaries": [],

@@ -81,6 +81,11 @@ If no issues found, return: `PASS | score: {N}`
 
 Category codes: `BE-PERF-DB`, `BE-PERF-ALGO`, `BE-PERF-CONCURRENCY`, `BE-PERF-CACHE`, `BE-PERF-API`.
 
+**Severity rules:**
+- **CRITICAL**: N+1 query in loop without limit, unbounded collection fetch, full table scan on large table without pagination, missing transaction on multi-write operation, thread-unsafe shared mutable state
+- **WARNING**: Missing database index on frequently queried column, O(n²) algorithm on unbounded input, missing connection pool configuration, cache-aside without TTL, blocking I/O in async context
+- **INFO**: Suboptimal query that could use projection, minor algorithmic improvement, optional caching opportunity, non-critical API payload optimization
+
 ---
 
 ## Forbidden Actions

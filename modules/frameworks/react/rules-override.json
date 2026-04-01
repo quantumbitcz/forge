@@ -38,9 +38,52 @@
       "fix_hint": "Reorder imports: 1) react/react-*, 2) third-party packages, 3) @/app/components/shared, 4) relative imports (./ ../).",
       "example_ref": "",
       "_note": "Import order is structural (not single-line grep). Engine delegates to layer-2 linter or agent check. This rule serves as documentation for the convention."
+    },
+    {
+      "id": "STRUCT-REACT-001",
+      "name": "hook-naming-convention",
+      "pattern": "^export\\s+(default\\s+)?function\\s+[a-z]",
+      "exclude_pattern": "function\\s+use[A-Z]",
+      "scope_pattern": "hooks/",
+      "severity": "WARNING",
+      "category": "STRUCT-NAME",
+      "message": "Hook file exports a function not starting with 'use' — React hooks must follow the useXxx naming convention",
+      "fix_hint": "Rename the function to start with 'use' (e.g., useAuth, useTheme). This is required by React's rules-of-hooks ESLint rule."
+    },
+    {
+      "id": "STRUCT-REACT-002",
+      "name": "component-lowercase-filename",
+      "pattern": "^import.*from\\s+['\"]\\./[a-z][a-zA-Z]*['\"]",
+      "scope_pattern": "src/app/components/",
+      "severity": "INFO",
+      "category": "STRUCT-NAME",
+      "message": "Component import from a lowercase filename — React component files should use PascalCase (e.g., Button.tsx, UserCard.tsx)",
+      "fix_hint": "Rename the file to PascalCase matching the exported component name."
+    },
+    {
+      "id": "STRUCT-REACT-003",
+      "name": "page-route-co-location",
+      "pattern": "export\\s+default\\s+function\\s+\\w*Page",
+      "scope_pattern": "src/app/components/",
+      "scope_exclude": "src/app/components/ui/|src/app/components/shared/",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "Page component defined in components directory — page components should be in src/routes/ or src/pages/ for framework routing",
+      "fix_hint": "Move page components to the appropriate routing directory (src/routes/ for TanStack Router, src/pages/ for file-based routing)."
     }
   ],
-  "additional_boundaries": [],
+  "additional_boundaries": [
+    {
+      "name": "Shared components must not import from feature directories",
+      "scope_pattern": "src/app/components/shared/",
+      "forbidden_imports": [
+        "from\\s+['\"]\\.\\./(features|pages|routes|views)/"
+      ],
+      "severity": "CRITICAL",
+      "category": "STRUCT-BOUNDARY",
+      "message": "Shared component imports from a feature directory — shared components must not depend on feature-specific code"
+    }
+  ],
   "disabled_rules": ["FE-CONV-001"],
   "severity_overrides": {},
   "threshold_overrides": {

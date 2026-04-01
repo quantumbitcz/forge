@@ -45,6 +45,37 @@
       "message": "print() in application code — use structured logging instead",
       "fix_hint": "Replace print() with logging.getLogger(__name__).info() or structlog equivalent.",
       "example_ref": ""
+    },
+    {
+      "id": "STRUCT-PF-001",
+      "name": "router-in-wrong-directory",
+      "pattern": "@(app|router)\\.(get|post|put|delete|patch)\\(",
+      "scope_exclude": "routers/|routes/|api/",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "Route handler defined outside routers/ directory — route handlers should be co-located in routers/ or routes/",
+      "fix_hint": "Move route handlers to a dedicated file in routers/ (e.g., routers/users.py)."
+    },
+    {
+      "id": "STRUCT-PF-002",
+      "name": "schema-naming-convention",
+      "pattern": "class\\s+\\w+\\(BaseModel\\)",
+      "exclude_pattern": "(Schema|Request|Response|Create|Update|Base|In|Out)\\(BaseModel\\)",
+      "scope_pattern": "schemas/",
+      "severity": "INFO",
+      "category": "STRUCT-NAME",
+      "message": "Pydantic schema class name should end with a purpose suffix (Schema, Request, Response, Create, Update)",
+      "fix_hint": "Rename to include purpose: UserCreate, UserResponse, UserUpdate, etc."
+    },
+    {
+      "id": "STRUCT-PF-003",
+      "name": "model-in-router",
+      "pattern": "class\\s+\\w+\\(.*Base\\):",
+      "scope_pattern": "routers/",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "SQLAlchemy/ORM model class defined in router file — models should be in models/ directory",
+      "fix_hint": "Move model definitions to models/ directory and import from there."
     }
   ],
   "additional_boundaries": [

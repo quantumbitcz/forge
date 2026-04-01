@@ -71,6 +71,11 @@ If no issues found, return: `PASS | score: {N}`
 
 Category codes: `FE-PERF-BUNDLE`, `FE-PERF-RENDER`, `FE-PERF-RESOURCE`, `FE-PERF-NETWORK`.
 
+**Severity rules:**
+- **CRITICAL**: Bundle >500KB uncompressed with no code splitting, layout thrashing in render loop, synchronous blocking resource on critical path
+- **WARNING**: Bundle >250KB without tree-shaking, unnecessary re-renders in hot path, unoptimized images >100KB, missing lazy loading for below-fold content
+- **INFO**: Minor bundle optimization opportunities, non-critical render inefficiencies, optional prefetch/preload suggestions
+
 ---
 
 ## Forbidden Actions

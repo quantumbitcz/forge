@@ -200,6 +200,8 @@ import json, sys
 SEP = '\x1f'
 rules = json.load(sys.stdin)
 for r in rules:
+    if r.get('pattern') is None:
+        continue
     fields = [
         r['id'],
         r['pattern'],
@@ -249,6 +251,47 @@ for r in rules:
       done <<< "$matches"
     fi
   done <<< "$rule_lines"
+
+  # --- Structural checks (file-level absence/presence checks) ---
+  local structural_checks
+  structural_checks="$(echo "$rules_json" | python3 -c "
+import json, sys
+SEP = '\x1f'
+rules = json.load(sys.stdin)
+for r in rules:
+    sc = r.get('structural_check')
+    if not sc or r.get('pattern') is not None:
+        continue
+    fields = [r['id'], sc, r['severity'], r['category'], r['message'], r.get('fix_hint', ''),
+              r.get('scope', r.get('scope_pattern', 'all')), r.get('scope_exclude', '')]
+    print(SEP.join(fields))
+" 2>/dev/null || true)"
+
+  if [[ -n "$structural_checks" ]]; then
+    while IFS="$SEP" read -r sc_id sc_type sc_severity sc_category sc_message sc_fix_hint sc_scope sc_scope_exclude; do
+      [[ -z "$sc_id" ]] && continue
+
+      # Apply scope and scope_exclude filtering (same as regex rules)
+      if ! in_scope "$sc_scope" "$FILE"; then
+        continue
+      fi
+      if [[ -n "$sc_scope_exclude" ]] && echo "$FILE" | grep -qE "$sc_scope_exclude" 2>/dev/null; then
+        continue
+      fi
+
+      case "$sc_type" in
+        awk_no_user_instruction)
+          # Check if file contains a USER instruction (Dockerfile-specific)
+          if ! grep -qiE "^USER\s" "$FILE" 2>/dev/null; then
+            emit "1" "$sc_category" "$sc_severity" "$sc_message" "$sc_fix_hint"
+          fi
+          ;;
+        *)
+          echo "[run-patterns] WARNING: unknown structural_check type '$sc_type' in rule $sc_id — skipping" >&2
+          ;;
+      esac
+    done <<< "$structural_checks"
+  fi
 
   # --- Threshold checks (single awk pass) ---
   local file_size_default func_size_default file_size_overrides_json

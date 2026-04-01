@@ -33,11 +33,14 @@
 
 ## Concurrency
 
+- **Prefer virtual threads** (Java 21+) over platform threads for I/O-bound work — they are lightweight, managed by the JVM, and eliminate the need for thread pool sizing. Use `Executors.newVirtualThreadPerTaskExecutor()` or Spring Boot's `spring.threads.virtual.enabled=true`.
 - Use `CompletableFuture<T>` for async operations that callers need to compose or await.
-- Background tasks: `@Async` with a custom `TaskExecutor` — never rely on the default unbounded executor.
+- Background tasks: `@Async` with a custom `TaskExecutor` — never rely on the default unbounded executor. With virtual threads enabled, Spring Boot auto-configures a virtual thread executor.
 - `@Async` does not work on `private` methods (proxy-based AOP bypasses the proxy).
 - `@Transactional` and `@Async` on the same method lose the transaction (runs in a new thread without the original transaction context).
 - Use `java.util.concurrent` primitives (`ReentrantLock`, `CountDownLatch`, `Semaphore`) over `synchronized` for explicit concurrency control.
+- **Don't** use `synchronized` blocks with virtual threads — they pin the carrier thread. Use `ReentrantLock` instead.
+- **Don't** use `ThreadLocal` for per-request state with virtual threads — use scoped values (`ScopedValue`, Java 21+ preview) or framework-provided request context instead.
 
 ## Naming Idioms
 

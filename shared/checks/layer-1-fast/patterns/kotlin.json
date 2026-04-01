@@ -110,6 +110,18 @@
       "fix_hint": "Rename to a descriptive name that conveys intent (exception: i, x, y in lambdas).",
       "example_ref": "kotlin/readability.md#naming",
       "scope": "all"
+    },
+    {
+      "id": "KT-CONC-001",
+      "name": "java-thread-instead-of-coroutine",
+      "pattern": "\\bThread\\s*\\(|ExecutorService|Executors\\.|CompletableFuture",
+      "exclude_pattern": "^\\s*//|^\\s*\\*|import\\s",
+      "severity": "WARNING",
+      "category": "CONV-CONCURRENCY",
+      "message": "Java threading API used — prefer Kotlin coroutines for structured concurrency and cancellation support.",
+      "fix_hint": "Replace Thread/ExecutorService with coroutineScope + launch/async. Replace CompletableFuture with suspend functions.",
+      "example_ref": "kotlin/concurrency.md#coroutines",
+      "scope": "main"
     }
   ],
   "thresholds": {
@@ -131,11 +143,14 @@
   "boundaries": [
     {
       "name": "No framework or persistence imports in domain",
-      "scope_pattern": "core/domain/",
+      "scope_pattern": "core/domain/|domain/model/|domain/entity/|domain/",
+      "_note": "Matches domain directories across architectures: hexagonal (core/domain/), clean (domain/model/), layered (domain/). Architecture-specific boundary checks are handled by architecture-reviewer agent (Layer 3).",
       "forbidden_imports": [
         "import org.springframework.data.",
         "import org.springframework.r2dbc.",
-        "import io.r2dbc."
+        "import io.r2dbc.",
+        "import jakarta.persistence.",
+        "import javax.persistence."
       ],
       "message": "Domain model must remain framework-free — use port interfaces and pure Kotlin types.",
       "severity": "WARNING",

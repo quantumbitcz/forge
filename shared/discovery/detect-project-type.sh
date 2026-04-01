@@ -96,7 +96,7 @@ elif $has_gradle_kts && [[ -d "$DIR/src/main/kotlin" ]]; then
   if grep -q "spring" "$DIR/build.gradle.kts" 2>/dev/null; then
     framework="spring"
   else
-    framework="kotlin"
+    framework="null"
   fi
 elif ($has_gradle || $has_gradle_kts) && [[ -d "$DIR/src/main/java" ]]; then
   type="backend"
@@ -106,7 +106,7 @@ elif ($has_gradle || $has_gradle_kts) && [[ -d "$DIR/src/main/java" ]]; then
   elif [[ -f "$DIR/build.gradle" ]] && grep -q "spring" "$DIR/build.gradle" 2>/dev/null; then
     framework="spring"
   else
-    framework="java"
+    framework="null"
   fi
 elif $has_pom; then
   type="backend"
@@ -114,7 +114,7 @@ elif $has_pom; then
   if grep -q "spring" "$DIR/pom.xml" 2>/dev/null; then
     framework="spring"
   else
-    framework="java"
+    framework="null"
   fi
 
 # Jetpack Compose mobile (before generic android — compose is more specific)
@@ -126,14 +126,16 @@ elif ($has_gradle_kts || $has_gradle) && \
   framework="jetpack-compose"
   language="kotlin"
 
-# Android mobile
+# Android mobile — maps to jetpack-compose (closest available module).
+# No separate "android" framework module exists; jetpack-compose covers modern Android dev.
+# pipeline-init presents this to the user for confirmation and allows override.
 elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle.kts" 2>/dev/null; then
   type="mobile"
-  framework="android"
+  framework="jetpack-compose"
   language="kotlin"
 elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle" 2>/dev/null; then
   type="mobile"
-  framework="android"
+  framework="jetpack-compose"
   language="java"
 
 # iOS mobile
@@ -158,7 +160,7 @@ elif $has_cargo; then
   if grep -q "axum" "$DIR/Cargo.toml" 2>/dev/null; then
     framework="axum"
   else
-    framework="rust"
+    framework="null"
   fi
 
 # Python backend
@@ -170,9 +172,9 @@ elif $has_requirements; then
   elif grep -qi "fastapi" "$DIR/requirements.txt" 2>/dev/null || grep -qi "fastapi" "$DIR/pyproject.toml" 2>/dev/null; then
     framework="fastapi"
   elif grep -qi "flask" "$DIR/requirements.txt" 2>/dev/null || grep -qi "flask" "$DIR/pyproject.toml" 2>/dev/null; then
-    framework="flask"
+    framework="null"
   else
-    framework="python"
+    framework="null"
   fi
 
 # Go backend
@@ -208,11 +210,13 @@ fi
 if [[ "$type" == "unknown" ]]; then
   if [[ -d "$DIR/helm" || -d "$DIR/k8s" || -d "$DIR/terraform" || -d "$DIR/charts" ]]; then
     type="infra"
-    framework="kubernetes"
+    framework="k8s"
     language="yaml"
   elif [[ -f "$DIR/Dockerfile" ]] && [[ ! -f "$DIR/package.json" && ! $has_gradle_kts && ! $has_cargo ]]; then
+    # Standalone Dockerfile without k8s manifests — no framework module applies.
+    # k8s conventions (Helm, pod security) don't apply to plain containerized apps.
     type="infra"
-    framework="docker"
+    framework="null"
     language="dockerfile"
   fi
 fi
@@ -305,5 +309,11 @@ for tool in ${detected_code_quality[@]+"${detected_code_quality[@]}"}; do
 done
 code_quality_json+="]"
 
-printf '{"type":"%s","framework":"%s","language":"%s","code_quality":%s}\n' \
-  "$type" "$framework" "$language" "$code_quality_json"
+# Output JSON — null framework is JSON null, not string "null"
+if [[ "$framework" == "null" ]]; then
+  printf '{"type":"%s","framework":null,"language":"%s","code_quality":%s}\n' \
+    "$type" "$language" "$code_quality_json"
+else
+  printf '{"type":"%s","framework":"%s","language":"%s","code_quality":%s}\n' \
+    "$type" "$framework" "$language" "$code_quality_json"
+fi

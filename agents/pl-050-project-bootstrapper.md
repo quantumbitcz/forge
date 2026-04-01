@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ---
 
 # Pipeline Project Bootstrapper (pl-050)
@@ -74,6 +74,8 @@ Parse the description to extract or infer:
 ---
 
 ## 3. Requirements Gathering
+
+**Plan Mode:** Call `EnterPlanMode` before gathering requirements and designing the project structure. This enters the Claude Code plan mode UI, allowing you to present the proposed architecture, build system, and tooling choices for user approval before creating any files. After the project plan is finalized (all decisions made), call `ExitPlanMode` to get approval before scaffolding.
 
 Before scaffolding, confirm or infer these decisions. If the description is clear enough, proceed without asking. If ambiguous, ask the user ONE question with all unclear items.
 

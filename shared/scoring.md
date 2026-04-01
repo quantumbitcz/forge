@@ -135,6 +135,7 @@ Additional category codes for specialized review domains:
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
 | `DESIGN-TOKEN` | Frontend design token violation (hardcoded hex/rgb instead of theme tokens) |
 | `DESIGN-MOTION` | Frontend animation performance issue (non-GPU-accelerated properties, missing will-change) |
+| `STRUCT-*` | Project structure violation — subcategories: `STRUCT-PLACE` (file in wrong directory/package), `STRUCT-NAME` (file/class naming convention violation), `STRUCT-BOUNDARY` (cross-layer import not caught by ARCH-BOUNDARY), `STRUCT-MISSING` (required directory or file missing from expected structure) |
 | `INFRA-*` | Infrastructure/deployment issue — subcategories: `INFRA-SEC` (security), `INFRA-REL` (reliability), `INFRA-SCA` (scalability), `INFRA-OBS` (observability), `INFRA-DOC` (Docker), `INFRA-HLM` (Helm), `INFRA-TF` (Terraform) |
 
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
@@ -194,7 +195,7 @@ If a review agent times out or fails to return results:
 3. **Log in stage notes.** Record which agent failed and what it was supposed to cover.
 4. **Do not lower the score** for the gap itself (the INFO finding costs -2, which is appropriate). The concern is missing coverage, not a quality problem in the code.
 5. **If a CRITICAL-focused agent fails** (e.g., security reviewer): the quality gate should flag this to the orchestrator as a coverage risk, allowing it to decide whether to re-dispatch or escalate.
-6. **Critical-domain gap severity upgrade.** If the timed-out agent covers a CRITICAL-focused domain, use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding: `{agent}:0 | REVIEW-GAP | WARNING | Critical-domain agent timed out, {focus} not reviewed | Re-run review or inspect manually`. A domain is "critical-focused" if the agent's `focus` field in batch config contains any of: "security", "auth", "injection", "architecture", "boundary", "SRP", "DIP".
+6. **Critical-domain gap severity upgrade.** If the timed-out agent covers a CRITICAL-focused domain, use WARNING severity (-5 points) instead of INFO (-2 points) for the coverage gap finding: `{agent}:0 | REVIEW-GAP | WARNING | Critical-domain agent timed out, {focus} not reviewed | Re-run review or inspect manually`. A domain is "critical-focused" if the agent's `focus` field in batch config contains any of: "security", "auth", "injection", "architecture", "boundary", "SRP", "DIP", "performance", "scalability", "version", "compat", "dependency", "infra".
 
 ## Review Cycle Flow
 
@@ -218,7 +219,7 @@ The score history (score per cycle) is included in the quality gate report so th
 
 ## Score Oscillation Handling
 
-> **Note:** When the convergence engine is active (default), oscillation detection is handled by the convergence engine's REGRESSING state (see `shared/convergence-engine.md`). The description below applies to the quality gate's per-cycle scoring within a single convergence iteration.
+> **Note:** Two complementary oscillation mechanisms exist. (1) The **convergence engine's REGRESSING state** (see `shared/convergence-engine.md`) detects score dips **across** convergence iterations — if `delta < 0` and `abs(delta) > oscillation_tolerance`, the engine transitions to REGRESSING and escalates. (2) The **Consecutive Dip Rule below** operates **within** a single convergence iteration's quality gate cycles — if two consecutive inner cycles show score dips, the quality gate escalates within that iteration. Both mechanisms are active by default and are complementary, not redundant.
 
 Track `score_history[]` in `state.json` across quality cycles. Initialized as `[]` at PREFLIGHT. After each cycle's score is computed, append it to the array FIRST, then run the oscillation check:
 

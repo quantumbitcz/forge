@@ -319,13 +319,17 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 ### Budget Ceiling
 
-`max_weight: 5.0`. Each strategy application adds its weight to `recovery_budget.total_weight`.
+`max_weight: 5.5`. Each strategy application adds its weight to `recovery_budget.total_weight`. The ceiling accommodates applying every non-terminal strategy exactly once (total: 5.5).
+
+### Inter-Strategy Cascade
+
+When a recovery strategy returns `ESCALATE`, the recovery engine does **not** automatically try alternate strategies. It reports `ESCALATE` to the orchestrator, which decides whether to retry with different parameters or escalate to the user. The recovery budget is cumulative across the entire pipeline run (not per-stage) and does not reset between stages.
 
 ### Budget Warning
 
-When `total_weight >= 4.0` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
+When `total_weight >= 4.4` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
 
-When `total_weight >= 4.5` (90% of budget), escalate to user in stage notes: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Pipeline is operating with minimal safety margin. Remaining capacity: {max_weight - total_weight}. Consider manual review before continuing."
+When `total_weight >= 5.0` (90% of budget), escalate to user in stage notes: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Pipeline is operating with minimal safety margin. Remaining capacity: {max_weight - total_weight}. Consider manual review before continuing."
 
 ### Budget Exhaustion
 
@@ -340,7 +344,7 @@ When `total_weight >= max_weight`, do not apply further strategies. Report `BUDG
 ```json
 {
   "recovery_budget": {
-    "max_weight": 5.0,
+    "max_weight": 5.5,
     "total_weight": 0.0,
     "applications": [
       {

@@ -145,7 +145,21 @@
       "_note": "Go functions can be longer due to explicit error handling."
     }
   },
-  "boundaries": [],
+  "boundaries": [
+    {
+      "name": "No database driver imports in domain package",
+      "scope_pattern": "domain/|internal/domain/|pkg/domain/",
+      "forbidden_imports": [
+        "\"database/sql\"",
+        "\"github.com/jackc/pgx",
+        "\"gorm.io/gorm\"",
+        "\"github.com/jmoiron/sqlx\""
+      ],
+      "message": "Domain package must not import database drivers — use interfaces defined in the domain package, implemented in infrastructure",
+      "severity": "WARNING",
+      "category": "STRUCT-BOUNDARY"
+    }
+  ],
   "deprecations": {
     "known_deprecations_file": "layer-3-agent/known-deprecations/go.json"
   }

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Requires Bash 4.0+ (uses associative arrays)
+if (( BASH_VERSINFO[0] < 4 )); then
+  echo "[generate-seed] Bash 4.0+ required (found ${BASH_VERSION}). Cannot generate seed." >&2
+  exit 1
+fi
+
 # ============================================================================
 # generate-seed.sh — Plugin Knowledge Graph Seed Generator
 #

@@ -16,7 +16,7 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode']
 ---
 
 # Feature Shaper (pl-010)
@@ -53,6 +53,8 @@ Do not assume any implicit scope beyond what is stated. Do not invent requiremen
 ---
 
 ## 3. Shaping Process
+
+**Plan Mode:** Call `EnterPlanMode` at the start of shaping. This enters the Claude Code plan mode UI, signaling to the user that you are designing — not implementing. After the spec is finalized and saved (Phase 5), call `ExitPlanMode` to present the spec for user approval before the pipeline can execute against it.
 
 Work through five sequential phases. Ask questions one at a time. Prefer multiple-choice when options are well-defined. Never ask more than 5–7 questions in total across all phases — be efficient.
 

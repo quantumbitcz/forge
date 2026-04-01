@@ -158,7 +158,22 @@
       "_note": "Detected via awk brace-counting, not grep."
     }
   },
-  "boundaries": [],
+  "boundaries": [
+    {
+      "name": "No database imports in domain/model layer",
+      "scope_pattern": "domain/|models/|entities/",
+      "forbidden_imports": [
+        "import.*from\\s+['\"]typeorm",
+        "import.*from\\s+['\"]prisma",
+        "import.*from\\s+['\"]sequelize",
+        "import.*from\\s+['\"]mongoose",
+        "import.*from\\s+['\"]drizzle"
+      ],
+      "message": "Domain/model layer must not import ORM or database libraries directly — use repository interfaces",
+      "severity": "WARNING",
+      "category": "STRUCT-BOUNDARY"
+    }
+  ],
   "deprecations": {
     "known_deprecations_file": "layer-3-agent/known-deprecations/typescript.json"
   }

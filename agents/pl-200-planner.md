@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: blue
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ---
 
 # Pipeline Planner (pl-200)
@@ -65,6 +65,8 @@ You receive from the orchestrator:
 ---
 
 ## 3. Planning Process
+
+**Plan Mode:** Call `EnterPlanMode` before starting the planning process. This enters the Claude Code plan mode UI, allowing you to explore the codebase and design the plan without writing code. After the plan is finalized (Section 5 output written to stage notes), call `ExitPlanMode` to present the plan for approval. If the orchestrator is running autonomously (not in interactive mode), skip plan mode — the validator (pl-210) serves as the approval gate instead.
 
 ### 3.1 Understand the Requirement
 

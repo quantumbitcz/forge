@@ -72,9 +72,40 @@
       "category": "CONV-ANGULAR",
       "message": "Constructor injection detected — prefer inject() function for tree-shakeable DI",
       "fix_hint": "Replace constructor(private service: MyService) with private service = inject(MyService) as a class field."
+    },
+    {
+      "id": "STRUCT-NG-001",
+      "name": "component-naming-convention",
+      "pattern": "@Component\\(",
+      "scope_exclude": "\\.component\\.ts$",
+      "severity": "WARNING",
+      "category": "STRUCT-NAME",
+      "message": "Angular @Component in a file that doesn't follow the *.component.ts naming convention",
+      "fix_hint": "Rename the file to follow Angular naming: feature-name.component.ts"
+    },
+    {
+      "id": "STRUCT-NG-002",
+      "name": "service-naming-convention",
+      "pattern": "@Injectable\\(",
+      "scope_exclude": "\\.service\\.ts$|\\.guard\\.ts$|\\.interceptor\\.ts$|\\.pipe\\.ts$|\\.resolver\\.ts$",
+      "severity": "INFO",
+      "category": "STRUCT-NAME",
+      "message": "Angular @Injectable in a file that doesn't follow the *.service.ts naming convention",
+      "fix_hint": "Rename the file to follow Angular naming: feature-name.service.ts"
     }
   ],
-  "additional_boundaries": [],
+  "additional_boundaries": [
+    {
+      "name": "Feature modules must not import from other feature modules",
+      "scope_pattern": "features/",
+      "forbidden_imports": [
+        "from\\s+['\"]\\.\\./(features|pages|modules)/"
+      ],
+      "severity": "WARNING",
+      "category": "STRUCT-BOUNDARY",
+      "message": "Feature module imports from another feature module — shared code should be in a shared/ directory"
+    }
+  ],
   "disabled_rules": [],
   "severity_overrides": {},
   "threshold_overrides": {

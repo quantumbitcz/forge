@@ -241,7 +241,7 @@ After reading config files, validate before proceeding:
 1. **`dev-pipeline.local.md`**: must exist and have valid YAML frontmatter
    - If missing: ERROR — "Run `/pipeline-init` to set up this project for the pipeline"
    - If YAML invalid: ERROR — show parse error with line number
-2. **Required fields**: `project_type`, `framework`, `module`, `commands.build`, `commands.test`, `quality_gate` must be present
+2. **Required fields**: `project_type`, `framework`, `module`, `commands.build`, `commands.test`, `commands.lint`, `quality_gate` must be present. `commands.test_single` is recommended but not required (falls back to `commands.test` if missing).
    - If missing: ERROR — list all missing fields
 3. **`conventions_file` path**: must resolve to a readable file
    - If missing: WARN — "Conventions file not found at {path}. Using universal defaults. Framework-specific checks will be skipped."
@@ -510,11 +510,15 @@ This step is optional and only triggers when explicitly configured. It runs AFTE
 
 Read `.pipeline/state.json`. If it exists and `complete: false`:
 
-1. Read `.pipeline/checkpoint-{storyId}.json` for task-level progress
-2. **Validate checkpoint**: for each `tasks_completed` entry, check that created files exist on disk. Mark mismatches as remaining.
-3. Run `git diff {last_commit_sha}` to detect manual filesystem drift
-4. If drift detected: **warn user, ask whether to incorporate or discard**
-5. Resume from first incomplete stage/task
+1. **Check for expired NO-GO timeout**: If `story_state` is `VALIDATING` AND `abort_reason` is empty AND `stage_timestamps.validate` exists:
+   - Compute elapsed time: `now - stage_timestamps.validate`
+   - If elapsed > `validation.no_go_timeout_hours` (default: 24 hours): auto-abort — set `abort_reason` to `"NO-GO timeout expired after {hours}h"`, set `complete: true`, log WARNING: "Previous NO-GO state expired. Auto-aborting stale run." Remove `.pipeline/.lock` if present. Remove `.pipeline/worktree` if present.
+   - If elapsed <= timeout: the NO-GO is still active — **escalate via AskUserQuestion** with header "Stale Run", question "A previous pipeline run received NO-GO at validation (started {validate_timestamp}, requirement: '{requirement}'). The NO-GO timeout has not expired ({elapsed}h / {timeout}h).", options: "Resume validation" (description: "Re-dispatch pl-210-validator with the existing plan"), "Re-plan" (description: "Go back to Stage 2 and redesign the approach"), "Abort" (description: "Cancel the stale run and start fresh").
+2. Read `.pipeline/checkpoint-{storyId}.json` for task-level progress
+3. **Validate checkpoint**: for each `tasks_completed` entry, check that created files exist on disk. Mark mismatches as remaining.
+4. Run `git diff {last_commit_sha}` to detect manual filesystem drift
+5. If drift detected: **warn user, ask whether to incorporate or discard**
+6. Resume from first incomplete stage/task
 
 ### 3.7 --from Flag Precedence
 
@@ -602,7 +606,7 @@ Create/overwrite `.pipeline/state.json` (see `shared/state-schema.md` for full s
   },
   "recovery_budget": {
     "total_weight": 0.0,
-    "max_weight": 5.0,
+    "max_weight": 5.5,
     "applications": []
   },
   "recovery_applied": [],
@@ -1606,7 +1610,7 @@ This prevents the pipeline from running indefinitely when multiple stages each c
 
 ### Recovery Budget
 
-Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check `recovery_budget.total_weight` against `recovery_budget.max_weight`. When `total_weight >= 4.0` (80% of default max), set `recovery.budget_warning_issued` to `true` and log WARNING: "Recovery budget at {total_weight}/{max_weight} — approaching limit." When `total_weight >= max_weight`, do not invoke recovery — escalate to user instead.
+Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check `recovery_budget.total_weight` against `recovery_budget.max_weight`. When `total_weight >= 4.4` (80% of default max), set `recovery.budget_warning_issued` to `true` and log WARNING: "Recovery budget at {total_weight}/{max_weight} — approaching limit." When `total_weight >= max_weight`, do not invoke recovery — escalate to user instead.
 
 ### Degraded Capability Check
 

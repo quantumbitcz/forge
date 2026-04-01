@@ -12,6 +12,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | auto_proceed_risk | MEDIUM | Highest risk level at which pipeline proceeds without asking (LOW, MEDIUM, HIGH, ALL) |
 | parallel_impl_threshold | 3 | Dispatch parallel sub-agents when >= N independent implementation steps |
 | total_retries_max | 10 | Global retry budget across all loops (5-30) |
+| oscillation_tolerance | 5 | Score regression tolerance for quality cycles (0-20) |
 
 ## Review Agents
 

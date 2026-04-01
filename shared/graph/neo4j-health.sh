@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform timeout wrapper (self-contained to avoid sourcing platform.sh,
+# which runs detect_os at load time and needs uname/grep on PATH).
+_neo4j_timeout() {
+  local seconds="$1"; shift
+  if command -v timeout &>/dev/null; then
+    timeout "$seconds" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$seconds" "$@"
+  else
+    "$@"
+  fi
+}
+
 # Check if Docker is available
 if ! docker info > /dev/null 2>&1; then
   echo '{"available": false, "reason": "docker not available"}'
@@ -9,13 +22,7 @@ fi
 
 # Check if the pipeline-neo4j container is running (with timeout to prevent hangs)
 CONTAINER_STATUS=""
-if command -v timeout &>/dev/null; then
-  CONTAINER_STATUS=$(timeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
-elif command -v gtimeout &>/dev/null; then
-  CONTAINER_STATUS=$(gtimeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
-else
-  CONTAINER_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
-fi
+CONTAINER_STATUS=$(_neo4j_timeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
 
 if [ "$CONTAINER_STATUS" != "running" ]; then
   echo '{"available": false, "reason": "container not running"}'
@@ -24,13 +31,7 @@ fi
 
 # Check health status
 HEALTH_STATUS=""
-if command -v timeout &>/dev/null; then
-  HEALTH_STATUS=$(timeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
-elif command -v gtimeout &>/dev/null; then
-  HEALTH_STATUS=$(gtimeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
-else
-  HEALTH_STATUS=$(docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
-fi
+HEALTH_STATUS=$(_neo4j_timeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
 
 if [ -z "$HEALTH_STATUS" ]; then
   # Container has no health check configured — treat as unknown, not failed

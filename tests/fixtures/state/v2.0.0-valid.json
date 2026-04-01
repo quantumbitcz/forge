@@ -67,7 +67,7 @@
   },
   "recovery_budget": {
     "total_weight": 1.5,
-    "max_weight": 5.0,
+    "max_weight": 5.5,
     "applications": []
   },
   "recovery_applied": [],

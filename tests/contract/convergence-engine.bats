@@ -148,3 +148,51 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
   grep -q "PHASE_A_FAILURE" "$ENGINE" \
     || fail "PHASE_A_FAILURE handling path not documented"
 }
+
+# ---------------------------------------------------------------------------
+# 17. Phase A inner cap (verify_fix_count >= max_fix_loops) documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: Phase A inner cap verify_fix_count >= max_fix_loops documented" {
+  grep -q "verify_fix_count >= max_fix_loops" "$ENGINE" \
+    || fail "Phase A inner cap (verify_fix_count >= max_fix_loops) not documented in algorithm"
+}
+
+# ---------------------------------------------------------------------------
+# 18. Global budget interaction documented (total_iterations -> total_retries)
+# ---------------------------------------------------------------------------
+@test "convergence-engine: global budget interaction documented" {
+  grep -q "total_retries" "$ENGINE" \
+    || fail "Global budget interaction (total_retries) not documented"
+  grep -q "total_retries_max" "$ENGINE" \
+    || fail "total_retries_max reference not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 19. Consecutive Dip Rule interaction documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: Consecutive Dip Rule interaction documented" {
+  grep -qi "Consecutive Dip Rule\|dip rule" "$ENGINE" \
+    || fail "Consecutive Dip Rule interaction not documented"
+}
+
+# ---------------------------------------------------------------------------
+# 20. Score escalation ladder documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: score escalation ladder with all 3 bands documented" {
+  grep -q "pass_threshold" "$ENGINE" \
+    || fail "pass_threshold band not documented in escalation ladder"
+  grep -q "concerns_threshold" "$ENGINE" \
+    || fail "concerns_threshold band not documented in escalation ladder"
+  grep -qi "PASS.*CONCERNS.*FAIL\|PASS verdict\|CONCERNS verdict\|FAIL verdict" "$ENGINE" \
+    || fail "PASS/CONCERNS/FAIL verdicts not documented in escalation ladder"
+}
+
+# ---------------------------------------------------------------------------
+# 21. Retrospective auto-tuning rules documented
+# ---------------------------------------------------------------------------
+@test "convergence-engine: retrospective auto-tuning documented" {
+  grep -qi "auto-tuning\|Auto-Tuning\|retrospective.*adjust" "$ENGINE" \
+    || fail "Retrospective auto-tuning not documented"
+  grep -q "pl-700-retrospective" "$ENGINE" \
+    || fail "pl-700-retrospective not referenced in auto-tuning section"
+}

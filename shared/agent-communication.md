@@ -147,7 +147,27 @@ PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller 
 - Earlier attempt markers are superseded — do not double-count
 - If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status
 
-## 7. Convention File Composition
+## 7. Plan Mode Integration
+
+Planning agents (`pl-200-planner`, `pl-010-shaper`, `pl-160-migration-planner`, `pl-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present their designs for user approval in the Claude Code UI before implementation proceeds.
+
+**When to use plan mode:**
+- Interactive sessions where the user is present and can approve plans
+- Complex plans with architectural decisions that benefit from user review
+
+**When to skip plan mode:**
+- Autonomous orchestrator runs (the validator `pl-210` serves as the approval gate)
+- Replanning after a REVISE verdict (plan mode was already used for the initial plan)
+- Simple, low-risk plans where the overhead is not justified
+
+**Protocol:**
+1. Agent calls `EnterPlanMode` at the start of its planning process
+2. Agent explores the codebase, analyzes alternatives, designs the plan
+3. Agent writes the plan to stage notes (or spec file for shaper)
+4. Agent calls `ExitPlanMode` — user sees the plan and approves or requests changes
+5. On approval, the orchestrator proceeds to the next stage
+
+## 8. Convention File Composition
 
 When an agent receives a convention stack with both generic and framework-binding files for the same layer (e.g., `modules/persistence/exposed.md` + `modules/frameworks/spring/persistence/exposed.md`), compose them as follows:
 

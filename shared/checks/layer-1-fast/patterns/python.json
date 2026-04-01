@@ -149,7 +149,21 @@
       "_note": "Detected via AST or indent-based heuristic, not grep."
     }
   },
-  "boundaries": [],
+  "boundaries": [
+    {
+      "name": "No ORM imports in domain/service layer",
+      "scope_pattern": "domain/|services/|core/",
+      "forbidden_imports": [
+        "from sqlalchemy",
+        "import sqlalchemy",
+        "from tortoise",
+        "from django\\.db"
+      ],
+      "message": "Domain/service layer must not import ORM libraries directly — use repository pattern or dependency injection",
+      "severity": "WARNING",
+      "category": "STRUCT-BOUNDARY"
+    }
+  ],
   "deprecations": {
     "known_deprecations_file": "layer-3-agent/known-deprecations/python.json"
   }

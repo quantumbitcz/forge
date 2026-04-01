@@ -75,15 +75,21 @@ When an agent approaches its context window limit:
 
 When the system is under memory pressure but not yet at OOM:
 
-1. **Kill orphan processes:**
+1. **Kill orphan processes (cross-platform):**
+
+   On UNIX/macOS/Linux (use `pkill`):
    ```bash
-   # Kill orphan Gradle daemons
    pkill -f "GradleDaemon" 2>/dev/null
-   # Kill orphan Node processes (dev servers, watchers)
    pkill -f "node.*--watch" 2>/dev/null
-   # Kill orphan Kotlin daemon
    pkill -f "kotlin-daemon" 2>/dev/null
    ```
+
+   On Windows/WSL (use `taskkill` or PowerShell):
+   ```powershell
+   Get-Process | Where-Object { $_.CommandLine -match "GradleDaemon|node.*--watch|kotlin-daemon" } | Stop-Process -Force -ErrorAction SilentlyContinue
+   ```
+
+   **Detection:** Use `shared/platform.sh` `detect_os()` to determine the platform. On `windows`, prefer PowerShell. On `darwin`/`linux`, use `pkill`.
 
 2. **Reduce parallelism:** Suggest orchestrator reduce `parallel_threshold` to 1 for remaining tasks.
 

@@ -117,7 +117,30 @@ get_agent_body() {
 }
 
 # ---------------------------------------------------------------------------
-# 4. All agents with Agent in tools actually dispatch something
+# 4. Planning agents have EnterPlanMode/ExitPlanMode in tools list
+# ---------------------------------------------------------------------------
+@test "agent-tools: planning agents have EnterPlanMode and ExitPlanMode tools" {
+  local planning_agents=(pl-200-planner pl-010-shaper pl-160-migration-planner pl-050-project-bootstrapper)
+  local failures=()
+  for agent_name in "${planning_agents[@]}"; do
+    local agent_file="$AGENTS_DIR/${agent_name}.md"
+    [[ -f "$agent_file" ]] || { failures+=("$agent_name: file not found"); continue; }
+    local tools
+    tools="$(get_agent_tools "$agent_file")"
+    if ! echo "$tools" | grep -q "EnterPlanMode"; then
+      failures+=("$agent_name: missing EnterPlanMode")
+    fi
+    if ! echo "$tools" | grep -q "ExitPlanMode"; then
+      failures+=("$agent_name: missing ExitPlanMode")
+    fi
+  done
+  if (( ${#failures[@]} > 0 )); then
+    fail "PlanMode tool mismatch: ${failures[*]}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# 5. All agents with Agent in tools actually dispatch something
 # ---------------------------------------------------------------------------
 @test "agent-tools: agents with Agent tool actually dispatch sub-agents" {
   local failures=()

@@ -78,6 +78,26 @@
       "message": "Deep relative import into another module — prefer barrel index.ts imports",
       "fix_hint": "Add or update the target module's index.ts to re-export the necessary symbols, then import from the module root: from '../users' instead of '../users/users.service'.",
       "example_ref": ""
+    },
+    {
+      "id": "STRUCT-NS-001",
+      "name": "controller-naming-convention",
+      "pattern": "@Controller\\(",
+      "scope_exclude": "\\.controller\\.ts$",
+      "severity": "WARNING",
+      "category": "STRUCT-NAME",
+      "message": "NestJS @Controller in a file that doesn't follow the *.controller.ts naming convention",
+      "fix_hint": "Rename the file to follow NestJS naming: feature-name.controller.ts"
+    },
+    {
+      "id": "STRUCT-NS-002",
+      "name": "dto-placement",
+      "pattern": "class\\s+\\w+(Dto|DTO)\\b",
+      "scope_exclude": "dto/|\\.dto\\.ts$",
+      "severity": "INFO",
+      "category": "STRUCT-PLACE",
+      "message": "DTO class defined outside dto/ directory or *.dto.ts file — co-locate DTOs for discoverability",
+      "fix_hint": "Move to dto/ directory or rename file to *.dto.ts (e.g., create-user.dto.ts)."
     }
   ],
   "additional_boundaries": [

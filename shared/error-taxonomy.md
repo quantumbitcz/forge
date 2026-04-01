@@ -37,7 +37,7 @@ When reporting errors, agents should structure them as:
 | VERSION_MISMATCH | Required tool/runtime version not met (e.g., Java 8 found, Java 11+ required) | No | none (user must fix) |
 | DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `pl-140-deprecation-refresh` | N/A | none (inline handling: log WARNING in stage notes, do not block pipeline, do not invoke recovery engine). Retrospective tracks accumulation. |
 | WORKTREE_FAILURE | Worktree creation, branch collision, or stale worktree cleanup failed | Yes | resource-cleanup |
-| BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.0) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
+| BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.5) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
 
 ## Usage by Agents
 

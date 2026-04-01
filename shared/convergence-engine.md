@@ -32,7 +32,7 @@ Key behaviors:
 - **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `pl-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
-- **Phase 1 inner cap** is `max_test_cycles`, enforced only for **test failures** (not build/lint failures). When tests fail, the convergence engine checks `phase_iterations >= max_test_cycles` (see algorithm ELSE branch). When build/lint fails (PHASE_A_FAILURE), only the global `max_iterations` cap applies — build failures are typically resolved in 1-2 attempts and don't need a separate inner cap. `pl-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
+- **Phase 1 inner caps:** Test failures use `max_test_cycles` (see algorithm ELSE branch). Build/lint failures use `max_fix_loops` from `implementation.max_fix_loops` config (default: 3). When tests fail, the convergence engine checks `phase_iterations >= max_test_cycles`. When build/lint fails (PHASE_A_FAILURE), the convergence engine checks `verify_fix_count >= max_fix_loops` first, then the global `max_iterations` cap. Build failures typically resolve in 1-2 attempts, but the inner cap prevents unbounded retries if they don't. `pl-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
 - **Phase 2 inner cap** is `max_review_cycles`, managed by `pl-400-quality-gate`. When convergence is active, `max_review_cycles` defaults to 1 per convergence iteration -- the convergence engine handles the outer loop.
 
 ## Algorithm
@@ -44,8 +44,11 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
 
     "correctness":
       IF verify_result is PHASE_A_FAILURE (build/lint failed before tests ran):
-        -> increment phase_iterations, increment total_iterations
-        -> IF total_iterations >= max_iterations: ESCALATE
+        -> increment verify_fix_count, increment phase_iterations, increment total_iterations
+        -> IF verify_fix_count >= max_fix_loops: ESCALATE
+           (Phase A inner cap — prevents unbounded build/lint fix loops,
+            consistent with stage-contract.md escalation rules)
+        -> ELSE IF total_iterations >= max_iterations: ESCALATE
         -> ELSE: dispatch IMPLEMENT with build/lint errors, then VERIFY again
         (analysis_pass is not evaluated — Phase B did not run)
 

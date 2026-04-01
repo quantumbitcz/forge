@@ -39,6 +39,8 @@ tools:
   - Glob
   - Grep
   - Agent
+  - EnterPlanMode
+  - ExitPlanMode
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
 ---
@@ -99,6 +101,8 @@ Read from `dev-pipeline.local.md` under the `migration` key. Apply defaults when
 ---
 
 ## 5. Migration Flow
+
+**Plan Mode:** Call `EnterPlanMode` before starting the migration planning process. This enters the Claude Code plan mode UI, allowing you to audit the codebase and design the phased migration plan without writing code. After the migration plan is finalized (Phase 3 complete), call `ExitPlanMode` to present the plan for user approval. If the orchestrator is running autonomously, skip plan mode — the validator serves as the approval gate instead.
 
 ### Phase 0 -- DETECT (auto-detection of current and target versions)
 

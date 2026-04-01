@@ -78,6 +78,26 @@
       "message": "print() in application code — use structured logging instead",
       "fix_hint": "Replace print() with logger = logging.getLogger(__name__) and logger.info() / logger.error().",
       "example_ref": ""
+    },
+    {
+      "id": "STRUCT-DJ-001",
+      "name": "model-in-views",
+      "pattern": "class\\s+\\w+\\(.*models\\.Model\\)",
+      "scope_pattern": "/views\\.py$",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "Django Model class defined in views.py — models must be in models.py or models/ package",
+      "fix_hint": "Move model class to models.py or models/ directory."
+    },
+    {
+      "id": "STRUCT-DJ-002",
+      "name": "form-in-models",
+      "pattern": "class\\s+\\w+\\(.*forms\\.(Form|ModelForm)\\)",
+      "scope_pattern": "/models\\.py$",
+      "severity": "WARNING",
+      "category": "STRUCT-PLACE",
+      "message": "Django Form class defined in models.py — forms should be in forms.py",
+      "fix_hint": "Move form class to forms.py in the same app directory."
     }
   ],
   "additional_boundaries": [

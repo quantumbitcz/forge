@@ -96,6 +96,7 @@ Use the right scope function for the intent — confusion leads to bugs:
 - Use `sealed class`/`sealed interface` for exhaustive `when` expressions — the compiler enforces completeness.
 - Use `data class` for value objects — `equals`, `hashCode`, `copy`, and `toString` are generated.
 - Use coroutines with structured concurrency (`coroutineScope`, `supervisorScope`) — never `GlobalScope`.
+- Prefer coroutines over Java threads/`ExecutorService` for all async and concurrent work — coroutines are lighter, cancellable, and integrate with structured concurrency.
 - Use extension functions to add behavior without inheritance — keeps classes focused.
 - Use `require`/`check`/`error` for preconditions — they throw `IllegalArgumentException`/`IllegalStateException` with clear messages.
 - Use `?.let { }` or `?.run { }` for null-safe operations instead of `if (x != null)` blocks.
@@ -108,6 +109,7 @@ Use the right scope function for the intent — confusion leads to bugs:
 - Don't use `object` singletons for stateful services — use dependency injection for testability.
 - Don't use `runBlocking` in coroutine contexts — it blocks the thread and can cause deadlocks.
 - Don't use Java's `synchronized` with coroutines — use `Mutex` from `kotlinx.coroutines.sync`.
+- Don't use Java threads (`Thread`, `ExecutorService`, `CompletableFuture`) when coroutines are available — they lack structured concurrency, cancellation propagation, and are heavier.
 - Don't use the Builder pattern — use named/default arguments + `copy()` on data classes.
 - Don't use the null-object pattern — use sealed classes/interfaces with an explicit `None` variant.
 - Don't create static utility classes — use top-level functions or extension functions.

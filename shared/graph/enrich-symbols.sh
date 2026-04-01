@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Requires Bash 4.0+ (uses associative arrays)
+if (( BASH_VERSINFO[0] < 4 )); then
+  echo "[enrich-symbols] Bash 4.0+ required (found ${BASH_VERSION}). Cannot enrich symbols." >&2
+  exit 1
+fi
+
 # ============================================================================
 # enrich-symbols.sh — Symbol-Level Graph Enrichment
 #
@@ -263,8 +269,8 @@ extract_python() {
     fi
   done
 
-  # Functions
-  grep -nE '^\s*def\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  # Functions (including async def)
+  grep -nE '^\s*(async\s+)?def\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(async\s+)?def\s+(\w+).*/\2/')"
     if [[ -n "$fname" ]]; then

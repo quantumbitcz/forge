@@ -52,21 +52,21 @@ CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Budget ceiling max_weight=5.0 documented
+# 4. Budget ceiling max_weight=5.5 documented
 # ---------------------------------------------------------------------------
-@test "recovery-engine: budget ceiling max_weight 5.0 documented" {
-  grep -q "max_weight.*5\.0\|5\.0.*max_weight\|max_weight: 5\.0" "$RECOVERY_ENGINE" \
-    || fail "Budget ceiling max_weight=5.0 not found in recovery-engine.md"
+@test "recovery-engine: budget ceiling max_weight 5.5 documented" {
+  grep -q "max_weight.*5\.5\|5\.5.*max_weight\|max_weight: 5\.5" "$RECOVERY_ENGINE" \
+    || fail "Budget ceiling max_weight=5.5 not found in recovery-engine.md"
 }
 
 # ---------------------------------------------------------------------------
-# 5. Warning at 80% (4.0) documented
+# 5. Warning at 80% documented
 # ---------------------------------------------------------------------------
-@test "recovery-engine: budget warning at 80 percent (4.0) documented" {
+@test "recovery-engine: budget warning at 80 percent documented" {
   grep -q "80%" "$RECOVERY_ENGINE" \
     || fail "80% warning threshold not documented"
-  grep -q "4\.0" "$RECOVERY_ENGINE" \
-    || fail "4.0 weight warning threshold not documented"
+  grep -q "4\.4" "$RECOVERY_ENGINE" \
+    || fail "4.4 weight warning threshold (80% of 5.5) not documented"
 }
 
 # ---------------------------------------------------------------------------

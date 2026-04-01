@@ -177,7 +177,7 @@ create_temp_file() {
 
 # ---------------------------------------------------------------------------
 # create_state_json [extra_json]
-# Creates .pipeline/state.json inside TEST_TEMP/project with base v1.0.0 fields.
+# Creates .pipeline/state.json inside TEST_TEMP/project with base v2.0.0 fields.
 # Optionally merges extra_json (a JSON object string) on top via python/jq.
 # Prints the absolute path to the created file.
 # ---------------------------------------------------------------------------
@@ -187,11 +187,16 @@ create_state_json() {
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v1.0.0 state object
+  # Base v2.0.0 state object (matches state-schema.md v2.0.0)
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "complete": false,
+  "story_id": "TEST-001",
+  "requirement": "Test requirement",
+  "domain_area": "test",
+  "risk_level": "LOW",
   "story_state": "PREFLIGHT",
   "active_component": "default",
   "components": {
@@ -202,14 +207,92 @@ create_state_json() {
       "detected_versions": {}
     }
   },
-  "story_id": "TEST-001",
   "run_id": "test-run-001",
+  "quality_cycles": 0,
+  "test_cycles": 0,
+  "verify_fix_count": 0,
+  "validation_retries": 0,
   "total_retries": 0,
   "total_retries_max": 10,
-  "oscillation_tolerance": 5,
-  "detected_versions": {},
-  "linear_sync": {},
+  "stage_timestamps": {},
+  "last_commit_sha": "",
+  "preempt_items_applied": [],
   "preempt_items_status": {},
+  "feedback_classification": "",
+  "feedback_loop_count": 0,
+  "score_history": [],
+  "convergence": {
+    "phase": "correctness",
+    "phase_iterations": 0,
+    "total_iterations": 0,
+    "plateau_count": 0,
+    "last_score_delta": 0,
+    "convergence_state": "IMPROVING",
+    "phase_history": [],
+    "safety_gate_passed": false,
+    "safety_gate_failures": 0,
+    "unfixable_findings": []
+  },
+  "integrations": {
+    "linear": { "available": false, "team": "" },
+    "playwright": { "available": false },
+    "slack": { "available": false },
+    "figma": { "available": false },
+    "context7": { "available": false },
+    "neo4j": { "available": false, "last_build_sha": "", "node_count": 0 }
+  },
+  "linear": {
+    "epic_id": "",
+    "story_ids": [],
+    "task_ids": {}
+  },
+  "linear_sync": {
+    "in_sync": true,
+    "failed_operations": []
+  },
+  "modules": [],
+  "cost": {
+    "wall_time_seconds": 0,
+    "stages_completed": 0
+  },
+  "recovery_applied": [],
+  "recovery_budget": {
+    "total_weight": 0.0,
+    "max_weight": 5.5,
+    "applications": []
+  },
+  "recovery": {
+    "total_failures": 0,
+    "total_recoveries": 0,
+    "degraded_capabilities": [],
+    "failures": [],
+    "budget_warning_issued": false
+  },
+  "scout_improvements": 0,
+  "conventions_hash": "",
+  "conventions_section_hashes": {},
+  "detected_versions": {},
+  "check_engine_skipped": 0,
+  "mode": "standard",
+  "dry_run": false,
+  "cross_repo": {},
+  "spec": null,
+  "documentation": {
+    "discovery_error": false,
+    "last_discovery_timestamp": "",
+    "files_discovered": 0,
+    "sections_parsed": 0,
+    "decisions_extracted": 0,
+    "constraints_extracted": 0,
+    "code_linkages": 0,
+    "coverage_gaps": [],
+    "stale_sections": 0,
+    "external_refs": [],
+    "generation_history": [],
+    "generation_error": false
+  },
+  "exploration_degraded": false,
+  "oscillation_tolerance": 5,
   "stage_notes": {},
   "quality_score": null,
   "worktree_branch": null,
