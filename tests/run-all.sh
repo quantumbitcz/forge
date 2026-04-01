@@ -5,6 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BATS="$SCRIPT_DIR/lib/bats-core/bin/bats"
 TIER="${1:-all}"
 
+# Verify bats is available (except for structural-only runs which don't need it)
+if [[ "$TIER" != "structural" ]] && [[ ! -x "$BATS" ]]; then
+  echo "ERROR: bats not found at $BATS" >&2
+  echo "  Run: git submodule update --init --recursive" >&2
+  exit 1
+fi
+
 RED='\033[0;31m'; GREEN='\033[0;32m'; BOLD='\033[1m'; NC='\033[0m'
 
 run_tier() {

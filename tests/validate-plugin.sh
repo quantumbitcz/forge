@@ -408,6 +408,8 @@ CI_PLATFORMS=("${DISCOVERED_CI_PLATFORMS[@]}")
 CONTAINER_ORCH=("${DISCOVERED_CONTAINER_ORCH[@]}")
 
 # Guard against accidental deletions in new layers
+guard_min_count "crosscutting layers" "${#LAYERS[@]}" "$MIN_LAYERS" || { FAIL=$((FAIL + 1)); }
+guard_min_count "documentation bindings" "${#DISCOVERED_DOC_BINDINGS[@]}" "$MIN_DOCUMENTATION_BINDINGS" || { FAIL=$((FAIL + 1)); }
 guard_min_count "build systems" "${#BUILD_SYSTEMS[@]}" "$MIN_BUILD_SYSTEMS" || { FAIL=$((FAIL + 1)); }
 guard_min_count "CI/CD platforms" "${#CI_PLATFORMS[@]}" "$MIN_CI_PLATFORMS" || { FAIL=$((FAIL + 1)); }
 guard_min_count "container orchestration" "${#CONTAINER_ORCH[@]}" "$MIN_CONTAINER_ORCH" || { FAIL=$((FAIL + 1)); }
@@ -489,6 +491,42 @@ for co in "${CONTAINER_ORCH[@]}"; do
   fi
 done
 check "All container orchestration learnings files exist" "$check32_fail"
+
+echo ""
+echo "--- CROSSCUTTING LAYER LEARNINGS ---"
+
+# Check: All crosscutting layer learnings files exist
+check_layer_learnings_fail=0
+for layer in "${LAYERS[@]}"; do
+  # Each layer directory may contain multiple .md files — check each has a learnings file
+  for f in "$ROOT/modules/$layer"/*.md; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f" .md)
+    if [ ! -f "$ROOT/shared/learnings/$name.md" ]; then
+      echo "    Missing: shared/learnings/$name.md (for modules/$layer/$name.md)"
+      check_layer_learnings_fail=1
+    fi
+  done
+done
+check "All crosscutting layer module learnings files exist" "$check_layer_learnings_fail"
+
+echo ""
+echo "--- RECOVERY ENGINE ---"
+
+# Check: Recovery engine exists with required sections
+check_recovery_fail=0
+if [[ ! -f "$ROOT/shared/recovery/recovery-engine.md" ]]; then
+  echo "  FAIL: shared/recovery/recovery-engine.md does not exist"
+  check_recovery_fail=1
+else
+  for section in "Boundary" "Failure Classification" "Recovery Execution" "Recovery Budget"; do
+    if ! grep -q "$section" "$ROOT/shared/recovery/recovery-engine.md"; then
+      echo "  FAIL: recovery-engine.md missing section: $section"
+      check_recovery_fail=1
+    fi
+  done
+fi
+check "Recovery engine exists with required sections" "$check_recovery_fail"
 
 echo ""
 echo "--- CONVERGENCE ENGINE ---"
