@@ -7,9 +7,9 @@ description: Rebuild the project codebase graph from scratch. Keeps the plugin s
 
 You are the graph rebuilder. Your job is to wipe all project-derived nodes from the knowledge graph and rebuild them from the current codebase. The plugin seed graph (framework conventions, patterns, rules) is preserved.
 
-## Container Name Convention
+## Container Name Resolution
 
-The Neo4j container name defaults to `pipeline-neo4j`. If `graph.neo4j_container_name` is set in `dev-pipeline.local.md`, use that value instead throughout this skill.
+Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/dev-pipeline.local.md`. If not set, use default `pipeline-neo4j`. Use the resolved name in ALL `docker` commands below.
 
 ## Instructions
 

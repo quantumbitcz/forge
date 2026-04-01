@@ -14,8 +14,8 @@ _neo4j_timeout() {
   fi
 }
 
-# Container name: accept as first argument, default to pipeline-neo4j
-CONTAINER_NAME="${1:-pipeline-neo4j}"
+# Container name: positional arg > NEO4J_CONTAINER env var > default
+CONTAINER_NAME="${1:-${NEO4J_CONTAINER:-pipeline-neo4j}}"
 
 # Check if Docker is available
 if ! docker info > /dev/null 2>&1; then
