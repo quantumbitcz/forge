@@ -240,6 +240,8 @@ auto_proceed_risk: LOW
 <!-- /locked -->
 ```
 
+Fences must not nest. If fences are malformed (unmatched open/close), treat all parameters as unlocked and emit a WARNING in the pipeline report.
+
 | # | Condition | Action |
 |---|-----------|--------|
 | 1 | `avg_fix_loops > max_fix_loops - 0.5` for 3+ consecutive runs | Increment `max_fix_loops` by 1 |

@@ -300,7 +300,7 @@ while IFS= read -r cmd; do
   elif [[ ! -x "$script_path" ]]; then
     echo "    DETAIL: Hook script not executable: $script_path (run: chmod +x $script_path)" >&2
     check18b_fail=1
-  elif ! head -1 "$script_path" | grep -q '^#!'; then
+  elif ! head -n 1 "$script_path" | grep -q '^#!'; then
     echo "    DETAIL: Hook script missing shebang: $script_path (add: #!/usr/bin/env bash)" >&2
     check18b_fail=1
   fi
