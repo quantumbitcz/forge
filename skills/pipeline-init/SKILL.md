@@ -29,6 +29,45 @@ Before scanning for stack markers, verify the environment is ready:
    - If the user chooses "Keep existing": abort with message "Keeping existing configuration."
    - If the user chooses "Overwrite": proceed, and the CONFIGURE phase will overwrite the file.
 
+#### Greenfield Detection
+
+Before scanning for stack markers, check whether the project is empty or has no source code:
+
+1. **Check tracked files**: Run `git ls-files --cached --others --exclude-standard | head -5`
+   - If the command returns empty (no tracked or untracked files, ignoring `.claude/` and `.pipeline/`): the project is **greenfield**.
+   - If the only files present are configuration files (`.gitignore`, `.editorconfig`, `README.md`, `LICENSE`) with no source code: the project is **greenfield**.
+2. **Check for any language markers**: Quickly scan for the existence of ANY build/manifest file (`package.json`, `build.gradle.kts`, `build.gradle`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `Package.swift`, `*.csproj`, `CMakeLists.txt`, `Makefile`).
+   - If none found: the project is **greenfield**.
+
+If the project is greenfield, **ASK via AskUserQuestion** with header "New Project", question "This looks like a new project with no code yet. Would you like to scaffold a project from scratch?", options:
+- "Bootstrap" (description: "Select a tech stack and scaffold a production-grade project structure with build system, CI/CD, and tooling")
+- "Select stack manually" (description: "Just configure the pipeline — I'll tell you what tech stack I plan to use")
+- "Skip" (description: "Proceed with detection anyway — I have code that wasn't detected")
+
+**If user chooses "Bootstrap":**
+1. Ask the user directly: **"What would you like to build? Describe your project (e.g., 'Kotlin Spring Boot REST API with PostgreSQL', 'React Vite frontend with TypeScript')."**
+2. After receiving the description, dispatch `pl-050-project-bootstrapper` via the Agent tool with the user's description. The bootstrapper handles all scaffolding, validation, and auto-runs `/pipeline-init` at the end. **Return the bootstrapper's output and stop** — do not continue to Phase 2.
+
+**If user chooses "Select stack manually":**
+1. Present the available frameworks grouped by language:
+
+   | Language | Frameworks |
+   |----------|-----------|
+   | Kotlin/Java | `spring`, `jetpack-compose`, `kotlin-multiplatform` |
+   | TypeScript | `react`, `nextjs`, `angular`, `vue`, `svelte`, `sveltekit`, `express`, `nestjs` |
+   | Rust | `axum` |
+   | Go | `gin`, `go-stdlib` |
+   | Python | `fastapi`, `django` |
+   | Swift | `vapor`, `swiftui` |
+   | C# | `aspnet` |
+   | C/C++ | `embedded` |
+   | Infrastructure | `k8s` |
+
+2. **ASK via AskUserQuestion** with header "Framework", question "Which framework will you use?", options: up to 4 most likely matches based on any context clues, plus "Other" (description: "I'll type the framework name").
+3. Once the framework is selected, use it as the detected module and continue to Phase 1.5 (Code Quality Recommendations) and Phase 2 (CONFIGURE) normally. Skip the rest of Phase 1 detection since the user selected manually.
+
+**If user chooses "Skip":** Continue with normal stack detection below.
+
 #### Stack Detection
 
 Scan the project root and immediate subdirectories for stack markers. Check for the **first match** in this priority order:
@@ -125,6 +164,8 @@ External docs:      Confluence (2 spaces referenced)
 **ASK via AskUserQuestion** with header "Confirm", question "Does this detected stack look correct? Should I proceed with the `{module}` module?", options: "Proceed" (description: "Stack detection looks correct, continue to configuration") and "Adjust" (description: "Something is wrong — I'll provide corrections").
 
 Wait for confirmation before continuing. If the user chooses "Adjust", ask what needs to change and adjust accordingly.
+
+**If detection returned unknown/null** (non-greenfield project with code but unrecognized stack): Present the available frameworks table (same as the "Select stack manually" flow in Greenfield Detection) and ask the user to select manually. Do NOT proceed with a null module — every project needs a resolved framework module for configuration generation.
 
 #### Documentation Sources Prompt
 
