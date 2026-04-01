@@ -14,15 +14,18 @@ _neo4j_timeout() {
   fi
 }
 
+# Container name: accept as first argument, default to pipeline-neo4j
+CONTAINER_NAME="${1:-pipeline-neo4j}"
+
 # Check if Docker is available
 if ! docker info > /dev/null 2>&1; then
   echo '{"available": false, "reason": "docker not available"}'
   exit 1
 fi
 
-# Check if the pipeline-neo4j container is running (with timeout to prevent hangs)
+# Check if the container is running (with timeout to prevent hangs)
 CONTAINER_STATUS=""
-CONTAINER_STATUS=$(_neo4j_timeout 5 docker inspect pipeline-neo4j --format '{{.State.Status}}' 2>/dev/null || true)
+CONTAINER_STATUS=$(_neo4j_timeout 5 docker inspect "$CONTAINER_NAME" --format '{{.State.Status}}' 2>/dev/null || true)
 
 if [ "$CONTAINER_STATUS" != "running" ]; then
   echo '{"available": false, "reason": "container not running"}'
@@ -31,7 +34,7 @@ fi
 
 # Check health status
 HEALTH_STATUS=""
-HEALTH_STATUS=$(_neo4j_timeout 5 docker inspect pipeline-neo4j --format '{{.State.Health.Status}}' 2>/dev/null || true)
+HEALTH_STATUS=$(_neo4j_timeout 5 docker inspect "$CONTAINER_NAME" --format '{{.State.Health.Status}}' 2>/dev/null || true)
 
 if [ -z "$HEALTH_STATUS" ]; then
   # Container has no health check configured — treat as unknown, not failed

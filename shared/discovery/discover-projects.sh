@@ -24,12 +24,12 @@ while [[ $# -gt 0 ]]; do
   shift 2>/dev/null || true
 done
 
-# Normalize depth to integer
-DEPTH=$(( DEPTH + 0 )) 2>/dev/null || DEPTH=2
+# Normalize depth to integer (POSIX-compatible — no (( )) arithmetic)
+DEPTH=$(printf '%d' "$DEPTH" 2>/dev/null) || DEPTH=2
 
 # Validate depth is within reasonable bounds
-(( DEPTH < 1 )) && DEPTH=1
-(( DEPTH > 10 )) && DEPTH=10
+[ "$DEPTH" -lt 1 ] 2>/dev/null && DEPTH=1
+[ "$DEPTH" -gt 10 ] 2>/dev/null && DEPTH=10
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
