@@ -111,6 +111,8 @@ If ALL tests pass: proceed to Step 2.
 
 Dispatch agents defined in `test_gate.analysis_agents` from config. These agents analyze test quality, not test results (tests already pass).
 
+**If `test_gate.analysis_agents` is empty or all conditional agents are skipped:** `analysis_pass` defaults to `true`. Return PASS verdict immediately (tests passed, no analysis needed). This commonly occurs in bootstrap mode or minimal configurations.
+
 ### 4.1 Batch Dispatch
 
 Dispatch analysis agents in batches of max 3 concurrent. All agents receive:

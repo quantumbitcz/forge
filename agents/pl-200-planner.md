@@ -61,6 +61,17 @@ You receive from the orchestrator:
 4. **Domain hotspots** -- areas with frequent issues (from `pipeline-config.md`).
 5. **`conventions_file` path** -- points to the module's conventions file (e.g., `modules/frameworks/spring/conventions.md`).
 6. **`scaffolder.patterns`** -- named file path templates from `dev-pipeline.local.md` config.
+7. **Spec content** (optional) -- pre-shaped stories from `--spec <path>` mode. If present, contains a `## Stories` block with acceptance criteria.
+
+### Spec-Provided Stories (--spec mode)
+
+If the dispatch includes spec content (item 7):
+
+1. **Use spec stories as the starting point.** Do NOT derive stories from scratch — refine and decompose the spec stories instead.
+2. **Preserve all spec acceptance criteria.** You may refine wording, split into sub-criteria, or decompose into tasks, but MUST NOT delete or weaken acceptance criteria from the spec.
+3. **Add technical tasks not in the spec** (migrations, test infrastructure, dependency updates, CI changes) as needed.
+4. **If the spec conflicts with conventions or exploration results:** flag the conflict in the Challenge Brief and propose a resolution, but do not silently override the spec.
+5. **If no spec content is provided:** derive stories from the requirement as normal (Section 3.7).
 
 ---
 
@@ -82,7 +93,9 @@ Parse what is being asked. Identify:
 
 ### Challenge Brief (Mandatory)
 
-Before decomposing into tasks, you MUST produce a Challenge Brief in stage notes. For trivial tasks (single file change, obvious fix), a one-line brief suffices. For non-trivial tasks, the full structure is required.
+Before decomposing into tasks, you MUST produce a Challenge Brief in stage notes. For trivial tasks, a one-line brief suffices. For non-trivial tasks, the full structure is required.
+
+**Trivial task definition:** A task is trivial when ALL of these conditions hold: (a) single story with <= 2 tasks, (b) LOW risk level, (c) no architectural changes, (d) no new public API surfaces. If ANY condition is false, the full Challenge Brief structure is required. The validator (pl-210) uses these same criteria.
 
 Reference: `shared/agent-philosophy.md`
 

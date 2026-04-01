@@ -63,11 +63,28 @@ You receive from the orchestrator:
 
 ## 3. Validation Process
 
+### 3.0 Bootstrap-Scoped Validation
+
+If the dispatch context indicates `mode == "bootstrap"` (the plan was produced by `pl-050-project-bootstrapper`):
+
+1. **Run ONLY these plan-level checks** (the validator analyzes the plan and scaffolded file structure, not build execution — VERIFY handles that):
+   - Plan includes a valid build command targeting the generated files
+   - Plan includes at least one test file (scaffolded by bootstrapper)
+   - Docker config file exists if deployment target is Docker/K8s
+   - File structure matches the declared architectural pattern (e.g., hexagonal layout has `core/`, `adapter/`, `app/` modules; layered has `domain/`, `handler/`, `repository/`)
+2. **Skip perspectives:** Perspective 5 (Conventions), Perspective 6 (Approach Quality), Perspective 7 (Documentation Consistency)
+3. **Challenge Brief is NOT required** for bootstrap plans — the bootstrapper's interactive requirements gathering serves the same purpose
+4. Return GO if all plan-level checks pass. Return NO-GO if the file structure fundamentally contradicts the declared architecture or no test files exist.
+
+If `mode != "bootstrap"`: run all 7 perspectives as documented below.
+
+### Standard Validation (non-bootstrap)
+
 Run ALL seven perspectives. Do not skip any, even if the plan looks clean.
 
 ### Perspective Time Budget
 
-Allocate your output budget roughly evenly across all 7 perspectives. If one perspective has many findings, compress rather than cutting other perspectives short.
+Allocate your output budget roughly evenly across all 7 perspectives (or the applicable subset in bootstrap mode). If one perspective has many findings, compress rather than cutting other perspectives short.
 
 ### Convention File Handling
 
@@ -209,8 +226,8 @@ Flag issues as: `CONV-N: [description]`
 Verify the planner challenged the requirement and chose the best approach.
 
 **Checks:**
-- [ ] Challenge Brief is present in stage notes (not missing or placeholder)
-- [ ] At least 2 meaningfully different alternatives were considered (not just variations)
+- [ ] Challenge Brief is present in stage notes (not missing or placeholder). **Trivial task exception:** if the plan has a single story with <= 2 tasks, LOW risk, no architectural changes, and no new public API surfaces, a one-line brief is acceptable.
+- [ ] At least 2 meaningfully different alternatives were considered (not just variations) — waived for trivial tasks (one-line brief)
 - [ ] Chosen approach has concrete justification (not just "it's standard")
 - [ ] A simpler approach wasn't overlooked (would 80% of the requirement work with 20% of the complexity?)
 - [ ] Well-known ecosystem solutions aren't being reinvented (existing libraries, framework built-ins)
@@ -345,7 +362,7 @@ Return EXACTLY this structure. No preamble or reasoning outside the format.
 
 ## 8. Rules
 
-1. **Run ALL seven perspectives** -- do not skip even if the plan looks clean
+1. **Run ALL seven perspectives** -- do not skip even if the plan looks clean. **Exception:** bootstrap-scoped validation (Section 3.0) runs a reduced check set
 2. **Be specific** -- every finding must reference a specific story, task, or AC in the plan
 3. **Suggest fixes** -- do not just identify problems; suggest how to amend the plan
 4. **Edge cases must map to ACs or tasks** -- abstract concerns without concrete fixes are unhelpful

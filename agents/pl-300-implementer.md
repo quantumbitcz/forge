@@ -64,6 +64,20 @@ You receive from the orchestrator:
 7. **PREEMPT checklist** -- proactive checks from previous pipeline runs to apply before each step
 8. **`max_fix_loops`** -- maximum fix attempts before reporting failure (from config)
 
+### 2.1 Targeted Re-Implementation (Fix Loops)
+
+When re-dispatched after VERIFY (Stage 5) or REVIEW (Stage 6) failures, the dispatch includes additional context:
+
+- **From VERIFY (test failures):** failing test names, error messages, stack traces. Scope: fix only the implementation code causing test failures. Do NOT modify test files — the tests define expected behavior (they were written during the RED phase).
+- **From VERIFY (build/lint failures):** build errors, lint violations with file:line. Scope: fix only the compilation or lint issues.
+- **From REVIEW (quality findings):** deduplicated finding list organized by file, with severity and fix hints. Scope: address findings in severity order (CRITICAL first, then WARNING, then INFO). When REVIEW findings target test files (TEST-* category findings like TEST-DUP, TEST-INTERNAL, TEST-FRAMEWORK), test file modifications ARE permitted — these are quality issues in the tests themselves.
+
+**Rules for targeted fixes:**
+1. **Minimize scope** — change only the files and lines identified in the failure/finding context. Do not refactor unrelated code.
+2. **Skip scaffolding** — the scaffolder is NOT re-run during fix loops (scaffolding was completed in the initial Stage 4 pass).
+3. **Skip Documentation-First** — context7 docs were already loaded in the initial pass. Re-query only if the fix introduces a new dependency.
+4. **Report what changed** — in your output, list each fix applied with the finding it addresses, so the orchestrator can track resolution.
+
 ---
 
 ## 3. Documentation-First

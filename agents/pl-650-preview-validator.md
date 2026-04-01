@@ -96,6 +96,7 @@ preview:
     comment_on_pr: true
     add_label: "preview-failed"
     block_merge: false
+    max_fix_loops: 1           # Max orchestrator-driven fix cycles when block_merge: true
   on_success:
     comment_on_pr: true
     add_label: "preview-validated"
