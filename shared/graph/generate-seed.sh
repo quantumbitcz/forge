@@ -211,6 +211,10 @@ for f in "${PLUGIN_ROOT}"/agents/*.md; do
 done
 emit_blank
 
+# Shared temp file for agent body extraction (avoids pipe buffer limits on large agents >64KB)
+_body_tmp="$(mktemp)"
+trap 'rm -f "$_body_tmp"' EXIT
+
 # DISPATCHES edges (best-effort: look for agent names referenced in files with Agent tool)
 emit "// --- Agent DISPATCHES edges ---"
 for f in "${PLUGIN_ROOT}"/agents/*.md; do
@@ -221,12 +225,12 @@ for f in "${PLUGIN_ROOT}"/agents/*.md; do
   has_agent_tool=$(sed -n '/^---$/,/^---$/p' "$f" | grep -q 'Agent' && echo "yes" || echo "no")
   [[ "$has_agent_tool" == "yes" ]] || continue
 
-  # Get the body (after second ---)
-  body="$(sed '1,/^---$/d; 1,/^---$/d' "$f")"
+  # Get the body (after second ---) — write to temp file to avoid pipe buffer limits on large agents
+  sed '1,/^---$/d; 1,/^---$/d' "$f" > "$_body_tmp"
 
   for target in "${AGENT_NAMES[@]}"; do
     [[ "$target" == "$agent_name" ]] && continue
-    if echo "$body" | grep -q "$target"; then
+    if grep -q "$target" "$_body_tmp"; then
       emit "MATCH (a:Agent {name: '${agent_name}'}), (b:Agent {name: '${target}'}) CREATE (a)-[:DISPATCHES]->(b);"
     fi
   done
@@ -259,12 +263,12 @@ done
 for f in "${PLUGIN_ROOT}"/agents/*.md; do
   [[ -e "$f" ]] || continue
   agent_name="$(basename "$f" .md)"
-  # Get body after frontmatter
-  body="$(sed '1,/^---$/d; 1,/^---$/d' "$f")"
+  # Get body after frontmatter — write to temp file to avoid pipe buffer limits on large agents (>64KB)
+  sed '1,/^---$/d; 1,/^---$/d' "$f" > "$_body_tmp"
 
   for contract in "${CONTRACT_NAMES[@]}"; do
     # Check if agent body references the contract file (backtick-quoted, path-qualified, or .md suffix)
-    if echo "$body" | grep -qE "(shared/|[\`'\"])${contract}(\.md|[\`'\"])" 2>/dev/null; then
+    if grep -qE "(shared/|[\`'\"])${contract}(\.md|[\`'\"])" "$_body_tmp" 2>/dev/null; then
       emit "MATCH (a:Agent {name: '${agent_name}'}), (c:SharedContract {name: '${contract}'}) CREATE (a)-[:READS]->(c);"
     fi
   done

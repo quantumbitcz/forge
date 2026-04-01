@@ -1943,6 +1943,7 @@ MATCH (a:Agent {name: 'frontend-performance-reviewer'}), (c:SharedContract {name
 MATCH (a:Agent {name: 'frontend-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'frontend-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'frontend-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'frontend-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'infra-deploy-verifier'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
@@ -1950,11 +1951,13 @@ MATCH (a:Agent {name: 'infra-deploy-verifier'}), (c:SharedContract {name: 'agent
 MATCH (a:Agent {name: 'pl-010-shaper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'error-taxonomy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-130-docs-discoverer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
@@ -1993,6 +1996,7 @@ MATCH (a:Agent {name: 'pl-650-preview-validator'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'pl-650-preview-validator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-700-retrospective'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-700-retrospective'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'pl-700-retrospective'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-710-feedback-capture'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-710-feedback-capture'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'pl-720-recap'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
