@@ -38,7 +38,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ## Quick start
 
 ```bash
-./tests/validate-plugin.sh          # 36 structural checks, ~2s
+./tests/validate-plugin.sh          # 39 structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
 
 # To test in a consuming project
