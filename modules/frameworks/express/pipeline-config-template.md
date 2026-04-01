@@ -55,6 +55,9 @@ Applied by the retrospective when updating this config:
 4. If `success_rate` drops below 60% over last 5 runs -> set `auto_proceed_risk` to LOW (more cautious)
 5. If `success_rate` is 100% over last 5 runs -> set `auto_proceed_risk` to HIGH (more autonomous)
 
+To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
+`<!-- locked -->` ... `<!-- /locked -->`. Locked parameters are skipped by the retrospective.
+
 # Scoring customization (uncomment to override defaults)
 # scoring:
 #   critical_weight: 20

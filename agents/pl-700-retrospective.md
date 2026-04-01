@@ -227,6 +227,19 @@ For each domain area in the current run:
 
 Read auto-tuning rules and apply any that trigger. Apply at most ONE parameter change per run to isolate effects.
 
+**Locked parameter protection:** Before modifying any parameter in `pipeline-config.md`, check whether it appears inside a `<!-- locked -->` / `<!-- /locked -->` fence. Parameters inside locked fences are **intentional user overrides** and MUST NOT be auto-tuned. If a triggered rule would modify a locked parameter:
+1. Skip the modification
+2. Log in the pipeline report: `"Auto-tuning skipped for {parameter}: locked by user in pipeline-config.md"`
+3. Proceed to check the next rule (the ONE-rule-per-run limit does NOT count skipped rules)
+
+Example locked section in `pipeline-config.md`:
+```markdown
+<!-- locked -->
+max_fix_loops: 5
+auto_proceed_risk: LOW
+<!-- /locked -->
+```
+
 | # | Condition | Action |
 |---|-----------|--------|
 | 1 | `avg_fix_loops > max_fix_loops - 0.5` for 3+ consecutive runs | Increment `max_fix_loops` by 1 |
