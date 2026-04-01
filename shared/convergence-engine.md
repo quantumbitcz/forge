@@ -35,6 +35,19 @@ Key behaviors:
 - **Phase 1 inner caps:** Test failures use `max_test_cycles` (see algorithm ELSE branch). Build/lint failures use `max_fix_loops` from `implementation.max_fix_loops` config (default: 3). When tests fail, the convergence engine checks `phase_iterations >= max_test_cycles`. When build/lint fails (PHASE_A_FAILURE), the convergence engine checks `verify_fix_count >= max_fix_loops` first, then the global `max_iterations` cap. Build failures typically resolve in 1-2 attempts, but the inner cap prevents unbounded retries if they don't. `pl-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
 - **Phase 2 inner cap** is `max_review_cycles`, managed by `pl-400-quality-gate`. When convergence is active, `max_review_cycles` defaults to 1 per convergence iteration -- the convergence engine handles the outer loop.
 
+## Input Contracts
+
+The convergence engine receives two structured inputs from the orchestrator:
+
+**`verify_result`** (from Stage 5 — VERIFY):
+- `tests_pass` (boolean): `true` when all tests pass in Phase B
+- `analysis_pass` (boolean): `true` when all Phase B analysis agents return without CRITICAL findings and the overall analysis verdict is not FAIL. Defaults to `true` if no analysis agents configured. Not evaluated on PHASE_A_FAILURE.
+- `is_phase_a_failure` (boolean): `true` when build or lint failed before tests ran (Phase A failure). When true, `tests_pass` and `analysis_pass` are not meaningful.
+
+**`review_result`** (from Stage 6 — REVIEW):
+- `score` (number): Quality score from the quality gate (0-100)
+- `findings` (array): Deduplicated findings list (SCOUT-* already filtered out before dispatch to implementer)
+
 ## Algorithm
 
 ```
