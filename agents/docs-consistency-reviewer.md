@@ -70,6 +70,8 @@ On dispatch you receive:
 
 ### 3.1 Locate Documentation Sources
 
+**Discovery error check:** If `state.json.documentation.discovery_error` is `true`, skip graph pre-queries and cross-document analysis entirely. Use grep-based fallback for decision/constraint checks (Sections 4.1-4.2) only. Skip Section 4.4 (Missing Documentation) and Section 4.6 (Cross-Doc Inconsistency) — they depend on discovery data.
+
 Identify all documentation relevant to the changed files:
 
 1. **ADRs and decision logs** — look for `docs/adr/`, `docs/decisions/`, `architecture/`, files named `ADR-*.md`, `DECISION-*.md`, or inline `<!-- DECISION: ... -->` markers
@@ -78,7 +80,7 @@ Identify all documentation relevant to the changed files:
 4. **Diagrams** — `*.mermaid`, `*.puml`, `*.drawio`, `docs/diagrams/`, diagram blocks inside Markdown files
 5. **Cross-references** — internal links between docs files, references to specific file paths or endpoint URLs
 
-When Neo4j is available, prefer graph pre-queries (patterns 9, 10, 11, 12 from `shared/graph/query-patterns.md`) over file scanning — they are faster and more precise. Fall back to file-based grep when Neo4j is unavailable.
+When Neo4j is available and `discovery_error` is `false`, prefer graph pre-queries (patterns 9, 10, 11, 12 from `shared/graph/query-patterns.md`) over file scanning — they are faster and more precise. Fall back to file-based grep when Neo4j is unavailable or discovery failed.
 
 ### 3.2 Map Changes to Documentation
 

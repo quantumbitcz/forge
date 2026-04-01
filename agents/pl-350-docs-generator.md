@@ -135,7 +135,12 @@ When the criteria are met, generate `docs/adr/ADR-{NNN}-{slug}.md` using the Mic
 
 ## 6. Generation Strategy
 
-Follow these 7 steps in order:
+Follow these 7 steps in order.
+
+**Discovery error handling:** If `state.json.documentation.discovery_error` is `true`, documentation discovery failed at PREFLIGHT. In this case:
+- Step 1 (Assess Coverage): Use local file inspection only — do not query the graph for doc inventory. Scan `docs/` directory directly.
+- Step 2 (Determine Need): Skip cross-document reference analysis and coverage gap computation. Focus on changed-file-driven doc updates only.
+- Step 6 (Update Graph): Skip graph updates entirely — the graph may have stale or missing Doc* nodes. Update `docs-index.json` as fallback.
 
 ### Step 1: Assess Coverage
 

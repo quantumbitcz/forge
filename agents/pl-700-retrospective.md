@@ -234,6 +234,14 @@ Read auto-tuning rules and apply any that trigger. Apply at most ONE parameter c
 | 3 | Domain with 3+ issues in hotspots | Add domain-specific PREEMPT to log |
 | 4 | `success_rate < 60%` over last 5 runs | Set `auto_proceed_risk` to LOW |
 | 5 | `success_rate = 100%` over last 5 runs | Set `auto_proceed_risk` to HIGH |
+| 6 | Score plateaus early (at iteration 2-3) for 3+ runs | Decrease `convergence.plateau_patience` by 1 (min: 1) |
+| 7 | Score consistently reaches target (100) for 3+ runs | Decrease `convergence.max_iterations` by 1 (min: 3) |
+| 8 | Score trajectory cut short by `max_iterations` cap for 3+ runs | Increase `convergence.max_iterations` by 1 (max: 20) |
+| 9 | Frequent false plateaus (plateau followed by improvement in next run) for 3+ runs | Increase `convergence.plateau_threshold` by 1 (max: 10) |
+
+**Note:** Rules 6-9 are documented in `shared/convergence-engine.md` § Retrospective Auto-Tuning. `target_score` and `safety_gate` are never auto-tuned — these are intentional project decisions. All convergence parameter adjustments respect PREFLIGHT constraint ranges.
+
+**Bootstrap / first-run handling:** If this is the first pipeline run (no prior entries in `pipeline-log.md` or `.pipeline/reports/`), skip all trend-based auto-tuning rules (they require historical data). Initialize the first log entry and report as baselines. Domain hotspots start empty — they will populate over subsequent runs.
 
 #### 2f. Detect PREEMPT_CRITICAL Escalations
 
