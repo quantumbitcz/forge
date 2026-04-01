@@ -142,7 +142,7 @@ portable_normalize_path() {
   fi
   # Try python3 first (handles all edge cases)
   if command -v python3 &>/dev/null; then
-    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" -- "$input" 2>/dev/null && return
+    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
   fi
   # Bash fallback: resolve ./ // and .. segments (Bash 3.2+)
   local is_absolute=0
