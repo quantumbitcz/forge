@@ -6,11 +6,11 @@
   },
   "metadata": {
     "description": "Autonomous development pipeline with multi-language support",
-    "version": "1.4.0"
+    "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "dev-pipeline",
+      "name": "forge",
       "description": "10-stage autonomous development pipeline: Preflight, Explore, Plan, Validate, Implement (TDD), Verify, Review, Docs, Ship, Learn. 21 frameworks, 15 languages, 15 crosscutting layers, knowledge graph. Migration and bootstrap modes. Self-healing recovery and generalized code quality checks.",
       "source": "./",
       "strict": false
