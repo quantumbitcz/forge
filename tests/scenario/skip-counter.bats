@@ -22,8 +22,8 @@ _make_skip_wrapper() {
 #!/usr/bin/env bash
 set -euo pipefail
 handle_skip() {
-  local skip_file=".pipeline/.check-engine-skipped"
-  if [ -d ".pipeline" ]; then
+  local skip_file=".forge/.check-engine-skipped"
+  if [ -d ".forge" ]; then
     local count=0
     if [ -f "$skip_file" ]; then
       count=$(cat "$skip_file" 2>/dev/null || echo 0)
@@ -44,16 +44,16 @@ WRAPPER_EOF
 # ---------------------------------------------------------------------------
 @test "skip-counter: first skip creates counter file with value 1" {
   local proj="$TEST_TEMP/project"
-  mkdir -p "$proj/.pipeline"
+  mkdir -p "$proj/.forge"
   local wrapper="$TEST_TEMP/skip-wrapper.sh"
   _make_skip_wrapper "$wrapper"
 
   run bash -c "cd '$proj' && bash '$wrapper'"
 
   assert_success
-  assert [ -f "$proj/.pipeline/.check-engine-skipped" ]
+  assert [ -f "$proj/.forge/.check-engine-skipped" ]
   local count
-  count="$(cat "$proj/.pipeline/.check-engine-skipped")"
+  count="$(cat "$proj/.forge/.check-engine-skipped")"
   assert [ "$count" -eq 1 ]
 }
 
@@ -62,7 +62,7 @@ WRAPPER_EOF
 # ---------------------------------------------------------------------------
 @test "skip-counter: second skip increments counter to 2" {
   local proj="$TEST_TEMP/project"
-  mkdir -p "$proj/.pipeline"
+  mkdir -p "$proj/.forge"
   local wrapper="$TEST_TEMP/skip-wrapper.sh"
   _make_skip_wrapper "$wrapper"
 
@@ -73,7 +73,7 @@ WRAPPER_EOF
 
   assert_success
   local count
-  count="$(cat "$proj/.pipeline/.check-engine-skipped")"
+  count="$(cat "$proj/.forge/.check-engine-skipped")"
   assert [ "$count" -eq 2 ]
 }
 
@@ -82,8 +82,8 @@ WRAPPER_EOF
 # ---------------------------------------------------------------------------
 @test "skip-counter: missing counter file is created fresh on first skip" {
   local proj="$TEST_TEMP/project"
-  mkdir -p "$proj/.pipeline"
-  local skip_file="$proj/.pipeline/.check-engine-skipped"
+  mkdir -p "$proj/.forge"
+  local skip_file="$proj/.forge/.check-engine-skipped"
   # Ensure no pre-existing counter file
   rm -f "$skip_file"
   local wrapper="$TEST_TEMP/skip-wrapper.sh"
@@ -99,17 +99,17 @@ WRAPPER_EOF
 }
 
 # ---------------------------------------------------------------------------
-# 4. No .pipeline/ dir → counter not created
+# 4. No .forge/ dir → counter not created
 # ---------------------------------------------------------------------------
-@test "skip-counter: without .pipeline/ directory no counter file is created" {
+@test "skip-counter: without .forge/ directory no counter file is created" {
   local proj="$TEST_TEMP/project"
-  # Do NOT create .pipeline/
-  rm -rf "$proj/.pipeline"
+  # Do NOT create .forge/
+  rm -rf "$proj/.forge"
   local wrapper="$TEST_TEMP/skip-wrapper.sh"
   _make_skip_wrapper "$wrapper"
 
   run bash -c "cd '$proj' && bash '$wrapper'"
 
   assert_success
-  assert [ ! -d "$proj/.pipeline" ]
+  assert [ ! -d "$proj/.forge" ]
 }

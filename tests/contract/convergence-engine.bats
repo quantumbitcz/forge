@@ -193,8 +193,8 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
 @test "convergence-engine: retrospective auto-tuning documented" {
   grep -qi "auto-tuning\|Auto-Tuning\|retrospective.*adjust" "$ENGINE" \
     || fail "Retrospective auto-tuning not documented"
-  grep -q "pl-700-retrospective" "$ENGINE" \
-    || fail "pl-700-retrospective not referenced in auto-tuning section"
+  grep -q "fg-700-retrospective" "$ENGINE" \
+    || fail "fg-700-retrospective not referenced in auto-tuning section"
 }
 
 # ---------------------------------------------------------------------------

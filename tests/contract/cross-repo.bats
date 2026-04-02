@@ -6,7 +6,7 @@ load '../helpers/test-helpers'
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
-PIPELINE_INIT="$PLUGIN_ROOT/skills/pipeline-init/SKILL.md"
+PIPELINE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 1. cross_repo field documented in state-schema.md
@@ -39,9 +39,9 @@ PIPELINE_INIT="$PLUGIN_ROOT/skills/pipeline-init/SKILL.md"
 # ---------------------------------------------------------------------------
 # 4. Pipeline-init handles cross-repo discovery
 # ---------------------------------------------------------------------------
-@test "cross-repo: pipeline-init skill includes cross-repo discovery phase" {
+@test "cross-repo: forge-init skill includes cross-repo discovery phase" {
   grep -qi "cross.repo\|CROSS-REPO\|related.*project\|related_projects" "$PIPELINE_INIT" \
-    || fail "Cross-repo discovery not mentioned in pipeline-init skill"
+    || fail "Cross-repo discovery not mentioned in forge-init skill"
 }
 
 # ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ PIPELINE_INIT="$PLUGIN_ROOT/skills/pipeline-init/SKILL.md"
 # ---------------------------------------------------------------------------
 # 9. Contract validator agent exists for cross-repo validation
 # ---------------------------------------------------------------------------
-@test "cross-repo: pl-250-contract-validator agent exists" {
-  [[ -f "$PLUGIN_ROOT/agents/pl-250-contract-validator.md" ]] \
-    || fail "pl-250-contract-validator agent not found"
+@test "cross-repo: fg-250-contract-validator agent exists" {
+  [[ -f "$PLUGIN_ROOT/agents/fg-250-contract-validator.md" ]] \
+    || fail "fg-250-contract-validator agent not found"
 }

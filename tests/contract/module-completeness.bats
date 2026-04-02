@@ -86,12 +86,12 @@ REQUIRED_FILES=("${REQUIRED_FRAMEWORK_FILES[@]}")
 }
 
 # ---------------------------------------------------------------------------
-# 4. pipeline-config-template has total_retries_max + oscillation_tolerance
+# 4. forge-config-template has total_retries_max + oscillation_tolerance
 # ---------------------------------------------------------------------------
-@test "module-completeness: pipeline-config-template has total_retries_max and oscillation_tolerance" {
+@test "module-completeness: forge-config-template has total_retries_max and oscillation_tolerance" {
   local failures=()
   for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
-    local tmpl="$FRAMEWORKS_DIR/$fw/pipeline-config-template.md"
+    local tmpl="$FRAMEWORKS_DIR/$fw/forge-config-template.md"
     if [[ ! -f "$tmpl" ]]; then
       continue
     fi
@@ -103,7 +103,7 @@ REQUIRED_FILES=("${REQUIRED_FRAMEWORK_FILES[@]}")
     fi
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "pipeline-config-template missing required fields: ${failures[*]}"
+    fail "forge-config-template missing required fields: ${failures[*]}"
   fi
 }
 

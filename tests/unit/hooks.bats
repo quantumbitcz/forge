@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
 # Unit tests for hook scripts:
-#   hooks/pipeline-checkpoint.sh — PostToolUse hook that updates lastCheckpoint in state.json
+#   hooks/forge-checkpoint.sh — PostToolUse hook that updates lastCheckpoint in state.json
 #   hooks/feedback-capture.sh   — Stop hook that appends timestamped line to auto-captured.md
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/pipeline-checkpoint.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
 FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/feedback-capture.sh"
 
 # Helper: run a hook with CWD set to the given project dir
@@ -61,8 +61,8 @@ run_hook_in() {
 # 4. Malformed state.json — no crash (exit 0), original file content unchanged
 @test "checkpoint: no crash and original content unchanged on malformed state.json" {
   local project_dir="${TEST_TEMP}/malformed-project"
-  mkdir -p "$project_dir/.pipeline"
-  local state_file="$project_dir/.pipeline/state.json"
+  mkdir -p "$project_dir/.forge"
+  local state_file="$project_dir/.forge/state.json"
   printf 'this is not valid json {{{' > "$state_file"
 
   run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
@@ -96,12 +96,12 @@ run_hook_in() {
 # 6. Appends timestamped line to auto-captured.md
 @test "feedback: appends timestamped line to auto-captured.md" {
   local project_dir="${TEST_TEMP}/feedback-project"
-  mkdir -p "$project_dir/.pipeline"
+  mkdir -p "$project_dir/.forge"
 
   run_hook_in "$FEEDBACK_HOOK" "$project_dir"
   assert_success
 
-  local feedback_file="$project_dir/.pipeline/feedback/auto-captured.md"
+  local feedback_file="$project_dir/.forge/feedback/auto-captured.md"
   [ -f "$feedback_file" ]
   local content
   content="$(cat "$feedback_file")"
@@ -111,28 +111,28 @@ run_hook_in() {
 # 7. Creates feedback directory if it does not exist
 @test "feedback: creates feedback/ directory if missing" {
   local project_dir="${TEST_TEMP}/feedback-mkdir-project"
-  mkdir -p "$project_dir/.pipeline"
+  mkdir -p "$project_dir/.forge"
   # Intentionally do NOT create feedback/ subdirectory
 
   run_hook_in "$FEEDBACK_HOOK" "$project_dir"
   assert_success
 
-  [ -d "$project_dir/.pipeline/feedback" ]
-  [ -f "$project_dir/.pipeline/feedback/auto-captured.md" ]
+  [ -d "$project_dir/.forge/feedback" ]
+  [ -f "$project_dir/.forge/feedback/auto-captured.md" ]
 }
 
-# 8. Exits 0 when .pipeline/ directory is missing
-@test "feedback: exits 0 when .pipeline/ directory is missing" {
+# 8. Exits 0 when .forge/ directory is missing
+@test "feedback: exits 0 when .forge/ directory is missing" {
   local project_dir="${TEST_TEMP}/no-pipeline-dir"
   mkdir -p "$project_dir"
-  # Do NOT create .pipeline/
+  # Do NOT create .forge/
 
   run_hook_in "$FEEDBACK_HOOK" "$project_dir"
   assert_success
 }
 
-# 9. All hooks exit 0 on error conditions (no .pipeline at all)
-@test "all hooks exit 0 when project has no .pipeline directory" {
+# 9. All hooks exit 0 on error conditions (no .forge at all)
+@test "all hooks exit 0 when project has no .forge directory" {
   local project_dir="${TEST_TEMP}/bare-project"
   mkdir -p "$project_dir"
 
@@ -146,14 +146,14 @@ run_hook_in() {
 # 10. Feedback hook appends (does not overwrite) on multiple runs
 @test "feedback: appends on successive runs (does not overwrite)" {
   local project_dir="${TEST_TEMP}/feedback-append-project"
-  mkdir -p "$project_dir/.pipeline/feedback"
+  mkdir -p "$project_dir/.forge/feedback"
   printf '[2000-01-01 00:00] Previous entry.\n' \
-    > "$project_dir/.pipeline/feedback/auto-captured.md"
+    > "$project_dir/.forge/feedback/auto-captured.md"
 
   run_hook_in "$FEEDBACK_HOOK" "$project_dir"
   assert_success
 
   local line_count
-  line_count="$(wc -l < "$project_dir/.pipeline/feedback/auto-captured.md")"
+  line_count="$(wc -l < "$project_dir/.forge/feedback/auto-captured.md")"
   [ "$line_count" -ge 2 ]
 }

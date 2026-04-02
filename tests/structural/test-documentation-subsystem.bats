@@ -7,13 +7,13 @@ AGENTS_DIR="$PLUGIN_ROOT/agents"
 SKILLS_DIR="$PLUGIN_ROOT/skills"
 MODULES_DIR="$PLUGIN_ROOT/modules"
 
-@test "docs-structural: pl-130-docs-discoverer.md exists with correct frontmatter" {
-  local agent_file="$AGENTS_DIR/pl-130-docs-discoverer.md"
+@test "docs-structural: fg-130-docs-discoverer.md exists with correct frontmatter" {
+  local agent_file="$AGENTS_DIR/fg-130-docs-discoverer.md"
   [ -f "$agent_file" ] || fail "Agent file not found: $agent_file"
   local first_line
   first_line="$(head -1 "$agent_file")"
   [[ "$first_line" == "---" ]] || fail "Missing frontmatter opening ---"
-  grep -q "^name: pl-130-docs-discoverer" "$agent_file" || fail "Missing or incorrect name field"
+  grep -q "^name: fg-130-docs-discoverer" "$agent_file" || fail "Missing or incorrect name field"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 
@@ -27,13 +27,13 @@ MODULES_DIR="$PLUGIN_ROOT/modules"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 
-@test "docs-structural: pl-350-docs-generator.md exists with correct frontmatter" {
-  local agent_file="$AGENTS_DIR/pl-350-docs-generator.md"
+@test "docs-structural: fg-350-docs-generator.md exists with correct frontmatter" {
+  local agent_file="$AGENTS_DIR/fg-350-docs-generator.md"
   [ -f "$agent_file" ] || fail "Agent file not found: $agent_file"
   local first_line
   first_line="$(head -1 "$agent_file")"
   [[ "$first_line" == "---" ]] || fail "Missing frontmatter opening ---"
-  grep -q "^name: pl-350-docs-generator" "$agent_file" || fail "Missing or incorrect name field"
+  grep -q "^name: fg-350-docs-generator" "$agent_file" || fail "Missing or incorrect name field"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 
