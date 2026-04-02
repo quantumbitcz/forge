@@ -96,5 +96,5 @@ teardown() {
 # ---------------------------------------------------------------------------
 @test "edge-case: platform.sh detects a known OS" {
   source "$PLUGIN_ROOT/shared/platform.sh"
-  [[ "$PIPELINE_OS" == "darwin" || "$PIPELINE_OS" == "linux" || "$PIPELINE_OS" == "windows" || "$PIPELINE_OS" == "unknown" ]]
+  [[ "$FORGE_OS" == "darwin" || "$FORGE_OS" == "linux" || "$FORGE_OS" == "windows" || "$FORGE_OS" == "unknown" ]]
 }
