@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# PostToolUse hook (Skill): Updates pipeline state timestamp after skill invocations.
+# PostToolUse hook (Skill): Updates forge state timestamp after skill invocations.
 # Best-effort — fails silently. Uses flock for atomic updates when available.
 
 {
-  STATE_FILE=".pipeline/state.json"
+  STATE_FILE=".forge/state.json"
   [ ! -f "$STATE_FILE" ] && exit 0
 
   timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-  tmp=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/pipeline-ckpt.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/forge-ckpt.XXXXXX")
   trap 'rm -f "$tmp"' EXIT
 
   # Atomic update: flock the state file to prevent concurrent writes
