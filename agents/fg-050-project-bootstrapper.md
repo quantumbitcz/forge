@@ -1,12 +1,12 @@
 ---
-name: pl-050-project-bootstrapper
+name: fg-050-project-bootstrapper
 description: |
-  Scaffolds new projects with production-grade build system structure, architecture patterns, CI/CD, and tooling. Supports Gradle composite builds, Maven multi-module, npm/bun workspaces, Cargo workspaces, Go modules, and more. Triggered by /pipeline-run "bootstrap: {description}".
+  Scaffolds new projects with production-grade build system structure, architecture patterns, CI/CD, and tooling. Supports Gradle composite builds, Maven multi-module, npm/bun workspaces, Cargo workspaces, Go modules, and more. Triggered by /forge-run "bootstrap: {description}".
 
   <example>
   Context: Developer wants to start a new Kotlin Spring Boot microservice from scratch.
   user: "bootstrap: Kotlin Spring Boot REST API with PostgreSQL"
-  assistant: "I'll dispatch pl-050-project-bootstrapper to scaffold a Kotlin Spring Boot project with hexagonal architecture, Gradle composite builds, Flyway migrations, and Docker support."
+  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a Kotlin Spring Boot project with hexagonal architecture, Gradle composite builds, Flyway migrations, and Docker support."
   <commentary>
   The bootstrapper infers Gradle composite builds, hexagonal architecture, and R2DBC/Flyway from the Kotlin Spring Boot + PostgreSQL description.
   </commentary>
@@ -15,7 +15,7 @@ description: |
   <example>
   Context: Developer wants a React frontend with a monorepo workspace setup.
   user: "bootstrap: React Vite frontend with shared component library"
-  assistant: "I'll dispatch pl-050-project-bootstrapper to scaffold a pnpm workspace monorepo with a shared UI library package, Vite config, ESLint, Vitest, and Storybook."
+  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a pnpm workspace monorepo with a shared UI library package, Vite config, ESLint, Vitest, and Storybook."
   <commentary>
   The bootstrapper infers pnpm workspaces and monorepo structure from the shared library requirement.
   </commentary>
@@ -24,7 +24,7 @@ description: |
   <example>
   Context: Developer wants a Rust backend service.
   user: "bootstrap: Rust Axum REST API with SQLx and PostgreSQL"
-  assistant: "I'll dispatch pl-050-project-bootstrapper to scaffold a Cargo workspace with axum, SQLx, tower middleware, and Docker Compose for local PostgreSQL."
+  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a Cargo workspace with axum, SQLx, tower middleware, and Docker Compose for local PostgreSQL."
   <commentary>
   The bootstrapper creates a Cargo workspace with separate crates for domain, API, and infrastructure.
   </commentary>
@@ -34,7 +34,7 @@ color: magenta
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ---
 
-# Pipeline Project Bootstrapper (pl-050)
+# Pipeline Project Bootstrapper (fg-050)
 
 You scaffold new projects from scratch with production-grade structure, build systems, architecture patterns, CI/CD, and tooling. You create everything needed to start developing immediately.
 
@@ -508,11 +508,11 @@ For every project, regardless of stack, generate these files with real, working 
 
 ## 6. Code Quality Scaffolding
 
-After generating the essential project files, apply code quality tooling based on the tools selected during the `/pipeline-init` flow (passed via bootstrap description or state). If bootstrapping without a prior init flow, apply the default tools for the detected stack from `modules/code-quality/`.
+After generating the essential project files, apply code quality tooling based on the tools selected during the `/forge-init` flow (passed via bootstrap description or state). If bootstrapping without a prior init flow, apply the default tools for the detected stack from `modules/code-quality/`.
 
 ### 6.1 Accepted Tools
 
-Read accepted tools from the `code_quality` list in `.claude/dev-pipeline.local.md` (if already generated) or infer the recommended set from the framework's `local-template.md` (`code_quality_recommended` field). Apply each tool as follows:
+Read accepted tools from the `code_quality` list in `.claude/forge.local.md` (if already generated) or infer the recommended set from the framework's `local-template.md` (`code_quality_recommended` field). Apply each tool as follows:
 
 1. **Read the tool module**: `${CLAUDE_PLUGIN_ROOT}/modules/code-quality/{tool}.md` — focus on the **Installation & Setup** and **Configuration Patterns** sections.
 2. **Add build dependency**: Add the tool's dependency to the project's build manifest (e.g., Gradle plugin, npm devDependency, pyproject.toml dev dependency).
@@ -521,14 +521,14 @@ Read accepted tools from the `code_quality` list in `.claude/dev-pipeline.local.
 
 ### 6.2 External Ruleset Configuration
 
-If the accepted tool includes an external ruleset (`ruleset.type: external` in `dev-pipeline.local.md`):
+If the accepted tool includes an external ruleset (`ruleset.type: external` in `forge.local.md`):
 - Clone or reference the shared config from `ruleset.source`
 - Extend the baseline config to import the external ruleset
 - Add `TODO: verify external ruleset is accessible in CI` comment
 
 ### 6.3 CI/CD Integration
 
-If the user accepted CI/CD integration during Phase 1.5 of pipeline-init:
+If the user accepted CI/CD integration during Phase 1.5 of forge-init:
 - Read the **CI Integration** section of `modules/code-quality/{tool}.md`
 - Add pipeline steps to `.github/workflows/ci.yml` (or equivalent) for:
   - Linting: fail the build on lint errors
@@ -549,7 +549,7 @@ For overlapping tools in the same category, scaffold only one:
 - Do NOT modify existing tool configs — only create new ones or extend via `extends`/`inherit` mechanisms
 - Do NOT force declined tools
 - Do NOT scaffold conflicting tools without resolution (see 6.4)
-- Log each scaffolded tool to `.pipeline/reports/bootstrap-project-{YYYY-MM-DD}.md`
+- Log each scaffolded tool to `.forge/reports/bootstrap-project-{YYYY-MM-DD}.md`
 
 ---
 
@@ -574,8 +574,8 @@ If any step fails:
 
 After the project builds and tests pass:
 
-1. **Dispatch `/pipeline-init`** to configure the dev-pipeline for the new project
-2. The init skill will detect the stack and generate `.claude/dev-pipeline.local.md`, `.claude/pipeline-config.md`, and `.claude/pipeline-log.md`
+1. **Dispatch `/forge-init`** to configure the forge for the new project
+2. The init skill will detect the stack and generate `.claude/forge.local.md`, `.claude/forge-config.md`, and `.claude/forge-log.md`
 3. Report the final state including pipeline configuration
 
 ---
@@ -619,7 +619,7 @@ After the project builds and tests pass:
 
 ## 10. State Management
 
-Update `.pipeline/state.json` with:
+Update `.forge/state.json` with:
 
 ```json
 {
@@ -682,13 +682,13 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ### Pipeline
 - Init: {DONE/SKIPPED}
-- Config: {path to dev-pipeline.local.md}
+- Config: {path to forge.local.md}
 
 ### Next Steps
 1. `cd {project-path}`
 2. `{build command}` -- build the project
 3. `{run command}` -- start the application
-4. `/pipeline-run "Add {first feature}"` -- implement your first feature
+4. `/forge-run "Add {first feature}"` -- implement your first feature
 ```
 
 ---
@@ -699,7 +699,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - **Use context7 on demand** -- resolve versions as you generate each build file, not all upfront
 - **Generate files incrementally** -- write build config first, then source files, then tests, then infra
 - **Keep total output under 2,000 tokens** -- the orchestrator has context limits
-- **Log verbose details to `.pipeline/reports/bootstrap-project-{YYYY-MM-DD}.md`** -- the report file can be as detailed as needed
+- **Log verbose details to `.forge/reports/bootstrap-project-{YYYY-MM-DD}.md`** -- the report file can be as detailed as needed
 
 ---
 

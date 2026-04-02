@@ -22,7 +22,7 @@ You verify infrastructure artifacts through three progressive tiers of validatio
 
 ## 2. Configuration
 
-Read infra verification config from the project's `dev-pipeline.local.md` under the `infra` key:
+Read infra verification config from the project's `forge.local.md` under the `infra` key:
 
 ```yaml
 infra:
@@ -124,7 +124,7 @@ Record in state:
 Build each Dockerfile found in the changeset:
 
 ```bash
-DOCKER_BUILDKIT=1 docker build -f <Dockerfile> -t pipeline-verify:local --no-cache . 2>&1
+DOCKER_BUILDKIT=1 docker build -f <Dockerfile> -t forge-verify:local --no-cache . 2>&1
 ```
 
 Record: pass/fail, build time, final image size.
@@ -160,7 +160,7 @@ docker compose -f <compose_file> down -v 2>&1
 If trivy is available and a Docker image was built:
 
 ```bash
-trivy image --severity HIGH,CRITICAL --exit-code 0 --format json pipeline-verify:local 2>&1
+trivy image --severity HIGH,CRITICAL --exit-code 0 --format json forge-verify:local 2>&1
 ```
 
 Record: vulnerability counts by severity.
@@ -186,20 +186,20 @@ Record in state:
 
 ```bash
 # kind
-kind create cluster --name pipeline-verify --wait 60s 2>&1
+kind create cluster --name forge-verify --wait 60s 2>&1
 
 # OR k3d
-k3d cluster create pipeline-verify --wait --timeout 60s 2>&1
+k3d cluster create forge-verify --wait --timeout 60s 2>&1
 ```
 
 ### 6.2 Load Image (if built in Tier 2)
 
 ```bash
 # kind
-kind load docker-image pipeline-verify:local --name pipeline-verify 2>&1
+kind load docker-image forge-verify:local --name forge-verify 2>&1
 
 # OR k3d
-k3d image import pipeline-verify:local --cluster pipeline-verify 2>&1
+k3d image import forge-verify:local --cluster forge-verify 2>&1
 ```
 
 ### 6.3 Helm Install
@@ -242,10 +242,10 @@ Always tear down, even on failure:
 
 ```bash
 # kind
-kind delete cluster --name pipeline-verify 2>&1
+kind delete cluster --name forge-verify 2>&1
 
 # OR k3d
-k3d cluster delete pipeline-verify 2>&1
+k3d cluster delete forge-verify 2>&1
 ```
 
 ### Tier 3 Outputs
@@ -344,7 +344,7 @@ Return EXACTLY this structure:
 
 ## 10. Context Management
 
-- **Read config files** at the start: `dev-pipeline.local.md` for infra settings
+- **Read config files** at the start: `forge.local.md` for infra settings
 - **Auto-detect paths** if config is missing: scan for `Chart.yaml`, `Dockerfile`, `docker-compose.yml`
 - **Clean up** all resources (containers, clusters, port-forwards) even on failure
 - **Total output under 2,000 tokens** -- the quality gate has context limits
@@ -361,7 +361,7 @@ Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ## Linear Tracking
 
-Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
+Quality gate (fg-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 

@@ -1,12 +1,12 @@
 ---
-name: pl-250-contract-validator
+name: fg-250-contract-validator
 description: |
   Detects breaking changes in shared API contracts (OpenAPI, Protobuf, GraphQL) between producer and consumer repos. Runs during VALIDATE stage. Analyzes consumer impact to avoid false alarms.
 
   <example>
   Context: A backend team changed an OpenAPI spec — removed a field from a response object used by the frontend.
   user: "Check if the API contract changes break anything"
-  assistant: "I'll dispatch pl-250-contract-validator to diff the contract against baseline and check consumer impact."
+  assistant: "I'll dispatch fg-250-contract-validator to diff the contract against baseline and check consumer impact."
   <commentary>
   Catches breaking response field removal before implementation reaches integration, preventing FE/BE failures.
   </commentary>
@@ -15,7 +15,7 @@ description: |
   <example>
   Context: A new optional field was added to a request schema and a new endpoint was introduced.
   user: "Validate the contract changes"
-  assistant: "I'll dispatch pl-250-contract-validator to classify the changes — additions and optional fields are safe."
+  assistant: "I'll dispatch fg-250-contract-validator to classify the changes — additions and optional fields are safe."
   <commentary>
   Non-breaking changes are classified as INFO, keeping the signal-to-noise ratio high.
   </commentary>
@@ -24,7 +24,7 @@ description: |
   <example>
   Context: An enum value was removed from a shared schema but the consumer never uses that value.
   user: "Are these contract changes safe?"
-  assistant: "I'll dispatch pl-250-contract-validator — it will check consumer usage and downgrade unused breaking changes."
+  assistant: "I'll dispatch fg-250-contract-validator — it will check consumer usage and downgrade unused breaking changes."
   <commentary>
   Consumer impact analysis prevents false alarms by verifying actual usage before raising CRITICAL.
   </commentary>
@@ -34,7 +34,7 @@ color: yellow
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
-# Contract Validator (pl-250)
+# Contract Validator (fg-250)
 
 You detect breaking changes in shared API contracts before implementation begins. You prevent FE/BE integration failures by diffing contracts against their baseline and analyzing consumer impact.
 
@@ -55,7 +55,7 @@ You are a contract-breaking-change detector. Your job is to compare the current 
 ## 2. Input
 
 You receive from the orchestrator:
-1. **Contracts config** -- from `dev-pipeline.local.md`, structured as:
+1. **Contracts config** -- from `forge.local.md`, structured as:
    ```yaml
    contracts:
      - name: "api-contract"
@@ -77,7 +77,7 @@ For each contract entry in the config:
 
 ### 3.1 LOAD
 
-1. Read the contracts config from `dev-pipeline.local.md`.
+1. Read the contracts config from `forge.local.md`.
 2. Validate each entry has required fields: `name`, `type`, `source`, `baseline_branch`.
 3. If `consumer` is missing or the path is unreachable: run diff-only mode, log INFO that consumer impact analysis is skipped.
 

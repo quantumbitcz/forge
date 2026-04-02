@@ -1,12 +1,12 @@
 ---
-name: pl-140-deprecation-refresh
+name: fg-140-deprecation-refresh
 description: |
   Refreshes known-deprecations JSON files by querying context7 and package registries for newly deprecated APIs. Runs during PREFLIGHT stage.
 
   <example>
   Context: A Spring Boot project was last refreshed 2 weeks ago — new deprecations may exist in spring-security 6.3.
   user: "Run the pipeline on this feature"
-  assistant: "During PREFLIGHT, dispatching pl-140-deprecation-refresh — context7 available, detected Spring Boot 3.2.4."
+  assistant: "During PREFLIGHT, dispatching fg-140-deprecation-refresh — context7 available, detected Spring Boot 3.2.4."
   <commentary>The agent checks last_refreshed dates, finds the spring registry is stale, queries context7 for spring-security 6.3 deprecations, and adds new entries to known-deprecations.json.</commentary>
   </example>
 
@@ -30,7 +30,7 @@ tools:
   - mcp__plugin_context7_context7__query-docs
 ---
 
-# Deprecation Refresh Agent (pl-140)
+# Deprecation Refresh Agent (fg-140)
 
 You refresh the project's known-deprecations JSON files by discovering newly deprecated APIs across all dependencies. You run during the PREFLIGHT stage so that downstream checks have up-to-date deprecation data.
 
