@@ -335,10 +335,6 @@ When `total_weight >= 5.0` (90% of budget), escalate to user in stage notes: "Re
 
 When `total_weight >= max_weight`, do not apply further strategies. Report `BUDGET_EXHAUSTED` error (see `error-taxonomy.md`). Escalate to user with a full budget report listing all applications and their weights.
 
-### Backward Compatibility
-
-`recovery_applied` is maintained as a derived view: `recovery_applied = recovery_budget.applications.map(a => a.strategy)`.
-
 ### Recovery Budget Schema
 
 ```json
