@@ -54,9 +54,9 @@ Execute these steps in order. Each step is designed to be safe even if previous 
 2. **If changes exist, commit to a temporary branch:**
    ```bash
    # Create WIP branch from current state
-   git checkout -b wip/pipeline-{storyId}-{timestamp}
+   git checkout -b wip/forge-{storyId}-{timestamp}
    git add -A
-   git commit -m "wip: pipeline partial work before graceful stop
+   git commit -m "wip: forge partial work before graceful stop
 
    Stage: {current_stage}
    Failure: {failure_category} — {failure_summary}
@@ -70,7 +70,7 @@ Execute these steps in order. Each step is designed to be safe even if previous 
 
 3. **If git operations fail** (e.g., merge conflicts): stash instead:
    ```bash
-   git stash push -m "pipeline-recovery: partial work from {storyId}"
+   git stash push -m "forge-recovery: partial work from {storyId}"
    ```
 
 ### 2.3 Clean Exit
@@ -106,8 +106,8 @@ Pipeline stopped: UNRECOVERABLE failure
 - Recovery attempts: [N] — [brief description of each attempt]
 
 ## Partial work preserved
-- Branch: wip/pipeline-{storyId}-{timestamp}
-  (or: Stash: pipeline-recovery: partial work from {storyId})
+- Branch: wip/forge-{storyId}-{timestamp}
+  (or: Stash: forge-recovery: partial work from {storyId})
 - State: .forge/state.json (recovery-aware)
 - Checkpoint: .forge/checkpoint-{storyId}.json
 
@@ -137,7 +137,7 @@ Return to recovery engine:
 {
   "result": "ESCALATE",
   "details": "Graceful stop completed. State preserved.",
-  "wip_branch": "wip/pipeline-{storyId}-{timestamp}",
+  "wip_branch": "wip/forge-{storyId}-{timestamp}",
   "resume_command": "/forge-run --from={stage} {requirement}",
   "completed_stages": ["PREFLIGHT", "EXPLORE", "PLAN"],
   "failed_stage": "IMPLEMENT",

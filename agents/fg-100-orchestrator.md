@@ -614,7 +614,6 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
     "max_weight": 5.5,
     "applications": []
   },
-  "recovery_applied": [],
   "recovery": {
     "total_failures": 0,
     "total_recoveries": 0,

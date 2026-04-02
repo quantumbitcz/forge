@@ -102,7 +102,7 @@ RETURN l.name
 
 ### 6. Recommendation
 
-**Used during:** pipeline-init
+**Used during:** forge-init
 
 Suggests layer modules that are commonly paired with a given framework for a specific layer. The orchestrator uses this during `/forge-init` to pre-populate `forge.local.md` with sensible defaults.
 

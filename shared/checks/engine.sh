@@ -218,7 +218,7 @@ resolve_component() {
   # Indentation: expects 2-space for component names and 4-space for path/framework
   # fields. If non-standard indentation is detected, a WARNING is emitted to stderr
   # and the parser falls back to detect_module() (single-component mode).
-  # All pipeline-generated templates use 2-space indent.
+  # All forge-generated templates use 2-space indent.
   if [[ -f "$cfg" ]]; then
     local in_components=0
     local in_component_block=0

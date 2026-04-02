@@ -1,11 +1,11 @@
 ---
 name: resource-cleanup
-description: Frees system resources (disk, memory, processes) and retries the failed action. Targets pipeline-managed caches and orphan processes only.
+description: Frees system resources (disk, memory, processes) and retries the failed action. Targets forge-managed caches and orphan processes only.
 ---
 
 # Resource Cleanup Strategy
 
-Handles failures caused by resource exhaustion: disk full, memory pressure, process limits, and token budget. Frees resources by cleaning pipeline-managed caches and killing orphan processes, then retries.
+Handles failures caused by resource exhaustion: disk full, memory pressure, process limits, and token budget. Frees resources by cleaning forge-managed caches and killing orphan processes, then retries.
 
 ---
 

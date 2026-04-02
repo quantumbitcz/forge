@@ -16,7 +16,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 |   +-- archive/                        # Incorporated feedback moved here
 +-- docs-index.json                     # Documentation index (fallback when Neo4j unavailable)
 +-- reports/
-    +-- pipeline-{YYYY-MM-DD}.md       # Per-run retrospective report
+    +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-720-recap)
 ```
 
@@ -30,7 +30,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `stage_N_notes_*.md` | Each stage | Stage agent | Yes | No |
 | `stage_final_notes_*.md` | Stage 9 (LEARN) | Retrospective agent | Yes | No |
 | `feedback/*.md` | On user correction | Feedback capture agent | Yes (pattern data) | No |
-| `reports/pipeline-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
+| `reports/forge-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
 | `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (fg-720-recap) | Yes (project history) | No |
 
 ### Related Files (outside `.forge/`, committed to git)
@@ -207,7 +207,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `total_retries` | integer | Yes | Cumulative retry count across all loops (validation_retries + verify_fix_count + test_cycles + quality_cycles + direct PR rejection increments). Used for the global retry budget. Starts at 0, incremented on every retry anywhere in the pipeline. |
 | `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `forge-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
 | `stage_timestamps` | object | Yes | Map of stage name (lowercase) to ISO 8601 timestamp marking when that stage started. Keys are: `"preflight"`, `"explore"`, `"plan"`, `"validate"`, `"implement"`, `"verify"`, `"review"`, `"docs"`, `"ship"`, `"learn"`. Only stages that have started appear in the map. |
-| `last_commit_sha` | string | Yes | Git commit SHA of the most recent pipeline-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
+| `last_commit_sha` | string | Yes | Git commit SHA of the most recent forge-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
 | `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `forge-log.md` that were loaded at PREFLIGHT for the current domain area. Records what was *loaded*, not what was *used*. Empty array `[]` if no items match. |
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `forge-log.md`. |
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-feedback-capture` stage notes. |
@@ -616,7 +616,7 @@ Contains individual feedback files that have been consolidated into `summary.md`
 
 ## Reports Directory
 
-### reports/pipeline-{YYYY-MM-DD}.md
+### reports/forge-{YYYY-MM-DD}.md
 
 Per-run retrospective report written by `fg-700-retrospective` at Stage 9. Contains:
 
@@ -629,7 +629,7 @@ Per-run retrospective report written by `fg-700-retrospective` at Stage 9. Conta
 - Auto-tuning actions taken
 - Comparison against previous runs (trend data)
 
-If multiple runs occur on the same date, reports use a suffix: `pipeline-{YYYY-MM-DD}-2.md`, `pipeline-{YYYY-MM-DD}-3.md`.
+If multiple runs occur on the same date, reports use a suffix: `forge-{YYYY-MM-DD}-2.md`, `forge-{YYYY-MM-DD}-3.md`.
 
 ### reports/recap-{YYYY-MM-DD}-{storyId}.md
 

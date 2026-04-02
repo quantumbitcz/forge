@@ -470,13 +470,13 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 7. Propose CLAUDE.md updates if a pattern repeated 3+ times.
 8. Consolidate feedback directory if >20 entries.
 9. Detect PREEMPT_CRITICAL escalations (3+ occurrences -> suggest hook/rule).
-10. Write pipeline report to `.forge/reports/pipeline-{date}.md`.
+10. Write pipeline report to `.forge/reports/forge-{date}.md`.
 11. Set `state.json.complete` to `true`.
 
 **Outputs:**
 - Updated `forge-log.md`
 - Updated `forge-config.md`
-- `.forge/reports/pipeline-{date}.md`
+- `.forge/reports/forge-{date}.md`
 - `stage_final_notes_{storyId}.md`
 - `state.json.complete = true`
 
