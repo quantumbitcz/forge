@@ -1,6 +1,6 @@
-# Contributing to dev-pipeline
+# Contributing to forge
 
-Guidelines for contributing to the dev-pipeline Claude Code plugin.
+Guidelines for contributing to the forge Claude Code plugin.
 
 ## Getting Started
 
@@ -24,7 +24,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 <type>(<scope>): <description>
 
-feat(agents): add pl-350-migration-checker agent
+feat(agents): add fg-350-migration-checker agent
 fix(hooks): correct checkpoint timestamp format
 chore(react): update known-deprecations.json
 docs(shared): clarify scoring deduplication rules
@@ -42,31 +42,31 @@ Every agent in `agents/` must have frontmatter with `name` (matching filename wi
 
 ### Pipeline agents vs module agents
 
-- **Pipeline agents** (`pl-{NNN}-{role}`) are shared across all modules. They handle stage orchestration.
+- **Pipeline agents** (`fg-{NNN}-{role}`) are shared across all modules. They handle stage orchestration.
 - **Cross-cutting review agents** use descriptive names without a module prefix (e.g., `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`). They are wired into the quality gate and work across modules.
 
 ### Skills are the user-facing entry points
 
-Users interact via `/pipeline-run`, `/pipeline-init`, `/bootstrap-project`, `/deploy`, and other skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
+Users interact via `/forge-run`, `/forge-init`, `/bootstrap-project`, `/deploy`, and other skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
 
 ### State is local and gitignored
 
-All pipeline state lives in `.pipeline/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v2.0.0). v2.0.0 is a clean break from v1.x — use `/pipeline-reset` to clear old state. Version 1.0.0 was a clean break from pre-1.0 schema versions. v1.1.0 was an additive extension of v1.0.0.
+All pipeline state lives in `.forge/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.0.0).
 
 ## Making Changes
 
 ### Adding a new pipeline agent
 
-1. Create `agents/pl-{NNN}-{role}.md` with YAML frontmatter:
+1. Create `agents/fg-{NNN}-{role}.md` with YAML frontmatter:
    ```yaml
    ---
-   name: pl-{NNN}-{role}
+   name: fg-{NNN}-{role}
    description: One-line description of the agent's purpose
    tools: [Read, Write, Edit, Grep, Glob, Bash, Agent]
    ---
    ```
 2. Write the agent's system prompt (instructions, inputs, outputs, constraints)
-3. Wire it into `pl-100-orchestrator.md` at the appropriate stage
+3. Wire it into `fg-100-orchestrator.md` at the appropriate stage
 4. Update `shared/stage-contract.md` if the agent changes stage behavior
 5. Update `README.md` agent table
 
@@ -77,7 +77,7 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
    modules/frameworks/{name}/
      conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
      local-template.md           # Project config template (YAML frontmatter, using components: structure)
-     pipeline-config-template.md # Runtime config template (must include total_retries_max, oscillation_tolerance, and convergence section)
+     forge-config-template.md    # Runtime config template (must include total_retries_max, oscillation_tolerance, and convergence section)
      rules-override.json         # Module-specific check engine overrides
      known-deprecations.json     # Registry of deprecated APIs (schema v2 with applies_from/removed_in/applies_to fields, seed with 5-15 entries)
      variants/{language}.md      # Optional language-specific overrides
@@ -116,7 +116,7 @@ All pipeline state lives in `.pipeline/` in the consuming project, never in this
 ### Modifying hooks
 
 1. Hooks are registered in `hooks/hooks.json` -- update the manifest if adding a new hook
-2. Three hooks are currently registered: the check engine (`PostToolUse` on `Edit|Write`), the pipeline checkpoint (`PostToolUse` on `Skill`), and feedback capture (`Stop`)
+2. Three hooks are currently registered: the check engine (`PostToolUse` on `Edit|Write`), the forge checkpoint (`PostToolUse` on `Skill`), and feedback capture (`Stop`)
 3. Hook scripts must be executable (`chmod +x`) with a shebang line
 4. Module guard hooks live in `modules/frameworks/{name}/hooks/` and are referenced from the local template
 
@@ -143,9 +143,9 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 | Component | Pattern | Example |
 |-----------|---------|---------|
 | Module directory | `modules/frameworks/{name}` | `fastapi`, `go-stdlib` |
-| Pipeline agent | `pl-{NNN}-{role}` | `pl-300-implementer` |
+| Pipeline agent | `fg-{NNN}-{role}` | `fg-300-implementer` |
 | Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
-| Skill directory | lowercase-with-hyphens | `pipeline-status` |
+| Skill directory | lowercase-with-hyphens | `forge-status` |
 | Health check script | `{what}-check.sh` | `pre-stage-health.sh`, `dependency-check.sh` |
 
 ## Pull Request Process
