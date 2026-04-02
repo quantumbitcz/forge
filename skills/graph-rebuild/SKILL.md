@@ -52,7 +52,7 @@ Delete all project-derived nodes and their relationships:
 
 ```bash
 echo "MATCH (n) WHERE n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:ProjectPackage OR n:ProjectDependency DETACH DELETE n" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 - If the command exits non-zero: **ERROR** — display the error output. Do not proceed. The graph may be in a partial state — suggest running `/graph-init` to fully reinitialize.
@@ -72,7 +72,7 @@ Re-run the build script and pipe output to Neo4j:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root . | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 - If the command exits non-zero: **ERROR** — display the error output and suggest checking that `build-project-graph.sh` is executable and that the project root is correct.
@@ -90,7 +90,7 @@ Query and display the updated node counts:
 
 ```bash
 echo "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Present a summary:

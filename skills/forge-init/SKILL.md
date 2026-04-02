@@ -208,12 +208,12 @@ Once confirmed, generate the configuration files:
 
 3. **Write config files**:
    - Copy filled template to `.claude/forge.local.md`
-   - If `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/pipeline-config-template.md` exists, copy it to `.claude/forge-config.md`
+   - If `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/forge-config-template.md` exists, copy it to `.claude/forge-config.md`
    - Create `.claude/forge-log.md` with this content:
      ```
-     # Pipeline Log
+     # Forge Log
 
-     Accumulated learnings from pipeline runs. Updated automatically by the retrospective agent.
+     Accumulated learnings from forge runs. Updated automatically by the retrospective agent.
      ```
 
 4. **Code Quality Scaffolding**: For each accepted tool from Phase 1.5:

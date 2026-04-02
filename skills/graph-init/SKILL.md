@@ -100,7 +100,7 @@ Check for the seed marker node to determine if the seed has already been importe
 
 ```bash
 echo "MATCH (n:_SeedMarker {id: 'forge-seed-v2'}) RETURN count(n)" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 - If count > 0: **skip** — seed already imported.
@@ -108,7 +108,7 @@ echo "MATCH (n:_SeedMarker {id: 'forge-seed-v2'}) RETURN count(n)" | \
 
 ```bash
 cat "${CLAUDE_PLUGIN_ROOT}/shared/graph/seed.cypher" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 ---
@@ -121,7 +121,7 @@ Otherwise, build the project graph:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root . | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 After success, write the current commit SHA to `.forge/graph/.last-build-sha`.
@@ -150,7 +150,7 @@ Query and display node counts:
 
 ```bash
 echo "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Present a summary:

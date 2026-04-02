@@ -44,7 +44,7 @@ Run the query against Neo4j:
 
 ```bash
 echo "$QUERY" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Capture both stdout and stderr.

@@ -96,8 +96,8 @@ AGENTS_DIR="$PLUGIN_ROOT/agents"
   for agent_file in "$AGENTS_DIR"/*.md; do
     local basename
     basename="$(basename "$agent_file" .md)"
-    # Skip pipeline agents (pl-*)
-    [[ "$basename" == pl-* ]] && continue
+    # Skip pipeline agents (fg-*)
+    [[ "$basename" == fg-* ]] && continue
     # This is a review/cross-cutting agent — must have tools:
     if ! grep -qE '^tools:' "$agent_file"; then
       failures+=("$basename")

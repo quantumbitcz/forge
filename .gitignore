@@ -1,5 +1,5 @@
-# Pipeline state (local only, never committed)
-.pipeline/
+# Forge state (local only, never committed)
+.forge/
 
 # Worktrees
 .worktrees/

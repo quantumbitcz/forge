@@ -123,7 +123,7 @@ run_hook_in() {
 
 # 8. Exits 0 when .forge/ directory is missing
 @test "feedback: exits 0 when .forge/ directory is missing" {
-  local project_dir="${TEST_TEMP}/no-pipeline-dir"
+  local project_dir="${TEST_TEMP}/no-forge-dir"
   mkdir -p "$project_dir"
   # Do NOT create .forge/
 

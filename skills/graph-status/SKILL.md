@@ -42,7 +42,7 @@ If Neo4j is healthy, query node counts by label:
 
 ```bash
 echo "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Display all results in a table.
@@ -74,7 +74,7 @@ If Neo4j is healthy, query relationship counts:
 
 ```bash
 echo "MATCH ()-[r]->() RETURN type(r) AS type, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Display all results in a table.
