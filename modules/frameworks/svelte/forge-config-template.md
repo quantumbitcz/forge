@@ -19,8 +19,9 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| frontend-reviewer | true | secondary | Conventions + security — findings merged into quality-gate |
-| frontend-performance-reviewer | true | secondary | OnPush, change detection, bundle size |
+| architecture-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
+| security-reviewer | true | secondary | XSS, token storage, secrets exposure — findings merged into quality-gate |
+| frontend-a11y-reviewer | true | secondary | WCAG 2.2 AA compliance for SPA components |
 | infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
 
 <!-- Applicable build-system bindings: bun -->
@@ -28,7 +29,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 ## Domain Hotspots
 
 Domains that frequently cause issues. Pipeline applies extra verification to these.
-Updated automatically by the retrospective agent.
+Updated automatically by the retrospective.
 
 | Domain | Issue Count | Last Issue | Common Failure |
 |--------|-------------|------------|----------------|
@@ -36,7 +37,7 @@ Updated automatically by the retrospective agent.
 
 ## Metrics
 
-Cross-run metrics computed by the retrospective agent. Used for trend analysis and self-tuning.
+Cross-run metrics computed by the retrospective. Used for trend analysis and self-tuning.
 
 | Metric | Value | Trend |
 |--------|-------|-------|
@@ -49,11 +50,11 @@ Cross-run metrics computed by the retrospective agent. Used for trend analysis a
 
 ## Auto-Tuning Rules
 
-Applied by the retrospective agent when updating this config:
+Applied by the retrospective when updating this config:
 
 1. If `avg_fix_loops` > `max_fix_loops - 0.5` for 3+ consecutive runs -> increment `max_fix_loops` by 1
 2. If `avg_fix_loops` < 1.0 for 5+ consecutive runs -> decrement `max_fix_loops` by 1 (min: 2)
-3. If a domain appears in hotspots 3+ times -> add a domain-specific PREEMPT to pipeline-log.md
+3. If a domain appears in hotspots 3+ times -> add a domain-specific PREEMPT to forge-log.md
 4. If `success_rate` drops below 60% over last 5 runs -> set `auto_proceed_risk` to LOW (more cautious)
 5. If `success_rate` is 100% over last 5 runs -> set `auto_proceed_risk` to HIGH (more autonomous)
 

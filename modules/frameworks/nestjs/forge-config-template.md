@@ -19,9 +19,11 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| architecture-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
-| security-reviewer | true | secondary | Auth/data exposure — findings merged into quality-gate |
+| architecture-reviewer | true | secondary | Module boundary violations, DI anti-patterns — findings merged into quality-gate |
+| security-reviewer | true | secondary | Auth guards, DTO exposure, injection — findings merged into quality-gate |
 | infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
+
+<!-- Applicable build-system bindings: bun -->
 
 ## Domain Hotspots
 
@@ -51,7 +53,7 @@ Applied by the retrospective when updating this config:
 
 1. If `avg_fix_loops` > `max_fix_loops - 0.5` for 3+ consecutive runs -> increment `max_fix_loops` by 1
 2. If `avg_fix_loops` < 1.0 for 5+ consecutive runs -> decrement `max_fix_loops` by 1 (min: 2)
-3. If a domain appears in hotspots 3+ times -> add a domain-specific PREEMPT to pipeline-log.md
+3. If a domain appears in hotspots 3+ times -> add a domain-specific PREEMPT to forge-log.md
 4. If `success_rate` drops below 60% over last 5 runs -> set `auto_proceed_risk` to LOW (more cautious)
 5. If `success_rate` is 100% over last 5 runs -> set `auto_proceed_risk` to HIGH (more autonomous)
 
