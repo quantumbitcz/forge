@@ -1,5 +1,5 @@
 ---
-name: pipeline-status
+name: forge-status
 description: Show current pipeline state, last run results, quality score, and Linear tracking status
 disable-model-invocation: false
 ---
@@ -10,8 +10,8 @@ Show the current state of the development pipeline for this project.
 
 ## What to do
 
-1. Check if `.pipeline/state.json` exists
-   - If not: report "No pipeline run in progress. Run `/pipeline-run` to start."
+1. Check if `.forge/state.json` exists
+   - If not: report "No pipeline run in progress. Run `/forge-run` to start."
 
 2. If it exists, read it and display:
    - **Current stage:** `story_state` value (e.g., IMPLEMENTING, REVIEWING)
@@ -30,7 +30,7 @@ Show the current state of the development pipeline for this project.
    - **Documentation:** `documentation.files_discovered` files, `documentation.decisions_extracted` decisions, `documentation.stale_sections` stale sections (if documentation subsystem active)
 
 3. Check for recent stage notes:
-   - Read the latest `.pipeline/stage_*_notes_*.md` file
+   - Read the latest `.forge/stage_*_notes_*.md` file
    - Show a 2-3 line summary of the last stage's output
 
 4. If `complete: true` in state.json:

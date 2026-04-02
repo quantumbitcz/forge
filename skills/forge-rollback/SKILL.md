@@ -1,5 +1,5 @@
 ---
-name: pipeline-rollback
+name: forge-rollback
 description: Safely rollback pipeline changes — revert worktree, restore state, or undo specific commits
 disable-model-invocation: false
 ---
@@ -18,8 +18,8 @@ Before presenting rollback options, detect the current state:
 
 1. **Check for uncommitted changes**: Run `git status --porcelain`. If there are uncommitted changes, warn:
    "Warning: You have uncommitted changes. Rollback operations (especially `git reset --hard` or `git revert`) may affect your working tree. Consider committing or stashing first."
-2. Check if `.pipeline/worktree` exists → Mode 1 available (pre-merge rollback)
-3. Check if `.pipeline/state.json` exists and `complete: true` → Mode 2 available (post-merge revert)
+2. Check if `.forge/worktree` exists → Mode 1 available (pre-merge rollback)
+3. Check if `.forge/state.json` exists and `complete: true` → Mode 2 available (post-merge revert)
 4. Check git log for pipeline merge commits → Mode 2 available
 5. Only present modes that are actually available based on detection
 
@@ -29,11 +29,11 @@ If the pipeline's worktree has unwanted changes:
 
 **Option A — Delete the worktree entirely (main tree unaffected):**
 
-    git worktree remove .pipeline/worktree --force
+    git worktree remove .forge/worktree --force
 
 **Option B — Reset worktree to a specific commit:**
 
-    cd .pipeline/worktree
+    cd .forge/worktree
     git log --oneline -10   # show recent commits
     git reset --hard {commit-sha}
 
@@ -63,9 +63,9 @@ If Linear tickets were created but the pipeline failed:
 
 If you want to keep code changes but reset pipeline state:
 
-    /pipeline-reset
+    /forge-reset
 
-This removes `.pipeline/` (state, checkpoints, notes) but preserves code changes and learnings.
+This removes `.forge/` (state, checkpoints, notes) but preserves code changes and learnings.
 
 ## Important
 - ALWAYS confirm with the user before executing destructive operations

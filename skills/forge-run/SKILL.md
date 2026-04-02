@@ -1,20 +1,20 @@
 ---
-name: pipeline-run
+name: forge-run
 description: Run the full development pipeline for a story or feature. Accepts --from=<stage> to resume, --dry-run for PREFLIGHT→VALIDATE only, or --spec <path> for shaped specs.
 ---
 
-# /pipeline-run — Pipeline Entry Point
+# /forge-run — Pipeline Entry Point
 
 You are a thin launcher. Your ONLY job is to detect available integrations and dispatch the pipeline orchestrator.
 
 ## Instructions
 
-1. **Parse input**: The user's argument (everything after `/pipeline-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". If no requirement text is provided (empty input after stripping flags), ask the user: "What would you like to build? Provide a feature description, e.g., 'Add plan versioning endpoint'." Do not dispatch the orchestrator with empty input.
+1. **Parse input**: The user's argument (everything after `/forge-run`) is the work item — a free-text feature description like "Add plan versioning endpoint". If no requirement text is provided (empty input after stripping flags), ask the user: "What would you like to build? Provide a feature description, e.g., 'Add plan versioning endpoint'." Do not dispatch the orchestrator with empty input.
 
    Check for optional flags:
    - `--from=<stage>` (e.g., `--from=implement`) — resume from that stage
-   - `--dry-run` — run PREFLIGHT through VALIDATE only. No implementation, no file changes, no `.pipeline/` state files, no `.pipeline/.lock`, no checkpoint files, no `lastCheckpoint` updates. The orchestrator handles these constraints.
-   - `--spec <path>` — use a shaped spec file (produced by `/pipeline-shape`). When present, pass it to the orchestrator with: `Execute the full development pipeline for spec: {spec_path}`
+   - `--dry-run` — run PREFLIGHT through VALIDATE only. No implementation, no file changes, no `.forge/` state files, no `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates. The orchestrator handles these constraints.
+   - `--spec <path>` — use a shaped spec file (produced by `/forge-shape`). When present, pass it to the orchestrator with: `Execute the full development pipeline for spec: {spec_path}`
 
 2. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
 
@@ -28,7 +28,7 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
    Build a comma-separated list of detected integrations (e.g., `Linear, Context7`). If none detected, use `none`.
 
-3. **Dispatch the orchestrator**: Use the Agent tool to invoke `pl-100-orchestrator` with the following prompt:
+3. **Dispatch the orchestrator**: Use the Agent tool to invoke `fg-100-orchestrator` with the following prompt:
 
    > Execute the full development pipeline for: `{user_input}`
    >

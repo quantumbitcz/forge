@@ -10,8 +10,8 @@ Run build, lint, and test commands for the current module without a full pipelin
 
 ## What to do
 
-1. Read `.claude/dev-pipeline.local.md` for the `commands` section
-   - If file doesn't exist: "No pipeline config found. Run `/pipeline-init` first."
+1. Read `.claude/forge.local.md` for the `commands` section
+   - If file doesn't exist: "No pipeline config found. Run `/forge-init` first."
 
 2. Run commands sequentially, stop on first failure:
 

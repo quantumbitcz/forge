@@ -5,7 +5,7 @@ description: Generate or update project documentation on demand. Bootstraps full
 
 # /docs-generate — On-Demand Documentation Generation
 
-Generates project documentation independently of the pipeline. Run this skill at any time to bootstrap a full documentation suite for an undocumented codebase, update specific document types, or audit coverage gaps — without triggering a pipeline run or touching `.pipeline/` state.
+Generates project documentation independently of the pipeline. Run this skill at any time to bootstrap a full documentation suite for an undocumented codebase, update specific document types, or audit coverage gaps — without triggering a pipeline run or touching `.forge/` state.
 
 ## Arguments
 
@@ -27,8 +27,8 @@ Multiple `--type` flags may be combined. `--from-code` applies as a scope filter
 
 ### Step 1: Detect Framework
 
-1. If `.claude/dev-pipeline.local.md` exists → read `components.framework` from it.
-2. If absent → run stack marker detection (same heuristics as `/pipeline-init`):
+1. If `.claude/forge.local.md` exists → read `components.framework` from it.
+2. If absent → run stack marker detection (same heuristics as `/forge-init`):
    - `build.gradle.kts` + `.kt` files → `spring`
    - `package.json` + `vite.config.*` + React imports → `react`
    - `package.json` + `next.config.*` → `nextjs`
@@ -52,8 +52,8 @@ Multiple `--type` flags may be combined. `--from-code` applies as a scope filter
 
 ### Step 2: Run Discovery
 
-- If `.pipeline/docs-index.json` exists and was last modified less than 1 hour ago → use it directly (skip re-discovery).
-- Otherwise → use the Agent tool to dispatch `pl-130-docs-discoverer` to scan the codebase and produce a fresh `docs-index.json`.
+- If `.forge/docs-index.json` exists and was last modified less than 1 hour ago → use it directly (skip re-discovery).
+- Otherwise → use the Agent tool to dispatch `fg-130-docs-discoverer` to scan the codebase and produce a fresh `docs-index.json`.
 
 ### Step 3: Handle Arguments
 
@@ -83,7 +83,7 @@ List all MEDIUM-confidence decisions and constraints identified during discovery
 Users may also downgrade a HIGH-confidence item to MEDIUM using the same interactive flow (present all HIGH items if `--include-high` is also passed).
 
 After the review loop:
-- Write all confidence upgrades and dismissals to the graph (Cypher `SET` on `DocDecision`/`DocConstraint` nodes) or to `.pipeline/docs-index.json`
+- Write all confidence upgrades and dismissals to the graph (Cypher `SET` on `DocDecision`/`DocConstraint` nodes) or to `.forge/docs-index.json`
 - Append a `generation_history` entry with a `confidence_changes` array listing every change made: `{ "id": "<id>", "from": "<old>", "to": "<new or null>", "reason": "<reason>" }`
 - Log a summary: `"Confirmed {N} decisions as HIGH, dismissed {M} items"`
 
@@ -91,7 +91,7 @@ Continue to the generation step once the user has reviewed all MEDIUM items.
 
 #### `--all` or `--type <type>`
 
-Use the Agent tool to dispatch `pl-350-docs-generator` in standalone mode with:
+Use the Agent tool to dispatch `fg-350-docs-generator` in standalone mode with:
 - `mode: standalone` (no pipeline state, no worktree)
 - `types`: the requested type(s), or all types if `--all`
 - `framework`: detected framework (or `null` if unknown)
@@ -103,11 +103,11 @@ Use the Agent tool to dispatch `pl-350-docs-generator` in standalone mode with:
 1. Present the coverage report (same as `--coverage`).
 2. Ask: "Which documentation would you like to generate?" with a numbered list of missing/stale types.
 3. Accept user selection (single type, multiple types, or "all").
-4. Dispatch `pl-350-docs-generator` in standalone mode with the selected types.
+4. Dispatch `fg-350-docs-generator` in standalone mode with the selected types.
 
 #### `--from-code <path>`
 
-Pass the provided path as the `scope` filter when dispatching `pl-350-docs-generator`. All other argument handling applies normally.
+Pass the provided path as the `scope` filter when dispatching `fg-350-docs-generator`. All other argument handling applies normally.
 
 ### Step 4: Report Results
 
@@ -132,7 +132,7 @@ If `--export` was passed and external systems are configured, report export stat
 ## Important
 
 - Do NOT create `state.json` — this skill does not interact with pipeline run state.
-- This skill reads/writes `.pipeline/docs-index.json` for documentation discovery but does not touch `state.json` or checkpoint files.
+- This skill reads/writes `.forge/docs-index.json` for documentation discovery but does not touch `state.json` or checkpoint files.
 - Do NOT create a worktree — all writes go directly to the project working tree.
 - If generation produces no useful content for a doc type (e.g., no API endpoints found for `api-spec`), skip that type and log INFO "Skipped {type}: no source content found."
 - This skill may be run at any time, including mid-pipeline.

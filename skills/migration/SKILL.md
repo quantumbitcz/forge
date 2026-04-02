@@ -8,7 +8,7 @@ disable-model-invocation: false
 
 Plan and execute a library or framework migration.
 
-Dispatches `pl-160-migration-planner` to handle the migration in phases.
+Dispatches `fg-160-migration-planner` to handle the migration in phases.
 
 ## Usage
 
@@ -89,7 +89,7 @@ You are a thin launcher. Your ONLY job is to dispatch the migration planner agen
 
 2. **Detect available MCPs**: Before dispatching, check whether Context7 is available by looking for `mcp__plugin_context7_context7__*` tool patterns. Include this in the dispatch prompt so the planner knows whether to use Context7 for migration guide lookups.
 
-3. **Dispatch the migration planner**: Use the Agent tool to invoke `pl-160-migration-planner` with the following prompt:
+3. **Dispatch the migration planner**: Use the Agent tool to invoke `fg-160-migration-planner` with the following prompt:
 
    > Plan and execute migration: `{user_input}`
    >

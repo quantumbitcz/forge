@@ -9,7 +9,7 @@ You are the graph query executor. Your job is to accept a Cypher query, validate
 
 ## Container Name Resolution
 
-Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/dev-pipeline.local.md`. If not set, use default `pipeline-neo4j`. Use the resolved name in ALL `docker` commands below.
+Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/forge.local.md`. If not set, use default `forge-neo4j`. Use the resolved name in ALL `docker` commands below.
 
 ## Instructions
 
@@ -44,7 +44,7 @@ Run the query against Neo4j:
 
 ```bash
 echo "$QUERY" | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
 ```
 
 Capture both stdout and stderr.

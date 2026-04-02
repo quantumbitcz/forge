@@ -9,7 +9,7 @@ You are the graph status reporter. Your job is to display the current state of t
 
 ## Container Name Resolution
 
-Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/dev-pipeline.local.md`. If not set, use default `pipeline-neo4j`. Use the resolved name in ALL `docker` commands below.
+Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/forge.local.md`. If not set, use default `forge-neo4j`. Use the resolved name in ALL `docker` commands below.
 
 ## Instructions
 
@@ -29,7 +29,7 @@ Run the health check script:
 Also check the container's running state:
 
 ```bash
-docker ps --filter "name=pipeline-neo4j" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker ps --filter "name=forge-neo4j" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 If Docker itself is unavailable, report: "Docker is not available. Cannot check graph status."
@@ -42,7 +42,7 @@ If Neo4j is healthy, query node counts by label:
 
 ```bash
 echo "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
 ```
 
 Display all results in a table.
@@ -51,7 +51,7 @@ Display all results in a table.
 
 ### Step 3: LAST BUILD SHA
 
-Read `.pipeline/graph/.last-build-sha` and display its contents.
+Read `.forge/graph/.last-build-sha` and display its contents.
 
 - If the file does not exist: show "No build recorded yet."
 - If the file exists: also compare to `git rev-parse HEAD` and indicate whether the graph is **up to date** or **stale** (HEAD has moved since last build).
@@ -60,7 +60,7 @@ Read `.pipeline/graph/.last-build-sha` and display its contents.
 
 ### Step 4: ENRICHMENT COVERAGE
 
-Read `.pipeline/graph/.enriched-files` if it exists.
+Read `.forge/graph/.enriched-files` if it exists.
 
 - Show total number of enriched files.
 - Show percentage of project source files covered (compare to total files tracked by git: `git ls-files | wc -l`).
@@ -74,7 +74,7 @@ If Neo4j is healthy, query relationship counts:
 
 ```bash
 echo "MATCH ()-[r]->() RETURN type(r) AS type, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
 ```
 
 Display all results in a table.
@@ -88,7 +88,7 @@ Present a consolidated status summary:
 ```
 Knowledge Graph Status
 
-  Container:         HEALTHY (pipeline-neo4j)
+  Container:         HEALTHY (forge-neo4j)
   Ports:             7474 (HTTP), 7687 (Bolt)
 
   Last build:        abc1234  (up to date)

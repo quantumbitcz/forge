@@ -1,9 +1,9 @@
 ---
-name: pipeline-init
-description: Auto-configures a project for the dev-pipeline. Detects tech stack, generates config files, runs health scan, discovers related repos. Zero-config setup.
+name: forge-init
+description: Auto-configures a project for the forge. Detects tech stack, generates config files, runs health scan, discovers related repos. Zero-config setup.
 ---
 
-# /pipeline-init — Zero-Config Project Setup
+# /forge-init — Zero-Config Project Setup
 
 You are the pipeline initializer. Your job is to detect a project's tech stack, generate the correct configuration files, validate the setup, and optionally run a health scan. Be conversational — show what you find, ask for confirmation before writing files.
 
@@ -24,8 +24,8 @@ Before scanning for stack markers, verify the environment is ready:
 2. **Config directory check**: Verify `.claude/` directory exists and is writable.
    - If it does not exist, it will be created in the CONFIGURE phase — this is fine, just note it.
    - If it exists but is not writable: **ERROR** — "`.claude/` directory is not writable. Check permissions." Abort.
-3. **Existing config check**: Check whether `.claude/dev-pipeline.local.md` already exists.
-   - If it exists: **ASK via AskUserQuestion** with header "Config", question "Found existing `dev-pipeline.local.md`. What should I do?", options: "Overwrite" (description: "Replace existing config with freshly detected settings") and "Keep existing" (description: "Abort initialization and preserve current configuration").
+3. **Existing config check**: Check whether `.claude/forge.local.md` already exists.
+   - If it exists: **ASK via AskUserQuestion** with header "Config", question "Found existing `forge.local.md`. What should I do?", options: "Overwrite" (description: "Replace existing config with freshly detected settings") and "Keep existing" (description: "Abort initialization and preserve current configuration").
    - If the user chooses "Keep existing": abort with message "Keeping existing configuration."
    - If the user chooses "Overwrite": proceed, and the CONFIGURE phase will overwrite the file.
 
@@ -34,7 +34,7 @@ Before scanning for stack markers, verify the environment is ready:
 Before scanning for stack markers, check whether the project is empty or has no source code:
 
 1. **Check tracked files**: Run `git ls-files --cached --others --exclude-standard | head -5`
-   - If the command returns empty (no tracked or untracked files, ignoring `.claude/` and `.pipeline/`): the project is **greenfield**.
+   - If the command returns empty (no tracked or untracked files, ignoring `.claude/` and `.forge/`): the project is **greenfield**.
    - If the only files present are configuration files (`.gitignore`, `.editorconfig`, `README.md`, `LICENSE`) with no source code: the project is **greenfield**.
 2. **Check for any language markers**: Quickly scan for the existence of ANY build/manifest file (`package.json`, `build.gradle.kts`, `build.gradle`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `Package.swift`, `*.csproj`, `CMakeLists.txt`, `Makefile`).
    - If none found: the project is **greenfield**.
@@ -46,7 +46,7 @@ If the project is greenfield, **ASK via AskUserQuestion** with header "New Proje
 
 **If user chooses "Bootstrap":**
 1. Ask the user directly: **"What would you like to build? Describe your project (e.g., 'Kotlin Spring Boot REST API with PostgreSQL', 'React Vite frontend with TypeScript')."**
-2. After receiving the description, dispatch `pl-050-project-bootstrapper` via the Agent tool with the user's description. The bootstrapper handles all scaffolding, validation, and auto-runs `/pipeline-init` at the end. **Return the bootstrapper's output and stop** — do not continue to Phase 2.
+2. After receiving the description, dispatch `fg-050-project-bootstrapper` via the Agent tool with the user's description. The bootstrapper handles all scaffolding, validation, and auto-runs `/forge-init` at the end. **Return the bootstrapper's output and stop** — do not continue to Phase 2.
 
 **If user chooses "Select stack manually":**
 1. Present the available frameworks grouped by language:
@@ -207,9 +207,9 @@ Once confirmed, generate the configuration files:
    - Adjust module paths if the project uses a monorepo structure
 
 3. **Write config files**:
-   - Copy filled template to `.claude/dev-pipeline.local.md`
-   - If `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/pipeline-config-template.md` exists, copy it to `.claude/pipeline-config.md`
-   - Create `.claude/pipeline-log.md` with this content:
+   - Copy filled template to `.claude/forge.local.md`
+   - If `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{detected_module}/pipeline-config-template.md` exists, copy it to `.claude/forge-config.md`
+   - Create `.claude/forge-log.md` with this content:
      ```
      # Pipeline Log
 
@@ -221,7 +221,7 @@ Once confirmed, generate the configuration files:
    - **CI/CD setup (if accepted):** Add pipeline steps for linting, coverage reports, threshold enforcement
    - Config patterns sourced from `modules/code-quality/{tool}.md` → Installation & Setup and CI Integration sections
    - Do NOT modify existing configs, force declined tools, or scaffold conflicting tools without resolution
-   - Record accepted tools in the `code_quality` list in `dev-pipeline.local.md` (simple string form `- jacoco` or object form with external ruleset `- tool: detekt\n  ruleset:\n    type: external\n    source: "..."`)
+   - Record accepted tools in the `code_quality` list in `forge.local.md` (simple string form `- jacoco` or object form with external ruleset `- tool: detekt\n  ruleset:\n    type: external\n    source: "..."`)
 
 5. **Documentation config**: If the module's `local-template.md` includes a `documentation:` section (all modules now do), populate detected values:
    - Set `external_sources` from any URLs the user provided in the documentation prompt
@@ -259,7 +259,7 @@ After generating the project config, run the discovery chain to find related pro
    - `OK` — path exists and is a valid git repository
    - `?` — referenced but not found on disk (show as informational only, do not add)
 
-3. **If user chooses "Add all":** Add `related_projects:` section to `dev-pipeline.local.md`:
+3. **If user chooses "Add all":** Add `related_projects:` section to `forge.local.md`:
    ```yaml
    related_projects:
      frontend:
@@ -284,9 +284,9 @@ After generating the project config, run the discovery chain to find related pro
 
 5. **If user declines (n):** Skip silently. The pipeline works without related projects. Do not add `related_projects:` to config.
 
-6. **If discovery script is not found** (plugin not fully installed, first-time setup): skip this step silently with an INFO note — "Discovery script not available. You can add related projects manually to `dev-pipeline.local.md`."
+6. **If discovery script is not found** (plugin not fully installed, first-time setup): skip this step silently with an INFO note — "Discovery script not available. You can add related projects manually to `forge.local.md`."
 
-7. **Add discovery config** to `dev-pipeline.local.md` when any related projects are written:
+7. **Add discovery config** to `forge.local.md` when any related projects are written:
    ```yaml
    discovery:
      enabled: true
@@ -384,7 +384,7 @@ This step always runs — no user prompt. It takes under 5 seconds.
      1. src/config/AppConfig.kt:15 | SEC-CRED | Possible hardcoded credential detected.
    ```
 
-4. **Save report** to `.pipeline/baseline-report.md` with all findings grouped by severity. This file is always written regardless of what the user chooses next.
+4. **Save report** to `.forge/baseline-report.md` with all findings grouped by severity. This file is always written regardless of what the user chooses next.
 
    Map category prefixes: `ARCH-*` → Architecture, `SEC-*` → Security, `PERF-*` → Performance, `TEST-*` → Test Quality, `CONV-*` → Conventions, `DOC-*` → Documentation, `QUAL-*` → Code Quality, `FE-PERF-*` → Frontend Perf, `APPROACH-*` → Approach, `A11Y-*` → Accessibility, `DEPS-*` → Dependencies, `COMPAT-*` → Compatibility. `SCOUT-*` findings have no deduction.
 
@@ -443,7 +443,7 @@ If the user accepts:
         MDC not cleared in finally block — risk of context bleed
    ```
 
-5. **Append** deep analysis findings to `.pipeline/baseline-report.md`.
+5. **Append** deep analysis findings to `.forge/baseline-report.md`.
 
 If declined, skip silently.
 
@@ -452,7 +452,7 @@ If declined, skip silently.
 After all completed tiers, if any findings were reported, **ASK via AskUserQuestion** with header "Remediate", question "How should I handle the findings from the baseline audit?", options:
 - "Fix CRITICAL only" (description: "Auto-fix only CRITICAL severity issues — safest option")
 - "Fix WARNING+" (description: "Auto-fix all WARNING and CRITICAL issues")
-- "Save report" (description: "Already saved to .pipeline/baseline-report.md — review later")
+- "Save report" (description: "Already saved to .forge/baseline-report.md — review later")
 - "Skip" (description: "Proceed without fixing anything")
 
 If the user chooses to fix: address issues methodically — fix each issue, re-run the specific check on the affected file, confirm resolution. Do NOT re-run the full scan after each fix.
@@ -469,7 +469,7 @@ If the user provides related repos:
 
 1. **Verify each path** exists and is a valid git repository.
 2. **Auto-detect role** for each repo using the same stack-marker logic from Phase 1.
-3. **Store in config**: Add entries to the `related_projects:` section in `.claude/dev-pipeline.local.md` (same format as Phase 2b):
+3. **Store in config**: Add entries to the `related_projects:` section in `.claude/forge.local.md` (same format as Phase 2b):
    ```yaml
    related_projects:
      frontend:
@@ -492,12 +492,12 @@ If the user provides related repos:
 
 Check for legacy setup artifacts:
 
-- If `.claude/plugins/dev-pipeline` exists as a git submodule (check `.gitmodules`), offer to remove it:
+- If `.claude/plugins/forge` exists as a git submodule (check `.gitmodules`), offer to remove it:
   - Explain: "The plugin is now installed via the marketplace. The old submodule can be removed."
-  - If confirmed: run `git submodule deinit .claude/plugins/dev-pipeline`, `git rm .claude/plugins/dev-pipeline`, clean `.gitmodules`
+  - If confirmed: run `git submodule deinit .claude/plugins/forge`, `git rm .claude/plugins/forge`, clean `.gitmodules`
   - If declined: skip, but warn about potential conflicts
 
-- If `.pipeline/` directory exists with stale state, offer to clean it.
+- If `.forge/` directory exists with stale state, offer to clean it.
 
 If nothing to clean up, skip this phase silently.
 
@@ -507,7 +507,7 @@ If nothing to clean up, skip this phase silently.
 
 ## Graph Initialization (Optional)
 
-If `graph.enabled` is `true` in the generated `dev-pipeline.local.md` (this is the default — enabled by default per CLAUDE.md):
+If `graph.enabled` is `true` in the generated `forge.local.md` (this is the default — enabled by default per CLAUDE.md):
 
 1. **Check Docker availability**: Run `docker info` to verify Docker is running.
    - If Docker is NOT available: skip graph init with a note — "Docker is not running. Graph features will be disabled. Start Docker and run `/graph-init` later to enable."
@@ -519,7 +519,7 @@ If `graph.enabled` is `true` in the generated `dev-pipeline.local.md` (this is t
 
 4. Set `integrations.neo4j.available` based on the result.
 
-5. If graph initialization completes successfully, dispatch `pl-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
+5. If graph initialization completes successfully, dispatch `fg-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
 
 ---
 
@@ -532,16 +532,16 @@ Pipeline initialized successfully!
 
   Project:    my-awesome-app
   Module:     spring
-  Config:     .claude/dev-pipeline.local.md
-              .claude/pipeline-config.md
-              .claude/pipeline-log.md
+  Config:     .claude/forge.local.md
+              .claude/forge-config.md
+              .claude/forge-log.md
 
   Available commands:
-    /pipeline-run <description>   — Run full pipeline for a feature
-    /pipeline-run --from=<stage>  — Resume from a specific stage
+    /forge-run <description>   — Run full pipeline for a feature
+    /forge-run --from=<stage>  — Resume from a specific stage
 
   Quick start:
-    /pipeline-run Add user registration endpoint
+    /forge-run Add user registration endpoint
 
   Health: All checks passed (build, tests, engine)
 ```

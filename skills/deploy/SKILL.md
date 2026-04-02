@@ -5,7 +5,7 @@ description: Trigger deployment to staging, production, or preview environments.
 
 # /deploy -- Environment Deployment
 
-You manage deployments to staging, production, and preview environments. You read deployment configuration from the project's `dev-pipeline.local.md` and execute the appropriate deployment method.
+You manage deployments to staging, production, and preview environments. You read deployment configuration from the project's `forge.local.md` and execute the appropriate deployment method.
 
 ## Instructions
 
@@ -27,7 +27,7 @@ If `--dry-run` is present in the arguments, execute in dry-run mode: resolve all
 
 ### 2. Read Configuration
 
-Read deployment config from `.claude/dev-pipeline.local.md` under the `deploy` key:
+Read deployment config from `.claude/forge.local.md` under the `deploy` key:
 
 ```yaml
 deploy:
@@ -52,7 +52,7 @@ If no `deploy` config is found, display a helpful message:
 ```
 No deployment configuration found.
 
-To enable /deploy, add a `deploy` section to your `.claude/dev-pipeline.local.md`:
+To enable /deploy, add a `deploy` section to your `.claude/forge.local.md`:
 
 deploy:
   method: argocd
