@@ -90,11 +90,11 @@ case "$STAGE" in
     ;;
   review)
     # Verify changed files from implementation are readable
-    if [[ -d "$PROJECT_ROOT/.pipeline/worktree" ]]; then
-      worktree_files="$(git -C "$PROJECT_ROOT/.pipeline/worktree" diff --name-only HEAD~1 2>/dev/null || true)"
+    if [[ -d "$PROJECT_ROOT/.forge/worktree" ]]; then
+      worktree_files="$(git -C "$PROJECT_ROOT/.forge/worktree" diff --name-only HEAD~1 2>/dev/null || true)"
       if [[ -n "$worktree_files" ]]; then
         while IFS= read -r f; do
-          full_path="$PROJECT_ROOT/.pipeline/worktree/$f"
+          full_path="$PROJECT_ROOT/.forge/worktree/$f"
           if [[ ! -r "$full_path" ]]; then
             echo "WARN: Changed file not readable: $f" >&2
           fi
@@ -103,11 +103,11 @@ case "$STAGE" in
     fi
     # Check convention file exists
     conventions_file=""
-    [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && {
-      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
+    [[ -f "$PROJECT_ROOT/.claude/forge.local.md" ]] && {
+      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
     }
     if [[ -n "${framework:-}" && "$framework" != "null" ]]; then
-      conventions_path="$PROJECT_ROOT/.claude/plugins/dev-pipeline/modules/frameworks/$framework/conventions.md"
+      conventions_path="$PROJECT_ROOT/.claude/plugins/forge/modules/frameworks/$framework/conventions.md"
       if [[ ! -f "$conventions_path" ]]; then
         echo "WARN: Convention file not found for framework '$framework'" >&2
       fi
@@ -142,9 +142,9 @@ case "$STAGE" in
     # Framework-specific tool check (reads components: structure from local config)
     framework=""
     language=""
-    [[ -f "$PROJECT_ROOT/.claude/dev-pipeline.local.md" ]] && {
-      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
-      language="$(grep -m1 'language:' "$PROJECT_ROOT/.claude/dev-pipeline.local.md" 2>/dev/null | sed 's/.*language:[[:space:]]*//' || true)"
+    [[ -f "$PROJECT_ROOT/.claude/forge.local.md" ]] && {
+      framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
+      language="$(grep -m1 'language:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*language:[[:space:]]*//' || true)"
     }
     case "$framework" in
       spring|jetpack-compose|kotlin-multiplatform)

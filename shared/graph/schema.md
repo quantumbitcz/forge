@@ -38,7 +38,7 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 | `ProjectDependency` | `name`, `version`, `scope`, `manager` | External dependency from manifest files (npm, gradle, pip, etc.) |
 | `ProjectClass` | `name`, `file_path`, `kind` | Class, interface, struct, trait, or object definition. `kind` values: `class`, `interface`, `struct`, `trait`, `object`, `module` |
 | `ProjectFunction` | `name`, `file_path` | Function or method definition |
-| `ProjectConfig` | `project`, `language` | Project configuration node linking to plugin conventions via `dev-pipeline.local.md` |
+| `ProjectConfig` | `project`, `language` | Project configuration node linking to plugin conventions via `forge.local.md` |
 | `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title`, `cross_repo` | A documentation file. `cross_repo` (boolean, default `false`) is `true` for docs discovered in related projects. |
 | `DocSection` | `name`, `file_path`, `heading_level`, `start_line`, `end_line`, `content_hash`, `content_hash_updated` | A section within a doc file (parsed from heading hierarchy). `content_hash_updated` is an ISO8601 timestamp of when the hash was last computed. |
 | `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence`, `extracted_at` | Architectural/design decision extracted from ADRs or inline markers. `extracted_at` is ISO8601 timestamp of extraction. |
@@ -85,7 +85,7 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh`.
 | `CLASS_IN_FILE` | `ProjectClass` → `ProjectFile` | Class is defined in file |
 | `EXTENDS_CLASS` | `ProjectClass` → `ProjectClass` | Class extends or implements another class |
 | `MAPS_TO` | `ProjectDependency` → `LayerModule`/`Framework`/`TestingFramework` | Dependency maps to a plugin module (via `dependency-map.json`) |
-| `USES_CONVENTION` | `ProjectConfig` → `Language`/`Framework`/`TestingFramework`/`LayerModule` | Project uses a plugin convention (from `dev-pipeline.local.md` components) |
+| `USES_CONVENTION` | `ProjectConfig` → `Language`/`Framework`/`TestingFramework`/`LayerModule` | Project uses a plugin convention (from `forge.local.md` components) |
 | `DESCRIBES` | `DocSection` → `ProjectFile`/`ProjectPackage`/`ProjectClass` | Documentation describes a code entity |
 | `SECTION_OF` | `DocSection` → `DocFile` | Section belongs to a document |
 | `DECIDES` | `DocDecision` → `ProjectFile`/`ProjectPackage` | Decision applies to code scope |
@@ -105,6 +105,6 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh`.
 | Rebuild project | `/graph-rebuild` | Deletes `Project*` nodes, rebuilds from codebase |
 | Query | `/graph-query` | Execute arbitrary Cypher |
 | Status | `/graph-status` | Container health, node counts, staleness |
-| Reset | `/pipeline-reset` | Stops container, removes all data |
+| Reset | `/forge-reset` | Stops container, removes all data |
 
 See `query-patterns.md` for pre-built Cypher templates used by the orchestrator.

@@ -1,11 +1,11 @@
 # State Schema Reference
 
-This document defines the JSON schemas and directory structure for the `.pipeline/` directory, which stores all per-run pipeline state. The `.pipeline/` directory is **gitignored** -- it persists on the local filesystem for run recovery and trend tracking but is never committed.
+This document defines the JSON schemas and directory structure for the `.forge/` directory, which stores all per-run pipeline state. The `.forge/` directory is **gitignored** -- it persists on the local filesystem for run recovery and trend tracking but is never committed.
 
 ## Directory Structure
 
 ```
-.pipeline/
+.forge/
 +-- state.json                          # Root pipeline state (one per run)
 +-- checkpoint-{storyId}.json           # Per-story recovery checkpoint
 +-- stage_N_notes_{storyId}.md          # Per-stage decisions and findings (N = 0-9)
@@ -17,7 +17,7 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 +-- docs-index.json                     # Documentation index (fallback when Neo4j unavailable)
 +-- reports/
     +-- pipeline-{YYYY-MM-DD}.md       # Per-run retrospective report
-    +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by pl-720-recap)
+    +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-720-recap)
 ```
 
 ### File Lifecycle
@@ -25,21 +25,21 @@ This document defines the JSON schemas and directory structure for the `.pipelin
 | File | Created At | Updated By | Survives Conversation? | Committed to Git? |
 |------|-----------|-----------|----------------------|-------------------|
 | `state.json` | Stage 0 (PREFLIGHT) | Orchestrator (every stage transition) | Yes (enables recovery) | No |
-| `docs-index.json` | Stage 0 (PREFLIGHT) | `pl-130-docs-discoverer` | Yes | No |
+| `docs-index.json` | Stage 0 (PREFLIGHT) | `fg-130-docs-discoverer` | Yes | No |
 | `checkpoint-*.json` | Stage 4 (IMPLEMENT) | Orchestrator (after each task) | Yes (enables resume) | No |
 | `stage_N_notes_*.md` | Each stage | Stage agent | Yes | No |
 | `stage_final_notes_*.md` | Stage 9 (LEARN) | Retrospective agent | Yes | No |
 | `feedback/*.md` | On user correction | Feedback capture agent | Yes (pattern data) | No |
 | `reports/pipeline-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
-| `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (pl-720-recap) | Yes (project history) | No |
+| `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (fg-720-recap) | Yes (project history) | No |
 
-### Related Files (outside `.pipeline/`, committed to git)
+### Related Files (outside `.forge/`, committed to git)
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `pipeline-config.md` | `.claude/pipeline-config.md` | Mutable runtime parameters (auto-tuned by retrospective) |
-| `pipeline-log.md` | `.claude/pipeline-log.md` | PREEMPT learnings + run history (institutional memory) |
-| `dev-pipeline.local.md` | `.claude/dev-pipeline.local.md` | Static project config (commands, agents, conventions) |
+| `forge-config.md` | `.claude/forge-config.md` | Mutable runtime parameters (auto-tuned by retrospective) |
+| `forge-log.md` | `.claude/forge-log.md` | PREEMPT learnings + run history (institutional memory) |
+| `forge.local.md` | `.claude/forge.local.md` | Static project config (commands, agents, conventions) |
 
 ---
 
@@ -192,28 +192,28 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"2.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Schema version 2.0.0 is a clean break from v1.1.0 — adds `documentation` field as a required top-level object. Old state files from v1.x are incompatible — use `/pipeline-reset` to clear them. |
+| `version` | string | Yes | Schema version string (`"2.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. Schema version 2.0.0 is a clean break from v1.1.0 — adds `documentation` field as a required top-level object. Old state files from v1.x are incompatible — use `/forge-reset` to clear them. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
-| `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/pipeline-run` invocation argument. |
+| `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
 | `domain_area` | string | Yes | Primary domain area affected by this change. Set by the planner at Stage 2. Examples: `"plan"`, `"billing"`, `"scheduling"`, `"inventory"`, `"communication"`, `"user"`, `"workflow"`. |
 | `risk_level` | string | Yes | Risk assessment from the planner. Valid values: `"LOW"`, `"MEDIUM"`, `"HIGH"`. Set at Stage 2, used at Stage 3 for the auto-proceed decision gate. |
 | `story_state` | string | Yes | The overall pipeline state — the highest active stage across all components. If backend is IMPLEMENTING and frontend is EXPLORING, the top-level story_state is IMPLEMENTING. Valid values and transitions defined below. Updated at the start of each stage. |
 | `active_component` | string | Yes | The component the orchestrator is currently processing. Set before dispatching agents for a component's tasks. Used by the check engine to route rules. Example: `"backend"`. |
-| `components` | object | Yes | Per-component state tracking for monorepo and multi-stack projects. Keys are derived from `dev-pipeline.local.md` config: for single-component projects, the key is the component name from config (e.g., `"backend"`); for multi-component projects with `path:` fields, keys are the component names (e.g., `"backend"`, `"frontend"`, `"mobile"`). The top-level `story_state` is always the highest active stage across all components. Values are component state objects. See the [components section](#components-object-required) below. |
+| `components` | object | Yes | Per-component state tracking for monorepo and multi-stack projects. Keys are derived from `forge.local.md` config: for single-component projects, the key is the component name from config (e.g., `"backend"`); for multi-component projects with `path:` fields, keys are the component names (e.g., `"backend"`, `"frontend"`, `"mobile"`). The top-level `story_state` is always the highest active stage across all components. Values are component state objects. See the [components section](#components-object-required) below. |
 | `quality_cycles` | integer | Yes | Number of quality review cycles completed in Stage 6 (REVIEW). Starts at 0, incremented each time the quality gate dispatches fixes and rescores. Max is `quality_gate.max_review_cycles` from config. |
 | `test_cycles` | integer | Yes | Number of test fix cycles completed in Stage 5 Phase B (test gate). Starts at 0, incremented each time failing tests are dispatched to the implementer. Max is `test_gate.max_test_cycles` from config. |
 | `verify_fix_count` | integer | Yes | Number of build/lint fix attempts in Stage 5 Phase A. Starts at 0, incremented on each compile or lint failure that triggers an auto-fix. Checked by the convergence engine BEFORE dispatching another IMPLEMENT — when `verify_fix_count >= implementation.max_fix_loops` (default: 3), the orchestrator escalates instead of retrying. This is the Phase A inner cap, distinct from `test_cycles` (Phase 1B) and `quality_cycles` (Phase 2). |
 | `validation_retries` | integer | Yes | Number of REVISE verdicts received at Stage 3 (VALIDATE). Starts at 0, incremented when the validator returns REVISE and the planner revises the plan. Max is `validation.max_validation_retries` from config (default: 2). |
 | `total_retries` | integer | Yes | Cumulative retry count across all loops (validation_retries + verify_fix_count + test_cycles + quality_cycles + direct PR rejection increments). Used for the global retry budget. Starts at 0, incremented on every retry anywhere in the pipeline. |
-| `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `pipeline-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
+| `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `forge-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
 | `stage_timestamps` | object | Yes | Map of stage name (lowercase) to ISO 8601 timestamp marking when that stage started. Keys are: `"preflight"`, `"explore"`, `"plan"`, `"validate"`, `"implement"`, `"verify"`, `"review"`, `"docs"`, `"ship"`, `"learn"`. Only stages that have started appear in the map. |
 | `last_commit_sha` | string | Yes | Git commit SHA of the most recent pipeline-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
-| `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `pipeline-log.md` that were loaded at PREFLIGHT for the current domain area. Records what was *loaded*, not what was *used*. Empty array `[]` if no items match. |
-| `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `pipeline-log.md`. |
-| `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `pl-710-feedback-capture` stage notes. |
+| `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `forge-log.md` that were loaded at PREFLIGHT for the current domain area. Records what was *loaded*, not what was *used*. Empty array `[]` if no items match. |
+| `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `forge-log.md`. |
+| `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-feedback-capture` stage notes. |
 | `previous_feedback_classification` | string | Yes | Feedback type from the preceding PR rejection. Used by the orchestrator to detect feedback loops — when `feedback_classification == previous_feedback_classification` for 2+ consecutive rejections, the orchestrator escalates. Updated by the orchestrator before comparing classifications. Empty string `""` initially. |
-| `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `pl-100-orchestrator.md` User Response section). |
+| `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `fg-100-orchestrator.md` User Response section). |
 | `score_history` | number[] | Yes | Unified quality score per review cycle for oscillation detection across all components. Appended after each quality gate scoring with the aggregate (unified) score. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. In multi-component projects, per-component score histories are tracked within `components[key].score_history` — see the components section below. Oscillation detection runs on BOTH the unified history and per-component histories (a per-component regression masked by other component improvements triggers a WARNING). Integer with default scoring weights; may be non-integer with custom weights. |
 | `convergence` | object | Yes | Convergence engine state. Tracks two-phase iteration progress (correctness → perfection → safety gate). See `shared/convergence-engine.md` for full algorithm. Initialized at PREFLIGHT with all counters at 0. |
 | `convergence.phase` | string | Yes | Current convergence phase. Valid values: `"correctness"` (Phase 1 — IMPLEMENT ↔ VERIFY), `"perfection"` (Phase 2 — IMPLEMENT ↔ REVIEW), `"safety_gate"` (final VERIFY after Phase 2). Transitions managed by the convergence engine. |
@@ -238,8 +238,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Kept for backward compatibility. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
 | `conventions_section_hashes` | object | Yes | Top-level per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Used for single-component projects. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. In multi-component projects, each component has its own `conventions_section_hashes` within `components[key]` — the top-level field is then set to `{}` and per-component hashes take precedence. |
 | `detected_versions` | object | Yes | Project dependency versions detected at PREFLIGHT. `language`: detected language (e.g., "kotlin", "typescript"). `language_version`: language/compiler version. `framework`: primary framework (e.g., "spring-boot", "fastapi"). `framework_version`: framework version. `key_dependencies` (v1.1.0): map of dependency name to version string for all detected libraries across all layers (language, framework, databases, messaging, persistence, testing). Values are `""` or `"unknown"` when detection fails — in that case, version-gated rules default to applying (conservative). Example: `{ "exposed-core": "0.48.0", "kafka-clients": "3.7.0", "flyway-core": "10.8.1", "caffeine": "3.1.8" }` |
-| `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.pipeline/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
-| `lastCheckpoint` | string | No | ISO 8601 timestamp of the most recent skill invocation, written by the `pipeline-checkpoint.sh` PostToolUse hook. Updated after every Skill invocation. **Usage:** Read by PREFLIGHT during interrupted-run detection — a `lastCheckpoint` older than 24 hours combined with `complete: false` indicates a stale/abandoned run. Also read by the `.pipeline/.lock` stale timeout check (24h). Format: `"2026-03-30T12:00:00Z"`. |
+| `check_engine_skipped` | integer | Yes | Count of inline check engine invocations that were skipped due to timeout or error during the current run. The `engine.sh` hook writes a counter to `.forge/.check-engine-skipped` on failure. The orchestrator copies this value to state.json at VERIFY Phase A entry, then deletes the marker file. Informational — VERIFY runs full checks regardless. |
+| `lastCheckpoint` | string | No | ISO 8601 timestamp of the most recent skill invocation, written by the `forge-checkpoint.sh` PostToolUse hook. Updated after every Skill invocation. **Usage:** Read by PREFLIGHT during interrupted-run detection — a `lastCheckpoint` older than 24 hours combined with `complete: false` indicates a stale/abandoned run. Also read by the `.forge/.lock` stale timeout check (24h). Format: `"2026-03-30T12:00:00Z"`. |
 | `mode` | string | Yes | Pipeline execution mode detected from requirement prefix. Valid values: `"standard"` (default), `"migration"` (requirement starts with `migrate:` or `migration:`), `"bootstrap"` (requirement starts with `bootstrap:`). Determines which planner agent is dispatched at Stage 2. |
 | `abort_reason` | string | No | Reason the pipeline was aborted. Set when the orchestrator auto-aborts. Values are prefix-matched strings (not fixed enums) — the orchestrator may append contextual details. Known prefixes: `"NO-GO timeout"` (validator returned NO-GO and user did not respond within timeout), `"budget exhausted"` (`total_retries >= total_retries_max`), `"recovery budget exhausted"` (`recovery_budget.total_weight >= max_weight`), `"user abort"` (user chose "Abort" at an escalation prompt), `"convergence regression"` (convergence engine detected REGRESSING state and user aborted). Match using `startsWith()`, not exact equality. Empty string or absent when not aborted. Present only in terminal state (`complete: true`). |
 | `recovery_failed` | boolean | No | Set to `true` by the recovery engine when recovery itself fails (e.g., state-reconstruction attempted but git unavailable). Triggers immediate escalation to user. Absent or `false` during normal operation. See `shared/recovery/recovery-engine.md` section 9. |
@@ -247,8 +247,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
 | `spec` | object\|null | No | Present when pipeline was invoked with `--spec <path>`. Contains `path`, `epic_title`, `story_count`, and `loaded_at`. `null` when not using spec-driven invocation. See the [spec section](#spec-object-optional) above. |
-| `documentation` | object | Yes | Documentation subsystem state. Populated by `pl-130-docs-discoverer` at PREFLIGHT and updated by `pl-350-docs-generator` at DOCUMENTING. |
-| `documentation.discovery_error` | boolean | Yes | `true` if `pl-130-docs-discoverer` timed out or failed during PREFLIGHT (documentation enabled but discovery failed). Default: `false`. When true, downstream agents (pl-350, docs-consistency-reviewer) operate with degraded context — skip cross-referencing and coverage gap analysis. |
+| `documentation` | object | Yes | Documentation subsystem state. Populated by `fg-130-docs-discoverer` at PREFLIGHT and updated by `fg-350-docs-generator` at DOCUMENTING. |
+| `documentation.discovery_error` | boolean | Yes | `true` if `fg-130-docs-discoverer` timed out or failed during PREFLIGHT (documentation enabled but discovery failed). Default: `false`. When true, downstream agents (fg-350, docs-consistency-reviewer) operate with degraded context — skip cross-referencing and coverage gap analysis. |
 | `documentation.last_discovery_timestamp` | string | Yes | ISO8601 of last discovery run |
 | `documentation.files_discovered` | number | Yes | Count of doc files found |
 | `documentation.sections_parsed` | number | Yes | Count of parsed sections |
@@ -260,7 +260,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.external_refs` | array | Yes | External doc URLs |
 | `documentation.generation_history` | array | Yes | Array of generation run records. Each entry may include a `confidence_changes` array (see below). |
 | `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
-| `documentation.generation_error` | boolean | Yes | `true` if `pl-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
+| `documentation.generation_error` | boolean | Yes | `true` if `fg-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
 | `exploration_degraded` | boolean | Yes | `true` if all exploration agents timed out or failed during EXPLORE stage. Default: `false`. When true, the planner operates with reduced codebase context. |
 
 ### cross_repo (object, optional)
@@ -286,7 +286,7 @@ Tracks worktrees and status for changes in related projects. Only populated when
 - Updated to `complete` when cross-repo implementation succeeds
 - Updated to `failed` on errors
 - `pr_url` populated during SHIP if PR creation succeeds
-- Cleaned up by `/pipeline-rollback` or `/pipeline-reset`
+- Cleaned up by `/forge-rollback` or `/forge-reset`
 
 ---
 
@@ -399,7 +399,7 @@ All other fields in the Field Reference table marked "Yes" are also required; th
 
 ### Migration State (stored in `state.json.migration` during migration runs)
 
-During migration mode (triggered by `/migration` or `/pipeline-run "migrate: ..."`), the `migration` object is added to `state.json` by `pl-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
+During migration mode (triggered by `/migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -463,7 +463,7 @@ Example:
 }
 ```
 
-**Note:** Version 1.0.0 is a clean break. Old state files from previous schema versions are incompatible — use `/pipeline-reset` to clear them. The recovery engine checks the `version` field before parsing and will refuse to load state files with a different version.
+**Note:** Version 1.0.0 is a clean break. Old state files from previous schema versions are incompatible — use `/forge-reset` to clear them. The recovery engine checks the `version` field before parsing and will refuse to load state files with a different version.
 
 ### story_state Valid Values
 
@@ -484,7 +484,7 @@ Example:
 | `"MIGRATION_CLEANUP"` | - | Removing old dependencies and shims |
 | `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
 
-Migration states are used exclusively by `pl-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
+Migration states are used exclusively by `fg-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
 
 **Multi-module only states** (used in `modules[].story_state`, never at top level):
 
@@ -538,7 +538,7 @@ Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) af
     }
   ],
   "tasks_remaining": ["T003", "T004"],
-  "last_action": "pl-300-implementer completed T002",
+  "last_action": "fg-300-implementer completed T002",
   "timestamp": "2026-03-21T10:15:00Z"
 }
 ```
@@ -558,12 +558,12 @@ Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) af
 | `tasks_completed[].fix_attempts` | integer | Yes | Number of fix attempts for this task (0 = succeeded on first try). Max is `implementation.max_fix_loops` from config. |
 | `tasks_completed[].preempt_items_used` | string[] | Yes | PREEMPT item identifiers that were applied during this task. Empty array if none. Used by the orchestrator to populate `state.json.preempt_items_status`. |
 | `tasks_remaining` | string[] | Yes | Task IDs not yet started. Shrinks as tasks complete. Empty array when all tasks are done. |
-| `last_action` | string | Yes | Human-readable description of the most recent action taken. Used for logging and recovery context. Examples: `"pl-310-scaffolder generated T003 boilerplate"`, `"pl-300-implementer completed T002"`, `"build fix attempt 2 for T004"`. |
+| `last_action` | string | Yes | Human-readable description of the most recent action taken. Used for logging and recovery context. Examples: `"fg-310-scaffolder generated T003 boilerplate"`, `"fg-300-implementer completed T002"`, `"build fix attempt 2 for T004"`. |
 | `timestamp` | string | Yes | ISO 8601 timestamp of when this checkpoint was last written. Used to determine freshness during recovery. |
 
 ### Recovery Behavior
 
-When PREFLIGHT detects an interrupted run (`.pipeline/state.json` exists with `complete: false`):
+When PREFLIGHT detects an interrupted run (`.forge/state.json` exists with `complete: false`):
 
 1. Read `state.json` to find `story_state` and `last_commit_sha`.
 2. If `story_state` is `"IMPLEMENTING"`: read `checkpoint-{storyId}.json` to find exactly which tasks are done.
@@ -586,7 +586,7 @@ Free-form markdown written by each stage's agent(s). Contains decisions, finding
 
 ### stage_final_notes_{storyId}.md
 
-Written by the retrospective agent at Stage 9. Contains the run summary, extracted learnings, and tuning recommendations. This is the primary input for `pipeline-log.md` updates.
+Written by the retrospective agent at Stage 9. Contains the run summary, extracted learnings, and tuning recommendations. This is the primary input for `forge-log.md` updates.
 
 ---
 
@@ -594,7 +594,7 @@ Written by the retrospective agent at Stage 9. Contains the run summary, extract
 
 ### feedback/{date}-{topic}.md
 
-Individual feedback files created by `pl-710-feedback-capture` when the user corrects the pipeline's approach. Format:
+Individual feedback files created by `fg-710-feedback-capture` when the user corrects the pipeline's approach. Format:
 
 ```markdown
 # Feedback: {topic}
@@ -612,7 +612,7 @@ Created by the retrospective agent when the feedback directory contains more tha
 
 ### feedback/archive/
 
-Contains individual feedback files that have been consolidated into `summary.md` or applied as PREEMPT items in `pipeline-log.md`. Preserved for audit trail.
+Contains individual feedback files that have been consolidated into `summary.md` or applied as PREEMPT items in `forge-log.md`. Preserved for audit trail.
 
 ---
 
@@ -620,7 +620,7 @@ Contains individual feedback files that have been consolidated into `summary.md`
 
 ### reports/pipeline-{YYYY-MM-DD}.md
 
-Per-run retrospective report written by `pl-700-retrospective` at Stage 9. Contains:
+Per-run retrospective report written by `fg-700-retrospective` at Stage 9. Contains:
 
 - Run metadata (story_id, requirement, duration, risk_level)
 - Stage-by-stage timing breakdown
@@ -635,7 +635,7 @@ If multiple runs occur on the same date, reports use a suffix: `pipeline-{YYYY-M
 
 ### reports/recap-{YYYY-MM-DD}-{storyId}.md
 
-Human-readable run recap written by `pl-720-recap` at Stage 9, after the retrospective. Contains:
+Human-readable run recap written by `fg-720-recap` at Stage 9, after the retrospective. Contains:
 
 - What was built (per-story summary with file lists)
 - Key decisions made (with trade-off reasoning)

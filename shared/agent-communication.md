@@ -4,12 +4,12 @@ Agents in the pipeline do not communicate directly. All inter-agent data flows t
 
 ## 1. Stage Notes (async, persistent)
 
-Each stage writes `.pipeline/stage_N_notes_{storyId}.md`. Downstream stages can read upstream notes via the orchestrator's dispatch prompt.
+Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can read upstream notes via the orchestrator's dispatch prompt.
 
 - Written by: the agent completing a stage
 - Read by: the orchestrator (always), downstream agents (when orchestrator includes relevant context in dispatch)
 - Format: markdown with structured sections (findings, decisions, metrics)
-- Lifetime: per-run (cleared on `/pipeline-reset`)
+- Lifetime: per-run (cleared on `/forge-reset`)
 
 ### What goes in stage notes
 - Decisions made and reasoning (for downstream agents and recap)
@@ -93,8 +93,8 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     SHIP agent → stage_8_notes → orchestrator → LEARN dispatch prompt
                                               ↘ Linear: PR link, status
     FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
-    LEARN (retro) → stage_final_notes → pipeline-log.md (PREEMPT hit counts)
-                                  → pipeline-config.md (auto-tuning)
+    LEARN (retro) → stage_final_notes → forge-log.md (PREEMPT hit counts)
+                                  → forge-config.md (auto-tuning)
     LEARN (recap) → recap report ↘ Linear: summary comment
 
 All data flows through the orchestrator. Agents are isolated. The orchestrator curates what each agent receives.
@@ -107,17 +107,17 @@ The following agents are dispatched conditionally and receive data from the orch
 
 | Agent | Stage | Trigger | Receives | Outputs |
 |-------|-------|---------|----------|---------|
-| `pl-320-frontend-polisher` | 4 (IMPLEMENT) | `frontend_polish.enabled` in config AND frontend component detected | Changed frontend files, design theory, theme tokens | Polished files, `FE-*` findings in stage notes |
-| `pl-650-preview-validator` | 8 (SHIP) | Preview/staging URL configured in `ship:` config | PR URL, preview URL | Validation results in stage notes |
+| `fg-320-frontend-polisher` | 4 (IMPLEMENT) | `frontend_polish.enabled` in config AND frontend component detected | Changed frontend files, design theory, theme tokens | Polished files, `FE-*` findings in stage notes |
+| `fg-650-preview-validator` | 8 (SHIP) | Preview/staging URL configured in `ship:` config | PR URL, preview URL | Validation results in stage notes |
 | `infra-deploy-verifier` | 8 (SHIP) | K8s/infra files in changeset | Changed infra files, Helm charts | Verification results in stage notes |
-| `pl-130-docs-discoverer` | 0 (PREFLIGHT) | Always (part of preflight) | Project root, config | `stage_0_docs_discovery.md`, docs-index.json |
-| `pl-140-deprecation-refresh` | 0 (PREFLIGHT) | Always (part of preflight) | Detected versions, known-deprecations.json | Updated deprecation rules |
-| `pl-150-test-bootstrapper` | 0 (PREFLIGHT) | No test infrastructure detected | Project root, framework conventions | Bootstrapped test config, stage notes |
+| `fg-130-docs-discoverer` | 0 (PREFLIGHT) | Always (part of preflight) | Project root, config | `stage_0_docs_discovery.md`, docs-index.json |
+| `fg-140-deprecation-refresh` | 0 (PREFLIGHT) | Always (part of preflight) | Detected versions, known-deprecations.json | Updated deprecation rules |
+| `fg-150-test-bootstrapper` | 0 (PREFLIGHT) | No test infrastructure detected | Project root, framework conventions | Bootstrapped test config, stage notes |
 | `docs-consistency-reviewer` | 6 (REVIEW) | Documentation exists in project | Changed files, docs-index.json, discovery summary | `DOC-*` findings |
 
 ## 6. PREEMPT Item Tracking
 
-During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes. PREEMPT producers are: `pl-300-implementer` (primary — receives PREEMPT items for the implementation domain), `pl-310-scaffolder` (when PREEMPT items reference scaffold patterns), and `pl-320-frontend-polisher` (when PREEMPT items reference frontend patterns). If multiple agents report on the same PREEMPT item, the orchestrator uses the marker from the **last agent to complete** (since later agents may override earlier work).
+During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes. PREEMPT producers are: `fg-300-implementer` (primary — receives PREEMPT items for the implementation domain), `fg-310-scaffolder` (when PREEMPT items reference scaffold patterns), and `fg-320-frontend-polisher` (when PREEMPT items reference frontend patterns). If multiple agents report on the same PREEMPT item, the orchestrator uses the marker from the **last agent to complete** (since later agents may override earlier work).
 
     PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
     PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
@@ -127,7 +127,7 @@ The orchestrator reads these markers from stage notes and populates `state.json.
 - `{ "applied": false, "false_positive": true }` — item was loaded but inapplicable
 
 The retrospective agent reads `preempt_items_status` and:
-1. Increments `hit_count` in `pipeline-log.md` for applied items
+1. Increments `hit_count` in `forge-log.md` for applied items
 2. Records false positives for confidence decay acceleration (false positive = 3 unused runs toward decay)
 3. Logs: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"
 
@@ -151,14 +151,14 @@ PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller 
 
 ## 7. Plan Mode Integration
 
-Planning agents (`pl-200-planner`, `pl-010-shaper`, `pl-160-migration-planner`, `pl-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present their designs for user approval in the Claude Code UI before implementation proceeds.
+Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present their designs for user approval in the Claude Code UI before implementation proceeds.
 
 **When to use plan mode:**
 - Interactive sessions where the user is present and can approve plans
 - Complex plans with architectural decisions that benefit from user review
 
 **When to skip plan mode:**
-- Autonomous orchestrator runs (the validator `pl-210` serves as the approval gate)
+- Autonomous orchestrator runs (the validator `fg-210` serves as the approval gate)
 - Replanning after a REVISE verdict (plan mode was already used for the initial plan)
 - Simple, low-risk plans where the overhead is not justified
 

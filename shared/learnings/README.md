@@ -6,17 +6,17 @@ The adaptive learning system operates across two dimensions — per-project and 
 
 | Scope | Location | Lifecycle |
 |-------|----------|-----------|
-| Per-project | `.claude/pipeline-log.md` (consuming repo) | Grows with each pipeline run; never leaves the project |
+| Per-project | `.claude/forge-log.md` (consuming repo) | Grows with each pipeline run; never leaves the project |
 | Cross-project | `shared/learnings/{module}.md` (this plugin repo) | One file per framework, language, testing framework, and crosscutting layer. Curated by retrospective agent; ships with the plugin |
 
 ## Learning classification
 
-Every learning produced by `pl-700-retrospective` is classified into one of two categories:
+Every learning produced by `fg-700-retrospective` is classified into one of two categories:
 
 ### PROJECT-SPECIFIC
 - References project file paths, domain entities, or local configuration
 - Examples: "The `OrderService` port must validate currency before delegating", "`/api/v2/users` endpoint needs pagination"
-- Stored only in `.claude/pipeline-log.md`
+- Stored only in `.claude/forge-log.md`
 - Never promoted to shared learnings
 
 ### MODULE-GENERIC
@@ -38,7 +38,7 @@ Everything else is MODULE-GENERIC.
 
 During the PREFLIGHT stage, the orchestrator:
 
-1. **Loads** per-project learnings from `.claude/pipeline-log.md`
+1. **Loads** per-project learnings from `.claude/forge-log.md`
 2. **Loads** cross-project learnings from `shared/learnings/{module}.md` (matching the active module)
 3. **Deduplicates** by comparing `Pattern` fields (fuzzy match, >80% similarity = duplicate)
 4. **Filters** to items whose `Domain` matches the current story's affected areas
@@ -81,7 +81,7 @@ Agent performance is tracked per `agent-effectiveness-template.md` (operational 
 
 PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
 - Active items: HIGH, MEDIUM, or LOW confidence — loaded during PREFLIGHT
-- Archived items: moved to bottom of pipeline-log.md — NOT loaded during PREFLIGHT
+- Archived items: moved to bottom of forge-log.md — NOT loaded during PREFLIGHT
 - Decay: 10 consecutive unused runs triggers confidence demotion
 - Promotion: 3+ applications with HIGH confidence suggests making it a permanent rule
 
@@ -93,6 +93,6 @@ Before a learning is promoted from per-project to cross-project:
 1. All file paths are stripped
 2. All domain entity names are replaced with generic placeholders
 3. All configuration values are generalized
-4. The result is reviewed by `pl-700-retrospective` for remaining project-specific content
+4. The result is reviewed by `fg-700-retrospective` for remaining project-specific content
 
 No project-specific data ever enters the plugin repository.

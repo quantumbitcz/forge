@@ -13,12 +13,12 @@ Handles missing, corrupted, or inconsistent pipeline state files. Reconstructs s
 
 ### 1.1 Missing `state.json`
 
-The `.pipeline/state.json` file does not exist when it should (mid-pipeline run).
+The `.forge/state.json` file does not exist when it should (mid-pipeline run).
 
 **Reconstruction steps:**
 
-1. **Check for checkpoints:** Look for `.pipeline/checkpoint-*.json` files. If found, the most recent one contains task-level progress.
-2. **Check for stage notes:** Look for `.pipeline/stage_*_notes_*.md` files. The highest stage number indicates the last completed stage.
+1. **Check for checkpoints:** Look for `.forge/checkpoint-*.json` files. If found, the most recent one contains task-level progress.
+2. **Check for stage notes:** Look for `.forge/stage_*_notes_*.md` files. The highest stage number indicates the last completed stage.
 3. **Check git log:** Look for pipeline commits:
    ```bash
    git log --oneline --grep="wip: pipeline" --grep="feat:" --grep="fix:" -20
@@ -48,7 +48,7 @@ After writing the reconstructed `state.json`, verify the `version` field:
 2. If `version` is `"2.0.0"`: no migration needed.
 3. Log: "Reconstructed state at schema version {version}."
 
-Version 2.0.0 is a clean break from v1.x — there is no migration chain. Incompatible old state files must be cleared with `/pipeline-reset`.
+Version 2.0.0 is a clean break from v1.x — there is no migration chain. Incompatible old state files must be cleared with `/forge-reset`.
 
 ### 1.2 Invalid JSON in `state.json`
 
@@ -56,7 +56,7 @@ The file exists but contains invalid JSON (parse error).
 
 **Remediation steps:**
 
-1. **Preserve the corrupt file:** Copy to `.pipeline/state.json.corrupt.{timestamp}` for debugging.
+1. **Preserve the corrupt file:** Copy to `.forge/state.json.corrupt.{timestamp}` for debugging.
 2. **Attempt JSON repair:**
    - Check for trailing comma (common): remove it and re-parse.
    - Check for truncation (incomplete write): if the file ends mid-value, trim to last complete object.
@@ -66,7 +66,7 @@ The file exists but contains invalid JSON (parse error).
 
 ### 1.3 Invalid Checkpoint JSON
 
-A `.pipeline/checkpoint-*.json` file contains invalid JSON.
+A `.forge/checkpoint-*.json` file contains invalid JSON.
 
 **Remediation steps:**
 
@@ -164,6 +164,6 @@ Return to recovery engine:
   "reconstruction_sources": ["checkpoint", "git_log", "stage_notes", "filesystem"],
   "data_loss_risk": "none | counter_approximated | unknown_drift",
   "user_action_required": false,
-  "corrupt_files_preserved": [".pipeline/state.json.corrupt.20260322T143000"]
+  "corrupt_files_preserved": [".forge/state.json.corrupt.20260322T143000"]
 }
 ```

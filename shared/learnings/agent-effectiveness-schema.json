@@ -1,5 +1,5 @@
 {
-  "_description": "Schema for agent effectiveness metrics tracked per pipeline run. Written to .pipeline/reports/ by pl-700-retrospective.",
+  "_description": "Schema for agent effectiveness metrics tracked per pipeline run. Written to .forge/reports/ by fg-700-retrospective.",
   "agent_effectiveness": {
     "{agent-name}": {
       "runs": "integer — total runs across tracked history",

@@ -19,7 +19,7 @@ RETURN f, b, m, l ORDER BY b.layer
 ```
 
 **Parameters:**
-- `$framework` — Framework name as declared in `components.framework` of `dev-pipeline.local.md` (e.g., `"spring"`, `"nextjs"`, `"fastapi"`).
+- `$framework` — Framework name as declared in `components.framework` of `forge.local.md` (e.g., `"spring"`, `"nextjs"`, `"fastapi"`).
 - `$language` — Language name as declared in `components.language` (e.g., `"kotlin"`, `"typescript"`, `"python"`).
 
 ---
@@ -28,7 +28,7 @@ RETURN f, b, m, l ORDER BY b.layer
 
 **Used during:** PLAN
 
-Determines which project files are directly or transitively affected when a given file is changed. The orchestrator uses this before dispatching `pl-200-planner` to scope the plan and surface hidden blast radius.
+Determines which project files are directly or transitively affected when a given file is changed. The orchestrator uses this before dispatching `fg-200-planner` to scope the plan and surface hidden blast radius.
 
 ```cypher
 // What project files are affected if I change a specific file?
@@ -104,7 +104,7 @@ RETURN l.name
 
 **Used during:** pipeline-init
 
-Suggests layer modules that are commonly paired with a given framework for a specific layer. The orchestrator uses this during `/pipeline-init` to pre-populate `dev-pipeline.local.md` with sensible defaults.
+Suggests layer modules that are commonly paired with a given framework for a specific layer. The orchestrator uses this during `/forge-init` to pre-populate `forge.local.md` with sensible defaults.
 
 ```cypher
 // What modules are commonly paired with a framework for a given layer?
@@ -123,7 +123,7 @@ RETURN m.name, count(*) AS binding_count ORDER BY binding_count DESC
 
 **Used during:** EXPLORE
 
-Traces the full dependency chain from a given file up to 4 hops deep. The orchestrator runs this during the EXPLORE stage to give `pl-100-orchestrator` a prioritized list of files that may need to change, ordered by proximity to the root.
+Traces the full dependency chain from a given file up to 4 hops deep. The orchestrator runs this during the EXPLORE stage to give `fg-100-orchestrator` a prioritized list of files that may need to change, ordered by proximity to the root.
 
 ```cypher
 // Given a file, what's the full dependency chain?
@@ -160,7 +160,7 @@ RETURN a.name, a.role
 
 **Used during:** PLAN
 
-Identifies all documentation sections, decisions, and constraints that reference a changed file. The orchestrator runs this before dispatching `pl-200-planner` so the plan includes documentation update tasks alongside code changes.
+Identifies all documentation sections, decisions, and constraints that reference a changed file. The orchestrator runs this before dispatching `fg-200-planner` so the plan includes documentation update tasks alongside code changes.
 
 ```cypher
 MATCH (changed:ProjectFile {path: $filePath})
@@ -197,7 +197,7 @@ RETURN ds.name, ds.file_path, pf.path AS stale_for_file
 
 **Used during:** VALIDATE
 
-Retrieves all active (non-superseded) architectural decisions that apply to a given package path or class. The orchestrator runs this before dispatching `pl-210-validator` to surface decisions the implementation must honour.
+Retrieves all active (non-superseded) architectural decisions that apply to a given package path or class. The orchestrator runs this before dispatching `fg-210-validator` to surface decisions the implementation must honour.
 
 ```cypher
 MATCH (dd:DocDecision)-[:DECIDES]->(target)
@@ -234,7 +234,7 @@ RETURN head(labels(source)) AS source_type, COALESCE(source.summary, source.name
 
 **Used during:** DOCUMENTING
 
-Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `pl-720-recap` a prioritized list of under-documented areas.
+Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `fg-720-recap` a prioritized list of under-documented areas.
 
 ```cypher
 MATCH (pp:ProjectPackage)

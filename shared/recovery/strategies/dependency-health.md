@@ -27,7 +27,7 @@ Run health checks before each stage begins. Required dependencies vary by stage:
 | PREVIEW | network | playwright |
 | LEARN | git | — |
 
-**Build tool** and **test runner** are detected from `dev-pipeline.local.md` `commands` config (e.g., `./gradlew`, `npm`, `pnpm`).
+**Build tool** and **test runner** are detected from `forge.local.md` `commands` config (e.g., `./gradlew`, `npm`, `pnpm`).
 
 Use `shared/recovery/health-checks/pre-stage-health.sh <stage>` for the check. If it reports missing dependencies, proceed to diagnosis below.
 

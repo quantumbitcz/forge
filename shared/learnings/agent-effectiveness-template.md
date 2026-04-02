@@ -1,6 +1,6 @@
 # Agent Effectiveness Tracking
 
-Operational guide for tracking review agent performance across pipeline runs. Updated by `pl-700-retrospective`. Data format defined in `agent-effectiveness-schema.json`.
+Operational guide for tracking review agent performance across pipeline runs. Updated by `fg-700-retrospective`. Data format defined in `agent-effectiveness-schema.json`.
 
 ## Metrics Per Agent
 
