@@ -815,9 +815,46 @@ For each automation category:
 
 ---
 
-## 12. Development Process (Implementation Phase)
+## 12. Cross-Cutting: Version Resolution (All Phases)
 
-### 12.1 Per-Phase Workflow
+### 12.1 Rule
+
+**Agents must NEVER use versions from training data or memory.** Whenever adding, recommending, or configuring a dependency, package, plugin, MCP server, or tool version, agents must:
+
+1. Search the internet (via `WebSearch` or `Context7 MCP`) for the current latest version
+2. Verify compatibility with the project's detected stack versions (from `state.json.detected_versions`)
+3. Use the verified latest compatible version
+
+### 12.2 Applies To
+
+- `/forge-init` — all dependency recommendations, MCP package installation, code quality tool versions
+- `/forge-run` — any dependency added during implementation (Gradle plugins, npm packages, pip packages, etc.)
+- `/forge-fix` — any dependency update as part of a bugfix
+- `fg-050-project-bootstrapper` — all scaffold dependencies
+- `fg-310-scaffolder` — all generated dependency declarations
+- `fg-140-deprecation-refresh` — when checking deprecation against current versions
+- Project-local plugin generation — MCP server packages, hook tool versions
+
+### 12.3 Implementation
+
+This rule is enforced in `shared/agent-defaults.md` as a shared constraint referenced by all agents:
+
+```
+## Version Resolution (MANDATORY)
+Never hardcode or assume dependency versions. Before writing any version number:
+1. Search the internet for the latest release of the package
+2. Check compatibility with detected project versions in state.json
+3. Use the latest compatible version
+Rationale: Training data versions are stale. Always resolve at runtime.
+```
+
+Agents that add dependencies must have `WebSearch` in their tools list or delegate version resolution to the orchestrator.
+
+---
+
+## 13. Development Process (Implementation Phase)
+
+### 13.1 Per-Phase Workflow
 
 ```
 1. Spec approved (this document)
@@ -850,7 +887,7 @@ For each automation category:
 5. Phase complete → next phase
 ```
 
-### 12.2 Commit Discipline
+### 13.2 Commit Discipline
 
 - Small logical commits throughout the loop
 - Conventional commits format: `type(scope): description`
@@ -870,7 +907,7 @@ For each automation category:
   chore: reset version to 1.0.0
   ```
 
-### 12.3 Platform Independence Checks
+### 13.3 Platform Independence Checks
 
 Every Ralph Loop iteration verifies:
 - Shell scripts use `#!/usr/bin/env bash`
@@ -880,7 +917,7 @@ Every Ralph Loop iteration verifies:
 - Docker commands work on Linux/macOS/WSL
 - `engine.sh` and hook scripts use POSIX-compatible constructs where possible
 
-### 12.4 Release Phase Branches
+### 13.4 Release Phase Branches
 
 | Phase | Version | Branch |
 |-------|---------|--------|
