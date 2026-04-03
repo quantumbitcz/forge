@@ -51,11 +51,11 @@ teardown() {
   assert_output "fix-login-redirect-bug-42"
 }
 
-@test "slugify: truncates to default max (50 chars)" {
-  run slugify "This is a very long title that should definitely be truncated at fifty"
+@test "slugify: truncates to default max (40 chars)" {
+  run slugify "This is a very long title that should definitely be truncated at forty chars"
   assert_success
   local result="$output"
-  [[ "${#result}" -le 50 ]]
+  [[ "${#result}" -le 40 ]]
 }
 
 @test "slugify: respects custom max_len" {
@@ -75,6 +75,18 @@ teardown() {
   run slugify "hello world"
   assert_success
   assert_output "hello-world"
+}
+
+@test "tracking: slugify rejects empty string" {
+  run slugify ""
+  assert_failure
+}
+
+@test "tracking: slugify handles unicode" {
+  run slugify "Ünïcödé tïtle"
+  assert_success
+  # Non-ASCII characters must be stripped; result must be non-empty and contain only a-z, 0-9, or hyphens
+  [[ "$output" =~ ^[a-z0-9-]+$ ]]
 }
 
 # ===========================================================================

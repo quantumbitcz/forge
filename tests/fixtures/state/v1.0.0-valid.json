@@ -93,6 +93,9 @@
   "scout_improvements": 0,
   "check_engine_skipped": 0,
   "exploration_degraded": false,
+  "ticket_id": null,
+  "branch_name": "",
+  "tracking_dir": null,
   "documentation": {
     "discovery_error": false,
     "generation_error": false,

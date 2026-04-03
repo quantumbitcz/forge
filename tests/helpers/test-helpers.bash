@@ -187,11 +187,11 @@ create_state_json() {
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v1.0.0 state object (matches state-schema.md v1.0.0)
+  # Base v1.1.0 state object (matches state-schema.md v1.1.0)
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "complete": false,
   "story_id": "TEST-001",
   "requirement": "Test requirement",
