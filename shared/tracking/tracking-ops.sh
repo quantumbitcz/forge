@@ -155,7 +155,7 @@ with open(sys.argv[1], 'w') as f:
 # Arguments:
 #   tracking_dir   — path to .forge/tracking/
 #   title          — human-readable title
-#   type           — feature | bug | chore | spike | refactor
+#   type           — feature | bugfix | refactor | chore
 #   priority       — critical | high | medium | low
 #   target_status  — backlog (default) | in-progress | review | done
 

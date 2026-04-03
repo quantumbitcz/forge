@@ -36,7 +36,7 @@ Each ticket is stored as a single Markdown file named `{ID}-{slug}.md`
 
 - `PREFIX` — project prefix from `counter.json` (default: `FG`)
 - `NNN` — zero-padded to 3 digits for IDs 1-999; no padding for 1000+
-- `slug` — kebab-case title, max 50 chars, special characters stripped
+- `slug` — kebab-case title, max 40 chars, special characters stripped
 
 ### Frontmatter
 
@@ -44,7 +44,7 @@ Each ticket is stored as a single Markdown file named `{ID}-{slug}.md`
 ---
 id: FG-007
 title: Add user authentication
-type: feature          # feature | bug | chore | spike | refactor
+type: feature          # feature | bugfix | refactor | chore
 status: backlog        # backlog | in-progress | review | done
 priority: medium       # critical | high | medium | low
 branch: ""             # git branch name (populated when work begins)

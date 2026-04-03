@@ -32,6 +32,16 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
+# 3b. Tracking fields documented
+# ---------------------------------------------------------------------------
+@test "state-schema: tracking fields ticket_id branch_name tracking_dir documented" {
+  for field in ticket_id branch_name tracking_dir; do
+    grep -q "$field" "$STATE_SCHEMA" \
+      || fail "Tracking field $field not found in state-schema.md"
+  done
+}
+
+# ---------------------------------------------------------------------------
 # 4. risk_level valid values documented: LOW, MEDIUM, HIGH
 # ---------------------------------------------------------------------------
 @test "state-schema: risk_level valid values LOW MEDIUM HIGH documented" {
