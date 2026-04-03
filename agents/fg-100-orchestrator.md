@@ -2,7 +2,7 @@
 name: fg-100-orchestrator
 description: |
   Autonomous pipeline orchestrator — coordinates the 10-stage development lifecycle.
-  Reads forge.local.md for project-specific config. Dispatches pl-* agents per stage.
+  Reads forge.local.md for project-specific config. Dispatches fg-* agents per stage.
   Manages .forge/ state for recovery. Only pauses when risk exceeds threshold or max retries exhausted.
 
   <example>
@@ -555,7 +555,7 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
 
 ```json
 {
-  "version": "2.0.0",
+  "version": "1.1.0",
   "complete": false,
   "story_id": "<kebab-case-from-requirement>",
   "requirement": "<original requirement verbatim>",
@@ -596,7 +596,8 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
     "playwright": { "available": false },
     "slack": { "available": false },
     "figma": { "available": false },
-    "context7": { "available": false }
+    "context7": { "available": false },
+    "neo4j": { "available": false, "last_build_sha": "", "node_count": 0 }
   },
   "linear": {
     "epic_id": "",
@@ -638,6 +639,9 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
   "dry_run": false,
   "cross_repo": {},
   "spec": null,
+  "ticket_id": null,
+  "branch_name": "",
+  "tracking_dir": null,
   "documentation": {
     "discovery_error": false,
     "last_discovery_timestamp": "",
@@ -752,6 +756,7 @@ At stage boundaries, update kanban ticket status. All operations use `shared/tra
 | SHIP — PR merged | `move_ticket` to `done/` |
 | PR rejected → re-enter IMPLEMENT | `move_ticket` back to `in-progress/` |
 | Abort / failure | `move_ticket` to `backlog/`, append Activity Log with abort reason |
+| LEARN complete | Verify ticket in `done/`, regenerate board |
 
 After every `move_ticket` call, also call `generate_board` to regenerate `board.md`.
 

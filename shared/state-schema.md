@@ -51,7 +51,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -194,7 +194,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. |
+| `version` | string | Yes | Schema version string (`"1.1.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.1.0 is an additive extension of v1.0.0 (new optional tracking fields). |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
