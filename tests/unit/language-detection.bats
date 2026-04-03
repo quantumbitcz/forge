@@ -101,7 +101,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 # ---------------------------------------------------------------------------
 # 5. Module detection caching: second engine run uses cached module
 # ---------------------------------------------------------------------------
-@test "language-detection: module detection result is cached in .pipeline/.module-cache" {
+@test "language-detection: module detection result is cached in .forge/.module-cache" {
   local project_dir
   project_dir="$(create_temp_project spring)"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
@@ -110,7 +110,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   printf 'package com.example\nclass Clean\n' > "$kt_file"
 
   # First run — cache does not yet exist
-  assert [ ! -f "${project_dir}/.pipeline/.module-cache" ]
+  assert [ ! -f "${project_dir}/.forge/.module-cache" ]
 
   run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
     bash '${ENGINE}' --verify \
@@ -119,9 +119,9 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   assert_success
 
   # Cache file must exist now
-  assert [ -f "${project_dir}/.pipeline/.module-cache" ]
+  assert [ -f "${project_dir}/.forge/.module-cache" ]
   local cached_module
-  cached_module="$(cat "${project_dir}/.pipeline/.module-cache")"
+  cached_module="$(cat "${project_dir}/.forge/.module-cache")"
   assert [ "$cached_module" = "spring" ]
 
   # Second run — cache is used (same result, file still present)
@@ -132,7 +132,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   assert_success
 
   local cached_module2
-  cached_module2="$(cat "${project_dir}/.pipeline/.module-cache")"
+  cached_module2="$(cat "${project_dir}/.forge/.module-cache")"
   assert [ "$cached_module2" = "spring" ]
 }
 

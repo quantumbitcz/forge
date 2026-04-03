@@ -9,7 +9,7 @@ You are the graph rebuilder. Your job is to wipe all project-derived nodes from 
 
 ## Container Name Resolution
 
-Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/dev-pipeline.local.md`. If not set, use default `pipeline-neo4j`. Use the resolved name in ALL `docker` commands below.
+Before starting, resolve the Neo4j container name: read `graph.neo4j_container_name` from `.claude/forge.local.md`. If not set, use default `forge-neo4j`. Use the resolved name in ALL `docker` commands below.
 
 ## Instructions
 
@@ -52,7 +52,7 @@ Delete all project-derived nodes and their relationships:
 
 ```bash
 echo "MATCH (n) WHERE n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:ProjectPackage OR n:ProjectDependency DETACH DELETE n" | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 - If the command exits non-zero: **ERROR** — display the error output. Do not proceed. The graph may be in a partial state — suggest running `/graph-init` to fully reinitialize.
@@ -61,7 +61,7 @@ echo "MATCH (n) WHERE n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:
 Also clear the stale build marker so the next step always runs:
 
 ```bash
-rm -f .pipeline/graph/.last-build-sha
+rm -f .forge/graph/.last-build-sha
 ```
 
 ---
@@ -72,14 +72,14 @@ Re-run the build script and pipe output to Neo4j:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root . | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
 - If the command exits non-zero: **ERROR** — display the error output and suggest checking that `build-project-graph.sh` is executable and that the project root is correct.
-- If successful: write the current commit SHA to `.pipeline/graph/.last-build-sha`:
+- If successful: write the current commit SHA to `.forge/graph/.last-build-sha`:
 
 ```bash
-git rev-parse HEAD > .pipeline/graph/.last-build-sha
+git rev-parse HEAD > .forge/graph/.last-build-sha
 ```
 
 ---
@@ -90,7 +90,7 @@ Query and display the updated node counts:
 
 ```bash
 echo "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY count DESC" | \
-  docker exec -i pipeline-neo4j cypher-shell -u neo4j -p pipeline-local --format plain
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain
 ```
 
 Present a summary:

@@ -25,7 +25,7 @@ When reporting errors, agents should structure them as:
 | CONTEXT_OVERFLOW | Agent context window approaching or exceeding token limit. Detected when agent output is truncated or agent reports token pressure. | Yes | resource-cleanup (reduce prompt scope, split task, compact history) |
 | STATE_CORRUPTION | state.json or checkpoint unreadable | Yes | state-reconstruction |
 | DEPENDENCY_MISSING | Required tool/binary not found | No | dependency-health |
-| CONFIG_INVALID | dev-pipeline.local.md malformed or missing required fields | No | none (user must fix) |
+| CONFIG_INVALID | forge.local.md malformed or missing required fields | No | none (user must fix) |
 | GIT_CONFLICT | Merge conflict or dirty working tree | No | resource-cleanup |
 | DISK_FULL | Insufficient disk space | No | resource-cleanup |
 | NETWORK_UNAVAILABLE | External service unreachable (GitHub, context7, Linear) | Maybe | transient-retry |
@@ -35,7 +35,7 @@ When reporting errors, agents should structure them as:
 | LOCK_FILE_CONFLICT | Lock file (yarn.lock, Cargo.lock) divergence or corruption | Yes | resource-cleanup |
 | FLAKY_TEST | Test passes on re-run after initial failure | Yes | transient-retry |
 | VERSION_MISMATCH | Required tool/runtime version not met (e.g., Java 8 found, Java 11+ required) | No | none (user must fix) |
-| DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `pl-140-deprecation-refresh` | N/A | none (inline handling: log WARNING in stage notes, do not block pipeline, do not invoke recovery engine). Retrospective tracks accumulation. |
+| DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `fg-140-deprecation-refresh` | N/A | none (inline handling: log WARNING in stage notes, do not block pipeline, do not invoke recovery engine). Retrospective tracks accumulation. |
 | WORKTREE_FAILURE | Worktree creation, branch collision, or stale worktree cleanup failed | Yes | resource-cleanup |
 | BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.5) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
 

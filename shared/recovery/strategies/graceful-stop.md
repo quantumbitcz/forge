@@ -35,11 +35,11 @@ Execute these steps in order. Each step is designed to be safe even if previous 
    - Add the triggering failure to `recovery.failures` array.
 
 2. **Write checkpoint:**
-   - Save `.pipeline/checkpoint-{storyId}.json` with current task progress.
+   - Save `.forge/checkpoint-{storyId}.json` with current task progress.
    - Include `tasks_completed`, `tasks_remaining`, `tasks_failed` lists.
 
 3. **Write stage notes:**
-   - Save `.pipeline/stage_{N}_notes_{storyId}.md` for the current stage with:
+   - Save `.forge/stage_{N}_notes_{storyId}.md` for the current stage with:
      - What was in progress when the stop occurred.
      - Error details.
      - Partial results available.
@@ -54,15 +54,15 @@ Execute these steps in order. Each step is designed to be safe even if previous 
 2. **If changes exist, commit to a temporary branch:**
    ```bash
    # Create WIP branch from current state
-   git checkout -b wip/pipeline-{storyId}-{timestamp}
+   git checkout -b wip/forge-{storyId}-{timestamp}
    git add -A
-   git commit -m "wip: pipeline partial work before graceful stop
+   git commit -m "wip: forge partial work before graceful stop
 
    Stage: {current_stage}
    Failure: {failure_category} — {failure_summary}
    Tasks completed: {N}/{total}
 
-   Resume with: /pipeline-run --from={current_stage_name} {original_requirement}"
+   Resume with: /forge-run --from={current_stage_name} {original_requirement}"
 
    # Return to original branch
    git checkout -
@@ -70,14 +70,14 @@ Execute these steps in order. Each step is designed to be safe even if previous 
 
 3. **If git operations fail** (e.g., merge conflicts): stash instead:
    ```bash
-   git stash push -m "pipeline-recovery: partial work from {storyId}"
+   git stash push -m "forge-recovery: partial work from {storyId}"
    ```
 
 ### 2.3 Clean Exit
 
 1. **Remove lock files** if any exist:
    ```bash
-   rm -f .pipeline/.lock
+   rm -f .forge/.lock
    ```
 
 2. **Ensure state files are written** (not in a half-written state).
@@ -106,19 +106,19 @@ Pipeline stopped: UNRECOVERABLE failure
 - Recovery attempts: [N] — [brief description of each attempt]
 
 ## Partial work preserved
-- Branch: wip/pipeline-{storyId}-{timestamp}
-  (or: Stash: pipeline-recovery: partial work from {storyId})
-- State: .pipeline/state.json (recovery-aware)
-- Checkpoint: .pipeline/checkpoint-{storyId}.json
+- Branch: wip/forge-{storyId}-{timestamp}
+  (or: Stash: forge-recovery: partial work from {storyId})
+- State: .forge/state.json (recovery-aware)
+- Checkpoint: .forge/checkpoint-{storyId}.json
 
 ## How to resume
 1. Fix the underlying issue: [specific suggestion based on failure]
-2. Run: /pipeline-run --from={stage} {requirement}
+2. Run: /forge-run --from={stage} {requirement}
    The pipeline will pick up from the last checkpoint.
 
 ## Alternative: Start fresh
-1. Delete .pipeline/ directory
-2. Run: /pipeline-run {requirement}
+1. Delete .forge/ directory
+2. Run: /forge-run {requirement}
 ```
 
 ---
@@ -137,8 +137,8 @@ Return to recovery engine:
 {
   "result": "ESCALATE",
   "details": "Graceful stop completed. State preserved.",
-  "wip_branch": "wip/pipeline-{storyId}-{timestamp}",
-  "resume_command": "/pipeline-run --from={stage} {requirement}",
+  "wip_branch": "wip/forge-{storyId}-{timestamp}",
+  "resume_command": "/forge-run --from={stage} {requirement}",
   "completed_stages": ["PREFLIGHT", "EXPLORE", "PLAN"],
   "failed_stage": "IMPLEMENT",
   "tasks_completed": 3,

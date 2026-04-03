@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Structural validation for the dev-pipeline plugin.
+# Structural validation for the forge plugin.
 # Zero dependencies beyond bash + jq.
 # Prints PASS/FAIL for each check. Exits 1 if any check fails.
 
@@ -32,7 +32,7 @@ check() {
 }
 
 echo ""
-echo "=== dev-pipeline structural validation ==="
+echo "=== forge structural validation ==="
 echo ""
 echo "--- AGENTS ---"
 
@@ -66,21 +66,21 @@ for f in "$ROOT/agents/"*.md; do
 done
 check "Agent name matches filename without .md" "$check2_fail"
 
-# Check 3: Pipeline agents (pl-* files) follow pl-{NNN}-{role} naming
+# Check 3: Pipeline agents (fg-* files) follow fg-{NNN}-{role} naming
 check3_fail=0
-for f in "$ROOT/agents/pl-"*.md; do
+for f in "$ROOT/agents/fg-"*.md; do
   name=$(basename "$f" .md)
-  if ! echo "$name" | grep -qE '^pl-[0-9]{3}-.+$'; then
+  if ! echo "$name" | grep -qE '^fg-[0-9]{3}-.+$'; then
     check3_fail=1; break
   fi
 done
-check "Pipeline agents follow pl-{NNN}-{role} naming" "$check3_fail"
+check "Pipeline agents follow fg-{NNN}-{role} naming" "$check3_fail"
 
-# Check 4: Cross-cutting review agents (non-pl-* agents) have tools list in frontmatter
+# Check 4: Cross-cutting review agents (non-fg-* agents) have tools list in frontmatter
 check4_fail=0
 for f in "$ROOT/agents/"*.md; do
   name=$(basename "$f" .md)
-  if echo "$name" | grep -qE '^pl-[0-9]{3}-'; then
+  if echo "$name" | grep -qE '^fg-[0-9]{3}-'; then
     continue
   fi
   has_tools=$(awk '/^---/{c++; next} c==1 && /^tools:/{found=1} c==2{exit} END{print found+0}' "$f")
@@ -140,25 +140,25 @@ for fw in "${FRAMEWORKS[@]}"; do
 done
 check "All conventions.md have Dos/Don'ts section" "$check7_fail"
 
-# Check 8: All pipeline-config-template.md have total_retries_max
+# Check 8: All forge-config-template.md have total_retries_max
 check8_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
-  f="$ROOT/modules/frameworks/$fw/pipeline-config-template.md"
+  f="$ROOT/modules/frameworks/$fw/forge-config-template.md"
   if ! grep -q "total_retries_max" "$f"; then
     check8_fail=1; break
   fi
 done
-check "All pipeline-config-template.md have total_retries_max" "$check8_fail"
+check "All forge-config-template.md have total_retries_max" "$check8_fail"
 
-# Check 9: All pipeline-config-template.md have oscillation_tolerance
+# Check 9: All forge-config-template.md have oscillation_tolerance
 check9_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
-  f="$ROOT/modules/frameworks/$fw/pipeline-config-template.md"
+  f="$ROOT/modules/frameworks/$fw/forge-config-template.md"
   if ! grep -q "oscillation_tolerance" "$f"; then
     check9_fail=1; break
   fi
 done
-check "All pipeline-config-template.md have oscillation_tolerance" "$check9_fail"
+check "All forge-config-template.md have oscillation_tolerance" "$check9_fail"
 
 # Check 10: All local-template.md have linear: section
 check10_fail=0
@@ -546,15 +546,15 @@ else
 fi
 check "Convergence engine exists with required sections" "$check33_fail"
 
-# Check 34: All pipeline-config-template.md have convergence: section
+# Check 34: All forge-config-template.md have convergence: section
 check34_fail=0
-for f in "$ROOT"/modules/frameworks/*/pipeline-config-template.md; do
+for f in "$ROOT"/modules/frameworks/*/forge-config-template.md; do
   if ! grep -q "convergence:" "$f"; then
-    echo "  FAIL: $(basename "$(dirname "$f")")/pipeline-config-template.md missing convergence section"
+    echo "  FAIL: $(basename "$(dirname "$f")")/forge-config-template.md missing convergence section"
     check34_fail=1
   fi
 done
-check "All pipeline config templates have convergence section" "$check34_fail"
+check "All forge config templates have convergence section" "$check34_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

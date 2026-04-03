@@ -32,10 +32,10 @@ Before resetting, preserve everything the agent has done so far:
    - Capture the list of files the agent has created or modified.
 
 2. **Save partial results to checkpoint:**
-   - Write `.pipeline/partial-{agent_name}-{timestamp}.json`:
+   - Write `.forge/partial-{agent_name}-{timestamp}.json`:
      ```json
      {
-       "agent": "pl-300-implementer",
+       "agent": "fg-300-implementer",
        "task": "task description",
        "files_modified": ["src/Foo.kt", "src/Bar.kt"],
        "files_created": ["src/Baz.kt"],
@@ -124,7 +124,7 @@ Return to recovery engine:
   "result": "RECOVERED | ESCALATE",
   "details": "Description of what happened and recovery action taken",
   "reset_count": 1,
-  "partial_results_ref": "recovery: partial results from pl-300-implementer",
+  "partial_results_ref": "recovery: partial results from fg-300-implementer",
   "scope_reduced": false,
   "files_preserved": ["src/Foo.kt", "src/Bar.kt"]
 }

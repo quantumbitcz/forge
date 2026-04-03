@@ -194,7 +194,7 @@ for f in "${PLUGIN_ROOT}"/agents/*.md; do
 
   # Determine role
   role="other"
-  if [[ "$agent_name" == "pl-100-orchestrator" ]]; then
+  if [[ "$agent_name" == "fg-100-orchestrator" ]]; then
     role="orchestrator"
   elif [[ "$agent_name" == *"-reviewer" ]]; then
     role="reviewer"
@@ -370,7 +370,7 @@ emit_blank
 # Step 12: Seed Marker (for idempotent import detection)
 # ============================================================================
 emit "// --- Seed Marker ---"
-emit "CREATE (:_SeedMarker {id: 'dev-pipeline-seed-v2'});"
+emit "CREATE (:_SeedMarker {id: 'forge-seed-v2'});"
 emit_blank
 
 # ============================================================================

@@ -103,8 +103,8 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 #!/usr/bin/env bash
 set -euo pipefail
 handle_skip() {
-  local skip_file=".pipeline/.check-engine-skipped"
-  if [ -d ".pipeline" ]; then
+  local skip_file=".forge/.check-engine-skipped"
+  if [ -d ".forge" ]; then
     local count=0
     if [ -f "\$skip_file" ]; then
       count=\$(cat "\$skip_file" 2>/dev/null || echo 0)
@@ -120,22 +120,22 @@ trap handle_skip ERR
 EOF
   chmod +x "$wrapper"
 
-  # Run from project_dir so .pipeline/ is the CWD .pipeline/
+  # Run from project_dir so .forge/ is the CWD .forge/
   run bash -c "cd '${project_dir}' && bash '${wrapper}'"
 
   assert_success
 
   # Skip counter should have been written
-  assert [ -f "${project_dir}/.pipeline/.check-engine-skipped" ]
+  assert [ -f "${project_dir}/.forge/.check-engine-skipped" ]
   local count
-  count="$(cat "${project_dir}/.pipeline/.check-engine-skipped")"
+  count="$(cat "${project_dir}/.forge/.check-engine-skipped")"
   assert [ "$count" -ge 1 ]
 
   # Run a second time — counter should increment
   run bash -c "cd '${project_dir}' && bash '${wrapper}'"
   assert_success
   local count2
-  count2="$(cat "${project_dir}/.pipeline/.check-engine-skipped")"
+  count2="$(cat "${project_dir}/.forge/.check-engine-skipped")"
   assert [ "$count2" -gt "$count" ]
 }
 
@@ -326,7 +326,7 @@ _resolve_component_wrapper() {
   mkdir -p "${project_dir}/fe/src"
 
   # Write a component cache: be=spring, fe=react
-  printf 'be=spring\nfe=react\n' > "${project_dir}/.pipeline/.component-cache"
+  printf 'be=spring\nfe=react\n' > "${project_dir}/.forge/.component-cache"
 
   local kt_file="${project_dir}/be/src/main/kotlin/Foo.kt"
   touch "$kt_file"
@@ -346,7 +346,7 @@ _resolve_component_wrapper() {
   mkdir -p "${project_dir}/be/adapter/src"
 
   # Two entries: be=spring and be/adapter=axum (more specific wins)
-  printf 'be=spring\nbe/adapter=axum\n' > "${project_dir}/.pipeline/.component-cache"
+  printf 'be=spring\nbe/adapter=axum\n' > "${project_dir}/.forge/.component-cache"
 
   local file="${project_dir}/be/adapter/src/Handler.kt"
   touch "$file"
@@ -364,7 +364,7 @@ _resolve_component_wrapper() {
   local project_dir
   project_dir="$(create_temp_project spring)"
 
-  printf 'be=spring\nfe=react\n' > "${project_dir}/.pipeline/.component-cache"
+  printf 'be=spring\nfe=react\n' > "${project_dir}/.forge/.component-cache"
 
   local root_file="${project_dir}/docker-compose.yml"
   touch "$root_file"
@@ -375,7 +375,7 @@ _resolve_component_wrapper() {
 }
 
 # ---------------------------------------------------------------------------
-# 17. resolve_component: dev-pipeline.local.md components: block
+# 17. resolve_component: forge.local.md components: block
 #     file under a component path resolves to that component's framework
 # ---------------------------------------------------------------------------
 @test "resolve_component: local.md components block — file under path returns framework" {
@@ -384,9 +384,9 @@ _resolve_component_wrapper() {
   mkdir -p "${project_dir}/be/src/main/kotlin"
   mkdir -p "${project_dir}/fe/src"
 
-  # Write a multi-component dev-pipeline.local.md (no component cache)
+  # Write a multi-component forge.local.md (no component cache)
   mkdir -p "${project_dir}/.claude"
-  cat > "${project_dir}/.claude/dev-pipeline.local.md" << 'CFG_EOF'
+  cat > "${project_dir}/.claude/forge.local.md" << 'CFG_EOF'
 ---
 components:
   backend:
@@ -407,7 +407,7 @@ CFG_EOF
 }
 
 # ---------------------------------------------------------------------------
-# 18. resolve_component: dev-pipeline.local.md components: block
+# 18. resolve_component: forge.local.md components: block
 #     file under the frontend component path resolves to react
 # ---------------------------------------------------------------------------
 @test "resolve_component: local.md components block — frontend file returns react framework" {
@@ -416,7 +416,7 @@ CFG_EOF
   mkdir -p "${project_dir}/fe/src/components"
 
   mkdir -p "${project_dir}/.claude"
-  cat > "${project_dir}/.claude/dev-pipeline.local.md" << 'CFG_EOF'
+  cat > "${project_dir}/.claude/forge.local.md" << 'CFG_EOF'
 ---
 components:
   backend:
@@ -437,7 +437,7 @@ CFG_EOF
 }
 
 # ---------------------------------------------------------------------------
-# 19. resolve_component: dev-pipeline.local.md without components: block
+# 19. resolve_component: forge.local.md without components: block
 #     falls back to detect_module() (single-component backward compat)
 # ---------------------------------------------------------------------------
 @test "resolve_component: no components block falls back to detect_module()" {
@@ -446,7 +446,7 @@ CFG_EOF
 
   # Single-component config (the existing format, no components: block)
   mkdir -p "${project_dir}/.claude"
-  cat > "${project_dir}/.claude/dev-pipeline.local.md" << 'CFG_EOF'
+  cat > "${project_dir}/.claude/forge.local.md" << 'CFG_EOF'
 ---
 module: spring
 framework: spring
@@ -468,7 +468,7 @@ CFG_EOF
 @test "resolve_component: no config at all — detect_module() still fires" {
   local project_dir
   project_dir="$(create_temp_project spring)"
-  # No .claude/dev-pipeline.local.md, no component cache
+  # No .claude/forge.local.md, no component cache
 
   local kt_file="${project_dir}/src/main/kotlin/Foo.kt"
   touch "$kt_file"
@@ -490,7 +490,7 @@ CFG_EOF
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   # Component cache mapping be/ to spring framework
-  printf 'be=spring\n' > "${project_dir}/.pipeline/.component-cache"
+  printf 'be=spring\n' > "${project_dir}/.forge/.component-cache"
 
   local kt_file="${project_dir}/be/src/main/kotlin/Bad.kt"
   printf 'package com.example\nval x = someValue!!\n' > "$kt_file"
@@ -516,7 +516,7 @@ CFG_EOF
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
   # Component cache: be=spring (root files have no matching entry)
-  printf 'be=spring\n' > "${project_dir}/.pipeline/.component-cache"
+  printf 'be=spring\n' > "${project_dir}/.forge/.component-cache"
 
   # A Kotlin file at root would be unusual but must not crash the engine
   local root_kt="${project_dir}/Build.kt"
@@ -541,7 +541,7 @@ CFG_EOF
   mkdir -p "${project_dir}/.claude"
 
   # Write config with tab-indented components block
-  cat > "${project_dir}/.claude/dev-pipeline.local.md" <<'YAML'
+  cat > "${project_dir}/.claude/forge.local.md" <<'YAML'
 ---
 components:
 	backend:
@@ -574,7 +574,7 @@ YAML
   mkdir -p "${project_dir}/.claude"
 
   # Write config with 4-space indented components block
-  cat > "${project_dir}/.claude/dev-pipeline.local.md" <<'YAML'
+  cat > "${project_dir}/.claude/forge.local.md" <<'YAML'
 ---
 components:
     backend:

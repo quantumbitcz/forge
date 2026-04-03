@@ -132,8 +132,8 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
     || fail "Migration mode not documented in stage-contract.md"
   grep -q "MIGRATING" "$STAGE_CONTRACT" \
     || fail "MIGRATING state not documented in migration mode"
-  grep -q "pl-160-migration-planner" "$STAGE_CONTRACT" \
-    || fail "pl-160-migration-planner not referenced in migration mode"
+  grep -q "fg-160-migration-planner" "$STAGE_CONTRACT" \
+    || fail "fg-160-migration-planner not referenced in migration mode"
 }
 
 # ---------------------------------------------------------------------------

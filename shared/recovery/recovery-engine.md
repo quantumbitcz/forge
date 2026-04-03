@@ -36,7 +36,7 @@ You receive a failure context JSON object:
 {
   "failure_id": "f-<uuid>",
   "stage": "IMPLEMENTING",
-  "agent": "pl-300-implementer",
+  "agent": "fg-300-implementer",
   "action": "Bash: ./gradlew build",
   "error_type": "TOOL_CRASH",
   "exit_code": 137,
@@ -148,8 +148,8 @@ An agent is stuck in a loop, producing malformed output, or making no progress.
 Pipeline state files are missing, invalid, or inconsistent.
 
 **Heuristics:**
-- `.pipeline/state.json` contains invalid JSON (parse error)
-- `.pipeline/state.json` is missing when it should exist (mid-pipeline)
+- `.forge/state.json` contains invalid JSON (parse error)
+- `.forge/state.json` is missing when it should exist (mid-pipeline)
 - `checkpoint-*.json` is invalid or references files that don't exist
 - `story_state` value is not one of the valid enum values
 - `state.json` and checkpoint disagree on current stage
@@ -213,7 +213,7 @@ For each failure:
 
 ## 5. State Updates
 
-After every recovery attempt, update `.pipeline/state.json`:
+After every recovery attempt, update `.forge/state.json`:
 
 ### 5.1 Recovery Record
 
@@ -224,7 +224,7 @@ Add an entry to `recovery.failures` array:
   "failure_id": "f-<uuid>",
   "timestamp": "2026-03-22T14:30:00Z",
   "stage": "IMPLEMENTING",
-  "agent": "pl-300-implementer",
+  "agent": "fg-300-implementer",
   "category": "TOOL_FAILURE",
   "strategy": "tool-diagnosis",
   "result": "RECOVERED",
@@ -334,10 +334,6 @@ When `total_weight >= 5.0` (90% of budget), escalate to user in stage notes: "Re
 ### Budget Exhaustion
 
 When `total_weight >= max_weight`, do not apply further strategies. Report `BUDGET_EXHAUSTED` error (see `error-taxonomy.md`). Escalate to user with a full budget report listing all applications and their weights.
-
-### Backward Compatibility
-
-`recovery_applied` is maintained as a derived view: `recovery_applied = recovery_budget.applications.map(a => a.strategy)`.
 
 ### Recovery Budget Schema
 

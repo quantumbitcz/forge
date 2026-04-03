@@ -25,7 +25,7 @@ Run the pipeline's check engine in full review mode across the entire project to
      "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh" --review --project-root "$PROJECT_ROOT" --files-changed "$PROJECT_ROOT/$f"
    done
    ```
-   If the engine script is not executable or not found: report "Check engine not available. Verify the dev-pipeline plugin is installed." and stop.
+   If the engine script is not executable or not found: report "Check engine not available. Verify the forge plugin is installed." and stop.
 
 4. **Parse findings:** The engine outputs pipe-delimited findings:
    ```
@@ -90,5 +90,5 @@ Run the pipeline's check engine in full review mode across the entire project to
 ## Important
 - Do NOT fix issues — only report them
 - This runs Layer 1 (patterns) + Layer 2 (linters) across ALL files, which may take longer than hook-mode
-- If you want to fix issues, run `/pipeline-run` or offer remediation options
-- Save the full report to `.pipeline/health-report.md` for reference
+- If you want to fix issues, run `/forge-run` or offer remediation options
+- Save the full report to `.forge/health-report.md` for reference

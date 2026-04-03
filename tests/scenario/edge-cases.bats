@@ -47,8 +47,8 @@ teardown() {
 # 4. Component cache handles empty cache file
 # ---------------------------------------------------------------------------
 @test "edge-case: engine handles empty component cache" {
-  mkdir -p "$TMPWORK/.pipeline"
-  touch "$TMPWORK/.pipeline/.component-cache"
+  mkdir -p "$TMPWORK/.forge"
+  touch "$TMPWORK/.forge/.component-cache"
 
   # Create a dummy source file
   echo "fun main() {}" > "$TMPWORK/test.kt"
@@ -61,8 +61,8 @@ teardown() {
 # 5. Component cache handles malformed entries
 # ---------------------------------------------------------------------------
 @test "edge-case: engine handles malformed component cache entries" {
-  mkdir -p "$TMPWORK/.pipeline"
-  printf '=component\nprefix=\n\n# comment line\nvalid=spring\n' > "$TMPWORK/.pipeline/.component-cache"
+  mkdir -p "$TMPWORK/.forge"
+  printf '=component\nprefix=\n\n# comment line\nvalid=spring\n' > "$TMPWORK/.forge/.component-cache"
 
   mkdir -p "$TMPWORK/valid"
   echo "fun main() {}" > "$TMPWORK/valid/test.kt"
@@ -96,5 +96,5 @@ teardown() {
 # ---------------------------------------------------------------------------
 @test "edge-case: platform.sh detects a known OS" {
   source "$PLUGIN_ROOT/shared/platform.sh"
-  [[ "$PIPELINE_OS" == "darwin" || "$PIPELINE_OS" == "linux" || "$PIPELINE_OS" == "windows" || "$PIPELINE_OS" == "unknown" ]]
+  [[ "$FORGE_OS" == "darwin" || "$FORGE_OS" == "linux" || "$FORGE_OS" == "windows" || "$FORGE_OS" == "unknown" ]]
 }

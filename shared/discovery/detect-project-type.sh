@@ -128,7 +128,7 @@ elif ($has_gradle_kts || $has_gradle) && \
 
 # Android mobile — maps to jetpack-compose (closest available module).
 # No separate "android" framework module exists; jetpack-compose covers modern Android dev.
-# pipeline-init presents this to the user for confirmation and allows override.
+# forge-init presents this to the user for confirmation and allows override.
 elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle.kts" 2>/dev/null; then
   type="mobile"
   framework="jetpack-compose"

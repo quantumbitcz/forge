@@ -84,7 +84,7 @@ case "$DEP" in
       echo "OK"
     elif curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; then
       echo "UNAVAILABLE: DNS resolution may be failing (raw IP works but github.com does not)"
-    elif case "$PIPELINE_OS" in
+    elif case "$FORGE_OS" in
            darwin)  ping -c 1 -t 3 8.8.8.8 ;;
            windows) ping -n 1 -w 3000 8.8.8.8 ;;
            *)       ping -c 1 -W 3 8.8.8.8 ;;
@@ -144,7 +144,7 @@ case "$DEP" in
   context7)
     # Quick probe — attempt to check if context7 MCP is responsive
     # This is a passive check; we can't call MCP from bash.
-    # The CONTEXT7_AVAILABLE env var is set by the orchestrator (pl-100) at PREFLIGHT
+    # The CONTEXT7_AVAILABLE env var is set by the orchestrator (fg-100) at PREFLIGHT
     # when MCP detection probes the context7 server. The orchestrator sets this to "1"
     # before spawning any subprocess that needs to know about MCP availability.
     # See: state.json.integrations.context7.available (authoritative source).
@@ -166,8 +166,8 @@ case "$DEP" in
       echo "UNAVAILABLE: Docker daemon is not running — cannot check Neo4j container"
       exit 0
     fi
-    # Container name: configurable via NEO4J_CONTAINER env var, default pipeline-neo4j
-    neo4j_container="${NEO4J_CONTAINER:-pipeline-neo4j}"
+    # Container name: configurable via NEO4J_CONTAINER env var, default forge-neo4j
+    neo4j_container="${NEO4J_CONTAINER:-forge-neo4j}"
     # Check if container is running
     container_status="$(docker inspect -f '{{.State.Status}}' "$neo4j_container" 2>/dev/null || true)"
     if [[ "$container_status" != "running" ]]; then

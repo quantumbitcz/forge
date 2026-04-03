@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-repo project discovery for dev-pipeline
+# Cross-repo project discovery for forge
 # Usage: discover-projects.sh <project-root> [--depth N]
 # Output: JSON array of discovered related projects
 
@@ -334,7 +334,7 @@ step3_ide_directories() {
   done
 
   # Platform-specific paths (skip irrelevant checks per OS)
-  if [[ "$PIPELINE_OS" == "windows" ]]; then
+  if [[ "$FORGE_OS" == "windows" ]]; then
     # Windows: Documents, Visual Studio, GitHub Desktop, drive roots
     for d in "$home/Documents/Projects" "$home/Documents/repos" \
              "$home/Documents/Visual Studio 2022/Projects" \
@@ -351,7 +351,7 @@ step3_ide_directories() {
     done
   fi
 
-  if [[ "$PIPELINE_OS" == "linux" ]]; then
+  if [[ "$FORGE_OS" == "linux" ]]; then
     # Linux: lowercase conventions common on Linux desktops
     for d in "$home/projects" "$home/dev" "$home/devel"; do
       [[ -d "$d" ]] && ide_dirs+=("$d")

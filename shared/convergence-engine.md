@@ -1,6 +1,6 @@
 # Convergence Engine
 
-This document defines the convergence-driven iteration engine that replaces hard-capped fix cycle loops with plateau detection. The orchestrator (`pl-100-orchestrator`) calls the convergence engine after every VERIFY or REVIEW dispatch to decide: **iterate again, or declare convergence?**
+This document defines the convergence-driven iteration engine that replaces hard-capped fix cycle loops with plateau detection. The orchestrator (`fg-100-orchestrator`) calls the convergence engine after every VERIFY or REVIEW dispatch to decide: **iterate again, or declare convergence?**
 
 The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a two-phase convergence loop targeting a perfect score of 100, stopping when the target is reached or the score plateaus.
 
@@ -29,11 +29,11 @@ State transitions:
 
 Key behaviors:
 
-- **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `pl-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
+- **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `fg-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
-- **Phase 1 inner caps:** Test failures use `max_test_cycles` (see algorithm ELSE branch). Build/lint failures use `max_fix_loops` from `implementation.max_fix_loops` config (default: 3). The global `max_iterations` cap is always checked first (takes precedence over inner caps). When tests fail, the convergence engine checks `total_iterations >= max_iterations`, then `phase_iterations >= max_test_cycles`. When build/lint fails (PHASE_A_FAILURE), the convergence engine checks `total_iterations >= max_iterations`, then `verify_fix_count >= max_fix_loops`. Build failures typically resolve in 1-2 attempts, but the inner cap prevents unbounded retries if they don't. `pl-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
-- **Phase 2 inner cap** is `max_review_cycles`, managed by `pl-400-quality-gate`. When convergence is active, `max_review_cycles` defaults to 1 per convergence iteration -- the convergence engine handles the outer loop.
+- **Phase 1 inner caps:** Test failures use `max_test_cycles` (see algorithm ELSE branch). Build/lint failures use `max_fix_loops` from `implementation.max_fix_loops` config (default: 3). The global `max_iterations` cap is always checked first (takes precedence over inner caps). When tests fail, the convergence engine checks `total_iterations >= max_iterations`, then `phase_iterations >= max_test_cycles`. When build/lint fails (PHASE_A_FAILURE), the convergence engine checks `total_iterations >= max_iterations`, then `verify_fix_count >= max_fix_loops`. Build failures typically resolve in 1-2 attempts, but the inner cap prevents unbounded retries if they don't. `fg-500-test-gate` manages `test_cycles` internally for its own bookkeeping. The convergence engine also tracks `total_iterations` across both phases.
+- **Phase 2 inner cap** is `max_review_cycles`, managed by `fg-400-quality-gate`. When convergence is active, `max_review_cycles` defaults to 1 per convergence iteration -- the convergence engine handles the outer loop.
 
 ## Input Contracts
 
@@ -157,7 +157,7 @@ The REGRESSING state and the score escalation ladder serve different purposes an
 
 ## Configuration
 
-New `convergence:` section in both `pipeline-config.md` and `dev-pipeline.local.md`:
+New `convergence:` section in both `forge-config.md` and `forge.local.md`:
 
 ```yaml
 convergence:
@@ -168,7 +168,7 @@ convergence:
   safety_gate: true        # Run VERIFY after Phase 2 to catch regressions
 ```
 
-**Parameter resolution:** `pipeline-config.md` > `dev-pipeline.local.md` > plugin defaults (values shown above).
+**Parameter resolution:** `forge-config.md` > `forge.local.md` > plugin defaults (values shown above).
 
 ## PREFLIGHT Constraints
 
@@ -188,11 +188,11 @@ The convergence engine reads from and interacts with existing pipeline configura
 
 | Existing Parameter | Location | Convergence Interaction |
 |--------------------|----------|------------------------|
-| `max_review_cycles` | `quality_gate:` in `pipeline-config.md` | Becomes Phase 2 inner cap per convergence iteration. Defaults to 1 when convergence is active -- the convergence engine handles the outer loop. |
-| `max_test_cycles` | `test_gate:` in `pipeline-config.md` | Stays as-is. Phase 1 inner cap, managed by `pl-500-test-gate`. |
-| `oscillation_tolerance` | `scoring:` in `pipeline-config.md` | Read from scoring section. **NOT** duplicated into `convergence:` config. Used by the perfection phase for regression detection. |
-| `implementation.max_fix_loops` | `pipeline-config.md` implementation section | Phase A (build/lint) inner cap. Prevents unbounded build/lint fix loops within VERIFY. Default: 3. |
-| `total_retries_max` | `pipeline-config.md` top-level | Still applies globally. Every convergence iteration increments `total_retries`. |
+| `max_review_cycles` | `quality_gate:` in `forge-config.md` | Becomes Phase 2 inner cap per convergence iteration. Defaults to 1 when convergence is active -- the convergence engine handles the outer loop. |
+| `max_test_cycles` | `test_gate:` in `forge-config.md` | Stays as-is. Phase 1 inner cap, managed by `fg-500-test-gate`. |
+| `oscillation_tolerance` | `scoring:` in `forge-config.md` | Read from scoring section. **NOT** duplicated into `convergence:` config. Used by the perfection phase for regression detection. |
+| `implementation.max_fix_loops` | `forge-config.md` implementation section | Phase A (build/lint) inner cap. Prevents unbounded build/lint fix loops within VERIFY. Default: 3. |
+| `total_retries_max` | `forge-config.md` top-level | Still applies globally. Every convergence iteration increments `total_retries`. |
 
 ## State Schema
 
@@ -250,11 +250,11 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 }
 ```
 
-**Relationship to existing counters:** `test_cycles` and `quality_cycles` still exist -- used by `pl-500` and `pl-400` internally. The convergence engine's `total_iterations` is the outer loop counter.
+**Relationship to existing counters:** `test_cycles` and `quality_cycles` still exist -- used by `fg-500` and `fg-400` internally. The convergence engine's `total_iterations` is the outer loop counter.
 
 ## Retrospective Auto-Tuning
 
-`pl-700-retrospective` can adjust convergence parameters based on historical patterns:
+`fg-700-retrospective` can adjust convergence parameters based on historical patterns:
 
 | Pattern | Adjustment |
 |---------|------------|
@@ -266,5 +266,5 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 **Constraints:**
 - Auto-tuning respects the PREFLIGHT constraint ranges (no parameter can be tuned outside its valid range).
 - At most one parameter is adjusted per run (prevent cascading changes).
-- Adjustments are logged in `pipeline-log.md` with rationale.
+- Adjustments are logged in `forge-log.md` with rationale.
 - `target_score` and `safety_gate` are never auto-tuned -- these are intentional project decisions.

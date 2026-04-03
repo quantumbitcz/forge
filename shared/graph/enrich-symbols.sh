@@ -18,7 +18,7 @@ fi
 #
 # Output: Cypher to stdout
 # Side effects:
-#   - Appends enriched file paths to .pipeline/graph/.enriched-files
+#   - Appends enriched file paths to .forge/graph/.enriched-files
 # ============================================================================
 
 PROJECT_ROOT=""
@@ -56,7 +56,7 @@ if [[ ${#FILES[@]} -eq 0 ]]; then
 fi
 
 # --- Ensure output directories ---
-GRAPH_DIR="${PROJECT_ROOT}/.pipeline/graph"
+GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 mkdir -p "$GRAPH_DIR"
 ENRICHED_FILE="${GRAPH_DIR}/.enriched-files"
 

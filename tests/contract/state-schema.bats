@@ -13,11 +13,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "2.0.0"
+# 2. Schema version is "1.0.0"
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 2.0.0 documented" {
-  grep -q '"version": "2.0.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "2.0.0" not found in state-schema.md'
+@test "state-schema: schema version 1.0.0 documented" {
+  grep -q '"version": "1.0.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.0.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
@@ -82,11 +82,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 9. v1.0.0 clean break documented: pipeline-reset required
+# 9. v1.0.0 clean break documented: forge-reset required
 # ---------------------------------------------------------------------------
-@test "state-schema: v1.0.0 clean break and pipeline-reset documented" {
-  grep -q "clean break\|pipeline-reset\|incompatible" "$STATE_SCHEMA" \
-    || fail "v1.0.0 clean break / pipeline-reset guidance not documented"
+@test "state-schema: v1.0.0 clean break and forge-reset documented" {
+  grep -q "clean break\|forge-reset\|incompatible" "$STATE_SCHEMA" \
+    || fail "v1.0.0 clean break / forge-reset guidance not documented"
 }
 
 # ---------------------------------------------------------------------------
@@ -164,34 +164,34 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# v2.0.0 fixture validation
+# v1.0.0 fixture validation
 # ---------------------------------------------------------------------------
-@test "state-schema: v2.0.0 fixture is valid JSON with correct version" {
-  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
-  [[ -f "$fixture" ]] || fail "v2.0.0 fixture not found"
-  jq -e '.version == "2.0.0"' "$fixture" >/dev/null || fail "v2.0.0 fixture has wrong version"
+@test "state-schema: v1.0.0 fixture is valid JSON with correct version" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v1.0.0-valid.json"
+  [[ -f "$fixture" ]] || fail "v1.0.0 fixture not found"
+  jq -e '.version == "1.0.0"' "$fixture" >/dev/null || fail "v1.0.0 fixture has wrong version"
 }
 
-@test "state-schema: v2.0.0 fixture has all required top-level fields" {
-  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+@test "state-schema: v1.0.0 fixture has all required top-level fields" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v1.0.0-valid.json"
   local fields=(version complete story_id story_state components active_component total_retries total_retries_max mode convergence)
   for field in "${fields[@]}"; do
-    jq -e "has(\"$field\")" "$fixture" >/dev/null || fail "v2.0.0 fixture missing required field: $field"
+    jq -e "has(\"$field\")" "$fixture" >/dev/null || fail "v1.0.0 fixture missing required field: $field"
   done
 }
 
-@test "state-schema: v2.0.0 fixture has feedback loop fields" {
-  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+@test "state-schema: v1.0.0 fixture has feedback loop fields" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v1.0.0-valid.json"
   jq -e 'has("feedback_classification")' "$fixture" >/dev/null \
-    || fail "v2.0.0 fixture missing feedback_classification"
+    || fail "v1.0.0 fixture missing feedback_classification"
   jq -e 'has("previous_feedback_classification")' "$fixture" >/dev/null \
-    || fail "v2.0.0 fixture missing previous_feedback_classification"
+    || fail "v1.0.0 fixture missing previous_feedback_classification"
   jq -e 'has("feedback_loop_count")' "$fixture" >/dev/null \
-    || fail "v2.0.0 fixture missing feedback_loop_count"
+    || fail "v1.0.0 fixture missing feedback_loop_count"
 }
 
-@test "state-schema: v2.0.0 fixture has proper integrations object structure" {
-  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v2.0.0-valid.json"
+@test "state-schema: v1.0.0 fixture has proper integrations object structure" {
+  local fixture="$PLUGIN_ROOT/tests/fixtures/state/v1.0.0-valid.json"
   jq -e '.integrations.linear | has("available")' "$fixture" >/dev/null \
     || fail "integrations.linear missing .available field (stale boolean schema?)"
   jq -e '.integrations.neo4j | has("available")' "$fixture" >/dev/null \

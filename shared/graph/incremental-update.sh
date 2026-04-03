@@ -12,7 +12,7 @@ set -euo pipefail
 #
 # Output: Cypher to stdout
 # Side effects:
-#   - Updates .pipeline/graph/.last-build-sha with current HEAD
+#   - Updates .forge/graph/.last-build-sha with current HEAD
 #   - May exec build-project-graph.sh for full rebuild if no prior build
 # ============================================================================
 
@@ -55,7 +55,7 @@ if [[ ! -d "$PROJECT_ROOT/.git" ]]; then
 fi
 
 # --- Ensure output directories ---
-GRAPH_DIR="${PROJECT_ROOT}/.pipeline/graph"
+GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 mkdir -p "$GRAPH_DIR"
 
 # --- Source file extensions (same as build-project-graph.sh) ---

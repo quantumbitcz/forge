@@ -11,9 +11,9 @@ Run security vulnerability scanners appropriate for the current module.
 ## What to do
 
 1. Verify the project is a git repository: run `git rev-parse --is-inside-work-tree`. If not: "Not a git repository."
-2. Read `.claude/dev-pipeline.local.md` for the `components` section (language, framework)
+2. Read `.claude/forge.local.md` for the `components` section (language, framework)
    - If the file doesn't exist: try to detect the module from project files (package.json, build.gradle.kts, Cargo.toml, go.mod, etc.)
-   - If detection also fails: "Could not detect project type. Run `/pipeline-init` to configure, or specify the framework manually."
+   - If detection also fails: "Could not detect project type. Run `/forge-init` to configure, or specify the framework manually."
 
 3. Run the appropriate scanner based on module:
 

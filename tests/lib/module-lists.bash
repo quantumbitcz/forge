@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared module list discovery for dev-pipeline tests.
+# Shared module list discovery for forge tests.
 # Reads module lists from disk instead of hardcoding them.
 # Provides minimum count guards to catch accidental deletions.
 #
@@ -63,7 +63,7 @@ for d in "$PLUGIN_ROOT"/modules/*/; do
 done
 
 # Required files per framework directory
-REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md pipeline-config-template.md rules-override.json known-deprecations.json)
+REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md forge-config-template.md rules-override.json known-deprecations.json)
 
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)

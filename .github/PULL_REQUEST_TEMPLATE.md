@@ -9,7 +9,7 @@
 ## Affected components
 
 <!-- Check all that apply -->
-- [ ] Pipeline agents (`agents/pl-*.md`)
+- [ ] Pipeline agents (`agents/fg-*.md`)
 - [ ] Review agents (`agents/*-reviewer.md`, `agents/*-verifier.md`)
 - [ ] Shared references (`shared/`)
 - [ ] Skills (`skills/`)

@@ -53,14 +53,14 @@ AGENTS_DIR="$PLUGIN_ROOT/agents"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Pipeline agents: name matches pl-{NNN}-{role} regex
+# 4. Pipeline agents: name matches fg-{NNN}-{role} regex
 # ---------------------------------------------------------------------------
-@test "agent-frontmatter: pipeline agent names match pl-NNN-role pattern" {
+@test "agent-frontmatter: pipeline agent names match fg-NNN-role pattern" {
   local failures=()
-  for agent_file in "$AGENTS_DIR"/pl-*.md; do
+  for agent_file in "$AGENTS_DIR"/fg-*.md; do
     local name_value
     name_value="$(grep -E '^name:' "$agent_file" | head -1 | sed 's/^name:[[:space:]]*//')"
-    if ! printf '%s' "$name_value" | grep -qE '^pl-[0-9]{3}-[a-z][a-z0-9-]+$'; then
+    if ! printf '%s' "$name_value" | grep -qE '^fg-[0-9]{3}-[a-z][a-z0-9-]+$'; then
       failures+=("$(basename "$agent_file"): name='$name_value'")
     fi
   done
@@ -96,8 +96,8 @@ AGENTS_DIR="$PLUGIN_ROOT/agents"
   for agent_file in "$AGENTS_DIR"/*.md; do
     local basename
     basename="$(basename "$agent_file" .md)"
-    # Skip pipeline agents (pl-*)
-    [[ "$basename" == pl-* ]] && continue
+    # Skip pipeline agents (fg-*)
+    [[ "$basename" == fg-* ]] && continue
     # This is a review/cross-cutting agent — must have tools:
     if ! grep -qE '^tools:' "$agent_file"; then
       failures+=("$basename")

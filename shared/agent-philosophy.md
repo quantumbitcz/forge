@@ -82,7 +82,7 @@ These principles are not aspirational. The pipeline enforces them through concre
 | Challenge Brief | Required in planner stage notes | Validator rejects if missing for non-trivial tasks |
 | Self-review checkpoint | Implementer, after GREEN phase | 30-second fresh eyes pass, documented in stage notes |
 | Devil's advocate pass | Quality gate, after all batches | Final "what are we missing?" scan before scoring |
-| Retrospective tracking | pl-700-retrospective | Tracks "times a better approach was found in review" — frequent triggers PREEMPT |
+| Retrospective tracking | fg-700-retrospective | Tracks "times a better approach was found in review" — frequent triggers PREEMPT |
 | APPROACH-* findings | New finding category | Review agents flag suboptimal approaches (INFO, -2 points) |
 
 Agents that consistently skip these steps produce patterns visible in retrospective data. The PREEMPT system will surface them into future runs as warnings.

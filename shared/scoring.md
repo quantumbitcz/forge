@@ -32,7 +32,7 @@ Every pipeline run starts at 100. Each finding deducts points based on its sever
 
 ## Scoring Customization
 
-The default formula and thresholds can be overridden per-project in `pipeline-config.md`:
+The default formula and thresholds can be overridden per-project in `forge-config.md`:
 
     scoring:
       critical_weight: 20
@@ -43,7 +43,7 @@ The default formula and thresholds can be overridden per-project in `pipeline-co
 
 ### Resolution Order
 
-1. `pipeline-config.md` scoring values (if present)
+1. `forge-config.md` scoring values (if present)
 2. Plugin defaults (the values in this document)
 
 ### Constraints
@@ -252,7 +252,7 @@ This prevents a scenario where one component steadily regresses while another im
 
 ### Oscillation Tolerance Configuration
 
-Configurable in `pipeline-config.md`:
+Configurable in `forge-config.md`:
 
     scoring:
       oscillation_tolerance: 5

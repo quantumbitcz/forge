@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared test helpers for dev-pipeline bats test suite.
+# Shared test helpers for forge bats test suite.
 # Load with: load '../helpers/test-helpers'  (from unit/, contract/, or scenario/)
 
 # ---------------------------------------------------------------------------
@@ -19,7 +19,7 @@ load "${PLUGIN_ROOT}/tests/lib/bats-assert/load"
 
 setup() {
   # Unique temp dir per test to avoid cross-test pollution
-  TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-dev-pipeline.XXXXXX")"
+  TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-forge.XXXXXX")"
 
   # Dedicated bin dir for mock executables; prepended to PATH
   MOCK_BIN="${TEST_TEMP}/mock-bin"
@@ -39,7 +39,7 @@ teardown() {
 # ---------------------------------------------------------------------------
 # create_temp_project <module>
 # Creates a minimal fake project directory whose layout triggers module
-# detection in engine.sh.  Runs git init and creates .pipeline/.
+# detection in engine.sh.  Runs git init and creates .forge/.
 # Prints the absolute project path to stdout.
 # ---------------------------------------------------------------------------
 create_temp_project() {
@@ -152,8 +152,8 @@ GRADLE
       ;;
   esac
 
-  # Every project gets a git repo and a .pipeline dir
-  mkdir -p "${project_dir}/.pipeline"
+  # Every project gets a git repo and a .forge dir
+  mkdir -p "${project_dir}/.forge"
   git -C "${project_dir}" init -q
   git -C "${project_dir}" config user.email "test@example.com"
   git -C "${project_dir}" config user.name "Test"
@@ -177,21 +177,21 @@ create_temp_file() {
 
 # ---------------------------------------------------------------------------
 # create_state_json [extra_json]
-# Creates .pipeline/state.json inside TEST_TEMP/project with base v2.0.0 fields.
+# Creates .forge/state.json inside TEST_TEMP/project with base v1.0.0 fields.
 # Optionally merges extra_json (a JSON object string) on top via python/jq.
 # Prints the absolute path to the created file.
 # ---------------------------------------------------------------------------
 create_state_json() {
   local extra_json="${1:-{\}}"
-  local state_dir="${TEST_TEMP}/project/.pipeline"
+  local state_dir="${TEST_TEMP}/project/.forge"
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v2.0.0 state object (matches state-schema.md v2.0.0)
+  # Base v1.0.0 state object (matches state-schema.md v1.0.0)
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "version": "2.0.0",
+  "version": "1.0.0",
   "complete": false,
   "story_id": "TEST-001",
   "requirement": "Test requirement",
@@ -256,7 +256,6 @@ create_state_json() {
     "wall_time_seconds": 0,
     "stages_completed": 0
   },
-  "recovery_applied": [],
   "recovery_budget": {
     "total_weight": 0.0,
     "max_weight": 5.5,

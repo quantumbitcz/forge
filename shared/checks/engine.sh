@@ -11,7 +11,7 @@ set -euo pipefail
 #   --review            REVIEW stage (Layer 1 + Layer 2; Layer 3 handled by agent dispatch)
 #
 # Multi-component routing:
-#   When .pipeline/.component-cache exists, the engine matches the file's
+#   When .forge/.component-cache exists, the engine matches the file's
 #   path prefix against the cache to load the correct rules-override.json
 #   for the owning component's framework.  Falls back to detect_module()
 #   for single-component projects (fully backward compatible).
@@ -20,8 +20,8 @@ set -euo pipefail
 _CURRENT_FILE=""
 
 handle_skip() {
-  local skip_file=".pipeline/.check-engine-skipped"
-  if [ -d ".pipeline" ]; then
+  local skip_file=".forge/.check-engine-skipped"
+  if [ -d ".forge" ]; then
     # Atomic increment: use flock if available, else mkdir-based lock
     if command -v flock &>/dev/null; then
       (
@@ -31,7 +31,7 @@ handle_skip() {
         echo $((count + 1)) > "$skip_file"
       ) 9>"${skip_file}.lock"
       # Lock file intentionally not removed — avoids TOCTOU race with concurrent flock callers.
-      # The file is in .pipeline/ (gitignored) so it is harmless to leave behind.
+      # The file is in .forge/ (gitignored) so it is harmless to leave behind.
     else
       local lock_dir="${skip_file}.lockdir"
       if mkdir "$lock_dir" 2>/dev/null; then
@@ -80,8 +80,8 @@ detect_language() {
 detect_module() {
   local project_root="$1"
   [[ -z "$project_root" ]] && return
-  local cache="$project_root/.pipeline/.module-cache"
-  local cfg="$project_root/.claude/dev-pipeline.local.md"
+  local cache="$project_root/.forge/.module-cache"
+  local cfg="$project_root/.claude/forge.local.md"
 
   if [[ -f "$cache" && -s "$cache" ]] && { [[ ! -f "$cfg" ]] || [[ "$cache" -nt "$cfg" ]]; }; then
     cat "$cache"; return
@@ -127,7 +127,7 @@ detect_module() {
   fi
 
   if [[ -n "$module" ]]; then
-    mkdir -p "$project_root/.pipeline"
+    mkdir -p "$project_root/.forge"
     echo "$module" > "$cache"
   fi
   echo "$module"
@@ -139,8 +139,8 @@ detect_module() {
 # file belongs to no component (e.g. root-level infra files).
 #
 # Resolution order:
-#   1. .pipeline/.component-cache  (path_prefix=component_name, one entry per line)
-#   2. Parse components: block in dev-pipeline.local.md
+#   1. .forge/.component-cache  (path_prefix=component_name, one entry per line)
+#   2. Parse components: block in forge.local.md
 #   3. Fall back to detect_module() — preserves single-component behavior
 #
 # Component cache format (written by the orchestrator at PREFLIGHT):
@@ -163,8 +163,8 @@ resolve_component() {
 
   [[ -z "$project_root" ]] && return
 
-  local cache_file="${project_root}/.pipeline/.component-cache"
-  local cfg="${project_root}/.claude/dev-pipeline.local.md"
+  local cache_file="${project_root}/.forge/.component-cache"
+  local cfg="${project_root}/.claude/forge.local.md"
 
   # --- 1. Fast path: component cache exists ---
   if [[ -f "$cache_file" ]]; then
@@ -203,7 +203,7 @@ resolve_component() {
     return
   fi
 
-  # --- 2. Parse components: block from dev-pipeline.local.md ---
+  # --- 2. Parse components: block from forge.local.md ---
   # Look for a multi-component config. The YAML block looks like:
   #   components:
   #     backend:
@@ -218,7 +218,7 @@ resolve_component() {
   # Indentation: expects 2-space for component names and 4-space for path/framework
   # fields. If non-standard indentation is detected, a WARNING is emitted to stderr
   # and the parser falls back to detect_module() (single-component mode).
-  # All pipeline-generated templates use 2-space indent.
+  # All forge-generated templates use 2-space indent.
   if [[ -f "$cfg" ]]; then
     local in_components=0
     local in_component_block=0
@@ -260,13 +260,13 @@ resolve_component() {
       # and only before we've entered a valid component block.
       if [[ $indent_warned -eq 0 && $in_component_block -eq 0 ]]; then
         if [[ "$line" =~ ^$'\t' ]]; then
-          echo "[check-engine] WARNING: Tab indentation detected in components: block of dev-pipeline.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /pipeline-init to regenerate config." >&2
+          echo "[check-engine] WARNING: Tab indentation detected in components: block of forge.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /forge-init to regenerate config." >&2
           indent_warned=1
           break  # Stop parsing — will fall through to detect_module()
         elif [[ "$line" =~ ^[[:space:]]{3,}[a-zA-Z_] ]]; then
           # 3+ leading spaces: this is NOT the expected 2-space indent for component names.
           # (2-space lines are caught by the component regex below, so reaching here means non-standard.)
-          echo "[check-engine] WARNING: Non-standard indentation detected in components: block of dev-pipeline.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /pipeline-init to regenerate config." >&2
+          echo "[check-engine] WARNING: Non-standard indentation detected in components: block of forge.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /forge-init to regenerate config." >&2
           indent_warned=1
           break  # Stop parsing — will fall through to detect_module()
         fi
@@ -344,7 +344,7 @@ run_layer1() {
     component="$(resolve_component "$file" "$project_root")"
     if [[ -n "$component" ]]; then
       # 1. Try per-component cached rules (generated by orchestrator at PREFLIGHT)
-      local rules_cache="${project_root}/.pipeline/.rules-cache-${component}.json"
+      local rules_cache="${project_root}/.forge/.rules-cache-${component}.json"
       if [[ -f "$rules_cache" ]]; then
         override="$rules_cache"
       # 2. Fallback: framework's rules-override.json (backward compat; in
@@ -426,9 +426,9 @@ mode_review() {
     run_layer2 "$f" "$PROJECT_ROOT"
   done
   # Layer 3 (agent intelligence) is handled by dedicated agent dispatch, not shell execution.
-  # - pl-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
+  # - fg-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
   # - version-compat-reviewer: dispatched during REVIEW via quality gate batches
-  # See agents/pl-140-deprecation-refresh.md and agents/version-compat-reviewer.md
+  # See agents/fg-140-deprecation-refresh.md and agents/version-compat-reviewer.md
 }
 
 # --- Main dispatch ---

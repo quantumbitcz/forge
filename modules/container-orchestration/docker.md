@@ -147,7 +147,7 @@ target/
 *.md
 docker-compose*.yml
 .env*
-.pipeline/
+.forge/
 ```
 
 ### BuildKit Features

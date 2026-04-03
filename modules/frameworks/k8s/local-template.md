@@ -84,8 +84,8 @@ linear:
 conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/conventions.md"
 conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
 conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/code-quality/"
-preempt_file: ".claude/pipeline-log.md"
-config_file: ".claude/pipeline-config.md"
+preempt_file: ".claude/forge-log.md"
+config_file: ".claude/forge-config.md"
 
 infra:
   max_verification_tier: 2

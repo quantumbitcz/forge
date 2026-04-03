@@ -86,7 +86,7 @@ When stderr indicates a configuration problem (invalid YAML, malformed JSON, mis
 2. **Read the file** and validate syntax:
    - JSON: attempt parse, report location of syntax error.
    - YAML: check for tab/space mixing, unclosed quotes, bad indentation.
-3. **If the file is a pipeline config** (`.pipeline/` or `.claude/`): attempt to regenerate from template.
+3. **If the file is a pipeline config** (`.forge/` or `.claude/`): attempt to regenerate from template.
 4. **If the file is a project config** (build.gradle, package.json, etc.): return `ESCALATE` — do not auto-edit project configuration.
 
 ---

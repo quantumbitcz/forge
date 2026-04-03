@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-platform detection helpers for dev-pipeline scripts.
+# Cross-platform detection helpers for forge scripts.
 # Source this file: source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 
 # ── OS Detection ─────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ detect_os() {
 }
 
 # Cache the result (called once per script)
-PIPELINE_OS="${PIPELINE_OS:-$(detect_os)}"
+FORGE_OS="${FORGE_OS:-$(detect_os)}"
 
 # ── Package Manager Suggestions ──────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ PIPELINE_OS="${PIPELINE_OS:-$(detect_os)}"
 # Usage: suggest_install "gh"  →  "brew install gh" / "sudo apt install gh" / etc.
 suggest_install() {
   local tool="$1"
-  case "$PIPELINE_OS" in
+  case "$FORGE_OS" in
     darwin)
       printf 'brew install %s' "$tool"
       ;;
@@ -90,7 +90,7 @@ is_wsl() {
 # ── Docker Start Suggestion ──────────────────────────────────────────────────
 
 suggest_docker_start() {
-  case "$PIPELINE_OS" in
+  case "$FORGE_OS" in
     darwin)  printf 'open -a Docker' ;;
     linux)   printf 'sudo systemctl start docker' ;;
     windows)
@@ -116,16 +116,16 @@ pipeline_tmpdir() {
   printf '%s' "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}"
 }
 
-# Creates a temp file with a dev-pipeline prefix.
+# Creates a temp file with a forge prefix.
 # Usage: tmpfile=$(pipeline_mktemp)
 pipeline_mktemp() {
-  mktemp "$(pipeline_tmpdir)/dev-pipeline.XXXXXX"
+  mktemp "$(pipeline_tmpdir)/forge.XXXXXX"
 }
 
-# Creates a temp directory with a dev-pipeline prefix.
+# Creates a temp directory with a forge prefix.
 # Usage: tmpdir=$(pipeline_mktempdir)
 pipeline_mktempdir() {
-  mktemp -d "$(pipeline_tmpdir)/dev-pipeline.XXXXXX"
+  mktemp -d "$(pipeline_tmpdir)/forge.XXXXXX"
 }
 
 # ── Path Normalisation ───────────────────────────────────────────────────────

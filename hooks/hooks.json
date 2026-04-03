@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pipeline-checkpoint.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/forge-checkpoint.sh",
             "timeout": 5
           }
         ]

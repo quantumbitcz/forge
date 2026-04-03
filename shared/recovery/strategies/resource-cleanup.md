@@ -1,11 +1,11 @@
 ---
 name: resource-cleanup
-description: Frees system resources (disk, memory, processes) and retries the failed action. Targets pipeline-managed caches and orphan processes only.
+description: Frees system resources (disk, memory, processes) and retries the failed action. Targets forge-managed caches and orphan processes only.
 ---
 
 # Resource Cleanup Strategy
 
-Handles failures caused by resource exhaustion: disk full, memory pressure, process limits, and token budget. Frees resources by cleaning pipeline-managed caches and killing orphan processes, then retries.
+Handles failures caused by resource exhaustion: disk full, memory pressure, process limits, and token budget. Frees resources by cleaning forge-managed caches and killing orphan processes, then retries.
 
 ---
 
@@ -17,7 +17,7 @@ Check current disk usage:
 
 ```bash
 df -h .
-du -sh .pipeline/ 2>/dev/null
+du -sh .forge/ 2>/dev/null
 du -sh build/ .gradle/ node_modules/.cache/ 2>/dev/null
 ```
 
@@ -27,9 +27,9 @@ Clean in this order, checking disk space after each step:
 
 | Priority | Target | Command | Typical Savings |
 |----------|--------|---------|-----------------|
-| 1 | Old pipeline reports | `find .pipeline/reports/ -name "*.md" -mtime +7 -delete` | Small |
-| 2 | Pipeline partial files | `rm -f .pipeline/partial-*.json` | Small |
-| 3 | Corrupt state backups | `rm -f .pipeline/*.corrupt.*` | Small |
+| 1 | Old pipeline reports | `find .forge/reports/ -name "*.md" -mtime +7 -delete` | Small |
+| 2 | Pipeline partial files | `rm -f .forge/partial-*.json` | Small |
+| 3 | Corrupt state backups | `rm -f .forge/*.corrupt.*` | Small |
 | 4 | Build caches | `rm -rf build/ .gradle/caches/ .gradle/build-cache/` | 100MB-1GB |
 | 5 | Node cache | `rm -rf node_modules/.cache/` | 50-500MB |
 | 6 | Kotlin incremental | `rm -rf build/kotlin/` | 50-200MB |
@@ -38,8 +38,8 @@ Clean in this order, checking disk space after each step:
 ### 1.3 Never Delete
 
 - Source code files
-- `.pipeline/state.json` (current state)
-- `.pipeline/checkpoint-*.json` (current checkpoints)
+- `.forge/state.json` (current state)
+- `.forge/checkpoint-*.json` (current checkpoints)
 - `node_modules/` (dependencies, not cache)
 - `.git/` contents
 - User configuration files
@@ -156,7 +156,7 @@ When `GIT_CONFLICT` errors are classified by the recovery engine:
    - Verify clean state: `git status --porcelain` returns empty
 
 2. **Worktree conflict (Stage 4/8):**
-   - If conflict is in `.pipeline/worktree`: remove and recreate worktree
+   - If conflict is in `.forge/worktree`: remove and recreate worktree
    - Re-run from the conflicting stage with fresh worktree
    - Log: "Worktree conflict recovered by recreating worktree"
 

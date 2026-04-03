@@ -106,7 +106,7 @@ get_agent_body() {
     body=$(get_agent_body "$agent_file")
 
     # Match active dispatch of a named skill (e.g., "dispatch claude-md-management:revise-claude-md")
-    # Exclude passive references like "dispatch the orchestrator" or "provided by the pipeline-run skill"
+    # Exclude passive references like "dispatch the orchestrator" or "provided by the forge-run skill"
     if echo "$body" | grep -qE "dispatch it with|invoke via.*Skill tool|dispatch.*revise-claude-md|dispatch.*claude-md-management"; then
       failures+=("$name: body references invoking skills but tools missing Skill")
     fi
@@ -120,7 +120,7 @@ get_agent_body() {
 # 4. Planning agents have EnterPlanMode/ExitPlanMode in tools list
 # ---------------------------------------------------------------------------
 @test "agent-tools: planning agents have EnterPlanMode and ExitPlanMode tools" {
-  local planning_agents=(pl-200-planner pl-010-shaper pl-160-migration-planner pl-050-project-bootstrapper)
+  local planning_agents=(fg-200-planner fg-010-shaper fg-160-migration-planner fg-050-project-bootstrapper)
   local failures=()
   for agent_name in "${planning_agents[@]}"; do
     local agent_file="$AGENTS_DIR/${agent_name}.md"

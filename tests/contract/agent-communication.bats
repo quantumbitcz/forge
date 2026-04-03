@@ -72,8 +72,8 @@ AGENT_COMM="$PLUGIN_ROOT/shared/agent-communication.md"
 @test "agent-communication: conditional agents table documented" {
   grep -q "Conditional Agents" "$AGENT_COMM" \
     || fail "Conditional Agents section not found"
-  grep -q "pl-320-frontend-polisher" "$AGENT_COMM" \
-    || fail "pl-320-frontend-polisher not listed in conditional agents"
+  grep -q "fg-320-frontend-polisher" "$AGENT_COMM" \
+    || fail "fg-320-frontend-polisher not listed in conditional agents"
 }
 
 # ---------------------------------------------------------------------------

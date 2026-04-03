@@ -1,6 +1,6 @@
 # Frontend Design Theory Guardrails
 
-Shared reference for all frontend agents (`pl-320-frontend-polisher`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-reviewer`). These are actionable design rules distilled from established theory — not textbook abstractions. Agents that CREATE (polisher) use these to guide implementation. Agents that EVALUATE (reviewers) use these as scoring criteria.
+Shared reference for all frontend agents (`fg-320-frontend-polisher`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-reviewer`). These are actionable design rules distilled from established theory — not textbook abstractions. Agents that CREATE (polisher) use these to guide implementation. Agents that EVALUATE (reviewers) use these as scoring criteria.
 
 ---
 

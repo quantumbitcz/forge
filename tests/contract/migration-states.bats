@@ -7,7 +7,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 MIGRATION_SKILL="$PLUGIN_ROOT/skills/migration/SKILL.md"
-MIGRATION_PLANNER="$PLUGIN_ROOT/agents/pl-160-migration-planner.md"
+MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 
 # ---------------------------------------------------------------------------
 # 1. All 4 migration states documented in state-schema
@@ -31,9 +31,9 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/pl-160-migration-planner.md"
 # ---------------------------------------------------------------------------
 # 3. Migration planner agent exists
 # ---------------------------------------------------------------------------
-@test "migration-states: pl-160-migration-planner agent exists" {
+@test "migration-states: fg-160-migration-planner agent exists" {
   [[ -f "$MIGRATION_PLANNER" ]] \
-    || fail "pl-160-migration-planner agent file not found"
+    || fail "fg-160-migration-planner agent file not found"
 }
 
 # ---------------------------------------------------------------------------
@@ -41,15 +41,15 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/pl-160-migration-planner.md"
 # ---------------------------------------------------------------------------
 @test "migration-states: migration planner has Agent tool" {
   grep -q "Agent" "$MIGRATION_PLANNER" \
-    || fail "pl-160-migration-planner missing Agent tool"
+    || fail "fg-160-migration-planner missing Agent tool"
 }
 
 # ---------------------------------------------------------------------------
 # 5. Migration skill exists and references planner
 # ---------------------------------------------------------------------------
-@test "migration-states: migration skill references pl-160-migration-planner" {
-  grep -q "pl-160-migration-planner" "$MIGRATION_SKILL" \
-    || fail "Migration skill does not reference pl-160-migration-planner"
+@test "migration-states: migration skill references fg-160-migration-planner" {
+  grep -q "fg-160-migration-planner" "$MIGRATION_SKILL" \
+    || fail "Migration skill does not reference fg-160-migration-planner"
 }
 
 # ---------------------------------------------------------------------------

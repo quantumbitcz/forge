@@ -98,7 +98,7 @@ Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
 ## Linear Tracking
 
-Quality gate (pl-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
+Quality gate (fg-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
 
 ---
 

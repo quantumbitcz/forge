@@ -4,7 +4,7 @@
 load '../helpers/test-helpers'
 
 @test "docs-scenario: discoverer agent has all required sections" {
-  local agent="$PLUGIN_ROOT/agents/pl-130-docs-discoverer.md"
+  local agent="$PLUGIN_ROOT/agents/fg-130-docs-discoverer.md"
   grep -q "Discovery Targets" "$agent" || fail "Missing Discovery Targets section"
   grep -q "Processing Pipeline" "$agent" || fail "Missing Processing Pipeline section"
   grep -q "Convention Drift\|Deferred Discovery\|content_hash" "$agent" || fail "Missing drift detection"
@@ -27,23 +27,23 @@ load '../helpers/test-helpers'
 }
 
 @test "docs-scenario: generator supports pipeline and standalone modes" {
-  local agent="$PLUGIN_ROOT/agents/pl-350-docs-generator.md"
+  local agent="$PLUGIN_ROOT/agents/fg-350-docs-generator.md"
   grep -qi "Pipeline Mode\|pipeline mode" "$agent" || fail "Missing pipeline mode"
   grep -qi "Standalone Mode\|standalone mode" "$agent" || fail "Missing standalone mode"
 }
 
 @test "docs-scenario: generator respects user-maintained fences" {
-  local agent="$PLUGIN_ROOT/agents/pl-350-docs-generator.md"
+  local agent="$PLUGIN_ROOT/agents/fg-350-docs-generator.md"
   grep -q "user-maintained" "$agent" || fail "Missing user-maintained fence handling"
 }
 
 @test "docs-scenario: generator writes to worktree in pipeline mode" {
-  local agent="$PLUGIN_ROOT/agents/pl-350-docs-generator.md"
+  local agent="$PLUGIN_ROOT/agents/fg-350-docs-generator.md"
   grep -qi "worktree" "$agent" || fail "Missing worktree awareness"
 }
 
 @test "docs-scenario: generator pipeline mode guardrails prevent runbook creation" {
-  local agent="$PLUGIN_ROOT/agents/pl-350-docs-generator.md"
+  local agent="$PLUGIN_ROOT/agents/fg-350-docs-generator.md"
   grep -qi "Never in Pipeline Mode\|never.*pipeline\|runbook.*standalone\|standalone.*only" "$agent" || fail "Missing pipeline mode guardrails"
 }
 
@@ -64,8 +64,8 @@ load '../helpers/test-helpers'
 
 @test "docs-scenario: ADR significance criteria documented" {
   local found=0
-  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/pl-350-docs-generator.md" && found=1
-  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/pl-100-orchestrator.md" && found=1
+  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/fg-350-docs-generator.md" && found=1
+  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" && found=1
   (( found > 0 )) || fail "ADR significance criteria not documented in generator or orchestrator"
 }
 

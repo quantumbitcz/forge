@@ -36,7 +36,7 @@ All project-specific config lives in the consuming repo's `.claude/` directory.
 
 ### Pipeline state is local
 
-- `.pipeline/` is gitignored and never committed.
+- `.forge/` is gitignored and never committed.
 - State files contain run metadata (story IDs, timestamps, scores) but no secrets.
 - Feedback files may contain user corrections -- these stay local.
 

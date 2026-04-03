@@ -12,9 +12,9 @@ set -euo pipefail
 #
 # Output: Cypher to stdout
 # Side effects:
-#   - Creates .pipeline/graph/ if needed
-#   - Writes git SHA to .pipeline/graph/.last-build-sha
-#   - Writes unresolved imports to .pipeline/graph/.unresolved-imports.log
+#   - Creates .forge/graph/ if needed
+#   - Writes git SHA to .forge/graph/.last-build-sha
+#   - Writes unresolved imports to .forge/graph/.unresolved-imports.log
 # ============================================================================
 
 # Requires Bash 4.0+ (uses associative arrays)
@@ -56,7 +56,7 @@ if [[ ! -d "$PROJECT_ROOT/.git" ]]; then
 fi
 
 # --- Ensure output directories ---
-GRAPH_DIR="${PROJECT_ROOT}/.pipeline/graph"
+GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 if ! mkdir -p "$GRAPH_DIR" 2>/dev/null; then
   echo "Error: Cannot create $GRAPH_DIR — check directory permissions" >&2
   exit 1
@@ -691,11 +691,11 @@ fi
 echo ""
 
 # ============================================================================
-# Step 6: Connect to plugin graph via dev-pipeline.local.md
+# Step 6: Connect to plugin graph via forge.local.md
 # ============================================================================
 
 echo "// --- Convention Connections ---"
-LOCAL_CONFIG="${PROJECT_ROOT}/.claude/dev-pipeline.local.md"
+LOCAL_CONFIG="${PROJECT_ROOT}/.claude/forge.local.md"
 if [[ -f "$LOCAL_CONFIG" ]]; then
   python3 -c "
 import re, sys
@@ -748,4 +748,4 @@ echo "$GIT_SHA" > "${GRAPH_DIR}/.last-build-sha"
 echo "// --- Metadata ---"
 echo "// Git SHA: ${GIT_SHA}"
 echo "// Files scanned: ${#ALL_FILES[@]}"
-echo "// Unresolved imports logged to: .pipeline/graph/.unresolved-imports.log"
+echo "// Unresolved imports logged to: .forge/graph/.unresolved-imports.log"

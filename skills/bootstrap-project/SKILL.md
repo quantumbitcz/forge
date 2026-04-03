@@ -11,7 +11,7 @@ You are a thin launcher. Your ONLY job is to dispatch the project bootstrapper a
 
 1. **Parse input**: The user's argument (everything after `/bootstrap-project`) is the project description -- a free-text string like "Kotlin Spring Boot REST API with PostgreSQL" or "React Vite frontend with shared component library".
 
-2. **Dispatch the bootstrapper**: Use the Agent tool to invoke `pl-050-project-bootstrapper` with the following prompt:
+2. **Dispatch the bootstrapper**: Use the Agent tool to invoke `fg-050-project-bootstrapper` with the following prompt:
 
    > Bootstrap a new project: `{user_input}`
 

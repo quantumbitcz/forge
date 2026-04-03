@@ -3,10 +3,10 @@
 
 load '../helpers/test-helpers'
 
-ORCHESTRATOR="$PLUGIN_ROOT/agents/pl-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
-QUALITY_GATE="$PLUGIN_ROOT/agents/pl-400-quality-gate.md"
-TEST_GATE="$PLUGIN_ROOT/agents/pl-500-test-gate.md"
+QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"
+TEST_GATE="$PLUGIN_ROOT/agents/fg-500-test-gate.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 
 # ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 @test "convergence-scenario: all 21 pipeline config templates have convergence section" {
   local count=0
   local missing=()
-  for f in "$PLUGIN_ROOT"/modules/frameworks/*/pipeline-config-template.md; do
+  for f in "$PLUGIN_ROOT"/modules/frameworks/*/forge-config-template.md; do
     if grep -q "convergence:" "$f"; then
       count=$((count + 1))
     else
@@ -98,9 +98,9 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 @test "convergence-scenario: config templates document all convergence parameters" {
   local params=(max_iterations plateau_threshold plateau_patience target_score safety_gate)
   # Check just one template — Task 8 ensures all 21 are identical
-  local template="$PLUGIN_ROOT/modules/frameworks/spring/pipeline-config-template.md"
+  local template="$PLUGIN_ROOT/modules/frameworks/spring/forge-config-template.md"
   for param in "${params[@]}"; do
     grep -q "$param" "$template" \
-      || fail "Parameter $param missing from spring pipeline-config-template.md"
+      || fail "Parameter $param missing from spring forge-config-template.md"
   done
 }

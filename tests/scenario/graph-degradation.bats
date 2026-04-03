@@ -45,7 +45,7 @@ teardown() { rm -rf "$TEST_TEMP"; }
   git -C "$proj" add .
   git -C "$proj" commit -q -m "init"
 
-  # No .pipeline/graph/.last-build-sha exists → script must not hard-fail
+  # No .forge/graph/.last-build-sha exists → script must not hard-fail
   run bash "$INCREMENTAL_UPDATE" --project-root "$proj"
 
   # Exit 0 is expected whether it falls back to a full build or emits a comment

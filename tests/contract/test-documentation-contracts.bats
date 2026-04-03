@@ -3,36 +3,36 @@
 
 load '../helpers/test-helpers'
 
-ORCHESTRATOR="$PLUGIN_ROOT/agents/pl-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
-VALIDATOR="$PLUGIN_ROOT/agents/pl-210-validator.md"
-QUALITY_GATE="$PLUGIN_ROOT/agents/pl-400-quality-gate.md"
+VALIDATOR="$PLUGIN_ROOT/agents/fg-210-validator.md"
+QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"
 GRAPH_SCHEMA="$PLUGIN_ROOT/shared/graph/schema.md"
 QUERY_PATTERNS="$PLUGIN_ROOT/shared/graph/query-patterns.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 SCORING="$PLUGIN_ROOT/shared/scoring.md"
 
-@test "docs-contract: orchestrator dispatches pl-130-docs-discoverer at PREFLIGHT" {
-  grep -q "pl-130-docs-discoverer" "$ORCHESTRATOR" || fail "Orchestrator does not reference pl-130-docs-discoverer"
+@test "docs-contract: orchestrator dispatches fg-130-docs-discoverer at PREFLIGHT" {
+  grep -q "fg-130-docs-discoverer" "$ORCHESTRATOR" || fail "Orchestrator does not reference fg-130-docs-discoverer"
 }
 
-@test "docs-contract: orchestrator dispatches pl-350-docs-generator at DOCUMENTING" {
-  grep -q "pl-350-docs-generator" "$ORCHESTRATOR" || fail "Orchestrator does not reference pl-350-docs-generator"
+@test "docs-contract: orchestrator dispatches fg-350-docs-generator at DOCUMENTING" {
+  grep -q "fg-350-docs-generator" "$ORCHESTRATOR" || fail "Orchestrator does not reference fg-350-docs-generator"
 }
 
-@test "docs-contract: stage contract Stage 0 includes pl-130-docs-discoverer" {
-  grep -q "pl-130-docs-discoverer" "$STAGE_CONTRACT" || fail "Stage contract Stage 0 does not include pl-130-docs-discoverer"
+@test "docs-contract: stage contract Stage 0 includes fg-130-docs-discoverer" {
+  grep -q "fg-130-docs-discoverer" "$STAGE_CONTRACT" || fail "Stage contract Stage 0 does not include fg-130-docs-discoverer"
 }
 
-@test "docs-contract: stage contract Stage 7 agent is pl-350-docs-generator" {
-  grep -q "pl-350-docs-generator" "$STAGE_CONTRACT" || fail "Stage contract Stage 7 does not reference pl-350-docs-generator"
+@test "docs-contract: stage contract Stage 7 agent is fg-350-docs-generator" {
+  grep -q "fg-350-docs-generator" "$STAGE_CONTRACT" || fail "Stage contract Stage 7 does not reference fg-350-docs-generator"
   local stage7_line
   stage7_line="$(grep "| 7 |" "$STAGE_CONTRACT")"
   [[ "$stage7_line" != *"| inline |"* ]] || fail "Stage 7 is still marked as inline"
 }
 
-@test "docs-contract: state schema version is 2.0.0" {
-  grep -q '"2.0.0"' "$STATE_SCHEMA" || fail "State schema version is not 2.0.0"
+@test "docs-contract: state schema version is 1.0.0" {
+  grep -q '"1.0.0"' "$STATE_SCHEMA" || fail "State schema version is not 1.0.0"
 }
 
 @test "docs-contract: state schema includes documentation field" {
@@ -100,7 +100,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
   grep -q "docs-index.json" "$STATE_SCHEMA" || fail "State schema does not document docs-index.json"
 }
 
-@test "docs-contract: pipeline-init templates include documentation config" {
+@test "docs-contract: forge-init templates include documentation config" {
   local missing=()
   for tmpl in "$PLUGIN_ROOT"/modules/frameworks/*/local-template.md; do
     grep -q "documentation:" "$tmpl" || missing+=("$(basename "$(dirname "$tmpl")")")

@@ -1,17 +1,17 @@
 #!/usr/bin/env bats
-# Scenario tests: pipeline-checkpoint.sh state management
+# Scenario tests: forge-checkpoint.sh state management
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/pipeline-checkpoint.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
 
 setup() {
   TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-checkpoint.XXXXXX")"
   MOCK_BIN="$TEST_TEMP/mock-bin"
   mkdir -p "$MOCK_BIN"
   export PATH="$MOCK_BIN:$PATH"
-  # Checkpoint hook reads .pipeline/state.json from CWD
-  mkdir -p "$TEST_TEMP/project/.pipeline"
+  # Checkpoint hook reads .forge/state.json from CWD
+  mkdir -p "$TEST_TEMP/project/.forge"
 }
 
 teardown() { rm -rf "$TEST_TEMP"; }
@@ -21,7 +21,7 @@ teardown() { rm -rf "$TEST_TEMP"; }
 # ---------------------------------------------------------------------------
 @test "checkpoint: valid state.json gets lastCheckpoint field set" {
   local proj="$TEST_TEMP/project"
-  local state="$proj/.pipeline/state.json"
+  local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"IMPLEMENTING"}\n' > "$state"
 
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
@@ -41,7 +41,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
 # ---------------------------------------------------------------------------
 @test "checkpoint: existing lastCheckpoint is overwritten" {
   local proj="$TEST_TEMP/project"
-  local state="$proj/.pipeline/state.json"
+  local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"VERIFYING","lastCheckpoint":"2000-01-01T00:00:00Z"}\n' > "$state"
 
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
@@ -58,7 +58,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
 # ---------------------------------------------------------------------------
 @test "checkpoint: missing state.json causes script to exit 0 cleanly" {
   local proj="$TEST_TEMP/project"
-  rm -f "$proj/.pipeline/state.json"
+  rm -f "$proj/.forge/state.json"
 
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
 
@@ -70,7 +70,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
 # ---------------------------------------------------------------------------
 @test "checkpoint: malformed JSON causes exit 0 without corrupting disk" {
   local proj="$TEST_TEMP/project"
-  local state="$proj/.pipeline/state.json"
+  local state="$proj/.forge/state.json"
   printf 'NOT VALID JSON { broken\n' > "$state"
 
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
@@ -84,7 +84,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
 # ---------------------------------------------------------------------------
 @test "checkpoint: lastCheckpoint is written in ISO 8601 UTC format (YYYY-MM-DDTHH:MM:SSZ)" {
   local proj="$TEST_TEMP/project"
-  local state="$proj/.pipeline/state.json"
+  local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"SHIPPING"}\n' > "$state"
 
   run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
