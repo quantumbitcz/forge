@@ -348,6 +348,7 @@ After version detection, optionally refresh the deprecation registries so downst
 **Condition:** Only dispatch if Context7 MCP is available (detected in 3.4) AND `detected_versions` contains at least one non-`"unknown"` version. Skip silently otherwise.
 
 Dispatch `fg-140-deprecation-refresh` with:
+// Wrap: TaskCreate("Dispatching fg-140-deprecation-refresh") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Refresh deprecation registries for this project.
@@ -480,6 +481,7 @@ After resolving all convention stacks, generate per-component rule caches for th
 ### 3.5c+ Documentation Discovery (dispatch fg-130-docs-discoverer)
 
 14. If `documentation.enabled` is `true` (default): dispatch `fg-130-docs-discoverer` with:
+    // Wrap: TaskCreate("Dispatching fg-130-docs-discoverer") → Agent dispatch → TaskUpdate(completed)
     - Project root path
     - Documentation config from `forge.local.md` `documentation:` section
     - Graph availability from `state.json.integrations.neo4j.available`
@@ -501,6 +503,7 @@ If `test_bootstrapper` is configured in `forge.local.md` and `test_bootstrapper.
 4. If coverage < threshold:
    - Log INFO: "Coverage {X}% below threshold {Y}% — dispatching test bootstrapper"
    - Dispatch `fg-150-test-bootstrapper` with: project root, target coverage, component convention stack
+     // Wrap: TaskCreate("Dispatching fg-150-test-bootstrapper") → Agent dispatch → TaskUpdate(completed)
    - Wait for bootstrapper to complete
    - Re-run coverage to verify improvement
    - Proceed to Stage 1 (EXPLORE) regardless of whether threshold was reached (bootstrapper does its best)
@@ -651,7 +654,34 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
 }
 ```
 
-### 3.9 Create Visual Task Tracker
+### 3.9 Create Worktree
+
+Skip if `--dry-run` (no worktree needed for read-only analysis).
+
+1. **Read git conventions** from `forge.local.md` `git:` section. If not present, use defaults from `shared/git-conventions.md`.
+2. **Determine branch type** from mode:
+   - Standard → `feat`
+   - Migration → `migrate`
+   - Bootstrap → `chore`
+3. **Resolve ticket ID** (ticket_source: auto):
+   a. If `--spec` provided and spec has a tracking ticket → use that ticket ID
+   b. If `--ticket` provided → use that ticket ID
+   c. If `.forge/tracking/counter.json` exists → create new ticket via `tracking-ops.sh create_ticket` with requirement as title, mode-derived type, and `medium` priority → use new ticket ID
+   d. If tracking not initialized → `ticket_id = null`, branch uses slug only
+4. **Build branch name** using `git.branch_template` from config (default: `{type}/{ticket}-{slug}`):
+   - `{type}` = branch type from step 2
+   - `{ticket}` = ticket ID from step 3 (omit segment if null)
+   - `{slug}` = slugified requirement title (max `git.slug_max_length`, default 40)
+5. **Clean stale worktree**: If `.forge/worktree` exists, ask user for confirmation, then `git worktree remove .forge/worktree --force`
+6. **Create worktree**: `git worktree add .forge/worktree -b {branch_name}`
+   - On branch collision: append epoch suffix (`{branch_name}-{epoch}`)
+7. **Update ticket** (if ticket exists):
+   - Set `branch` field to the branch name
+   - Move ticket to `in-progress/` if currently in `backlog/`
+   - Regenerate board via `tracking-ops.sh generate_board`
+8. **Store in state.json**: `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`)
+
+### 3.10 Create Visual Task Tracker
 
 Use `TaskCreate` to create one task per pipeline stage. This gives the user a real-time visual progress tracker with checkboxes that update as stages complete.
 
@@ -680,6 +710,51 @@ Mark Preflight as `in_progress` now (it was just completed inline). After Prefli
 
 Record run start: requirement summary, timestamp, domain area (inferred from requirement).
 
+### 3.11 Sub-Agent Dispatch Pattern
+
+Every `Agent` dispatch in the orchestrator MUST be wrapped with TaskCreate/TaskUpdate for user visibility:
+
+```
+sub_task_id = TaskCreate(
+  subject = "Dispatching fg-NNN-name",
+  description = "Running agent description",
+  activeForm = "Running fg-NNN-name"
+)
+TaskUpdate(taskId = sub_task_id, addBlockedBy = [current_stage_task_id])
+
+result = Agent(name = "fg-NNN-name", prompt = ...)
+
+TaskUpdate(taskId = sub_task_id, status = "completed")
+// If agent fails: TaskUpdate(taskId = sub_task_id, description = "Failed: {reason}")
+```
+
+**Subject format by context:**
+
+| Context | Subject |
+|---------|---------|
+| Named agent dispatch | `Dispatching fg-NNN-name` |
+| Inline orchestrator work | Descriptive: `Loading project config`, `Acquiring run lock`, `Resolving convention stack` |
+| Review batch | `Review batch {N}: {reviewer1}, {reviewer2}` |
+| Individual reviewer in batch | `Running architecture-reviewer` |
+| Convergence iteration | `Convergence iteration {N}/{max} (score: {prev} → {current})` |
+
+All sub-tasks use `addBlockedBy: [stage_task_id]` to create parent→child hierarchy.
+
+### 3.12 Kanban Status Transitions
+
+At stage boundaries, update kanban ticket status. All operations use `shared/tracking/tracking-ops.sh`. If `.forge/tracking/` does not exist or `state.json.ticket_id` is null, skip silently.
+
+| Orchestrator Event | Kanban Action |
+|-------------------|---------------|
+| PREFLIGHT complete, worktree created | `move_ticket` to `in-progress/` (done in §3.9) |
+| REVIEW stage entry | `move_ticket` to `review/` |
+| SHIP — PR created | `update_ticket_field` set `pr` to PR URL |
+| SHIP — PR merged | `move_ticket` to `done/` |
+| PR rejected → re-enter IMPLEMENT | `move_ticket` back to `in-progress/` |
+| Abort / failure | `move_ticket` to `backlog/`, append Activity Log with abort reason |
+
+After every `move_ticket` call, also call `generate_board` to regenerate `board.md`.
+
 ### Runtime Convention Lookup
 
 When any stage needs conventions for a specific file path:
@@ -695,6 +770,7 @@ When any stage needs conventions for a specific file path:
 **story_state:** `EXPLORING` | **TaskUpdate:** Mark "Stage 0: Preflight" → `completed`, Mark "Stage 1: Explore" → `in_progress`
 
 Dispatch exploration agents configured in `forge.local.md` under `explore_agents`. Default: `feature-dev:code-explorer` (primary) + `Explore` (secondary, subagent_type=Explore).
+// Wrap: TaskCreate("Dispatching explore agents") → Agent dispatches → TaskUpdate(completed)
 
 ### Agent 1: Primary Explorer
 
@@ -737,6 +813,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
 
 **If `mode == "migration"`:**
 1. Dispatch `fg-160-migration-planner` instead of `fg-200-planner`
+   // Wrap: TaskCreate("Dispatching fg-160-migration-planner") → Agent dispatch → TaskUpdate(completed)
 2. The migration planner uses its own state machine (MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY) — see `fg-160-migration-planner.md` for details
 3. The requirement has already been stripped of the `migrate:` / `migration:` prefix at PREFLIGHT
 
@@ -756,6 +833,7 @@ Proceed with the standard `fg-200-planner` dispatch below.
 ### Standard Planning (mode == "standard")
 
 Dispatch `fg-200-planner` with a **<2,000 token** prompt:
+// Wrap: TaskCreate("Dispatching fg-200-planner") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Create an implementation plan for: [requirement]
@@ -832,6 +910,7 @@ Mark Plan as completed.
 **story_state:** `VALIDATING` | **TaskUpdate:** Mark "Stage 2: Plan" → `completed`, Mark "Stage 3: Validate" → `in_progress`
 
 Dispatch `fg-210-validator` with a **<2,000 token** prompt:
+// Wrap: TaskCreate("Dispatching fg-210-validator") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Validate this implementation plan:
@@ -937,15 +1016,11 @@ git add -A && git commit -m "wip: pipeline checkpoint pre-implement" --allow-emp
 
 Record the SHA in `state.json.last_commit_sha`.
 
-### 7.1a Create Worktree
+### 7.1a Verify Worktree
 
-Create an isolated worktree for all implementation work (see section 20 for full policy):
+Verify worktree exists at `.forge/worktree`. If not (should not happen after PREFLIGHT), abort with error `WORKTREE_MISSING`.
 
-1. **Branch collision check:** `git branch --list pipeline/{story-id}`. If exists, append epoch suffix: `pipeline/{story-id}-{epoch}`.
-2. **Stale worktree check:** If `.forge/worktree` exists, remove it and log WARNING.
-3. **Create worktree:** `git worktree add .forge/worktree -b pipeline/{story-id}` (using collision-safe branch name).
-4. All subsequent implementation, scaffolding, and testing happens inside the worktree.
-5. Dispatched agents receive the worktree path as their working directory.
+All subsequent implementation, scaffolding, and testing happens inside the worktree. Dispatched agents receive the worktree path as their working directory.
 
 ### 7.2 Documentation Prefetch
 
@@ -960,10 +1035,12 @@ For each parallel group (sequential order, groups 1 -> 2 -> 3):
   For each task in the group (concurrent up to `implementation.parallel_threshold`):
 
   a. If `scaffolder_before_impl: true` in config: dispatch `fg-310-scaffolder` with task details, scaffolder patterns, conventions file path. Scaffolder generates boilerplate, types, TODO markers.
+     // Wrap: TaskCreate("Dispatching fg-310-scaffolder") → Agent dispatch → TaskUpdate(completed)
 
   b. Write tests (RED phase -- tests defining expected behavior, expected to fail).
 
   c. Dispatch `fg-300-implementer` with a **<2,000 token** prompt containing ONLY that task's details:
+     // Wrap: TaskCreate("Dispatching fg-300-implementer") → Agent dispatch → TaskUpdate(completed)
 
   ```
   Implement this task:
@@ -1054,6 +1131,7 @@ After `fg-300-implementer` completes a task for a frontend component, optionally
 3. `frontend_polish.enabled` is true in the component's config (default: true for frontend components)
 
 Dispatch `fg-320-frontend-polisher` with:
+// Wrap: TaskCreate("Dispatching fg-320-frontend-polisher") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Polish this frontend implementation:
@@ -1116,6 +1194,7 @@ Run in sequence using commands from config. Stop on first failure:
 ### Phase B: Test Gate (dispatch fg-500-test-gate)
 
 Dispatch `fg-500-test-gate` with config:
+// Wrap: TaskCreate("Dispatching fg-500-test-gate") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Run test suite and analyze results.
@@ -1174,6 +1253,8 @@ Each Phase 1 iteration increments both `convergence.total_iterations` and `total
 
 **story_state:** `REVIEWING` | **TaskUpdate:** Mark "Stage 5: Verify" → `completed`, Mark "Stage 6: Review" → `in_progress`
 
+**Kanban:** `move_ticket` to `review/` + `generate_board` (per §3.12).
+
 ### 9.0 Pre-Query Documentation Context
 
 Before dispatching `fg-400-quality-gate`:
@@ -1183,6 +1264,7 @@ Before dispatching `fg-400-quality-gate`:
 ### 9.1 Batch Dispatch
 
 Read `quality_gate` config. For each `batch_N` defined in config:
+// Wrap: TaskCreate("Review batch {N}: {agent1}, {agent2}") → per-agent TaskCreate → Agent dispatches → TaskUpdate(completed)
 1. Dispatch all agents in the batch **in parallel**
 2. Wait for batch completion before starting next batch
 3. Partial failure: proceed with available results, note coverage gap (see `shared/scoring.md`)
@@ -1297,6 +1379,7 @@ Mark Review as completed.
 **story_state:** `DOCUMENTING` | **TaskUpdate:** Mark "Stage 6: Review" → `completed`, Mark "Stage 7: Docs" → `in_progress`
 
 Dispatch `fg-350-docs-generator` with:
+// Wrap: TaskCreate("Dispatching fg-350-docs-generator") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Changed files: [list from implementation checkpoints]
@@ -1332,6 +1415,7 @@ Mark Docs as completed.
 **story_state:** `SHIPPING` | **TaskUpdate:** Mark "Stage 7: Docs" → `completed`, Mark "Stage 8: Ship" → `in_progress`
 
 Dispatch `fg-600-pr-builder` with:
+// Wrap: TaskCreate("Dispatching fg-600-pr-builder") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Create branch, commit, and PR for this pipeline run.
@@ -1351,6 +1435,8 @@ Rules:
 ```
 
 Present PR to user with summary of work, quality score, test results.
+
+**Kanban:** After PR creation, `update_ticket_field` set `pr` to PR URL + `generate_board` (per §3.12).
 
 ### Merge Conflict Handling
 
@@ -1380,6 +1466,7 @@ If `preview.enabled` is `true` in `forge.local.md` and the PR was created succes
 
 1. Wait for preview URL to become available (from CI/CD webhook or `preview.url_pattern` config)
 2. Dispatch `fg-650-preview-validator` with: PR number, preview URL, smoke test routes, Lighthouse thresholds, Playwright test paths
+   // Wrap: TaskCreate("Dispatching fg-650-preview-validator") → Agent dispatch → TaskUpdate(completed)
 3. fg-650 posts results as a PR comment (smoke tests, Lighthouse audit, visual regression, E2E)
 4. **Gating behavior** based on `preview.block_merge` config (default: `false`):
    - If `block_merge: false` (default): verdict is advisory only. FAIL → add `preview-failed` label, include findings in user presentation, but proceed to user response.
@@ -1401,8 +1488,8 @@ If no infrastructure components are configured: skip infrastructure verification
 
 ### User Response
 
-- **Approval** -> proceed to LEARN (Stage 9)
-- **Feedback/Rejection** -> dispatch `fg-710-feedback-capture` to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `fg-710-feedback-capture`):
+- **Approval** -> **Kanban:** `move_ticket` to `done/` + `generate_board` (per §3.12). Proceed to LEARN (Stage 9).
+- **Feedback/Rejection** -> **Kanban:** `move_ticket` back to `in-progress/` + `generate_board` (per §3.12). Dispatch `fg-710-feedback-capture` to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `fg-710-feedback-capture`):
 
   **Feedback loop detection** (before re-entering any stage):
   1. Read the new `feedback_classification` from `state.json` (set by `fg-710-feedback-capture`).
@@ -1433,6 +1520,7 @@ Mark Ship as completed.
 **story_state:** `LEARNING` | **TaskUpdate:** Mark "Stage 8: Ship" → `completed`, Mark "Stage 9: Learn" → `in_progress`
 
 Dispatch `fg-700-retrospective` with a **<2,000 token** summary:
+// Wrap: TaskCreate("Dispatching fg-700-retrospective") → Agent dispatch → TaskUpdate(completed)
 
 ```
 Analyze this pipeline run and update forge-log.md and forge-config.md.
@@ -1469,6 +1557,7 @@ After retrospective completes, update `state.json`: `complete` -> `true`.
 After `fg-700-retrospective` completes:
 
 1. Dispatch `fg-720-recap` with:
+   // Wrap: TaskCreate("Dispatching fg-720-recap") → Agent dispatch → TaskUpdate(completed)
    - All stage note paths
    - `state.json` path
    - Quality gate report path
@@ -1778,13 +1867,20 @@ Module dependency is determined by config ordering — modules listed earlier ar
 
 All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline.
 
-### Creation (Stage 4 entry)
+### Creation (Stage 0 — PREFLIGHT, §3.9)
 
-1. First: create git checkpoint in main tree — `git add -A && git commit -m 'wip: pipeline checkpoint pre-implement'`
-2. Branch collision check: run `git branch --list pipeline/{story-id}`. If the branch already exists, append epoch: `pipeline/{story-id}-{epoch}` (e.g., `pipeline/add-comments-1711234567`).
-3. Then: create worktree — `git worktree add .forge/worktree -b pipeline/{story-id}` (using the collision-safe branch name)
-4. All subsequent implementation, scaffolding, and testing happens inside the worktree
-5. Dispatched agents receive the worktree path as their working directory
+Worktree is created at PREFLIGHT after state initialization (skip if `--dry-run`):
+
+1. Read git conventions from `forge.local.md` `git:` section (defaults from `shared/git-conventions.md`).
+2. Determine branch type from mode (feat/migrate/chore).
+3. Resolve ticket ID from spec, `--ticket` flag, or kanban tracking system.
+4. Build branch name using `git.branch_template` (default: `{type}/{ticket}-{slug}`).
+5. Branch collision check: append epoch suffix on collision.
+6. Create worktree: `git worktree add .forge/worktree -b {branch_name}`
+7. All subsequent implementation, scaffolding, and testing happens inside the worktree.
+8. Dispatched agents receive the worktree path as their working directory.
+
+Stage 4 (IMPLEMENT) verifies the worktree exists — it does NOT create it.
 
 ### Merge (Stage 8 — SHIP)
 
