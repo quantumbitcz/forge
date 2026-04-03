@@ -367,3 +367,11 @@ assert_no_findings() {
     fail "Expected no findings but got output: ${output}"
   fi
 }
+
+# --- Tracking helpers ---
+
+setup_tracking() {
+  local forge_dir="$1"
+  mkdir -p "$forge_dir/tracking/backlog" "$forge_dir/tracking/in-progress" "$forge_dir/tracking/review" "$forge_dir/tracking/done"
+  echo '{"next": 1, "prefix": "FG"}' > "$forge_dir/tracking/counter.json"
+}
