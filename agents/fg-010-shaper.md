@@ -179,10 +179,35 @@ After completing the dialogue, save the spec to `.forge/specs/{feature-name}.md`
 
 Use the feature title to derive the filename: lowercase, spaces to hyphens, strip special characters. Example: "Add notification system" → `notification-system.md`.
 
+### Create Tracking Ticket
+
+After saving the spec, create a kanban ticket if tracking is initialized:
+
+1. Check if `.forge/tracking/counter.json` exists
+2. **If tracking initialized:**
+   - Source `shared/tracking/tracking-ops.sh`
+   - `id = create_ticket(tracking_dir, feature_title, "feature", "medium")`
+   - `update_ticket_field(tracking_dir, id, "spec", spec_path)` — link to the saved spec
+   - `generate_board(tracking_dir)` — regenerate board
+   - Note the ticket ID for the user message
+3. **If tracking NOT initialized:**
+   - Skip ticket creation
+   - Optionally note: "Tip: Run `/forge-init` to enable kanban tracking."
+
 ### Tell the User
 
-After saving:
+After saving (and optionally creating a ticket):
 
+**If ticket created:**
+```
+Spec saved to .forge/specs/{feature-name}.md
+Ticket {id} created in .forge/tracking/backlog/
+
+To execute: /forge-run --spec .forge/specs/{feature-name}.md
+To review first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
+```
+
+**If no tracking:**
 ```
 Spec saved to .forge/specs/{feature-name}.md
 
@@ -194,7 +219,10 @@ To review first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
 
 If the Linear MCP is available (check by attempting a lightweight Linear tool call), offer to create an Epic with the stories as child issues. Ask the user before creating — do not create tickets silently.
 
-If the user confirms: create the Epic, create one Issue per story with the acceptance criteria in the description, and record the Epic ID in the spec under a `## Linear` section.
+If the user confirms:
+1. Create Epic, create one Issue per story with the acceptance criteria in the description
+2. Record Epic ID in the spec under a `## Linear` section
+3. If tracking ticket exists: `update_ticket_field(tracking_dir, id, "linear_id", epic_id)`
 
 ---
 
