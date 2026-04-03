@@ -557,6 +557,44 @@ done
 check "All forge config templates have convergence section" "$check34_fail"
 
 echo ""
+echo "--- TRACKING ---"
+
+# Check: tracking-ops.sh exists and is executable
+check_tracking_ops_fail=0
+if [ ! -x "$ROOT/shared/tracking/tracking-ops.sh" ]; then
+  check_tracking_ops_fail=1
+fi
+check "tracking-ops.sh exists and is executable" "$check_tracking_ops_fail"
+
+# Check: tracking-schema.md exists
+check_tracking_schema_fail=0
+if [ ! -f "$ROOT/shared/tracking/tracking-schema.md" ]; then
+  check_tracking_schema_fail=1
+fi
+check "tracking-schema.md exists" "$check_tracking_schema_fail"
+
+# Check: git-conventions.md exists
+check_git_conventions_fail=0
+if [ ! -f "$ROOT/shared/git-conventions.md" ]; then
+  check_git_conventions_fail=1
+fi
+check "git-conventions.md exists" "$check_git_conventions_fail"
+
+# Check: All local-template.md have git: section
+check_git_section_fail=0
+git_count=0
+git_total=0
+for tmpl in "$ROOT"/modules/frameworks/*/local-template.md; do
+  git_total=$((git_total + 1))
+  grep -q "^git:" "$tmpl" 2>/dev/null && git_count=$((git_count + 1)) || true
+done
+if [ "$git_count" -ne "$git_total" ] || [ "$git_total" -eq 0 ]; then
+  check_git_section_fail=1
+  echo "    DETAIL: $git_count/$git_total local-template.md files have git: section"
+fi
+check "All local-template.md have git: section ($git_count/$git_total)" "$check_git_section_fail"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
 
