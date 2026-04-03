@@ -164,6 +164,9 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "dry_run": false,
   "cross_repo": {},
   "spec": null,
+  "ticket_id": null,
+  "branch_name": "",
+  "tracking_dir": null,
   "documentation": {
     "discovery_error": false,
     "last_discovery_timestamp": "",
@@ -260,6 +263,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
 | `documentation.generation_error` | boolean | Yes | `true` if `fg-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
 | `exploration_degraded` | boolean | Yes | `true` if all exploration agents timed out or failed during EXPLORE stage. Default: `false`. When true, the planner operates with reduced codebase context. |
+
+### Tracking Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ticket_id` | string or null | Kanban ticket ID (e.g., `FG-001`). Null if tracking not initialized. Set at PREFLIGHT. |
+| `branch_name` | string | Full branch name (e.g., `feat/FG-001-user-notifications`). Set at PREFLIGHT when worktree is created. |
+| `tracking_dir` | string or null | Path to tracking directory (e.g., `.forge/tracking`). Null if tracking not initialized. |
+
+These fields are set during PREFLIGHT (Stage 0) when the worktree is created (§3.9 of `fg-100-orchestrator.md`). They remain constant for the duration of the run.
 
 ### cross_repo (object, optional)
 
@@ -389,7 +402,7 @@ Example: `"active_component": "backend"`
 
 The following fields are required in every v1.0.0 state.json:
 
-`version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`
+`version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`, `branch_name`
 
 All other fields in the Field Reference table marked "Yes" are also required; the list above is the minimum set the recovery engine validates on load.
 
