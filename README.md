@@ -351,7 +351,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 ```
 forge/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.0.0)
+    plugin.json                         # Plugin manifest (v1.1.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 32 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
@@ -415,7 +415,7 @@ forge/
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.0.0
+    state-schema.md                     # State schema v1.1.0
     checks/                             # 3-layer generalized check engine
       engine.sh                         #   Main engine script (--hook, --verify, --review modes)
       test-engine.sh                    #   Engine test harness

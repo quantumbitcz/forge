@@ -51,7 +51,7 @@ Users interact via `/forge-run`, `/forge-init`, `/bootstrap-project`, `/deploy`,
 
 ### State is local and gitignored
 
-All pipeline state lives in `.forge/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.0.0).
+All pipeline state lives in `.forge/` in the consuming project, never in this repo. See `shared/state-schema.md` for the full schema (currently v1.1.0).
 
 ## Making Changes
 

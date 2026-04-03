@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.0.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.1.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -63,7 +63,7 @@ This is a documentation-only plugin (no build step). To test changes:
 | Pipeline flow      | `shared/stage-contract.md` (10 stages, entry/exit conditions)     |
 | Orchestrator logic | `agents/fg-100-orchestrator.md` (state machine, dispatch rules)   |
 | Quality scoring    | `shared/scoring.md` (formula, verdicts, thresholds)               |
-| State persistence  | `shared/state-schema.md` (v1.0.0 JSON schema)                    |
+| State persistence  | `shared/state-schema.md` (v1.1.0 JSON schema)                    |
 | Error handling     | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design       | `shared/agent-philosophy.md` + `shared/agent-communication.md`    |
 | Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
@@ -302,7 +302,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 
 ## Plugin distribution (`.claude-plugin/`)
 
-- `plugin.json` — manifest (v1.0.0). `marketplace.json` — catalog for `quantumbitcz`.
+- `plugin.json` — manifest (v1.1.0). `marketplace.json` — catalog for `quantumbitcz`.
 - Hooks in `hooks/hooks.json` only (NOT in plugin.json).
 - Install: `/plugin marketplace add quantumbitcz/forge` then `/plugin install forge@quantumbitcz`.
 
