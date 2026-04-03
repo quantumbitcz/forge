@@ -69,6 +69,8 @@ This is a documentation-only plugin (no build step). To test changes:
 | Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
 | Token management   | `shared/agent-defaults.md` (shared constraints) + `shared/logging-rules.md` (cross-cutting logging) |
 | Convergence loop | `shared/convergence-engine.md` (two-phase iteration, plateau detection) |
+| Kanban tracking  | `shared/tracking/tracking-schema.md` (ticket format, board structure)  |
+| Git conventions  | `shared/git-conventions.md` (branches, commits, hook detection)        |
 
 ## Key conventions
 
@@ -88,7 +90,7 @@ This is a documentation-only plugin (no build step). To test changes:
 **Review agents** (10, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
 
 **Agent file rules:**
-- YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes). Agents and skills that present multi-option choices to the user **must** use `AskUserQuestion` with structured options (header, question, 2-4 options with descriptions) — never plain text `Options: (1)...` or `(y/n)` patterns. Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present designs for user approval before implementation — skip in autonomous/replanning contexts where the validator serves as the gate.
+- YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes). The orchestrator wraps every Agent dispatch with TaskCreate/TaskUpdate for real-time sub-agent progress visibility (§3.11). Agents and skills that present multi-option choices to the user **must** use `AskUserQuestion` with structured options (header, question, 2-4 options with descriptions) — never plain text `Options: (1)...` or `(y/n)` patterns. Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present designs for user approval before implementation — skip in autonomous/replanning contexts where the validator serves as the gate.
 - Module config uses `components:` in `forge.local.md` — core fields: `language:`, `framework:`, `variant:`, `testing:`.
   - Framework-specific stack fields: `web` (e.g., `mvc | webflux`), `persistence` (e.g., `hibernate | r2dbc` — distinct from crosscutting `modules/persistence/`).
   - Optional crosscutting layers: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip.
@@ -108,7 +110,7 @@ Read source files for full details. Key facts:
 
 - **Scoring** (`scoring.md`): `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL remaining after convergence exhaustion. 18 shared categories — 15 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `FE-PERF-*`, `APPROACH-*`, `SCOUT-*` (no deduction), `A11Y-*`, `DEPS-*`, `COMPAT-*`, `STRUCT-*`, `INFRA-*` + 3 discrete codes: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`. Agent-specific categories (`BE-PERF-*`, `FE-*`, `CONTRACT-*`) defined in their respective agents. Component-aware deduplication: key is `(component, file, line, category)` in multi-component projects — same issue in different components is not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Convergence engine: two-phase iteration (correctness → perfection → safety gate) replaces hard-capped fix cycles. Global `max_iterations` cap is checked before inner caps (precedence rule). SCOUT-* findings filtered before dispatch to implementer. See `shared/convergence-engine.md`. Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `fg-710-feedback-capture`.
-- **State schema** (`state-schema.md`): Version **1.0.0**. State in `.forge/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when fg-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout), `recovery` (runtime recovery state: failures, recoveries, degraded_capabilities).
+- **State schema** (`state-schema.md`): Version **1.0.0**. State in `.forge/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when fg-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout), `recovery` (runtime recovery state: failures, recoveries, degraded_capabilities), `ticket_id` (kanban ticket linked to the run), `branch_name` (git branch derived from ticket ID and slug), `tracking_dir` (absolute path to `.forge/tracking/`).
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.5 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 22 types (incl. `CONTEXT_OVERFLOW`), 16-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable. `BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` are code-level errors handled by the orchestrator fix loop, not the recovery engine.
 - **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (fg-400, fg-500, fg-600, fg-200, fg-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
@@ -144,11 +146,25 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 ### Skills (18 in `skills/`)
 
-`forge-run` (main entry), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
+`forge-run` (main entry — accepts `--ticket FG-001` or bare ticket ID shorthand to resume/link a tracked ticket), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
 
 ### Hooks (`hooks/hooks.json`)
 
 3 hooks: check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`.
+
+### Kanban Tracking (`.forge/tracking/`)
+
+File-based kanban board. Tickets in `backlog/`, `in-progress/`, `review/`, `done/` with YAML frontmatter. Counter in `counter.json`. Board summary in `board.md` (auto-generated). Ticket IDs used in branch names. See `shared/tracking/tracking-schema.md` for schema and `shared/tracking/tracking-ops.sh` for operations.
+
+Configurable prefix in `forge.local.md`: `tracking.prefix: "WP"`. Default: `FG`. IDs never reused.
+
+Stage integration: shaper creates tickets → orchestrator moves through statuses → PR builder updates PR URL → retrospective closes tickets. Graceful degradation: all kanban operations silently skip if tracking not initialized.
+
+### Git Conventions (`shared/git-conventions.md`)
+
+Branch naming: `{type}/{ticket}-{slug}` (configurable via `git:` in `forge.local.md`). Commit format: Conventional Commits by default, or `project` if existing hooks detected during `/forge-init`. Hook detection scans for Husky, commitlint, Lefthook, pre-commit, Commitizen — adopts existing conventions, never overrides.
+
+**Never in commits:** `Co-Authored-By`, AI attribution, `--no-verify`.
 
 ## Adding a new framework
 
@@ -230,6 +246,10 @@ done
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact.
 - The plugin never touches consuming project files. Runtime state goes to `.forge/`.
 - `forge-config.md` is auto-tuned by retrospective — manual edits may be overwritten. Wrap parameters in `<!-- locked -->` / `<!-- /locked -->` fences to protect them from auto-tuning.
+
+### Worktree enforcement
+
+Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge workflows use `.forge/worktree`. Only exceptions: `--dry-run` and `/forge-init`. Branch name uses ticket ID from kanban tracking. See `shared/stage-contract.md` Cross-Cutting Constraints.
 
 ### Check engine
 

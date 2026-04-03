@@ -162,6 +162,18 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 6. Open a PR with a clear description using the PR template
 7. Get at least one review from a team member
 
+## Kanban Tracking
+
+The kanban tracking system lives in `shared/tracking/`. The shell library `tracking-ops.sh` provides ticket CRUD functions used by agents. The schema is documented in `tracking-schema.md`.
+
+When adding new agent integration points that should update ticket status, use the functions from `tracking-ops.sh` and follow the transition table in `fg-100-orchestrator.md` §3.12.
+
+## Git Conventions
+
+Branch naming and commit format rules are in `shared/git-conventions.md`. The `/forge-init` skill detects existing project hooks — see Phase 2a in `forge-init/SKILL.md`.
+
+When modifying commit or branch naming behavior, update both `shared/git-conventions.md` and the consuming agents (`fg-100-orchestrator.md`, `fg-600-pr-builder.md`).
+
 ## Questions?
 
 Read the `shared/` references and existing agent files first. If you're unsure about a change, open a draft PR to discuss.
