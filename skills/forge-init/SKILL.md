@@ -233,7 +233,61 @@ Show the user what files were created and their key settings. **ASK via AskUserQ
 
 ---
 
-### Phase 2b: CROSS-REPO DISCOVERY
+### Phase 2a — Git Conventions Detection
+
+1. **Scan for existing hooks** in the project:
+   - `.husky/` → Husky detected
+   - `.git/hooks/commit-msg` (exists with content, not default sample) → Native git hook
+   - `.pre-commit-config.yaml` → pre-commit framework
+   - `lefthook.yml` → Lefthook
+   - `commitlint.config.*` (js, json, yaml, yml, ts, cjs, mjs) → commitlint
+   - `.czrc` or `.cz.json` → Commitizen
+
+2. **If any convention tool detected:**
+   - If commitlint: parse rules to extract allowed types and scopes
+   - Write to `forge.local.md` `git:` section with `commit_format: project` and detected rules
+   - Set `git.commit_enforcement: external`
+   - Tell user: "Detected {tool}. Adopting your project's commit conventions."
+
+3. **If NO convention tool detected:**
+   - Ask user via `AskUserQuestion`:
+     ```
+     Header: "Git Conventions"
+     Question: "No commit conventions detected. Would you like to set up Conventional Commits?"
+     Options:
+       A) Yes, set up Conventional Commits (recommended)
+       B) No, I'll configure my own later
+     ```
+   - If (A): Write defaults to `forge.local.md` `git:` section with `commit_format: conventional`
+   - If (B): Write `git:` section with `commit_format: none`
+
+4. **Branch naming:**
+   - Write `git.branch_template: "{type}/{ticket}-{slug}"` to `forge.local.md`
+   - If a custom branch naming hook is detected, parse its pattern and use it instead
+
+---
+
+### Phase 2b — Kanban Tracking Setup
+
+1. Check if `.forge/tracking/counter.json` already exists
+2. If not, ask user via `AskUserQuestion`:
+   ```
+   Header: "Kanban Tracking"
+   Question: "Set up file-based kanban tracking for this project?"
+   Options:
+     A) Yes, with default prefix "FG"
+     B) Yes, with custom prefix
+     C) No, skip tracking
+   ```
+3. If (A): Source `shared/tracking/tracking-ops.sh`, call `init_counter ".forge/tracking"`
+4. If (B): Ask for prefix via `AskUserQuestion`, then `init_counter ".forge/tracking" "$prefix"`
+5. If (C): Skip
+6. Create directory structure: `mkdir -p .forge/tracking/{backlog,in-progress,review,done}`
+7. Generate initial empty board: `generate_board ".forge/tracking"`
+
+---
+
+### Phase 2c: CROSS-REPO DISCOVERY
 
 After generating the project config, run the discovery chain to find related projects automatically.
 
@@ -459,9 +513,9 @@ If the user chooses to fix: address issues methodically — fix each issue, re-r
 
 ---
 
-### Phase 5: MANUAL RELATED REPOS (optional — only if Phase 2b found nothing)
+### Phase 5: MANUAL RELATED REPOS (optional — only if Phase 2c found nothing)
 
-**Skip this phase entirely if Phase 2b already configured `related_projects:` in the config.** This phase only fires as a manual fallback.
+**Skip this phase entirely if Phase 2c already configured `related_projects:` in the config.** This phase only fires as a manual fallback.
 
 Ask the user: **"Does this project work with related repositories (e.g., frontend, backend, infrastructure, API contracts)? I can configure cross-repo validation."**
 
@@ -469,7 +523,7 @@ If the user provides related repos:
 
 1. **Verify each path** exists and is a valid git repository.
 2. **Auto-detect role** for each repo using the same stack-marker logic from Phase 1.
-3. **Store in config**: Add entries to the `related_projects:` section in `.claude/forge.local.md` (same format as Phase 2b):
+3. **Store in config**: Add entries to the `related_projects:` section in `.claude/forge.local.md` (same format as Phase 2c):
    ```yaml
    related_projects:
      frontend:
