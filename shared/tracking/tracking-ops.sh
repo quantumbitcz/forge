@@ -43,13 +43,13 @@ portable_sed_i() {
 #   1. Lowercase
 #   2. Replace runs of non-alphanumeric characters with a single hyphen
 #   3. Strip leading/trailing hyphens
-#   4. Truncate to max_len (default 50), stripping a trailing partial word
+#   4. Truncate to max_len (default 40), stripping a trailing partial word
 #
 # Prints the slug to stdout.
 
 slugify() {
   local title="${1:?slugify requires a title}"
-  local max_len="${2:-50}"
+  local max_len="${2:-40}"
 
   local slug
   # Lowercase — use tr for portability (bash 3.2 on macOS does not support ${var,,})

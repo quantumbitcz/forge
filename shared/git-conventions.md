@@ -37,7 +37,7 @@ git:
     - refactor
     - chore
     - migrate
-  slug_max_length: 50                          # characters, default 50
+  slug_max_length: 40                          # characters, default 40
   ticket_source: auto                          # auto | linear | kanban | none
 ```
 
@@ -91,7 +91,10 @@ refactor(domain): extract money value object
 
 ```yaml
 git:
-  commit_format: conventional             # conventional | freeform; default conventional
+  commit_format: conventional             # conventional | project | none; default conventional
+                                          # conventional: enforce Conventional Commits
+                                          # project: defer to existing project hooks (set by hook detection)
+                                          # none: no commit format enforcement
   commit_types:                           # full allowed list
     - feat
     - fix

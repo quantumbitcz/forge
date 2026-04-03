@@ -282,8 +282,8 @@ Show the user what files were created and their key settings. **ASK via AskUserQ
 3. If (A): Source `shared/tracking/tracking-ops.sh`, call `init_counter ".forge/tracking"`
 4. If (B): Ask for prefix via `AskUserQuestion`, then `init_counter ".forge/tracking" "$prefix"`
 5. If (C): Skip
-6. Create directory structure: `mkdir -p .forge/tracking/{backlog,in-progress,review,done}`
-7. Generate initial empty board: `generate_board ".forge/tracking"`
+6. If (A) or (B): Create directory structure: `mkdir -p .forge/tracking/{backlog,in-progress,review,done}`
+7. If (A) or (B): Generate initial empty board: `generate_board ".forge/tracking"`
 
 ---
 
