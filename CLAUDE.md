@@ -152,6 +152,17 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 **Schema v2**: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`. Rules skip when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated by `fg-140-deprecation-refresh` during PREFLIGHT.
 
+### Infra testing (`infra-deploy-verifier`)
+
+5-tier verification system for infrastructure changes:
+- **Tier 1** (<10s): Static validation — helm lint, kubectl dry-run, Dockerfile syntax.
+- **Tier 2** (<60s): Container validation — docker build, compose health check, trivy scan.
+- **Tier 3** (<5min): Isolated cluster — kind/k3d ephemeral cluster, helm install, pod readiness, smoke tests.
+- **Tier 4** (<5min): Contract testing — infra + stub containers (auto-generated from OpenAPI spec or health-only), DNS/routing/config validation, user scripts from `tests/infra/contract/`.
+- **Tier 5** (<15min): Full stack integration — infra + real service images from registry or local build (`image_source: registry | build | auto`), end-to-end connectivity, DB migration validation, user scripts from `tests/infra/integration/`.
+
+Default: Tier 3. Configure via `infra.max_verification_tier` (1-5). Graceful degradation: missing tools skip tiers, pipeline continues. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT` (CRITICAL), `INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL). User scenario tests live in `tests/infra/` — see `modules/frameworks/k8s/conventions.md`.
+
 ### Skills (20 in `skills/`)
 
 `forge-run` (main entry — accepts `--ticket FG-001`, bare ticket ID shorthand, or `bugfix:` prefix), `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or plain description), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint` (parallel multi-feature entry — accepts `--sprint`/`--parallel` with feature list), `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
