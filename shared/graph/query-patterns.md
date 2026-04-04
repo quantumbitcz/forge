@@ -351,3 +351,50 @@ RETURN pc.project_id, pc.language, pc.component, collect(DISTINCT fw.name) AS fr
 
 **Parameters:**
 - `$project_id` — Project identifier. Pass each related project's ID to discover their stack.
+
+---
+
+### 19. Cross-Feature File Overlap Detection
+
+**Used during:** ANALYZE (sprint orchestrator independence analysis)
+
+Detects files that would be affected by multiple features in a sprint, enabling conflict detection before parallel dispatch.
+
+```cypher
+// For each feature's seed files, find all transitively affected files
+MATCH (seed:ProjectFile {project_id: $project_id})
+WHERE seed.path IN $feature_seed_files
+MATCH (seed)<-[:IMPORTS*0..3]-(affected:ProjectFile {project_id: $project_id})
+RETURN DISTINCT affected.path AS file_path, affected.component AS component
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+- `$feature_seed_files` — List of seed file paths for one feature (from requirement parsing).
+
+**Usage:** Run once per feature, then compute set intersections between results to identify conflicts.
+
+---
+
+### 20. Cross-Repo Dependency Graph Traversal
+
+**Used during:** ANALYZE (sprint orchestrator cross-repo feature planning)
+
+Maps API contract dependencies between related projects to determine execution ordering (producers before consumers).
+
+```cypher
+// Find which project configs have dependencies that map to frameworks in other projects
+MATCH (pc:ProjectConfig {project_id: $project_id})
+MATCH (dep:ProjectDependency {project_id: $project_id})-[:MAPS_TO]->(target)
+WHERE target:Framework OR target:LayerModule
+WITH target, pc
+MATCH (other_pc:ProjectConfig)-[:USES_CONVENTION]->(target)
+WHERE other_pc.project_id <> $project_id
+RETURN $project_id AS consumer, other_pc.project_id AS producer,
+       collect(DISTINCT target.name) AS shared_conventions
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+
+**Usage:** If project A consumes conventions that project B produces, A depends on B. Execute B through VERIFY before starting A's IMPLEMENT.
