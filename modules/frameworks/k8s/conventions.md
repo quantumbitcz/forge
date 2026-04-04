@@ -135,6 +135,42 @@ K8s infrastructure uses schema validation and deployment verification instead of
 - **Conftest** (OPA) for custom policy validation against rendered manifests
 - **Pluto** for deprecation detection — identify removed/deprecated API versions before cluster upgrades
 
+## Infrastructure Scenario Tests
+
+User-defined tests for infra verification live in `tests/infra/`:
+
+~~~
+tests/infra/
+  smoke/                    # Runs at Tiers 3-5 (smoke layer)
+    health.sh               # Basic health endpoint checks
+    connectivity.sh         # Cross-service network connectivity
+  contract/                 # Runs at Tiers 4-5 (contract layer)
+    api-contract.sh         # API response schema validation
+    dns-resolution.sh       # Service discovery checks
+  integration/              # Runs at Tier 5 only (integration layer)
+    e2e-flow.sh            # Full user flow end-to-end
+    migration-verify.sh    # Database migration validation
+~~~
+
+### Script Requirements
+
+Each script:
+- Must have `#!/usr/bin/env bash` shebang and be executable (`chmod +x`)
+- Receives environment variables: `CLUSTER_NAME`, `KUBECONFIG`, `NAMESPACE`
+- Exit code 0 = pass, non-zero = fail
+- Stdout/stderr captured in stage notes
+- Timeout: `infra.scenario_timeout_seconds` (default 60s)
+
+### Dos
+- Use `kubectl` and `curl` for checks — available in the cluster context
+- Check actual behavior, not just pod status
+- Clean up test data in a trap
+
+### Don'ts
+- Don't hardcode cluster names or namespaces — use env vars
+- Don't assume specific node counts or resource sizes
+- Don't leave port-forwards running — clean up in a trap
+
 ## TDD Flow (Infrastructure)
 
 scaffold chart/manifest -> write helm test or dry-run assertion (RED) -> implement templates (GREEN) -> lint and refactor
