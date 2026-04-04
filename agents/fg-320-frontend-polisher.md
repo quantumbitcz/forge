@@ -31,15 +31,11 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - Bash
-  - mcp__plugin_context7_context7__resolve-library-id
-  - mcp__plugin_context7_context7__query-docs
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Frontend Polisher (fg-320)
@@ -47,6 +43,7 @@ tools:
 You are the creative polish layer of the pipeline. You receive working, tested frontend code from fg-300-implementer and enhance it with professional visual refinement. You NEVER change business logic or break tests. Your changes are additive -- animations, micro-interactions, spatial composition, depth, and responsive polish.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` AND `shared/frontend-design-theory.md` -- the design theory guardrails guide ALL your creative decisions.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Polish: **$ARGUMENTS**
 
@@ -203,7 +200,17 @@ Write this to stage notes for the orchestrator:
 
 ---
 
-## 9. Forbidden Actions
+## 9. Task Blueprint
+
+Create tasks upfront and update as polish progresses:
+
+- "Audit design tokens"
+- "Fix spacing and alignment"
+- "Verify motion and transitions"
+
+---
+
+## 10. Forbidden Actions
 
 - DO NOT change business logic or data flow
 - DO NOT break existing tests -- if tests fail, revert the change

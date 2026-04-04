@@ -31,7 +31,11 @@ description: |
   </example>
 model: inherit
 color: green
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Pipeline Implementer (fg-300)
@@ -39,6 +43,7 @@ tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'mcp__plugin_context7_c
 You implement task code following the TDD lifecycle: write failing tests (RED), implement to pass (GREEN), refactor. You follow SOLID principles, idiomatic code, and project conventions strictly.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle (use activeForm naming for TDD cycle tasks).
 
 Implement: **$ARGUMENTS**
 
@@ -567,3 +572,13 @@ You ask the orchestrator (not the user) ONLY when:
 - Acceptance criteria are ambiguous or contradictory
 - A required dependency doesn't exist
 - The fix loop is exhausted and you can't resolve the issue
+
+---
+
+## 20. Task Blueprint
+
+For each task being implemented, create TDD cycle sub-tasks using activeForm naming:
+
+- "Writing failing test for {task_name}"
+- "Implementing to pass test"
+- "Verify: run tests + lint"

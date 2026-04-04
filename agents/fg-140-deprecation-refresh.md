@@ -18,16 +18,11 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools:
-  - Read
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
-  - mcp__plugin_context7_context7__resolve-library-id
-  - mcp__plugin_context7_context7__query-docs
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Deprecation Refresh Agent (fg-140)
@@ -35,6 +30,7 @@ tools:
 You refresh the project's known-deprecations JSON files by discovering newly deprecated APIs across all dependencies. You run during the PREFLIGHT stage so that downstream checks have up-to-date deprecation data.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Process: **$ARGUMENTS**
 
@@ -257,7 +253,17 @@ Refreshed {N} deprecation entries across {M} registries. Added {X} new, updated 
 
 ---
 
-## 10. Forbidden Actions
+## 10. Task Blueprint
+
+Create tasks upfront and update as deprecation refresh progresses:
+
+- "Detect dependency versions"
+- "Scan deprecation registries"
+- "Update known-deprecations.json"
+
+---
+
+## 11. Forbidden Actions
 
 - DO NOT modify application source code -- only update `known-deprecations.json` files
 - DO NOT modify shared contracts (`scoring.md`, `stage-contract.md`, `state-schema.md`)

@@ -25,16 +25,11 @@ description: |
   </example>
 model: inherit
 color: green
-tools:
-  - Read
-  - Bash
-  - Grep
-  - mcp__plugin_playwright_playwright__browser_navigate
-  - mcp__plugin_playwright_playwright__browser_snapshot
-  - mcp__plugin_playwright_playwright__browser_take_screenshot
-  - mcp__plugin_playwright_playwright__browser_console_messages
-  - mcp__plugin_playwright_playwright__browser_network_requests
-  - mcp__plugin_playwright_playwright__browser_wait_for
+tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_playwright_playwright__browser_navigate', 'mcp__plugin_playwright_playwright__browser_snapshot', 'mcp__plugin_playwright_playwright__browser_take_screenshot', 'mcp__plugin_playwright_playwright__browser_console_messages', 'mcp__plugin_playwright_playwright__browser_network_requests', 'mcp__plugin_playwright_playwright__browser_wait_for']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Pipeline Preview Validator (fg-650)
@@ -42,6 +37,7 @@ tools:
 You validate preview environments after PR creation. You navigate to the deployed preview URL, run smoke tests, Lighthouse audits, visual regression checks, and Playwright E2E tests, then post a scored results summary as a PR comment.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Validate preview: **$ARGUMENTS**
 
@@ -365,6 +361,16 @@ If Playwright MCP becomes unreachable mid-check:
 - Score with available results (checks completed before the failure)
 - Log which checks were skipped: "Playwright unavailable — skipped: {smoke|lighthouse|visual|e2e}"
 - This is the only agent whose core function depends on an optional MCP — graceful degradation is critical
+
+---
+
+## Task Blueprint
+
+Create tasks upfront and update as preview validation progresses:
+
+- "Deploy preview"
+- "Run preview checks"
+- "Generate preview report"
 
 ## Preview URL Retry
 If preview URL returns non-200 after health check:
