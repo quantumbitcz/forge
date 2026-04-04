@@ -57,6 +57,9 @@ Parse `$ARGUMENTS` for optional flags before the requirement text:
 | `--from=<stage>` | `--from=verify Implement plan comments` | Skip to the specified stage |
 | `--dry-run` | `--dry-run Implement plan comments` | Run PREFLIGHT through VALIDATE, then stop with a dry-run report |
 | `--spec <path>` | `--spec .forge/shape/plan-2025-03-23.md` | Read a shaped spec file and use it as the requirement |
+| `--run-dir <path>` | `--run-dir .forge/runs/feat-1/` | Override state directory (sprint mode) |
+| `--wait-for <id>` | `--wait-for feat-auth` | Block at PREFLIGHT until dependency reaches VERIFY |
+| `--project-root <path>` | `--project-root /path/to/repo` | Override project root (cross-repo dispatch) |
 
 **Valid `--from` values:** `preflight` (0), `explore` (1), `plan` (2), `validate` (3), `implement` (4), `verify` (5), `review` (6), `docs` (7), `ship` (8), `learn` (9)
 
@@ -170,6 +173,26 @@ Dry-run populates state.json fields normally for stages 0-3:
 - `total_retries`: tracks validation retries only (0-2)
 - `recovery_budget`: tracks any recovery during stages 0-3
 - `conventions_hash`, `conventions_section_hashes`: computed normally
+
+### 2.4 Sprint Mode Parameters
+
+The orchestrator accepts these additional parameters when dispatched by `fg-090-sprint-orchestrator`:
+
+- `--run-dir <path>`: Override state directory (default: `.forge/`). Used by sprint orchestrator to isolate per-feature state in `.forge/runs/{feature-id}/`.
+- `--wait-for <project_id>`: Block at PREFLIGHT until the specified project reaches VERIFY stage in `sprint-state.json`. Poll interval: 30 seconds. Timeout: `cross_repo.timeout_minutes` (default 30).
+- `--project-root <path>`: Override project root (default: current directory). Used for cross-repo dispatch.
+
+When `--run-dir` is provided:
+- All state files (state.json, checkpoints, stage notes) write to the specified directory
+- The lock file is at `{run-dir}/.lock` instead of `.forge/.lock`
+- The worktree base directory is `{run-dir}/worktree/`
+
+When `--wait-for` is provided:
+1. At PREFLIGHT, after config validation, read `.forge/sprint-state.json`
+2. Find the feature entry matching `--wait-for` project_id
+3. If its status is `verifying`, `reviewing`, `shipping`, `learning`, or `complete`: proceed immediately
+4. Otherwise: poll every 30 seconds until it reaches VERIFY or timeout expires
+5. On timeout: log WARNING, proceed anyway (the dependency may not block this feature)
 
 ---
 
@@ -685,29 +708,22 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
 
 Skip if `--dry-run` (no worktree needed for read-only analysis).
 
-1. **Read git conventions** from `forge.local.md` `git:` section. If not present, use defaults from `shared/git-conventions.md`.
-2. **Determine branch type** from mode:
-   - Standard → `feat`
-   - Migration → `migrate`
-   - Bootstrap → `chore`
-   - Bugfix → `fix`
-3. **Resolve ticket ID** (ticket_source: auto):
-   a. If `--spec` provided and spec has a tracking ticket → use that ticket ID
-   b. If `--ticket` provided → use that ticket ID
-   c. If `.forge/tracking/counter.json` exists → create new ticket via `tracking-ops.sh create_ticket` with requirement as title, mode-derived type, and `medium` priority → use new ticket ID
-   d. If tracking not initialized → `ticket_id = null`, branch uses slug only
-4. **Build branch name** using `git.branch_template` from config (default: `{type}/{ticket}-{slug}`):
-   - `{type}` = branch type from step 2
-   - `{ticket}` = ticket ID from step 3 (omit segment if null)
-   - `{slug}` = slugified requirement title (max `git.slug_max_length`, default 40)
-5. **Clean stale worktree**: If `.forge/worktree` exists, ask user for confirmation, then `git worktree remove .forge/worktree --force`
-6. **Create worktree**: `git worktree add .forge/worktree -b {branch_name}`
-   - On branch collision: append epoch suffix (`{branch_name}-{epoch}`)
-7. **Update ticket** (if ticket exists):
-   - Set `branch` field to the branch name
-   - Move ticket to `in-progress/` if currently in `backlog/`
-   - Regenerate board via `tracking-ops.sh generate_board`
-8. **Store in state.json**: `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`)
+Dispatch `fg-101-worktree-manager` to create the worktree:
+
+```
+sub_task = TaskCreate("Creating worktree", activeForm="Creating worktree")
+result = dispatch fg-101-worktree-manager "create ${ticket_id} ${slug} --mode ${mode} --base-dir ${base_dir}"
+TaskUpdate(sub_task, status="completed")
+```
+
+**Input resolution before dispatch:**
+- `ticket_id`: resolved from `--spec` ticket, `--ticket` flag, or kanban tracking (create new ticket if tracking initialized). Pass `null` if tracking not initialized.
+- `slug`: slugified requirement title
+- `mode`: pipeline mode (standard/migration/bootstrap/bugfix) — determines branch type (feat/migrate/chore/fix)
+- `base_dir`: `.forge/worktree` (standard mode) or `{run_dir}/worktree/` (sprint mode, when `--run-dir` provided)
+
+Read `worktree_path` and `branch_name` from stage notes written by fg-101.
+Store `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`) in state.json. Set working directory to `worktree_path` for all subsequent stages.
 
 ### 3.9a Bugfix Source Resolution (bugfix mode only)
 
@@ -1205,18 +1221,19 @@ Extract from results: steps completed vs failed, files created/modified, fix loo
 **Timing:** Conflict detection runs AFTER all scaffolders in the group have completed but BEFORE any implementer in the group is dispatched. This ensures file lists from scaffolder output are final. Sequence for each parallel group:
 
 1. Run all scaffolders in the group (serially — scaffolders are fast and their output is needed for conflict detection)
-2. Run conflict detection on the group using scaffolder output file lists
-3. Dispatch implementers for the conflict-free group (parallel up to `parallel_threshold`)
-4. After implementers complete, process any serialized sub-groups (step 1-3 recursively)
+2. Dispatch `fg-102-conflict-resolver` to analyze task dependencies
+3. Dispatch implementers for the conflict-free groups (parallel up to `parallel_threshold`)
+4. After implementers complete, process any serialized sub-groups from the conflict resolver's output
 
-BEFORE dispatching parallel group G:
+Dispatch `fg-102-conflict-resolver`:
 
-1. For each task in the group: read target files from scaffolder output or plan
-2. Build conflict map: `{ "path/to/file": ["T001", "T003"] }` — any path appearing in 2+ tasks is a conflict
-3. For conflicting files: keep the first task in the group, move all other conflicting tasks to a new sub-group G'
-4. Dispatch G (now conflict-free), then run conflict check on G' recursively (G' may itself contain internal conflicts requiring further splitting)
-5. Log WARNING for each conflict: "Conflict detected: {file} is in both Task {A} and Task {B}"
-6. Report in stage notes: "Serialized {N} tasks due to file conflicts across {M} sub-groups"
+```
+sub_task = TaskCreate("Analyzing task conflicts", activeForm="Analyzing task conflicts")
+result = dispatch fg-102-conflict-resolver "analyze --items ${task_list_json}"
+TaskUpdate(sub_task, status="completed")
+```
+
+Read `parallel_groups`, `serial_chains`, `conflicts` from stage notes written by fg-102. Use these to determine dispatch order — conflict-free tasks run in parallel, conflicting tasks are serialized into sub-groups.
 
 This check runs at IMPLEMENT time, not PLAN time, because task file lists are finalized during scaffolding.
 
@@ -1724,6 +1741,22 @@ Write report to .forge/reports/forge-{date}.md.
 
 After retrospective completes, update `state.json`: `complete` -> `true`.
 
+### 12.1a Worktree Cleanup
+
+After retrospective and before recap, dispatch worktree cleanup:
+
+```
+dispatch fg-101-worktree-manager "cleanup ${worktree_path}"
+```
+
+If cross-repo worktrees exist, also dispatch:
+
+```
+dispatch fg-103-cross-repo-coordinator "cleanup --feature ${feature_id}"
+```
+
+Delete `.forge/.lock` (or `{run_dir}/.lock` in sprint mode).
+
 ### 12.2 Recap
 
 After `fg-700-retrospective` completes:
@@ -2037,38 +2070,14 @@ Module dependency is determined by config ordering — modules listed earlier ar
 
 ## 20. Worktree Policy
 
-All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline.
+All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline. Worktree lifecycle is managed by `fg-101-worktree-manager` — see `agents/fg-101-worktree-manager.md` for full details.
 
-### Creation (Stage 0 — PREFLIGHT, §3.9)
+### Key Points
 
-Worktree is created at PREFLIGHT after state initialization (skip if `--dry-run`):
-
-1. Read git conventions from `forge.local.md` `git:` section (defaults from `shared/git-conventions.md`).
-2. Determine branch type from mode (feat/migrate/chore).
-3. Resolve ticket ID from spec, `--ticket` flag, or kanban tracking system.
-4. Build branch name using `git.branch_template` (default: `{type}/{ticket}-{slug}`).
-5. Branch collision check: append epoch suffix on collision.
-6. Create worktree: `git worktree add .forge/worktree -b {branch_name}`
-7. All subsequent implementation, scaffolding, and testing happens inside the worktree.
-8. Dispatched agents receive the worktree path as their working directory.
-
-Stage 4 (IMPLEMENT) verifies the worktree exists — it does NOT create it.
-
-### Merge (Stage 8 — SHIP)
-
-- On SHIP success: merge worktree branch back to the base branch, remove worktree
-- On SHIP failure or user rejection: preserve worktree for manual inspection
-- On abort: preserve worktree, notify user of its location
-
-### Health Checks
-
-Before creating worktree:
-- Verify no stale worktree at `.forge/worktree` (if found, remove and log WARNING)
-- Verify working tree is clean (no uncommitted changes). If dirty: warn user, offer to stash. NEVER force-clean.
-
-### Check Engine Compatibility
-
-The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel` to find the project root. Inside a worktree, this resolves correctly to the worktree root. No special handling needed.
+- **Creation:** Dispatched at PREFLIGHT (§3.9) via `fg-101-worktree-manager create`. Skip if `--dry-run`.
+- **Verification:** Stage 4 (IMPLEMENT) verifies the worktree exists — it does NOT create it.
+- **Merge:** On SHIP success, merge worktree branch back to base branch, then dispatch `fg-101-worktree-manager cleanup`. On failure or rejection, preserve worktree for manual inspection.
+- **Sprint mode:** When `--run-dir` is provided, the worktree base directory is `{run-dir}/worktree/` instead of `.forge/worktree`.
 
 ### Hard Rules
 
@@ -2076,43 +2085,31 @@ The check engine hook (`engine.sh --hook`) uses `git rev-parse --show-toplevel` 
 - NEVER run `git clean -f` or `git checkout .` on the main working tree
 - NEVER modify files in the main working tree during IMPLEMENT through REVIEW stages
 
-### Cross-Repo Worktree Management
+### Cross-Repo Coordination (dispatch fg-103-cross-repo-coordinator)
 
-When `related_projects` is configured in `forge.local.md` and the plan includes cross-repo tasks:
+When `related_projects` is configured in `forge.local.md` and the plan includes cross-repo tasks, delegate all cross-repo operations to `fg-103-cross-repo-coordinator`.
 
-**Worktree creation:**
-- Each related project gets its own worktree at `{related_project_path}/.forge/worktree`
-- Branch naming: `feat/{feature-name}-cross-{timestamp}`
-- Same collision detection as main worktree (epoch suffix fallback)
-- Acquire locks in alphabetical order by project name (prevents deadlocks)
+**Setup (after VALIDATE, before IMPLEMENT):**
 
-**State tracking:** Add to `state.json`:
-```json
-{
-  "cross_repo": {
-    "frontend": {
-      "path": "/abs/path/project-fe/.forge/worktree",
-      "branch": "feat/add-api-types-cross-1711187200",
-      "status": "implementing",
-      "files_changed": []
-    }
-  }
-}
+```
+dispatch fg-103-cross-repo-coordinator "setup-worktrees --feature ${feature_id} --projects ${related_projects}"
 ```
 
-**Cross-repo timeout:** Each cross-repo project's implementation is limited to `cross_repo.timeout_minutes` (default: 30 minutes). If exceeded, the cross-repo task is marked as failed with `status: "timeout"` and the main PR proceeds without it. Timeout is checked per-project, not globally.
+fg-103 handles worktree creation, lock ordering, branch naming, and state tracking for all related projects. Read `cross_repo` state from stage notes.
 
-**Partial failure handling:**
-1. Main repo changes are preserved (not rolled back) on cross-repo failure
-2. Failed cross-repo worktree is left in place for manual inspection
-3. Stage notes document the partial failure with details
-4. PR for main repo is created with a note: "Cross-repo changes for {project} failed — manual intervention needed"
-5. `/forge-rollback` handles multi-repo cleanup independently
+**PR Linking (SHIP stage):**
 
-**Lock management:**
-- Each related project gets its own `.forge/.lock`
-- Locks acquired in alphabetical order by project name
-- Stale lock detection: same 24h + PID check as main repo
+```
+dispatch fg-103-cross-repo-coordinator "link-prs --feature ${feature_id} --prs ${pr_urls}"
+```
+
+**Cleanup (LEARN stage):**
+
+```
+dispatch fg-103-cross-repo-coordinator "cleanup --feature ${feature_id}"
+```
+
+Cross-repo timeout, partial failure handling, and lock management are handled by fg-103. See `agents/fg-103-cross-repo-coordinator.md` for details. Main repo changes are never rolled back on cross-repo failure.
 
 ---
 
