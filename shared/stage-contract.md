@@ -544,6 +544,44 @@ The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly
 
 See `agents/fg-050-project-bootstrapper.md` for supported project types and scaffolding capabilities.
 
+### Bugfix Mode
+
+Activated by `/forge-fix` or `/forge-run bugfix: <description>`. Sets `state.json.mode = "bugfix"`.
+
+#### Stage Mapping
+
+| Stage | Name | Bugfix Behavior | Agent |
+|-------|------|-----------------|-------|
+| 0 | PREFLIGHT | Same + resolve bug source (kanban/Linear/description). Create ticket if needed. Branch type: `fix`. | fg-100 inline |
+| 1 | INVESTIGATE | Replaces EXPLORE. Pull bug context, search codebase, query graph, form hypotheses. | fg-020-bug-investigator |
+| 2 | REPRODUCE | Replaces PLAN. Write failing test or obtain user confirmation. Max 3 attempts. | fg-020-bug-investigator |
+| 3 | ROOT CAUSE | Replaces VALIDATE. 4 bugfix perspectives: root cause validity, fix scope, regression risk, test coverage. | fg-210-validator (reused) |
+| 4 | FIX | Same as IMPLEMENT. TDD: make failing test pass, refactor. | fg-300-implementer (reused) |
+| 5 | VERIFY | Same as standard. | fg-500-test-gate (reused) |
+| 6 | REVIEW | Reduced batch: architecture + security always; frontend only if frontend files changed. | fg-400-quality-gate (reused) |
+| 7 | DOCS | Minimal: changelog entry + update affected docs. | fg-350-docs-generator (reused) |
+| 8 | SHIP | Same. Branch: `fix/{ticket}-{slug}`. | fg-600-pr-builder (reused) |
+| 9 | LEARN | Same + bug pattern tracking (root cause category, layer, reproduction method). | fg-700-retrospective (reused) |
+
+#### Entry Conditions (bugfix-specific)
+
+- Stage 1: `mode == "bugfix"` and `bugfix.source` is set
+- Stage 2: Stage 1 investigation notes available with at least one hypothesis
+- Stage 3: Reproduction evidence available (test file or user confirmation)
+
+#### Exit Conditions (bugfix-specific)
+
+- Stage 1: Root cause hypothesis with confidence level in stage notes
+- Stage 2: `bugfix.reproduction.method` set (`automated`, `manual`, or `unresolvable`)
+- Stage 3: Validator verdict (GO/REVISE/NO-GO) with bugfix perspectives
+
+#### Escalation
+
+If reproduction fails after 3 attempts AND user cannot confirm:
+- Mark `bugfix.reproduction.method = "unresolvable"`
+- Orchestrator asks user: (A) Provide more context, (B) Pair debug, (C) Close as unreproducible
+- If (C): set `state.json.abort_reason = "unreproducible"`, skip to LEARN
+
 ### Targeted Re-Implementation
 
 When a fix cycle re-enters Stage 4 (IMPLEMENT) from Stage 5 or Stage 6, the implementation is **targeted** — scoped to only the files and issues identified by the preceding stage.
