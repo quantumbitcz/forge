@@ -232,3 +232,21 @@ portable_timeout() {
     "$@"
   fi
 }
+
+# ── Project Identity ─────────────────────────────────────────────────────────
+
+# Derives project_id from git remote origin, fallback to absolute path.
+# Usage: project_id=$(derive_project_id "/path/to/project")
+derive_project_id() {
+  local project_root="${1:-.}"
+  local remote_url
+  remote_url=$(git -C "$project_root" remote get-url origin 2>/dev/null || true)
+  if [[ -n "$remote_url" ]]; then
+    # Strip protocol/host prefix and .git suffix
+    # Handles: git@github.com:org/repo.git, https://github.com/org/repo.git, ssh://...
+    echo "$remote_url" | sed -E 's|^.*[:/]([^/]+/[^/]+?)(\.git)?$|\1|'
+  else
+    # Fallback: absolute path
+    (cd "$project_root" && pwd)
+  fi
+}
