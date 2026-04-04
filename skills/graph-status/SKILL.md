@@ -36,6 +36,17 @@ If Docker itself is unavailable, report: "Docker is not available. Cannot check 
 
 ---
 
+### Per-Project Node Counts
+
+Show node counts grouped by project:
+```cypher
+MATCH (n) WHERE n.project_id IS NOT NULL
+RETURN n.project_id, labels(n)[0] AS label, count(n) AS count
+ORDER BY n.project_id, label
+```
+
+---
+
 ### Step 2: NODE COUNTS
 
 If Neo4j is healthy, query node counts by label:

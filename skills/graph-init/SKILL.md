@@ -117,6 +117,25 @@ cat "${CLAUDE_PLUGIN_ROOT}/shared/graph/seed.cypher" | \
 
 Check `.forge/graph/.last-build-sha` — if it exists and matches the current `git rev-parse HEAD`, the graph is already up to date for this commit; skip rebuild and note this to the user.
 
+### Project Identity
+
+After container startup, derive project_id:
+```bash
+PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
+```
+
+Pass to build-project-graph.sh:
+```bash
+./shared/graph/build-project-graph.sh --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
+```
+
+For monorepo with components, iterate each component:
+```bash
+for component in $(read_components "$PROJECT_ROOT"); do
+  ./shared/graph/build-project-graph.sh --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID" --component "$component"
+done
+```
+
 Otherwise, build the project graph:
 
 ```bash

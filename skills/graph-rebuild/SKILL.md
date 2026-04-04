@@ -46,6 +46,16 @@ Use `AskUserQuestion` to confirm:
 
 ---
 
+### Component-Scoped Rebuild
+
+Accept optional `--component <name>` argument:
+- Without `--component`: rebuild all components for current project
+- With `--component api`: rebuild only the `api` component
+
+Deletion is always scoped to current project — never touches other projects' nodes.
+
+---
+
 ### Step 3: DELETE PROJECT NODES
 
 Delete all project-derived nodes and their relationships:
