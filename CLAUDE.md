@@ -119,7 +119,7 @@ grep -A1 "^name:" agents/*.md
 shared/checks/engine.sh --dry-run
 
 # Verify all modules have required files
-for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,pipeline-config-template.md,rules-override.json} 2>&1; done
+for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template.md,forge-config-template.md,rules-override.json} 2>&1; done
 ```
 
 ## Gotchas
@@ -129,25 +129,32 @@ for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template
 - **Standard mode:** `/forge-run <requirement>` — full 10-stage pipeline.
 - **Bugfix mode:** `/forge-fix` or `/forge-run bugfix: <description>`. Stage 1 dispatches `fg-020-bug-investigator` (INVESTIGATE), Stage 2 continues with reproduction (max 3 attempts). Stage 3 validates with 4 bugfix perspectives (root cause validity, fix scope, regression risk, test coverage). Stage 6 uses reduced reviewer batch. Stage 9 tracks bug patterns in `.forge/forge-log.md`. See `stage-contract.md` Bugfix Mode section.
 - **Bootstrap mode:** `/bootstrap-project` — scaffolds greenfield projects via `fg-050-project-bootstrapper`. Stage 4 is skipped.
-- **Migration mode:** `/migration` — all 10 stages run with `fg-160-migration-planner` at Stage 2.
+- **Migration mode:** `/migration` — all 10 stages run with `fg-160-migration-planner` at Stage 2. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY.
 - **Dry-run:** `--dry-run` flag runs PREFLIGHT→VALIDATE only. No worktree, no file changes.
+
+### Cross-repo
+
+- 5-step discovery during `/forge-init`. Contract validation (`fg-250-contract-validator`), linked PRs, multi-repo worktrees during runs.
+- PR failures don't block main PR. Worktrees use alphabetical lock ordering to prevent deadlocks.
+- Discovery results stored with `detected_via` — re-run `/forge-init` to refresh.
+- Timeout: 30 minutes per project (configurable via `cross_repo.timeout_minutes`).
 
 ### Structural rules
 
 - Agent `name` in frontmatter **must** match the filename without `.md` — the orchestrator uses it for dispatch.
 - Scripts must have a shebang (`#!/usr/bin/env bash`) and be `chmod +x` — hooks fail silently without this.
 - `shared/` files are contracts: changing `scoring.md`, `stage-contract.md`, or `state-schema.md` affects all agents and modules. Verify downstream impact before editing.
-- The plugin itself never touches consuming project files at development time. All runtime state goes to `.pipeline/` in the consuming repo.
-- `pipeline-config.md` is auto-tuned by the retrospective agent — manual edits may be overwritten after a run.
+- The plugin itself never touches consuming project files at development time. All runtime state goes to `.forge/` in the consuming repo.
+- `forge-config.md` is auto-tuned by the retrospective agent — manual edits may be overwritten after a run.
 - The check engine hook fires on every `Edit`/`Write` — if `shared/checks/engine.sh` is broken or non-executable, all file edits will trigger hook errors.
 - `rules-override.json` in modules extends (not replaces) shared check defaults. Use `"disabled": true` to suppress a shared rule, not deletion.
 
 ## Plugin distribution (`.claude-plugin/`)
 
 - `plugin.json` — plugin manifest (name, version, description, author, license, category, keywords).
-- `marketplace.json` — marketplace catalog for the `quantumbitcz` marketplace. Lists `dev-pipeline` with source `"./"`.
+- `marketplace.json` — marketplace catalog for the `quantumbitcz` marketplace. Lists `forge` with source `"./"`.
 - Hook registration lives in `hooks/hooks.json` (3 hooks: check engine on Edit/Write, checkpoint on Skill, feedback on Stop).
-- Install: `/plugin marketplace add quantumbitcz/dev-pipeline` then `/plugin install dev-pipeline@quantumbitcz`.
+- Install: `/plugin marketplace add quantumbitcz/forge` then `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

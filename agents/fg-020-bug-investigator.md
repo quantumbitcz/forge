@@ -83,6 +83,7 @@ Before forming any hypothesis, gather context from all available sources:
 - Use `Grep` to locate the entry point mentioned in the bug report (endpoint, function, component)
 - Use `Glob` to find related test files in the affected area
 - Use `Read` to trace the execution path from the reported failure point
+- Dispatch an explorer sub-agent via `Agent` tool for deep codebase analysis when the fault area spans multiple modules or the call chain is complex
 
 ### 3.2 Hypothesis Formation
 
