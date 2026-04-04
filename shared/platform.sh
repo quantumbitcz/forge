@@ -133,9 +133,11 @@ pipeline_mktempdir() {
 # Returns the available python command name (python3 or python).
 # Cached in FORGE_PYTHON for reuse. Scripts that source platform.sh should
 # use "$FORGE_PYTHON" instead of hardcoding "python3".
-# Scripts that do NOT source platform.sh (linter adapters, hooks) should
-# continue using inline python3 calls — python3 is available on all major
-# platforms (macOS, modern Linux, Windows with Python installed).
+# Scripts that do NOT source platform.sh (engine.sh, run-patterns.sh,
+# linter adapters, hooks) should use inline fallback or direct python3
+# calls — python3 is available on all major platforms (macOS, modern
+# Linux, Windows with Python installed). These scripts avoid sourcing
+# platform.sh due to invocation frequency (every Edit/Write hook).
 detect_python() {
   if command -v python3 &>/dev/null; then
     printf 'python3'
@@ -160,7 +162,7 @@ portable_normalize_path() {
     printf '%s' "$input"
     return
   fi
-  # Try python first (handles all edge cases)
+  # Try Python first (handles all edge cases)
   if [[ -n "$FORGE_PYTHON" ]]; then
     "$FORGE_PYTHON" -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
   fi

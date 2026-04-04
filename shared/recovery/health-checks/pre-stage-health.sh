@@ -47,8 +47,8 @@ detect_build_tool() {
   elif [[ -f "go.mod" ]]; then
     check_cmd "go"
   elif [[ -f "pyproject.toml" || -f "setup.py" || -f "requirements.txt" ]]; then
-    if ! check_cmd "python3" 2>/dev/null; then
-      check_cmd "python"
+    if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
+      missing+=("python3 or python")
     fi
   elif [[ -f "Makefile" ]] && compgen -G "./*.c" >/dev/null 2>&1; then
     # C project with Makefile

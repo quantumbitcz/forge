@@ -210,7 +210,7 @@ step1_inproject_references() {
         abs="$(cd "$root" && cd "$ws" 2>/dev/null && pwd || true)"
         [[ -n "$abs" && -d "$abs" && "$abs" != "$root" ]] && candidate_paths+=("$abs:package-workspace:high")
       fi
-    done < <(PKG_PATH="$root/package.json" "$FORGE_PYTHON" -c "
+    done < <(if [[ -n "$FORGE_PYTHON" ]]; then PKG_PATH="$root/package.json" "$FORGE_PYTHON" -c "
 import json,sys,os
 try:
   d=json.load(open(os.environ['PKG_PATH']))
@@ -218,7 +218,7 @@ try:
   if isinstance(ws,dict): ws=ws.get('packages',[])
   [print(w) for w in ws]
 except: pass
-" 2>/dev/null || true)
+" 2>/dev/null; fi || true)
   fi
 
   # build.gradle.kts composite builds

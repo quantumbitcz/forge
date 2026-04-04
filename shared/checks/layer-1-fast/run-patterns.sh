@@ -9,6 +9,16 @@ FILE="${1:?Usage: run-patterns.sh <file> <rules.json> [override.json]}"
 RULES_JSON="${2:?Usage: run-patterns.sh <file> <rules.json> [override.json]}"
 OVERRIDE_JSON="${3:-}"
 
+# Resolve python command (python3 preferred, python as fallback).
+# This script does not source platform.sh to avoid overhead on every
+# Edit/Write hook invocation (same rationale as engine.sh and linter adapters).
+_PY="python3"
+command -v python3 &>/dev/null || _PY="python"
+if ! command -v "$_PY" &>/dev/null; then
+  # No python available — skip all Layer 1 checks silently
+  exit 0
+fi
+
 # Compute project-relative path (preferred) or fall back to basename
 PROJECT_ROOT="$(git -C "$(dirname "$FILE")" rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -n "$PROJECT_ROOT" ]]; then
@@ -17,10 +27,10 @@ else
   DISPLAY_PATH="$(basename "$FILE")"
 fi
 
-# --- Build merged config (single python3 call) ---
+# --- Build merged config (single Python call) ---
 # Produces section-delimited JSON: RULES, THRESHOLDS, BOUNDARIES.
 build_merged_config() {
-  python3 -c "
+  "$_PY" -c "
 import json, sys
 rules_path = sys.argv[1]
 override_path = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else ''
@@ -161,8 +171,8 @@ emit() {
 # Skip binary files to avoid corrupted grep output
 is_binary_file() {
   # Check for null bytes in first 8KB — reliable binary indicator
-  # Uses python3 (already a dependency) instead of grep -P (not available on macOS)
-  if python3 -c "import sys; sys.exit(0 if b'\\x00' in open(sys.argv[1],'rb').read(8192) else 1)" "$1" 2>/dev/null; then
+  # Uses Python (already a dependency) instead of grep -P (not available on macOS)
+  if "$_PY" -c "import sys; sys.exit(0 if b'\\x00' in open(sys.argv[1],'rb').read(8192) else 1)" "$1" 2>/dev/null; then
     return 0
   fi
   # Fallback: check file command output (if available)
@@ -195,7 +205,7 @@ main() {
   # --- Rule matching (fields delimited by 0x1F unit separator) ---
   local SEP=$'\x1f'
   local rule_lines
-  rule_lines="$(echo "$rules_json" | python3 -c "
+  rule_lines="$(echo "$rules_json" | "$_PY" -c "
 import json, sys
 SEP = '\x1f'
 rules = json.load(sys.stdin)
@@ -254,7 +264,7 @@ for r in rules:
 
   # --- Structural checks (file-level absence/presence checks) ---
   local structural_checks
-  structural_checks="$(echo "$rules_json" | python3 -c "
+  structural_checks="$(echo "$rules_json" | "$_PY" -c "
 import json, sys
 SEP = '\x1f'
 rules = json.load(sys.stdin)
@@ -295,19 +305,19 @@ for r in rules:
 
   # --- Threshold checks (single awk pass) ---
   local file_size_default func_size_default file_size_overrides_json
-  file_size_default="$(echo "$thresholds_json" | python3 -c "
+  file_size_default="$(echo "$thresholds_json" | "$_PY" -c "
 import json, sys
 t = json.load(sys.stdin)
 print(t.get('file_size', {}).get('default', 300))
 " 2>/dev/null || echo 300)"
 
-  func_size_default="$(echo "$thresholds_json" | python3 -c "
+  func_size_default="$(echo "$thresholds_json" | "$_PY" -c "
 import json, sys
 t = json.load(sys.stdin)
 print(t.get('function_size', {}).get('default', 30))
 " 2>/dev/null || echo 30)"
 
-  file_size_overrides_json="$(echo "$thresholds_json" | python3 -c "
+  file_size_overrides_json="$(echo "$thresholds_json" | "$_PY" -c "
 import json, sys
 t = json.load(sys.stdin)
 print(json.dumps(t.get('file_size', {}).get('overrides', {})))
@@ -316,7 +326,7 @@ print(json.dumps(t.get('file_size', {}).get('overrides', {})))
   # Pick the right file size threshold: first matching override key, or default
   local file_size_threshold="$file_size_default"
   local override_threshold
-  override_threshold="$(python3 -c "
+  override_threshold="$("$_PY" -c "
 import json, sys, re
 overrides = json.loads(sys.argv[1])
 filepath = sys.argv[2]
@@ -445,11 +455,11 @@ for key, val in overrides.items():
 
   # --- Boundary checks ---
   local boundary_count
-  boundary_count="$(echo "$boundaries_json" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo 0)"
+  boundary_count="$(echo "$boundaries_json" | "$_PY" -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo 0)"
 
   for (( b=0; b<boundary_count; b++ )); do
     local b_scope b_severity b_category b_message b_fields
-    b_fields="$(echo "$boundaries_json" | python3 -c "
+    b_fields="$(echo "$boundaries_json" | "$_PY" -c "
 import json, sys
 boundaries = json.load(sys.stdin)
 b = boundaries[$b]

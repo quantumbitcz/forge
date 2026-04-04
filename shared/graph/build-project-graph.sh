@@ -26,6 +26,11 @@ fi
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
+
+if [[ -z "$FORGE_PYTHON" ]]; then
+  echo "[build-project-graph] WARNING: No Python interpreter found. Graph build may produce incomplete results." >&2
+fi
+
 PROJECT_ROOT=""
 PROJECT_ID=""
 COMPONENT=""
@@ -367,7 +372,8 @@ parse_imports_elixir() {
     sed 's/^alias //' | while IFS= read -r mod; do
       [[ -z "$mod" ]] && continue
       local path_candidate
-      path_candidate="$("$FORGE_PYTHON" -c "
+      if [[ -n "$FORGE_PYTHON" ]]; then
+        path_candidate="$("$FORGE_PYTHON" -c "
 import re
 mod = '${mod}'
 parts = mod.split('.')
@@ -377,6 +383,9 @@ for p in parts:
     snake_parts.append(s)
 print('lib/' + '/'.join(snake_parts))
 " 2>/dev/null || echo "")"
+      else
+        path_candidate=""
+      fi
       [[ -z "$path_candidate" ]] && continue
       local target
       target="$(resolve_file "$path_candidate")"
@@ -593,7 +602,7 @@ emit_dep() {
 }
 
 # --- npm (package.json) ---
-if [[ -f "$PROJECT_ROOT/package.json" ]]; then
+if [[ -f "$PROJECT_ROOT/package.json" && -n "$FORGE_PYTHON" ]]; then
   "$FORGE_PYTHON" -c "
 import json, sys
 data = json.load(open('${PROJECT_ROOT}/package.json'))
@@ -635,7 +644,7 @@ if [[ -f "$PROJECT_ROOT/requirements.txt" ]]; then
 fi
 
 # --- pip (pyproject.toml) ---
-if [[ -f "$PROJECT_ROOT/pyproject.toml" ]]; then
+if [[ -f "$PROJECT_ROOT/pyproject.toml" && -n "$FORGE_PYTHON" ]]; then
   "$FORGE_PYTHON" -c "
 import sys
 try:
@@ -670,7 +679,7 @@ if [[ -f "$PROJECT_ROOT/Gemfile" ]]; then
 fi
 
 # --- Cargo.toml ---
-if [[ -f "$PROJECT_ROOT/Cargo.toml" ]]; then
+if [[ -f "$PROJECT_ROOT/Cargo.toml" && -n "$FORGE_PYTHON" ]]; then
   "$FORGE_PYTHON" -c "
 import sys
 try:
@@ -719,7 +728,8 @@ if [[ -f "$DEP_MAP" && -s "$DEP_TMPFILE" ]]; then
     manager="${key%%:*}"
     dep_name="${key#*:}"
 
-    mapped_module="$("$FORGE_PYTHON" -c "
+    mapped_module=""
+    [[ -n "$FORGE_PYTHON" ]] && mapped_module="$("$FORGE_PYTHON" -c "
 import json
 data = json.load(open('${DEP_MAP}'))
 section = data.get('${manager}', {})
@@ -745,7 +755,7 @@ echo ""
 
 echo "// --- Convention Connections ---"
 LOCAL_CONFIG="${PROJECT_ROOT}/.claude/forge.local.md"
-if [[ -f "$LOCAL_CONFIG" ]]; then
+if [[ -f "$LOCAL_CONFIG" && -n "$FORGE_PYTHON" ]]; then
   "$FORGE_PYTHON" -c "
 import re, sys
 
