@@ -181,15 +181,64 @@ If the user says no or skips: proceed without additional sources.
 
 ---
 
-### Phase 1.5: Code Quality Recommendations
+### Phase 1.5 — Smart Code Quality Recommendations
 
-#### Code Quality Recommendations
+**Input:** Framework's `code_quality_recommended` list from local-template.md + project's existing tool configs detected in Phase 1.
 
-1. Compare detected tools against `code_quality_recommended` from framework's `local-template.md`
-2. Present missing tools with descriptions, **ASK via AskUserQuestion** with header "Quality", question "Which recommended code quality tools should I add?", options: "Add all" (description: "Install all {N} recommended tools"), "Pick individually" (description: "Let me choose which tools to add"), "Skip" (description: "Don't add any code quality tools").
-3. For overlapping tools (prettier vs biome, eslint vs biome, owasp vs snyk vs trivy), **ASK via AskUserQuestion** with header "Tooling", question "Found overlapping tools — which do you prefer?", options: one per alternative (label: tool name, description: trade-offs).
-4. After selection, ask about external rulesets (default baseline / custom rules / shared config from external repo)
-5. **ASK via AskUserQuestion** with header "CI/CD", question "Also configure these tools in your CI/CD pipeline?", options: "Yes" (description: "Add linting, coverage, and quality checks to CI pipeline"), "No" (description: "Only configure locally, skip CI integration").
+**Algorithm:**
+
+1. **Load recommendations:** Read the framework's `code_quality_recommended` list from `local-template.md`
+2. **Read frontmatter:** For each recommended tool, read its `modules/code-quality/{tool}.md` YAML frontmatter to extract: `exclusive_group`, `recommendation_score`, `detection_files`, `categories`
+3. **Detect existing tools:** For each tool, check if ANY of its `detection_files` exist in the project root. Mark as "already configured" if found.
+4. **Group by exclusive_group:** Partition tools into groups. Tools with `exclusive_group: none` (security scanners) go into a "complementary" bucket — no deduplication needed.
+5. **Deduplicate per group:**
+   a. If the project already has a tool from this group (detected via `detection_files`) → keep it, hide alternatives
+   b. If no tool detected in the group → pre-select the one with highest `recommendation_score`
+   c. Mark remaining tools in the group as "alternatives (not selected)"
+
+6. **Present to user** via `AskUserQuestion`:
+
+   ```
+   Header: "Code Quality Tools"
+   Question: "Recommended tools for your {framework} + {language} project:"
+   Options:
+     A) Accept recommendations:
+        ✅ {tool1} — {description from overview} (recommended)
+        ✅ {tool2} — {description} (recommended)
+           ↳ Alternatives: {alt1}, {alt2} (same category: {exclusive_group})
+        ✅ {tool3} — {description} (recommended)
+        ...
+     B) Customize selection (per-group choices)
+     C) Skip code quality setup
+   ```
+
+7. **If user selects (B) — Customize:**
+   For each exclusive group with multiple members, present via `AskUserQuestion`:
+
+   For exclusive groups (radio — pick one):
+   ```
+   Header: "{Language} {Category}"
+   Question: "Pick one (or none):"
+   Options:
+     A) {tool1} — {brief desc} (recommended, score: {N})
+     B) {tool2} — {brief desc} (score: {N})
+     C) {tool3} — {brief desc} (score: {N})
+     D) None — skip this category
+   ```
+
+   For complementary groups (checkboxes — pick any):
+   ```
+   Header: "Security Scanning"
+   Question: "Select any (all are complementary):"
+   Options:
+     A) ☑ {tool1} — {desc} (recommended)
+     B) ☐ {tool2} — {desc}
+     C) ☐ {tool3} — {desc}
+   ```
+
+8. **Write selections** to `forge.local.md` `code_quality:` list.
+   - Simple string form: `code_quality: [detekt, ktlint, jacoco]`
+   - Object form for tools with external rulesets: `code_quality: [{name: detekt, ruleset: "path/to/rules.xml"}]`
 
 ---
 
