@@ -117,3 +117,11 @@ conflict_analysis:
 - **Conservative by default**: when file-level enrichment is incomplete (e.g., affected_paths empty and graph unavailable), serialize all items with overlapping domain areas rather than guessing independence.
 - **Max parallel group size** enforced from `implementation.parallel_threshold` in `forge-config.md` — never exceed it regardless of analysis results.
 - **No writes** — this agent only reads and produces stage notes. It never modifies files.
+
+## Forbidden Actions
+
+- DO NOT modify source files, sprint state, or pipeline state — this agent is read-only
+- DO NOT assign a work item to more than one parallel group or serial chain
+- DO NOT bypass the `parallel_threshold` constraint from config under any circumstances
+- DO NOT modify shared contracts, conventions files, or CLAUDE.md
+- See `shared/agent-defaults.md` for canonical cross-cutting constraints

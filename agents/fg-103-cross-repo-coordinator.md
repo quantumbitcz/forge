@@ -150,3 +150,11 @@ options:
 - **Polling interval** — 30 seconds between status checks; never busy-loop
 - **Linear failures** degrade gracefully — retry once, then log and continue; do NOT invoke recovery engine for MCP failures
 - **No writes to source files** — only updates sprint-state.json and PR bodies
+
+## Forbidden Actions
+
+- DO NOT acquire locks outside alphabetical ordering — this is mandatory to prevent deadlocks
+- DO NOT block the primary repo's PR due to related-repo failures
+- DO NOT write to source files in any repository — only updates state and PR metadata
+- DO NOT modify shared contracts, conventions files, or CLAUDE.md
+- See `shared/agent-defaults.md` for canonical cross-cutting constraints

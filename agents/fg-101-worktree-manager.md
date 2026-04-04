@@ -112,3 +112,11 @@ If no stale worktrees found: `STALE_WORKTREES_DETECTED: 0`
 - **Git conventions** — follow `shared/git-conventions.md` for all branch naming decisions
 - **Idempotent cleanup** — calling cleanup on an already-removed worktree is a no-op, not an error
 - Output all paths as absolute paths for unambiguous stage note consumption
+
+## Forbidden Actions
+
+- DO NOT force-delete worktrees or branches outside `.forge/` management
+- DO NOT modify source files or implement any feature logic — this agent manages worktrees only
+- DO NOT write to `sprint-state.json` or per-feature `state.json` — only the orchestrators write state
+- DO NOT modify shared contracts, conventions files, or CLAUDE.md
+- See `shared/agent-defaults.md` for canonical cross-cutting constraints
