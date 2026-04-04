@@ -73,6 +73,7 @@ This is a documentation-only plugin (no build step). To test changes:
 | Git conventions  | `shared/git-conventions.md` (branches, commits, hook detection)        |
 | MCP provisioning | `shared/mcp-provisioning.md` (auto-install rules) |
 | Version resolution | `shared/version-resolution.md` (never hardcode versions) |
+| UI patterns      | `shared/agent-ui.md` (AskUserQuestion, TaskCreate, plan mode)     |
 
 ## Key conventions
 
@@ -93,6 +94,8 @@ This is a documentation-only plugin (no build step). To test changes:
 
 **Agent file rules:**
 - YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes). The orchestrator wraps every Agent dispatch with TaskCreate/TaskUpdate for real-time sub-agent progress visibility (§3.11). Agents and skills that present multi-option choices to the user **must** use `AskUserQuestion` with structured options (header, question, 2-4 options with descriptions) — never plain text `Options: (1)...` or `(y/n)` patterns. Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present designs for user approval before implementation — skip in autonomous/replanning contexts where the validator serves as the gate.
+- YAML frontmatter `ui:` section declares interactive capabilities: `tasks` (TaskCreate/TaskUpdate), `ask` (AskUserQuestion), `plan_mode` (EnterPlanMode/ExitPlanMode). Omitting `ui:` entirely = all false (Tier 4). Structural test `ui-frontmatter-consistency.bats` enforces that `ui:` declarations match `tools:` list. See `shared/agent-ui.md` for patterns.
+- Agent UI tiers: Tier 1 (tasks+ask+plan_mode): orchestrator, shaper, planner, migration planner, bootstrapper. Tier 2 (tasks+ask): bug investigator, quality gate, test gate, PR builder; (tasks only): scaffolder, docs generator, contract validator, test bootstrapper. Tier 3 (tasks only): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, infra verifier. Tier 4 (no UI): all 10 reviewers, validator, feedback capture, recap.
 - Module config uses `components:` in `forge.local.md` — core fields: `language:`, `framework:`, `variant:`, `testing:`.
   - Framework-specific stack fields: `web` (e.g., `mvc | webflux`), `persistence` (e.g., `hibernate | r2dbc` — distinct from crosscutting `modules/persistence/`).
   - Optional crosscutting layers: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip.
@@ -276,6 +279,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - **Bugfix mode:** `/forge-fix` or `/forge-run bugfix: <description>`. Stage 1 dispatches `fg-020-bug-investigator` (INVESTIGATE), Stage 2 continues with reproduction (max 3 attempts). Stage 3 validates with 4 bugfix perspectives (root cause validity, fix scope, regression risk, test coverage). Stage 6 uses reduced reviewer batch. Stage 9 tracks bug patterns in `.forge/forge-log.md`. Bugfix state fields: `bugfix.source`, `bugfix.reproduction.*`, `bugfix.root_cause.*`. See `stage-contract.md` Bugfix Mode section.
 - **Migration mode:** All 10 stages run. Stage 2 uses `fg-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates.
+- **Autonomous mode:** `autonomous: true` in `forge-config.md` replaces all AskUserQuestion with auto-selection (logged with `[AUTO]` prefix). Plans auto-approved after validator passes. Tasks still created. Pipeline never pauses except on unrecoverable CRITICAL errors.
 
 ### Convergence & review
 
