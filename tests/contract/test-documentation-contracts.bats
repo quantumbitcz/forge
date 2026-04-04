@@ -31,8 +31,8 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
   [[ "$stage7_line" != *"| inline |"* ]] || fail "Stage 7 is still marked as inline"
 }
 
-@test "docs-contract: state schema version is 1.1.0" {
-  grep -q '"1.1.0"' "$STATE_SCHEMA" || fail "State schema version is not 1.1.0"
+@test "docs-contract: state schema version is 1.2.0" {
+  grep -q '"1.2.0"' "$STATE_SCHEMA" || fail "State schema version is not 1.2.0"
 }
 
 @test "docs-contract: state schema includes documentation field" {
