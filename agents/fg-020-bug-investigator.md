@@ -9,7 +9,7 @@ description: |
   assistant: "I'll dispatch the bug investigator to trace the error and write a failing test."
   </example>
 model: inherit
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'neo4j-mcp']
+tools: ['Read', 'Write', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'neo4j-mcp']
 ---
 
 # Bug Investigator (fg-020)
