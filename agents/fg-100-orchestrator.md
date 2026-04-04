@@ -74,105 +74,17 @@ When `--from` is specified:
 
 If `--spec <path>` is passed:
 
-1. **Read the spec file** at the given path. Resolve relative paths against the project root (output of `git rev-parse --show-toplevel`).
-   - If the file does not exist: **ERROR** — "Spec file not found: `{path}`. Check the path and retry." Abort.
-   - If the file is not readable: **ERROR** — "Cannot read spec file: `{path}`." Abort.
-
-2. **Parse the spec file format.** Spec files are produced by `/forge-shape` and contain structured Markdown:
-   - `## Epic` — the top-level feature title and description. Use this as the requirement label stored in `state.json.requirement`.
-   - `## Stories` — one or more user stories with acceptance criteria. Feed these directly to the PLAN stage planner — the planner should use the pre-shaped stories as its input rather than deriving stories from scratch.
-   - `## Technical Notes` (optional) — architectural context, constraints, decisions already made. Pass to EXPLORE and PLAN agents.
-   - `## Out of Scope` (optional) — explicit exclusions. Pass to implementer to avoid scope creep.
-   - If the spec file lacks an `## Epic` section: **WARN** — treat the entire file content as the raw requirement, same as plain-text input.
-
-3. **Store spec metadata** in `state.json`:
-   ```json
-   "spec": {
-     "source": "file",
-     "path": "/absolute/path/to/spec-file.md",
-     "epic_title": "<title from ## Epic>",
-     "story_count": <number of ## Story entries>,
-     "has_technical_notes": true/false,
-     "loaded_at": "<ISO8601>"
-   }
-   ```
-
-4. **Behavior in subsequent stages:**
-   - **EXPLORE:** Explorer agents receive the `## Technical Notes` section as additional context (if present).
-   - **PLAN:** The planner receives the full `## Stories` block. It should refine and decompose them into tasks, but MUST NOT discard acceptance criteria from the spec. It may add technical tasks (migrations, tests, infra) not in the spec.
-   - **VALIDATE:** Validator checks that the generated plan covers all acceptance criteria in the spec.
-   - **All other stages:** proceed normally.
-
-5. **Combining with other flags:** `--spec` is compatible with `--from` and `--dry-run`.
-   - `--spec path --dry-run`: loads spec, runs PREFLIGHT through VALIDATE using spec content, then stops.
-   - `--spec path --from=plan`: loads spec, skips EXPLORE, feeds spec directly to PLAN.
-
-Key rules:
-- The spec file is read once at startup (PREFLIGHT) and stored in stage notes for downstream agents.
-- If both `--spec` and inline requirement text are provided (e.g., `--spec plan.md Add extra requirement`), concatenate the spec content with the inline text — spec comes first.
-- The spec file is NEVER modified by the pipeline.
+1. Read the spec file (resolve relative paths against project root). ERROR if not found/readable.
+2. Parse sections: `## Epic` (requirement label), `## Stories` (feed to planner as-is), `## Technical Notes` (pass to EXPLORE/PLAN), `## Out of Scope` (pass to implementer). Missing `## Epic` → WARN, treat as raw requirement.
+3. Store spec metadata in `state.json.spec` (source, path, epic_title, story_count, has_technical_notes, loaded_at).
+4. Stage behavior: EXPLORE gets Technical Notes, PLAN gets Stories (must preserve ACs, may add technical tasks), VALIDATE checks plan covers all spec ACs.
+5. Compatible with `--from` and `--dry-run`. If both `--spec` and inline text provided, concatenate (spec first). Spec file is NEVER modified.
 
 ### 2.3 --dry-run Mode
 
-If `--dry-run` is passed (can combine with `--from`):
+Run PREFLIGHT → EXPLORE → PLAN → VALIDATE, then **STOP**. Output a dry-run report (requirement, module, risk, validation verdict, plan summary, QG config, integrations, PREEMPT items).
 
-1. Run PREFLIGHT normally (config validation, MCP detection, state init)
-2. Run EXPLORE normally (codebase analysis)
-3. Run PLAN normally (create stories, tasks, parallel groups)
-4. Run VALIDATE normally (check plan quality)
-5. **STOP after VALIDATE.** Do not enter IMPLEMENT.
-
-Output a dry-run summary:
-
-    ## Dry Run Report
-
-    **Requirement:** {requirement}
-    **Spec:** {spec_path if --spec was used, else "none"}
-    **Module:** {module} ({framework})
-    **Risk Level:** {risk_level}
-    **Validation:** {GO/REVISE/NO-GO}
-
-    ### Plan Summary
-    - Stories: {count}
-    - Tasks: {count} across {group_count} parallel groups
-    - Estimated files: {count} creates, {count} modifies
-
-    ### Quality Gate Configuration
-    - Batch 1: {agent_list}
-    - Batch 2: {agent_list}
-    - Inline checks: {list}
-
-    ### Integrations Available
-    {MCP detection results from PREFLIGHT}
-
-    ### PREEMPT Items Matched
-    {list of PREEMPT items that would apply}
-
-    To execute: /forge-run {same arguments without --dry-run}
-
-Key rules:
-- `--dry-run` creates NO files outside `.forge/` (stage notes still written for debugging)
-- `--dry-run` creates NO Linear tickets
-- `--dry-run` creates NO git branches or worktrees
-- `--dry-run` does NOT acquire `.forge/.lock` (concurrent dry-runs are safe — they only read project state and write stage notes)
-- `--dry-run` does NOT write checkpoint files (`checkpoint-*.json`) — there is nothing to recover
-- `--dry-run` does NOT trigger the `forge-checkpoint.sh` PostToolUse hook (no `lastCheckpoint` updates)
-- `--dry-run` is compatible with `--from` and `--spec` (e.g., `--dry-run --from=plan --spec shape.md`)
-- State.json is written with `"dry_run": true` flag
-
-### Dry-Run State Behavior
-
-Dry-run populates state.json fields normally for stages 0-3:
-- `integrations`: detected normally (MCP probing runs)
-- `preempt_items_applied`: loaded normally (PREEMPT matching runs)
-- `preempt_items_status`: remains `{}` (no implementation to track)
-- `domain_area`, `risk_level`: set by planner at Stage 2
-- `stage_timestamps`: recorded for stages 0-3 only
-- `score_history`: remains `[]` (no review cycles)
-- `linear_sync`: remains `{ "in_sync": true }` (Linear tickets NOT created in dry-run)
-- `total_retries`: tracks validation retries only (0-2)
-- `recovery_budget`: tracks any recovery during stages 0-3
-- `conventions_hash`, `conventions_section_hashes`: computed normally
+Key rules: NO files outside `.forge/`, NO Linear tickets, NO branches/worktrees, NO lock, NO checkpoints, NO hook triggers. State.json written with `"dry_run": true`. Stages 0-3 populate state fields normally; stages 4+ fields remain at defaults. Compatible with `--from` and `--spec`.
 
 ### 2.4 Sprint Mode Parameters
 
@@ -323,54 +235,17 @@ If it exists:
 
 ### 3.5a Detect Project Dependency Versions
 
-Detect current dependency versions from the project's package manifest files. This enables version-aware rule application — deprecation rules only trigger when the project's actual version is in the rule's applicable range.
-
-**Detection sources by module:**
-
-| Framework | File | Extract |
-|-----------|------|---------|
-| spring (Kotlin) | `build.gradle.kts` | `plugins { id("org.springframework.boot") version "X.Y.Z" }`, Kotlin version, Spring Security version |
-| spring (Java) | `build.gradle` or `pom.xml` | Spring Boot version, Spring Security version, Java source/target |
-| react | `package.json` | React version, Vite version, TypeScript version, key libraries |
-| express | `package.json` | Node engine version, Express/NestJS version, TypeScript version |
-| sveltekit | `package.json` | Svelte version, SvelteKit version, TypeScript version |
-| nextjs | `package.json` | Next.js version, React version, TypeScript version |
-| fastapi | `pyproject.toml` or `requirements.txt` | Python version, FastAPI version, Pydantic version, SQLAlchemy version |
-| django | `requirements.txt` or `pyproject.toml` | Python version, Django version, DRF version |
-| go-stdlib | `go.mod` | Go version, key module versions |
-| gin | `go.mod` | Go version, Gin version, key module versions |
-| axum | `Cargo.toml` | Rust edition, Axum version, Tokio version |
-| swiftui | `Package.swift` | Swift tools version, iOS deployment target, key package versions |
-| vapor | `Package.swift` | Swift tools version, Vapor version, Fluent version |
-| jetpack-compose | `build.gradle.kts` | Kotlin version, Compose version, AGP version |
-| kotlin-multiplatform | `build.gradle.kts` | Kotlin version, target platforms, key library versions |
-| aspnet | `.csproj` | .NET SDK version, target framework, NuGet package versions |
-| embedded | `CMakeLists.txt` or `platformio.ini` | C standard (C99/C11/C17), ESP-IDF version, platform |
-| k8s | Kubernetes YAML / Helm `Chart.yaml` | `apiVersion` fields, Helm chart versions, K8s target version |
-
-**Process:**
-1. Read the module's primary manifest file (based on `module` from config)
-2. Extract version strings using regex or structured parsing
-3. Store in `state.json` under a new `detected_versions` object:
+Detect dependency versions from the project's manifest file (e.g., `build.gradle.kts`, `package.json`, `go.mod`, `Cargo.toml`, `Package.swift`, `.csproj`, `pyproject.toml`). Extract language version, framework version, and key dependency versions. Store in `state.json.detected_versions`:
 
 ```json
 "detected_versions": {
-  "language": "kotlin",
-  "language_version": "2.0.0",
-  "framework": "spring-boot",
-  "framework_version": "3.2.4",
-  "key_dependencies": {
-    "spring-security": "6.2.1",
-    "r2dbc-postgresql": "1.0.4",
-    "kotlinx-coroutines": "1.8.0"
-  }
+  "language": "kotlin", "language_version": "2.0.0",
+  "framework": "spring-boot", "framework_version": "3.2.4",
+  "key_dependencies": { "spring-security": "6.2.1" }
 }
 ```
 
-4. If version cannot be detected (missing file, unparseable): log WARNING, set to `"unknown"` — rules default to applying (conservative, same as v1 behavior)
-5. Pass `detected_versions` to agents in dispatch prompts where relevant (implementer, quality gate, deprecation-refresh)
-
-**For old projects:** If manifest files use outdated formats or unconventional locations, detection may fail partially. The pipeline gracefully degrades — `"unknown"` versions cause all rules to apply, which is the safest default for legacy codebases.
+If version cannot be detected: log WARNING, set to `"unknown"` — all deprecation rules apply (conservative). Pass `detected_versions` to implementer, quality gate, and deprecation-refresh agents.
 
 ### 3.5a+ Deprecation Refresh (dispatch fg-140-deprecation-refresh)
 
@@ -407,95 +282,21 @@ Both modes produce the same `state.json.components` structure with named entries
 
 ### 3.5b Multi-Component Convention Resolution
 
-If `components:` is present in `forge.local.md`, resolve a full convention stack for each named component. This block runs after version detection and before the interrupted-run check.
+If `components:` is present in `forge.local.md`, resolve a convention stack per component. Runs after version detection, before interrupted-run check.
 
-For each component entry (e.g., `backend`, `frontend`, `infra`):
+**Resolution order per component** (most specific wins): variant > framework-testing > framework > language > testing.
 
-1. **Language layer:** `${CLAUDE_PLUGIN_ROOT}/modules/languages/${component.language}.md`
-   - Skip if `language` is null (e.g., pure infra/k8s component)
-2. **Framework layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/conventions.md`
-   - Skip if `framework` is null or `"stdlib"` (language-only project)
-3. **Variant layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/variants/${component.variant}.md`
-   - Skip if no `variant` specified or file does not exist
-4. **Framework testing layer:** `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/${component.framework}/testing/${component.testing}.md`
-   - Skip if no framework-specific testing file exists
-5. **Generic testing layer:** `${CLAUDE_PLUGIN_ROOT}/modules/testing/${component.testing}.md`
-   - Always load if `testing` is specified
-6. **Shared testing layers:**
-   - `modules/testing/testcontainers.md` — load if the component's stack involves a database
-   - `modules/testing/playwright.md` — load if the component has `e2e` configured
+1. **Language:** `modules/languages/${language}.md` (skip if null)
+2. **Framework:** `modules/frameworks/${framework}/conventions.md` (skip if null/stdlib)
+3. **Variant:** `modules/frameworks/${framework}/variants/${variant}.md` (skip if absent)
+4. **Framework testing:** `modules/frameworks/${framework}/testing/${testing}.md` (skip if absent)
+5. **Generic testing:** `modules/testing/${testing}.md` (always if `testing` specified)
+6. **Shared testing:** `testcontainers.md` (if database), `playwright.md` (if e2e)
+7. **Optional layers** (`database`, `persistence`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`): generic `modules/{layer}/{value}.md` + framework binding `modules/frameworks/{fw}/{layer}/{value}.md`. Missing files silently skipped.
 
-### Optional Layer Fields in `components:`
+**Validation:** Missing required files (language, framework) → ERROR + abort. Missing optional → WARNING + skip. Nonsensical combinations (frontend + database, k8s + messaging, etc.) → WARN, do not block. Stack > 12 files → advisory WARNING.
 
-| Field | Module Directory | Binding Directory |
-|-------|-----------------|-------------------|
-| `database` | `modules/databases/{value}.md` | `modules/frameworks/{fw}/databases/{value}.md` |
-| `persistence` | `modules/persistence/{value}.md` | `modules/frameworks/{fw}/persistence/{value}.md` |
-| `migrations` | `modules/migrations/{value}.md` | `modules/frameworks/{fw}/migrations/{value}.md` |
-| `api_protocol` | `modules/api-protocols/{value}.md` | `modules/frameworks/{fw}/api-protocols/{value}.md` |
-| `messaging` | `modules/messaging/{value}.md` | `modules/frameworks/{fw}/messaging/{value}.md` |
-| `caching` | `modules/caching/{value}.md` | `modules/frameworks/{fw}/caching/{value}.md` |
-| `search` | `modules/search/{value}.md` | `modules/frameworks/{fw}/search/{value}.md` |
-| `storage` | `modules/storage/{value}.md` | `modules/frameworks/{fw}/storage/{value}.md` |
-| `auth` | `modules/auth/{value}.md` | `modules/frameworks/{fw}/auth/{value}.md` |
-| `observability` | `modules/observability/{value}.md` | `modules/frameworks/{fw}/observability/{value}.md` |
-
-7. **Optional layer resolution:** For each optional field present in the component config (`database`, `persistence`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`):
-   a. Generic module: `${CLAUDE_PLUGIN_ROOT}/modules/{layer}/{value}.md` — add to stack if file exists.
-   b. Framework binding: `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{framework}/{layer}/{value}.md` — add to stack if file exists.
-
-   Files that do not exist are silently skipped (layers are populated incrementally across phases).
-
-8. **Layer combination validation:** Check for nonsensical configurations and log WARNINGs (do not block):
-   - Frontend frameworks (react, nextjs, sveltekit, svelte, angular, vue) with `database:` or `persistence:` → WARN
-   - SQL persistence (hibernate, jooq, exposed, sqlalchemy, prisma, typeorm, drizzle, django-orm) with document database (mongodb, dynamodb, cassandra) → WARN
-   - Mobile frameworks (swiftui, jetpack-compose) with `messaging:` → WARN
-   - Infra frameworks (k8s) with any layer except `observability:` → WARN
-
-**Validation:** After resolving paths, verify each one exists on disk.
-- Missing **optional** file (variant, framework-testing): log WARNING, skip the layer.
-- Missing **required** file (language, framework conventions): log ERROR, continue collecting all errors, then abort PREFLIGHT if any ERRORs remain.
-
-**Conflict resolution order (most specific wins):** variant > framework-testing > framework > language > testing.
-
-**Convention stack size cap:** If a component's resolved stack exceeds **12 files**, log a WARNING: `"Convention stack for {component} has {N} files (cap: 12). Consider splitting into sub-components or removing unused optional layers."` Continue with the full stack — this is advisory, not blocking. Rationale: 12 files at ~150 avg lines ≈ 1,800 lines ≈ 2,500 tokens, roughly 2.5% of a 100K context window. Beyond this, convention context competes with the agent's working memory for code analysis.
-
-Store resolved paths in `state.json` under `components`:
-
-```json
-{
-  "components": {
-    "backend": {
-      "convention_stack": [
-        "modules/languages/kotlin.md",
-        "modules/frameworks/spring/conventions.md",
-        "modules/frameworks/spring/variants/kotlin.md",
-        "modules/frameworks/spring/testing/kotest.md",
-        "modules/testing/kotest.md",
-        "modules/testing/testcontainers.md"
-      ],
-      "story_state": "PREFLIGHT",
-      "conventions_hash": "",
-      "detected_versions": {}
-    },
-    "frontend": {
-      "convention_stack": [
-        "modules/languages/typescript.md",
-        "modules/frameworks/react/conventions.md",
-        "modules/testing/vitest.md",
-        "modules/testing/playwright.md"
-      ],
-      "story_state": "PREFLIGHT",
-      "conventions_hash": "",
-      "detected_versions": {}
-    }
-  }
-}
-```
-
-Compute `conventions_hash` per component (SHA256 first 8 chars of the concatenated convention stack content, in resolution order). Store in `components.{name}.conventions_hash`. Used for per-component drift detection.
-
-**Single-component projects:** If `components:` is absent, this section is skipped entirely. The existing `conventions_file` / `detected_versions` flow applies unchanged.
+Store resolved paths in `state.json.components.{name}.convention_stack`. Compute per-component `conventions_hash` (SHA256 first 8 chars of concatenated stack). Single-component projects skip this section entirely.
 
 ### 3.5c Check Engine Rule Cache
 
@@ -582,127 +383,17 @@ Do NOT create the lock file during `--dry-run` runs.
 
 ### 3.8 Initialize State
 
-Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full schema):
-
-```json
-{
-  "version": "1.1.0",
-  "complete": false,
-  "story_id": "<kebab-case-from-requirement>",
-  "requirement": "<original requirement verbatim>",
-  "mode": "standard",
-  "domain_area": "",
-  "risk_level": "",
-  "story_state": "PREFLIGHT",
-  "active_component": "",
-  "components": {},
-  "quality_cycles": 0,
-  "test_cycles": 0,
-  "verify_fix_count": 0,
-  "validation_retries": 0,
-  "total_retries": 0,
-  "convergence": {
-    "phase": "correctness",
-    "phase_iterations": 0,
-    "total_iterations": 0,
-    "plateau_count": 0,
-    "last_score_delta": 0,
-    "convergence_state": "IMPROVING",
-    "phase_history": [],
-    "safety_gate_passed": false,
-    "safety_gate_failures": 0,
-    "unfixable_findings": []
-  },
-  "total_retries_max": 10,
-  "stage_timestamps": { "preflight": "<now ISO 8601>" },
-  "last_commit_sha": "",
-  "preempt_items_applied": [],
-  "preempt_items_status": {},
-  "feedback_classification": "",
-  "previous_feedback_classification": "",
-  "feedback_loop_count": 0,
-  "score_history": [],
-  "integrations": {
-    "linear": { "available": false, "team": "" },
-    "playwright": { "available": false },
-    "slack": { "available": false },
-    "figma": { "available": false },
-    "context7": { "available": false },
-    "neo4j": { "available": false, "last_build_sha": "", "node_count": 0 }
-  },
-  "linear": {
-    "epic_id": "",
-    "story_ids": [],
-    "task_ids": {}
-  },
-  "linear_sync": {
-    "in_sync": true,
-    "failed_operations": []
-  },
-  "modules": [],
-  "cost": {
-    "wall_time_seconds": 0,
-    "stages_completed": 0
-  },
-  "recovery_budget": {
-    "total_weight": 0.0,
-    "max_weight": 5.5,
-    "applications": []
-  },
-  "recovery": {
-    "total_failures": 0,
-    "total_recoveries": 0,
-    "degraded_capabilities": [],
-    "failures": [],
-    "budget_warning_issued": false
-  },
-  "scout_improvements": 0,
-  "conventions_hash": "",
-  "conventions_section_hashes": {},
-  "detected_versions": {
-    "language": "",
-    "language_version": "",
-    "framework": "",
-    "framework_version": "",
-    "key_dependencies": {}
-  },
-  "check_engine_skipped": 0,
-  "dry_run": false,
-  "cross_repo": {},
-  "spec": null,
-  "ticket_id": null,
-  "branch_name": "",
-  "tracking_dir": null,
-  "bugfix": {
-    "source": null,
-    "source_id": null,
-    "reproduction": {
-      "method": null,
-      "test_file": null,
-      "attempts": 0
-    },
-    "root_cause": {
-      "hypothesis": null,
-      "category": null,
-      "affected_files": [],
-      "confidence": null
-    }
-  },
-  "documentation": {
-    "discovery_error": false,
-    "last_discovery_timestamp": "",
-    "files_discovered": 0,
-    "sections_parsed": 0,
-    "decisions_extracted": 0,
-    "constraints_extracted": 0,
-    "code_linkages": 0,
-    "coverage_gaps": [],
-    "stale_sections": 0,
-    "external_refs": [],
-    "generation_history": []
-  }
-}
-```
+Create/overwrite `.forge/state.json` per `shared/state-schema.md` (version 1.1.0). Key fields to initialize:
+- `complete: false`, `story_id` (kebab-case from requirement), `requirement` (verbatim), `mode` (from §3.0)
+- `story_state: "PREFLIGHT"`, all counters to 0 (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`, `total_retries`)
+- `convergence`: phase `"correctness"`, state `"IMPROVING"`, all counters 0, `safety_gate_passed: false`
+- `total_retries_max` from config (default 10)
+- `stage_timestamps: { "preflight": "<now>" }`
+- `integrations`: all `available: false` (updated by MCP detection in §23)
+- `linear`, `linear_sync`, `recovery_budget`, `recovery`: empty/default per schema
+- `detected_versions`, `conventions_hash`, `conventions_section_hashes`: from earlier PREFLIGHT steps
+- `dry_run`: from flag, `spec`: from `--spec` parsing, `bugfix`: empty defaults, `documentation`: empty defaults
+- `ticket_id`, `branch_name`, `tracking_dir`: set after worktree creation (§3.9)
 
 ### 3.9 Create Worktree
 
@@ -1237,28 +928,9 @@ Read `parallel_groups`, `serial_chains`, `conflicts` from stage notes written by
 
 This check runs at IMPLEMENT time, not PLAN time, because task file lists are finalized during scaffolding.
 
-### 7.7 Component-Scoped Dispatch
+### 7.7 Component-Scoped Dispatch (multi-component projects)
 
-For **multi-component projects** (where `state.json.components` is populated), apply these rules when dispatching implementer agents:
-
-1. **Set active component:** before each task dispatch, set `state.json.components.{name}.story_state` to `"IMPLEMENTING"`.
-2. **Scope the convention stack:** include ONLY the active component's `convention_stack` paths in the dispatch prompt. Do not pass other components' conventions to the same dispatch.
-3. **Scope commands:** include ONLY the active component's `commands` (build, test, lint, test_single). Never mix commands from different components in one dispatch.
-4. **Set working directory context:** pass the component's `path` as the working directory in the dispatch prompt. Agents must not touch files outside that path unless the task explicitly spans components.
-
-**Cross-component tasks** (e.g., an API change that requires a matching type update in the frontend):
-1. Process the **primary component** first (typically backend — it defines the contract).
-2. After the primary component's task completes through VERIFY, process **dependent components** in dependency order.
-3. Each dependent-component dispatch uses that component's convention stack and commands exclusively.
-4. Cross-component tasks are always serialized — never dispatch two components' tasks in parallel when one depends on the other's output.
-
-### 7.7a Multi-Service Implementation Context
-
-When dispatching implementers for multi-service tasks:
-1. Set working directory context to the task's component `path:` (e.g., `services/user-service`).
-2. Load the component's `convention_stack` from `state.json.components[task.component]`.
-3. Pass the correct scaffolder patterns, build commands, and test commands for that component.
-4. The implementer must not touch files outside its component's path unless the task explicitly spans components.
+Each dispatch scoped to one component: set active component state to `"IMPLEMENTING"`, include ONLY that component's convention stack, commands, and working directory path. Cross-component tasks: process primary component first (typically backend), then dependents in order — always serialized, never parallel when one depends on the other's output.
 
 ### 7.8 Frontend Creative Polish (conditional, dispatch fg-320-frontend-polisher)
 
@@ -1306,16 +978,7 @@ Mark Implement as completed.
 
 ### Post-IMPLEMENT Graph Update
 
-After Stage 4 (IMPLEMENT) completes:
-
-1. Check `graph.enabled` in `forge.local.md`
-2. If enabled AND `state.json.files_changed` is non-empty:
-   - Run `shared/graph/update-project-graph.sh --project-root $PROJECT_ROOT --project-id $project_id --component $component --files $changed_files`
-   - Update `state.json.graph.last_update_stage = 4`
-   - Update `state.json.graph.last_update_files = $changed_files`
-   - Update `state.json.graph.stale = false`
-   - Log: "Graph updated: {N} files re-indexed"
-3. If update fails: log WARNING, set `state.json.graph.stale = true`, continue pipeline
+If `graph.enabled` and files changed: run `update-project-graph.sh` with changed files. Update `state.json.graph` (last_update_stage=4, stale=false). On failure: WARNING, set stale=true, continue.
 
 ---
 
@@ -1364,16 +1027,7 @@ Quality is NOT re-run after a test fix unless the fix introduces substantial new
 
 ### Phase C: Per-Component Verification (multi-component projects only)
 
-For projects where `state.json.components` is populated, VERIFY runs per component rather than globally:
-
-1. **Identify changed components:** for each component in `state.json.components`, check whether any files under `component.path` were created or modified during IMPLEMENT. Only components with changes undergo verification.
-2. **Phase A per component:** for each changed component, run that component's `commands.build` then `commands.lint`. Stop on first failure within a component and enter the fix loop using that component's `commands` exclusively.
-3. **Phase B per component:** run each changed component's `commands.test` (or `test_gate.command` if overridden per component) separately. Test failures in one component do not block verification of other independent components.
-4. **Independence rule:** a component that passes VERIFY is not re-verified because another component fails, unless the second component's fix touches the first component's files.
-5. **Completion condition:** the VERIFY stage completes successfully only when ALL changed components have passed both Phase A and Phase B.
-6. **State updates:** set `state.json.components.{name}.story_state` to `"VERIFYING"` while running, `"VERIFIED"` on pass, `"FAILED"` on exhausted fix loops.
-
-For **single-component projects**, this section is skipped — Phase A and Phase B run as documented above using the global `commands`.
+For multi-component projects: identify changed components, run Phase A + Phase B per component using that component's `commands`. Independent components verify in parallel; a passed component is not re-verified unless another fix touches its files. All changed components must pass. State: `"VERIFYING"` → `"VERIFIED"` / `"FAILED"`. Single-component projects skip this.
 
 ### Linear Tracking
 
@@ -1399,21 +1053,9 @@ After IMPLEMENT completes, the orchestrator enters the convergence loop defined 
 
 Each Phase 1 iteration increments both `convergence.total_iterations` and `total_retries`. If `total_retries >= total_retries_max`, escalate regardless of convergence state.
 
-### Post-VERIFY Graph Update
+### Post-VERIFY / Pre-REVIEW Graph Updates
 
-After Stage 5 (VERIFY) completes, if fix iterations changed additional files:
-
-1. Compute delta: `new_files = state.json.files_changed - state.json.graph.last_update_files`
-2. If delta is non-empty: run `update-project-graph.sh` with `--files $delta`
-3. Update state.json.graph fields
-4. If update fails: log WARNING, set stale = true, continue
-
-### Pre-REVIEW Graph Update
-
-Before dispatching Stage 6 (REVIEW):
-
-1. If `state.json.graph.stale == true`: run full update with current `files_changed`
-2. If `state.json.graph.stale == false`: no-op
+Post-VERIFY: if fix iterations changed additional files (delta from last_update_files), update graph with delta only. Pre-REVIEW: if `graph.stale == true`, run full update. If stale == false, no-op. Failures: WARNING + stale=true, continue.
 
 ---
 
@@ -1482,25 +1124,7 @@ Merge the returned findings into the quality gate's finding pool before scoring 
 
 ### 9.2a Component-Aware Quality Gate (multi-component projects)
 
-For projects where `state.json.components` is populated, the quality gate dispatch applies these rules:
-
-1. **Full file list:** collect changed files across ALL components and pass the complete list to the quality gate. The quality gate is responsible for routing findings back to the correct component.
-2. **Convention stack per file:** when dispatching review agents, annotate each changed file with its owning component's convention stack. Review agents use the annotated stack to apply the right rules per file.
-3. **Backend-scoped review agents** (`architecture-reviewer`, `backend-performance-reviewer`): dispatched with only the backend component's changed files and its convention stack. They do not review frontend or infra files.
-4. **Frontend-scoped review agents** (`frontend-reviewer`, `frontend-performance-reviewer`): dispatched with only the frontend component's changed files and its convention stack.
-5. **Cross-cutting review agents** (`security-reviewer`, and any agent without an explicit component scope in config): dispatched with the full changed file list across all components.
-6. **Unified scoring:** all findings from all review agents are merged and scored as a single pool using the standard formula (`max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`). There is one score and one verdict per review cycle — not per component. This keeps escalation and oscillation detection simple.
-7. **Finding annotation:** each finding in stage notes includes `component: {name}` for traceability during fix cycles and retrospective analysis.
-
-For **single-component projects**, this section is skipped — batch dispatch proceeds as documented in 9.1.
-
-### 9.2b Multi-Service Review Context
-
-When dispatching quality gate reviewers for multi-service projects:
-1. For each changed file, resolve its owning component via path-prefix matching.
-2. Annotate each file with its component's convention_stack in the dispatch prompt.
-3. Reviewers apply the correct rules per file — a PR touching both Kotlin and TypeScript services gets the right conventions for each file.
-4. Cross-service consistency checks: if the requirement spans services, verify event schemas match, API contracts align, and shared types are consistent.
+Multi-component: annotate each file with its owning component's convention stack. Backend-scoped reviewers get backend files only; frontend-scoped get frontend files only; cross-cutting reviewers (security, etc.) get all files. Unified scoring — one score/verdict per cycle, not per component. Each finding annotated with `component: {name}`. Cross-service consistency: verify event schemas, API contracts, shared types match. Single-component projects skip this.
 
 ### 9.3 Convergence-Driven Fix Cycle
 
@@ -1807,20 +1431,7 @@ The pipeline is a long-running workflow that can consume significant context. Ap
 
 ### Convention Drift Check
 
-Agents that read the conventions file should:
-1. After reading, compute SHA256 first 8 chars of the content
-2. Compare with `conventions_hash` in state.json
-3. If different: log WARNING — "Conventions file changed mid-run (PREFLIGHT hash: {old}, current: {new}). Using current version."
-4. Continue with the current (newer) version — do not use stale conventions
-5. If `conventions_hash` is empty (conventions file was unavailable at PREFLIGHT): skip the check
-
-**Section-level drift detection (optional optimization):**
-
-When agents only care about specific sections of the conventions file (e.g., implementer only cares about "Architecture" and "Testing" sections), they MAY compare individual section hashes from `conventions_section_hashes` against re-computed section hashes. This avoids false warnings when unrelated sections changed. If per-section checking is used:
-1. Compute SHA256 first 8 chars of each relevant section
-2. Compare with matching key in `conventions_section_hashes`
-3. If only irrelevant sections changed: log INFO instead of WARNING
-4. If relevant sections changed: log WARNING and use current version
+Agents compare SHA256 (first 8 chars) of conventions file against `conventions_hash` in state.json. If changed: WARNING + use current version. Optional section-level drift: compare per-section hashes from `conventions_section_hashes` — irrelevant section changes → INFO instead of WARNING.
 
 ### Dispatch Prompts
 
@@ -1832,79 +1443,11 @@ When agents only care about specific sections of the conventions file (e.g., imp
 
 ## 14. Agent Dispatch Rules
 
-When to use each dispatch type:
-
-### Inline (orchestrator handles directly)
-
-Use inline when the work is:
-- **Stateless** — reads config, writes state, no domain reasoning needed
-- **Fast** — completes in seconds, not minutes
-- **Orchestration-only** — file management, command execution, checkpoint writing
-
-Examples: PREFLIGHT config parsing, VERIFY Phase A (run build/lint commands), DOCS (check if docs need updating), state.json writes, checkpoint saves.
-
-**Rule:** If it takes <30 seconds and doesn't need a system prompt, do it inline.
-
-### Dedicated Plugin Agent (`agents/*.md`)
-
-Use a dedicated agent when the work:
-- **Needs a system prompt** — specific persona, rules, output format, expertise
-- **Is reusable** — same logic used across multiple pipeline runs and stages
-- **Requires domain reasoning** — architectural analysis, security review, planning
-- **Produces structured output** — findings, verdicts, plans, reports
-- **Has its own guardrails** — forbidden actions, context budget, tool restrictions
-
-Examples: `fg-200-planner` (needs planning rules), `fg-300-implementer` (needs TDD rules, Boy Scout rules, coding guardrails), `fg-400-quality-gate` (needs scoring formula, dedup logic), all review agents (need domain-specific checklists).
-
-**Rule:** If it needs a system prompt with rules and constraints, create a dedicated agent.
-
-### Builtin Claude Code Agent (`source: builtin`)
-
-Use a builtin when:
-- **Generic capability** suffices — general code review, security scanning, accessibility audit
-- **No forge-specific rules** needed — the agent's default behavior is what you want
-- **Broad perspective** desired — a "second opinion" without framework-specific bias
-
-Examples: `Code Reviewer` (general correctness), `Security Engineer` (broad security), `Accessibility Auditor` (WCAG checks).
-
-**Rule:** Use builtins for general-purpose tasks where forge-specific guardrails aren't needed. They complement (not replace) dedicated plugin agents.
-
-### Plugin Subagent (`source: plugin`)
-
-Use a plugin subagent when:
-- **Another installed plugin** provides specialized capability the pipeline doesn't have
-- **The capability is maintained externally** — updates come from the plugin author, not from us
-
-Examples: `pr-review-toolkit:code-reviewer` (CLAUDE.md adherence), `pr-review-toolkit:silent-failure-hunter` (error swallowing detection), `codebase-audit-suite:*` (deep audit agents).
-
-**Rule:** Use plugin subagents for capabilities that are maintained by other plugin teams. Don't duplicate their logic in our agents.
-
-### Config-Driven (user decides)
-
-Some dispatch decisions are left to the user's `forge.local.md`:
-- `explore_agents` — user picks their preferred explorer
-- `quality_gate.batch_N` — user defines which reviewers run and in what order
-- `test_gate.analysis_agents` — user picks test analysis tools
-
-**Rule:** When reasonable people could disagree on which agents to use, make it configurable. The pipeline provides defaults in module templates; users override in their project config.
-
-### Decision Tree
-
-```
-Is the work <30 seconds with no reasoning needed?
-  → YES: Inline
-  → NO: Does it need forge-specific rules and guardrails?
-    → YES: Dedicated plugin agent (agents/*.md)
-    → NO: Is it a generic capability (review, audit, scan)?
-      → YES: Is there a builtin that does it well enough?
-        → YES: Builtin agent (source: builtin)
-        → NO: Is there an external plugin that does it?
-          → YES: Plugin subagent (source: plugin)
-          → NO: Create a dedicated plugin agent
-      → NO: Should the user decide which tool to use?
-        → YES: Config-driven (let user pick in template)
-        → NO: Dedicated plugin agent
-```
+- **Inline:** <30s, stateless, no reasoning (config parsing, state writes, command execution)
+- **Dedicated plugin agent** (`agents/*.md`): needs system prompt, guardrails, structured output (planner, implementer, quality gate, reviewers)
+- **Builtin agent** (`source: builtin`): generic capability, no forge-specific rules needed (general code review, accessibility)
+- **Plugin subagent** (`source: plugin`): capability maintained by external plugin team
+- **Config-driven:** user-configurable in `forge.local.md` (`explore_agents`, `quality_gate.batch_N`, `test_gate.analysis_agents`)
 
 ---
 
@@ -1944,46 +1487,14 @@ State files use JSON. Stage notes use markdown.
 
 ## 16. Timeout Enforcement
 
-### Agent Dispatch Timeouts
-
-When dispatching an agent via the Agent tool:
-
-1. Record the dispatch timestamp in stage notes
-2. The Agent tool has a built-in timeout mechanism — agents complete when they return a result
-3. If an agent has not returned after the stage timeout (30 min), the orchestrator:
-   - Stops waiting for the agent
-   - Proceeds with available results from other agents in the batch
-   - Logs: "Agent {name} timed out after {duration}. Proceeding without its results."
-   - Adds INFO finding: `{agent}:0 | REVIEW-GAP | INFO | Agent timed out, {focus} not reviewed`
-4. If a late result arrives after the orchestrator moved on: discard it
-
-### Command Timeouts
-
-When running shell commands (build, test, lint):
-
-1. Use the configurable timeout from `commands.{cmd}_timeout` in `forge.local.md`
-2. Default timeouts: build=120s, test=300s, lint=60s
-3. If a command exceeds its timeout:
-   - Kill the process
-   - Report: "Command '{cmd}' timed out after {N}s"
-   - Classify as TOOL_FAILURE for recovery engine
-
-### Stage Timeouts
-
 | Level | Timeout | Action |
 |---|---|---|
-| Single command | `commands.*_timeout` (default 120-300s) | Kill, report TOOL_FAILURE |
+| Single command | `commands.*_timeout` (default build=120s, test=300s, lint=60s) | Kill, report TOOL_FAILURE |
+| Agent dispatch | 30 minutes | Proceed with available results, add REVIEW-GAP finding |
 | Stage total | 30 minutes | Checkpoint, warn user, suggest resume |
-| Full pipeline | 2 hours | Checkpoint, pause, notify user |
-| Full pipeline (dry-run) | 30 minutes | Stop, report what completed |
+| Full pipeline | 2 hours (30 min for dry-run) | Checkpoint, pause, notify user |
 
-### Enforcement Rule
-
-Timeouts are defensive — they prevent runaway execution, not thoroughness. When a timeout fires:
-- NEVER discard work already completed
-- ALWAYS checkpoint before stopping
-- ALWAYS tell the user what was completed and what was skipped
-- NEVER retry after a stage timeout (the user decides to resume or abort)
+On timeout: NEVER discard completed work, ALWAYS checkpoint before stopping, NEVER retry (user decides).
 
 ---
 
@@ -2006,110 +1517,23 @@ Health: [improving / stable / degrading]
 
 ## 18. Pipeline Principles
 
-1. **Autonomy first** -- only pause for user input when risk exceeds threshold or max retries exhausted
-2. **Fail fast** -- stop at first failure, fix, re-verify from that point
-3. **Parallel where possible** -- exploration, review, and independent implementation tasks run concurrently
-4. **Learn from failure** -- every failure is recorded and informs future runs via pipeline log + config tuning
-5. **Agent per stage** -- each stage is handled by a dedicated agent with focused context
-6. **Self-improving** -- fg-700-retrospective updates config parameters based on accumulated metrics
-7. **Pattern-driven** -- implementation always follows existing code patterns, never invents new ones
-8. **Config-driven** -- all commands, agents, and thresholds come from config files, never hardcoded
-9. **Validate before implementing** -- plan review catches gaps cheaply before code is written
-10. **Smart TDD** -- write meaningful tests that cover business behavior, skip duplicate or framework tests
-11. **Readable code** -- KDoc/TSDoc on public interfaces, small functions (<40 lines), low cognitive complexity
-12. **No gold-plating** -- implement exactly what the ACs specify, don't add unasked features
-13. **Boy Scout Rule** -- improve code you touch: safe, small, local improvements only
-14. **Token-conscious** -- keep dispatch prompts tight (<2k), return structured output only, summarize between stages
+Autonomy first (3 touchpoints only) · Fail fast, fix, re-verify · Parallel where possible · Learn from failure (PREEMPT + config tuning) · Agent per stage · Self-improving (retrospective auto-tunes) · Pattern-driven (follow existing code) · Config-driven (never hardcode) · Validate before implementing · Smart TDD (business behavior, not framework) · Readable code (<40 line functions, KDoc/TSDoc) · No gold-plating · Boy Scout Rule (safe, small, local) · Token-conscious (<2k dispatch prompts)
 
 ---
 
 ## 19. Large Codebase & Multi-Module Handling
 
-When dispatching any agent, enforce these file limits to prevent context overflow:
+**File limits per dispatch:** Exploration max 50 files, Implementation max 20 files/task, Review max 100 files/batch. Exceed → split into sub-tasks or multiple rounds.
 
-- **Exploration:** max 50 files per pass, grouped by domain area. If exploration finds more, summarize by directory and read details only for the most relevant.
-- **Implementation:** max 20 files per task. If a task's file list exceeds 20, split into sub-tasks before dispatching.
-- **Review:** max 100 files per batch agent dispatch. If more files changed, batch them into multiple review rounds.
-
-### Multi-Module Detection
-
-If the project has multiple module markers at different paths (e.g., both `build.gradle.kts` and `package.json` in separate directories), this is a multi-module project. Each module gets its own sub-pipeline:
-
-1. **EXPLORE:** dispatch per-module explorers in parallel
-2. **PLAN:** create stories grouped by module, with explicit integration points between modules
-3. **IMPLEMENT:** run per-module, sequentially. Backend modules complete through VERIFY before frontend modules enter IMPLEMENT (backend defines API contracts that frontend consumes)
-4. **REVIEW:** dispatch module-appropriate reviewers for each module's changed files
-
-### Multi-Module State
-
-For multi-module runs, `state.json` tracks per-module progress:
-
-```json
-{
-  "modules": [
-    { "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" },
-    { "module": "react", "story_state": "PLANNING", "story_id": "story-2" }
-  ]
-}
-```
-
-The orchestrator manages transitions: a module's sub-pipeline advances independently, but cross-module dependencies (e.g., frontend depends on backend API) are enforced by the sequential ordering.
-
-### Multi-Module Failure Handling
-
-When a module's sub-pipeline fails (e.g., backend IMPLEMENT fails after max retries):
-
-1. Set the failed module's state to `"FAILED"` in `state.json.modules[]`
-2. **Dependent modules:** do NOT enter IMPLEMENT. Set their state to `"BLOCKED"` with reason: "Blocked by {failed_module} failure"
-3. **Independent modules:** continue their sub-pipeline normally
-4. Escalate to user: "Module {name} failed at {stage}. Dependent modules ({list}) are blocked. Independent modules ({list}) continuing. Options: (1) Fix {name} and resume with `/forge-run --from={stage}`, (2) Abort all modules."
-
-Module dependency is determined by config ordering — modules listed earlier are assumed to be depended upon by later modules (backend before frontend).
+**Multi-module projects** (multiple manifest files at different paths): each module gets its own sub-pipeline tracked in `state.json.modules[]`. Backend modules complete through VERIFY before frontend enters IMPLEMENT (contract dependency). Failed module → dependent modules `"BLOCKED"`, independent modules continue. Config ordering determines dependency (earlier = depended upon).
 
 ---
 
-## 20. Worktree Policy
+## 20. Worktree & Cross-Repo Policy
 
-All implementation work happens in an isolated git worktree. The user's working tree is never modified by the pipeline. Worktree lifecycle is managed by `fg-101-worktree-manager` — see `agents/fg-101-worktree-manager.md` for full details.
+Worktree lifecycle managed by `fg-101-worktree-manager` — see `agents/fg-101-worktree-manager.md`. Creation at PREFLIGHT (§3.9), cleanup at LEARN (§12.1a). Hard rules: NEVER force-remove worktrees, NEVER `git clean -f` or `git checkout .` on the main working tree, NEVER modify main working tree during IMPLEMENT through REVIEW.
 
-### Key Points
-
-- **Creation:** Dispatched at PREFLIGHT (§3.9) via `fg-101-worktree-manager create`. Skip if `--dry-run`.
-- **Verification:** Stage 4 (IMPLEMENT) verifies the worktree exists — it does NOT create it.
-- **Merge:** On SHIP success, merge worktree branch back to base branch, then dispatch `fg-101-worktree-manager cleanup`. On failure or rejection, preserve worktree for manual inspection.
-- **Sprint mode:** When `--run-dir` is provided, the worktree base directory is `{run-dir}/worktree/` instead of `.forge/worktree`.
-
-### Hard Rules
-
-- NEVER run `git worktree remove --force` without user confirmation
-- NEVER run `git clean -f` or `git checkout .` on the main working tree
-- NEVER modify files in the main working tree during IMPLEMENT through REVIEW stages
-
-### Cross-Repo Coordination (dispatch fg-103-cross-repo-coordinator)
-
-When `related_projects` is configured in `forge.local.md` and the plan includes cross-repo tasks, delegate all cross-repo operations to `fg-103-cross-repo-coordinator`.
-
-**Setup (after VALIDATE, before IMPLEMENT):**
-
-```
-dispatch fg-103-cross-repo-coordinator "setup-worktrees --feature ${feature_id} --projects ${related_projects}"
-```
-
-fg-103 handles worktree creation, lock ordering, branch naming, and state tracking for all related projects. Read `cross_repo` state from stage notes.
-
-**PR Linking (SHIP stage):**
-
-```
-dispatch fg-103-cross-repo-coordinator "link-prs --feature ${feature_id} --prs ${pr_urls}"
-```
-
-**Cleanup (LEARN stage):**
-
-```
-dispatch fg-103-cross-repo-coordinator "cleanup --feature ${feature_id}"
-```
-
-Cross-repo timeout, partial failure handling, and lock management are handled by fg-103. See `agents/fg-103-cross-repo-coordinator.md` for details. Main repo changes are never rolled back on cross-repo failure.
+Cross-repo operations delegated to `fg-103-cross-repo-coordinator` — see `agents/fg-103-cross-repo-coordinator.md`. Dispatch points: `setup-worktrees` (after VALIDATE), `link-prs` (SHIP), `cleanup` (LEARN). fg-103 handles lock ordering, timeouts, partial failures. Main repo never rolled back on cross-repo failure.
 
 ---
 
@@ -2144,206 +1568,41 @@ Hard rules that apply at all times, regardless of context.
 
 ## 22. Autonomy & Decision Framework
 
-The pipeline operates with MAXIMUM autonomy. The user is interrupted only when:
+Maximum autonomy. User interrupted only for: pipeline start, genuine 50/50 decisions, unresolvable CRITICALs, PR approval. All other decisions: choose and document in stage notes.
 
-1. Pipeline starts — present the requirement interpretation
-2. Genuine 50/50 architectural decisions — see hierarchy below
-3. CRITICAL findings that cannot be auto-resolved
-4. PR approval
+**Decision hierarchy:** 70/30+ → choose silently. 60/40 → choose simpler (fewer files, less coupling, reversible, matches patterns). 50/50 → ask user. Requires domain knowledge → ask user.
 
-For ALL other decisions, the agent decides and documents the reasoning in stage notes.
-
-### Decision Hierarchy
-
-When encountering a design, architecture, or implementation choice:
-
-**Clear winner exists (70/30 or better)** — Choose it silently. Document: "Decision: {chosen} because {reason}" in stage notes. Post to Linear ticket if available.
-
-**Slight lean (60/40)** — Choose the simpler option. Prefer: fewer files, less coupling, easier to reverse, matches existing patterns. Document both options and why the simpler one won.
-
-**Genuine 50/50** — Ask the user. Present: both options with concrete trade-offs, your slight lean if any. Wait for response.
-
-**Requires domain knowledge you don't have** — Ask the user. Example: "Should expired subscriptions be soft-deleted or hard-deleted? This depends on your data retention policy — I can't infer it from the codebase."
-
-### Never Worth Asking About
-
-- Implementation details (which data structure, which algorithm)
-- Code style (the conventions file decides)
-- Test strategy (TDD rules decide)
-- Naming (follow existing codebase patterns)
-- Whether to fix a WARNING (always fix if possible)
-- Whether to apply Boy Scout improvements (always apply within budget)
+**Never ask about:** implementation details, code style (conventions decide), test strategy (TDD rules decide), naming (follow patterns), WARNINGs (always fix), Boy Scout (always apply).
 
 ---
 
 ## 23. Adaptive MCP Detection
 
-During PREFLIGHT, parse the `Available MCPs:` line from the dispatch prompt provided by the `forge-run` skill. The skill runs in the main session where MCP tools are visible and passes detection results.
-
-**Expected format in dispatch prompt:**
-> Available MCPs: Linear, Context7
-
-Parse the comma-separated list and map to integrations:
-
-| Name in list | Integration | Stage Usage |
-|---|---|---|
-| Linear | Linear (task tracking) | All stages |
-| Playwright | Playwright (preview validation) | Stage 6.5 |
-| Slack | Slack (notifications) | Stages 0, 8, 9 |
-| Figma | Figma (design validation) | Stage 6 |
-| Context7 | Context7 (doc lookup) | Stages 1, 4 |
-
-**Fallback** — if `Available MCPs:` is not in the dispatch prompt (e.g., orchestrator invoked directly), detect by reading MCP configuration:
-
-```bash
-cat .mcp.json 2>/dev/null || echo '{}'
-```
-
-Check for keys under `mcpServers`: `linear`, `playwright`, `slack`, `figma`, `context7`.
-
-Store results in `state.json`:
-
-```json
-{
-  "integrations": {
-    "linear": { "available": true },
-    "playwright": { "available": false },
-    "slack": { "available": false },
-    "context7": { "available": true }
-  }
-}
-```
-
-### Report to User
-
-After detection, show available and missing MCPs:
-
-```
-## Optional Integrations
-
-OK Linear — task tracking enabled
-OK Context7 — documentation lookup enabled
-MISSING Playwright — preview validation unavailable
-  Install: claude mcp add playwright -- npx -y @anthropic/mcp-playwright
-MISSING Slack — notifications unavailable
-  Install: claude mcp add slack -- npx -y @anthropic/mcp-slack
-```
-
-Pipeline runs without any MCPs. They add capabilities, never requirements.
+Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Pipeline runs without any MCPs.
 
 ### MCP Mid-Run Health
 
-MCP availability can change during a run. Before dispatching any agent that depends on an MCP:
-
-1. Check `recovery.degraded_capabilities[]` — if the MCP is already degraded, skip without re-checking
-2. If not degraded: the dispatch itself serves as a health check — if the MCP call fails, the agent handles it inline (per `error-taxonomy.md` MCP_UNAVAILABLE handling)
-3. On first MCP failure during the run: update `integrations.{name}.available: false` and add to `recovery.degraded_capabilities[]`
-4. Subsequent dispatches skip that MCP without attempting (no cumulative timeout delays)
-
-This is lightweight — no explicit health-check ping. The first failure detection and graceful degradation is sufficient for optional MCPs.
+First MCP failure → set `integrations.{name}.available: false`, add to `recovery.degraded_capabilities[]`. Subsequent dispatches skip without re-checking. No explicit health pings.
 
 ### Linear Operation Resilience
 
-All Linear MCP operations should follow this pattern:
-
-1. **Attempt** the Linear operation (create epic, update status, post comment)
-2. **On success:** continue normally
-3. **On failure:**
-   a. Retry once after 3-second delay
-   b. If retry fails: log to `state.json.linear_sync.failed_operations[]` with `{ "op": "<operation>", "error": "<message>", "timestamp": "<now>" }`
-   c. Set `state.json.linear_sync.in_sync: false`
-   d. **Continue pipeline** — Linear failures never block the development workflow
-   e. Log WARNING in stage notes: "Linear operation failed: {op}. Pipeline continues without ticket sync."
-4. **At LEARN stage:** if `linear_sync.in_sync: false`, the retrospective reports: "Linear sync issues: {count} failed operations. Consider running manual sync."
-
-Linear availability can change mid-run. If the first Linear failure occurs after PREFLIGHT:
-- Update `integrations.linear.available: false` in state.json
-- Skip all subsequent Linear operations for the rest of the run (don't retry each one)
-- This prevents accumulating timeout delays from a down Linear server
-
-**Recovery engine interaction:** Linear failures are handled by this inline resilience pattern, NOT by the recovery engine. MCP_UNAVAILABLE errors for Linear do not trigger recovery-engine invocation (per `error-taxonomy.md` MCP handling rules). The 1-retry + degrade pattern is sufficient because Linear is optional infrastructure — the pipeline's core workflow never depends on it.
+Attempt → on failure: retry once (3s delay) → if retry fails: log to `linear_sync.failed_operations[]`, set `in_sync: false`, continue. First post-PREFLIGHT failure → disable Linear for rest of run. Recovery engine NOT invoked for MCP failures (per `error-taxonomy.md`).
 
 ---
 
 ## 24. Escalation Format
 
-When pausing the pipeline to ask the user, always use this exact structure:
-
-```
-## Pipeline Paused: {STAGE_NAME}
-
-**What happened:** {specific failure — not "something went wrong"}
-**What was tried:** {N} attempts — {strategy 1}, {strategy 2}, ...
-**Root cause (best guess):** {analysis based on error output}
-**Options:**
-1. {Concrete action with command} — `/forge-run --from={stage}`
-2. {Alternative with what to change first}
-3. Abort — no action needed, pipeline state preserved at `.forge/state.json`
-```
-
-Never escalate with just "Pipeline blocked." Always include diagnosis and actionable options.
+Escalation format: `## Pipeline Paused: {STAGE}` → What happened, What was tried, Root cause (best guess), Options (concrete actions with commands). Never escalate with just "Pipeline blocked."
 
 ---
 
 ## 25. Pipeline Observability
 
-### Progress Reporting
-
-At each stage transition, output a concise progress line:
-
-```
-[STAGE {N}/10] {STAGE_NAME} — {status} ({elapsed}s)
-```
-
-Examples:
-```
-[STAGE 0/10] PREFLIGHT — complete (2s) — framework: spring, risk: MEDIUM
-[STAGE 1/10] EXPLORE — complete (15s) — 12 files analyzed, 3 patterns found
-[STAGE 2/10] PLAN — complete (8s) — 2 stories, 5 tasks, 2 parallel groups
-[STAGE 3/10] VALIDATE — complete (6s) — verdict: GO
-[STAGE 4/10] IMPLEMENT — in progress — task 3/5 (group 2)
-[STAGE 5/10] VERIFY — complete (12s) — build OK, lint OK, tests 42/42
-[STAGE 6/10] REVIEW — complete (25s) — score: 94/100 (CONCERNS), cycle 2/2
-[STAGE 7/10] DOCS — complete (3s) — no updates needed
-[STAGE 8/10] SHIP — complete (5s) — PR #42 created
-[STAGE 9/10] LEARN — complete (4s) — 1 learning, recap written
-```
-
-### Error Reporting
-
-When a stage fails or pauses, include diagnostic context:
-```
-[STAGE 5/10] VERIFY — FAILED (45s) — test failures: 3 (AuthServiceTest, PlanTest, NoteTest)
-```
-
-### Cost Tracking
-
-The `cost` object already exists in state.json (added in Phase 1). Update it at each stage transition:
-- `wall_time_seconds`: total elapsed from PREFLIGHT start to current stage
-- `stages_completed`: increment by 1
-
-Report in final output:
-```
-Pipeline complete in {wall_time}s — {stages_completed} stages, {quality_score}/100
-```
-
----
+At each stage transition, output: `[STAGE {N}/10] {STAGE_NAME} — {status} ({elapsed}s) — {key metric}`. On failure, include diagnostic context (e.g., failing tests). Update `state.json.cost` at each transition: `wall_time_seconds` (total elapsed) and `stages_completed` (increment).
 
 ## 26. Task Blueprint
 
-At PREFLIGHT, create one task per pipeline stage. Update each task as the stage executes.
-
-Standard stage tasks:
-- "Stage 0: Preflight"
-- "Stage 1: Explore"
-- "Stage 2: Plan"
-- "Stage 3: Validate"
-- "Stage 4: Implement"
-- "Stage 5: Verify"
-- "Stage 6: Review"
-- "Stage 7: Docs"
-- "Stage 8: Ship"
-- "Stage 9: Learn"
+Create one TaskCreate per pipeline stage at PREFLIGHT (see §3.10). Update as stages execute.
 
 Use `AskUserQuestion` for: escalation after max retries, CONCERNS verdict requiring user decision, feedback loop detection (same classification 2+ times).
 
