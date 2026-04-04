@@ -51,7 +51,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -195,7 +195,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.1.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.1.0 is an additive extension of v1.0.0 (new optional tracking fields). |
+| `version` | string | Yes | Schema version string (`"1.2.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
@@ -332,6 +332,24 @@ Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metad
   }
 }
 ```
+
+---
+
+### graph (object, optional)
+
+Tracks graph update state for incremental updates at stage boundaries.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `last_update_stage` | integer | Stage number (0-9) when graph was last updated |
+| `last_update_files` | string[] | Files re-indexed in the last update |
+| `stale` | boolean | True when files changed since last graph update |
+
+**Lifecycle:**
+- Created at PREFLIGHT (Stage 0) when `graph.enabled` is true
+- Updated at post-IMPLEMENT, post-VERIFY, pre-REVIEW by the orchestrator
+- `stale` set to `true` by orchestrator when `files_changed` grows; reset to `false` after each successful update
+- Reviewers querying the graph check `stale` — if `true`, log INFO but proceed
 
 ---
 
