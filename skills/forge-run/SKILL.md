@@ -62,7 +62,19 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
    Build a comma-separated list of detected integrations (e.g., `Linear, Context7`). If none detected, use `none`.
 
-3. **Dispatch the orchestrator**: Use the Agent tool to invoke `fg-100-orchestrator` with the following prompt:
+3. **Sprint/Parallel Mode**: If arguments include `--sprint` or `--parallel`:
+
+   ```
+   dispatch fg-090-sprint-orchestrator "$ARGUMENTS"
+   ```
+
+   When `--sprint` or `--parallel` is detected, the sprint orchestrator is dispatched instead of the standard fg-100-orchestrator. The sprint orchestrator handles multi-feature decomposition, independence analysis, and parallel dispatch.
+
+   Skip all standard single-feature preflight when in sprint mode — the sprint orchestrator has its own preflight.
+
+   If neither `--sprint` nor `--parallel` is present, continue with the standard orchestrator dispatch below.
+
+4. **Dispatch the orchestrator**: Use the Agent tool to invoke `fg-100-orchestrator` with the following prompt:
 
    > Execute the full development pipeline for: `{user_input}`
    >
@@ -72,6 +84,6 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
    Where `{user_input}` is the resolved requirement text (from ticket description if ticket was resolved, otherwise raw text from user, including any `--from` flag — the orchestrator knows how to interpret it), `{detected_mcps}` is the list from step 2, and `{ticket_id}` is the resolved kanban ticket ID (if any).
 
-4. **Do nothing else**: Do not plan, implement, review, or make decisions. The orchestrator handles recovery, planning, implementation, quality, testing, delivery, and meta-analysis autonomously.
+5. **Do nothing else**: Do not plan, implement, review, or make decisions. The orchestrator handles recovery, planning, implementation, quality, testing, delivery, and meta-analysis autonomously.
 
-5. **Relay the result**: When the orchestrator completes, relay its final output (PR URL, summary, or escalation) back to the user unchanged.
+6. **Relay the result**: When the orchestrator completes, relay its final output (PR URL, summary, or escalation) back to the user unchanged.
