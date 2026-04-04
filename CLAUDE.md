@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`dev-pipeline` is a Claude Code plugin (installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/pipeline-run` skill which dispatches `pl-100-orchestrator`.
+`dev-pipeline` is a Claude Code plugin (v1.2.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/pipeline-run` skill which dispatches `pl-100-orchestrator`.
 
 ## Architecture
 
@@ -20,9 +20,20 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 
 ### Agent files (`agents/*.md`)
 - YAML frontmatter is required: `name` (must match filename without `.md`), `description`, `tools` list.
-- Pipeline agents use `pl-{NNN}-{role}` naming (e.g., `pl-300-implementer`).
+- Pipeline agents use `fg-{NNN}-{role}` naming (e.g., `fg-300-implementer`).
 - Cross-cutting review agents use descriptive names without module prefix: `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `infra-deploy-reviewer`, `infra-deploy-verifier`.
-- The orchestrator (`pl-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
+- The orchestrator (`fg-100-orchestrator`) never writes code itself — it dispatches specialized agents per stage.
+
+**Pipeline agents** (`fg-{NNN}-{role}` naming):
+- Pre-pipeline: `fg-010-shaper`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
+- Orchestration: `fg-100-orchestrator`
+- Preflight: `fg-130-docs-discoverer`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
+- Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
+- Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher`
+- Docs: `fg-350-docs-generator`
+- Verify/Review: `fg-400-quality-gate`, `fg-500-test-gate`
+- Ship: `fg-600-pr-builder`, `fg-650-preview-validator`
+- Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
 
 ### Stage contracts (`shared/stage-contract.md`)
 - Every stage has defined entry conditions, exit conditions, and data flow. Agents must comply with the contract.
@@ -37,6 +48,7 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 - PREEMPT system: learnings from `pipeline-log.md` are proactively applied to matching domain areas in new runs.
 - Recovery engine (`shared/recovery/recovery-engine.md`) with 7 strategies: transient-retry, state-reconstruction, agent-reset, tool-diagnosis, dependency-health, resource-cleanup, graceful-stop.
 - Health checks (`shared/recovery/health-checks/`) run pre-stage dependency and environment validation.
+- Bugfix-specific state fields: `mode: bugfix`, `bugfix.bug_id`, `bugfix.investigation_result`, `bugfix.reproduction_attempts`, `bugfix.reproduction_confirmed`, `bugfix.root_cause`. Set by `fg-020-bug-investigator` and read by the orchestrator throughout the bugfix run.
 
 ### Check engine (`shared/checks/`)
 - 3-layer generalized check engine triggered on every `Edit`/`Write` via PostToolUse hook.
@@ -53,8 +65,9 @@ Parameter resolution: `pipeline-config.md` > `dev-pipeline.local.md` > plugin ha
 ### Skills (`skills/`)
 - `pipeline-run` — the main entry point, thin launcher for the orchestrator.
 - `pipeline-init` — initializes `.claude/dev-pipeline.local.md` and `.claude/pipeline-config.md` for a consuming project.
-- `bootstrap-project` — scaffolds a new project from a module template via `pl-050-project-bootstrapper`.
+- `bootstrap-project` — scaffolds a new project from a module template via `fg-050-project-bootstrapper`.
 - `deploy` — triggers deployment workflow via `infra-deploy-*` agents.
+- `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or description).
 - `fe-*` skills (`fe-check-theme`, `fe-dark-mode-check`, `fe-design-review`, `fe-react-doctor`) — inline frontend checks. React-vite module only.
 
 ### Hooks (`hooks/hooks.json`)
@@ -110,6 +123,16 @@ for m in modules/*/; do echo "=== $m ==="; ls "$m"{conventions.md,local-template
 ```
 
 ## Gotchas
+
+### Pipeline modes
+
+- **Standard mode:** `/forge-run <requirement>` — full 10-stage pipeline.
+- **Bugfix mode:** `/forge-fix` or `/forge-run bugfix: <description>`. Stage 1 dispatches `fg-020-bug-investigator` (INVESTIGATE), Stage 2 continues with reproduction (max 3 attempts). Stage 3 validates with 4 bugfix perspectives (root cause validity, fix scope, regression risk, test coverage). Stage 6 uses reduced reviewer batch. Stage 9 tracks bug patterns in `.forge/forge-log.md`. See `stage-contract.md` Bugfix Mode section.
+- **Bootstrap mode:** `/bootstrap-project` — scaffolds greenfield projects via `fg-050-project-bootstrapper`. Stage 4 is skipped.
+- **Migration mode:** `/migration` — all 10 stages run with `fg-160-migration-planner` at Stage 2.
+- **Dry-run:** `--dry-run` flag runs PREFLIGHT→VALIDATE only. No worktree, no file changes.
+
+### Structural rules
 
 - Agent `name` in frontmatter **must** match the filename without `.md` — the orchestrator uses it for dispatch.
 - Scripts must have a shebang (`#!/usr/bin/env bash`) and be `chmod +x` — hooks fail silently without this.
