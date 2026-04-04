@@ -1287,6 +1287,19 @@ Update state: add `implement` timestamp.
 
 Mark Implement as completed.
 
+### Post-IMPLEMENT Graph Update
+
+After Stage 4 (IMPLEMENT) completes:
+
+1. Check `graph.enabled` in `forge.local.md`
+2. If enabled AND `state.json.files_changed` is non-empty:
+   - Run `shared/graph/update-project-graph.sh --project-root $PROJECT_ROOT --project-id $project_id --component $component --files $changed_files`
+   - Update `state.json.graph.last_update_stage = 4`
+   - Update `state.json.graph.last_update_files = $changed_files`
+   - Update `state.json.graph.stale = false`
+   - Log: "Graph updated: {N} files re-indexed"
+3. If update fails: log WARNING, set `state.json.graph.stale = true`, continue pipeline
+
 ---
 
 ## 8. Stage 5: VERIFY (Phase A inline + Phase B dispatch)
@@ -1368,6 +1381,22 @@ After IMPLEMENT completes, the orchestrator enters the convergence loop defined 
 3. **Phase transition:** On VERIFY pass, set `convergence.phase = "perfection"`, reset `convergence.phase_iterations = 0`, append to `convergence.phase_history`.
 
 Each Phase 1 iteration increments both `convergence.total_iterations` and `total_retries`. If `total_retries >= total_retries_max`, escalate regardless of convergence state.
+
+### Post-VERIFY Graph Update
+
+After Stage 5 (VERIFY) completes, if fix iterations changed additional files:
+
+1. Compute delta: `new_files = state.json.files_changed - state.json.graph.last_update_files`
+2. If delta is non-empty: run `update-project-graph.sh` with `--files $delta`
+3. Update state.json.graph fields
+4. If update fails: log WARNING, set stale = true, continue
+
+### Pre-REVIEW Graph Update
+
+Before dispatching Stage 6 (REVIEW):
+
+1. If `state.json.graph.stale == true`: run full update with current `files_changed`
+2. If `state.json.graph.stale == false`: no-op
 
 ---
 
