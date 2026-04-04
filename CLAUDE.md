@@ -31,7 +31,7 @@ Layered design with resolution flowing top-down:
    - `modules/documentation/` — documentation conventions layer (doc structure, ADR patterns, API docs, changelog standards, cross-reference rules).
    - `modules/code-quality/` — code quality tooling best practices: linters (detekt, eslint, ruff, clippy, etc.), formatters (prettier, black, gofmt, etc.), coverage tools (jacoco, istanbul, coverage-py, etc.), doc generators (dokka, typedoc, sphinx, etc.), dependency security scanners (owasp-dependency-check, npm-audit, cargo-audit, etc.), mutation testing (pitest, stryker, mutmut). ~70 tool files.
    Convention composition order (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 32 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 36 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
 
 Parameter resolution: `forge-config.md` > `forge.local.md` > plugin hardcoded defaults.
 
@@ -74,14 +74,17 @@ This is a documentation-only plugin (no build step). To test changes:
 | MCP provisioning | `shared/mcp-provisioning.md` (auto-install rules) |
 | Version resolution | `shared/version-resolution.md` (never hardcode versions) |
 | UI patterns      | `shared/agent-ui.md` (AskUserQuestion, TaskCreate, plan mode)     |
+| Sprint orchestration | `shared/sprint-state-schema.md` (sprint state, per-run isolation)  |
 
 ## Key conventions
 
-### Agents (33 total, in `agents/*.md`)
+### Agents (37 total, in `agents/*.md`)
 
 **Pipeline agents** (`fg-{NNN}-{role}` naming):
 - Pre-pipeline: `fg-010-shaper`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
+- Sprint orchestration: `fg-090-sprint-orchestrator`
 - Orchestration: `fg-100-orchestrator` (coordinator — dispatches all others, never writes code)
+- Orchestrator helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
@@ -149,9 +152,9 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 **Schema v2**: `pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`. Rules skip when project version < `applies_from`. Severity: WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated by `fg-140-deprecation-refresh` during PREFLIGHT.
 
-### Skills (19 in `skills/`)
+### Skills (20 in `skills/`)
 
-`forge-run` (main entry — accepts `--ticket FG-001`, bare ticket ID shorthand, or `bugfix:` prefix), `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or plain description), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
+`forge-run` (main entry — accepts `--ticket FG-001`, bare ticket ID shorthand, or `bugfix:` prefix), `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or plain description), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint` (parallel multi-feature entry — accepts `--sprint`/`--parallel` with feature list), `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
 
 ### Hooks (`hooks/hooks.json`)
 
@@ -280,6 +283,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - **Migration mode:** All 10 stages run. Stage 2 uses `fg-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates.
 - **Autonomous mode:** `autonomous: true` in `forge-config.md` replaces all AskUserQuestion with auto-selection (logged with `[AUTO]` prefix). Plans auto-approved after validator passes. Tasks still created. Pipeline never pauses except on unrecoverable CRITICAL errors.
+- **Sprint mode:** `/forge-run --sprint` or `/forge-run --parallel "A" "B" "C"`. Dispatches `fg-090-sprint-orchestrator` which decomposes features, analyzes independence via `fg-102-conflict-resolver`, and dispatches parallel `fg-100-orchestrator` instances per feature. Per-feature isolation: `.forge/runs/{feature-id}/` for state, `.forge/worktrees/{feature-id}/` for git worktrees. Shared Neo4j graph for cross-feature conflict detection. Cross-repo features execute contract producers before consumers. State in `.forge/sprint-state.json`. See `shared/sprint-state-schema.md`.
 
 ### Convergence & review
 
