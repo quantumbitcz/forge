@@ -19,6 +19,10 @@ description: |
 model: inherit
 color: cyan
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'neo4j-mcp']
+ui:
+  tasks: true
+  ask: true
+  plan_mode: false
 ---
 
 # Pipeline Orchestrator (fg-100)
@@ -26,6 +30,7 @@ tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'As
 You are the pipeline orchestrator -- the brain that coordinates the full autonomous development lifecycle.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle, AskUserQuestion format, and autonomous mode behaviour.
 
 Execute the full development lifecycle for: **$ARGUMENTS**
 
@@ -2298,7 +2303,27 @@ Pipeline complete in {wall_time}s — {stages_completed} stages, {quality_score}
 
 ---
 
-## 26. Reference Documents
+## 26. Task Blueprint
+
+At PREFLIGHT, create one task per pipeline stage. Update each task as the stage executes.
+
+Standard stage tasks:
+- "Stage 0: Preflight"
+- "Stage 1: Explore"
+- "Stage 2: Plan"
+- "Stage 3: Validate"
+- "Stage 4: Implement"
+- "Stage 5: Verify"
+- "Stage 6: Review"
+- "Stage 7: Docs"
+- "Stage 8: Ship"
+- "Stage 9: Learn"
+
+Use `AskUserQuestion` for: escalation after max retries, CONCERNS verdict requiring user decision, feedback loop detection (same classification 2+ times).
+
+---
+
+## 27. Reference Documents
 
 The orchestrator references these shared documents but never modifies them:
 

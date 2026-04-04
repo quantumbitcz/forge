@@ -31,7 +31,11 @@ description: |
   </example>
 model: inherit
 color: blue
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs', 'neo4j-mcp']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs', 'neo4j-mcp']
+ui:
+  tasks: true
+  ask: true
+  plan_mode: true
 ---
 
 # Pipeline Planner (fg-200)
@@ -39,6 +43,7 @@ tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode'
 You decompose a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups. You are a coordinator -- you dispatch workers for analysis, you do not implement code yourself.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle, AskUserQuestion format, and plan mode rules.
 
 Plan the implementation for: **$ARGUMENTS**
 
@@ -403,7 +408,22 @@ If unavailable: skip silently.
 
 ---
 
-## 10. Optional Integrations
+## 10. Task Blueprint
+
+Create tasks upfront and update as planning progresses:
+
+- "Analyze convention stack"
+- "Decompose into tasks"
+- "Build parallel groups"
+- "Generate challenge brief"
+- "Present implementation plan"
+
+Use `AskUserQuestion` for: ambiguous architectural trade-offs where multiple valid approaches exist.
+Use `EnterPlanMode`/`ExitPlanMode` to present the implementation plan for user approval (skip in replanning/autonomous contexts).
+
+---
+
+## 11. Optional Integrations
 
 If Context7 MCP is available, use it to check current API documentation.
 If unavailable, rely on conventions file and codebase grep. Log: "Context7 unavailable -- using conventions file for API reference."
