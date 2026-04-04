@@ -33,7 +33,7 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 | Label | Properties | Description |
 |-------|-----------|-------------|
 | `ProjectLanguage` | `name` | Detected programming language in the project |
-| `ProjectFile` | `path`, `language`, `size`, `last_modified` | Source file in the consuming project |
+| `ProjectFile` | `path`, `language`, `size`, `last_modified`, `bug_fix_count`, `last_bug_fix_date` | Source file in the consuming project |
 | `ProjectPackage` | `name`, `path` | Package or module namespace (derived from directory structure) |
 | `ProjectDependency` | `name`, `version`, `scope`, `manager` | External dependency from manifest files (npm, gradle, pip, etc.) |
 | `ProjectClass` | `name`, `file_path`, `kind` | Class, interface, struct, trait, or object definition. `kind` values: `class`, `interface`, `struct`, `trait`, `object`, `module` |
@@ -52,6 +52,13 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 **`confidence` values:** `HIGH` (explicit markers like ADR format), `MEDIUM` (heuristic extraction), `LOW` (weak pattern matches)
 
 **`DocDecision.status` values:** `proposed`, `accepted`, `deprecated`, `superseded`
+
+**`ProjectFile` enrichment properties (set by `fg-700-retrospective` after bugfix runs):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `bug_fix_count` | integer | Number of bugfix runs that modified this file. Incremented by `fg-700-retrospective`. Default: 0. |
+| `last_bug_fix_date` | string (ISO 8601) | Date of most recent bugfix. Set by `fg-700-retrospective`. Null if never fixed. |
 
 ---
 

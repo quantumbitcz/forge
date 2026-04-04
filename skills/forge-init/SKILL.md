@@ -577,6 +577,21 @@ If `graph.enabled` is `true` in the generated `forge.local.md` (this is the defa
 
 ---
 
+### Phase 6c — MCP Provisioning
+
+For each MCP listed in `forge.local.md` `mcps:` section where `auto_install: true`:
+
+1. Check if already configured (search `.mcp.json` in project root).
+2. If not configured:
+   a. Check prerequisites (e.g., Docker for Neo4j).
+   b. If prerequisites met: search internet for latest package version, install, write `.mcp.json`, verify.
+   c. If prerequisites missing: ask user via `AskUserQuestion` to skip or install the prerequisite.
+3. Report provisioned MCPs in the init summary.
+
+Follow `shared/mcp-provisioning.md` for the detailed flow.
+
+---
+
 ### Phase 7: REPORT
 
 Present a final summary:
