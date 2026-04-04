@@ -789,3 +789,12 @@ If `.forge/tracking/` exists, ticket status is updated at stage boundaries per t
 ### Sub-Agent Visibility
 
 Every Agent dispatch by the orchestrator is wrapped with TaskCreate/TaskUpdate per §3.11 of `fg-100-orchestrator.md`. This provides real-time progress visibility to the user without requiring sub-agents to know about the task system.
+
+### Autonomous Mode
+
+When `autonomous: true` in `forge-config.md`:
+- All `AskUserQuestion` calls are replaced with automatic recommended-choice selection
+- All auto-decisions are logged to stage notes with `[AUTO]` prefix
+- TaskCreate/TaskUpdate still active (visual progress is always useful)
+- EnterPlanMode/ExitPlanMode still active — plans are auto-approved after fg-210 validator passes
+- The pipeline does not pause for user input at any point except on CRITICAL errors that cannot be auto-resolved

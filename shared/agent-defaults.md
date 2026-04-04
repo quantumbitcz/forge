@@ -17,6 +17,14 @@ These apply to all 10 review agents (architecture-reviewer, security-reviewer, f
 - DO NOT delete or disable anything without checking if it was intentional (check git blame, check comments)
 - DO NOT hardcode file paths or agent names -- read from config
 
+## UI Contract
+
+Agents with `ui:` section in frontmatter MUST follow `shared/agent-ui.md` for:
+- AskUserQuestion format (structured options, never bare yes/no)
+- TaskCreate/TaskUpdate lifecycle (create upfront, in_progress/completed transitions)
+- Three-level task nesting maximum (orchestrator → coordinator → leaf)
+- Autonomous mode behavior (`autonomous: true` in forge-config.md)
+
 ### Linear Tracking
 
 Findings from review agents are posted to Linear by the quality gate coordinator (fg-400), not by individual reviewers. You return findings in the standard format; the quality gate handles Linear integration.
