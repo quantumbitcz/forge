@@ -1578,7 +1578,7 @@ Maximum autonomy. User interrupted only for: pipeline start, genuine 50/50 decis
 
 ## 23. Adaptive MCP Detection
 
-Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Pipeline runs without any MCPs.
+Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Auto-provisioning rules apply per `shared/mcp-provisioning.md`. Pipeline runs without any MCPs.
 
 ### MCP Mid-Run Health
 

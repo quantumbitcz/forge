@@ -19,7 +19,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 8 | SHIP | `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `fg-700-retrospective` + `fg-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
-**Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails.
+**Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails. Universal defaults: the agent applies only the language module rules (`modules/languages/{lang}.md`) and generic check patterns — no framework-specific, testing, or crosscutting layer conventions. The agent logs a WARNING in stage notes: `"Convention stack unavailable — operating with language-only defaults."`
 
 ---
 
@@ -57,6 +57,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 12. Generate per-component rule cache (.forge/.rules-cache-{component}.json)
 13. Write component path mapping (.forge/.component-cache)
 14. If `documentation.enabled` is `true` (default): dispatch `fg-130-docs-discoverer` with project root, documentation config, graph availability, previous discovery timestamp, and related projects. Write discovery summary to `stage_0_docs_discovery.md`. Store metrics in `state.json.documentation`.
+15. Probe MCP server availability (Linear, Playwright, Slack, Context7, Figma, Neo4j). Record in `state.json.integrations`. Auto-provisioning rules per `shared/mcp-provisioning.md` apply at this step.
 
 **Outputs:**
 - Initialized `.forge/state.json`
