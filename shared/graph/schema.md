@@ -32,18 +32,18 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 
 | Label | Properties | Description |
 |-------|-----------|-------------|
-| `ProjectLanguage` | `name` | Detected programming language in the project |
-| `ProjectFile` | `path`, `language`, `size`, `last_modified`, `bug_fix_count`, `last_bug_fix_date` | Source file in the consuming project |
-| `ProjectPackage` | `name`, `path` | Package or module namespace (derived from directory structure) |
-| `ProjectDependency` | `name`, `version`, `scope`, `manager` | External dependency from manifest files (npm, gradle, pip, etc.) |
-| `ProjectClass` | `name`, `file_path`, `kind` | Class, interface, struct, trait, or object definition. `kind` values: `class`, `interface`, `struct`, `trait`, `object`, `module` |
-| `ProjectFunction` | `name`, `file_path` | Function or method definition |
-| `ProjectConfig` | `project`, `language` | Project configuration node linking to plugin conventions via `forge.local.md` |
-| `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title`, `cross_repo` | A documentation file. `cross_repo` (boolean, default `false`) is `true` for docs discovered in related projects. |
-| `DocSection` | `name`, `file_path`, `heading_level`, `start_line`, `end_line`, `content_hash`, `content_hash_updated` | A section within a doc file (parsed from heading hierarchy). `content_hash_updated` is an ISO8601 timestamp of when the hash was last computed. |
-| `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence`, `extracted_at` | Architectural/design decision extracted from ADRs or inline markers. `extracted_at` is ISO8601 timestamp of extraction. |
-| `DocConstraint` | `id`, `file_path`, `summary`, `scope`, `confidence` | Constraint/rule extracted from documentation |
-| `DocDiagram` | `path`, `format`, `diagram_type`, `source_file` | Generated or discovered diagram |
+| `ProjectLanguage` | `name`, `project_id` | Detected programming language in the project |
+| `ProjectFile` | `path`, `language`, `size`, `last_modified`, `bug_fix_count`, `last_bug_fix_date`, `project_id`, `component` | Source file in the consuming project |
+| `ProjectPackage` | `name`, `path`, `project_id`, `component` | Package or module namespace (derived from directory structure) |
+| `ProjectDependency` | `name`, `version`, `scope`, `manager`, `project_id`, `component` | External dependency from manifest files (npm, gradle, pip, etc.) |
+| `ProjectClass` | `name`, `file_path`, `kind`, `project_id`, `component` | Class, interface, struct, trait, or object definition. `kind` values: `class`, `interface`, `struct`, `trait`, `object`, `module` |
+| `ProjectFunction` | `name`, `file_path`, `project_id`, `component` | Function or method definition |
+| `ProjectConfig` | `project_id`, `language`, `component` | Project configuration node linking to plugin conventions via `forge.local.md` |
+| `DocFile` | `path`, `format`, `doc_type`, `last_modified`, `title`, `cross_repo`, `project_id`, `component` | A documentation file. `cross_repo` (boolean, default `false`) is `true` for docs discovered in related projects. |
+| `DocSection` | `name`, `file_path`, `heading_level`, `start_line`, `end_line`, `content_hash`, `content_hash_updated`, `project_id` | A section within a doc file (parsed from heading hierarchy). `content_hash_updated` is an ISO8601 timestamp of when the hash was last computed. |
+| `DocDecision` | `id`, `file_path`, `summary`, `status`, `confidence`, `extracted_at`, `project_id` | Architectural/design decision extracted from ADRs or inline markers. `extracted_at` is ISO8601 timestamp of extraction. |
+| `DocConstraint` | `id`, `file_path`, `summary`, `scope`, `confidence`, `project_id` | Constraint/rule extracted from documentation |
+| `DocDiagram` | `path`, `format`, `diagram_type`, `source_file`, `project_id` | Generated or discovered diagram |
 
 **`doc_type` values:** `readme`, `adr`, `architecture`, `api-spec`, `runbook`, `onboarding`, `design-doc`, `migration-guide`, `changelog`, `contributing`, `user-guide`, `business-spec`, `other`
 
@@ -104,14 +104,35 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh`.
 
 ---
 
+### Project-Scoped Indexes
+
+Created by `build-project-graph.sh` for efficient project-scoped queries.
+
+    CREATE INDEX project_file_idx IF NOT EXISTS FOR (n:ProjectFile) ON (n.project_id, n.component, n.path);
+    CREATE INDEX project_class_idx IF NOT EXISTS FOR (n:ProjectClass) ON (n.project_id, n.component, n.name);
+    CREATE INDEX doc_file_idx IF NOT EXISTS FOR (n:DocFile) ON (n.project_id, n.path);
+
+---
+
 ## Graph Lifecycle
 
 | Operation | Command | Scope |
 |-----------|---------|-------|
 | Initialize | `/graph-init` | Creates container, loads seed, builds project graph |
-| Rebuild project | `/graph-rebuild` | Deletes `Project*` nodes, rebuilds from codebase |
+| Rebuild project | `/graph-rebuild` | Deletes `Project*` nodes for the current project (scoped by `project_id`), rebuilds from codebase |
+| Incremental update | `/graph-update` via orchestrator | Upserts changed files (scoped by `project_id`/`component`) |
 | Query | `/graph-query` | Execute arbitrary Cypher |
 | Status | `/graph-status` | Container health, node counts, staleness |
 | Reset | `/forge-reset` | Stops container, removes all data |
 
 See `query-patterns.md` for pre-built Cypher templates used by the orchestrator.
+
+---
+
+## Project Identity
+
+`project_id` is derived automatically:
+1. **Primary:** Git remote origin — `git remote get-url origin | sed 's|.*github.com[:/]||; s|\.git$||'` → e.g., `quantumbitcz/wellplanned-be`
+2. **Fallback:** Absolute path of project root (for non-git projects)
+
+`component` comes from the `components:` key in `forge.local.md`. Single-component projects store `component: null`. Queries conditionally include the `component` filter only when non-null.

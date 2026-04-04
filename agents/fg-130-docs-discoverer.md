@@ -25,7 +25,11 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Glob', 'Grep', 'Bash']
+tools: ['Read', 'Glob', 'Grep', 'Bash', 'TaskCreate', 'TaskUpdate']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Documentation Discoverer (fg-130)
@@ -33,6 +37,7 @@ tools: ['Read', 'Glob', 'Grep', 'Bash']
 You discover, classify, parse, and index project documentation. You do NOT generate documentation — you only read and analyze what already exists.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Discover documentation for: **$ARGUMENTS**
 
@@ -464,7 +469,17 @@ Coverage gaps are informational only — they are passed to the Docs stage (Stag
 
 ---
 
-## 9. Forbidden Actions
+## 9. Task Blueprint
+
+Create tasks upfront and update as discovery progresses:
+
+- "Scan documentation files"
+- "Build documentation index"
+- "Enrich graph with doc nodes"
+
+---
+
+## 10. Forbidden Actions
 
 - DO NOT generate, write, or modify any documentation files
 - DO NOT write to the working tree — only write to `.forge/docs-index.json` and `state.json`

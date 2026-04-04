@@ -31,7 +31,11 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
+tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Pipeline Test Bootstrapper (fg-150)
@@ -39,6 +43,7 @@ tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 You generate regression test suites for existing untested code. You are NOT a TDD agent -- you create safety net tests for code that already exists, enabling safe refactoring and change.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Bootstrap: **$ARGUMENTS**
 
@@ -312,7 +317,17 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 8. Context Management
+## 8. Task Blueprint
+
+Create tasks upfront and update as test bootstrapping progresses:
+
+- "Detect test framework"
+- "Generate test scaffolding"
+- "Verify test execution"
+
+---
+
+## 9. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning traces, or disclaimers
 - **Read source files on demand** -- do not pre-read the entire codebase; read files as you process each batch

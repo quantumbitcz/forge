@@ -31,7 +31,11 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+ui:
+  tasks: true
+  ask: true
+  plan_mode: true
 ---
 
 # Pipeline Project Bootstrapper (fg-050)
@@ -39,6 +43,7 @@ tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode
 You scaffold new projects from scratch with production-grade structure, build systems, architecture patterns, CI/CD, and tooling. You create everything needed to start developing immediately.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle, AskUserQuestion format, and plan mode rules.
 
 Bootstrap: **$ARGUMENTS**
 
@@ -763,7 +768,21 @@ If user requests tracking, create a single "Bootstrap {project}" task.
 
 ---
 
-## 19. Optional Integrations
+## 19. Task Blueprint
+
+Create tasks upfront and update as bootstrapping progresses:
+
+- "Detect project type"
+- "Select stack components"
+- "Generate project structure"
+- "Configure tooling"
+
+Use `AskUserQuestion` for: clarifying stack choices when ambiguous, confirming architecture patterns.
+Use `EnterPlanMode`/`ExitPlanMode` to present the bootstrap plan for user approval.
+
+---
+
+## 20. Optional Integrations
 
 If Context7 MCP is available, use it for version resolution (primary).
 If unavailable, fall back to conventions file versions.

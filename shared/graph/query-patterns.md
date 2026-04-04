@@ -32,15 +32,16 @@ Determines which project files are directly or transitively affected when a give
 
 ```cypher
 // What project files are affected if I change a specific file?
-MATCH (changed:ProjectFile {path: $filePath})
-MATCH (dependent:ProjectFile)-[:IMPORTS]->(changed)
-OPTIONAL MATCH (dependent)-[:IMPORTS*2..3]->(transitive:ProjectFile)
+MATCH (changed:ProjectFile {path: $filePath, project_id: $project_id})
+MATCH (dependent:ProjectFile {project_id: $project_id})-[:IMPORTS]->(changed)
+OPTIONAL MATCH (dependent)-[:IMPORTS*2..3]->(transitive:ProjectFile {project_id: $project_id})
 RETURN changed, collect(DISTINCT dependent.path) AS direct_dependents,
        collect(DISTINCT transitive.path) AS transitive_dependents
 ```
 
 **Parameters:**
 - `$filePath` — Repo-relative path of the file being changed (e.g., `"src/domain/User.kt"`).
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -53,14 +54,15 @@ Identifies which files consume a specific class or entity, and which conventions
 ```cypher
 // What breaks if I change a specific class/entity?
 // Note: project_conventions is project-wide (USES_CONVENTION lives on ProjectConfig, not per-file)
-MATCH (entity:ProjectClass {name: $className})-[:CLASS_IN_FILE]->(f:ProjectFile)
-MATCH (consumer:ProjectFile)-[:IMPORTS]->(f)
-OPTIONAL MATCH (pc:ProjectConfig)-[:USES_CONVENTION]->(conv)
+MATCH (entity:ProjectClass {name: $className, project_id: $project_id})-[:CLASS_IN_FILE]->(f:ProjectFile {project_id: $project_id})
+MATCH (consumer:ProjectFile {project_id: $project_id})-[:IMPORTS]->(f)
+OPTIONAL MATCH (pc:ProjectConfig {project_id: $project_id})-[:USES_CONVENTION]->(conv)
 RETURN consumer.path, collect(DISTINCT conv.name) AS project_conventions
 ```
 
 **Parameters:**
 - `$className` — Simple (unqualified) class name (e.g., `"UserEntity"`, `"PaymentService"`).
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -127,14 +129,15 @@ Traces the full dependency chain from a given file up to 4 hops deep. The orches
 
 ```cypher
 // Given a file, what's the full dependency chain?
-MATCH (root:ProjectFile {path: $filePath})
-MATCH path = (root)<-[:IMPORTS*1..4]-(dependent:ProjectFile)
+MATCH (root:ProjectFile {path: $filePath, project_id: $project_id})
+MATCH path = (root)<-[:IMPORTS*1..4]-(dependent:ProjectFile {project_id: $project_id})
 RETURN nodes(path) AS impact_chain, length(path) AS depth
 ORDER BY depth
 ```
 
 **Parameters:**
 - `$filePath` — Repo-relative path of the entry-point file being analyzed (e.g., `"src/api/UserController.kt"`).
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -163,16 +166,17 @@ RETURN a.name, a.role
 Identifies all documentation sections, decisions, and constraints that reference a changed file. The orchestrator runs this before dispatching `fg-200-planner` so the plan includes documentation update tasks alongside code changes.
 
 ```cypher
-MATCH (changed:ProjectFile {path: $filePath})
-OPTIONAL MATCH (ds:DocSection)-[:DESCRIBES]->(changed)
-OPTIONAL MATCH (ds)-[:SECTION_OF]->(df:DocFile)
-OPTIONAL MATCH (dd:DocDecision)-[:DECIDES]->(changed)
-OPTIONAL MATCH (dc:DocConstraint)-[:CONSTRAINS]->(changed)
+MATCH (changed:ProjectFile {path: $filePath, project_id: $project_id})
+OPTIONAL MATCH (ds:DocSection {project_id: $project_id})-[:DESCRIBES]->(changed)
+OPTIONAL MATCH (ds)-[:SECTION_OF]->(df:DocFile {project_id: $project_id})
+OPTIONAL MATCH (dd:DocDecision {project_id: $project_id})-[:DECIDES]->(changed)
+OPTIONAL MATCH (dc:DocConstraint {project_id: $project_id})-[:CONSTRAINS]->(changed)
 RETURN df.path, ds.name, dd.summary, dc.summary
 ```
 
 **Parameters:**
 - `$filePath` — Repo-relative path of the file being changed (e.g., `"src/domain/User.kt"`).
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -183,13 +187,13 @@ RETURN df.path, ds.name, dd.summary, dc.summary
 Finds documentation sections whose content hash is older than the last modification time of the code file they describe. Surfaced by the documentation reviewer to flag docs that may no longer match the implementation.
 
 ```cypher
-MATCH (ds:DocSection)-[:DESCRIBES]->(pf:ProjectFile)
+MATCH (ds:DocSection {project_id: $project_id})-[:DESCRIBES]->(pf:ProjectFile {project_id: $project_id})
 WHERE pf.last_modified > ds.content_hash_updated
 RETURN ds.name, ds.file_path, pf.path AS stale_for_file
 ```
 
 **Parameters:**
-- None.
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -200,9 +204,9 @@ RETURN ds.name, ds.file_path, pf.path AS stale_for_file
 Retrieves all active (non-superseded) architectural decisions that apply to a given package path or class. The orchestrator runs this before dispatching `fg-210-validator` to surface decisions the implementation must honour.
 
 ```cypher
-MATCH (dd:DocDecision)-[:DECIDES]->(target)
+MATCH (dd:DocDecision {project_id: $project_id})-[:DECIDES]->(target)
 WHERE target.path STARTS WITH $packagePath OR target.name = $className
-OPTIONAL MATCH (dd)<-[:SUPERSEDES]-(newer:DocDecision)
+OPTIONAL MATCH (dd)<-[:SUPERSEDES]-(newer:DocDecision {project_id: $project_id})
 WHERE newer IS NULL
 RETURN dd.id, dd.summary, dd.status, dd.confidence, target.path
 ```
@@ -210,6 +214,7 @@ RETURN dd.id, dd.summary, dd.status, dd.confidence, target.path
 **Parameters:**
 - `$packagePath` — Package path prefix to match (e.g., `"src/domain/"`). Pass an empty string to skip package matching.
 - `$className` — Simple class name to match (e.g., `"PaymentService"`). Pass an empty string to skip class matching.
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -237,13 +242,13 @@ RETURN head(labels(source)) AS source_type, COALESCE(source.summary, source.name
 Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `fg-720-recap` a prioritized list of under-documented areas.
 
 ```cypher
-MATCH (pp:ProjectPackage)
-WHERE NOT (pp)<-[:DESCRIBES]-(:DocSection)
+MATCH (pp:ProjectPackage {project_id: $project_id})
+WHERE NOT (pp)<-[:DESCRIBES]-(:DocSection {project_id: $project_id})
 RETURN pp.name, pp.path ORDER BY pp.path
 ```
 
 **Parameters:**
-- None.
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -256,12 +261,15 @@ RETURN pp.name, pp.path ORDER BY pp.path
 **Prerequisites:** `ProjectFile` nodes with `bug_fix_count` and `last_bug_fix_date` properties, populated by `fg-700-retrospective` after each bugfix run.
 
 ```cypher
-MATCH (f:ProjectFile)
+MATCH (f:ProjectFile {project_id: $project_id})
 WHERE f.bug_fix_count > 0
 RETURN f.path, f.bug_fix_count, f.last_bug_fix_date
 ORDER BY f.bug_fix_count DESC
 LIMIT 20
 ```
+
+**Parameters:**
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 **Consumers:** `fg-010-shaper` (risk flagging in spec), `fg-020-bug-investigator` (prioritize investigation), `fg-400-quality-gate` (stricter review for hotspots)
 
@@ -278,12 +286,115 @@ LIMIT 20
 **Prerequisites:** `ProjectClass` nodes with `CLASS_IN_FILE` edges and `TESTS` edges between test files and source files, populated by `build-project-graph.sh`.
 
 ```cypher
-MATCH (c:ProjectClass)
-OPTIONAL MATCH (t:ProjectFile)-[:TESTS]->(f:ProjectFile)-[:CLASS_IN_FILE]->(c)
+MATCH (c:ProjectClass {project_id: $project_id})
+OPTIONAL MATCH (t:ProjectFile {project_id: $project_id})-[:TESTS]->(f:ProjectFile {project_id: $project_id})-[:CLASS_IN_FILE]->(c)
 WHERE t IS NULL
 RETURN c.name, f.path AS source_file
 ```
 
+**Parameters:**
+- `$project_id` — Project identifier (git remote origin or absolute path).
+
 **Consumers:** `fg-020-bug-investigator` (identify untested code near bug), `fg-500-test-gate` (coverage gap warnings), `fg-010-shaper` (note in spec Technical Notes)
 
 **Graceful degradation:** If no `TESTS` edges exist, returns all classes. Consumers should limit to the affected area.
+
+---
+
+### 16. Cross-Project Impact Analysis
+
+**Used during:** PLAN (cross-repo features)
+
+Identifies files in the current project that import files from other projects.
+
+```cypher
+MATCH (f:ProjectFile {project_id: $project_id})-[:IMPORTS]->(dep:ProjectFile)
+WHERE dep.project_id <> $project_id
+RETURN f.path, dep.project_id, dep.path
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+
+---
+
+### 17. Cross-Project Dependency Map
+
+**Used during:** PLAN (cross-repo features)
+
+Finds shared module dependencies across related projects.
+
+```cypher
+MATCH (d:ProjectDependency {project_id: $project_id})-[:MAPS_TO]->(m)
+WITH m
+MATCH (d2:ProjectDependency)-[:MAPS_TO]->(m) // cross-project: d2.project_id <> $project_id
+WHERE d2.project_id <> $project_id
+RETURN d2.project_id, m.name, collect(d2.name) AS shared_deps
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+
+---
+
+### 18. Cross-Repo Service Discovery
+
+**Used during:** VERIFY (Tier 5 image resolution)
+
+Discovers related project services and their deployment configuration for full stack testing.
+
+```cypher
+MATCH (pc:ProjectConfig {project_id: $project_id})
+OPTIONAL MATCH (dep:ProjectDependency {project_id: pc.project_id})-[:MAPS_TO]->(fw:Framework)
+RETURN pc.project_id, pc.language, pc.component, collect(DISTINCT fw.name) AS frameworks
+```
+
+**Parameters:**
+- `$project_id` — Project identifier. Pass each related project's ID to discover their stack.
+
+---
+
+### 19. Cross-Feature File Overlap Detection
+
+**Used during:** ANALYZE (sprint orchestrator independence analysis)
+
+Detects files that would be affected by multiple features in a sprint, enabling conflict detection before parallel dispatch.
+
+```cypher
+// For each feature's seed files, find all transitively affected files
+MATCH (seed:ProjectFile {project_id: $project_id})
+WHERE seed.path IN $feature_seed_files
+MATCH (seed)<-[:IMPORTS*0..3]-(affected:ProjectFile {project_id: $project_id})
+RETURN DISTINCT affected.path AS file_path, affected.component AS component
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+- `$feature_seed_files` — List of seed file paths for one feature (from requirement parsing).
+
+**Usage:** Run once per feature, then compute set intersections between results to identify conflicts.
+
+---
+
+### 20. Cross-Repo Dependency Graph Traversal
+
+**Used during:** ANALYZE (sprint orchestrator cross-repo feature planning)
+
+Maps API contract dependencies between related projects to determine execution ordering (producers before consumers).
+
+```cypher
+// Find which project configs have dependencies that map to frameworks in other projects
+MATCH (pc:ProjectConfig {project_id: $project_id})
+MATCH (dep:ProjectDependency {project_id: $project_id})-[:MAPS_TO]->(target)
+WHERE target:Framework OR target:LayerModule
+WITH target, pc
+MATCH (other_pc:ProjectConfig)-[:USES_CONVENTION]->(target)
+WHERE other_pc.project_id <> $project_id
+RETURN $project_id AS consumer, other_pc.project_id AS producer,
+       collect(DISTINCT target.name) AS shared_conventions
+```
+
+**Parameters:**
+- `$project_id` — Current project identifier.
+
+**Usage:** If project A consumes conventions that project B produces, A depends on B. Execute B through VERIFY before starting A's IMPLEMENT.

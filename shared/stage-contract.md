@@ -789,3 +789,39 @@ If `.forge/tracking/` exists, ticket status is updated at stage boundaries per t
 ### Sub-Agent Visibility
 
 Every Agent dispatch by the orchestrator is wrapped with TaskCreate/TaskUpdate per §3.11 of `fg-100-orchestrator.md`. This provides real-time progress visibility to the user without requiring sub-agents to know about the task system.
+
+### Autonomous Mode
+
+When `autonomous: true` in `forge-config.md`:
+- All `AskUserQuestion` calls are replaced with automatic recommended-choice selection
+- All auto-decisions are logged to stage notes with `[AUTO]` prefix
+- TaskCreate/TaskUpdate still active (visual progress is always useful)
+- EnterPlanMode/ExitPlanMode still active — plans are auto-approved after fg-210 validator passes
+- The pipeline does not pause for user input at any point except on CRITICAL errors that cannot be auto-resolved
+
+---
+
+## Sprint Mode
+
+When `/forge-run --sprint` or `/forge-run --parallel` is used:
+
+- `fg-090-sprint-orchestrator` runs the top-level lifecycle (GATHER → ANALYZE → GROUP → APPROVE → DISPATCH → MONITOR → MERGE)
+- Each feature gets its own `fg-100-orchestrator` instance with isolated state
+- Per-feature state in `.forge/runs/{feature-id}/`
+- Per-feature worktree in `.forge/worktrees/{feature-id}/`
+- No global `.forge/.lock` — per-run locks only
+- Cross-repo features: contract producers complete through VERIFY before consumers enter IMPLEMENT
+
+### Sprint → Feature Orchestrator Interface
+
+The sprint orchestrator passes to each feature orchestrator:
+- `--run-dir .forge/runs/{feature-id}/` — isolated state directory
+- `--project-root /path/to/project` — project root (for cross-repo dispatch)
+- `--wait-for <project_id>` — blocks at PREFLIGHT until dependency reaches VERIFY
+- Standard requirement and ticket arguments
+
+### Single-Feature Compatibility
+
+Single-feature `/forge-run` (without `--sprint`/`--parallel`) is unchanged:
+- Uses global `.forge/.lock`, `.forge/state.json`, `.forge/worktree`
+- No sprint-state.json, no per-run directories

@@ -31,7 +31,11 @@ description: |
   </example>
 model: inherit
 color: green
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Agent', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Pipeline Scaffolder (fg-310)
@@ -39,6 +43,7 @@ tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Agent', 'mcp__plugin_c
 You create boilerplate files with correct imports, type signatures, documentation stubs, empty function bodies, and TODO markers. You do NOT implement business logic -- that is the implementer's job.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle (activeForm naming for leaf tasks).
 
 Scaffold files for: **$ARGUMENTS**
 
@@ -244,7 +249,17 @@ Never fail because an optional MCP is down.
 
 ---
 
-## 11. Context Management
+## 11. Task Blueprint
+
+Create one task per file group to scaffold:
+
+- "Scaffold {group_name} files" (one task per file group from the plan)
+
+Use `activeForm` naming for spinner display (e.g., "Scaffolding PlanComment domain model").
+
+---
+
+## 12. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning, or disclaimers
 - **Read at most 3-4 pattern files** -- the task spec already identifies them

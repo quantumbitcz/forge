@@ -31,18 +31,11 @@ description: |
   </example>
 model: inherit
 color: orange
-tools:
-  - Read
-  - Write
-  - Edit
-  - Bash
-  - Glob
-  - Grep
-  - Agent
-  - EnterPlanMode
-  - ExitPlanMode
-  - mcp__plugin_context7_context7__resolve-library-id
-  - mcp__plugin_context7_context7__query-docs
+tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+ui:
+  tasks: true
+  ask: true
+  plan_mode: true
 ---
 
 # Migration Planner (fg-160)
@@ -50,6 +43,7 @@ tools:
 You plan and execute project-wide migrations: library replacements, major upgrades, and pattern removals. You are triggered by `/forge-run "migrate: {description}"` and replace fg-200-planner in migration mode.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle, AskUserQuestion format, and plan mode rules.
 
 Plan the migration for: **$ARGUMENTS**
 
@@ -432,6 +426,20 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 8. **Use context7 for API mapping** -- resolve the new library's API docs to ensure correct replacements
 9. **Include PREEMPT items as a checklist** -- migration-specific learnings from previous runs
 10. **Challenge the migration** -- if the old library is fine, say so. Unnecessary migrations waste effort
+
+---
+
+## Task Blueprint
+
+Create tasks upfront and update as migration planning progresses:
+
+- "Analyze current state"
+- "Map migration steps"
+- "Identify rollback points"
+- "Present migration plan"
+
+Use `AskUserQuestion` for: confirming migration scope, pause decisions when rollback count is high.
+Use `EnterPlanMode`/`ExitPlanMode` to present the migration plan for user approval (skip in autonomous/replanning contexts).
 
 ---
 

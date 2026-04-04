@@ -27,6 +27,17 @@ Run the health check script:
 
 ---
 
+### Default Parameters
+
+Inject `project_id` automatically into all queries:
+```bash
+PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
+```
+
+User can override by specifying their own `:param project_id` in the query, or omit `project_id` for cross-project queries.
+
+---
+
 ### Step 2: GET QUERY
 
 Accept the Cypher query from the skill argument (the text following `/graph-query` on the command line).

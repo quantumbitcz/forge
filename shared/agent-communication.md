@@ -32,7 +32,19 @@ Stage notes should stay under **2,000 tokens** to prevent context cascading in d
 
 The **retrospective** (Stage 9) reads all stage notes (0-8). With the 2K cap, 9 stage notes total ~18K tokens — well within dispatch limits. Feedback files and reports are read separately by the retrospective agent (not included in the orchestrator dispatch prompt). If a project has accumulated many feedback entries (>20), the retrospective reads only `feedback/summary.md` (the consolidated file).
 
-## 2. Shared Findings Context (within REVIEW stage)
+## 2. Task Hierarchy
+
+Task visibility follows the agent dispatch hierarchy:
+
+- **Level 1 (Orchestrator):** fg-100-orchestrator creates 10 stage-level tasks. These are the top-level progress indicators.
+- **Level 2 (Coordinators):** Agents dispatched by the orchestrator (fg-400, fg-500, fg-600, fg-200, fg-310, etc.) create sub-tasks within their stage for batches, phases, or file groups.
+- **Level 3 (Leaf agents):** Agents dispatched by coordinators (fg-300 TDD cycles, infra-deploy-verifier tiers) create sub-sub-tasks for their internal steps.
+
+Maximum nesting depth: 3 levels. Leaf agent sub-tasks are the finest granularity.
+
+Tasks are session-scoped (not persisted to state.json). They provide real-time visual progress in the Claude Code UI but do not survive conversation restarts.
+
+## 3. Shared Findings Context (within REVIEW stage)
 
 During REVIEW, multiple agent batches run sequentially. To reduce duplicate work, the quality gate includes previous batch findings in subsequent dispatch prompts.
 
@@ -62,11 +74,11 @@ If a review agent finds an issue that relates to another agent's domain, note it
 
 The quality gate uses these cross-references to understand finding relationships.
 
-## 3. State.json (orchestrator-managed)
+## 4. State.json (orchestrator-managed)
 
 The orchestrator is the sole writer of state.json. Agents read it (for integrations, conventions_hash, etc.) but never write to it.
 
-## 4. What Agents CANNOT Do
+## 5. What Agents CANNOT Do
 
 - Agents cannot dispatch agents in other stages (all inter-stage data flows through the orchestrator via stage notes). However, coordinator agents (quality gate, test gate, PR builder, planner, scaffolder) may dispatch sub-agents within their own stage for specialized analysis or feedback capture.
 - Agents cannot write to state.json (only the orchestrator writes state)
@@ -75,7 +87,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
 - Agents cannot modify shared contracts (scoring.md, state-schema.md, etc.)
 - Agents cannot undo, revert, or overwrite work produced by another agent — if an agent detects a conflict with another agent's output, it MUST report the conflict in stage notes and let the orchestrator decide the resolution strategy.
 
-## 5. Data Flow Summary
+## 6. Data Flow Summary
 
     EXPLORE agent → stage_1_notes → orchestrator → PLAN dispatch prompt
     PLAN agent → stage_2_notes → orchestrator → VALIDATE dispatch prompt
@@ -101,6 +113,24 @@ All data flows through the orchestrator. Agents are isolated. The orchestrator c
 
 **Checkpoint persistence:** The orchestrator writes `checkpoint-{storyId}.json` after each Stage 4 task completion for resume capability. Checkpoints are orchestrator-internal state — agents do not read or write checkpoints directly.
 
+## 7. Sprint ↔ Feature Communication
+
+The sprint orchestrator (fg-090) communicates with feature orchestrators (fg-100) through:
+
+1. **Sprint state file:** `.forge/sprint-state.json` — read by all, written only by fg-090
+2. **Per-run state files:** `.forge/runs/{feature-id}/state.json` — written by each fg-100 instance
+3. **Agent dispatch:** fg-090 dispatches fg-100 instances as sub-agents
+
+Feature orchestrators do NOT write to `sprint-state.json`. The sprint orchestrator polls per-run state files and updates sprint state.
+
+### Wait Mechanism
+
+When `--wait-for <project_id>` is set, the feature orchestrator:
+1. Reads `sprint-state.json` for the dependency project's status
+2. Blocks at PREFLIGHT until dependency status >= `verifying`
+3. Poll interval: 30 seconds
+4. Timeout: `cross_repo.timeout_minutes` (default 30)
+
 ### Conditional Agents
 
 The following agents are dispatched conditionally and receive data from the orchestrator only when their trigger conditions are met:
@@ -115,7 +145,7 @@ The following agents are dispatched conditionally and receive data from the orch
 | `fg-150-test-bootstrapper` | 0 (PREFLIGHT) | No test infrastructure detected | Project root, framework conventions | Bootstrapped test config, stage notes |
 | `docs-consistency-reviewer` | 6 (REVIEW) | Documentation exists in project | Changed files, docs-index.json, discovery summary | `DOC-*` findings |
 
-## 6. PREEMPT Item Tracking
+## 7. PREEMPT Item Tracking
 
 During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes. PREEMPT producers are: `fg-300-implementer` (primary — receives PREEMPT items for the implementation domain), `fg-310-scaffolder` (when PREEMPT items reference scaffold patterns), and `fg-320-frontend-polisher` (when PREEMPT items reference frontend patterns). If multiple agents report on the same PREEMPT item, the orchestrator uses the marker from the **last agent to complete** (since later agents may override earlier work).
 
@@ -149,7 +179,7 @@ PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller 
 - Earlier attempt markers are superseded — do not double-count
 - If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status
 
-## 7. Plan Mode Integration
+## 8. Plan Mode Integration
 
 Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present their designs for user approval in the Claude Code UI before implementation proceeds.
 
@@ -169,7 +199,7 @@ Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, 
 4. Agent calls `ExitPlanMode` — user sees the plan and approves or requests changes
 5. On approval, the orchestrator proceeds to the next stage
 
-## 8. Convention File Composition
+## 9. Convention File Composition
 
 When an agent receives a convention stack with both generic and framework-binding files for the same layer (e.g., `modules/persistence/exposed.md` + `modules/frameworks/spring/persistence/exposed.md`), compose them as follows:
 

@@ -18,7 +18,11 @@ description: |
   </example>
 model: inherit
 color: green
-tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Agent', 'Skill', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Agent', 'Skill', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+ui:
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Documentation Generator (fg-350)
@@ -26,6 +30,7 @@ tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Agent', 'Skill', 'mcp_
 You generate and maintain accurate project documentation. You work from code analysis and pipeline data — never fabricating information that cannot be verified from the source.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
+**UI contract:** Follow `shared/agent-ui.md` for TaskCreate/TaskUpdate lifecycle.
 
 Generate documentation for: **$ARGUMENTS**
 
@@ -292,7 +297,17 @@ Coverage: 0% → 72%
 
 ---
 
-## 9. Forbidden Actions
+## 9. Task Blueprint
+
+Create tasks upfront and update as documentation generation progresses:
+
+- "Discover documentation gaps"
+- "Generate documentation files"
+- "Validate cross-references"
+
+---
+
+## 10. Forbidden Actions
 
 - DO NOT fabricate content — every claim must trace to source code, spec, or pipeline state
 - DO NOT modify source code files — documentation only
