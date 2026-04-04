@@ -250,3 +250,16 @@ derive_project_id() {
     (cd "$project_root" && pwd)
   fi
 }
+
+# Read component names from forge.local.md components: section.
+# Returns one component name per line. Empty output for single-component projects.
+# Usage: while IFS= read -r comp; do echo "$comp"; done < <(read_components "/path/to/project")
+read_components() {
+  local project_root="${1:-.}"
+  local config_file="${project_root}/.claude/forge.local.md"
+  if [[ ! -f "$config_file" ]]; then
+    return
+  fi
+  # Extract component names (2-space indented keys under components:)
+  awk '/^components:/{found=1; next} found && /^  [a-zA-Z]/{sub(/:.*/, ""); print $1; next} found && /^[^ ]/{exit}' "$config_file"
+}
