@@ -1,3 +1,12 @@
+---
+name: pmd
+categories: [linter]
+languages: [java]
+exclusive_group: java-static-analysis
+recommendation_score: 70
+detection_files: [pmd.xml, ruleset.xml, pom.xml, build.gradle]
+---
+
 # pmd
 
 ## Overview

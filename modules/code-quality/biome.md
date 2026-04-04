@@ -1,3 +1,12 @@
+---
+name: biome
+categories: [linter, formatter]
+languages: [javascript, typescript]
+exclusive_group: js-linter
+recommendation_score: 90
+detection_files: [biome.json, biome.jsonc]
+---
+
 # biome
 
 ## Overview

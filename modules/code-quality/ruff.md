@@ -1,3 +1,12 @@
+---
+name: ruff
+categories: [linter, formatter]
+languages: [python]
+exclusive_group: python-linter
+recommendation_score: 90
+detection_files: [ruff.toml, .ruff.toml, pyproject.toml]
+---
+
 # ruff
 
 ## Overview

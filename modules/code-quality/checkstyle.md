@@ -1,3 +1,12 @@
+---
+name: checkstyle
+categories: [linter, formatter]
+languages: [java]
+exclusive_group: java-formatter
+recommendation_score: 70
+detection_files: [checkstyle.xml, .checkstyle, google_checks.xml, sun_checks.xml]
+---
+
 # checkstyle
 
 ## Overview

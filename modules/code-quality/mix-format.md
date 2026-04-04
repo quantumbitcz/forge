@@ -1,3 +1,12 @@
+---
+name: mix-format
+categories: [formatter]
+languages: [elixir]
+exclusive_group: elixir-formatter
+recommendation_score: 90
+detection_files: [.formatter.exs, mix.exs]
+---
+
 # mix-format
 
 ## Overview

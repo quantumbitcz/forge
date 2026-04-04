@@ -1,3 +1,12 @@
+---
+name: excoveralls
+categories: [coverage]
+languages: [elixir]
+exclusive_group: elixir-coverage
+recommendation_score: 90
+detection_files: [mix.exs, coveralls.json]
+---
+
 # excoveralls
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: sphinx
+categories: [doc-generator]
+languages: [python]
+exclusive_group: python-doc-generator
+recommendation_score: 90
+detection_files: [conf.py, docs/conf.py, sphinx.toml]
+---
+
 # sphinx
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: stryker
+categories: [mutation-tester]
+languages: [javascript, typescript, csharp]
+exclusive_group: js-mutation
+recommendation_score: 90
+detection_files: [stryker.config.json, stryker.config.mjs, stryker.config.cjs, .stryker.json]
+---
+
 # stryker
 
 ## Overview

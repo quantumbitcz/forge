@@ -1,3 +1,12 @@
+---
+name: rustdoc
+categories: [doc-generator]
+languages: [rust]
+exclusive_group: rust-doc-generator
+recommendation_score: 90
+detection_files: [Cargo.toml]
+---
+
 # rustdoc
 
 ## Overview

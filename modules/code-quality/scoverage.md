@@ -1,3 +1,12 @@
+---
+name: scoverage
+categories: [coverage]
+languages: [scala]
+exclusive_group: scala-coverage
+recommendation_score: 90
+detection_files: [build.sbt, project/plugins.sbt]
+---
+
 # scoverage
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: roslyn-analyzers
+categories: [linter]
+languages: [csharp]
+exclusive_group: csharp-linter
+recommendation_score: 90
+detection_files: [.editorconfig, *.csproj, Directory.Build.props]
+---
+
 # roslyn-analyzers
 
 ## Overview

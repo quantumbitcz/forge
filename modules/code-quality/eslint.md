@@ -1,3 +1,12 @@
+---
+name: eslint
+categories: [linter]
+languages: [javascript, typescript]
+exclusive_group: js-linter
+recommendation_score: 80
+detection_files: [eslint.config.js, .eslintrc.js, .eslintrc.json, .eslintrc.yml, .eslintrc.yaml, .eslintrc]
+---
+
 # eslint
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: safety
+categories: [security-scanner]
+languages: [python]
+exclusive_group: none
+recommendation_score: 80
+detection_files: [.safety-policy.yml, requirements.txt, pyproject.toml]
+---
+
 # safety
 
 ## Overview

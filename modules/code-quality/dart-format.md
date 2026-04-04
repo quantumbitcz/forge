@@ -1,3 +1,12 @@
+---
+name: dart-format
+categories: [formatter]
+languages: [dart]
+exclusive_group: dart-formatter
+recommendation_score: 90
+detection_files: [analysis_options.yaml, pubspec.yaml]
+---
+
 # dart-format
 
 ## Overview

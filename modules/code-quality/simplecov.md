@@ -1,3 +1,12 @@
+---
+name: simplecov
+categories: [coverage]
+languages: [ruby]
+exclusive_group: ruby-coverage
+recommendation_score: 90
+detection_files: [spec/spec_helper.rb, test/test_helper.rb, Gemfile]
+---
+
 # simplecov
 
 ## Overview

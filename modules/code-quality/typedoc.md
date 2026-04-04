@@ -1,3 +1,12 @@
+---
+name: typedoc
+categories: [doc-generator]
+languages: [typescript]
+exclusive_group: ts-doc-generator
+recommendation_score: 90
+detection_files: [typedoc.json, typedoc.config.js, tsconfig.json]
+---
+
 # typedoc
 
 ## Overview

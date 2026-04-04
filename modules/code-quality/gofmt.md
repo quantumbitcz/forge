@@ -1,3 +1,12 @@
+---
+name: gofmt
+categories: [formatter]
+languages: [go]
+exclusive_group: go-formatter
+recommendation_score: 70
+detection_files: [go.mod, go.sum]
+---
+
 # gofmt
 
 ## Overview

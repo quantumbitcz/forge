@@ -1,3 +1,12 @@
+---
+name: javadoc
+categories: [doc-generator]
+languages: [java]
+exclusive_group: java-doc-generator
+recommendation_score: 90
+detection_files: [build.gradle.kts, build.gradle, pom.xml]
+---
+
 # javadoc
 
 ## Overview

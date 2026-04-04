@@ -1,3 +1,12 @@
+---
+name: detekt
+categories: [linter]
+languages: [kotlin]
+exclusive_group: kotlin-linter
+recommendation_score: 90
+detection_files: [detekt.yml, config/detekt.yml, .detekt.yml]
+---
+
 # detekt
 
 ## Overview

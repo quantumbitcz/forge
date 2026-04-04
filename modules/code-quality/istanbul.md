@@ -1,3 +1,12 @@
+---
+name: istanbul
+categories: [coverage]
+languages: [javascript, typescript]
+exclusive_group: js-coverage
+recommendation_score: 90
+detection_files: [.nycrc, .nycrc.json, .c8rc, nyc.config.js, package.json]
+---
+
 # istanbul
 
 ## Overview

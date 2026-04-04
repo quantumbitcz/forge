@@ -1,3 +1,12 @@
+---
+name: doxygen
+categories: [doc-generator]
+languages: [c, cpp]
+exclusive_group: cpp-doc-generator
+recommendation_score: 90
+detection_files: [Doxyfile, Doxyfile.in, doxygen.config]
+---
+
 # doxygen
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: spotless
+categories: [formatter]
+languages: [java, kotlin, scala]
+exclusive_group: kotlin-formatter
+recommendation_score: 70
+detection_files: [build.gradle.kts, build.gradle, pom.xml]
+---
+
 # spotless
 
 ## Overview

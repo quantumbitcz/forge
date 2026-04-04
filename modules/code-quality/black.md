@@ -1,3 +1,12 @@
+---
+name: black
+categories: [formatter]
+languages: [python]
+exclusive_group: python-formatter
+recommendation_score: 70
+detection_files: [pyproject.toml, .black, setup.cfg]
+---
+
 # black
 
 ## Overview

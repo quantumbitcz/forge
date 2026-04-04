@@ -1,3 +1,12 @@
+---
+name: errorprone
+categories: [linter]
+languages: [java]
+exclusive_group: java-linter
+recommendation_score: 90
+detection_files: [build.gradle.kts, build.gradle, pom.xml]
+---
+
 # errorprone
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: scalafmt
+categories: [formatter]
+languages: [scala]
+exclusive_group: scala-formatter
+recommendation_score: 90
+detection_files: [.scalafmt.conf]
+---
+
 # scalafmt
 
 ## Overview

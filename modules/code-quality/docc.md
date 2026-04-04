@@ -1,3 +1,12 @@
+---
+name: docc
+categories: [doc-generator]
+languages: [swift]
+exclusive_group: swift-doc-generator
+recommendation_score: 90
+detection_files: [*.docc, Package.swift]
+---
+
 # docc
 
 ## Overview

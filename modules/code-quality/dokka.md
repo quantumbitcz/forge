@@ -1,3 +1,12 @@
+---
+name: dokka
+categories: [doc-generator]
+languages: [kotlin]
+exclusive_group: kotlin-doc-generator
+recommendation_score: 90
+detection_files: [build.gradle.kts, build.gradle]
+---
+
 # dokka
 
 ## Overview

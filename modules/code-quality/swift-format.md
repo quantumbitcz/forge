@@ -1,3 +1,12 @@
+---
+name: swift-format
+categories: [linter, formatter]
+languages: [swift]
+exclusive_group: swift-formatter
+recommendation_score: 90
+detection_files: [.swift-format, Package.swift]
+---
+
 # swift-format
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: mix-audit
+categories: [security-scanner]
+languages: [elixir]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [mix.lock, mix.exs]
+---
+
 # mix-audit
 
 ## Overview

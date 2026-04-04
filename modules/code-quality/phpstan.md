@@ -1,3 +1,12 @@
+---
+name: phpstan
+categories: [linter]
+languages: [php]
+exclusive_group: php-linter
+recommendation_score: 90
+detection_files: [phpstan.neon, phpstan.neon.dist, phpstan.dist.neon]
+---
+
 # phpstan
 
 ## Overview

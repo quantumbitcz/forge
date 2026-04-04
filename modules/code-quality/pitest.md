@@ -1,3 +1,12 @@
+---
+name: pitest
+categories: [mutation-tester]
+languages: [java, kotlin]
+exclusive_group: jvm-mutation
+recommendation_score: 90
+detection_files: [build.gradle.kts, build.gradle, pom.xml]
+---
+
 # pitest
 
 ## Overview

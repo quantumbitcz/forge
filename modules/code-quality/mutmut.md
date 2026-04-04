@@ -1,3 +1,12 @@
+---
+name: mutmut
+categories: [mutation-tester]
+languages: [python]
+exclusive_group: python-mutation
+recommendation_score: 90
+detection_files: [pyproject.toml, setup.cfg, .mutmut-cache]
+---
+
 # mutmut
 
 ## Overview

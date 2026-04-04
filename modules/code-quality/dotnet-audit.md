@@ -1,3 +1,12 @@
+---
+name: dotnet-audit
+categories: [security-scanner]
+languages: [csharp]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [*.csproj, global.json]
+---
+
 # dotnet-audit
 
 ## Overview

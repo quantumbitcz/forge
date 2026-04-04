@@ -1,3 +1,12 @@
+---
+name: dartdoc
+categories: [doc-generator]
+languages: [dart]
+exclusive_group: dart-doc-generator
+recommendation_score: 90
+detection_files: [dartdoc_options.yaml, pubspec.yaml]
+---
+
 # dartdoc
 
 ## Overview

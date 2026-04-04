@@ -1,3 +1,12 @@
+---
+name: jacoco
+categories: [coverage]
+languages: [java, kotlin]
+exclusive_group: jvm-coverage
+recommendation_score: 90
+detection_files: [build.gradle.kts, build.gradle, pom.xml, jacoco.xml]
+---
+
 # jacoco
 
 ## Overview

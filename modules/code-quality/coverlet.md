@@ -1,3 +1,12 @@
+---
+name: coverlet
+categories: [coverage]
+languages: [csharp]
+exclusive_group: csharp-coverage
+recommendation_score: 90
+detection_files: [*.csproj, coverlet.runsettings]
+---
+
 # coverlet
 
 ## Overview

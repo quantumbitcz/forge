@@ -1,3 +1,12 @@
+---
+name: yard
+categories: [doc-generator]
+languages: [ruby]
+exclusive_group: ruby-doc-generator
+recommendation_score: 90
+detection_files: [.yardopts, Gemfile]
+---
+
 # yard
 
 ## Overview

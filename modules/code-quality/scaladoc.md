@@ -1,3 +1,12 @@
+---
+name: scaladoc
+categories: [doc-generator]
+languages: [scala]
+exclusive_group: scala-doc-generator
+recommendation_score: 90
+detection_files: [build.sbt, project/plugins.sbt]
+---
+
 # scaladoc
 
 ## Overview
