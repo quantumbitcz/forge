@@ -39,8 +39,15 @@ if grep -q 'detekt' "$PROJECT_ROOT/build.gradle.kts" 2>/dev/null || \
   (cd "$PROJECT_ROOT" && ./gradlew detekt --no-daemon -q 2>/dev/null) > "$RAW_DETEKT" || RC_DETEKT=$?
 fi
 
+# --- validate exit codes ---
+# If both linters failed with no output, report as linter error
+if [[ $RC_LINT -ne 0 && -z "${LINT_REPORT:-}" && $RC_DETEKT -ne 0 && ! -s "$RAW_DETEKT" ]]; then
+  exit 2
+fi
+
 # --- parse findings ---
-python3 -c "
+_PY=python3; command -v python3 &>/dev/null || _PY=python
+"$_PY" -c "
 import json, re, sys, os
 from xml.etree import ElementTree as ET
 
