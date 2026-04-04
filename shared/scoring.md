@@ -139,6 +139,16 @@ Additional category codes for specialized review domains:
 | `STRUCT-*` | Project structure violation — subcategories: `STRUCT-PLACE` (file in wrong directory/package), `STRUCT-NAME` (file/class naming convention violation), `STRUCT-BOUNDARY` (cross-layer import not caught by ARCH-BOUNDARY), `STRUCT-MISSING` (required directory or file missing from expected structure) |
 | `INFRA-*` | Infrastructure/deployment issue — subcategories: `INFRA-SEC` (security), `INFRA-REL` (reliability), `INFRA-SCA` (scalability), `INFRA-OBS` (observability), `INFRA-DOC` (Docker), `INFRA-HLM` (Helm), `INFRA-TF` (Terraform) |
 
+Specific INFRA finding codes for tiered infra verification:
+
+| Code | Meaning | Default Severity |
+|------|---------|-----------------|
+| `INFRA-HEALTH` | Pod/service health check failure | CRITICAL |
+| `INFRA-SMOKE` | Smoke test failure (connectivity, DNS, config) | WARNING |
+| `INFRA-CONTRACT` | Contract schema/routing validation failure | CRITICAL |
+| `INFRA-E2E` | Full stack integration test failure | CRITICAL |
+| `INFRA-IMAGE` | Image resolution failure (pull/build) | WARNING (auto fallback) / CRITICAL (explicit mode) |
+
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
