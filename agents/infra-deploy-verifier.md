@@ -264,7 +264,147 @@ Record in state:
 
 ---
 
-## 7. Graceful Degradation
+## 7. Tier 4 — Contract Testing (<5min)
+
+**Requires:** kind or k3d (same as Tier 3)
+**Triggered when:** `infra.max_verification_tier >= 4`
+
+### 7.1 Stub Generation
+
+Generate lightweight stub containers for each service in the deployment:
+
+**auto mode** (default `infra.contract_testing.stub_generator`):
+1. Check for OpenAPI spec at `infra.contract_testing.openapi_spec` path
+2. If found: generate stub that returns canned responses matching the spec
+3. If not found: generate health-only stub (responds 200 on health endpoint)
+
+**openapi mode:**
+1. Require OpenAPI spec — emit INFRA-CONTRACT CRITICAL if not found
+2. Parse spec and generate per-endpoint stubs
+
+**health-only mode:**
+1. Generate minimal HTTP server: responds 200 on `/health`, 404 on everything else
+
+Stub container: `nginx:alpine` with a custom `default.conf` generated per service.
+
+### 7.2 Deployment
+
+1. Create cluster: `kind create cluster --name forge-verify-4` (or k3d equivalent)
+2. Deploy infra manifests (Helm or raw K8s) into the cluster
+3. Deploy stub containers for each service referenced in the manifests
+4. Wait for all pods to be ready: `kubectl wait --for=condition=ready pod --all --timeout=120s`
+
+### 7.3 Validation
+
+Run test layers in order:
+
+**Health (mandatory):**
+- All pods running: `kubectl get pods --field-selector=status.phase!=Running` → expect empty
+- All services reachable: `kubectl get endpoints` → all have addresses
+
+**Smoke (default):**
+- Service discovery: `kubectl exec` into a pod, `nslookup {service-name}`
+- Ingress routing: `curl` via ingress hostname (if ingress configured)
+- ConfigMap/Secret injection: verify expected env vars are set in pods
+- Volume mounts: verify expected volumes are mounted
+
+**Scenario (if `tests/infra/contract/` exists):**
+- Run each script in `tests/infra/contract/`
+- Pass `CLUSTER_NAME`, `KUBECONFIG`, `NAMESPACE` env vars
+- Timeout: `infra.scenario_timeout_seconds` per script (default 60)
+
+### 7.4 Cleanup
+
+Always: `kind delete cluster --name forge-verify-4`
+
+### 7.5 Findings
+
+| Finding | Severity | Trigger |
+|---------|----------|---------|
+| INFRA-HEALTH | CRITICAL | Pod/service not ready after 120s |
+| INFRA-SMOKE | WARNING | DNS/ingress/config check failed |
+| INFRA-CONTRACT | CRITICAL | Contract validation script failed |
+
+---
+
+## 8. Tier 5 — Full Stack Integration (<15min)
+
+**Requires:** kind or k3d, Docker, service images
+**Triggered when:** `infra.max_verification_tier >= 5`
+
+### 8.1 Image Resolution
+
+For each service in `infra.stack_testing.services`:
+
+**registry mode:**
+1. `docker pull {registry}:{tag}`
+2. Fail → INFRA-IMAGE CRITICAL
+
+**build mode:**
+1. Locate project via `related_projects` in `forge.local.md`
+2. `docker build -t {service_name}:forge-test -f {dockerfile} {project_root}`
+3. `kind load docker-image {service_name}:forge-test --name forge-verify-5`
+4. Fail → INFRA-IMAGE CRITICAL
+
+**auto mode (default):**
+1. Try `docker pull {registry}:{tag}`
+2. Check staleness: `docker inspect --format='{{.Created}}' {registry}:{tag}` — if >24h old and related project has newer commits → stale
+3. If pull succeeds and fresh → use it
+4. If pull fails or stale → fall back to build mode
+5. If both fail → INFRA-IMAGE WARNING, deploy stub instead (graceful degradation)
+
+Services not listed in config but referenced in manifests → `image_source: registry` with their existing image reference.
+
+### 8.2 Deployment Order
+
+Deploy in dependency order:
+1. **Infrastructure:** databases, message brokers, caches (wait for ready)
+2. **Backend:** API servers, workers (wait for ready)
+3. **Frontend:** web servers (wait for ready)
+4. **Ingress:** ingress controller, network policies
+
+Per-service readiness: `kubectl wait --for=condition=ready pod -l app={service} --timeout=120s`
+
+### 8.3 Cluster Setup
+
+1. Create cluster: `kind create cluster --name forge-verify-5`
+2. Load locally-built images: `kind load docker-image {service}:forge-test --name forge-verify-5`
+3. Deploy in dependency order (§8.2)
+4. Wait for all pods ready
+
+### 8.4 Validation
+
+**Health:**
+- All pods running
+- All health endpoints responding (using `health_endpoint` from config, TCP check if null)
+
+**Smoke:**
+- Cross-service connectivity: exec into backend pod, curl frontend; exec into frontend pod, curl backend
+- Ingress end-to-end: external request → ingress → backend → response
+- Database connectivity: backend can reach DB and run a simple query
+
+**Scenario (if `tests/infra/integration/` exists):**
+- Run each script in `tests/infra/integration/`
+- Same env vars as Tier 4
+- Timeout: `infra.scenario_timeout_seconds` per script
+
+### 8.5 Cleanup
+
+Always: `kind delete cluster --name forge-verify-5`
+Timeout: `infra.stack_testing.timeout_minutes` (default 15) — if exceeded, force cleanup + INFRA-E2E WARNING.
+
+### 8.6 Findings
+
+| Finding | Severity | Trigger |
+|---------|----------|---------|
+| INFRA-HEALTH | CRITICAL | Service health check failed |
+| INFRA-SMOKE | WARNING | Cross-service connectivity failed |
+| INFRA-E2E | CRITICAL | Integration test script failed |
+| INFRA-IMAGE | WARNING/CRITICAL | Image resolution failed (see §8.1) |
+
+---
+
+## 10. Graceful Degradation
 
 At every step, if a tool is missing or a command fails unexpectedly:
 
@@ -276,7 +416,7 @@ The pipeline should never fail because an optional tool is unavailable. The veri
 
 ---
 
-## 8. Error Handling
+## 11. Error Handling
 
 - **Tier 1 failure**: Report findings but continue to Tier 2/3 if configured. Static validation failures do not block container/cluster tests.
 - **Tier 2 Docker build failure**: Skip compose and trivy (they depend on a built image). Report the build failure.
@@ -285,7 +425,7 @@ The pipeline should never fail because an optional tool is unavailable. The veri
 
 ---
 
-## 9. Output Format
+## 12. Output Format
 
 Return EXACTLY this structure:
 
@@ -347,7 +487,7 @@ Return EXACTLY this structure:
 
 ---
 
-## 10. Context Management
+## 13. Context Management
 
 - **Read config files** at the start: `forge.local.md` for infra settings
 - **Auto-detect paths** if config is missing: scan for `Chart.yaml`, `Dockerfile`, `docker-compose.yml`
@@ -369,6 +509,8 @@ Create tasks upfront and update as infrastructure verification progresses:
 - "Tier 1: Static validation"
 - "Tier 2: Container validation"
 - "Tier 3: Cluster validation"
+- "Tier 4: Contract testing"
+- "Tier 5: Full stack integration"
 
 Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
 
