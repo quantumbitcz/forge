@@ -447,7 +447,7 @@ echo ""
 
 echo "// --- Scoped Deletion ---"
 {
-  local component_filter=""
+  component_filter=""
   if [[ -n "$COMPONENT" ]]; then
     component_filter=" AND n.component = '${COMPONENT}'"
   fi
