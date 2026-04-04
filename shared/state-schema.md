@@ -235,7 +235,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.5). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight >= 4.4` (80%), set `recovery.budget_warning_issued: true`. |
 | `recovery` | object | Yes | Recovery engine runtime state. `total_failures`: count of error occurrences that triggered recovery evaluation. `total_recoveries`: count of successful recoveries. `degraded_capabilities`: list of capability names operating in degraded mode (e.g., `"linear"`, `"neo4j"`). `failures`: list of `{ "error_type": "<type>", "stage": "<stage>", "timestamp": "<ISO8601>", "strategy": "<strategy-applied>", "outcome": "recovered\|escalated" }`. `budget_warning_issued`: boolean, `true` when `recovery_budget.total_weight >= 4.4` (80% of budget). |
-| `linear_sync` | object | Yes | Tracks Linear API operation success/failure for desync detection. `in_sync`: boolean, true when all Linear operations succeeded. `failed_operations[]`: list of `{ "op": "<operation>", "error": "<message>", "timestamp": "<ISO8601>" }`. Read by retrospective to report desync. |
+| `linear_sync` | object | Yes | Tracks Linear API operation success/failure for desync detection. `in_sync`: boolean, true when all Linear operations succeeded. `failed_operations[]`: list of `{ "op": "<operation>", "error": "<message>", "timestamp": "<ISO8601>" }`. Read by retrospective to report desync. **Sync guarantees:** Linear operations are fire-and-forget with single retry — the pipeline does not block on Linear success. If `epic_id` is set but subsequent story/task creation fails, the orphaned epic remains in Linear (logged in `failed_operations` for manual cleanup). Checked at SHIP and LEARN stages; `in_sync: false` triggers a WARNING in the retrospective report. |
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
 | `conventions_section_hashes` | object | Yes | Top-level per-section SHA256 hashes (first 8 chars) of conventions_file content at PREFLIGHT. Used for single-component projects. Keys are section names (e.g., `"architecture"`, `"naming"`, `"testing"`), values are hash strings. Enables granular drift detection — agents only react to changes in their relevant section. If conventions file was unavailable, set to `{}`. In multi-component projects, each component has its own `conventions_section_hashes` within `components[key]` — the top-level field is then set to `{}` and per-component hashes take precedence. |
@@ -527,7 +527,20 @@ Example:
 }
 ```
 
-**Note:** The recovery engine checks the `version` field before parsing. State files with a missing or mismatched version are reinitialized — use `/forge-reset` to manually clear stale state if needed.
+### State Version Migration
+
+The recovery engine checks the `version` field before parsing state files:
+
+1. **Missing version:** State file is treated as corrupted — reinitialized from PREFLIGHT defaults.
+2. **Matching version:** Parsed normally.
+3. **Older version:** The recovery engine applies forward-compatible defaults for fields added in newer schema versions, then updates the `version` field in-place. This allows interrupted runs from a prior plugin version to resume after a plugin upgrade without losing state.
+
+| From | To | Fields Added | Default |
+|------|----|-------------|---------|
+| 1.0.0 | 1.1.0 | `ticket_id`, `branch_name`, `tracking_dir` | `null`, `""`, `null` |
+| 1.1.0 | 1.2.0 | `graph` | `{ "last_update_stage": -1, "last_update_files": [], "stale": false }` |
+
+**Manual reset:** Use `/forge-reset` to clear stale state if automatic migration is insufficient.
 
 ### story_state Valid Values
 

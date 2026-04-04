@@ -29,6 +29,7 @@ State transitions:
 
 Key behaviors:
 
+- **Phase A / Phase B within VERIFY:** Phase A is build + lint. Phase B is tests + analysis. **If Phase A fails, Phase B is skipped entirely** — `tests_pass` and `analysis_pass` are not meaningful when `is_phase_a_failure` is true. The convergence engine must check `is_phase_a_failure` first before evaluating Phase B results.
 - **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `fg-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
@@ -232,9 +233,9 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 | `plateau_count` | integer | Consecutive cycles with improvement <= `plateau_threshold`; resets on meaningful improvement |
 | `last_score_delta` | number | Score change from previous perfection cycle (0 if first cycle). May be non-integer with custom scoring weights. |
 | `convergence_state` | `"IMPROVING"` \| `"PLATEAUED"` \| `"REGRESSING"` | Current convergence state |
-| `phase_history` | array | Append-only log of completed phases for retrospective analysis. Each entry has `outcome`: `"converged"` (target reached or plateau accepted), `"escalated"` (cap hit, regression, or user escalation), or `"restarted"` (safety gate failure triggered correctness restart). Capped at 50 entries per run. Resets to `[]` at PREFLIGHT for each new run. |
+| `phase_history` | array | Append-only log of completed phases for retrospective analysis. Each entry has `outcome`: `"converged"` (target reached or plateau accepted), `"escalated"` (cap hit, regression, or user escalation), or `"restarted"` (safety gate failure triggered correctness restart). Capped at 50 entries per run — when the cap is reached, the oldest entry is evicted (FIFO). Resets to `[]` at PREFLIGHT for each new run. |
 | `safety_gate_passed` | boolean | Whether the final VERIFY after Phase 2 succeeded |
-| `safety_gate_failures` | integer | Consecutive safety gate failures. Escalate at >= 2 (cross-phase oscillation). Resets to 0 on safety gate pass. |
+| `safety_gate_failures` | integer | Consecutive safety gate failures. Incremented when `verify_result.tests_pass` is `false` during the safety gate phase. Escalate at >= 2 (cross-phase oscillation). Resets to 0 on safety gate pass. |
 | `unfixable_findings` | array | Findings that survived all iterations (see format below) |
 
 **Unfixable finding format:**
