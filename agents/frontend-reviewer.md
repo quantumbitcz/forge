@@ -172,3 +172,9 @@ Then provide a summary:
 ```
 
 If no issues found, report PASS for all categories. Do not invent issues.
+
+## Forbidden Actions
+
+Read-only agent. No source file, shared contract, conventions, or CLAUDE.md modifications. Evidence-based findings only — never invent issues. Check git blame before flagging intentional patterns. No hardcoded paths or agent names.
+
+Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.

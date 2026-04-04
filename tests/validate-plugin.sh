@@ -609,6 +609,30 @@ fi
 check "All local-template.md have tracking: section ($tracking_count/$tracking_total)" "$check_tracking_section_fail"
 
 echo ""
+echo "--- BUGFIX WORKFLOW ---"
+
+# Check: fg-020-bug-investigator agent exists
+check_bugfix_agent_fail=0
+if [ ! -f "$ROOT/agents/fg-020-bug-investigator.md" ]; then
+  check_bugfix_agent_fail=1
+fi
+check "fg-020-bug-investigator agent exists" "$check_bugfix_agent_fail"
+
+# Check: forge-fix skill exists
+check_forgefix_skill_fail=0
+if [ ! -f "$ROOT/skills/forge-fix/SKILL.md" ]; then
+  check_forgefix_skill_fail=1
+fi
+check "forge-fix skill exists" "$check_forgefix_skill_fail"
+
+# Check: forge-fix name matches directory
+check_forgefix_name_fail=0
+if ! grep -q "^name: forge-fix$" "$ROOT/skills/forge-fix/SKILL.md" 2>/dev/null; then
+  check_forgefix_name_fail=1
+fi
+check "forge-fix name matches directory" "$check_forgefix_name_fail"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
 
