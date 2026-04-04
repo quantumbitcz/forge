@@ -1,3 +1,12 @@
+---
+name: exdoc
+categories: [doc-generator]
+languages: [elixir]
+exclusive_group: elixir-doc-generator
+recommendation_score: 90
+detection_files: [mix.exs]
+---
+
 # exdoc
 
 ## Overview

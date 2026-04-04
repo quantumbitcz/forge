@@ -1,3 +1,12 @@
+---
+name: phpdoc
+categories: [doc-generator]
+languages: [php]
+exclusive_group: php-doc-generator
+recommendation_score: 90
+detection_files: [phpdoc.xml, phpdoc.dist.xml, phpdoc.xml.dist]
+---
+
 # phpdoc
 
 ## Overview

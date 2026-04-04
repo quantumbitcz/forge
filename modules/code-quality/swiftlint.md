@@ -1,3 +1,12 @@
+---
+name: swiftlint
+categories: [linter]
+languages: [swift]
+exclusive_group: swift-linter
+recommendation_score: 80
+detection_files: [.swiftlint.yml, .swiftlint.yaml]
+---
+
 # swiftlint
 
 ## Overview

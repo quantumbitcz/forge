@@ -181,15 +181,64 @@ If the user says no or skips: proceed without additional sources.
 
 ---
 
-### Phase 1.5: Code Quality Recommendations
+### Phase 1.5 — Smart Code Quality Recommendations
 
-#### Code Quality Recommendations
+**Input:** Framework's `code_quality_recommended` list from local-template.md + project's existing tool configs detected in Phase 1.
 
-1. Compare detected tools against `code_quality_recommended` from framework's `local-template.md`
-2. Present missing tools with descriptions, **ASK via AskUserQuestion** with header "Quality", question "Which recommended code quality tools should I add?", options: "Add all" (description: "Install all {N} recommended tools"), "Pick individually" (description: "Let me choose which tools to add"), "Skip" (description: "Don't add any code quality tools").
-3. For overlapping tools (prettier vs biome, eslint vs biome, owasp vs snyk vs trivy), **ASK via AskUserQuestion** with header "Tooling", question "Found overlapping tools — which do you prefer?", options: one per alternative (label: tool name, description: trade-offs).
-4. After selection, ask about external rulesets (default baseline / custom rules / shared config from external repo)
-5. **ASK via AskUserQuestion** with header "CI/CD", question "Also configure these tools in your CI/CD pipeline?", options: "Yes" (description: "Add linting, coverage, and quality checks to CI pipeline"), "No" (description: "Only configure locally, skip CI integration").
+**Algorithm:**
+
+1. **Load recommendations:** Read the framework's `code_quality_recommended` list from `local-template.md`
+2. **Read frontmatter:** For each recommended tool, read its `modules/code-quality/{tool}.md` YAML frontmatter to extract: `exclusive_group`, `recommendation_score`, `detection_files`, `categories`
+3. **Detect existing tools:** For each tool, check if ANY of its `detection_files` exist in the project root. Mark as "already configured" if found.
+4. **Group by exclusive_group:** Partition tools into groups. Tools with `exclusive_group: none` (security scanners) go into a "complementary" bucket — no deduplication needed.
+5. **Deduplicate per group:**
+   a. If the project already has a tool from this group (detected via `detection_files`) → keep it, hide alternatives
+   b. If no tool detected in the group → pre-select the one with highest `recommendation_score`
+   c. Mark remaining tools in the group as "alternatives (not selected)"
+
+6. **Present to user** via `AskUserQuestion`:
+
+   ```
+   Header: "Code Quality Tools"
+   Question: "Recommended tools for your {framework} + {language} project:"
+   Options:
+     A) Accept recommendations:
+        ✅ {tool1} — {description from overview} (recommended)
+        ✅ {tool2} — {description} (recommended)
+           ↳ Alternatives: {alt1}, {alt2} (same category: {exclusive_group})
+        ✅ {tool3} — {description} (recommended)
+        ...
+     B) Customize selection (per-group choices)
+     C) Skip code quality setup
+   ```
+
+7. **If user selects (B) — Customize:**
+   For each exclusive group with multiple members, present via `AskUserQuestion`:
+
+   For exclusive groups (radio — pick one):
+   ```
+   Header: "{Language} {Category}"
+   Question: "Pick one (or none):"
+   Options:
+     A) {tool1} — {brief desc} (recommended, score: {N})
+     B) {tool2} — {brief desc} (score: {N})
+     C) {tool3} — {brief desc} (score: {N})
+     D) None — skip this category
+   ```
+
+   For complementary groups (checkboxes — pick any):
+   ```
+   Header: "Security Scanning"
+   Question: "Select any (all are complementary):"
+   Options:
+     A) ☑ {tool1} — {desc} (recommended)
+     B) ☐ {tool2} — {desc}
+     C) ☐ {tool3} — {desc}
+   ```
+
+8. **Write selections** to `forge.local.md` `code_quality:` list.
+   - Simple string form: `code_quality: [detekt, ktlint, jacoco]`
+   - Object form for tools with external rulesets: `code_quality: [{name: detekt, ruleset: "path/to/rules.xml"}]`
 
 ---
 
@@ -574,6 +623,171 @@ If `graph.enabled` is `true` in the generated `forge.local.md` (this is the defa
 4. Set `integrations.neo4j.available` based on the result.
 
 5. If graph initialization completes successfully, dispatch `fg-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
+
+---
+
+### Phase 6c — MCP Provisioning
+
+For each MCP listed in `forge.local.md` `mcps:` section where `auto_install: true`:
+
+1. Check if already configured (search `.mcp.json` in project root).
+2. If not configured:
+   a. Check prerequisites (e.g., Docker for Neo4j).
+   b. If prerequisites met: search internet for latest package version, install, write `.mcp.json`, verify.
+   c. If prerequisites missing: ask user via `AskUserQuestion` to skip or install the prerequisite.
+3. Report provisioned MCPs in the init summary.
+
+Follow `shared/mcp-provisioning.md` for the detailed flow.
+
+---
+
+### Phase 6d — Project-Local Plugin Generation
+
+Generate a project-local Claude Code plugin at `.claude/plugins/project-tools/` tailored to the detected project.
+
+**Skip if:** `.claude/plugins/project-tools/plugin.json` already exists — ask user whether to regenerate or skip.
+
+#### Step 1: Create plugin manifest
+
+Write `.claude/plugins/project-tools/plugin.json`:
+```json
+{
+  "name": "project-tools",
+  "version": "1.0.0",
+  "description": "Project-specific automations generated by /forge-init"
+}
+```
+
+#### Step 2: Generate hooks (conditional)
+
+**Only if** `git.commit_enforcement` is NOT `external` (no existing hooks detected in Phase 2a):
+
+Create `.claude/plugins/project-tools/hooks/hooks.json`:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/commit-msg-guard.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Create `.claude/plugins/project-tools/hooks/commit-msg-guard.sh`:
+```bash
+#!/usr/bin/env bash
+# Validates commit messages match project conventions.
+# Generated by /forge-init — customized from forge.local.md git: section.
+MSG_FILE="$1"
+MSG=$(head -1 "$MSG_FILE")
+PATTERN="^(feat|fix|test|refactor|docs|chore|perf|ci)(\(.+\))?: .{1,72}$"
+if ! echo "$MSG" | grep -qE "$PATTERN"; then
+  echo "ERROR: Commit message doesn't match conventional commits format"
+  echo "Expected: type(scope): description"
+  echo "Got: $MSG"
+  exit 1
+fi
+```
+
+Create `.claude/plugins/project-tools/hooks/branch-name-guard.sh`:
+```bash
+#!/usr/bin/env bash
+# Validates branch names match project conventions.
+# Generated by /forge-init — customized from forge.local.md git: section.
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+PATTERN="^(feat|fix|refactor|chore)/[A-Z]+-[0-9]+-[a-z0-9-]+$"
+if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+  echo "WARNING: Branch '$BRANCH' doesn't match naming convention"
+  echo "Expected: {type}/{TICKET-ID}-{slug}"
+fi
+```
+
+Make both scripts executable: `chmod +x`.
+
+The commit types in the PATTERN should be customized from `forge.local.md` `git.commit_types` if available.
+
+#### Step 3: Generate wrapper skills
+
+Detect build/test/lint/deploy tools and generate minimal wrapper skills:
+
+| Detection | Skill | Command |
+|-----------|-------|---------|
+| `build.gradle.kts` or `build.gradle` | `/build` | `./gradlew build` |
+| Gradle + test task | `/run-tests` | `./gradlew test` |
+| `package.json` + vitest/jest | `/run-tests` | `npm run test` |
+| `Makefile` | `/build` | `make build` |
+| `pyproject.toml` + pytest | `/run-tests` | `pytest` |
+| `Cargo.toml` | `/build`, `/run-tests` | `cargo build`, `cargo test` |
+| `Dockerfile` + `docker-compose.yml` | `/deploy` | `docker compose up --build` |
+| detekt/eslint/ruff/biome config | `/lint` | Appropriate lint command |
+
+Each generated skill is a minimal SKILL.md:
+```markdown
+---
+name: {skill-name}
+description: {Brief description} (generated by /forge-init)
+---
+
+{Description of what this does}
+
+\`\`\`bash
+{detected_command}
+\`\`\`
+
+Report results. If the command fails, show the failure summary.
+```
+
+Skills are written to `.claude/plugins/project-tools/skills/{name}/SKILL.md`.
+
+#### Step 4: Generate commit-reviewer agent (optional)
+
+Write `.claude/plugins/project-tools/agents/commit-reviewer.md`:
+```markdown
+---
+name: commit-reviewer
+description: Reviews staged changes before commit for convention compliance (generated by /forge-init)
+tools: ['Read', 'Grep', 'Glob', 'Bash']
+---
+
+# Commit Reviewer
+
+Review staged changes (`git diff --cached`) for:
+1. Convention compliance (naming, patterns, structure)
+2. Obvious issues (debug code, TODO comments, console.log)
+3. Missing test coverage for new functions
+
+Report findings as a brief list. Do not block — advisory only.
+```
+
+#### Step 5: Offer implementation tasks
+
+After generating the plugin, check if accepted tools need build config implementation:
+
+Ask user via `AskUserQuestion`:
+```
+Header: "Setup Tasks"
+Question: "The following tools need implementation to integrate into your project:"
+{list of tools needing build config changes, e.g., "dokka — needs Gradle plugin", "jacoco — needs coverage thresholds"}
+
+Options:
+  A) Run /forge-run to implement all setup tasks now
+  B) Add to backlog (creates tickets in .forge/tracking/backlog/)
+  C) Skip — configure manually later
+```
+
+If (A): Create kanban tickets for each task, dispatch `/forge-run` with bundled requirement (runs in worktree).
+If (B): Create kanban tickets for future runs.
+
+### End of Phase 6d
 
 ---
 

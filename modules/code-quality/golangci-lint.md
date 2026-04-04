@@ -1,3 +1,12 @@
+---
+name: golangci-lint
+categories: [linter]
+languages: [go]
+exclusive_group: go-linter
+recommendation_score: 90
+detection_files: [.golangci.yml, .golangci.yaml, .golangci.toml, .golangci.json]
+---
+
 # golangci-lint
 
 ## Overview

@@ -633,6 +633,56 @@ fi
 check "forge-fix name matches directory" "$check_forgefix_name_fail"
 
 echo ""
+echo "--- PHASE 4: GRAPH + INIT ---"
+
+# Check: mcp-provisioning.md exists
+check_mcp_prov_fail=0
+if [ ! -f "$ROOT/shared/mcp-provisioning.md" ]; then
+  check_mcp_prov_fail=1
+fi
+check "mcp-provisioning.md exists" "$check_mcp_prov_fail"
+
+# Check: version-resolution.md exists
+check_ver_res_fail=0
+if [ ! -f "$ROOT/shared/version-resolution.md" ]; then
+  check_ver_res_fail=1
+fi
+check "version-resolution.md exists" "$check_ver_res_fail"
+
+# Check: All code-quality modules have frontmatter (line 1 is ---)
+check_cq_frontmatter_fail=0
+cq_total=0
+cq_with_fm=0
+for f in "$ROOT/modules/code-quality/"*.md; do
+  [ -f "$f" ] || continue
+  cq_total=$((cq_total + 1))
+  has_open=$(awk 'NR==1{print ($0=="---")?1:0}' "$f")
+  if [ "$has_open" = "1" ]; then
+    cq_with_fm=$((cq_with_fm + 1))
+  fi
+done
+if [ "$cq_total" -eq 0 ] || [ "$cq_with_fm" -ne "$cq_total" ]; then
+  check_cq_frontmatter_fail=1
+  echo "    DETAIL: $cq_with_fm/$cq_total code-quality modules have frontmatter"
+fi
+check "All code-quality modules have frontmatter ($cq_with_fm/$cq_total)" "$check_cq_frontmatter_fail"
+
+# Check: query-patterns.md has at least 15 patterns (counts both ### N. and ## Pattern N formats)
+check_qp_fail=0
+qp_file="$ROOT/shared/graph/query-patterns.md"
+if [ ! -f "$qp_file" ]; then
+  check_qp_fail=1
+  echo "    DETAIL: shared/graph/query-patterns.md not found"
+else
+  pattern_count=$(grep -cE "^(### [0-9]+\.|## Pattern)" "$qp_file" 2>/dev/null || echo 0)
+  if [ "$pattern_count" -lt 15 ]; then
+    check_qp_fail=1
+    echo "    DETAIL: query-patterns.md has $pattern_count patterns (expected >= 15)"
+  fi
+fi
+check "query-patterns.md has at least 15 patterns ($pattern_count)" "$check_qp_fail"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
 

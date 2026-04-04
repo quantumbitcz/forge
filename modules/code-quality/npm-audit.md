@@ -1,3 +1,12 @@
+---
+name: npm-audit
+categories: [security-scanner]
+languages: [javascript, typescript]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [package-lock.json, package.json]
+---
+
 # npm-audit
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: cppcheck
+categories: [linter]
+languages: [c, cpp]
+exclusive_group: c-linter
+recommendation_score: 80
+detection_files: [.cppcheck, cppcheck.xml]
+---
+
 # cppcheck
 
 ## Overview

@@ -16,7 +16,7 @@ description: |
   </example>
 model: inherit
 color: magenta
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'neo4j-mcp']
 ---
 
 # Feature Shaper (fg-010)
@@ -94,14 +94,25 @@ Apply Principle 1 from `shared/agent-philosophy.md`: never settle for the first 
 
 Do not skip this phase even if the feature seems clear-cut. Document the outcome: either "scope challenged and narrowed to MVP" or "full vision accepted after challenge because {reason}".
 
-### Phase 4 — Identify Components
+### Phase 4 — Identify Components (Graph-Enhanced)
 
-Dispatch an explorer sub-agent (via Agent tool) to understand what already exists in the codebase that is relevant to this feature:
-- Which files, modules, or services are affected?
-- What API contracts or interfaces would need to change?
-- Are there existing patterns (auth guards, validation utilities, event buses) that should be reused?
+If `neo4j-mcp` is available (check by attempting `RETURN 1`):
 
-Map the cross-repo implications. Note them in the spec under Technical Notes.
+1. **Query Pattern 7 (Blast Radius):** Search for files/packages related to the feature keywords → affected area
+2. **Query Pattern 3 (Entity Impact):** For each affected entity → consumer files, dependent modules
+3. **Query Pattern 11 (Decision Traceability):** Active architectural decisions constraining the affected area
+4. **Query Pattern 14 (Bug Hotspots):** Files in the affected area with recurring bugs → flag risk in spec
+5. **Query Pattern 15 (Test Coverage Gaps):** Entities lacking test coverage → note in spec
+
+Synthesize graph results into the Technical Notes section of the spec.
+
+**If graph unavailable:** Fall back to the explorer sub-agent dispatch (via Agent tool) to scan the codebase for related functionality. Use Grep/Glob to find related files manually.
+
+In both cases, also:
+- Identify which files, modules, or services are affected
+- Check for API contracts or interfaces that would change
+- Note existing patterns (auth guards, validation utilities, event buses) to reuse
+- Map cross-repo implications under Technical Notes
 
 ### Phase 5 — Structure Output
 

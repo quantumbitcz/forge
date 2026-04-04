@@ -71,7 +71,7 @@ If `$ARGUMENTS` is a raw text description with no ticket reference:
 Before forming any hypothesis, gather context from all available sources:
 
 **Read project config:**
-- `.claude/dev-pipeline.local.md` or `.forge/forge.local.md` — identify language, framework, component structure
+- `.claude/forge.local.md` — identify language, framework, component structure
 - Note relevant stack layers: persistence, API protocol, auth, caching
 
 **Query the knowledge graph (if available via neo4j-mcp):**

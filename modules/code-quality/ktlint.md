@@ -1,3 +1,12 @@
+---
+name: ktlint
+categories: [linter, formatter]
+languages: [kotlin]
+exclusive_group: kotlin-formatter
+recommendation_score: 90
+detection_files: [.editorconfig, .ktlint, .ktlint-baseline.xml]
+---
+
 # ktlint
 
 ## Overview

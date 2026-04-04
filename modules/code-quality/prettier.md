@@ -1,3 +1,12 @@
+---
+name: prettier
+categories: [formatter]
+languages: [javascript, typescript]
+exclusive_group: js-formatter
+recommendation_score: 70
+detection_files: [prettier.config.js, prettier.config.cjs, .prettierrc, .prettierrc.json, .prettierrc.yaml, .prettierrc.yml, .prettierignore]
+---
+
 # prettier
 
 ## Overview

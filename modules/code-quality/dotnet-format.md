@@ -1,3 +1,12 @@
+---
+name: dotnet-format
+categories: [formatter]
+languages: [csharp]
+exclusive_group: csharp-formatter
+recommendation_score: 70
+detection_files: [.editorconfig, *.csproj, global.json]
+---
+
 # dotnet-format
 
 ## Overview

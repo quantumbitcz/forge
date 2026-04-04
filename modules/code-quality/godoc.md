@@ -1,3 +1,12 @@
+---
+name: godoc
+categories: [doc-generator]
+languages: [go]
+exclusive_group: go-doc-generator
+recommendation_score: 90
+detection_files: [go.mod]
+---
+
 # godoc
 
 ## Overview

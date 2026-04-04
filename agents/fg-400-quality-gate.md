@@ -25,7 +25,7 @@ description: |
   </example>
 model: inherit
 color: red
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'Skill']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'Skill', 'neo4j-mcp']
 ---
 
 # Pipeline Quality Gate (fg-400)
@@ -75,6 +75,8 @@ Agent batches are defined entirely by the project's `forge.local.md` config unde
 ### 4.0 Documentation Context
 
 `docs-consistency-reviewer` is a standard reviewer that may be configured in any `batch_N` entry. It receives documentation context (doc discovery summary and stale docs detection results) pre-queried by the orchestrator and passed in the dispatch prompt alongside the changed files. No special handling required — treat it like any other configured review agent.
+
+**Graph Context (when available):** Query patterns 10 (Stale Docs), 11 (Decision Traceability), 12 (Contradiction Report) via `neo4j-mcp` to coordinate review focus areas. Fall back to file-based analysis if graph unavailable.
 
 ### 4.1 Batch Execution
 

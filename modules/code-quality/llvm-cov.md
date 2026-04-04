@@ -1,3 +1,12 @@
+---
+name: llvm-cov
+categories: [coverage]
+languages: [rust, c, cpp]
+exclusive_group: rust-coverage
+recommendation_score: 90
+detection_files: [Cargo.toml, CMakeLists.txt]
+---
+
 # llvm-cov
 
 ## Overview

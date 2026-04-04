@@ -1,3 +1,12 @@
+---
+name: pylint
+categories: [linter]
+languages: [python]
+exclusive_group: python-linter
+recommendation_score: 60
+detection_files: [.pylintrc, pyproject.toml, setup.cfg]
+---
+
 # pylint
 
 ## Overview

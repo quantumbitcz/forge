@@ -1,3 +1,12 @@
+---
+name: spotbugs
+categories: [linter]
+languages: [java, kotlin]
+exclusive_group: jvm-bug-detector
+recommendation_score: 80
+detection_files: [spotbugs-include.xml, spotbugs-exclude.xml, build.gradle.kts, build.gradle, pom.xml]
+---
+
 # spotbugs
 
 ## Overview

@@ -244,3 +244,46 @@ RETURN pp.name, pp.path ORDER BY pp.path
 
 **Parameters:**
 - None.
+
+---
+
+## Pattern 14 — Bug Hotspot Analysis
+
+**Used during:** PREFLIGHT (PREEMPT), EXPLORE (bugfix mode), REVIEW (risk flagging)
+
+**Purpose:** Identify files with recurring bug fixes to flag as hotspots for extra attention.
+
+**Prerequisites:** `ProjectFile` nodes with `bug_fix_count` and `last_bug_fix_date` properties, populated by `fg-700-retrospective` after each bugfix run.
+
+```cypher
+MATCH (f:ProjectFile)
+WHERE f.bug_fix_count > 0
+RETURN f.path, f.bug_fix_count, f.last_bug_fix_date
+ORDER BY f.bug_fix_count DESC
+LIMIT 20
+```
+
+**Consumers:** `fg-010-shaper` (risk flagging in spec), `fg-020-bug-investigator` (prioritize investigation), `fg-400-quality-gate` (stricter review for hotspots)
+
+**Graceful degradation:** If no `bug_fix_count` properties exist yet (first run), returns empty result. Consumers treat empty as "no hotspot data available."
+
+---
+
+## Pattern 15 — Test Coverage by Entity
+
+**Used during:** EXPLORE (bugfix mode), PLAN (test gap analysis), REVIEW (coverage flagging)
+
+**Purpose:** Identify classes/entities that lack direct test coverage.
+
+**Prerequisites:** `ProjectClass` nodes with `CLASS_IN_FILE` edges and `TESTS` edges between test files and source files, populated by `build-project-graph.sh`.
+
+```cypher
+MATCH (c:ProjectClass)
+OPTIONAL MATCH (t:ProjectFile)-[:TESTS]->(f:ProjectFile)-[:CLASS_IN_FILE]->(c)
+WHERE t IS NULL
+RETURN c.name, f.path AS source_file
+```
+
+**Consumers:** `fg-020-bug-investigator` (identify untested code near bug), `fg-500-test-gate` (coverage gap warnings), `fg-010-shaper` (note in spec Technical Notes)
+
+**Graceful degradation:** If no `TESTS` edges exist, returns all classes. Consumers should limit to the affected area.

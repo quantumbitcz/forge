@@ -1,3 +1,12 @@
+---
+name: xmldoc
+categories: [doc-generator]
+languages: [csharp]
+exclusive_group: csharp-doc-generator
+recommendation_score: 90
+detection_files: [*.csproj]
+---
+
 # xmldoc
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+name: xcov
+categories: [coverage]
+languages: [swift]
+exclusive_group: swift-coverage
+recommendation_score: 90
+detection_files: [Fastfile, .xcodeproj, *.xcworkspace]
+---
+
 # xcov
 
 ## Overview

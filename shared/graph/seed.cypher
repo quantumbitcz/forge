@@ -1921,9 +1921,11 @@ CREATE (:SharedContract {name: 'error-taxonomy', file_path: 'shared/error-taxono
 CREATE (:SharedContract {name: 'frontend-design-theory', file_path: 'shared/frontend-design-theory.md'});
 CREATE (:SharedContract {name: 'git-conventions', file_path: 'shared/git-conventions.md'});
 CREATE (:SharedContract {name: 'logging-rules', file_path: 'shared/logging-rules.md'});
+CREATE (:SharedContract {name: 'mcp-provisioning', file_path: 'shared/mcp-provisioning.md'});
 CREATE (:SharedContract {name: 'scoring', file_path: 'shared/scoring.md'});
 CREATE (:SharedContract {name: 'stage-contract', file_path: 'shared/stage-contract.md'});
 CREATE (:SharedContract {name: 'state-schema', file_path: 'shared/state-schema.md'});
+CREATE (:SharedContract {name: 'version-resolution', file_path: 'shared/version-resolution.md'});
 
 // --- Agent READS SharedContract edges ---
 MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);

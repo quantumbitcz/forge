@@ -1,3 +1,12 @@
+---
+name: trivy
+categories: [security-scanner]
+languages: [javascript, typescript, java, kotlin, python, ruby, go, php, rust, csharp, swift, dart]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [.trivy.yaml, trivy.yaml]
+---
+
 # trivy
 
 ## Overview

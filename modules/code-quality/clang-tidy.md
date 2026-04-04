@@ -1,3 +1,12 @@
+---
+name: clang-tidy
+categories: [linter]
+languages: [c, cpp]
+exclusive_group: cpp-linter
+recommendation_score: 90
+detection_files: [.clang-tidy, compile_commands.json]
+---
+
 # clang-tidy
 
 ## Overview

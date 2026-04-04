@@ -1,3 +1,12 @@
+---
+name: psalm
+categories: [linter]
+languages: [php]
+exclusive_group: php-type-checker
+recommendation_score: 80
+detection_files: [psalm.xml, psalm.xml.dist]
+---
+
 # psalm
 
 ## Overview

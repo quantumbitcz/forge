@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: yellow
-tools: ['Read', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp']
 ---
 
 # Pipeline Validator (fg-210)
@@ -98,6 +98,8 @@ If conventions file is missing or unreadable:
 ### Findings Cap
 
 If you find >20 issues across all perspectives, return the top 20 by severity. Add note: "20 of {N} total findings shown. Remaining findings are lower severity."
+
+**Graph Context (when available):** Query patterns 11 (Decision Traceability), 12 (Contradiction Report) via `neo4j-mcp` to validate plan against active architectural decisions. Fall back to document search if graph unavailable.
 
 ### 3.1 Read Context
 

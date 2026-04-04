@@ -1,3 +1,12 @@
+---
+name: snyk
+categories: [security-scanner]
+languages: [javascript, typescript, java, kotlin, python, ruby, go, php, scala, csharp, swift, dart]
+exclusive_group: none
+recommendation_score: 80
+detection_files: [.snyk, snyk.yml]
+---
+
 # snyk
 
 ## Overview

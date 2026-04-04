@@ -101,6 +101,21 @@ All pipeline state lives in `.forge/` in the consuming project, never in this re
 4. Add `shared/learnings/{name}.md` for per-layer learnings.
 5. Run `./tests/run-all.sh` to verify structural integrity.
 
+### Adding a new code-quality module
+
+1. Create `modules/code-quality/{name}.md` with the standard structure (Overview, Configuration, Rules, Performance, Security, Dos, Don'ts).
+2. YAML frontmatter is required with these fields:
+   ```yaml
+   ---
+   name: {name}
+   categories: [{category}]   # e.g., [linter], [formatter], [coverage], [security-scanner]
+   languages: [{lang}]         # list of target languages, or [all]
+   exclusive_group: {group}    # optional — tools in the same group are mutually exclusive
+   ---
+   ```
+3. Add `shared/learnings/{name}.md` for per-tool learnings.
+4. Bump `MIN_CODE_QUALITY` in `tests/lib/module-lists.bash` if needed.
+
 ### Adding a new skill
 
 1. Create `skills/{skill-name}/SKILL.md` with YAML frontmatter
@@ -135,7 +150,9 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 - `discovery/` -- cross-repo project discovery and project type detection
 - `graph/` -- Neo4j knowledge graph builder, enricher, and query patterns (opt-in)
 - `learnings/` -- per-module learnings accumulated from pipeline runs
+- `mcp-provisioning.md` -- rules for auto-installing missing MCP servers (Neo4j, Playwright) at init time. Agents must not assume MCPs are pre-installed.
 - `recovery/` -- recovery engine with strategies and health checks for pipeline resilience
+- `version-resolution.md` -- constraint: agents must NEVER use dependency versions from training data. Always search the internet for the latest compatible version at runtime.
 
 > Changes to shared contracts are high-impact. Verify that all agents referencing the changed contract still behave correctly. Changes to subsystems should be tested with `shared/checks/engine.sh --verify --project-root . --files-changed <file>`.
 

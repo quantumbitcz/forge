@@ -1,3 +1,12 @@
+---
+name: cargo-audit
+categories: [security-scanner]
+languages: [rust]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [Cargo.lock, .cargo-audit.toml]
+---
+
 # cargo-audit
 
 ## Overview

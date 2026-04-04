@@ -1,3 +1,12 @@
+---
+name: govulncheck
+categories: [security-scanner]
+languages: [go]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [go.mod, go.sum]
+---
+
 # govulncheck
 
 ## Overview

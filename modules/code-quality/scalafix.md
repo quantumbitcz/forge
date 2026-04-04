@@ -1,3 +1,12 @@
+---
+name: scalafix
+categories: [linter]
+languages: [scala]
+exclusive_group: scala-linter
+recommendation_score: 90
+detection_files: [.scalafix.conf, project/plugins.sbt]
+---
+
 # scalafix
 
 ## Overview

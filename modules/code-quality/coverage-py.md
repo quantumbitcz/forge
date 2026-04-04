@@ -1,3 +1,12 @@
+---
+name: coverage-py
+categories: [coverage]
+languages: [python]
+exclusive_group: python-coverage
+recommendation_score: 90
+detection_files: [.coveragerc, pyproject.toml, setup.cfg]
+---
+
 # coverage-py
 
 ## Overview

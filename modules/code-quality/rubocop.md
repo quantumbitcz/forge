@@ -1,3 +1,12 @@
+---
+name: rubocop
+categories: [linter, formatter]
+languages: [ruby]
+exclusive_group: ruby-formatter
+recommendation_score: 90
+detection_files: [.rubocop.yml, .rubocop.yaml]
+---
+
 # rubocop
 
 ## Overview

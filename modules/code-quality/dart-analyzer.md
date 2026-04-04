@@ -1,3 +1,12 @@
+---
+name: dart-analyzer
+categories: [linter]
+languages: [dart]
+exclusive_group: dart-linter
+recommendation_score: 90
+detection_files: [analysis_options.yaml]
+---
+
 # dart-analyzer
 
 ## Overview

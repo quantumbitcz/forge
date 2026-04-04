@@ -1,3 +1,12 @@
+---
+name: clippy
+categories: [linter]
+languages: [rust]
+exclusive_group: rust-linter
+recommendation_score: 90
+detection_files: [Cargo.toml]
+---
+
 # clippy
 
 ## Overview

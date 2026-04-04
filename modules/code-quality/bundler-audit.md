@@ -1,3 +1,12 @@
+---
+name: bundler-audit
+categories: [security-scanner]
+languages: [ruby]
+exclusive_group: none
+recommendation_score: 90
+detection_files: [Gemfile.lock]
+---
+
 # bundler-audit
 
 ## Overview

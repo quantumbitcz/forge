@@ -1,3 +1,12 @@
+---
+name: credo
+categories: [linter]
+languages: [elixir]
+exclusive_group: elixir-linter
+recommendation_score: 90
+detection_files: [.credo.exs]
+---
+
 # credo
 
 ## Overview

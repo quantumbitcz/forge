@@ -1,3 +1,12 @@
+---
+name: owasp-dependency-check
+categories: [security-scanner]
+languages: [java, kotlin]
+exclusive_group: none
+recommendation_score: 80
+detection_files: [build.gradle.kts, build.gradle, pom.xml]
+---
+
 # owasp-dependency-check
 
 ## Overview

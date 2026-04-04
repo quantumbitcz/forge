@@ -1,3 +1,12 @@
+---
+name: mypy
+categories: [linter]
+languages: [python]
+exclusive_group: python-type-checker
+recommendation_score: 90
+detection_files: [mypy.ini, .mypy.ini, pyproject.toml, setup.cfg]
+---
+
 # mypy
 
 ## Overview

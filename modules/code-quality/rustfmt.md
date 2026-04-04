@@ -1,3 +1,12 @@
+---
+name: rustfmt
+categories: [formatter]
+languages: [rust]
+exclusive_group: rust-formatter
+recommendation_score: 90
+detection_files: [rustfmt.toml, .rustfmt.toml, Cargo.toml]
+---
+
 # rustfmt
 
 ## Overview

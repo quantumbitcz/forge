@@ -1,3 +1,12 @@
+---
+name: go-cover
+categories: [coverage]
+languages: [go]
+exclusive_group: go-coverage
+recommendation_score: 90
+detection_files: [go.mod, go.sum]
+---
+
 # go-cover
 
 ## Overview
