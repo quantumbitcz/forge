@@ -334,3 +334,20 @@ RETURN d2.project_id, m.name, collect(d2.name) AS shared_deps
 
 **Parameters:**
 - `$project_id` — Current project identifier.
+
+---
+
+### 18. Cross-Repo Service Discovery
+
+**Used during:** VERIFY (Tier 5 image resolution)
+
+Discovers related project services and their deployment configuration for full stack testing.
+
+```cypher
+MATCH (pc:ProjectConfig {project_id: $project_id})
+OPTIONAL MATCH (dep:ProjectDependency {project_id: pc.project_id})-[:MAPS_TO]->(fw:Framework)
+RETURN pc.project_id, pc.language, pc.component, collect(DISTINCT fw.name) AS frameworks
+```
+
+**Parameters:**
+- `$project_id` — Project identifier. Pass each related project's ID to discover their stack.
