@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.2.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.3.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -71,6 +71,8 @@ This is a documentation-only plugin (no build step). To test changes:
 | Convergence loop | `shared/convergence-engine.md` (two-phase iteration, plateau detection) |
 | Kanban tracking  | `shared/tracking/tracking-schema.md` (ticket format, board structure)  |
 | Git conventions  | `shared/git-conventions.md` (branches, commits, hook detection)        |
+| MCP provisioning | `shared/mcp-provisioning.md` (auto-install rules) |
+| Version resolution | `shared/version-resolution.md` (never hardcode versions) |
 
 ## Key conventions
 
@@ -129,7 +131,7 @@ Read source files for full details. Key facts:
 
 ### Knowledge Graph (`graph:` in `forge.local.md`)
 
-Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.forge/`, accessed by orchestrator via Neo4j MCP. Enabled by default — set `graph.enabled: false` to disable (e.g., if Docker is unavailable). See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Container name defaults to `forge-neo4j`, configurable via `graph.neo4j_container_name` in `forge.local.md` or `NEO4J_CONTAINER` env var. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `fg-130-docs-discoverer` and `fg-350-docs-generator` to track documentation coverage and relationships.
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.forge/`, accessed by orchestrator via Neo4j MCP. Enabled by default — set `graph.enabled: false` to disable (e.g., if Docker is unavailable). See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Container name defaults to `forge-neo4j`, configurable via `graph.neo4j_container_name` in `forge.local.md` or `NEO4J_CONTAINER` env var. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `fg-130-docs-discoverer` and `fg-350-docs-generator` to track documentation coverage and relationships. 5 agents have direct `neo4j-mcp` access (fg-010-shaper, fg-020-bug-investigator, fg-200-planner, fg-210-validator, fg-400-quality-gate). Query patterns 14 (Bug Hotspots) and 15 (Test Coverage) added for bugfix risk analysis.
 
 ### Check engine (`shared/checks/`)
 
@@ -165,6 +167,10 @@ Stage integration: shaper creates tickets → orchestrator moves through statuse
 Branch naming: `{type}/{ticket}-{slug}` (configurable via `git:` in `forge.local.md`). Commit format: Conventional Commits by default, or `project` if existing hooks detected during `/forge-init`. Hook detection scans for Husky, commitlint, Lefthook, pre-commit, Commitizen — adopts existing conventions, never overrides.
 
 **Never in commits:** `Co-Authored-By`, AI attribution, `--no-verify`.
+
+### Init Automation (`.claude/plugins/project-tools/`)
+
+`/forge-init` generates a project-local plugin with hooks (commit-msg-guard, branch-name-guard), skills (/run-tests, /build, /lint, /deploy), and agents (commit-reviewer). Respects existing project hooks — never overrides. MCP auto-provisioning installs missing servers (Neo4j, Playwright) at init time. See `forge-init/SKILL.md` Phase 6d and `shared/mcp-provisioning.md`.
 
 ## Adding a new framework
 
@@ -297,13 +303,17 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 
 - **`modules` vs `components`:** `components` = per-service state within a single monorepo. `modules` = per-repo state across related repositories. Both can be active simultaneously.
 
+### Version resolution
+
+Agents must NEVER use dependency versions from training data. Always search the internet for latest compatible version at runtime. See `shared/version-resolution.md`.
+
 ### Testing
 
 - **Test module counts:** Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Minimum count guards (e.g., `MIN_FRAMEWORKS=21`) catch accidental deletions. When intentionally adding modules, bump the corresponding `MIN_*` constant in `module-lists.bash`.
 
 ## Plugin distribution (`.claude-plugin/`)
 
-- `plugin.json` — manifest (v1.2.0). `marketplace.json` — catalog for `quantumbitcz`.
+- `plugin.json` — manifest (v1.3.0). `marketplace.json` — catalog for `quantumbitcz`.
 - Hooks in `hooks/hooks.json` only (NOT in plugin.json).
 - Install: `/plugin marketplace add quantumbitcz/forge` then `/plugin install forge@quantumbitcz`.
 

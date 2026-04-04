@@ -351,7 +351,7 @@ Reference the cross-cutting review agents (`architecture-reviewer`, `security-re
 ```
 forge/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.2.0)
+    plugin.json                         # Plugin manifest (v1.3.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 32 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
