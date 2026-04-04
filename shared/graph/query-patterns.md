@@ -33,8 +33,8 @@ Determines which project files are directly or transitively affected when a give
 ```cypher
 // What project files are affected if I change a specific file?
 MATCH (changed:ProjectFile {path: $filePath, project_id: $project_id})
-MATCH (dependent:ProjectFile)-[:IMPORTS]->(changed)
-OPTIONAL MATCH (dependent)-[:IMPORTS*2..3]->(transitive:ProjectFile)
+MATCH (dependent:ProjectFile {project_id: $project_id})-[:IMPORTS]->(changed)
+OPTIONAL MATCH (dependent)-[:IMPORTS*2..3]->(transitive:ProjectFile {project_id: $project_id})
 RETURN changed, collect(DISTINCT dependent.path) AS direct_dependents,
        collect(DISTINCT transitive.path) AS transitive_dependents
 ```
@@ -54,9 +54,9 @@ Identifies which files consume a specific class or entity, and which conventions
 ```cypher
 // What breaks if I change a specific class/entity?
 // Note: project_conventions is project-wide (USES_CONVENTION lives on ProjectConfig, not per-file)
-MATCH (entity:ProjectClass {name: $className, project_id: $project_id})-[:CLASS_IN_FILE]->(f:ProjectFile)
-MATCH (consumer:ProjectFile)-[:IMPORTS]->(f)
-OPTIONAL MATCH (pc:ProjectConfig)-[:USES_CONVENTION]->(conv)
+MATCH (entity:ProjectClass {name: $className, project_id: $project_id})-[:CLASS_IN_FILE]->(f:ProjectFile {project_id: $project_id})
+MATCH (consumer:ProjectFile {project_id: $project_id})-[:IMPORTS]->(f)
+OPTIONAL MATCH (pc:ProjectConfig {project_id: $project_id})-[:USES_CONVENTION]->(conv)
 RETURN consumer.path, collect(DISTINCT conv.name) AS project_conventions
 ```
 
@@ -130,7 +130,7 @@ Traces the full dependency chain from a given file up to 4 hops deep. The orches
 ```cypher
 // Given a file, what's the full dependency chain?
 MATCH (root:ProjectFile {path: $filePath, project_id: $project_id})
-MATCH path = (root)<-[:IMPORTS*1..4]-(dependent:ProjectFile)
+MATCH path = (root)<-[:IMPORTS*1..4]-(dependent:ProjectFile {project_id: $project_id})
 RETURN nodes(path) AS impact_chain, length(path) AS depth
 ORDER BY depth
 ```
@@ -206,7 +206,7 @@ Retrieves all active (non-superseded) architectural decisions that apply to a gi
 ```cypher
 MATCH (dd:DocDecision {project_id: $project_id})-[:DECIDES]->(target)
 WHERE target.path STARTS WITH $packagePath OR target.name = $className
-OPTIONAL MATCH (dd)<-[:SUPERSEDES]-(newer:DocDecision)
+OPTIONAL MATCH (dd)<-[:SUPERSEDES]-(newer:DocDecision {project_id: $project_id})
 WHERE newer IS NULL
 RETURN dd.id, dd.summary, dd.status, dd.confidence, target.path
 ```
@@ -327,7 +327,7 @@ Finds shared module dependencies across related projects.
 ```cypher
 MATCH (d:ProjectDependency {project_id: $project_id})-[:MAPS_TO]->(m)
 WITH m
-MATCH (d2:ProjectDependency)-[:MAPS_TO]->(m)
+MATCH (d2:ProjectDependency)-[:MAPS_TO]->(m) // cross-project: d2.project_id <> $project_id
 WHERE d2.project_id <> $project_id
 RETURN d2.project_id, m.name, collect(d2.name) AS shared_deps
 ```
