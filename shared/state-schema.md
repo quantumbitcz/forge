@@ -453,7 +453,7 @@ Example: `"active_component": "backend"`
 
 ### Required Fields
 
-The following fields are required in every v1.0.0 state.json:
+The following fields are required in every state.json (all schema versions):
 
 `version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`, `branch_name`
 

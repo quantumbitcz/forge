@@ -44,9 +44,11 @@ The `.forge/state.json` file does not exist when it should (mid-pipeline run).
 
 After writing the reconstructed `state.json`, verify the `version` field:
 
-1. If `version` is missing or != `"1.0.0"`: the state file is from an incompatible schema. Discard and reinitialize from the orchestrator's section 3.8 template. Log: "Incompatible state version {version}, reinitializing."
-2. If `version` is `"1.0.0"`: no migration needed.
-3. Log: "Reconstructed state at schema version {version}."
+1. If `version` is missing: the state file is corrupted. Discard and reinitialize from the orchestrator's section 3.8 template. Log: "Missing state version, reinitializing."
+2. If `version` matches the current schema version (`"1.2.0"`): no migration needed.
+3. If `version` is an older recognized version (`"1.0.0"`, `"1.1.0"`): apply forward-compatible defaults per the state version migration table in `shared/state-schema.md`, then update `version` to `"1.2.0"`. Log: "Migrated state from {old_version} to 1.2.0."
+4. If `version` is unrecognized (not in the migration table): discard and reinitialize. Log: "Incompatible state version {version}, reinitializing."
+5. Log: "Reconstructed state at schema version {version}."
 
 ### 1.2 Invalid JSON in `state.json`
 

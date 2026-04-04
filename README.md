@@ -80,6 +80,8 @@ Then add to `.claude/settings.json`:
 | `/bootstrap-project` | Scaffold a new project from a module template |
 | `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
 | `/forge-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
+| `/forge-fix` | Bugfix entry point -- root cause investigation, reproduction, targeted fix |
+| `/forge-sprint` | Parallel multi-feature orchestration -- decomposes and runs features concurrently |
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
 | `/verify` | Quick build + lint + test check without a full pipeline run |
@@ -263,7 +265,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-32 agents organized by pipeline stage and cross-cutting concerns.
+37 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
