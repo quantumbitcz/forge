@@ -1969,6 +1969,7 @@ MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'agent-u
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'error-taxonomy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'mcp-provisioning'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
