@@ -515,7 +515,47 @@ Check the `.forge/feedback/` directory for accumulated feedback.
 
 ---
 
-## 10. Execution Steps
+## 10. Bug Pattern Tracking (bugfix mode only)
+
+When `state.json.mode == "bugfix"`, append a structured bug pattern entry to `.forge/forge-log.md` under a `## Bug Patterns` section (create section if not present).
+
+Entry format:
+```markdown
+### BUG-{ticket_id} — {root_cause_hypothesis}
+- **Date:** {ISO timestamp}
+- **Root cause category:** {bugfix.root_cause.category}
+- **Affected layer:** {inferred from file paths: domain|persistence|API|frontend|infra}
+- **Affected files:** {bugfix.root_cause.affected_files, comma-separated}
+- **Detection method:** {user_report|test|monitoring|code_review — inferred from bugfix.source}
+- **Reproduction:** {bugfix.reproduction.method} ({bugfix.reproduction.attempts} attempts)
+- **Fix branch:** {state.json.branch_name}
+```
+
+### Layer Inference Rules
+
+Determine the affected layer from the file paths in `bugfix.root_cause.affected_files`:
+- Files in `*/domain/*`, `*/model/*`, `*/entity/*` → `domain`
+- Files in `*/repository/*`, `*/persistence/*`, `*/adapter/output/*` → `persistence`
+- Files in `*/controller/*`, `*/api/*`, `*/adapter/input/*`, `*/route/*` → `API`
+- Files in `*/component/*`, `*.tsx`, `*.jsx`, `*.vue`, `*.svelte` → `frontend`
+- Files in `*/infra/*`, `Dockerfile`, `*.yml` (k8s/docker) → `infra`
+- If multiple layers: list all, comma-separated
+
+### Detection Method Inference
+
+- `bugfix.source == "kanban"` or `"description"` → `user_report`
+- `bugfix.source == "linear"` → check labels for `monitoring`/`automated`, default to `user_report`
+
+### Pattern Analysis (cumulative)
+
+Over time, the Bug Patterns section accumulates entries. During PREFLIGHT of future runs, the orchestrator's PREEMPT system can:
+- Flag files with 3+ bugs as **hotspots** → suggest extra test coverage
+- Flag recurring `root_cause.category` (3+ same category) → suggest automated check rule
+- Flag areas where `reproduction.method == "manual"` repeatedly → suggest test infrastructure investment
+
+---
+
+## 11. Execution Steps
 
 When invoked, follow this sequence:
 
@@ -537,11 +577,12 @@ When invoked, follow this sequence:
 16. **Check skill/agent evolution needs** -- review quality gaps, scaffolding patterns
 17. **Check self-improvement triggers** -- compare against historical reports for 3+ run patterns
 18. **Consolidate feedback** (if threshold met) -- clean up the feedback directory
-19. **Summarize** -- report what was found, what was proposed, and what was updated
+19. **Append bug pattern entry** (bugfix mode only) -- write structured entry to forge-log.md `## Bug Patterns` section
+20. **Summarize** -- report what was found, what was proposed, and what was updated
 
 ---
 
-## 11. Important Constraints
+## 12. Important Constraints
 
 - **Append-only log** -- never remove old entries from forge-log.md
 - **Idempotent config updates** -- re-running the retrospective on the same run should produce the same config

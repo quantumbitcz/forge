@@ -202,9 +202,12 @@ Before reading config, detect the requirement mode from the user's input:
 |--------|------|--------|
 | `bootstrap:` / `Bootstrap:` | Bootstrap | Dispatch `fg-050-project-bootstrapper` at Stage 2. Stage 3 uses bootstrap-scoped validation. Stage 4 is skipped (scaffolding done in Stage 2). Stage 6 uses reduced reviewer set. See `stage-contract.md` Bootstrap Mode. |
 | `migrate:` / `migration:` | Migration | Dispatch `fg-160-migration-planner` at Stage 2 instead of `fg-200-planner`. Uses migration-specific states (MIGRATING, etc.). |
+| `bugfix:` / `fix:` | bugfix | Dispatch `fg-020-bug-investigator` at Stages 1-2. Reduced validation (4 perspectives). Reduced review batch. |
 | (anything else) | Standard | Normal pipeline flow with `fg-200-planner`. |
 
-Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, or `"bootstrap"`).
+If the orchestrator is dispatched with `Mode: bugfix` in the prompt (from `/forge-fix`), set mode to `bugfix` directly without prefix detection.
+
+Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, or `"bugfix"`).
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 
@@ -642,6 +645,21 @@ Create/overwrite `.forge/state.json` (see `shared/state-schema.md` for full sche
   "ticket_id": null,
   "branch_name": "",
   "tracking_dir": null,
+  "bugfix": {
+    "source": null,
+    "source_id": null,
+    "reproduction": {
+      "method": null,
+      "test_file": null,
+      "attempts": 0
+    },
+    "root_cause": {
+      "hypothesis": null,
+      "category": null,
+      "affected_files": [],
+      "confidence": null
+    }
+  },
   "documentation": {
     "discovery_error": false,
     "last_discovery_timestamp": "",
@@ -667,6 +685,7 @@ Skip if `--dry-run` (no worktree needed for read-only analysis).
    - Standard → `feat`
    - Migration → `migrate`
    - Bootstrap → `chore`
+   - Bugfix → `fix`
 3. **Resolve ticket ID** (ticket_source: auto):
    a. If `--spec` provided and spec has a tracking ticket → use that ticket ID
    b. If `--ticket` provided → use that ticket ID
@@ -684,6 +703,19 @@ Skip if `--dry-run` (no worktree needed for read-only analysis).
    - Move ticket to `in-progress/` if currently in `backlog/`
    - Regenerate board via `tracking-ops.sh generate_board`
 8. **Store in state.json**: `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`)
+
+### 3.9a Bugfix Source Resolution (bugfix mode only)
+
+Skip if `mode != "bugfix"`.
+
+1. Read bug source from the dispatch prompt: `source` (kanban/linear/description) and `source_id`
+2. **If source is "kanban":** Read ticket file from `.forge/tracking/`, extract description, steps to reproduce, error messages
+3. **If source is "linear":** Read Linear issue via Linear MCP (if available), extract title, description, comments, labels
+4. **If source is "description":**
+   - Create kanban ticket with `type: bugfix` directly in `in-progress/` via `tracking-ops.sh create_ticket`
+   - Store the new ticket ID as `source_id`
+5. Store `bugfix.source` and `bugfix.source_id` in `state.json`
+6. Ensure branch type was set to `fix` in §3.9 (worktree branch naming)
 
 ### 3.10 Create Visual Task Tracker
 
@@ -774,6 +806,27 @@ When any stage needs conventions for a specific file path:
 
 **story_state:** `EXPLORING` | **TaskUpdate:** Mark "Stage 0: Preflight" → `completed`, Mark "Stage 1: Explore" → `in_progress`
 
+### Bugfix Mode (mode == "bugfix")
+
+If `mode == "bugfix"`:
+// Wrap: TaskCreate("Investigating bug — fg-020-bug-investigator") → Agent → TaskUpdate
+Dispatch `fg-020-bug-investigator` with:
+- Bug description (from ticket or raw input)
+- Bug source and source_id
+- Ticket file path (if kanban)
+- Project stack context from forge.local.md
+- Graph availability flag
+- Instruction: "Execute Phase 1 — INVESTIGATE"
+
+Read stage 1 notes. Extract: root cause hypothesis, affected files, confidence.
+Store affected files in `state.json.bugfix.root_cause.affected_files`.
+
+Write `.forge/stage_1_notes_{storyId}.md` with investigation results.
+Update state: `story_state` -> `"EXPLORING"`, add `explore` timestamp.
+Mark Explore as completed. Skip to Stage 2.
+
+### Standard / Migration / Bootstrap Mode
+
 Dispatch exploration agents configured in `forge.local.md` under `explore_agents`. Default: `feature-dev:code-explorer` (primary) + `Explore` (secondary, subagent_type=Explore).
 // Wrap: TaskCreate("Dispatching explore agents") → Agent dispatches → TaskUpdate(completed)
 
@@ -811,6 +864,37 @@ Mark Explore as completed.
 ## 5. Stage 2: PLAN (dispatch fg-200-planner or fg-160-migration-planner)
 
 **story_state:** `PLANNING` | **TaskUpdate:** Mark "Stage 1: Explore" → `completed`, Mark "Stage 2: Plan" → `in_progress`
+
+### Bugfix Mode Detection
+
+Check `state.json.mode` (set at PREFLIGHT section 3.0):
+
+**If `mode == "bugfix"`:**
+1. Dispatch `fg-020-bug-investigator` with:
+   // Wrap: TaskCreate("Reproducing bug — fg-020-bug-investigator") → Agent dispatch → TaskUpdate(completed)
+   - Stage 1 investigation results (from stage notes)
+   - Instruction: "Execute Phase 2 — REPRODUCE"
+2. Read stage 2 notes. Extract:
+   - reproduction method → store in `state.json.bugfix.reproduction.method`
+   - test file → store in `state.json.bugfix.reproduction.test_file`
+   - attempts → store in `state.json.bugfix.reproduction.attempts`
+   - root cause category → store in `state.json.bugfix.root_cause.category`
+   - root cause hypothesis → store in `state.json.bugfix.root_cause.hypothesis`
+   - confidence → store in `state.json.bugfix.root_cause.confidence`
+3. If `reproduction.method == "unresolvable"`:
+   Ask user via AskUserQuestion with header "Bug Reproduction", question "The bug could not be reproduced. How would you like to proceed?", options:
+   - "Provide more context" (description: "Supply additional information — Stage 1 investigation will re-run")
+   - "Pair debug" (description: "Get diagnostic guidance for manual debugging")
+   - "Close as unreproducible" (description: "Mark the bug as unreproducible and skip to Stage 9")
+   On "Provide more context": re-run Stage 1 with user's additional context.
+   On "Pair debug": provide diagnostic guidance, then pause for user.
+   On "Close as unreproducible": set `abort_reason` to "Bug unreproducible", skip to Stage 9 (LEARN).
+4. The requirement has already been stripped of the `bugfix:` / `fix:` prefix at PREFLIGHT.
+5. After reproduction completes, the planner output is replaced by the bug investigator's fix plan (root cause + targeted fix). Proceed to VALIDATE.
+
+Write `.forge/stage_2_notes_{storyId}.md` with reproduction and root cause details.
+Update state: `story_state` -> `"PLANNING"`, set `domain_area`, `risk_level` (bugfix default: LOW unless root cause spans 3+ files → MEDIUM), add `plan` timestamp.
+Mark Plan as completed.
 
 ### Migration Mode Detection
 
@@ -913,6 +997,34 @@ Mark Plan as completed.
 ## 6. Stage 3: VALIDATE (dispatch fg-210-validator)
 
 **story_state:** `VALIDATING` | **TaskUpdate:** Mark "Stage 2: Plan" → `completed`, Mark "Stage 3: Validate" → `in_progress`
+
+### Bugfix Validation (mode == "bugfix")
+
+If `mode == "bugfix"`:
+Dispatch `fg-210-validator` with 4 bugfix-specific perspectives (instead of the standard 7):
+// Wrap: TaskCreate("Dispatching fg-210-validator (bugfix)") → Agent dispatch → TaskUpdate(completed)
+
+```
+Validate this bugfix plan:
+
+Bug: [description from ticket or raw input]
+Root cause: [hypothesis from stage 2 notes]
+Confidence: [from state.json.bugfix.root_cause.confidence]
+Affected files: [from state.json.bugfix.root_cause.affected_files]
+Reproduction test: [from state.json.bugfix.reproduction.test_file]
+
+Validation perspectives:
+- root_cause_validity: Is the identified root cause consistent with the reported symptoms?
+- fix_scope: Is the proposed fix minimal and targeted? No scope creep.
+- regression_risk: Could the fix break related functionality?
+- test_coverage: Does the reproduction test adequately verify the fix will work?
+
+Conventions file: [path from config]
+```
+
+Process verdict normally (GO/REVISE/NO-GO). On REVISE, re-dispatch `fg-020-bug-investigator` Phase 2 (not `fg-200-planner`).
+
+### Standard Validation (all other modes)
 
 Dispatch `fg-210-validator` with a **<2,000 token** prompt:
 // Wrap: TaskCreate("Dispatching fg-210-validator") → Agent dispatch → TaskUpdate(completed)
@@ -1266,7 +1378,17 @@ Before dispatching `fg-400-quality-gate`:
 - If graph available: run "Documentation Impact" and "Stale Docs Detection" queries
 - Include results in quality gate context alongside changed files
 
-### 9.1 Batch Dispatch
+### 9.0a Bugfix Review Batch (mode == "bugfix")
+
+If `mode == "bugfix"`:
+Reduced review batch (overrides config-driven batches):
+- Always dispatch: `architecture-reviewer`, `security-reviewer`
+- If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `frontend-reviewer`
+- Skip by default: `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`
+
+Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (§9.2) normally.
+
+### 9.1 Batch Dispatch (standard / migration / bootstrap modes)
 
 Read `quality_gate` config. For each `batch_N` defined in config:
 // Wrap: TaskCreate("Review batch {N}: {agent1}, {agent2}") → per-agent TaskCreate → Agent dispatches → TaskUpdate(completed)
@@ -1526,6 +1648,17 @@ Mark Ship as completed.
 
 Dispatch `fg-700-retrospective` with a **<2,000 token** summary:
 // Wrap: TaskCreate("Dispatching fg-700-retrospective") → Agent dispatch → TaskUpdate(completed)
+
+If `mode == "bugfix"`, include additional bugfix context in the dispatch prompt:
+```
+Bugfix context:
+- Root cause category: [state.json.bugfix.root_cause.category]
+- Reproduction method: [state.json.bugfix.reproduction.method]
+- Affected files: [state.json.bugfix.root_cause.affected_files]
+- Reproduction attempts: [state.json.bugfix.reproduction.attempts]
+
+Write a bug pattern entry to `.forge/forge-log.md` under a `## Bug Patterns` section.
+```
 
 ```
 Analyze this pipeline run and update forge-log.md and forge-config.md.

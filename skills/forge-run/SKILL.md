@@ -21,6 +21,18 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
    - `/forge-run --ticket FG-001 <requirement>` — link to existing kanban ticket
    - `/forge-run FG-001` — shorthand: look up ticket, use its description as requirement
 
+   ### Mode Prefixes
+
+   If the requirement starts with a recognized prefix, pass the mode to the orchestrator:
+   - `bugfix: <description>` or `fix: <description>` → `Mode: bugfix`
+   - `migrate: <description>` or `migration: <description>` → `Mode: migration`
+   - `bootstrap: <description>` or `Bootstrap: <description>` → `Mode: bootstrap`
+   - (no prefix) → `Mode: standard`
+
+   The prefix is stripped before passing the requirement to the orchestrator.
+
+   Note: For bugfix mode, prefer `/forge-fix` which provides richer source resolution (kanban tickets, Linear issues). The `bugfix:` prefix in `/forge-run` is a convenience shortcut equivalent to `/forge-fix "description"`.
+
    Check for optional flags:
    - `--from=<stage>` (e.g., `--from=implement`) — resume from that stage
    - `--dry-run` — run PREFLIGHT through VALIDATE only. No implementation, no file changes, no `.forge/` state files, no `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates. The orchestrator handles these constraints.
