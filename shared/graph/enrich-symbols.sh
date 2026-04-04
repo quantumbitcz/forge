@@ -14,14 +14,21 @@ fi
 # specific files using regex and outputs Cypher for symbol-level nodes.
 #
 # Usage:
-#   ./shared/graph/enrich-symbols.sh --project-root /path/to/project file1.kt file2.ts file3.py
+#   ./shared/graph/enrich-symbols.sh --project-root /path/to/project [--project-id org/repo] [--component api] [--files "a.kt,b.ts"] file1.kt file2.ts
 #
 # Output: Cypher to stdout
 # Side effects:
 #   - Appends enriched file paths to .forge/graph/.enriched-files
 # ============================================================================
 
+PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../platform.sh
+source "${PLUGIN_ROOT}/shared/platform.sh"
+
 PROJECT_ROOT=""
+PROJECT_ID=""
+COMPONENT=""
+FILES_FILTER=""
 declare -a FILES=()
 
 # --- Argument parsing ---
@@ -31,9 +38,21 @@ while [[ $# -gt 0 ]]; do
       PROJECT_ROOT="$2"
       shift 2
       ;;
+    --project-id)
+      PROJECT_ID="$2"
+      shift 2
+      ;;
+    --component)
+      COMPONENT="$2"
+      shift 2
+      ;;
+    --files)
+      FILES_FILTER="$2"
+      shift 2
+      ;;
     -*)
       echo "Unknown option: $1" >&2
-      echo "Usage: enrich-symbols.sh --project-root /path/to/project file1 file2 ..." >&2
+      echo "Usage: enrich-symbols.sh --project-root /path/to/project [--project-id org/repo] [--component api] file1 file2 ..." >&2
       exit 1
       ;;
     *)
@@ -50,8 +69,30 @@ fi
 
 PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
 
+# Auto-derive project_id if not provided
+if [[ -z "${PROJECT_ID:-}" ]]; then
+  PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
+fi
+COMPONENT="${COMPONENT:-}"
+
+# Cypher-safe component value
+if [[ -n "$COMPONENT" ]]; then
+  COMPONENT_CYPHER="'${COMPONENT}'"
+else
+  COMPONENT_CYPHER="null"
+fi
+
+# If --files provided (comma-separated), add to FILES array
+if [[ -n "$FILES_FILTER" ]]; then
+  IFS=',' read -ra filter_arr <<< "$FILES_FILTER"
+  for f in "${filter_arr[@]}"; do
+    f=$(echo "$f" | xargs)  # trim whitespace
+    [[ -n "$f" ]] && FILES+=("$f")
+  done
+fi
+
 if [[ ${#FILES[@]} -eq 0 ]]; then
-  echo "Error: at least one file argument is required" >&2
+  echo "Error: at least one file argument is required (positional or --files)" >&2
   exit 1
 fi
 
@@ -141,10 +182,10 @@ extract_kotlin() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" && "$parent_info" != "$name" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -154,7 +195,7 @@ extract_kotlin() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?fun\s+(\w+).*/\2/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -183,13 +224,13 @@ extract_java() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
       if [[ -n "${impl_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -201,7 +242,7 @@ extract_java() {
       fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+)?(static\s+)?(\w+\s+)?(\w+)\s*\(.*/\4/')"
       # Skip constructors (name matches class pattern — starts with uppercase, but we emit anyway)
       if [[ -n "$fname" && "$fname" != "class" && "$fname" != "interface" ]]; then
-        echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+        echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       fi
     done
 }
@@ -227,13 +268,13 @@ extract_typescript() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
       if [[ -n "${impl_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -243,7 +284,7 @@ extract_typescript() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(export\s+)?(async\s+)?function\s+(\w+).*/\3/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -261,10 +302,10 @@ extract_python() {
     parent_info="$(echo "$line" | grep -oE 'class\s+\w+\(\s*\w+' | sed -E 's/class\s+\w+\(\s*//' || true)"
 
     if [[ -n "$name" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" && "$parent_info" != "object" && "$parent_info" != "$name" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -274,7 +315,7 @@ extract_python() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(async\s+)?def\s+(\w+).*/\2/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -291,8 +332,8 @@ extract_go() {
     kind="$(echo "$line" | sed -E 's/^[0-9]+:\s*type\s+\w+\s+(struct|interface).*/\1/')"
 
     if [[ -n "$name" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
     fi
   done
 
@@ -307,7 +348,7 @@ extract_go() {
       fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*func\s+(\w+).*/\1/')"
     fi
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -329,8 +370,8 @@ extract_rust() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
     fi
   done
 
@@ -341,7 +382,7 @@ extract_rust() {
       trait_name="$(echo "$line" | sed -E 's/^[0-9]+:\s*impl\s+(\w+)\s+for\s+(\w+).*/\1/')"
       struct_name="$(echo "$line" | sed -E 's/^[0-9]+:\s*impl\s+(\w+)\s+for\s+(\w+).*/\2/')"
       if [[ -n "$trait_name" && -n "$struct_name" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$struct_name")'}), (b:ProjectClass {name: '$(cypher_escape "$trait_name")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$struct_name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$trait_name")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -351,7 +392,7 @@ extract_rust() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(pub\s+)?(async\s+)?fn\s+(\w+).*/\3/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -375,10 +416,10 @@ extract_ruby() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -388,7 +429,7 @@ extract_ruby() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*def\s+(\w+).*/\1/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -414,13 +455,13 @@ extract_php() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
       if [[ -n "${impl_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -430,7 +471,7 @@ extract_php() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+)?(static\s+)?function\s+(\w+).*/\3/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -455,10 +496,10 @@ extract_csharp() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -469,7 +510,7 @@ extract_csharp() {
       local fname
       fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+|internal\s+)?(static\s+)?(async\s+)?(override\s+)?(\w+\s+)?(\w+)\s*\(.*/\6/')"
       if [[ -n "$fname" && "$fname" != "class" && "$fname" != "interface" ]]; then
-        echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+        echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       fi
     done
 }
@@ -490,10 +531,10 @@ extract_swift() {
     fi
 
     if [[ -n "$name" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" && "$parent_info" != "$name" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -503,7 +544,7 @@ extract_swift() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?(static\s+)?func\s+(\w+).*/\3/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -518,8 +559,8 @@ extract_elixir() {
     local name
     name="$(echo "$line" | sed -E 's/^[0-9]+:\s*defmodule\s+(\S+)\s*.*/\1/')"
     if [[ -n "$name" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'module'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'module', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
     fi
   done
 
@@ -529,7 +570,7 @@ extract_elixir() {
       local fname
       fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*def[p]?\s+(\w+).*/\1/')"
       if [[ -n "$fname" ]]; then
-        echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+        echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       fi
     done
 }
@@ -557,10 +598,10 @@ extract_scala() {
     fi
 
     if [[ -n "${name:-}" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
@@ -570,7 +611,7 @@ extract_scala() {
     local fname
     fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?def\s+(\w+).*/\2/')"
     if [[ -n "$fname" ]]; then
-      echo "CREATE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}'});"
+      echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
   done
 }
@@ -590,10 +631,10 @@ extract_c_cpp() {
       parent_info="$(echo "$line" | grep -oE ':\s*(public|protected|private)\s+\w+' | sed -E 's/:\s*(public|protected|private)\s+//' || true)"
 
       if [[ -n "$name" ]]; then
-        echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}'});"
-        echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+        echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+        echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
         if [[ -n "${parent_info:-}" ]]; then
-          echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+          echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
         fi
       fi
     done
@@ -613,13 +654,13 @@ extract_dart() {
     impl_info="$(echo "$line" | grep -oE 'implements\s+\w+' | sed 's/implements\s*//' || true)"
 
     if [[ -n "$name" ]]; then
-      echo "CREATE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class'});"
-      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}'}), (f:ProjectFile {path: '${esc_path}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
+      echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
+      echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
       if [[ -n "${parent_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$parent_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
       if [[ -n "${impl_info:-}" ]]; then
-        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
+        echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$impl_info")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
     fi
   done
