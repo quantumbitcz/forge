@@ -52,6 +52,15 @@ These apply to ALL agents (pipeline and review):
 - **Graceful MCP degradation** -- never fail because an optional MCP is unavailable
 - **Output budget** -- keep total output under 2,000 tokens unless agent-specific limit differs
 
+## Version Resolution (MANDATORY)
+
+Never hardcode or assume dependency versions. Before writing any version number:
+1. Search the internet for the latest release of the package
+2. Check compatibility with detected project versions in `state.json.detected_versions`
+3. Use the latest compatible version
+
+Rationale: Training data versions are stale. Always resolve at runtime. See `shared/version-resolution.md` for full details.
+
 ### Convention Stack Layers
 
 Agents loading conventions for a component resolve these layers in order (most specific wins): variant → framework-binding → framework → language → code-quality → generic-layer → testing. The `code_quality` field is a list; each tool in the list loads its generic file (`modules/code-quality/{tool}.md`) and framework binding (`modules/frameworks/{fw}/code-quality/{tool}.md`) if it exists.
