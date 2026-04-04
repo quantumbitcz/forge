@@ -8,11 +8,11 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
-| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established |
+| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
 | 2 | PLAN | `fg-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `fg-210-validator` + conditional: `fg-250-contract-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user); cross-repo contracts validated if applicable |
-| 4 | IMPLEMENT | `fg-310-scaffolder` + `fg-300-implementer` + conditional: `fg-320-frontend-polisher` | `IMPLEMENTING` | Plan validated with GO verdict; worktree created on a unique branch; working tree clean | All tasks completed inside worktree (or failed after max retries) |
+| 4 | IMPLEMENT | `fg-310-scaffolder` + `fg-300-implementer` + conditional: `fg-320-frontend-polisher` | `IMPLEMENTING` | Plan validated with GO verdict; worktree exists at `.forge/worktree` (created at PREFLIGHT) | All tasks completed inside worktree (or failed after max retries) |
 | 5 | VERIFY | inline (Phase A) + `fg-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `fg-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `fg-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
@@ -63,7 +63,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - Parsed config (passed as context to subsequent stages)
 - Matched PREEMPT items (recorded in `preempt_items_applied`)
 
-**Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered (or skipped if `documentation.enabled` is `false`).
+**Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered (or skipped if `documentation.enabled` is `false`). Worktree created at `.forge/worktree` with ticket-based branch name (unless `--dry-run`). Tracking ticket created/resolved in `.forge/tracking/` (if tracking initialized).
 
 **Documentation discovery failure:** If `documentation.enabled` is `true` but `fg-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents (fg-350-docs-generator, docs-consistency-reviewer) check this flag and operate with degraded documentation context — they skip cross-referencing and coverage gap analysis but still generate docs for changed files.
 
@@ -171,12 +171,10 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Agent(s):** `fg-310-scaffolder` + `fg-300-implementer`
 **story_state:** `IMPLEMENTING`
 
-**Entry condition:** Plan validated with GO verdict (Stage 3). Worktree created at `.forge/worktree` on a unique branch; working tree clean.
+**Entry condition:** Plan validated with GO verdict (Stage 3). Worktree exists at `.forge/worktree` (created at PREFLIGHT).
 
 **Pre-entry checks:**
-1. Check `git branch --list pipeline/{story-id}` — if the branch already exists, append epoch suffix (e.g., `pipeline/{story-id}-1711100000`).
-2. Check for stale worktree at `.forge/worktree` — if found, remove it and log WARNING.
-3. Verify working tree is clean (`git status --porcelain` returns empty).
+1. Verify worktree exists at `.forge/worktree`. If not (should not happen after PREFLIGHT), abort with error `WORKTREE_MISSING`.
 
 **Inputs:**
 - Validated plan with tasks and parallel groups
@@ -733,3 +731,23 @@ Stage 9 (LEARN)
   IN:  all stage notes, counters, timestamps, log, config, reports, feedback
   OUT: updated log, updated config, report, state.json.complete=true
 ```
+
+---
+
+## Cross-Cutting Constraints
+
+### Worktree Isolation
+
+All forge workflows (feature, bugfix, migration, bootstrap) run in `.forge/worktree`. No exceptions except:
+- `--dry-run` (read-only, no worktree)
+- `/forge-init` (writes to `.claude/` config, not source files)
+
+Worktree is created at PREFLIGHT (Stage 0) and persists through SHIP (Stage 8). User's working tree is NEVER modified during any forge workflow.
+
+### Kanban Tracking
+
+If `.forge/tracking/` exists, ticket status is updated at stage boundaries per the transition table in `fg-100-orchestrator.md` §3.12. If tracking is not initialized, all kanban operations are silently skipped (graceful degradation).
+
+### Sub-Agent Visibility
+
+Every Agent dispatch by the orchestrator is wrapped with TaskCreate/TaskUpdate per §3.11 of `fg-100-orchestrator.md`. This provides real-time progress visibility to the user without requiring sub-agents to know about the task system.

@@ -13,11 +13,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.0.0"
+# 2. Schema version is "1.1.0"
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.0.0 documented" {
-  grep -q '"version": "1.0.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.0.0" not found in state-schema.md'
+@test "state-schema: schema version 1.1.0 documented" {
+  grep -q '"version": "1.1.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.1.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
@@ -28,6 +28,16 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   for field in "${fields[@]}"; do
     grep -q "\"${field}\"\|${field}" "$STATE_SCHEMA" \
       || fail "Required field $field not found in state-schema.md"
+  done
+}
+
+# ---------------------------------------------------------------------------
+# 3b. Tracking fields documented
+# ---------------------------------------------------------------------------
+@test "state-schema: tracking fields ticket_id branch_name tracking_dir documented" {
+  for field in ticket_id branch_name tracking_dir; do
+    grep -q "$field" "$STATE_SCHEMA" \
+      || fail "Tracking field $field not found in state-schema.md"
   done
 }
 

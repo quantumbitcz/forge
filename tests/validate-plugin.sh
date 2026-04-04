@@ -391,7 +391,7 @@ echo "--- VERSION ---"
 # Check 25: plugin.json version matches CLAUDE.md version
 check25_fail=0
 plugin_ver=$(jq -r '.version' "$ROOT/.claude-plugin/plugin.json" 2>/dev/null)
-# CLAUDE.md refers to version as "v1.0.0" — strip leading v for comparison
+# CLAUDE.md refers to version as "v1.1.0" — strip leading v for comparison
 claude_ver=$(grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' "$ROOT/CLAUDE.md" | head -1 | sed 's/^v//')
 if [ -z "$plugin_ver" ] || [ -z "$claude_ver" ] || [ "$plugin_ver" != "$claude_ver" ]; then
   check25_fail=1
@@ -555,6 +555,58 @@ for f in "$ROOT"/modules/frameworks/*/forge-config-template.md; do
   fi
 done
 check "All forge config templates have convergence section" "$check34_fail"
+
+echo ""
+echo "--- TRACKING ---"
+
+# Check: tracking-ops.sh exists and is executable
+check_tracking_ops_fail=0
+if [ ! -x "$ROOT/shared/tracking/tracking-ops.sh" ]; then
+  check_tracking_ops_fail=1
+fi
+check "tracking-ops.sh exists and is executable" "$check_tracking_ops_fail"
+
+# Check: tracking-schema.md exists
+check_tracking_schema_fail=0
+if [ ! -f "$ROOT/shared/tracking/tracking-schema.md" ]; then
+  check_tracking_schema_fail=1
+fi
+check "tracking-schema.md exists" "$check_tracking_schema_fail"
+
+# Check: git-conventions.md exists
+check_git_conventions_fail=0
+if [ ! -f "$ROOT/shared/git-conventions.md" ]; then
+  check_git_conventions_fail=1
+fi
+check "git-conventions.md exists" "$check_git_conventions_fail"
+
+# Check: All local-template.md have git: section
+check_git_section_fail=0
+git_count=0
+git_total=0
+for tmpl in "$ROOT"/modules/frameworks/*/local-template.md; do
+  git_total=$((git_total + 1))
+  grep -q "^git:" "$tmpl" 2>/dev/null && git_count=$((git_count + 1)) || true
+done
+if [ "$git_count" -ne "$git_total" ] || [ "$git_total" -eq 0 ]; then
+  check_git_section_fail=1
+  echo "    DETAIL: $git_count/$git_total local-template.md files have git: section"
+fi
+check "All local-template.md have git: section ($git_count/$git_total)" "$check_git_section_fail"
+
+# Check: All local-template.md have tracking: section
+check_tracking_section_fail=0
+tracking_count=0
+tracking_total=0
+for tmpl in "$ROOT"/modules/frameworks/*/local-template.md; do
+  tracking_total=$((tracking_total + 1))
+  grep -q "^tracking:" "$tmpl" 2>/dev/null && tracking_count=$((tracking_count + 1)) || true
+done
+if [ "$tracking_count" -ne "$tracking_total" ] || [ "$tracking_total" -eq 0 ]; then
+  check_tracking_section_fail=1
+  echo "    DETAIL: $tracking_count/$tracking_total local-template.md files have tracking: section"
+fi
+check "All local-template.md have tracking: section ($tracking_count/$tracking_total)" "$check_tracking_section_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

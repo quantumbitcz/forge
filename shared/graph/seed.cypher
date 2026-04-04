@@ -1918,6 +1918,7 @@ CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-phil
 CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
 CREATE (:SharedContract {name: 'error-taxonomy', file_path: 'shared/error-taxonomy.md'});
 CREATE (:SharedContract {name: 'frontend-design-theory', file_path: 'shared/frontend-design-theory.md'});
+CREATE (:SharedContract {name: 'git-conventions', file_path: 'shared/git-conventions.md'});
 CREATE (:SharedContract {name: 'logging-rules', file_path: 'shared/logging-rules.md'});
 CREATE (:SharedContract {name: 'scoring', file_path: 'shared/scoring.md'});
 CREATE (:SharedContract {name: 'stage-contract', file_path: 'shared/stage-contract.md'});
@@ -1940,6 +1941,7 @@ MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'agent-p
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'error-taxonomy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
@@ -1976,6 +1978,7 @@ MATCH (a:Agent {name: 'fg-400-quality-gate'}), (c:SharedContract {name: 'scoring
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);

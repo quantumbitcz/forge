@@ -141,6 +141,25 @@ graph:
   enrich_symbols: true
   neo4j_port: 7687
   neo4j_http_port: 7474
+
+# Git conventions (auto-detected or configured by /forge-init)
+git:
+  branch_template: "{type}/{ticket}-{slug}"
+  branch_types: [feat, fix, refactor, chore]
+  slug_max_length: 40
+  ticket_source: auto
+  commit_format: conventional
+  commit_types: [feat, fix, test, refactor, docs, chore, perf, ci]
+  commit_scopes: auto
+  max_subject_length: 72
+  require_scope: false
+  sign_commits: false
+  # commit_enforcement: external  # Uncomment if project has its own hooks
+
+# Kanban tracking
+tracking:
+  prefix: FG
+  # enabled: true  # Set to false to disable tracking
 ---
 
 ## Jetpack Compose Android Context

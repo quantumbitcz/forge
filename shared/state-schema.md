@@ -51,7 +51,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -164,6 +164,9 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "dry_run": false,
   "cross_repo": {},
   "spec": null,
+  "ticket_id": null,
+  "branch_name": "",
+  "tracking_dir": null,
   "documentation": {
     "discovery_error": false,
     "last_discovery_timestamp": "",
@@ -191,7 +194,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. |
+| `version` | string | Yes | Schema version string (`"1.1.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.1.0 is an additive extension of v1.0.0 (new optional tracking fields). |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
@@ -260,6 +263,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
 | `documentation.generation_error` | boolean | Yes | `true` if `fg-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
 | `exploration_degraded` | boolean | Yes | `true` if all exploration agents timed out or failed during EXPLORE stage. Default: `false`. When true, the planner operates with reduced codebase context. |
+
+### Tracking Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ticket_id` | string or null | Kanban ticket ID (e.g., `FG-001`). Null if tracking not initialized. Set at PREFLIGHT. |
+| `branch_name` | string | Full branch name (e.g., `feat/FG-001-user-notifications`). Set at PREFLIGHT when worktree is created. |
+| `tracking_dir` | string or null | Path to tracking directory (e.g., `.forge/tracking`). Null if tracking not initialized. |
+
+These fields are set during PREFLIGHT (Stage 0) when the worktree is created (§3.9 of `fg-100-orchestrator.md`). They remain constant for the duration of the run.
 
 ### cross_repo (object, optional)
 
@@ -389,7 +402,7 @@ Example: `"active_component": "backend"`
 
 The following fields are required in every v1.0.0 state.json:
 
-`version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`
+`version`, `complete`, `story_id`, `story_state`, `components`, `active_component`, `total_retries`, `total_retries_max`, `branch_name`
 
 All other fields in the Field Reference table marked "Yes" are also required; the list above is the minimum set the recovery engine validates on load.
 
