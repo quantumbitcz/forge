@@ -463,12 +463,41 @@ Return EXACTLY this structure:
 | Pods ready | PASS/FAIL/SKIPPED | {pod count, time to ready} |
 | Smoke test | PASS/FAIL/SKIPPED | {endpoint responses} |
 
+### Tier 4 — Contract Testing
+
+| Check | Status | Finding |
+|-------|--------|---------|
+| Cluster creation | PASS/FAIL | — |
+| Stub deployment | PASS/FAIL/SKIP | — |
+| Pod readiness | PASS/FAIL | INFRA-HEALTH if FAIL |
+| Service discovery | PASS/FAIL/SKIP | INFRA-SMOKE if FAIL |
+| Ingress routing | PASS/FAIL/SKIP | INFRA-SMOKE if FAIL |
+| Config injection | PASS/FAIL/SKIP | INFRA-SMOKE if FAIL |
+| Contract scripts | PASS/FAIL/SKIP | INFRA-CONTRACT if FAIL |
+| Cleanup | PASS/FAIL | — |
+
+### Tier 5 — Full Stack Integration
+
+| Check | Status | Finding |
+|-------|--------|---------|
+| Image resolution | PASS/FAIL per service | INFRA-IMAGE if FAIL |
+| Cluster creation | PASS/FAIL | — |
+| Dependency-order deploy | PASS/FAIL | — |
+| Pod readiness (all) | PASS/FAIL | INFRA-HEALTH if FAIL |
+| Health endpoints | PASS/FAIL per service | INFRA-HEALTH if FAIL |
+| Cross-service connectivity | PASS/FAIL | INFRA-SMOKE if FAIL |
+| Ingress end-to-end | PASS/FAIL/SKIP | INFRA-SMOKE if FAIL |
+| Integration scripts | PASS/FAIL/SKIP | INFRA-E2E if FAIL |
+| Cleanup | PASS/FAIL | — |
+
 ### State Update
 
 ```json
 {
   "infra_verification": {
-    "tier_reached": 2,
+    "tier_reached": 5,
+    "tier_4_verdict": "PASS",
+    "tier_5_verdict": "PASS",
     "docker_build": "pass",
     "docker_build_time": 12,
     "docker_image_size": "145MB",
