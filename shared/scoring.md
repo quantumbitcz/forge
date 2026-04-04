@@ -151,7 +151,7 @@ Specific INFRA finding codes for tiered infra verification:
 
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
 
-**APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule.
+**APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule. "Same finding" is identified by matching on `(category, description_hash)` where `description_hash` is the first 8 characters of SHA256 of the normalized description (lowercase, trimmed). Accumulation is tracked in `forge-log.md` under the `approach_accumulations` section, updated by `fg-700-retrospective` at the end of each run.
 
 ### DOC-* Findings (Documentation Consistency)
 
@@ -196,6 +196,13 @@ Findings are grouped by the tuple `(file, line, category)`. In multi-component p
 ### Cross-File Deduplication
 
 Findings at different lines in the same file with the same category are NOT deduplicated -- they represent distinct issues. Only exact `(component, file, line, category)` matches are grouped.
+
+### SCOUT-* Finding Handling
+
+`SCOUT-*` findings are **tracked separately** from non-SCOUT findings and are **never scored**. During deduplication:
+- `SCOUT-*` findings are excluded from the dedup pass entirely — they are not compared against non-SCOUT findings.
+- If an agent reports both a `SCOUT-IMPORT-UNUSED` and a regular `QUAL-IMPORT-UNUSED` for the same location, **both are kept**: the SCOUT version for the recap, the non-SCOUT version for scoring.
+- SCOUT findings are passed through to `fg-720-recap` and `fg-700-retrospective` for reporting but are **filtered out** before dispatch to `fg-300-implementer` (no action required — the improvement was already made).
 
 ## Partial Failure Handling
 

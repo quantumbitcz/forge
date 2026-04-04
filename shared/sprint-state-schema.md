@@ -104,7 +104,7 @@ Root sprint state file. Created when a sprint run begins, updated as features pr
 | `conflicts` | array | — | Detected file/symbol conflicts between features |
 | `conflicts[].pair` | array | two feature IDs | The conflicting feature pair |
 | `conflicts[].files` | array | file paths | Shared files causing the conflict |
-| `conflicts[].resolution` | string | `serialize \| manual` | How the conflict is resolved |
+| `conflicts[].resolution` | string | `serialize \| manual` | How the conflict is resolved. `serialize`: features execute sequentially (first feature completes before second starts). `manual`: user decides resolution strategy at escalation prompt. |
 
 ---
 
@@ -172,3 +172,35 @@ Who sets each field and when:
 Lock acquisition order when multiple repos are involved in a single feature: alphabetical by `project_id` (git remote URL). This ordering is mandatory and enforced by `fg-103-cross-repo-coordinator` to prevent deadlocks.
 
 Lock stale detection: a lock is considered stale if the PID is no longer running OR the lock file is older than 24 hours. `fg-101-worktree-manager detect-stale` checks both conditions.
+
+---
+
+## Conflict Detection Algorithm
+
+`fg-102-conflict-resolver` detects conflicts between features using a two-level analysis:
+
+1. **File-level overlap:** For each feature pair, compute the intersection of files touched by their plans. If any files overlap, create a conflict entry with `resolution: "serialize"`. The feature with higher priority (earlier in the sprint backlog) executes first.
+2. **Symbol-level overlap (graph-enhanced):** When Neo4j is available, query pattern 19 (Cross-Feature File Overlap) extends file-level detection with import/dependency analysis. If feature A modifies a file that feature B imports, this creates an indirect conflict even without direct file overlap.
+
+If no graph is available, only file-level overlap is used. Conflict resolution always prefers `serialize` over `manual` unless the user explicitly overrides.
+
+---
+
+## Waiting Dependency Timeout
+
+Features and repos with `waiting_for` set are subject to a timeout:
+
+- **Default:** 60 minutes per waiting dependency (configurable via `sprint.dependency_timeout_minutes` in `forge-config.md`).
+- **Detection:** `fg-090-sprint-orchestrator` checks waiting features every iteration. If a feature has been waiting longer than the timeout, escalate to user with options: (1) Continue waiting, (2) Skip the dependency, (3) Abort the waiting feature.
+- **Deadlock detection:** If feature A waits for B and B waits for A (direct or transitive cycle), escalate immediately without waiting for timeout.
+
+---
+
+## Sprint Completion Criteria
+
+Sprint transitions from `merging` to `complete` when ALL of:
+1. All features have status `complete` or `failed`
+2. All PRs (primary and cross-repo) are created (merged is not required — user merges)
+3. No features have status `executing` or `waiting`
+
+Sprint transitions to `failed` if any feature fails AND the user chooses not to continue with remaining features.
