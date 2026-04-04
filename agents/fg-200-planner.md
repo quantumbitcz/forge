@@ -31,7 +31,7 @@ description: |
   </example>
 model: inherit
 color: blue
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs', 'neo4j-mcp']
 ---
 
 # Pipeline Planner (fg-200)
@@ -78,6 +78,8 @@ If the dispatch includes spec content (item 7):
 ## 3. Planning Process
 
 **Plan Mode:** Call `EnterPlanMode` before starting the planning process. This enters the Claude Code plan mode UI, allowing you to explore the codebase and design the plan without writing code. After the plan is finalized (Section 5 output written to stage notes), call `ExitPlanMode` to present the plan for approval. If the orchestrator is running autonomously (not in interactive mode), skip plan mode — the validator (fg-210) serves as the approval gate instead.
+
+**Graph Context (when available):** Query patterns 2 (Direct Impact), 3 (Entity Impact), 7 (Blast Radius), 9 (Documentation Impact) via `neo4j-mcp` to inform task decomposition and dependency ordering. Fall back to grep/glob if graph unavailable.
 
 ### 3.1 Understand the Requirement
 
