@@ -47,7 +47,9 @@ detect_build_tool() {
   elif [[ -f "go.mod" ]]; then
     check_cmd "go"
   elif [[ -f "pyproject.toml" || -f "setup.py" || -f "requirements.txt" ]]; then
-    check_cmd "python3"
+    if ! check_cmd "python3" 2>/dev/null; then
+      check_cmd "python"
+    fi
   elif [[ -f "Makefile" ]] && compgen -G "./*.c" >/dev/null 2>&1; then
     # C project with Makefile
     check_cmd "make"
@@ -79,7 +81,9 @@ detect_test_tool() {
 case "$STAGE" in
   preflight)
     check_cmd "git"
-    check_cmd "python3"
+    if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
+      echo "WARN: Neither python3 nor python found — some forge operations may be limited" >&2
+    fi
     # Check .claude/ is writable
     if [[ -d "$PROJECT_ROOT/.claude" ]] && [[ ! -w "$PROJECT_ROOT/.claude" ]]; then
       echo "WARN: .claude/ directory is not writable" >&2
@@ -165,8 +169,10 @@ case "$STAGE" in
       fastapi|django)
         if command -v python3 &>/dev/null; then
           echo "INFO: Python: $(python3 --version)" >&2
+        elif command -v python &>/dev/null; then
+          echo "INFO: Python: $(python --version)" >&2
         else
-          echo "WARN: Python3 not found — Python builds may fail" >&2
+          echo "WARN: Neither python3 nor python found — Python builds may fail" >&2
         fi
         ;;
       axum)

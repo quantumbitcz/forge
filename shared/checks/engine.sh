@@ -365,7 +365,9 @@ run_layer1() {
 # --- Mode: --hook (PostToolUse, single file, Layer 1 only) ---
 mode_hook() {
   local file=""
-  file="$(echo "${TOOL_INPUT:-}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)" || true
+  local py_cmd="python3"
+  command -v python3 &>/dev/null || py_cmd="python"
+  file="$(echo "${TOOL_INPUT:-}" | "$py_cmd" -c "import json,sys; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)" || true
   if [[ -z "$file" ]]; then
     file="$(echo "${TOOL_INPUT:-}" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//; s/"$//' || true)"
   fi

@@ -367,7 +367,7 @@ parse_imports_elixir() {
     sed 's/^alias //' | while IFS= read -r mod; do
       [[ -z "$mod" ]] && continue
       local path_candidate
-      path_candidate="$(python3 -c "
+      path_candidate="$("$FORGE_PYTHON" -c "
 import re
 mod = '${mod}'
 parts = mod.split('.')
@@ -594,7 +594,7 @@ emit_dep() {
 
 # --- npm (package.json) ---
 if [[ -f "$PROJECT_ROOT/package.json" ]]; then
-  python3 -c "
+  "$FORGE_PYTHON" -c "
 import json, sys
 data = json.load(open('${PROJECT_ROOT}/package.json'))
 for scope_key, scope_label in [('dependencies', 'runtime'), ('devDependencies', 'dev')]:
@@ -636,7 +636,7 @@ fi
 
 # --- pip (pyproject.toml) ---
 if [[ -f "$PROJECT_ROOT/pyproject.toml" ]]; then
-  python3 -c "
+  "$FORGE_PYTHON" -c "
 import sys
 try:
     import tomllib
@@ -671,7 +671,7 @@ fi
 
 # --- Cargo.toml ---
 if [[ -f "$PROJECT_ROOT/Cargo.toml" ]]; then
-  python3 -c "
+  "$FORGE_PYTHON" -c "
 import sys
 try:
     import tomllib
@@ -719,7 +719,7 @@ if [[ -f "$DEP_MAP" && -s "$DEP_TMPFILE" ]]; then
     manager="${key%%:*}"
     dep_name="${key#*:}"
 
-    mapped_module="$(python3 -c "
+    mapped_module="$("$FORGE_PYTHON" -c "
 import json
 data = json.load(open('${DEP_MAP}'))
 section = data.get('${manager}', {})
@@ -746,7 +746,7 @@ echo ""
 echo "// --- Convention Connections ---"
 LOCAL_CONFIG="${PROJECT_ROOT}/.claude/forge.local.md"
 if [[ -f "$LOCAL_CONFIG" ]]; then
-  python3 -c "
+  "$FORGE_PYTHON" -c "
 import re, sys
 
 content = open('${LOCAL_CONFIG}').read()

@@ -128,6 +128,26 @@ pipeline_mktempdir() {
   mktemp -d "$(pipeline_tmpdir)/forge.XXXXXX"
 }
 
+# ── Python Detection ─────────────────────────────────────────────────────
+
+# Returns the available python command name (python3 or python).
+# Cached in FORGE_PYTHON for reuse. Scripts that source platform.sh should
+# use "$FORGE_PYTHON" instead of hardcoding "python3".
+# Scripts that do NOT source platform.sh (linter adapters, hooks) should
+# continue using inline python3 calls — python3 is available on all major
+# platforms (macOS, modern Linux, Windows with Python installed).
+detect_python() {
+  if command -v python3 &>/dev/null; then
+    printf 'python3'
+  elif command -v python &>/dev/null; then
+    printf 'python'
+  else
+    printf ''
+  fi
+}
+
+FORGE_PYTHON="${FORGE_PYTHON:-$(detect_python)}"
+
 # ── Path Normalisation ───────────────────────────────────────────────────────
 
 # Resolves ./ // and .. segments in a path without touching the filesystem.
@@ -140,9 +160,9 @@ portable_normalize_path() {
     printf '%s' "$input"
     return
   fi
-  # Try python3 first (handles all edge cases)
-  if command -v python3 &>/dev/null; then
-    python3 -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
+  # Try python first (handles all edge cases)
+  if [[ -n "$FORGE_PYTHON" ]]; then
+    "$FORGE_PYTHON" -c "import os.path,sys; print(os.path.normpath(sys.argv[1]))" "$input" 2>/dev/null && return
   fi
   # Bash fallback: resolve ./ // and .. segments (Bash 3.2+)
   local is_absolute=0
@@ -191,8 +211,8 @@ portable_file_date() {
     date -d "@$epoch" '+%Y-%m-%d' 2>/dev/null && return
     # 3. perl (widely available, lighter than python3)
     perl -e "use POSIX qw(strftime); print strftime('%Y-%m-%d', localtime($epoch))" 2>/dev/null && return
-    # 4. python3
-    python3 -c "import datetime,sys; print(datetime.datetime.fromtimestamp(int(sys.argv[1]), tz=datetime.timezone.utc).strftime('%Y-%m-%d'))" "$epoch" 2>/dev/null && return
+    # 4. python3 or python (via FORGE_PYTHON)
+    [[ -n "$FORGE_PYTHON" ]] && "$FORGE_PYTHON" -c "import datetime,sys; print(datetime.datetime.fromtimestamp(int(sys.argv[1]), tz=datetime.timezone.utc).strftime('%Y-%m-%d'))" "$epoch" 2>/dev/null && return
   }
   # 5. git log (works in any git repo)
   git log -1 --format='%as' -- "$filepath" 2>/dev/null && return
@@ -213,7 +233,13 @@ portable_sed() {
   local expr="$1" file="$2"
   local tmp
   tmp="$(pipeline_mktemp)" || { echo "portable_sed: failed to create temp file" >&2; return 1; }
-  sed "$expr" "$file" > "$tmp" && mv "$tmp" "$file"
+  if sed "$expr" "$file" > "$tmp"; then
+    mv "$tmp" "$file"
+  else
+    rm -f "$tmp"
+    echo "portable_sed: sed expression failed" >&2
+    return 1
+  fi
 }
 
 # ── timeout Compatibility ───────────────────────────────────────────────────

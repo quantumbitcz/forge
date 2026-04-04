@@ -68,8 +68,8 @@ detect_type_and_framework() {
 
 extract_json_field() {
   local json="$1" field="$2"
-  if command -v python3 &>/dev/null; then
-    printf '%s' "$json" | FIELD="$field" python3 -c "import json,sys,os; d=json.load(sys.stdin); print(d.get(os.environ['FIELD'],''))" 2>/dev/null || true
+  if command -v "$FORGE_PYTHON" &>/dev/null; then
+    printf '%s' "$json" | FIELD="$field" "$FORGE_PYTHON" -c "import json,sys,os; d=json.load(sys.stdin); print(d.get(os.environ['FIELD'],''))" 2>/dev/null || true
   else
     printf '%s' "$json" | grep -o "\"$field\":\"[^\"]*\"" | cut -d'"' -f4 || true
   fi
@@ -210,7 +210,7 @@ step1_inproject_references() {
         abs="$(cd "$root" && cd "$ws" 2>/dev/null && pwd || true)"
         [[ -n "$abs" && -d "$abs" && "$abs" != "$root" ]] && candidate_paths+=("$abs:package-workspace:high")
       fi
-    done < <(PKG_PATH="$root/package.json" python3 -c "
+    done < <(PKG_PATH="$root/package.json" "$FORGE_PYTHON" -c "
 import json,sys,os
 try:
   d=json.load(open(os.environ['PKG_PATH']))

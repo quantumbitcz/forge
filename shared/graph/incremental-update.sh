@@ -276,9 +276,9 @@ parse_imports_elixir() {
     sed 's/^alias //' | while IFS= read -r mod; do
       [[ -z "$mod" ]] && continue
       local path_candidate=""
-      # Try python3 for accurate CamelCase → snake_case conversion
-      if command -v python3 &>/dev/null; then
-        path_candidate="$(python3 -c "
+      # Try Python for accurate CamelCase → snake_case conversion
+      if command -v "$FORGE_PYTHON" &>/dev/null; then
+        path_candidate="$("$FORGE_PYTHON" -c "
 import re
 mod = '${mod}'
 parts = mod.split('.')

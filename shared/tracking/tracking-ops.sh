@@ -117,10 +117,10 @@ next_id() {
     return 1
   fi
 
-  # Parse with python3 (available on all supported platforms)
+  # Parse with python (via FORGE_PYTHON from platform.sh)
   local prefix next
-  prefix="$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['prefix'])" "$counter_file")"
-  next="$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['next'])" "$counter_file")"
+  prefix="$("$FORGE_PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['prefix'])" "$counter_file")"
+  next="$("$FORGE_PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['next'])" "$counter_file")"
 
   # Format: zero-pad to 3 digits for 1-999, no padding for 1000+
   local formatted_num
@@ -134,7 +134,7 @@ next_id() {
 
   # Increment counter atomically (write new JSON)
   local new_next=$(( next + 1 ))
-  python3 -c "
+  "$FORGE_PYTHON" -c "
 import json, sys
 with open(sys.argv[1]) as f:
     d = json.load(f)
@@ -330,12 +330,12 @@ generate_board() {
   local now
   now="$(iso_now)"
 
-  # Parse all frontmatter fields from a ticket file using python3.
+  # Parse all frontmatter fields from a ticket file using python (via FORGE_PYTHON).
   # Usage: _parse_ticket_field <file> <field>
   # Strips surrounding quotes for quoted fields.
   _parse_ticket_field() {
     local _file="$1" _field="$2"
-    python3 -c "
+    "$FORGE_PYTHON" -c "
 import sys
 lines = open(sys.argv[1]).readlines()
 in_fm = False

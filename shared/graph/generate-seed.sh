@@ -19,6 +19,17 @@ fi
 # ============================================================================
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
+# Resolve Python command (platform.sh is not sourced here)
+if command -v python3 &>/dev/null; then
+  FORGE_PYTHON="python3"
+elif command -v python &>/dev/null; then
+  FORGE_PYTHON="python"
+else
+  echo "[generate-seed] Warning: No python3 or python found — JSON parsing will fail" >&2
+  FORGE_PYTHON="python3"  # fallback; will error at usage
+fi
+
 OUTPUT_FILE="${PLUGIN_ROOT}/shared/graph/seed.cypher"
 DRY_RUN=false
 
@@ -31,9 +42,9 @@ LAYERS=(databases persistence migrations api-protocols messaging caching search 
 BINDING_LAYERS=("${LAYERS[@]}" testing)
 
 # --- JSON parsing helper ---
-# Uses python3 for JSON parsing (warns on failure, returns empty)
+# Uses Python for JSON parsing (warns on failure, returns empty)
 json_parse() {
-  python3 -c "$1" 2>/dev/null || {
+  "$FORGE_PYTHON" -c "$1" 2>/dev/null || {
     echo "[generate-seed] Warning: Python parsing failed" >&2
     return 0
   }
