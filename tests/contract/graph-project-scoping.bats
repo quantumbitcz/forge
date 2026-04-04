@@ -60,7 +60,8 @@ GRAPH_DIR="$PLUGIN_ROOT/shared/graph"
     skip "No project node matches found"
   fi
   local unscoped
-  unscoped=$(echo "$matches" | grep -v 'project_id' | grep -v 'seed' | grep -v '^--' || true)
+  # Exclude: lines with project_id, seed nodes, separators, and intentional cross-project queries (other_*)
+  unscoped=$(echo "$matches" | grep -v 'project_id' | grep -v 'seed' | grep -v '^--' | grep -v 'other_' || true)
   if [[ -n "$unscoped" ]]; then
     fail "Unscoped project queries in query-patterns.md: $unscoped"
   fi
