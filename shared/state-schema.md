@@ -353,6 +353,24 @@ Tracks graph update state for incremental updates at stage boundaries.
 
 ---
 
+### Per-Run State (Sprint Mode)
+
+In sprint mode, each feature gets its own state directory:
+
+```
+.forge/runs/{feature-id}/
+  state.json              # Same schema as root state.json
+  checkpoint-*.json       # Same as root
+  stage_N_notes_*.md      # Same as root
+  .lock                   # Per-run lock
+```
+
+The root `.forge/state.json` is NOT used in sprint mode. Each `runs/{feature-id}/state.json` is a complete, independent pipeline state.
+
+Sprint-level state is tracked in `.forge/sprint-state.json` (see `shared/sprint-state-schema.md`).
+
+---
+
 ### components (object, required)
 
 Per-component state tracking for monorepo and multi-stack projects. Single-repo projects have one component.

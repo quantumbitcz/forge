@@ -113,6 +113,24 @@ All data flows through the orchestrator. Agents are isolated. The orchestrator c
 
 **Checkpoint persistence:** The orchestrator writes `checkpoint-{storyId}.json` after each Stage 4 task completion for resume capability. Checkpoints are orchestrator-internal state — agents do not read or write checkpoints directly.
 
+## 7. Sprint ↔ Feature Communication
+
+The sprint orchestrator (fg-090) communicates with feature orchestrators (fg-100) through:
+
+1. **Sprint state file:** `.forge/sprint-state.json` — read by all, written only by fg-090
+2. **Per-run state files:** `.forge/runs/{feature-id}/state.json` — written by each fg-100 instance
+3. **Agent dispatch:** fg-090 dispatches fg-100 instances as sub-agents
+
+Feature orchestrators do NOT write to `sprint-state.json`. The sprint orchestrator polls per-run state files and updates sprint state.
+
+### Wait Mechanism
+
+When `--wait-for <project_id>` is set, the feature orchestrator:
+1. Reads `sprint-state.json` for the dependency project's status
+2. Blocks at PREFLIGHT until dependency status >= `verifying`
+3. Poll interval: 30 seconds
+4. Timeout: `cross_repo.timeout_minutes` (default 30)
+
 ### Conditional Agents
 
 The following agents are dispatched conditionally and receive data from the orchestrator only when their trigger conditions are met:
