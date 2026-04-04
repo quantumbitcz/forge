@@ -38,7 +38,7 @@ Parameter resolution: `forge-config.md` > `forge.local.md` > plugin hardcoded de
 ## Quick start
 
 ```bash
-./tests/validate-plugin.sh          # 39 structural checks, ~2s
+./tests/validate-plugin.sh          # 51 structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
 
 # To test in a consuming project
@@ -76,7 +76,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 ## Key conventions
 
-### Agents (32 total, in `agents/*.md`)
+### Agents (33 total, in `agents/*.md`)
 
 **Pipeline agents** (`fg-{NNN}-{role}` naming):
 - Pre-pipeline: `fg-010-shaper`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -112,7 +112,7 @@ Read source files for full details. Key facts:
 
 - **Scoring** (`scoring.md`): `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL remaining after convergence exhaustion. 18 shared categories — 15 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `FE-PERF-*`, `APPROACH-*`, `SCOUT-*` (no deduction), `A11Y-*`, `DEPS-*`, `COMPAT-*`, `STRUCT-*`, `INFRA-*` + 3 discrete codes: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`. Agent-specific categories (`BE-PERF-*`, `FE-*`, `CONTRACT-*`) defined in their respective agents. Component-aware deduplication: key is `(component, file, line, category)` in multi-component projects — same issue in different components is not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Convergence engine: two-phase iteration (correctness → perfection → safety gate) replaces hard-capped fix cycles. Global `max_iterations` cap is checked before inner caps (precedence rule). SCOUT-* findings filtered before dispatch to implementer. See `shared/convergence-engine.md`. Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `fg-710-feedback-capture`.
-- **State schema** (`state-schema.md`): Version **1.2.0**. State in `.forge/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap/bugfix — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when fg-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout), `recovery` (runtime recovery state: failures, recoveries, degraded_capabilities), `ticket_id` (kanban ticket linked to the run), `branch_name` (git branch derived from ticket ID and slug), `tracking_dir` (absolute path to `.forge/tracking/`).
+- **State schema** (`state-schema.md`): Version **1.1.0**. State in `.forge/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap/bugfix — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when fg-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout), `recovery` (runtime recovery state: failures, recoveries, degraded_capabilities), `ticket_id` (kanban ticket linked to the run), `branch_name` (git branch derived from ticket ID and slug), `tracking_dir` (absolute path to `.forge/tracking/`).
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.5 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 22 types (incl. `CONTEXT_OVERFLOW`), 16-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable. `BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` are code-level errors handled by the orchestrator fix loop, not the recovery engine.
 - **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (fg-400, fg-500, fg-600, fg-200, fg-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
@@ -213,9 +213,9 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
 ./tests/run-all.sh structural       # 39 checks, no bats needed
-./tests/run-all.sh unit             # 10 test files
-./tests/run-all.sh contract         # 20 test files
-./tests/run-all.sh scenario         # 11 test files
+./tests/run-all.sh unit             # 12 test files
+./tests/run-all.sh contract         # 27 test files
+./tests/run-all.sh scenario         # 12 test files
 ./tests/lib/bats-core/bin/bats tests/unit/scoring.bats  # Single test file
 ```
 
