@@ -1873,7 +1873,11 @@ CREATE (:Agent:Reviewer {name: 'docs-consistency-reviewer', role: 'reviewer', fi
 CREATE (:Agent {name: 'fg-010-shaper', role: 'other', file_path: 'agents/fg-010-shaper.md'});
 CREATE (:Agent {name: 'fg-020-bug-investigator', role: 'other', file_path: 'agents/fg-020-bug-investigator.md'});
 CREATE (:Agent {name: 'fg-050-project-bootstrapper', role: 'other', file_path: 'agents/fg-050-project-bootstrapper.md'});
+CREATE (:Agent {name: 'fg-090-sprint-orchestrator', role: 'other', file_path: 'agents/fg-090-sprint-orchestrator.md'});
 CREATE (:Agent {name: 'fg-100-orchestrator', role: 'orchestrator', file_path: 'agents/fg-100-orchestrator.md'});
+CREATE (:Agent {name: 'fg-101-worktree-manager', role: 'other', file_path: 'agents/fg-101-worktree-manager.md'});
+CREATE (:Agent {name: 'fg-102-conflict-resolver', role: 'other', file_path: 'agents/fg-102-conflict-resolver.md'});
+CREATE (:Agent {name: 'fg-103-cross-repo-coordinator', role: 'other', file_path: 'agents/fg-103-cross-repo-coordinator.md'});
 CREATE (:Agent {name: 'fg-130-docs-discoverer', role: 'other', file_path: 'agents/fg-130-docs-discoverer.md'});
 CREATE (:Agent {name: 'fg-140-deprecation-refresh', role: 'other', file_path: 'agents/fg-140-deprecation-refresh.md'});
 CREATE (:Agent {name: 'fg-150-test-bootstrapper', role: 'other', file_path: 'agents/fg-150-test-bootstrapper.md'});
@@ -1902,6 +1906,11 @@ CREATE (:Agent:Reviewer {name: 'security-reviewer', role: 'reviewer', file_path:
 CREATE (:Agent:Reviewer {name: 'version-compat-reviewer', role: 'reviewer', file_path: 'agents/version-compat-reviewer.md'});
 
 // --- Agent DISPATCHES edges ---
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-100-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-103-cross-repo-coordinator'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-103-cross-repo-coordinator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1924,6 +1933,7 @@ CREATE (:SharedContract {name: 'git-conventions', file_path: 'shared/git-convent
 CREATE (:SharedContract {name: 'logging-rules', file_path: 'shared/logging-rules.md'});
 CREATE (:SharedContract {name: 'mcp-provisioning', file_path: 'shared/mcp-provisioning.md'});
 CREATE (:SharedContract {name: 'scoring', file_path: 'shared/scoring.md'});
+CREATE (:SharedContract {name: 'sprint-state-schema', file_path: 'shared/sprint-state-schema.md'});
 CREATE (:SharedContract {name: 'stage-contract', file_path: 'shared/stage-contract.md'});
 CREATE (:SharedContract {name: 'state-schema', file_path: 'shared/state-schema.md'});
 CREATE (:SharedContract {name: 'version-resolution', file_path: 'shared/version-resolution.md'});
@@ -1944,16 +1954,29 @@ MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'age
 MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'sprint-state-schema'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'error-taxonomy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'stage-contract'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-100-orchestrator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-101-worktree-manager'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-101-worktree-manager'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-102-conflict-resolver'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-103-cross-repo-coordinator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-103-cross-repo-coordinator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-130-docs-discoverer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-130-docs-discoverer'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-130-docs-discoverer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
