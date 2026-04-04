@@ -1,0 +1,4 @@
+tests/fixtures/patterns/kotlin-bad.kt:java.util.UUID
+tests/fixtures/patterns/kotlin-bad.kt:org.springframework.data.annotation.Id
+tests/fixtures/patterns/kotlin-clean.kt:kotlin.uuid.Uuid
+tests/fixtures/patterns/kotlin-clean.kt:kotlinx.datetime.Instant

@@ -116,7 +116,8 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 |------|---------|
 | `ARCH-*` | Architectural violation (SRP, DIP, layer boundary) |
 | `SEC-*` | Security concern (auth, injection, exposure) |
-| `PERF-*` | Performance issue (N+1, O(n^2), unnecessary allocation) |
+| `PERF-*` | Backend performance issue (N+1, O(n^2), blocking I/O, unnecessary allocation) |
+| `FE-PERF-*` | Frontend performance issue (re-renders, bundle size, DOM efficiency, assets) |
 | `TEST-*` | Test quality (missing coverage, testing framework behavior) |
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
