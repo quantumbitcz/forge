@@ -203,4 +203,4 @@ Sprint transitions from `merging` to `complete` when ALL of:
 2. All PRs (primary and cross-repo) are created (merged is not required — user merges)
 3. No features have status `executing` or `waiting`
 
-Sprint transitions to `failed` if any feature fails AND the user chooses not to continue with remaining features.
+Sprint transitions to `failed` only if zero features completed successfully and at least one feature has status `failed`. A sprint where some features completed and others failed is still marked `complete` (partial success) — the failed features are reported in the sprint summary for follow-up.

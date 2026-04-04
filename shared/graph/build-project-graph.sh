@@ -472,6 +472,10 @@ echo "// --- Indexes ---"
 echo "CREATE INDEX project_file_idx IF NOT EXISTS FOR (n:ProjectFile) ON (n.project_id, n.component, n.path);"
 echo "CREATE INDEX project_class_idx IF NOT EXISTS FOR (n:ProjectClass) ON (n.project_id, n.component, n.name);"
 echo "CREATE INDEX doc_file_idx IF NOT EXISTS FOR (n:DocFile) ON (n.project_id, n.path);"
+echo "CREATE INDEX project_dep_idx IF NOT EXISTS FOR (n:ProjectDependency) ON (n.project_id, n.manager);"
+echo "CREATE INDEX doc_section_idx IF NOT EXISTS FOR (n:DocSection) ON (n.project_id, n.file_path);"
+echo "CREATE INDEX doc_decision_idx IF NOT EXISTS FOR (n:DocDecision) ON (n.project_id, n.status);"
+echo "CREATE INDEX project_pkg_idx IF NOT EXISTS FOR (n:ProjectPackage) ON (n.project_id, n.path);"
 echo ""
 
 # ============================================================================

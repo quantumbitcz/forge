@@ -46,9 +46,10 @@ elif [ "$HEALTH_STATUS" != "healthy" ]; then
 fi
 
 # Verify Bolt connectivity (port 7687) via a simple Cypher query
+NEO4J_PASSWORD="${NEO4J_PASSWORD:-forge}"
 BOLT_OK=""
 BOLT_OK=$(_neo4j_timeout 10 docker exec "$CONTAINER_NAME" \
-  cypher-shell -u neo4j -p forge "RETURN 1 AS ping" 2>/dev/null || true)
+  cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "RETURN 1 AS ping" 2>/dev/null || true)
 
 if [[ -z "$BOLT_OK" || "$BOLT_OK" != *"1"* ]]; then
   echo '{"available": false, "reason": "container healthy but Bolt query failed"}'
