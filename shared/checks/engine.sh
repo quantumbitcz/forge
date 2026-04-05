@@ -57,6 +57,11 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-"$(cd "$SCRIPT_DIR/../.." && pwd)"}"
 
 # --- Language detection from file extension ---
 detect_language() {
+  # Dockerfile detection by filename (no standard extension)
+  local basename="${1##*/}"
+  case "$basename" in
+    Dockerfile|Dockerfile.*|*.dockerfile) echo "dockerfile"; return ;;
+  esac
   case ".${1##*.}" in
     .kt|.kts)          echo "kotlin" ;;
     .java)             echo "java" ;;
@@ -73,6 +78,7 @@ detect_language() {
     .dart)             echo "dart" ;;
     .ex|.exs)          echo "elixir" ;;
     .scala|.sc)        echo "scala" ;;
+    .yml|.yaml)        echo "yaml" ;;
   esac
 }
 
