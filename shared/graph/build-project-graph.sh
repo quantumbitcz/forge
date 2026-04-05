@@ -17,15 +17,12 @@ set -euo pipefail
 #   - Writes unresolved imports to .forge/graph/.unresolved-imports.log
 # ============================================================================
 
-# Requires Bash 4.0+ (uses associative arrays)
-if (( BASH_VERSINFO[0] < 4 )); then
-  echo "[build-project-graph] Bash 4.0+ required (found ${BASH_VERSION}). Cannot build graph." >&2
-  exit 1
-fi
-
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
+
+# Requires Bash 4.0+ (uses associative arrays)
+require_bash4 "build-project-graph.sh" || exit 1
 
 if [[ -z "$FORGE_PYTHON" ]]; then
   echo "[build-project-graph] WARNING: No Python interpreter found. Graph build may produce incomplete results." >&2
