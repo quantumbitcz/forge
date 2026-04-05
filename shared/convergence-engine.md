@@ -260,7 +260,7 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 }
 ```
 
-**Relationship to existing counters:** The pipeline uses four iteration counters at different scopes:
+**Relationship to existing counters:** The pipeline uses five iteration counters at different scopes:
 
 | Counter | Scope | Managed By | Resets | Feeds Into |
 |---------|-------|-----------|--------|------------|

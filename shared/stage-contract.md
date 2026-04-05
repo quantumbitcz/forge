@@ -41,7 +41,11 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Actions:**
 1. Read and parse `forge.local.md` config (agents, commands, conventions, module).
-2. Read `forge-config.md` (max_fix_loops, auto_proceed_risk, hotspots). Apply parameter resolution order: `forge-config.md` > `forge.local.md` > plugin defaults.
+2. Read `forge-config.md` (max_fix_loops, auto_proceed_risk, hotspots). Apply parameter resolution order: `forge-config.md` > `forge.local.md` > plugin defaults. Validate all configurable parameters against their constraint ranges (abort with CONFIG_INVALID if out of range):
+   - Scoring: `critical_weight` >= 10, `warning_weight` >= 1, `info_weight` >= 0, `pass_threshold` >= 60, `concerns_threshold` >= 40, `oscillation_tolerance` 0-20, `total_retries_max` 5-30
+   - Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100
+   - Sprint: `sprint.poll_interval_seconds` 10-120, `sprint.dependency_timeout_minutes` 5-180
+   - Tracking: `tracking.archive_after_days` 30-365 or 0 (disabled)
 3. Read `forge-log.md` (PREEMPT items for the domain area, last 3 runs).
 4. Check `.forge/state.json` for interrupted runs:
    - If `complete: false`: validate checkpoint artifacts, detect git drift via `git diff` against `last_commit_sha`.
@@ -69,7 +73,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Documentation discovery failure:** If `documentation.enabled` is `true` but `fg-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents check this flag and operate with degraded documentation context:
 
 - **`fg-350-docs-generator` (Stage 7):** Generate docs for changed files only. Skip cross-referencing, coverage gap analysis, and doc structure recommendations. Do not create new doc files that would normally be suggested by discovery results.
-- **`docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report an INFO finding: `DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.`
+- **`docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` (SCOUT prefix = zero score deduction; this is a pipeline infrastructure signal, not a code quality issue the implementer can fix.)
 
 ---
 

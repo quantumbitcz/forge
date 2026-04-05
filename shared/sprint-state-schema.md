@@ -115,7 +115,7 @@ The sprint orchestrator (`fg-090`) polls per-feature state to coordinate paralle
 - **Polling interval:** Every 30 seconds (configurable via `sprint.poll_interval_seconds` in `forge-config.md`, default: 30, range: 10-120).
 - **Mechanism:** Read each feature's `.forge/runs/{feature-id}/state.json` and extract `story_state`, `score_history`, and error flags.
 - **Sprint state update:** After each poll, update `sprint-state.json` with the latest per-repo status derived from the per-run state files.
-- **Stale data detection:** If a feature's `state.json` has not been modified for more than 5 minutes and its status is not `complete` or `failed`, log WARNING in sprint notes. If stale for more than `cross_repo.timeout_minutes` (default: 30), mark the feature as `failed` with reason `"stale_timeout"`.
+- **Stale data detection:** If a feature's `state.json` has not been modified for more than 5 minutes and its status is not `complete` or `failed`, log WARNING in sprint notes. If stale for more than `sprint.dependency_timeout_minutes` (default: 60), mark the feature as `failed` with reason `"stale_timeout"`.
 
 ## Waiting State Behavior
 
@@ -123,7 +123,7 @@ When a feature repo's status is `waiting` (i.e., `waiting_for` is set):
 
 - The feature's `fg-100-orchestrator` instance is **not dispatched**. No stage work occurs.
 - The sprint orchestrator polls the dependency's status. When the dependency's status reaches the required threshold (default: `shipping` for cross-repo contract producers, `complete` for serial chain dependencies), the waiting feature transitions to `planning`.
-- **Timeout:** If a waiting feature remains in `waiting` for more than `cross_repo.timeout_minutes` (default: 30), the sprint orchestrator escalates to the user with options: "Continue waiting", "Skip dependency and proceed", "Abort feature".
+- **Timeout:** If a waiting feature remains in `waiting` for more than `sprint.dependency_timeout_minutes` (default: 60), the sprint orchestrator escalates to the user with options: "Continue waiting", "Skip dependency and proceed", "Abort feature". This is the same timeout as documented in the [Waiting Dependency Timeout](#waiting-dependency-timeout) section below.
 
 ---
 
