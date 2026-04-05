@@ -1,11 +1,11 @@
 ---
 name: forge-run
-description: Run the full development pipeline for a story or feature. Accepts --from=<stage> to resume, --dry-run for PREFLIGHT→VALIDATE only, or --spec <path> for shaped specs.
+description: Universal pipeline entry point. Auto-classifies intent (feature, bugfix, migration, bootstrap, multi-feature) and routes to the correct pipeline mode. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel.
 ---
 
-# /forge-run — Pipeline Entry Point
+# /forge-run — Universal Pipeline Entry Point
 
-You are a thin launcher. Your ONLY job is to detect available integrations and dispatch the pipeline orchestrator.
+You are the universal entry point for the forge pipeline. Your job is to classify the user's intent, detect available integrations, and dispatch the correct agent. You handle routing — not planning, implementation, or review.
 
 ## Instructions
 
@@ -50,7 +50,39 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
    If no ticket ID provided, the orchestrator will create one during PREFLIGHT (if tracking is initialized).
 
-2. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
+2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint`, `--parallel`), classify the requirement to determine the correct pipeline mode. Reference: `shared/intent-classification.md`.
+
+   **Classification order** (first match wins):
+   1. Explicit prefix/flag → use that mode directly (skip classification)
+   2. Bugfix signals (fix, bug, broken, regression, error, stack traces) → `Mode: bugfix`
+   3. Migration signals (upgrade X to Y, replace X with Y, migrate) → `Mode: migration`
+   4. Bootstrap signals (scaffold, create new, start from scratch, empty project) → `Mode: bootstrap`
+   5. Multi-feature signals (3+ distinct domain nouns, enumerated capabilities) → `Mode: multi-feature`
+   6. Vague signals (very short/long input, no ACs, exploratory language) → `Mode: vague`
+   7. Default → `Mode: standard`
+
+   **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.
+
+   **Autonomous mode**: Read `autonomous` from `forge-config.md` (default: `false`).
+   - If `autonomous: false`: Present classification result via AskUserQuestion:
+     - Header: "Intent Classification"
+     - Question: "This looks like a **{classified_mode}** based on: {signal_summary}. Proceed with this routing?"
+     - Options:
+       - "{classified_mode} mode" (description: "Route to {target_agent}")
+       - "Override: standard feature" (description: "Treat as single feature, route to fg-100")
+       - "Override: choose mode" (description: "Let me pick the mode manually")
+   - If `autonomous: true`: Use classified mode directly. Log: `[AUTO-ROUTE] Classified as {mode} based on: {signals}`
+
+   ### Scope Fast Scan
+
+   If classification didn't already detect multi-feature mode (and `scope.fast_scan` is not `false` in `forge-config.md`), perform a quick text scan:
+   - 3+ distinct domain nouns joined by "and", "plus", comma-separated
+   - Enumerated capabilities ("1. X 2. Y 3. Z")
+   - Additive language ("also add", "on top of that", "additionally")
+
+   If detected: set `Mode: multi-feature`.
+
+3. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
 
    | Tool pattern | Integration |
    |---|---|
@@ -62,28 +94,41 @@ You are a thin launcher. Your ONLY job is to detect available integrations and d
 
    Build a comma-separated list of detected integrations (e.g., `Linear, Context7`). If none detected, use `none`.
 
-3. **Sprint/Parallel Mode**: If arguments include `--sprint` or `--parallel`:
+4. **Route by mode**: Based on the classified mode (or explicit prefix/flag):
 
-   ```
-   dispatch fg-090-sprint-orchestrator "$ARGUMENTS"
-   ```
+   | Mode | Dispatch Target |
+   |------|----------------|
+   | `--sprint` or `--parallel` flag | `fg-090-sprint-orchestrator` with `$ARGUMENTS` |
+   | `multi-feature` | `fg-015-scope-decomposer` with requirement + MCPs |
+   | `vague` | `fg-010-shaper` with requirement; on spec output, re-invoke with `--spec {path}` |
+   | `bugfix` | `fg-100-orchestrator` with `Mode: bugfix` |
+   | `migration` | `fg-100-orchestrator` with `Mode: migration` |
+   | `bootstrap` | `fg-100-orchestrator` with `Mode: bootstrap` |
+   | `standard` (default) | `fg-100-orchestrator` |
 
-   When `--sprint` or `--parallel` is detected, the sprint orchestrator is dispatched instead of the standard fg-100-orchestrator. The sprint orchestrator handles multi-feature decomposition, independence analysis, and parallel dispatch.
+   **For multi-feature mode**, dispatch `fg-015-scope-decomposer`:
+   > Decompose this multi-feature requirement into independent features:
+   >
+   > Requirement: `{user_input}`
+   >
+   > Source: fast_scan
+   > Available MCPs: `{detected_mcps}`
 
-   Skip all standard single-feature preflight when in sprint mode — the sprint orchestrator has its own preflight.
+   **For vague mode**, dispatch `fg-010-shaper`:
+   > Shape this requirement into a structured spec:
+   >
+   > `{user_input}`
+   >
+   > When the shaper returns a spec path, re-dispatch as: `/forge-run --spec {spec_path}`
 
-   If neither `--sprint` nor `--parallel` is present, continue with the standard orchestrator dispatch below.
-
-4. **Dispatch the orchestrator**: Use the Agent tool to invoke `fg-100-orchestrator` with the following prompt:
-
+   **For all other modes** (bugfix, migration, bootstrap, standard), dispatch `fg-100-orchestrator`:
    > Execute the full development pipeline for: `{user_input}`
    >
+   > Mode: `{classified_mode}`
    > Available MCPs: `{detected_mcps}`
    >
-   > Ticket ID: `{ticket_id}` _(omit this line if no ticket was resolved)_
+   > Ticket ID: `{ticket_id}` _(omit if no ticket)_
 
-   Where `{user_input}` is the resolved requirement text (from ticket description if ticket was resolved, otherwise raw text from user, including any `--from` flag — the orchestrator knows how to interpret it), `{detected_mcps}` is the list from step 2, and `{ticket_id}` is the resolved kanban ticket ID (if any).
+5. **Do nothing else**: Do not plan, implement, review, or make decisions. The dispatched agent handles everything autonomously.
 
-5. **Do nothing else**: Do not plan, implement, review, or make decisions. The orchestrator handles recovery, planning, implementation, quality, testing, delivery, and meta-analysis autonomously.
-
-6. **Relay the result**: When the orchestrator completes, relay its final output (PR URL, summary, or escalation) back to the user unchanged.
+6. **Relay the result**: When the dispatched agent completes, relay its final output (PR URL, summary, decomposition plan, or escalation) back to the user unchanged.
