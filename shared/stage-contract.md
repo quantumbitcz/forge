@@ -9,7 +9,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
 | 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
-| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes |
+| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
 | 2 | PLAN | `fg-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `fg-210-validator` + conditional: `fg-250-contract-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user); cross-repo contracts validated if applicable |
 | 4 | IMPLEMENT | `fg-310-scaffolder` + `fg-300-implementer` + conditional: `fg-320-frontend-polisher` | `IMPLEMENTING` | Plan validated with GO verdict; worktree exists at `.forge/worktree` (created at PREFLIGHT) | All tasks completed inside worktree (or failed after max retries) |
@@ -99,12 +99,28 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - `stage_1_notes_{storyId}.md` -- exploration summary
 - Structured list of: relevant source files, test files, pattern files, domain model files, identified gaps
 
-**Exit condition:** Exploration results summarized and available for the planner.
+**Exit condition:** Exploration results summarized and available for the planner. OR: auto-decomposition triggered (`scope.decomposition_threshold` exceeded) — orchestrator dispatches `fg-015-scope-decomposer` and transitions to `DECOMPOSED` state.
 
 **On failure/timeout:** Exploration is advisory, not blocking. If all exploration agents time out or fail:
 1. Log WARNING in stage notes: `"Exploration failed: {reason}. Proceeding with degraded context."`
 2. Set `state.json.exploration_degraded: true`
 3. Proceed to Stage 2 (PLAN). The planner operates with reduced context — it may produce a less optimal plan.
+
+---
+
+### Decomposition Transition (EXPLORING → DECOMPOSED)
+
+**Trigger:** Post-EXPLORE deep scope check detects requirement touches >= `scope.decomposition_threshold` (default: 3) distinct architectural domains.
+
+**Actions:**
+1. Orchestrator dispatches `fg-015-scope-decomposer` with exploration notes
+2. Scope decomposer extracts features, analyzes dependencies, presents decomposition for approval
+3. On approval: dispatches `fg-090-sprint-orchestrator` with feature list
+4. Current orchestrator instance stops — sprint orchestrator takes over with per-feature `fg-100` instances
+
+**State:** `story_state` set to `DECOMPOSED`. Details stored in `state.json.decomposition`.
+
+**Scope:** Standard mode only. Bugfix, migration, and bootstrap modes skip the scope check.
 
 ---
 
