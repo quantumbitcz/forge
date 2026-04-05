@@ -131,12 +131,13 @@ Additional category codes for specialized review domains:
 | Code | Meaning |
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
-| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions) |
-| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility) |
+| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions). Reserved — currently `version-compat-reviewer` uses `QUAL-COMPAT` for version compatibility findings. `DEPS-*` may be activated by a future dedicated dependency auditing agent. |
+| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `version-compat-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
+| `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
 | `DESIGN-TOKEN` | Frontend design token violation (hardcoded hex/rgb instead of theme tokens) |
 | `DESIGN-MOTION` | Frontend animation performance issue (non-GPU-accelerated properties, missing will-change) |
-| `STRUCT-*` | Project structure violation — subcategories: `STRUCT-PLACE` (file in wrong directory/package), `STRUCT-NAME` (file/class naming convention violation), `STRUCT-BOUNDARY` (cross-layer import not caught by ARCH-BOUNDARY), `STRUCT-MISSING` (required directory or file missing from expected structure) |
+| `STRUCT-*` | Project structure violation — subcategories: `STRUCT-PLACE` (file in wrong directory/package), `STRUCT-NAME` (file/class naming convention violation), `STRUCT-BOUNDARY` (cross-layer import not caught by ARCH-BOUNDARY — emitted by Layer 1 check engine patterns), `STRUCT-MISSING` (required directory or file missing from expected structure) |
 | `INFRA-*` | Infrastructure/deployment issue — subcategories: `INFRA-SEC` (security), `INFRA-REL` (reliability), `INFRA-SCA` (scalability), `INFRA-OBS` (observability), `INFRA-DOC` (Docker), `INFRA-HLM` (Helm), `INFRA-TF` (Terraform) |
 
 Specific INFRA finding codes for tiered infra verification:
