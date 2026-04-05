@@ -1,19 +1,6 @@
 ---
 name: frontend-design-reviewer
-description: |
-  Evaluates frontend implementation for design quality, design system compliance, visual coherence, responsive behavior, and dark mode correctness. Optionally compares implementation against Figma designs when MCP is available.
-
-  <example>
-  Auditing a React dashboard for design token compliance: scans all component files for hardcoded hex colors, non-standard spacing values, and arbitrary font sizes outside the project's type scale. Reports DESIGN-TOKEN findings for each violation with the correct token replacement.
-  </example>
-
-  <example>
-  Checking responsive behavior of a card layout at mobile (375px), tablet (768px), and desktop (1280px): verifies single-column reflow on mobile, adaptive two-column on tablet, and full layout utilization on desktop. Reports DESIGN-RESPONSIVE findings for broken breakpoints, touch targets below 44px, and horizontal overflow.
-  </example>
-
-  <example>
-  Comparing implementation against Figma design when MCP is available: fetches design context via get_design_context, compares colors, spacing, typography, and layout against the Figma source. Reports DESIGN-FIGMA findings with specific pixel/token deviations between implementation and design spec.
-  </example>
+description: Evaluates frontend for design quality, design system compliance, visual coherence, responsive behavior, and dark mode.
 model: inherit
 color: purple
 tools:

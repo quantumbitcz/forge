@@ -1,6 +1,6 @@
 ---
 name: backend-performance-reviewer
-description: Reviews backend code for performance issues including N+1 queries, missing indexes, inefficient algorithms, connection pool sizing, caching gaps, and concurrency bottlenecks. Detects the backend framework and applies language-specific performance patterns.
+description: Reviews backend code for performance issues — N+1 queries, missing indexes, connection pools, caching, concurrency.
 model: inherit
 color: yellow
 tools:

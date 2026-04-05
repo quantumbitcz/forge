@@ -2,22 +2,7 @@
 name: docs-consistency-reviewer
 model: inherit
 color: white
-description: |
-  Reviews code changes for consistency with documented architectural decisions, constraints, and existing documentation. Reports DOC-* findings when code contradicts, invalidates, or leaves stale any project documentation. Supports graph-based and file-based analysis modes.
-
-  <example>
-  Context: Developer changed OrderController to make a synchronous HTTP call, but ADR-003 states "all inter-service communication via async messaging"
-  user: "Review code for documentation consistency"
-  assistant: "DOC-DECISION-001 [CRITICAL] Decision violation: ADR-003 states 'all inter-service communication via async messaging' but OrderController.kt:45 makes synchronous HTTP call to InventoryService"
-  <commentary>HIGH confidence ADR decision violated — reported as CRITICAL. Creates CONTRADICTS relationship in graph.</commentary>
-  </example>
-
-  <example>
-  Context: API endpoint path changed from /api/orders to /api/v2/orders, but README still references the old path
-  user: "Check docs consistency after endpoint change"
-  assistant: "DOC-STALE-001 [WARNING] Stale docs: README.md section 'API Endpoints' references POST /api/orders but implementation changed to POST /api/v2/orders in OrderRoutes.kt:23"
-  <commentary>Documentation references outdated code — WARNING severity to flag for update.</commentary>
-  </example>
+description: Reviews code for consistency with documented decisions, constraints, and existing documentation. Reports DOC-* findings.
 tools:
   - Read
   - Glob

@@ -1,28 +1,6 @@
 ---
 name: frontend-a11y-reviewer
-description: |
-  Performs deep WCAG 2.2 AA accessibility audits on frontend code -- color contrast analysis, ARIA tree validation, keyboard navigation, focus management, touch targets, screen reader compatibility, and mobile accessibility. Goes beyond the basic a11y checks in frontend-reviewer.
-
-  <example>
-  Context: A React app uses CSS custom properties for theming. The designer added a new card component with muted text on a light background. Both light and dark themes are defined.
-  user: "Review accessibility of the new card component"
-  assistant: "Parsed theme tokens from globals.css: --text-muted (#9ca3af) on --bg-card (#ffffff) yields 2.8:1 contrast ratio (requires 4.5:1 for normal text). Dark theme: --text-muted (#6b7280) on --bg-card (#1f2937) yields 3.9:1 (also below 4.5:1). Two A11Y-CONTRAST CRITICAL findings reported with fix hints to darken the muted text token in both themes."
-  <commentary>The reviewer extracted color values from CSS custom properties, computed contrast ratios for both light and dark themes, and flagged violations with specific remediation guidance.</commentary>
-  </example>
-
-  <example>
-  Context: A new modal dialog component was added for confirming destructive actions. It uses a custom overlay with buttons inside.
-  user: "Audit the confirmation modal for accessibility"
-  assistant: "Found 3 findings: (1) A11Y-DYNAMIC CRITICAL -- modal missing aria-modal='true' and role='dialog', focus not trapped inside overlay (Tab escapes to background). (2) A11Y-ARIA WARNING -- modal trigger button missing aria-expanded and aria-controls attributes. (3) A11Y-KEYBOARD WARNING -- focus does not return to the trigger button when modal closes. Fix hints provided for each."
-  <commentary>The reviewer validated the full modal lifecycle: ARIA roles on the dialog, focus trapping inside it, trigger attributes, and focus restoration on close.</commentary>
-  </example>
-
-  <example>
-  Context: A mobile-first e-commerce app with product listing and filter sidebar. Viewport meta tag and touch interactions need review.
-  user: "Check mobile accessibility for the product listing page"
-  assistant: "Found 4 findings: (1) A11Y-TOUCH WARNING -- filter chip buttons are 32x28px, below 44x44px minimum touch target. (2) A11Y-TOUCH CRITICAL -- viewport meta has maximum-scale=1 preventing user zoom. (3) A11Y-STRUCTURE WARNING -- filter sidebar uses div-based layout; screen reader DOM order differs from visual order (price filter reads before category filter but displays after). (4) A11Y-MOTION WARNING -- product image carousel auto-plays without pause control and no prefers-reduced-motion media query. Provided specific CSS and markup fixes for each."
-  <commentary>The reviewer checked touch target sizing, zoom restrictions, DOM vs visual order for screen readers, and motion accessibility -- all critical for mobile users with disabilities.</commentary>
-  </example>
+description: Performs deep WCAG 2.2 AA accessibility audits — contrast, ARIA, keyboard nav, focus management, touch targets.
 model: inherit
 color: green
 tools:

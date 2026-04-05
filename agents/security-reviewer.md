@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Reviews code for security vulnerabilities across all languages and frameworks. Covers OWASP Top 10, authentication/authorization gaps, injection flaws, secrets exposure, dependency vulnerabilities, and framework-specific security patterns.
+description: Reviews code for security vulnerabilities — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs.
 model: inherit
 color: red
 tools:

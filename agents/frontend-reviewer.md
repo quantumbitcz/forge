@@ -1,6 +1,6 @@
 ---
 name: frontend-reviewer
-description: Reviews frontend code for conventions, accessibility, and framework-specific patterns across React, Svelte, Vue, Angular, and vanilla JS/TS. Detects the frontend framework from project structure and applies framework-specific rules.
+description: Reviews frontend code for conventions, accessibility, and framework-specific patterns across React, Svelte, Vue, Angular.
 tools:
   - Read
   - Glob

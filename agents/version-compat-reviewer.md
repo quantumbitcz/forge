@@ -1,21 +1,6 @@
 ---
 name: version-compat-reviewer
-description: |
-  Analyzes project dependency tree for version conflicts, language feature compatibility, and runtime API removals. Dispatched during REVIEW stage via quality gate batches.
-
-  <example>
-  Context: A Spring Boot 3.x project still uses javax.* imports that were moved to jakarta.* namespace.
-  user: "Check if our dependencies are compatible"
-  assistant: "I'll dispatch version-compat-reviewer to analyze dependency conflicts, language features, and runtime API removals."
-  <commentary>Catches the javax/jakarta namespace migration that would cause runtime ClassNotFoundException.</commentary>
-  </example>
-
-  <example>
-  Context: A TypeScript project targets ES2020 but uses the 'using' keyword (TS 5.2+).
-  user: "Review version compatibility"
-  assistant: "I'll dispatch version-compat-reviewer — it will check if language features match the target version."
-  <commentary>Detects language feature usage that exceeds the configured target, preventing silent compilation issues.</commentary>
-  </example>
+description: Analyzes dependency tree for version conflicts, language feature compatibility, and runtime API removals.
 model: inherit
 color: cyan
 tools:
