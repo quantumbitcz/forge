@@ -122,7 +122,6 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code) |
-| `FE-PERF-*` | Frontend performance issue (bundle size, unnecessary re-renders, unoptimized assets) |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
