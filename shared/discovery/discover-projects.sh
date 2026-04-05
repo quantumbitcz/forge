@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
   shift 2>/dev/null || true
 done
 
-# Normalize depth to integer (POSIX-compatible — no (( )) arithmetic)
+# Normalize depth to integer
 DEPTH=$(printf '%d' "$DEPTH" 2>/dev/null) || DEPTH=2
 
 # Validate depth is within reasonable bounds
