@@ -11,13 +11,10 @@ Claude Code is powerful, but without structure it makes inconsistent decisions, 
 /plugin marketplace add quantumbitcz/forge
 /plugin install forge@quantumbitcz
 
-# 2. Initialize your project (auto-detects framework)
+# 2. Initialize your project (auto-detects framework, gitignores .forge/)
 /forge-init
 
-# 3. Add .forge/ to .gitignore
-echo ".forge/" >> .gitignore
-
-# 4. Run it
+# 3. Run it
 /forge-run Add user dashboard with activity feed
 ```
 
@@ -147,11 +144,7 @@ Open `.claude/forge.local.md` and set:
 - `quality_gate` batches and `inline_checks` for your review needs
 - `context7_libraries` for the frameworks your project uses
 
-Add `.forge/` to `.gitignore`:
-
-```bash
-echo ".forge/" >> .gitignore
-```
+`/forge-init` automatically adds `.forge/` to `.gitignore`. For manual setups, add it yourself:
 
 <details>
 <summary>Manual setup (without /forge-init)</summary>

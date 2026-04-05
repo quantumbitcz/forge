@@ -37,3 +37,7 @@ setup() {
 @test "init-auto: generates commit-reviewer agent" {
   grep -q "commit-reviewer" "$FORGE_INIT"
 }
+
+@test "init-auto: ensures .forge/ is gitignored" {
+  grep -q "gitignore.*\.forge\|\.forge.*gitignore" "$FORGE_INIT"
+}

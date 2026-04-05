@@ -278,6 +278,13 @@ Once confirmed, generate the configuration files:
 
 6. **Create `.claude/` directory** if it does not exist. Never overwrite existing files without asking first — if any config file already exists, show a diff of what would change and ask for confirmation.
 
+7. **Ensure `.forge/` is gitignored**: Check if the project's `.gitignore` already contains a `.forge/` or `.forge` entry. If not, append it:
+   ```
+   # Forge pipeline state (local only, never committed)
+   .forge/
+   ```
+   If `.gitignore` does not exist, create it with this entry. This prevents pipeline state (lock files, worktrees, checkpoints, tracking, reports) from being accidentally committed.
+
 Show the user what files were created and their key settings. **ASK via AskUserQuestion** with header "Validate", question "Config files written. Want me to validate the setup?", options: "Validate" (description: "Run build, test, and engine checks to verify everything works (Recommended)"), "Skip" (description: "Skip validation — I'll test it myself later").
 
 ---
