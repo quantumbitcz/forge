@@ -25,6 +25,7 @@ fi
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
+require_bash4 "incremental-update.sh" || exit 1
 PROJECT_ROOT=""
 
 # --- Argument parsing ---

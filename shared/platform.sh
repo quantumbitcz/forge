@@ -104,6 +104,24 @@ suggest_docker_start() {
   esac
 }
 
+# ── Bash Version Check ───────────────────────────────────────────────────────
+#
+# Scripts using associative arrays (declare -A) require bash 4.0+.
+# macOS ships with bash 3.2 by default; Homebrew bash is the norm for
+# developers but CI runners and fresh installs may hit this.
+#
+# Usage: require_bash4 "build-project-graph.sh"
+
+require_bash4() {
+  local caller="${1:-script}"
+  if (( BASH_VERSINFO[0] < 4 )); then
+    printf 'ERROR: %s requires bash 4.0+ (found %s).\n' "$caller" "$BASH_VERSION" >&2
+    printf '  macOS: brew install bash\n' >&2
+    printf '  Linux: bash 4+ is standard on all modern distributions.\n' >&2
+    return 1
+  fi
+}
+
 # ── Temp Directory ───────────────────────────────────────────────────────────
 #
 # Scripts that source platform.sh should use these helpers. Linter adapters
