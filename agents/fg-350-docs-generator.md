@@ -144,7 +144,7 @@ Follow these 7 steps in order.
 
 **Discovery error handling:** If `state.json.documentation.discovery_error` is `true`, documentation discovery failed at PREFLIGHT. In this case:
 - Step 1 (Assess Coverage): Use local file inspection only — do not query the graph for doc inventory. Scan `docs/` directory directly.
-- Step 2 (Determine Need): Skip cross-document reference analysis and coverage gap computation. Focus on changed-file-driven doc updates only.
+- Step 2 (Determine Need): Skip cross-document reference analysis and coverage gap computation. Focus on changed-file-driven doc updates only. Do not create new documentation files that would normally be suggested by discovery results — only update existing docs for changed code.
 - Step 6 (Update Graph): Skip graph updates entirely — the graph may have stale or missing Doc* nodes. Update `docs-index.json` as fallback.
 
 ### Step 1: Assess Coverage
