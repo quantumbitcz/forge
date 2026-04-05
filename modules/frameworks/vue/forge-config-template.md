@@ -75,3 +75,12 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 #   plateau_patience: 2     # Consecutive plateaus before convergence (1-5)
 #   target_score: 100       # Score target (80-100, must be >= pass_threshold)
 #   safety_gate: true       # Run VERIFY after Phase 2
+
+# Sprint orchestration (only relevant for /forge-run --sprint)
+# sprint:
+#   poll_interval_seconds: 30    # How often to poll per-feature state (10-120)
+#   dependency_timeout_minutes: 60  # Max wait for a dependency feature (5-180)
+
+# Tracking (kanban ticket management)
+# tracking:
+#   archive_after_days: 90       # Auto-archive done/ tickets older than N days (30-365, 0=disabled)
