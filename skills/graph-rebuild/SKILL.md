@@ -62,19 +62,33 @@ Accept optional `--clear-enrichment` flag to wipe all enrichment data. Useful wh
 
 ---
 
-### Step 3: DELETE PROJECT NODES
+### Step 3: RESOLVE PROJECT IDENTITY
 
-**Step 3a: Save enrichment data** (skip if `--clear-enrichment`):
+Derive the `project_id` for scoping all queries:
 
 ```bash
-echo "MATCH (n:ProjectFile) WHERE n.bug_fix_count > 0 RETURN n.path AS path, n.bug_fix_count AS count, n.last_bug_fix_date AS date" | \
+PROJECT_ID=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[:/]||; s|\.git$||')
+# Fallback for repos without a remote:
+[ -z "$PROJECT_ID" ] && PROJECT_ID=$(basename "$(git rev-parse --show-toplevel)")
+```
+
+All Cypher queries in this step MUST include `n.project_id = '$PROJECT_ID'` to avoid affecting other projects sharing the same Neo4j instance.
+
+---
+
+### Step 3a: SAVE ENRICHMENT DATA (skip if `--clear-enrichment`)
+
+```bash
+echo "MATCH (n:ProjectFile {project_id: '$PROJECT_ID'}) WHERE n.bug_fix_count > 0 RETURN n.path AS path, n.bug_fix_count AS count, n.last_bug_fix_date AS date" | \
   docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain > /tmp/forge-enrichment-backup.csv
 ```
 
-**Step 3b: Delete all project-derived nodes** and their relationships:
+### Step 3b: DELETE PROJECT NODES
+
+Delete project-derived nodes **scoped to current project only**:
 
 ```bash
-echo "MATCH (n) WHERE n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:ProjectPackage OR n:ProjectDependency DETACH DELETE n" | \
+echo "MATCH (n) WHERE (n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:ProjectPackage OR n:ProjectDependency) AND n.project_id = '$PROJECT_ID' DETACH DELETE n" | \
   docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
@@ -113,7 +127,9 @@ If enrichment data was saved in Step 3a and the backup file is non-empty, restor
 # Parse the CSV and apply enrichment via MERGE
 while IFS=',' read -r path count date; do
   [ -z "$path" ] && continue
-  echo "MATCH (n:ProjectFile {path: '$path'}) SET n.bug_fix_count = $count, n.last_bug_fix_date = '$date';"
+  # Escape single quotes in path to prevent Cypher injection
+  safe_path=$(printf '%s' "$path" | sed "s/'/''/g")
+  echo "MATCH (n:ProjectFile {project_id: '$PROJECT_ID', path: '$safe_path'}) SET n.bug_fix_count = $count, n.last_bug_fix_date = '$date';"
 done < /tmp/forge-enrichment-backup.csv | \
   docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
