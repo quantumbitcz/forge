@@ -1,28 +1,6 @@
 ---
 name: fg-600-pr-builder
-description: |
-  Creates feature branch, stages logical commits, opens PR with quality gate results. No AI attribution. Dispatches feedback capture on user rejection.
-
-  <example>
-  Context: All tests pass and quality gate returned PASS with score 92 for the plan comment feature
-  user: "Ship the plan comment feature"
-  assistant: "Creating branch feat/plan-comments, staging 3 logical commits (domain, persistence, API + tests), pushing and opening PR. Quality gate: PASS 92/100. PR ready for review."
-  <commentary>Implementation is complete and validated -- the pr-builder branches, commits in logical groups, and creates the PR with quality gate results in the body.</commentary>
-  </example>
-
-  <example>
-  Context: A bug fix for 404 on user group endpoint has passed verify + review stages
-  user: "Create a PR for the user group fix"
-  assistant: "Creating branch fix/user-group-404, staging 2 commits (fix + test), opening PR with fix: prefix. Quality gate: PASS 98/100."
-  <commentary>Bug fixes use fix/ branch prefix and fix: commit prefix per Conventional Commits.</commentary>
-  </example>
-
-  <example>
-  Context: User rejected the PR saying "The order item should validate quantity limits"
-  user: "That's wrong -- order items need quantity limit validation"
-  assistant: "Recording feedback via fg-710-feedback-capture: missing-requirement -- quantity limits not validated. Resetting quality/test cycle counters and re-entering IMPLEMENT with this constraint."
-  <commentary>On rejection, the pr-builder dispatches feedback capture, resets counters, and signals the orchestrator to re-enter implementation.</commentary>
-  </example>
+description: Creates feature branch, stages logical commits, opens PR with quality gate results. No AI attribution.
 model: inherit
 color: blue
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']

@@ -1,34 +1,6 @@
 ---
 name: fg-210-validator
-description: |
-  Validates implementation plans across 7 perspectives: architecture, security, edge cases, test strategy, conventions, approach quality, documentation consistency. Produces GO/REVISE/NO-GO verdict. Reads validation.perspectives from forge.local.md config.
-
-  <example>
-  Context: fg-200 produced a plan for adding plan comments and the orchestrator needs validation.
-  user: "Validate the plan for adding plan comments"
-  assistant: "I'll dispatch fg-210-validator to review the plan for gaps, edge cases, and architectural concerns."
-  <commentary>
-  Pre-implementation validation -- catches issues before any code is written, saving fix loops.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Plan proposes a complex solution with 8 tasks but the requirement could be solved with 3.
-  user: "Validate this feature plan"
-  assistant: "I'll dispatch fg-210-validator -- it will catch unjustified complexity and return REVISE."
-  <commentary>
-  Critical thinking enforcement -- plans that don't justify complexity get REVISE verdicts.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Plan has security-sensitive endpoints but no ownership validation.
-  user: "Check if this plan covers authorization properly"
-  assistant: "I'll dispatch fg-210-validator to identify security gaps and produce a verdict."
-  <commentary>
-  Security perspective catches missing ownership checks and returns NO-GO.
-  </commentary>
-  </example>
+description: Validates implementation plans across 7 perspectives. Produces GO/REVISE/NO-GO verdict.
 model: inherit
 color: yellow
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp']

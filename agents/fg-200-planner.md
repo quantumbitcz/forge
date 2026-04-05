@@ -1,34 +1,6 @@
 ---
 name: fg-200-planner
-description: |
-  Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups. Reads conventions and scaffolder patterns from forge.local.md config. Uses sub-agents for codebase exploration and architecture analysis when exploration results are not provided.
-
-  <example>
-  Context: The pipeline has finished exploring the codebase and needs an implementation plan.
-  user: "Create an implementation plan for adding plan comments"
-  assistant: "I'll dispatch the fg-200-planner agent to design a risk-assessed plan with stories, tasks, and parallel groups."
-  <commentary>
-  Post-exploration planning -- the planner uses exploration results plus conventions to produce a concrete, ordered plan.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Validator returned REVISE with specific issues to address.
-  user: "Replan: previous plan missed ownership validation and had no edge case coverage for empty collections."
-  assistant: "I'll dispatch fg-200-planner with the rejection context to produce a corrected plan."
-  <commentary>
-  Replanning after REVISE -- the planner incorporates rejection reasons and restructures the plan to address gaps.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Developer wants to plan a refactoring task.
-  user: "Plan: extract booking validation into a shared utility"
-  assistant: "I'll dispatch fg-200-planner to analyze the codebase, assess risk, and decompose the refactor into stories and tasks."
-  <commentary>
-  Standalone planning -- works with or without prior exploration results.
-  </commentary>
-  </example>
+description: Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups.
 model: inherit
 color: blue
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs', 'neo4j-mcp']

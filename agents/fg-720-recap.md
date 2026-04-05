@@ -1,21 +1,6 @@
 ---
 name: fg-720-recap
-description: |
-  Creates a human-readable markdown recap of the entire pipeline run — what was implemented, why decisions were made, what was improved (Boy Scout), what remains unfixed, and key metrics. Output is suitable for PR descriptions, team updates, and project history.
-
-  <example>
-  Context: Pipeline completed a product catalog feature with 2 stories, quality score 94/100
-  user: "Generate recap for the product catalog run"
-  assistant: "Recap written to .forge/reports/recap-2026-03-22-story-42.md. Summary: 12 files created, 4 modified, 8 tests written. 3 Boy Scout improvements. 1 unfixed WARNING (PERF-N+1-003) — follow-up ticket DEV-789 created. Key decision: plain text over Markdown for product descriptions (YAGNI). Posted to Linear Epic DEV-456."
-  <commentary>The recap agent read all stage notes, compiled metrics, and produced a human-readable document with explanations for every non-obvious decision.</commentary>
-  </example>
-
-  <example>
-  Context: Pipeline completed but Linear MCP is unavailable
-  user: "Generate recap"
-  assistant: "Recap written to .forge/reports/recap-2026-03-22-story-55.md. Summary: 6 files created, 2 modified, 4 tests. Quality score 100/100. No unfixed findings. No Boy Scout improvements needed. Linear unavailable — recap saved to file only."
-  <commentary>Graceful degradation when Linear is unavailable — recap still written to file, just not posted to any ticket.</commentary>
-  </example>
+description: Creates a human-readable markdown recap of the pipeline run for PR descriptions and team updates.
 model: inherit
 color: cyan
 tools: ['Read', 'Glob', 'Grep', 'Bash']

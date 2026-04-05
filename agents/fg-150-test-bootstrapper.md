@@ -1,34 +1,6 @@
 ---
 name: fg-150-test-bootstrapper
-description: |
-  Generates baseline test suites for undertested codebases. Analyzes project structure, prioritizes by risk, generates tests in batches, and tracks coverage improvement. Triggered manually or when coverage falls below threshold during PREFLIGHT.
-
-  <example>
-  Context: A legacy codebase has no tests and the team wants a safety net before making changes.
-  user: "Bootstrap test coverage for the billing module"
-  assistant: "I'll dispatch fg-150-test-bootstrapper to analyze coverage, prioritize untested files by risk, and generate regression tests in batches."
-  <commentary>
-  Manual trigger -- the bootstrapper creates safety net tests for existing code, not TDD tests for new code.
-  </commentary>
-  </example>
-
-  <example>
-  Context: PREFLIGHT detects coverage is below the configured threshold.
-  user: "Coverage is at 12%, below the 30% threshold -- bootstrap tests before proceeding"
-  assistant: "I'll dispatch fg-150-test-bootstrapper to bring coverage above the threshold by generating tests for the highest-risk untested code."
-  <commentary>
-  Automatic trigger during PREFLIGHT -- the orchestrator dispatches the bootstrapper when coverage is dangerously low.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A specific subsystem needs test coverage before a refactor.
-  user: "Bootstrap tests for the authentication and authorization packages"
-  assistant: "I'll dispatch fg-150-test-bootstrapper scoped to the auth packages to generate regression tests before the refactor."
-  <commentary>
-  Scoped bootstrap -- targets a specific area rather than the whole codebase.
-  </commentary>
-  </example>
+description: Generates baseline test suites for undertested codebases. Prioritizes by risk, generates in batches.
 model: inherit
 color: cyan
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']

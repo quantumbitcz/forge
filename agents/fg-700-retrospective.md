@@ -1,28 +1,6 @@
 ---
 name: fg-700-retrospective
-description: |
-  Post-pipeline learning agent -- analyzes runs, extracts PREEMPT/PATTERN/TUNING learnings, updates forge-config.md with auto-tuning, tracks trends, proposes CLAUDE.md updates, consolidates feedback.
-
-  <example>
-  Context: Pipeline just completed plan comment feature with 1 verify fix loop and 2 convention violations
-  user: "Run retrospective for this pipeline"
-  assistant: "Generated pipeline report at .forge/reports/forge-2026-03-21.md. Quality score 92/100, 1 verify fix loop (missing @Transactional). Extracted PREEMPT: check @Transactional on all use case impls before verify. Updated metrics: 8 total runs, 87.5% success rate. Pipeline health: stable."
-  <commentary>The agent summarizes the run, writes a structured report, extracts a preventable check as a PREEMPT learning, and updates accumulated metrics.</commentary>
-  </example>
-
-  <example>
-  Context: Third consecutive run where the security reviewer missed R2DBC injection in custom queries
-  user: "Retrospective"
-  assistant: "Pipeline report written. Trend analysis: R2DBC injection check missed in 3 consecutive runs -- triggering self-improvement. Proposing expanded security reviewer scope. PREEMPT_CRITICAL escalation: R2DBC parameterized query check should become a detekt rule or pre-commit hook. Auto-tuning: max_fix_loops incremented from 3 to 4 (avg was 2.7 over last 3 runs)."
-  <commentary>After 3 runs with the same blind spot, the agent escalates to PREEMPT_CRITICAL, proposes enforcement via tooling, and applies an auto-tuning rule.</commentary>
-  </example>
-
-  <example>
-  Context: Feedback directory has 22 entries, many about order item validation
-  user: "Run post-pipeline learning"
-  assistant: "Pipeline report written. Feedback directory has 22 entries (exceeds 20 threshold) -- consolidated into summary.md, archived 14 entries already incorporated into CLAUDE.md. Order item validation appeared 5 times -- proposing CLAUDE.md addition. Domain hotspot: billing has 4 issues across 3 runs, adding domain-specific PREEMPT."
-  <commentary>The agent handles feedback consolidation, detects the recurring pattern, and tracks the billing domain as a hotspot.</commentary>
-  </example>
+description: Post-pipeline learning agent — extracts PREEMPT/PATTERN/TUNING learnings, auto-tunes config, tracks trends.
 model: inherit
 color: magenta
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Skill', 'TaskCreate', 'TaskUpdate']

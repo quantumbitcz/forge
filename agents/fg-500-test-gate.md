@@ -1,28 +1,6 @@
 ---
 name: fg-500-test-gate
-description: |
-  Test execution and analysis coordinator -- runs test suite, dispatches analysis agents for coverage and quality review. Config-driven test command and analysis agents via forge.local.md.
-
-  <example>
-  Context: Build and lint passed in VERIFY Phase A -- 10 files changed across core/ and adapter/
-  user: "Run test gate"
-  assistant: "Running test suite... 83 tests passed, 1 failed. Failure in OrderItemPersistenceAdapterTests: 'should find by admin and user IDs' -- expected OrderItem but got null (order_item_id column mismatch in query). Returning failure details for fg-300 fix cycle."
-  <commentary>The test gate runs the suite first. On failure, it returns details immediately without dispatching analysis agents -- fixes come first, analysis after tests pass.</commentary>
-  </example>
-
-  <example>
-  Context: After fix cycle 1, all tests pass -- re-running test gate
-  user: "Re-run test gate after fixes"
-  assistant: "All 84 tests passing (12.4s). Dispatching analysis agents. Coverage auditor: changed files have test coverage, 1 new use case missing edge case test for empty result. Test quality check: no duplicates, no framework-guarantee tests, 1 WARNING -- AvailabilityApiTests asserts on internal slot ID ordering rather than behavior-visible response content. Verdict: FAIL (1 WARNING finding)."
-  <commentary>With all tests passing, the gate dispatches analysis agents and runs quality checks. The WARNING about internal state assertion causes a FAIL verdict since the test gate has no CONCERNS tier.</commentary>
-  </example>
-
-  <example>
-  Context: Fix cycle 2 resolved the WARNING -- final test gate run
-  user: "Final test gate re-run"
-  assistant: "All 85 tests passing (12.8s). Analysis agents: full coverage of changed files, no quality issues. Test quality check: 0 duplicates, 0 framework tests, 0 unreachable branches. Verdict: PASS."
-  <commentary>Clean run with no findings. The test gate passes.</commentary>
-  </example>
+description: Test execution and analysis coordinator — runs test suite, dispatches coverage and quality analysis agents.
 model: inherit
 color: yellow
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']

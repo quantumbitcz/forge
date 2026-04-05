@@ -1,6 +1,6 @@
 ---
 name: infra-deploy-verifier
-description: Verifies infrastructure deployments by running tiered checks -- static validation, container builds, and optional local cluster tests. Uses available tools (docker, helm, kind, k3d, trivy).
+description: Verifies infrastructure deployments — static validation, container builds, optional local cluster tests.
 model: inherit
 color: green
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

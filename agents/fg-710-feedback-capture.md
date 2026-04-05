@@ -1,28 +1,6 @@
 ---
 name: fg-710-feedback-capture
-description: |
-  Records user corrections and rejections as structured feedback. Classifies by category, detects patterns, proposes convention rules after 3+ similar corrections.
-
-  <example>
-  Context: User rejected the PR saying "The order item should validate quantity limits"
-  user: "That's wrong -- order items need quantity limit validation"
-  assistant: "Captured feedback: missing-requirement -- quantity limits not validated for order items. Written to .forge/feedback/2026-03-21-quantity-limits.md. This is the first occurrence of this pattern -- will flag if it recurs."
-  <commentary>The agent extracts the implicit rule (validate quantity limits), classifies it as a missing requirement, and writes structured feedback.</commentary>
-  </example>
-
-  <example>
-  Context: User corrected the agent's approach to putting business logic in a controller
-  user: "Don't validate the order ownership in the controller -- that belongs in the use case"
-  assistant: "Captured feedback: wrong-approach -- business logic placed in controller instead of use case. Written to .forge/feedback/2026-03-21-controller-logic.md. Found 2 similar prior entries about logic placement. This pattern has now occurred 3 times -- proposing CLAUDE.md addition to clarify that all authorization and validation logic belongs in use case implementations, never in controllers."
-  <commentary>After detecting the same feedback 3 times, the agent proposes a CLAUDE.md rule to prevent recurrence.</commentary>
-  </example>
-
-  <example>
-  Context: User requested a specific naming pattern that differs from what was implemented
-  user: "Port methods should use 'find' not 'get' -- we use find because it returns nullable"
-  assistant: "Captured feedback: convention-violation -- used 'get' prefix instead of 'find' for nullable-returning port method. Written to .forge/feedback/2026-03-21-find-not-get.md. Checking existing conventions... CLAUDE.md already specifies 'findOrThrow() throws NoSuchElementException' pattern -- this was a convention-violation rather than a new preference."
-  <commentary>The agent cross-references the feedback against existing conventions and confirms the classification as a convention violation.</commentary>
-  </example>
+description: Records user corrections and rejections as structured feedback. Proposes convention rules after 3+ similar corrections.
 model: inherit
 color: magenta
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob']

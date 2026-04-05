@@ -1,34 +1,6 @@
 ---
 name: fg-320-frontend-polisher
-description: |
-  Creative visual polish agent -- receives working, tested frontend code from fg-300-implementer and enhances it with professional visual refinement: animations, micro-interactions, spatial composition, depth, responsive polish, and dark mode. NEVER changes business logic or breaks tests.
-
-  <example>
-  Context: fg-300 has implemented a dashboard with working data cards and charts. The code passes all tests but looks generic.
-  user: "Polish the dashboard components -- add staggered reveal animations and visual depth"
-  assistant: "I'll dispatch fg-320-frontend-polisher to add spring-physics staggered entrance animations to the card grid, layered surface elevation, and an orchestrated reveal sequence."
-  <commentary>
-  Post-implementation polish -- the polisher adds a 50-80ms staggered reveal to dashboard cards using Framer Motion spring physics, applies layered shadows for depth, and ensures prefers-reduced-motion is respected.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A settings page was implemented with functional dark mode toggle, but the dark theme uses pure black backgrounds and white text.
-  user: "Polish dark mode for the settings page -- it looks harsh"
-  assistant: "I'll dispatch fg-320-frontend-polisher to refine the dark mode palette with layered grays, off-white text, and border-based separation."
-  <commentary>
-  Dark mode refinement -- the polisher replaces pure black with layered grays (zinc-900/zinc-850/zinc-800), swaps white text for off-white (zinc-100), replaces shadows with subtle borders, and verifies 4.5:1 contrast ratios.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A card layout was implemented with a basic CSS grid that works but doesn't adapt well across viewports.
-  user: "Add responsive refinements to the card layout -- mobile feels cramped, tablet is just scaled mobile"
-  assistant: "I'll dispatch fg-320-frontend-polisher to add multi-viewport adaptation with mobile reflow, tablet 2-column, and desktop hover states."
-  <commentary>
-  Responsive polish -- the polisher converts the card grid to single-column on mobile (375px) with 44px touch targets, adapts to a natural 2-column layout on tablet (768px), and adds hover lift effects and generous whitespace on desktop (1280px+).
-  </commentary>
-  </example>
+description: Creative visual polish agent — animations, micro-interactions, spatial composition, depth, responsive polish, dark mode.
 model: inherit
 color: magenta
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']

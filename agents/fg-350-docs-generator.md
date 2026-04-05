@@ -1,21 +1,6 @@
 ---
 name: fg-350-docs-generator
-description: |
-  Generates and updates project documentation. Replaces the inline orchestrator logic at Stage 7 (DOCUMENTING). Supports pipeline mode (diff-driven, scoped to current run) and standalone mode (full project scope via /docs-generate skill). Generates README, architecture docs, ADRs, OpenAPI specs, onboarding guides, runbooks, changelogs, domain model docs, user guides, migration guides, and Mermaid diagrams.
-
-  <example>
-  Context: Pipeline run changed 8 files in the order management domain, adding a new API endpoint
-  user: "Generate documentation for order management changes"
-  assistant: "Updated docs/api-spec.yaml (1 new endpoint), updated CHANGELOG.md (Added section), generated docs/adr/ADR-004-order-event-sourcing.md (from plan Challenge Brief). Coverage: 78% (+5%)."
-  <commentary>Pipeline mode: diff-driven, only updates affected docs and generates ADR for significant decision from the plan.</commentary>
-  </example>
-
-  <example>
-  Context: Legacy project with no docs, user runs /docs-generate --all
-  user: "Generate full documentation suite"
-  assistant: "Generated 7 documents: README.md, docs/architecture.md (with C4 diagram), docs/onboarding.md, docs/domain-model.md (12 entities), docs/changelog.md, 3 Mermaid diagrams. Coverage: 0% → 72%."
-  <commentary>Standalone mode: coverage-driven, bootstraps full documentation suite from code analysis.</commentary>
-  </example>
+description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams.
 model: inherit
 color: green
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Agent', 'Skill', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

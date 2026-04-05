@@ -1,34 +1,6 @@
 ---
 name: fg-160-migration-planner
-description: |
-  Plans and orchestrates multi-phase library migrations and major upgrades. Replaces fg-200-planner when pipeline runs in migration mode (migrate: prefix). Produces phased plan with per-batch rollback and quality gates.
-
-  <example>
-  Context: User triggers a migration run to replace an old library with a new one.
-  user: "/forge-run \"migrate: replace moment.js with date-fns\""
-  assistant: "I'll dispatch fg-160-migration-planner to audit current usage, classify complexity, and produce a phased migration plan."
-  <commentary>
-  Migration mode entry -- the orchestrator detects the "migrate:" prefix and dispatches this agent instead of fg-200-planner.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A major framework upgrade needs careful phased rollout.
-  user: "/forge-run \"migrate: upgrade Spring Boot 3.2 to 3.4\""
-  assistant: "I'll dispatch fg-160-migration-planner to audit breaking changes, create compatibility shims, and plan per-area migration batches."
-  <commentary>
-  Major upgrade -- the planner creates adapter/shim layers for gradual migration and groups files by feature area.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Migration was paused after phase 2 due to complex failures.
-  user: "/forge-run --from=migrate"
-  assistant: "I'll resume fg-160-migration-planner from the last checkpoint, skipping already-migrated files and re-assessing remaining phases."
-  <commentary>
-  Resume after pause -- the planner reads .forge/migration-audit.json and state.json to continue from where it stopped.
-  </commentary>
-  </example>
+description: Plans and orchestrates multi-phase library migrations and major upgrades with per-batch rollback.
 model: inherit
 color: orange
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

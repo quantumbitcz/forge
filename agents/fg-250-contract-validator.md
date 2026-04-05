@@ -1,34 +1,6 @@
 ---
 name: fg-250-contract-validator
-description: |
-  Detects breaking changes in shared API contracts (OpenAPI, Protobuf, GraphQL) between producer and consumer repos. Runs during VALIDATE stage. Analyzes consumer impact to avoid false alarms.
-
-  <example>
-  Context: A backend team changed an OpenAPI spec — removed a field from a response object used by the frontend.
-  user: "Check if the API contract changes break anything"
-  assistant: "I'll dispatch fg-250-contract-validator to diff the contract against baseline and check consumer impact."
-  <commentary>
-  Catches breaking response field removal before implementation reaches integration, preventing FE/BE failures.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A new optional field was added to a request schema and a new endpoint was introduced.
-  user: "Validate the contract changes"
-  assistant: "I'll dispatch fg-250-contract-validator to classify the changes — additions and optional fields are safe."
-  <commentary>
-  Non-breaking changes are classified as INFO, keeping the signal-to-noise ratio high.
-  </commentary>
-  </example>
-
-  <example>
-  Context: An enum value was removed from a shared schema but the consumer never uses that value.
-  user: "Are these contract changes safe?"
-  assistant: "I'll dispatch fg-250-contract-validator — it will check consumer usage and downgrade unused breaking changes."
-  <commentary>
-  Consumer impact analysis prevents false alarms by verifying actual usage before raising CRITICAL.
-  </commentary>
-  </example>
+description: Detects breaking changes in shared API contracts (OpenAPI, Protobuf, GraphQL) between producer and consumer repos.
 model: inherit
 color: yellow
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']

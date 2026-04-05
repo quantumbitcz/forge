@@ -1,7 +1,6 @@
 ---
 name: fg-101-worktree-manager
-description: |
-  Manages git worktree lifecycle — creation, cleanup, branch naming, and stale detection. Called by the orchestrator at PREFLIGHT (create) and LEARN (cleanup). Extracted from fg-100-orchestrator.
+description: Manages git worktree lifecycle — creation, cleanup, branch naming, and stale detection.
 model: inherit
 color: gray
 tools: ['Bash', 'Read', 'Glob']

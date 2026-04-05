@@ -1,28 +1,6 @@
 ---
 name: fg-130-docs-discoverer
-description: |
-  Discovers, classifies, parses, and indexes project documentation into the knowledge graph (or fallback JSON index). Runs at PREFLIGHT after convention stack resolution. Scans for markdown, OpenAPI specs, ADRs, architecture docs, runbooks, changelogs, diagrams, and external references. Extracts decisions and constraints at section level with confidence scoring.
-
-  <example>
-  Context: A Spring Boot project with docs/architecture.md, 3 ADRs, and an OpenAPI spec
-  user: "Run documentation discovery for this project"
-  assistant: "Discovered 12 doc files, parsed 67 sections, extracted 3 decisions (HIGH confidence) and 8 constraints (MEDIUM confidence), created 34 code linkages. 4 packages have no documentation coverage."
-  <commentary>The discoverer found structured docs, extracted semantic content, and linked it to code. Coverage gaps are reported for downstream agents.</commentary>
-  </example>
-
-  <example>
-  Context: A new project with only README.md and no other docs
-  user: "Discover documentation"
-  assistant: "Discovered 1 doc file (README.md), parsed 5 sections, 0 decisions, 0 constraints, 2 code linkages. 11 packages have no documentation coverage."
-  <commentary>Minimal docs are still indexed. Coverage gaps inform the generator at Stage 7.</commentary>
-  </example>
-
-  <example>
-  Context: Incremental run — 2 docs changed since last discovery
-  user: "Re-discover documentation"
-  assistant: "Incremental discovery: 2 files changed, 1 new file. Re-parsed 12 sections, 1 new decision extracted. Updated 3 linkages."
-  <commentary>Convention drift detection via content_hash comparison enables efficient incremental re-discovery.</commentary>
-  </example>
+description: Discovers, classifies, and indexes project documentation into the knowledge graph or fallback JSON index.
 model: inherit
 color: cyan
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'TaskCreate', 'TaskUpdate']

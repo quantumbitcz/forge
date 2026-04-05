@@ -1,28 +1,6 @@
 ---
 name: fg-400-quality-gate
-description: |
-  Multi-batch quality coordinator -- dispatches review agents in sequential batches, runs inline checks, deduplicates findings, scores, and determines GO/CONCERNS/FAIL verdict. Config-driven agent selection via forge.local.md.
-
-  <example>
-  Context: fg-300 has completed implementation -- all tests pass, 8 files changed across core/domain/ and adapter/output/
-  user: "Run quality gate on the order management changes"
-  assistant: "Dispatching quality gate. Batch 1 (Architecture): architecture-reviewer, security-reviewer. 2 agents returned 7 raw findings. After dedup: 5 unique findings (1 CRITICAL, 2 WARNING, 2 INFO). Score: 100 - 20 - 10 - 4 = 66. Dispatching fg-300 for fix cycle 1."
-  <commentary>The quality gate dispatches agents from config batch_1, deduplicates overlapping findings, computes the score, and since there is a CRITICAL, triggers a fix cycle before proceeding.</commentary>
-  </example>
-
-  <example>
-  Context: After fix cycle 1, fg-300 resolved all CRITICALs and most WARNINGs -- re-running quality gate
-  user: "Re-run quality gate after fixes"
-  assistant: "Re-scoring after fix cycle 1. All 2 batches complete + inline checks. 12 raw findings from 4 agents, deduplicated to 8 unique. 0 CRITICAL, 1 WARNING, 3 INFO. Score: 100 - 0 - 5 - 6 = 89. Verdict: PASS (score >= 80, no CRITICALs). Returning all 4 remaining findings to implementer for fix cycle 2."
-  <commentary>Even though PASS allows proceeding, the aim-for-100 policy means all findings are returned for another fix attempt. This is cycle 2 of max 2.</commentary>
-  </example>
-
-  <example>
-  Context: Fix cycle 2 complete -- 1 INFO finding remains that is an intentional trade-off
-  user: "Final quality gate re-score"
-  assistant: "Final score after cycle 2: 0 CRITICAL, 0 WARNING, 1 INFO. Score: 98. 1 remaining INFO is intentional: file-size 380 lines in OrderItemPersistenceAdapterTests.kt -- extracting further would scatter related test fixtures. Verdict: PASS. Documenting trade-off in stage notes."
-  <commentary>Max cycles reached with a high score and no CRITICALs. The unfixable finding is documented with rationale rather than forced into an awkward fix.</commentary>
-  </example>
+description: Multi-batch quality coordinator — dispatches reviewers, deduplicates findings, scores, determines GO/CONCERNS/FAIL verdict.
 model: inherit
 color: red
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'Skill', 'neo4j-mcp', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']

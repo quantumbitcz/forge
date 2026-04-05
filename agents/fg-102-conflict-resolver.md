@@ -1,7 +1,6 @@
 ---
 name: fg-102-conflict-resolver
-description: |
-  Analyzes file and symbol-level conflicts between tasks or features. Produces parallel groups and serial chains. Used by fg-100 (task-level) and fg-090 (feature-level). Queries Neo4j graph for impact analysis.
+description: Analyzes file and symbol-level conflicts between tasks or features. Produces parallel groups and serial chains.
 model: inherit
 color: gray
 tools: ['Read', 'Grep', 'Glob', 'neo4j-mcp']

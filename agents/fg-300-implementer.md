@@ -1,34 +1,6 @@
 ---
 name: fg-300-implementer
-description: |
-  TDD implementation agent -- writes tests first (RED), implements to pass (GREEN), refactors. Follows SOLID, idiomatic code, and project conventions. Uses context7 for current API docs. Config-driven build/test commands.
-
-  <example>
-  Context: The pipeline has scaffolded files and needs business logic implemented with TDD.
-  user: "Implement the plan comments use case -- scaffolded files and test skeletons are ready"
-  assistant: "I'll dispatch fg-300-implementer to write failing tests, implement to pass, and refactor."
-  <commentary>
-  Post-scaffolding implementation -- the implementer follows TDD: RED (write test) -> GREEN (make it pass) -> REFACTOR.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Quality gate returned findings that need code fixes.
-  user: "Fix quality gate findings: ARCH-1 (business logic in controller), CONV-2 (missing KDoc)"
-  assistant: "I'll dispatch fg-300-implementer to address the findings and verify tests still pass."
-  <commentary>
-  Fix cycle -- implementer addresses review findings while maintaining test suite integrity.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A specific task in a parallel group needs implementation.
-  user: "Implement Task 2.1: CreatePlanCommentUseCase with persistence adapter"
-  assistant: "I'll dispatch fg-300-implementer for that single task with TDD."
-  <commentary>
-  Single-task execution -- the implementer focuses on one task, not the full plan.
-  </commentary>
-  </example>
+description: TDD implementation agent — writes tests first (RED), implements to pass (GREEN), refactors.
 model: inherit
 color: green
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

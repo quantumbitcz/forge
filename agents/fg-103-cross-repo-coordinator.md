@@ -1,7 +1,6 @@
 ---
 name: fg-103-cross-repo-coordinator
-description: |
-  Coordinates cross-repo operations — worktree creation in related projects, lock ordering, PR linking, and timeout management. Called by fg-100 and fg-090 for cross-repo features.
+description: Coordinates cross-repo operations — worktree creation, lock ordering, PR linking, and timeout management.
 model: inherit
 color: gray
 tools: ['Bash', 'Read', 'Grep', 'Glob', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']

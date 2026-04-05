@@ -1,21 +1,6 @@
 ---
 name: fg-140-deprecation-refresh
-description: |
-  Refreshes known-deprecations JSON files by querying context7 and package registries for newly deprecated APIs. Runs during PREFLIGHT stage.
-
-  <example>
-  Context: A Spring Boot project was last refreshed 2 weeks ago — new deprecations may exist in spring-security 6.3.
-  user: "Run the pipeline on this feature"
-  assistant: "During PREFLIGHT, dispatching fg-140-deprecation-refresh — context7 available, detected Spring Boot 3.2.4."
-  <commentary>The agent checks last_refreshed dates, finds the spring registry is stale, queries context7 for spring-security 6.3 deprecations, and adds new entries to known-deprecations.json.</commentary>
-  </example>
-
-  <example>
-  Context: A React project with all registries refreshed within the last 7 days.
-  user: "Run the pipeline"
-  assistant: "Deprecation refresh skipped — all registries are fresh (within 7-day window)."
-  <commentary>The agent checks freshness and skips entirely when registries are recent, keeping PREFLIGHT fast.</commentary>
-  </example>
+description: Refreshes known-deprecations JSON files by querying context7 and package registries for newly deprecated APIs.
 model: inherit
 color: cyan
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

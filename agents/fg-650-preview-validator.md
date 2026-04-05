@@ -1,28 +1,6 @@
 ---
 name: fg-650-preview-validator
-description: |
-  Validates preview environments after PR creation. Runs smoke tests, Lighthouse audits, visual regression checks, and Playwright E2E against the preview URL. Posts results as PR comment.
-
-  <example>
-  Context: fg-600-pr-builder created PR #42 for the admin dashboard feature. Preview config is enabled in forge.local.md.
-  user: "Validate the preview for PR #42"
-  assistant: "Preview URL https://pr-42.preview.example.com is live (waited 30s). Smoke: 3/3 routes OK. Lighthouse: performance 72, accessibility 94. Visual regression: 0.02 diff (under 0.05 threshold). E2E: 12/12 passed. Score: 96/100, verdict PASS. Posted results to PR #42."
-  <commentary>The validator waited for the deploy, ran all four check types, scored the results, and posted a summary comment on the PR.</commentary>
-  </example>
-
-  <example>
-  Context: PR #58 preview has a broken JS bundle causing console errors on the user dashboard route.
-  user: "Run preview validation for PR #58"
-  assistant: "Preview URL https://pr-58.preview.example.com is live (waited 45s). Smoke: 2/3 routes OK -- /user/dashboard returned JS errors (TypeError: Cannot read properties of undefined). Lighthouse: performance 38 (below 50 threshold). Visual regression: 0.12 diff (above 0.05 threshold). E2E: 9/12 passed. Score: 63/100, verdict CONCERNS. Posted results and added 'preview-failed' label to PR #58."
-  <commentary>Failures in smoke and lighthouse checks produced warnings and criticals that lowered the score. The validator posted findings and labeled the PR accordingly.</commentary>
-  </example>
-
-  <example>
-  Context: Playwright MCP plugin is not available in this session. PR #71 preview config is enabled.
-  user: "Validate preview for PR #71"
-  assistant: "Playwright MCP unavailable -- skipping smoke and visual regression checks (WARNING logged). Running Lighthouse and E2E only. Lighthouse: performance 65, accessibility 88. E2E: 8/8 passed. Score: 93/100, verdict PASS. Posted partial results to PR #71."
-  <commentary>When Playwright MCP is unavailable, the validator degrades gracefully -- it skips dependent checks, logs a warning, and runs what it can.</commentary>
-  </example>
+description: Validates preview environments after PR creation — smoke tests, Lighthouse, visual regression, Playwright E2E.
 model: inherit
 color: green
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_playwright_playwright__browser_navigate', 'mcp__plugin_playwright_playwright__browser_snapshot', 'mcp__plugin_playwright_playwright__browser_take_screenshot', 'mcp__plugin_playwright_playwright__browser_console_messages', 'mcp__plugin_playwright_playwright__browser_network_requests', 'mcp__plugin_playwright_playwright__browser_wait_for']
