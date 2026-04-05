@@ -105,5 +105,51 @@
     "_severity_map": {
       "error": "WARNING"
     }
+  },
+  "biome": {
+    "error": "WARNING",
+    "warning": "INFO",
+    "nursery.*": "INFO",
+    "correctness.*": "WARNING",
+    "suspicious.*": "WARNING",
+    "security.*": "CRITICAL"
+  },
+  "cppcheck": {
+    "error": "WARNING",
+    "warning": "INFO",
+    "style": "INFO",
+    "performance": "INFO",
+    "portability": "INFO"
+  },
+  "ktlint": {
+    "_severity_map": {
+      "error": "WARNING"
+    }
+  },
+  "phpcs": {
+    "ERROR": "WARNING",
+    "WARNING": "INFO"
+  },
+  "pylint": {
+    "fatal": "CRITICAL",
+    "error": "WARNING",
+    "warning": "INFO",
+    "convention": "INFO",
+    "refactor": "INFO"
+  },
+  "scalafix": {
+    "_severity_map": {
+      "error": "WARNING"
+    }
+  },
+  "spotbugs": {
+    "1": "CRITICAL",
+    "2": "WARNING",
+    "3": "INFO"
+  },
+  "standardrb": {
+    "Error": "WARNING",
+    "Convention": "INFO",
+    "Refactor": "INFO"
   }
 }
