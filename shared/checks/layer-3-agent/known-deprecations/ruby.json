@@ -1,0 +1,46 @@
+{
+  "language": "ruby",
+  "last_refreshed": "2026-04-06",
+  "entries": [
+    {
+      "id": "RB-DEP-001",
+      "pattern": "File\\.exists\\?",
+      "library": "ruby-core",
+      "deprecated_in": "2.1",
+      "removed_in": null,
+      "replacement": "Use File.exist? (without trailing 's')",
+      "source": "https://ruby-doc.org/core/File.html#method-c-exist-3F",
+      "severity": "WARNING"
+    },
+    {
+      "id": "RB-DEP-002",
+      "pattern": "Dir\\.exists\\?",
+      "library": "ruby-core",
+      "deprecated_in": "2.1",
+      "removed_in": null,
+      "replacement": "Use Dir.exist? (without trailing 's')",
+      "source": "https://ruby-doc.org/core/Dir.html#method-c-exist-3F",
+      "severity": "WARNING"
+    },
+    {
+      "id": "RB-DEP-003",
+      "pattern": "URI\\.escape\\(|URI\\.encode\\(",
+      "library": "uri",
+      "deprecated_in": "2.7",
+      "removed_in": "3.0",
+      "replacement": "Use CGI.escape or URI::DEFAULT_PARSER.escape",
+      "source": "https://ruby-doc.org/stdlib/libdoc/uri/rdoc/URI.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "RB-DEP-004",
+      "pattern": "Fixnum|Bignum",
+      "library": "ruby-core",
+      "deprecated_in": "2.4",
+      "removed_in": null,
+      "replacement": "Use Integer; Fixnum and Bignum were unified into Integer",
+      "source": "https://www.ruby-lang.org/en/news/2016/12/25/ruby-2-4-0-released/",
+      "severity": "WARNING"
+    }
+  ]
+}

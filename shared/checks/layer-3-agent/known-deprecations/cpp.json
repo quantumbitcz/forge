@@ -1,0 +1,56 @@
+{
+  "language": "cpp",
+  "last_refreshed": "2026-04-06",
+  "entries": [
+    {
+      "id": "CPP-DEP-001",
+      "pattern": "std::auto_ptr",
+      "library": "libstdc++",
+      "deprecated_in": "C++11",
+      "removed_in": "C++17",
+      "replacement": "Use std::unique_ptr for exclusive ownership",
+      "source": "https://en.cppreference.com/w/cpp/memory/auto_ptr",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CPP-DEP-002",
+      "pattern": "std::random_shuffle",
+      "library": "libstdc++",
+      "deprecated_in": "C++14",
+      "removed_in": "C++17",
+      "replacement": "Use std::shuffle with a random engine",
+      "source": "https://en.cppreference.com/w/cpp/algorithm/random_shuffle",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CPP-DEP-003",
+      "pattern": "std::binary_function|std::unary_function",
+      "library": "libstdc++",
+      "deprecated_in": "C++11",
+      "removed_in": "C++17",
+      "replacement": "Use lambda expressions or custom function objects",
+      "source": "https://en.cppreference.com/w/cpp/utility/functional/binary_function",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CPP-DEP-004",
+      "pattern": "std::bind1st|std::bind2nd",
+      "library": "libstdc++",
+      "deprecated_in": "C++11",
+      "removed_in": "C++17",
+      "replacement": "Use std::bind or lambda expressions",
+      "source": "https://en.cppreference.com/w/cpp/utility/functional/bind12",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CPP-DEP-005",
+      "pattern": "register\\s+(?:int|char|float|double|long|short|unsigned|signed|auto|void)",
+      "library": "language",
+      "deprecated_in": "C++11",
+      "removed_in": "C++17",
+      "replacement": "Remove register keyword; modern compilers optimize automatically",
+      "source": "https://en.cppreference.com/w/cpp/language/storage_duration",
+      "severity": "CRITICAL"
+    }
+  ]
+}

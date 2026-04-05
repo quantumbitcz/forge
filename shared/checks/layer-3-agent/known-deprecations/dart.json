@@ -1,0 +1,46 @@
+{
+  "language": "dart",
+  "last_refreshed": "2026-04-06",
+  "entries": [
+    {
+      "id": "DART-DEP-001",
+      "pattern": "(?:new )\\w+\\(",
+      "library": "dart-core",
+      "deprecated_in": "2.0",
+      "removed_in": null,
+      "replacement": "Omit 'new' keyword; it is optional since Dart 2",
+      "source": "https://dart.dev/language/constructors",
+      "severity": "WARNING"
+    },
+    {
+      "id": "DART-DEP-002",
+      "pattern": "@deprecated",
+      "library": "dart-core",
+      "deprecated_in": null,
+      "removed_in": null,
+      "replacement": "Check specific API for replacement guidance",
+      "source": "https://api.dart.dev/stable/dart-core/Deprecated-class.html",
+      "severity": "WARNING"
+    },
+    {
+      "id": "DART-DEP-003",
+      "pattern": "HttpClient\\(\\)|HttpClientRequest",
+      "library": "dart:io",
+      "deprecated_in": null,
+      "removed_in": null,
+      "replacement": "Consider package:http or package:dio for higher-level HTTP",
+      "source": "https://pub.dev/packages/http",
+      "severity": "WARNING"
+    },
+    {
+      "id": "DART-DEP-004",
+      "pattern": "part of ['\"]",
+      "library": "dart-core",
+      "deprecated_in": "2.0",
+      "removed_in": null,
+      "replacement": "Use part of <library-name> without quotes",
+      "source": "https://dart.dev/guides/libraries/create-packages",
+      "severity": "WARNING"
+    }
+  ]
+}

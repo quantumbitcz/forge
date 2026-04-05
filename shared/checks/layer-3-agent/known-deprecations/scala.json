@@ -1,0 +1,46 @@
+{
+  "language": "scala",
+  "last_refreshed": "2026-04-06",
+  "entries": [
+    {
+      "id": "SC-DEP-001",
+      "pattern": "scala\\.util\\.parsing",
+      "library": "scala-library",
+      "deprecated_in": "2.11",
+      "removed_in": "2.13",
+      "replacement": "Use scala-parser-combinators library (separate artifact)",
+      "source": "https://github.com/scala/scala-parser-combinators",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "SC-DEP-002",
+      "pattern": "JavaConversions\\b",
+      "library": "scala-library",
+      "deprecated_in": "2.12",
+      "removed_in": "2.13",
+      "replacement": "Use scala.jdk.CollectionConverters (Scala 2.13+) or JavaConverters",
+      "source": "https://docs.scala-lang.org/overviews/collections-2.13/conversions-between-java-and-scala-collections.html",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "SC-DEP-003",
+      "pattern": "scala\\.xml\\.",
+      "library": "scala-library",
+      "deprecated_in": "2.11",
+      "removed_in": "2.13",
+      "replacement": "Use scala-xml library (separate artifact)",
+      "source": "https://github.com/scala/scala-xml",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "SC-DEP-004",
+      "pattern": "procedure syntax|def \\w+\\([^)]*\\)\\s*\\{",
+      "library": "scala-language",
+      "deprecated_in": "2.13",
+      "removed_in": "3.0",
+      "replacement": "Use explicit ': Unit =' return type instead of procedure syntax",
+      "source": "https://docs.scala-lang.org/scala3/reference/dropped-features/procedure-syntax.html",
+      "severity": "WARNING"
+    }
+  ]
+}

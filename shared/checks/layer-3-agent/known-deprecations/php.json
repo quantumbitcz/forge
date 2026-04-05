@@ -1,0 +1,56 @@
+{
+  "language": "php",
+  "last_refreshed": "2026-04-06",
+  "entries": [
+    {
+      "id": "PHP-DEP-001",
+      "pattern": "mysql_connect\\(|mysql_query\\(|mysql_fetch",
+      "library": "ext-mysql",
+      "deprecated_in": "5.5",
+      "removed_in": "7.0",
+      "replacement": "Use PDO or mysqli extension",
+      "source": "https://www.php.net/manual/en/migration70.removed-exts-sapis.php",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PHP-DEP-002",
+      "pattern": "ereg\\(|ereg_replace\\(|eregi\\(",
+      "library": "ext-ereg",
+      "deprecated_in": "5.3",
+      "removed_in": "7.0",
+      "replacement": "Use preg_match() and preg_replace() with PCRE patterns",
+      "source": "https://www.php.net/manual/en/migration70.removed-exts-sapis.php",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PHP-DEP-003",
+      "pattern": "create_function\\s*\\(",
+      "library": "php-core",
+      "deprecated_in": "7.2",
+      "removed_in": "8.0",
+      "replacement": "Use anonymous functions (closures) instead",
+      "source": "https://www.php.net/manual/en/migration80.incompatible.php",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PHP-DEP-004",
+      "pattern": "each\\s*\\(",
+      "library": "php-core",
+      "deprecated_in": "7.2",
+      "removed_in": "8.0",
+      "replacement": "Use foreach loop or array_key_first()/array_values()",
+      "source": "https://www.php.net/manual/en/migration80.incompatible.php",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "PHP-DEP-005",
+      "pattern": "utf8_encode\\(|utf8_decode\\(",
+      "library": "php-core",
+      "deprecated_in": "8.2",
+      "removed_in": null,
+      "replacement": "Use mb_convert_encoding() with explicit charset",
+      "source": "https://www.php.net/manual/en/migration82.deprecated.php",
+      "severity": "WARNING"
+    }
+  ]
+}

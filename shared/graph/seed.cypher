@@ -2043,6 +2043,7 @@ MATCH (a:Agent {name: 'fg-590-pre-ship-verifier'}), (c:SharedContract {name: 've
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'git-conventions'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-600-pr-builder'}), (c:SharedContract {name: 'verification-evidence'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-650-preview-validator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
