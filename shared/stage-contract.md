@@ -66,7 +66,10 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered (or skipped if `documentation.enabled` is `false`). Worktree created at `.forge/worktree` with ticket-based branch name (unless `--dry-run`). Tracking ticket created/resolved in `.forge/tracking/` (if tracking initialized).
 
-**Documentation discovery failure:** If `documentation.enabled` is `true` but `fg-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents (fg-350-docs-generator, docs-consistency-reviewer) check this flag and operate with degraded documentation context — they skip cross-referencing and coverage gap analysis but still generate docs for changed files.
+**Documentation discovery failure:** If `documentation.enabled` is `true` but `fg-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents check this flag and operate with degraded documentation context:
+
+- **`fg-350-docs-generator` (Stage 7):** Generate docs for changed files only. Skip cross-referencing, coverage gap analysis, and doc structure recommendations. Do not create new doc files that would normally be suggested by discovery results.
+- **`docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report an INFO finding: `DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.`
 
 ---
 

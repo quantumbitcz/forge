@@ -134,12 +134,21 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
               (reset to 0) for its own delta calculations, not score_history.
            -> NOTE: total_iterations is NOT reset — it counts across all phases
               including restarts. The global cap (max_iterations) applies cumulatively.
+           -> NOTE: After restart, the first perfection cycle will have phase_iterations = 0
+              and last_score_delta = 0. Per the plateau detection logic (phase_iterations > 0
+              guard), this first cycle is exempt from plateau counting — it establishes
+              a new baseline. This is correct and intentional.
         -> increment total_iterations
 ```
 
 **Global budget interaction:** Every `total_iterations` increment also increments `state.json.total_retries`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of convergence state.
 
-**SCOUT-* finding filtering:** When the quality gate returns findings to the convergence engine, filter out `SCOUT-*` findings before dispatching to the implementer. SCOUT items represent improvements already made — they do not affect the score and should not be re-sent as "fixes to make." SCOUT findings are preserved in stage notes for recap and retrospective purposes only.
+**SCOUT-* finding filtering:** SCOUT-* findings are filtered at two points:
+
+1. **Quality gate (`fg-400`)** excludes SCOUT-* from score calculation (0-point deduction). SCOUT findings are still included in the quality gate's full findings list returned to the orchestrator.
+2. **Orchestrator (`fg-100`)** strips SCOUT-* findings from the list before dispatching to the implementer (`fg-300`). This is the definitive filtering point — the orchestrator owns the dispatch decision.
+
+SCOUT items represent improvements already made — they do not affect the score and should not be re-sent as "fixes to make." SCOUT findings are preserved in stage notes for recap and retrospective purposes only.
 
 **Phase timeout:** Individual phases do not have explicit time limits — the convergence engine relies on iteration caps (`max_test_cycles` for Phase 1, `max_review_cycles` for Phase 2, `max_iterations` globally) and the global retry budget (`total_retries_max`) to bound execution. Wall-clock time is tracked in `state.json.cost.wall_time_seconds` for retrospective analysis but is not used as a termination condition. If the orchestrator detects no progress (e.g., identical errors across 3 consecutive iterations), it should escalate without waiting for budget exhaustion.
 
@@ -251,7 +260,21 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 }
 ```
 
-**Relationship to existing counters:** `test_cycles` and `quality_cycles` still exist -- used by `fg-500` and `fg-400` internally. The convergence engine's `total_iterations` is the outer loop counter.
+**Relationship to existing counters:** The pipeline uses four iteration counters at different scopes:
+
+| Counter | Scope | Managed By | Resets | Feeds Into |
+|---------|-------|-----------|--------|------------|
+| `verify_fix_count` | Phase A (build/lint) inner cap | Orchestrator | Per-run only (not per-phase) | `total_retries` |
+| `test_cycles` | Phase 1B (test gate) inner cap | `fg-500-test-gate` | Per-run only (not per-phase) | `total_retries` |
+| `quality_cycles` | Phase 2 (review) inner cap | `fg-400-quality-gate` | Per-run only (not per-phase) | `total_retries` |
+| `phase_iterations` | Current convergence phase | Convergence engine | On phase transition (including safety gate restart) | — |
+| `total_iterations` | Entire convergence lifecycle | Convergence engine | Never | `total_retries` |
+
+**Key relationships:**
+- `quality_cycles` and `test_cycles` are **inner-loop** counters — they track retries within a single convergence iteration. When convergence is active, `max_review_cycles` defaults to 1, so the quality gate runs once per convergence iteration.
+- `phase_iterations` is the **mid-loop** counter — it tracks how many convergence iterations have occurred in the current phase. It resets on phase transitions (correctness → perfection, or safety gate restart → correctness).
+- `total_iterations` is the **outer-loop** counter — cumulative across all phases and restarts. It is the primary budget enforcement counter alongside `total_retries`.
+- Every increment of `total_iterations` also increments `total_retries`. Inner counters (`verify_fix_count`, `test_cycles`, `quality_cycles`) independently increment `total_retries` as well.
 
 ## Retrospective Auto-Tuning
 
