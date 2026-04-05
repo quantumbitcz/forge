@@ -213,6 +213,53 @@ Each task AC gets an explicit verification method:
 | `verify: command` | Build, lint, migration |
 | `verify: inspect` | Pattern compliance, naming (quality-gate agent) |
 
+### 3.12 Visual Design Preview (Frontend Features)
+
+When the requirement involves frontend UI changes AND the visual companion is available, present design alternatives visually before finalizing the plan.
+
+**Activation conditions** (ALL must be true):
+1. The requirement involves frontend UI (component creation, layout changes, page design)
+2. The project has a frontend framework configured (`framework:` is react, vue, svelte, angular, sveltekit, or nextjs)
+3. `frontend_preview.enabled` is `true` in `forge.local.md` (default: `true`)
+4. `autonomous` is `false` in `forge-config.md` (skip visual preview in autonomous mode — pick design based on `shared/frontend-design-theory.md` principles and log `[AUTO-DESIGN]`)
+5. The superpowers visual companion is available (check `state.json.integrations.visual_companion`)
+
+**If all conditions met:**
+
+1. **Generate 2-3 design directions** based on the requirement, exploration results, and existing design patterns in the codebase. Each direction should represent a meaningfully different approach (e.g., sidebar vs top-nav, card grid vs table, minimal vs feature-rich).
+
+2. **Start the visual companion server**:
+   ```bash
+   # Find superpowers plugin path
+   SUPERPOWERS_DIR=$(find ~/.claude/plugins -path "*/superpowers/*/skills/brainstorming" -type d | head -1)
+   SUPERPOWERS_SCRIPTS="$(dirname "$SUPERPOWERS_DIR")/scripts"
+
+   # Start server
+   $SUPERPOWERS_SCRIPTS/start-server.sh --project-dir $PROJECT_ROOT
+   ```
+   Capture `screen_dir` and `state_dir` from the response.
+
+3. **Write mockup HTML** for each design direction to `screen_dir`. Use content fragments (no full HTML documents). Use superpowers CSS classes:
+   - `.options` / `.option` with `data-choice` and `onclick="toggleSelect(this)"` for selectable choices
+   - `.cards` / `.card` for visual design cards
+   - `.mockup` / `.mockup-body` for wireframe previews
+   - `.split` for side-by-side comparison
+   - `.mock-nav`, `.mock-sidebar`, `.mock-content`, `.mock-button` for wireframe blocks
+
+4. **Present to user**: Tell them the URL and ask them to view and select. Read `$STATE_DIR/events` on next turn for click selections.
+
+5. **Capture selection**: Record the user's chosen design direction. Embed it as a plan constraint:
+   ```
+   ## Design Constraint
+   User selected: {Design Direction Name}
+   Description: {brief description of chosen approach}
+   Key decisions: {layout, color direction, interaction pattern}
+   ```
+
+6. **Stop server** (unless `frontend_preview.keep_alive_for_polish` is `true` — keep for fg-320 to reuse during REVIEW stage).
+
+**If conditions NOT met**: Skip visual preview. Use text-based design alternative descriptions in the Challenge Brief as already done today.
+
 ---
 
 ## 4. Replanning After REVISE
