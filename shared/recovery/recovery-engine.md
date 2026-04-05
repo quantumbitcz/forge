@@ -325,6 +325,24 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 When a recovery strategy returns `ESCALATE`, the recovery engine does **not** automatically try alternate strategies. It reports `ESCALATE` to the orchestrator, which decides whether to retry with different parameters or escalate to the user. The recovery budget is cumulative across the entire pipeline run (not per-stage) and does not reset between stages.
 
+### Multi-Error Ordering
+
+When a single pipeline action produces multiple simultaneous errors (e.g., network timeout AND disk full), recover in this order:
+
+1. Classify all errors by severity (per `error-taxonomy.md` priority order).
+2. Attempt recovery for the **highest-severity recoverable** error first.
+3. If recovery succeeds, retry the original action — the other errors may resolve as a side effect.
+4. If the original errors persist after retry, repeat from step 1 with the remaining errors.
+5. Each recovery attempt consumes budget independently.
+
+### Budget Reset Policy
+
+The recovery budget resets to `0.0` at PREFLIGHT of each new `/forge-run` invocation. Budget is per-run, not per-session — a failed first run does not starve a subsequent run of recovery capacity.
+
+### Sprint Mode Budget Scope
+
+In sprint mode, each feature's `fg-100-orchestrator` instance has its **own independent recovery budget** (max_weight: 5.5). The sprint orchestrator (`fg-090`) does NOT enforce a cross-feature budget cap. Rationale: features run in isolation with separate state files, so recovery failures in one feature should not affect another.
+
 ### Budget Warning
 
 When `total_weight >= 4.4` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
