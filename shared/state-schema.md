@@ -51,7 +51,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -200,7 +200,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.2.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.3.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
@@ -235,6 +235,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `convergence.safety_gate_failures` | integer | Yes | Consecutive safety gate failures. When >= 2, the orchestrator escalates immediately (cross-phase oscillation detected — Phase 2 fixes keep breaking tests). Resets to 0 on safety gate pass. Default: 0. |
 | `convergence.unfixable_findings` | array | Yes | Findings that survived all iterations with documented rationale. Each entry: `{ "category": "<CATEGORY-CODE>", "file": "<path>", "line": <int>, "severity": "<CRITICAL\|WARNING\|INFO>", "reason": "<why not fixed>", "options": ["<option1>", "<option2>"] }`. Populated when Phase 2 converges below target. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). The `neo4j` integration includes `last_build_sha` (SHA of the commit the graph was built from) and `node_count` (total nodes in the graph) — set by the `graph-init` skill; when available, the orchestrator pre-queries graph context at stage boundaries. Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
+| `visual_companion` | boolean | Whether the superpowers visual companion is available. Detected at PREFLIGHT. |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | **Distinct from `components`.** Per-module state for cross-repo multi-module projects (different git repos with different frameworks). Each entry: `{ "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. `"FAILED"` and `"BLOCKED"` are module-only states (see below). Blocked modules include `blocked_by`. The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects. **Relationship to `components`:** `components` tracks per-service state within a single monorepo (same git repo, potentially different frameworks). `modules` tracks per-repo state across related repositories. A monorepo uses `components`; a multi-repo architecture uses `modules`. Both can be active simultaneously (e.g., a monorepo backend component with a cross-repo mobile frontend module). |
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
@@ -355,6 +356,45 @@ Tracks graph update state for incremental updates at stage boundaries.
 - Updated at post-IMPLEMENT, post-VERIFY, pre-REVIEW by the orchestrator
 - `stale` set to `true` by orchestrator when `files_changed` grows; reset to `false` after each successful update
 - Reviewers querying the graph check `stale` — if `true`, log INFO but proceed
+
+---
+
+### `decomposition` (object, optional)
+
+Present when auto-decomposition was triggered (via fast scan or deep scan). Null/absent otherwise.
+
+```json
+{
+  "decomposition": {
+    "source": "fast_scan | deep_scan",
+    "original_requirement": "string",
+    "extracted_features": [
+      {
+        "id": "feat-1",
+        "title": "string",
+        "description": "string",
+        "scope": "S | M | L",
+        "domain": "string",
+        "depends_on": ["feat-2"]
+      }
+    ],
+    "routing": "parallel | serial | single",
+    "user_selection": ["feat-1", "feat-3"],
+    "classified_intent": "bugfix | migration | bootstrap | multi-feature | vague | standard",
+    "classification_signals": ["signal1", "signal2"]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `source` | string | How decomposition was triggered: `fast_scan` (pre-explore) or `deep_scan` (post-explore) |
+| `original_requirement` | string | Original requirement text before decomposition |
+| `extracted_features` | array | Extracted features with id, title, description, scope, domain, dependencies |
+| `routing` | string | Execution mode: `parallel`, `serial`, or `single` (cherry-picked) |
+| `user_selection` | array | Feature IDs selected for execution (may be subset) |
+| `classified_intent` | string | Intent classification result from forge-run |
+| `classification_signals` | array | Signals that triggered the classification |
 
 ---
 
@@ -544,6 +584,7 @@ The recovery engine checks the `version` field before parsing state files:
 |------|----|-------------|---------|
 | 1.0.0 | 1.1.0 | `ticket_id`, `branch_name`, `tracking_dir` | `null`, `""`, `null` |
 | 1.1.0 | 1.2.0 | `graph` | `{ "last_update_stage": -1, "last_update_files": [], "stale": false }` |
+| 1.2.0 | 1.3.0 | `decomposition` | `null` |
 
 **Manual reset:** Use `/forge-reset` to clear stale state if automatic migration is insufficient.
 
@@ -565,6 +606,7 @@ The recovery engine checks the `version` field before parsing state files:
 | `"MIGRATION_PAUSED"` | - | Migration paused due to rollback threshold or user intervention |
 | `"MIGRATION_CLEANUP"` | - | Removing old dependencies and shims |
 | `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
+| `"DECOMPOSED"` | - | Requirement decomposed into multiple features; sprint orchestrator taking over |
 
 Migration states are used exclusively by `fg-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
 
