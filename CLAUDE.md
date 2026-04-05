@@ -229,9 +229,9 @@ All 21 frameworks share the same base structure — see their `conventions.md` f
 
 ```bash
 ./tests/run-all.sh                  # Full suite (~30s)
-./tests/run-all.sh structural       # 39 checks, no bats needed
-./tests/run-all.sh unit             # 12 test files
-./tests/run-all.sh contract         # 27 test files
+./tests/run-all.sh structural       # 51 checks, no bats needed
+./tests/run-all.sh unit             # 11 test files
+./tests/run-all.sh contract         # 31 test files
 ./tests/run-all.sh scenario         # 12 test files
 ./tests/lib/bats-core/bin/bats tests/unit/scoring.bats  # Single test file
 ```

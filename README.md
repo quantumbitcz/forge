@@ -253,14 +253,14 @@ Key sections:
 The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
 
 ```bash
-# Run all tests (~357 tests, ~30s)
+# Run all tests (~623 tests, ~30s)
 ./tests/run-all.sh
 
 # Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (39 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (98 tests)
-./tests/run-all.sh contract     # Document contract compliance (151 tests)
-./tests/run-all.sh scenario     # Multi-script integration (72 tests)
+./tests/run-all.sh structural   # Plugin integrity (51 checks, no bats needed)
+./tests/run-all.sh unit         # Shell script behavior (141 tests)
+./tests/run-all.sh contract     # Document contract compliance (349 tests)
+./tests/run-all.sh scenario     # Multi-script integration (82 tests)
 ```
 
 ## Agents
@@ -496,7 +496,7 @@ forge/
     (each framework contains: conventions.md, local-template.md,
      forge-config-template.md, rules-override.json,
      known-deprecations.json)
-  tests/                                # 4-tier test suite (~357 tests)
+  tests/                                # 4-tier test suite (~623 tests)
     run-all.sh                          #   Test runner (all tiers or individual)
     validate-plugin.sh                  #   Structural validation (no bats needed)
     fixtures/                           #   Test fixture data
