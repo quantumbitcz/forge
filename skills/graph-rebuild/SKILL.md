@@ -37,12 +37,12 @@ Run the health check script:
 
 Inform the user what will happen:
 
-"This will delete all project nodes (`ProjectFile`, `ProjectClass`, `ProjectFunction`, `ProjectPackage`, `ProjectDependency`) and rebuild them from the current codebase. The plugin seed graph will not be affected."
+"This will delete all project nodes (`ProjectFile`, `ProjectClass`, `ProjectFunction`, `ProjectPackage`, `ProjectDependency`) and rebuild them from the current codebase. The plugin seed graph will not be affected. Bugfix enrichment data (bug_fix_count, last_bug_fix_date) is preserved by default."
 
 Use `AskUserQuestion` to confirm:
 - Header: "Graph Rebuild"
-- Question: "This will delete all project graph nodes and rebuild them from the current codebase. The plugin seed graph is not affected."
-- Options: "Rebuild — delete project nodes and rebuild from codebase" / "Cancel — keep current graph"
+- Question: "This will delete all project graph nodes and rebuild them from the current codebase. The plugin seed graph is not affected. Bugfix enrichment is preserved unless --clear-enrichment is specified."
+- Options: "Rebuild — delete project nodes and rebuild from codebase (preserves enrichment)" / "Cancel — keep current graph"
 
 ---
 
@@ -54,11 +54,24 @@ Accept optional `--component <name>` argument:
 
 Deletion is always scoped to current project — never touches other projects' nodes.
 
+### Enrichment Preservation
+
+By default, `ProjectFile` enrichment properties (`bug_fix_count`, `last_bug_fix_date`) are **preserved** across rebuilds. The deletion step saves enrichment data before deleting, and the rebuild step restores it.
+
+Accept optional `--clear-enrichment` flag to wipe all enrichment data. Useful when enrichment is stale or after significant codebase restructuring.
+
 ---
 
 ### Step 3: DELETE PROJECT NODES
 
-Delete all project-derived nodes and their relationships:
+**Step 3a: Save enrichment data** (skip if `--clear-enrichment`):
+
+```bash
+echo "MATCH (n:ProjectFile) WHERE n.bug_fix_count > 0 RETURN n.path AS path, n.bug_fix_count AS count, n.last_bug_fix_date AS date" | \
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain > /tmp/forge-enrichment-backup.csv
+```
+
+**Step 3b: Delete all project-derived nodes** and their relationships:
 
 ```bash
 echo "MATCH (n) WHERE n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n:ProjectPackage OR n:ProjectDependency DETACH DELETE n" | \
@@ -91,6 +104,22 @@ Re-run the build script and pipe output to Neo4j:
 ```bash
 git rev-parse HEAD > .forge/graph/.last-build-sha
 ```
+
+### Step 4b: RESTORE ENRICHMENT (skip if `--clear-enrichment`)
+
+If enrichment data was saved in Step 3a and the backup file is non-empty, restore it:
+
+```bash
+# Parse the CSV and apply enrichment via MERGE
+while IFS=',' read -r path count date; do
+  [ -z "$path" ] && continue
+  echo "MATCH (n:ProjectFile {path: '$path'}) SET n.bug_fix_count = $count, n.last_bug_fix_date = '$date';"
+done < /tmp/forge-enrichment-backup.csv | \
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
+```
+
+- If restoration fails: log WARNING "Enrichment restoration failed — enrichment data lost. Bugfix telemetry will restart from zero." Continue — this is non-blocking.
+- Clean up: `rm -f /tmp/forge-enrichment-backup.csv`
 
 ---
 

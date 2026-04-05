@@ -285,6 +285,8 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 
 - Scoring: `critical_weight >= 10`, `warning_weight >= 1`, `warning_weight > info_weight`, `info_weight >= 0`, `pass_threshold >= 60`, `concerns_threshold >= 40`, `concerns_threshold < pass_threshold`, `pass_threshold - concerns_threshold >= 10`, `oscillation_tolerance` 0-20. Global retry budget: `total_retries_max` 5-30.
 - Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100.
+- Sprint: `sprint.poll_interval_seconds` 10-120 (default: 30), `sprint.dependency_timeout_minutes` 5-180 (default: 60).
+- Tracking: `tracking.archive_after_days` 30-365 or 0 to disable (default: 90).
 
 ### Pipeline modes
 
@@ -294,7 +296,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - **Migration mode:** All 10 stages run. Stage 2 uses `fg-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates.
 - **Autonomous mode:** `autonomous: true` in `forge-config.md` replaces all AskUserQuestion with auto-selection (logged with `[AUTO]` prefix). Plans auto-approved after validator passes. Tasks still created. Pipeline never pauses except on unrecoverable CRITICAL errors.
-- **Sprint mode:** `/forge-run --sprint` or `/forge-run --parallel "A" "B" "C"`. Dispatches `fg-090-sprint-orchestrator` which decomposes features, analyzes independence via `fg-102-conflict-resolver`, and dispatches parallel `fg-100-orchestrator` instances per feature. Per-feature isolation: `.forge/runs/{feature-id}/` for state, `.forge/worktrees/{feature-id}/` for git worktrees. Shared Neo4j graph for cross-feature conflict detection. Cross-repo features execute contract producers before consumers. State in `.forge/sprint-state.json`. Sprint orchestrator polls per-feature state every 30s (configurable via `sprint.poll_interval_seconds`). Conflict resolution `serialize` = first feature completes SHIP before second enters IMPLEMENT. `waiting` repos pause at PREFLIGHT until dependency resolves or times out. See `shared/sprint-state-schema.md`.
+- **Sprint mode:** `/forge-run --sprint` or `/forge-run --parallel "A" "B" "C"`. Dispatches `fg-090-sprint-orchestrator` which decomposes features, analyzes independence via `fg-102-conflict-resolver`, and dispatches parallel `fg-100-orchestrator` instances per feature. Per-feature isolation: `.forge/runs/{feature-id}/` for state, `.forge/worktrees/{feature-id}/` for git worktrees. Shared Neo4j graph for cross-feature conflict detection. Cross-repo features execute contract producers before consumers. State in `.forge/sprint-state.json`. Sprint orchestrator polls per-feature state every 30s (configurable via `sprint.poll_interval_seconds`). Conflict resolution `serialize` = first feature completes SHIP before second enters IMPLEMENT. `waiting` repos pause until dependency resolves or `sprint.dependency_timeout_minutes` (default: 60) expires. See `shared/sprint-state-schema.md`.
 
 ### Convergence & review
 
