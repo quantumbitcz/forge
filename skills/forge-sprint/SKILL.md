@@ -8,7 +8,18 @@ description: |
     /forge-sprint                          — reads current active Linear cycle
     /forge-sprint CYC-42                   — reads specific Linear cycle
     /forge-sprint "Feature A" "Feature B"  — manual feature list
-allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'neo4j-mcp']
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - Agent
+  - TaskCreate
+  - TaskUpdate
+  - AskUserQuestion
+  - EnterPlanMode
+  - ExitPlanMode
+  - neo4j-mcp
 ---
 
 # Sprint Execution
