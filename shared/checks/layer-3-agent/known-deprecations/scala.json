@@ -40,7 +40,7 @@
       "removed_in": "3.0",
       "replacement": "Use explicit ': Unit =' return type instead of procedure syntax",
       "source": "https://docs.scala-lang.org/scala3/reference/dropped-features/procedure-syntax.html",
-      "severity": "WARNING"
+      "severity": "CRITICAL"
     }
   ]
 }

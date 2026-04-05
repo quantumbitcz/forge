@@ -22,6 +22,7 @@ source "${PLUGIN_ROOT}/shared/platform.sh"
 
 # Requires Bash 4.0+ (uses associative arrays)
 require_bash4 "incremental-update.sh" || exit 1
+
 PROJECT_ROOT=""
 
 # --- Argument parsing ---

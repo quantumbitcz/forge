@@ -44,7 +44,7 @@
     },
     {
       "id": "CPP-DEP-005",
-      "pattern": "register\\s+(?:int|char|float|double|long|short|unsigned|signed|auto|void)",
+      "pattern": "\\bregister\\s+(?:int|char|float|double|long|short|unsigned|signed|auto|void)",
       "library": "language",
       "deprecated_in": "C++11",
       "removed_in": "C++17",

@@ -4,7 +4,7 @@
   "entries": [
     {
       "id": "DART-DEP-001",
-      "pattern": "(?:new )\\w+\\(",
+      "pattern": "\\bnew\\s+\\w+\\(",
       "library": "dart-core",
       "deprecated_in": "2.0",
       "removed_in": null,
@@ -14,12 +14,12 @@
     },
     {
       "id": "DART-DEP-002",
-      "pattern": "@deprecated",
-      "library": "dart-core",
-      "deprecated_in": null,
+      "pattern": "\\bJSON\\.decode\\(|\\bJSON\\.encode\\(",
+      "library": "dart:convert",
+      "deprecated_in": "2.0",
       "removed_in": null,
-      "replacement": "Check specific API for replacement guidance",
-      "source": "https://api.dart.dev/stable/dart-core/Deprecated-class.html",
+      "replacement": "Use jsonDecode() and jsonEncode() top-level functions",
+      "source": "https://api.dart.dev/stable/dart-convert/jsonDecode.html",
       "severity": "WARNING"
     },
     {
