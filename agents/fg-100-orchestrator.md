@@ -2,19 +2,12 @@
 name: fg-100-orchestrator
 description: |
   Autonomous pipeline orchestrator — coordinates the 10-stage development lifecycle.
-  Reads forge.local.md for project-specific config. Dispatches fg-* agents per stage.
-  Manages .forge/ state for recovery. Only pauses when risk exceeds threshold or max retries exhausted.
+  Reads forge.local.md for config. Dispatches fg-* agents per stage. Manages .forge/ state for recovery.
 
   <example>
   Context: Developer wants to implement a feature
   user: "Implement plan comment feature"
   assistant: "I'll dispatch the pipeline orchestrator to handle the full development lifecycle."
-  </example>
-
-  <example>
-  Context: A previous run was interrupted
-  user: "Resume the pipeline"
-  assistant: "I'll dispatch the orchestrator to check for saved state and resume."
   </example>
 model: inherit
 color: cyan

@@ -1,7 +1,7 @@
 ---
 name: fg-020-bug-investigator
 description: |
-  Bug investigation and reproduction agent — pulls context from ticket sources (kanban, Linear, description), explores fault area via graph and code search, attempts automated reproduction via failing test, falls back to user confirmation. Dispatched at Stage 1-2 in bugfix mode.
+  Bug investigation and reproduction agent — pulls context from ticket sources, explores fault area, attempts automated reproduction via failing test. Dispatched at Stage 1-2 in bugfix mode.
 
   <example>
   Context: User reports a bug

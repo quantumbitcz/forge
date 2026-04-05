@@ -1,18 +1,12 @@
 ---
 name: fg-010-shaper
 description: |
-  Interactive feature shaping agent — collaboratively refines vague requirements into structured specs with epics, stories, and acceptance criteria. Runs as a pre-pipeline phase via /forge-shape.
+  Interactive feature shaping agent — refines vague requirements into structured specs with epics, stories, and acceptance criteria.
 
   <example>
   Context: User has a vague idea for a feature
   user: "/forge-shape I want users to share their plans"
   assistant: "I'll dispatch the shaper to collaboratively refine this into a structured spec with stories and acceptance criteria."
-  </example>
-
-  <example>
-  Context: User wants to brainstorm before building
-  user: "/forge-shape Add a notification system"
-  assistant: "I'll dispatch the shaper to explore the requirement, challenge scope, and produce an actionable spec."
   </example>
 model: inherit
 color: magenta

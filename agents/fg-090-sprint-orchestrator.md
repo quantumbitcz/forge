@@ -1,24 +1,12 @@
 ---
 name: fg-090-sprint-orchestrator
 description: |
-  Sprint-level orchestrator — decomposes a sprint into independent features, analyzes conflicts, and dispatches parallel fg-100 pipeline instances. Supports Linear sprint/cycle input and manual feature lists. Manages per-feature isolation via git worktrees and shared Neo4j graph.
-
-  <example>
-  Context: User wants to implement an entire sprint in parallel
-  user: "/forge-run --sprint"
-  assistant: "I'll dispatch the sprint orchestrator to read the current Linear cycle, analyze feature independence, and run features in parallel."
-  </example>
+  Sprint-level orchestrator — decomposes a sprint into independent features and dispatches parallel fg-100 pipeline instances. Supports Linear cycles and manual feature lists.
 
   <example>
   Context: User provides manual feature list
   user: "/forge-run --parallel 'Add user avatars' 'Fix checkout flow' 'Add export CSV'"
   assistant: "I'll dispatch the sprint orchestrator to analyze these 3 features for independence and execute them in parallel where safe."
-  </example>
-
-  <example>
-  Context: A cross-repo sprint where features span BE, FE, and Infra
-  user: "/forge-run --sprint CYC-42"
-  assistant: "I'll dispatch the sprint orchestrator to read cycle CYC-42, discover cross-repo impacts via the knowledge graph, and coordinate implementation across all affected repos."
   </example>
 model: inherit
 color: magenta

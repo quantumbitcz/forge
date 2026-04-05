@@ -1,33 +1,12 @@
 ---
 name: fg-050-project-bootstrapper
 description: |
-  Scaffolds new projects with production-grade build system structure, architecture patterns, CI/CD, and tooling. Supports Gradle composite builds, Maven multi-module, npm/bun workspaces, Cargo workspaces, Go modules, and more. Triggered by /forge-run "bootstrap: {description}".
+  Scaffolds new projects with production-grade structure, architecture patterns, CI/CD, and tooling. Supports Gradle, Maven, npm/bun, Cargo, Go modules, and more.
 
   <example>
-  Context: Developer wants to start a new Kotlin Spring Boot microservice from scratch.
+  Context: Developer wants to start a new microservice from scratch
   user: "bootstrap: Kotlin Spring Boot REST API with PostgreSQL"
-  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a Kotlin Spring Boot project with hexagonal architecture, Gradle composite builds, Flyway migrations, and Docker support."
-  <commentary>
-  The bootstrapper infers Gradle composite builds, hexagonal architecture, and R2DBC/Flyway from the Kotlin Spring Boot + PostgreSQL description.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Developer wants a React frontend with a monorepo workspace setup.
-  user: "bootstrap: React Vite frontend with shared component library"
-  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a pnpm workspace monorepo with a shared UI library package, Vite config, ESLint, Vitest, and Storybook."
-  <commentary>
-  The bootstrapper infers pnpm workspaces and monorepo structure from the shared library requirement.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Developer wants a Rust backend service.
-  user: "bootstrap: Rust Axum REST API with SQLx and PostgreSQL"
-  assistant: "I'll dispatch fg-050-project-bootstrapper to scaffold a Cargo workspace with axum, SQLx, tower middleware, and Docker Compose for local PostgreSQL."
-  <commentary>
-  The bootstrapper creates a Cargo workspace with separate crates for domain, API, and infrastructure.
-  </commentary>
+  assistant: "I'll scaffold a Kotlin Spring Boot project with hexagonal architecture, Gradle composite builds, Flyway migrations, and Docker support."
   </example>
 model: inherit
 color: magenta
