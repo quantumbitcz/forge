@@ -21,6 +21,15 @@ project root (gitignored by default).
 Status directories are the canonical source of truth for a ticket's current
 state. Moving a ticket file between directories is the primary state transition.
 
+### Archival
+
+Tickets in `done/` are archived to reduce accumulation in long-running projects:
+
+- **Automatic archival:** During PREFLIGHT, tickets in `done/` older than 90 days (based on `updated` timestamp) are moved to `.forge/tracking/archived/{YYYY-MM}/`. Configurable via `tracking.archive_after_days` in `forge.local.md` (default: 90, range: 30-365, `0` disables archival).
+- **board.md:** Archived tickets are excluded from the auto-generated board summary. A one-line footer shows the archived count: "({N} archived tickets in .forge/tracking/archived/)".
+- **Counter:** Archived ticket IDs are never reused. `counter.json` is unaffected.
+- **Manual access:** Archived tickets can be moved back to any status directory to reactivate them.
+
 ---
 
 ## Ticket File

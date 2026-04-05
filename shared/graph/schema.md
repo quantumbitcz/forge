@@ -60,6 +60,13 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 | `bug_fix_count` | integer | Number of bugfix runs that modified this file. Incremented by `fg-700-retrospective`. Default: 0. |
 | `last_bug_fix_date` | string (ISO 8601) | Date of most recent bugfix. Set by `fg-700-retrospective`. Null if never fixed. |
 
+**Enrichment persistence rules:**
+- **Incremental updates** (`/graph-update`): Preserve all enrichment properties on existing `ProjectFile` nodes. `fg-700-retrospective` increments `bug_fix_count` atomically via `SET n.bug_fix_count = COALESCE(n.bug_fix_count, 0) + 1`.
+- **Project rebuild** (`/graph-rebuild`): Preserve enrichment properties by default. The rebuild script merges (upserts) rather than deletes+recreates `ProjectFile` nodes, retaining `bug_fix_count` and `last_bug_fix_date`. To clear enrichment, use `/graph-rebuild --clear-enrichment`.
+- **Full reset** (`/forge-reset`): All data is destroyed, including enrichment.
+
+**Cross-repo DocFile scoping:** All project docs (primary and cross-repo) are stored in the same Neo4j instance, scoped by `project_id`. `DocFile` nodes with `cross_repo = true` reference files from related projects. Queries include `project_id` filter by default; exclude cross-repo docs unless explicitly requested (e.g., for cross-repo consistency analysis).
+
 ---
 
 ## Relationship Types
@@ -114,7 +121,9 @@ Created by `build-project-graph.sh` for efficient project-scoped queries.
     CREATE INDEX project_dep_idx IF NOT EXISTS FOR (n:ProjectDependency) ON (n.project_id, n.manager);
     CREATE INDEX doc_section_idx IF NOT EXISTS FOR (n:DocSection) ON (n.project_id, n.file_path);
     CREATE INDEX doc_decision_idx IF NOT EXISTS FOR (n:DocDecision) ON (n.project_id, n.status);
+    CREATE INDEX doc_constraint_idx IF NOT EXISTS FOR (n:DocConstraint) ON (n.project_id, n.scope);
     CREATE INDEX project_pkg_idx IF NOT EXISTS FOR (n:ProjectPackage) ON (n.project_id, n.path);
+    CREATE INDEX project_func_idx IF NOT EXISTS FOR (n:ProjectFunction) ON (n.project_id, n.file_path);
 
 ---
 

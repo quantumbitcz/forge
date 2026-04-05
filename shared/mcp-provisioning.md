@@ -119,3 +119,23 @@ MCP provisioning failures must never block the initialization flow. Apply the fo
 | MCP with `required: false` unavailable | Pipeline continues. Feature that depends on the MCP degrades silently (same as normal MCP degradation behaviour). |
 
 The recovery engine is NOT invoked for MCP provisioning failures. Handle all failures inline per this table.
+
+---
+
+## User-Supplied Credentials
+
+MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials before the pipeline can use them. Credential configuration flow:
+
+1. **During `/forge-init`:** If a non-auto-install MCP is listed in the `mcps:` config, forge-init prompts the user via `AskUserQuestion`:
+   - Header: "MCP Configuration Required"
+   - Question: "{MCP name} requires credentials. How would you like to configure?"
+   - Options:
+     - "Environment variable" — set `{MCP_NAME}_API_KEY` in shell environment or `.env` file
+     - "Skip for now" — proceed without this MCP (it will be marked unavailable)
+
+2. **Credential sources** (checked in order at PREFLIGHT):
+   - Environment variable: `{MCP_NAME}_API_KEY` (e.g., `LINEAR_API_KEY`)
+   - `.env` file in project root
+   - `forge.local.md` under `mcps.{name}.api_key` (last resort — prefer env vars to avoid committing secrets)
+
+3. **Validation:** If a credential source is found, test connectivity during the MCP probe at PREFLIGHT step 15. If the credential is invalid (auth failure), log WARNING and mark MCP as unavailable — do not retry or prompt again during this run.
