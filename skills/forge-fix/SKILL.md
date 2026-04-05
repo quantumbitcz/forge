@@ -1,20 +1,6 @@
 ---
 name: forge-fix
-description: |
-  Start a bugfix workflow. Accepts a kanban ticket ID, Linear issue, or plain bug description.
-  Dispatches the forge orchestrator in bugfix mode with investigation, reproduction, and fix stages.
-
-  <example>
-  Context: User has a kanban ticket
-  user: "/forge-fix FG-005"
-  assistant: "I'll start the bugfix workflow for ticket FG-005."
-  </example>
-
-  <example>
-  Context: User describes a bug
-  user: "/forge-fix Users get 404 when accessing their group"
-  assistant: "I'll investigate the bug, write a failing test, and create a fix."
-  </example>
+description: Start a bugfix workflow. Accepts a kanban ticket ID, Linear issue, or plain bug description.
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point
