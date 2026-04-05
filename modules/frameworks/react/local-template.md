@@ -174,6 +174,7 @@ git:
 # Kanban tracking
 tracking:
   prefix: FG
+  archive_after_days: 90  # Auto-archive done/ tickets (30-365, 0=disabled)
   # enabled: true  # Set to false to disable tracking
 ---
 

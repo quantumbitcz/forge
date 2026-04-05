@@ -93,13 +93,13 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
   [[ "$missing" -eq 0 ]] || fail "$missing framework templates missing sprint params"
 }
 
-@test "preflight-constraints: all framework config templates have tracking params" {
+@test "preflight-constraints: all framework local templates have tracking archive param" {
   local missing=0
-  for template in "$PLUGIN_ROOT"/modules/frameworks/*/forge-config-template.md; do
+  for template in "$PLUGIN_ROOT"/modules/frameworks/*/local-template.md; do
     if ! grep -q "archive_after_days" "$template"; then
       echo "MISSING tracking params: $(basename "$(dirname "$template")")" >&2
       missing=$((missing + 1))
     fi
   done
-  [[ "$missing" -eq 0 ]] || fail "$missing framework templates missing tracking params"
+  [[ "$missing" -eq 0 ]] || fail "$missing framework local templates missing tracking archive param"
 }

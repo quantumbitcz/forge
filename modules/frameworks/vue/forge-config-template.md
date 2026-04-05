@@ -80,7 +80,3 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 # sprint:
 #   poll_interval_seconds: 30    # How often to poll per-feature state (10-120)
 #   dependency_timeout_minutes: 60  # Max wait for a dependency feature (5-180)
-
-# Tracking (kanban ticket management)
-# tracking:
-#   archive_after_days: 90       # Auto-archive done/ tickets older than N days (30-365, 0=disabled)
