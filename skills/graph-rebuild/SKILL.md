@@ -80,7 +80,7 @@ All Cypher queries in this step MUST include `n.project_id = '$PROJECT_ID'` to a
 
 ```bash
 echo "MATCH (n:ProjectFile {project_id: '$PROJECT_ID'}) WHERE n.bug_fix_count > 0 RETURN n.path AS path, n.bug_fix_count AS count, n.last_bug_fix_date AS date" | \
-  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format plain > /tmp/forge-enrichment-backup.csv
+  docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local --format csv > /tmp/forge-enrichment-backup.csv
 ```
 
 ### Step 3b: DELETE PROJECT NODES

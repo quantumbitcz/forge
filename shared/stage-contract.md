@@ -41,8 +41,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Actions:**
 1. Read and parse `forge.local.md` config (agents, commands, conventions, module).
-2. Read `forge-config.md` (max_fix_loops, auto_proceed_risk, hotspots). Apply parameter resolution order: `forge-config.md` > `forge.local.md` > plugin defaults. Validate all configurable parameters against their constraint ranges (abort with CONFIG_INVALID if out of range):
-   - Scoring: `critical_weight` >= 10, `warning_weight` >= 1, `info_weight` >= 0, `pass_threshold` >= 60, `concerns_threshold` >= 40, `oscillation_tolerance` 0-20, `total_retries_max` 5-30
+2. Read `forge-config.md` (max_fix_loops, auto_proceed_risk, hotspots). Apply parameter resolution order: `forge-config.md` > `forge.local.md` > plugin defaults. Validate all configurable parameters against their constraint ranges. If violated: log WARNING and use plugin defaults (do not abort — config errors are recoverable):
+   - Scoring: `critical_weight` >= 10, `warning_weight` >= 1, `warning_weight` > `info_weight`, `info_weight` >= 0, `pass_threshold` >= 60, `concerns_threshold` >= 40, `concerns_threshold` < `pass_threshold`, `pass_threshold - concerns_threshold` >= 10, `oscillation_tolerance` 0-20, `total_retries_max` 5-30
    - Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100
    - Sprint: `sprint.poll_interval_seconds` 10-120, `sprint.dependency_timeout_minutes` 5-180
    - Tracking: `tracking.archive_after_days` 30-365 or 0 (disabled)
