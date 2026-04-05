@@ -15,6 +15,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 |   +-- {date}-{topic}.md              # Individual feedback files (YYYY-MM-DD-topic.md)
 |   +-- archive/                        # Incorporated feedback moved here
 +-- docs-index.json                     # Documentation index (fallback when Neo4j unavailable)
++-- evidence.json                       # Pre-ship verification evidence (created by fg-590)
 +-- reports/
     +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-720-recap)
@@ -30,6 +31,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `stage_N_notes_*.md` | Each stage | Stage agent | Yes | No |
 | `stage_final_notes_*.md` | Stage 9 (LEARN) | Retrospective agent | Yes | No |
 | `feedback/*.md` | On user correction | Feedback capture agent | Yes (pattern data) | No |
+| `evidence.json` | After Stage 7 (DOCS) | `fg-590-pre-ship-verifier` | No (overwritten each invocation) | No |
 | `reports/forge-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
 | `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (fg-720-recap) | Yes (project history) | No |
 
@@ -51,7 +53,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
@@ -200,7 +202,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.3.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.4.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
@@ -356,6 +358,43 @@ Tracks graph update state for incremental updates at stage boundaries.
 - Updated at post-IMPLEMENT, post-VERIFY, pre-REVIEW by the orchestrator
 - `stale` set to `true` by orchestrator when `files_changed` grows; reset to `false` after each successful update
 - Reviewers querying the graph check `stale` — if `true`, log INFO but proceed
+
+---
+
+### evidence (object, optional)
+
+Tracks pre-ship verification attempts and results. Created by `fg-590-pre-ship-verifier`, read by `fg-100-orchestrator` and `fg-600-pr-builder`.
+
+```json
+{
+  "evidence": {
+    "last_run": "2026-04-05T14:32:00Z",
+    "verdict": "SHIP",
+    "attempts": 2,
+    "block_history": [
+      {
+        "attempt": 1,
+        "reasons": ["tests.failed: 3"],
+        "timestamp": "2026-04-05T14:20:00Z"
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `last_run` | string (ISO 8601) | When fg-590 last ran |
+| `verdict` | string | Last verdict: `"SHIP"` or `"BLOCK"` |
+| `attempts` | integer | How many times fg-590 was dispatched this run |
+| `block_history` | array | Append-only log of BLOCK verdicts with reasons and timestamps. Capped at 20 entries (FIFO). |
+
+**Lifecycle:**
+- Created when fg-590 first runs (after Stage 7)
+- Updated on each fg-590 invocation
+- `attempts` incremented each time; `block_history` appended on BLOCK
+- The full evidence artifact lives at `.forge/evidence.json` (see `shared/verification-evidence.md`); `state.json.evidence` is the summary for state tracking and retrospective analysis
+- Reset at PREFLIGHT for each new run
 
 ---
 
@@ -585,6 +624,7 @@ The recovery engine checks the `version` field before parsing state files:
 | 1.0.0 | 1.1.0 | `ticket_id`, `branch_name`, `tracking_dir` | `null`, `""`, `null` |
 | 1.1.0 | 1.2.0 | `graph` | `{ "last_update_stage": -1, "last_update_files": [], "stale": false }` |
 | 1.2.0 | 1.3.0 | `decomposition` | `null` |
+| 1.3.0 | 1.4.0 | `evidence` | `{ "last_run": null, "verdict": null, "attempts": 0, "block_history": [] }` |
 
 **Manual reset:** Use `/forge-reset` to clear stale state if automatic migration is insufficient.
 

@@ -16,7 +16,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 5 | VERIFY | inline (Phase A) + `fg-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `fg-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `fg-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
-| 8 | SHIP | `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
+| 8 | SHIP | `fg-590-pre-ship-verifier` + `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done AND `evidence.verdict == "SHIP"` (fresh, < `shipping.evidence_max_age_minutes`) | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `fg-700-retrospective` + `fg-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
 **Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails. Universal defaults: the agent applies only the language module rules (`modules/languages/{lang}.md`) and generic check patterns — no framework-specific, testing, or crosscutting layer conventions. The agent logs a WARNING in stage notes: `"Convention stack unavailable — operating with language-only defaults."`
@@ -391,7 +391,7 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 **Agent:** `fg-600-pr-builder`
 **story_state:** `SHIPPING`
 
-**Entry condition:** Documentation done (Stage 7).
+**Entry condition:** Documentation done (Stage 7) AND pre-ship evidence passed. The orchestrator dispatches `fg-590-pre-ship-verifier` after DOCS completes. Evidence must exist at `.forge/evidence.json` with `verdict: "SHIP"` and `timestamp` within `shipping.evidence_max_age_minutes` (default: 30). See `shared/verification-evidence.md` for the full schema.
 
 **Inputs:**
 - All changed files
@@ -526,6 +526,8 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 | Quality fix | 6 REVIEW | 4 IMPLEMENT (targeted) | Score < 100 | `quality_cycles` | `quality_gate.max_review_cycles` (default: 2; set to 1 when convergence is active — the convergence engine manages the outer loop) |
 | PR rejection (implementation) | 8 SHIP | 4 IMPLEMENT | User rejects PR with implementation feedback | increments `total_retries` | `total_retries_max` (default: 10) |
 | PR rejection (design) | 8 SHIP | 2 PLAN | User rejects PR with design feedback | increments `total_retries` | `total_retries_max` (default: 10) |
+| Evidence fix (build/test) | Pre-ship verify | 4 IMPLEMENT | `evidence.verdict == "BLOCK"` with build/lint/test failure | `total_iterations` | `convergence.max_iterations` (default: 8) |
+| Evidence fix (review/score) | Pre-ship verify | 4 IMPLEMENT | `evidence.verdict == "BLOCK"` with review issues or score below target | `total_iterations` | `convergence.max_iterations` (default: 8) |
 
 > **Convergence engine note:** The quality fix loop above describes the inner cycle (per convergence iteration). The outer loop is managed by the convergence engine with `convergence.max_iterations` (default: 8) as the hard cap and plateau detection as the normal exit. See `shared/convergence-engine.md`.
 

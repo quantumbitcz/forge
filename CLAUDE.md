@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.7.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.8.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -31,9 +31,11 @@ Layered design with resolution flowing top-down:
    - `modules/documentation/` — documentation conventions layer (doc structure, ADR patterns, API docs, changelog standards, cross-reference rules).
    - `modules/code-quality/` — code quality tooling best practices: linters (detekt, eslint, ruff, clippy, etc.), formatters (prettier, black, gofmt, etc.), coverage tools (jacoco, istanbul, coverage-py, etc.), doc generators (dokka, typedoc, sphinx, etc.), dependency security scanners (owasp-dependency-check, npm-audit, cargo-audit, etc.), mutation testing (pitest, stryker, mutmut). ~70 tool files.
    Convention composition order (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 38 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 39 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
 
 Parameter resolution: `forge-config.md` > `forge.local.md` > plugin hardcoded defaults.
+
+Runtime dispatch: orchestrator loads the target agent's `.md` as subagent system prompt, passes stage notes as the task, collects the return as stage output. Agent `.md` size directly impacts token cost per dispatch.
 
 ## Quick start
 
@@ -45,6 +47,8 @@ Parameter resolution: `forge-config.md` > `forge.local.md` > plugin hardcoded de
 ln -s "$(pwd)" /path/to/project/.claude/plugins/forge
 cd /path/to/project && claude       # then run /forge-init
 ```
+
+**First-time contributor?** Read `shared/agent-philosophy.md` first, then pick any agent `.md` to understand prompt structure. Run `./tests/validate-plugin.sh` after every change.
 
 ## Development workflow
 
@@ -63,12 +67,13 @@ This is a documentation-only plugin (no build step). To test changes:
 | Pipeline flow      | `shared/stage-contract.md` (10 stages, entry/exit conditions)     |
 | Orchestrator logic | `agents/fg-100-orchestrator.md` (state machine, dispatch rules)   |
 | Quality scoring    | `shared/scoring.md` (formula, verdicts, thresholds)               |
-| State persistence  | `shared/state-schema.md` (v1.3.0 JSON schema)                    |
+| State persistence  | `shared/state-schema.md` (v1.4.0 JSON schema)                    |
 | Error handling     | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design       | `shared/agent-philosophy.md` + `shared/agent-communication.md`    |
 | Graph schema       | `shared/graph/schema.md` (node types, relationships, lifecycle)   |
 | Token management   | `shared/agent-defaults.md` (shared constraints) + `shared/logging-rules.md` (cross-cutting logging) |
-| Convergence loop | `shared/convergence-engine.md` (two-phase iteration, plateau detection) |
+| Convergence loop | `shared/convergence-engine.md` (three-phase iteration: correctness, perfection, evidence) |
+| Shipping evidence | `shared/verification-evidence.md` (evidence artifact schema, verdict rules) |
 | Kanban tracking  | `shared/tracking/tracking-schema.md` (ticket format, board structure, archival)  |
 | Git conventions  | `shared/git-conventions.md` (branches, commits, hook detection)        |
 | MCP provisioning | `shared/mcp-provisioning.md` (auto-install rules, credential config) |
@@ -79,7 +84,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 ## Key conventions
 
-### Agents (38 total, in `agents/*.md`)
+### Agents (39 total, in `agents/*.md`)
 
 **Pipeline agents** (`fg-{NNN}-{role}` naming):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -91,15 +96,19 @@ This is a documentation-only plugin (no build step). To test changes:
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs (Stage 7): `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-500-test-gate`
-- Ship: `fg-600-pr-builder`, `fg-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
+- Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
 
 **Review agents** (10, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
 
 **Agent file rules:**
-- YAML frontmatter required: `name` (must match filename without `.md`), `description`, `tools`. Agents that dispatch others **must** include `Agent` in tools list. The orchestrator also uses `TaskCreate`/`TaskUpdate` for visual progress tracking (checkbox UI that updates as each stage completes). The orchestrator wraps every Agent dispatch with TaskCreate/TaskUpdate for real-time sub-agent progress visibility (§3.11). Agents and skills that present multi-option choices to the user **must** use `AskUserQuestion` with structured options (header, question, 2-4 options with descriptions) — never plain text `Options: (1)...` or `(y/n)` patterns. Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present designs for user approval before implementation — skip in autonomous/replanning contexts where the validator serves as the gate.
+- **YAML frontmatter required:** `name` (must match filename without `.md`), `description`, `tools`.
+  - Dispatch agents **must** include `Agent` in tools list.
+  - Orchestrator wraps every dispatch with `TaskCreate`/`TaskUpdate` for real-time progress visibility.
+  - Multi-option choices **must** use `AskUserQuestion` with structured options — never `Options: (1)...` or `(y/n)`.
+  - Planning agents use `EnterPlanMode`/`ExitPlanMode` for user approval — skip in autonomous/replanning.
 - YAML frontmatter `ui:` section declares interactive capabilities: `tasks` (TaskCreate/TaskUpdate), `ask` (AskUserQuestion), `plan_mode` (EnterPlanMode/ExitPlanMode). Omitting `ui:` entirely = all false (Tier 4). Structural test `ui-frontmatter-consistency.bats` enforces that `ui:` declarations match `tools:` list. See `shared/agent-ui.md` for patterns.
-- Agent UI tiers: Tier 1 (tasks+ask+plan_mode): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator. Tier 3 (tasks only): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper. Tier 4 (no UI): all 10 reviewers, validator, feedback capture, recap, worktree manager, conflict resolver.
+- Agent UI tiers: Tier 1 (tasks+ask+plan_mode): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator. Tier 3 (tasks only): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper. Tier 4 (no UI): all 10 reviewers, validator, feedback capture, recap, worktree manager, conflict resolver.
 - Module config uses `components:` in `forge.local.md` — core fields: `language:`, `framework:`, `variant:`, `testing:`.
   - Framework-specific stack fields: `web` (e.g., `mvc | webflux`), `persistence` (e.g., `hibernate | r2dbc` — distinct from crosscutting `modules/persistence/`).
   - Optional crosscutting layers: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip.
@@ -124,18 +133,31 @@ This is a documentation-only plugin (no build step). To test changes:
 
 Read source files for full details. Key facts:
 
-- **Scoring** (`scoring.md`): `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL remaining after convergence exhaustion. 19 shared categories — 16 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*` (no deduction), `A11Y-*`, `DEPS-*` (reserved), `COMPAT-*` (reserved), `CONTRACT-*` (BREAK/CHANGE/ADD), `STRUCT-*`, `INFRA-*` + 3 discrete codes: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`. Agent-specific categories (`BE-PERF-*`, `FE-*`) defined in their respective agents. Component-aware deduplication: key is `(component, file, line, category)` in multi-component projects — same issue in different components is not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear documentation granularity. Oscillation tolerance: configurable (default 5 pts). Convergence engine: two-phase iteration (correctness → perfection → safety gate) replaces hard-capped fix cycles. Global `max_iterations` cap is checked before inner caps (precedence rule). SCOUT-* findings: quality gate excludes from score, orchestrator strips before dispatch to implementer (two-point filtering). Five iteration counters at different scopes: `verify_fix_count` (Phase A), `test_cycles` (Phase 1B), `quality_cycles` (Phase 2) are inner-loop; `phase_iterations` (per-phase, resets on transition); `total_iterations` (cumulative, never resets). See `shared/convergence-engine.md`. Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING. 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
+- **Scoring** (`scoring.md`):
+  - Formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. PASS >= 80, CONCERNS 60-79, FAIL < 60 or any CRITICAL remaining after convergence exhaustion.
+  - 19 shared categories — 16 wildcard prefixes (`ARCH-*`, `SEC-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEPS-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`) + 3 discrete codes (`REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Agent-specific categories (`BE-PERF-*`, `FE-*`) in their agents.
+  - Deduplication: key is `(component, file, line, category)` — same issue in different components not deduplicated. Sub-bands (95-99, 80-94, 60-79, <60) guide Linear granularity.
+  - Convergence: three-phase iteration (correctness → perfection → safety gate → evidence). Global `max_iterations` checked before inner caps. Oscillation tolerance configurable (default 5 pts). See `shared/convergence-engine.md`.
+  - SCOUT-* findings: excluded from score by quality gate, stripped by orchestrator before implementer dispatch (two-point filtering).
+  - Five iteration counters: `verify_fix_count` (Phase A), `test_cycles` (Phase 1B), `quality_cycles` (Phase 2) inner-loop; `phase_iterations` (per-phase, resets); `total_iterations` (cumulative, never resets).
+  - Timed-out security/architecture reviewers: coverage gap upgraded INFO → WARNING.
+  - 7 validation perspectives: architecture, security, edge_cases, test_strategy, conventions, approach_quality, documentation_consistency.
 - **Stage contracts** (`stage-contract.md`): Entry/exit conditions per stage. States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration states: MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY. PR rejection routes to Stage 4 (impl feedback) or Stage 2 (design feedback) via `fg-710-feedback-capture`.
-- **State schema** (`state-schema.md`): Version **1.3.0**. State in `.forge/` (gitignored). Checkpoints per task. Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero. Key fields: `mode` (standard/migration/bootstrap/bugfix — determines planner dispatch), `feedback_loop_count` (consecutive same-classification PR rejections — escalates at 2), `documentation.discovery_error` (degraded doc context when fg-130 fails), `abort_reason` (set on auto-abort, e.g., NO-GO timeout), `recovery` (runtime recovery state: failures, recoveries, degraded_capabilities), `ticket_id` (kanban ticket linked to the run), `branch_name` (git branch derived from ticket ID and slug), `tracking_dir` (absolute path to `.forge/tracking/`), `graph` (graph update state: `last_update_stage`, `last_update_files`, `stale`).
+- **State schema** (`state-schema.md`): Version **1.4.0**. State in `.forge/` (gitignored). Checkpoints per task.
+  - Corrupted counters recovered from checkpoints — fallback uses configured maximum (conservative), not zero.
+  - Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `documentation.discovery_error`, `abort_reason`, `recovery` (failures, recoveries, degraded_capabilities), `ticket_id`, `branch_name`, `tracking_dir`, `graph` (update state).
 - **Recovery** (`recovery/`): 7 strategies, weighted budget ceiling 5.5 (extremes: graceful-stop 0.0/free, state-reconstruction 1.5/costliest). Budget resets at PREFLIGHT of each new `/forge-run`. In sprint mode, each feature's orchestrator has its own independent budget. Multi-error ordering: highest-severity recoverable first. See `recovery-engine.md`.
 - **Error taxonomy** (`error-taxonomy.md`): 22 types (incl. `CONTEXT_OVERFLOW`), 16-level severity priority. MCP failures handled inline (skip + INFO), NOT by recovery engine. 3 consecutive transient-retry failures for same endpoint within 60s → reclassified as non-recoverable. `BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` are code-level errors handled by the orchestrator fix loop, not the recovery engine.
-- **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly. However, coordinator agents (fg-400, fg-500, fg-600, fg-200, fg-310) **can** dispatch sub-agents within their stage — this is distinct from inter-stage communication. Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
+- **Agent communication** (`agent-communication.md`): Inter-stage data flows through orchestrator via stage notes. Agents cannot write state or message the user directly.
+  - Coordinator agents (fg-400, fg-500, fg-600, fg-200, fg-310) **can** dispatch sub-agents within their stage (distinct from inter-stage communication).
+  - Quality gate includes previous batch findings (top 20) to reduce duplicates. PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED` markers.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion — shared by all frontend agents.
 - **Learnings** (`learnings/`): Per-module files (frameworks, languages, testing frameworks, crosscutting layers) + JSON schemas (`rule-learning-schema.json`, `agent-effectiveness-schema.json`) for tracking check rule evolution and agent performance.
 - **Version detection:** PREFLIGHT detects dependency versions from manifest files (build.gradle.kts, package.json, go.mod, etc.) → `state.json.detected_versions`. Enables version-gated deprecation rules.
 - **Convention drift:** Detected mid-run via per-section SHA256 hash comparison. Agents only react to changes in their relevant section.
 - **Global retry budget:** Cumulative `total_retries` counter (default max: 10, configurable). Prevents unbounded cascades.
 - **Concurrent run lock:** `.forge/.lock` with PID check + 24h stale timeout.
+- **Evidence-based shipping:** `fg-590-pre-ship-verifier` runs fresh build+test+lint+review after DOCS, writes `.forge/evidence.json`. PR builder refuses to create PR without `verdict: SHIP`. No "continue anyway" option anywhere — only fix, keep trying, or abort. See `shared/verification-evidence.md`.
 
 ### Integrations
 
@@ -145,7 +167,15 @@ Read source files for full details. Key facts:
 
 ### Knowledge Graph (`graph:` in `forge.local.md`)
 
-Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher. Docker-managed in `.forge/`, accessed by orchestrator via Neo4j MCP. Enabled by default — set `graph.enabled: false` to disable (e.g., if Docker is unavailable). See `shared/graph/schema.md` for node/relationship types and `shared/graph/query-patterns.md` for Cypher templates. Graceful degradation: pipeline works normally without Neo4j. Container name defaults to `forge-neo4j`, configurable via `graph.neo4j_container_name` in `forge.local.md` or `NEO4J_CONTAINER` env var. Documentation node types: `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by `fg-130-docs-discoverer` and `fg-350-docs-generator` to track documentation coverage and relationships. 5 agents have direct `neo4j-mcp` access (fg-010-shaper, fg-020-bug-investigator, fg-200-planner, fg-210-validator, fg-400-quality-gate). Query patterns 14 (Bug Hotspots) and 15 (Test Coverage) added for bugfix risk analysis. Query patterns 19 (Cross-Feature File Overlap) and 20 (Cross-Repo Dependency Graph Traversal) added for sprint orchestrator independence analysis. All `Project*` and `Doc*` nodes are scoped by `project_id` (git remote origin) and optional `component` (from `forge.local.md`). Multiple projects share one Neo4j instance without data collision. `/graph-rebuild` only deletes nodes for the current project. Graph auto-updates at post-IMPLEMENT, post-VERIFY, and pre-REVIEW via `update-project-graph.sh`. State tracking in `state.json.graph` (`last_update_stage`, `stale`). State schema version: **1.3.0**.
+Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship graph (pre-computed seed), (2) dynamic consuming project codebase graph (files, imports, classes, dependencies). Enables impact analysis, convention stack resolution, gap detection, and recommendation queries via Cypher.
+
+- **Setup:** Docker-managed in `.forge/`, accessed via Neo4j MCP. Container: `forge-neo4j` (configurable via `graph.neo4j_container_name` or `NEO4J_CONTAINER`). Disable with `graph.enabled: false`. See `shared/graph/schema.md` and `shared/graph/query-patterns.md`.
+- **Scoping:** All `Project*`/`Doc*` nodes scoped by `project_id` (git remote origin) + optional `component`. Multiple projects share one instance. `/graph-rebuild` only deletes current project.
+- **Agent access:** 5 agents with direct `neo4j-mcp`: fg-010-shaper, fg-020-bug-investigator, fg-200-planner, fg-210-validator, fg-400-quality-gate.
+- **Doc nodes:** `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by fg-130/fg-350 for coverage tracking.
+- **Query patterns:** 14 (Bug Hotspots), 15 (Test Coverage) for bugfix risk. 19 (Cross-Feature File Overlap), 20 (Cross-Repo Dependency Graph) for sprint independence.
+- **Auto-updates:** post-IMPLEMENT, post-VERIFY, pre-REVIEW via `update-project-graph.sh`. Tracked in `state.json.graph`.
+- **Graceful degradation:** Pipeline works normally without Neo4j. State schema version: **1.4.0**.
 
 ### Check engine (`shared/checks/`)
 
@@ -266,6 +296,10 @@ for fw in modules/frameworks/*/; do
   name=$(basename "$fw")
   [ -f "shared/learnings/$name.md" ] || echo "MISSING: learnings/$name.md"
 done
+
+# Test specific agent or test category
+./tests/lib/bats-core/bin/bats tests/structural/agent-frontmatter.bats  # All agent structure checks
+./tests/lib/bats-core/bin/bats tests/contract/                          # All contract tests
 ```
 
 ## Gotchas
@@ -277,6 +311,7 @@ done
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact.
 - The plugin never touches consuming project files. Runtime state goes to `.forge/`.
 - `forge-config.md` is auto-tuned by retrospective — manual edits may be overwritten. Wrap parameters in `<!-- locked -->` / `<!-- /locked -->` fences to protect them from auto-tuning.
+- `.forge/` directory is gitignored and assumed present by pipeline. Deleting it mid-run causes unrecoverable state loss — use `/forge-reset` instead.
 
 ### Worktree enforcement
 
@@ -296,6 +331,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - Sprint: `sprint.poll_interval_seconds` 10-120 (default: 30), `sprint.dependency_timeout_minutes` 5-180 (default: 60).
 - Tracking: `tracking.archive_after_days` 30-365 or 0 to disable (default: 90).
 - Scope: `scope.decomposition_threshold` 2-10 (default: 3). Routing: `routing.vague_threshold` low/medium/high (default: medium).
+- Shipping: `shipping.min_score` >= `pass_threshold` AND <= 100 (default: 100), `shipping.evidence_max_age_minutes` 5-60 (default: 30).
 
 ### Pipeline modes
 
@@ -305,7 +341,12 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - **Migration mode:** All 10 stages run. Stage 2 uses `fg-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates.
 - **Autonomous mode:** `autonomous: true` in `forge-config.md` replaces all AskUserQuestion with auto-selection (logged with `[AUTO]` prefix). Plans auto-approved after validator passes. Tasks still created. Pipeline never pauses except on unrecoverable CRITICAL errors.
-- **Sprint mode:** `/forge-run --sprint` or `/forge-run --parallel "A" "B" "C"`. Dispatches `fg-090-sprint-orchestrator` which decomposes features, analyzes independence via `fg-102-conflict-resolver`, and dispatches parallel `fg-100-orchestrator` instances per feature. Per-feature isolation: `.forge/runs/{feature-id}/` for state, `.forge/worktrees/{feature-id}/` for git worktrees. Shared Neo4j graph for cross-feature conflict detection. Cross-repo features execute contract producers before consumers. State in `.forge/sprint-state.json`. Sprint orchestrator polls per-feature state every 30s (configurable via `sprint.poll_interval_seconds`). Conflict resolution `serialize` = first feature completes SHIP before second enters IMPLEMENT. `waiting` repos pause until dependency resolves or `sprint.dependency_timeout_minutes` (default: 60) expires. See `shared/sprint-state-schema.md`.
+- **Sprint mode:** `/forge-run --sprint` or `/forge-run --parallel "A" "B" "C"`. Dispatches `fg-090-sprint-orchestrator`.
+  - Decomposition: analyzes independence via `fg-102-conflict-resolver`, dispatches parallel `fg-100-orchestrator` per feature.
+  - Isolation: `.forge/runs/{feature-id}/` for state, `.forge/worktrees/{feature-id}/` for worktrees. Shared Neo4j for cross-feature conflict detection.
+  - Cross-repo: contract producers execute before consumers. State in `.forge/sprint-state.json`.
+  - Polling: every 30s (configurable via `sprint.poll_interval_seconds`). Conflict `serialize` = first completes SHIP before second enters IMPLEMENT.
+  - `waiting` repos pause until resolved or `sprint.dependency_timeout_minutes` (default: 60) expires. See `shared/sprint-state-schema.md`.
 
 ### Convergence & review
 
@@ -343,7 +384,7 @@ Agents must NEVER use dependency versions from training data. Always search the 
 
 ## Plugin distribution (`.claude-plugin/`)
 
-- `plugin.json` — manifest (v1.5.1). `marketplace.json` — catalog for `quantumbitcz`.
+- `plugin.json` — manifest (v1.8.0). `marketplace.json` — catalog for `quantumbitcz`.
 - Hooks in `hooks/hooks.json` only (NOT in plugin.json).
 - Install: `/plugin marketplace add quantumbitcz/forge` then `/plugin install forge@quantumbitcz`.
 

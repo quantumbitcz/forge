@@ -1148,7 +1148,7 @@ Merge the returned findings into the quality gate's finding pool before scoring 
 4. Append score to `state.json.score_history` (e.g., `[85, 78, 92]` across cycles)
 5. Determine verdict (thresholds from `forge-config.md` scoring section, defaults from `shared/scoring.md`):
    - **PASS:** score >= `pass_threshold` (default 80), no CRITICALs -> proceed to DOCS
-   - **CONCERNS:** score >= `concerns_threshold` (default 60) and < `pass_threshold`, no CRITICALs -> proceed to DOCS with findings preserved in notes
+   - **CONCERNS:** score >= `concerns_threshold` (default 60) and < `pass_threshold`, no CRITICALs -> proceed to DOCS with findings preserved in notes. Note: the pre-ship verifier (§10.5) will independently verify the score meets `shipping.min_score` before allowing PR creation.
    - **FAIL:** score < `concerns_threshold` or any CRITICAL -> fix cycle
 
 ### 9.2a Component-Aware Quality Gate (multi-component projects)
@@ -1241,9 +1241,60 @@ Mark Docs as completed.
 
 ---
 
+## 10.5. Pre-Ship Verification (dispatch fg-590-pre-ship-verifier)
+
+**TaskUpdate:** Mark "Stage 7: Docs" → `completed`
+
+Dispatch `fg-590-pre-ship-verifier` with:
+// Wrap: TaskCreate("Dispatching fg-590-pre-ship-verifier") → Agent dispatch → TaskUpdate(completed)
+
+```
+Verify shipping readiness. Run fresh build, lint, tests, and code review.
+
+Commands: build={commands.build}, test={commands.test}, lint={commands.lint}
+Current score: [last score from convergence state]
+shipping.min_score: [from config, default 100]
+BASE_SHA: [worktree branch point]
+HEAD_SHA: [current HEAD]
+shipping.evidence_review: [from config, default true]
+```
+
+Read `.forge/evidence.json` after fg-590 returns.
+
+Update `state.json.evidence`: increment `attempts`, set `last_run` and `verdict`. If BLOCK, append to `block_history`.
+
+### Evidence Verdict Routing
+
+**IF `evidence.verdict == "SHIP"`:** Proceed to Stage 8 (§11).
+
+**IF `evidence.verdict == "BLOCK"`:** Analyze `block_reasons` and route:
+
+| Block Reason | Action |
+|-------------|--------|
+| `build.exit_code != 0` | Transition convergence to Phase 1 (correctness). Re-enter Stage 4 (IMPLEMENT) → Stage 5 (VERIFY). |
+| `lint.exit_code != 0` | Same as build failure — Phase 1. |
+| `tests.failed > 0` | Same as build failure — Phase 1. |
+| `review.critical_issues > 0` | Transition convergence to Phase 2 (perfection). Re-enter Stage 4 (IMPLEMENT) → Stage 6 (REVIEW). |
+| `review.important_issues > 0` | Same as critical — Phase 2. |
+| `score.current < shipping.min_score` | Same as review issues — Phase 2. |
+
+After the fix loop completes, re-run Stage 7 (DOCS, incremental) then re-dispatch fg-590. Repeat until SHIP or convergence plateaus.
+
+**IF convergence PLATEAUED during evidence fix loop:**
+Escalate via AskUserQuestion with header "Evidence Gate Blocked", question "Pre-ship verification cannot reach shipping target. Current score: {score}. Block reasons: {reasons}.", options:
+1. **"Keep trying"** — reset `plateau_count` to 0, `convergence_state` to `"IMPROVING"`, continue iterating (global `max_iterations` cap still applies)
+2. **"Fix manually"** — pause pipeline, user fixes outside forge, resume from Stage 5 (VERIFY)
+3. **"Abort"** — stop pipeline, no PR, write abort report
+
+**Autonomous mode:** Auto-select "Keep trying". On `max_iterations` exhausted: hard abort, write `.forge/abort-report.md`, no PR.
+
+---
+
 ## 11. Stage 8: SHIP (dispatch fg-600-pr-builder)
 
-**story_state:** `SHIPPING` | **TaskUpdate:** Mark "Stage 7: Docs" → `completed`, Mark "Stage 8: Ship" → `in_progress`
+**story_state:** `SHIPPING` | **TaskUpdate:** Mark "Stage 8: Ship" → `in_progress`
+
+**Pre-condition:** `.forge/evidence.json` must exist with `verdict: "SHIP"` and `timestamp` within `shipping.evidence_max_age_minutes`. If missing or stale, re-dispatch fg-590 (§10.5). If BLOCK, follow evidence verdict routing (§10.5).
 
 Dispatch `fg-600-pr-builder` with:
 // Wrap: TaskCreate("Dispatching fg-600-pr-builder") → Agent dispatch → TaskUpdate(completed)
@@ -1253,6 +1304,7 @@ Create branch, commit, and PR for this pipeline run.
 
 Changed files: [list from implementation]
 Quality verdict: [PASS/CONCERNS] with score [N]
+Evidence verdict: SHIP (evidence.json timestamp: [timestamp])
 Test results: [pass/fail summary]
 Story metadata: requirement=[req], risk=[level]
 Stage 7 notes: [path to stage_7_notes_{storyId}.md]
@@ -1262,6 +1314,7 @@ Rules:
 - Exclude: .claude/, build/, .env, .forge/, node_modules/
 - Conventional commit (no AI attribution, no Co-Authored-By)
 - PR body: Summary, Quality Gate (verdict + score), Test Plan, Pipeline Run metrics
+- PR body section "## Verification Evidence": build status + duration, test count + duration, lint status, review issue counts, quality score (from .forge/evidence.json)
 - PR body section "## Documentation": coverage percentage and delta, files created/updated, ADRs generated (from stage_7_notes)
 ```
 

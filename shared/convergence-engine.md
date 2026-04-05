@@ -2,7 +2,7 @@
 
 This document defines the convergence-driven iteration engine that replaces hard-capped fix cycle loops with plateau detection. The orchestrator (`fg-100-orchestrator`) calls the convergence engine after every VERIFY or REVIEW dispatch to decide: **iterate again, or declare convergence?**
 
-The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a two-phase convergence loop targeting a perfect score of 100, stopping when the target is reached or the score plateaus.
+The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a three-phase convergence loop (correctness, perfection, evidence) targeting a perfect score of 100 with verified shipping evidence, stopping when the target is reached and evidence passes or the score plateaus.
 
 ## Convergence States
 
@@ -26,6 +26,7 @@ State transitions:
 | **Phase 1: Correctness** | IMPLEMENT <-> VERIFY | Tests green | All tests pass (binary) |
 | **Phase 2: Perfection** | IMPLEMENT <-> REVIEW | Score = `target_score` | Score = target, OR `PLATEAUED` |
 | **Safety Gate** | VERIFY (one shot) | No regressions | Tests still pass after Phase 2 |
+| **Phase 3: Evidence** | DOCS → fg-590 | Ship-ready proof | `verdict = SHIP` in `.forge/evidence.json` |
 
 Key behaviors:
 
@@ -141,6 +142,21 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
         -> increment total_iterations
 ```
 
+### Phase 3: Evidence
+
+After the safety gate passes and DOCS (Stage 7) completes, the orchestrator dispatches `fg-590-pre-ship-verifier`. This is a checkpoint, not a loop — it runs once and produces a verdict.
+
+On `verdict: "SHIP"`: proceed to Stage 8 (SHIP).
+
+On `verdict: "BLOCK"`: the orchestrator routes back based on `block_reasons`:
+- `build`, `lint`, or `test` failure → transition to Phase 1 (correctness): re-enter IMPLEMENT → VERIFY loop
+- `review` Critical/Important issues → transition to Phase 2 (perfection): re-enter IMPLEMENT → REVIEW loop
+- `score` below `shipping.min_score` → transition to Phase 2 (perfection): re-enter IMPLEMENT → REVIEW loop
+
+After the fix loop completes, DOCS re-runs (incremental), then fg-590 runs again. This uses the same `total_iterations` counter — the global cap applies.
+
+See `shared/verification-evidence.md` for the evidence artifact schema.
+
 **Global budget interaction:** Every `total_iterations` increment also increments `state.json.total_retries`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of convergence state.
 
 **SCOUT-* finding filtering:** SCOUT-* findings are filtered at two points:
@@ -155,9 +171,17 @@ SCOUT items represent improvements already made — they do not affect the score
 **Consecutive Dip Rule interaction:** The quality gate's per-cycle Consecutive Dip Rule (see `scoring.md`) operates within a single convergence iteration. If two consecutive inner cycles show score dips, the quality gate escalates *within* that iteration. The convergence engine's `REGRESSING` state detects dips *across* iterations (via `oscillation_tolerance`). Both mechanisms are complementary: the inner rule catches intra-iteration oscillation, the outer state catches inter-iteration regression.
 
 **Score escalation ladder** (applies when Phase 2 converges below target via PLATEAUED):
-- Score >= `pass_threshold` (default 80): proceed to safety gate with PASS verdict. Findings preserved in stage notes. Sub-band guidance: 95-99 = no follow-up tickets; 80-94 = architectural WARNINGs get follow-up tickets.
-- Score >= `concerns_threshold` AND < `pass_threshold` (default 60-79): CONCERNS verdict. Full findings posted. Escalate to user for guidance before proceeding.
-- Score < `concerns_threshold` (default < 60): FAIL verdict. Escalate to user. Recommend abort or replan.
+- Score >= `shipping.min_score` (default 100): proceed to safety gate. Findings preserved in stage notes.
+- Score >= `pass_threshold` AND < `shipping.min_score`: proceed to safety gate. Remaining findings documented as follow-up tickets if Linear enabled. Sub-band guidance: 95-99 = no follow-up tickets; 80-94 = architectural WARNINGs get follow-up tickets.
+- Score < `pass_threshold` AND >= `concerns_threshold` (default 60-79): escalate to user with 3 options:
+  1. **"Keep trying"** — reset `plateau_count` to 0, `convergence_state` to `"IMPROVING"`, continue iterating (`total_iterations` NOT reset — global cap still applies)
+  2. **"Fix manually"** — pause pipeline, user fixes outside forge, resume from VERIFY
+  3. **"Abort"** — stop pipeline, no PR
+- Score < `concerns_threshold` (default < 60): escalate to user. Recommend abort. Same 3 options as above.
+
+**No "Continue anyway" or "Accept and ship" option exists.** The pipeline never offers to ship below `shipping.min_score`.
+
+**Autonomous mode:** On plateau below `shipping.min_score`, auto-select option 1 ("Keep trying"). On `max_iterations` exhausted, hard abort — write `.forge/abort-report.md` with final score, remaining findings, last evidence, iteration history. Never auto-ship below `shipping.min_score`.
 
 **Precedence between oscillation detection and score escalation ladder:**
 The REGRESSING state and the score escalation ladder serve different purposes and do NOT conflict:
@@ -176,6 +200,12 @@ convergence:
   plateau_patience: 2      # Consecutive sub-threshold cycles before declaring plateau
   target_score: 100        # Score to aim for (convergence target)
   safety_gate: true        # Run VERIFY after Phase 2 to catch regressions
+
+shipping:
+  min_score: 100                  # Minimum score to create PR. Range: pass_threshold-100. Default: 100.
+  require_evidence: true          # Always true. Not user-configurable. Documented for visibility.
+  evidence_review: true           # Dispatch code reviewer in fg-590. Default: true. Set false to skip.
+  evidence_max_age_minutes: 30    # Evidence staleness threshold. Range: 5-60. Default: 30.
 ```
 
 **Parameter resolution:** `forge-config.md` > `forge.local.md` > plugin defaults (values shown above).
@@ -191,6 +221,8 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 | `plateau_patience` | 1-5 | 1 = stop at first plateau; 5 = very patient |
 | `target_score` | >= `pass_threshold` AND <= 100 | Cannot be below the passing score |
 | `safety_gate` | boolean | No range constraint |
+| `shipping.min_score` | >= `pass_threshold` AND <= 100 | Cannot ship below passing score; 100 is maximum |
+| `shipping.evidence_max_age_minutes` | 5-60 | Below 5 is impractical; above 60 risks stale evidence |
 
 ## Interaction with Existing Config
 

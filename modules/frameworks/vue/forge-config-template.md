@@ -80,3 +80,9 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 # sprint:
 #   poll_interval_seconds: 30    # How often to poll per-feature state (10-120)
 #   dependency_timeout_minutes: 60  # Max wait for a dependency feature (5-180)
+
+# Shipping gate (evidence-based verification before PR creation)
+# shipping:
+#   min_score: 100                    # Minimum quality score to ship (pass_threshold-100)
+#   evidence_review: true             # Dispatch code reviewer in fg-590 (true/false)
+#   evidence_max_age_minutes: 30      # Evidence staleness threshold (5-60)
