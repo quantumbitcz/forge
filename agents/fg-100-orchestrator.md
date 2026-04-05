@@ -564,6 +564,42 @@ Update state: `story_state` -> `"EXPLORING"`, add `explore` timestamp.
 
 Mark Explore as completed.
 
+### Post-EXPLORE Scope Check (Auto-Decomposition)
+
+After exploration completes (standard mode only — skip for bugfix, migration, bootstrap modes), check if the requirement spans too many architectural domains:
+
+1. **Read config**: Check `scope.auto_decompose` from `forge-config.md` (default: `true`). If `false`, skip this check.
+
+2. **Analyze exploration results**: From stage 1 notes, count distinct architectural domains touched by the requirement:
+   - Different bounded contexts (separate domain model packages/directories)
+   - Different API groups (separate controller/route namespaces)
+   - Independent data models (separate database tables/collections with no FK relationships)
+   - Different infrastructure concerns (auth vs. payments vs. notifications)
+
+3. **Threshold check**: If domain count >= `scope.decomposition_threshold` (default: 3 from `forge-config.md`):
+
+   a. Log in stage notes: `"Deep scope check triggered: {domain_count} domains detected (threshold: {threshold}). Domains: {domain_list}"`
+
+   b. Dispatch `fg-015-scope-decomposer`:
+      // Wrap: TaskCreate("Decomposing multi-feature requirement — fg-015-scope-decomposer") → Agent dispatch → TaskUpdate(completed)
+      ```
+      Decompose this multi-feature requirement into independent features:
+
+      Requirement: {original_requirement}
+
+      Source: deep_scan
+      Exploration notes: {summarized stage 1 notes — file paths, domains, patterns}
+      Available MCPs: {detected_mcps}
+      ```
+
+   c. The scope decomposer handles user approval and dispatches `fg-090-sprint-orchestrator`. This orchestrator instance should then **stop execution** — the sprint orchestrator takes over.
+
+   d. Update state: `decomposition.source = "deep_scan"`, store extracted features and routing in `state.json.decomposition`.
+
+   e. Set `story_state` to `"DECOMPOSED"` and return. Do NOT proceed to Stage 2.
+
+4. **If domain count < threshold**: Proceed to Stage 2 (PLAN) as normal.
+
 ---
 
 ## 5. Stage 2: PLAN (dispatch fg-200-planner or fg-160-migration-planner)
