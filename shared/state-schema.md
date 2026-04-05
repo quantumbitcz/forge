@@ -187,7 +187,12 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
       }
     ]
   },
-  "bugfix": null
+  "bugfix": null,
+  "graph": {
+    "last_update_stage": -1,
+    "last_update_files": [],
+    "stale": false
+  }
 }
 ```
 
