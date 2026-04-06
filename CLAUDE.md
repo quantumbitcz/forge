@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.8.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.9.0, installable from the `quantumbitcz` marketplace or as a Git submodule). It orchestrates a 10-stage autonomous development pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. The entry point is the `/forge-run` skill which dispatches `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -384,7 +384,7 @@ Agents must NEVER use dependency versions from training data. Always search the 
 
 ## Plugin distribution (`.claude-plugin/`)
 
-- `plugin.json` — manifest (v1.8.0). `marketplace.json` — catalog for `quantumbitcz`.
+- `plugin.json` — manifest (v1.9.0). `marketplace.json` — catalog for `quantumbitcz`.
 - Hooks in `hooks/hooks.json` only (NOT in plugin.json).
 - Install: `/plugin marketplace add quantumbitcz/forge` then `/plugin install forge@quantumbitcz`.
 
