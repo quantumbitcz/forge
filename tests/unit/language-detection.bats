@@ -137,10 +137,86 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 }
 
 # ---------------------------------------------------------------------------
-# 6. All 8 language extensions are handled (or silently ignored for unsupported)
-#    For each known extension, engine produces no error and exits 0.
-#    Code extensions with content that triggers findings produce output.
-#    Non-code extensions produce no findings.
+# 6. Dockerfile is detected by filename (no extension)
+# ---------------------------------------------------------------------------
+@test "language-detection: Dockerfile triggers dockerfile findings" {
+  local project_dir
+  project_dir="$(create_temp_project k8s)"
+  git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
+
+  local dockerfile="${project_dir}/Dockerfile"
+  printf 'FROM ubuntu:latest\nRUN apt-get install -y curl\n' > "$dockerfile"
+
+  run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
+    bash '${ENGINE}' --verify \
+      --project-root '${project_dir}' \
+      --files-changed '${dockerfile}' 2>/dev/null"
+
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# 7. Dockerfile.prod variant is detected
+# ---------------------------------------------------------------------------
+@test "language-detection: Dockerfile.prod triggers dockerfile findings" {
+  local project_dir
+  project_dir="$(create_temp_project k8s)"
+  git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
+
+  local dockerfile="${project_dir}/Dockerfile.prod"
+  printf 'FROM node:20\nCOPY . .\n' > "$dockerfile"
+
+  run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
+    bash '${ENGINE}' --verify \
+      --project-root '${project_dir}' \
+      --files-changed '${dockerfile}' 2>/dev/null"
+
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# 8. YAML file is detected
+# ---------------------------------------------------------------------------
+@test "language-detection: .yaml file triggers yaml findings" {
+  local project_dir
+  project_dir="$(create_temp_project k8s)"
+  git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
+
+  local yaml_file="${project_dir}/values.yaml"
+  printf 'replicas: 1\nimage: nginx:latest\n' > "$yaml_file"
+
+  run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
+    bash '${ENGINE}' --verify \
+      --project-root '${project_dir}' \
+      --files-changed '${yaml_file}' 2>/dev/null"
+
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# 9. .yml extension also detected
+# ---------------------------------------------------------------------------
+@test "language-detection: .yml file triggers yaml findings" {
+  local project_dir
+  project_dir="$(create_temp_project k8s)"
+  git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
+
+  local yml_file="${project_dir}/config.yml"
+  printf 'key: value\n' > "$yml_file"
+
+  run bash -c "env CLAUDE_PLUGIN_ROOT='${PLUGIN_ROOT}' \
+    bash '${ENGINE}' --verify \
+      --project-root '${project_dir}' \
+      --files-changed '${yml_file}' 2>/dev/null"
+
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# 10. All 8 language extensions are handled (or silently ignored for unsupported)
+#     For each known extension, engine produces no error and exits 0.
+#     Code extensions with content that triggers findings produce output.
+#     Non-code extensions produce no findings.
 # ---------------------------------------------------------------------------
 @test "language-detection: engine handles all 8 known code extensions without error" {
   local project_dir
