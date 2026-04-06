@@ -37,6 +37,12 @@ portable_sed_i() {
   fi
 }
 
+# Escape a string for safe use as a sed replacement value.
+# Handles: backslash, pipe (our delimiter), ampersand, and newlines.
+_sed_escape_replacement() {
+  printf '%s' "$1" | sed -e 's/[\\|&]/\\&/g'
+}
+
 # ── slugify <title> [max_len] ─────────────────────────────────────────────────
 #
 # Convert a human-readable title into a URL/filename-safe kebab-case slug.
@@ -306,10 +312,12 @@ update_ticket_field() {
     fi
   done
 
+  local safe_value
+  safe_value="$(_sed_escape_replacement "$value")"
   if (( use_quotes )); then
-    portable_sed_i "s|^${field}: .*|${field}: \"${value}\"|" "$ticket_path"
+    portable_sed_i "s|^${field}: .*|${field}: \"${safe_value}\"|" "$ticket_path"
   else
-    portable_sed_i "s|^${field}: .*|${field}: ${value}|" "$ticket_path"
+    portable_sed_i "s|^${field}: .*|${field}: ${safe_value}|" "$ticket_path"
   fi
 
   # Also update the `updated` timestamp
