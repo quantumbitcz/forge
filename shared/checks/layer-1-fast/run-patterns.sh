@@ -66,8 +66,15 @@ if override_path:
         '.dart': 'dart',
         '.ex': 'elixir', '.exs': 'elixir',
         '.scala': 'scala', '.sc': 'scala',
+        '.yml': 'yaml', '.yaml': 'yaml',
+        '.dockerfile': 'dockerfile',
     }
-    file_lang = ext_to_lang.get(os.path.splitext(sys.argv[3] if len(sys.argv) > 3 else '')[1].lower(), '')
+    checked_file = sys.argv[3] if len(sys.argv) > 3 else ''
+    basename = os.path.basename(checked_file)
+    if basename == 'Dockerfile' or basename.startswith('Dockerfile.'):
+        file_lang = 'dockerfile'
+    else:
+        file_lang = ext_to_lang.get(os.path.splitext(checked_file)[1].lower(), '')
 
     # Support both flat format and new nested format (variant_rules / shared_rules)
     if 'variant_rules' in ov or 'shared_rules' in ov:
