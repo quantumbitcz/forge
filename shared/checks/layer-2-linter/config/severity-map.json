@@ -151,5 +151,23 @@
     "Error": "WARNING",
     "Convention": "INFO",
     "Refactor": "INFO"
+  },
+  "hadolint": {
+    "DL3000": "CRITICAL",
+    "DL3002": "WARNING",
+    "DL3003": "WARNING",
+    "DL3007": "WARNING",
+    "DL3008": "INFO",
+    "_severity_map": {
+      "error": "WARNING",
+      "warning": "INFO",
+      "info": "INFO"
+    }
+  },
+  "yamllint": {
+    "_severity_map": {
+      "error": "WARNING",
+      "warning": "INFO"
+    }
   }
 }

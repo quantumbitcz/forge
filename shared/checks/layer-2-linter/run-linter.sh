@@ -35,6 +35,7 @@ PRIMARY=(
   [c]=clang-tidy       [swift]=swiftlint   [csharp]=dotnet-format
   [ruby]=rubocop       [php]=phpstan       [dart]=dart-analyzer
   [elixir]=credo       [scala]=scalafmt    [cpp]=clang-tidy
+  [dockerfile]=hadolint [yaml]=yamllint
 )
 FALLBACK=(
   [kotlin]=ktlint      [java]=spotbugs     [typescript]=biome
