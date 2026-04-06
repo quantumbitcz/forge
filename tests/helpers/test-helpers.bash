@@ -94,6 +94,27 @@ create_temp_project() {
       mkdir -p "${project_dir}/k8s"
       touch "${project_dir}/k8s/deployment.yaml"
       ;;
+    angular)
+      echo '{"name":"test-app","version":"0.0.1"}' > "${project_dir}/package.json"
+      printf '{\n  "$schema": "./node_modules/@angular/cli/lib/config/schema.json"\n}\n' \
+        > "${project_dir}/angular.json"
+      ;;
+    nestjs)
+      echo '{"name":"test-app","version":"0.0.1","dependencies":{"@nestjs/core":"10.0.0"}}' \
+        > "${project_dir}/package.json"
+      printf '{\n  "compilerOptions": { "module": "commonjs" }\n}\n' \
+        > "${project_dir}/nest-cli.json"
+      ;;
+    svelte)
+      echo '{"name":"test-app","version":"0.0.1","devDependencies":{"svelte":"5.0.0"}}' \
+        > "${project_dir}/package.json"
+      ;;
+    vue)
+      echo '{"name":"test-app","version":"0.0.1","dependencies":{"vue":"3.4.0"}}' \
+        > "${project_dir}/package.json"
+      printf 'import { fileURLToPath } from "node:url";\nimport vue from "@vitejs/plugin-vue";\n' \
+        > "${project_dir}/vite.config.ts"
+      ;;
     aspnet)
       cat > "${project_dir}/TestApp.csproj" <<'CSPROJ'
 <Project Sdk="Microsoft.NET.Sdk.Web">
