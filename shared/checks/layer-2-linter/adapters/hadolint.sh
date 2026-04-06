@@ -67,9 +67,10 @@ def map_category(code):
     c = code.upper()
     if c.startswith('DL'):
         num = int(c[2:]) if c[2:].isdigit() else 0
-        if 3000 <= num < 4000:
+        # DL3002 (last user = root) is security; rest of DL3xxx are best practices
+        if c == 'DL3002':
             return 'DF-LINT-SEC'
-        if 4000 <= num < 5000:
+        if 3000 <= num < 5000:
             return 'DF-LINT-BEST'
     if c.startswith('SC'):
         return 'DF-LINT-SHELL'

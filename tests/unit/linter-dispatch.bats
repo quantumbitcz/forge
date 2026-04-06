@@ -137,10 +137,10 @@ WRAP
 }
 
 # ---------------------------------------------------------------------------
-# 7. Maps all 8 languages to their primary linters (loop over all)
+# 7. Maps all 17 languages to their primary linters (loop over all)
 #    Each call should exit 0 (no crash), confirming the language is recognized.
 # ---------------------------------------------------------------------------
-@test "dispatch: all 8 languages recognized and exit 0" {
+@test "dispatch: all 17 languages recognized and exit 0" {
   local -A lang_primary=(
     [kotlin]=detekt
     [java]=checkstyle
@@ -150,6 +150,15 @@ WRAP
     [rust]=cargo      # clippy resolved to cargo
     [c]=clang-tidy
     [swift]=swiftlint
+    [csharp]=dotnet
+    [ruby]=rubocop
+    [php]=phpstan
+    [dart]=dart
+    [elixir]=mix
+    [scala]=scalafmt
+    [cpp]=clang-tidy
+    [dockerfile]=hadolint
+    [yaml]=yamllint
   )
 
   for lang in "${!lang_primary[@]}"; do
