@@ -307,7 +307,7 @@ done
 ### Structural rules
 
 - Agent `name` in frontmatter **must** match filename without `.md` — orchestrator dispatch depends on it.
-- Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this. Graph scripts (`build-project-graph.sh`, `incremental-update.sh`) and `run-linter.sh` require **bash 4.0+** for associative arrays. macOS ships bash 3.2 — developers need `brew install bash`. All three scripts guard with `require_bash4()` from `shared/platform.sh` (or inline check).
+- Scripts need shebang (`#!/usr/bin/env bash`) and `chmod +x` — hooks fail silently without this. Graph scripts (`build-project-graph.sh`, `incremental-update.sh`, `enrich-symbols.sh`, `generate-seed.sh`) and `run-linter.sh` require **bash 4.0+** for associative arrays. macOS ships bash 3.2 — developers need `brew install bash`. The four graph scripts guard with `require_bash4()` from `shared/platform.sh`; `run-linter.sh` uses an inline check (does not source `platform.sh` for performance).
 - `shared/` files are contracts — changing `scoring.md`, `stage-contract.md`, `state-schema.md`, or `frontend-design-theory.md` affects all agents/modules. Verify downstream impact.
 - The plugin never touches consuming project files. Runtime state goes to `.forge/`.
 - `forge-config.md` is auto-tuned by retrospective — manual edits may be overwritten. Wrap parameters in `<!-- locked -->` / `<!-- /locked -->` fences to protect them from auto-tuning.
