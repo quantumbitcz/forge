@@ -38,7 +38,7 @@ portable_sed_i() {
 }
 
 # Escape a string for safe use as a sed replacement value.
-# Handles: backslash, pipe (our delimiter), ampersand, and newlines.
+# Handles: backslash, pipe (our delimiter), and ampersand.
 _sed_escape_replacement() {
   printf '%s' "$1" | sed -e 's/[\\|&]/\\&/g'
 }
@@ -275,7 +275,9 @@ move_ticket() {
   now="$(iso_now)"
 
   # Update status field in frontmatter
-  portable_sed_i "s|^status: .*|status: ${new_status}|" "$current_path"
+  local safe_status
+  safe_status="$(_sed_escape_replacement "$new_status")"
+  portable_sed_i "s|^status: .*|status: ${safe_status}|" "$current_path"
   # Update updated field in frontmatter
   portable_sed_i "s|^updated: .*|updated: \"${now}\"|" "$current_path"
 
