@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Requires Bash 4.0+ (uses associative arrays)
-if (( BASH_VERSINFO[0] < 4 )); then
-  echo "[generate-seed] Bash 4.0+ required (found ${BASH_VERSION}). Cannot generate seed." >&2
-  exit 1
-fi
-
 # ============================================================================
 # generate-seed.sh — Plugin Knowledge Graph Seed Generator
 #
@@ -19,13 +13,13 @@ fi
 # ============================================================================
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../platform.sh
+source "${PLUGIN_ROOT}/shared/platform.sh"
 
-# Resolve Python command (platform.sh is not sourced here)
-if command -v python3 &>/dev/null; then
-  FORGE_PYTHON="python3"
-elif command -v python &>/dev/null; then
-  FORGE_PYTHON="python"
-else
+# Requires Bash 4.0+ (uses associative arrays)
+require_bash4 "generate-seed.sh" || exit 1
+
+if [[ -z "$FORGE_PYTHON" ]]; then
   echo "[generate-seed] Warning: No python3 or python found — JSON parsing will fail" >&2
   FORGE_PYTHON="python3"  # fallback; will error at usage
 fi

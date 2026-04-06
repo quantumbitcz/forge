@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Requires Bash 4.0+ (uses associative arrays)
-if (( BASH_VERSINFO[0] < 4 )); then
-  echo "[enrich-symbols] Bash 4.0+ required (found ${BASH_VERSION}). Cannot enrich symbols." >&2
-  exit 1
-fi
-
 # ============================================================================
 # enrich-symbols.sh — Symbol-Level Graph Enrichment
 #
@@ -24,6 +18,9 @@ fi
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
+
+# Requires Bash 4.0+ (uses associative arrays)
+require_bash4 "enrich-symbols.sh" || exit 1
 
 PROJECT_ROOT=""
 PROJECT_ID=""
