@@ -80,7 +80,7 @@ The provisioned `.mcp.json` at the project root uses the standard MCP server for
       "env": {
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USERNAME": "neo4j",
-        "NEO4J_PASSWORD": "forge-neo4j"
+        "NEO4J_PASSWORD": "forge-local"
       }
     }
   }
