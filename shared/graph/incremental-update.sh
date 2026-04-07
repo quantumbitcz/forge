@@ -67,9 +67,9 @@ if [[ ! -f "$LAST_BUILD_FILE" ]]; then
   exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
 fi
 
-LAST_BUILD_SHA="$(cat "$LAST_BUILD_FILE" | tr -d '[:space:]')"
+LAST_BUILD_SHA="$(tr -d '[:space:]' < "$LAST_BUILD_FILE")"
 
-if [[ -z "$LAST_BUILD_SHA" || "$LAST_BUILD_SHA" == "unknown" ]]; then
+if [[ -z "$LAST_BUILD_SHA" || "$LAST_BUILD_SHA" == "unknown" || ! "$LAST_BUILD_SHA" =~ ^[0-9a-f]+$ ]]; then
   echo "// Invalid last build SHA — executing full rebuild" >&2
   exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
 fi
@@ -89,7 +89,10 @@ if [[ "$LAST_BUILD_SHA" == "$CURRENT_SHA" ]]; then
 fi
 
 # --- Get changed files ---
-CHANGES="$(cd "$PROJECT_ROOT" && git diff --name-status "${LAST_BUILD_SHA}..HEAD" 2>/dev/null || echo "")"
+if ! CHANGES="$(cd "$PROJECT_ROOT" && git diff --name-status "${LAST_BUILD_SHA}..HEAD" 2>/dev/null)"; then
+  echo "// git diff failed (shallow clone or corrupt history?) — executing full rebuild" >&2
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
+fi
 
 if [[ -z "$CHANGES" ]]; then
   echo "// No file changes between ${LAST_BUILD_SHA} and ${CURRENT_SHA}"
