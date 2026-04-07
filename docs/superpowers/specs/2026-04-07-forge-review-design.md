@@ -69,15 +69,19 @@ Score using the forge formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`
 
 | Score | Condition | Verdict |
 |---|---|---|
-| >= 80 AND 0 CRITICALs | Clean | **PASS** |
-| 60-79 AND 0 CRITICALs | Minor issues | **CONCERNS** |
-| < 60 OR any CRITICAL | Blocking issues | **FAIL** |
+| 100 | Perfect | **PERFECT** — no findings, ready to ship |
+| >= 80 AND 0 CRITICALs | Acceptable but imperfect | **PASS** — list remaining findings to fix toward 100 |
+| 60-79 AND 0 CRITICALs | Minor issues | **CONCERNS** — fix before proceeding |
+| < 60 OR any CRITICAL | Blocking issues | **FAIL** — must fix before proceeding |
+
+**Target is always 100.** PASS (>=80) means the code won't break, but findings still exist. The review should always list ALL remaining findings so the caller can fix toward a perfect score. Only PERFECT (100) means "nothing left to improve."
 
 Output format:
 ```
-## Forge Review -- {PASS|CONCERNS|FAIL} (Score: {N}/100)
+## Forge Review -- {PERFECT|PASS|CONCERNS|FAIL} (Score: {N}/100)
 
 **Mode:** {quick|full} | **Files reviewed:** {count} | **Agents dispatched:** {count}
+**Target:** 100 | **Remaining:** {total_count} findings to fix
 
 ### Findings ({total_count})
 
@@ -91,10 +95,10 @@ Output format:
 - `file:line` | CATEGORY | message
 
 ### Verdict
-{Contextual summary based on verdict}
+{PERFECT: Clean — no findings. | PASS: Acceptable but {N} findings remain — fix to reach 100. | CONCERNS/FAIL: Fix required before proceeding.}
 ```
 
-If zero findings: "No issues found. Score: 100/100."
+If zero findings: "PERFECT -- Score: 100/100. No findings."
 
 ## What It Does NOT Do
 
