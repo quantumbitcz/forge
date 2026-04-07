@@ -31,7 +31,7 @@ Layered design with resolution flowing top-down:
    - `modules/documentation/` — documentation conventions layer (doc structure, ADR patterns, API docs, changelog standards, cross-reference rules).
    - `modules/code-quality/` — code quality tooling best practices: linters (detekt, eslint, ruff, clippy, etc.), formatters (prettier, black, gofmt, etc.), coverage tools (jacoco, istanbul, coverage-py, etc.), doc generators (dokka, typedoc, sphinx, etc.), dependency security scanners (owasp-dependency-check, npm-audit, cargo-audit, etc.), mutation testing (pitest, stryker, mutmut). ~70 tool files.
    Convention composition order (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Note: framework-testing is a specific case of framework-binding. All framework subdirectory bindings (testing/, persistence/, messaging/, etc.) share the same precedence level.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 39 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — the pipeline engine: 40 agents, check engine, recovery system, scoring, discovery (`shared/discovery/`), knowledge graph (`shared/graph/`), and frontend design theory.
 
 Parameter resolution: `forge-config.md` > `forge.local.md` > plugin hardcoded defaults.
 
@@ -84,7 +84,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 ## Key conventions
 
-### Agents (39 total, in `agents/*.md`)
+### Agents (40 total, in `agents/*.md`)
 
 **Pipeline agents** (`fg-{NNN}-{role}` naming):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -99,7 +99,7 @@ This is a documentation-only plugin (no build step). To test changes:
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
 
-**Review agents** (10, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
+**Review agents** (11, dispatched by quality gate): `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
 
 **Agent file rules:**
 - **YAML frontmatter required:** `name` (must match filename without `.md`), `description`, `tools`.
@@ -108,7 +108,7 @@ This is a documentation-only plugin (no build step). To test changes:
   - Multi-option choices **must** use `AskUserQuestion` with structured options — never `Options: (1)...` or `(y/n)`.
   - Planning agents use `EnterPlanMode`/`ExitPlanMode` for user approval — skip in autonomous/replanning.
 - YAML frontmatter `ui:` section declares interactive capabilities: `tasks` (TaskCreate/TaskUpdate), `ask` (AskUserQuestion), `plan_mode` (EnterPlanMode/ExitPlanMode). Omitting `ui:` entirely = all false (Tier 4). Structural test `ui-frontmatter-consistency.bats` enforces that `ui:` declarations match `tools:` list. See `shared/agent-ui.md` for patterns.
-- Agent UI tiers: Tier 1 (tasks+ask+plan_mode): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator. Tier 3 (tasks only): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper. Tier 4 (no UI): all 10 reviewers, validator, feedback capture, recap, worktree manager, conflict resolver.
+- Agent UI tiers: Tier 1 (tasks+ask+plan_mode): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator. Tier 3 (tasks only): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper. Tier 4 (no UI): all 11 reviewers, validator, feedback capture, recap, worktree manager, conflict resolver.
 - Module config uses `components:` in `forge.local.md` — core fields: `language:`, `framework:`, `variant:`, `testing:`.
   - Framework-specific stack fields: `web` (e.g., `mvc | webflux`), `persistence` (e.g., `hibernate | r2dbc` — distinct from crosscutting `modules/persistence/`).
   - Optional crosscutting layers: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality`. All optional — omit to skip.
@@ -125,7 +125,7 @@ This is a documentation-only plugin (no build step). To test changes:
 
 ### Universal Routing & Auto-Decomposition
 
-- **Universal routing:** `/forge-run` auto-classifies intent (bugfix/migration/bootstrap/multi-feature/vague/standard) and routes to the correct agent. Explicit prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint`, `--parallel`) override classification. Config: `routing.auto_classify`, `routing.vague_threshold` in `forge-config.md`. See `shared/intent-classification.md`.
+- **Universal routing:** `/forge-run` auto-classifies intent (bugfix/migration/bootstrap/multi-feature/vague/standard) and routes to the correct agent. Vague detection includes a **feature completeness check**: requirements under 50 words missing 3+ of (actors, entities, surface, criteria) are routed to `fg-010-shaper` for shaping first. Explicit prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint`, `--parallel`) override classification. Config: `routing.auto_classify`, `routing.vague_threshold` in `forge-config.md`. See `shared/intent-classification.md`.
 - **Auto-decomposition:** Multi-feature requirements detected via fast scan (text analysis in forge-run) or deep scan (post-EXPLORE domain analysis in orchestrator). Triggers `fg-015-scope-decomposer` → `fg-090-sprint-orchestrator`. Config: `scope.auto_decompose`, `scope.decomposition_threshold`, `scope.fast_scan` in `forge-config.md`.
 - **Visual design preview:** Frontend features optionally present design alternatives via superpowers visual companion during PLAN stage (fg-200). Detected at PREFLIGHT (`state.json.integrations.visual_companion`). Config: `frontend_preview.enabled`, `frontend_preview.auto_open_browser`, `frontend_preview.keep_alive_for_polish` in `forge.local.md`. Graceful degradation: text-only if superpowers unavailable or `autonomous: true`.
 
@@ -336,8 +336,8 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 ### Pipeline modes
 
 - **Greenfield projects:** `/forge-init` detects empty projects and offers three paths: Bootstrap (dispatch `fg-050-project-bootstrapper`), Select stack manually (choose from available frameworks), or Skip. Unknown/null detection on non-empty projects also triggers manual framework selection. See `forge-init` SKILL.md Greenfield Detection section.
-- **Bootstrap mode:** Stage 4 (IMPLEMENT) is skipped — all files created by bootstrapper in Stage 2. Stage 3 uses bootstrap-scoped validation (no conventions check, no Challenge Brief required). Stage 6 uses reduced reviewer set (`architecture-reviewer` + `security-reviewer` only). Quality target is `pass_threshold`, not 100.
-- **Bugfix mode:** `/forge-fix` or `/forge-run bugfix: <description>`. Stage 1 dispatches `fg-020-bug-investigator` (INVESTIGATE), Stage 2 continues with reproduction (max 3 attempts). Stage 3 validates with 4 bugfix perspectives (root cause validity, fix scope, regression risk, test coverage). Stage 6 uses reduced reviewer batch. Stage 9 tracks bug patterns in `.forge/forge-log.md`. Bugfix state fields: `bugfix.source`, `bugfix.reproduction.*`, `bugfix.root_cause.*`. See `stage-contract.md` Bugfix Mode section.
+- **Bootstrap mode:** Stage 4 (IMPLEMENT) is skipped — all files created by bootstrapper in Stage 2. Stage 3 uses bootstrap-scoped validation (no conventions check, no Challenge Brief required). Stage 6 uses reduced reviewer set (`architecture-reviewer` + `security-reviewer` + `code-quality-reviewer`). Quality target is `pass_threshold`, not 100.
+- **Bugfix mode:** `/forge-fix` or `/forge-run bugfix: <description>`. Stage 1 dispatches `fg-020-bug-investigator` (INVESTIGATE), Stage 2 continues with reproduction (max 3 attempts). Stage 3 validates with 4 bugfix perspectives (root cause validity, fix scope, regression risk, test coverage). Stage 6 uses reduced reviewer batch (`architecture-reviewer` + `security-reviewer` + `code-quality-reviewer`, plus `frontend-reviewer` if frontend files changed). Stage 9 tracks bug patterns in `.forge/forge-log.md`. Bugfix state fields: `bugfix.source`, `bugfix.reproduction.*`, `bugfix.root_cause.*`. See `stage-contract.md` Bugfix Mode section.
 - **Migration mode:** All 10 stages run. Stage 2 uses `fg-160-migration-planner`. Stage 4 cycles through migration-specific states (`MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`). See `stage-contract.md` Migration Mode section.
 - `--dry-run` runs PREFLIGHT→VALIDATE only. No worktree, no Linear, no file changes. No `.forge/.lock`, no checkpoint files, no `lastCheckpoint` updates.
 - **Autonomous mode:** `autonomous: true` in `forge-config.md` replaces all AskUserQuestion with auto-selection (logged with `[AUTO]` prefix). Plans auto-approved after validator passes. Tasks still created. Pipeline never pauses except on unrecoverable CRITICAL errors.

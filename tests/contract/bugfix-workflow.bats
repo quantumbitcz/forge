@@ -89,6 +89,11 @@ setup() {
   grep -qi "bugfix.*review\|reduced.*batch\|bugfix review" "$ORCHESTRATOR"
 }
 
+@test "bugfix: bugfix reduced batch includes code-quality-reviewer" {
+  # Section 9.0a should dispatch code-quality-reviewer alongside architecture and security
+  grep -q "code-quality-reviewer" "$ORCHESTRATOR"
+}
+
 # --- Stage Contract ---
 @test "bugfix: stage contract has Bugfix Mode section" {
   grep -q "Bugfix Mode" "$STAGE_CONTRACT"

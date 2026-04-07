@@ -109,6 +109,23 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 }
 
 # ---------------------------------------------------------------------------
+# 11b. QUAL-* and TEST-* subcategories documented (emitted by code-quality-reviewer)
+# ---------------------------------------------------------------------------
+@test "scoring: QUAL-* subcategories documented" {
+  local subcats=(QUAL-ERR QUAL-DRY QUAL-DEF QUAL-PLAN QUAL-NAME QUAL-COMPLEX QUAL-MAGIC QUAL-LENGTH QUAL-KISS)
+  for sub in "${subcats[@]}"; do
+    grep -q "${sub}" "$SCORING" || fail "QUAL subcategory ${sub} not found in scoring.md"
+  done
+}
+
+@test "scoring: TEST-* subcategories documented" {
+  local subcats=(TEST-MOCK-ONLY TEST-EDGE-MISSING TEST-ASSERT-WEAK TEST-ISOLATION)
+  for sub in "${subcats[@]}"; do
+    grep -q "${sub}" "$SCORING" || fail "TEST subcategory ${sub} not found in scoring.md"
+  done
+}
+
+# ---------------------------------------------------------------------------
 # 12. Formula arithmetic verification: 100 - 20*1 - 5*2 - 2*3 = 64
 # ---------------------------------------------------------------------------
 @test "scoring: formula arithmetic 1C 2W 3I = 64" {
