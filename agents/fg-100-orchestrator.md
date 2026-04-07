@@ -1168,6 +1168,20 @@ Fix cycles are driven by the convergence engine (`shared/convergence-engine.md`)
    - **REGRESSING** (delta < 0, abs(delta) > `oscillation_tolerance`): escalate immediately.
 4. On transition to `"safety_gate"`: dispatch VERIFY (Stage 5 — full build + lint + tests). If VERIFY passes, set `convergence.safety_gate_passed = true`, proceed to DOCS. If VERIFY fails, transition back to `"correctness"` (Phase 1) — Phase 2 fixes broke something.
 
+### 9.3a Code Review Feedback Rigor
+
+Before dispatching `fg-300-implementer` with review findings (from quality gate, PR reviewer, or convergence fix cycle), the orchestrator MUST follow this verification pattern:
+
+1. **READ** the feedback completely — every finding, not just the summary.
+2. **VERIFY** each finding against the actual code. Is it a real issue or a false positive? Read the referenced file and line.
+3. **EVALUATE** severity honestly — do not inflate (to force a fix) or deflate (to skip inconvenient work).
+4. **PUSH BACK** where warranted: if a finding is technically incorrect, document the reasoning and exclude it from the implementer dispatch. Record excluded findings with justification in stage notes.
+5. **YAGNI check:** If a reviewer suggests adding features not in the spec (logging, metrics, validation beyond requirements, defensive patterns not justified by the threat model), mark as `SCOUT-*` and defer — do not include in the implementer dispatch.
+
+Only after this verification pass, dispatch the implementer with the verified findings.
+
+**Do NOT implement review feedback blindly. Verify each finding before acting.**
+
 **Pre-dispatch budget check:** Before dispatching implementer, check `total_retries` against `total_retries_max`. If within 1 of max, log WARNING in stage notes.
 
 If convergence exhausted (`total_iterations >= max_iterations`) and score still < target:
