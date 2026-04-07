@@ -78,9 +78,11 @@ Then add to `.claude/settings.json`:
 | `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
 | `/forge-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
 | `/forge-fix` | Bugfix entry point -- root cause investigation, reproduction, targeted fix |
+| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 3 agents, full: 11 agents) |
 | `/forge-sprint` | Parallel multi-feature orchestration -- decomposes and runs features concurrently |
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
+| `/deep-health` | Iterative investigation + fix + review loop using forge review agents -- loops until clean |
 | `/verify` | Quick build + lint + test check without a full pipeline run |
 | `/graph-init` | Initialize the Neo4j knowledge graph (Docker-managed, enabled by default) |
 | `/graph-status` | Show knowledge graph connection status and node/relationship counts |
@@ -387,10 +389,10 @@ forge/
     deploy/
     docs-generate/
     forge-fix/
-    forge-review/
     forge-history/
     forge-init/
     forge-reset/
+    forge-review/
     forge-rollback/
     forge-run/
     forge-shape/
