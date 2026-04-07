@@ -151,6 +151,12 @@ Write `.forge/sprint-state.json` (atomic: write to `.forge/sprint-state.json.tmp
 
 For each feature, initialize with the current project as the single repo entry. Cross-repo entries are added during ANALYZE (§4).
 
+**Base commit pinning:** Record the current HEAD commit of the base branch (`main`/`master`) at GATHER time:
+```bash
+git rev-parse HEAD  # → store as sprint-state.json.base_commit
+```
+All parallel feature worktrees MUST branch from this commit — not from HEAD at dispatch time (which may have moved if features merged during the sprint). This ensures consistent merge semantics across all features. Cross-repo projects each pin their own base commit at GATHER time, recorded per-repo.
+
 Mark task completed. Update sprint status to `analyzing`.
 
 ---
@@ -414,6 +420,11 @@ options:
   - "Retry" (description: "Re-run {failed_feature} from the beginning")
   - "Abort chain" (description: "Cancel all remaining features in this chain — other chains and parallel groups are unaffected")
 ```
+
+**State transitions per option:**
+- **"Skip and continue"**: Set failed feature status to `failed` with reason `"skipped_by_user"`. Proceed to next feature in chain. If next feature has `waiting_for` pointing to the skipped feature, clear it (dependency no longer blocking).
+- **"Retry"**: Reset feature status to `executing`. Reset its per-run state counters (`total_retries`, `verify_fix_count`, `test_cycles`, `quality_cycles` to 0). Clean up and recreate worktree from `base_commit`. Redispatch `fg-100-orchestrator`.
+- **"Abort chain"**: Set failed feature and ALL remaining features in this chain to `failed` with reason `"chain_aborted"`. Clean up worktrees for all affected features. Other parallel groups and serial chains are unaffected.
 
 ---
 

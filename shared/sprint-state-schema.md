@@ -88,6 +88,7 @@ Root sprint state file. Created when a sprint run begins, updated as features pr
 | `source` | string | `linear \| manual` | How the sprint was initiated |
 | `started` | string | ISO 8601 | When the sprint run began |
 | `status` | string | `gathering \| analyzing \| approved \| executing \| merging \| complete \| failed` | Overall sprint lifecycle state |
+| `base_commit` | string | git SHA | HEAD of base branch at GATHER time. All feature worktrees branch from this commit for consistent merge semantics. |
 | `features[].id` | string | — | Feature ticket ID (e.g., `FG-42`) |
 | `features[].name` | string | — | Human-readable feature name |
 | `features[].status` | string | `gathering \| analyzing \| approved \| executing \| merging \| complete \| failed` | Per-feature lifecycle state |

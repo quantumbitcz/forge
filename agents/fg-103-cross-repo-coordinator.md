@@ -45,7 +45,8 @@ Create worktrees across all related projects for the given feature.
    b. If lock is held by another process: surface `AskUserQuestion` (see User Escalation below)
    c. Dispatch `fg-101-worktree-manager create {feature_id} {slug} --base-dir {project_path}/.forge/worktrees/{feature_id}/`
    d. Update TaskUpdate to reflect worktree creation status
-4. Record all `worktree_path` and `branch_name` outputs in sprint-state.json under the corresponding `features[].repos[]` entry
+   e. **On failure** (worktree creation or lock acquisition fails): rollback all previously created worktrees for this feature by dispatching `fg-101-worktree-manager delete` for each successfully created worktree. Release all acquired locks. Mark the feature as `failed` with reason `"cross_repo_setup_failure"` in sprint-state.json. Do NOT partially update sprint-state.json — either all worktrees succeed or none are recorded.
+4. Record all `worktree_path` and `branch_name` outputs in sprint-state.json under the corresponding `features[].repos[]` entry. **Only write after all worktrees are created successfully** (atomic from the sprint-state perspective).
 
 **Task Blueprint:**
 
