@@ -1912,6 +1912,7 @@ CREATE (:Agent:Reviewer {name: 'version-compat-reviewer', role: 'reviewer', file
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-090-sprint-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-100-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-100-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1934,6 +1935,7 @@ CREATE (:SharedContract {name: 'agent-defaults', file_path: 'shared/agent-defaul
 CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-philosophy.md'});
 CREATE (:SharedContract {name: 'agent-ui', file_path: 'shared/agent-ui.md'});
 CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
+CREATE (:SharedContract {name: 'debugging-techniques', file_path: 'shared/debugging-techniques.md'});
 CREATE (:SharedContract {name: 'error-taxonomy', file_path: 'shared/error-taxonomy.md'});
 CREATE (:SharedContract {name: 'frontend-design-theory', file_path: 'shared/frontend-design-theory.md'});
 CREATE (:SharedContract {name: 'git-conventions', file_path: 'shared/git-conventions.md'});
@@ -1944,6 +1946,8 @@ CREATE (:SharedContract {name: 'scoring', file_path: 'shared/scoring.md'});
 CREATE (:SharedContract {name: 'sprint-state-schema', file_path: 'shared/sprint-state-schema.md'});
 CREATE (:SharedContract {name: 'stage-contract', file_path: 'shared/stage-contract.md'});
 CREATE (:SharedContract {name: 'state-schema', file_path: 'shared/state-schema.md'});
+CREATE (:SharedContract {name: 'tdd-enforcement', file_path: 'shared/tdd-enforcement.md'});
+CREATE (:SharedContract {name: 'testing-anti-patterns', file_path: 'shared/testing-anti-patterns.md'});
 CREATE (:SharedContract {name: 'verification-evidence', file_path: 'shared/verification-evidence.md'});
 CREATE (:SharedContract {name: 'version-resolution', file_path: 'shared/version-resolution.md'});
 
@@ -1965,6 +1969,8 @@ MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (c:SharedContract {name: 'age
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'debugging-techniques'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'state-schema'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-050-project-bootstrapper'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
@@ -2021,6 +2027,8 @@ MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'a
 MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'tdd-enforcement'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'testing-anti-patterns'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-310-scaffolder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-310-scaffolder'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-320-frontend-polisher'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);

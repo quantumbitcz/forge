@@ -252,8 +252,8 @@ Record the analysis outcome in stage notes under `## Root Cause (Confirmed)` —
 
 If 3+ fix attempts fail for the same issue, **STOP**. The problem is likely architectural — a localized fix will not resolve a systemic defect.
 
-- Escalate by dispatching `fg-200-planner` for replanning instead of continuing fix attempts.
-- This integrates with the orchestrator's existing feedback loop detection (`feedback_loop_count` in `state-schema.md`). When the orchestrator detects consecutive failures of the same classification, it offers escalation options — architectural escalation here is the agent-level equivalent.
+- Escalate to the orchestrator via stage notes — you cannot dispatch other agents directly. The orchestrator will dispatch `fg-200-planner` for replanning.
+- This integrates with the orchestrator's existing feedback loop detection (`feedback_loop_count` in `state-schema.md`). When the orchestrator detects consecutive failures of the same classification, it offers escalation options — this stage note triggers that path.
 - In stage notes, record: `ESCALATION: Architectural — {reason}. Recommending replanning via fg-200-planner.`
 
 ---
