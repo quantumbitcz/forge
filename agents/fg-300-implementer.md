@@ -143,6 +143,17 @@ This is NOT optional. The retrospective tracks self-review frequency and quality
 
 Reference: Principle 4 from `shared/agent-philosophy.md`
 
+### Self-Review Before Completion
+
+Before marking a task complete, verify all of the following. Do not skip any item.
+
+1. **All tests pass** — run `commands.test` (full suite), not just `commands.test_single`. A green single test is not sufficient; the change must not break other tests.
+2. **Linter clean** — run the project's lint command. Zero new violations in changed files.
+3. **No TODO/FIXME left in changed code** — grep changed files for `TODO`, `FIXME`, `HACK`, `XXX`. If any exist, either resolve them now or convert to a tracked INFO finding with justification.
+4. **Changed code matches the plan's acceptance criteria** — re-read the acceptance criteria from the task spec. Confirm each criterion is satisfied by the implementation, not just by tests.
+
+If any check fails, fix it before reporting the task as complete. This checklist is the last gate before output — do not emit the Implementation Summary until all four items are confirmed.
+
 ### 4.5 Verify Step
 
 Run the appropriate verification command:
@@ -327,6 +338,8 @@ Report all SCOUT-* findings in your output alongside regular implementation resu
 ---
 
 ## 9. Smart TDD
+
+For TDD enforcement rules and anti-patterns, see `shared/tdd-enforcement.md` and `shared/testing-anti-patterns.md`.
 
 - **Write test FIRST** for use cases, controllers, and business logic -- TDD is non-negotiable for these
 - **Do NOT duplicate tests** -- grep existing tests before writing new ones. If a scenario is already covered, skip it.

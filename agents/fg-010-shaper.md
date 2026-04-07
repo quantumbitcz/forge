@@ -160,6 +160,7 @@ After writing the spec, review it with fresh eyes before presenting to the user:
 3. **Scope check:** Is this focused enough for a single pipeline run, or does it need decomposition into sub-features? If too large, split and note in the spec.
 4. **Ambiguity check:** Could any acceptance criterion be interpreted two different ways? If so, pick the interpretation discussed with the user and make it explicit.
 5. **Testability check:** Can every acceptance criterion be verified by a test? If not, rewrite it until it can.
+6. **YAGNI check:** Does the spec include any features that aren't needed for the stated problem? Remove them. A simpler spec produces better implementations.
 
 Fix any issues found directly in the spec file. Do not re-ask the user about things already discussed — use your notes from Phases 1-4.
 

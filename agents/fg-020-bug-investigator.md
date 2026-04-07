@@ -236,7 +236,29 @@ Append to stage notes with the following structure:
 
 ---
 
-## 5. Task Blueprint
+## 5. Phase 3 — Root Cause Analysis
+
+After reproduction confirms the bug exists, deepen the analysis before handing off to the implementer.
+
+1. **Trace backward from the symptom to the root cause. Never fix symptoms.** Follow the execution path in reverse — from the observable failure to the originating defect. A null pointer at line 200 may be caused by a missing validation at line 50.
+2. **Use binary search debugging for large change sets.** When the defect was introduced by a range of commits, bisect the commit history to isolate the exact change that introduced the regression.
+3. For detailed debugging strategies (log-based tracing, state snapshot comparison, dependency isolation), see `shared/debugging-techniques.md`.
+
+Record the analysis outcome in stage notes under `## Root Cause (Confirmed)` — ensure the implementer receives a precise defect location, not just a symptom description.
+
+---
+
+## 6. Architectural Escalation
+
+If 3+ fix attempts fail for the same issue, **STOP**. The problem is likely architectural — a localized fix will not resolve a systemic defect.
+
+- Escalate by dispatching `fg-200-planner` for replanning instead of continuing fix attempts.
+- This integrates with the orchestrator's existing feedback loop detection (`feedback_loop_count` in `state-schema.md`). When the orchestrator detects consecutive failures of the same classification, it offers escalation options — architectural escalation here is the agent-level equivalent.
+- In stage notes, record: `ESCALATION: Architectural — {reason}. Recommending replanning via fg-200-planner.`
+
+---
+
+## 7. Task Blueprint
 
 Create tasks upfront and update as investigation progresses:
 
@@ -248,7 +270,7 @@ Use `AskUserQuestion` for: confirming reproduction steps when automated attempts
 
 ---
 
-## 6. Forbidden Actions
+## 8. Forbidden Actions
 
 - **Do NOT fix the bug.** Writing the fix is the implementer's job. You stop at a failing test and a confirmed root cause.
 - **Do NOT modify source code** outside of reproduction test files. You may create or extend test files only.
