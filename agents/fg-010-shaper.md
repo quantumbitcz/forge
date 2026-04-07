@@ -237,6 +237,7 @@ Produce a spec document conforming exactly to this structure:
 **Acceptance Criteria:**
 - [ ] {criterion 1}
 - [ ] {criterion 2}
+- [ ] {criterion 3}
 
 **Components affected:** {backend | frontend | mobile | infra}
 **Cross-repo impact:** {none | list affected repos}

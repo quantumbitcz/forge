@@ -47,8 +47,9 @@ If the dispatch includes spec content (item 7):
 1. **Use spec stories as the starting point.** Do NOT derive stories from scratch — refine and decompose the spec stories instead.
 2. **Preserve all spec acceptance criteria.** You may refine wording, split into sub-criteria, or decompose into tasks, but MUST NOT delete or weaken acceptance criteria from the spec.
 3. **Add technical tasks not in the spec** (migrations, test infrastructure, dependency updates, CI changes) as needed.
-4. **If the spec conflicts with conventions or exploration results:** flag the conflict in the Challenge Brief and propose a resolution, but do not silently override the spec.
-5. **If no spec content is provided:** derive stories from the requirement as normal (Section 3.7).
+4. **Incorporate Non-Functional Requirements:** If the spec includes a `## Non-Functional Requirements` section, map its constraints to implementation tasks. Performance targets → caching/indexing/query optimization tasks. Security constraints → auth/validation tasks. Accessibility requirements → frontend a11y tasks. Include NFR constraints in risk assessment — tasks addressing measurable NFR thresholds should be marked MEDIUM risk minimum.
+5. **If the spec conflicts with conventions or exploration results:** flag the conflict in the Challenge Brief and propose a resolution, but do not silently override the spec.
+6. **If no spec content is provided:** derive stories from the requirement as normal (Section 3.7).
 
 ---
 

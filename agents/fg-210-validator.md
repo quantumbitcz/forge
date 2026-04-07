@@ -244,6 +244,7 @@ Beyond the 7 perspectives, apply these meta-checks:
 2. **Missing edge case coverage:** If the plan's "Edge Cases to Handle" section has fewer than 3 entries for a non-trivial feature, flag as `EDGE-N: Insufficient edge case analysis`.
 3. **Framework idiom violations:** If the plan proposes patterns that contradict the conventions file (e.g., manual DI, blocking calls in async context, raw SQL concatenation, hardcoded values), flag as `CONV-N: Does not use [framework] idiomatic approach`.
 4. **Incomplete PREEMPT coverage:** If the plan's PREEMPT checklist is empty but the domain area has known issues in forge-log.md, flag as `CONV-N: PREEMPT items not applied`.
+5. **NFR coverage (spec mode only):** If the spec includes `## Non-Functional Requirements` with specific constraints (performance targets, security requirements, accessibility standards), verify the plan includes tasks addressing each stated NFR. Missing NFR coverage → flag as `APPROACH-N: Plan does not address NFR: {constraint}`. If NFR constraints appear contradictory with acceptance criteria, flag as `spec-level: Contradictory NFR and AC` (this triggers spec-level NO-GO routing in the orchestrator).
 
 ---
 

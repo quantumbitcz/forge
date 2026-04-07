@@ -184,6 +184,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **On NO-GO:** Escalate to user. Pipeline pauses. If the user does not respond within 24 hours (configurable via `validation.no_go_timeout_hours`, default: 24), the orchestrator auto-aborts: clean up the worktree if created, set `state.json.complete = true` with `abort_reason: "NO-GO timeout"`, and log a WARNING in stage notes. The stale timeout is checked by PREFLIGHT of any subsequent `/forge-run` invocation (not by a background process).
 
+**On NO-GO (spec-level):** When running in `--spec` mode and the validator's findings indicate spec-quality issues (contradictory acceptance criteria, infeasible scope, missing domain context) rather than plan-quality issues, the orchestrator offers a reshaping path: "Reshape spec" (re-run `/forge-shape` with validator findings as context), "Try replanning", or "Abort". This prevents endlessly replanning around a fundamentally flawed spec.
+
 **Decision gate:** Compare plan `risk_level` against `risk.auto_proceed` from config:
 - Risk <= threshold: proceed automatically on GO.
 - Risk > threshold: show plan to user, ask for approval before proceeding.
