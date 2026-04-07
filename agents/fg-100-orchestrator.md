@@ -623,8 +623,9 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
    - root cause hypothesis → store in `state.json.bugfix.root_cause.hypothesis`
    - confidence → store in `state.json.bugfix.root_cause.confidence`
 3. If `reproduction.method == "unresolvable"`:
+   Increment `state.json.bugfix.context_retries` (initialized to 0 at PREFLIGHT).
    Ask user via AskUserQuestion with header "Bug Reproduction", question "The bug could not be reproduced. How would you like to proceed?", options:
-   - "Provide more context" (description: "Supply additional information — Stage 1 investigation will re-run")
+   - "Provide more context" (description: "Supply additional information — Stage 1 investigation will re-run") — **only if `bugfix.context_retries < 2`**; omit after 2 retries to prevent infinite loops
    - "Pair debug" (description: "Get diagnostic guidance for manual debugging")
    - "Close as unreproducible" (description: "Mark the bug as unreproducible and skip to Stage 9")
    On "Provide more context": re-run Stage 1 with user's additional context.

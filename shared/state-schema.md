@@ -294,6 +294,7 @@ Present when `mode == "bugfix"`. Null/empty defaults for other modes.
 | `bugfix.reproduction.method` | enum or null | `"automated"`, `"manual"`, `"unresolvable"`. Set at Stage 2. |
 | `bugfix.reproduction.test_file` | string or null | Path to reproduction test file (if automated). |
 | `bugfix.reproduction.attempts` | integer | Reproduction attempts count (max 3). Default: 0. |
+| `bugfix.context_retries` | integer | "Provide more context" re-run count. Max 2 — option removed after reaching limit. Default: 0. |
 | `bugfix.root_cause.hypothesis` | string or null | Description of confirmed/suspected root cause. |
 | `bugfix.root_cause.category` | enum or null | `"off_by_one"`, `"null_handling"`, `"race_condition"`, `"missing_validation"`, `"wrong_assumption"`, `"config_error"`. |
 | `bugfix.root_cause.affected_files` | array | File paths affected by the bug. Default: []. |

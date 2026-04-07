@@ -46,6 +46,8 @@ The convergence engine receives two structured inputs from the orchestrator:
 - `analysis_pass` (boolean): `true` when all Phase B analysis agents return without CRITICAL findings and the overall analysis verdict is not FAIL. Defaults to `true` if no analysis agents configured. Not evaluated on PHASE_A_FAILURE.
 - `is_phase_a_failure` (boolean): `true` when build or lint failed before tests ran (Phase A failure). When true, `tests_pass` and `analysis_pass` are not meaningful.
 
+**PHASE_A_FAILURE field values:** When `is_phase_a_failure` is `true`, `fg-500-test-gate` MUST set `tests_pass: false` and `analysis_pass: false` (not `null` or omitted). The convergence engine checks `is_phase_a_failure` first and short-circuits — but defensive `false` values prevent crashes if the check is accidentally bypassed or the struct is accessed directly by other consumers.
+
 **`review_result`** (from Stage 6 — REVIEW):
 - `score` (number): Quality score from the quality gate (0-100)
 - `findings` (array): Deduplicated findings list (SCOUT-* already filtered out before dispatch to implementer)
@@ -217,7 +219,7 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 | Parameter | Range | Rationale |
 |-----------|-------|-----------|
 | `max_iterations` | 3-20 | Below 3 defeats the purpose; above 20 is runaway |
-| `plateau_threshold` | 0-10 | 0 = any improvement counts; 10 = very loose |
+| `plateau_threshold` | 0-10 | 0 = any improvement counts; 10 = very loose. Note: 0 means even a 0.1-point improvement resets plateau count. |
 | `plateau_patience` | 1-5 | 1 = stop at first plateau; 5 = very patient |
 | `target_score` | >= `pass_threshold` AND <= 100 | Cannot be below the passing score |
 | `safety_gate` | boolean | No range constraint |
@@ -296,9 +298,9 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 
 | Counter | Scope | Managed By | Resets | Feeds Into |
 |---------|-------|-----------|--------|------------|
-| `verify_fix_count` | Phase A (build/lint) inner cap | Orchestrator | Per-run only (not per-phase) | `total_retries` |
-| `test_cycles` | Phase 1B (test gate) inner cap | `fg-500-test-gate` | Per-run only (not per-phase) | `total_retries` |
-| `quality_cycles` | Phase 2 (review) inner cap | `fg-400-quality-gate` | Per-run only (not per-phase) | `total_retries` |
+| `verify_fix_count` | Phase A (build/lint) inner cap | Orchestrator | Per-run only (not per-phase, not on safety gate restart) | `total_retries` |
+| `test_cycles` | Phase 1B (test gate) inner cap | `fg-500-test-gate` | Per-run only (not per-phase, not on safety gate restart) | `total_retries` |
+| `quality_cycles` | Phase 2 (review) inner cap | `fg-400-quality-gate` | Per-run only (not per-phase, not on safety gate restart) | `total_retries` |
 | `phase_iterations` | Current convergence phase | Convergence engine | On phase transition (including safety gate restart) | — |
 | `total_iterations` | Entire convergence lifecycle | Convergence engine | Never | `total_retries` |
 
@@ -307,6 +309,12 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 - `phase_iterations` is the **mid-loop** counter — it tracks how many convergence iterations have occurred in the current phase. It resets on phase transitions (correctness → perfection, or safety gate restart → correctness).
 - `total_iterations` is the **outer-loop** counter — cumulative across all phases and restarts. It is the primary budget enforcement counter alongside `total_retries`.
 - Every increment of `total_iterations` also increments `total_retries`. Inner counters (`verify_fix_count`, `test_cycles`, `quality_cycles`) independently increment `total_retries` as well.
+
+**Safety gate restart and inner counters:** When the safety gate fails and restarts the correctness phase, inner counters (`verify_fix_count`, `test_cycles`, `quality_cycles`) are intentionally NOT reset. This is cross-phase budget sharing: the total budget for build/lint fixes, test cycles, and review cycles is finite across the entire run. If a project consumed 3 build fix loops before Phase 2, those are spent — a safety gate restart does not grant 3 more. The orchestrator should check remaining budget and escalate immediately if inner caps are already exhausted upon re-entry.
+
+**Global budget enforcement in convergence algorithm:** The `total_retries_max` check is performed by the orchestrator *before* each convergence engine call, not within the convergence algorithm itself. The orchestrator MUST check `total_retries >= total_retries_max` before dispatching any stage — if exhausted, escalate regardless of convergence state. This ensures no dispatch occurs after the global budget is exhausted, even if the convergence engine's `max_iterations` cap has not been reached.
+
+**`oscillation_tolerance` = 0 note:** Setting `oscillation_tolerance` to 0 means ANY score decrease triggers REGRESSING escalation. This is intentionally allowed but aggressive — even a 1-point drop from findings being reclassified would escalate. PREFLIGHT logs a WARNING when `oscillation_tolerance` is 0 to alert users that this configuration is very strict.
 
 ## Retrospective Auto-Tuning
 

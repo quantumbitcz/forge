@@ -616,6 +616,7 @@ Activated by `/forge-fix` or `/forge-run bugfix: <description>`. Sets `state.jso
 If reproduction fails after 3 attempts AND user cannot confirm:
 - Mark `bugfix.reproduction.method = "unresolvable"`
 - Orchestrator asks user: (A) Provide more context, (B) Pair debug, (C) Close as unreproducible
+- If (A): re-run Stage 1 with additional context. Max 2 "Provide more context" re-runs (tracked via `bugfix.context_retries` in state.json, initialized to 0). On third failure, only options (B) and (C) remain — (A) is removed to prevent infinite loops.
 - If (C): set `state.json.abort_reason = "unreproducible"`, skip to LEARN
 
 ### Targeted Re-Implementation
