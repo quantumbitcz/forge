@@ -63,7 +63,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-21 skills provide the user-facing interface to the pipeline and its subsystems.
+22 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -191,7 +191,7 @@ touch .claude/forge-log.md
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (21 user-facing commands)
+|                           |  skills/ (22 user-facing commands)
 +---------------------------+
 ```
 
@@ -380,13 +380,14 @@ forge/
     infra-deploy-reviewer.md
     infra-deploy-verifier.md
     docs-consistency-reviewer.md
-  skills/                               # 21 user-facing skills
+  skills/                               # 22 user-facing skills
     bootstrap-project/
     codebase-health/
     deep-health/
     deploy/
     docs-generate/
     forge-fix/
+    forge-review/
     forge-history/
     forge-init/
     forge-reset/
