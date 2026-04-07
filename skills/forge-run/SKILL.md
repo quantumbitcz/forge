@@ -58,7 +58,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
    3. Migration signals (upgrade X to Y, replace X with Y, migrate) → `Mode: migration`
    4. Bootstrap signals (scaffold, create new, start from scratch, empty project) → `Mode: bootstrap`
    5. Multi-feature signals (3+ distinct domain nouns, enumerated capabilities) → `Mode: multi-feature`
-   6. Vague signals (very short/long input, no ACs, exploratory language) → `Mode: vague`
+   6. Vague signals (very short/long input, no ACs, exploratory language, OR feature completeness check: under 50 words missing 3+ of: actors, entities, surface, criteria) → `Mode: vague`
    7. Default → `Mode: standard`
 
    **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.

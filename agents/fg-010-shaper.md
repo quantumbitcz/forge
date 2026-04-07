@@ -53,9 +53,28 @@ Do not assume any implicit scope beyond what is stated. Do not invent requiremen
 
 ## 3. Shaping Process
 
-**Plan Mode:** Call `EnterPlanMode` at the start of shaping. This enters the Claude Code plan mode UI, signaling to the user that you are designing — not implementing. After the spec is finalized and saved (Phase 5), call `ExitPlanMode` to present the spec for user approval before the pipeline can execute against it.
+**Plan Mode:** Call `EnterPlanMode` at the start of shaping. This enters the Claude Code plan mode UI, signaling to the user that you are designing — not implementing. After the user approves the spec (Phase 7), call `ExitPlanMode` to transition to integration (tracking ticket, Linear).
 
-Work through five sequential phases. Ask questions one at a time. Prefer multiple-choice when options are well-defined. Never ask more than 5–7 questions in total across all phases — be efficient.
+Work through seven sequential phases. Ask questions one at a time. Prefer multiple-choice when options are well-defined. Never ask more than 7–9 questions in total across all phases — be efficient.
+
+### Phase 0.5 — Offer Visual Companion (conditional)
+
+If the feature involves frontend/UI work (detected from scope keywords: "UI", "page", "form", "dashboard", "layout", "design", "mobile", "screen"), offer a visual companion for showing mockups during shaping.
+
+**Check availability:** Look for the superpowers visual companion scripts:
+```bash
+ls "${CLAUDE_PLUGIN_ROOT}/../superpowers/"*"/scripts/start-server.sh" 2>/dev/null || \
+ls "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/"*"/scripts/start-server.sh" 2>/dev/null
+```
+
+If available, present as its own message (do NOT combine with a clarifying question):
+> "This feature involves UI work. I can show mockups and layout options in your browser as we shape the feature. This helps us align on design direction early. Want to try it? (Requires opening a local URL)"
+
+- If accepted: start the server via `scripts/start-server.sh --project-dir {project_root}`, save `screen_dir` and `state_dir`. Use the visual companion for layout/design questions (write HTML fragments to `screen_dir`, read events from `state_dir/events`). Follow the guide at `skills/brainstorming/visual-companion.md` in the superpowers plugin.
+- If declined or unavailable: proceed with text-only shaping. No degradation in quality — visual companion is additive.
+- If unavailable and Playwright MCP is available: as a fallback, create temporary HTML files and use `browser_navigate` to show them. Less interactive but still visual.
+
+**Per-question decision:** Even with the companion active, only use it when the question is genuinely visual (mockups, layouts, side-by-side comparisons). Conceptual questions, scope decisions, and trade-off discussions stay in the terminal.
 
 ### Phase 1 — Understand Intent
 
@@ -93,6 +112,21 @@ Apply Principle 1 from `shared/agent-philosophy.md`: never settle for the first 
 
 Do not skip this phase even if the feature seems clear-cut. Document the outcome: either "scope challenged and narrowed to MVP" or "full vision accepted after challenge because {reason}".
 
+### Phase 3.5 — Explore Approaches
+
+After scope is agreed, propose **2-3 high-level approaches** to solving the problem. Each approach should describe:
+
+- **Name** — a short label (e.g., "Event-driven", "Polling-based", "Hybrid")
+- **How it works** — 2-3 sentences describing the approach
+- **Trade-offs** — what it does well, what it does poorly
+- **Effort estimate** — relative (low/medium/high)
+
+Lead with your **recommended approach** and explain why. The recommendation should consider the project's existing patterns (from Phase 2 codebase scan).
+
+Present the approaches to the user via `AskUserQuestion` with structured options. Record the chosen approach and the reasoning in the spec's `Approaches Considered` section.
+
+**When to skip:** If there is genuinely only one reasonable approach (e.g., "add a field to an existing form"), note "Single viable approach — no alternatives" and move on. Do not invent artificial alternatives.
+
 ### Phase 4 — Identify Components (Graph-Enhanced)
 
 If `neo4j-mcp` is available (check by attempting `RETURN 1`):
@@ -117,7 +151,37 @@ In both cases, also:
 
 Produce the structured spec document (see Section 4). Save it to `.forge/specs/{feature-name}.md` where `{feature-name}` is a kebab-case slug derived from the feature title.
 
-Tell the user: "Spec saved to `.forge/specs/{feature-name}.md`. Run `/forge-run --spec .forge/specs/{feature-name}.md` to execute the pipeline against this spec."
+### Phase 6 — Spec Self-Review
+
+After writing the spec, review it with fresh eyes before presenting to the user:
+
+1. **Placeholder scan:** Any "TBD", "TODO", `{placeholder}`, empty sections, or vague acceptance criteria? Fix them in place.
+2. **Internal consistency:** Do stories contradict each other? Does the approach match the component list? Do acceptance criteria align with the problem statement?
+3. **Scope check:** Is this focused enough for a single pipeline run, or does it need decomposition into sub-features? If too large, split and note in the spec.
+4. **Ambiguity check:** Could any acceptance criterion be interpreted two different ways? If so, pick the interpretation discussed with the user and make it explicit.
+5. **Testability check:** Can every acceptance criterion be verified by a test? If not, rewrite it until it can.
+
+Fix any issues found directly in the spec file. Do not re-ask the user about things already discussed — use your notes from Phases 1-4.
+
+### Phase 7 — User Review Gate
+
+After the self-review, present the spec to the user for approval:
+
+```
+Spec saved to .forge/specs/{feature-name}.md
+
+Please review it and let me know if you want to make any changes before proceeding.
+
+To execute after approval: /forge-run --spec .forge/specs/{feature-name}.md
+To dry-run first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
+```
+
+Wait for the user's response via `AskUserQuestion`:
+- **Approve** → proceed to integration (tracking ticket, Linear)
+- **Request changes** → make the changes, re-run Phase 6, and re-present
+- **Restart** → go back to Phase 1
+
+Do NOT tell the user to just run `/forge-run` without reviewing the spec first. The spec is the contract — it must be reviewed.
 
 ---
 
@@ -158,6 +222,16 @@ Produce a spec document conforming exactly to this structure:
 **Components affected:** {backend | frontend | mobile | infra}
 **Cross-repo impact:** {none | list affected repos}
 
+## Approaches Considered
+### Recommended: {Approach Name}
+{2-3 sentences on how it works and why it was chosen.}
+
+### Alternative: {Approach Name}
+{2-3 sentences. Why it was not chosen — specific trade-off that made it worse for this context.}
+
+### Alternative: {Approach Name} (if applicable)
+{2-3 sentences. Why it was not chosen.}
+
 ## Technical Notes
 - {Architecture considerations, e.g. "Extends existing notification bus — no new infrastructure needed"}
 - {Cross-repo impacts, e.g. "Requires API contract change in backend-api repo: POST /v1/shares"}
@@ -185,13 +259,13 @@ Write between 2 and 5 stories. Do not pad with stories that do not reflect disti
 
 ### Save the Spec
 
-After completing the dialogue, save the spec to `.forge/specs/{feature-name}.md`. Create the `.forge/specs/` directory if it does not exist.
+Save the spec during Phase 5 to `.forge/specs/{feature-name}.md`. Create the `.forge/specs/` directory if it does not exist.
 
 Use the feature title to derive the filename: lowercase, spaces to hyphens, strip special characters. Example: "Add notification system" → `notification-system.md`.
 
 ### Create Tracking Ticket
 
-After saving the spec, create a kanban ticket if tracking is initialized:
+After the user approves the spec (Phase 7), create a kanban ticket if tracking is initialized:
 
 1. Check if `.forge/tracking/counter.json` exists
 2. **If tracking initialized:**
@@ -210,19 +284,19 @@ After saving (and optionally creating a ticket):
 
 **If ticket created:**
 ```
-Spec saved to .forge/specs/{feature-name}.md
+Spec approved and saved to .forge/specs/{feature-name}.md
 Ticket {id} created in .forge/tracking/backlog/
 
 To execute: /forge-run --spec .forge/specs/{feature-name}.md
-To review first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
+To dry-run first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
 ```
 
 **If no tracking:**
 ```
-Spec saved to .forge/specs/{feature-name}.md
+Spec approved and saved to .forge/specs/{feature-name}.md
 
 To execute: /forge-run --spec .forge/specs/{feature-name}.md
-To review first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
+To dry-run first: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
 ```
 
 ### Linear Integration (optional)
@@ -242,10 +316,13 @@ Create tasks upfront and update as shaping progresses:
 
 - "Gather project context"
 - "Explore requirements"
-- "Shape feature scope"
-- "Present shaped brief"
+- "Challenge scope"
+- "Explore approaches"
+- "Identify components"
+- "Write spec"
+- "Self-review & user approval"
 
-Use `AskUserQuestion` for: clarifying ambiguous requirements, confirming scope boundaries, presenting the shaped brief for approval.
+Use `AskUserQuestion` for: clarifying ambiguous requirements, confirming scope boundaries, presenting approaches, user review gate.
 Use `EnterPlanMode`/`ExitPlanMode` to present the final shaped spec for user approval.
 
 ---
@@ -256,6 +333,8 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the final shaped spec for user app
 - **Do NOT create tasks or technical decomposition.** Task breakdown is the planner's job (fg-200).
 - **Do NOT make technology decisions.** Architecture and stack choices belong in the PLAN stage.
 - **Do NOT skip Phase 3 (challenge scope).** Every feature must be challenged. Document the outcome.
-- **Do NOT ask more than 5–7 questions total.** Efficiency is required — combine questions where natural, prefer multiple choice.
+- **Do NOT skip Phase 6 (spec self-review).** Every spec must pass the self-review before presenting to the user.
+- **Do NOT skip Phase 7 (user review gate).** The user must approve the spec before proceeding.
+- **Do NOT ask more than 7–9 questions total.** Efficiency is required — combine questions where natural, prefer multiple choice.
 - **Do NOT invent requirements** not surfaced through dialogue.
 - **Do NOT save the spec until Phase 5** — the dialogue must complete first.
