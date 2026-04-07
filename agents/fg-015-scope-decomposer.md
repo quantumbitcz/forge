@@ -93,6 +93,13 @@ If source is `deep_scan` and exploration notes are available, use the file list 
 - **Serial**: Feature B depends on feature A → ordered execution
 - **Shared-file conflict**: Both features modify same files → serialize those two, others may parallelize
 
+**Implicit ordering heuristics** (apply after explicit dependency analysis):
+- Features touching the same domain module (e.g., both modify "auth") should be serialized if they modify the module's core abstractions
+- Features where one is a superset of another (e.g., "add auth" and "add OAuth2 to auth") must serialize — the broader feature first
+- Features modifying shared config/schema files should serialize to avoid merge conflicts
+
+**Cycle detection (mandatory):** After constructing serial chains, verify no transitive cycles exist (A→B→A or A→B→C→A). Use topological sort on the dependency graph. If a cycle is detected: the features are not truly independent — merge them back into a single feature and notify the user: "Features {cycle} form a circular dependency and cannot be decomposed. Running as a single feature."
+
 Dispatch `fg-102-conflict-resolver` if exploration notes include file lists (deep_scan only). Otherwise, use heuristic domain analysis.
 
 ---

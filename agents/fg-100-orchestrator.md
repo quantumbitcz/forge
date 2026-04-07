@@ -68,10 +68,15 @@ When `--from` is specified:
 If `--spec <path>` is passed:
 
 1. Read the spec file (resolve relative paths against project root). ERROR if not found/readable.
-2. Parse sections: `## Epic` (requirement label), `## Stories` (feed to planner as-is), `## Technical Notes` (pass to EXPLORE/PLAN), `## Out of Scope` (pass to implementer). Missing `## Epic` → WARN, treat as raw requirement.
-3. Store spec metadata in `state.json.spec` (source, path, epic_title, story_count, has_technical_notes, loaded_at).
-4. Stage behavior: EXPLORE gets Technical Notes, PLAN gets Stories (must preserve ACs, may add technical tasks), VALIDATE checks plan covers all spec ACs.
-5. Compatible with `--from` and `--dry-run`. If both `--spec` and inline text provided, concatenate (spec first). Spec file is NEVER modified.
+2. **Validate spec structure:**
+   - Required sections: `## Problem Statement`, at least one `### Story` block with ACs
+   - Each story must have at least 1 acceptance criterion (non-empty `- [ ]` line)
+   - If `## Status: Blocked` section exists: ERROR — "Spec has unresolved contradictions. Run `/forge-shape` to resolve before executing."
+   - If validation fails: ERROR with specific reason. Suggest: "Run `/forge-shape` to create or fix the spec."
+3. Parse sections: `## Epic` (requirement label), `## Stories` (feed to planner as-is), `## Technical Notes` (pass to EXPLORE/PLAN), `## Non-Functional Requirements` (pass to planner and reviewers), `## Out of Scope` (pass to implementer). Missing `## Epic` → WARN, treat as raw requirement.
+4. Store spec metadata in `state.json.spec` (source, path, epic_title, story_count, has_technical_notes, has_nfr, loaded_at).
+5. Stage behavior: EXPLORE gets Technical Notes, PLAN gets Stories + NFRs (must preserve ACs, may add technical tasks), VALIDATE checks plan covers all spec ACs.
+6. Compatible with `--from` and `--dry-run`. If both `--spec` and inline text provided, concatenate (spec first). Spec file is NEVER modified.
 
 ### 2.3 --dry-run Mode
 
@@ -795,8 +800,11 @@ Risk level: [from plan]
 | **GO** | Proceed to IMPLEMENT |
 | **REVISE** | Amend the plan based on findings, re-dispatch `fg-200-planner` with rejection reasons, then re-validate. Max: `validation.max_validation_retries` (default: 2). After max, escalate as NO-GO. |
 | **NO-GO** | Show findings to user and ask for guidance. Pipeline pauses. |
+| **NO-GO (spec-level)** | If validator findings indicate the spec itself is problematic (contradictory ACs, infeasible scope, missing domain context), suggest reshaping instead of replanning. Present via AskUserQuestion: "Reshape spec" (re-run `/forge-shape` with validator findings as context), "Try replanning" (re-dispatch planner), "Abort". |
 
 Increment `validation_retries` on each REVISE verdict.
+
+**Spec-level issue detection:** If any validator finding contains keywords "contradictory", "mutually exclusive", "infeasible", "spec-level", or if 3+ findings reference acceptance criteria wording (not implementation), treat as spec-level NO-GO. The distinction matters: implementation issues can be re-planned, but spec issues require reshaping with the user.
 
 ### Contract Validation (conditional, dispatch fg-250-contract-validator)
 
