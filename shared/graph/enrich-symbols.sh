@@ -554,7 +554,7 @@ extract_elixir() {
   # Modules
   grep -nE '^[[:space:]]*defmodule[[:space:]]+\S+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name
-    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*defmodule[[:space:]]+(\S+)[[:space:]]*.*/\1/')"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*defmodule[[:space:]]+([^[:space:]]+)[[:space:]]*.*/\1/')"
     if [[ -n "$name" ]]; then
       echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'module', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
