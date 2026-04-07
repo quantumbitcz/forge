@@ -584,7 +584,7 @@ Activated by `/forge-fix` or `/forge-run bugfix: <description>`. Sets `state.jso
 | 3 | ROOT CAUSE | Replaces VALIDATE. 4 bugfix perspectives: root cause validity, fix scope, regression risk, test coverage. | fg-210-validator (reused) |
 | 4 | FIX | Same as IMPLEMENT. TDD: make failing test pass, refactor. | fg-300-implementer (reused) |
 | 5 | VERIFY | Same as standard. | fg-500-test-gate (reused) |
-| 6 | REVIEW | Reduced batch: architecture + security always; frontend only if frontend files changed. | fg-400-quality-gate (reused) |
+| 6 | REVIEW | Reduced batch: architecture + security + code-quality always; frontend only if frontend files changed. | fg-400-quality-gate (reused) |
 | 7 | DOCS | Minimal: changelog entry + update affected docs. | fg-350-docs-generator (reused) |
 | 8 | SHIP | Same. Branch: `fix/{ticket}-{slug}`. | fg-600-pr-builder (reused) |
 | 9 | LEARN | Same + bug pattern tracking (root cause category, layer, reproduction method). | fg-700-retrospective (reused) |

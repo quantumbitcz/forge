@@ -1,6 +1,7 @@
 ---
 name: deep-health
 description: Deep iterative codebase health investigation and fix loop. Dispatches forge's own review agents for investigation and verification, fixes all findings including minor, commits per iteration. Loops until all review agents report clean. Use on any codebase.
+disable-model-invocation: false
 ---
 
 # /deep-health — Deep Iterative Codebase Health Fix
@@ -35,7 +36,7 @@ Parse `$ARGUMENTS`:
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 # Get files to investigate
 FILES=$(git diff --name-only $(git merge-base origin/master HEAD 2>/dev/null || echo HEAD~10)..HEAD 2>/dev/null)
-[ -z "$FILES" ] && FILES=$(git ls-files --cached --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala)$')
+[ -z "$FILES" ] && FILES=$(git ls-files --cached --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala|vue|svelte|html|css|scss)$')
 ```
 
 Run the check engine for a fast baseline scan (Layer 1 + Layer 2):
@@ -114,7 +115,7 @@ git add <changed files — be specific, no git add -A>
 git commit -m "<type>: <concise description>"
 ```
 
-One commit per iteration. Follow project commit conventions.
+One commit per iteration. Follow project commit conventions per `shared/git-conventions.md` — check for existing hooks (Husky, commitlint, etc.) and adopt the project's format.
 
 ### 8. Loop Decision
 

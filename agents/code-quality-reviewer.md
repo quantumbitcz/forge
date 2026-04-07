@@ -199,7 +199,7 @@ If a spec exists, read it to enable plan alignment checks (Section 3.4).
 
 For each file:
 1. Read the full file for context
-2. Apply all 6 review dimensions
+2. Apply all 7 review dimensions
 3. For each potential finding, verify it against the conventions file
 4. Check against previous batch findings to avoid duplicates
 

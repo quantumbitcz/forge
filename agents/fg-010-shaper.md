@@ -247,7 +247,7 @@ Produce a spec document conforming exactly to this structure:
 
 ## Shaping Notes
 - Scope challenge outcome: {narrowed to MVP | accepted in full — reason}
-- Questions asked: {N of 7 max}
+- Questions asked: {N of 9 max}
 - Codebase scan: {summary of what was found — related files, existing patterns, conflicts}
 ```
 
