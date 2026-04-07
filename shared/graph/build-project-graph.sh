@@ -622,7 +622,7 @@ fi
 for gradle_file in "$PROJECT_ROOT/build.gradle.kts" "$PROJECT_ROOT/build.gradle" "$PROJECT_ROOT/app/build.gradle.kts" "$PROJECT_ROOT/app/build.gradle"; do
   [[ -f "$gradle_file" ]] || continue
   sgrep -oE '(implementation|api|testImplementation|runtimeOnly|compileOnly)\s*\(\s*"[^"]*"' "$gradle_file" | \
-    sed -E 's/^(implementation|api|testImplementation|runtimeOnly|compileOnly)\s*\(\s*"//; s/"$//' | \
+    sed -E 's/^(implementation|api|testImplementation|runtimeOnly|compileOnly)[[:space:]]*\([[:space:]]*"//; s/"$//' | \
     sort -u | while IFS= read -r dep; do
       [[ -z "$dep" ]] && continue
       scope="runtime"
@@ -637,7 +637,7 @@ done
 # --- pip (requirements.txt) ---
 if [[ -f "$PROJECT_ROOT/requirements.txt" ]]; then
   sgrep -v '^\s*#' "$PROJECT_ROOT/requirements.txt" | sgrep -v '^\s*$' | \
-    sed -E 's/\s*#.*//' | sort | while IFS= read -r line; do
+    sed -E 's/[[:space:]]*#.*//' | sort | while IFS= read -r line; do
       name="$(echo "$line" | sed -E 's/[>=<!\[].*$//')"
       ver="$(echo "$line" | sed -E 's/^[^>=<!\[]*//')"
       [[ -z "$name" ]] && continue
