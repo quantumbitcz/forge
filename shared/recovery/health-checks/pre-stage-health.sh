@@ -6,15 +6,8 @@
 
 set -euo pipefail
 
-# Portable glob-match helper: returns 0 if any file matches the pattern.
-_glob_exists() {
-  local pattern="$1"
-  local f
-  for f in $pattern; do
-    [ -e "$f" ] && return 0
-  done
-  return 1
-}
+# shellcheck source=../../platform.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/platform.sh"
 
 STAGE="${1:-}"
 PROJECT_ROOT="${2:-$(pwd)}"

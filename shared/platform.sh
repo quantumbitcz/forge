@@ -122,6 +122,26 @@ require_bash4() {
   fi
 }
 
+# ── Portable Glob Matching ────────────────────────────────────────────────────
+#
+# Returns 0 if any file matches the glob pattern, 1 otherwise.
+# Replaces compgen -G (a bash builtin not available on all platforms).
+#
+# Scripts that source platform.sh should use this. Performance-critical paths
+# (engine.sh, detect-project-type.sh) keep an inline copy to avoid the overhead
+# of sourcing platform.sh on every invocation.
+#
+# Usage: _glob_exists "/path/to/dir"/*.ext
+
+_glob_exists() {
+  local pattern="$1"
+  local f
+  for f in $pattern; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
 # ── Temp Directory ───────────────────────────────────────────────────────────
 #
 # Scripts that source platform.sh should use these helpers. Linter adapters

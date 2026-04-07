@@ -23,16 +23,7 @@ source "${PLUGIN_ROOT}/shared/platform.sh"
 
 # Requires Bash 4.0+ (uses associative arrays)
 require_bash4 "build-project-graph.sh" || exit 1
-
-# Portable glob-match helper for consistency across scripts.
-_glob_exists() {
-  local pattern="$1"
-  local f
-  for f in $pattern; do
-    [ -e "$f" ] && return 0
-  done
-  return 1
-}
+# _glob_exists is provided by platform.sh (sourced above)
 
 if [[ -z "$FORGE_PYTHON" ]]; then
   echo "[build-project-graph] WARNING: No Python interpreter found. Graph build may produce incomplete results." >&2

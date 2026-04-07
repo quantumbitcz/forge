@@ -20,11 +20,19 @@ set -euo pipefail
 # macOS ships bash 3.2 — install bash 4+ via: brew install bash
 if (( BASH_VERSINFO[0] < 4 )); then
   echo "[check-engine] WARNING: Bash 4.0+ required. Current: ${BASH_VERSION}. Skipping checks." >&2
+  # Increment skip counter so VERIFY stage surfaces that checks were skipped
+  _skip_file=".forge/.check-engine-skipped"
+  if [ -d ".forge" ]; then
+    _count=0; [ -f "$_skip_file" ] && _count=$(cat "$_skip_file" 2>/dev/null || echo 0)
+    echo $((_count + 1)) > "$_skip_file" 2>/dev/null || true
+  fi
   exit 0
 fi
 
 # Portable glob-match helper: returns 0 if any file matches the pattern.
 # Replaces compgen -G which is a bash builtin not available on all platforms.
+# Canonical version lives in shared/platform.sh — kept inline here to avoid
+# sourcing platform.sh on every Edit/Write hook invocation (performance).
 _glob_exists() {
   local pattern="$1"
   local f

@@ -5,16 +5,8 @@
 
 set -euo pipefail
 
-# Portable glob-match helper: returns 0 if any file matches the pattern.
-# Replaces compgen -G which is a bash builtin not available on all platforms.
-_glob_exists() {
-  local pattern="$1"
-  local f
-  for f in $pattern; do
-    [ -e "$f" ] && return 0
-  done
-  return 1
-}
+# shellcheck source=../platform.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/platform.sh"
 
 DIR="${1:-}"
 

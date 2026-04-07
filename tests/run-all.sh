@@ -31,7 +31,7 @@ case "$TIER" in
     run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
-    printf '\n%b%bAll tiers passed.%b\n' "$GREEN" "$BOLD" "$NC"
+    printf '\n%bAll tiers passed.%b\n' "${GREEN}${BOLD}" "$NC"
     ;;
   structural) run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh" ;;
   unit)       run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats ;;
