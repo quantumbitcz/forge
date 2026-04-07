@@ -161,21 +161,21 @@ extract_kotlin() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes, data classes, objects, interfaces
-  grep -nE '^\s*(data\s+)?class\s+\w+|^\s*interface\s+\w+|^\s*object\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(data[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*interface[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*object[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info
-    if echo "$line" | grep -qE '^\s*[0-9]+:\s*(data\s+)?class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(data\s+)?class\s+(\w+).*/\2/')"
+    if echo "$line" | grep -qE '^[[:space:]]*[0-9]+:[[:space:]]*(data[[:space:]]+)?class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(data[[:space:]]+)?class[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       kind="class"
       # Check for extends: class Foo : Bar or class Foo(val x: X) : Bar
-      parent_info="$(echo "$line" | sed -E 's/^[^:]*:\s*(data\s+)?class\s+\w+[^:]*:\s*//' | grep -oE '^\w+' || true)"
-    elif echo "$line" | grep -qE '^\s*[0-9]+:\s*interface\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*interface\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | sed -E 's/^[^:]*:[[:space:]]*(data[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+[^:]*:[[:space:]]*//' | grep -oE '^[a-zA-Z0-9_]+' || true)"
+    elif echo "$line" | grep -qE '^[[:space:]]*[0-9]+:[[:space:]]*interface[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*interface[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="interface"
       parent_info=""
-    elif echo "$line" | grep -qE '^\s*[0-9]+:\s*object\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*object\s+(\w+).*/\1/')"
+    elif echo "$line" | grep -qE '^[[:space:]]*[0-9]+:[[:space:]]*object[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*object[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="object"
-      parent_info="$(echo "$line" | sed -E 's/^[^:]*:\s*object\s+\w+[^:]*:\s*//' | grep -oE '^\w+' || true)"
+      parent_info="$(echo "$line" | sed -E 's/^[^:]*:[[:space:]]*object[[:space:]]+[a-zA-Z0-9_]+[^:]*:[[:space:]]*//' | grep -oE '^[a-zA-Z0-9_]+' || true)"
     fi
 
     if [[ -n "${name:-}" ]]; then
@@ -188,9 +188,9 @@ extract_kotlin() {
   done
 
   # Functions
-  grep -nE '^\s*(override\s+)?fun\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(override[[:space:]]+)?fun[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?fun\s+(\w+).*/\2/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(override[[:space:]]+)?fun[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -203,18 +203,18 @@ extract_java() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and interfaces
-  grep -nE '^\s*(public\s+)?(abstract\s+)?class\s+\w+|^\s*(public\s+)?interface\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(public[[:space:]]+)?(abstract[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*(public[[:space:]]+)?interface[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info
-    if echo "$line" | grep -qE 'class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class\s+(\w+).*/\1/')"
+    if echo "$line" | grep -qE 'class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="class"
       # Check extends
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
       # Check implements
       local impl_info
-      impl_info="$(echo "$line" | grep -oE 'implements\s+\w+' | sed 's/implements\s*//' || true)"
-    elif echo "$line" | grep -qE 'interface\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface\s+(\w+).*/\1/')"
+      impl_info="$(echo "$line" | grep -oE 'implements[[:space:]]+[a-zA-Z0-9_]+' | sed 's/implements[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'interface[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="interface"
       parent_info=""
       local impl_info=""
@@ -233,10 +233,10 @@ extract_java() {
   done
 
   # Methods — match public/private/protected return_type methodName(
-  grep -nE '^\s*(public|private|protected)?\s*(static\s+)?\w+\s+\w+\s*\(' "$abs_path" 2>/dev/null | \
-    grep -vE '^\s*[0-9]+:\s*(if|for|while|switch|catch|return|new|import|package)\s' | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(public|private|protected)?[[:space:]]*(static[[:space:]]+)?[a-zA-Z0-9_]+[[:space:]]+[a-zA-Z0-9_]+[[:space:]]*\(' "$abs_path" 2>/dev/null | \
+    grep -vE '^[[:space:]]*[0-9]+:[[:space:]]*(if|for|while|switch|catch|return|new|import|package)[[:space:]]' | while IFS= read -r line; do
       local fname
-      fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+)?(static\s+)?(\w+\s+)?(\w+)\s*\(.*/\4/')"
+      fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(public[[:space:]]+|private[[:space:]]+|protected[[:space:]]+)?(static[[:space:]]+)?([a-zA-Z0-9_]+[[:space:]]+)?([a-zA-Z0-9_]+)[[:space:]]*\(.*/\4/')"
       # Skip constructors (name matches class pattern — starts with uppercase, but we emit anyway)
       if [[ -n "$fname" && "$fname" != "class" && "$fname" != "interface" ]]; then
         echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
@@ -250,17 +250,17 @@ extract_typescript() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and interfaces
-  grep -nE '^\s*(export\s+)?(abstract\s+)?class\s+\w+|^\s*(export\s+)?interface\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(export[[:space:]]+)?(abstract[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*(export[[:space:]]+)?interface[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info impl_info
-    if echo "$line" | grep -qE 'class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class\s+(\w+).*/\1/')"
+    if echo "$line" | grep -qE 'class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="class"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
-      impl_info="$(echo "$line" | grep -oE 'implements\s+\w+' | sed 's/implements\s*//' || true)"
-    elif echo "$line" | grep -qE 'interface\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
+      impl_info="$(echo "$line" | grep -oE 'implements[[:space:]]+[a-zA-Z0-9_]+' | sed 's/implements[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'interface[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="interface"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
       impl_info=""
     fi
 
@@ -277,9 +277,9 @@ extract_typescript() {
   done
 
   # Top-level and exported functions
-  grep -nE '^\s*(export\s+)?(async\s+)?function\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(export\s+)?(async\s+)?function\s+(\w+).*/\3/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+([a-zA-Z0-9_]+).*/\3/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -292,11 +292,11 @@ extract_python() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes with optional parents
-  grep -nE '^\s*class\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*class[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name parent_info
-    name="$(echo "$line" | sed -E 's/^[0-9]+:\s*class\s+(\w+).*/\1/')"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*class[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
     # Extract parent class from class Foo(Bar):
-    parent_info="$(echo "$line" | grep -oE 'class\s+\w+\(\s*\w+' | sed -E 's/class\s+\w+\(\s*//' || true)"
+    parent_info="$(echo "$line" | grep -oE 'class[[:space:]]+[a-zA-Z0-9_]+\([[:space:]]*[a-zA-Z0-9_]+' | sed -E 's/class[[:space:]]+[a-zA-Z0-9_]+\([[:space:]]*//' || true)"
 
     if [[ -n "$name" ]]; then
       echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
@@ -308,9 +308,9 @@ extract_python() {
   done
 
   # Functions (including async def)
-  grep -nE '^\s*(async\s+)?def\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(async[[:space:]]+)?def[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(async\s+)?def\s+(\w+).*/\2/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(async[[:space:]]+)?def[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -323,10 +323,10 @@ extract_go() {
   esc_path="$(cypher_escape "$file")"
 
   # Structs and interfaces
-  grep -nE '^\s*type\s+\w+\s+(struct|interface)' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*type[[:space:]]+[a-zA-Z0-9_]+[[:space:]]+(struct|interface)' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind
-    name="$(echo "$line" | sed -E 's/^[0-9]+:\s*type\s+(\w+)\s+(struct|interface).*/\1/')"
-    kind="$(echo "$line" | sed -E 's/^[0-9]+:\s*type\s+\w+\s+(struct|interface).*/\1/')"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*type[[:space:]]+([a-zA-Z0-9_]+)[[:space:]]+(struct|interface).*/\1/')"
+    kind="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*type[[:space:]]+[a-zA-Z0-9_]+[[:space:]]+(struct|interface).*/\1/')"
 
     if [[ -n "$name" ]]; then
       echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
@@ -335,14 +335,14 @@ extract_go() {
   done
 
   # Functions (both standalone and methods)
-  grep -nE '^\s*func\s+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*func[[:space:]]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
     # Method: func (r *Receiver) MethodName(...)
-    if echo "$line" | grep -qE '^\s*[0-9]+:\s*func\s+\('; then
-      fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*func\s+\([^)]+\)\s+(\w+).*/\1/')"
+    if echo "$line" | grep -qE '^[[:space:]]*[0-9]+:[[:space:]]*func[[:space:]]+\('; then
+      fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*func[[:space:]]+\([^)]+\)[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
     else
       # Standalone: func FuncName(...)
-      fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*func\s+(\w+).*/\1/')"
+      fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*func[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
     fi
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
@@ -356,13 +356,13 @@ extract_rust() {
   esc_path="$(cypher_escape "$file")"
 
   # Structs, traits
-  grep -nE '^\s*(pub\s+)?struct\s+\w+|^\s*(pub\s+)?trait\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(pub[[:space:]]+)?struct[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*(pub[[:space:]]+)?trait[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind
-    if echo "$line" | grep -qE 'struct\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(pub\s+)?struct\s+(\w+).*/\2/')"
+    if echo "$line" | grep -qE 'struct[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(pub[[:space:]]+)?struct[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       kind="struct"
-    elif echo "$line" | grep -qE 'trait\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(pub\s+)?trait\s+(\w+).*/\2/')"
+    elif echo "$line" | grep -qE 'trait[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(pub[[:space:]]+)?trait[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       kind="trait"
     fi
 
@@ -373,11 +373,11 @@ extract_rust() {
   done
 
   # impl blocks — impl Trait for Struct
-  grep -nE '^\s*impl\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
-    if echo "$line" | grep -qE 'impl\s+\w+\s+for\s+\w+'; then
+  grep -nE '^[[:space:]]*impl[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+    if echo "$line" | grep -qE 'impl[[:space:]]+[a-zA-Z0-9_]+[[:space:]]+for[[:space:]]+[a-zA-Z0-9_]+'; then
       local trait_name struct_name
-      trait_name="$(echo "$line" | sed -E 's/^[0-9]+:\s*impl\s+(\w+)\s+for\s+(\w+).*/\1/')"
-      struct_name="$(echo "$line" | sed -E 's/^[0-9]+:\s*impl\s+(\w+)\s+for\s+(\w+).*/\2/')"
+      trait_name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*impl[[:space:]]+([a-zA-Z0-9_]+)[[:space:]]+for[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
+      struct_name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*impl[[:space:]]+([a-zA-Z0-9_]+)[[:space:]]+for[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       if [[ -n "$trait_name" && -n "$struct_name" ]]; then
         echo "MATCH (a:ProjectClass {name: '$(cypher_escape "$struct_name")', project_id: '${PROJECT_ID}'}), (b:ProjectClass {name: '$(cypher_escape "$trait_name")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:EXTENDS_CLASS]->(b);"
       fi
@@ -385,9 +385,9 @@ extract_rust() {
   done
 
   # Functions
-  grep -nE '^\s*(pub\s+)?(async\s+)?fn\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(pub\s+)?(async\s+)?fn\s+(\w+).*/\3/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+([a-zA-Z0-9_]+).*/\3/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -400,15 +400,15 @@ extract_ruby() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and modules
-  grep -nE '^\s*class\s+\w+|^\s*module\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*module[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info=""
-    if echo "$line" | grep -qE 'class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*class\s+(\w+).*/\1/')"
+    if echo "$line" | grep -qE 'class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*class[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="class"
       # Check for < inheritance
-      parent_info="$(echo "$line" | grep -oE '<\s*\w+' | sed 's/<\s*//' || true)"
-    elif echo "$line" | grep -qE 'module\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*module\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE '<[[:space:]]*[a-zA-Z0-9_]+' | sed 's/<[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'module[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*module[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="module"
     fi
 
@@ -422,9 +422,9 @@ extract_ruby() {
   done
 
   # Methods
-  grep -nE '^\s*def\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*def[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*def\s+(\w+).*/\1/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*def[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -437,15 +437,15 @@ extract_php() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and interfaces
-  grep -nE '^\s*(abstract\s+)?class\s+\w+|^\s*interface\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(abstract[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*interface[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info impl_info
-    if echo "$line" | grep -qE 'class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(abstract\s+)?class\s+(\w+).*/\2/')"
+    if echo "$line" | grep -qE 'class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(abstract[[:space:]]+)?class[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       kind="class"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
-      impl_info="$(echo "$line" | grep -oE 'implements\s+\w+' | sed 's/implements\s*//' || true)"
-    elif echo "$line" | grep -qE 'interface\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*interface\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
+      impl_info="$(echo "$line" | grep -oE 'implements[[:space:]]+[a-zA-Z0-9_]+' | sed 's/implements[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'interface[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*interface[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="interface"
       parent_info=""
       impl_info=""
@@ -464,9 +464,9 @@ extract_php() {
   done
 
   # Functions
-  grep -nE '^\s*(public|private|protected)?\s*(static\s+)?function\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(public|private|protected)?[[:space:]]*(static[[:space:]]+)?function[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+)?(static\s+)?function\s+(\w+).*/\3/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(public[[:space:]]+|private[[:space:]]+|protected[[:space:]]+)?(static[[:space:]]+)?function[[:space:]]+([a-zA-Z0-9_]+).*/\3/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -479,15 +479,15 @@ extract_csharp() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and interfaces
-  grep -nE '^\s*(public\s+)?(abstract\s+)?class\s+\w+|^\s*(public\s+)?interface\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(public[[:space:]]+)?(abstract[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*(public[[:space:]]+)?interface[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info
-    if echo "$line" | grep -qE 'class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class\s+(\w+).*/\1/')"
+    if echo "$line" | grep -qE 'class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*class[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="class"
       # C# uses : for inheritance
-      parent_info="$(echo "$line" | grep -oE ':\s*\w+' | head -1 | sed 's/:\s*//' || true)"
-    elif echo "$line" | grep -qE 'interface\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE ':[[:space:]]*[a-zA-Z0-9_]+' | head -1 | sed 's/:[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'interface[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:.*interface[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="interface"
       parent_info=""
     fi
@@ -502,10 +502,10 @@ extract_csharp() {
   done
 
   # Methods
-  grep -nE '^\s*(public|private|protected|internal)?\s*(static\s+)?(async\s+)?\w+\s+\w+\s*\(' "$abs_path" 2>/dev/null | \
-    grep -vE '^\s*[0-9]+:\s*(if|for|while|switch|catch|return|new|using|namespace)\s' | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(public|private|protected|internal)?[[:space:]]*(static[[:space:]]+)?(async[[:space:]]+)?[a-zA-Z0-9_]+[[:space:]]+[a-zA-Z0-9_]+[[:space:]]*\(' "$abs_path" 2>/dev/null | \
+    grep -vE '^[[:space:]]*[0-9]+:[[:space:]]*(if|for|while|switch|catch|return|new|using|namespace)[[:space:]]' | while IFS= read -r line; do
       local fname
-      fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(public\s+|private\s+|protected\s+|internal\s+)?(static\s+)?(async\s+)?(override\s+)?(\w+\s+)?(\w+)\s*\(.*/\6/')"
+      fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(public[[:space:]]+|private[[:space:]]+|protected[[:space:]]+|internal[[:space:]]+)?(static[[:space:]]+)?(async[[:space:]]+)?(override[[:space:]]+)?([a-zA-Z0-9_]+[[:space:]]+)?([a-zA-Z0-9_]+)[[:space:]]*\(.*/\6/')"
       if [[ -n "$fname" && "$fname" != "class" && "$fname" != "interface" ]]; then
         echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       fi
@@ -518,13 +518,13 @@ extract_swift() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes, structs, protocols
-  grep -nE '^\s*(class|struct|protocol)\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(class|struct|protocol)[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info=""
-    kind="$(echo "$line" | sed -E 's/^[0-9]+:\s*(class|struct|protocol)\s+.*/\1/')"
-    name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(class|struct|protocol)\s+(\w+).*/\2/')"
+    kind="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(class|struct|protocol)[[:space:]]+.*/\1/')"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(class|struct|protocol)[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
     # Check for : inheritance
     if [[ "$kind" == "class" || "$kind" == "struct" ]]; then
-      parent_info="$(echo "$line" | grep -oE ':\s*\w+' | head -1 | sed 's/:\s*//' || true)"
+      parent_info="$(echo "$line" | grep -oE ':[[:space:]]*[a-zA-Z0-9_]+' | head -1 | sed 's/:[[:space:]]*//' || true)"
     fi
 
     if [[ -n "$name" ]]; then
@@ -537,9 +537,9 @@ extract_swift() {
   done
 
   # Functions
-  grep -nE '^\s*(override\s+)?(static\s+)?func\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(override[[:space:]]+)?(static[[:space:]]+)?func[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?(static\s+)?func\s+(\w+).*/\3/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(override[[:space:]]+)?(static[[:space:]]+)?func[[:space:]]+([a-zA-Z0-9_]+).*/\3/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -552,9 +552,9 @@ extract_elixir() {
   esc_path="$(cypher_escape "$file")"
 
   # Modules
-  grep -nE '^\s*defmodule\s+\S+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*defmodule[[:space:]]+\S+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name
-    name="$(echo "$line" | sed -E 's/^[0-9]+:\s*defmodule\s+(\S+)\s*.*/\1/')"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*defmodule[[:space:]]+(\S+)[[:space:]]*.*/\1/')"
     if [[ -n "$name" ]]; then
       echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'module', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       echo "MATCH (c:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', project_id: '${PROJECT_ID}'}), (f:ProjectFile {path: '${esc_path}', project_id: '${PROJECT_ID}'}) CREATE (c)-[:CLASS_IN_FILE]->(f);"
@@ -562,10 +562,10 @@ extract_elixir() {
   done
 
   # Functions
-  grep -nE '^\s*def[p]?\s+\w+' "$abs_path" 2>/dev/null | \
+  grep -nE '^[[:space:]]*def[p]?[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | \
     grep -vE 'defmodule|defstruct|defmacro|defimpl|defprotocol|defoverridable|defdelegate' | while IFS= read -r line; do
       local fname
-      fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*def[p]?\s+(\w+).*/\1/')"
+      fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*def[p]?[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       if [[ -n "$fname" ]]; then
         echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
       fi
@@ -578,20 +578,20 @@ extract_scala() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes, case classes, traits, objects
-  grep -nE '^\s*(case\s+)?class\s+\w+|^\s*trait\s+\w+|^\s*object\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(case[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*trait[[:space:]]+[a-zA-Z0-9_]+|^[[:space:]]*object[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name kind parent_info=""
-    if echo "$line" | grep -qE '(case\s+)?class\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(case\s+)?class\s+(\w+).*/\2/')"
+    if echo "$line" | grep -qE '(case[[:space:]]+)?class[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(case[[:space:]]+)?class[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       kind="class"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
-    elif echo "$line" | grep -qE 'trait\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*trait\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'trait[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*trait[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="trait"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
-    elif echo "$line" | grep -qE 'object\s+'; then
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*object\s+(\w+).*/\1/')"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
+    elif echo "$line" | grep -qE 'object[[:space:]]+'; then
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*object[[:space:]]+([a-zA-Z0-9_]+).*/\1/')"
       kind="object"
-      parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
+      parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
     fi
 
     if [[ -n "${name:-}" ]]; then
@@ -604,9 +604,9 @@ extract_scala() {
   done
 
   # Functions
-  grep -nE '^\s*(override\s+)?def\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(override[[:space:]]+)?def[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local fname
-    fname="$(echo "$line" | sed -E 's/^[0-9]+:\s*(override\s+)?def\s+(\w+).*/\2/')"
+    fname="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(override[[:space:]]+)?def[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
     if [[ -n "$fname" ]]; then
       echo "MERGE (:ProjectFunction {name: '$(cypher_escape "$fname")', file_path: '${esc_path}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
     fi
@@ -619,13 +619,13 @@ extract_c_cpp() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes and structs
-  grep -nE '^\s*(class|struct)\s+\w+' "$abs_path" 2>/dev/null | \
-    grep -vE '^\s*[0-9]+:\s*(class|struct)\s+\w+\s*;' | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(class|struct)[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | \
+    grep -vE '^[[:space:]]*[0-9]+:[[:space:]]*(class|struct)[[:space:]]+[a-zA-Z0-9_]+[[:space:]]*;' | while IFS= read -r line; do
       local name kind parent_info=""
-      kind="$(echo "$line" | sed -E 's/^[0-9]+:\s*(class|struct)\s+.*/\1/')"
-      name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(class|struct)\s+(\w+).*/\2/')"
+      kind="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(class|struct)[[:space:]]+.*/\1/')"
+      name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(class|struct)[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
       # Check for : public Base
-      parent_info="$(echo "$line" | grep -oE ':\s*(public|protected|private)\s+\w+' | sed -E 's/:\s*(public|protected|private)\s+//' || true)"
+      parent_info="$(echo "$line" | grep -oE ':[[:space:]]*(public|protected|private)[[:space:]]+[a-zA-Z0-9_]+' | sed -E 's/:[[:space:]]*(public|protected|private)[[:space:]]+//' || true)"
 
       if [[ -n "$name" ]]; then
         echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: '${kind}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
@@ -643,12 +643,12 @@ extract_dart() {
   esc_path="$(cypher_escape "$file")"
 
   # Classes (with optional abstract)
-  grep -nE '^\s*(abstract\s+)?class\s+\w+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*(abstract[[:space:]]+)?class[[:space:]]+[a-zA-Z0-9_]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name parent_info
-    name="$(echo "$line" | sed -E 's/^[0-9]+:\s*(abstract\s+)?class\s+(\w+).*/\2/')"
-    parent_info="$(echo "$line" | grep -oE 'extends\s+\w+' | sed 's/extends\s*//' || true)"
+    name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*(abstract[[:space:]]+)?class[[:space:]]+([a-zA-Z0-9_]+).*/\2/')"
+    parent_info="$(echo "$line" | grep -oE 'extends[[:space:]]+[a-zA-Z0-9_]+' | sed 's/extends[[:space:]]*//' || true)"
     local impl_info
-    impl_info="$(echo "$line" | grep -oE 'implements\s+\w+' | sed 's/implements\s*//' || true)"
+    impl_info="$(echo "$line" | grep -oE 'implements[[:space:]]+[a-zA-Z0-9_]+' | sed 's/implements[[:space:]]*//' || true)"
 
     if [[ -n "$name" ]]; then
       echo "MERGE (:ProjectClass {name: '$(cypher_escape "$name")', file_path: '${esc_path}', kind: 'class', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
