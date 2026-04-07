@@ -171,7 +171,7 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 - **Setup:** Docker-managed in `.forge/`, accessed via Neo4j MCP. Container: `forge-neo4j` (configurable via `graph.neo4j_container_name` or `NEO4J_CONTAINER`). Disable with `graph.enabled: false`. See `shared/graph/schema.md` and `shared/graph/query-patterns.md`.
 - **Scoping:** All `Project*`/`Doc*` nodes scoped by `project_id` (git remote origin) + optional `component`. Multiple projects share one instance. `/graph-rebuild` only deletes current project.
-- **Agent access:** 5 agents with direct `neo4j-mcp`: fg-010-shaper, fg-020-bug-investigator, fg-200-planner, fg-210-validator, fg-400-quality-gate.
+- **Agent access:** 8 agents with direct `neo4j-mcp`: fg-010-shaper, fg-020-bug-investigator, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-102-conflict-resolver, fg-200-planner, fg-210-validator, fg-400-quality-gate.
 - **Doc nodes:** `DocFile`, `DocSection`, `DocDecision`, `DocConstraint`, `DocDiagram` — used by fg-130/fg-350 for coverage tracking.
 - **Query patterns:** 14 (Bug Hotspots), 15 (Test Coverage) for bugfix risk. 19 (Cross-Feature File Overlap), 20 (Cross-Repo Dependency Graph) for sprint independence.
 - **Auto-updates:** post-IMPLEMENT, post-VERIFY, pre-REVIEW via `update-project-graph.sh`. Tracked in `state.json.graph`.
