@@ -201,9 +201,9 @@ Neo4j-based dual-purpose knowledge graph: (1) static plugin module relationship 
 
 Default: Tier 3. Configure via `infra.max_verification_tier` (1-5). Graceful degradation: missing tools skip tiers, pipeline continues. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT` (CRITICAL), `INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL). User scenario tests live in `tests/infra/` — see `modules/frameworks/k8s/conventions.md`.
 
-### Skills (20 in `skills/`)
+### Skills (21 in `skills/`)
 
-`forge-run` (main entry — accepts `--ticket FG-001`, bare ticket ID shorthand, or `bugfix:` prefix), `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or plain description), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint` (parallel multi-feature entry — accepts `--sprint`/`--parallel` with feature list), `verify`, `security-audit`, `codebase-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
+`forge-run` (main entry — accepts `--ticket FG-001`, bare ticket ID shorthand, or `bugfix:` prefix), `forge-fix` (bugfix entry — accepts ticket ID, Linear issue, or plain description), `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint` (parallel multi-feature entry — accepts `--sprint`/`--parallel` with feature list), `verify`, `security-audit`, `codebase-health`, `deep-health` (iterative investigation + fix + review loop — dispatches forge review agents, fixes all findings including minor, commits per iteration, loops until clean), `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`. Frontend commands (`fe-check-theme`, `fe-design-review`, etc.) live in the consuming project, not here.
 
 ### Hooks (`hooks/hooks.json`)
 
