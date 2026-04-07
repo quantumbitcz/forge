@@ -381,7 +381,7 @@ Do NOT create the lock file during `--dry-run` runs.
 
 ### 3.8 Initialize State
 
-Create/overwrite `.forge/state.json` per `shared/state-schema.md` (version 1.2.0). Key fields to initialize:
+Create/overwrite `.forge/state.json` per `shared/state-schema.md` (version 1.4.0). Key fields to initialize:
 - `complete: false`, `story_id` (kebab-case from requirement), `requirement` (verbatim), `mode` (from §3.0)
 - `story_state: "PREFLIGHT"`, all counters to 0 (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`, `total_retries`)
 - `"convergence"`: `"phase": "correctness"`, `"convergence_state": "IMPROVING"`, all counters 0, `"safety_gate_passed": false`

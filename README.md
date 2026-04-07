@@ -2,7 +2,7 @@
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 37 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 40 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -63,7 +63,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-20 skills provide the user-facing interface to the pipeline and its subsystems.
+21 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -187,11 +187,11 @@ touch .claude/forge-log.md
 |    deprecations, scripts) |  ci-cd, container-orchestration, documentation, code-quality)
 |                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
-|   Shared core             |  agents/ (37 pipeline + review agents)
+|   Shared core             |  agents/ (40 pipeline + review agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (20 user-facing commands)
+|                           |  skills/ (21 user-facing commands)
 +---------------------------+
 ```
 
@@ -410,7 +410,7 @@ forge/
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.2.0
+    state-schema.md                     # State schema v1.4.0
     checks/                             # 3-layer generalized check engine
       engine.sh                         #   Main engine script (--hook, --verify, --review modes)
       test-engine.sh                    #   Engine test harness
