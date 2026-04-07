@@ -258,7 +258,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-37 agents organized by pipeline stage and cross-cutting concerns.
+40 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
@@ -348,7 +348,7 @@ forge/
   .claude-plugin/
     plugin.json                         # Plugin manifest (v1.4.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
-  agents/                               # 32 agent definitions (YAML frontmatter + instructions)
+  agents/                               # 40 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
     fg-050-project-bootstrapper.md
     fg-100-orchestrator.md
@@ -380,23 +380,26 @@ forge/
     infra-deploy-reviewer.md
     infra-deploy-verifier.md
     docs-consistency-reviewer.md
-  skills/                               # 18 user-facing skills
+  skills/                               # 21 user-facing skills
     bootstrap-project/
     codebase-health/
+    deep-health/
     deploy/
     docs-generate/
-    graph-init/
-    graph-query/
-    graph-rebuild/
-    graph-status/
-    migration/
+    forge-fix/
     forge-history/
     forge-init/
     forge-reset/
     forge-rollback/
     forge-run/
     forge-shape/
+    forge-sprint/
     forge-status/
+    graph-init/
+    graph-query/
+    graph-rebuild/
+    graph-status/
+    migration/
     security-audit/
     verify/
   hooks/                                # 3 hooks (registered in hooks.json)
