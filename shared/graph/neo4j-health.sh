@@ -41,7 +41,10 @@ if [ -z "$HEALTH_STATUS" ]; then
   echo '{"available": false, "reason": "container health status unknown (no health check configured)"}'
   exit 1
 elif [ "$HEALTH_STATUS" != "healthy" ]; then
-  echo "{\"available\": false, \"reason\": \"container unhealthy (status: ${HEALTH_STATUS})\"}"
+  # Sanitize status for safe JSON embedding (escape backslashes and quotes)
+  _safe_status="${HEALTH_STATUS//\\/\\\\}"
+  _safe_status="${_safe_status//\"/\\\"}"
+  echo "{\"available\": false, \"reason\": \"container unhealthy (status: ${_safe_status})\"}"
   exit 1
 fi
 
