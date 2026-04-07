@@ -124,6 +124,7 @@ Write `.forge/sprint-state.json` (atomic: write to `.forge/sprint-state.json.tmp
   "source": "{linear|manual}",
   "started": "{ISO 8601 now}",
   "status": "gathering",
+  "base_commit": "{git rev-parse HEAD}",
   "features": [
     {
       "id": "{feature_id}",
@@ -357,7 +358,7 @@ Update feature status in sprint-state.json to `executing`.
 ```
 // Wrap: TaskCreate("Create worktree for {feature_id}") → Agent dispatch → TaskUpdate(completed)
 
-dispatch fg-101-worktree-manager "create {ticket_id} {slug} --base-dir .forge/worktrees/{feature_id}"
+dispatch fg-101-worktree-manager "create {ticket_id} {slug} --base-dir .forge/worktrees/{feature_id} --start-point {base_commit}"
 ```
 
 Read worktree result from stage notes: `worktree_path`, `branch_name`.

@@ -18,7 +18,7 @@ Execute: **$ARGUMENTS**
 
 ## Operations
 
-### `create <ticket_id> <slug> [--base-dir <path>]`
+### `create <ticket_id> <slug> [--base-dir <path>] [--start-point <commit>]`
 
 Create a new git worktree for a pipeline run.
 
@@ -30,7 +30,9 @@ Create a new git worktree for a pipeline run.
 4. Determine base directory:
    - Single-feature mode: `.forge/worktree` (standard path)
    - Sprint mode (when `--base-dir` provided): use the provided path (e.g., `.forge/worktrees/FG-42/`)
-5. Create the worktree: `git worktree add <base-dir> -b <branch-name>`
+5. Create the worktree: `git worktree add <base-dir> -b <branch-name> [<start-point>]`
+   - If `--start-point` provided: use that commit as the branch base (e.g., sprint base_commit for consistent parallel feature branching)
+   - If omitted: default to current HEAD (standard single-feature behavior)
 6. Verify the worktree is functional: `git -C <base-dir> status`
 
 **Output via stage notes:**

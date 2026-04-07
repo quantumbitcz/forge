@@ -1374,7 +1374,15 @@ If `preview.enabled` is `true` in `forge.local.md` and the PR was created succes
 3. fg-650 posts results as a PR comment (smoke tests, Lighthouse audit, visual regression, E2E)
 4. **Gating behavior** based on `preview.block_merge` config (default: `false`):
    - If `block_merge: false` (default): verdict is advisory only. FAIL → add `preview-failed` label, include findings in user presentation, but proceed to user response.
-   - If `block_merge: true`: FAIL verdict **blocks stage progression**. The orchestrator loops: dispatch `fg-300-implementer` with preview findings, re-run VERIFY (safety check), re-dispatch preview validator. Max `preview.max_fix_loops` (default: 1) attempts. Each loop iteration increments `total_iterations` and `total_retries` — the global budget still applies. After exhaustion of `max_fix_loops` OR `total_retries >= total_retries_max`, escalate to user with the preview failure details and options: (1) "Fix manually" — pause for user intervention, (2) "Merge anyway" — override preview gating for this PR only, (3) "Abort" — close PR and abort pipeline.
+   - If `block_merge: true`: FAIL verdict **blocks stage progression**. The orchestrator loops: dispatch `fg-300-implementer` with preview findings, re-run VERIFY (safety check), re-dispatch preview validator. Max `preview.max_fix_loops` (default: 1) attempts. Each loop iteration increments `total_iterations` and `total_retries` — the global budget still applies. After exhaustion of `max_fix_loops` OR `total_retries >= total_retries_max`, escalate via AskUserQuestion:
+     ```
+     header: Preview Validation Failed
+     question: Preview environment validation failed after {attempts} fix attempts. How would you like to proceed?
+     options:
+       - "Fix manually" (description: "Pause pipeline for manual intervention, resume from VERIFY when ready")
+       - "Merge anyway" (description: "Override preview gating for this PR only — findings preserved in PR comment")
+       - "Abort" (description: "Close PR and abort the pipeline")
+     ```
 5. If verdict is PASS or CONCERNS: proceed to user response.
 
 If `preview.enabled` is not configured or `false`: skip preview validation.

@@ -353,7 +353,7 @@ Worktree created at PREFLIGHT (Stage 0), not IMPLEMENT (Stage 4). All forge work
 - PREEMPT confidence decay: 10 domain-matched unused runs → HIGH → MEDIUM → LOW → ARCHIVED. 1 false positive = 3 unused runs. Archived items are not loaded at PREFLIGHT.
 - **Convergence safety gate restart:** Resets `phase_iterations`, `plateau_count`, `last_score_delta`, `convergence_state` to initial values. Does NOT reset `total_iterations` or `score_history`. After restart, the first perfection cycle (phase_iterations = 0) is exempt from plateau counting — it establishes a new baseline. See `convergence-engine.md` safety_gate section.
 - **PLATEAUED transition:** Score >= `pass_threshold` proceeds directly to safety gate. Score in CONCERNS range escalates to user first. Score in FAIL range recommends abort — does NOT proceed to safety gate.
-- **Preview validator gating:** When `preview.block_merge: true`, FAIL verdict blocks Stage 8 progression. Orchestrator loops: implement fix → verify → re-validate preview (max `preview.max_fix_loops`, default 1).
+- **Preview validator gating:** When `preview.block_merge: true`, FAIL verdict blocks Stage 8 progression. Orchestrator loops: implement fix → verify → re-validate preview (max `preview.max_fix_loops`, default 1). Each loop increments `total_iterations` and `total_retries` — global budget applies. On exhaustion, escalates via AskUserQuestion with: "Fix manually", "Merge anyway", "Abort".
 
 ### Implementation & shipping
 
