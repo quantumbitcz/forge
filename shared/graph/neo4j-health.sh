@@ -37,9 +37,8 @@ HEALTH_STATUS=""
 HEALTH_STATUS=$(_neo4j_timeout 5 docker inspect "$CONTAINER_NAME" --format '{{.State.Health.Status}}' 2>/dev/null || true)
 
 if [ -z "$HEALTH_STATUS" ]; then
-  # Container has no health check configured — treat as unknown, not failed
-  echo '{"available": false, "reason": "container health status unknown (no health check configured)"}'
-  exit 1
+  # Container has no health check configured — fall through to Bolt connectivity test
+  true
 elif [ "$HEALTH_STATUS" != "healthy" ]; then
   # Sanitize status for safe JSON embedding (escape backslashes and quotes)
   _safe_status="${HEALTH_STATUS//\\/\\\\}"
@@ -49,7 +48,7 @@ elif [ "$HEALTH_STATUS" != "healthy" ]; then
 fi
 
 # Verify Bolt connectivity (port 7687) via a simple Cypher query
-NEO4J_PASSWORD="${NEO4J_PASSWORD:-forge}"
+NEO4J_PASSWORD="${NEO4J_PASSWORD:-forge-local}"
 BOLT_OK=""
 BOLT_OK=$(_neo4j_timeout 10 docker exec "$CONTAINER_NAME" \
   cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "RETURN 1 AS ping" 2>/dev/null || true)
