@@ -169,7 +169,10 @@ in_scope() {
 # --- Emit a finding line ---
 emit() {
   local line="$1" category="$2" severity="$3" message="$4" fix_hint="$5"
+  # Escape order per output-format.md: backslash first, then pipe
+  message="${message//\\/\\\\}"
   message="${message//|/\\|}"
+  fix_hint="${fix_hint//\\/\\\\}"
   fix_hint="${fix_hint//|/\\|}"
   echo "${DISPLAY_PATH}:${line} | ${category} | ${severity} | ${message} | ${fix_hint}"
 }
