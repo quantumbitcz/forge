@@ -11,6 +11,10 @@ Reference document for the intent classification system used by `/forge-run` to 
 | **bootstrap** | "scaffold", "create new", "start from scratch", "initialize", "new project", empty project root | Any 1+ signal or empty project detection | `fg-100` bootstrap mode → `fg-050` |
 | **multi-feature** | 3+ distinct domain nouns joined by conjunctions, enumerated capabilities ("1. X 2. Y 3. Z"), "also add", "plus", "on top of" | 3+ distinct features detected | `fg-015-scope-decomposer` → `fg-090` |
 | **vague** | Very short (<10 words with no specifics), very long (>500 words), no acceptance criteria, exploratory language ("something like", "maybe", "could we", "what if"), OR under 50 words missing 3+ completeness signals (actors, entities, surface, criteria) | Qualitative assessment per `routing.vague_threshold` | `fg-010-shaper` → shaped spec → re-enter |
+| **testing** | "add tests", "test coverage", "e2e tests", "integration tests", "unit tests", testing frameworks, coverage thresholds | Any 2+ signals or 1 strong signal (coverage percentage, test framework name) | `fg-100-orchestrator` standard mode (implementer focuses on test files only; quality gate uses reduced reviewer set) |
+| **documentation** | "document", "write docs", "generate API docs", "ADR", "architecture docs", "changelog" | Any 2+ signals or 1 strong signal (specific doc type like "ADR", "OpenAPI") | `fg-350-docs-generator` standalone mode (skip pipeline stages 4-6) |
+| **refactor** | "refactor", "extract", "consolidate", "reduce duplication", "technical debt", "cleanup", "restructure" | Any 2+ signals or 1 strong signal with clear scope (file or module named) | `fg-100-orchestrator` standard mode (planner uses refactor constraints: same behavior, no new features, maintain test suite) |
+| **performance** | "optimize", "performance", "slow", "latency", "bundle size", "memory", "N+1", "throughput", "cache" | Any 2+ signals or 1 strong signal with measurable target | `fg-100-orchestrator` standard mode (EXPLORE includes profiling/benchmarking, REVIEW uses performance-focused reviewer set) |
 | **single-feature** | Clear, bounded requirement with identifiable scope | Default when no other intent matches | `fg-100-orchestrator` standard mode |
 
 ## Classification Priority
@@ -21,8 +25,12 @@ When multiple intents match, use this precedence (highest first):
 3. migration (specific pattern)
 4. bootstrap (specific or environmental)
 5. multi-feature (structural detection)
-6. vague (catch-all for unclear)
-7. single-feature (default)
+6. testing (specific — test-focused requests)
+7. documentation (specific — doc-focused requests)
+8. refactor (specific — improvement-focused requests)
+9. performance (specific — performance-focused requests)
+10. vague (catch-all for unclear)
+11. single-feature (default)
 
 ## Signal Detection Rules
 
@@ -48,6 +56,28 @@ When multiple intents match, use this precedence (highest first):
 - Domain count: 3+ unrelated bounded contexts in a single requirement
 - NOT multi-feature: a single feature with multiple implementation steps ("add auth with JWT tokens, refresh tokens, and session management" — this is one feature with sub-tasks)
 
+### Testing Signals
+- Keywords: test, tests, testing, coverage, e2e, integration test, unit test, snapshot test, test suite, TDD
+- Patterns: coverage percentages ("increase to 80%"), test framework names ("add vitest", "set up playwright"), "test the X module"
+- NOT testing: "test if this works" (exploratory language, route to vague), bug reports containing test failures (route to bugfix)
+- Modifier: requests that mention both testing AND a feature ("add auth with tests") are single-feature — the "tests" part is an implementation detail, not the primary intent
+
+### Documentation Signals
+- Keywords: document, documentation, docs, write docs, generate docs, ADR, architecture decision record, README, changelog, API docs, OpenAPI, Swagger
+- Patterns: "document the X", "generate API docs from Y", "write ADR for Z", "update README"
+- NOT documentation: "document as we go" (this is a process instruction, not an intent)
+
+### Refactor Signals
+- Keywords: refactor, extract, consolidate, reduce duplication, technical debt, cleanup, restructure, simplify, decompose, decouple
+- Patterns: "extract X into Y", "refactor X to use Y", "consolidate X and Y", "reduce complexity in Z"
+- NOT refactor: "refactor" used loosely ("let's refactor this approach" — exploratory, route to vague)
+- Scope requirement: refactor intent requires naming at least one file, module, or bounded context. "Refactor everything" is vague.
+
+### Performance Signals
+- Keywords: optimize, performance, slow, latency, bundle size, memory, N+1, throughput, cache, profiling, benchmark, response time
+- Patterns: measurable targets ("reduce from 500ms to 100ms"), specific bottlenecks ("N+1 queries in user list"), resource metrics ("reduce bundle size by 30%")
+- NOT performance: "optimize the codebase" (too vague — no specific bottleneck or target)
+
 ### Vague Signals
 - Length extremes: <10 words with no technical specifics, or >500 words of stream-of-consciousness
 - Exploratory language: "something like", "maybe we could", "what if", "I'm thinking about"
@@ -69,7 +99,7 @@ When multiple intents match, use this precedence (highest first):
   - Options:
     - "{classified_mode} mode" (description: "Route to {target_agent}")
     - "Override: standard feature" (description: "Treat as single feature, route to fg-100")
-    - "Override: choose mode" (description: "Let me pick: bugfix / migration / bootstrap / multi-feature / shape first")
+    - "Override: choose mode" (description: "Let me pick: bugfix / migration / bootstrap / multi-feature / testing / documentation / refactor / performance / shape first")
 - `autonomous: true`: Use classified mode directly. Log: `[AUTO-ROUTE] Classified as {intent} based on signals: {signal_list}`
 
 ## Config
