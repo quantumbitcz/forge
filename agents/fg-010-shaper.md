@@ -98,6 +98,19 @@ Ask:
 
 Read `.claude/forge.local.md` if present to check `related_projects` — note any cross-repo implications. Dispatch an explorer sub-agent (via Agent tool) to scan the codebase for related existing functionality before asking the user about it.
 
+### Phase 2.5 — Non-Functional Requirements
+
+Before challenging scope, surface constraints that shape the design:
+
+Ask: "Beyond the user-visible features, are there constraints around:"
+- **Performance** — latency targets, throughput requirements, resource limits (e.g., "must respond in <200ms", "handle 1000 concurrent users")
+- **Security** — authentication/authorization, data sensitivity, compliance (GDPR, SOC2, HIPAA)
+- **Accessibility** — WCAG level, keyboard navigation, screen reader support
+- **Scale** — expected data volumes, growth projections, multi-tenancy
+- **Observability** — logging, monitoring, alerting requirements
+
+Record answers under `## Non-Functional Requirements` in the spec. If the user has no constraints, note "None specified — implementation uses project defaults."
+
 ### Phase 3 — Challenge Scope (CRITICAL)
 
 This phase is mandatory. Every feature gets pushback.
@@ -109,6 +122,10 @@ Apply Principle 1 from `shared/agent-philosophy.md`: never settle for the first 
 - If an existing feature or pattern already covers part of the requirement, call it out explicitly and ask whether it can be leveraged or extended instead of building new.
 - If the feature introduces significant cross-repo impact, flag the cost and ask whether the scope can be narrowed.
 - If the feature duplicates something already planned or in-flight in Linear (check if Linear MCP is available), surface the overlap.
+
+**Contradiction detection (mandatory):** Review all acceptance criteria and constraints gathered so far. Flag any pairs that conflict (e.g., "real-time updates" + "offline-first", "unlimited data" + "must respond in <100ms"). Present contradictions to the user and ask which constraint takes priority. Do not proceed with contradictory requirements — the planner cannot resolve them.
+
+**Feasibility check:** If `neo4j-mcp` is available, query Pattern 11 (Decision Traceability) for active architectural decisions that might prohibit or constrain the feature. If found, present them: "An existing decision ({ADR title}) constrains this area: {summary}. Does this feature align, or should we revisit the decision?"
 
 Do not skip this phase even if the feature seems clear-cut. Document the outcome: either "scope challenged and narrowed to MVP" or "full vision accepted after challenge because {reason}".
 
@@ -156,11 +173,12 @@ Produce the structured spec document (see Section 4). Save it to `.forge/specs/{
 After writing the spec, review it with fresh eyes before presenting to the user:
 
 1. **Placeholder scan:** Any "TBD", "TODO", `{placeholder}`, empty sections, or vague acceptance criteria? Fix them in place.
-2. **Internal consistency:** Do stories contradict each other? Does the approach match the component list? Do acceptance criteria align with the problem statement?
+2. **Internal consistency:** Do stories contradict each other? Does the approach match the component list? Do acceptance criteria align with the problem statement? Do non-functional requirements conflict with acceptance criteria?
 3. **Scope check:** Is this focused enough for a single pipeline run, or does it need decomposition into sub-features? If too large, split and note in the spec.
 4. **Ambiguity check:** Could any acceptance criterion be interpreted two different ways? If so, pick the interpretation discussed with the user and make it explicit.
-5. **Testability check:** Can every acceptance criterion be verified by a test? If not, rewrite it until it can.
-6. **YAGNI check:** Does the spec include any features that aren't needed for the stated problem? Remove them. A simpler spec produces better implementations.
+5. **Testability enforcement:** Every acceptance criterion MUST describe an observable, verifiable outcome. Auto-flag ACs containing: "easy", "intuitive", "good", "better", "proper", "should work", "correctly", "fast", "performant" without specific metrics. Rewrite flagged ACs to include concrete outcomes (HTTP status codes, state changes, visible UI elements, measurable thresholds). Prefer Given/When/Then format where the scenario is non-trivial.
+6. **AC quantity check:** Each story must have 3-5 acceptance criteria. Flag stories with <3 ACs (incomplete — add missing criteria) or >5 ACs (too large — split the story). This range ensures sufficient test coverage without scope creep.
+7. **YAGNI check:** Does the spec include any features that aren't needed for the stated problem? Remove them. A simpler spec produces better implementations.
 
 Fix any issues found directly in the spec file. Do not re-ask the user about things already discussed — use your notes from Phases 1-4.
 
@@ -232,6 +250,13 @@ Produce a spec document conforming exactly to this structure:
 
 ### Alternative: {Approach Name} (if applicable)
 {2-3 sentences. Why it was not chosen.}
+
+## Non-Functional Requirements
+- **Performance:** {targets or "project defaults"}
+- **Security:** {constraints or "no additional requirements"}
+- **Accessibility:** {WCAG level or "project defaults"}
+- **Scale:** {expected volumes or "not specified"}
+- **Observability:** {requirements or "project defaults"}
 
 ## Technical Notes
 - {Architecture considerations, e.g. "Extends existing notification bus — no new infrastructure needed"}
@@ -328,8 +353,19 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the final shaped spec for user app
 
 ---
 
-## 7. Forbidden Actions
+## 7. Error Handling
 
+- **Graph/explorer unavailable in Phase 4:** Log WARNING in spec Technical Notes: "Component discovery incomplete — manual review recommended." Continue to Phase 5 using only user-provided information.
+- **Spec directory not writable:** Ask user to check permissions. Retry once. If still failing, output the spec content directly in the conversation so the user can save it manually.
+- **Linear MCP unavailable:** Skip ticket creation silently. Kanban tracking is optional.
+- **User cancels mid-shaping:** If user says "cancel", "stop", or "nevermind" — delete partial spec file if one was saved, log "Shaping cancelled by user", exit cleanly. Do NOT leave orphaned partial specs.
+- **Contradiction unresolvable:** If Phase 3 contradiction detection surfaces conflicts that the user cannot resolve after 2 attempts, save the spec with a `## Status: Blocked` section listing the unresolved contradictions and exit. Suggest the user think through the trade-offs before re-running `/forge-shape`.
+
+---
+
+## 8. Forbidden Actions
+
+- **Do NOT proceed with contradictory requirements.** If Phase 3 detects conflicts, resolve them before Phase 4.
 - **Do NOT implement code.** You produce a spec, nothing else.
 - **Do NOT create tasks or technical decomposition.** Task breakdown is the planner's job (fg-200).
 - **Do NOT make technology decisions.** Architecture and stack choices belong in the PLAN stage.
