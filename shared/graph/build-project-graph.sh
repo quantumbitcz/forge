@@ -96,7 +96,7 @@ UNRESOLVED_LOG="${GRAPH_DIR}/.unresolved-imports.log"
 : > "$UNRESOLVED_LOG"
 
 # --- Source file extensions ---
-SOURCE_EXTS='\.kt$|\.java$|\.ts$|\.tsx$|\.js$|\.jsx$|\.py$|\.go$|\.rs$|\.rb$|\.php$|\.ex$|\.exs$|\.scala$|\.dart$|\.swift$|\.cs$|\.c$|\.cpp$|\.h$|\.hpp$'
+SOURCE_EXTS='\.kt$|\.java$|\.ts$|\.tsx$|\.js$|\.jsx$|\.py$|\.go$|\.rs$|\.rb$|\.php$|\.ex$|\.exs$|\.scala$|\.dart$|\.swift$|\.cs$|\.c$|\.cc$|\.cpp$|\.cxx$|\.h$|\.hpp$'
 
 # --- Collect all source files into an associative array for fast lookups ---
 declare -A FILE_SET=()

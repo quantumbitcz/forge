@@ -128,7 +128,7 @@ ext_to_lang() {
     *.swift)     echo "swift" ;;
     *.cs)        echo "csharp" ;;
     *.c|*.h)     echo "c" ;;
-    *.cpp|*.hpp) echo "cpp" ;;
+    *.cc|*.cpp|*.cxx|*.hpp) echo "cpp" ;;
     *)           echo "unknown" ;;
   esac
 }

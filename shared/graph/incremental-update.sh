@@ -57,7 +57,7 @@ GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 mkdir -p "$GRAPH_DIR"
 
 # --- Source file extensions (same as build-project-graph.sh) ---
-SOURCE_EXTS='\.kt$|\.java$|\.ts$|\.tsx$|\.js$|\.jsx$|\.py$|\.go$|\.rs$|\.rb$|\.php$|\.ex$|\.exs$|\.scala$|\.dart$|\.swift$|\.cs$|\.c$|\.cpp$|\.h$|\.hpp$'
+SOURCE_EXTS='\.kt$|\.java$|\.ts$|\.tsx$|\.js$|\.jsx$|\.py$|\.go$|\.rs$|\.rb$|\.php$|\.ex$|\.exs$|\.scala$|\.dart$|\.swift$|\.cs$|\.c$|\.cc$|\.cpp$|\.cxx$|\.h$|\.hpp$'
 
 # --- Check for last build SHA ---
 LAST_BUILD_FILE="${GRAPH_DIR}/.last-build-sha"
