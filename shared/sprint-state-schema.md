@@ -211,7 +211,13 @@ Features and repos with `waiting_for` set are subject to a timeout:
 
 - **Default:** 60 minutes per waiting dependency (configurable via `sprint.dependency_timeout_minutes` in `forge-config.md`).
 - **Detection:** `fg-090-sprint-orchestrator` checks waiting features every iteration. If a feature has been waiting longer than the timeout, escalate to user with options: (1) Continue waiting, (2) Skip the dependency, (3) Abort the waiting feature.
-- **Deadlock detection:** If feature A waits for B and B waits for A (direct or transitive cycle), escalate immediately without waiting for timeout.
+- **Cascading abort on skip/abort:** When a dependency is skipped or aborted, ALL features and repos with `waiting_for` pointing to that dependency (direct or transitive) must be updated:
+  1. Set their status to `failed` with reason `"dependency_skipped"` or `"dependency_aborted"`.
+  2. Clear their `waiting_for` field (dependency no longer exists to wait on).
+  3. If the affected feature has repos with worktrees, clean up the worktrees via `fg-101-worktree-manager delete`.
+  4. Log each cascading failure in sprint notes for the sprint summary.
+- **Deadlock detection:** If feature A waits for B and B waits for A (direct or transitive cycle), escalate immediately without waiting for timeout. Use topological sort on the `waiting_for` graph — if sort produces fewer nodes than input, a cycle exists.
+- **Lock ordering normalization:** When sorting by `project_id` for lock acquisition, normalize URLs first: strip protocol prefix (`git@`, `https://`), strip trailing `.git`, lowercase the result. E.g., `git@github.com:Org/Backend.git` normalizes to `github.com:org/backend`.
 
 ---
 

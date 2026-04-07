@@ -107,6 +107,7 @@ conflict_analysis:
 - Serial chains preserve dependency order — first element runs first
 - A work item appears in exactly one parallel group or one serial chain, never both
 - Work items with no conflicts appear in the first available parallel group
+- **Cycle detection (mandatory):** After constructing serial_chains, verify no transitive cycles exist (A→B→A or A→B→C→A). Use DFS/topological sort. If a cycle is detected, emit an ERROR in the warnings array with the cycle path and fall back to full serialization of all cycled items. Never produce output with circular serial_chains.
 
 ---
 

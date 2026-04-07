@@ -94,6 +94,15 @@ If `state.json.branch_name` is not set (legacy or error case), construct the bra
 
 ## 5. Stage and Commit
 
+### 5.0 Pre-Commit Validation
+
+Before staging any files, check if there are actual changes to commit:
+1. Run `git status --porcelain` in the worktree.
+2. If output is empty (zero changed files): return success to orchestrator with `pr_url: null` and `reason: "no_changes"`. Log: `"[PR-BUILDER] No file changes detected — skipping PR creation."` Do NOT create an empty commit or PR.
+3. If output contains only excluded paths (§5.1): same handling — return with `pr_url: null`.
+
+The orchestrator handles `pr_url: null` by marking the feature as complete without a PR (valid for edge cases where TDD found existing tests already pass, or where the requirement was already satisfied).
+
 ### 5.1 Exclude from Staging
 
 NEVER stage these paths:
