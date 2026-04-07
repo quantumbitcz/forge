@@ -343,6 +343,16 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 
 **On fix cycle:** Convergence engine dispatches IMPLEMENT with findings, then REVIEW again. Increment `quality_cycles` (inner cap) and `convergence.total_iterations` (outer cap). See `shared/convergence-engine.md`.
 
+**Review Agent Dispatch by Mode:**
+
+| Mode | Always Dispatched | Conditional | Skipped |
+|---|---|---|---|
+| Standard | Config-driven batches (all 11 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
+| Bugfix | `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer` | `frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
+| Bootstrap | `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
+
+Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap use hardcoded reduced batches in the orchestrator (§9.0a).
+
 ---
 
 ### Stage 7: DOCS
