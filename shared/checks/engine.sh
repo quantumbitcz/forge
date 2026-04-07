@@ -15,6 +15,24 @@ set -euo pipefail
 #   path prefix against the cache to load the correct rules-override.json
 #   for the owning component's framework.  Falls back to detect_module()
 #   for single-component projects (fully backward compatible).
+#
+# Requires bash 4.0+ for BASH_REMATCH (regex capture groups).
+# macOS ships bash 3.2 — install bash 4+ via: brew install bash
+if (( BASH_VERSINFO[0] < 4 )); then
+  echo "[check-engine] WARNING: Bash 4.0+ required. Current: ${BASH_VERSION}. Skipping checks." >&2
+  exit 0
+fi
+
+# Portable glob-match helper: returns 0 if any file matches the pattern.
+# Replaces compgen -G which is a bash builtin not available on all platforms.
+_glob_exists() {
+  local pattern="$1"
+  local f
+  for f in $pattern; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
 
 # Track current file for error reporting
 _CURRENT_FILE=""
@@ -106,12 +124,12 @@ detect_module() {
     elif [[ -f "$project_root/build.gradle.kts" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle.kts" 2>/dev/null; then module="spring"
     elif [[ -f "$project_root/build.gradle" ]] && grep -qE 'spring-boot|org\.springframework' "$project_root/build.gradle" 2>/dev/null; then module="spring"
     elif [[ -f "$project_root/angular.json" ]]; then module="angular"
-    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/next.config.* >/dev/null 2>&1; then module="nextjs"
-    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/svelte.config.* >/dev/null 2>&1; then module="sveltekit"
+    elif [[ -f "$project_root/package.json" ]] && _glob_exists "$project_root"/next.config.*; then module="nextjs"
+    elif [[ -f "$project_root/package.json" ]] && _glob_exists "$project_root"/svelte.config.*; then module="sveltekit"
     elif [[ -f "$project_root/package.json" ]] && [[ -f "$project_root/nest-cli.json" ]]; then module="nestjs"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"vue"' "$project_root/package.json" 2>/dev/null; then module="vue"
     elif [[ -f "$project_root/package.json" ]] && grep -q '"svelte"' "$project_root/package.json" 2>/dev/null; then module="svelte"
-    elif [[ -f "$project_root/package.json" ]] && compgen -G "$project_root"/vite.config.* >/dev/null 2>&1; then
+    elif [[ -f "$project_root/package.json" ]] && _glob_exists "$project_root"/vite.config.*; then
       # Vue and Svelte already handled above; remaining Vite projects default to react
       module="react"
     # Bare package.json defaults to express for linter module selection (intentional —
@@ -125,10 +143,10 @@ detect_module() {
     elif [[ -f "$project_root/manage.py" ]]; then module="django"
     elif [[ -f "$project_root/pyproject.toml" ]] && grep -q 'fastapi' "$project_root/pyproject.toml" 2>/dev/null; then module="fastapi"
     elif [[ -f "$project_root/Package.swift" ]]; then module="vapor"
-    elif compgen -G "$project_root"/*.xcodeproj >/dev/null 2>&1; then module="swiftui"
-    elif [[ -f "$project_root/Makefile" ]] && compgen -G "$project_root"/*.c >/dev/null 2>&1; then module="embedded"
-    elif compgen -G "$project_root"/*.csproj >/dev/null 2>&1; then module="aspnet"
-    elif compgen -G "$project_root"/*.yaml >/dev/null 2>&1 && grep -ql 'apiVersion:' "$project_root"/*.yaml 2>/dev/null; then module="k8s"
+    elif _glob_exists "$project_root"/*.xcodeproj; then module="swiftui"
+    elif [[ -f "$project_root/Makefile" ]] && _glob_exists "$project_root"/*.c; then module="embedded"
+    elif _glob_exists "$project_root"/*.csproj; then module="aspnet"
+    elif _glob_exists "$project_root"/*.yaml && grep -ql 'apiVersion:' "$project_root"/*.yaml 2>/dev/null; then module="k8s"
     fi
   fi
 
