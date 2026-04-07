@@ -5,6 +5,17 @@
 
 set -euo pipefail
 
+# Portable glob-match helper: returns 0 if any file matches the pattern.
+# Replaces compgen -G which is a bash builtin not available on all platforms.
+_glob_exists() {
+  local pattern="$1"
+  local f
+  for f in $pattern; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
 DIR="${1:-}"
 
 if [[ -z "$DIR" || ! -d "$DIR" ]]; then
@@ -139,7 +150,7 @@ elif ($has_gradle || $has_gradle_kts) && grep -q "android" "${DIR}/build.gradle"
   language="java"
 
 # iOS mobile
-elif $has_package_swift && compgen -G "$DIR"/*.xcodeproj >/dev/null 2>&1; then
+elif $has_package_swift && _glob_exists "$DIR"/*.xcodeproj; then
   type="mobile"
   language="swift"
   if grep -q -i "vapor" "$DIR/Package.swift" 2>/dev/null; then
@@ -148,7 +159,7 @@ elif $has_package_swift && compgen -G "$DIR"/*.xcodeproj >/dev/null 2>&1; then
   else
     framework="swiftui"
   fi
-elif compgen -G "$DIR"/*.xcodeproj >/dev/null 2>&1; then
+elif _glob_exists "$DIR"/*.xcodeproj; then
   type="mobile"
   framework="swiftui"
   language="swift"
@@ -190,7 +201,7 @@ fi
 
 # ASP.NET / .NET backend
 if [[ "$type" == "unknown" ]]; then
-  if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 || compgen -G "$DIR"/*.sln >/dev/null 2>&1; then
+  if _glob_exists "$DIR"/*.csproj || _glob_exists "$DIR"/*.sln; then
     type="backend"
     framework="aspnet"
     language="csharp"
@@ -199,7 +210,7 @@ fi
 
 # Embedded C/C++ (Makefile + C source files, no higher-level framework detected)
 if [[ "$type" == "unknown" ]]; then
-  if [[ -f "$DIR/Makefile" || -f "$DIR/CMakeLists.txt" ]] && compgen -G "$DIR"/*.c >/dev/null 2>&1; then
+  if [[ -f "$DIR/Makefile" || -f "$DIR/CMakeLists.txt" ]] && _glob_exists "$DIR"/*.c; then
     type="embedded"
     framework="embedded"
     language="c"
@@ -230,7 +241,7 @@ detected_code_quality=()
 if [[ -f "$DIR/.editorconfig" ]] && grep -q "ktlint_" "$DIR/.editorconfig" 2>/dev/null; then
   detected_code_quality+=("ktlint")
 fi
-if compgen -G "$DIR/eslint.config."* >/dev/null 2>&1 || compgen -G "$DIR/.eslintrc."* >/dev/null 2>&1 || [[ -f "$DIR/.eslintrc" ]] || \
+if _glob_exists "$DIR/eslint.config."* || _glob_exists "$DIR/.eslintrc."* || [[ -f "$DIR/.eslintrc" ]] || \
    ( [[ -f "$DIR/package.json" ]] && grep -q '"eslintConfig"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("eslint")
 fi
@@ -247,7 +258,7 @@ fi
 [[ -f "$DIR/analysis_options.yaml" ]] && detected_code_quality+=("dart-analyzer")
 [[ -f "$DIR/.scalafmt.conf" ]] && detected_code_quality+=("scalafmt")
 [[ -f "$DIR/.scalafix.conf" ]] && detected_code_quality+=("scalafix")
-if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
+if _glob_exists "$DIR"/*.csproj && grep -ql "Analyzer" "$DIR"/*.csproj 2>/dev/null; then
   detected_code_quality+=("roslyn-analyzers")
 fi
 [[ -f "$DIR/checkstyle.xml" ]] && detected_code_quality+=("checkstyle")
@@ -260,7 +271,7 @@ fi
 [[ -f "$DIR/mypy.ini" || -f "$DIR/.mypy.ini" ]] && detected_code_quality+=("mypy")
 
 # Formatting
-if compgen -G "$DIR/.prettierrc"* >/dev/null 2>&1 || [[ -f "$DIR/.prettierrc" ]] || \
+if _glob_exists "$DIR/.prettierrc"* || [[ -f "$DIR/.prettierrc" ]] || \
    ( [[ -f "$DIR/package.json" ]] && grep -q '"prettier"' "$DIR/package.json" 2>/dev/null ); then
   detected_code_quality+=("prettier")
 fi
@@ -286,7 +297,7 @@ if [[ -f "$DIR/pyproject.toml" ]] && grep -q "\[tool.coverage\]" "$DIR/pyproject
    [[ -f "$DIR/.coveragerc" ]]; then
   detected_code_quality+=("coverage-py")
 fi
-if compgen -G "$DIR"/*.csproj >/dev/null 2>&1 && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then
+if _glob_exists "$DIR"/*.csproj && grep -ql "coverlet" "$DIR"/*.csproj 2>/dev/null; then
   detected_code_quality+=("coverlet")
 fi
 

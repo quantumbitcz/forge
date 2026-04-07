@@ -24,6 +24,16 @@ source "${PLUGIN_ROOT}/shared/platform.sh"
 # Requires Bash 4.0+ (uses associative arrays)
 require_bash4 "build-project-graph.sh" || exit 1
 
+# Portable glob-match helper for consistency across scripts.
+_glob_exists() {
+  local pattern="$1"
+  local f
+  for f in $pattern; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
 if [[ -z "$FORGE_PYTHON" ]]; then
   echo "[build-project-graph] WARNING: No Python interpreter found. Graph build may produce incomplete results." >&2
 fi
@@ -204,7 +214,7 @@ detect_languages() {
   [[ -f "$PROJECT_ROOT/build.sbt" ]] && echo "scala"
   [[ -f "$PROJECT_ROOT/pubspec.yaml" ]] && echo "dart"
   [[ -f "$PROJECT_ROOT/Package.swift" ]] && echo "swift"
-  if compgen -G "$PROJECT_ROOT"/*.csproj > /dev/null 2>&1 || compgen -G "$PROJECT_ROOT"/*.sln > /dev/null 2>&1; then
+  if _glob_exists "$PROJECT_ROOT"/*.csproj || _glob_exists "$PROJECT_ROOT"/*.sln; then
     echo "csharp"
   fi
   if [[ -f "$PROJECT_ROOT/CMakeLists.txt" || -f "$PROJECT_ROOT/Makefile" ]]; then

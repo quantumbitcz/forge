@@ -6,6 +6,16 @@
 
 set -euo pipefail
 
+# Portable glob-match helper: returns 0 if any file matches the pattern.
+_glob_exists() {
+  local pattern="$1"
+  local f
+  for f in $pattern; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
 STAGE="${1:-}"
 PROJECT_ROOT="${2:-$(pwd)}"
 
@@ -50,13 +60,13 @@ detect_build_tool() {
     if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
       missing+=("python3 or python")
     fi
-  elif [[ -f "Makefile" ]] && compgen -G "./*.c" >/dev/null 2>&1; then
+  elif [[ -f "Makefile" ]] && _glob_exists "./*.c"; then
     # C project with Makefile
     check_cmd "make"
     check_cmd "cc"
   elif [[ -f "CMakeLists.txt" ]]; then
     check_cmd "cmake"
-  elif compgen -G "./*.csproj" >/dev/null 2>&1 || compgen -G "./*.sln" >/dev/null 2>&1; then
+  elif _glob_exists "./*.csproj" || _glob_exists "./*.sln"; then
     check_cmd "dotnet"
   elif [[ -f "Gemfile" ]]; then
     check_cmd "bundle"

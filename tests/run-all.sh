@@ -16,11 +16,11 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; BOLD='\033[1m'; NC='\033[0m'
 
 run_tier() {
   local name="$1"; shift
-  echo -e "\n${BOLD}=== $name ===${NC}"
+  printf '\n%b=== %s ===%b\n' "$BOLD" "$name" "$NC"
   if "$@"; then
-    echo -e "${GREEN}$name: PASSED${NC}"
+    printf '%b%s: PASSED%b\n' "$GREEN" "$name" "$NC"
   else
-    echo -e "${RED}$name: FAILED${NC}"
+    printf '%b%s: FAILED%b\n' "$RED" "$name" "$NC"
     exit 1
   fi
 }
@@ -31,7 +31,7 @@ case "$TIER" in
     run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
-    echo -e "\n${GREEN}${BOLD}All tiers passed.${NC}"
+    printf '\n%b%bAll tiers passed.%b\n' "$GREEN" "$BOLD" "$NC"
     ;;
   structural) run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh" ;;
   unit)       run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats ;;
