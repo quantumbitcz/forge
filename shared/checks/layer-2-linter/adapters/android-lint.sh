@@ -47,6 +47,7 @@ fi
 
 # --- parse findings ---
 _PY=python3; command -v python3 &>/dev/null || _PY=python
+if ! command -v "$_PY" &>/dev/null; then exit 0; fi
 "$_PY" -c "
 import json, re, sys, os
 from xml.etree import ElementTree as ET
@@ -110,6 +111,7 @@ with open(detekt_raw) as f:
         if not m:
             continue
         filepath, lineno, message, rule_id = m.group(1), m.group(2), m.group(3), m.group(4)
+        message  = message.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
         severity = map_detekt_severity(rule_id)
         hint     = f'detekt rule {rule_id}'
         print(f'{filepath}:{lineno} | QUAL-DETEKT | {severity} | {message} | {hint}')
