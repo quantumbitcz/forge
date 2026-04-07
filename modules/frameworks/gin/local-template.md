@@ -50,8 +50,7 @@ quality_gate:
     - agent: backend-performance-reviewer
       focus: "connection pooling, context timeouts, N+1 queries, goroutine leaks"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

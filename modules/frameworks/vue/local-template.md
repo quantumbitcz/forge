@@ -48,8 +48,7 @@ quality_gate:
       focus: "Server route input validation, runtimeConfig secrets, v-html usage, auth middleware"
     - agent: frontend-performance-reviewer
       focus: "useLazyFetch for non-critical data, NuxtImg, shallowRef for large data, bundle size"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

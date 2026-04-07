@@ -118,10 +118,10 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `SEC-*` | Security concern (auth, injection, exposure) |
 | `PERF-*` | Backend performance issue (N+1, O(n^2), blocking I/O, unnecessary allocation) |
 | `FE-PERF-*` | Frontend performance issue (re-renders, bundle size, DOM efficiency, assets) |
-| `TEST-*` | Test quality (missing coverage, testing framework behavior) |
+| `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `code-quality-reviewer`. |
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
-| `QUAL-*` | Code quality (complexity, duplication, dead code) |
+| `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `code-quality-reviewer`. |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 

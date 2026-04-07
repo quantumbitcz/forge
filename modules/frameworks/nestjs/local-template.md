@@ -55,8 +55,7 @@ quality_gate:
     - agent: backend-performance-reviewer
       focus: "N+1 queries, blocking I/O, missing indexes, algorithm complexity"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability, NestJS idioms"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

@@ -46,8 +46,7 @@ quality_gate:
       focus: "auth, input validation, secrets exposure"
     - agent: backend-performance-reviewer
       focus: "EventLoop blocking, Fluent eager loading, resource management"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, repository pattern adherence"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"

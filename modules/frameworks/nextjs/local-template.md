@@ -50,8 +50,7 @@ quality_gate:
       focus: "Server Action input validation, NEXT_PUBLIC_ secrets, CSRF, XSS"
     - agent: frontend-performance-reviewer
       focus: "Client Component boundaries, bundle size, image optimization, streaming"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

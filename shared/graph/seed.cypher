@@ -1869,6 +1869,7 @@ MATCH (f:Framework {name: 'vue'}), (t:TestingFramework {name: 'vitest'}) CREATE 
 // --- Agents ---
 CREATE (:Agent:Reviewer {name: 'architecture-reviewer', role: 'reviewer', file_path: 'agents/architecture-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'backend-performance-reviewer', role: 'reviewer', file_path: 'agents/backend-performance-reviewer.md'});
+CREATE (:Agent:Reviewer {name: 'code-quality-reviewer', role: 'reviewer', file_path: 'agents/code-quality-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'docs-consistency-reviewer', role: 'reviewer', file_path: 'agents/docs-consistency-reviewer.md'});
 CREATE (:Agent {name: 'fg-010-shaper', role: 'other', file_path: 'agents/fg-010-shaper.md'});
 CREATE (:Agent {name: 'fg-015-scope-decomposer', role: 'other', file_path: 'agents/fg-015-scope-decomposer.md'});
@@ -1951,6 +1952,8 @@ MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent
 MATCH (a:Agent {name: 'architecture-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'backend-performance-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'backend-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'code-quality-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'code-quality-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'docs-consistency-reviewer'}), (c:SharedContract {name: 'scoring'}) CREATE (a)-[:READS]->(c);

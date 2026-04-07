@@ -41,8 +41,7 @@ quality_gate:
       focus: "buffer overflows, format strings, integer overflows, use-after-free"
     - agent: backend-performance-reviewer
       focus: "ISR allocation, cache-friendly access, busy-wait loops, volatile usage"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, memory safety, const correctness"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"

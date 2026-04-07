@@ -44,8 +44,7 @@ quality_gate:
       focus: "XSS, injection, secrets exposure, prototype pollution, DomSanitizer bypass"
     - agent: frontend-performance-reviewer
       focus: "OnPush violations, change detection, bundle size, code splitting, @defer usage"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

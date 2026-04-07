@@ -51,8 +51,7 @@ quality_gate:
     - agent: backend-performance-reviewer
       focus: "N+1 queries, sync-over-async, missing AsNoTracking, EF Core efficiency"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

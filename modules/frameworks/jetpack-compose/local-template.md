@@ -52,8 +52,7 @@ quality_gate:
     - agent: frontend-reviewer
       focus: "Compose best practices, recomposition efficiency, accessibility"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

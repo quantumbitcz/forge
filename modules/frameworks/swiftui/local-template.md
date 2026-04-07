@@ -42,8 +42,7 @@ quality_gate:
       focus: "MVVM adherence, layer boundaries, dependency direction"
     - agent: security-reviewer
       focus: "Keychain usage, App Transport Security, certificate pinning"
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, MVVM adherence, view complexity"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"

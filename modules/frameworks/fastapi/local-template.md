@@ -50,8 +50,7 @@ quality_gate:
     - agent: backend-performance-reviewer
       focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

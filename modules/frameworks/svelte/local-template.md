@@ -47,8 +47,7 @@ quality_gate:
     - agent: security-reviewer
       focus: "XSS via {@html}, token storage, secrets in VITE_* env vars"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: frontend-design-reviewer
       focus: "CSS custom property tokens, spatial hierarchy, responsive, dark mode, visual coherence"

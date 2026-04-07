@@ -48,8 +48,7 @@ quality_gate:
     - agent: security-reviewer
       focus: "server-side auth, input validation, data exposure"
   batch_2:
-    - agent: "Code Reviewer"
-      source: builtin
+    - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: frontend-design-reviewer
       focus: "design tokens, spatial hierarchy, responsive, dark mode, visual coherence"

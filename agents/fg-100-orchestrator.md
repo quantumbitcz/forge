@@ -655,7 +655,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
    - **Stage 3 (VALIDATE):** Use bootstrap-scoped perspectives only: build compiles, tests pass, Docker config valid, architecture matches pattern. Skip: conventions check, approach quality, documentation consistency. Challenge Brief NOT required.
    - **Stage 4 (IMPLEMENT):** **Skip entirely** — the bootstrapper already created all files. Transition directly from VALIDATE (GO) to VERIFY.
    - **Stage 5 (VERIFY):** Runs normally — build + lint + tests must pass.
-   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `architecture-reviewer` + `security-reviewer` only. Quality target is `pass_threshold` (not 100).
+   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `architecture-reviewer` + `security-reviewer` + `code-quality-reviewer`. Quality target is `pass_threshold` (not 100).
 
 **If `mode == "standard"` (default):**
 Proceed with the standard `fg-200-planner` dispatch below.
@@ -1104,7 +1104,7 @@ Before dispatching `fg-400-quality-gate`:
 
 If `mode == "bugfix"`:
 Reduced review batch (overrides config-driven batches):
-- Always dispatch: `architecture-reviewer`, `security-reviewer`
+- Always dispatch: `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`
 - If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `frontend-reviewer`
 - Skip by default: `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`
 
