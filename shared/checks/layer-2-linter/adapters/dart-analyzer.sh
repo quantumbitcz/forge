@@ -74,7 +74,7 @@ for diag in data.get('diagnostics', []):
     filepath = diag.get('location', {}).get('file', '?')
     row = diag.get('location', {}).get('range', {}).get('start', {}).get('line', 0)
     code = diag.get('code', '')
-    message = diag.get('problemMessage', '').replace('|', '\\\\|')
+    message = diag.get('problemMessage', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
     dart_sev = diag.get('severity', 'INFO')
     severity = lookup_severity(code, dart_sev)
     category = map_category(code)

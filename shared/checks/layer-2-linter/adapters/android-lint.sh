@@ -90,7 +90,7 @@ if lint_report and os.path.isfile(lint_report):
         for issue in root.findall('.//issue'):
             issue_id  = issue.get('id', 'unknown')
             lint_sev  = issue.get('severity', 'Warning')
-            summary   = issue.get('summary', '').replace('|', '\\\\|')
+            summary   = issue.get('summary', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
             category  = issue.get('category', 'Correctness')
             for loc in issue.findall('location'):
                 filepath = loc.get('file', '?')

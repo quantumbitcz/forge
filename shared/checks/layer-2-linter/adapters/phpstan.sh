@@ -61,7 +61,7 @@ with open(raw_path) as f:
 for filepath, errors in data.get('files', {}).items():
     for err in errors.get('messages', []):
         row = err.get('line', 0)
-        message = err.get('message', '').replace('|', '\\\\|')
+        message = err.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
         identifier = err.get('identifier', '')
         severity = lookup_severity(identifier)
         category = 'PHP-LINT-PHPSTAN'

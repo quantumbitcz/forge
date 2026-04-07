@@ -88,7 +88,7 @@ with open(raw_path) as f:
 for item in findings:
     line = item.get('line', 0)
     code = item.get('code', '')
-    message = item.get('message', '').replace('|', '\\\\|')
+    message = item.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
     level = item.get('level', 'warning')
     severity = lookup_severity(level, code)
     category = map_category(code)

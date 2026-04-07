@@ -84,7 +84,7 @@ for item in findings:
     loc = item.get('location', {})
     row = loc.get('row', 0)
     code = item.get('code', '')
-    message = item.get('message', '').replace('|', '\\\\|')
+    message = item.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
     severity = lookup_severity(code)
     category = map_category(code)
     hint = f'ruff rule {code}' if code else 'ruff check'

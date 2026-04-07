@@ -90,7 +90,7 @@ for entry in results:
         rule_id = msg.get('ruleId', '')
         eslint_sev = msg.get('severity', 1)
         # Escape pipe characters per output-format.md (use \\| not replacement)
-        message = msg.get('message', '').replace('|', '\\\\|')
+        message = msg.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
         severity = lookup_severity(rule_id, eslint_sev)
         category = map_category(rule_id)
         hint = f'eslint rule {rule_id}' if rule_id else 'eslint parse error'

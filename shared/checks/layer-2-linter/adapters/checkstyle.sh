@@ -50,13 +50,13 @@ with open(sys.argv[2]) as f:
         m = pat_plain.match(line)
         if m:
             cs_sev, fp, ln, msg = m.groups()
-            msg = msg.replace('|', '\\\\|')
+            msg = msg.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
             print(f'{fp}:{ln} | {map_cat(msg)} | {lookup_sev(cs_sev)} | {msg} | checkstyle')
             continue
         m = pat_alt.match(line)
         if m:
             fp, ln, msg = m.groups()
-            msg = msg.replace('|', '\\\\|')
+            msg = msg.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
             print(f'{fp}:{ln} | {map_cat(msg)} | INFO | {msg} | checkstyle')
 " "$SEVERITY_MAP" "$RAW"
 exit 0

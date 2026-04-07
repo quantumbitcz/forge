@@ -77,7 +77,7 @@ for issue in data.get('issues', []):
     filepath = issue.get('filename', '?')
     row = issue.get('line_no', 0)
     check = issue.get('check', '')
-    message = issue.get('message', '').replace('|', '\\\\|')
+    message = issue.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
     priority = issue.get('priority', 0)
     severity = lookup_severity(check)
     category = map_category(check, priority)

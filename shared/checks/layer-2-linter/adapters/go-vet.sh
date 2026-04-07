@@ -55,13 +55,13 @@ with open(sys.argv[2]) as f:
         m = pat_sc.match(line)
         if m:
             fp, ln, msg, code = m.groups()
-            msg = msg.replace('|', '\\\\|')
+            msg = msg.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
             print(f'{fp}:{ln} | {map_cat(code)} | {lookup_sev(code)} | {msg} | staticcheck {code}')
             continue
         m = pat_vet.match(line)
         if m:
             fp, ln, msg = m.groups()
-            msg = msg.replace('|', '\\\\|')
+            msg = msg.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
             print(f'{fp}:{ln} | GO-LINT-VET | WARNING | {msg} | go vet')
 " "$SEVERITY_MAP" "$RAW"
 exit 0

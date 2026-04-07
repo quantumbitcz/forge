@@ -82,7 +82,7 @@ for file_entry in data.get('files', []):
         loc = offense.get('location', {})
         row = loc.get('start_line', 0)
         cop = offense.get('cop_name', '')
-        message = offense.get('message', '').replace('|', '\\\\|')
+        message = offense.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
         severity = lookup_severity(cop)
         category = map_category(cop)
         hint = f'rubocop cop {cop}' if cop else 'rubocop'

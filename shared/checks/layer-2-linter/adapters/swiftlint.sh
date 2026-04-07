@@ -67,7 +67,7 @@ for item in findings:
     rule_id = item.get('rule_id', '')
     swift_sev = item.get('severity', 'warning').lower()
 
-    reason = reason.replace('|', '\\\\|')
+    reason = reason.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
     severity = lookup_severity(swift_sev, rule_id)
     category = map_category(rule_id)
     print(f'{fp}:{ln} | {category} | {severity} | {reason} | swiftlint [{rule_id}]')
