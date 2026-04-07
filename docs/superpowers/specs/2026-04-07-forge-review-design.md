@@ -2,19 +2,20 @@
 
 ## Problem Statement
 
-Iterative development workflows (Ralph Loop, manual fix cycles, `/deep-health`) need a way to verify code quality using forge's own review agents without running the full 10-stage pipeline. Currently, users must either use the external `/requesting-code-review` (single general-purpose agent, no scoring) or manually dispatch forge agents. Neither is practical for repeated use in loops.
+Iterative development workflows (Ralph Loop, manual fix cycles, `/deep-health`) need a way to verify and fix code quality issues using forge's own review agents without running the full 10-stage pipeline. Currently, users must either use the external `/requesting-code-review` (single general-purpose agent, no scoring, no fixes) or manually dispatch forge agents. Neither is practical for repeated use in loops.
 
 ## Solution
 
-A standalone `/forge-review` skill that dispatches forge review agents against changed files and returns a scored verdict. Two modes: **quick** (core 3 agents, for mid-iteration checks) and **full** (all applicable agents, for final reviews).
+A standalone `/forge-review` skill that dispatches forge review agents against changed files, fixes all findings, re-verifies, and loops until clean (score 100) or max iterations reached. Two modes: **quick** (core 3 agents, for mid-iteration checks) and **full** (all applicable agents, for final reviews).
 
 ## Interface
 
 ```
-/forge-review                          # Quick review of changes since last commit
-/forge-review --full                   # Full review with all applicable agents
+/forge-review                          # Quick review+fix of changes since last commit
+/forge-review --full                   # Full review+fix with all applicable agents
 /forge-review --range abc123..def456   # Custom commit range
 /forge-review --files "src/**/*.kt"    # Specific files only
+/forge-review --max-iterations 5       # Override inner loop cap (default: 3)
 ```
 
 Flags are combinable: `/forge-review --full --range abc123..HEAD`
@@ -30,7 +31,7 @@ Compute the file list:
 
 Filter to source files only (same extensions as `/codebase-health`).
 
-If zero files match: report "No changed files to review." and exit with PASS.
+If zero files match: report "No changed files to review." and exit with PERFECT.
 
 ### 2. Select Agents
 
@@ -52,81 +53,112 @@ If zero files match: report "No changed files to review." and exit with PASS.
 | `forge:version-compat-reviewer` | Dependency files (`package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj`) |
 | `forge:infra-deploy-reviewer` | `Dockerfile`, `*.yaml`/`*.yml` with k8s markers, Helm charts |
 
-### 3. Dispatch Agents
+### 3. Review-Fix-Verify Loop
 
-Dispatch selected agents **in parallel** (max 3 concurrent to manage context). Each agent receives:
-- Changed file list with full paths
-- Conventions file path (from `.claude/forge.local.md` if present, otherwise omit)
-- Review focus: "Review these changes. Report ALL findings with severity (CRITICAL/WARNING/INFO) and category."
+```
+ITERATION = 0
+MAX_ITERATIONS = 3 (or --max-iterations value)
 
-### 4. Collect & Score
+LOOP:
+  ITERATION += 1
 
-Compile all findings from all agents. Deduplicate by `(file, line, category)` — keep highest severity on collision.
+  Step A — DISPATCH review agents (parallel, max 3 concurrent)
+    Each agent receives: file list, conventions path, "Report ALL findings"
 
-Score using the forge formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`
+  Step B — COLLECT & SCORE
+    Deduplicate findings by (file, line, category) — keep highest severity
+    Score: max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)
 
-### 5. Report Verdict
+  Step C — CHECK VERDICT
+    If score == 100: BREAK → report PERFECT
+    If ITERATION >= MAX_ITERATIONS: BREAK → report final verdict
+
+  Step D — FIX all findings (highest severity first)
+    For each finding:
+      1. Read the affected file and surrounding context
+      2. Challenge: is there a better solution than the obvious fix?
+      3. Fix following existing project conventions
+      4. If fix changes behavior, update affected documentation
+    After all fixes: run build/test/lint if available. If tests fail, fix regressions before continuing.
+
+  Step E — UPDATE scope
+    Narrow file list to files touched by fixes: git diff --name-only
+    GOTO LOOP
+```
+
+**Key rules:**
+- Fix ALL severities (CRITICAL, WARNING, INFO). The target is 100, not just "no criticals."
+- Each loop iteration narrows scope to only files changed by fixes (prevents re-scanning everything).
+- Build/test/lint runs after fixes to catch regressions before re-verification.
+- The inner loop hard cap (default 3) prevents oscillation. If findings persist after 3 rounds, report them as unfixable.
+
+### 4. Report Verdict
 
 | Score | Condition | Verdict |
 |---|---|---|
 | 100 | Perfect | **PERFECT** — no findings, ready to ship |
-| >= 80 AND 0 CRITICALs | Acceptable but imperfect | **PASS** — list remaining findings to fix toward 100 |
-| 60-79 AND 0 CRITICALs | Minor issues | **CONCERNS** — fix before proceeding |
-| < 60 OR any CRITICAL | Blocking issues | **FAIL** — must fix before proceeding |
+| >= 80, 0 CRITICALs | Acceptable but imperfect | **PASS** — remaining findings listed |
+| 60-79, 0 CRITICALs | Minor issues | **CONCERNS** — could not reach 100 |
+| < 60 or any CRITICAL | Blocking issues | **FAIL** — critical issues remain |
 
-**Target is always 100.** PASS (>=80) means the code won't break, but findings still exist. The review should always list ALL remaining findings so the caller can fix toward a perfect score. Only PERFECT (100) means "nothing left to improve."
+**Target is always 100.** Only PERFECT means "nothing left to improve."
 
 Output format:
 ```
 ## Forge Review -- {PERFECT|PASS|CONCERNS|FAIL} (Score: {N}/100)
 
 **Mode:** {quick|full} | **Files reviewed:** {count} | **Agents dispatched:** {count}
-**Target:** 100 | **Remaining:** {total_count} findings to fix
+**Iterations:** {N}/{max} | **Findings fixed:** {fixed_count} | **Remaining:** {remaining_count}
 
-### Findings ({total_count})
+### Fixed ({fixed_count})
+- `file:line` | CATEGORY | SEVERITY | what was fixed
 
-**Critical ({count}):**
-- `file:line` | CATEGORY | message
-
-**Warning ({count}):**
-- `file:line` | CATEGORY | message
-
-**Info ({count}):**
-- `file:line` | CATEGORY | message
+### Remaining ({remaining_count})  [omitted if PERFECT]
+- `file:line` | CATEGORY | SEVERITY | message | reason unfixable
 
 ### Verdict
-{PERFECT: Clean — no findings. | PASS: Acceptable but {N} findings remain — fix to reach 100. | CONCERNS/FAIL: Fix required before proceeding.}
+{Contextual summary}
 ```
 
-If zero findings: "PERFECT -- Score: 100/100. No findings."
+If PERFECT on first pass: "PERFECT -- Score: 100/100. No findings on first review."
 
-## What It Does NOT Do
+## Relationship to Other Skills
 
-- Does NOT fix code (review only -- the caller decides what to do)
-- Does NOT run the check engine Layer 1/Layer 2 (that's `/codebase-health`)
-- Does NOT create PRs, tickets, branches, or state files
-- Does NOT modify any files in the project
-- Does NOT write to `.forge/` state
+| Skill | Purpose | Fixes? | Agents? | Use when |
+|---|---|---|---|---|
+| `/forge-review` | Review + fix changed files | Yes | 3 or 11 | After any code changes, in iterative loops |
+| `/deep-health` | Deep investigation + fix entire codebase | Yes | 11 | Full audit, finding issues you don't know about |
+| `/codebase-health` | Check engine scan (Layer 1+2) | No | 0 | Quick convention/pattern violation scan |
+| `/verify` | Build + lint + test | No | 0 | Verify code compiles and tests pass |
+
+**Key distinction:** `/forge-review` reviews changes you just made. `/deep-health` investigates the whole codebase for issues you don't know about. `/forge-review` is the verification step; `/deep-health` is the investigation step.
 
 ## Integration Points
 
 - **Ralph Loop:** `/forge-review` at each iteration (quick), `/forge-review --full` at final iteration
-- **Manual workflow:** Run before committing or creating PRs
-- **`/deep-health`:** Could delegate its verification step to `/forge-review --full` (future refactor)
+- **Manual workflow:** Run after any code changes, before committing
+- **`/deep-health`:** Could delegate its verification step (Step 6) to `/forge-review --full` (future refactor)
 - **Pipeline complement:** Lighter than Stage 6 (REVIEW), usable outside the full pipeline
+
+## Error Handling
+
+- **Agent dispatch failure:** Skip failed agent, continue with remaining. Log WARNING. If all agents fail, report ERROR and exit.
+- **Fix introduces regression (tests fail):** Revert the fix, mark finding as "unfixable: fix caused regression", continue with next finding.
+- **No conventions file:** Agents run without conventions context. Log INFO.
+- **Build/test command unknown:** Skip the build/test step. Log WARNING: "No build/test command detected — fixes not verified against test suite."
 
 ## Implementation Notes
 
 - Skill file: `skills/forge-review/SKILL.md`
-- No shell scripts needed -- agent dispatch is handled by the Claude runtime via the Agent tool
+- No shell scripts needed — agent dispatch and fixes handled by Claude runtime via Agent and Edit/Write tools
 - Add to CLAUDE.md skills list (22 skills after addition)
-- Add to `.claude-plugin/plugin.json` keywords if needed
 - Add to README skills directory listing
 - Regenerate `seed.cypher` after adding the skill directory
 
 ## Out of Scope
 
-- Auto-fix mode (that's `/deep-health`)
-- Check engine integration (that's `/codebase-health`)
-- CI/CD integration (future -- would need a shell wrapper)
-- Custom reviewer selection (e.g., "only run security") -- use `--full` or default
+- Deep codebase investigation (that's `/deep-health`)
+- Check engine Layer 1/Layer 2 scanning (that's `/codebase-health`)
+- CI/CD integration (future — would need a shell wrapper)
+- Custom reviewer selection (e.g., "only run security") — use `--full` or default
+- Writing to `.forge/` state or creating tickets/PRs
