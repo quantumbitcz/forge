@@ -1,6 +1,6 @@
 ---
 name: forge-run
-description: Universal pipeline entry point. Auto-classifies intent (feature, bugfix, migration, bootstrap, multi-feature) and routes to the correct pipeline mode. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel.
+description: Universal pipeline entry point. Auto-classifies intent (feature, bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance) and routes to the correct pipeline mode. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel.
 ---
 
 # /forge-run — Universal Pipeline Entry Point
@@ -58,8 +58,12 @@ You are the universal entry point for the forge pipeline. Your job is to classif
    3. Migration signals (upgrade X to Y, replace X with Y, migrate) → `Mode: migration`
    4. Bootstrap signals (scaffold, create new, start from scratch, empty project) → `Mode: bootstrap`
    5. Multi-feature signals (3+ distinct domain nouns, enumerated capabilities) → `Mode: multi-feature`
-   6. Vague signals (very short/long input, no ACs, exploratory language, OR feature completeness check: under 50 words missing 3+ of: actors, entities, surface, criteria) → `Mode: vague`
-   7. Default → `Mode: standard`
+   6. Testing signals (add tests, test coverage, e2e tests, unit tests) → `Mode: testing`
+   7. Documentation signals (document, write docs, generate API docs, ADR) → `Mode: documentation`
+   8. Refactor signals (refactor, extract, consolidate, reduce duplication) → `Mode: refactor`
+   9. Performance signals (optimize, performance, slow, latency, bundle size) → `Mode: performance`
+   10. Vague signals (very short/long input, no ACs, exploratory language, OR feature completeness check: under 50 words missing 3+ of: actors, entities, surface, criteria) → `Mode: vague`
+   11. Default → `Mode: standard`
 
    **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.
 
@@ -104,6 +108,10 @@ You are the universal entry point for the forge pipeline. Your job is to classif
    | `bugfix` | `fg-100-orchestrator` with `Mode: bugfix` |
    | `migration` | `fg-100-orchestrator` with `Mode: migration` |
    | `bootstrap` | `fg-100-orchestrator` with `Mode: bootstrap` |
+   | `testing` | `fg-100-orchestrator` with `Mode: testing` (implementer focuses on test files; reduced reviewer set) |
+   | `documentation` | `fg-350-docs-generator` standalone mode (skip pipeline stages 4-6) |
+   | `refactor` | `fg-100-orchestrator` with `Mode: refactor` (planner uses refactor constraints: same behavior, no new features) |
+   | `performance` | `fg-100-orchestrator` with `Mode: performance` (EXPLORE includes profiling; performance-focused reviewers) |
    | `standard` (default) | `fg-100-orchestrator` |
 
    **For multi-feature mode**, dispatch `fg-015-scope-decomposer`:
@@ -121,7 +129,13 @@ You are the universal entry point for the forge pipeline. Your job is to classif
    >
    > When the shaper returns a spec path, re-dispatch as: `/forge-run --spec {spec_path}`
 
-   **For all other modes** (bugfix, migration, bootstrap, standard), dispatch `fg-100-orchestrator`:
+   **For documentation mode**, dispatch `fg-350-docs-generator` directly (standalone mode):
+   > Generate documentation for: `{user_input}`
+   >
+   > Mode: standalone (no pipeline — skip stages 4-6)
+   > Available MCPs: `{detected_mcps}`
+
+   **For all other modes** (bugfix, migration, bootstrap, testing, refactor, performance, standard), dispatch `fg-100-orchestrator`:
    > Execute the full development pipeline for: `{user_input}`
    >
    > Mode: `{classified_mode}`

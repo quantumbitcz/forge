@@ -128,8 +128,8 @@ require_bash4() {
 # Replaces compgen -G (a bash builtin not available on all platforms).
 #
 # Scripts that source platform.sh should use this. Performance-critical paths
-# (engine.sh, detect-project-type.sh) keep an inline copy to avoid the overhead
-# of sourcing platform.sh on every invocation.
+# (engine.sh) keep an inline copy to avoid the overhead of sourcing platform.sh
+# on every PostToolUse hook invocation.
 #
 # Usage: _glob_exists "/path/to/dir"/*.ext
 

@@ -140,7 +140,12 @@ Before reading config, detect the requirement mode from the user's input:
 
 If the orchestrator is dispatched with `Mode: bugfix` in the prompt (from `/forge-fix`), set mode to `bugfix` directly without prefix detection.
 
-Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, or `"bugfix"`).
+Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, `"bugfix"`, `"testing"`, `"refactor"`, or `"performance"`).
+
+**Specialized mode behaviors:**
+- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `code-quality-reviewer` + `architecture-reviewer`. Target score is `pass_threshold`, not 100.
+- `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `architecture-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `backend-performance-reviewer` and/or `frontend-performance-reviewer` as mandatory. Target score is `shipping.min_score`.
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 
