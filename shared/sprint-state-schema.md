@@ -94,8 +94,9 @@ Root sprint state file. Created when a sprint run begins, updated as features pr
 | `features[].name` | string | — | Human-readable feature name |
 | `features[].status` | string | `gathering \| analyzing \| approved \| executing \| merging \| complete \| failed` | Per-feature lifecycle state |
 | `features[].waiting_for` | string\|null | feature id or null | Feature this one is blocked on (serial chain dependency) |
-| `features[].reason` | string\|null | null | Reason for failure when status is `failed`. Known values: `"skipped_by_user"` (serial chain skip), `"chain_aborted"` (serial chain abort), `"cross_repo_setup_failure"` (worktree creation failed), `"stale_timeout"` (stale state detection), `"dependency_skipped"` (cascading from skipped dependency), `"dependency_aborted"` (cascading from aborted dependency). Null when not failed. |
+| `features[].reason` | string\|null | string or null | Reason for failure when status is `failed`. Known values: `"skipped_by_user"` (serial chain skip), `"chain_aborted"` (serial chain abort), `"cross_repo_setup_failure"` (worktree creation failed), `"stale_timeout"` (stale state detection), `"dependency_skipped"` (cascading from skipped dependency), `"dependency_aborted"` (cascading from aborted dependency). Null when not failed. |
 | `features[].repos[].project_id` | string | git remote URL | Unique project identifier for this repo |
+| `features[].repos[].base_commit` | string\|null | git SHA or null | Per-repo base commit pinned at GATHER time. Used for cross-repo projects where each repo has a different HEAD. Null for single-repo features (use top-level `base_commit`). |
 | `features[].repos[].status` | string | `waiting \| planning \| implementing \| verifying \| reviewing \| shipping \| complete \| failed` | Per-repo per-feature pipeline state |
 | `features[].repos[].waiting_for` | string\|null | project_id or null | Repo this one is waiting on (e.g., FE waits for BE contract) |
 | `features[].repos[].run_dir` | string | absolute path | Directory holding per-run forge state (state.json, checkpoints, stage notes) |
