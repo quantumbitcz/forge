@@ -54,7 +54,7 @@ def lookup_severity(level):
     return 'INFO'
 
 # parsable format: file:line:col: [level] message (rule)
-pattern = re.compile(r'^(.+?):(\d+):\d+: \[(\w+)\] (.+?)(?:\s+\((\S+)\))?\$')
+pattern = re.compile(r'^(.+?):(\d+):\d+: \[(\w+)\] (.+?)(?:\s+\((\S+)\))?$')
 
 with open(raw_path) as f:
     for line in f:
@@ -67,7 +67,7 @@ with open(raw_path) as f:
         filepath, lineno, level, message, rule = m.groups()
         rule = rule or 'general'
         severity = lookup_severity(level)
-        safe_msg = message.replace('|', '\\\\|')
+        safe_msg = message.replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
         hint = f'yamllint rule: {rule}'
         print(f'{filepath}:{lineno} | YML-LINT | {severity} | {safe_msg} | {hint}')
 " "$SEVERITY_MAP" "$RAW"
