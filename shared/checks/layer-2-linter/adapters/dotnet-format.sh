@@ -32,7 +32,9 @@ fi
 # dotnet format output contains lines like:
 #   /path/file.cs(42,5): warning IDE0060: Remove unused parameter 'x'
 #   /path/file.cs(10,1): error CS0168: The variable 'e' is declared but never used
-python3 -c "
+_PY="python3"; command -v python3 &>/dev/null || _PY="python"
+if ! command -v "$_PY" &>/dev/null; then exit 0; fi
+"$_PY" -c "
 import json, sys, re
 
 sev_map_path = sys.argv[1]

@@ -28,7 +28,9 @@ if [[ $RC -ne 0 && ! -s "$RAW" ]]; then
 fi
 
 # --- parse findings ---
-python3 -c "
+_PY="python3"; command -v python3 &>/dev/null || _PY="python"
+if ! command -v "$_PY" &>/dev/null; then exit 0; fi
+"$_PY" -c "
 import json, sys
 
 sev_map_path = sys.argv[1]

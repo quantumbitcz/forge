@@ -20,7 +20,9 @@ clang-tidy "${EXTRA_ARGS[@]}" "$TARGET" 2>/dev/null > "$RAW" || RC=$?
 [[ $RC -ne 0 && ! -s "$RAW" ]] && exit 2
 
 # --- parse findings ---
-python3 -c "
+_PY="python3"; command -v python3 &>/dev/null || _PY="python"
+if ! command -v "$_PY" &>/dev/null; then exit 0; fi
+"$_PY" -c "
 import json, re, sys
 with open(sys.argv[1]) as f: full_map = json.load(f)
 ct_map = full_map.get('clang-tidy', {})

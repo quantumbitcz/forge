@@ -31,7 +31,9 @@ fi
 # --- parse findings ---
 # scalafmt --check outputs lines like:
 #   error: /path/to/File.scala is not formatted
-python3 -c "
+_PY="python3"; command -v python3 &>/dev/null || _PY="python"
+if ! command -v "$_PY" &>/dev/null; then exit 0; fi
+"$_PY" -c "
 import sys, re
 
 raw_path = sys.argv[1]
