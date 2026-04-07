@@ -55,7 +55,7 @@ Do not assume any implicit scope beyond what is stated. Do not invent requiremen
 
 **Plan Mode:** Call `EnterPlanMode` at the start of shaping. This enters the Claude Code plan mode UI, signaling to the user that you are designing — not implementing. After the user approves the spec (Phase 7), call `ExitPlanMode` to transition to integration (tracking ticket, Linear).
 
-Work through seven sequential phases. Ask questions one at a time. Prefer multiple-choice when options are well-defined. Never ask more than 7–9 questions in total across all phases — be efficient.
+Work through nine sequential phases (Phases 0.5 and 3.5 are conditional sub-phases). Ask questions one at a time. Prefer multiple-choice when options are well-defined. Never ask more than 7–9 questions in total across all phases — be efficient.
 
 ### Phase 0.5 — Offer Visual Companion (conditional)
 
