@@ -124,32 +124,35 @@ next_id() {
     return 1
   fi
 
-  # Parse with python (via FORGE_PYTHON from platform.sh)
-  local prefix next
-  prefix="$("$FORGE_PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['prefix'])" "$counter_file")"
-  next="$("$FORGE_PYTHON" -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['next'])" "$counter_file")"
+  # Atomic read-increment-write in a single Python invocation to prevent
+  # TOCTOU race when concurrent pipeline runs call next_id() simultaneously.
+  # Uses fcntl.flock for file-level locking (available on Linux and macOS).
+  local ticket_id
+  ticket_id="$("$FORGE_PYTHON" -c "
+import json, sys, fcntl, os
 
-  # Format: zero-pad to 3 digits for 1-999, no padding for 1000+
-  local formatted_num
-  if (( next < 1000 )); then
-    formatted_num="$(printf '%03d' "$next")"
-  else
-    formatted_num="$next"
-  fi
-
-  local ticket_id="${prefix}-${formatted_num}"
-
-  # Increment counter atomically (write new JSON)
-  local new_next=$(( next + 1 ))
-  "$FORGE_PYTHON" -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    d = json.load(f)
-d['next'] = int(sys.argv[2])
-with open(sys.argv[1], 'w') as f:
-    json.dump(d, f)
-    f.write('\n')
-" "$counter_file" "$new_next"
+counter_file = sys.argv[1]
+fd = os.open(counter_file, os.O_RDWR)
+try:
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    with os.fdopen(os.dup(fd), 'r') as f:
+        d = json.load(f)
+    prefix = d['prefix']
+    n = d['next']
+    # Format: zero-pad to 3 digits for 1-999, no padding for 1000+
+    formatted = f'{n:03d}' if n < 1000 else str(n)
+    ticket_id = f'{prefix}-{formatted}'
+    d['next'] = n + 1
+    # Write back: truncate then write
+    os.lseek(fd, 0, os.SEEK_SET)
+    os.ftruncate(fd, 0)
+    content = json.dumps(d) + '\n'
+    os.write(fd, content.encode())
+    print(ticket_id, end='')
+finally:
+    fcntl.flock(fd, fcntl.LOCK_UN)
+    os.close(fd)
+" "$counter_file")"
 
   printf '%s' "$ticket_id"
 }
