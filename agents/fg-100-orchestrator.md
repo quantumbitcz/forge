@@ -1200,6 +1200,10 @@ Merge the returned findings into the quality gate's finding pool before scoring 
 
 Multi-component: annotate each file with its owning component's convention stack. Backend-scoped reviewers get backend files only; frontend-scoped get frontend files only; cross-cutting reviewers (security, etc.) get all files. Unified scoring — one score/verdict per cycle, not per component. Each finding annotated with `component: {name}`. Cross-service consistency: verify event schemas, API contracts, shared types match. Single-component projects skip this.
 
+### 9.2b State Machine Reference
+
+All state transitions in this section follow the formal transition table in `shared/state-transitions.md`. The orchestrator MUST look up (current_state, event, guard) in that table for every control flow decision. Do not interpret prose descriptions as state transition logic — use the table. If a (state, event) pair is not in the table, log ERROR and escalate.
+
 ### 9.3 Convergence-Driven Fix Cycle
 
 Fix cycles are driven by the convergence engine (`shared/convergence-engine.md`). After scoring:

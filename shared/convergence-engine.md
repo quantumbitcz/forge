@@ -52,6 +52,10 @@ The convergence engine receives two structured inputs from the orchestrator:
 - `score` (number): Quality score from the quality gate (0-100)
 - `findings` (array): Deduplicated findings list (SCOUT-* already filtered out before dispatch to implementer)
 
+## State Machine Reference
+
+The convergence phase transitions follow the formal table in `shared/state-transitions.md` (section "Convergence Phase Transitions"). This algorithm section describes the *implementation* of those transitions — the table is the *specification*.
+
 ## Algorithm
 
 ```
