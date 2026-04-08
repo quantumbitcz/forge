@@ -1,0 +1,2 @@
+error: src/main/scala/com/example/App.scala is not formatted
+error: src/main/scala/com/example/service/UserService.scala is not formatted

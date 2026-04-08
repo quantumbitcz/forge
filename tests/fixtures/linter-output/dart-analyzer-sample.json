@@ -1,0 +1,5 @@
+{"version": 1, "diagnostics": [
+  {"code": "unused_import", "severity": "WARNING", "location": {"file": "lib/src/auth.dart", "range": {"start": {"line": 3, "column": 1}}}, "problemMessage": "Unused import: 'dart:io'."},
+  {"code": "deprecated_member_use", "severity": "INFO", "location": {"file": "lib/src/service.dart", "range": {"start": {"line": 15, "column": 5}}}, "problemMessage": "Using deprecated API."},
+  {"code": "invalid_assignment", "severity": "ERROR", "location": {"file": "lib/src/model.dart", "range": {"start": {"line": 28, "column": 10}}}, "problemMessage": "A value of type 'String' cannot be assigned to a variable of type 'int'."}
+]}

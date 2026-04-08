@@ -1,0 +1,4 @@
+cmd/server/main.go:42:5: printf format %d has arg of wrong type string (SA5009)
+internal/service/worker.go:15:2: should use time.Since instead of time.Now().Sub (S1012)
+pkg/utils/helpers.go:8:1: at least one file in a package should have a package comment (ST1000)
+internal/handler.go:30:10: unreachable code

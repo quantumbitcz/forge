@@ -1,0 +1,4 @@
+src/main.c:15:5: warning: use of a signed integer operand with a binary bitwise operator [bugprone-signed-bitwise]
+src/auth.c:42:10: error: pointer arithmetic on non-array type [cert-arr39-c]
+src/utils.h:8:1: note: this is a note that should be skipped
+src/legacy.c:30:3: warning: use nullptr instead of NULL [modernize-use-nullptr]

@@ -1,0 +1,19 @@
+{
+  "totals": {"errors": 0, "file_errors": 3},
+  "files": {
+    "src/Controller/AuthController.php": {
+      "errors": 2,
+      "messages": [
+        {"message": "Parameter $request of method AuthController::login() has no type specified.", "line": 15, "ignorable": true, "identifier": "missingType.parameter"},
+        {"message": "Call to an undefined method Doctrine\\ORM\\EntityRepository::findByEmail().", "line": 28, "ignorable": false, "identifier": "method.notFound"}
+      ]
+    },
+    "src/Service/PaymentService.php": {
+      "errors": 1,
+      "messages": [
+        {"message": "Variable $result might not be defined.", "line": 42, "ignorable": true, "identifier": "variable.undefined"}
+      ]
+    }
+  },
+  "errors": []
+}

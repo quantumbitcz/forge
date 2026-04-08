@@ -1,0 +1,37 @@
+{
+  "issues": [
+    {
+      "category": "readability",
+      "check": "Credo.Check.Readability.ModuleDoc",
+      "column": null,
+      "column_end": null,
+      "filename": "lib/app/auth.ex",
+      "line_no": 1,
+      "message": "Modules should have a @moduledoc tag.",
+      "priority": 1,
+      "trigger": "App.Auth"
+    },
+    {
+      "category": "warning",
+      "check": "Credo.Check.Warning.IoInspect",
+      "column": 5,
+      "column_end": null,
+      "filename": "lib/app/controller.ex",
+      "line_no": 42,
+      "message": "There should be no calls to IO.inspect/1.",
+      "priority": 10,
+      "trigger": "IO.inspect"
+    },
+    {
+      "category": "refactor",
+      "check": "Credo.Check.Refactor.CyclomaticComplexity",
+      "column": null,
+      "column_end": null,
+      "filename": "lib/app/service.ex",
+      "line_no": 15,
+      "message": "Function is too complex (CC is 14, max is 9).",
+      "priority": 5,
+      "trigger": "process/2"
+    }
+  ]
+}
