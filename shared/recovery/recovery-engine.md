@@ -301,6 +301,90 @@ Before each stage begins, run `shared/recovery/health-checks/pre-stage-health.sh
 
 ---
 
+## 8.1 Circuit Breaker
+
+The circuit breaker prevents the recovery engine from repeatedly attempting strategies for a failure category that is consistently failing. When a category accumulates consecutive failures beyond a threshold, the circuit opens — blocking further recovery attempts for that category and preserving budget for categories that will actually recover.
+
+### Failure Categories
+
+Circuit breakers track failures by category, not by individual strategy. Each category aggregates related error types from `shared/error-taxonomy.md`:
+
+| Category | Error Types | Description |
+|----------|------------|-------------|
+| `build` | `BUILD_FAILURE`, `LINT_FAILURE` | Compilation and static analysis failures |
+| `test` | `TEST_FAILURE`, `FLAKY_TEST` | Test assertion and non-deterministic test failures |
+| `network` | `NETWORK_UNAVAILABLE`, `MCP_UNAVAILABLE` | External service and MCP connectivity failures |
+| `agent` | `AGENT_TIMEOUT`, `AGENT_ERROR`, `CONTEXT_OVERFLOW` | Agent execution and resource failures |
+| `state` | `STATE_CORRUPTION`, `LOCK_FILE_CONFLICT` | Pipeline state integrity failures |
+| `environment` | `DEPENDENCY_MISSING`, `PERMISSION_DENIED`, `DISK_FULL` | System environment and resource failures |
+
+### State Machine
+
+Each category maintains an independent circuit breaker with three states:
+
+```
+CLOSED → (failures_count >= threshold) → OPEN → (cooldown elapsed) → HALF_OPEN → (probe succeeds) → CLOSED
+                                                                       ↓ (probe fails)
+                                                                      OPEN
+```
+
+- **CLOSED** — Normal operation. Recovery strategies execute as usual. Each failure increments `failures_count` for the category. When `failures_count >= threshold`, the circuit transitions to OPEN.
+- **OPEN** — Category is blocked. No recovery strategies are attempted for error types in this category. The recovery engine returns `ESCALATE` immediately with reason `"circuit_breaker_open: {category}"`. The orchestrator raises a `circuit_breaker_open` event (see `shared/state-transitions.md` row E3). After `cooldown_seconds` elapses from `last_failure_timestamp`, the circuit transitions to HALF_OPEN.
+- **HALF_OPEN** — Probe state. The next failure in this category is allowed one recovery attempt. If the probe succeeds (strategy returns `RECOVERED` or `DEGRADED`), the circuit resets to CLOSED with `failures_count = 0`. If the probe fails, the circuit returns to OPEN with a fresh cooldown.
+
+### Configuration
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `threshold` | 2 | Consecutive failures before circuit opens |
+| `cooldown_seconds` | 300 | Seconds before OPEN transitions to HALF_OPEN |
+
+### Decision Order
+
+When the recovery engine receives a failure, it evaluates in this order:
+
+1. **Circuit breaker check** — Look up the failure's category. If the circuit is OPEN, return `ESCALATE` immediately without consuming budget. If HALF_OPEN, allow one probe attempt.
+2. **Budget check** — Verify `recovery_budget.total_weight + strategy.weight <= max_weight`. If over budget, return `BUDGET_EXHAUSTED`.
+3. **Strategy selection** — Load and execute the appropriate strategy.
+
+This order ensures that circuit breaker blocks before budget is consumed, preserving budget for recoverable categories.
+
+### Schema (state.json)
+
+Circuit breaker state is tracked in `recovery.circuit_breakers`:
+
+```json
+{
+  "recovery": {
+    "circuit_breakers": {
+      "build": {
+        "state": "CLOSED",
+        "failures_count": 0,
+        "last_failure_timestamp": null,
+        "cooldown_seconds": 300
+      },
+      "test": {
+        "state": "OPEN",
+        "failures_count": 2,
+        "last_failure_timestamp": "2026-03-22T14:30:00Z",
+        "cooldown_seconds": 300
+      }
+    }
+  }
+}
+```
+
+Only categories that have recorded at least one failure appear in the map. Absent categories are implicitly CLOSED with `failures_count = 0`.
+
+### Principles
+
+1. **Category not strategy** — Circuit breakers aggregate by failure category, not by recovery strategy. A `build` circuit opening means all build-related error types are blocked, regardless of which strategy would be selected.
+2. **Budget preservation** — An open circuit returns `ESCALATE` without consuming recovery budget. This is the primary value: budget is not wasted on categories that are consistently failing.
+3. **Transparent escalation** — When a circuit opens, the recovery engine includes `"circuit_breaker_open: {category}"` in the escalation reason, enabling the orchestrator and user to understand why recovery was skipped.
+4. **No false safety** — The circuit breaker does not prevent the user from continuing. It only prevents *automatic* recovery. The orchestrator can still present the user with options to retry manually or proceed with degraded capability.
+
+---
+
 ## 9. Recovery Budget
 
 Recovery strategies have different costs. The budget uses weighted accounting tracked in `state.json.recovery_budget`.
