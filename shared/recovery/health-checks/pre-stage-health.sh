@@ -124,7 +124,8 @@ case "$STAGE" in
     check_cmd "git"
     detect_build_tool
     # Disk space check (min 100MB free)
-    free_kb=$(df -k "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
+    # -P forces POSIX output format to prevent line wrapping on long mount paths
+    free_kb=$(df -Pk "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
     if [[ "$free_kb" -lt 102400 ]]; then
       echo "ERROR: Less than 100MB free disk space ($((free_kb / 1024))MB available)" >&2
     fi
@@ -142,7 +143,7 @@ case "$STAGE" in
     detect_build_tool
     detect_test_tool
     # Disk space check (min 100MB free — same as implement)
-    free_kb=$(df -k "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
+    free_kb=$(df -Pk "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
     if [[ "$free_kb" -lt 102400 ]]; then
       echo "ERROR: Less than 100MB free disk space ($((free_kb / 1024))MB available)" >&2
     fi
