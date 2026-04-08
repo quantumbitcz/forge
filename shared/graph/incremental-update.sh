@@ -24,6 +24,8 @@ source "${PLUGIN_ROOT}/shared/platform.sh"
 require_bash4 "incremental-update.sh" || exit 1
 
 PROJECT_ROOT=""
+PROJECT_ID=""
+COMPONENT=""
 
 # --- Argument parsing ---
 while [[ $# -gt 0 ]]; do
@@ -32,9 +34,17 @@ while [[ $# -gt 0 ]]; do
       PROJECT_ROOT="$2"
       shift 2
       ;;
+    --project-id)
+      PROJECT_ID="$2"
+      shift 2
+      ;;
+    --component)
+      COMPONENT="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: incremental-update.sh --project-root /path/to/project" >&2
+      echo "Usage: incremental-update.sh --project-root /path/to/project [--project-id org/repo] [--component name]" >&2
       exit 1
       ;;
   esac
@@ -52,6 +62,17 @@ if [[ ! -d "$PROJECT_ROOT/.git" ]]; then
   exit 1
 fi
 
+# Auto-derive project_id if not provided
+if [[ -z "$PROJECT_ID" ]]; then
+  PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
+fi
+
+if [[ -n "$COMPONENT" ]]; then
+  COMPONENT_CYPHER="'${COMPONENT}'"
+else
+  COMPONENT_CYPHER="null"
+fi
+
 # --- Ensure output directories ---
 GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 mkdir -p "$GRAPH_DIR"
@@ -64,20 +85,20 @@ LAST_BUILD_FILE="${GRAPH_DIR}/.last-build-sha"
 
 if [[ ! -f "$LAST_BUILD_FILE" ]]; then
   echo "// No prior build found — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
 fi
 
 LAST_BUILD_SHA="$(tr -d '[:space:]' < "$LAST_BUILD_FILE")"
 
 if [[ -z "$LAST_BUILD_SHA" || "$LAST_BUILD_SHA" == "unknown" || ! "$LAST_BUILD_SHA" =~ ^[0-9a-f]+$ ]]; then
   echo "// Invalid last build SHA — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
 fi
 
 # Verify the SHA still exists in the repo
 if ! (cd "$PROJECT_ROOT" && git cat-file -e "$LAST_BUILD_SHA" 2>/dev/null); then
   echo "// Last build SHA ${LAST_BUILD_SHA} no longer in history — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
 fi
 
 CURRENT_SHA="$(cd "$PROJECT_ROOT" && git rev-parse HEAD)"
@@ -91,7 +112,7 @@ fi
 # --- Get changed files ---
 if ! CHANGES="$(cd "$PROJECT_ROOT" && git diff --name-status "${LAST_BUILD_SHA}..HEAD" 2>/dev/null)"; then
   echo "// git diff failed (shallow clone or corrupt history?) — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
 fi
 
 if [[ -z "$CHANGES" ]]; then
@@ -352,7 +373,7 @@ emit_file_create() {
   size="$(file_size "$file")"
   mod_date="$(file_date "$file")"
 
-  echo "CREATE (:ProjectFile {path: '$(cypher_escape "$file")', language: '${lang}', size: ${size}, last_modified: '${mod_date}'});"
+  echo "CREATE (:ProjectFile {path: '$(cypher_escape "$file")', language: '${lang}', size: ${size}, last_modified: '${mod_date}', project_id: '${PROJECT_ID}', component: ${COMPONENT_CYPHER}});"
 
   # Parse imports and emit edges
   local import_targets=""
@@ -375,7 +396,7 @@ emit_file_create() {
       [[ -z "$target" || "$target" == "$file" ]] && continue
       if [[ -z "${seen_local[$target]:-}" ]]; then
         seen_local["$target"]=1
-        echo "MATCH (a:ProjectFile {path: '$(cypher_escape "$file")'}), (b:ProjectFile {path: '$(cypher_escape "$target")'}) CREATE (a)-[:IMPORTS]->(b);"
+        echo "MATCH (a:ProjectFile {path: '$(cypher_escape "$file")', project_id: '${PROJECT_ID}'}), (b:ProjectFile {path: '$(cypher_escape "$target")', project_id: '${PROJECT_ID}'}) CREATE (a)-[:IMPORTS]->(b);"
       fi
     done <<< "$import_targets"
   fi
@@ -384,14 +405,14 @@ emit_file_create() {
   local dir
   dir="$(dirname "$file")"
   if [[ "$dir" != "." ]]; then
-    echo "MATCH (f:ProjectFile {path: '$(cypher_escape "$file")'}), (p:ProjectPackage {path: '$(cypher_escape "$dir")'}) CREATE (f)-[:BELONGS_TO]->(p);"
+    echo "MATCH (f:ProjectFile {path: '$(cypher_escape "$file")', project_id: '${PROJECT_ID}'}), (p:ProjectPackage {path: '$(cypher_escape "$dir")', project_id: '${PROJECT_ID}'}) CREATE (f)-[:BELONGS_TO]->(p);"
   fi
 }
 
 # --- Helper: emit Cypher for deleting a file node ---
 emit_file_delete() {
   local file="$1"
-  echo "MATCH (f:ProjectFile {path: '$(cypher_escape "$file")'}) DETACH DELETE f;"
+  echo "MATCH (f:ProjectFile {path: '$(cypher_escape "$file")', project_id: '${PROJECT_ID}'}) DETACH DELETE f;"
 }
 
 # ============================================================================
@@ -402,6 +423,8 @@ echo "// ===================================="
 echo "// Incremental Graph Update"
 echo "// Generated by incremental-update.sh"
 echo "// Project: ${PROJECT_ROOT}"
+echo "// Project ID: ${PROJECT_ID}"
+echo "// Component: ${COMPONENT:-<none>}"
 echo "// Base SHA: ${LAST_BUILD_SHA}"
 echo "// Head SHA: ${CURRENT_SHA}"
 echo "// ===================================="
