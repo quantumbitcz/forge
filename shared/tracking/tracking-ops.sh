@@ -135,6 +135,8 @@ counter_file = sys.argv[1]
 fd = os.open(counter_file, os.O_RDWR)
 try:
     fcntl.flock(fd, fcntl.LOCK_EX)
+    # dup(fd) so fdopen's context manager closes the copy, not the original fd
+    # (we still need fd open for the subsequent write and unlock)
     with os.fdopen(os.dup(fd), 'r') as f:
         d = json.load(f)
     prefix = d['prefix']
