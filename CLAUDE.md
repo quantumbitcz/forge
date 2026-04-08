@@ -74,10 +74,10 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-500-test-gate`
-- Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
+- Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
 
-**Review** (10, via quality gate): `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`, `frontend-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
+**Review** (10, via quality gate): `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer`, `fg-413-frontend-reviewer`, `fg-414-frontend-a11y-reviewer`, `fg-415-frontend-performance-reviewer`, `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
 
 ### Agent rules
 
@@ -146,7 +146,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 **Deprecation registries** (`modules/frameworks/*/known-deprecations.json`): Schema v2 (`pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`). Skip when project version < `applies_from`. WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated at PREFLIGHT.
 
-## Infra testing (`infra-deploy-verifier`)
+## Infra testing (`fg-610-infra-deploy-verifier`)
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Missing tools skip tiers. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 

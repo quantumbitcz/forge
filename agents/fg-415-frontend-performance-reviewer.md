@@ -1,5 +1,5 @@
 ---
-name: frontend-performance-reviewer
+name: fg-415-frontend-performance-reviewer
 description: Reviews frontend code for performance issues — bundle size, rendering efficiency, lazy loading, resource optimization.
 model: inherit
 color: blue

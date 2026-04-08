@@ -50,7 +50,7 @@ Glob expansion against project root.
 echo "$FILES" | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala|vue|svelte|html|css|scss)$'
 ```
 
-Also include `.md` files if `--full` is set (for docs-consistency-reviewer).
+Also include `.md` files if `--full` is set (for fg-418-docs-consistency-reviewer).
 
 If zero files remain: report "No changed source files to review. PERFECT." and stop.
 
@@ -59,21 +59,21 @@ Report: "Reviewing {count} files in {mode} mode."
 ### 2. Select Agents
 
 **Quick mode (default):** Always dispatch these 3:
-- `forge:architecture-reviewer`
-- `forge:security-reviewer`
-- `forge:code-quality-reviewer`
+- `forge:fg-410-architecture-reviewer`
+- `forge:fg-411-security-reviewer`
+- `forge:fg-412-code-quality-reviewer`
 
 **Full mode (`--full`):** Core 3 + conditional agents based on file types present:
 
 | Agent | Dispatch condition |
 |---|---|
-| `forge:docs-consistency-reviewer` | Any `.md` files in scope |
-| `forge:frontend-reviewer` | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, `.styled.*` files |
-| `forge:frontend-performance-reviewer` | Any frontend files present |
-| `forge:frontend-a11y-reviewer` | Any frontend files present |
-| `forge:backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
-| `forge:version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
-| `forge:infra-deploy-reviewer` | Any `Dockerfile`, `docker-compose.*`, `*.yaml`/`*.yml` with k8s markers, Helm charts |
+| `forge:fg-418-docs-consistency-reviewer` | Any `.md` files in scope |
+| `forge:fg-413-frontend-reviewer` | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, `.styled.*` files |
+| `forge:fg-415-frontend-performance-reviewer` | Any frontend files present |
+| `forge:fg-414-frontend-a11y-reviewer` | Any frontend files present |
+| `forge:fg-416-backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
+| `forge:fg-417-version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
+| `forge:fg-419-infra-deploy-reviewer` | Any `Dockerfile`, `docker-compose.*`, `*.yaml`/`*.yml` with k8s markers, Helm charts |
 
 Report: "Dispatching {count} review agents: {agent_names}"
 

@@ -48,19 +48,19 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: architecture-reviewer
+    - agent: fg-410-architecture-reviewer
       focus: "module boundaries, dependency direction, DI patterns, single responsibility"
-    - agent: security-reviewer
+    - agent: fg-411-security-reviewer
       focus: "auth guards, injection, input sanitization, data exposure via DTOs"
-    - agent: backend-performance-reviewer
+    - agent: fg-416-backend-performance-reviewer
       focus: "N+1 queries, blocking I/O, missing indexes, algorithm complexity"
   batch_2:
-    - agent: code-quality-reviewer
+    - agent: fg-412-code-quality-reviewer
       focus: "general correctness, maintainability, NestJS idioms"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
 
 test_gate:

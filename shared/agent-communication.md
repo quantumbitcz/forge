@@ -38,7 +38,7 @@ Task visibility follows the agent dispatch hierarchy:
 
 - **Level 1 (Orchestrator):** fg-100-orchestrator creates 10 stage-level tasks. These are the top-level progress indicators.
 - **Level 2 (Coordinators):** Agents dispatched by the orchestrator (fg-400, fg-500, fg-600, fg-200, fg-310, etc.) create sub-tasks within their stage for batches, phases, or file groups.
-- **Level 3 (Leaf agents):** Agents dispatched by coordinators (fg-300 TDD cycles, infra-deploy-verifier tiers) create sub-sub-tasks for their internal steps.
+- **Level 3 (Leaf agents):** Agents dispatched by coordinators (fg-300 TDD cycles, fg-610-infra-deploy-verifier tiers) create sub-sub-tasks for their internal steps.
 
 Maximum nesting depth: 3 levels. Leaf agent sub-tasks are the finest granularity.
 
@@ -162,11 +162,11 @@ The following agents are dispatched conditionally and receive data from the orch
 |-------|-------|---------|----------|---------|
 | `fg-320-frontend-polisher` | 4 (IMPLEMENT) | `frontend_polish.enabled` in config AND frontend component detected | Changed frontend files, design theory, theme tokens | Polished files, `FE-*` findings in stage notes |
 | `fg-650-preview-validator` | 8 (SHIP) | Preview/staging URL configured in `ship:` config | PR URL, preview URL | Validation results in stage notes |
-| `infra-deploy-verifier` | 8 (SHIP) | K8s/infra files in changeset | Changed infra files, Helm charts | Verification results in stage notes |
+| `fg-610-infra-deploy-verifier` | 8 (SHIP) | K8s/infra files in changeset | Changed infra files, Helm charts | Verification results in stage notes |
 | `fg-130-docs-discoverer` | 0 (PREFLIGHT) | Always (part of preflight) | Project root, config | `stage_0_docs_discovery.md`, docs-index.json |
 | `fg-140-deprecation-refresh` | 0 (PREFLIGHT) | Always (part of preflight) | Detected versions, known-deprecations.json | Updated deprecation rules |
 | `fg-150-test-bootstrapper` | 0 (PREFLIGHT) | No test infrastructure detected | Project root, framework conventions | Bootstrapped test config, stage notes |
-| `docs-consistency-reviewer` | 6 (REVIEW) | Documentation exists in project | Changed files, docs-index.json, discovery summary | `DOC-*` findings |
+| `fg-418-docs-consistency-reviewer` | 6 (REVIEW) | Documentation exists in project | Changed files, docs-index.json, discovery summary | `DOC-*` findings |
 
 ## 7. PREEMPT Item Tracking
 

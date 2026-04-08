@@ -17,13 +17,13 @@ MODULES_DIR="$PLUGIN_ROOT/modules"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 
-@test "docs-structural: docs-consistency-reviewer.md exists with correct frontmatter" {
-  local agent_file="$AGENTS_DIR/docs-consistency-reviewer.md"
+@test "docs-structural: fg-418-docs-consistency-reviewer.md exists with correct frontmatter" {
+  local agent_file="$AGENTS_DIR/fg-418-docs-consistency-reviewer.md"
   [ -f "$agent_file" ] || fail "Agent file not found: $agent_file"
   local first_line
   first_line="$(head -1 "$agent_file")"
   [[ "$first_line" == "---" ]] || fail "Missing frontmatter opening ---"
-  grep -q "^name: docs-consistency-reviewer" "$agent_file" || fail "Missing or incorrect name field"
+  grep -q "^name: fg-418-docs-consistency-reviewer" "$agent_file" || fail "Missing or incorrect name field"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 

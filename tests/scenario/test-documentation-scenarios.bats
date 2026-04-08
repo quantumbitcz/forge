@@ -13,7 +13,7 @@ load '../helpers/test-helpers'
 }
 
 @test "docs-scenario: consistency reviewer finding format matches DOC-* pattern" {
-  local agent="$PLUGIN_ROOT/agents/docs-consistency-reviewer.md"
+  local agent="$PLUGIN_ROOT/agents/fg-418-docs-consistency-reviewer.md"
   grep -q "DOC-DECISION" "$agent" || fail "Missing DOC-DECISION category"
   grep -q "DOC-STALE" "$agent" || fail "Missing DOC-STALE category"
   grep -q "DOC-MISSING" "$agent" || fail "Missing DOC-MISSING category"
@@ -22,7 +22,7 @@ load '../helpers/test-helpers'
 }
 
 @test "docs-scenario: consistency reviewer handles cross-repo as WARNING only" {
-  local agent="$PLUGIN_ROOT/agents/docs-consistency-reviewer.md"
+  local agent="$PLUGIN_ROOT/agents/fg-418-docs-consistency-reviewer.md"
   grep -qi "cross-repo.*WARNING\|WARNING.*cross-repo\|cross-repo.*CRITICAL" "$agent" || fail "Cross-repo finding severity not documented"
 }
 

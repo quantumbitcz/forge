@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
-# Contract tests: infra-deploy-verifier supports Tiers 4-5.
+# Contract tests: fg-610-infra-deploy-verifier supports Tiers 4-5.
 
 load '../helpers/test-helpers'
 
-VERIFIER="$PLUGIN_ROOT/agents/infra-deploy-verifier.md"
+VERIFIER="$PLUGIN_ROOT/agents/fg-610-infra-deploy-verifier.md"
 
 @test "infra-tiers: verifier documents Tier 4 contract testing" {
   grep -qi 'tier 4' "$VERIFIER"

@@ -118,10 +118,10 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `SEC-*` | Security concern (auth, injection, exposure) |
 | `PERF-*` | Backend performance issue (N+1, O(n^2), blocking I/O, unnecessary allocation) |
 | `FE-PERF-*` | Frontend performance issue (re-renders, bundle size, DOM efficiency, assets) |
-| `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `code-quality-reviewer`. |
+| `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `fg-412-code-quality-reviewer`. |
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
-| `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `code-quality-reviewer`. |
+| `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-412-code-quality-reviewer`. |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
@@ -130,8 +130,8 @@ Additional category codes for specialized review domains:
 | Code | Meaning |
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
-| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions). Reserved — currently `version-compat-reviewer` uses `QUAL-COMPAT` for version compatibility findings. `DEPS-*` may be activated by a future dedicated dependency auditing agent. |
-| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `version-compat-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
+| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions). Reserved — currently `fg-417-version-compat-reviewer` uses `QUAL-COMPAT` for version compatibility findings. `DEPS-*` may be activated by a future dedicated dependency auditing agent. |
+| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-version-compat-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
 | `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
 | `DESIGN-TOKEN` | Frontend design token violation (hardcoded hex/rgb instead of theme tokens) |
@@ -155,7 +155,7 @@ Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are d
 
 ### DOC-* Findings (Documentation Consistency)
 
-Reported by `docs-consistency-reviewer` during REVIEW stage.
+Reported by `fg-418-docs-consistency-reviewer` during REVIEW stage.
 
 | Category | Severity | Deduction | Description |
 |----------|----------|-----------|-------------|

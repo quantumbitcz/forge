@@ -38,17 +38,17 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: architecture-reviewer
+    - agent: fg-410-architecture-reviewer
       focus: "MVVM adherence, layer boundaries, dependency direction"
-    - agent: security-reviewer
+    - agent: fg-411-security-reviewer
       focus: "Keychain usage, App Transport Security, certificate pinning"
-    - agent: code-quality-reviewer
+    - agent: fg-412-code-quality-reviewer
       focus: "general correctness, MVVM adherence, view complexity"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks: []
 

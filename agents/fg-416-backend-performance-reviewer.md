@@ -1,5 +1,5 @@
 ---
-name: backend-performance-reviewer
+name: fg-416-backend-performance-reviewer
 description: Reviews backend code for performance issues — N+1 queries, missing indexes, connection pools, caching, concurrency.
 model: inherit
 color: yellow

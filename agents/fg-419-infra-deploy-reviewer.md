@@ -1,5 +1,5 @@
 ---
-name: infra-deploy-reviewer
+name: fg-419-infra-deploy-reviewer
 description: Reviews Helm charts, K8s manifests, Terraform, and Dockerfiles for security, reliability, and observability.
 model: inherit
 color: green

@@ -61,7 +61,7 @@ Before dispatching review agents:
    - Log WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
    - Include drift context in dispatch prompts to reviewers: "NOTE: Conventions updated mid-run. Evaluate against current conventions."
    - Add informational finding: `REVIEW-CONTEXT | INFO | Conventions changed mid-run; review performed against current version`
-4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform architecture-reviewer)
+4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform fg-410-architecture-reviewer)
 
 ---
 
@@ -71,7 +71,7 @@ Agent batches are defined entirely by the project's `forge.local.md` config unde
 
 ### 5.0 Documentation Context
 
-`docs-consistency-reviewer` is a standard reviewer that may be configured in any `batch_N` entry. It receives documentation context (doc discovery summary and stale docs detection results) pre-queried by the orchestrator and passed in the dispatch prompt alongside the changed files. No special handling required — treat it like any other configured review agent.
+`fg-418-docs-consistency-reviewer` is a standard reviewer that may be configured in any `batch_N` entry. It receives documentation context (doc discovery summary and stale docs detection results) pre-queried by the orchestrator and passed in the dispatch prompt alongside the changed files. No special handling required — treat it like any other configured review agent.
 
 **Graph Context (when available):** Query patterns 10 (Stale Docs), 11 (Decision Traceability), 12 (Contradiction Report) via `neo4j-mcp` to coordinate review focus areas. Fall back to file-based analysis if graph unavailable.
 
@@ -453,16 +453,16 @@ list is authoritative — if an agent is not listed here, it cannot be dispatche
 this gate. The `generate-seed.sh` script reads this section to build DISPATCHES edges
 in the knowledge graph.
 
-- `architecture-reviewer` — architecture pattern compliance (hexagonal, clean, layered, MVC)
-- `security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
-- `code-quality-reviewer` — error handling, DRY/KISS, defensive programming, test quality
-- `frontend-reviewer` — conventions, accessibility basics, framework-specific patterns, design system compliance, visual coherence, responsive behavior
-- `frontend-a11y-reviewer` — WCAG 2.2 AA accessibility audits
-- `frontend-performance-reviewer` — bundle size, rendering efficiency, lazy loading
-- `backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
-- `version-compat-reviewer` — dependency tree conflicts, language feature compatibility
-- `infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
-- `docs-consistency-reviewer` — consistency with documented decisions and constraints
+- `fg-410-architecture-reviewer` — architecture pattern compliance (hexagonal, clean, layered, MVC)
+- `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
+- `fg-412-code-quality-reviewer` — error handling, DRY/KISS, defensive programming, test quality
+- `fg-413-frontend-reviewer` — conventions, accessibility basics, framework-specific patterns, design system compliance, visual coherence, responsive behavior
+- `fg-414-frontend-a11y-reviewer` — WCAG 2.2 AA accessibility audits
+- `fg-415-frontend-performance-reviewer` — bundle size, rendering efficiency, lazy loading
+- `fg-416-backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
+- `fg-417-version-compat-reviewer` — dependency tree conflicts, language feature compatibility
+- `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
+- `fg-418-docs-consistency-reviewer` — consistency with documented decisions and constraints
 
 ---
 

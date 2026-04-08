@@ -1,5 +1,5 @@
 ---
-name: security-reviewer
+name: fg-411-security-reviewer
 description: Reviews code for security vulnerabilities — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs.
 model: inherit
 color: red
@@ -209,9 +209,9 @@ Apply the patterns matching the detected language/framework:
 ## 9. Infrastructure-as-Code Security
 
 When reviewing infrastructure files (Helm charts, K8s manifests, Terraform, Dockerfiles):
-- Delegate detailed infrastructure security checks to `infra-deploy-reviewer` (it has specialized rules)
+- Delegate detailed infrastructure security checks to `fg-419-infra-deploy-reviewer` (it has specialized rules)
 - Flag only CRITICAL cross-cutting security issues visible from the codebase: hardcoded secrets in values files, privileged containers, wildcard RBAC permissions, public-facing services without auth
-- Do NOT duplicate infra-deploy-reviewer's specialized checks (resource limits, probe configuration, image pinning)
+- Do NOT duplicate fg-419-infra-deploy-reviewer's specialized checks (resource limits, probe configuration, image pinning)
 
 ---
 

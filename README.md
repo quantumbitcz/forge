@@ -127,7 +127,7 @@ The pipeline auto-detects available MCP servers at PREFLIGHT and adapts its beha
 | Integration | What it does | Used by |
 |-------------|-------------|---------|
 | **Linear** | Creates Epics, Stories, and Tasks during PLAN. Updates ticket statuses per stage. Posts quality findings and recap summaries as comments. Mid-run failures retry once, then degrade silently. | Orchestrator, planner, quality gate, retrospective |
-| **Context7** | Documentation lookup for migration guides, breaking changes, and API references. Powers `fg-140-deprecation-refresh` (PREFLIGHT) and `version-compat-reviewer` (REVIEW). | Migration planner, deprecation refresh, version compat reviewer, implementer |
+| **Context7** | Documentation lookup for migration guides, breaking changes, and API references. Powers `fg-140-deprecation-refresh` (PREFLIGHT) and `fg-417-version-compat-reviewer` (REVIEW). | Migration planner, deprecation refresh, version compat reviewer, implementer |
 | **Playwright** | Preview/staging deployment validation before merge. Visual regression checks. | Preview validator |
 | **Slack** | Notifications and status updates (configured via consuming project). | PR builder, retrospective |
 | **Figma** | Design reference and component mapping (configured via consuming project). | Frontend reviewer |
@@ -292,16 +292,16 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 | Agent | Role |
 |---|---|
-| `architecture-reviewer` | Architecture patterns, SRP, DIP, boundaries |
-| `security-reviewer` | OWASP, auth, injection, secrets |
-| `frontend-reviewer` | Frontend code quality, conventions, framework rules, design system compliance, visual hierarchy, Figma comparison |
-| `frontend-a11y-reviewer` | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
-| `frontend-performance-reviewer` | Bundle size, rendering, lazy loading, code splitting |
-| `backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
-| `version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
-| `infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
-| `infra-deploy-verifier` | Deployment health verification |
-| `docs-consistency-reviewer` | Documentation accuracy, cross-doc consistency, decision/constraint violations |
+| `fg-410-architecture-reviewer` | Architecture patterns, SRP, DIP, boundaries |
+| `fg-411-security-reviewer` | OWASP, auth, injection, secrets |
+| `fg-413-frontend-reviewer` | Frontend code quality, conventions, framework rules, design system compliance, visual hierarchy, Figma comparison |
+| `fg-414-frontend-a11y-reviewer` | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
+| `fg-415-frontend-performance-reviewer` | Bundle size, rendering, lazy loading, code splitting |
+| `fg-416-backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
+| `fg-417-version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
+| `fg-419-infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
+| `fg-610-infra-deploy-verifier` | Deployment health verification |
+| `fg-418-docs-consistency-reviewer` | Documentation accuracy, cross-doc consistency, decision/constraint violations |
 
 ## Adding a new module
 
@@ -330,12 +330,12 @@ Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Bu
 
 ### 4. Wire agents into the local template
 
-Reference the cross-cutting review agents (`architecture-reviewer`, `security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
+Reference the cross-cutting review agents (`fg-410-architecture-reviewer`, `fg-411-security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
 
 ### 5. Naming conventions
 
 - Module directory: `modules/frameworks/{name}`, lowercase with hyphens (`fastapi`, `go-stdlib`)
-- Review agents: descriptive names without module prefix (`architecture-reviewer`, `security-reviewer`)
+- Review agents: descriptive names without module prefix (`fg-410-architecture-reviewer`, `fg-411-security-reviewer`)
 - Pipeline agents: `fg-{NNN}-{role}` (shared, not module-specific)
 - Scripts: `check-{what}.sh` or `{what}-guard.sh`
 
@@ -370,16 +370,16 @@ forge/
     fg-700-retrospective.md
     fg-710-feedback-capture.md
     fg-720-recap.md
-    architecture-reviewer.md
-    security-reviewer.md
-    frontend-reviewer.md
-    frontend-a11y-reviewer.md
-    frontend-performance-reviewer.md
-    backend-performance-reviewer.md
-    version-compat-reviewer.md
-    infra-deploy-reviewer.md
-    infra-deploy-verifier.md
-    docs-consistency-reviewer.md
+    fg-410-architecture-reviewer.md
+    fg-411-security-reviewer.md
+    fg-413-frontend-reviewer.md
+    fg-414-frontend-a11y-reviewer.md
+    fg-415-frontend-performance-reviewer.md
+    fg-416-backend-performance-reviewer.md
+    fg-417-version-compat-reviewer.md
+    fg-419-infra-deploy-reviewer.md
+    fg-610-infra-deploy-verifier.md
+    fg-418-docs-consistency-reviewer.md
   skills/                               # 22 user-facing skills
     bootstrap-project/
     codebase-health/
@@ -428,7 +428,7 @@ forge/
         defaults/                       #     Default linter settings
       layer-3-agent/                    #   Redirect stubs (agents live in agents/)
         deprecation-refresh.md          #     -> agents/fg-140-deprecation-refresh.md
-        version-compat.md               #     -> agents/version-compat-reviewer.md
+        version-compat.md               #     -> agents/fg-417-version-compat-reviewer.md
         known-deprecations/
       examples/                         #   Per-language pattern examples
         c/ go/ java/ kotlin/

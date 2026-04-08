@@ -63,16 +63,16 @@ AGENT_DEFAULTS="$PLUGIN_ROOT/shared/agent-defaults.md"
 # ---------------------------------------------------------------------------
 @test "agent-defaults: all 10 review agents listed" {
   local reviewers=(
-    architecture-reviewer
-    security-reviewer
-    code-quality-reviewer
-    frontend-reviewer
-    frontend-a11y-reviewer
-    frontend-performance-reviewer
-    backend-performance-reviewer
-    docs-consistency-reviewer
-    infra-deploy-reviewer
-    version-compat-reviewer
+    fg-410-architecture-reviewer
+    fg-411-security-reviewer
+    fg-412-code-quality-reviewer
+    fg-413-frontend-reviewer
+    fg-414-frontend-a11y-reviewer
+    fg-415-frontend-performance-reviewer
+    fg-416-backend-performance-reviewer
+    fg-418-docs-consistency-reviewer
+    fg-419-infra-deploy-reviewer
+    fg-417-version-compat-reviewer
   )
   for reviewer in "${reviewers[@]}"; do
     grep -q "$reviewer" "$AGENT_DEFAULTS" \

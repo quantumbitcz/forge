@@ -44,13 +44,13 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: frontend-reviewer
+    - agent: fg-413-frontend-reviewer
       focus: "Server vs Client component boundaries, SSR/SSG correctness, metadata"
-    - agent: security-reviewer
+    - agent: fg-411-security-reviewer
       focus: "Server Action input validation, NEXT_PUBLIC_ secrets, CSRF, XSS"
-    - agent: frontend-performance-reviewer
+    - agent: fg-415-frontend-performance-reviewer
       focus: "Client Component boundaries, bundle size, image optimization, streaming"
-    - agent: code-quality-reviewer
+    - agent: fg-412-code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
@@ -62,7 +62,7 @@ quality_gate:
     - agent: "Accessibility Auditor"
       source: builtin
       focus: "WCAG 2.2 AA, keyboard nav, screen reader"
-    - agent: frontend-a11y-reviewer
+    - agent: fg-414-frontend-a11y-reviewer
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
@@ -74,7 +74,7 @@ quality_gate:
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "Server Action types, page prop types, discriminated unions"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"

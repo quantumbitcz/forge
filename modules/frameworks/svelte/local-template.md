@@ -40,21 +40,21 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: frontend-reviewer
+    - agent: fg-413-frontend-reviewer
       focus: "Svelte 5 rune usage, callback props, no legacy syntax"
-    - agent: frontend-performance-reviewer
+    - agent: fg-415-frontend-performance-reviewer
       focus: "Bundle size, lazy loading, keyed each blocks, $derived vs $effect"
-    - agent: security-reviewer
+    - agent: fg-411-security-reviewer
       focus: "XSS via {@html}, token storage, secrets in VITE_* env vars"
   batch_2:
-    - agent: code-quality-reviewer
+    - agent: fg-412-code-quality-reviewer
       focus: "general correctness, maintainability"
-    - agent: frontend-a11y-reviewer
+    - agent: fg-414-frontend-a11y-reviewer
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, focus management, touch targets"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
 
 test_gate:

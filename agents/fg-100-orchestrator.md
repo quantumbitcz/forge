@@ -160,9 +160,9 @@ If the orchestrator is dispatched with `Mode: bugfix` in the prompt (from `/forg
 Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, `"bugfix"`, `"testing"`, `"refactor"`, or `"performance"`).
 
 **Specialized mode behaviors:**
-- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `code-quality-reviewer` + `architecture-reviewer`. Target score is `pass_threshold`, not 100.
-- `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `architecture-reviewer` as mandatory. Target score is `shipping.min_score`.
-- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `backend-performance-reviewer` and/or `frontend-performance-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-412-code-quality-reviewer` + `fg-410-architecture-reviewer`. Target score is `pass_threshold`, not 100.
+- `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `fg-410-architecture-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-415-frontend-performance-reviewer` as mandatory. Target score is `shipping.min_score`.
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 
@@ -521,7 +521,7 @@ TaskUpdate(taskId = sub_task_id, status = "completed")
 | Named agent dispatch | `Dispatching fg-NNN-name` |
 | Inline orchestrator work | Descriptive: `Loading project config`, `Acquiring run lock`, `Resolving convention stack` |
 | Review batch | `Review batch {N}: {reviewer1}, {reviewer2}` |
-| Individual reviewer in batch | `Running architecture-reviewer` |
+| Individual reviewer in batch | `Running fg-410-architecture-reviewer` |
 | Convergence iteration | `Convergence iteration {N}/{max} (score: {prev} → {current})` |
 
 All sub-tasks use `addBlockedBy: [stage_task_id]` to create parent→child hierarchy.
@@ -701,7 +701,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
    - **Stage 3 (VALIDATE):** Use bootstrap-scoped perspectives only: build compiles, tests pass, Docker config valid, architecture matches pattern. Skip: conventions check, approach quality, documentation consistency. Challenge Brief NOT required.
    - **Stage 4 (IMPLEMENT):** **Skip entirely** — the bootstrapper already created all files. Transition directly from VALIDATE (GO) to VERIFY.
    - **Stage 5 (VERIFY):** Runs normally — build + lint + tests must pass.
-   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `architecture-reviewer` + `security-reviewer` + `code-quality-reviewer`. Quality target is `pass_threshold` (not 100).
+   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `fg-410-architecture-reviewer` + `fg-411-security-reviewer` + `fg-412-code-quality-reviewer`. Quality target is `pass_threshold` (not 100).
 
 **If `mode == "standard"` (default):**
 Proceed with the standard `fg-200-planner` dispatch below.
@@ -1159,9 +1159,9 @@ Before dispatching `fg-400-quality-gate`:
 
 If `mode == "bugfix"`:
 Reduced review batch (overrides config-driven batches):
-- Always dispatch: `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`
-- If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `frontend-reviewer`
-- Skip by default: `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`
+- Always dispatch: `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer`
+- If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `fg-413-frontend-reviewer`
+- Skip by default: `fg-414-frontend-a11y-reviewer`, `fg-415-frontend-performance-reviewer`, `fg-416-backend-performance-reviewer`
 
 Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (§9.2) normally.
 
@@ -1175,13 +1175,13 @@ Read `quality_gate` config. For each `batch_N` defined in config:
 
 After all batches: run `quality_gate.inline_checks` (scripts or skills from config).
 
-### 9.1a Version Compatibility Check (dispatch version-compat-reviewer)
+### 9.1a Version Compatibility Check (dispatch fg-417-version-compat-reviewer)
 
-After all quality gate batches and inline checks complete, dispatch `version-compat-reviewer` as a cross-cutting review agent. This runs independently of the config-driven batch system because version compatibility is a universal concern across all frameworks.
+After all quality gate batches and inline checks complete, dispatch `fg-417-version-compat-reviewer` as a cross-cutting review agent. This runs independently of the config-driven batch system because version compatibility is a universal concern across all frameworks.
 
 **Condition:** Only dispatch when `detected_versions` in state.json contains at least one non-`"unknown"` version. Skip silently otherwise.
 
-Dispatch `version-compat-reviewer` with:
+Dispatch `fg-417-version-compat-reviewer` with:
 
 ```
 Analyze version compatibility for this project:
@@ -1193,7 +1193,7 @@ Conventions file: [path from config]
 
 Merge the returned findings into the quality gate's finding pool before scoring (section 9.2). Findings use the `QUAL-COMPAT` category and follow the standard unified format.
 
-**On failure/timeout:** Log INFO-level coverage gap: `"version-compat-reviewer timed out — version compatibility not reviewed."` Proceed to scoring without version-compat findings. If the agent covers a critical domain (it does — dependency conflicts can cause runtime failures), use WARNING severity (-5) for the coverage gap finding per `shared/scoring.md` critical agent gap rule.
+**On failure/timeout:** Log INFO-level coverage gap: `"fg-417-version-compat-reviewer timed out — version compatibility not reviewed."` Proceed to scoring without version-compat findings. If the agent covers a critical domain (it does — dependency conflicts can cause runtime failures), use WARNING severity (-5) for the coverage gap finding per `shared/scoring.md` critical agent gap rule.
 
 ### 9.2 Score and Verdict
 
@@ -1447,8 +1447,8 @@ If `preview.enabled` is not configured or `false`: skip preview validation.
 
 If any component has `framework: k8s` or `container_orchestration:` config in `forge.local.md`:
 
-1. Dispatch `infra-deploy-verifier` with: changed manifests, deployment target, container images, Helm charts
-2. `infra-deploy-verifier` performs tiered verification: static analysis (lint, template) → container build → cluster validation (if available)
+1. Dispatch `fg-610-infra-deploy-verifier` with: changed manifests, deployment target, container images, Helm charts
+2. `fg-610-infra-deploy-verifier` performs tiered verification: static analysis (lint, template) → container build → cluster validation (if available)
 3. If verdict is FAIL: include findings in user presentation, recommend manifest fixes
 4. If verdict is PASS or CONCERNS: proceed
 

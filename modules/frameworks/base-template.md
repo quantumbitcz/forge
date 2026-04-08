@@ -96,29 +96,29 @@ quality_gate:
   max_review_cycles: 2                     # SHARED DEFAULT
   # --- Backend pattern (2 batches) ---
   # batch_1:
-  #   - agent: architecture-reviewer
+  #   - agent: fg-410-architecture-reviewer
   #     focus: "<framework-specific arch focus>"
-  #   - agent: security-reviewer
+  #   - agent: fg-411-security-reviewer
   #     focus: "<framework-specific security focus>"
-  #   - agent: backend-performance-reviewer
+  #   - agent: fg-416-backend-performance-reviewer
   #     focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
   # batch_2:
-  #   - agent: code-quality-reviewer
+  #   - agent: fg-412-code-quality-reviewer
   #     focus: "general correctness, maintainability"
   #   - agent: "pr-review-toolkit:code-reviewer"
   #     source: plugin
   #     focus: "CLAUDE.md adherence"
-  #   - agent: docs-consistency-reviewer
+  #   - agent: fg-418-docs-consistency-reviewer
   #     focus: "code-docs consistency, decision violations, stale documentation"
   #
   # --- Frontend pattern (3 batches) ---
   # batch_1:
-  #   - agent: frontend-reviewer
-  #   - agent: security-reviewer
+  #   - agent: fg-413-frontend-reviewer
+  #   - agent: fg-411-security-reviewer
   #     focus: "<framework-specific security focus>"
-  #   - agent: frontend-performance-reviewer
+  #   - agent: fg-415-frontend-performance-reviewer
   #     focus: "<framework-specific perf focus>"
-  #   - agent: code-quality-reviewer
+  #   - agent: fg-412-code-quality-reviewer
   #     focus: "general correctness, maintainability"
   #   - agent: "pr-review-toolkit:code-reviewer"
   #     source: plugin
@@ -130,7 +130,7 @@ quality_gate:
   #   - agent: "Accessibility Auditor"
   #     source: builtin
   #     focus: "WCAG 2.2 AA, keyboard nav, screen reader"
-  #   - agent: frontend-a11y-reviewer
+  #   - agent: fg-414-frontend-a11y-reviewer
   #     focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
   #   - agent: "pr-review-toolkit:silent-failure-hunter"
   #     source: plugin
@@ -142,7 +142,7 @@ quality_gate:
   #   - agent: "pr-review-toolkit:type-design-analyzer"
   #     source: plugin
   #     focus: "<framework-specific type design focus>"
-  #   - agent: docs-consistency-reviewer
+  #   - agent: fg-418-docs-consistency-reviewer
   #     focus: "code-docs consistency, decision violations, stale documentation"
   #
   # --- Required for all templates (shared) ---

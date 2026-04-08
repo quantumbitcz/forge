@@ -1,5 +1,5 @@
 ---
-name: architecture-reviewer
+name: fg-410-architecture-reviewer
 description: Reviews code for architecture pattern compliance (hexagonal, clean, layered, MVC, microservices, modular monolith).
 model: inherit
 color: cyan

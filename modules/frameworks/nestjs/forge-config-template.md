@@ -19,9 +19,9 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| architecture-reviewer | true | secondary | Module boundary violations, DI anti-patterns — findings merged into quality-gate |
-| security-reviewer | true | secondary | Auth guards, DTO exposure, injection — findings merged into quality-gate |
-| infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
+| fg-410-architecture-reviewer | true | secondary | Module boundary violations, DI anti-patterns — findings merged into quality-gate |
+| fg-411-security-reviewer | true | secondary | Auth guards, DTO exposure, injection — findings merged into quality-gate |
+| fg-419-infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
 
 <!-- Applicable build-system bindings: bun -->
 

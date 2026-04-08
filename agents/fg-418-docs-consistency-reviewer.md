@@ -1,5 +1,5 @@
 ---
-name: docs-consistency-reviewer
+name: fg-418-docs-consistency-reviewer
 model: inherit
 color: white
 description: Reviews code for consistency with documented decisions, constraints, and existing documentation. Reports DOC-* findings.

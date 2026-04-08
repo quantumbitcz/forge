@@ -120,7 +120,7 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
     || fail "Bootstrap mode not documented in stage-contract.md"
   grep -q "Stage 4.*IMPLEMENT.*Skip\|Skip.*entirely\|skipped" "$STAGE_CONTRACT" \
     || fail "Bootstrap mode does not document Stage 4 skip"
-  grep -qi "reduced reviewer\|architecture-reviewer.*security-reviewer" "$STAGE_CONTRACT" \
+  grep -qi "reduced reviewer\|fg-410-architecture-reviewer.*fg-411-security-reviewer" "$STAGE_CONTRACT" \
     || fail "Bootstrap mode does not document reduced reviewer set at Stage 6"
 }
 

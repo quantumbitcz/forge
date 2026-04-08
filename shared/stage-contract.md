@@ -16,7 +16,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 5 | VERIFY | inline (Phase A) + `fg-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `fg-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `fg-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
-| 8 | SHIP | `fg-590-pre-ship-verifier` + `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done AND `evidence.verdict == "SHIP"` (fresh, < `shipping.evidence_max_age_minutes`) | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
+| 8 | SHIP | `fg-590-pre-ship-verifier` + `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `fg-610-infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done AND `evidence.verdict == "SHIP"` (fresh, < `shipping.evidence_max_age_minutes`) | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
 | 9 | LEARN | `fg-700-retrospective` + `fg-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
 **Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails. Universal defaults: the agent applies only the language module rules (`modules/languages/{lang}.md`) and generic check patterns — no framework-specific, testing, or crosscutting layer conventions. The agent logs a WARNING in stage notes: `"Convention stack unavailable — operating with language-only defaults."`
@@ -73,7 +73,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Documentation discovery failure:** If `documentation.enabled` is `true` but `fg-130-docs-discoverer` times out or returns an error: log WARNING in stage notes, set `state.json.documentation.discovery_error = true`, and proceed. Downstream agents check this flag and operate with degraded documentation context:
 
 - **`fg-350-docs-generator` (Stage 7):** Generate docs for changed files only. Skip cross-referencing, coverage gap analysis, and doc structure recommendations. Do not create new doc files that would normally be suggested by discovery results.
-- **`docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` (SCOUT prefix = zero score deduction; this is a pipeline infrastructure signal, not a code quality issue the implementer can fix.)
+- **`fg-418-docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` (SCOUT prefix = zero score deduction; this is a pipeline infrastructure signal, not a code quality issue the implementer can fix.)
 
 ---
 
@@ -350,8 +350,8 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 | Mode | Always Dispatched | Conditional | Skipped |
 |---|---|---|---|
 | Standard | Config-driven batches (all 11 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
-| Bugfix | `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer` | `frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
-| Bootstrap | `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
+| Bugfix | `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
+| Bootstrap | `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
 
 Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap use hardcoded reduced batches in the orchestrator (§9.0a).
 
@@ -560,7 +560,7 @@ The orchestrator detects the pipeline mode from the requirement prefix at PREFLI
    - `MIGRATION_VERIFY` — running verification against the migrated codebase
    These states replace `IMPLEMENTING` in `story_state` during migration execution.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass after migration.
-7. Stage 6 (REVIEW): Runs normally with full reviewer set. `version-compat-reviewer` is especially important — verifies no deprecated APIs remain.
+7. Stage 6 (REVIEW): Runs normally with full reviewer set. `fg-417-version-compat-reviewer` is especially important — verifies no deprecated APIs remain.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. Documentation updates include migration notes and upgraded version references.
 
 The `/migration` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
@@ -575,7 +575,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
-7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `architecture-reviewer` (verify scaffold structure), `security-reviewer` (check for hardcoded secrets, insecure defaults), `code-quality-reviewer` (verify baseline error handling, naming, clarity). Skips: `frontend-*-reviewer` (no design baseline), `backend-performance-reviewer` (no business logic yet), `docs-consistency-reviewer` (no docs baseline), `version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` §3.0 for dispatch details.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-architecture-reviewer` (verify scaffold structure), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults), `fg-412-code-quality-reviewer` (verify baseline error handling, naming, clarity). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` §3.0 for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
 The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.

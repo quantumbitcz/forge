@@ -351,8 +351,8 @@ During retrospective, analyze review agent performance:
     ### Agent Effectiveness ({date})
     | Agent | Runs | Avg Time | Avg Findings | FP Rate |
     |---|---|---|---|---|
-    | architecture-reviewer | 12 | 8s | 1.2 | 5% |
-    | security-reviewer | 12 | 12s | 0.8 | 10% |
+    | fg-410-architecture-reviewer | 12 | 8s | 1.2 | 5% |
+    | fg-411-security-reviewer | 12 | 12s | 0.8 | 10% |
 
 4. Check auto-tuning triggers (see `shared/learnings/agent-effectiveness-template.md`)
 5. If any trigger fires, add to improvement proposals section of the pipeline report

@@ -1,5 +1,5 @@
 ---
-name: infra-deploy-verifier
+name: fg-610-infra-deploy-verifier
 description: Verifies infrastructure deployments — static validation, container builds, optional local cluster tests.
 model: inherit
 color: green

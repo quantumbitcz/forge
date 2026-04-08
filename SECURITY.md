@@ -27,7 +27,7 @@ All project-specific config lives in the consuming repo's `.claude/` directory.
 
 - Agents declare required tools in YAML frontmatter (`tools` field). The orchestrator dispatches agents with only those declared tools.
 - Review agents (quality gate, security reviewer) use read-only access where possible.
-- The `security-reviewer` agent checks for OWASP top 10 vulnerabilities, hardcoded secrets, and injection risks during every pipeline run (Stage 6: Review).
+- The `fg-411-security-reviewer` agent checks for OWASP top 10 vulnerabilities, hardcoded secrets, and injection risks during every pipeline run (Stage 6: Review).
 
 ### Automated security checks
 

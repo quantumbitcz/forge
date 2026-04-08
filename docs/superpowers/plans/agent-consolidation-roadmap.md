@@ -10,9 +10,9 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 
 | Current Agents | Merged Agent | Savings | Risk |
 |---|---|---|---|
-| `frontend-reviewer` + `frontend-design-reviewer` | `frontend-reviewer` (with design checklist) | 1 dispatch | Low |
-| `frontend-a11y-reviewer` + `frontend-performance-reviewer` | `frontend-quality-reviewer` | 1 dispatch | Low |
-| `architecture-reviewer` + `code-quality-reviewer` | `code-reviewer` (with arch + quality checklists) | 1 dispatch | Medium |
+| `fg-413-frontend-reviewer` + `frontend-design-reviewer` | `fg-413-frontend-reviewer` (with design checklist) | 1 dispatch | Low |
+| `fg-414-frontend-a11y-reviewer` + `fg-415-frontend-performance-reviewer` | `frontend-quality-reviewer` | 1 dispatch | Low |
+| `fg-410-architecture-reviewer` + `fg-412-code-quality-reviewer` | `code-reviewer` (with arch + quality checklists) | 1 dispatch | Medium |
 
 ### Tier 2: Moderate Merges
 
@@ -28,12 +28,12 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 | `fg-100-orchestrator` | Coordinator — must stay isolated |
 | `fg-300-implementer` | Hot path — large prompt |
 | `fg-200-planner` | Distinct domain |
-| `security-reviewer` | Must be independently auditable |
+| `fg-411-security-reviewer` | Must be independently auditable |
 | `fg-590-pre-ship-verifier` | Evidence gate — must be independent |
 
 ## Recommended First Merge
 
-`frontend-reviewer` + `frontend-design-reviewer` → combined `frontend-reviewer`
+`fg-413-frontend-reviewer` + `frontend-design-reviewer` → combined `fg-413-frontend-reviewer`
 
 ## Implementation Steps
 

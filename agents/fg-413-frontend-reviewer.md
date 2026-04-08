@@ -1,5 +1,5 @@
 ---
-name: frontend-reviewer
+name: fg-413-frontend-reviewer
 description: Reviews frontend code for conventions, accessibility, framework-specific patterns, design system compliance, visual coherence, responsive behavior, and dark mode.
 model: inherit
 color: teal
@@ -28,9 +28,9 @@ Review the changed files (use `git diff master...HEAD` or `git diff` to find the
 
 - Conventions, framework idioms, accessibility basics
 - Design system compliance, visual coherence, responsive behavior, dark mode, motion
-- NOT: deep accessibility audits (frontend-a11y-reviewer)
-- NOT: performance (frontend-performance-reviewer)
-- NOT: security (security-reviewer)
+- NOT: deep accessibility audits (fg-414-frontend-a11y-reviewer)
+- NOT: performance (fg-415-frontend-performance-reviewer)
+- NOT: security (fg-411-security-reviewer)
 
 ---
 

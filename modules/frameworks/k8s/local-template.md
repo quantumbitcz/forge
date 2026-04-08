@@ -44,13 +44,13 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: infra-deploy-reviewer
+    - agent: fg-419-infra-deploy-reviewer
       focus: "deployment safety, resource limits, probes, security context"
   batch_2:
     - agent: "Security Engineer"
       source: builtin
       focus: "secrets exposure, RBAC, pod security, network policies, image provenance"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"

@@ -43,7 +43,7 @@ Every agent in `agents/` must have frontmatter with `name` (matching filename wi
 ### Pipeline agents vs module agents
 
 - **Pipeline agents** (`fg-{NNN}-{role}`) are shared across all modules. They handle stage orchestration.
-- **Cross-cutting review agents** use descriptive names without a module prefix (e.g., `architecture-reviewer`, `security-reviewer`, `frontend-reviewer`). They are wired into the quality gate and work across modules.
+- **Cross-cutting review agents** use descriptive names without a module prefix (e.g., `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer`). They are wired into the quality gate and work across modules.
 - **Bugfix agent** (`fg-020-bug-investigator`) is a pre-pipeline agent dispatched exclusively in bugfix mode (via `/forge-fix` or `/forge-run bugfix: <description>`). It performs root cause investigation and populates `state.json` bugfix fields before the standard pipeline stages run. When adding features to the bugfix workflow, start from `fg-020-bug-investigator.md` and the `stage-contract.md` Bugfix Mode section.
 
 ### Skills are the user-facing entry points
@@ -162,7 +162,7 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 |-----------|---------|---------|
 | Module directory | `modules/frameworks/{name}` | `fastapi`, `go-stdlib` |
 | Pipeline agent | `fg-{NNN}-{role}` | `fg-300-implementer` |
-| Review agent | `{descriptive-name}` | `architecture-reviewer`, `security-reviewer` |
+| Review agent | `{descriptive-name}` | `fg-410-architecture-reviewer`, `fg-411-security-reviewer` |
 | Skill directory | lowercase-with-hyphens | `forge-status` |
 | Health check script | `{what}-check.sh` | `pre-stage-health.sh`, `dependency-check.sh` |
 

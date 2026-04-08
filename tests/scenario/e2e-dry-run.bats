@@ -36,8 +36,8 @@ components:
   testing: kotest
 quality_gate:
   batch_1:
-    - { agent: architecture-reviewer, focus: "architecture patterns" }
-    - { agent: code-quality-reviewer, focus: "code quality" }
+    - { agent: fg-410-architecture-reviewer, focus: "architecture patterns" }
+    - { agent: fg-412-code-quality-reviewer, focus: "code quality" }
 ---
 LOCALMD
 
@@ -241,7 +241,7 @@ with open('$PROJECT/.forge/state.json', 'w') as f:
 # 7. All agents referenced in config exist
 # ---------------------------------------------------------------------------
 @test "e2e-dry-run: quality gate agents from config exist as agent files" {
-  for agent in architecture-reviewer code-quality-reviewer; do
+  for agent in fg-410-architecture-reviewer fg-412-code-quality-reviewer; do
     [[ -f "$PLUGIN_ROOT/agents/${agent}.md" ]] \
       || fail "Agent $agent referenced in quality_gate config does not exist"
   done

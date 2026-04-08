@@ -46,19 +46,19 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: architecture-reviewer
+    - agent: fg-410-architecture-reviewer
       focus: "MTV layering violations, business logic in views, direct ORM in views"
-    - agent: security-reviewer
+    - agent: fg-411-security-reviewer
       focus: "auth, permissions, SQL injection risk, ALLOWED_HOSTS, DEBUG, secrets"
-    - agent: backend-performance-reviewer
+    - agent: fg-416-backend-performance-reviewer
       focus: "N+1 queries, missing select_related/prefetch_related, queryset in loops"
   batch_2:
-    - agent: code-quality-reviewer
+    - agent: fg-412-code-quality-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: docs-consistency-reviewer
+    - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"

@@ -1,5 +1,5 @@
 ---
-name: version-compat-reviewer
+name: fg-417-version-compat-reviewer
 description: Analyzes dependency tree for version conflicts, language feature compatibility, and runtime API removals.
 model: inherit
 color: cyan

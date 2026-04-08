@@ -92,8 +92,8 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
   grep -q "documentation_consistency" "$VALIDATOR" || fail "Validator missing documentation_consistency perspective"
 }
 
-@test "docs-contract: quality gate references docs-consistency-reviewer" {
-  grep -q "docs-consistency-reviewer" "$QUALITY_GATE" || fail "Quality gate does not reference docs-consistency-reviewer"
+@test "docs-contract: quality gate references fg-418-docs-consistency-reviewer" {
+  grep -q "fg-418-docs-consistency-reviewer" "$QUALITY_GATE" || fail "Quality gate does not reference fg-418-docs-consistency-reviewer"
 }
 
 @test "docs-contract: docs-index.json documented in state schema" {
