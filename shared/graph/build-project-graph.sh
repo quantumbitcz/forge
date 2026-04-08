@@ -63,15 +63,28 @@ fi
 
 PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
 
+# --- Helper: escape strings for Cypher (defined early for project_id escaping) ---
+cypher_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
+  printf '%s' "$s"
+}
+
 # Auto-derive project_id if not provided
 if [[ -z "${PROJECT_ID:-}" ]]; then
   PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
 fi
+# Escape project_id for safe Cypher embedding (handles paths with single quotes)
+PROJECT_ID="$(cypher_escape "$PROJECT_ID")"
 COMPONENT="${COMPONENT:-}"
 
-# Cypher-safe component value
+# Cypher-safe component value (escaped for Cypher)
 if [[ -n "$COMPONENT" ]]; then
-  COMPONENT_CYPHER="'${COMPONENT}'"
+  COMPONENT_CYPHER="'$(cypher_escape "$COMPONENT")'"
 else
   COMPONENT_CYPHER="null"
 fi
@@ -108,16 +121,7 @@ while IFS= read -r f; do
   FILE_SET["$f"]=1
 done < <(cd "$PROJECT_ROOT" && git ls-files | grep -E "$SOURCE_EXTS" | sort || true)
 
-# --- Helper: escape single quotes for Cypher ---
-cypher_escape() {
-  local s="$1"
-  s="${s//\\/\\\\}"
-  s="${s//\'/\\\'}"
-  s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
-  s="${s//$'\r'/}"
-  printf '%s' "$s"
-}
+# cypher_escape defined above (before project_id escaping)
 
 # --- Helper: get file size (returns 0 if file is unreadable/missing) ---
 file_size() {

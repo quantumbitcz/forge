@@ -66,15 +66,28 @@ fi
 
 PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
 
+# --- Helper: escape strings for Cypher (defined early for project_id escaping) ---
+cypher_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
+  printf '%s' "$s"
+}
+
 # Auto-derive project_id if not provided
 if [[ -z "${PROJECT_ID:-}" ]]; then
   PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
 fi
+# Escape project_id for safe Cypher embedding
+PROJECT_ID="$(cypher_escape "$PROJECT_ID")"
 COMPONENT="${COMPONENT:-}"
 
-# Cypher-safe component value
+# Cypher-safe component value (escaped for Cypher)
 if [[ -n "$COMPONENT" ]]; then
-  COMPONENT_CYPHER="'${COMPONENT}'"
+  COMPONENT_CYPHER="'$(cypher_escape "$COMPONENT")'"
 else
   COMPONENT_CYPHER="null"
 fi
@@ -98,16 +111,7 @@ GRAPH_DIR="${PROJECT_ROOT}/.forge/graph"
 mkdir -p "$GRAPH_DIR"
 ENRICHED_FILE="${GRAPH_DIR}/.enriched-files"
 
-# --- Helper: escape strings for Cypher ---
-cypher_escape() {
-  local s="$1"
-  s="${s//\\/\\\\}"
-  s="${s//\'/\\\'}"
-  s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
-  s="${s//$'\r'/}"
-  printf '%s' "$s"
-}
+# cypher_escape defined above (before project_id escaping)
 
 # --- Helper: determine language from extension ---
 ext_to_lang() {

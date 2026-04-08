@@ -62,13 +62,26 @@ if [[ ! -d "$PROJECT_ROOT/.git" ]]; then
   exit 1
 fi
 
+# --- Helper: escape strings for Cypher ---
+cypher_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\'/\\\'}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
+  printf '%s' "$s"
+}
+
 # Auto-derive project_id if not provided
 if [[ -z "$PROJECT_ID" ]]; then
   PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
 fi
+# Escape project_id for safe Cypher embedding
+PROJECT_ID="$(cypher_escape "$PROJECT_ID")"
 
 if [[ -n "$COMPONENT" ]]; then
-  COMPONENT_CYPHER="'${COMPONENT}'"
+  COMPONENT_CYPHER="'$(cypher_escape "$COMPONENT")'"
 else
   COMPONENT_CYPHER="null"
 fi
@@ -130,16 +143,7 @@ if [[ -z "$SOURCE_CHANGES" ]]; then
   exit 0
 fi
 
-# --- Helper: escape strings for Cypher ---
-cypher_escape() {
-  local s="$1"
-  s="${s//\\/\\\\}"
-  s="${s//\'/\\\'}"
-  s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
-  s="${s//$'\r'/}"
-  printf '%s' "$s"
-}
+# cypher_escape defined above (before project_id escaping)
 
 # --- Helper: determine language from extension ---
 ext_to_lang() {
