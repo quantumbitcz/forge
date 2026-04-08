@@ -234,7 +234,7 @@ When the requirement involves frontend UI changes AND the visual companion is av
 2. The project has a frontend framework configured (`framework:` is react, vue, svelte, angular, sveltekit, or nextjs)
 3. `frontend_preview.enabled` is `true` in `forge.local.md` (default: `true`)
 4. `autonomous` is `false` in `forge-config.md` (skip visual preview in autonomous mode — pick design based on `shared/frontend-design-theory.md` principles and log `[AUTO-DESIGN]`)
-5. The superpowers visual companion is available (check `state.json.integrations.visual_companion`)
+5. The superpowers visual companion is available (check `state.json.visual_companion`)
 
 **If all conditions met:**
 
