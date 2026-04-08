@@ -39,9 +39,9 @@
       "pattern": "hyper::Body",
       "replacement": "axum::body::Body (Axum 0.7 uses its own Body type backed by http-body 1.0)",
       "package": "hyper",
-      "since": "1.0",
+      "since": "0.14.0",
       "removed_in": "1.0",
-      "applies_from": "1.0",
+      "applies_from": "0.14.0",
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"

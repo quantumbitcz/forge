@@ -17,9 +17,9 @@
       "pattern": "IconLeft|IconRight",
       "replacement": "Use Chevron component instead",
       "package": "react-day-picker",
-      "since": "9.0.0",
+      "since": "8.10.0",
       "removed_in": "9.0.0",
-      "applies_from": "9.0.0",
+      "applies_from": "8.10.0",
       "applies_to": "*",
       "added": "2026-03-21",
       "addedBy": "seed"

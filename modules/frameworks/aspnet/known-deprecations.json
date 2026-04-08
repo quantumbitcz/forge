@@ -87,16 +87,16 @@
       "addedBy": "seed"
     },
     {
-      "pattern": "WebSecurityConfigurerAdapter|extends WebSecurityConfigurerAdapter",
-      "replacement": "N/A for ASP.NET — this is a Spring pattern. In ASP.NET Core use SecurityFilterChain equivalent: configure via AddAuthentication/AddAuthorization in Program.cs.",
+      "pattern": "AddIdentity<|services\\.AddDefaultIdentity",
+      "replacement": "Use AddIdentityApiEndpoints<TUser>() (ASP.NET Core 8+) for token-based auth, or AddIdentityCore<TUser>() for minimal setup without UI.",
       "package": "aspnet-identity",
-      "since": "6.0.0",
+      "since": "8.0.0",
       "removed_in": null,
-      "applies_from": "6.0.0",
+      "applies_from": "8.0.0",
       "applies_to": "*",
       "language": "csharp",
-      "added": "2026-03-23",
-      "addedBy": "seed"
+      "added": "2026-04-08",
+      "addedBy": "audit"
     }
   ]
 }
