@@ -1919,6 +1919,7 @@ MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-102-co
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-103-cross-repo-coordinator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-103-cross-repo-coordinator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'architecture-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (b:Agent {name: 'fg-590-pre-ship-verifier'}) CREATE (a)-[:DISPATCHES]->(b);
