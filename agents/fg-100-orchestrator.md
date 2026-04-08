@@ -39,6 +39,18 @@ You manage the complete lifecycle autonomously across 10 stages: **PREFLIGHT -> 
 - Load **metadata only** (IDs, titles, states, config values). Workers load full file contents.
 - The orchestrator **reads ZERO source files** -- agents do that.
 
+### Dispatch Protocol
+
+Every agent dispatch follows this 3-step wrapper. Sections below marked `[dispatch]` use this protocol:
+
+1. `TaskCreate("{description}", activeForm="{active description}")`
+2. `dispatch {agent-name} "{prompt}"` via the Agent tool
+3. `TaskUpdate(sub_task, status="completed")` (or `"failed"` on error)
+
+On failure: apply error taxonomy classification → recovery engine (unless marked advisory). On timeout: record INFO finding and continue.
+
+**Linear rule:** All `If integrations.linear.available` blocks follow the same pattern: execute MCP operation if true, skip silently if false. Never fail the pipeline on Linear unavailability.
+
 ---
 
 ## 2. Argument Parsing
@@ -257,7 +269,7 @@ After version detection, optionally refresh the deprecation registries so downst
 **Condition:** Only dispatch if Context7 MCP is available (detected in 3.4) AND `detected_versions` contains at least one non-`"unknown"` version. Skip silently otherwise.
 
 Dispatch `fg-140-deprecation-refresh` with:
-// Wrap: TaskCreate("Dispatching fg-140-deprecation-refresh") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-140-deprecation-refresh]
 
 ```
 Refresh deprecation registries for this project.
@@ -316,7 +328,7 @@ After resolving all convention stacks, generate per-component rule caches for th
 ### 3.5c+ Documentation Discovery (dispatch fg-130-docs-discoverer)
 
 14. If `documentation.enabled` is `true` (default): dispatch `fg-130-docs-discoverer` with:
-    // Wrap: TaskCreate("Dispatching fg-130-docs-discoverer") → Agent dispatch → TaskUpdate(completed)
+    [dispatch fg-130-docs-discoverer]
     - Project root path
     - Documentation config from `forge.local.md` `documentation:` section
     - Graph availability from `state.json.integrations.neo4j.available`
@@ -338,7 +350,7 @@ If `test_bootstrapper` is configured in `forge.local.md` and `test_bootstrapper.
 4. If coverage < threshold:
    - Log INFO: "Coverage {X}% below threshold {Y}% — dispatching test bootstrapper"
    - Dispatch `fg-150-test-bootstrapper` with: project root, target coverage, component convention stack
-     // Wrap: TaskCreate("Dispatching fg-150-test-bootstrapper") → Agent dispatch → TaskUpdate(completed)
+     [dispatch fg-150-test-bootstrapper]
    - Wait for bootstrapper to complete
    - Re-run coverage to verify improvement
    - Proceed to Stage 1 (EXPLORE) regardless of whether threshold was reached (bootstrapper does its best)
@@ -431,8 +443,8 @@ TaskUpdate(sub_task, status="completed")
 - `mode`: pipeline mode (standard/migration/bootstrap/bugfix) — determines branch type (feat/migrate/chore/fix)
 - `base_dir`: `.forge/worktree` (standard mode) or `{run_dir}/worktree/` (sprint mode, when `--run-dir` provided)
 
-Read `worktree_path` and `branch_name` from stage notes written by fg-101.
-Store `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`) in state.json. Set working directory to `worktree_path` for all subsequent stages.
+Read `worktree_path`, `branch_name`, and `shallow_clone` from stage notes written by fg-101.
+Store `ticket_id`, `branch_name`, `tracking_dir` (`.forge/tracking`), and `shallow_clone` in state.json. Set working directory to `worktree_path` for all subsequent stages.
 
 ### 3.9a Bugfix Source Resolution (bugfix mode only)
 
@@ -539,7 +551,7 @@ When any stage needs conventions for a specific file path:
 ### Bugfix Mode (mode == "bugfix")
 
 If `mode == "bugfix"`:
-// Wrap: TaskCreate("Investigating bug — fg-020-bug-investigator") → Agent → TaskUpdate
+[dispatch fg-020-bug-investigator]
 Dispatch `fg-020-bug-investigator` with:
 - Bug description (from ticket or raw input)
 - Bug source and source_id
@@ -558,7 +570,7 @@ Mark Explore as completed. Skip to Stage 2.
 ### Standard / Migration / Bootstrap Mode
 
 Dispatch exploration agents configured in `forge.local.md` under `explore_agents`. Default: `feature-dev:code-explorer` (primary) + `Explore` (secondary, subagent_type=Explore).
-// Wrap: TaskCreate("Dispatching explore agents") → Agent dispatches → TaskUpdate(completed)
+[dispatch per protocol]
 
 ### Agent 1: Primary Explorer
 
@@ -606,7 +618,7 @@ After exploration completes (standard mode only — skip for bugfix, migration, 
    a. Log in stage notes: `"Deep scope check triggered: {domain_count} domains detected (threshold: {threshold}). Domains: {domain_list}"`
 
    b. Dispatch `fg-015-scope-decomposer`:
-      // Wrap: TaskCreate("Decomposing multi-feature requirement — fg-015-scope-decomposer") → Agent dispatch → TaskUpdate(completed)
+      [dispatch fg-015-scope-decomposer]
       ```
       Decompose this multi-feature requirement into independent features:
 
@@ -637,7 +649,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
 
 **If `mode == "bugfix"`:**
 1. Dispatch `fg-020-bug-investigator` with:
-   // Wrap: TaskCreate("Reproducing bug — fg-020-bug-investigator") → Agent dispatch → TaskUpdate(completed)
+   [dispatch fg-020-bug-investigator]
    - Stage 1 investigation results (from stage notes)
    - Instruction: "Execute Phase 2 — REPRODUCE"
 2. Read stage 2 notes. Extract:
@@ -669,7 +681,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
 
 **If `mode == "migration"`:**
 1. Dispatch `fg-160-migration-planner` instead of `fg-200-planner`
-   // Wrap: TaskCreate("Dispatching fg-160-migration-planner") → Agent dispatch → TaskUpdate(completed)
+   [dispatch fg-160-migration-planner]
 2. The migration planner uses its own state machine (MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY) — see `fg-160-migration-planner.md` for details
 3. The requirement has already been stripped of the `migrate:` / `migration:` prefix at PREFLIGHT
 
@@ -689,7 +701,7 @@ Proceed with the standard `fg-200-planner` dispatch below.
 ### Standard Planning (mode == "standard")
 
 Dispatch `fg-200-planner` with a **<2,000 token** prompt:
-// Wrap: TaskCreate("Dispatching fg-200-planner") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-200-planner]
 
 ```
 Create an implementation plan for: [requirement]
@@ -753,7 +765,6 @@ If `integrations.linear.available` is true:
 4. Store all Linear IDs in `state.json` under `linear.epic_id`, `linear.story_ids`, `linear.task_ids`
 5. Set all items to "Backlog" status
 
-If `integrations.linear.available` is false, skip Linear operations silently.
 
 Write `.forge/stage_2_notes_{storyId}.md` with planning decisions.
 
@@ -769,7 +780,7 @@ Mark Plan as completed.
 
 If `mode == "bugfix"`:
 Dispatch `fg-210-validator` with 4 bugfix-specific perspectives (instead of the standard 7):
-// Wrap: TaskCreate("Dispatching fg-210-validator (bugfix)") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-210-validator (bugfix)]
 
 ```
 Validate this bugfix plan:
@@ -794,7 +805,7 @@ Process verdict normally (GO/REVISE/NO-GO). On REVISE, re-dispatch `fg-020-bug-i
 ### Standard Validation (all other modes)
 
 Dispatch `fg-210-validator` with a **<2,000 token** prompt:
-// Wrap: TaskCreate("Dispatching fg-210-validator") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-210-validator]
 
 ```
 Validate this implementation plan:
@@ -877,7 +888,6 @@ If `integrations.linear.available` is true:
 
 - Comment on Epic: validation verdict (GO/REVISE/NO-GO) with summary of findings
 
-If `integrations.linear.available` is false, skip Linear operations silently.
 
 Write `.forge/stage_3_notes_{storyId}.md` with validation analysis.
 
@@ -922,12 +932,12 @@ For each parallel group (sequential order, groups 1 -> 2 -> 3):
   For each task in the group (concurrent up to `implementation.parallel_threshold`):
 
   a. If `scaffolder_before_impl: true` in config: dispatch `fg-310-scaffolder` with task details, scaffolder patterns, conventions file path. Scaffolder generates boilerplate, types, TODO markers.
-     // Wrap: TaskCreate("Dispatching fg-310-scaffolder") → Agent dispatch → TaskUpdate(completed)
+     [dispatch fg-310-scaffolder]
 
   b. Write tests (RED phase -- tests defining expected behavior, expected to fail).
 
   c. Dispatch `fg-300-implementer` with a **<2,000 token** prompt containing ONLY that task's details:
-     // Wrap: TaskCreate("Dispatching fg-300-implementer") → Agent dispatch → TaskUpdate(completed)
+     [dispatch fg-300-implementer]
 
   ```
   Implement this task:
@@ -1000,7 +1010,7 @@ After `fg-300-implementer` completes a task for a frontend component, optionally
 3. `frontend_polish.enabled` is true in the component's config (default: true for frontend components)
 
 Dispatch `fg-320-frontend-polisher` with:
-// Wrap: TaskCreate("Dispatching fg-320-frontend-polisher") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-320-frontend-polisher]
 
 ```
 Polish this frontend implementation:
@@ -1028,7 +1038,6 @@ If `integrations.linear.available` is true:
 - For each task: move Linear Task from "In Progress" to "Done" when task completes successfully
 - Failed tasks: move to "Blocked" with failure reason as comment
 
-If `integrations.linear.available` is false, skip Linear operations silently.
 
 Update state: add `implement` timestamp.
 
@@ -1075,7 +1084,7 @@ Run in sequence using commands from config. Stop on first failure:
 ### Phase B: Test Gate (dispatch fg-500-test-gate)
 
 Dispatch `fg-500-test-gate` with config:
-// Wrap: TaskCreate("Dispatching fg-500-test-gate") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-500-test-gate]
 
 ```
 Run test suite and analyze results.
@@ -1101,7 +1110,6 @@ If `integrations.linear.available` is true:
 
 - Comment on Epic: build/test results summary (pass/fail, fix loop count, test cycle count)
 
-If `integrations.linear.available` is false, skip Linear operations silently.
 
 Write `.forge/stage_5_notes_{storyId}.md` with verification details, fix loop history.
 
@@ -1150,7 +1158,7 @@ Dispatch the reduced batch as a single batch (no multi-batch sequencing needed).
 ### 9.1 Batch Dispatch (standard / migration / bootstrap modes)
 
 Read `quality_gate` config. For each `batch_N` defined in config:
-// Wrap: TaskCreate("Review batch {N}: {agent1}, {agent2}") → per-agent TaskCreate → Agent dispatches → TaskUpdate(completed)
+[dispatch per protocol]
 1. Dispatch all agents in the batch **in parallel**
 2. Wait for batch completion before starting next batch
 3. Partial failure: proceed with available results, note coverage gap (see `shared/scoring.md`)
@@ -1261,7 +1269,7 @@ Mark Review as completed.
 **story_state:** `DOCUMENTING` | **TaskUpdate:** Mark "Stage 6: Review" → `completed`, Mark "Stage 7: Docs" → `in_progress`
 
 Dispatch `fg-350-docs-generator` with:
-// Wrap: TaskCreate("Dispatching fg-350-docs-generator") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-350-docs-generator]
 
 ```
 Changed files: [list from implementation checkpoints]
@@ -1297,7 +1305,7 @@ Mark Docs as completed.
 **TaskUpdate:** Mark "Stage 7: Docs" → `completed`
 
 Dispatch `fg-590-pre-ship-verifier` with:
-// Wrap: TaskCreate("Dispatching fg-590-pre-ship-verifier") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-590-pre-ship-verifier]
 
 ```
 Verify shipping readiness. Run fresh build, lint, tests, and code review.
@@ -1348,7 +1356,7 @@ Escalate via AskUserQuestion with header "Evidence Gate Blocked", question "Pre-
 **Pre-condition:** `.forge/evidence.json` must exist with `verdict: "SHIP"` and `timestamp` within `shipping.evidence_max_age_minutes`. If missing or stale, re-dispatch fg-590 (§10.5). If BLOCK, follow evidence verdict routing (§10.5).
 
 Dispatch `fg-600-pr-builder` with:
-// Wrap: TaskCreate("Dispatching fg-600-pr-builder") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-600-pr-builder]
 
 ```
 Create branch, commit, and PR for this pipeline run.
@@ -1393,7 +1401,6 @@ If `integrations.linear.available` is true:
 - Link PR URL to Epic as attachment
 - Move all Stories to "In Review" status
 
-If `integrations.linear.available` is false, skip Linear operations silently.
 
 ### Preview Validation (conditional)
 
@@ -1401,7 +1408,7 @@ If `preview.enabled` is `true` in `forge.local.md` and the PR was created succes
 
 1. Wait for preview URL to become available (from CI/CD webhook or `preview.url_pattern` config)
 2. Dispatch `fg-650-preview-validator` with: PR number, preview URL, smoke test routes, Lighthouse thresholds, Playwright test paths
-   // Wrap: TaskCreate("Dispatching fg-650-preview-validator") → Agent dispatch → TaskUpdate(completed)
+   [dispatch fg-650-preview-validator]
 3. fg-650 posts results as a PR comment (smoke tests, Lighthouse audit, visual regression, E2E)
 4. **Gating behavior** based on `preview.block_merge` config (default: `false`):
    - If `block_merge: false` (default): verdict is advisory only. FAIL → add `preview-failed` label, include findings in user presentation, but proceed to user response.
@@ -1463,7 +1470,7 @@ Mark Ship as completed.
 **story_state:** `LEARNING` | **TaskUpdate:** Mark "Stage 8: Ship" → `completed`, Mark "Stage 9: Learn" → `in_progress`
 
 Dispatch `fg-700-retrospective` with a **<2,000 token** summary:
-// Wrap: TaskCreate("Dispatching fg-700-retrospective") → Agent dispatch → TaskUpdate(completed)
+[dispatch fg-700-retrospective]
 
 If `mode == "bugfix"`, include additional bugfix context in the dispatch prompt:
 ```
@@ -1527,7 +1534,7 @@ Delete `.forge/.lock` (or `{run_dir}/.lock` in sprint mode).
 After `fg-700-retrospective` completes:
 
 1. Dispatch `fg-720-recap` with:
-   // Wrap: TaskCreate("Dispatching fg-720-recap") → Agent dispatch → TaskUpdate(completed)
+   [dispatch fg-720-recap]
    - All stage note paths
    - `state.json` path
    - Quality gate report path

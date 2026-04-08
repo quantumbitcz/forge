@@ -45,7 +45,10 @@ Create a new git worktree for a pipeline run.
 WORKTREE_CREATED
 worktree_path: <absolute-path>
 branch_name: <branch-name>
+shallow_clone: <true|false>
 ```
+
+The orchestrator reads `shallow_clone` from these stage notes and writes it to `state.json.shallow_clone`. Downstream agents check this field to skip history-dependent analysis (git log depth, git blame, diff-based drift detection) and fall back to file-based analysis.
 
 **Constraints:**
 - Never create a worktree on an existing branch that has uncommitted changes

@@ -23,7 +23,8 @@ setup() {
 }
 
 @test "tracking-contract: orchestrator wraps Agent dispatch with TaskCreate" {
-  grep -q "TaskCreate.*Dispatching\|Wrap.*TaskCreate" "$ORCHESTRATOR"
+  # Orchestrator uses [dispatch] shorthand per Dispatch Protocol section, or explicit TaskCreate
+  grep -q "\[dispatch\]\|\[dispatch fg-\|TaskCreate.*Dispatching\|Dispatch Protocol" "$ORCHESTRATOR"
 }
 
 @test "tracking-contract: orchestrator has kanban transitions table" {
