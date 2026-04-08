@@ -402,6 +402,19 @@ Create/overwrite `.forge/state.json` per `shared/state-schema.md` (version 1.4.0
 
 Skip if `--dry-run` (no worktree needed for read-only analysis).
 
+**Pre-creation cleanup:** Before creating a new worktree, detect and handle stale worktrees from interrupted runs:
+
+```
+sub_task = TaskCreate("Checking for stale worktrees", activeForm="Checking for stale worktrees")
+stale_result = dispatch fg-101-worktree-manager "detect-stale"
+TaskUpdate(sub_task, status="completed")
+```
+
+If `STALE_WORKTREES_DETECTED: N` where N > 0:
+- For each stale worktree, dispatch cleanup: `fg-101-worktree-manager "cleanup <worktree_path> --delete-branch"`
+- If cleanup fails (uncommitted changes), ask the user via `AskUserQuestion` whether to force-remove or abort
+- Log each stale worktree cleanup as INFO in stage notes
+
 Dispatch `fg-101-worktree-manager` to create the worktree:
 
 ```
