@@ -200,7 +200,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Entry condition:** Plan validated with GO verdict (Stage 3). Worktree exists at `.forge/worktree` (created at PREFLIGHT).
 
 **Pre-entry checks:**
-1. Verify worktree exists at `.forge/worktree`. If not (should not happen after PREFLIGHT), abort with error `WORKTREE_MISSING`.
+1. Verify worktree exists at `.forge/worktree`. If not (should not happen after PREFLIGHT), abort with error `WORKTREE_FAILURE`.
 
 **Inputs:**
 - Validated plan with tasks and parallel groups
@@ -619,7 +619,7 @@ If reproduction fails after 3 attempts AND user cannot confirm:
 - Mark `bugfix.reproduction.method = "unresolvable"`
 - Orchestrator asks user: (A) Provide more context, (B) Pair debug, (C) Close as unreproducible
 - If (A): re-run Stage 1 with additional context. Max 2 "Provide more context" re-runs (tracked via `bugfix.context_retries` in state.json, initialized to 0). On third failure, only options (B) and (C) remain — (A) is removed to prevent infinite loops.
-- If (C): set `state.json.abort_reason = "unreproducible"`, skip to LEARN
+- If (C): set `state.json.abort_reason = "Bug unreproducible"`, skip to LEARN
 
 ### Targeted Re-Implementation
 
@@ -651,7 +651,7 @@ All retry loops share a cumulative budget tracked in `state.json.total_retries`.
 
 When `total_retries >= total_retries_max`, the orchestrator escalates to the user regardless of which individual loop has budget remaining. Escalation format:
 
-The orchestrator **escalates via AskUserQuestion** with header "Budget", question "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}.", options: "Continue" (increase budget and keep iterating), "Ship as-is" (create PR with current state), "Abort" (stop the pipeline run).
+The orchestrator **escalates via AskUserQuestion** with header "Budget", question "Pipeline exhausted global retry budget ({total_retries}/{total_retries_max}). Breakdown: validation={N}, build_fix={N}, test_fix={N}, quality_fix={N}.", options: "Continue" (increase budget and keep iterating), "Abort" (stop the pipeline run). Note: there is no "Ship as-is" option — the pipeline never offers to ship below `shipping.min_score` or without passing evidence (see `convergence-engine.md`).
 
 Constraint: `total_retries_max` must be >= 5 and <= 30. If violated, use default (10).
 

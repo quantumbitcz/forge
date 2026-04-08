@@ -19,7 +19,7 @@ State transitions:
 - `PLATEAUED` is terminal for the current phase (proceeds to safety gate or exits)
 - `REGRESSING` is terminal (escalates to user)
 
-## Two-Phase Model
+## Phase Model
 
 | Phase | Loop | Goal | Convergence Signal |
 |-------|------|------|--------------------|

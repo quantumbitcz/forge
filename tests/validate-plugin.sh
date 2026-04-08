@@ -537,7 +537,7 @@ if [[ ! -f "$ROOT/shared/convergence-engine.md" ]]; then
   echo "  FAIL: shared/convergence-engine.md does not exist"
   check33_fail=1
 else
-  for section in "Convergence States" "Two-Phase Model" "Algorithm" "Configuration" "PREFLIGHT Constraints"; do
+  for section in "Convergence States" "Phase Model" "Algorithm" "Configuration" "PREFLIGHT Constraints"; do
     if ! grep -q "$section" "$ROOT/shared/convergence-engine.md"; then
       echo "  FAIL: convergence-engine.md missing section: $section"
       check33_fail=1
