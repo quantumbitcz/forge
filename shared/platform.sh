@@ -225,6 +225,8 @@ portable_normalize_path() {
       *) stack[$n]="$segment"; n=$((n + 1)) ;;
     esac
   done
+  # For absolute paths, leading .. above root is discarded (can't go above /)
+  [[ $is_absolute -eq 1 ]] && leading_dots=0
   local result="" i
   for ((i = 0; i < leading_dots; i++)); do
     result="${result:+$result/}.."
