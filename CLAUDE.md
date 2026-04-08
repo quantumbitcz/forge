@@ -58,6 +58,10 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | UI | `shared/agent-ui.md` |
 | Sprint | `shared/sprint-state-schema.md` |
 | Intent | `shared/intent-classification.md` |
+| State machine | `shared/state-transitions.md` |
+| Domain detection | `shared/domain-detection.md` |
+| Decision log | `shared/decision-log.md` |
+| State integrity | `shared/state-integrity.sh` |
 
 ## Agents (40 total, `agents/*.md`)
 
@@ -119,6 +123,10 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Convention drift:** Mid-run SHA256 hash comparison. Agents react only to their relevant section changes.
 - **Learnings** (`learnings/`): Per-module files + JSON schemas for rule evolution and agent effectiveness.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion.
+
+### Deterministic Control Flow
+
+Pipeline control flow follows the formal transition table in `shared/state-transitions.md`. LLM judgment is used for code review, implementation, and architecture decisions — NOT for state transitions. Every branching decision is logged to `.forge/decisions.jsonl` per `shared/decision-log.md`. Recovery uses circuit breakers per failure category (`shared/recovery/recovery-engine.md` §8.1). Reviewer conflicts are resolved by priority ordering in `shared/agent-communication.md` §3.1.
 
 ## Integrations
 
