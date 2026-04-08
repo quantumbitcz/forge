@@ -91,7 +91,11 @@ Identify worktrees from interrupted or abandoned pipeline runs.
    c. Check the lock file (`.forge/.lock` or `.forge/runs/{feature-id}/.lock`):
       - Read PID from lock file
       - Check if PID is still running: `kill -0 <pid> 2>/dev/null`
-      - If PID not running, lock is stale
+      - **Container fallback:** If PID check fails (process not found), also check the lock file's age:
+        - If lock file is older than 1 hour AND the PID is not running: lock is stale
+        - If lock file is younger than 1 hour AND the PID is not running: lock is likely stale but could be a container PID mismatch — treat as stale with WARNING: "Lock PID {pid} not found (possible container environment). Lock age: {age}. Treating as stale."
+      - If PID IS running: lock is active (not stale)
+      - 24-hour absolute timeout: any lock older than 24 hours is stale regardless of PID status
    d. A worktree is stale if: incomplete run AND stale lock (or no lock file)
 3. Report stale worktrees with their paths, associated feature IDs, and last-modified timestamps
 

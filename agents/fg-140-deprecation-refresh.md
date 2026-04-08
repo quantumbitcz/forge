@@ -173,6 +173,13 @@ Use semantic version comparison (major.minor.patch). For non-semver versions (e.
 - Compare major then minor then patch
 - If unparseable: treat as `"unknown"` and apply conservatively
 
+**Pre-release suffix handling** (e.g., `3.0.0-rc.1`, `3.0.0-alpha.2`, `3.0.0-beta`):
+- Parse format: `<major>.<minor>.<patch>[-<pre-release>]`
+- A pre-release version has **lower** precedence than its release: `3.0.0-rc.1 < 3.0.0`
+- Pre-release ordering: `alpha < beta < rc` (lexicographic within same base version)
+- For `applies_from` comparison: strip pre-release suffix from **both** sides, then compare base versions. If bases are equal, a pre-release project version matches a release `applies_from` conservatively (apply the rule with WARNING)
+- For `removed_in` comparison: same stripping logic. A pre-release project version below the `removed_in` release gets WARNING (deprecated), not CRITICAL (removed)
+
 ---
 
 ## 6. Merge Into Existing JSON
