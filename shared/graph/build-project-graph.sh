@@ -78,7 +78,8 @@ cypher_escape() {
 if [[ -z "${PROJECT_ID:-}" ]]; then
   PROJECT_ID=$(derive_project_id "$PROJECT_ROOT")
 fi
-# Escape project_id for safe Cypher embedding (handles paths with single quotes)
+# Escape project_id for safe Cypher embedding (handles paths with single quotes).
+# NOTE: PROJECT_ID is pre-escaped here — do NOT pass it through cypher_escape() again.
 PROJECT_ID="$(cypher_escape "$PROJECT_ID")"
 COMPONENT="${COMPONENT:-}"
 
@@ -140,7 +141,7 @@ file_date() {
 ext_to_lang() {
   local file="$1"
   case "$file" in
-    *.kt)       echo "kotlin" ;;
+    *.kt|*.kts)  echo "kotlin" ;;
     *.java)     echo "java" ;;
     *.ts|*.tsx)  echo "typescript" ;;
     *.js|*.jsx)  echo "javascript" ;;
@@ -153,9 +154,9 @@ ext_to_lang() {
     *.scala)    echo "scala" ;;
     *.dart)     echo "dart" ;;
     *.swift)    echo "swift" ;;
-    *.cs)       echo "csharp" ;;
+    *.cs|*.csx)  echo "csharp" ;;
     *.c|*.h)     echo "c" ;;
-    *.cpp|*.hpp)  echo "cpp" ;;
+    *.cpp|*.cc|*.cxx|*.hpp) echo "cpp" ;;
     *)          echo "unknown" ;;
   esac
 }

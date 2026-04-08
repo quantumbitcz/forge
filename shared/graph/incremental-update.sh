@@ -98,20 +98,20 @@ LAST_BUILD_FILE="${GRAPH_DIR}/.last-build-sha"
 
 if [[ ! -f "$LAST_BUILD_FILE" ]]; then
   echo "// No prior build found — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID" ${COMPONENT:+--component "$COMPONENT"}
 fi
 
 LAST_BUILD_SHA="$(tr -d '[:space:]' < "$LAST_BUILD_FILE")"
 
 if [[ -z "$LAST_BUILD_SHA" || "$LAST_BUILD_SHA" == "unknown" || ! "$LAST_BUILD_SHA" =~ ^[0-9a-f]+$ ]]; then
   echo "// Invalid last build SHA — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID" ${COMPONENT:+--component "$COMPONENT"}
 fi
 
 # Verify the SHA still exists in the repo
 if ! (cd "$PROJECT_ROOT" && git cat-file -e "$LAST_BUILD_SHA" 2>/dev/null); then
   echo "// Last build SHA ${LAST_BUILD_SHA} no longer in history — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID" ${COMPONENT:+--component "$COMPONENT"}
 fi
 
 CURRENT_SHA="$(cd "$PROJECT_ROOT" && git rev-parse HEAD)"
@@ -125,7 +125,7 @@ fi
 # --- Get changed files ---
 if ! CHANGES="$(cd "$PROJECT_ROOT" && git diff --name-status "${LAST_BUILD_SHA}..HEAD" 2>/dev/null)"; then
   echo "// git diff failed (shallow clone or corrupt history?) — executing full rebuild" >&2
-  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID"
+  exec "${PLUGIN_ROOT}/shared/graph/build-project-graph.sh" --project-root "$PROJECT_ROOT" --project-id "$PROJECT_ID" ${COMPONENT:+--component "$COMPONENT"}
 fi
 
 if [[ -z "$CHANGES" ]]; then
