@@ -514,7 +514,8 @@ mode_flush_queue() {
     file_groups[$lang]+="$f"$'\n'
   done
 
-  # Process each language group
+  # Process each language group — Layer 1 only, matching hook mode behavior.
+  # Layer 2 (linter) runs during --verify/--review stages, not deferred hooks.
   for lang in "${!file_groups[@]}"; do
     while IFS= read -r f; do
       [[ -z "$f" ]] && continue

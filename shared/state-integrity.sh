@@ -90,7 +90,7 @@ fi
 
 # ── 5. story_state is a valid pipeline state ─────────────────────────────────
 
-VALID_STATES="PREFLIGHT EXPLORING PLANNING VALIDATING IMPLEMENTING VERIFYING REVIEWING DOCUMENTING SHIPPING LEARNING MIGRATING MIGRATION_PAUSED MIGRATION_CLEANUP MIGRATION_VERIFY"
+VALID_STATES="PREFLIGHT EXPLORING PLANNING VALIDATING IMPLEMENTING VERIFYING REVIEWING DOCUMENTING SHIPPING LEARNING MIGRATING MIGRATION_PAUSED MIGRATION_CLEANUP MIGRATION_VERIFY COMPLETE ABORTED"
 
 state_check=$("$PYTHON" - "$STATE_FILE" "$VALID_STATES" <<'PYEOF'
 import json, sys
@@ -114,13 +114,13 @@ import json, sys, re
 with open(sys.argv[1]) as f:
     state = json.load(f)
 domain = state.get("domain_area", "")
-if domain and not re.match(r'^[a-z][a-z0-9_-]*$', domain):
-    print(f"domain_area '{domain}' is not lowercase single word")
+if domain and not re.match(r'^[a-z][a-z0-9]*$', domain):
+    print(f"domain_area '{domain}' contains invalid characters (must be lowercase letters and digits only)")
 PYEOF
 )
 
 if [[ -n "$domain_check" ]]; then
-  warn "$domain_check"
+  error "$domain_check"
 fi
 
 # ── 7. Orphaned checkpoint files ─────────────────────────────────────────────
