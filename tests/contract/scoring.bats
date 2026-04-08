@@ -62,9 +62,9 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 # ---------------------------------------------------------------------------
 # 7. Deduplication key documented as (file, line, category)
 # ---------------------------------------------------------------------------
-@test "scoring: deduplication key documented as (file, line, category)" {
-  grep -q "file, line, category\|file.*line.*category" "$SCORING" \
-    || fail "Deduplication key (file, line, category) not found"
+@test "scoring: deduplication key documented as (component, file, line, category)" {
+  grep -q "component, file, line, category\|component.*file.*line.*category" "$SCORING" \
+    || fail "Deduplication key (component, file, line, category) not found"
 }
 
 # ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 #     TEST-*, FE-PERF-*, SCOUT-*, A11Y-*, DEPS-*, COMPAT-*, REVIEW-GAP
 # ---------------------------------------------------------------------------
 @test "scoring: category code prefixes documented" {
-  local categories=(ARCH SEC PERF QUAL CONV DOC TEST FE-PERF SCOUT A11Y DEPS COMPAT REVIEW-GAP)
+  local categories=(ARCH SEC PERF QUAL CONV DOC TEST FE-PERF SCOUT A11Y DEPS COMPAT APPROACH CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)
   for cat in "${categories[@]}"; do
     grep -q "${cat}" "$SCORING" || fail "Category prefix ${cat} not found in scoring.md"
   done
