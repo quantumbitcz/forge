@@ -727,8 +727,10 @@ echo ":commit"
 echo ""
 
 # ============================================================================
-# Record enrichment — AFTER :commit to avoid silent data loss if
-# the transaction is rolled back by the consumer
+# Record enrichment — AFTER :commit output, so the consumer sees
+# the complete transaction before we log files as enriched.
+# NOTE: if the consumer rolls back, these paths will still be
+# recorded; a subsequent /graph-rebuild is needed to re-enrich.
 # ============================================================================
 
 for ep in "${ENRICHED_PATHS[@]}"; do

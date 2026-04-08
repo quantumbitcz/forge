@@ -117,7 +117,7 @@ This feedback is used by the retrospective to update PREEMPT confidence scores.
 
 ### 5.2 Write Test FIRST (RED phase)
 
-When applicable (see section 4.7 for exceptions):
+When applicable (see section 5.7 for exceptions):
 
 1. Write the test BEFORE writing production code
 2. Follow the test pattern file specified in the task (Kotest ShouldSpec, Vitest, etc.)
