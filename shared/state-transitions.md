@@ -34,8 +34,7 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 16 | `VALIDATING` | `verdict_NOGO` | — | ESCALATED | Escalate to user: Reshape spec / Try replanning / Abort |
 | 17 | `VALIDATING` | `contract_breaking` | `consumer_tasks_in_plan` | `IMPLEMENTING` | Add contract findings as WARNING, proceed |
 | 18 | `VALIDATING` | `contract_breaking` | `no_consumer_tasks` | `PLANNING` | Amend plan for breaking changes, increment validation_retries |
-| 19 | `IMPLEMENTING` | `implement_complete` | `dry_run == true` | `COMPLETE` | Output dry-run report, skip all subsequent stages |
-| 20 | `IMPLEMENTING` | `implement_complete` | `at_least_one_task_passed` | `VERIFYING` | Git checkpoint, dispatch Phase A (build+lint) |
+| 19 | `IMPLEMENTING` | `implement_complete` | `at_least_one_task_passed` | `VERIFYING` | Git checkpoint, dispatch Phase A (build+lint) |
 | 21 | `IMPLEMENTING` | `implement_complete` | `all_tasks_failed` | ESCALATED | AskUserQuestion: Re-plan / Retry / Abort |
 | 22 | `VERIFYING` | `phase_a_failure` | `verify_fix_count < max_fix_loops AND total_iterations < max_iterations` | `IMPLEMENTING` | Increment verify_fix_count + total_iterations + total_retries, dispatch implementer with build/lint errors |
 | 23 | `VERIFYING` | `phase_a_failure` | `verify_fix_count >= max_fix_loops OR total_iterations >= max_iterations` | ESCALATED | AskUserQuestion: Fix manually / Re-plan / Abort |
@@ -86,14 +85,11 @@ These transitions can fire from any current_state. They take priority over norma
 
 ## Dry-Run Flow
 
-Dry-run mode executes only stages 0-3 with no side effects (no worktree, no lock, no checkpoints, no Linear).
+Dry-run mode executes only stages 0-3 with no side effects (no worktree, no lock, no checkpoints, no Linear). Dry-run transitions are part of the Normal Flow table above (guarded by `dry_run == true`): rows 2 (PREFLIGHT), and the row below (VALIDATING exit). During dry-run, EXPLORING and PLANNING use the same normal-flow transitions (rows 5/9) — the `dry_run` guard only affects PREFLIGHT initialization and the VALIDATING exit.
 
 | # | current_state | event | guard | next_state | action |
 |---|---------------|-------|-------|------------|--------|
-| D1 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree) |
-| D2 | `EXPLORING` | `explore_complete` | `dry_run == true` | `PLANNING` | Explore with reduced context if needed |
-| D3 | `PLANNING` | `plan_complete` | `dry_run == true` | `VALIDATING` | Dispatch validator |
-| D4 | `VALIDATING` | `validate_complete` | `dry_run == true` | `COMPLETE` | Output dry-run report: plan + validation verdict + risk assessment |
+| D1 | `VALIDATING` | `validate_complete` | `dry_run == true` | `COMPLETE` | Output dry-run report: plan + validation verdict + risk assessment |
 
 ---
 

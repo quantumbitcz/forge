@@ -1,8 +1,8 @@
 # Agent Consolidation Roadmap
 
-## Current State: 40 Agents
+## Current State: 39 Agents
 
-The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context construction.
+The forge pipeline has 39 agents (down from 40 after the frontend reviewer merge). Each dispatch costs ~50K+ tokens of context construction.
 
 ## Consolidation Opportunities
 
@@ -10,7 +10,7 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 
 | Current Agents | Merged Agent | Savings | Risk |
 |---|---|---|---|
-| `fg-413-frontend-reviewer` + `frontend-design-reviewer` | `fg-413-frontend-reviewer` (with design checklist) | 1 dispatch | Low |
+| ~~`fg-413-frontend-reviewer` + `frontend-design-reviewer`~~ | ~~`fg-413-frontend-reviewer`~~ | ~~1 dispatch~~ | **[DONE]** |
 | `fg-414-frontend-a11y-reviewer` + `fg-415-frontend-performance-reviewer` | `frontend-quality-reviewer` | 1 dispatch | Low |
 | `fg-410-architecture-reviewer` + `fg-412-code-quality-reviewer` | `code-reviewer` (with arch + quality checklists) | 1 dispatch | Medium |
 
@@ -31,9 +31,13 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 | `fg-411-security-reviewer` | Must be independently auditable |
 | `fg-590-pre-ship-verifier` | Evidence gate — must be independent |
 
-## Recommended First Merge
+## Completed Merges
 
-`fg-413-frontend-reviewer` + `frontend-design-reviewer` → combined `fg-413-frontend-reviewer`
+- **[DONE]** `frontend-reviewer` + `frontend-design-reviewer` → `fg-413-frontend-reviewer` (Part A: Code Conventions + Part B: Design Quality)
+
+## Recommended Next Merge
+
+`fg-414-frontend-a11y-reviewer` + `fg-415-frontend-performance-reviewer` → combined `fg-414-frontend-quality-reviewer`
 
 ## Implementation Steps
 
@@ -45,6 +49,6 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 6. Run full test suite
 7. Validate with dry-run
 
-## Target State: ~30 Agents (from 40)
+## Target State: ~30 Agents (from 39)
 
-Tier 1: 40 → 37, Tier 2: 37 → 35, Future: 35 → ~30
+Remaining Tier 1: 39 → 37, Tier 2: 37 → 35, Future: 35 → ~30
