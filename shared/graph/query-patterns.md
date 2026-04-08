@@ -226,12 +226,13 @@ Returns all `CONTRADICTS` edges in the graph, showing which documentation source
 
 ```cypher
 MATCH (source)-[:CONTRADICTS]->(target)
+WHERE source.project_id = $project_id OR source.project_id IS NULL
 RETURN head(labels(source)) AS source_type, COALESCE(source.summary, source.name) AS source_desc,
        target.path AS code_target, source.file_path AS doc_source
 ```
 
 **Parameters:**
-- None.
+- `$project_id` — Project identifier (git remote origin or absolute path).
 
 ---
 
@@ -286,8 +287,8 @@ LIMIT 20
 **Prerequisites:** `ProjectClass` nodes with `CLASS_IN_FILE` edges and `TESTS` edges between test files and source files, populated by `build-project-graph.sh`.
 
 ```cypher
-MATCH (c:ProjectClass {project_id: $project_id})
-OPTIONAL MATCH (t:ProjectFile {project_id: $project_id})-[:TESTS]->(f:ProjectFile {project_id: $project_id})-[:CLASS_IN_FILE]->(c)
+MATCH (c:ProjectClass {project_id: $project_id})-[:CLASS_IN_FILE]->(f:ProjectFile {project_id: $project_id})
+OPTIONAL MATCH (t:ProjectFile {project_id: $project_id})-[:TESTS]->(f)
 WHERE t IS NULL
 RETURN c.name, f.path AS source_file
 ```

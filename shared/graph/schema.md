@@ -98,6 +98,7 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh`.
 | `BELONGS_TO` | `ProjectFile` → `ProjectPackage` | File belongs to package (based on directory) |
 | `CLASS_IN_FILE` | `ProjectClass` → `ProjectFile` | Class is defined in file |
 | `EXTENDS_CLASS` | `ProjectClass` → `ProjectClass` | Class extends or implements another class |
+| `TESTS` | `ProjectFile` → `ProjectFile` | Test file tests a source file (inferred from naming conventions and import analysis) |
 | `MAPS_TO` | `ProjectDependency` → `LayerModule`/`Framework`/`TestingFramework` | Dependency maps to a plugin module (via `dependency-map.json`) |
 | `USES_CONVENTION` | `ProjectConfig` → `Language`/`Framework`/`TestingFramework`/`LayerModule` | Project uses a plugin convention (from `forge.local.md` components) |
 | `DESCRIBES` | `DocSection` → `ProjectFile`/`ProjectPackage`/`ProjectClass` | Documentation describes a code entity |
