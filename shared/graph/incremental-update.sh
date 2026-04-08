@@ -440,20 +440,18 @@ DELETED=0
 RENAMED=0
 
 echo "// --- Deleted / Modified (detach-delete phase) ---"
-while IFS=$'\t' read -r status path_info; do
-  # Handle rename: status is like R100, path_info is "old_path\tnew_path"
+while IFS=$'\t' read -r status old_path new_path; do
   case "$status" in
     D)
-      emit_file_delete "$path_info"
+      emit_file_delete "$old_path"
       ((DELETED++)) || true
       ;;
     M)
-      emit_file_delete "$path_info"
+      emit_file_delete "$old_path"
       ((MODIFIED++)) || true
       ;;
     R*)
-      # Rename: status field contains R + similarity score, followed by two paths
-      old_path="$(echo "$path_info" | cut -f1)"
+      # Rename: delete old path (new_path has the rename target)
       emit_file_delete "$old_path"
       ((RENAMED++)) || true
       ;;
@@ -462,18 +460,17 @@ done <<< "$SOURCE_CHANGES"
 echo ""
 
 echo "// --- Added / Modified / Renamed (create phase) ---"
-while IFS=$'\t' read -r status path_info; do
+while IFS=$'\t' read -r status old_path new_path; do
   case "$status" in
     A)
-      emit_file_create "$path_info"
+      emit_file_create "$old_path"
       ((ADDED++)) || true
       ;;
     M)
-      emit_file_create "$path_info"
+      emit_file_create "$old_path"
       ;;
     R*)
       # Rename: create the new path
-      new_path="$(echo "$path_info" | cut -f2)"
       if [[ -n "$new_path" ]]; then
         emit_file_create "$new_path"
       fi
