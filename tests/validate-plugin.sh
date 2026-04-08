@@ -682,6 +682,31 @@ else
 fi
 check "query-patterns.md has at least 15 patterns ($pattern_count)" "$check_qp_fail"
 
+# --- Deterministic Pipeline Hardening ---
+echo ""
+echo "--- DETERMINISTIC PIPELINE HARDENING ---"
+
+echo "Checking state-transitions.md..."
+check_st_fail=0
+[[ -f "$ROOT/shared/state-transitions.md" ]] || { echo "FAIL: shared/state-transitions.md missing"; check_st_fail=1; }
+check "state-transitions.md exists" "$check_st_fail"
+
+echo "Checking domain-detection.md..."
+check_dd_fail=0
+[[ -f "$ROOT/shared/domain-detection.md" ]] || { echo "FAIL: shared/domain-detection.md missing"; check_dd_fail=1; }
+check "domain-detection.md exists" "$check_dd_fail"
+
+echo "Checking decision-log.md..."
+check_dl_fail=0
+[[ -f "$ROOT/shared/decision-log.md" ]] || { echo "FAIL: shared/decision-log.md missing"; check_dl_fail=1; }
+check "decision-log.md exists" "$check_dl_fail"
+
+echo "Checking state-integrity.sh..."
+check_si_fail=0
+[[ -f "$ROOT/shared/state-integrity.sh" ]] || { echo "FAIL: shared/state-integrity.sh missing"; check_si_fail=1; }
+[[ -x "$ROOT/shared/state-integrity.sh" ]] || { echo "FAIL: shared/state-integrity.sh not executable"; check_si_fail=1; }
+check "state-integrity.sh exists and is executable" "$check_si_fail"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""

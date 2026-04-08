@@ -245,7 +245,7 @@ If `forge-log.md` does not exist (first-ever run on this project):
 
 If it exists:
 - Collect all `PREEMPT` and `PREEMPT_CRITICAL` items
-- Filter items matching the inferred domain area of the current requirement
+- Filter items matching the inferred domain area of the current requirement (detection rules per `shared/domain-detection.md`)
 - Note the last 3 run results for trend context
 
 ### 3.5a Detect Project Dependency Versions
