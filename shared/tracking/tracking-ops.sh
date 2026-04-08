@@ -21,7 +21,8 @@ source "${_TRACKING_OPS_DIR}/../platform.sh"
 
 # ── Status directory names ────────────────────────────────────────────────────
 
-readonly TRACKING_STATUSES=(backlog in-progress review done)
+# shellcheck disable=SC1010  # 'done' is an array element, not the loop keyword
+readonly TRACKING_STATUSES=(backlog in-progress review "done")
 
 # ── Portable in-place sed ─────────────────────────────────────────────────────
 #

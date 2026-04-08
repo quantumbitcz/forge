@@ -254,7 +254,7 @@ parse_imports_go() {
   local mod_pattern="${mod_path//./\\.}"
   grep -oE "\"${mod_pattern}/[^\"]+\"" "$PROJECT_ROOT/$file" 2>/dev/null | \
     tr -d '"' | while IFS= read -r imp; do
-      local rel="${imp#${mod_path}/}"
+      local rel="${imp#"${mod_path}"/}"
       local target
       target="$(resolve_file "$rel")"
       [[ -n "$target" ]] && echo "$target"
@@ -326,7 +326,7 @@ print('lib/' + '/'.join(snake_parts))
             char="${part:$i:1}"
             if [[ "$char" =~ [A-Z] ]]; then
               [[ $i -gt 0 && "$prev_upper" == false ]] && snake="${snake}_"
-              lower="$(printf '%s' "$char" | tr 'A-Z' 'a-z')"
+              lower="$(printf '%s' "$char" | tr '[:upper:]' '[:lower:]')"
               snake="${snake}${lower}"
               prev_upper=true
             else

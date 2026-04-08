@@ -301,7 +301,7 @@ parse_imports_go() {
   sgrep -oE "\"${mod_pattern}/[^\"]+\"" "$PROJECT_ROOT/$file" | \
     tr -d '"' | while IFS= read -r imp; do
       [[ -z "$imp" ]] && continue
-      local rel="${imp#${mod_path}/}"
+      local rel="${imp#"${mod_path}"/}"
       local target
       target="$(resolve_file "$rel")"
       if [[ -n "$target" ]]; then
@@ -596,6 +596,7 @@ DEP_MAP="${PLUGIN_ROOT}/shared/graph/dependency-map.json"
 
 # We collect deps into a temp file since subshell pipes lose variable state
 DEP_TMPFILE="$(mktemp)"
+# shellcheck disable=SC2064  # intentional: expand DEP_TMPFILE now (value is fixed)
 trap "rm -f '$DEP_TMPFILE'" EXIT
 
 emit_dep() {

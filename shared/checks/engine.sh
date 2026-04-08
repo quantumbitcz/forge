@@ -48,6 +48,7 @@ _glob_exists() {
 # Track current file for error reporting
 _CURRENT_FILE=""
 
+# shellcheck disable=SC2329  # invoked indirectly via hook timeout handler
 handle_skip() {
   local skip_file=".forge/.check-engine-skipped"
   if [ -d ".forge" ]; then

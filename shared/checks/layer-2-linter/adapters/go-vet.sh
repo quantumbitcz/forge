@@ -6,6 +6,7 @@ set -euo pipefail
 # Exit:   0=ok  1=not installed  2=linter error
 
 PROJECT_ROOT="${1:?usage: go-vet.sh PROJECT_ROOT TARGET SEVERITY_MAP}"
+# shellcheck disable=SC2034  # adapter interface contract
 TARGET="${2:?}"
 SEVERITY_MAP="${3:?}"
 

@@ -678,7 +678,7 @@ for file in "${FILES[@]}"; do
   local_path="$file"
   # If absolute, make relative
   if [[ "$local_path" == /* ]]; then
-    local_path="${local_path#${PROJECT_ROOT}/}"
+    local_path="${local_path#"${PROJECT_ROOT}"/}"
   fi
 
   abs_path="${PROJECT_ROOT}/${local_path}"

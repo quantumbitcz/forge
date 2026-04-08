@@ -99,6 +99,7 @@ fi
 if [[ -n "$CHANGED_FILES" ]]; then
   echo "// --- Changed Files ---"
   IFS=',' read -ra changed_arr <<< "$CHANGED_FILES"
+  size="" mod_date="" lang=""
   for file_path in "${changed_arr[@]}"; do
     file_path=$(echo "$file_path" | xargs)
     [[ -z "$file_path" ]] && continue
@@ -108,7 +109,6 @@ if [[ -n "$CHANGED_FILES" ]]; then
       continue
     fi
 
-    local size mod_date lang
     size=$(wc -c < "$local_path" | xargs)
     mod_date=$(portable_file_date "$local_path")
 

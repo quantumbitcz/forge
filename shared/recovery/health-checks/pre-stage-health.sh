@@ -109,6 +109,7 @@ case "$STAGE" in
       fi
     fi
     # Check convention file exists
+    # shellcheck disable=SC2034  # reserved for future convention-file validation
     conventions_file=""
     [[ -f "$PROJECT_ROOT/.claude/forge.local.md" ]] && {
       framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
@@ -152,6 +153,7 @@ case "$STAGE" in
     language=""
     [[ -f "$PROJECT_ROOT/.claude/forge.local.md" ]] && {
       framework="$(grep -m1 'framework:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*framework:[[:space:]]*//' || true)"
+      # shellcheck disable=SC2034  # reserved for future language-specific tool checks
       language="$(grep -m1 'language:' "$PROJECT_ROOT/.claude/forge.local.md" 2>/dev/null | sed 's/.*language:[[:space:]]*//' || true)"
     }
     case "$framework" in

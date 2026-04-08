@@ -212,6 +212,7 @@ portable_normalize_path() {
   local IFS='/' segment
   local -a stack=()
   local n=0 leading_dots=0
+  # shellcheck disable=SC2004  # explicit $n for bash 3.2 compat
   for segment in $input; do
     case "$segment" in
       ..)

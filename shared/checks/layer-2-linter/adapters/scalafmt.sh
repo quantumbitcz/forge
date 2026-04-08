@@ -6,8 +6,10 @@ set -euo pipefail
 # Output: file:line | CATEGORY | SEVERITY | message | fix_hint
 # Exit:   0=ok  1=not installed  2=linter error
 
+# shellcheck disable=SC2034  # adapter interface contract
 PROJECT_ROOT="${1:?usage: scalafmt.sh PROJECT_ROOT TARGET SEVERITY_MAP}"
 TARGET="${2:?}"
+# shellcheck disable=SC2034  # adapter interface contract
 SEVERITY_MAP="${3:?}"
 
 # --- availability check ---
