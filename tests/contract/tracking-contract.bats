@@ -51,3 +51,12 @@ setup() {
 @test "tracking-contract: stage-contract documents kanban graceful degradation" {
   grep -q "graceful degradation\|silently skipped" "$STAGE_CONTRACT"
 }
+
+@test "tracking-contract: orchestrator enforces convention stack soft cap" {
+  grep -q "12 files\|Stack.*12\|soft cap" "$ORCHESTRATOR" \
+    || fail "Convention stack soft cap (12 files) not documented in orchestrator"
+}
+
+@test "tracking-contract: orchestrator stores shallow_clone in state.json" {
+  grep -q "shallow_clone" "$ORCHESTRATOR"
+}
