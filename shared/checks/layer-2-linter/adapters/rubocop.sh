@@ -41,15 +41,20 @@ with open(sev_map_path) as f:
     full_map = json.load(f)
 rubocop_map = full_map.get('rubocop', {})
 
-def lookup_severity(cop_name):
+def lookup_severity(rb_severity, cop_name):
+    # Check cop-specific override first (e.g., 'Security/*': 'CRITICAL')
     if cop_name in rubocop_map:
         return rubocop_map[cop_name]
-    best = ('', 'INFO')
+    best_cop = ('', '')
     for pattern, sev in rubocop_map.items():
         prefix = pattern.rstrip('*')
-        if cop_name.startswith(prefix) and len(prefix) > len(best[0]):
-            best = (prefix, sev)
-    return best[1]
+        if cop_name.startswith(prefix) and len(prefix) > len(best_cop[0]):
+            best_cop = (prefix, sev)
+    if best_cop[1]:
+        return best_cop[1]
+    # Fall back to RuboCop severity level (Fatal, Error, Warning, Convention, Refactor)
+    cap = rb_severity.capitalize() if rb_severity else ''
+    return rubocop_map.get(cap, 'INFO')
 
 def map_category(cop_name):
     if not cop_name:
@@ -83,8 +88,9 @@ for file_entry in data.get('files', []):
         loc = offense.get('location', {})
         row = loc.get('start_line', 0)
         cop = offense.get('cop_name', '')
+        rb_severity = offense.get('severity', '')
         message = offense.get('message', '').replace('\\\\', '\\\\\\\\').replace('|', '\\\\|')
-        severity = lookup_severity(cop)
+        severity = lookup_severity(rb_severity, cop)
         category = map_category(cop)
         hint = f'rubocop cop {cop}' if cop else 'rubocop'
         print(f'{path}:{row} | {category} | {severity} | {message} | {hint}')

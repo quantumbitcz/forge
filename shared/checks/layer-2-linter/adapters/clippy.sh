@@ -67,7 +67,7 @@ def extract_group_from_explanation(code_obj):
     \"\"\"Try to extract the group from the code explanation field.\"\"\"
     if not code_obj or not isinstance(code_obj, dict):
         return ''
-    explanation = code_obj.get('explanation', '')
+    explanation = code_obj.get('explanation') or ''
     for group in ('correctness', 'suspicious', 'perf', 'style', 'nursery', 'complexity', 'pedantic'):
         if group in explanation.lower():
             return group
