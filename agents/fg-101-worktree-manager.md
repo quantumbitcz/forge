@@ -25,18 +25,19 @@ Create a new git worktree for a pipeline run.
 **Steps:**
 
 1. Prune stale worktree references: `git worktree prune` (prevents stale metadata from blocking creation)
-2. Derive branch name from `shared/git-conventions.md`: `{type}/{ticket_id}-{slug}` (type defaults to `feat`; infer from ticket prefix if recognizable)
-3. Check if branch already exists: `git branch --list <branch-name>`
-4. If collision detected, append epoch suffix: `<branch-name>-<epoch>` (e.g., `feat/FG-42-add-plan-comment-1743760000`)
-5. Determine base directory:
+2. Check for shallow clone: `git rev-parse --is-shallow-repository`. If `true`, log a WARNING: "Shallow clone detected — worktree may have limited history. Consider `git fetch --unshallow` for full pipeline capability."
+3. Derive branch name from `shared/git-conventions.md`: `{type}/{ticket_id}-{slug}` (type defaults to `feat`; infer from ticket prefix if recognizable)
+4. Check if branch already exists: `git branch --list <branch-name>`
+5. If collision detected, append epoch suffix: `<branch-name>-<epoch>` (e.g., `feat/FG-42-add-plan-comment-1743760000`)
+6. Determine base directory:
    - Single-feature mode: `.forge/worktree` (standard path)
    - Sprint mode (when `--base-dir` provided): use the provided path (e.g., `.forge/worktrees/FG-42/`)
-6. Create the worktree: `git worktree add <base-dir> -b <branch-name> [<start-point>]`
+7. Create the worktree: `git worktree add <base-dir> -b <branch-name> [<start-point>]`
    - If `--start-point` provided: use that commit as the branch base (e.g., sprint base_commit for consistent parallel feature branching)
    - If omitted: default to current HEAD (standard single-feature behavior)
-   - **On branch collision failure** (creation fails despite step 3-4 check — TOCTOU race in sprint mode): retry once with epoch suffix appended
-7. Verify the worktree is functional: `git -C <base-dir> status`
-8. If `.gitmodules` exists in the worktree root, initialize submodules: `git -C <base-dir> submodule update --init --recursive`
+   - **On branch collision failure** (creation fails despite step 4-5 check — TOCTOU race in sprint mode): retry once with epoch suffix appended
+8. Verify the worktree is functional: `git -C <base-dir> status`
+9. If `.gitmodules` exists in the worktree root, initialize submodules: `git -C <base-dir> submodule update --init --recursive`
 
 **Output via stage notes:**
 
