@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "last_refreshed": "2026-03-22",
+  "last_refreshed": "2026-04-08",
   "deprecations": [
     {
       "pattern": "req\\.content\\.decode\\(",
@@ -56,6 +56,39 @@
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
+    },
+    {
+      "pattern": "BasicAuthenticator",
+      "replacement": "Use AsyncBasicAuthenticator protocol with async authenticate(basic:for:) method",
+      "package": "Vapor",
+      "since": "4.50.0",
+      "removed_in": null,
+      "applies_from": "4.50.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
+    },
+    {
+      "pattern": "BearerAuthenticator",
+      "replacement": "Use AsyncBearerAuthenticator protocol with async authenticate(bearer:for:) method",
+      "package": "Vapor",
+      "since": "4.50.0",
+      "removed_in": null,
+      "applies_from": "4.50.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
+    },
+    {
+      "pattern": "app\\.middleware\\.use\\(",
+      "replacement": "app.middleware.add(_:) — use add() for middleware registration in Vapor 4.x+",
+      "package": "Vapor",
+      "since": "4.0.0",
+      "removed_in": null,
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
     }
   ]
 }

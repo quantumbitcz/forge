@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "last_refreshed": "2026-03-22",
+  "last_refreshed": "2026-04-08",
   "deprecations": [
     {
       "pattern": "axum::extract::Extension",
@@ -56,6 +56,39 @@
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
+    },
+    {
+      "pattern": "axum::routing::any\\(",
+      "replacement": "axum::routing::any_service or use method_router with explicit methods for type safety",
+      "package": "axum",
+      "since": "0.7",
+      "removed_in": null,
+      "applies_from": "0.7",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
+    },
+    {
+      "pattern": "ContentLengthLimit",
+      "replacement": "Use DefaultBodyLimit::max() layer or axum::extract::DefaultBodyLimit for request size limits",
+      "package": "axum",
+      "since": "0.6",
+      "removed_in": "0.7",
+      "applies_from": "0.6",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
+    },
+    {
+      "pattern": "axum::body::BoxBody",
+      "replacement": "axum::body::Body — BoxBody was replaced by a unified Body type in 0.7",
+      "package": "axum",
+      "since": "0.7",
+      "removed_in": null,
+      "applies_from": "0.7",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
     }
   ]
 }
