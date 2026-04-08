@@ -744,6 +744,8 @@ Extract from the planner's response:
 
 Update state: `story_state` -> `"PLANNING"`, set `domain_area`, `risk_level`, add `plan` timestamp.
 
+**Domain validation:** After planner completes, verify `domain_area` is set in state.json. If missing or empty, default to `"general"` and log WARNING: "domain_area not set by planner — defaulting to general". See `shared/domain-detection.md` for the full detection algorithm and known domain list.
+
 ### Cross-Repo Task Detection
 
 When `related_projects` is configured in `forge.local.md`, the planner should additionally:
