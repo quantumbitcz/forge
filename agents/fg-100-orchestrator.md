@@ -398,6 +398,8 @@ Create/overwrite `.forge/state.json` per `shared/state-schema.md` (version 1.4.0
 - `dry_run`: from flag, `spec`: from `--spec` parsing, `bugfix`: empty defaults, `documentation`: empty defaults
 - `ticket_id`, `branch_name`, `tracking_dir`: set after worktree creation (§3.9)
 
+Pre-recover backup files (`.forge/*.pre-recover.*`) are cleaned by fg-700-retrospective (files older than 7 days removed at start of each run's retrospective phase).
+
 ### 3.9 Create Worktree
 
 Skip if `--dry-run` (no worktree needed for read-only analysis).
@@ -1035,6 +1037,14 @@ Mark Implement as completed.
 ### Post-IMPLEMENT Graph Update
 
 If `graph.enabled` and files changed: run `update-project-graph.sh` with changed files. Update `state.json.graph` (last_update_stage=4, stale=false). On failure: WARNING, set stale=true, continue.
+
+**Graph Transaction Failure Handling:**
+
+All graph Cypher generators (`build-project-graph.sh`, `incremental-update.sh`, `update-project-graph.sh`, `enrich-symbols.sh`) emit `:begin`/`:commit` transaction boundaries. When feeding this output to Neo4j (via `cypher-shell` or MCP):
+- If any statement within the transaction fails: execute `:rollback` to discard partial changes
+- Log the failure as INFO (not recovery-engine material): `"Graph update failed: {error}. Rolled back. Pipeline continues with stale graph."`
+- Set `state.json.integrations.neo4j.available = false` to prevent further graph operations in this run
+- The pipeline continues — graph is optional, never blocking
 
 ---
 

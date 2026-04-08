@@ -400,7 +400,10 @@ For each PREEMPT item in `forge-log.md`, after updating hit counts:
    - Reset `runs_since_last_hit` to 0 after each demotion
    - ARCHIVED items are NOT loaded at PREFLIGHT in future runs
 
-4. **Promotion check:** If `hit_count >= 4` and `false_positives == 0` and confidence is not already HIGH: promote to HIGH. If an item has been HIGH for 5+ consecutive successful applications, flag for permanent rule consideration.
+4. **Promotion check:**
+   - If `hit_count >= 2` and confidence is LOW: promote to MEDIUM
+   - If `hit_count >= 4` and `false_positives == 0` and confidence is MEDIUM: promote to HIGH
+   - If an item has been HIGH for 5+ consecutive successful applications, flag for permanent rule consideration.
 
 ### Archival
 
@@ -538,10 +541,20 @@ Over time, the Bug Patterns section accumulates entries. During PREFLIGHT of fut
 
 ---
 
-## 11. Execution Steps
+## 11. Pre-Recovery File Cleanup
+
+At the start of the retrospective (before analyzing the run), remove stale pre-recovery backup files:
+- Delete `.forge/state.json.pre-recover.*` files older than 7 days
+- Delete `.forge/checkpoint-*.json.pre-recover.*` files older than 7 days
+- Log count of files removed: "Cleaned {N} stale pre-recover backup(s)"
+
+---
+
+## 12. Execution Steps
 
 When invoked, follow this sequence:
 
+0. **Clean stale pre-recover files** -- remove `.forge/*.pre-recover.*` files older than 7 days (§11)
 1. **Read config** -- get `preempt_file` and `config_file` paths from `forge.local.md`
 2. **Gather data** -- read pipeline state, stage notes, checkpoints, and previous reports
 3. **Write pipeline report** -- generate the structured report to `.forge/reports/`
@@ -565,7 +578,7 @@ When invoked, follow this sequence:
 
 ---
 
-## 12. Important Constraints
+## 13. Important Constraints
 
 - **Append-only log** -- never remove old entries from forge-log.md
 - **Idempotent config updates** -- re-running the retrospective on the same run should produce the same config
