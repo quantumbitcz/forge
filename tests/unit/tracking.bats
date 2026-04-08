@@ -552,3 +552,51 @@ teardown() {
   # Board should now include both tickets
   grep -q "FG-002" "${td}/board.md"
 }
+
+# ===========================================================================
+# next_id: concurrency stress test
+# ===========================================================================
+
+@test "next_id: 5 parallel calls produce 5 unique IDs" {
+  local td
+  td="$(make_tracking_dir)"
+  init_counter "$td"
+
+  local ids_file="${TEST_TEMP}/parallel_ids.txt"
+  : > "$ids_file"
+
+  # Spawn 5 parallel next_id calls
+  local pids=()
+  for i in 1 2 3 4 5; do
+    (
+      local result
+      result="$(next_id "$td")"
+      printf '%s\n' "$result"
+    ) >> "$ids_file" &
+    pids+=($!)
+  done
+
+  # Wait for all to complete
+  local all_ok=true
+  for pid in "${pids[@]}"; do
+    if ! wait "$pid"; then
+      all_ok=false
+    fi
+  done
+
+  [[ "$all_ok" == "true" ]]
+
+  # Verify: 5 lines, all unique, all matching FG-NNN pattern
+  local count
+  count="$(wc -l < "$ids_file" | tr -d ' ')"
+  [[ "$count" == "5" ]]
+
+  local unique_count
+  unique_count="$(sort -u "$ids_file" | wc -l | tr -d ' ')"
+  [[ "$unique_count" == "5" ]]
+
+  # Counter should now be at 6
+  local next_val
+  next_val="$("$FORGE_PYTHON" -c "import json; print(json.load(open('${td}/counter.json'))['next'])")"
+  [[ "$next_val" == "6" ]]
+}

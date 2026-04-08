@@ -150,3 +150,72 @@ W_GRACEFUL_STOP="0.0"
       || fail "Strategy '$strategy' not documented"
   done
 }
+
+# ---------------------------------------------------------------------------
+# 8. 90% escalation threshold (4.95)
+# ---------------------------------------------------------------------------
+@test "recovery-budget: budget at 4.95 triggers 90% escalation" {
+  local total="4.95"
+  [[ $(echo "$total >= $WARNING_90PCT" | bc) -eq 1 ]] \
+    || fail "$total should trigger 90% escalation (threshold=$WARNING_90PCT)"
+}
+
+@test "recovery-budget: budget at 4.94 does not trigger 90% escalation" {
+  local total="4.94"
+  [[ $(echo "$total < $WARNING_90PCT" | bc) -eq 1 ]] \
+    || fail "$total should NOT trigger 90% escalation (threshold=$WARNING_90PCT)"
+}
+
+# ---------------------------------------------------------------------------
+# 9. Budget exhaustion + max retries simultaneous
+# ---------------------------------------------------------------------------
+@test "recovery-budget: 3 transient retries consume 1.5 weight" {
+  # Per-strategy max retries = 3 for transient-retry
+  local total
+  total=$(compute_total_weight "$W_TRANSIENT" "$W_TRANSIENT" "$W_TRANSIENT")
+  [[ "$total" == "1.5" ]] || fail "Expected 1.5, got $total"
+}
+
+@test "recovery-budget: exhausted budget blocks further recovery even if retries remain" {
+  # Scenario: budget at 5.5 (exhausted) — any new strategy application should be rejected
+  local budget="5.5"
+  local proposed="$W_TRANSIENT"
+  local new_total
+  new_total=$(echo "$budget + $proposed" | bc)
+  [[ $(echo "$new_total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "Adding $proposed to exhausted budget $budget should exceed ceiling"
+}
+
+@test "recovery-budget: heaviest strategy path = transient + state-recon + tool-diag + dep-health = 4.0" {
+  # Realistic worst-case path before budget warning
+  local total
+  total=$(compute_total_weight "$W_TRANSIENT" "$W_STATE_RECON" "$W_TOOL_DIAG" "$W_DEP_HEALTH")
+  [[ "$total" == "4.0" ]] || fail "Expected 4.0, got $total"
+  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+    || fail "4.0 should still be below 80% warning threshold"
+}
+
+# ---------------------------------------------------------------------------
+# 10. Transient permanence rule (3 consecutive in 60s)
+# ---------------------------------------------------------------------------
+@test "recovery-budget: 3-consecutive-transients permanence rule documented" {
+  grep -q "3 consecutive" "$RECOVERY_ENGINE" \
+    || grep -q "3 consecutive" "$PLUGIN_ROOT/shared/error-taxonomy.md" \
+    || fail "3-consecutive-transients permanence rule not documented"
+}
+
+@test "recovery-budget: 3 transient retries at max still under budget" {
+  # Even worst-case 3 transient retries = 1.5, well under budget
+  local total
+  total=$(compute_total_weight "$W_TRANSIENT" "$W_TRANSIENT" "$W_TRANSIENT")
+  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "3 transient retries ($total) should be well under ceiling"
+}
+
+# ---------------------------------------------------------------------------
+# 11. Sprint mode independent budgets
+# ---------------------------------------------------------------------------
+@test "recovery-budget: sprint independent budgets documented" {
+  grep -qi "independent\|per.feature\|per.run\|isolated" "$RECOVERY_ENGINE" \
+    || fail "Sprint mode independent budgets not documented"
+}

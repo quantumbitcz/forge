@@ -347,7 +347,7 @@ In sprint mode, each feature's `fg-100-orchestrator` instance has its **own inde
 
 When `total_weight >= 4.4` (80% of budget), set `recovery.budget_warning_issued: true` and log WARNING with current budget consumption breakdown.
 
-When `total_weight >= 5.0` (90% of budget), escalate to user in stage notes: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Pipeline is operating with minimal safety margin. Remaining capacity: {max_weight - total_weight}. Consider manual review before continuing."
+When `total_weight >= 4.95` (90% of budget), escalate to user in stage notes: "Recovery budget nearly exhausted ({total_weight}/{max_weight}). Pipeline is operating with minimal safety margin. Remaining capacity: {max_weight - total_weight}. Consider manual review before continuing."
 
 ### Budget Exhaustion
 
