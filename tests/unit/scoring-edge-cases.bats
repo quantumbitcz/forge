@@ -156,3 +156,39 @@ compute_verdict() {
   grep -q "oscillation_tolerance" "$SCORING" || fail "oscillation_tolerance not documented"
   grep -q "0.*20\|0-20" "$SCORING" || fail "oscillation_tolerance range 0-20 not documented"
 }
+
+# ---------------------------------------------------------------------------
+# 12. Exactly 5 CRITICALs = 0 (boundary)
+# ---------------------------------------------------------------------------
+@test "scoring-edge: 5 CRITICALs = exactly 0 (boundary)" {
+  local score
+  score=$(compute_score 5 0 0)
+  [[ "$score" -eq 0 ]] || fail "Expected exactly 0 (100 - 20*5 = 0), got $score"
+}
+
+# ---------------------------------------------------------------------------
+# 13. 6 CRITICALs clamped to 0 (not negative)
+# ---------------------------------------------------------------------------
+@test "scoring-edge: 6 CRITICALs clamped to 0 (not -20)" {
+  local score
+  score=$(compute_score 6 0 0)
+  [[ "$score" -eq 0 ]] || fail "Expected 0 (clamped from -20), got $score"
+}
+
+# ---------------------------------------------------------------------------
+# 14. PASS boundary: score 79 is CONCERNS, not PASS
+# ---------------------------------------------------------------------------
+@test "scoring-edge: score 79 with 0 CRITICALs = CONCERNS" {
+  local verdict
+  verdict=$(compute_verdict 79 0)
+  [[ "$verdict" == "CONCERNS" ]] || fail "Expected CONCERNS, got $verdict"
+}
+
+# ---------------------------------------------------------------------------
+# 15. CONCERNS boundary: score 59 is FAIL, not CONCERNS
+# ---------------------------------------------------------------------------
+@test "scoring-edge: score 59 with 0 CRITICALs = FAIL" {
+  local verdict
+  verdict=$(compute_verdict 59 0)
+  [[ "$verdict" == "FAIL" ]] || fail "Expected FAIL, got $verdict"
+}
