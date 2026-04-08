@@ -143,6 +143,32 @@ See `query-patterns.md` for pre-built Cypher templates used by the orchestrator.
 
 ---
 
+## Transaction Safety
+
+All Cypher generators (`build-project-graph.sh`, `incremental-update.sh`, `update-project-graph.sh`, `enrich-symbols.sh`) emit explicit transaction boundaries:
+
+```
+:begin
+// Cypher statements (MERGE, CREATE, SET, DELETE)
+:commit
+```
+
+**Consumer-side `:rollback` contract:**
+
+When feeding generated Cypher to Neo4j (via `cypher-shell`, MCP `neo4j-mcp`, or any other driver):
+
+1. **On success:** The `:commit` at the end of the block finalizes all changes atomically.
+2. **On failure of any statement within the transaction:**
+   - Execute `:rollback` to discard all partial changes from the current `:begin` block.
+   - Log the failure as INFO: `"Graph update failed: {error}. Rolled back. Pipeline continues with stale graph."`
+   - Set `state.json.integrations.neo4j.available = false` to prevent further graph operations in the current run.
+   - Do NOT invoke the recovery engine — graph failures are handled inline as graceful degradation.
+3. **Pipeline continues** — the knowledge graph is supplementary, never blocking. All stages fall back to grep/glob-based analysis when the graph is unavailable.
+
+**Rationale:** Partial graph state (e.g., nodes created but relationships missing) produces incorrect query results that are worse than no graph at all. The `:rollback` ensures the graph either reflects a complete, consistent update or remains at its prior known-good state.
+
+---
+
 ## Project Identity
 
 `project_id` is derived automatically:

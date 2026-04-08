@@ -148,6 +148,9 @@ echo "// Project: ${PROJECT_ROOT}"
 echo "// Files: ${#FILES[@]}"
 echo "// ===================================="
 echo ""
+echo "// --- Transaction boundary: wrap in :begin/:commit for atomicity ---"
+echo ":begin"
+echo ""
 
 # ============================================================================
 # Language-specific extraction functions
@@ -672,6 +675,7 @@ extract_dart() {
 # ============================================================================
 
 FILE_COUNT=0
+declare -a ENRICHED_PATHS=()
 
 for file in "${FILES[@]}"; do
   # Resolve to relative path within project
@@ -715,9 +719,20 @@ for file in "${FILES[@]}"; do
 
   echo ""
 
-  # Record enrichment
-  echo "$local_path" >> "$ENRICHED_FILE"
+  ENRICHED_PATHS+=("$local_path")
   ((FILE_COUNT++)) || true
+done
+
+echo ":commit"
+echo ""
+
+# ============================================================================
+# Record enrichment — AFTER :commit to avoid silent data loss if
+# the transaction is rolled back by the consumer
+# ============================================================================
+
+for ep in "${ENRICHED_PATHS[@]}"; do
+  echo "$ep" >> "$ENRICHED_FILE"
 done
 
 echo "// --- Enrichment Complete ---"
