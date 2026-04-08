@@ -1161,7 +1161,7 @@ If `mode == "bugfix"`:
 Reduced review batch (overrides config-driven batches):
 - Always dispatch: `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`
 - If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `frontend-reviewer`
-- Skip by default: `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`
+- Skip by default: `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`
 
 Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (§9.2) normally.
 

@@ -63,7 +63,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Decision log | `shared/decision-log.md` |
 | State integrity | `shared/state-integrity.sh` |
 
-## Agents (40 total, `agents/*.md`)
+## Agents (39 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -77,7 +77,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
 
-**Review** (11, via quality gate): `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`, `frontend-reviewer`, `frontend-design-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
+**Review** (10, via quality gate): `architecture-reviewer`, `security-reviewer`, `code-quality-reviewer`, `frontend-reviewer`, `frontend-a11y-reviewer`, `frontend-performance-reviewer`, `backend-performance-reviewer`, `version-compat-reviewer`, `infra-deploy-reviewer`, `docs-consistency-reviewer`.
 
 ### Agent rules
 

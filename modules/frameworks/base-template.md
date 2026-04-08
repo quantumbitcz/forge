@@ -130,8 +130,6 @@ quality_gate:
   #   - agent: "Accessibility Auditor"
   #     source: builtin
   #     focus: "WCAG 2.2 AA, keyboard nav, screen reader"
-  #   - agent: frontend-design-reviewer
-  #     focus: "design tokens, spatial hierarchy, responsive, dark mode, visual coherence"
   #   - agent: frontend-a11y-reviewer
   #     focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
   #   - agent: "pr-review-toolkit:silent-failure-hunter"

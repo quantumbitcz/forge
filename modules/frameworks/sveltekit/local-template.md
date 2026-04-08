@@ -50,8 +50,6 @@ quality_gate:
   batch_2:
     - agent: code-quality-reviewer
       focus: "general correctness, maintainability"
-    - agent: frontend-design-reviewer
-      focus: "design tokens, spatial hierarchy, responsive, dark mode, visual coherence"
     - agent: frontend-a11y-reviewer
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:code-reviewer"

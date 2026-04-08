@@ -68,9 +68,8 @@ Report: "Reviewing {count} files in {mode} mode."
 | Agent | Dispatch condition |
 |---|---|
 | `forge:docs-consistency-reviewer` | Any `.md` files in scope |
-| `forge:frontend-reviewer` | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html` files |
+| `forge:frontend-reviewer` | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, `.styled.*` files |
 | `forge:frontend-performance-reviewer` | Any frontend files present |
-| `forge:frontend-design-reviewer` | Any `.css`, `.scss`, `.styled.*` files present |
 | `forge:frontend-a11y-reviewer` | Any frontend files present |
 | `forge:backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
 | `forge:version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |

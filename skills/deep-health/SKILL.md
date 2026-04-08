@@ -58,9 +58,8 @@ Dispatch forge's own review agents to investigate the scoped files. Select agent
 | `forge:security-reviewer` | Always |
 | `forge:code-quality-reviewer` | Always |
 | `forge:docs-consistency-reviewer` | Always (or `--focus docs`) |
-| `forge:frontend-reviewer` | Frontend files present (*.tsx, *.jsx, *.vue, *.svelte) |
+| `forge:frontend-reviewer` | Frontend files (code, styling, layout) |
 | `forge:frontend-performance-reviewer` | Frontend files present |
-| `forge:frontend-design-reviewer` | Frontend files with styling/layout |
 | `forge:frontend-a11y-reviewer` | Frontend files present |
 | `forge:backend-performance-reviewer` | Backend files present |
 | `forge:version-compat-reviewer` | Dependency files changed (package.json, build.gradle.kts, go.mod, etc.) |

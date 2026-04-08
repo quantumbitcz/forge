@@ -456,8 +456,7 @@ in the knowledge graph.
 - `architecture-reviewer` — architecture pattern compliance (hexagonal, clean, layered, MVC)
 - `security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
 - `code-quality-reviewer` — error handling, DRY/KISS, defensive programming, test quality
-- `frontend-reviewer` — conventions, accessibility basics, framework-specific patterns
-- `frontend-design-reviewer` — design system compliance, visual coherence, responsive behavior
+- `frontend-reviewer` — conventions, accessibility basics, framework-specific patterns, design system compliance, visual coherence, responsive behavior
 - `frontend-a11y-reviewer` — WCAG 2.2 AA accessibility audits
 - `frontend-performance-reviewer` — bundle size, rendering efficiency, lazy loading
 - `backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
