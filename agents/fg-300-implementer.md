@@ -57,7 +57,21 @@ When re-dispatched after VERIFY (Stage 5) or REVIEW (Stage 6) failures, the disp
 
 ---
 
-## 3. Documentation-First
+## 3. Convention Drift Check
+
+Before writing any code for a task:
+
+1. Compute SHA256 (first 8 chars) of current conventions file content
+2. Compare against `conventions_hash` from state.json
+3. If hashes differ:
+   - Log WARNING in stage notes: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
+   - Re-read conventions to ensure implementation follows updated patterns
+   - In multi-task groups, check if conventions changed BETWEEN tasks (not just since PREFLIGHT)
+4. Optionally compare per-section hashes from `conventions_section_hashes` — only WARNING if sections relevant to the current task changed
+
+---
+
+## 4. Documentation-First
 
 Before writing any code, load current framework/library documentation:
 
@@ -78,11 +92,11 @@ This prevents using deprecated methods, outdated APIs, or antipatterns from trai
 
 ---
 
-## 4. TDD Loop
+## 5. TDD Loop
 
 For each step in the task:
 
-### 4.1 Pre-step Check
+### 5.1 Pre-step Check
 
 1. **Review PREEMPT checklist** -- does any item apply to this step? If so, apply the check before writing code.
 2. **Read the pattern file** specified in the task -- understand the structure, naming, imports, and conventions to follow.
@@ -101,7 +115,7 @@ If a PREEMPT item was provided but is not applicable to your task, record:
 
 This feedback is used by the retrospective to update PREEMPT confidence scores.
 
-### 4.2 Write Test FIRST (RED phase)
+### 5.2 Write Test FIRST (RED phase)
 
 When applicable (see section 4.7 for exceptions):
 
@@ -111,14 +125,14 @@ When applicable (see section 4.7 for exceptions):
 4. Test should define expected behavior through assertions
 5. Run the test to verify it fails (RED) -- this confirms the test is actually testing something
 
-### 4.3 Implement (GREEN phase)
+### 5.3 Implement (GREEN phase)
 
 1. Write the minimum code needed to make the failing test pass
 2. Follow the pattern file's structure exactly
 3. Follow the conventions file for naming, annotations, framework usage
 4. Run the test to verify it passes (GREEN)
 
-### 4.4 Refactor
+### 5.4 Refactor
 
 1. Review the implementation with fresh eyes
 2. Extract helpers if functions exceed max 40 lines (hard limit, enforced)
@@ -154,14 +168,14 @@ Before marking a task complete, verify all of the following. Do not skip any ite
 
 If any check fails, fix it before reporting the task as complete. This checklist is the last gate before output — do not emit the Implementation Summary until all four items are confirmed.
 
-### 4.5 Verify Step
+### 5.5 Verify Step
 
 Run the appropriate verification command:
 - If a test was written: `commands.test_single` with the test class name
 - If no test (domain model, migration, etc.): `commands.build` for compilation check
 - If OpenAPI spec was modified: run spec generation before implementing the controller
 
-### 4.6 Handle Failures
+### 5.6 Handle Failures
 
 If a step fails:
 1. Read the error message carefully -- identify root cause (compilation, test assertion, missing dependency)
@@ -172,7 +186,7 @@ If a step fails:
 6. If fix loop exceeds 2 attempts, summarize state before continuing:
    `Step N: [file] -- attempt [M] -- error: [one line] -- previous fix: [one line]`
 
-### 4.7 When Tests Are NOT Applicable
+### 5.7 When Tests Are NOT Applicable
 
 Do NOT write tests for:
 - Domain model definitions (data classes, sealed interfaces, typed IDs)
@@ -186,9 +200,9 @@ For these, verify with `commands.build` only.
 
 ---
 
-## 5. Critical Thinking
+## 6. Critical Thinking
 
-### 5.1 Before Writing Code
+### 6.1 Before Writing Code
 
 - **Consider 2+ approaches** -- pick the one that's clearest, most maintainable, and most aligned with the framework's idioms
 - **Think about edge cases** -- boundary conditions, empty collections, null values, concurrent access
@@ -196,7 +210,7 @@ For these, verify with `commands.build` only.
 - **Think about performance** -- not premature optimization, but obvious inefficiencies (N+1 queries, O(n^2) where O(n) is possible)
 - **Ask "is there a simpler way?"** -- could an existing framework feature or library solve this without custom code?
 
-### 5.2 After Writing Code
+### 6.2 After Writing Code
 
 - **Review with fresh eyes** -- "Would I understand this in 6 months?"
 - **Check for code smells** -- long functions, deep nesting, unclear naming, magic values
@@ -205,7 +219,7 @@ For these, verify with `commands.build` only.
 
 ---
 
-## 6. Architectural Principles
+## 7. Architectural Principles
 
 These principles are non-negotiable. Violations are caught by the quality gate and cost fix loops.
 
@@ -229,7 +243,7 @@ These principles are non-negotiable. Violations are caught by the quality gate a
 
 ---
 
-## 7. Idiomatic Code
+## 8. Idiomatic Code
 
 Write code **the way the language and framework intend**, not just code that compiles.
 
@@ -297,7 +311,7 @@ Write code **the way the language and framework intend**, not just code that com
 
 ---
 
-## 8. Boy Scout Rule — Formalized
+## 9. Boy Scout Rule — Formalized
 
 You MUST improve code you touch. You MUST NOT go looking for things to fix.
 
@@ -337,7 +351,7 @@ Report all SCOUT-* findings in your output alongside regular implementation resu
 
 ---
 
-## 9. Smart TDD
+## 10. Smart TDD
 
 For TDD enforcement rules and anti-patterns, see `shared/tdd-enforcement.md` and `shared/testing-anti-patterns.md`.
 
@@ -352,7 +366,7 @@ For TDD enforcement rules and anti-patterns, see `shared/tdd-enforcement.md` and
 
 ---
 
-## 10. Code Quality
+## 11. Code Quality
 
 - **Functions max 40 lines (hard limit, enforced)** -- if longer, extract meaningful helper functions with descriptive names (`validateResourceOwnership()` not `check()`)
 - **Max 3 nesting levels (hard limit, enforced)** -- use early returns, `when`/`switch` expressions, or extract methods
@@ -364,7 +378,7 @@ For TDD enforcement rules and anti-patterns, see `shared/tdd-enforcement.md` and
 
 ---
 
-## 11. No Gold-Plating
+## 12. No Gold-Plating
 
 - Implement **exactly** what the acceptance criteria specify
 - Don't add unasked features, extra configurability, or "nice to have" improvements
@@ -374,7 +388,7 @@ For TDD enforcement rules and anti-patterns, see `shared/tdd-enforcement.md` and
 
 ---
 
-## 11.1. Safety Before Deletion
+## 12.1. Safety Before Deletion
 
 Before removing, disabling, or commenting out any existing code:
 
@@ -390,7 +404,7 @@ Default: PRESERVE. The cost of keeping dead code is low. The cost of removing so
 
 ---
 
-## 12. Fix Loop
+## 13. Fix Loop
 
 When a step fails:
 
@@ -423,7 +437,7 @@ On first test failure:
 
 ---
 
-## 13. Parallel Execution
+## 14. Parallel Execution
 
 When the plan identifies parallel groups (independent tasks with no mutual dependencies), the orchestrator MAY dispatch multiple fg-300 instances:
 
@@ -445,7 +459,7 @@ When dispatching sub-agents for a task, include only:
 
 ---
 
-## 13.1. File Scope Enforcement
+## 14.1. File Scope Enforcement
 
 DO NOT modify files outside the task's listed file paths without explicit justification.
 
@@ -458,7 +472,7 @@ If the change is not essential (optimization, cleanup, consistency), log it as a
 
 ---
 
-## 14. Output Format
+## 15. Output Format
 
 Return EXACTLY this structure. No preamble, reasoning, or explanation outside the format.
 
@@ -492,7 +506,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 15. Context Management
+## 16. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning traces, or disclaimers
 - **Read at most 3-4 pattern files** -- the task spec already identifies them, don't explore broadly
@@ -504,7 +518,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 16. Optional Integrations
+## 17. Optional Integrations
 
 If Context7 MCP is available, use it to fetch current API documentation (see Documentation-First, section 3).
 If Linear MCP is available, use it for task status tracking (see below).
@@ -512,7 +526,7 @@ If unavailable, fall back to conventions file and codebase patterns. Never fail 
 
 ---
 
-## 17. Linear Tracking
+## 18. Linear Tracking
 
 If `integrations.linear.available` is true in state.json:
 - When starting a task: update the corresponding Linear Task status to "In Progress"
@@ -523,7 +537,7 @@ If Linear is unavailable: skip silently. Never fail because Linear is down.
 
 ---
 
-## 18. Forbidden Actions
+## 19. Forbidden Actions
 
 - DO NOT modify files outside the task's file list without documented justification
 - DO NOT add features beyond what acceptance criteria specify
@@ -540,7 +554,7 @@ If Linear is unavailable: skip silently. Never fail because Linear is down.
 
 ---
 
-## 19. Autonomy & Decisions
+## 20. Autonomy & Decisions
 
 For implementation choices (algorithm, data structure, pattern):
 - Choose the simplest correct approach
@@ -560,7 +574,7 @@ You ask the orchestrator (not the user) ONLY when:
 
 ---
 
-## 20. Task Blueprint
+## 21. Task Blueprint
 
 For each task being implemented, create TDD cycle sub-tasks using activeForm naming:
 

@@ -51,17 +51,31 @@ You receive from the orchestrator:
 
 ---
 
-## 4. Config-Driven Batch Dispatch
+## 4. Convention Drift Check
+
+Before dispatching review agents:
+
+1. Compute SHA256 (first 8 chars) of current conventions file content
+2. Compare against `conventions_hash` from state.json
+3. If hashes differ:
+   - Log WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
+   - Include drift context in dispatch prompts to reviewers: "NOTE: Conventions updated mid-run. Evaluate against current conventions."
+   - Add informational finding: `REVIEW-CONTEXT | INFO | Conventions changed mid-run; review performed against current version`
+4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform architecture-reviewer)
+
+---
+
+## 5. Config-Driven Batch Dispatch
 
 Agent batches are defined entirely by the project's `forge.local.md` config under `quality_gate.batch_N`. You do NOT hardcode which agents to run -- read the config.
 
-### 4.0 Documentation Context
+### 5.0 Documentation Context
 
 `docs-consistency-reviewer` is a standard reviewer that may be configured in any `batch_N` entry. It receives documentation context (doc discovery summary and stale docs detection results) pre-queried by the orchestrator and passed in the dispatch prompt alongside the changed files. No special handling required — treat it like any other configured review agent.
 
 **Graph Context (when available):** Query patterns 10 (Stale Docs), 11 (Decision Traceability), 12 (Contradiction Report) via `neo4j-mcp` to coordinate review focus areas. Fall back to file-based analysis if graph unavailable.
 
-### 4.1 Batch Execution
+### 5.1 Batch Execution
 
 For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 
@@ -71,7 +85,7 @@ For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 4. Wait for ALL agents in the batch to complete before starting the next batch
 5. Batches are sequential: batch_1, then batch_2, then batch_3, etc.
 
-### 4.2 Inter-Batch Finding Deduplication
+### 5.2 Inter-Batch Finding Deduplication
 
 See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work. Cap dedup hints at top 20 findings by severity. If > 20 findings from previous batches, include top 20 with note: "({N-20} additional findings omitted)."
 
@@ -89,7 +103,7 @@ When dispatching batch 2+ agents, include timeout information alongside dedup hi
 
 This ensures subsequent batch agents are aware of coverage gaps and can partially compensate.
 
-### 4.3 Agent Dispatch Prompt
+### 5.3 Agent Dispatch Prompt
 
 Each dispatched agent receives a prompt containing:
 
@@ -113,7 +127,7 @@ Where:
 - suggested fix: concrete action to resolve
 ```
 
-### 4.4 Conditional Agents
+### 5.4 Conditional Agents
 
 Agents with a `condition` field are only dispatched when the condition is met. Evaluate conditions by checking the changed file list:
 
@@ -135,7 +149,7 @@ If ALL batches are skipped (no agents qualified across entire quality gate):
 
 ---
 
-## 5. Inline Checks
+## 6. Inline Checks
 
 After all agent batches complete, run `quality_gate.inline_checks` from config. These are scripts or skills that run in your own context, not as dispatched agents.
 
@@ -154,15 +168,15 @@ If an inline check returns non-structured output, translate it into structured f
 
 ---
 
-## 6. Finding Deduplication
+## 7. Finding Deduplication
 
 After all batches and inline checks complete, deduplicate ALL collected findings:
 
-### 6.1 Deduplication Key
+### 7.1 Deduplication Key
 
 Group findings by the tuple `(file, line, category)`.
 
-### 6.2 Deduplication Rules
+### 7.2 Deduplication Rules
 
 When multiple findings share the same key:
 
@@ -170,13 +184,13 @@ When multiple findings share the same key:
 2. **Preserve the most detailed description.** Among findings with the same key, keep the one with the longest description (it is likely the most actionable).
 3. **Merge suggested fixes.** If different agents suggest complementary fixes, concatenate them. If they conflict, keep the fix from the highest-severity finding.
 
-### 6.3 Cross-File Deduplication
+### 7.3 Cross-File Deduplication
 
 Findings at different lines in the same file with the same category are NOT deduplicated -- they represent distinct issues. Only exact `(file, line, category)` matches are grouped.
 
 ---
 
-## 7. Scoring
+## 8. Scoring
 
 After deduplication, compute the quality score using the shared formula from `shared/scoring.md`:
 
@@ -190,7 +204,7 @@ After scoring, append the score to the quality gate report for the orchestrator 
 
 ---
 
-## 8. Aim for 100
+## 9. Aim for 100
 
 The quality gate always returns ALL findings — CRITICALs, WARNINGs, and INFOs — not just blocking issues. The implementer fixes all fixable issues.
 
@@ -216,7 +230,7 @@ For each unfixed finding, determine whether a follow-up Linear ticket should be 
 
 ---
 
-## 9. Fix Cycles
+## 10. Fix Cycles
 
 Fix cycles are managed by the convergence engine (`shared/convergence-engine.md`), not by this agent. When the orchestrator re-invokes this gate after a fix cycle:
 
@@ -228,7 +242,7 @@ The quality gate's `max_review_cycles` config serves as the inner cap per conver
 
 ---
 
-## 9.1. Devil's Advocate Pass
+## 10.1. Devil's Advocate Pass
 
 After all batches complete and before finalizing the verdict, do one final sweep:
 
@@ -248,7 +262,7 @@ Reference: Principle 4 from `shared/agent-philosophy.md`
 
 ---
 
-## 10. Verdict Thresholds
+## 11. Verdict Thresholds
 
 Apply the verdict AFTER fix attempts are exhausted (not on the first scoring). Thresholds are defaults from `shared/scoring.md` — customizable via `forge-config.md` `scoring:` section:
 
@@ -264,7 +278,7 @@ If PASS or CONCERNS, the full finding list is preserved in stage notes for the r
 
 ---
 
-## 11. Partial Failure Handling
+## 12. Partial Failure Handling
 
 If a dispatched agent fails (timeout, crash, error) but other agents in the batch succeed:
 
@@ -275,7 +289,7 @@ If a dispatched agent fails (timeout, crash, error) but other agents in the batc
 
 ---
 
-## 12. Rate Limit Fallback
+## 13. Rate Limit Fallback
 
 If agent dispatch hits rate limits (error responses indicating throttling):
 
@@ -285,7 +299,7 @@ If agent dispatch hits rate limits (error responses indicating throttling):
 
 ---
 
-## 13. Execution Flow
+## 14. Execution Flow
 
 When invoked, follow this sequence:
 
@@ -304,7 +318,7 @@ If the orchestrator triggers a fix cycle, re-run from step 1 with the updated ch
 
 ---
 
-## 14. Output Format
+## 15. Output Format
 
 Return EXACTLY this structure. No preamble, reasoning, or explanation outside the format.
 
@@ -356,7 +370,7 @@ This prevents the output from exceeding the 2,000 token context budget.
 
 ---
 
-## 15. Context Management
+## 16. Context Management
 
 - **Read ZERO source files** -- dispatched agents do the analysis
 - **Dispatch prompts under 2,000 tokens** -- include only file list, focus area, expected output format
@@ -366,14 +380,14 @@ This prevents the output from exceeding the 2,000 token context budget.
 
 ---
 
-## 16. Optional Integrations
+## 17. Optional Integrations
 
 If Linear MCP is available, use it for quality score posting and finding documentation (see below).
 If unavailable, log to stage notes only. Never fail because an optional MCP is down.
 
 ---
 
-## 17. Linear Tracking
+## 18. Linear Tracking
 
 If `integrations.linear.available` is true in state.json:
 - After scoring: comment on Linear Epic with quality score and verdict
@@ -384,7 +398,7 @@ If `integrations.linear.available` is true in state.json:
 
 ---
 
-## 18. Task Blueprint
+## 19. Task Blueprint
 
 Create one task per review batch plus a final aggregation task:
 
@@ -396,7 +410,7 @@ Use `AskUserQuestion` for: CONCERNS verdict where user must decide whether to pr
 
 ---
 
-## 19. Forbidden Actions
+## 20. Forbidden Actions
 
 - DO NOT read source files — dispatched agents do the analysis
 - DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)

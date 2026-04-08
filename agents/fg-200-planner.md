@@ -98,6 +98,17 @@ Reference: `shared/agent-philosophy.md`
 - If no simpler alternative exists after 2 minutes of brainstorming, document: "Direct implementation — no simpler alternative identified after evaluating {alt1} and {alt2}."
 - The validator (fg-210) will REVISE plans with missing or shallow Challenge Briefs
 
+### Convention Drift Check
+
+Before reading the conventions file:
+
+1. Compute SHA256 (first 8 chars) of current conventions file content
+2. Compare against `conventions_hash` from state.json (received via dispatch context)
+3. If hashes differ:
+   - Log WARNING in stage notes: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
+   - Use the current (updated) conventions for planning
+4. Optionally compare per-section hashes from `conventions_section_hashes` — if only irrelevant sections changed, downgrade to INFO
+
 ### 3.2 Map Existing Code
 
 If exploration results are provided, use them. Otherwise:
