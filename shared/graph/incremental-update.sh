@@ -145,7 +145,7 @@ cypher_escape() {
 ext_to_lang() {
   local file="$1"
   case "$file" in
-    *.kt)    echo "kotlin" ;;
+    *.kt|*.kts) echo "kotlin" ;;
     *.java)  echo "java" ;;
     *.ts|*.tsx) echo "typescript" ;;
     *.js|*.jsx) echo "javascript" ;;
@@ -158,9 +158,9 @@ ext_to_lang() {
     *.scala) echo "scala" ;;
     *.dart)  echo "dart" ;;
     *.swift) echo "swift" ;;
-    *.cs)    echo "csharp" ;;
+    *.cs|*.csx) echo "csharp" ;;
     *.c|*.h) echo "c" ;;
-    *.cpp|*.hpp) echo "cpp" ;;
+    *.cpp|*.cc|*.cxx|*.hpp) echo "cpp" ;;
     *)       echo "unknown" ;;
   esac
 }
