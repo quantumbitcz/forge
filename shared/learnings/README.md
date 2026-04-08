@@ -82,8 +82,30 @@ Agent performance is tracked per `agent-effectiveness-template.md` (operational 
 PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
 - Active items: HIGH, MEDIUM, or LOW confidence — loaded during PREFLIGHT
 - Archived items: moved to bottom of forge-log.md — NOT loaded during PREFLIGHT
-- Decay: 10 consecutive unused runs triggers confidence demotion
-- Promotion: 3+ applications with HIGH confidence suggests making it a permanent rule
+
+**Confidence decay formula:**
+
+| Current level | Condition | Action |
+|---|---|---|
+| HIGH | 10 consecutive unused runs | Demote to MEDIUM |
+| MEDIUM | 10 consecutive unused runs | Demote to LOW |
+| LOW | 10 consecutive unused runs | Archive (stop loading at PREFLIGHT) |
+| Any | 1 false positive confirmed | Count as 3 unused runs toward demotion |
+| Any | Framework/library major version supersedes the pattern | Archive immediately |
+| LOW | Hit count = 0 AND age > 20 runs | Archive |
+
+**Confidence promotion:**
+
+| Current level | Condition | Action |
+|---|---|---|
+| LOW | 2+ hits across different runs | Promote to MEDIUM |
+| MEDIUM | 4+ hits AND 0 false positives | Promote to HIGH |
+| HIGH | 3+ applications AND stable across 5+ runs | Candidate for permanent convention rule |
+
+**Tracking fields per PREEMPT item:**
+- `consecutive_unused`: integer, resets to 0 on any hit
+- `false_positives`: integer, incremented by retrospective when agent reports PREEMPT_SKIPPED with reason
+- `last_hit_run`: run ID of last use
 
 This supersedes the simple "Pruning" rules previously defined. The confidence decay model provides gradual deprecation instead of abrupt removal.
 
