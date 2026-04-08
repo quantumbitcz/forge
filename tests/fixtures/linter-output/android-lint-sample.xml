@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.2.0">
+    <issue id="HardcodedText" severity="Warning" message="Hardcoded string" category="Internationalization" summary="Hardcoded text in layout" priority="5">
+        <location file="app/src/main/res/layout/activity_main.xml" line="12" column="9"/>
+    </issue>
+    <issue id="MissingPermission" severity="Error" message="Missing INTERNET permission" category="Security" summary="Missing required permission" priority="9">
+        <location file="app/src/main/java/com/example/ApiClient.kt" line="25" column="5"/>
+    </issue>
+    <issue id="ObsoleteSdkInt" severity="Warning" message="Unnecessary version check" category="Performance" summary="Obsolete SDK_INT version check" priority="6">
+        <location file="app/src/main/java/com/example/Utils.kt" line="42" column="9"/>
+    </issue>
+</issues>

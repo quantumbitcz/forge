@@ -1,0 +1,42 @@
+[
+  {
+    "code": "F401",
+    "end_location": {"column": 10, "row": 3},
+    "filename": "src/main.py",
+    "fix": {"applicability": "safe", "edits": [], "message": "Remove unused import: os"},
+    "location": {"column": 1, "row": 3},
+    "message": "`os` imported but unused",
+    "noqa_row": 3,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "code": "S101",
+    "end_location": {"column": 20, "row": 15},
+    "filename": "src/auth.py",
+    "fix": null,
+    "location": {"column": 5, "row": 15},
+    "message": "Use of `assert` detected",
+    "noqa_row": 15,
+    "url": "https://docs.astral.sh/ruff/rules/assert"
+  },
+  {
+    "code": "E501",
+    "end_location": {"column": 120, "row": 42},
+    "filename": "src/utils.py",
+    "fix": null,
+    "location": {"column": 1, "row": 42},
+    "message": "Line too long (120 > 88)",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "code": "UP006",
+    "end_location": {"column": 15, "row": 7},
+    "filename": "src/models.py",
+    "fix": {"applicability": "safe", "edits": [], "message": "Use `list` instead of `List`"},
+    "location": {"column": 1, "row": 7},
+    "message": "Use `list` instead of `List` for type annotation",
+    "noqa_row": 7,
+    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
+  }
+]

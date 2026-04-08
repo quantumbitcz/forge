@@ -1,0 +1,32 @@
+{
+  "Issues": [
+    {
+      "FromLinter": "errcheck",
+      "Text": "Error return value of `file.Close` is not checked",
+      "Severity": "",
+      "SourceLines": ["file.Close()"],
+      "Pos": {"Filename": "cmd/server/main.go", "Offset": 0, "Line": 42, "Column": 2}
+    },
+    {
+      "FromLinter": "gosec",
+      "Text": "Potential hardcoded credentials",
+      "Severity": "",
+      "SourceLines": ["password := \"admin123\""],
+      "Pos": {"Filename": "internal/auth/auth.go", "Offset": 0, "Line": 15, "Column": 1}
+    },
+    {
+      "FromLinter": "revive",
+      "Text": "exported function DoStuff should have comment or be unexported",
+      "Severity": "",
+      "SourceLines": ["func DoStuff() {"],
+      "Pos": {"Filename": "pkg/utils/helpers.go", "Offset": 0, "Line": 8, "Column": 1}
+    },
+    {
+      "FromLinter": "unused",
+      "Text": "var unusedVar is unused",
+      "Severity": "",
+      "SourceLines": ["var unusedVar int"],
+      "Pos": {"Filename": "internal/service/worker.go", "Offset": 0, "Line": 23, "Column": 5}
+    }
+  ]
+}

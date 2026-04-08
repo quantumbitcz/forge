@@ -1,0 +1,6 @@
+Starting audit...
+[ERROR] src/main/java/com/example/App.java:15:5: Missing Javadoc comment.
+[WARNING] src/main/java/com/example/App.java:22:1: Unused import - java.util.ArrayList
+[ERROR] src/main/java/com/example/service/UserService.java:8: 'method def modifier' has incorrect indentation level 4, expected level should be 2.
+src/main/java/com/example/util/Helper.java:30: Abbreviation in name 'getHTTPClient' must contain no more than '2' consecutive capital letters.
+Audit done.

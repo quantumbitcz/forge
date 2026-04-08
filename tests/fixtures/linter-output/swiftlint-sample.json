@@ -1,0 +1,29 @@
+[
+  {
+    "character": 1,
+    "file": "Sources/App/Models/User.swift",
+    "line": 15,
+    "reason": "Force casts should be avoided",
+    "rule_id": "force_cast",
+    "severity": "Error",
+    "type": "Force Cast"
+  },
+  {
+    "character": 5,
+    "file": "Sources/App/Controllers/AuthController.swift",
+    "line": 42,
+    "reason": "Lines should not span too many characters",
+    "rule_id": "line_length",
+    "severity": "Warning",
+    "type": "Line Length"
+  },
+  {
+    "character": 1,
+    "file": "Sources/App/Services/DataService.swift",
+    "line": 8,
+    "reason": "Unused import Foundation",
+    "rule_id": "unused_import",
+    "severity": "Warning",
+    "type": "Unused Import"
+  }
+]
