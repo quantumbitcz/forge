@@ -168,6 +168,42 @@ If an inline check returns non-structured output, translate it into structured f
 
 ---
 
+## 6.1 Conflict Detection
+
+After all batches and inline checks complete but BEFORE deduplication, detect and resolve contradictory findings from different review agents.
+
+### Detection Algorithm
+
+1. **Group findings by (file, line)** across all agents and inline checks.
+2. **For each group with 2+ findings from different agents**, check whether the suggested fixes are contradictory (e.g., "extract to module" vs. "inline this", "add caching" vs. "remove caching layer").
+3. **Apply the priority ordering** from `shared/agent-communication.md` (Conflict Reporting Protocol) to determine the winner:
+   - Priority 1: SEC-* (Security)
+   - Priority 2: ARCH-* (Architecture)
+   - Priority 3: QUAL-*, TEST-* (Code Quality)
+   - Priority 4: PERF-*, FE-PERF-* (Performance)
+   - Priority 5: CONV-*, DOC-* (Convention)
+   - Priority 6: APPROACH-*, DESIGN-* (Style)
+4. **If same priority level**, the finding with higher severity wins. If severity is also equal, escalate both to the user with a CONFLICT annotation in the quality gate report.
+
+### Conflict Resolution Output
+
+For each resolved conflict, record in the quality gate report and stage notes:
+
+```
+CONFLICT RESOLVED: {file}:{line}
+  Winner: {category_A} ({severity_A}) from {agent_A} — {description_A}
+  Demoted: {category_B} reclassified as SCOUT-CONFLICT-{N} — {description_B}
+  Reason: {priority_level_A} ({priority_name}) outranks {priority_level_B} ({priority_name})
+```
+
+The demoted finding is reclassified with a `SCOUT-CONFLICT-{N}` category (where N is a sequential counter). Because `SCOUT-*` findings are excluded from the scoring formula (see `shared/scoring.md`), the demoted finding is tracked for reporting but does not affect the quality score.
+
+### Why This Matters
+
+Without conflict resolution, the implementer receives opposing instructions from different reviewers. This causes fix oscillation: fixing one finding introduces the other, then fixing that reintroduces the first. By resolving conflicts at the quality gate level, the implementer receives a single coherent set of instructions.
+
+---
+
 ## 7. Finding Deduplication
 
 After all batches and inline checks complete, deduplicate ALL collected findings:

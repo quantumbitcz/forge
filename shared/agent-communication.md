@@ -74,6 +74,29 @@ If a review agent finds an issue that relates to another agent's domain, note it
 
 The quality gate uses these cross-references to understand finding relationships.
 
+### Conflict Reporting Protocol
+
+When a review agent produces a finding that contradicts another agent's known output (via dedup hints or cross-agent references), it MUST report the conflict explicitly:
+
+```
+CONFLICT: {category} at {file}:{line}
+  Agent A: {finding_A_description} (severity: {sev_A})
+  Agent B: {finding_B_description} (severity: {sev_B})
+```
+
+Conflicts are resolved by the quality gate using this reviewer priority ordering (highest authority first):
+
+1. **Security** (SEC-*) — security concerns override all others
+2. **Architecture** (ARCH-*) — structural decisions override style/quality
+3. **Code Quality** (QUAL-*, TEST-*) — correctness over performance
+4. **Performance** (PERF-*, FE-PERF-*) — performance over convention
+5. **Convention** (CONV-*, DOC-*) — convention over style preference
+6. **Style** (APPROACH-*, DESIGN-*) — lowest priority
+
+When two findings conflict at the same priority level, the finding with the higher severity wins. If severity is also equal, both findings are escalated to the user via the quality gate report with a CONFLICT annotation.
+
+Agents should NOT attempt to resolve conflicts themselves. Report the conflict and let the quality gate arbitrate.
+
 ## 4. State.json (orchestrator-managed)
 
 The orchestrator is the sole writer of state.json. Agents read it (for integrations, conventions_hash, etc.) but never write to it.
