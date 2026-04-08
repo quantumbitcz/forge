@@ -56,6 +56,8 @@ The convergence engine receives two structured inputs from the orchestrator:
 
 The convergence phase transitions follow the formal table in `shared/state-transitions.md` (section "Convergence Phase Transitions"). This algorithm section describes the *implementation* of those transitions — the table is the *specification*.
 
+On every convergence evaluation (IMPROVING, PLATEAUED, REGRESSING) and phase transition, emit a decision log entry per `shared/decision-log.md` with decision type `convergence_evaluation` or `convergence_phase_transition`.
+
 ## Algorithm
 
 ```

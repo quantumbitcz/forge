@@ -1204,6 +1204,10 @@ Multi-component: annotate each file with its owning component's convention stack
 
 All state transitions in this section follow the formal transition table in `shared/state-transitions.md`. The orchestrator MUST look up (current_state, event, guard) in that table for every control flow decision. Do not interpret prose descriptions as state transition logic — use the table. If a (state, event) pair is not in the table, log ERROR and escalate.
 
+### 9.2c Decision Logging
+
+On every state transition, convergence evaluation, recovery attempt, and escalation, emit a decision log entry to `.forge/decisions.jsonl` per `shared/decision-log.md`. Fire-and-forget — logging failure does not block the pipeline.
+
 ### 9.3 Convergence-Driven Fix Cycle
 
 Fix cycles are driven by the convergence engine (`shared/convergence-engine.md`). After scoring:
