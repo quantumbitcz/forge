@@ -236,6 +236,11 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 - Table-driven tests for input/output variations
 - One assertion focus per test — multiple asserts OK if testing the same behavior
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated handlers, changing middleware contracts, restructuring router groups.
+
 ## Dos and Don'ts
 
 ### Do

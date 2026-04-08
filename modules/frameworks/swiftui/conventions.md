@@ -156,6 +156,11 @@ For general XCTest patterns, see `modules/testing/xctest.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated views, changing property wrapper contracts, restructuring navigation patterns.
+
 ## Dos and Don'ts
 
 ### Do

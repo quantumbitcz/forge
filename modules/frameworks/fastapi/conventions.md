@@ -147,6 +147,11 @@ For general pytest patterns, see `modules/testing/pytest.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated routers, changing dependency injection contracts, restructuring Pydantic models.
+
 ## Dos and Don'ts
 
 ### Do

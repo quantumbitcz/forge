@@ -206,6 +206,11 @@ For Playwright E2E patterns, see `modules/testing/playwright.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated routes, changing load function contracts, restructuring hook handlers.
+
 ## Dos and Don'ts
 
 ### Do

@@ -162,6 +162,11 @@ For general Rust test patterns, see `modules/testing/rust-test.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated handlers, changing extractor contracts, restructuring router composition.
+
 ## Dos and Don'ts
 
 ### Do

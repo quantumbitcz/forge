@@ -168,6 +168,11 @@ For general Vitest patterns, see `modules/testing/vitest.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated routes, changing middleware contracts, restructuring error handlers.
+
 ## Dos and Don'ts
 
 ### Do

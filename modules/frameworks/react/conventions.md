@@ -240,6 +240,11 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 - Skip framework guarantees (don't test React renders, useState)
 - One assertion focus per it() -- multiple asserts OK if same behavior
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated components, changing hook contracts, restructuring state management.
+
 ## Dos and Don'ts
 
 ### Do

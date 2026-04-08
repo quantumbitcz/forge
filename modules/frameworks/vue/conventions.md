@@ -379,6 +379,11 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 - Skip framework guarantees (don't test Nuxt routing or auto-imports)
 - One assertion focus per `it()` — multiple asserts OK if same behavior
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated composables, changing component public APIs, restructuring Pinia stores.
+
 ## Dos and Don'ts
 
 ### Do

@@ -182,6 +182,11 @@ For general Go testing patterns, see `modules/testing/go-testing.md`.
 
 scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated packages, changing exported function signatures, restructuring internal modules.
+
 ## Dos and Don'ts
 
 ### Do

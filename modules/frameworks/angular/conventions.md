@@ -258,6 +258,11 @@ scaffold -> write tests (RED) -> implement (GREEN) -> refactor
 - Skip framework guarantees (don't test Angular renders, signal graph)
 - One assertion focus per it() — multiple asserts OK if same behavior
 
+## Boy Scout Rule
+
+Improve touched code if: safe, small (<10 lines), local (same file), convention-aligned.
+NOT in scope: refactoring unrelated modules, changing service injection contracts, restructuring NgRx store.
+
 ## Dos and Don'ts
 
 ### Do
