@@ -376,15 +376,15 @@ parse_imports_elixir() {
       local path_candidate
       if [[ -n "$FORGE_PYTHON" ]]; then
         path_candidate="$("$FORGE_PYTHON" -c "
-import re
-mod = '${mod}'
+import re, sys
+mod = sys.argv[1]
 parts = mod.split('.')
 snake_parts = []
 for p in parts:
     s = re.sub(r'([A-Z])', r'_\1', p).lower().lstrip('_')
     snake_parts.append(s)
 print('lib/' + '/'.join(snake_parts))
-" 2>/dev/null || echo "")"
+" "$mod" 2>/dev/null || echo "")"
       else
         path_candidate=""
       fi
