@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 40 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 39 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -90,7 +90,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
-- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 11): single-line. Tier 3 (internal, 23): minimal. Full capability in `.md` body.
+- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 10): single-line. Tier 3 (internal, 23): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
 
@@ -152,7 +152,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (22), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: 11; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: 10; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
 
 **Hooks** (3): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`.
 

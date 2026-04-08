@@ -294,6 +294,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 |---|---|
 | `fg-410-architecture-reviewer` | Architecture patterns, SRP, DIP, boundaries |
 | `fg-411-security-reviewer` | OWASP, auth, injection, secrets |
+| `fg-412-code-quality-reviewer` | Error handling, DRY/KISS, defensive programming, test quality |
 | `fg-413-frontend-reviewer` | Frontend code quality, conventions, framework rules, design system compliance, visual hierarchy, Figma comparison |
 | `fg-414-frontend-a11y-reviewer` | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
 | `fg-415-frontend-performance-reviewer` | Bundle size, rendering, lazy loading, code splitting |
