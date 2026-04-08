@@ -410,6 +410,13 @@ mode_hook() {
 
   [[ -z "$file" || ! -f "$file" ]] && return 0
   [[ "$file" == *"build/generated-sources"* ]] && return 0
+
+  # Deferred batch mode: queue file instead of processing immediately
+  if [[ "${FORGE_BATCH_HOOK:-}" == "1" && -n "${FORGE_HOOK_QUEUE:-}" ]]; then
+    echo "$file" >> "$FORGE_HOOK_QUEUE"
+    return 0
+  fi
+
   _CURRENT_FILE="$file"
 
   local project_root
@@ -445,6 +452,8 @@ run_layer2() {
 mode_verify() {
   shift  # consume --verify
   parse_batch_args "$@"
+  # Files are processed sequentially; grouping by language is available in --flush-queue mode.
+  # In verify/review, sequential per-file processing ensures correct component resolution.
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
     _CURRENT_FILE="$f"
@@ -457,6 +466,8 @@ mode_verify() {
 mode_review() {
   shift  # consume --review
   parse_batch_args "$@"
+  # Files are processed sequentially; grouping by language is available in --flush-queue mode.
+  # In verify/review, sequential per-file processing ensures correct component resolution.
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
     _CURRENT_FILE="$f"
@@ -469,12 +480,60 @@ mode_review() {
   # See agents/fg-140-deprecation-refresh.md and agents/version-compat-reviewer.md
 }
 
+# --- Mode: --flush-queue (process deferred hook queue) ---
+mode_flush_queue() {
+  shift  # consume --flush-queue
+  local queue_file="" project_root=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --project-root) project_root="$2"; shift 2 ;;
+      --queue-file) queue_file="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  [[ -z "$queue_file" || ! -f "$queue_file" ]] && return 0
+  [[ ! -s "$queue_file" ]] && return 0
+
+  # Read unique files from queue
+  local -A seen_files=()
+  local files=()
+  while IFS= read -r f; do
+    [[ -z "$f" || ! -f "$f" ]] && continue
+    [[ -n "${seen_files[$f]+x}" ]] && continue
+    seen_files[$f]=1
+    files+=("$f")
+  done < "$queue_file"
+
+  # Group files by language for efficient batch processing
+  local -A file_groups=()
+  for f in "${files[@]}"; do
+    local lang
+    lang="$(detect_language "$f")" || true
+    [[ -z "$lang" ]] && continue
+    file_groups[$lang]+="$f"$'\n'
+  done
+
+  # Process each language group
+  for lang in "${!file_groups[@]}"; do
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      _CURRENT_FILE="$f"
+      run_layer1 "$f" "$project_root"
+    done <<< "${file_groups[$lang]}"
+  done
+
+  # Clear the queue
+  : > "$queue_file"
+}
+
 # --- Main dispatch ---
 case "${1:---hook}" in
-  --hook)   mode_hook ;;
-  --verify) mode_verify "$@" ;;
-  --review) mode_review "$@" ;;
-  *)        echo "Usage: engine.sh [--hook | --verify | --review] [options]" >&2 ;;
+  --hook)        mode_hook ;;
+  --verify)      mode_verify "$@" ;;
+  --review)      mode_review "$@" ;;
+  --flush-queue) mode_flush_queue "$@" ;;
+  *)             echo "Usage: engine.sh [--hook | --verify | --review | --flush-queue] [options]" >&2 ;;
 esac
 
 exit 0
