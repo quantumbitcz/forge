@@ -79,6 +79,8 @@ echo "// Project ID: ${PROJECT_ID}"
 echo "// Component: ${COMPONENT:-<none>}"
 echo "// ===================================="
 echo ""
+echo ":begin"
+echo ""
 
 # --- Delete removed files ---
 if [[ -n "$DELETED_FILES" ]]; then
@@ -147,3 +149,5 @@ if [[ -n "$CHANGED_FILES" ]]; then
       --files "$CHANGED_FILES" 2>/dev/null || true
   fi
 fi
+
+echo ":commit"

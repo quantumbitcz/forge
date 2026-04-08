@@ -443,6 +443,9 @@ MODIFIED=0
 DELETED=0
 RENAMED=0
 
+echo "// --- Transaction boundary: wrap in :begin/:commit for atomicity ---"
+echo ":begin"
+echo ""
 echo "// --- Deleted / Modified (detach-delete phase) ---"
 while IFS=$'\t' read -r status old_path new_path; do
   case "$status" in
@@ -489,6 +492,8 @@ echo ""
 
 echo "$CURRENT_SHA" > "$LAST_BUILD_FILE"
 
+echo ":commit"
+echo ""
 echo "// --- Summary ---"
 echo "// Added: ${ADDED}, Modified: ${MODIFIED}, Deleted: ${DELETED}, Renamed: ${RENAMED}"
 echo "// Updated .last-build-sha to ${CURRENT_SHA}"
