@@ -103,9 +103,9 @@ PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
 | HIGH | 3+ applications AND stable across 5+ runs | Candidate for permanent convention rule |
 
 **Tracking fields per PREEMPT item:**
-- `consecutive_unused`: integer, resets to 0 on any hit
+- `runs_since_last_hit`: integer, resets to 0 on any hit (only incremented when item's domain is active in a run)
 - `false_positives`: integer, incremented by retrospective when agent reports PREEMPT_SKIPPED with reason
-- `last_hit_run`: run ID of last use
+- `last_hit`: ISO 8601 date of last use
 
 This supersedes the simple "Pruning" rules previously defined. The confidence decay model provides gradual deprecation instead of abrupt removal.
 

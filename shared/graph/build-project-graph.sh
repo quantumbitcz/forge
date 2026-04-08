@@ -452,6 +452,8 @@ echo "// Project ID: ${PROJECT_ID}"
 echo "// Component: ${COMPONENT:-<none>}"
 echo "// ===================================="
 echo ""
+echo ":begin"
+echo ""
 
 # ============================================================================
 # Step 0: Delete existing project nodes for this project_id (scoped)
@@ -808,6 +810,9 @@ echo ""
 # ============================================================================
 # Step 7: Write git SHA
 # ============================================================================
+
+echo ":commit"
+echo ""
 
 GIT_SHA="$(cd "$PROJECT_ROOT" && git rev-parse HEAD 2>/dev/null || echo "unknown")"
 echo "$GIT_SHA" > "${GRAPH_DIR}/.last-build-sha"

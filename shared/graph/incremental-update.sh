@@ -486,14 +486,16 @@ while IFS=$'\t' read -r status old_path new_path; do
 done <<< "$SOURCE_CHANGES"
 echo ""
 
+echo ":commit"
+echo ""
+
 # ============================================================================
-# Update last build SHA
+# Update last build SHA — AFTER :commit to avoid silent data loss if
+# the transaction is rolled back by the consumer
 # ============================================================================
 
 echo "$CURRENT_SHA" > "$LAST_BUILD_FILE"
 
-echo ":commit"
-echo ""
 echo "// --- Summary ---"
 echo "// Added: ${ADDED}, Modified: ${MODIFIED}, Deleted: ${DELETED}, Renamed: ${RENAMED}"
 echo "// Updated .last-build-sha to ${CURRENT_SHA}"
