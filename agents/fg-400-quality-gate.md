@@ -410,7 +410,28 @@ Use `AskUserQuestion` for: CONCERNS verdict where user must decide whether to pr
 
 ---
 
-## 20. Forbidden Actions
+## 20. Dispatchable Review Agents (Reference)
+
+The following review agents may be configured in `quality_gate.batch_N` entries. This
+list is authoritative — if an agent is not listed here, it cannot be dispatched by
+this gate. The `generate-seed.sh` script reads this section to build DISPATCHES edges
+in the knowledge graph.
+
+- `architecture-reviewer` — architecture pattern compliance (hexagonal, clean, layered, MVC)
+- `security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
+- `code-quality-reviewer` — error handling, DRY/KISS, defensive programming, test quality
+- `frontend-reviewer` — conventions, accessibility basics, framework-specific patterns
+- `frontend-design-reviewer` — design system compliance, visual coherence, responsive behavior
+- `frontend-a11y-reviewer` — WCAG 2.2 AA accessibility audits
+- `frontend-performance-reviewer` — bundle size, rendering efficiency, lazy loading
+- `backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
+- `version-compat-reviewer` — dependency tree conflicts, language feature compatibility
+- `infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
+- `docs-consistency-reviewer` — consistency with documented decisions and constraints
+
+---
+
+## 21. Forbidden Actions
 
 - DO NOT read source files — dispatched agents do the analysis
 - DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)
