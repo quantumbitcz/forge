@@ -302,7 +302,7 @@ for r in rules:
       case "$sc_type" in
         awk_no_user_instruction)
           # Check if file contains a USER instruction (Dockerfile-specific)
-          if ! grep -qiE "^USER\s" "$FILE" 2>/dev/null; then
+          if ! grep -qiE "^USER[[:space:]]" "$FILE" 2>/dev/null; then
             emit "1" "$sc_category" "$sc_severity" "$sc_message" "$sc_fix_hint"
           fi
           ;;

@@ -552,7 +552,7 @@ extract_elixir() {
   esc_path="$(cypher_escape "$file")"
 
   # Modules
-  grep -nE '^[[:space:]]*defmodule[[:space:]]+\S+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
+  grep -nE '^[[:space:]]*defmodule[[:space:]]+[^[:space:]]+' "$abs_path" 2>/dev/null | while IFS= read -r line; do
     local name
     name="$(echo "$line" | sed -E 's/^[0-9]+:[[:space:]]*defmodule[[:space:]]+([^[:space:]]+)[[:space:]]*.*/\1/')"
     if [[ -n "$name" ]]; then
