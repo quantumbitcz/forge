@@ -100,6 +100,28 @@
       "applies_to": "*",
       "added": "2026-03-23",
       "addedBy": "seed"
+    },
+    {
+      "pattern": "<Link[^>]*>\\s*<a\\b",
+      "replacement": "Remove the nested <a> tag — Next.js 13+ renders the anchor automatically inside <Link>",
+      "package": "next",
+      "since": "13.0.0",
+      "removed_in": null,
+      "applies_from": "13.0.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
+    },
+    {
+      "pattern": "getInitialProps",
+      "replacement": "Use getServerSideProps (SSR) or getStaticProps (SSG) instead of getInitialProps for better performance and static optimization",
+      "package": "next",
+      "since": "9.3.0",
+      "removed_in": null,
+      "applies_from": "9.3.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
     }
   ]
 }

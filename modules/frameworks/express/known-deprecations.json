@@ -78,6 +78,17 @@
       "applies_to": "*",
       "added": "2026-03-22",
       "addedBy": "seed"
+    },
+    {
+      "pattern": "require\\s*\\(\\s*['\"]body-parser['\"]\\s*\\)",
+      "replacement": "Use express.json() and express.urlencoded() built-in middleware instead of the separate body-parser package",
+      "package": "body-parser",
+      "since": "4.16.0",
+      "removed_in": null,
+      "applies_from": "4.16.0",
+      "applies_to": "*",
+      "added": "2026-04-08",
+      "addedBy": "audit"
     }
   ]
 }
