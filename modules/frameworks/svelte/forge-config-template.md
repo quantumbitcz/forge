@@ -21,6 +21,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
 | architecture-reviewer | true | secondary | Architecture violations — findings merged into quality-gate |
 | security-reviewer | true | secondary | XSS, token storage, secrets exposure — findings merged into quality-gate |
+| frontend-reviewer | true | secondary | Conventions, framework patterns, design system — findings merged into quality-gate |
 | frontend-a11y-reviewer | true | secondary | WCAG 2.2 AA compliance for SPA components |
 | infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
 
