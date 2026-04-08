@@ -359,6 +359,14 @@ If `test_bootstrapper` is configured in `forge.local.md` and `test_bootstrapper.
 
 This step is optional and only triggers when explicitly configured. It runs AFTER convention resolution (3.5b) so the bootstrapper gets the correct convention stack.
 
+### 3.5e State Integrity Check
+
+When `.forge/state.json` exists (interrupted run recovery), run `shared/state-integrity.sh .forge/` to validate cross-reference consistency of state files before attempting recovery. The validator checks required fields, counter bounds, pipeline state validity, orphaned checkpoints, stale locks, and evidence freshness.
+
+- **ERRORs** (exit 1): State is corrupted. Attempt state reconstruction: back up the corrupted `state.json` to `.forge/state.json.pre-recover.{timestamp}`, then re-initialize state from scratch (§3.8). Log WARNING: "State integrity check failed — reconstructing state from scratch."
+- **WARNINGs** (exit 0 with warnings): Log each warning as INFO and proceed with recovery. Warnings are advisory (e.g., orphaned checkpoints, stale locks).
+- **Fresh run** (no existing `state.json`): Skip this validation entirely — state will be initialized from scratch at §3.8.
+
 ### 3.6 Check for Interrupted Runs
 
 Read `.forge/state.json`. If it exists and `complete: false`:
