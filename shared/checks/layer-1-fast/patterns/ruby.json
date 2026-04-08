@@ -1,6 +1,8 @@
 {
   "language": "ruby",
-  "extensions": [".rb"],
+  "extensions": [
+    ".rb"
+  ],
   "source": "RuboCop, Ruby Style Guide, OWASP Ruby",
   "rules": [
     {
@@ -98,6 +100,17 @@
       "fix_hint": "Define a UPPER_SNAKE_CASE constant with a descriptive name.",
       "example_ref": "ruby/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "RB-EXCEPT-003",
+      "name": "empty-rescue",
+      "pattern": "rescue\\s*=>?\\s*\\w*\\s*$",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty rescue block silently swallows exceptions.",
+      "fix_hint": "Log the error, reraise, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

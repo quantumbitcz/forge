@@ -90,6 +90,28 @@
       "message": "async void method — exceptions cannot be caught by caller.",
       "fix_hint": "Return Task instead of void. async void is only acceptable for event handlers.",
       "scope": "all"
+    },
+    {
+      "id": "CS-READ-001",
+      "name": "deep-nesting",
+      "pattern": "^\\s{16,}\\S",
+      "exclude_pattern": "^\\s*//|^\\s*///|^\\s*\\*",
+      "severity": "WARNING",
+      "category": "QUAL-READ",
+      "message": "Deep nesting detected (4+ indent levels with 4-space indent) — reduces readability.",
+      "fix_hint": "Extract inner logic into named methods or use early returns / guard clauses.",
+      "scope": "all"
+    },
+    {
+      "id": "CS-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*///|const\\s|readonly\\s|\"[^\"]*\"",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "fix_hint": "Define a const or static readonly field with a descriptive name.",
+      "scope": "main"
     }
   ],
   "thresholds": {

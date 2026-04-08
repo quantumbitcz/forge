@@ -1,6 +1,8 @@
 {
   "language": "rust",
-  "extensions": [".rs"],
+  "extensions": [
+    ".rs"
+  ],
   "source": "Clippy, rust-analyzer, Rust API Guidelines",
   "rules": [
     {
@@ -98,6 +100,17 @@
       "fix_hint": "Define a const with a descriptive name.",
       "example_ref": "rust/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "RS-EXCEPT-001",
+      "name": "ignored-result",
+      "pattern": "let\\s+_\\s*=.*\\?|Err\\(_\\)\\s*=>\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Error result discarded or empty error arm — errors may be silently lost.",
+      "fix_hint": "Log the error, propagate with ?, or use .expect() with an explanatory message.",
+      "scope": "all"
     }
   ],
   "thresholds": {

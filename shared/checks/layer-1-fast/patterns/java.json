@@ -1,6 +1,8 @@
 {
   "language": "java",
-  "extensions": [".java"],
+  "extensions": [
+    ".java"
+  ],
   "source": "SonarJava, SpotBugs, Google Java Style Guide",
   "rules": [
     {
@@ -110,6 +112,17 @@
       "fix_hint": "Replace synchronized(lock) { ... } with ReentrantLock: lock.lock(); try { ... } finally { lock.unlock(); }",
       "example_ref": "java/concurrency.md#virtual-threads",
       "scope": "main"
+    },
+    {
+      "id": "JV-EXCEPT-003",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block silently swallows exceptions.",
+      "fix_hint": "Log the exception, rethrow, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

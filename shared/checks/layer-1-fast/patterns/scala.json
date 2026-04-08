@@ -1,6 +1,9 @@
 {
   "language": "scala",
-  "extensions": [".scala", ".sc"],
+  "extensions": [
+    ".scala",
+    ".sc"
+  ],
   "source": "Scalafix, WartRemover, Scala Style Guide",
   "rules": [
     {
@@ -110,6 +113,17 @@
       "fix_hint": "Define a val with a descriptive PascalCase name (Scala convention).",
       "example_ref": "scala/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "SC-EXCEPT-002",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\{\\s*case\\s+_\\s*=>\\s*\\}",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block with wildcard pattern silently swallows exceptions.",
+      "fix_hint": "Log the exception, use Try/Either for error handling, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

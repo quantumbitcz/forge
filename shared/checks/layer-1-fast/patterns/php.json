@@ -1,6 +1,8 @@
 {
   "language": "php",
-  "extensions": [".php"],
+  "extensions": [
+    ".php"
+  ],
   "source": "PHPStan, Psalm, PSR-12, OWASP PHP",
   "rules": [
     {
@@ -110,6 +112,17 @@
       "fix_hint": "Define a class constant or const with a descriptive name.",
       "example_ref": "php/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "PHP-EXCEPT-002",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block silently swallows exceptions.",
+      "fix_hint": "Log the exception, rethrow, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

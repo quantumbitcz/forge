@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|!=|!==|@IBOutlet",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Force unwrap (!) \u2014 crashes at runtime if the value is nil.",
+      "message": "Force unwrap (!) — crashes at runtime if the value is nil.",
       "fix_hint": "Use optional binding (if let / guard let), nil-coalescing (??), or optional chaining (?.) instead.",
       "example_ref": "swift/optionals.md#force-unwrap",
       "scope": "all"
@@ -24,7 +24,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Force cast (as!) \u2014 crashes at runtime if the type doesn't match.",
+      "message": "Force cast (as!) — crashes at runtime if the type doesn't match.",
       "fix_hint": "Use conditional cast (as?) with optional binding instead.",
       "example_ref": "swift/optionals.md#force-cast",
       "scope": "all"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|@IBOutlet|@IBAction",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Implicitly unwrapped optional \u2014 crashes if accessed while nil.",
+      "message": "Implicitly unwrapped optional — crashes if accessed while nil.",
       "fix_hint": "Use a regular optional (?) with proper unwrapping, unless required for Interface Builder outlets.",
       "example_ref": "swift/optionals.md#implicitly-unwrapped",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "print() in production code \u2014 use os_log or a structured logger instead.",
+      "message": "print() in production code — use os_log or a structured logger instead.",
       "fix_hint": "Replace with os_log, Logger (iOS 14+), or a project-specific logging framework.",
       "example_ref": "swift/logging.md#structured-logging",
       "scope": "main"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Force try (try!) \u2014 crashes at runtime if the call throws.",
+      "message": "Force try (try!) — crashes at runtime if the call throws.",
       "fix_hint": "Use do/catch or try? with optional binding for recoverable errors.",
       "example_ref": "swift/error-handling.md#force-try",
       "scope": "all"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use guard statements for early exits.",
       "example_ref": "swift/readability.md#nesting",
       "scope": "all"
@@ -96,10 +96,21 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*\"|let\\s+\\w+\\s*=\\s*\\d|static\\s+let",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
+      "message": "Magic number in comparison — extract to a named constant for clarity.",
       "fix_hint": "Define a static let constant with a descriptive name.",
       "example_ref": "swift/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "SW-EXCEPT-001",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\{\\s*\\}|catch\\s+\\w+\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block silently swallows errors.",
+      "fix_hint": "Log the error, rethrow, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

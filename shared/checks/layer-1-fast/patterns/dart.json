@@ -1,6 +1,8 @@
 {
   "language": "dart",
-  "extensions": [".dart"],
+  "extensions": [
+    ".dart"
+  ],
   "source": "dart analyze, Effective Dart, Flutter best practices",
   "rules": [
     {
@@ -98,6 +100,17 @@
       "fix_hint": "Define a const or final variable with a descriptive name.",
       "example_ref": "dart/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "DT-EXCEPT-002",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block silently swallows exceptions.",
+      "fix_hint": "Log the error, rethrow, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

@@ -1,6 +1,11 @@
 {
   "language": "cpp",
-  "extensions": [".cpp", ".cc", ".cxx", ".hpp"],
+  "extensions": [
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".hpp"
+  ],
   "source": "Clang-Tidy, CppCoreGuidelines, CERT C++",
   "rules": [
     {
@@ -98,6 +103,17 @@
       "fix_hint": "Use std::atomic<T> for thread-safe shared state.",
       "example_ref": "cpp/concurrency.md#volatile",
       "scope": "main"
+    },
+    {
+      "id": "CPP-EXCEPT-002",
+      "name": "empty-catch",
+      "pattern": "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty catch block silently swallows exceptions.",
+      "fix_hint": "Log the error, rethrow, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

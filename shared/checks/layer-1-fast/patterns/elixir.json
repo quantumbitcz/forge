@@ -1,6 +1,9 @@
 {
   "language": "elixir",
-  "extensions": [".ex", ".exs"],
+  "extensions": [
+    ".ex",
+    ".exs"
+  ],
   "source": "Credo, Dialyzer, Elixir best practices",
   "rules": [
     {
@@ -98,6 +101,17 @@
       "fix_hint": "Define a module attribute (@max_retries 5) with a descriptive name.",
       "example_ref": "elixir/readability.md#magic-numbers",
       "scope": "main"
+    },
+    {
+      "id": "EX-EXCEPT-001",
+      "name": "empty-rescue",
+      "pattern": "rescue\\s+\\w+.*->\\s*$|rescue\\s*$",
+      "exclude_pattern": "^\\s*#",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Empty rescue block silently swallows errors.",
+      "fix_hint": "Log the error, reraise, or add a comment explaining why it is intentionally ignored.",
+      "scope": "all"
     }
   ],
   "thresholds": {

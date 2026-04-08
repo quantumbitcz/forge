@@ -67,24 +67,62 @@
       "scope": "all"
     },
     {
+      "id": "C-READ-002",
+      "name": "magic-numbers",
+      "pattern": "[<>=!]=?\\s+\\d{2,}|\\d{2,}\\s*[<>=!]=?",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*|#define\\s|const\\s|enum\\s",
+      "severity": "INFO",
+      "category": "QUAL-READ",
+      "message": "Magic number in comparison \u2014 extract to a named constant or #define for clarity.",
+      "fix_hint": "Define a #define, enum value, or static const with a descriptive name.",
+      "example_ref": "c/readability.md#magic-numbers",
+      "scope": "main"
+    },
+    {
       "id": "C-SEC-FORMAT-001",
+      "name": "format-string-vulnerability",
       "pattern": "printf\\s*\\(\\s*[a-zA-Z_]",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "WARNING",
       "category": "SEC-FORMAT",
-      "message": "printf() with variable format string \u2014 potential format string vulnerability, use printf(\"%s\", var) instead",
-      "scope": "all",
-      "name": "format-string-vulnerability",
-      "fix_hint": "Use a literal format string or validate user-provided format strings"
+      "message": "printf() with variable format string \u2014 potential format string vulnerability, use printf(\"%s\", var) instead.",
+      "fix_hint": "Use a literal format string or validate user-provided format strings.",
+      "scope": "all"
     },
     {
       "id": "C-QUAL-MEMORY-001",
+      "name": "malloc-without-nearby-free",
       "pattern": "malloc\\s*\\([^)]+\\)(?!.*free)",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*",
       "severity": "INFO",
       "category": "QUAL-MEMORY",
-      "message": "malloc() without nearby free() \u2014 verify memory is properly freed to prevent leaks",
-      "scope": "all",
-      "name": "malloc-without-free",
-      "fix_hint": "Verify every malloc has a matching free on all code paths"
+      "message": "malloc() without nearby free() \u2014 verify memory is properly freed to prevent leaks.",
+      "fix_hint": "Verify every malloc has a matching free on all code paths.",
+      "scope": "all"
+    },
+    {
+      "id": "C-EXCEPT-001",
+      "name": "unchecked-return-value",
+      "pattern": "^\\s*(fopen|malloc|calloc|realloc|fread|fwrite|fgets)\\s*\\(",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*|\\bif\\s*\\(|=\\s*$",
+      "severity": "WARNING",
+      "category": "QUAL-EXCEPT",
+      "message": "Return value of error-reporting function not checked \u2014 may silently fail.",
+      "fix_hint": "Check the return value (NULL for allocation/fopen, count for fread/fwrite) and handle the error.",
+      "example_ref": "c/error-handling.md#unchecked-return",
+      "scope": "all"
+    },
+    {
+      "id": "C-NULL-001",
+      "name": "null-pointer-dereference-risk",
+      "pattern": "->\\s*[a-zA-Z_]",
+      "exclude_pattern": "^\\s*//|^\\s*/\\*|if\\s*\\(.*!=\\s*NULL|if\\s*\\(.*==\\s*NULL|assert\\(",
+      "severity": "INFO",
+      "category": "QUAL-NULL",
+      "message": "Pointer dereference via -> \u2014 ensure pointer is validated as non-NULL before use.",
+      "fix_hint": "Add a NULL check before dereferencing, or use assert() for invariant enforcement.",
+      "example_ref": "c/null-safety.md#null-check",
+      "scope": "all"
     }
   ],
   "thresholds": {
