@@ -9,6 +9,24 @@ Handles missing, corrupted, or inconsistent pipeline state files. Reconstructs s
 
 ---
 
+## 0. Pre-Recovery Backup
+
+**Before any reconstruction or repair operation**, create a backup of the current state:
+
+```bash
+# Backup state.json if it exists (even if corrupt — preserves evidence)
+[ -f ".forge/state.json" ] && cp ".forge/state.json" ".forge/state.json.pre-recover.$(date -u +%Y%m%dT%H%M%SZ)"
+
+# Backup all checkpoint files
+for f in .forge/checkpoint-*.json; do
+  [ -f "$f" ] && cp "$f" "${f}.pre-recover.$(date -u +%Y%m%dT%H%M%SZ)"
+done
+```
+
+This ensures the original state is recoverable even if reconstruction itself fails mid-way. Pre-recover backups are distinct from `.corrupt.{timestamp}` files (which mark known-bad data). Cleanup: pre-recover files older than 7 days can be removed by the next successful run.
+
+---
+
 ## 1. Failure Scenarios and Remediation
 
 ### 1.1 Missing `state.json`
