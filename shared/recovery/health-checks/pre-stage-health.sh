@@ -162,7 +162,7 @@ case "$STAGE" in
           echo "WARN: Java not found — JVM builds may fail" >&2
         fi
         ;;
-      react|nextjs|sveltekit|express)
+      react|nextjs|sveltekit|express|angular|nestjs|svelte|vue)
         if command -v node &>/dev/null; then
           echo "INFO: Node: $(node --version)" >&2
         else
@@ -204,6 +204,13 @@ case "$STAGE" in
           echo "INFO: .NET: $(dotnet --version)" >&2
         else
           echo "WARN: dotnet not found — .NET builds may fail" >&2
+        fi
+        ;;
+      embedded)
+        if command -v make &>/dev/null && command -v cc &>/dev/null; then
+          echo "INFO: Make: $(make --version 2>&1 | head -1)" >&2
+        else
+          echo "WARN: make or cc not found — C builds may fail" >&2
         fi
         ;;
     esac
