@@ -234,7 +234,7 @@ teardown() {
 
   # Check each required frontmatter field is present
   grep -q "^id: FG-001" "$f"
-  grep -q "^title: Fix login bug" "$f"
+  grep -q '^title: "Fix login bug"' "$f"
   grep -q "^type: bug" "$f"
   grep -q "^status: backlog" "$f"
   grep -q "^priority: critical" "$f"

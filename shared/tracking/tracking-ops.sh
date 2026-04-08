@@ -189,10 +189,12 @@ create_ticket() {
   local now
   now="$(iso_now)"
 
+  # Escape double quotes in title for safe YAML embedding
+  local safe_title="${title//\"/\\\"}"
   cat > "$filepath" <<TICKET
 ---
 id: ${ticket_id}
-title: ${title}
+title: "${safe_title}"
 type: ${type}
 status: ${target_status}
 priority: ${priority}
