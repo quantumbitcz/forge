@@ -17,7 +17,7 @@ Check `state.json.mode_config.stages.explore` for overrides (set at PREFLIGHT vi
 If `override.agent` exists: dispatch that agent instead of the default.
 If `override.skip`: skip this stage entirely.
 
-**If `mode == "bugfix"` (or mode_config overrides to fg-020):**
+**If `mode_config.stages.explore.agent == "fg-020-bug-investigator"`:**
 
 [dispatch fg-020-bug-investigator]
 Dispatch `fg-020-bug-investigator` with:
@@ -120,7 +120,7 @@ If `override.agent` exists: dispatch that agent instead of the default.
 If `override.skip`: skip this stage entirely.
 If `override.perspectives`: use those validation perspectives downstream.
 
-**If `mode == "bugfix"` (or mode_config overrides to fg-020):**
+**If `mode_config.stages.plan.agent == "fg-020-bug-investigator"`:**
 
 1. Dispatch `fg-020-bug-investigator` with:
    [dispatch fg-020-bug-investigator]
@@ -149,25 +149,25 @@ Write `.forge/stage_2_notes_{storyId}.md` with reproduction and root cause detai
 Update state: `story_state` -> `"PLANNING"`, set `domain_area`, `risk_level` (bugfix default: LOW unless root cause spans 3+ files -> MEDIUM), add `plan` timestamp.
 Mark Plan as completed.
 
-**If `mode == "migration"` (or mode_config overrides to fg-160):**
+**If `mode_config.stages.plan.agent == "fg-160-migration-planner"`:**
 
 1. Dispatch `fg-160-migration-planner` instead of `fg-200-planner`
    [dispatch fg-160-migration-planner]
 2. The migration planner uses its own state machine (MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY) -- see `fg-160-migration-planner.md` for details
 3. The requirement has already been stripped of the `migrate:` / `migration:` prefix at PREFLIGHT
 
-**If `mode == "bootstrap"` (or mode_config overrides to fg-050):**
+**If `mode_config.stages.plan.agent == "fg-050-project-bootstrapper"`:**
 
 1. Dispatch `fg-050-project-bootstrapper` instead of `fg-200-planner`
 2. The bootstrapper infers project structure, build system, and architecture from the requirement description -- see `fg-050-project-bootstrapper.md` for details
 3. The requirement has already been stripped of the `bootstrap:` prefix at PREFLIGHT
-4. After bootstrapping completes:
-   - **Stage 3 (VALIDATE):** Use bootstrap-scoped perspectives only: build compiles, tests pass, Docker config valid, architecture matches pattern. Skip: conventions check, approach quality, documentation consistency. Challenge Brief NOT required.
-   - **Stage 4 (IMPLEMENT):** **Skip entirely** -- the bootstrapper already created all files. Transition directly from VALIDATE (GO) to VERIFY.
+4. After bootstrapping completes, downstream stages honor `mode_config` overrides:
+   - **Stage 3 (VALIDATE):** `mode_config.stages.validate.perspectives` provides bootstrap-scoped perspectives. `challenge_brief_required: false`.
+   - **Stage 4 (IMPLEMENT):** `mode_config.stages.implement.skip: true` -- skip entirely. Transition directly from VALIDATE (GO) to VERIFY.
    - **Stage 5 (VERIFY):** Runs normally -- build + lint + tests must pass.
-   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `fg-410-code-reviewer` + `fg-411-security-reviewer`. Quality target is `pass_threshold` (not 100).
+   - **Stage 6 (REVIEW):** `mode_config.stages.review.batch_override` provides reduced reviewer set. `target_score` is `pass_threshold`.
 
-### SS2.2 Standard Planning (mode == "standard")
+### SS2.2 Standard Planning (no mode_config.stages.plan.agent override)
 
 Dispatch `fg-200-planner` with a **<2,000 token** prompt:
 [dispatch fg-200-planner]
@@ -252,7 +252,7 @@ Check `state.json.mode_config.stages.validate` for overrides (set at PREFLIGHT v
 If `override.skip`: skip this stage entirely.
 If `override.perspectives`: use those validation perspectives instead of the defaults.
 
-**Bugfix Validation (mode == "bugfix" or mode_config override):**
+**Bugfix Validation (mode_config.stages.validate.perspectives overrides defaults):**
 
 Dispatch `fg-210-validator` with 4 bugfix-specific perspectives (instead of the standard 7):
 [dispatch fg-210-validator (bugfix)]
@@ -650,7 +650,7 @@ Check `state.json.mode_config.stages.review` for overrides (set at PREFLIGHT via
 If `override.skip`: skip this stage entirely.
 If `override.reviewers`: use that reviewer set instead of the config-driven batches.
 
-**Bugfix Review Batch (mode == "bugfix" or mode_config override):**
+**Reduced Review Batch (mode_config.stages.review.batch_override):**
 
 Reduced review batch (overrides config-driven batches):
 - Always dispatch: `fg-410-code-reviewer`, `fg-411-security-reviewer`
