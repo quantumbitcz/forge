@@ -35,6 +35,8 @@
 | Create | `tests/fixtures/sim/safety-gate-failure.yaml` | Simulation scenario |
 | Create | `tests/fixtures/sim/dry-run.yaml` | Simulation scenario |
 | Create | `tests/scenario/simulation.bats` | Simulation scenario tests |
+| Create | `tests/unit/forge-timeout.bats` | Timeout enforcement tests |
+| Create | `tests/unit/forge-compact-check.bats` | Compaction hook tests |
 | Modify | `agents/fg-413-frontend-reviewer.md` | Absorb fg-414 content with modes |
 | Delete | `agents/fg-414-frontend-quality-reviewer.md` | Merged into fg-413 |
 | Modify | `agents/fg-700-retrospective.md` | Tuning guardrails |
@@ -263,6 +265,22 @@ Replace `git commit --allow-empty` with conditional commit (only if staged chang
 chmod +x shared/forge-compact-check.sh shared/forge-timeout.sh
 ```
 
+- [ ] **Step 5a: Write tests for forge-timeout.sh and forge-compact-check.sh**
+
+Create `tests/unit/forge-timeout.bats` with tests for:
+- Script exists and is executable
+- Returns exit 0 when pipeline is within time budget
+- Returns exit 0 with WARNING output at 80% of budget
+- Returns exit 1 when pipeline exceeds time budget
+- Returns exit 0 when no preflight timestamp exists (skip check)
+- Respects custom MAX_SECONDS argument
+
+Create `tests/unit/forge-compact-check.bats` with tests for:
+- Script exists and is executable
+- Increments `.forge/.token-estimate` counter file
+- Writes suggestion to `.forge/.compact-suggestion` every 5 dispatches
+- Does not write suggestion for dispatches 1-4
+
 - [ ] **Step 6: Run all tests**
 
 Run: `./tests/run-all.sh`
@@ -310,6 +328,10 @@ Add checks to `validate-plugin.sh`:
 - `shared/cross-repo-contracts.md` exists
 - `tests/fixtures/sim/` contains at least 10 YAML files
 
+- [ ] **Step 1b: Update .claude-plugin/plugin.json if needed**
+
+Check if `plugin.json` description or keywords need updating to reflect the orchestrator split, new scripts, or scoring changes. If the plugin auto-discovers agents from `agents/`, no agent list change is needed. Update `description` and `keywords` if they reference stale architecture (e.g., "single orchestrator").
+
 - [ ] **Step 2: Update CLAUDE.md**
 
 - Agent count: keep at 36 (net zero: +1 fg-505, -1 fg-414)
@@ -340,7 +362,7 @@ git commit -m "docs: update CLAUDE.md and structural validation for P1+P2 delive
 |------|-----------|------------|
 | 1 | P1 complete | Simulation harness + 10 scenarios |
 | 2 | P0 cross-repo docs | Cross-repo contract-first + integration tests |
-| 3 | P1 Task 3 (fg-505 exists) | Reviewer merge (fg-413 absorbs fg-414) |
+| 3 | P0 complete (orchestrator split done) | Reviewer merge (fg-413 absorbs fg-414) |
 | 4 | P1 Task 1 (token tracker) | Retrospective guardrails + fix cost tracking |
 | 5 | P0 Task 5-8 (orchestrator split) | Agent prompt compression |
 | 6 | P1 Task 6 (hooks fixed) | Compaction hook + timeout + git fix |

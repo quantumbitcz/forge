@@ -44,6 +44,7 @@
 | Modify | `agents/fg-300-implementer.md` | Decision log instruction |
 | Modify | `agents/fg-100-orchestrator-execute.md` | Update §5.1 for fg-505 dispatch |
 | Create | `tests/unit/forge-token-tracker.bats` | Token tracker tests |
+| Create | `tests/unit/forge-linear-sync.bats` | Linear sync tests |
 | Create | `tests/contract/mode-overlay-contract.bats` | Mode overlay validation |
 
 ---
@@ -198,14 +199,24 @@ Script accepts `emit <event-type> <event-json> [--forge-dir]`. Checks Linear ava
 
 Search for all `If integrations.linear.available` blocks. Replace each with a single `forge-linear-sync.sh emit` call matching the event type table from the spec.
 
-- [ ] **Step 3: Run all tests**
+- [ ] **Step 3: Write tests for forge-linear-sync.sh**
+
+Create `tests/unit/forge-linear-sync.bats` with tests for:
+- Script exists and is executable
+- `emit` with valid event type writes to `.forge/linear-events.jsonl`
+- `emit` returns exit 0 even when Linear is unavailable (graceful degradation)
+- Event log truncates at 100 entries
+- Invalid event type still exits 0 (never blocks pipeline)
+- Event log contains valid JSON lines
+
+- [ ] **Step 4: Run all tests**
 
 Run: `./tests/run-all.sh`
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add shared/forge-linear-sync.sh agents/fg-100-orchestrator-boot.md agents/fg-100-orchestrator-execute.md agents/fg-100-orchestrator-ship.md
+git add shared/forge-linear-sync.sh tests/unit/forge-linear-sync.bats agents/fg-100-orchestrator-boot.md agents/fg-100-orchestrator-execute.md agents/fg-100-orchestrator-ship.md
 git commit -m "feat: consolidate Linear tracking into event-driven forge-linear-sync.sh"
 ```
 

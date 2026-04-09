@@ -28,6 +28,7 @@
 | Create | `agents/fg-100-orchestrator-execute.md` | Stages 1-6 (EXPLORE through REVIEW) |
 | Create | `agents/fg-100-orchestrator-ship.md` | Stages 7-9 (DOCS through LEARN) |
 | Delete | `agents/fg-100-orchestrator.md` | Replaced by the 4 files above |
+| Create | `tests/unit/check-prerequisites.bats` | Prerequisite validation tests |
 | Create | `tests/unit/forge-state-write.bats` | Atomic write + WAL tests |
 | Create | `tests/unit/forge-state.bats` | State machine transition tests |
 | Create | `tests/scenario/state-transitions.bats` | End-to-end transition scenarios |
@@ -75,12 +76,43 @@ SCRIPT
 chmod +x shared/check-prerequisites.sh
 ```
 
-- [ ] **Step 2: Run it to verify it passes on this machine**
+- [ ] **Step 2: Write tests for check-prerequisites.sh**
 
-Run: `bash shared/check-prerequisites.sh`
-Expected: `OK: all prerequisites met (bash X.Y.Z, python3 X.Y.Z)`
+Create `tests/unit/check-prerequisites.bats` with tests for:
 
-- [ ] **Step 3: Commit**
+```bash
+#!/usr/bin/env bats
+# Unit tests: check-prerequisites.sh — validates bash 4+ and python3.
+
+load '../helpers/test-helpers'
+
+SCRIPT="$PLUGIN_ROOT/shared/check-prerequisites.sh"
+
+@test "check-prerequisites: script exists and is executable" {
+  assert [ -f "$SCRIPT" ]
+  assert [ -x "$SCRIPT" ]
+}
+
+@test "check-prerequisites: passes on this machine (bash 4+ and python3 available)" {
+  run bash "$SCRIPT"
+  assert_success
+  assert_output --partial "OK: all prerequisites met"
+}
+
+@test "check-prerequisites: reports bash version in output" {
+  run bash "$SCRIPT"
+  assert_success
+  assert_output --partial "bash"
+  assert_output --partial "python3"
+}
+```
+
+- [ ] **Step 3: Run tests to verify they pass**
+
+Run: `./tests/lib/bats-core/bin/bats tests/unit/check-prerequisites.bats`
+Expected: All PASS
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add shared/check-prerequisites.sh

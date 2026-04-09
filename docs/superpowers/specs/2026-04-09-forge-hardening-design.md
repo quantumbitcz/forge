@@ -1610,7 +1610,7 @@ Existing tests updated:
 
 ### File Manifest
 
-**New files (22):**
+**New files (21):**
 - `shared/forge-state.sh`
 - `shared/forge-state-write.sh`
 - `shared/check-prerequisites.sh` (promoted from P1-6 to P0 — required by forge-state.sh)
@@ -1619,7 +1619,6 @@ Existing tests updated:
 - `shared/forge-timeout.sh`
 - `shared/forge-sim.sh`
 - `shared/forge-compact-check.sh`
-- `shared/check-prerequisites.sh`
 - `shared/cross-repo-contracts.md`
 - `shared/modes/standard.md`
 - `shared/modes/bugfix.md`
@@ -1639,7 +1638,7 @@ Existing tests updated:
 - `shared/scoring.md` (P0-4: min_score default, P1-7: INFO policy)
 - `shared/convergence-engine.md` (P0-4: diminishing returns)
 - `shared/state-schema.md` (P0-2: `_seq` + WAL fields, P1-1: `tokens` section, P1-2: `decision_quality` section, P0-4: `diminishing_count`, P1-7: `unfixable_info_count`, P1-5: `mode_config` — consolidated as state schema v1.5.0)
-- `shared/state-transitions.md` (P0-4: row 36a score_diminishing, P1-1: row E8 token_budget_exhausted)
+- `shared/state-transitions.md` (P0-4: row 50 score_diminishing, P1-1: row E8 token_budget_exhausted)
 - `shared/state-integrity.sh` (P1-2: decision log validation)
 - `shared/checks/engine.sh` (P1-6: file locks replacing env var guard)
 - `shared/checks/output-format.md` (P1-2: confidence field)
