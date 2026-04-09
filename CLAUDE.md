@@ -68,7 +68,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
 - Sprint: `fg-090-sprint-orchestrator`
-- Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
+- Core: `fg-100-orchestrator` (coordinator, never writes code; 4-file split: `-core`, `-boot`, `-execute`, `-ship`), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
@@ -127,6 +127,23 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 ### Deterministic Control Flow
 
 Pipeline control flow follows the formal transition table in `shared/state-transitions.md`. LLM judgment is used for code review, implementation, and architecture decisions — NOT for state transitions. Every branching decision is logged to `.forge/decisions.jsonl` per `shared/decision-log.md`. Recovery uses circuit breakers per failure category (`shared/recovery/recovery-engine.md` §8.1). Reviewer conflicts are resolved by priority ordering in `shared/agent-communication.md` §3.1.
+
+### Shared scripts (`shared/`)
+
+| Script | Purpose |
+|---|---|
+| `forge-state.sh` | Executable state machine (57+ transitions from `state-transitions.md`) |
+| `forge-state-write.sh` | Atomic JSON writes with WAL and `_seq` versioning |
+| `forge-token-tracker.sh` | Token budget tracking and ceiling enforcement |
+| `forge-linear-sync.sh` | Event-driven Linear sync (audit layer) |
+| `forge-sim.sh` | Pipeline simulation harness |
+| `forge-timeout.sh` | Pipeline timeout enforcement |
+| `forge-compact-check.sh` | Compaction suggestion hook |
+| `check-prerequisites.sh` | bash 4+ and python3 validation |
+
+### Mode overlays (`shared/modes/`)
+
+7 pipeline mode overlays: `standard`, `bugfix`, `migration`, `bootstrap`, `testing`, `refactor`, `performance`. Loaded by orchestrator at PREFLIGHT based on `state.mode`. Each overlay defines phase-specific adjustments (skip conditions, reduced thresholds, extra agents).
 
 ## Integrations
 

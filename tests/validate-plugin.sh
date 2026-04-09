@@ -758,6 +758,64 @@ for script in forge-state.sh forge-state-write.sh check-prerequisites.sh; do
   check "shared/$script exists and is executable" "$script_fail"
 done
 
+# --- P1+P2: New scripts and files ---
+echo ""
+echo "P1+P2: New scripts and files..."
+
+for script in forge-token-tracker.sh forge-linear-sync.sh forge-sim.sh forge-timeout.sh forge-compact-check.sh; do
+  script_fail=0
+  if [[ ! -f "$ROOT/shared/$script" ]] || [[ ! -x "$ROOT/shared/$script" ]]; then
+    script_fail=1
+  fi
+  check "shared/$script exists and is executable" "$script_fail"
+done
+
+# fg-505-build-verifier exists
+fg505_fail=0
+if ! grep -q "^name: fg-505-build-verifier" "$ROOT/agents/fg-505-build-verifier.md" 2>/dev/null; then
+  fg505_fail=1
+fi
+check "fg-505-build-verifier agent exists with correct frontmatter" "$fg505_fail"
+
+# Mode overlay files
+modes_fail=0
+for mode in standard bugfix migration bootstrap testing refactor performance; do
+  if [[ ! -f "$ROOT/shared/modes/${mode}.md" ]]; then
+    modes_fail=1
+    break
+  fi
+done
+check "All 7 mode overlay files exist" "$modes_fail"
+
+# fg-414 removed
+fg414_fail=0
+if [[ -f "$ROOT/agents/fg-414-frontend-quality-reviewer.md" ]]; then
+  fg414_fail=1
+fi
+check "fg-414-frontend-quality-reviewer removed (merged into fg-413)" "$fg414_fail"
+
+# fg-415 never existed
+fg415_fail=0
+if [[ -f "$ROOT/agents/fg-415-frontend-performance-reviewer.md" ]]; then
+  fg415_fail=1
+fi
+check "fg-415-frontend-performance-reviewer does not exist" "$fg415_fail"
+
+# Cross-repo contracts doc
+xrepo_fail=0
+if [[ ! -f "$ROOT/shared/cross-repo-contracts.md" ]]; then
+  xrepo_fail=1
+fi
+check "shared/cross-repo-contracts.md exists" "$xrepo_fail"
+
+# Simulation fixtures
+sim_fail=0
+sim_count=$(ls "$ROOT/tests/fixtures/sim/"*.yaml 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$sim_count" -lt 10 ]]; then
+  sim_fail=1
+fi
+check "At least 10 simulation scenario files exist" "$sim_fail"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""

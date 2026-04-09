@@ -13,6 +13,16 @@ Work through these phases in order. Do NOT skip ahead — each phase builds on t
 
 ---
 
+### Prerequisites Check
+
+Before any initialization, verify system prerequisites:
+```
+bash shared/check-prerequisites.sh
+```
+If this fails (exit code > 0), show the error messages and abort init. The user must install the missing prerequisites before the forge can operate.
+
+---
+
 ### Phase 1: DETECT
 
 #### Pre-Validation
