@@ -2069,14 +2069,17 @@ MATCH (a:Agent {name: 'fg-160-migration-planner'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-200-planner'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-200-planner'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-200-planner'}), (c:SharedContract {name: 'decision-log'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-200-planner'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-210-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-210-validator'}), (c:SharedContract {name: 'decision-log'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'agent-communication'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-250-contract-validator'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'decision-log'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'tdd-enforcement'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'testing-anti-patterns'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-310-scaffolder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);

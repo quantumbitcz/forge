@@ -7,7 +7,7 @@ All three layers (fast patterns, linter bridge, agent intelligence) emit finding
 One finding per line:
 
 ```
-file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint | confidence:HIGH
 ```
 
 ### Field definitions
@@ -18,6 +18,12 @@ file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
 - `SEVERITY` — exactly one of: `CRITICAL`, `WARNING`, `INFO`.
 - `message` — human-readable description.
 - `fix_hint` — one-line suggested fix. Empty string if no hint.
+
+### Confidence (Optional)
+
+The 6th field is optional. Values: `confidence:HIGH` (>90% certain, default if omitted), `confidence:MEDIUM` (70-90%), `confidence:LOW` (<70%).
+
+Agents should add `confidence:LOW` or `confidence:MEDIUM` when unsure about severity or whether a finding is a false positive. This data is used by the retrospective to track reviewer accuracy.
 
 ### Delimiter
 
@@ -39,7 +45,7 @@ If a check layer finds no issues: output nothing to stdout and exit 0. Do NOT em
 
 ### Missing Fields
 
-All five fields are required in every finding line. If a check cannot determine a field:
+The first five fields are required in every finding line. The 6th field (confidence) is optional. If a check cannot determine a field:
 - `file`: use `?` if unknown
 - `line`: use `0` for file-level or unknown
 - `CATEGORY-CODE`: use a linter-default category (e.g., `TS-LINT-ESLINT`)

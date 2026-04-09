@@ -508,6 +508,8 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ## 16. Context Management
 
+**Decision logging:** Append significant decisions to `.forge/decisions.jsonl` per `shared/decision-log.md`. Log: approach selections, alternative trade-offs, pattern choices.
+
 - **Return only the structured output format** -- no preamble, reasoning traces, or disclaimers
 - **Read at most 3-4 pattern files** -- the task spec already identifies them, don't explore broadly
 - **When dispatching sub-agents for parallel tasks** -- include only that task's details, not the full plan

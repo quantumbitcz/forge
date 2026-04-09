@@ -145,6 +145,12 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "by_agent": {},
     "budget_warning_issued": false
   },
+  "decision_quality": {
+    "reviewer_agreement_rate": 0.0,
+    "findings_with_low_confidence": 0,
+    "overridden_findings": 0,
+    "total_decisions_logged": 0
+  },
   "recovery_budget": {
     "total_weight": 0.0,
     "max_weight": 5.5,
@@ -263,6 +269,11 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.by_stage` | object | — | Per-stage token breakdown. Keys are stage names (e.g., `"explore"`, `"plan"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple agent calls within a stage. |
 | `tokens.by_agent` | object | — | Per-agent token breakdown. Keys are agent names (e.g., `"fg-200-planner"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple calls to the same agent. |
 | `tokens.budget_warning_issued` | boolean | — | `true` when `estimated_total >= 80%` of `budget_ceiling`. Prevents duplicate warnings. Default: `false`. |
+| `decision_quality` | object | No | Decision quality metrics for the current run. Populated by the quality gate and orchestrator. |
+| `decision_quality.reviewer_agreement_rate` | float | — | Percentage of findings where multiple reviewers agreed on severity for the same `(file, line)`. 0.0 when no overlapping findings exist. Updated by `fg-400-quality-gate`. |
+| `decision_quality.findings_with_low_confidence` | integer | — | Count of findings tagged with `confidence:LOW` or `confidence:MEDIUM`. Updated by `fg-400-quality-gate`. Default: 0. |
+| `decision_quality.overridden_findings` | integer | — | Count of findings where the orchestrator pushed back or overrode a reviewer's recommendation. Default: 0. |
+| `decision_quality.total_decisions_logged` | integer | — | Total number of entries in `.forge/decisions.jsonl` for this run. Updated at stage boundaries. Default: 0. |
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.5). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight >= 4.4` (80%), set `recovery.budget_warning_issued: true`. |
 | `recovery` | object | Yes | Recovery engine runtime state. `total_failures`: count of error occurrences that triggered recovery evaluation. `total_recoveries`: count of successful recoveries. `degraded_capabilities`: list of capability names operating in degraded mode (e.g., `"linear"`, `"neo4j"`). `failures`: list of `{ "error_type": "<type>", "stage": "<stage>", "timestamp": "<ISO8601>", "strategy": "<strategy-applied>", "outcome": "recovered\|escalated" }`. `budget_warning_issued`: boolean, `true` when `recovery_budget.total_weight >= 4.4` (80% of budget). |
 | `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300 }`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine and category-to-error-type mapping. |
