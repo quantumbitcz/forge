@@ -45,14 +45,14 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "MVVM boundaries, no repository calls from composables, no business logic in UI"
     - agent: fg-411-security-reviewer
       focus: "data handling, PII in logs, insecure storage"
     - agent: fg-413-frontend-reviewer
       focus: "Compose best practices, recomposition efficiency, accessibility"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

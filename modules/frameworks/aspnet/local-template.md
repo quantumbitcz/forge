@@ -44,14 +44,14 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "Clean Architecture layer violations, controller logic boundary"
     - agent: fg-411-security-reviewer
       focus: "auth, ownership, injection, secrets, CORS misconfiguration"
     - agent: fg-416-backend-performance-reviewer
       focus: "N+1 queries, sync-over-async, missing AsNoTracking, EF Core efficiency"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

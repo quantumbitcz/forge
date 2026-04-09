@@ -38,11 +38,11 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "MVVM adherence, layer boundaries, dependency direction"
     - agent: fg-411-security-reviewer
       focus: "Keychain usage, App Transport Security, certificate pinning"
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, MVVM adherence, view complexity"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"

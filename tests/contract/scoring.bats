@@ -109,7 +109,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 }
 
 # ---------------------------------------------------------------------------
-# 11b. QUAL-* and TEST-* subcategories documented (emitted by fg-412-code-quality-reviewer)
+# 11b. QUAL-* and TEST-* subcategories documented (emitted by fg-410-code-reviewer)
 # ---------------------------------------------------------------------------
 @test "scoring: QUAL-* subcategories documented" {
   local subcats=(QUAL-ERR QUAL-DRY QUAL-DEF QUAL-PLAN QUAL-NAME QUAL-COMPLEX QUAL-MAGIC QUAL-LENGTH QUAL-KISS)

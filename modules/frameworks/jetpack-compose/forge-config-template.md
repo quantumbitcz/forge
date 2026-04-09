@@ -19,7 +19,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | Agent | Enabled | Weight | Notes |
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
-| fg-410-architecture-reviewer | true | secondary | MVVM boundary violations, composable responsibility — findings merged into quality-gate |
+| fg-410-code-reviewer | true | secondary | MVVM boundary violations, composable responsibility — findings merged into quality-gate |
 | fg-411-security-reviewer | true | secondary | Data exposure, insecure storage — findings merged into quality-gate |
 | fg-413-frontend-reviewer | true | secondary | Compose best practices, recomposition, accessibility — findings merged into quality-gate |
 | fg-419-infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |

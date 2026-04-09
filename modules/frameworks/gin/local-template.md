@@ -43,14 +43,14 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "handler/service/repository layering, interface boundaries, no global state"
     - agent: fg-411-security-reviewer
       focus: "input validation, SQL injection, JWT auth, CORS, rate limiting"
     - agent: fg-416-backend-performance-reviewer
       focus: "connection pooling, context timeouts, N+1 queries, goroutine leaks"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

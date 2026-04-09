@@ -144,7 +144,7 @@
     {
       "name": "No framework or persistence imports in domain",
       "scope_pattern": "core/domain/|domain/model/|domain/entity/|domain/",
-      "_note": "Matches domain directories across architectures: hexagonal (core/domain/), clean (domain/model/), layered (domain/). Architecture-specific boundary checks are handled by fg-410-architecture-reviewer agent (Layer 3).",
+      "_note": "Matches domain directories across architectures: hexagonal (core/domain/), clean (domain/model/), layered (domain/). Architecture-specific boundary checks are handled by fg-410-code-reviewer agent (Layer 3).",
       "forbidden_imports": [
         "import org.springframework.data.",
         "import org.springframework.r2dbc.",

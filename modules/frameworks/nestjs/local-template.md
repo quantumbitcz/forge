@@ -48,14 +48,14 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "module boundaries, dependency direction, DI patterns, single responsibility"
     - agent: fg-411-security-reviewer
       focus: "auth guards, injection, input sanitization, data exposure via DTOs"
     - agent: fg-416-backend-performance-reviewer
       focus: "N+1 queries, blocking I/O, missing indexes, algorithm complexity"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability, NestJS idioms"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin

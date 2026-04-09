@@ -40,13 +40,13 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "repository pattern adherence, layer boundaries"
     - agent: fg-411-security-reviewer
       focus: "auth, input validation, secrets exposure"
     - agent: fg-416-backend-performance-reviewer
       focus: "EventLoop blocking, Fluent eager loading, resource management"
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, repository pattern adherence"
   batch_2:
     - agent: "pr-review-toolkit:code-reviewer"

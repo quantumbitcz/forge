@@ -69,14 +69,14 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-architecture-reviewer
+    - agent: fg-410-code-reviewer
       focus: "source set boundary violations, JVM-only imports in commonMain, actual/expect misuse"
     - agent: fg-411-security-reviewer
       focus: "data handling, key storage, certificate pinning"
     - agent: fg-416-backend-performance-reviewer
       focus: "coroutine scope management, blocking calls on wrong dispatcher, SQLDelight query efficiency"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
