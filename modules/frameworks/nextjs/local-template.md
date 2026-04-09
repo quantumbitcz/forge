@@ -48,8 +48,9 @@ quality_gate:
       focus: "Server vs Client component boundaries, SSR/SSG correctness, metadata"
     - agent: fg-411-security-reviewer
       focus: "Server Action input validation, NEXT_PUBLIC_ secrets, CSRF, XSS"
-    - agent: fg-414-frontend-quality-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, Client Component boundaries, bundle size, image optimization, streaming"
+    - agent: fg-413-frontend-reviewer
+      mode: a11y-only
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"

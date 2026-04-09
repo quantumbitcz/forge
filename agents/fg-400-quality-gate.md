@@ -464,8 +464,7 @@ in the knowledge graph.
 
 - `fg-410-code-reviewer` — architecture pattern compliance AND code quality (error handling, DRY/KISS, defensive programming, test quality)
 - `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
-- `fg-413-frontend-reviewer` — conventions, accessibility basics, framework-specific patterns, design system compliance, visual coherence, responsive behavior
-- `fg-414-frontend-quality-reviewer` — WCAG 2.2 AA accessibility audits + bundle size, rendering efficiency, lazy loading
+- `fg-413-frontend-reviewer` — conventions, accessibility (WCAG 2.2 AA), performance (bundle size, rendering, lazy loading), framework-specific patterns, design system compliance, visual coherence, responsive behavior. Supports review modes: `full` (default), `conventions-only`, `a11y-only`, `performance-only`.
 - `fg-416-backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
 - `fg-417-version-compat-reviewer` — dependency tree conflicts, language feature compatibility
 - `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles

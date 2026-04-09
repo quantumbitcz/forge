@@ -42,8 +42,9 @@ quality_gate:
   batch_1:
     - agent: fg-413-frontend-reviewer
       focus: "Svelte 5 rune usage, callback props, no legacy syntax"
-    - agent: fg-414-frontend-quality-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, focus management, touch targets, Bundle size, lazy loading, keyed each blocks, $derived vs $effect"
+    - agent: fg-413-frontend-reviewer
+      mode: a11y-only
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, focus management, touch targets"
     - agent: fg-411-security-reviewer
       focus: "XSS via {@html}, token storage, secrets in VITE_* env vars"
   batch_2:

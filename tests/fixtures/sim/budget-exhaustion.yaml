@@ -1,0 +1,18 @@
+name: "budget-exhaustion-escalation"
+requirement: "Pipeline exhausts retry budget"
+mode: standard
+fast_forward:
+  story_state: "REVIEWING"
+  convergence.phase: "perfection"
+  convergence.total_iterations: 2
+  convergence.phase_iterations: 2
+  total_retries: 9
+  total_retries_max: 10
+mock_events:
+  - event: budget_exhausted
+    guards:
+      total_retries: "10"
+      total_retries_max: "10"
+expected_trace:
+  - "REVIEWING -> ESCALATED"
+expected_counters: {}

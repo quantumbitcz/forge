@@ -43,8 +43,9 @@ quality_gate:
   max_review_cycles: 2
   batch_1:
     - agent: fg-413-frontend-reviewer
-    - agent: fg-414-frontend-quality-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, Svelte 5 rune usage, component patterns, reactivity"
+    - agent: fg-413-frontend-reviewer
+      mode: a11y-only
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: fg-411-security-reviewer
       focus: "server-side auth, input validation, data exposure"
   batch_2:

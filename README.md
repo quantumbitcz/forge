@@ -293,8 +293,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 |---|---|
 | `fg-410-code-reviewer` | Architecture patterns, SRP, DIP, boundaries + error handling, DRY/KISS, defensive programming, test quality |
 | `fg-411-security-reviewer` | OWASP, auth, injection, secrets |
-| `fg-413-frontend-reviewer` | Frontend code quality, conventions, framework rules, design system compliance, visual hierarchy, Figma comparison |
-| `fg-414-frontend-quality-reviewer` | WCAG 2.2 AA deep audits + bundle size, rendering, lazy loading |
+| `fg-413-frontend-reviewer` | Frontend conventions, a11y (WCAG 2.2 AA), performance (bundle, rendering, lazy loading), framework rules, design system, visual hierarchy, Figma comparison. Modes: full/conventions-only/a11y-only/performance-only |
 | `fg-416-backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
 | `fg-417-version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
 | `fg-419-infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
@@ -370,7 +369,6 @@ forge/
     fg-410-code-reviewer.md
     fg-411-security-reviewer.md
     fg-413-frontend-reviewer.md
-    fg-414-frontend-quality-reviewer.md
     fg-416-backend-performance-reviewer.md
     fg-417-version-compat-reviewer.md
     fg-419-infra-deploy-reviewer.md

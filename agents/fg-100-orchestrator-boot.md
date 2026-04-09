@@ -28,7 +28,7 @@ Strip the mode prefix from the requirement before passing it to downstream agent
 **Specialized mode behaviors:**
 - `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-410-code-reviewer`. Target score is `pass_threshold`, not 100.
 - `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `fg-410-code-reviewer` as mandatory. Target score is `shipping.min_score`.
-- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-414-frontend-quality-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-413-frontend-reviewer` (mode: `performance-only`) as mandatory. Target score is `shipping.min_score`.
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 

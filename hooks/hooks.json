@@ -20,6 +20,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/shared/forge-compact-check.sh",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [

@@ -294,10 +294,8 @@ Return EXACTLY this structure. No preamble or explanation outside the format.
 
 ---
 
-## 9. Forbidden Actions
+## 9. Constraints
 
-Standard constraints per `shared/agent-defaults.md`, plus:
-- DO NOT modify source code -- report findings only
-- DO NOT modify shared contracts (`scoring.md`, `stage-contract.md`, `state-schema.md`)
-- DO NOT modify conventions files or deprecation registries
-- DO NOT fail the pipeline -- always return findings gracefully
+**Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally: do not modify deprecation registries, do not fail the pipeline — always return findings gracefully.
+
+**Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.

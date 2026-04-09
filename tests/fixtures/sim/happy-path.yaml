@@ -1,0 +1,52 @@
+name: "happy-path-simple-feature"
+requirement: "Add a health check endpoint"
+mode: standard
+mock_events:
+  - event: preflight_complete
+    guards:
+      dry_run: "false"
+  - event: explore_complete
+    guards:
+      scope: "1"
+      decomposition_threshold: "3"
+  - event: plan_complete
+  - event: verdict_GO
+    guards:
+      risk: "LOW"
+      auto_proceed_risk: "MEDIUM"
+  - event: implement_complete
+    guards:
+      at_least_one_task_passed: "true"
+  - event: verify_pass
+    guards:
+      convergence.phase: "correctness"
+  - event: score_target_reached
+  - event: verify_pass
+    guards:
+      convergence.phase: "safety_gate"
+  - event: docs_complete
+  - event: evidence_SHIP
+    guards:
+      evidence_fresh: "true"
+  - event: pr_created
+  - event: user_approve_pr
+  - event: retrospective_complete
+expected_trace:
+  - "PREFLIGHT -> EXPLORING"
+  - "EXPLORING -> PLANNING"
+  - "PLANNING -> VALIDATING"
+  - "VALIDATING -> IMPLEMENTING"
+  - "IMPLEMENTING -> VERIFYING"
+  - "VERIFYING -> REVIEWING"
+  - "REVIEWING -> VERIFYING"
+  - "VERIFYING -> DOCUMENTING"
+  - "DOCUMENTING -> SHIPPING"
+  - "SHIPPING -> SHIPPING"
+  - "SHIPPING -> SHIPPING"
+  - "SHIPPING -> LEARNING"
+  - "LEARNING -> COMPLETE"
+expected_counters:
+  total_retries: 0
+  quality_cycles: 0
+  test_cycles: 0
+  verify_fix_count: 0

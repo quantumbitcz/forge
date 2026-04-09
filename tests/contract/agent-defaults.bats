@@ -61,12 +61,11 @@ AGENT_DEFAULTS="$PLUGIN_ROOT/shared/agent-defaults.md"
 # ---------------------------------------------------------------------------
 # 7. All 8 review agents listed
 # ---------------------------------------------------------------------------
-@test "agent-defaults: all 8 review agents listed" {
+@test "agent-defaults: all 7 review agents listed" {
   local reviewers=(
     fg-410-code-reviewer
     fg-411-security-reviewer
     fg-413-frontend-reviewer
-    fg-414-frontend-quality-reviewer
     fg-416-backend-performance-reviewer
     fg-418-docs-consistency-reviewer
     fg-419-infra-deploy-reviewer

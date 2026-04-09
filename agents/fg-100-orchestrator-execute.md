@@ -388,7 +388,10 @@ If `dry_run` is true in state.json, skip this stage and all subsequent stages. T
 Before dispatching any implementer, create a checkpoint for rollback safety:
 
 ```bash
-git add -A && git commit -m "wip: pipeline checkpoint pre-implement" --allow-empty
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -m "wip: pipeline checkpoint pre-implement"
+fi
 ```
 
 Record the SHA in `state.json.last_commit_sha`.
@@ -655,7 +658,7 @@ If `override.reviewers`: use that reviewer set instead of the config-driven batc
 Reduced review batch (overrides config-driven batches):
 - Always dispatch: `fg-410-code-reviewer`, `fg-411-security-reviewer`
 - If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `fg-413-frontend-reviewer`
-- Skip by default: `fg-414-frontend-quality-reviewer`, `fg-416-backend-performance-reviewer`
+- Skip by default: `fg-416-backend-performance-reviewer`
 
 Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (SS6.2) normally.
 

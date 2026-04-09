@@ -20,7 +20,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 |-------|---------|--------|-------|
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
 | fg-413-frontend-reviewer | true | secondary | Conventions + security — findings merged into quality-gate |
-| fg-414-frontend-quality-reviewer | true | secondary | WCAG 2.2 AA, OnPush, change detection, bundle size |
+| fg-413-frontend-reviewer (a11y-only) | true | secondary | WCAG 2.2 AA deep audit for Angular components |
 | fg-419-infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
 
 <!-- Applicable build-system bindings: bun -->

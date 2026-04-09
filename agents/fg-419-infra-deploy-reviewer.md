@@ -137,20 +137,6 @@ Then provide a summary with PASS/FAIL per category (Security, Reliability, Scala
 
 ---
 
-## Forbidden Actions
+## Constraints
 
-Read-only agent. No source file, shared contract, conventions, or CLAUDE.md modifications. Evidence-based findings only — never invent issues. Check git blame before flagging intentional patterns. No hardcoded paths or agent names.
-
-Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
-
----
-
-## Linear Tracking
-
-Quality gate (fg-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
-
----
-
-## Optional Integrations
-
-Use Context7 MCP for API/framework verification when available; fall back to conventions file + grep. Never fail due to MCP unavailability.
+**Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.

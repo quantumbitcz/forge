@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 37 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 36 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -63,12 +63,12 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Decision log | `shared/decision-log.md` |
 | State integrity | `shared/state-integrity.sh` |
 
-## Agents (37 total, `agents/*.md`)
+## Agents (36 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
 - Sprint: `fg-090-sprint-orchestrator`
-- Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
+- Core: `fg-100-orchestrator` (coordinator, never writes code; 4-file split: `-core`, `-boot`, `-execute`, `-ship`), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
@@ -77,7 +77,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (8, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer`, `fg-414-frontend-quality-reviewer`, `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
+**Review** (7, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
 
 ### Agent rules
 
@@ -90,7 +90,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
-- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
+- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 7): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
 
@@ -128,6 +128,23 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 
 Pipeline control flow follows the formal transition table in `shared/state-transitions.md`. LLM judgment is used for code review, implementation, and architecture decisions — NOT for state transitions. Every branching decision is logged to `.forge/decisions.jsonl` per `shared/decision-log.md`. Recovery uses circuit breakers per failure category (`shared/recovery/recovery-engine.md` §8.1). Reviewer conflicts are resolved by priority ordering in `shared/agent-communication.md` §3.1.
 
+### Shared scripts (`shared/`)
+
+| Script | Purpose |
+|---|---|
+| `forge-state.sh` | Executable state machine (57+ transitions from `state-transitions.md`) |
+| `forge-state-write.sh` | Atomic JSON writes with WAL and `_seq` versioning |
+| `forge-token-tracker.sh` | Token budget tracking and ceiling enforcement |
+| `forge-linear-sync.sh` | Event-driven Linear sync (audit layer) |
+| `forge-sim.sh` | Pipeline simulation harness |
+| `forge-timeout.sh` | Pipeline timeout enforcement |
+| `forge-compact-check.sh` | Compaction suggestion hook |
+| `check-prerequisites.sh` | bash 4+ and python3 validation |
+
+### Mode overlays (`shared/modes/`)
+
+7 pipeline mode overlays: `standard`, `bugfix`, `migration`, `bootstrap`, `testing`, `refactor`, `performance`. Loaded by orchestrator at PREFLIGHT based on `state.mode`. Each overlay defines phase-specific adjustments (skip conditions, reduced thresholds, extra agents).
+
 ## Integrations
 
 - **Linear** (optional): Epic/Stories/Tasks at PLAN, status per stage. Disabled by default. MCP failures → graceful degradation (no recovery engine).
@@ -152,9 +169,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (22), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 8; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 7; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
 
-**Hooks** (3): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`.
+**Hooks** (4): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
 **Kanban** (`.forge/tracking/`): File-based board (`backlog/`, `in-progress/`, `review/`, `done/`). Prefix configurable (default `FG`). IDs never reused. Shaper creates → orchestrator moves → PR builder updates → retrospective closes. Silently skips if uninitialized.
 

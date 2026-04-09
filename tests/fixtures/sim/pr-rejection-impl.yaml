@@ -1,0 +1,18 @@
+name: "pr-rejection-implementation-feedback"
+requirement: "PR rejected with implementation feedback"
+mode: standard
+fast_forward:
+  story_state: "SHIPPING"
+  convergence.phase: "safety_gate"
+  convergence.safety_gate_passed: true
+  quality_cycles: 2
+  test_cycles: 1
+  total_retries: 0
+mock_events:
+  - event: pr_rejected
+    guards:
+      feedback_classification: "implementation"
+expected_trace:
+  - "SHIPPING -> IMPLEMENTING"
+expected_counters:
+  total_retries: 1

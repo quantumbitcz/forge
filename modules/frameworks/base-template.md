@@ -116,8 +116,9 @@ quality_gate:
   #   - agent: fg-413-frontend-reviewer
   #   - agent: fg-411-security-reviewer
   #     focus: "<framework-specific security focus>"
-  #   - agent: fg-414-frontend-quality-reviewer
-  #     focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, <framework-specific perf focus>"
+  #   - agent: fg-413-frontend-reviewer
+  #     mode: a11y-only
+  #     focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
   #   - agent: fg-410-code-reviewer
   #     focus: "general correctness, maintainability"
   #   - agent: "pr-review-toolkit:code-reviewer"

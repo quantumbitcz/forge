@@ -1,0 +1,41 @@
+name: "convergence-improving-score-cycles"
+requirement: "Review iteration with improving scores"
+mode: standard
+fast_forward:
+  story_state: "REVIEWING"
+  convergence.phase: "perfection"
+  convergence.plateau_count: 0
+  convergence.total_iterations: 0
+  convergence.phase_iterations: 0
+mock_events:
+  - event: score_improving
+    guards:
+      total_iterations: "0"
+      max_iterations: "8"
+  - event: implement_complete
+    guards:
+      at_least_one_task_passed: "true"
+  - event: verify_pass
+    guards:
+      convergence.phase: "correctness"
+  - event: score_improving
+    guards:
+      total_iterations: "1"
+      max_iterations: "8"
+  - event: implement_complete
+    guards:
+      at_least_one_task_passed: "true"
+  - event: verify_pass
+    guards:
+      convergence.phase: "correctness"
+  - event: score_target_reached
+expected_trace:
+  - "REVIEWING -> IMPLEMENTING"
+  - "IMPLEMENTING -> VERIFYING"
+  - "VERIFYING -> REVIEWING"
+  - "REVIEWING -> IMPLEMENTING"
+  - "IMPLEMENTING -> VERIFYING"
+  - "VERIFYING -> REVIEWING"
+  - "REVIEWING -> VERIFYING"
+expected_counters:
+  quality_cycles: 2
