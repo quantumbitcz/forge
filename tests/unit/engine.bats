@@ -65,9 +65,11 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
 }
 
 # ---------------------------------------------------------------------------
-# 4. hook mode: prevents double execution via _ENGINE_RUNNING=1 env var
+# 4. hook mode: prevents double execution via file-based lock
+#    When the lock directory already exists (simulating a concurrent run),
+#    the engine should exit 0 with no output.
 # ---------------------------------------------------------------------------
-@test "hook mode: exits 0 with empty output when _ENGINE_RUNNING=1" {
+@test "hook mode: exits 0 with empty output when lock is held" {
   local project_dir
   project_dir="$(create_temp_project spring)"
 
@@ -75,14 +77,22 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   printf 'package com.example\nval x = someValue!!\n' > "$kt_file"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
+  # Pre-create the mkdir-based lock directory to simulate a concurrent instance.
+  # On macOS (no flock), the engine uses mkdir for locking.
+  local lock_dir="${project_dir}/.forge/.engine.lock.d"
+  mkdir -p "$lock_dir"
+
   run env \
-    _ENGINE_RUNNING=1 \
+    FORGE_DIR="${project_dir}/.forge" \
     TOOL_INPUT="{\"file_path\": \"${kt_file}\"}" \
     CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
     bash "$ENGINE" --hook
 
   assert_success
   assert_no_findings "$output"
+
+  # Clean up the lock dir
+  rmdir "$lock_dir" 2>/dev/null || true
 }
 
 # ---------------------------------------------------------------------------
@@ -286,29 +296,21 @@ EOF
 
 # ---------------------------------------------------------------------------
 # Helper: run resolve_component() in isolation via a wrapper script.
-# Sources engine.sh using bash -c with a patched invocation that bypasses
-# the _ENGINE_RUNNING guard and mode dispatch by passing a no-op arg.
-# We use a thin wrapper that calls the engine as a library via `source`.
+# Extracts function definitions from engine.sh (up to the instance lock
+# block) and appends a direct call to resolve_component.
 # ---------------------------------------------------------------------------
 _resolve_component_wrapper() {
   local file_path="$1"
   local project_root="$2"
-  # Build a wrapper that sources engine.sh in a way that:
-  #  1. Does NOT set _ENGINE_RUNNING before sourcing (so functions are defined)
-  #  2. Replaces the main dispatch block with a direct call to resolve_component
-  # Since engine.sh exits 0 at the bottom of its dispatch, we use a subshell
-  # trick: source the engine with a fake mode arg that hits the "*) echo usage"
-  # branch, which just writes to stderr and falls through to `exit 0`. But that
-  # would define all functions first.
-  # Cleanest approach: use awk to extract lines up to the "--- Main dispatch ---"
-  # comment, then append our call.
+  # Use awk to extract lines up to the "Acquire instance lock" comment,
+  # which sits after all function definitions but before the lock and dispatch.
   local wrapper="${TEST_TEMP}/rc-wrapper.sh"
   {
     printf '#!/usr/bin/env bash\nset -euo pipefail\n'
     printf 'PLUGIN_ROOT="%s"\n' "${PLUGIN_ROOT}"
-    # Extract everything from the engine up to (but not including) the main
-    # dispatch block. We stop at the line that starts "# --- Main dispatch ---".
-    awk '/^# --- Main dispatch ---/{exit} {print}' "${ENGINE}" | tail -n +2
+    # Extract everything from the engine up to (but not including) the
+    # instance lock block. All function definitions are above this marker.
+    awk '/^# --- Acquire instance lock/{exit} {print}' "${ENGINE}" | tail -n +2
     printf 'resolve_component "%s" "%s"\n' "${file_path}" "${project_root}"
   } > "$wrapper"
   chmod +x "$wrapper"

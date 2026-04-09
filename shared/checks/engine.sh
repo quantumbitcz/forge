@@ -25,9 +25,15 @@ if (( BASH_VERSINFO[0] < 4 )); then
   # bash 4+ constructs (flock subshell). Simple non-atomic increment is fine
   # since this code path only runs once per session (not concurrent).
   _skip_file=".forge/.check-engine-skipped"
+  _log_dir="${FORGE_DIR:-.forge}"
   if [ -d ".forge" ]; then
     _count=0; [ -f "$_skip_file" ] && _count=$(cat "$_skip_file" 2>/dev/null || echo 0)
     echo $((_count + 1)) > "$_skip_file" 2>/dev/null || true
+  fi
+  # Log failure inline (handle_failure not yet defined; see comment above)
+  if [ -d "$_log_dir" ]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | skip:bash_version_${BASH_VERSION} | n/a" \
+      >> "${_log_dir}/.hook-failures.log" 2>/dev/null || true
   fi
   exit 0
 fi
@@ -47,6 +53,18 @@ _glob_exists() {
 
 # Track current file for error reporting
 _CURRENT_FILE=""
+
+# Log hook failures to .forge/.hook-failures.log for observability.
+# Called before silent exits so operators can audit skipped checks.
+handle_failure() {
+  local reason="$1"
+  local file="${2:-unknown}"
+  local log_dir="${FORGE_DIR:-.forge}"
+  if [[ -d "$log_dir" ]]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | ${reason} | ${file}" \
+      >> "${log_dir}/.hook-failures.log"
+  fi
+}
 
 # shellcheck disable=SC2329  # invoked indirectly via hook timeout handler
 handle_skip() {
@@ -73,14 +91,11 @@ handle_skip() {
       # If lock fails, skip the increment — best-effort counter
     fi
   fi
+  handle_failure "skip:timeout_or_error" "${_CURRENT_FILE:-unknown}"
   echo "[check-engine] Hook skipped for ${_CURRENT_FILE:-unknown} (timeout/error)" >&2
   exit 0
 }
 trap handle_skip ERR
-
-# Prevent double execution when both plugin hook and legacy wrapper fire
-[[ -n "${_ENGINE_RUNNING:-}" ]] && exit 0
-export _ENGINE_RUNNING=1
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-"$(cd "$SCRIPT_DIR/../.." && pwd)"}"
@@ -527,6 +542,27 @@ mode_flush_queue() {
   # Clear the queue
   : > "$queue_file"
 }
+
+# --- Acquire instance lock (prevents double execution) ---
+# Placed after function definitions so test wrappers that extract functions
+# via awk (stopping at "Acquire instance lock") are not affected by the lock.
+# Uses atomic file lock instead of env var (which has a TOCTOU race between
+# concurrent hook invocations in the same shell session).
+# The lock dir must exist; if it doesn't, skip locking (no forge project context).
+_LOCK_DIR="${FORGE_DIR:-.forge}"
+if [[ -d "$_LOCK_DIR" ]]; then
+  LOCK_FILE="${_LOCK_DIR}/.engine.lock"
+  if command -v flock &>/dev/null; then
+    exec 200>"$LOCK_FILE"
+    flock -n 200 || exit 0  # Another instance running, skip silently
+  else
+    # macOS fallback: mkdir-based lock (atomic on POSIX)
+    if ! mkdir "$LOCK_FILE.d" 2>/dev/null; then
+      exit 0  # Another instance running
+    fi
+    trap 'rmdir "$LOCK_FILE.d" 2>/dev/null' EXIT
+  fi
+fi
 
 # --- Main dispatch ---
 case "${1:---hook}" in
