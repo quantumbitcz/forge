@@ -329,7 +329,7 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 - Score history (score per cycle)
 - `stage_6_notes_{storyId}.md` -- review report
 
-**Exit condition (converged at target):** Score = `target_score` (default 100) and safety gate passed. Proceed to Stage 7.
+**Exit condition (converged at target):** Score = `target_score` (default 90) and safety gate passed. Proceed to Stage 7.
 
 **Exit condition (converged below target):** Score plateaued below target. The convergence engine applies the score escalation ladder (see `convergence-engine.md`):
 
@@ -545,7 +545,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 
 ### Migration Mode
 
-The orchestrator detects the pipeline mode from the requirement prefix at PREFLIGHT (section 3.0 in `fg-100-orchestrator.md`). Mode is stored in `state.json.mode`.
+The orchestrator detects the pipeline mode from the requirement prefix at PREFLIGHT (see `fg-100-orchestrator-boot.md`). Mode is stored in `state.json.mode`.
 
 **Migration mode** (`migrate:` / `migration:` prefix):
 
@@ -575,7 +575,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
-7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` §3.0 for dispatch details.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator-boot.md` for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
 The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
@@ -823,11 +823,11 @@ Worktree is created at PREFLIGHT (Stage 0) and persists through SHIP (Stage 8). 
 
 ### Kanban Tracking
 
-If `.forge/tracking/` exists, ticket status is updated at stage boundaries per the transition table in `fg-100-orchestrator.md` §3.12. If tracking is not initialized, all kanban operations are silently skipped (graceful degradation).
+If `.forge/tracking/` exists, ticket status is updated at stage boundaries per the transition table in `fg-100-orchestrator-boot.md`. If tracking is not initialized, all kanban operations are silently skipped (graceful degradation).
 
 ### Sub-Agent Visibility
 
-Every Agent dispatch by the orchestrator is wrapped with TaskCreate/TaskUpdate per §3.11 of `fg-100-orchestrator.md`. This provides real-time progress visibility to the user without requiring sub-agents to know about the task system.
+Every Agent dispatch by the orchestrator is wrapped with TaskCreate/TaskUpdate per `fg-100-orchestrator-core.md`. This provides real-time progress visibility to the user without requiring sub-agents to know about the task system.
 
 ### Autonomous Mode
 

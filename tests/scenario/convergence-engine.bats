@@ -3,7 +3,8 @@
 
 load '../helpers/test-helpers'
 
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
 QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"
 TEST_GATE="$PLUGIN_ROOT/agents/fg-500-test-gate.md"
@@ -21,9 +22,9 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 # 2. Orchestrator initializes convergence state
 # ---------------------------------------------------------------------------
 @test "convergence-scenario: orchestrator initializes convergence object in state" {
-  grep -q '"convergence"' "$ORCHESTRATOR" \
+  grep -q '"convergence"' "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator does not initialize convergence object"
-  grep -q '"phase".*"correctness"' "$ORCHESTRATOR" \
+  grep -q '"phase".*"correctness"' "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator does not set initial phase to correctness"
 }
 

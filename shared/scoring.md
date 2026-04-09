@@ -69,7 +69,7 @@ These constraints are enforced at PREFLIGHT. If violated, log WARNING and use pl
 - CONCERNS: score >= `concerns_threshold` AND score < `pass_threshold` AND 0 CRITICALs remaining after all fix cycles
 - FAIL: score < `concerns_threshold` OR any CRITICAL remaining after convergence exhaustion (plateau + max_iterations)
 
-Note: CRITICALs trigger fix cycles (per Aim-for-100 policy) before determining the final verdict. A CRITICAL in cycle 1 does NOT immediately produce FAIL — it is sent to the implementer for fixing first.
+Note: CRITICALs trigger fix cycles (per Aim-for-Target policy) before determining the final verdict. A CRITICAL in cycle 1 does NOT immediately produce FAIL — it is sent to the implementer for fixing first.
 
 ### When to Customize
 
@@ -85,11 +85,11 @@ Note: CRITICALs trigger fix cycles (per Aim-for-100 policy) before determining t
 | **CONCERNS** | score 60-79 AND 0 CRITICALs | Proceed, but send ALL findings to implementer for fixing. The pipeline continues, but improvements are expected. |
 | **FAIL** | score < 60 OR any CRITICAL remaining after convergence exhaustion | Escalate to user. Pipeline pauses until user decides. |
 
-### Aim-for-100 Policy
+### Aim-for-Target Policy
 
 Regardless of the verdict, every review cycle returns ALL findings -- not just CRITICALs. The quality gate dispatches the implementer to fix as many as possible, then rescores. This repeats up to `quality_gate.max_review_cycles` times.
 
-The goal is always a score of 100. Even when the verdict is CONCERNS and the pipeline proceeds, the full finding list is preserved in stage notes for the retrospective to analyze.
+The goal is always the configured `target_score` (default 90, max 100). Even when the verdict is CONCERNS and the pipeline proceeds, the full finding list is preserved in stage notes for the retrospective to analyze.
 
 ## Finding Format
 

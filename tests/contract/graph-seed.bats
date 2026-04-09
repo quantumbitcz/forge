@@ -109,6 +109,10 @@ LAYERS=(databases persistence migrations api-protocols messaging caching search 
     [[ -f "$f" ]] || continue
     local name
     name="$(basename "$f" .md)"
+    # Orchestrator phase files are includes, not standalone agents
+    [[ "$name" == fg-100-orchestrator-boot ]] && continue
+    [[ "$name" == fg-100-orchestrator-execute ]] && continue
+    [[ "$name" == fg-100-orchestrator-ship ]] && continue
     if ! grep -qF "CREATE (:Agent" "$SEED_FILE" || ! grep -qF "name: '${name}'" <(grep "CREATE (:Agent" "$SEED_FILE"); then
       missing+=("$name")
     fi

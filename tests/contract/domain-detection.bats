@@ -4,7 +4,8 @@
 load '../helpers/test-helpers'
 
 DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
 # ---------------------------------------------------------------------------
@@ -84,7 +85,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 7. Orchestrator references domain-detection.md
 # ---------------------------------------------------------------------------
 @test "domain-detection: orchestrator references domain-detection.md" {
-  grep -q "domain-detection.md" "$ORCHESTRATOR" \
+  grep -q "domain-detection.md" "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator does not reference domain-detection.md"
 }
 

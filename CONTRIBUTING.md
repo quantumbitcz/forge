@@ -67,7 +67,7 @@ All pipeline state lives in `.forge/` in the consuming project, never in this re
    ---
    ```
 2. Write the agent's system prompt (instructions, inputs, outputs, constraints)
-3. Wire it into `fg-100-orchestrator.md` at the appropriate stage
+3. Wire it into the orchestrator files (`fg-100-orchestrator-core.md` + phase files) at the appropriate stage
 4. Update `shared/stage-contract.md` if the agent changes stage behavior
 5. Update `README.md` agent table
 
@@ -184,13 +184,13 @@ The `shared/` directory contains contracts and subsystems consumed by all agents
 
 The kanban tracking system lives in `shared/tracking/`. The shell library `tracking-ops.sh` provides ticket CRUD functions used by agents. The schema is documented in `tracking-schema.md`.
 
-When adding new agent integration points that should update ticket status, use the functions from `tracking-ops.sh` and follow the transition table in `fg-100-orchestrator.md` §3.12.
+When adding new agent integration points that should update ticket status, use the functions from `tracking-ops.sh` and follow the transition table in `fg-100-orchestrator-boot.md`.
 
 ## Git Conventions
 
 Branch naming and commit format rules are in `shared/git-conventions.md`. The `/forge-init` skill detects existing project hooks — see Phase 2a in `forge-init/SKILL.md`.
 
-When modifying commit or branch naming behavior, update both `shared/git-conventions.md` and the consuming agents (`fg-100-orchestrator.md`, `fg-600-pr-builder.md`).
+When modifying commit or branch naming behavior, update both `shared/git-conventions.md` and the consuming agents (`fg-100-orchestrator-core.md`, `fg-600-pr-builder.md`).
 
 ## Questions?
 

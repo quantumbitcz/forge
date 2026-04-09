@@ -53,13 +53,15 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
+  "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
   "requirement": "Add plan comment feature",
   "domain_area": "plan",
   "risk_level": "MEDIUM",
   "story_state": "IMPLEMENTING",
+  "previous_state": "",
   "active_component": "backend",
   "components": {
     "backend": {
@@ -110,7 +112,9 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "phase_history": [],
     "safety_gate_passed": false,
     "safety_gate_failures": 0,
-    "unfixable_findings": []
+    "unfixable_findings": [],
+    "diminishing_count": 0,
+    "unfixable_info_count": 0
   },
   "integrations": {
     "linear": { "available": false, "team": "" },
@@ -203,13 +207,15 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.4.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.5.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing or does not match the current schema version, the state file is reinitialized. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
 | `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
 | `domain_area` | string | Yes | Primary domain area affected by this change. Detected by the planner at Stage 2 using the algorithm in `shared/domain-detection.md`. Known domains: `auth`, `billing`, `user`, `scheduling`, `communication`, `inventory`, `workflow`, `commerce`, `search`, `analytics`, `config`, `api`, `infra`, `general`. Falls back to `"general"` if detection produces no clear result or the planner fails to set it (orchestrator emits WARNING). Immutable after Stage 2. Used by PREEMPT decay, auto-tuning, and bug hotspot tracking. |
 | `risk_level` | string | Yes | Risk assessment from the planner. Valid values: `"LOW"`, `"MEDIUM"`, `"HIGH"`. Set at Stage 2, used at Stage 3 for the auto-proceed decision gate. |
 | `story_state` | string | Yes | The overall pipeline state — the highest active stage across all components. If backend is IMPLEMENTING and frontend is EXPLORING, the top-level story_state is IMPLEMENTING. Valid values and transitions defined below. Updated at the start of each stage. |
+| `previous_state` | string | Yes | Pipeline state before the last transition. Set by `forge-state.sh` on every transition. Used by `user_continue` (E5) to resume from escalation. Empty string `""` initially. |
 | `active_component` | string | Yes | The component the orchestrator is currently processing. Set before dispatching agents for a component's tasks. Used by the check engine to route rules. Example: `"backend"`. |
 | `components` | object | Yes | Per-component state tracking for monorepo and multi-stack projects. Keys are derived from `forge.local.md` config: for single-component projects, the key is the component name from config (e.g., `"backend"`); for multi-component projects with `path:` fields, keys are the component names (e.g., `"backend"`, `"frontend"`, `"mobile"`). The top-level `story_state` is always the highest active stage across all components. Values are component state objects. See the [components section](#components-object-required) below. |
 | `quality_cycles` | integer | Yes | Number of quality review cycles completed in Stage 6 (REVIEW). Starts at 0, incremented each time the quality gate dispatches fixes and rescores. Max is `quality_gate.max_review_cycles` from config. |
@@ -224,7 +230,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `forge-log.md`. |
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-post-run` stage notes. |
 | `previous_feedback_classification` | string | Yes | Feedback type from the preceding PR rejection. Used by the orchestrator to detect feedback loops — when `feedback_classification == previous_feedback_classification` for 2+ consecutive rejections, the orchestrator escalates. Updated by the orchestrator before comparing classifications. Empty string `""` initially. |
-| `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `fg-100-orchestrator.md` User Response section). |
+| `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `fg-100-orchestrator-core.md` User Response section). |
 | `score_history` | number[] | Yes | Unified quality score per review cycle for oscillation detection across all components. Appended after each quality gate scoring with the aggregate (unified) score. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. In multi-component projects, per-component score histories are tracked within `components[key].score_history` — see the components section below. Oscillation detection runs on BOTH the unified history and per-component histories (a per-component regression masked by other component improvements triggers a WARNING). Integer with default scoring weights; may be non-integer with custom weights. |
 | `convergence` | object | Yes | Convergence engine state. Tracks two-phase iteration progress (correctness → perfection → safety gate). See `shared/convergence-engine.md` for full algorithm. Initialized at PREFLIGHT with all counters at 0. |
 | `convergence.phase` | string | Yes | Current convergence phase. Valid values: `"correctness"` (Phase 1 — IMPLEMENT ↔ VERIFY), `"perfection"` (Phase 2 — IMPLEMENT ↔ REVIEW), `"safety_gate"` (final VERIFY after Phase 2). Transitions managed by the convergence engine. |
@@ -237,6 +243,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `convergence.safety_gate_passed` | boolean | Yes | `true` when the final VERIFY after Phase 2 passes. `false` until then. If safety gate fails, phase transitions back to correctness and this resets to `false`. |
 | `convergence.safety_gate_failures` | integer | Yes | Consecutive safety gate failures. When >= 2, the orchestrator escalates immediately (cross-phase oscillation detected — Phase 2 fixes keep breaking tests). Resets to 0 on safety gate pass. Default: 0. |
 | `convergence.unfixable_findings` | array | Yes | Findings that survived all iterations with documented rationale. Each entry: `{ "category": "<CATEGORY-CODE>", "file": "<path>", "line": <int>, "severity": "<CRITICAL\|WARNING\|INFO>", "reason": "<why not fixed>", "options": ["<option1>", "<option2>"] }`. Populated when Phase 2 converges below target. |
+| `convergence.diminishing_count` | integer | Yes | Consecutive low-gain iterations (gain <= 2 points). Reset to 0 when gain > 2. Triggers `score_diminishing` event at 2. Default: 0. |
+| `convergence.unfixable_info_count` | integer | Yes | INFO findings not fixed after first attempt. Used to compute effective_target. Default: 0. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). The `neo4j` integration includes `last_build_sha` (SHA of the commit the graph was built from) and `node_count` (total nodes in the graph) — set by the `graph-init` skill; when available, the orchestrator pre-queries graph context at stage boundaries. Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
 | `visual_companion` | boolean | No | Whether the superpowers visual companion is available. Detected at PREFLIGHT. Absent or `false` when superpowers plugin is not installed. |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
@@ -284,7 +292,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `branch_name` | string | Full branch name (e.g., `feat/FG-001-user-notifications`). Set at PREFLIGHT when worktree is created. |
 | `tracking_dir` | string or null | Path to tracking directory (e.g., `.forge/tracking`). Null if tracking not initialized. |
 
-These fields are set during PREFLIGHT (Stage 0) when the worktree is created (§3.9 of `fg-100-orchestrator.md`). They remain constant for the duration of the run.
+These fields are set during PREFLIGHT (Stage 0) when the worktree is created (see `fg-100-orchestrator-boot.md`). They remain constant for the duration of the run.
 
 ### Bugfix Fields
 
@@ -631,6 +639,7 @@ The recovery engine checks the `version` field before parsing state files:
 | 1.1.0 | 1.2.0 | `graph` | `{ "last_update_stage": -1, "last_update_files": [], "stale": false }` |
 | 1.2.0 | 1.3.0 | `decomposition` | `null` |
 | 1.3.0 | 1.4.0 | `evidence` | `{ "last_run": null, "verdict": null, "attempts": 0, "block_history": [] }` |
+| 1.4.0 | 1.5.0 | `_seq`, `previous_state`, `convergence.diminishing_count`, `convergence.unfixable_info_count` | `1`, `""`, `0`, `0` |
 
 **Manual reset:** Use `/forge-reset` to clear stale state if automatic migration is insufficient.
 
