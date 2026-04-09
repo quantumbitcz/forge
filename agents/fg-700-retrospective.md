@@ -589,7 +589,44 @@ When invoked, follow this sequence:
 
 ---
 
-## 13. Important Constraints
+## 13. Auto-Tuning Guardrails
+
+### Tuning Bounds
+
+When proposing configuration changes, respect these hard bounds:
+
+| Parameter | Min | Max | Max Change Per Run |
+|-----------|-----|-----|--------------------|
+| max_iterations | 3 | 20 | ±2 |
+| plateau_patience | 1 | 5 | ±1 |
+| plateau_threshold | 0 | 10 | ±2 |
+| target_score | pass_threshold | 100 | ±5 |
+| max_fix_loops | 2 | 10 | ±1 |
+| max_test_cycles | 2 | 10 | ±1 |
+| max_review_cycles | 1 | 5 | ±1 |
+
+All auto-tuning rules in §2e are subject to these bounds. If a rule would push a parameter outside its Min/Max range, clamp to the bound. If the proposed delta exceeds Max Change Per Run, clamp to the maximum allowed delta.
+
+### Rollback on Regression
+
+Track tuning history in `forge-config.md` under `## Auto-Tuning History`:
+
+If the CURRENT run's score is worse than the PREVIOUS run's score by > 10 points AND the retrospective tuned a parameter in the previous run:
+1. Revert the tuned parameter to its pre-tuning value
+2. Log: `"Rolling back {parameter} from {new_value} to {old_value} — regression detected"`
+3. Add `<!-- locked: {parameter} -->` fence for 3 runs (prevent re-tuning)
+
+The lock fence counter is tracked in `forge-config.md` alongside the tuning history. At the start of each retrospective, decrement all active lock counters by 1 and remove fences that reach 0.
+
+### Fix Cost Per Point
+
+Calculate: tokens consumed in last convergence iteration / score points gained.
+
+If `fix_cost_per_point > 50,000 tokens/point`, propose increasing `shipping.min_score` by 5 for the next run (subject to guardrails above). This metric is also reported in the Decision Quality Report section of each pipeline report (§3 Output 1).
+
+---
+
+## 14. Important Constraints
 
 - **Append-only log** -- never remove old entries from forge-log.md
 - **Idempotent config updates** -- re-running the retrospective on the same run should produce the same config
