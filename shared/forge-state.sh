@@ -580,6 +580,11 @@ def match_transition():
          lambda: True,
          'PLANNING', 'E7', 'user_reshape',
          {}, {}),
+        # E8: ANY + token_budget_exhausted -> ESCALATED
+        ('ANY', 'token_budget_exhausted',
+         lambda: int(g('estimated_total', state.get('tokens', {}).get('estimated_total', 0))) >= int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) and int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) > 0,
+         'ESCALATED', 'E8', 'token_budget_exhausted',
+         {}, {}),
     ]
 
     # Check error transitions first (they match ANY state)

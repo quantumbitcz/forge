@@ -82,6 +82,7 @@ These transitions can fire from any current_state. They take priority over norma
 | E5 | ANY (ESCALATED) | `user_continue` | — | Previous state | Resume from escalation point with user guidance |
 | E6 | ANY (ESCALATED) | `user_abort` | — | `ABORTED` | Write abort-report.md, clean up worktree, release lock |
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
+| E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user |
 
 ---
 

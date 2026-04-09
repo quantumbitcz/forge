@@ -138,6 +138,13 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "wall_time_seconds": 0,
     "stages_completed": 0
   },
+  "tokens": {
+    "estimated_total": 0,
+    "budget_ceiling": 2000000,
+    "by_stage": {},
+    "by_agent": {},
+    "budget_warning_issued": false
+  },
   "recovery_budget": {
     "total_weight": 0.0,
     "max_weight": 5.5,
@@ -250,6 +257,12 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | **Distinct from `components`.** Per-module state for cross-repo multi-module projects (different git repos with different frameworks). Each entry: `{ "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. `"FAILED"` and `"BLOCKED"` are module-only states (see below). Blocked modules include `blocked_by`. The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects. **Relationship to `components`:** `components` tracks per-service state within a single monorepo (same git repo, potentially different frameworks). `modules` tracks per-repo state across related repositories. A monorepo uses `components`; a multi-repo architecture uses `modules`. Both can be active simultaneously (e.g., a monorepo backend component with a cross-repo mobile frontend module). |
 | `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
+| `tokens` | object | No | Token usage tracking. Populated by `forge-token-tracker.sh` via orchestrator calls at stage boundaries. |
+| `tokens.estimated_total` | integer | — | Cumulative estimated token usage (input + output) across all stages and agents. Updated by the `record` command. Default: 0. |
+| `tokens.budget_ceiling` | integer | — | Maximum allowed token usage for the run. 0 means no limit. Configurable in `forge-config.md`. Default: 2000000. |
+| `tokens.by_stage` | object | — | Per-stage token breakdown. Keys are stage names (e.g., `"explore"`, `"plan"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple agent calls within a stage. |
+| `tokens.by_agent` | object | — | Per-agent token breakdown. Keys are agent names (e.g., `"fg-200-planner"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple calls to the same agent. |
+| `tokens.budget_warning_issued` | boolean | — | `true` when `estimated_total >= 80%` of `budget_ceiling`. Prevents duplicate warnings. Default: `false`. |
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.5). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight >= 4.4` (80%), set `recovery.budget_warning_issued: true`. |
 | `recovery` | object | Yes | Recovery engine runtime state. `total_failures`: count of error occurrences that triggered recovery evaluation. `total_recoveries`: count of successful recoveries. `degraded_capabilities`: list of capability names operating in degraded mode (e.g., `"linear"`, `"neo4j"`). `failures`: list of `{ "error_type": "<type>", "stage": "<stage>", "timestamp": "<ISO8601>", "strategy": "<strategy-applied>", "outcome": "recovered\|escalated" }`. `budget_warning_issued`: boolean, `true` when `recovery_budget.total_weight >= 4.4` (80% of budget). |
 | `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300 }`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine and category-to-error-type mapping. |
