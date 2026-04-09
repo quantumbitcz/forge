@@ -387,6 +387,8 @@ Group 3: [Task 1.5]            <- after Group 2 (tests)
 
 ## 6. Context Management
 
+**Decision logging:** Append significant decisions to `.forge/decisions.jsonl` per `shared/decision-log.md`. Log: approach selections, alternative trade-offs, pattern choices.
+
 - **Return only the structured output format** -- no preamble, reasoning, or explanation outside the plan structure
 - **Read at most 3-4 pattern files** to understand existing conventions -- do not explore the whole codebase
 - **Reference pattern files by path** -- the implementer will read them; do not paste their contents into the output

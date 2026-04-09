@@ -327,6 +327,8 @@ Return EXACTLY this structure. No preamble or reasoning outside the format.
 
 ## 7. Context Management
 
+**Decision logging:** Append significant decisions to `.forge/decisions.jsonl` per `shared/decision-log.md`. Log: approach selections, alternative trade-offs, pattern choices.
+
 - **Return only the structured output format** -- verdict, findings table, and recommended amendments
 - **Do not re-read the entire codebase** -- use targeted Grep/Glob for specific checks (e.g., grep for existing auth patterns, spot-check a pattern file exists)
 - **Be concise in findings** -- one line per finding with file reference and fix suggestion

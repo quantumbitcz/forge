@@ -33,6 +33,8 @@ Each line is a self-contained JSON object:
 | `choice` | string | yes | The outcome selected |
 | `alternatives` | array of strings | yes | Other options that were considered (may be empty `[]`) |
 | `reason` | string | yes | Brief rationale for the choice |
+| `confidence` | string (enum) | no | Decision confidence: `HIGH` (>90% certain, default if omitted), `MEDIUM` (70-90%), `LOW` (<70%). Agents should set `LOW` or `MEDIUM` when trade-offs are unclear or multiple alternatives are equally viable. Used by the retrospective to track decision quality. |
+| `agreement` | object | no | Reviewer agreement metadata for quality gate conflict resolutions. Structure: `{ "agents": ["fg-410", "fg-411"], "agreed": true/false, "resolved_by": "priority" }`. `agents`: list of agents involved. `agreed`: whether agents reached the same conclusion. `resolved_by`: resolution method (`"priority"`, `"severity"`, `"user"`). Only present on `reviewer_conflict` decision types. |
 
 ## Decision Types
 

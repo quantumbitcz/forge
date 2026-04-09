@@ -179,6 +179,31 @@ if [[ "$story_id" != "" ]]; then
   fi
 fi
 
+# ── 10. Decision log format validation ─────────────────────────────────────
+
+if [[ -f "${FORGE_DIR}/decisions.jsonl" ]]; then
+  invalid_count=$("$PYTHON" - "${FORGE_DIR}/decisions.jsonl" <<'PYEOF'
+import json, sys
+invalid = 0
+with open(sys.argv[1]) as f:
+    for i, line in enumerate(f, 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            d = json.loads(line)
+            if 'ts' not in d or 'decision' not in d:
+                invalid += 1
+        except json.JSONDecodeError:
+            invalid += 1
+print(invalid)
+PYEOF
+)
+  if [[ "$invalid_count" -gt 0 ]]; then
+    warn "decisions.jsonl has ${invalid_count} malformed line(s)"
+  fi
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 if [[ $errors -gt 0 ]]; then

@@ -284,7 +284,7 @@ Check `state.json.mode_config.stages.learn` for overrides (set at PREFLIGHT via 
 If `override.skip`: skip retrospective entirely (write INFO note, proceed to cleanup).
 If `override.reduced`: dispatch fg-700 with reduced summary (skip auto-tuning).
 
-If `state.json.mode == "bugfix"`, include additional bugfix context in the dispatch prompt:
+If `state.json.mode == "bugfix"` (i.e., bugfix mode overlay was loaded), include additional bugfix context in the dispatch prompt:
 ```
 Bugfix context:
 - Root cause category: [state.json.bugfix.root_cause.category]

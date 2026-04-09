@@ -224,6 +224,15 @@ When multiple findings share the same key:
 
 Findings at different lines in the same file with the same category are NOT deduplicated -- they represent distinct issues. Only exact `(file, line, category)` matches are grouped.
 
+### Reviewer Agreement Tracking
+
+After deduplication, compare findings from different reviewers on the same `(file, line)`:
+- Same severity from both reviewers → agreement
+- Different severity → disagreement
+- Record in stage notes: "Reviewer agreement: {N}/{M} findings ({pct}%)"
+- Update `state.json.decision_quality.reviewer_agreement_rate` via forge-state-write.sh
+- Count findings with `confidence:LOW` or `confidence:MEDIUM` and update `state.json.decision_quality.findings_with_low_confidence`
+
 ---
 
 ## 8. Scoring

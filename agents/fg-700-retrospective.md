@@ -110,6 +110,17 @@ result: { SUCCESS / SUCCESS_WITH_FIXES / FAILED }
 [Compare against previous reports if available -- improving/declining metrics]
 [If no previous reports: "First run -- no trend data available"]
 
+## Decision Quality Report
+
+- Decisions logged: {total_decisions_logged from state.json}
+- Reviewer agreement rate: {reviewer_agreement_rate}%
+- Findings with low confidence: {findings_with_low_confidence} ({pct}% of total)
+- Overridden findings (orchestrator pushed back): {overridden_findings}
+- Score trajectory: {score_history joined by " → "}
+- Fix cost per point: {tokens consumed in last convergence iteration ÷ score points gained} tokens/point
+
+If fix_cost_per_point > 50,000 tokens/point, propose increasing `shipping.min_score` by 5 for the next run (subject to auto-tuning guardrails from P2-4).
+
 ## Learnings Extracted
 
 - PREEMPT: [items extracted this run]

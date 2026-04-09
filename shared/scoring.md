@@ -91,6 +91,18 @@ Regardless of the verdict, every review cycle returns ALL findings -- not just C
 
 The goal is always the configured `target_score` (default 90, max 100). Even when the verdict is CONCERNS and the pipeline proceeds, the full finding list is preserved in stage notes for the retrospective to analyze.
 
+### INFO Efficiency Policy
+
+During convergence Phase 2 (perfection), INFO findings follow "fix if easy, skip if costly":
+
+1. On first iteration: attempt to fix ALL findings (including INFO)
+2. On subsequent iterations: if an INFO finding was present in the previous cycle and the implementer did not fix it, mark it as `unfixable_info` in convergence state
+3. Unfixable INFO findings are excluded from the convergence target calculation:
+   `effective_target = min(target_score, 100 - 2 * unfixable_info_count)`
+4. The pipeline converges when `score >= effective_target` (not raw `target_score`)
+
+This prevents the pipeline from spending 3-4 iterations to squeeze out the last 2-3 INFO fixes when the score is already above pass_threshold.
+
 ## Finding Format
 
 Every review agent (module-specific reviewers, inline checks, quality gate batches) must return findings in this exact format:
