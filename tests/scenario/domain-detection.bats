@@ -4,7 +4,8 @@
 load '../helpers/test-helpers'
 
 DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
 # ---------------------------------------------------------------------------
@@ -12,12 +13,12 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "domain-detection scenario: orchestrator validates domain_area after planner" {
   # The orchestrator must mention verifying/validating domain_area post-planner
-  grep -q "domain_area" "$ORCHESTRATOR" \
+  grep -q "domain_area" "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator does not mention domain_area"
-  grep -iq "verify\|validate\|check\|default" "$ORCHESTRATOR" \
+  grep -iq "verify\|validate\|check\|default" "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator has no validation language for domain_area"
   # Specifically, it should default to "general" with WARNING
-  grep -q 'general.*WARNING\|WARNING.*general' "$ORCHESTRATOR" \
+  grep -q 'general.*WARNING\|WARNING.*general' "${ORCHESTRATOR_ALL[@]}" \
     || fail "Orchestrator does not default to 'general' with WARNING"
 }
 

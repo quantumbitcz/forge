@@ -5,7 +5,8 @@
 
 load '../helpers/test-helpers'
 
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
@@ -14,7 +15,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "orchestrator-sm: all 10 story_state values referenced in orchestrator" {
   for state in PREFLIGHT EXPLORING PLANNING VALIDATING IMPLEMENTING VERIFYING REVIEWING DOCUMENTING SHIPPING LEARNING; do
-    grep -q "$state" "$ORCHESTRATOR" \
+    grep -q "$state" "${ORCHESTRATOR_ALL[@]}" \
       || fail "story_state '$state' not referenced in orchestrator"
   done
 }
@@ -82,7 +83,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "orchestrator-sm: bootstrap mode skips Stage 4 (IMPLEMENT)" {
   grep -qi "bootstrap.*skip\|Stage 4.*skip\|skip.*IMPLEMENT.*bootstrap" "$STAGE_CONTRACT" \
-    || grep -qi "bootstrap.*reduced\|bootstrap.*Stage 4" "$ORCHESTRATOR" \
+    || grep -qi "bootstrap.*reduced\|bootstrap.*Stage 4" "${ORCHESTRATOR_ALL[@]}" \
     || fail "Bootstrap mode stage skipping not documented"
 }
 
@@ -101,7 +102,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "orchestrator-sm: dry-run stops at VALIDATE (no IMPLEMENT)" {
   grep -qi "dry.run.*VALIDATE\|dry.run.*Stage 3\|PREFLIGHT.*VALIDATE.*dry" "$STAGE_CONTRACT" \
-    || grep -qi "dry.run.*VALIDATE\|dry.run.*no worktree\|dry.run.*read.only" "$ORCHESTRATOR" \
+    || grep -qi "dry.run.*VALIDATE\|dry.run.*no worktree\|dry.run.*read.only" "${ORCHESTRATOR_ALL[@]}" \
     || fail "Dry-run mode VALIDATE-only constraint not documented"
 }
 
@@ -121,7 +122,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "orchestrator-sm: feedback loop count documented with escalation" {
   grep -q "feedback_loop_count" "$STATE_SCHEMA" || fail "feedback_loop_count not in state schema"
-  grep -qi "escalat" "$ORCHESTRATOR" || fail "Escalation not mentioned in orchestrator"
+  grep -qi "escalat" "${ORCHESTRATOR_ALL[@]}" || fail "Escalation not mentioned in orchestrator"
 }
 
 # ---------------------------------------------------------------------------

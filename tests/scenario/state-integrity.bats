@@ -6,13 +6,14 @@
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/state-integrity.sh"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 
 # ---------------------------------------------------------------------------
 # 1. Orchestrator references state-integrity at PREFLIGHT
 # ---------------------------------------------------------------------------
 @test "state-integrity-scenario: orchestrator runs validator at PREFLIGHT" {
-  run grep -i 'state-integrity\|integrity check\|integrity valid' "$ORCHESTRATOR"
+  run grep -i 'state-integrity\|integrity check\|integrity valid' "${ORCHESTRATOR_ALL[@]}"
 
   assert_success
   # The orchestrator should mention the state integrity validator

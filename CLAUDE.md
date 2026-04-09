@@ -42,7 +42,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Topic | File |
 |---|---|
 | Pipeline flow | `shared/stage-contract.md` |
-| Orchestrator | `agents/fg-100-orchestrator.md` |
+| Orchestrator | `agents/fg-100-orchestrator-core.md` |
 | Scoring | `shared/scoring.md` |
 | State | `shared/state-schema.md` (v1.5.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |

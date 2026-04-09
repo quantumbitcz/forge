@@ -5,7 +5,7 @@
 
 ---
 
-## 7.1 Stage 7: DOCS (dispatch fg-350-docs-generator)
+## 7.1 Stage 7: DOCS — state DOCUMENTING (dispatch fg-350-docs-generator)
 
 **State transition:** Call `forge-state.sh transition docs_complete` after fg-350 returns (or `docs_failure` on error).
 **TaskUpdate:** Mark "Stage 6: Review" -> `completed`, Mark "Stage 7: Docs" -> `in_progress`

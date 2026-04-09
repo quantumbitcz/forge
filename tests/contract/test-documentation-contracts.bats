@@ -3,7 +3,8 @@
 
 load '../helpers/test-helpers'
 
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 VALIDATOR="$PLUGIN_ROOT/agents/fg-210-validator.md"
 QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"
@@ -13,11 +14,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 SCORING="$PLUGIN_ROOT/shared/scoring.md"
 
 @test "docs-contract: orchestrator dispatches fg-130-docs-discoverer at PREFLIGHT" {
-  grep -q "fg-130-docs-discoverer" "$ORCHESTRATOR" || fail "Orchestrator does not reference fg-130-docs-discoverer"
+  grep -q "fg-130-docs-discoverer" "${ORCHESTRATOR_ALL[@]}" || fail "Orchestrator does not reference fg-130-docs-discoverer"
 }
 
 @test "docs-contract: orchestrator dispatches fg-350-docs-generator at DOCUMENTING" {
-  grep -q "fg-350-docs-generator" "$ORCHESTRATOR" || fail "Orchestrator does not reference fg-350-docs-generator"
+  grep -q "fg-350-docs-generator" "${ORCHESTRATOR_ALL[@]}" || fail "Orchestrator does not reference fg-350-docs-generator"
 }
 
 @test "docs-contract: stage contract Stage 0 includes fg-130-docs-discoverer" {
