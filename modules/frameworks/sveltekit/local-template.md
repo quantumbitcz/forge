@@ -43,15 +43,13 @@ quality_gate:
   max_review_cycles: 2
   batch_1:
     - agent: fg-413-frontend-reviewer
-    - agent: fg-415-frontend-performance-reviewer
-      focus: "Svelte 5 rune usage, component patterns, reactivity"
+    - agent: fg-414-frontend-quality-reviewer
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, Svelte 5 rune usage, component patterns, reactivity"
     - agent: fg-411-security-reviewer
       focus: "server-side auth, input validation, data exposure"
   batch_2:
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
-    - agent: fg-414-frontend-a11y-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"

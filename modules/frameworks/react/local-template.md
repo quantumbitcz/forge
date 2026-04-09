@@ -41,9 +41,9 @@ quality_gate:
     - agent: fg-413-frontend-reviewer
     - agent: fg-411-security-reviewer
       focus: "XSS, injection, secrets exposure, prototype pollution"
-    - agent: fg-415-frontend-performance-reviewer
-      focus: "re-renders, bundle size, code splitting, asset optimization"
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-414-frontend-quality-reviewer
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, re-renders, bundle size, code splitting, asset optimization"
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
@@ -55,8 +55,6 @@ quality_gate:
     - agent: "Accessibility Auditor"
       source: builtin
       focus: "WCAG 2.2 AA, keyboard nav, screen reader"
-    - agent: fg-414-frontend-a11y-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, bad fallbacks"

@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: Review + fix changed files using forge's own review agents. Dispatches reviewers, fixes all findings, re-verifies in a loop until score reaches 100 or max iterations. Quick mode (3 agents) for iteration checks, full mode (10 agents) for final reviews.
+description: Review + fix changed files using forge's own review agents. Dispatches reviewers, fixes all findings, re-verifies in a loop until score reaches 100 or max iterations. Quick mode (3 agents) for iteration checks, full mode (9 agents) for final reviews.
 disable-model-invocation: false
 ---
 
@@ -58,10 +58,9 @@ Report: "Reviewing {count} files in {mode} mode."
 
 ### 2. Select Agents
 
-**Quick mode (default):** Always dispatch these 3:
-- `forge:fg-410-architecture-reviewer`
+**Quick mode (default):** Always dispatch these 2:
+- `forge:fg-410-code-reviewer`
 - `forge:fg-411-security-reviewer`
-- `forge:fg-412-code-quality-reviewer`
 
 **Full mode (`--full`):** Core 3 + conditional agents based on file types present:
 
@@ -69,8 +68,7 @@ Report: "Reviewing {count} files in {mode} mode."
 |---|---|
 | `forge:fg-418-docs-consistency-reviewer` | Any `.md` files in scope |
 | `forge:fg-413-frontend-reviewer` | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, `.styled.*` files |
-| `forge:fg-415-frontend-performance-reviewer` | Any frontend files present |
-| `forge:fg-414-frontend-a11y-reviewer` | Any frontend files present |
+| `forge:fg-414-frontend-quality-reviewer` | Any frontend files present |
 | `forge:fg-416-backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
 | `forge:fg-417-version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
 | `forge:fg-419-infra-deploy-reviewer` | Any `Dockerfile`, `docker-compose.*`, `*.yaml`/`*.yml` with k8s markers, Helm charts |

@@ -28,8 +28,7 @@ Review the changed files (use `git diff master...HEAD` or `git diff` to find the
 
 - Conventions, framework idioms, accessibility basics
 - Design system compliance, visual coherence, responsive behavior, dark mode, motion
-- NOT: deep accessibility audits (fg-414-frontend-a11y-reviewer)
-- NOT: performance (fg-415-frontend-performance-reviewer)
+- NOT: deep accessibility audits or performance (fg-414-frontend-quality-reviewer)
 - NOT: security (fg-411-security-reviewer)
 
 ---

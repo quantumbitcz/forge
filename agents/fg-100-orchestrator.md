@@ -160,9 +160,9 @@ If the orchestrator is dispatched with `Mode: bugfix` in the prompt (from `/forg
 Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (section 3.8), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, `"bugfix"`, `"testing"`, `"refactor"`, or `"performance"`).
 
 **Specialized mode behaviors:**
-- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-412-code-quality-reviewer` + `fg-410-architecture-reviewer`. Target score is `pass_threshold`, not 100.
-- `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `fg-410-architecture-reviewer` as mandatory. Target score is `shipping.min_score`.
-- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-415-frontend-performance-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-410-code-reviewer`. Target score is `pass_threshold`, not 100.
+- `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `fg-410-code-reviewer` as mandatory. Target score is `shipping.min_score`.
+- `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-414-frontend-quality-reviewer` as mandatory. Target score is `shipping.min_score`.
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 
@@ -521,7 +521,7 @@ TaskUpdate(taskId = sub_task_id, status = "completed")
 | Named agent dispatch | `Dispatching fg-NNN-name` |
 | Inline orchestrator work | Descriptive: `Loading project config`, `Acquiring run lock`, `Resolving convention stack` |
 | Review batch | `Review batch {N}: {reviewer1}, {reviewer2}` |
-| Individual reviewer in batch | `Running fg-410-architecture-reviewer` |
+| Individual reviewer in batch | `Running fg-410-code-reviewer` |
 | Convergence iteration | `Convergence iteration {N}/{max} (score: {prev} → {current})` |
 
 All sub-tasks use `addBlockedBy: [stage_task_id]` to create parent→child hierarchy.
@@ -701,7 +701,7 @@ Check `state.json.mode` (set at PREFLIGHT section 3.0):
    - **Stage 3 (VALIDATE):** Use bootstrap-scoped perspectives only: build compiles, tests pass, Docker config valid, architecture matches pattern. Skip: conventions check, approach quality, documentation consistency. Challenge Brief NOT required.
    - **Stage 4 (IMPLEMENT):** **Skip entirely** — the bootstrapper already created all files. Transition directly from VALIDATE (GO) to VERIFY.
    - **Stage 5 (VERIFY):** Runs normally — build + lint + tests must pass.
-   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `fg-410-architecture-reviewer` + `fg-411-security-reviewer` + `fg-412-code-quality-reviewer`. Quality target is `pass_threshold` (not 100).
+   - **Stage 6 (REVIEW):** Dispatch reduced reviewer set: `fg-410-code-reviewer` + `fg-411-security-reviewer`. Quality target is `pass_threshold` (not 100).
 
 **If `mode == "standard"` (default):**
 Proceed with the standard `fg-200-planner` dispatch below.
@@ -1159,9 +1159,9 @@ Before dispatching `fg-400-quality-gate`:
 
 If `mode == "bugfix"`:
 Reduced review batch (overrides config-driven batches):
-- Always dispatch: `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer`
+- Always dispatch: `fg-410-code-reviewer`, `fg-411-security-reviewer`
 - If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `fg-413-frontend-reviewer`
-- Skip by default: `fg-414-frontend-a11y-reviewer`, `fg-415-frontend-performance-reviewer`, `fg-416-backend-performance-reviewer`
+- Skip by default: `fg-414-frontend-quality-reviewer`, `fg-416-backend-performance-reviewer`
 
 Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (§9.2) normally.
 
@@ -1457,10 +1457,10 @@ If no infrastructure components are configured: skip infrastructure verification
 ### User Response
 
 - **Approval** -> **Kanban:** `move_ticket` to `done/` + `generate_board` (per §3.12). Proceed to LEARN (Stage 9).
-- **Feedback/Rejection** -> **Kanban:** `move_ticket` back to `in-progress/` + `generate_board` (per §3.12). Dispatch `fg-710-feedback-capture` to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `fg-710-feedback-capture`):
+- **Feedback/Rejection** -> **Kanban:** `move_ticket` back to `in-progress/` + `generate_board` (per §3.12). Dispatch `fg-710-post-run` (Part A: Feedback Capture) to record the correction structurally. Read classification from `state.json.feedback_classification` (set by `fg-710-post-run`):
 
   **Feedback loop detection** (before re-entering any stage):
-  1. Read the new `feedback_classification` from `state.json` (set by `fg-710-feedback-capture`).
+  1. Read the new `feedback_classification` from `state.json` (set by `fg-710-post-run`).
   2. Compare to `state.json.previous_feedback_classification`:
      - If same classification (e.g., both `"design"` or both `"implementation"`): increment `feedback_loop_count`.
      - If different classification: reset `feedback_loop_count` to 0.
@@ -1533,7 +1533,7 @@ After retrospective completes, update `state.json`: `complete` -> `true`.
 
 ### 12.1a Worktree Cleanup
 
-After retrospective and before recap, dispatch worktree cleanup:
+After retrospective and before post-run, dispatch worktree cleanup:
 
 ```
 dispatch fg-101-worktree-manager "cleanup ${worktree_path}"
@@ -1547,21 +1547,22 @@ dispatch fg-103-cross-repo-coordinator "cleanup --feature ${feature_id}"
 
 Delete `.forge/.lock` (or `{run_dir}/.lock` in sprint mode).
 
-### 12.2 Recap
+### 12.2 Post-Run (Feedback Capture + Recap)
 
 After `fg-700-retrospective` completes:
 
-1. Dispatch `fg-720-recap` with:
-   [dispatch fg-720-recap]
+1. Dispatch `fg-710-post-run` with:
+   [dispatch fg-710-post-run]
    - All stage note paths
    - `state.json` path
    - Quality gate report path
    - PR URL (if created)
    - Linear Epic ID (if tracked)
-2. Recap writes `.forge/reports/recap-{date}-{storyId}.md`
-3. If Linear available: post summarized recap (max 2000 chars) as comment on Epic
-4. If PR exists: append "What Was Built" and "Key Decisions" to PR description
-5. Close Linear Epic AFTER both retrospective and recap complete
+2. Post-run agent runs Part A (feedback capture) then Part B (recap)
+3. Recap writes `.forge/reports/recap-{date}-{storyId}.md`
+4. If Linear available: post summarized recap (max 2000 chars) as comment on Epic
+5. If PR exists: append "What Was Built" and "Key Decisions" to PR description
+6. Close Linear Epic AFTER both retrospective and post-run complete
 
 Write `.forge/stage_final_notes_{storyId}.md`.
 

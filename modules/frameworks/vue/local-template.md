@@ -46,9 +46,9 @@ quality_gate:
       focus: "Composition API usage, SSR safety, useFetch patterns, Pinia store structure"
     - agent: fg-411-security-reviewer
       focus: "Server route input validation, runtimeConfig secrets, v-html usage, auth middleware"
-    - agent: fg-415-frontend-performance-reviewer
-      focus: "useLazyFetch for non-critical data, NuxtImg, shallowRef for large data, bundle size"
-    - agent: fg-412-code-quality-reviewer
+    - agent: fg-414-frontend-quality-reviewer
+      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets, useLazyFetch for non-critical data, NuxtImg, shallowRef for large data, bundle size"
+    - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
@@ -60,8 +60,6 @@ quality_gate:
     - agent: "Accessibility Auditor"
       source: builtin
       focus: "WCAG 2.2 AA, keyboard nav, screen reader"
-    - agent: fg-414-frontend-a11y-reviewer
-      focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, missing error handling in useFetch"

@@ -109,13 +109,13 @@ AGENTS_DIR="$PLUGIN_ROOT/agents"
 }
 
 # ---------------------------------------------------------------------------
-# 7. Agent count >= 38 (buffer of 2 for temporary fluctuations)
+# 7. Agent count >= 36 (buffer of 2 for temporary fluctuations)
 # ---------------------------------------------------------------------------
-@test "agent-frontmatter: at least 38 agents exist" {
+@test "agent-frontmatter: at least 36 agents exist" {
   local count
   count="$(ls "$AGENTS_DIR"/*.md | wc -l | tr -d ' ')"
-  if (( count < 38 )); then
-    fail "Expected >= 38 agents, found $count"
+  if (( count < 36 )); then
+    fail "Expected >= 36 agents, found $count"
   fi
 }
 

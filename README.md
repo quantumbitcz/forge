@@ -2,7 +2,7 @@
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 39 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 38 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -78,7 +78,7 @@ Then add to `.claude/settings.json`:
 | `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
 | `/forge-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
 | `/forge-fix` | Bugfix entry point -- root cause investigation, reproduction, targeted fix |
-| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 3 agents, full: 10 agents) |
+| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 3 agents, full: 9 agents) |
 | `/forge-sprint` | Parallel multi-feature orchestration -- decomposes and runs features concurrently |
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
@@ -189,7 +189,7 @@ touch .claude/forge-log.md
 |    deprecations, scripts) |  ci-cd, container-orchestration, documentation, code-quality)
 |                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
-|   Shared core             |  agents/ (39 pipeline + review agents)
+|   Shared core             |  agents/ (38 pipeline + review agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
@@ -260,7 +260,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-39 agents organized by pipeline stage and cross-cutting concerns.
+38 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 
@@ -285,19 +285,16 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `fg-600-pr-builder`           | 8 Ship       | Creates branch, commits, and PR with quality gate results         |
 | `fg-650-preview-validator`    | 8 Ship       | Preview deployment validation (Lighthouse, visual regression)     |
 | `fg-700-retrospective`        | 9 Learn      | Post-run analysis, learning extraction, config auto-tuning        |
-| `fg-710-feedback-capture`     | 9 Learn      | Records user corrections as structured feedback for future runs   |
-| `fg-720-recap`                | 9 Learn      | Generates a human-readable summary of the pipeline run            |
+| `fg-710-post-run`             | 9 Learn      | Records user corrections as structured feedback and generates human-readable pipeline run recap |
 
 ### Cross-cutting review agents
 
 | Agent | Role |
 |---|---|
-| `fg-410-architecture-reviewer` | Architecture patterns, SRP, DIP, boundaries |
+| `fg-410-code-reviewer` | Architecture patterns, SRP, DIP, boundaries + error handling, DRY/KISS, defensive programming, test quality |
 | `fg-411-security-reviewer` | OWASP, auth, injection, secrets |
-| `fg-412-code-quality-reviewer` | Error handling, DRY/KISS, defensive programming, test quality |
 | `fg-413-frontend-reviewer` | Frontend code quality, conventions, framework rules, design system compliance, visual hierarchy, Figma comparison |
-| `fg-414-frontend-a11y-reviewer` | WCAG 2.2 AA deep audits (contrast, ARIA, focus, touch targets) |
-| `fg-415-frontend-performance-reviewer` | Bundle size, rendering, lazy loading, code splitting |
+| `fg-414-frontend-quality-reviewer` | WCAG 2.2 AA deep audits + bundle size, rendering, lazy loading |
 | `fg-416-backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
 | `fg-417-version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
 | `fg-419-infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
@@ -331,12 +328,12 @@ Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Bu
 
 ### 4. Wire agents into the local template
 
-Reference the cross-cutting review agents (`fg-410-architecture-reviewer`, `fg-411-security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
+Reference the cross-cutting review agents (`fg-410-code-reviewer`, `fg-411-security-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
 
 ### 5. Naming conventions
 
 - Module directory: `modules/frameworks/{name}`, lowercase with hyphens (`fastapi`, `go-stdlib`)
-- Review agents: descriptive names without module prefix (`fg-410-architecture-reviewer`, `fg-411-security-reviewer`)
+- Review agents: descriptive names without module prefix (`fg-410-code-reviewer`, `fg-411-security-reviewer`)
 - Pipeline agents: `fg-{NNN}-{role}` (shared, not module-specific)
 - Scripts: `check-{what}.sh` or `{what}-guard.sh`
 
@@ -350,7 +347,7 @@ forge/
   .claude-plugin/
     plugin.json                         # Plugin manifest (v1.4.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
-  agents/                               # 39 agent definitions (YAML frontmatter + instructions)
+  agents/                               # 38 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
     fg-050-project-bootstrapper.md
     fg-100-orchestrator.md
@@ -369,13 +366,11 @@ forge/
     fg-600-pr-builder.md
     fg-650-preview-validator.md
     fg-700-retrospective.md
-    fg-710-feedback-capture.md
-    fg-720-recap.md
-    fg-410-architecture-reviewer.md
+    fg-710-post-run.md
+    fg-410-code-reviewer.md
     fg-411-security-reviewer.md
     fg-413-frontend-reviewer.md
-    fg-414-frontend-a11y-reviewer.md
-    fg-415-frontend-performance-reviewer.md
+    fg-414-frontend-quality-reviewer.md
     fg-416-backend-performance-reviewer.md
     fg-417-version-compat-reviewer.md
     fg-419-infra-deploy-reviewer.md

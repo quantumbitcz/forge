@@ -54,13 +54,11 @@ Dispatch forge's own review agents to investigate the scoped files. Select agent
 
 | Agent | Dispatched when |
 |---|---|
-| `forge:fg-410-architecture-reviewer` | Always (unless `--focus` excludes) |
+| `forge:fg-410-code-reviewer` | Always (unless `--focus` excludes) |
 | `forge:fg-411-security-reviewer` | Always |
-| `forge:fg-412-code-quality-reviewer` | Always |
 | `forge:fg-418-docs-consistency-reviewer` | Always (or `--focus docs`) |
 | `forge:fg-413-frontend-reviewer` | Frontend files (code, styling, layout) |
-| `forge:fg-415-frontend-performance-reviewer` | Frontend files present |
-| `forge:fg-414-frontend-a11y-reviewer` | Frontend files present |
+| `forge:fg-414-frontend-quality-reviewer` | Frontend files present |
 | `forge:fg-416-backend-performance-reviewer` | Backend files present |
 | `forge:fg-417-version-compat-reviewer` | Dependency files changed (package.json, build.gradle.kts, go.mod, etc.) |
 | `forge:fg-419-infra-deploy-reviewer` | Infra files present (Dockerfile, helm, k8s manifests) |

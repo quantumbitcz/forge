@@ -61,7 +61,7 @@ Before dispatching review agents:
    - Log WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
    - Include drift context in dispatch prompts to reviewers: "NOTE: Conventions updated mid-run. Evaluate against current conventions."
    - Add informational finding: `REVIEW-CONTEXT | INFO | Conventions changed mid-run; review performed against current version`
-4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform fg-410-architecture-reviewer)
+4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform fg-410-code-reviewer)
 
 ---
 
@@ -453,12 +453,10 @@ list is authoritative — if an agent is not listed here, it cannot be dispatche
 this gate. The `generate-seed.sh` script reads this section to build DISPATCHES edges
 in the knowledge graph.
 
-- `fg-410-architecture-reviewer` — architecture pattern compliance (hexagonal, clean, layered, MVC)
+- `fg-410-code-reviewer` — architecture pattern compliance AND code quality (error handling, DRY/KISS, defensive programming, test quality)
 - `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
-- `fg-412-code-quality-reviewer` — error handling, DRY/KISS, defensive programming, test quality
 - `fg-413-frontend-reviewer` — conventions, accessibility basics, framework-specific patterns, design system compliance, visual coherence, responsive behavior
-- `fg-414-frontend-a11y-reviewer` — WCAG 2.2 AA accessibility audits
-- `fg-415-frontend-performance-reviewer` — bundle size, rendering efficiency, lazy loading
+- `fg-414-frontend-quality-reviewer` — WCAG 2.2 AA accessibility audits + bundle size, rendering efficiency, lazy loading
 - `fg-416-backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
 - `fg-417-version-compat-reviewer` — dependency tree conflicts, language feature compatibility
 - `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles

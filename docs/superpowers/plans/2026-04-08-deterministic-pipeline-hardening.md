@@ -1996,14 +1996,14 @@ The forge pipeline has 40 agents. Each dispatch costs ~50K+ tokens of context co
 | Current Agents | Merged Agent | Savings | Risk |
 |---|---|---|---|
 | `fg-413-frontend-reviewer` + `frontend-design-reviewer` | `fg-413-frontend-reviewer` (with design checklist) | 1 dispatch | Low — same files, same stage |
-| `fg-414-frontend-a11y-reviewer` + `fg-415-frontend-performance-reviewer` | `frontend-quality-reviewer` | 1 dispatch | Low — same files, different checklists |
-| `fg-410-architecture-reviewer` + `fg-412-code-quality-reviewer` | `code-reviewer` (with arch + quality checklists) | 1 dispatch | Medium — overlapping but distinct concerns (DRY/KISS) |
+| ~~`fg-414-frontend-a11y-reviewer` + `fg-415-frontend-performance-reviewer`~~ | ~~`fg-414-frontend-quality-reviewer`~~ | ~~1 dispatch~~ | **[DONE]** |
+| ~~`fg-410-architecture-reviewer` + `fg-412-code-quality-reviewer`~~ | ~~`fg-410-code-reviewer`~~ | ~~1 dispatch~~ | **[DONE]** |
 
 ### Tier 2: Moderate Merges (adjacent concerns)
 
 | Current Agents | Merged Agent | Savings | Risk |
 |---|---|---|---|
-| `fg-710-feedback-capture` + `fg-720-recap` | `fg-710-post-run` | 1 dispatch | Low — both in LEARNING stage |
+| ~~`fg-710-feedback-capture` + `fg-720-recap`~~ | ~~`fg-710-post-run`~~ | ~~1 dispatch~~ | **[DONE]** |
 | `fg-101-worktree-manager` + `fg-102-conflict-resolver` | `fg-101-workspace-manager` | 1 dispatch | Medium — different trigger points |
 
 ### Tier 3: Do Not Merge

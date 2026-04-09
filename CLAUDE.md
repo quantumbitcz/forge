@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 39 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 38 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -63,7 +63,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Decision log | `shared/decision-log.md` |
 | State integrity | `shared/state-integrity.sh` |
 
-## Agents (39 total, `agents/*.md`)
+## Agents (38 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -75,9 +75,9 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-500-test-gate`
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
-- Learn: `fg-700-retrospective`, `fg-710-feedback-capture`, `fg-720-recap`
+- Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (10, via quality gate): `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer`, `fg-413-frontend-reviewer`, `fg-414-frontend-a11y-reviewer`, `fg-415-frontend-performance-reviewer`, `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
+**Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer`, `fg-414-frontend-quality-reviewer`, `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
 
 ### Agent rules
 
@@ -113,7 +113,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### Stage contracts & shipping
 
-States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration: MIGRATING/PAUSED/CLEANUP/VERIFY. PR rejection → Stage 4 (impl) or Stage 2 (design) via `fg-710-feedback-capture`.
+States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. Migration: MIGRATING/PAUSED/CLEANUP/VERIFY. PR rejection → Stage 4 (impl) or Stage 2 (design) via `fg-710-post-run`.
 
 **Evidence-based shipping:** `fg-590-pre-ship-verifier` runs fresh build+test+lint+review → `.forge/evidence.json`. PR builder refuses without `verdict: SHIP`. No "continue anyway" — fix, retry, or abort.
 
