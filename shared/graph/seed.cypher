@@ -1891,7 +1891,6 @@ CREATE (:Agent {name: 'fg-400-quality-gate', role: 'other', file_path: 'agents/f
 CREATE (:Agent:Reviewer {name: 'fg-410-code-reviewer', role: 'reviewer', file_path: 'agents/fg-410-code-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-411-security-reviewer', role: 'reviewer', file_path: 'agents/fg-411-security-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-413-frontend-reviewer', role: 'reviewer', file_path: 'agents/fg-413-frontend-reviewer.md'});
-CREATE (:Agent:Reviewer {name: 'fg-414-frontend-quality-reviewer', role: 'reviewer', file_path: 'agents/fg-414-frontend-quality-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-416-backend-performance-reviewer', role: 'reviewer', file_path: 'agents/fg-416-backend-performance-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-417-version-compat-reviewer', role: 'reviewer', file_path: 'agents/fg-417-version-compat-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-418-docs-consistency-reviewer', role: 'reviewer', file_path: 'agents/fg-418-docs-consistency-reviewer.md'});
@@ -1927,7 +1926,7 @@ MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-300-impl
 MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-310-scaffolder'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-400-quality-gate'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-410-code-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-414-frontend-quality-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-413-frontend-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-416-backend-performance-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-700-retrospective'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-core'}), (b:Agent {name: 'fg-090-sprint-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1951,7 +1950,6 @@ MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-400-q
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-410-code-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-411-security-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-413-frontend-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-414-frontend-quality-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-416-backend-performance-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-417-version-compat-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-execute'}), (b:Agent {name: 'fg-500-test-gate'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1961,7 +1959,6 @@ MATCH (a:Agent {name: 'fg-160-migration-planner'}), (b:Agent {name: 'fg-200-plan
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-410-code-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-411-security-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-413-frontend-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-414-frontend-quality-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-416-backend-performance-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-417-version-compat-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-418-docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1981,6 +1978,7 @@ CREATE (:SharedContract {name: 'agent-defaults', file_path: 'shared/agent-defaul
 CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-philosophy.md'});
 CREATE (:SharedContract {name: 'agent-ui', file_path: 'shared/agent-ui.md'});
 CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
+CREATE (:SharedContract {name: 'cross-repo-contracts', file_path: 'shared/cross-repo-contracts.md'});
 CREATE (:SharedContract {name: 'debugging-techniques', file_path: 'shared/debugging-techniques.md'});
 CREATE (:SharedContract {name: 'decision-log', file_path: 'shared/decision-log.md'});
 CREATE (:SharedContract {name: 'domain-detection', file_path: 'shared/domain-detection.md'});
@@ -2106,9 +2104,6 @@ MATCH (a:Agent {name: 'fg-411-security-reviewer'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-414-frontend-quality-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-414-frontend-quality-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-414-frontend-quality-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-416-backend-performance-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-416-backend-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-417-version-compat-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);

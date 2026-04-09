@@ -6,7 +6,7 @@ When updating a rule here, grep for the compressed version across `agents/*.md` 
 
 ## Standard Reviewer Constraints
 
-These apply to all 8 review agents (fg-410-code-reviewer, fg-411-security-reviewer, fg-413-frontend-reviewer, fg-414-frontend-quality-reviewer, fg-416-backend-performance-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer, fg-417-version-compat-reviewer). Note: `fg-610-infra-deploy-verifier` is a Stage 8 (SHIP) verification agent, not a Stage 6 reviewer — it follows the same Forbidden Actions but is dispatched by `fg-600-pr-builder`, not `fg-400-quality-gate`.
+These apply to all 7 review agents (fg-410-code-reviewer, fg-411-security-reviewer, fg-413-frontend-reviewer, fg-416-backend-performance-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer, fg-417-version-compat-reviewer). Note: `fg-610-infra-deploy-verifier` is a Stage 8 (SHIP) verification agent, not a Stage 6 reviewer — it follows the same Forbidden Actions but is dispatched by `fg-600-pr-builder`, not `fg-400-quality-gate`.
 
 ### Forbidden Actions
 

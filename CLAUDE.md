@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 37 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 36 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -63,7 +63,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Decision log | `shared/decision-log.md` |
 | State integrity | `shared/state-integrity.sh` |
 
-## Agents (37 total, `agents/*.md`)
+## Agents (36 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -77,7 +77,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (8, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer`, `fg-414-frontend-quality-reviewer`, `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
+**Review** (7, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
 
 ### Agent rules
 
@@ -90,7 +90,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
-- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
+- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 8): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
 
@@ -152,7 +152,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (22), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 8; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 7; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
 
 **Hooks** (3): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`.
 
