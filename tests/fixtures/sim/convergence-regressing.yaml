@@ -1,0 +1,18 @@
+name: "convergence-regressing-escalation"
+requirement: "Review iteration with regressing score"
+mode: standard
+fast_forward:
+  story_state: "REVIEWING"
+  convergence.phase: "perfection"
+  convergence.plateau_count: 0
+  convergence.total_iterations: 2
+  convergence.phase_iterations: 2
+  oscillation_tolerance: 5
+mock_events:
+  - event: score_regressing
+    guards:
+      delta: "-10"
+      oscillation_tolerance: "5"
+expected_trace:
+  - "REVIEWING -> ESCALATED"
+expected_counters: {}

@@ -1,0 +1,21 @@
+name: "convergence-plateau-to-safety-gate"
+requirement: "Review iteration with plateau reaching patience"
+mode: standard
+fast_forward:
+  story_state: "REVIEWING"
+  convergence.phase: "perfection"
+  convergence.plateau_count: 2
+  convergence.total_iterations: 3
+  convergence.phase_iterations: 3
+mock_events:
+  - event: score_plateau
+    guards:
+      plateau_count: "2"
+      plateau_patience: "3"
+      total_iterations: "3"
+      max_iterations: "8"
+      score: "85"
+      pass_threshold: "80"
+expected_trace:
+  - "REVIEWING -> IMPLEMENTING"
+expected_counters: {}

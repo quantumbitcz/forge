@@ -1,0 +1,30 @@
+name: "safety-gate-fail-then-recover"
+requirement: "Safety gate fails once then passes on retry"
+mode: standard
+fast_forward:
+  story_state: "VERIFYING"
+  convergence.phase: "safety_gate"
+  convergence.safety_gate_failures: 0
+  convergence.total_iterations: 4
+  convergence.phase_iterations: 2
+mock_events:
+  - event: safety_gate_fail
+    guards:
+      safety_gate_failures: "0"
+  - event: implement_complete
+    guards:
+      at_least_one_task_passed: "true"
+  - event: verify_pass
+    guards:
+      convergence.phase: "correctness"
+  - event: score_target_reached
+  - event: verify_pass
+    guards:
+      convergence.phase: "safety_gate"
+expected_trace:
+  - "VERIFYING -> IMPLEMENTING"
+  - "IMPLEMENTING -> VERIFYING"
+  - "VERIFYING -> REVIEWING"
+  - "REVIEWING -> VERIFYING"
+  - "VERIFYING -> DOCUMENTING"
+expected_counters: {}

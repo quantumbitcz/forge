@@ -1,0 +1,23 @@
+name: "dry-run-stops-at-validate"
+requirement: "Dry-run pipeline stops after validation"
+mode: standard
+dry_run: true
+mock_events:
+  - event: preflight_complete
+    guards:
+      dry_run: "true"
+  - event: explore_complete
+    guards:
+      scope: "1"
+      decomposition_threshold: "3"
+  - event: plan_complete
+  - event: validate_complete
+    guards:
+      dry_run: "true"
+expected_trace:
+  - "PREFLIGHT -> EXPLORING"
+  - "EXPLORING -> PLANNING"
+  - "PLANNING -> VALIDATING"
+  - "VALIDATING -> COMPLETE"
+expected_counters:
+  total_retries: 0

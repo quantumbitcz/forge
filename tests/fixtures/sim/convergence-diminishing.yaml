@@ -1,0 +1,19 @@
+name: "convergence-diminishing-returns"
+requirement: "Review iteration with diminishing gains"
+mode: standard
+fast_forward:
+  story_state: "REVIEWING"
+  convergence.phase: "perfection"
+  convergence.plateau_count: 0
+  convergence.total_iterations: 3
+  convergence.phase_iterations: 3
+  convergence.diminishing_count: 2
+mock_events:
+  - event: score_diminishing
+    guards:
+      diminishing_count: "2"
+      score: "90"
+      pass_threshold: "80"
+expected_trace:
+  - "REVIEWING -> VERIFYING"
+expected_counters: {}
