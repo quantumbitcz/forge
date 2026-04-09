@@ -15,7 +15,16 @@ WAL_MAX_ENTRIES=50
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    write)   CMD="write"; shift; JSON_CONTENT="${1:-}"; shift ;;
+    write)
+      CMD="write"
+      shift
+      if [[ "${1:-}" == --* ]]; then
+        echo "ERROR: write requires JSON content as first argument after 'write'" >&2
+        exit 2
+      fi
+      JSON_CONTENT="${1:-}"
+      shift
+      ;;
     read)    CMD="read"; shift ;;
     recover) CMD="recover"; shift ;;
     --forge-dir) shift; FORGE_DIR="${1:?--forge-dir requires a path}"; shift ;;
@@ -40,6 +49,28 @@ do_write() {
     exit 2
   fi
 
+  # Acquire exclusive lock for the entire read-modify-write cycle.
+  # Uses flock when available (Linux), falls back to mkdir-based lock (macOS).
+  local _lock_mode=""
+  local lock_file="${FORGE_DIR}/.state-write.lock"
+  local lock_dir="${FORGE_DIR}/.state-write.lockdir"
+  if command -v flock &>/dev/null; then
+    _lock_mode="flock"
+    exec 200>"$lock_file"
+    flock -x 200
+  else
+    _lock_mode="mkdir"
+    local _lock_attempts=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+      _lock_attempts=$((_lock_attempts + 1))
+      if [[ $_lock_attempts -ge 50 ]]; then
+        echo "ERROR: failed to acquire write lock after 5s" >&2
+        exit 2
+      fi
+      sleep 0.1
+    done
+  fi
+
   # Read current _seq from existing state.json (0 if not present)
   local current_seq=0
   if [[ -f "$STATE_FILE" ]]; then
@@ -48,9 +79,17 @@ import json, sys
 try:
     with open('$STATE_FILE') as f:
         print(json.load(f).get('_seq', 0))
-except:
+except json.JSONDecodeError:
     print(0)
-" 2>/dev/null || echo "0")
+except Exception as e:
+    print('READ_ERROR: ' + str(e), file=sys.stderr)
+    sys.exit(1)
+")
+    if [[ $? -ne 0 ]]; then
+      echo "ERROR: failed to read current state.json" >&2
+      if [[ "$_lock_mode" == "flock" ]]; then exec 200>&-; else rmdir "$lock_dir" 2>/dev/null; fi
+      exit 2
+    fi
   fi
 
   # Read input _seq
@@ -60,6 +99,7 @@ except:
   # Reject stale writes
   if [[ -f "$STATE_FILE" ]] && [[ "$input_seq" -lt "$current_seq" ]]; then
     echo "ERROR: stale write rejected (_seq $input_seq < current $current_seq)" >&2
+    if [[ "$_lock_mode" == "flock" ]]; then exec 200>&-; else rmdir "$lock_dir" 2>/dev/null; fi
     exit 1
   fi
 
@@ -86,20 +126,28 @@ json.dump(d, sys.stdout, indent=2)
   wal_count=$(grep -c "^--- SEQ:" "$WAL_FILE" 2>/dev/null || echo "0")
   if [[ "$wal_count" -gt "$WAL_MAX_ENTRIES" ]]; then
     python3 -c "
-import re, sys
+import re, sys, os
 with open('$WAL_FILE') as f:
     content = f.read()
 entries = re.split(r'(?=^--- SEQ:)', content, flags=re.MULTILINE)
 entries = [e for e in entries if e.strip()]
 keep = entries[-$WAL_MAX_ENTRIES:]
-with open('$WAL_FILE', 'w') as f:
+with open('$WAL_FILE.tmp', 'w') as f:
     f.write(''.join(keep))
+os.replace('$WAL_FILE.tmp', '$WAL_FILE')
 "
   fi
 
   # Atomic write: tmp + mv
   echo "$updated_json" > "$TMP_FILE"
   mv "$TMP_FILE" "$STATE_FILE"
+
+  # Release exclusive lock
+  if [[ "$_lock_mode" == "flock" ]]; then
+    exec 200>&-
+  else
+    rmdir "$lock_dir" 2>/dev/null
+  fi
 
   echo "$updated_json"
 }
@@ -130,6 +178,7 @@ do_recover() {
     return 1
   fi
 
+  # Split declaration from assignment to preserve $? from python3 subshell
   local recovered
   recovered=$(python3 -c "
 import re, json, sys

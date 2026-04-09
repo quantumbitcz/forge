@@ -188,3 +188,27 @@ print('OK')
   assert_success
   assert_output "OK"
 }
+
+# ---------------------------------------------------------------------------
+# 8. Argument guard
+# ---------------------------------------------------------------------------
+
+@test "forge-state-write: write rejects --forge-dir before JSON" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  run bash "$SCRIPT" write --forge-dir "$forge_dir" '{"version":"1.5.0"}'
+  assert_failure
+  assert_output --partial "requires JSON content"
+}
+
+# ---------------------------------------------------------------------------
+# 9. Recovery edge cases
+# ---------------------------------------------------------------------------
+
+@test "forge-state-write: recover fails with empty WAL" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  touch "$forge_dir/state.wal"
+  run bash "$SCRIPT" recover --forge-dir "$forge_dir"
+  assert_failure
+}
