@@ -554,29 +554,27 @@ All graph Cypher generators (`build-project-graph.sh`, `incremental-update.sh`, 
 
 ### SS5.1 VERIFY Phase A -- Build & Lint
 
-If `agents/fg-505-build-verifier.md` exists:
-  Dispatch fg-505-build-verifier with commands, max_fix_loops, check_engine_skipped.
-Else (fg-505 not yet created):
-  Run build+lint inline with fix loop (preserving current behavior):
+Read `.forge/.hook-failures.log` if it exists. If non-empty, count entries and log in stage notes, then delete the file.
 
-  First, read `.forge/.check-engine-skipped`. If present and count > 0: copy count to `state.json.check_engine_skipped`, report in stage notes: '{N} file edits had inline checks skipped (hook timeout/error). Running full verification now.' Delete the marker file.
+Read `.forge/.check-engine-skipped`. If present and count > 0, store in `state.json.check_engine_skipped` and log in stage notes: `'{N} file edits had inline checks skipped (hook timeout/error). Running full verification now.'`
 
-  Run in sequence using commands from config. Stop on first failure:
+Dispatch `fg-505-build-verifier`:
+[dispatch fg-505-build-verifier]
 
-  1. `commands.build` -- compile check
-  2. `commands.lint` -- lint + static analysis
-  3. `inline_checks` from config -- module scripts or skills (e.g., antipattern scans)
+```
+Verify build and lint pass.
 
-  **Fix loop**: on failure:
-  1. Analyze the error output
-  2. Fix the issue (edit the relevant file)
-  3. Re-run from the failed step (not from the beginning)
-  4. Increment `verify_fix_count`
+Commands: build={commands.build}, lint={commands.lint}
+Inline checks: {quality_gate.inline_checks from config}
+Max fix loops: {implementation.max_fix_loops from config}
+Check engine skipped: {count from .forge/.check-engine-skipped}
+Conventions file: {conventions_file path}
+```
 
-  **Max:** `implementation.max_fix_loops` from config.
+Parse the VERDICT line from the agent's output.
 
-On verdict PASS: proceed to Phase B.
-On verdict FAIL: call `forge-state.sh transition phase_a_failure --guard "verify_fix_count=N" --guard "max_fix_loops=M" --guard "total_iterations=I" --guard "max_iterations=J"` and follow returned action.
+If verdict == "PASS": proceed to Phase B (SS5.2).
+If verdict == "FAIL": call `forge-state.sh transition phase_a_failure --guard "verify_fix_count=N" --guard "max_fix_loops=M" --guard "total_iterations=I" --guard "max_iterations=J"` and follow returned action.
 
 ### SS5.2 VERIFY Phase B -- Test Gate (dispatch fg-500-test-gate)
 
