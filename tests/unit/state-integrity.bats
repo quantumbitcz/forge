@@ -57,7 +57,7 @@ SCRIPT="$PLUGIN_ROOT/shared/state-integrity.sh"
   mkdir -p "$forge_dir"
   cat > "$forge_dir/state.json" << 'EOF'
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "complete": false,
   "story_id": "test-001",
   "story_state": "PREFLIGHT",
@@ -81,7 +81,7 @@ EOF
   mkdir -p "$forge_dir"
   cat > "$forge_dir/state.json" << 'EOF'
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "complete": false
 }
 EOF
@@ -100,7 +100,7 @@ EOF
   mkdir -p "$forge_dir"
   cat > "$forge_dir/state.json" << 'EOF'
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "complete": false,
   "story_id": "test-001",
   "story_state": "IMPLEMENTING",

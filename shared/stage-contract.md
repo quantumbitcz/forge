@@ -329,7 +329,7 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 - Score history (score per cycle)
 - `stage_6_notes_{storyId}.md` -- review report
 
-**Exit condition (converged at target):** Score = `target_score` (default 100) and safety gate passed. Proceed to Stage 7.
+**Exit condition (converged at target):** Score = `target_score` (default 90) and safety gate passed. Proceed to Stage 7.
 
 **Exit condition (converged below target):** Score plateaued below target. The convergence engine applies the score escalation ladder (see `convergence-engine.md`):
 

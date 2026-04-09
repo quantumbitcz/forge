@@ -135,7 +135,7 @@ teardown() {
   python3 -c "
 import json
 state = {
-    'version': '1.4.0',
+    'version': '1.5.0',
     'complete': False,
     'story_id': 'feat-test-dry-run',
     'requirement': 'Test dry run',
@@ -157,13 +157,13 @@ with open('$PROJECT/.forge/state.json', 'w') as f:
   # Verify it's valid JSON with correct version
   local version
   version=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d['version'])")
-  [[ "$version" == "1.4.0" ]]
+  [[ "$version" == "1.5.0" ]]
 }
 
 @test "e2e-dry-run: dry_run flag set to true in state.json" {
   # Reuse state.json from previous test if exists, or create minimal
   if [[ ! -f "$PROJECT/.forge/state.json" ]]; then
-    printf '{"version":"1.4.0","dry_run":true}\n' > "$PROJECT/.forge/state.json"
+    printf '{"version":"1.5.0","dry_run":true}\n' > "$PROJECT/.forge/state.json"
   fi
   local dry_run
   dry_run=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d.get('dry_run', False))")

@@ -27,7 +27,7 @@ ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
   mkdir -p "$forge_dir"
   cat > "$forge_dir/state.json" << 'EOF'
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "complete": false,
   "story_id": "feat-plan-comments",
   "story_state": "IMPLEMENTING",
@@ -59,7 +59,7 @@ EOF
   # Missing required fields + counter violation
   cat > "$forge_dir/state.json" << 'EOF'
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "complete": false,
   "story_id": "test-broken",
   "story_state": "INVALID_STATE",

@@ -2,7 +2,7 @@
 
 This document defines the convergence-driven iteration engine that replaces hard-capped fix cycle loops with plateau detection. The orchestrator (`fg-100-orchestrator`) calls the convergence engine after every VERIFY or REVIEW dispatch to decide: **iterate again, or declare convergence?**
 
-The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a three-phase convergence loop (correctness, perfection, evidence) targeting a perfect score of 100 with verified shipping evidence, stopping when the target is reached and evidence passes or the score plateaus.
+The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a three-phase convergence loop (correctness, perfection, evidence) targeting a score of `target_score` (default 90) with verified shipping evidence, stopping when the target is reached and evidence passes or the score plateaus.
 
 ## Convergence States
 
@@ -179,7 +179,7 @@ SCOUT items represent improvements already made — they do not affect the score
 **Consecutive Dip Rule interaction:** The quality gate's per-cycle Consecutive Dip Rule (see `scoring.md`) operates within a single convergence iteration. If two consecutive inner cycles show score dips, the quality gate escalates *within* that iteration. The convergence engine's `REGRESSING` state detects dips *across* iterations (via `oscillation_tolerance`). Both mechanisms are complementary: the inner rule catches intra-iteration oscillation, the outer state catches inter-iteration regression.
 
 **Score escalation ladder** (applies when Phase 2 converges below target via PLATEAUED):
-- Score >= `shipping.min_score` (default 100): proceed to safety gate. Findings preserved in stage notes.
+- Score >= `shipping.min_score` (default 90): proceed to safety gate. Findings preserved in stage notes.
 - Score >= `pass_threshold` AND < `shipping.min_score`: proceed to safety gate. Remaining findings documented as follow-up tickets if Linear enabled. Sub-band guidance: 95-99 = no follow-up tickets; 80-94 = architectural WARNINGs get follow-up tickets.
 - Score < `pass_threshold` AND >= `concerns_threshold` (default 60-79): escalate to user with 3 options:
   1. **"Keep trying"** — reset `plateau_count` to 0, `convergence_state` to `"IMPROVING"`, continue iterating (`total_iterations` NOT reset — global cap still applies)
@@ -197,6 +197,22 @@ The REGRESSING state and the score escalation ladder serve different purposes an
 - **Score escalation ladder** fires when convergence reaches **PLATEAUED** — this is a **terminal verdict** meaning "we've stopped improving." It determines what happens next based on absolute score.
 - If a single iteration shows both a drop exceeding tolerance AND would trigger plateau (e.g., score oscillating around threshold), **REGRESSING takes priority** — it is checked first in the algorithm (line `ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance` precedes the plateau check). This prevents the pipeline from declaring "plateau" when the score is actually declining.
 
+### Diminishing Returns Detection
+
+After each convergence iteration in Phase 2 (perfection), check for diminishing returns:
+
+1. Compute `gain = score_current - score_previous`
+2. If `gain > 0 AND gain <= 2 AND score_current >= pass_threshold`:
+   - This is a diminishing returns cycle — progress is real but minimal
+   - Increment `convergence.diminishing_count` (default 0)
+   - If `diminishing_count >= 2`: treat as PLATEAUED — apply score escalation ladder
+   - Log: "Diminishing returns: gained {gain} points in last {diminishing_count} iterations"
+3. If `gain > 2`: reset `diminishing_count = 0`
+
+This prevents the pipeline from spending 3-4 iterations to squeeze out the last 2-3 INFO fixes when the score is already above pass_threshold.
+
+The `score_diminishing` event is Row 50 in the transition table (`shared/state-transitions.md`).
+
 ## Configuration
 
 New `convergence:` section in both `forge-config.md` and `forge.local.md`:
@@ -206,11 +222,11 @@ convergence:
   max_iterations: 8        # Total iterations across both phases
   plateau_threshold: 2     # Minimum score improvement to count as progress
   plateau_patience: 2      # Consecutive sub-threshold cycles before declaring plateau
-  target_score: 100        # Score to aim for (convergence target)
+  target_score: 90         # Score to aim for (convergence target). Default 90.
   safety_gate: true        # Run VERIFY after Phase 2 to catch regressions
 
 shipping:
-  min_score: 100                  # Minimum score to create PR. Range: pass_threshold-100. Default: 100.
+  min_score: 90                   # Minimum score to create PR. Range: pass_threshold-100. Default: 90.
   require_evidence: true          # Always true. Not user-configurable. Documented for visibility.
   evidence_review: true           # Dispatch code reviewer in fg-590. Default: true. Set false to skip.
   evidence_max_age_minutes: 30    # Evidence staleness threshold. Range: 5-60. Default: 30.

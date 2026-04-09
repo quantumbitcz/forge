@@ -73,7 +73,7 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 #   max_iterations: 8       # Hard safety valve across both phases (3-20)
 #   plateau_threshold: 2    # Score delta <= this = "no progress" (0-10)
 #   plateau_patience: 2     # Consecutive plateaus before convergence (1-5)
-#   target_score: 100       # Score target (80-100, must be >= pass_threshold)
+#   target_score: 90        # Score target (80-100, must be >= pass_threshold). Default 90.
 #   safety_gate: true       # Run VERIFY after Phase 2
 
 # Sprint orchestration (only relevant for /forge-run --sprint)
@@ -83,6 +83,6 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 
 # Shipping gate (evidence-based verification before PR creation)
 # shipping:
-#   min_score: 100                    # Minimum quality score to ship (pass_threshold-100)
+#   min_score: 90                     # Minimum quality score to ship (pass_threshold-100). Default 90.
 #   evidence_review: true             # Dispatch code reviewer in fg-590 (true/false)
 #   evidence_max_age_minutes: 30      # Evidence staleness threshold (5-60)

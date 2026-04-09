@@ -44,7 +44,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Pipeline flow | `shared/stage-contract.md` |
 | Orchestrator | `agents/fg-100-orchestrator.md` |
 | Scoring | `shared/scoring.md` |
-| State | `shared/state-schema.md` (v1.4.0) |
+| State | `shared/state-schema.md` (v1.5.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design | `shared/agent-philosophy.md` + `shared/agent-communication.md` |
 | Graph | `shared/graph/schema.md` |
@@ -106,7 +106,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### State, recovery & errors
 
-- **State** (`state-schema.md`): v1.4.0. `.forge/` (gitignored). Checkpoints per task. Corrupted counters → fallback to configured max. Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
+- **State** (`state-schema.md`): v1.5.0. `.forge/` (gitignored). Checkpoints per task. Corrupted counters → fallback to configured max. Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
 - **Recovery** (`recovery/`): 7 strategies, budget ceiling 5.5 (resets per run; sprint = independent budgets). Highest-severity first. Global retry budget: `total_retries` (default max 10, configurable).
 - **Errors** (`error-taxonomy.md`): 22 types, 16-level severity. MCP failures → inline skip + INFO (not recovery engine). 3 consecutive transients in 60s → non-recoverable. `BUILD`/`TEST`/`LINT_FAILURE` → orchestrator fix loop.
 - **Communication:** Inter-stage via orchestrator stage notes. Coordinators (fg-400/500/600/200/310) can dispatch sub-agents within stage. Quality gate includes previous batch findings (top 20). PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED`.
@@ -221,7 +221,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Sprint: `sprint.poll_interval_seconds` 10-120 (default 30), `sprint.dependency_timeout_minutes` 5-180 (default 60).
 - Tracking: `tracking.archive_after_days` 30-365 or 0 (default 90).
 - Scope: `decomposition_threshold` 2-10 (default 3). Routing: `vague_threshold` low/medium/high (default medium).
-- Shipping: `min_score` ∈ [pass_threshold, 100] (default 100), `evidence_max_age_minutes` 5-60 (default 30).
+- Shipping: `min_score` ∈ [pass_threshold, 100] (default 90), `evidence_max_age_minutes` 5-60 (default 30).
 
 ### Pipeline modes
 
