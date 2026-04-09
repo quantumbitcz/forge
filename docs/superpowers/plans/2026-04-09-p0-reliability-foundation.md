@@ -261,6 +261,34 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state-write.sh"
   assert_success
   assert [ ! -f "$forge_dir/state.json.tmp" ]
 }
+
+# ---------------------------------------------------------------------------
+# 7. Concurrent write safety (flock)
+# ---------------------------------------------------------------------------
+
+@test "forge-state-write: concurrent writes do not corrupt state" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" write '{"version":"1.5.0","_seq":0}' --forge-dir "$forge_dir"
+
+  # Launch 5 concurrent writes
+  for i in $(seq 1 5); do
+    bash "$SCRIPT" write "{\"version\":\"1.5.0\",\"_seq\":$i,\"writer\":$i}" --forge-dir "$forge_dir" &
+  done
+  wait
+
+  # state.json must be valid JSON with _seq >= 1
+  run python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+assert d['_seq'] >= 1, f'_seq={d[\"_seq\"]}'
+assert 'version' in d
+print('OK')
+"
+  assert_success
+  assert_output "OK"
+}
 TESTS
 ```
 
@@ -691,7 +719,8 @@ assert d['convergence']['phase_iterations'] == 0
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  # Fast-forward to REVIEWING with convergence.phase=perfection
+  # Fast-forward state directly (bypasses forge-state-write.sh WAL/_seq validation;
+  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is)
   python3 -c "
 import json
 with open('$forge_dir/state.json') as f:
@@ -1227,7 +1256,12 @@ ui:
 
 Note: the `name` stays `fg-100-orchestrator` (not `fg-100-orchestrator-core`) because this is the file that gets loaded when the agent is dispatched. The other files are read by the orchestrator itself via the Read tool at phase boundaries.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Verify section structure**
+
+Run: `grep "^## §" agents/fg-100-orchestrator-core.md | wc -l`
+Expected: 11 sections (§1 through §11). Verify these sections exist: §1 Identity, §2 Forbidden Actions, §3 Pipeline Principles, §4 Dispatch Protocol, §5 Argument Parsing, §6 State Management, §7 Context Management, §8 Phase Loading, §9 Decision Framework, §10 Mode Resolution, §11 Reference Documents.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add agents/fg-100-orchestrator-core.md
@@ -1264,7 +1298,12 @@ Key changes from original:
 - MCP detection (§23 → §0.18) moved here
 - Graph context (from top of orchestrator → §0.19)
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify section structure**
+
+Run: `grep "^### §0\." agents/fg-100-orchestrator-boot.md | wc -l`
+Expected: 19 sections (§0.1 through §0.19). Verify all PREFLIGHT sub-sections are present.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add agents/fg-100-orchestrator-boot.md
@@ -1302,7 +1341,11 @@ Key changes from original:
 - All `if mode == "bugfix"` branches replaced with "Check `state.json.mode_config.stages.{stage_name}` for overrides"
 - All Linear blocks replaced with `forge-linear-sync.sh emit` calls
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify section structure**
+
+Verify these sections exist: §1.1, §1.2, §2.1, §2.2, §2.3, §3.1, §3.2, §3.3, §3.4, §4.1, §4.2, §4.3, §4.4, §4.5, §4.6, §5.1, §5.2, §5.3, §6.1, §6.2, §6.3, §6.4, §6.5 (23 sections total).
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add agents/fg-100-orchestrator-execute.md
@@ -1333,7 +1376,11 @@ No frontmatter. Start with:
 
 Key changes: same pattern as execute file (forge-state.sh for transitions, mode overlays, Linear sync).
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify section structure**
+
+Verify these sections exist: §7.1, §7.2, §7.3, §8.1, §8.2, §8.3, §8.4, §8.5, §9.1, §9.2, §9.3, §9.4 (12 sections total).
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add agents/fg-100-orchestrator-ship.md
@@ -1401,9 +1448,11 @@ Expected: All tests PASS (including new structural checks)
 - [ ] **Step 4: Commit**
 
 ```bash
-git add -A
+git add tests/validate-plugin.sh
 git commit -m "refactor: delete monolithic orchestrator, add structural validation for split"
 ```
+
+Note: `git rm` in step 1 already stages the deletion. Do NOT use `git add -A` as it could sweep in unintended changes.
 
 ---
 

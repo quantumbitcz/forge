@@ -276,11 +276,24 @@ git commit -m "feat: add compaction hook, timeout enforcement, fix empty git che
 
 ---
 
-## Task 7: Structural Validation + CLAUDE.md Update
+## Task 7: Contract Tests + Structural Validation + CLAUDE.md Update
 
 **Files:**
+- Create: `tests/contract/state-machine-contract.bats`
 - Modify: `tests/validate-plugin.sh`
 - Modify: `CLAUDE.md`
+- Modify: `skills/forge-init.md`
+
+- [ ] **Step 0: Create state-machine-contract.bats**
+
+Create `tests/contract/state-machine-contract.bats` that validates:
+- Every row in `shared/state-transitions.md` (parse the markdown table) has a matching transition in `forge-state.sh` (call `forge-state.sh transition` for each row with mock state and verify the output matches the table's `next_state`)
+- Every event handled by `forge-state.sh` appears in `state-transitions.md`
+- Counter changes in `forge-state.sh` match the action descriptions in the transition table
+
+- [ ] **Step 0a: Add check-prerequisites.sh call to skills/forge-init.md**
+
+In the `/forge-init` skill, add a step that runs `shared/check-prerequisites.sh` before any other initialization. If it fails, show the error messages and abort init.
 
 - [ ] **Step 1: Add structural checks for all P1+P2 deliverables**
 
@@ -293,6 +306,7 @@ Add checks to `validate-plugin.sh`:
 - `fg-505-build-verifier.md` exists with correct frontmatter
 - All 7 mode overlay files exist in `shared/modes/`
 - `fg-414-frontend-quality-reviewer.md` does NOT exist
+- `fg-415-frontend-performance-reviewer.md` does NOT exist (never existed; confirms no stale files)
 - `shared/cross-repo-contracts.md` exists
 - `tests/fixtures/sim/` contains at least 10 YAML files
 

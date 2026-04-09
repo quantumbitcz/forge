@@ -236,7 +236,7 @@ Create `tests/contract/mode-overlay-contract.bats` that validates:
 
 - [ ] **Step 3: Create all 7 mode overlay files**
 
-Each file has YAML frontmatter with stage overrides extracted from the current orchestrator's `if mode ==` branches. The `standard.md` file has empty `stages:` (no overrides — default behavior). The `bugfix.md` file has the overrides per the spec example. Extract migration, bootstrap, testing, refactor, performance overrides from the current orchestrator's mode-specific sections.
+Each file has YAML frontmatter with stage overrides extracted from the orchestrator's `if mode ==` branches. **Note:** By this point, the monolithic orchestrator has been deleted (P0 Task 9). The mode-specific content is now in the split files (`fg-100-orchestrator-execute.md` and `fg-100-orchestrator-boot.md`). Extract overrides from those files. The `standard.md` file has empty `stages:` (no overrides — default behavior). The `bugfix.md` file has the overrides per the spec example. Extract migration, bootstrap, testing, refactor, performance overrides from the split orchestrator files.
 
 - [ ] **Step 4: Remove mode-specific if/else branches from orchestrator execute file**
 
@@ -328,4 +328,5 @@ git commit -m "feat: add INFO 'fix if easy' policy with effective_target computa
 
 Tasks 1, 2, 6 are independent (can parallelize).
 Tasks 3, 4, 5 depend on P0 orchestrator split.
+**WARNING: Tasks 3, 4, 5 all modify `fg-100-orchestrator-execute.md` — they MUST be serialized (3 → 4 → 5) to avoid merge conflicts.**
 Task 7 depends on P0 scoring changes.
