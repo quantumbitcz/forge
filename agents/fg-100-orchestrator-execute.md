@@ -388,7 +388,10 @@ If `dry_run` is true in state.json, skip this stage and all subsequent stages. T
 Before dispatching any implementer, create a checkpoint for rollback safety:
 
 ```bash
-git add -A && git commit -m "wip: pipeline checkpoint pre-implement" --allow-empty
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -m "wip: pipeline checkpoint pre-implement"
+fi
 ```
 
 Record the SHA in `state.json.last_commit_sha`.
