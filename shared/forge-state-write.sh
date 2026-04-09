@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Atomic JSON state writer with WAL (write-ahead log) and _seq versioning.
 # Usage:
-#   forge-state-write.sh write <json> [--forge-dir <path>]
+#   forge-state-write.sh write <json> [--forge-dir <path>]   # exit 0=OK, 2=usage/validation, 3=stale write
 #   forge-state-write.sh read [--forge-dir <path>]
 #   forge-state-write.sh recover [--forge-dir <path>]
 set -uo pipefail
@@ -71,6 +71,9 @@ do_write() {
     done
   fi
 
+  # Release lock on any exit path (error, signal, etc.)
+  trap 'if [[ "${_lock_mode:-}" == "flock" ]]; then exec 200>&- 2>/dev/null; elif [[ -d "${lock_dir:-}" ]]; then rmdir "$lock_dir" 2>/dev/null; fi' EXIT
+
   # Read current _seq from existing state.json (0 if not present)
   local current_seq=0
   if [[ -f "$STATE_FILE" ]]; then
@@ -87,7 +90,6 @@ except Exception as e:
 ")
     if [[ $? -ne 0 ]]; then
       echo "ERROR: failed to read current state.json" >&2
-      if [[ "$_lock_mode" == "flock" ]]; then exec 200>&-; else rmdir "$lock_dir" 2>/dev/null; fi
       exit 2
     fi
   fi
@@ -99,8 +101,7 @@ except Exception as e:
   # Reject stale writes
   if [[ -f "$STATE_FILE" ]] && [[ "$input_seq" -lt "$current_seq" ]]; then
     echo "ERROR: stale write rejected (_seq $input_seq < current $current_seq)" >&2
-    if [[ "$_lock_mode" == "flock" ]]; then exec 200>&-; else rmdir "$lock_dir" 2>/dev/null; fi
-    exit 1
+    exit 3
   fi
 
   # Increment _seq
@@ -142,7 +143,9 @@ os.replace('$WAL_FILE.tmp', '$WAL_FILE')
   echo "$updated_json" > "$TMP_FILE"
   mv "$TMP_FILE" "$STATE_FILE"
 
-  # Release exclusive lock
+  # Clear the EXIT trap (lock released by trap on error paths)
+  trap - EXIT
+  # Release exclusive lock on success
   if [[ "$_lock_mode" == "flock" ]]; then
     exec 200>&-
   else

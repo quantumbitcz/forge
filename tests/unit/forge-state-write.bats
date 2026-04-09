@@ -187,6 +187,11 @@ print('OK')
 "
   assert_success
   assert_output "OK"
+
+  # Verify WAL has multiple entries (proving serialized writes happened)
+  local wal_count
+  wal_count=$(grep -c "^--- SEQ:" "$forge_dir/state.wal")
+  assert [ "$wal_count" -ge 2 ]
 }
 
 # ---------------------------------------------------------------------------
