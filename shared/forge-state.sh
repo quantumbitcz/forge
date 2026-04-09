@@ -84,6 +84,7 @@ state = {
     'requirement': sys.argv[2],
     'domain_area': '',
     'risk_level': '',
+    'previous_state': '',
     'story_state': 'PREFLIGHT',
     'active_component': '',
     'components': {},
@@ -208,7 +209,7 @@ print(json.dumps(guards))
   # Execute the transition via embedded Python
   local result
   result=$(python3 -c "
-import json, sys, datetime
+import json, sys, datetime, os
 
 state = json.loads(sys.argv[1])
 event = sys.argv[2]
@@ -352,6 +353,7 @@ def match_transition():
          {'validation_retries': '+1'}, {}),
 
         # === IMPLEMENTING ===
+        # Rows 19/21: implement_complete requires exactly one of at_least_one_task_passed=true or all_tasks_failed=true
         # Row 19: IMPLEMENTING + implement_complete + at_least_one_passed -> VERIFYING
         ('IMPLEMENTING', 'implement_complete',
          lambda: g('at_least_one_task_passed', False) == True,
@@ -455,6 +457,12 @@ def match_transition():
          'IMPLEMENTING', '36', 'score_plateau (within patience)',
          {'convergence.plateau_count': '+1', 'convergence.phase_iterations': '+1',
           'convergence.total_iterations': '+1', 'total_retries': '+1'}, {}),
+        # Row 51: REVIEWING + score_plateau + within patience + iteration cap reached -> ESCALATED
+        ('REVIEWING', 'score_plateau',
+         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) < int(g('plateau_patience', 3))
+                  and int(g('total_iterations', conv.get('total_iterations', 0))) >= int(g('max_iterations', 8))),
+         'ESCALATED', '51', 'score_plateau (within patience + iteration cap reached)',
+         {}, {}),
         # Row 37: REVIEWING + score_regressing + beyond tolerance -> ESCALATED
         ('REVIEWING', 'score_regressing',
          lambda: abs(int(g('delta', 0))) > int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5))),
@@ -688,21 +696,23 @@ except AttributeError:
     ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 decision = {
     'ts': ts,
-    'agent': 'forge-state',
+    'agent': 'fg-100-orchestrator',
     'decision': 'state_transition',
     'input': {'state': current, 'event': event, 'guards': guards},
     'choice': new_state,
-    'reason': f'Row {r_id}: {r_desc}'
+    'reason': f'Row {r_id}: {r_desc}',
+    'alternatives': []
 }
 
 # Write decision log
-import os
 decisions_path = os.path.join(forge_dir, 'decisions.jsonl')
 with open(decisions_path, 'a') as f:
     f.write(json.dumps(decision) + '\n')
 
+# Persist previous_state for user_continue (E5) recovery
+state['previous_state'] = current
+
 # Write updated state to temp file for bash to pick up
-import os, tempfile
 state_tmp = os.path.join(forge_dir, '.state-transition.tmp')
 with open(state_tmp, 'w') as f:
     json.dump(state, f, indent=2)

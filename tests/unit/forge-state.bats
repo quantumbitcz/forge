@@ -552,3 +552,144 @@ d = json.load(sys.stdin)
 assert d['convergence']['phase'] == 'safety_gate'
 "
 }
+
+# ---------------------------------------------------------------------------
+# 11. C1: user_continue returns to previous state
+# ---------------------------------------------------------------------------
+
+@test "forge-state: ESCALATED + user_continue returns to previous state" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+  # Fast-forward to REVIEWING then ESCALATED
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'ESCALATED'
+d['previous_state'] = 'REVIEWING'
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+  run bash "$SCRIPT" transition user_continue --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='REVIEWING', d['new_state']"
+}
+
+# ---------------------------------------------------------------------------
+# 12. S1: pr_rejected (design) resets all inner-loop counters
+# ---------------------------------------------------------------------------
+
+@test "forge-state: pr_rejected (design) resets all inner-loop counters" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'SHIPPING'
+d['quality_cycles'] = 3
+d['test_cycles'] = 2
+d['verify_fix_count'] = 2
+d['validation_retries'] = 1
+d['total_retries'] = 8
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+  run bash "$SCRIPT" transition pr_rejected --guard "feedback_classification=design" --forge-dir "$forge_dir"
+  assert_success
+  run bash "$SCRIPT" query --forge-dir "$forge_dir"
+  echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['quality_cycles'] == 0
+assert d['test_cycles'] == 0
+assert d['verify_fix_count'] == 0
+assert d['validation_retries'] == 0
+assert d['total_retries'] == 9
+assert d['story_state'] == 'PLANNING'
+"
+}
+
+# ---------------------------------------------------------------------------
+# 13. S1: score_regressing → ESCALATED
+# ---------------------------------------------------------------------------
+
+@test "forge-state: score_regressing → ESCALATED" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'REVIEWING'
+d['convergence']['phase'] = 'perfection'
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+  run bash "$SCRIPT" transition score_regressing \
+    --guard "delta=-8" --guard "oscillation_tolerance=5" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='ESCALATED'"
+}
+
+# ---------------------------------------------------------------------------
+# 14. S1: dry-run validate_complete → COMPLETE
+# ---------------------------------------------------------------------------
+
+@test "forge-state: dry-run validate_complete → COMPLETE" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --dry-run --forge-dir "$forge_dir"
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'VALIDATING'
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+  run bash "$SCRIPT" transition validate_complete --guard "dry_run=true" --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='COMPLETE'"
+}
+
+# ---------------------------------------------------------------------------
+# 15. S1: reset design clears all inner-loop counters
+# ---------------------------------------------------------------------------
+
+@test "forge-state: reset design clears all inner-loop counters" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['quality_cycles'] = 3
+d['test_cycles'] = 2
+d['verify_fix_count'] = 2
+d['validation_retries'] = 1
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+  run bash "$SCRIPT" reset design --forge-dir "$forge_dir"
+  assert_success
+  run bash "$SCRIPT" query --forge-dir "$forge_dir"
+  echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['quality_cycles'] == 0
+assert d['test_cycles'] == 0
+assert d['verify_fix_count'] == 0
+assert d['validation_retries'] == 0
+"
+}

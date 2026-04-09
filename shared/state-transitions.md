@@ -64,6 +64,8 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 47 | `SHIPPING` | `pr_rejected` | `feedback_classification == "design"` | `PLANNING` | Reset quality_cycles + test_cycles + verify_fix_count + validation_retries = 0, increment total_retries, re-enter Stage 2 |
 | 48 | `SHIPPING` | `feedback_loop_detected` | `feedback_loop_count >= 2` | ESCALATED | AskUserQuestion: Guide / Start fresh / Override |
 | 49 | `LEARNING` | `retrospective_complete` | — | `COMPLETE` | Write run report, auto-tune config, archive tracking ticket |
+| 50 | `REVIEWING` | `score_diminishing` | `diminishing_count >= 2 AND score >= pass_threshold` | `VERIFYING` | Transition to "safety_gate", document diminishing gains as unfixable |
+| 51 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations >= max_iterations` | ESCALATED | Global iteration cap reached despite patience remaining |
 
 ---
 
