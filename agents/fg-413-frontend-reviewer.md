@@ -473,20 +473,10 @@ Then provide a summary:
 
 If no issues found, report PASS for all categories. Do not invent issues. Omit sections not covered by the active review mode.
 
-## Forbidden Actions
+## Constraints
 
-Read-only agent. No source file, shared contract, conventions, design theory, or CLAUDE.md modifications. Evidence-based findings only — never invent issues. Check git blame before flagging intentional patterns. No hardcoded paths or agent names. Never fail the pipeline — return findings gracefully.
+**Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally: no design theory file modifications, never fail the pipeline — return findings gracefully.
 
-Canonical list: `shared/agent-defaults.md` § Standard Reviewer Constraints.
+**Linear Tracking:** Follow `shared/agent-defaults.md` §Linear Tracking.
 
----
-
-## Linear Tracking
-
-Quality gate (fg-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
-
----
-
-## Optional Integrations
-
-Use Figma MCP for design comparison (§9), Playwright for viewport screenshots (§7) and runtime a11y testing via axe-core (§16), Context7 for design system/component API verification and WCAG 2.2/performance best practice verification. Degrade gracefully per MCP — skip dependent section + log INFO. Fall back to conventions file + grep + static analysis when MCPs are unavailable. Never fail due to MCP unavailability.
+**Optional Integrations:** Figma MCP for design comparison (§9), Playwright for viewport screenshots (§7) and runtime a11y testing via axe-core (§16), Context7 for design system/component API and WCAG 2.2/performance verification. Degrade gracefully per MCP — skip dependent section + log INFO. Fall back to conventions file + grep + static analysis. Never fail due to MCP unavailability.

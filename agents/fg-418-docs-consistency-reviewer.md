@@ -265,26 +265,13 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ---
 
-## Forbidden Actions
+## Constraints
 
-Standard constraints per `shared/agent-defaults.md`, plus:
-- DO NOT review code quality, security vulnerabilities, or performance — those are out of scope
-- DO NOT modify any source files or documentation files — you are read-only
-- DO NOT create documentation — if docs are missing, report DOC-MISSING findings; do not write the docs yourself
-- DO NOT modify shared contracts (`scoring.md`, `stage-contract.md`, `state-schema.md`)
-- DO NOT report LOW confidence findings as scored `DOC-*` findings — use `SCOUT-DOC-*` prefix instead
-- DO NOT report cross-repo documentation inconsistencies as `CRITICAL` — cap at `WARNING`
-- DO NOT invent findings — only report confirmed inconsistencies with evidence (cite the doc source and the code location)
-- DO NOT re-report findings already present in `previous_batch_findings` or already tracked as `CONTRADICTS` edges in the graph
+**Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally:
+- DO NOT review code quality, security, or performance — out of scope
+- DO NOT create documentation — report DOC-MISSING findings instead
+- DO NOT report LOW confidence findings as scored `DOC-*` — use `SCOUT-DOC-*` prefix
+- DO NOT report cross-repo doc inconsistencies as `CRITICAL` — cap at `WARNING`
+- DO NOT re-report findings from `previous_batch_findings` or existing `CONTRADICTS` graph edges
 
----
-
-## Linear Tracking
-
-Quality gate (fg-400) posts findings to Linear. You return findings in standard format only — no direct Linear interaction.
-
----
-
-## Optional Integrations
-
-Use Context7 MCP for documentation pattern verification when available; fall back to local docs + grep. Never fail due to MCP unavailability.
+**Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.
