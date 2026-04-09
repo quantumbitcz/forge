@@ -75,7 +75,7 @@ forge-state.sh reset <counter-group> [--forge-dir <path>]
 
 #### Transition Logic
 
-The script encodes the full 49-row transition table + 7 error transitions + dry-run flow + convergence phase transitions from `shared/state-transitions.md`. Implementation as a lookup function:
+The script encodes the complete Normal Flow transition table (48 data rows, numbered 1-49 with row 20 absent) + 7 error transitions + dry-run flow + convergence phase transitions from `shared/state-transitions.md`. Implementation as a lookup function:
 
 ```python
 # Pseudocode for the core logic (implemented in Python embedded in bash)
@@ -157,6 +157,7 @@ Every transition automatically appends to `.forge/decisions.jsonl`:
 - **Uses:** `forge-state-write.sh` (P0-2) for atomic writes
 - **Source of truth:** Encodes `shared/state-transitions.md` tables
 - **Implementation pattern:** Bash script with embedded Python via `python3 -c '...'` for JSON read/write/manipulation. The bash layer handles argument parsing, file I/O, and flock; the Python layer handles JSON parsing, guard evaluation, and transition table lookup. This matches the existing pattern used by `state-integrity.sh`.
+- **Prerequisite check:** `shared/check-prerequisites.sh` (defined in P1-6 A8b) is promoted to P0 as a prerequisite for all P0 scripts. It validates both bash 4.0+ and python3 availability. This script is created as part of P0 implementation, not deferred to P1.
 
 ---
 
@@ -308,7 +309,7 @@ Loaded after PREFLIGHT. Contains stages 1-6:
 - **§4.4** Checkpoints + Failure Isolation
 - **§4.5** Frontend Creative Polish (conditional)
 - **§4.6** Post-IMPLEMENT Graph Update
-- **§5.1** VERIFY Phase A — dispatch `fg-505-build-verifier` if available (P1-3), else inline build+lint with fix loop (preserves current behavior until P1-3 is implemented)
+- **§5.1** VERIFY Phase A — dispatch `fg-505-build-verifier` if available (P1-3), else inline build+lint with fix loop (preserves current behavior until P1-3 is implemented). **Acceptance criterion: §5.1 MUST NOT fail when `agents/fg-505-build-verifier.md` does not exist. It must use the current inline approach as fallback.**
 - **§5.2** VERIFY Phase B — dispatch fg-500-test-gate
 - **§5.3** Convergence Engine Integration (EXTRACTED — references `shared/convergence-engine.md` and `forge-state.sh` for transitions, does NOT restate the algorithm)
 - **§6.1** REVIEW — Batch Dispatch
@@ -365,6 +366,42 @@ After completing PREFLIGHT, load the next phase document:
 Always keep this core document's principles active. Phase documents add stage-specific behavior;
 they do not override core principles or forbidden actions.
 ```
+
+#### Complete Section-to-File Mapping
+
+Every current orchestrator section must map to exactly one new file. Here is the exhaustive mapping:
+
+| Current Section | New File | New Section |
+|----------------|----------|-------------|
+| §1 Identity & Purpose | core | §1 |
+| §2 Argument Parsing | core | §5 |
+| Graph Context | boot | §0.19 |
+| §3 PREFLIGHT (§3.0-§3.12) | boot | §0.1-§0.18 |
+| §4 EXPLORE | execute | §1.1-§1.2 |
+| §5 PLAN | execute | §2.1-§2.3 |
+| §6 VALIDATE | execute | §3.1-§3.4 |
+| §7 IMPLEMENT | execute | §4.1-§4.6 |
+| §8 VERIFY | execute | §5.1-§5.3 |
+| §9 REVIEW | execute | §6.1-§6.5 |
+| §10 DOCS | ship | §7.1 |
+| §10.5 Pre-Ship | ship | §7.2-§7.3 |
+| §11 SHIP | ship | §8.1-§8.5 |
+| §12 LEARN | ship | §9.1-§9.4 |
+| §13 Context Management | core | §7 |
+| §14 Agent Dispatch Rules | core | §4 (merged into dispatch protocol) |
+| §15 State Tracking | core | §6 (replaced by forge-state.sh usage) |
+| §16 Timeout Enforcement | core | §7 (merged into context management) |
+| §17 Final Report | ship | §9.4 |
+| §18 Pipeline Principles | core | §3 (MOVED TO FRONT) |
+| §19 Large Codebase | core | §7 (merged into context management) |
+| §20 Worktree & Cross-Repo | core | §5 (reference to fg-101/fg-103 docs) |
+| §21 Forbidden Actions | core | §2 (MOVED TO FRONT) |
+| §22 Autonomy & Decision | core | §9 |
+| §23 MCP Detection | boot | §0.18 (part of PREFLIGHT) |
+| §24 Escalation Format | core | §9 (merged into decision framework) |
+| §25 Pipeline Observability | core | §7 (merged into context management) |
+| §26 Task Blueprint | core | §4 (merged into dispatch protocol) |
+| §27 Reference Documents | core | §11 (final section) |
 
 #### Linear Operations
 
@@ -439,7 +476,7 @@ Add `diminishing_count` to state schema convergence section (default 0).
 Add transition row to `shared/state-transitions.md`:
 
 ```
-| 36a | REVIEWING | score_diminishing | diminishing_count >= 2 AND score >= pass_threshold | VERIFYING | Treat as plateau, transition to safety_gate |
+| 50 | REVIEWING | score_diminishing | diminishing_count >= 2 AND score >= pass_threshold | VERIFYING | Treat as plateau, transition to safety_gate |
 ```
 
 Update `forge-state.sh` to handle the new `score_diminishing` event.
@@ -782,9 +819,11 @@ Create `shared/forge-linear-sync.sh`:
 forge-linear-sync.sh emit <event-type> <event-json> [--forge-dir <path>]
 # Appends event to .forge/linear-events.jsonl
 # If Linear available: processes immediately, removes from queue
-# If Linear unavailable: drops silently (events are best-effort, not queued)
+# If Linear unavailable: logs event to file for debugging, does NOT retry or queue
 # NEVER blocks the pipeline. NEVER returns non-zero.
+# The .forge/linear-events.jsonl file serves as a debug log only (not a retry queue).
 # File is truncated at 100 entries to prevent unbounded growth.
+# On successful Linear operation: event is still logged (for audit trail).
 ```
 
 #### Event Types
@@ -1194,7 +1233,7 @@ Update `fg-400-quality-gate.md` batch config to dispatch one agent with `mode: f
 
 **Agent count change:** The current codebase has **36 agents**. P2-3 deletes `fg-414-frontend-quality-reviewer.md` (1 file). P1-3 adds `fg-505-build-verifier.md` (1 file). Net result: **36 agents** (no change to total count).
 
-Update `CLAUDE.md` to list correct reviewer set: 8 reviewers (was 9 in CLAUDE.md due to stale data).
+Update `CLAUDE.md` description tiering line from "Tier 2 (reviewers, 9)" to "Tier 2 (reviewers, 8)" — the reviewer list at line 80 already shows 8 correctly, but the tier count at the agent rules section is stale.
 
 ---
 
@@ -1384,7 +1423,7 @@ if (( count % 5 == 0 )); then
 fi
 ```
 
-The hook outputs a suggestion that appears in the conversation. The LLM (orchestrator) sees it and can act on it. This is more reliable than relying on the LLM to remember.
+**Output mechanism:** PostToolUse hook stdout may not be directly surfaced to the LLM conversation for all matchers. As a fallback, the hook also writes its suggestion to `.forge/.compact-suggestion`. The orchestrator checks this file at stage boundaries (alongside `.forge/.hook-failures.log`). If the file exists and contains a suggestion, the orchestrator acts on it and deletes the file. This is more reliable than relying on hook stdout visibility or LLM memory.
 
 ---
 
@@ -1482,7 +1521,7 @@ New `tests/contract/mode-overlay-contract.bats`:
 
 #### Update CLAUDE.md
 
-- Agent count: 38 → 36 (after P2-3 merge)
+- Agent count: 36 (unchanged net — P1-3 adds fg-505, P2-3 removes fg-414)
 - New scripts section listing `forge-state.sh`, `forge-state-write.sh`, etc.
 - Orchestrator split: describe the 4-file structure
 - Mode overlays: describe `shared/modes/` directory
@@ -1574,6 +1613,7 @@ Existing tests updated:
 **New files (22):**
 - `shared/forge-state.sh`
 - `shared/forge-state-write.sh`
+- `shared/check-prerequisites.sh` (promoted from P1-6 to P0 — required by forge-state.sh)
 - `shared/forge-token-tracker.sh`
 - `shared/forge-linear-sync.sh`
 - `shared/forge-timeout.sh`
@@ -1613,7 +1653,7 @@ Existing tests updated:
 - `agents/fg-210-validator.md` (P1-2: decision log population instruction)
 - `agents/fg-300-implementer.md` (P1-2: decision log population instruction)
 - `agents/fg-103-cross-repo-coordinator.md` (P2-2: integration verification phase)
-- `.claude-plugin/plugin.json` (P0-3: update agent list for orchestrator split, P1-3: add fg-505, P2-3: remove fg-414)
+- `.claude-plugin/plugin.json` (P0-3: update description/keywords if needed — agents are auto-discovered from `agents/` directory, no manual agent list to update)
 - `tests/validate-plugin.sh` (P2-10: structural checks for all new files)
 - `skills/forge-init.md` (P1-6: invoke check-prerequisites.sh)
 - `CLAUDE.md` (P2-10: reflect new architecture)
