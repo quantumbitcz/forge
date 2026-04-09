@@ -12,7 +12,11 @@ import subprocess
 import sys
 import tempfile
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    print("ERROR: PyYAML is required for forge-sim. Install with: pip3 install pyyaml", file=sys.stderr)
+    sys.exit(1)
 
 
 def parse_scenario(path: str) -> dict:
