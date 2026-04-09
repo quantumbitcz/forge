@@ -16,8 +16,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | 5 | VERIFY | inline (Phase A) + `fg-500-test-gate` (Phase B) | `VERIFYING` | Implementation complete | Build + lint + tests all pass |
 | 6 | REVIEW | `fg-400-quality-gate` | `REVIEWING` | Verification passed | Quality verdict PASS or CONCERNS |
 | 7 | DOCS | `fg-350-docs-generator` | `DOCUMENTING` | Review passed | Documentation updated; no new public interfaces lack documentation; coverage gaps reduced or explained |
-| 8 | SHIP | `fg-590-pre-ship-verifier` + `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `fg-610-infra-deploy-verifier`, `fg-710-feedback-capture` (on PR rejection) | `SHIPPING` | Documentation done AND `evidence.verdict == "SHIP"` (fresh, < `shipping.evidence_max_age_minutes`) | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
-| 9 | LEARN | `fg-700-retrospective` + `fg-720-recap` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
+| 8 | SHIP | `fg-590-pre-ship-verifier` + `fg-600-pr-builder` + conditional: `fg-650-preview-validator`, `fg-610-infra-deploy-verifier`, `fg-710-post-run` (Part A, on PR rejection) | `SHIPPING` | Documentation done AND `evidence.verdict == "SHIP"` (fresh, < `shipping.evidence_max_age_minutes`) | PR created; preview validated (if enabled); infra verified (if applicable); presented to user; worktree merged and cleaned up |
+| 9 | LEARN | `fg-700-retrospective` + `fg-710-post-run` | `LEARNING` | PR approved by user (or rejected with feedback captured) | Run logged, config updated, report written |
 
 **Convention file defensive read:** Each agent that reads the conventions file handles the case where it becomes unreadable between stages. PREFLIGHT validates the path; each agent does a defensive Read and proceeds with universal defaults if it fails. Universal defaults: the agent applies only the language module rules (`modules/languages/{lang}.md`) and generic check patterns — no framework-specific, testing, or crosscutting layer conventions. The agent logs a WARNING in stage notes: `"Convention stack unavailable — operating with language-only defaults."`
 
@@ -350,8 +350,8 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 | Mode | Always Dispatched | Conditional | Skipped |
 |---|---|---|---|
 | Standard | Config-driven batches (all 10 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
-| Bugfix | `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
-| Bootstrap | `fg-410-architecture-reviewer`, `fg-411-security-reviewer`, `fg-412-code-quality-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
+| Bugfix | `fg-410-code-reviewer`, `fg-411-security-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
+| Bootstrap | `fg-410-code-reviewer`, `fg-411-security-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
 
 Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap use hardcoded reduced batches in the orchestrator (§9.0a).
 
@@ -431,7 +431,7 @@ Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap
 
 **On user rejection/feedback:**
 
-`fg-710-feedback-capture` classifies feedback into one of two paths using these heuristics. Default to `implementation` when ambiguous.
+`fg-710-post-run` (Part A: Feedback Capture) classifies feedback into one of two paths using these heuristics. Default to `implementation` when ambiguous.
 
 **Design feedback signals** (route to Stage 2 — PLAN):
 - References: architecture, approach, decomposition, scope, strategy, wrong decision, missing story
@@ -450,13 +450,13 @@ When feedback contains signals from both categories, count the signals:
 - If ambiguous and the user's feedback is short (< 3 sentences), prefer `implementation` — short feedback typically targets specific code issues
 
 **Path A — `implementation` feedback** (references specific files, code behavior, test cases):
-1. Dispatch `fg-710-feedback-capture` to record the correction structurally.
+1. Dispatch `fg-710-post-run` (Part A: Feedback Capture) to record the correction structurally.
 2. Reset `quality_cycles` and `test_cycles` to 0.
 3. Increment `total_retries` by 1.
 4. Re-enter Stage 4 (IMPLEMENT) with feedback context.
 
 **Path B — `design` feedback** (references wrong approach, wrong decomposition, missing stories, architectural direction):
-1. Dispatch `fg-710-feedback-capture` to record the correction structurally.
+1. Dispatch `fg-710-post-run` (Part A: Feedback Capture) to record the correction structurally.
 2. Reset stage-specific counters (`quality_cycles`, `test_cycles`, `verify_fix_count`, `validation_retries`) to 0. Do NOT reset `total_retries`.
 3. Increment `total_retries` by 1.
 4. Re-enter Stage 2 (PLAN) with feedback as planner input.
@@ -477,7 +477,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 
 ### Stage 9: LEARN
 
-**Agent(s):** `fg-700-retrospective` + `fg-720-recap`
+**Agent(s):** `fg-700-retrospective` + `fg-710-post-run`
 **story_state:** `LEARNING`
 
 **Entry condition:** PR approved by user. Also entered (with partial data) if PR is rejected and feedback is captured, after the re-run completes.
@@ -575,7 +575,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
-7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-architecture-reviewer` (verify scaffold structure), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults), `fg-412-code-quality-reviewer` (verify baseline error handling, naming, clarity). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` §3.0 for dispatch details.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` §3.0 for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
 The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.

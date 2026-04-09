@@ -271,7 +271,7 @@ If the user approves the PR, report success to the orchestrator. The pipeline pr
 
 If the user rejects the PR or provides corrective feedback:
 
-1. **Dispatch `fg-710-feedback-capture`** with the following context: (a) the user's exact feedback message, (b) the list of files changed in the PR, (c) the quality gate verdict and score from Stage 6, (d) the story_id and requirement from state.json. This context enables accurate feedback classification.
+1. **Dispatch `fg-710-post-run`** (Part A: Feedback Capture) with the following context: (a) the user's exact feedback message, (b) the list of files changed in the PR, (c) the quality gate verdict and score from Stage 6, (d) the story_id and requirement from state.json. This context enables accurate feedback classification.
 2. **Report to orchestrator** that the PR was rejected with a summary of the feedback
 3. The orchestrator will:
    - Reset `quality_cycles` and `test_cycles` counters to 0

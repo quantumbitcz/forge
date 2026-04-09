@@ -130,7 +130,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     FEEDBACK agent → classification → orchestrator → route to PLAN or IMPLEMENT
     LEARN (retro) → stage_final_notes → forge-log.md (PREEMPT hit counts)
                                   → forge-config.md (auto-tuning)
-    LEARN (recap) → recap report ↘ Linear: summary comment
+    LEARN (post-run) → recap report ↘ Linear: summary comment
 
 All data flows through the orchestrator. Agents are isolated. The orchestrator curates what each agent receives.
 

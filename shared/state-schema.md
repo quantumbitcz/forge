@@ -18,7 +18,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 +-- evidence.json                       # Pre-ship verification evidence (created by fg-590)
 +-- reports/
     +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
-    +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-720-recap)
+    +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-710-post-run)
 ```
 
 ### File Lifecycle
@@ -33,7 +33,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `feedback/*.md` | On user correction | Feedback capture agent | Yes (pattern data) | No |
 | `evidence.json` | After Stage 7 (DOCS) | `fg-590-pre-ship-verifier` | No (overwritten each invocation) | No |
 | `reports/forge-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
-| `reports/recap-*.md` | Stage 9 (LEARN) | Recap agent (fg-720-recap) | Yes (project history) | No |
+| `reports/recap-*.md` | Stage 9 (LEARN) | Post-run agent (fg-710-post-run) | Yes (project history) | No |
 
 ### Related Files (outside `.forge/`, committed to git)
 
@@ -222,7 +222,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `last_commit_sha` | string | Yes | Git commit SHA of the most recent forge-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
 | `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `forge-log.md` that were loaded at PREFLIGHT for the current domain area. Records what was *loaded*, not what was *used*. Empty array `[]` if no items match. |
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `forge-log.md`. |
-| `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-feedback-capture` stage notes. |
+| `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-post-run` stage notes. |
 | `previous_feedback_classification` | string | Yes | Feedback type from the preceding PR rejection. Used by the orchestrator to detect feedback loops — when `feedback_classification == previous_feedback_classification` for 2+ consecutive rejections, the orchestrator escalates. Updated by the orchestrator before comparing classifications. Empty string `""` initially. |
 | `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `fg-100-orchestrator.md` User Response section). |
 | `score_history` | number[] | Yes | Unified quality score per review cycle for oscillation detection across all components. Appended after each quality gate scoring with the aggregate (unified) score. Used to detect regressions: if score drops by more than `oscillation_tolerance` between consecutive cycles, the orchestrator escalates. In multi-component projects, per-component score histories are tracked within `components[key].score_history` — see the components section below. Oscillation detection runs on BOTH the unified history and per-component histories (a per-component regression masked by other component improvements triggers a WARNING). Integer with default scoring weights; may be non-integer with custom weights. |
@@ -764,7 +764,7 @@ Written by the retrospective agent at Stage 9. Contains the run summary, extract
 
 ### feedback/{date}-{topic}.md
 
-Individual feedback files created by `fg-710-feedback-capture` when the user corrects the pipeline's approach. Format:
+Individual feedback files created by `fg-710-post-run` (Part A: Feedback Capture) when the user corrects the pipeline's approach. Format:
 
 ```markdown
 # Feedback: {topic}
@@ -805,7 +805,7 @@ If multiple runs occur on the same date, reports use a suffix: `forge-{YYYY-MM-D
 
 ### reports/recap-{YYYY-MM-DD}-{storyId}.md
 
-Human-readable run recap written by `fg-720-recap` at Stage 9, after the retrospective. Contains:
+Human-readable run recap written by `fg-710-post-run` (Part B: Recap) at Stage 9, after the retrospective. Contains:
 
 - What was built (per-story summary with file lists)
 - Key decisions made (with trade-off reasoning)

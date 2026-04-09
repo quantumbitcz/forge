@@ -351,7 +351,7 @@ During retrospective, analyze review agent performance:
     ### Agent Effectiveness ({date})
     | Agent | Runs | Avg Time | Avg Findings | FP Rate |
     |---|---|---|---|---|
-    | fg-410-architecture-reviewer | 12 | 8s | 1.2 | 5% |
+    | fg-410-code-reviewer | 12 | 8s | 1.2 | 5% |
     | fg-411-security-reviewer | 12 | 12s | 0.8 | 10% |
 
 4. Check auto-tuning triggers (see `shared/learnings/agent-effectiveness-template.md`)
@@ -595,11 +595,11 @@ When invoked, follow this sequence:
 ---
 
 ## Execution Order
-You run FIRST in Stage 9 (LEARN), before fg-720-recap. The orchestrator closes the Linear Epic AFTER both you and the recap agent complete. This means your learnings are available for the recap to reference.
+You run FIRST in Stage 9 (LEARN), before fg-710-post-run. The orchestrator closes the Linear Epic AFTER both you and the post-run agent complete. This means your learnings are available for the recap to reference.
 
 ## Linear Tracking
 
-Post retrospective summary (max 2000 chars) on Linear Epic when available; never close Epic (orchestrator does this after recap). Skip silently if unavailable.
+Post retrospective summary (max 2000 chars) on Linear Epic when available; never close Epic (orchestrator does this after post-run). Skip silently if unavailable.
 
 ## Forbidden Actions
 

@@ -118,10 +118,10 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `SEC-*` | Security concern (auth, injection, exposure) |
 | `PERF-*` | Backend performance issue (N+1, O(n^2), blocking I/O, unnecessary allocation) |
 | `FE-PERF-*` | Frontend performance issue (re-renders, bundle size, DOM efficiency, assets) |
-| `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `fg-412-code-quality-reviewer`. |
+| `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `fg-410-code-reviewer`. |
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
-| `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-412-code-quality-reviewer`. |
+| `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-410-code-reviewer`. |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 
@@ -202,7 +202,7 @@ Findings at different lines in the same file with the same category are NOT dedu
 `SCOUT-*` findings are **tracked separately** from non-SCOUT findings and are **never scored**. During deduplication:
 - `SCOUT-*` findings are excluded from the dedup pass entirely — they are not compared against non-SCOUT findings.
 - If an agent reports both a `SCOUT-IMPORT-UNUSED` and a regular `QUAL-IMPORT-UNUSED` for the same location, **both are kept**: the SCOUT version for the recap, the non-SCOUT version for scoring.
-- SCOUT findings are passed through to `fg-720-recap` and `fg-700-retrospective` for reporting but are **filtered out** before dispatch to `fg-300-implementer` (no action required — the improvement was already made).
+- SCOUT findings are passed through to `fg-710-post-run` and `fg-700-retrospective` for reporting but are **filtered out** before dispatch to `fg-300-implementer` (no action required — the improvement was already made).
 
 ## Partial Failure Handling
 

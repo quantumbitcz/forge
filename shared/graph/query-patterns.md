@@ -240,7 +240,7 @@ RETURN head(labels(source)) AS source_type, COALESCE(source.summary, source.name
 
 **Used during:** DOCUMENTING
 
-Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `fg-720-recap` a prioritized list of under-documented areas.
+Finds project packages that have no documentation section describing them. The orchestrator uses this at the start of the DOCUMENTING stage to give `fg-710-post-run` a prioritized list of under-documented areas.
 
 ```cypher
 MATCH (pp:ProjectPackage {project_id: $project_id})

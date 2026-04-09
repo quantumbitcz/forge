@@ -57,7 +57,7 @@ On dispatch you receive:
 
 **Discovery error check:** If `state.json.documentation.discovery_error` is `true`, skip graph pre-queries and cross-document analysis entirely. Use grep-based fallback for decision/constraint checks (Sections 4.1-4.2) only. Skip Section 4.4 (Missing Documentation) and Section 4.6 (Cross-Doc Inconsistency) — they depend on discovery data. Additionally:
 - Cap confidence on all emitted findings to `MEDIUM` maximum (incomplete doc context may cause false positives).
-- Emit a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` This is informational only (zero score deduction) and signals reduced review coverage to the recap agent.
+- Emit a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` This is informational only (zero score deduction) and signals reduced review coverage to the post-run agent.
 
 Identify all documentation relevant to the changed files:
 
