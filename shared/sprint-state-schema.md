@@ -103,6 +103,7 @@ Root sprint state file. Created when a sprint run begins, updated as features pr
 | `features[].repos[].worktree` | string\|null | absolute path or null | Git worktree path for this feature+repo combination |
 | `features[].repos[].branch` | string\|null | branch name or null | Git branch name (set after worktree creation) |
 | `features[].repos[].pr_url` | string\|null | URL or null | Pull request URL (set after SHIP stage) |
+| `features[].repos[].dependencies` | array\|null | dependency objects or null | Cross-repo dependencies for this repo. Each entry: `{ "type": "contract"|"data", "contract_file": "path", "producer": "project_id", "consumer": "project_id", "checkpoint": "contract_agreed"|"implementation_complete" }`. Null for single-repo features. |
 | `parallel_groups` | array of arrays | feature ID lists | Groups of features that can execute concurrently |
 | `serial_chains` | array of arrays | feature ID lists | Ordered sequences that must execute sequentially |
 | `conflicts` | array | — | Detected file/symbol conflicts between features |

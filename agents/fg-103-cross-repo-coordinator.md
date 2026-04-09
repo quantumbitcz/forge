@@ -108,6 +108,19 @@ Add cross-references to pull request bodies and link to Linear.
 
 ---
 
+## Integration Verification (pre-SHIP gate)
+
+Before creating PRs for cross-repo features:
+1. Check if both repos have `commands.integration_test` configured in their `forge.local.md`
+2. If yes: dispatch integration tests that exercise the contract boundary between producer and consumer
+3. Parse results: if any test fails, report as findings with file references
+4. If tests fail: block PR creation for BOTH repos (producer and consumer)
+5. If no integration tests configured: log INFO "Integration tests not configured — skipping cross-repo verification", proceed
+
+This phase runs after pre-ship verification (fg-590) and before PR creation (fg-600) in the SHIP stage.
+
+---
+
 ## User Escalation
 
 Use `AskUserQuestion` with structured options. Never use plain text prompts.
