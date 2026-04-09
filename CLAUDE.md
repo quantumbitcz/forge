@@ -90,7 +90,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
-- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 23): minimal. Full capability in `.md` body.
+- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 21): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
 
@@ -152,7 +152,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (22), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: 10; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 8; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`.
 
 **Hooks** (3): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`.
 

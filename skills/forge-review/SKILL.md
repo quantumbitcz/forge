@@ -62,7 +62,7 @@ Report: "Reviewing {count} files in {mode} mode."
 - `forge:fg-410-code-reviewer`
 - `forge:fg-411-security-reviewer`
 
-**Full mode (`--full`):** Core 3 + conditional agents based on file types present:
+**Full mode (`--full`):** Core 2 + conditional agents based on file types present:
 
 | Agent | Dispatch condition |
 |---|---|
