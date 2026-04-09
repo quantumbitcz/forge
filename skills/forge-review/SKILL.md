@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: Review + fix changed files using forge's own review agents. Dispatches reviewers, fixes all findings, re-verifies in a loop until score reaches 100 or max iterations. Quick mode (3 agents) for iteration checks, full mode (9 agents) for final reviews.
+description: Review + fix changed files using forge's own review agents. Dispatches reviewers, fixes all findings, re-verifies in a loop until score reaches 100 or max iterations. Quick mode (2 agents) for iteration checks, full mode (8 agents) for final reviews.
 disable-model-invocation: false
 ---
 

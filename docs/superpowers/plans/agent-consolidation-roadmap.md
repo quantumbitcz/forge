@@ -1,8 +1,8 @@
 # Agent Consolidation Roadmap
 
-## Current State: 38 Agents
+## Current State: 36 Agents
 
-The forge pipeline has 38 agents (down from 40 after the frontend reviewer merge and the a11y+performance merge). Each dispatch costs ~50K+ tokens of context construction.
+The forge pipeline has 36 agents (down from 40 after 4 merges: frontend reviewers, a11y+performance, architecture+quality, feedback+recap). Each dispatch costs ~50K+ tokens of context construction.
 
 ## Consolidation Opportunities
 

@@ -2,7 +2,7 @@
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 38 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 36 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -78,7 +78,7 @@ Then add to `.claude/settings.json`:
 | `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
 | `/forge-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
 | `/forge-fix` | Bugfix entry point -- root cause investigation, reproduction, targeted fix |
-| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 3 agents, full: 9 agents) |
+| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 2 agents, full: 8 agents) |
 | `/forge-sprint` | Parallel multi-feature orchestration -- decomposes and runs features concurrently |
 | `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
 | `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
@@ -189,7 +189,7 @@ touch .claude/forge-log.md
 |    deprecations, scripts) |  ci-cd, container-orchestration, documentation, code-quality)
 |                           |  conventions.md, rules-override.json, etc.
 +---------------------------+
-|   Shared core             |  agents/ (38 pipeline + review agents)
+|   Shared core             |  agents/ (36 pipeline + review agents)
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
@@ -260,7 +260,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-38 agents organized by pipeline stage and cross-cutting concerns.
+36 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 

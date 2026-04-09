@@ -349,7 +349,7 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 
 | Mode | Always Dispatched | Conditional | Skipped |
 |---|---|---|---|
-| Standard | Config-driven batches (all 10 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
+| Standard | Config-driven batches (all 8 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
 | Bugfix | `fg-410-code-reviewer`, `fg-411-security-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
 | Bootstrap | `fg-410-code-reviewer`, `fg-411-security-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
 
