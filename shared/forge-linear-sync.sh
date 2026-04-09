@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# NOTE: This script is a logging/audit layer only. It does NOT make Linear MCP calls.
+# The orchestrator agent handles actual Linear MCP operations by interpreting the
+# forge-linear-sync.sh emit calls in the orchestrator phase documents.
+# This script records events for audit trail and debugging.
+#
 # Event-driven Linear sync — centralises the "check availability → log → handle" pattern.
 # Usage:
 #   forge-linear-sync.sh emit <event-type> <event-json> [--forge-dir PATH]

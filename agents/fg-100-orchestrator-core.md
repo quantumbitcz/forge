@@ -88,6 +88,11 @@ On failure: apply error taxonomy classification → recovery engine (unless mark
 
 **Linear rule:** All `If integrations.linear.available` blocks follow the same pattern: execute MCP operation if true, skip silently if false. Never fail the pipeline on Linear unavailability.
 
+**Linear integration:** The orchestrator handles actual Linear MCP calls inline when executing
+`forge-linear-sync.sh emit` instructions. The bash script logs events for audit trail only.
+When `integrations.linear.available` is true, make the MCP call THEN run the emit script.
+When false, only run the emit script (it logs the missed event for debugging).
+
 ### Agent Types
 
 - **Inline:** <30s, stateless, no reasoning (config parsing, state writes, command execution)

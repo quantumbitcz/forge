@@ -17,6 +17,8 @@ stages:
       - agent: fg-413-frontend-reviewer
         condition: frontend_files_in_diff
     target_score: pass_threshold
+  ship:
+    target_score: pass_threshold
 ---
 
 ## Bugfix Mode
