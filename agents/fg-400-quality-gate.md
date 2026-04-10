@@ -85,6 +85,15 @@ For each `batch_N` (batch_1, batch_2, batch_3, ...) defined in config:
 4. Wait for ALL agents in the batch to complete before starting the next batch
 5. Batches are sequential: batch_1, then batch_2, then batch_3, etc.
 
+### 5.1b Pre-Dedup Finding Validation
+
+Before deduplication, validate each finding line using `shared/validate-finding.sh`. For each invalid line:
+1. Log WARNING with the malformed line content and originating agent
+2. Skip the invalid finding (do not include in dedup or scoring)
+3. Add a replacement finding: `{agent}:0 | REVIEW-GAP | INFO | Malformed finding output from {agent_name} — line skipped | Review agent output format`
+
+This prevents malformed agent output from crashing the dedup pipeline or silently corrupting scores.
+
 ### 5.2 Inter-Batch Finding Deduplication
 
 See `shared/agent-communication.md` for the inter-batch finding deduplication protocol. When dispatching batch 2+, include a summary of previous batch findings in the dispatch prompt to reduce duplicate work. Cap dedup hints at top 20 findings by severity. If > 20 findings from previous batches, include top 20 with note: "({N-20} additional findings omitted)."
