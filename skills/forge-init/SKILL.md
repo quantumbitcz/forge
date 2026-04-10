@@ -416,6 +416,22 @@ After generating the project config, run the discovery chain to find related pro
 
 ---
 
+### Convention Validation
+
+After generating `forge.local.md`, validate that all convention references resolve to existing module files:
+
+```
+bash "${CLAUDE_PLUGIN_ROOT}/shared/validate-conventions.sh" ".claude/forge.local.md" "${CLAUDE_PLUGIN_ROOT}"
+```
+
+If any references are missing:
+- Show all missing references to the user
+- Suggest corrections (e.g., "Did you mean 'jooq' instead of 'jooql'?")
+- Ask whether to fix and retry, or continue with degraded conventions
+- Do NOT abort init — the user may want to proceed with partial conventions
+
+---
+
 ### Phase 3: VALIDATE
 
 Run the following checks to confirm the setup works. Execute BOTH build and test commands explicitly — do not skip either.
