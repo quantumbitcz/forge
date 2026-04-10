@@ -75,7 +75,7 @@ is_stale() {
 # 5. Loop cap at 3 refreshes — row 52 in transition table
 # ---------------------------------------------------------------------------
 @test "evidence-staleness: loop cap at 3 refreshes documented" {
-  grep -q "evidence_refresh_count >= 3\|evidence_stale AND evidence_refresh_count" "$STATE_TRANSITIONS" \
+  grep -qE "evidence_refresh_count >= 3|evidence_stale AND evidence_refresh_count" "$STATE_TRANSITIONS" \
     || fail "Row 52 (evidence refresh loop cap) not found in state-transitions.md"
 }
 
