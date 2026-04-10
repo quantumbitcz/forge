@@ -114,6 +114,34 @@ d['_seq'] = $new_seq
 json.dump(d, sys.stdout, indent=2)
 ")
 
+  # Advisory schema validation (never blocks writes)
+  if [[ "${VALIDATE:-true}" != "false" ]]; then
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local validation_result
+    validation_result=$(python3 -c "
+import json, sys
+try:
+    from jsonschema import validate, ValidationError
+    schema_path = sys.argv[2]
+    with open(schema_path) as f:
+        schema = json.load(f)
+    state = json.loads(sys.argv[1])
+    validate(instance=state, schema=schema)
+    print('OK')
+except ImportError:
+    print('SKIP')
+except ValidationError as e:
+    print('FAIL: ' + e.message)
+except Exception as e:
+    print('SKIP')
+" "$updated_json" "${SCRIPT_DIR}/state-schema.json" 2>/dev/null || echo "SKIP")
+
+    if [[ "$validation_result" == FAIL:* ]]; then
+      echo "WARNING: State validation failed: ${validation_result#FAIL: }" >&2
+    fi
+  fi
+
   # Append to WAL
   local ts
   ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S)

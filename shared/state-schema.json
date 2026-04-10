@@ -1,0 +1,337 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://forge.quantumbit.cz/schemas/state-v1.5.0.json",
+  "title": "Forge Pipeline State",
+  "description": "JSON Schema for .forge/state.json (v1.5.0). Advisory validation — never blocks writes.",
+  "type": "object",
+  "required": [
+    "version",
+    "_seq",
+    "complete",
+    "story_id",
+    "requirement",
+    "story_state",
+    "mode",
+    "dry_run",
+    "convergence",
+    "recovery",
+    "recovery_budget",
+    "integrations",
+    "cost",
+    "score_history"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "story_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requirement": {
+      "type": "string"
+    },
+    "domain_area": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["", "LOW", "MEDIUM", "HIGH"]
+    },
+    "previous_state": {
+      "type": "string"
+    },
+    "story_state": {
+      "type": "string",
+      "enum": [
+        "PREFLIGHT",
+        "EXPLORING",
+        "PLANNING",
+        "VALIDATING",
+        "IMPLEMENTING",
+        "VERIFYING",
+        "REVIEWING",
+        "DOCUMENTING",
+        "SHIPPING",
+        "LEARNING",
+        "COMPLETE",
+        "ABORTED",
+        "ESCALATED",
+        "DECOMPOSED"
+      ]
+    },
+    "active_component": {
+      "type": "string"
+    },
+    "components": {
+      "type": "object"
+    },
+    "quality_cycles": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "test_cycles": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "verify_fix_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "validation_retries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_retries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_retries_max": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 30
+    },
+    "stage_timestamps": {
+      "type": "object"
+    },
+    "last_commit_sha": {
+      "type": "string"
+    },
+    "preempt_items_applied": {
+      "type": "array"
+    },
+    "preempt_items_status": {
+      "type": "object"
+    },
+    "feedback_classification": {
+      "type": "string"
+    },
+    "previous_feedback_classification": {
+      "type": "string"
+    },
+    "feedback_loop_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "score_history": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "convergence": {
+      "type": "object",
+      "required": [
+        "phase",
+        "phase_iterations",
+        "total_iterations",
+        "plateau_count",
+        "last_score_delta",
+        "convergence_state",
+        "phase_history",
+        "safety_gate_passed",
+        "safety_gate_failures",
+        "unfixable_findings",
+        "diminishing_count",
+        "unfixable_info_count"
+      ],
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["correctness", "perfection", "safety_gate"]
+        },
+        "phase_iterations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_iterations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "plateau_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_score_delta": {
+          "type": "number"
+        },
+        "convergence_state": {
+          "type": "string",
+          "enum": ["IMPROVING", "PLATEAUED", "REGRESSING"]
+        },
+        "phase_history": {
+          "type": "array"
+        },
+        "safety_gate_passed": {
+          "type": "boolean"
+        },
+        "safety_gate_failures": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unfixable_findings": {
+          "type": "array"
+        },
+        "diminishing_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unfixable_info_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "linear": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" },
+            "team": { "type": "string" }
+          }
+        },
+        "playwright": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" }
+          }
+        },
+        "slack": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" }
+          }
+        },
+        "figma": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" }
+          }
+        },
+        "context7": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" }
+          }
+        },
+        "neo4j": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" },
+            "last_build_sha": { "type": "string" },
+            "node_count": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "linear": {
+      "type": "object",
+      "properties": {
+        "epic_id": { "type": "string" },
+        "story_ids": { "type": "array", "items": { "type": "string" } },
+        "task_ids": { "type": "object" }
+      }
+    },
+    "linear_sync": {
+      "type": "object",
+      "properties": {
+        "in_sync": { "type": "boolean" },
+        "failed_operations": { "type": "array" }
+      }
+    },
+    "modules": {
+      "type": "array"
+    },
+    "cost": {
+      "type": "object",
+      "required": ["wall_time_seconds", "stages_completed"],
+      "properties": {
+        "wall_time_seconds": { "type": "number", "minimum": 0 },
+        "stages_completed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "recovery_budget": {
+      "type": "object",
+      "required": ["total_weight", "max_weight", "applications"],
+      "properties": {
+        "total_weight": { "type": "number", "minimum": 0 },
+        "max_weight": { "type": "number" },
+        "applications": { "type": "array" }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "required": ["total_failures", "total_recoveries", "degraded_capabilities", "failures", "budget_warning_issued"],
+      "properties": {
+        "total_failures": { "type": "integer", "minimum": 0 },
+        "total_recoveries": { "type": "integer", "minimum": 0 },
+        "degraded_capabilities": { "type": "array" },
+        "failures": { "type": "array" },
+        "budget_warning_issued": { "type": "boolean" }
+      }
+    },
+    "scout_improvements": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "evidence_refresh_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "conventions_hash": {
+      "type": "string"
+    },
+    "conventions_section_hashes": {
+      "type": "object"
+    },
+    "detected_versions": {
+      "type": "object"
+    },
+    "check_engine_skipped": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["standard", "bugfix", "migration", "bootstrap", "testing", "refactor", "performance"]
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "shallow_clone": {
+      "type": "boolean"
+    },
+    "cross_repo": {
+      "type": "object"
+    },
+    "spec": {},
+    "ticket_id": {},
+    "branch_name": {
+      "type": "string"
+    },
+    "tracking_dir": {},
+    "documentation": {
+      "type": "object"
+    },
+    "bugfix": {},
+    "graph": {
+      "type": "object",
+      "properties": {
+        "last_update_stage": { "type": "integer" },
+        "last_update_files": { "type": "array" },
+        "stale": { "type": "boolean" }
+      }
+    }
+  },
+  "additionalProperties": true
+}
