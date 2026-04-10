@@ -84,14 +84,14 @@ CONFLICT: {category} at {file}:{line}
   Agent B: {finding_B_description} (severity: {sev_B})
 ```
 
-Conflicts are resolved by the quality gate using this reviewer priority ordering (highest authority first):
+Conflict resolution priority is defined in `shared/checks/category-registry.json` (`priority` field). Lower number = higher priority. Categories without explicit priority default to 5 (CONV-level). Current priority bands:
 
-1. **Security** (SEC-*) — security concerns override all others
-2. **Architecture** (ARCH-*) — structural decisions override style/quality
-3. **Code Quality** (QUAL-*, TEST-*) — correctness over performance
-4. **Performance** (PERF-*, FE-PERF-*) — performance over convention
-5. **Convention** (CONV-*, DOC-*) — convention over style preference
-6. **Style** (APPROACH-*, DESIGN-*) — lowest priority
+1. **Security** (SEC-*) — priority 1
+2. **Architecture** (ARCH-*, STRUCT-*) — priority 2
+3. **Code Quality** (QUAL-*, TEST-*, CONTRACT-*) — priority 3
+4. **Performance** (PERF-*, FE-PERF-*, INFRA-*) — priority 4
+5. **Convention** (CONV-*, DOC-*, A11Y-*, DESIGN-*) — priority 5
+6. **Style** (APPROACH-*, SCOUT-*) — priority 6
 
 When two findings conflict at the same priority level, the finding with the higher severity wins. If severity is also equal, both findings are escalated to the user via the quality gate report with a CONFLICT annotation.
 

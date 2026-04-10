@@ -94,3 +94,66 @@ if errors:
     sys.exit(1)
 " || fail "Some categories missing required fields"
 }
+
+@test "category-registry: SEC has highest priority (1)" {
+  python3 -c "
+import json
+with open('$REGISTRY') as f:
+    data = json.load(f)
+assert data['categories']['SEC'].get('priority') == 1
+" || fail "SEC does not have priority 1"
+}
+
+@test "category-registry: all active categories have numeric priority" {
+  python3 -c "
+import json, sys
+with open('$REGISTRY') as f:
+    data = json.load(f)
+missing = []
+for cat_name, cat_data in data['categories'].items():
+    if cat_data.get('status') == 'reserved':
+        continue
+    p = cat_data.get('priority')
+    if not isinstance(p, int):
+        missing.append(f'{cat_name}: priority={p}')
+if missing:
+    for m in missing:
+        print(m, file=sys.stderr)
+    sys.exit(1)
+" || fail "Some active categories missing numeric priority"
+}
+
+@test "category-registry: priority values are 1-6" {
+  python3 -c "
+import json, sys
+with open('$REGISTRY') as f:
+    data = json.load(f)
+out_of_range = []
+for cat_name, cat_data in data['categories'].items():
+    p = cat_data.get('priority')
+    if p is not None and (p < 1 or p > 6):
+        out_of_range.append(f'{cat_name}: priority={p}')
+if out_of_range:
+    for o in out_of_range:
+        print(o, file=sys.stderr)
+    sys.exit(1)
+" || fail "Some priorities outside 1-6 range"
+}
+
+@test "category-registry: SEC < ARCH < QUAL priority ordering" {
+  python3 -c "
+import json
+with open('$REGISTRY') as f:
+    data = json.load(f)
+cats = data['categories']
+sec_p = cats['SEC']['priority']
+arch_p = cats['ARCH']['priority']
+qual_p = cats['QUAL']['priority']
+assert sec_p < arch_p < qual_p, f'Order wrong: SEC={sec_p}, ARCH={arch_p}, QUAL={qual_p}'
+" || fail "Priority ordering wrong"
+}
+
+@test "category-registry: agent-communication.md references registry for priorities" {
+  grep -q "category-registry.json" "$PLUGIN_ROOT/shared/agent-communication.md" \
+    || fail "agent-communication.md does not reference category-registry.json"
+}
