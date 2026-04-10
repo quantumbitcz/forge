@@ -1916,11 +1916,13 @@ MATCH (a:Agent {name: 'fg-103-cross-repo-coordinator'}), (b:Agent {name: 'fg-101
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-410-code-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-411-security-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-412-architecture-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-413-frontend-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-416-backend-performance-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-417-version-compat-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-418-docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-419-infra-deploy-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-420-dependency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (b:Agent {name: 'fg-590-pre-ship-verifier'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-600-pr-builder'}), (b:Agent {name: 'fg-710-post-run'}) CREATE (a)-[:DISPATCHES]->(b);
