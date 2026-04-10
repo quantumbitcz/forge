@@ -463,7 +463,7 @@ If the orchestrator is dispatched with `Mode: bugfix` in the prompt (from `/forg
 Strip the mode prefix from the requirement before passing it to downstream agents. After state initialization (§0.17), update `state.json.mode` to the detected value (`"standard"`, `"migration"`, `"bootstrap"`, `"bugfix"`, `"testing"`, `"refactor"`, or `"performance"`).
 
 **Specialized mode behaviors:**
-- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-410-code-reviewer`. Target score is `pass_threshold`, not 100.
+- `testing`: Standard pipeline. Implementer focuses on test files only (no production code changes). Quality gate uses reduced reviewer set: `fg-412-architecture-reviewer`, `fg-410-code-reviewer`. Target score is `pass_threshold`, not 100.
 - `refactor`: Standard pipeline. Planner uses refactor constraints: preserve existing behavior, no new features, maintain passing test suite. Review batch adds `fg-410-code-reviewer` as mandatory. Target score is `shipping.min_score`.
 - `performance`: Standard pipeline. EXPLORE stage includes profiling/benchmarking context. Review batch includes `fg-416-backend-performance-reviewer` and/or `fg-413-frontend-reviewer` (mode: `performance-only`) as mandatory. Target score is `shipping.min_score`.
 
@@ -1582,9 +1582,9 @@ If `override.reviewers`: use that reviewer set instead of the config-driven batc
 **Reduced Review Batch (mode_config.stages.review.batch_override):**
 
 Reduced review batch (overrides config-driven batches):
-- Always dispatch: `fg-410-code-reviewer`, `fg-411-security-reviewer`
+- Always dispatch: `fg-412-architecture-reviewer`, `fg-410-code-reviewer`, `fg-411-security-reviewer`
 - If frontend files in diff (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`): add `fg-413-frontend-reviewer`
-- Skip by default: `fg-416-backend-performance-reviewer`
+- Skip by default: `fg-416-backend-performance-reviewer`, `fg-420-dependency-reviewer`
 
 Dispatch the reduced batch as a single batch (no multi-batch sequencing needed). After completion, proceed to scoring (SS6.2) normally.
 

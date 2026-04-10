@@ -12,7 +12,7 @@ stages:
     max_retries: 1
   review:
     batch_override:
-      batch_1: [fg-410-code-reviewer, fg-411-security-reviewer]
+      batch_1: [fg-412-architecture-reviewer, fg-410-code-reviewer, fg-411-security-reviewer]
     conditional:
       - agent: fg-413-frontend-reviewer
         condition: frontend_files_in_diff

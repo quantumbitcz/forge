@@ -10,7 +10,7 @@ stages:
     skip: true
   review:
     batch_override:
-      batch_1: [fg-410-code-reviewer, fg-411-security-reviewer]
+      batch_1: [fg-412-architecture-reviewer, fg-410-code-reviewer, fg-411-security-reviewer]
     target_score: pass_threshold
 ---
 
