@@ -5,6 +5,9 @@ set -euo pipefail
 # Detects language + module, dispatches to the appropriate layer runner(s).
 # Always exits 0 — never blocks the pipeline.
 #
+# When bash 4.0+ is not available, delegates to engine.py (Python) if present.
+# This removes the hard bash 4.0+ requirement for macOS users.
+#
 # Modes:
 #   --hook              PostToolUse hook (single file, Layer 1 only)
 #   --verify            VERIFY stage (Layer 1 + Layer 2)
@@ -19,14 +22,19 @@ set -euo pipefail
 # Requires bash 4.0+ for BASH_REMATCH (regex capture groups).
 # macOS ships bash 3.2 — install bash 4+ via: brew install bash
 if (( BASH_VERSINFO[0] < 4 )); then
+  # Try Python entry point (no bash 4.0+ requirement)
+  _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if command -v python3 &>/dev/null && [ -f "${_SCRIPT_DIR}/engine.py" ]; then
+    python3 "${_SCRIPT_DIR}/engine.py" "$@"
+    exit $?
+  fi
   echo "[check-engine] WARNING: Bash 4.0+ required. Current: ${BASH_VERSION}. Skipping checks." >&2
   # Increment skip counter so VERIFY stage surfaces that checks were skipped.
   _skip_file=".forge/.check-engine-skipped"
   _log_dir="${FORGE_DIR:-.forge}"
   if [ -d ".forge" ]; then
     # Try atomic_increment from platform.sh; fall back to simple increment
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    source "${SCRIPT_DIR}/../platform.sh" 2>/dev/null || true
+    source "${_SCRIPT_DIR}/../platform.sh" 2>/dev/null || true
     if type atomic_increment &>/dev/null; then
       atomic_increment "$_skip_file" >/dev/null 2>&1
     else
