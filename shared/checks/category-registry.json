@@ -1,0 +1,24 @@
+{
+  "_note": "Canonical registry of finding category codes. Source of truth for scoring.md, output-format.md, and all review agents. When adding a new category, update this registry first.",
+  "categories": {
+    "ARCH": { "description": "Architectural violation (SRP, DIP, layer boundary)", "agents": ["fg-410-code-reviewer"], "wildcard": true },
+    "SEC": { "description": "Security concern (auth, injection, exposure)", "agents": ["fg-411-security-reviewer"], "wildcard": true },
+    "PERF": { "description": "Backend performance issue (N+1, O(n^2), blocking I/O)", "agents": ["fg-416-backend-performance-reviewer"], "wildcard": true },
+    "FE-PERF": { "description": "Frontend performance issue (re-renders, bundle size, DOM)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true },
+    "TEST": { "description": "Test quality issue (coverage, mocks, assertions, isolation)", "agents": ["fg-410-code-reviewer"], "wildcard": true },
+    "CONV": { "description": "Convention violation (naming, style, patterns)", "agents": ["fg-410-code-reviewer"], "wildcard": true },
+    "DOC": { "description": "Documentation gap (missing docs, stale sections, cross-ref conflicts)", "agents": ["fg-418-docs-consistency-reviewer"], "wildcard": true },
+    "QUAL": { "description": "Code quality (complexity, duplication, dead code, error handling)", "agents": ["fg-410-code-reviewer"], "wildcard": true },
+    "APPROACH": { "description": "Solution quality (suboptimal pattern, unnecessary complexity)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "INFO_ONLY", "accumulation_rule": "3+ recurrences escalate to convention" },
+    "SCOUT": { "description": "Boy Scout improvement (tracked, no point deduction)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "NONE" },
+    "A11Y": { "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true },
+    "DEPS": { "description": "Dependency health (vulnerable, unmaintained, outdated)", "agents": [], "wildcard": true, "status": "reserved" },
+    "COMPAT": { "description": "Compatibility issue (browser, platform, API version)", "agents": [], "wildcard": true, "status": "reserved" },
+    "CONTRACT": { "description": "Contract validation (breaking changes, schema violations)", "agents": ["fg-250-contract-validator"], "wildcard": true },
+    "STRUCT": { "description": "Project structure violation (file placement, naming, boundaries)", "agents": ["fg-410-code-reviewer"], "wildcard": true },
+    "INFRA": { "description": "Infrastructure/deployment issue (health, smoke, contract, image)", "agents": ["fg-419-infra-deploy-reviewer"], "wildcard": true },
+    "REVIEW-GAP": { "description": "Coverage gap from timed-out or failed review agent", "agents": ["fg-400-quality-gate"], "wildcard": false },
+    "DESIGN-TOKEN": { "description": "Frontend design token violation (hardcoded hex/rgb instead of theme tokens)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false },
+    "DESIGN-MOTION": { "description": "Frontend animation performance issue (non-GPU properties, missing will-change)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false }
+  }
+}

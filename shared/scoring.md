@@ -122,6 +122,8 @@ file:line | category | severity | description | suggested fix
 
 ### Category Codes
 
+> **Authoritative source:** See `shared/checks/category-registry.json` for the canonical list of all category codes, their emitting agents, and conflict resolution priorities. When adding a new category, update the registry first, then update this document.
+
 Categories are defined per module in `conventions.md`. Common shared categories:
 
 | Code | Meaning |
