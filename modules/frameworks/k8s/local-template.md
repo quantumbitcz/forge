@@ -44,12 +44,15 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: fg-412-architecture-reviewer
+      focus: "service boundaries, namespace structure, resource organization"
+    - agent: fg-411-security-reviewer
+      focus: "secrets exposure, RBAC, pod security, network policies, image provenance"
     - agent: fg-419-infra-deploy-reviewer
       focus: "deployment safety, resource limits, probes, security context"
   batch_2:
-    - agent: "Security Engineer"
-      source: builtin
-      focus: "secrets exposure, RBAC, pod security, network policies, image provenance"
+    - agent: fg-410-code-reviewer
+      focus: "manifest correctness, DRY violations, configuration consistency"
     - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:

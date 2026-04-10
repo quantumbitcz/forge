@@ -37,18 +37,20 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: fg-412-architecture-reviewer
+      focus: "HAL layer boundaries, module isolation, driver interface patterns"
     - agent: fg-411-security-reviewer
       focus: "buffer overflows, format strings, integer overflows, use-after-free"
     - agent: fg-416-backend-performance-reviewer
       focus: "ISR allocation, cache-friendly access, busy-wait loops, volatile usage"
+  batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, memory safety, const correctness"
-  batch_2:
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks: []
 
 test_gate:

@@ -38,18 +38,26 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-413-frontend-reviewer
+    - agent: fg-412-architecture-reviewer
+      focus: "component boundaries, state management patterns, module structure"
     - agent: fg-411-security-reviewer
       focus: "XSS, injection, secrets exposure, prototype pollution"
     - agent: fg-413-frontend-reviewer
+    - agent: fg-413-frontend-reviewer
       mode: a11y-only
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
+  batch_2:
     - agent: fg-410-code-reviewer
-      focus: "general correctness, maintainability"
+      focus: "general correctness, maintainability, error handling, DRY/KISS"
+    - agent: fg-420-dependency-reviewer
+      condition: manifest_changed
+      focus: "vulnerable, outdated, unmaintained dependencies"
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-  batch_2:
+  batch_3:
     - agent: "Security Engineer"
       source: builtin
       focus: "XSS, injection, localStorage, prototype pollution"
@@ -59,15 +67,12 @@ quality_gate:
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, bad fallbacks"
-  batch_3:
     - agent: "pr-review-toolkit:code-simplifier"
       source: plugin
       focus: "over-engineering, unnecessary abstractions"
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "type encapsulation, branded types, discriminated unions"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 

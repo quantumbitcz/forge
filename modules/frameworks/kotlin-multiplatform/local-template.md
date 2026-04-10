@@ -69,7 +69,7 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-410-code-reviewer
+    - agent: fg-412-architecture-reviewer
       focus: "source set boundary violations, JVM-only imports in commonMain, actual/expect misuse"
     - agent: fg-411-security-reviewer
       focus: "data handling, key storage, certificate pinning"
@@ -77,12 +77,15 @@ quality_gate:
       focus: "coroutine scope management, blocking calls on wrong dispatcher, SQLDelight query efficiency"
   batch_2:
     - agent: fg-410-code-reviewer
-      focus: "general correctness, maintainability"
+      focus: "general correctness, maintainability, error handling, DRY/KISS"
+    - agent: fg-420-dependency-reviewer
+      condition: manifest_changed
+      focus: "vulnerable, outdated, unmaintained dependencies"
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 

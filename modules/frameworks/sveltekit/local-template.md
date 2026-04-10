@@ -42,20 +42,25 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
+    - agent: fg-412-architecture-reviewer
+      focus: "route structure, load function boundaries, server/client separation"
+    - agent: fg-411-security-reviewer
+      focus: "server-side auth, input validation, data exposure"
     - agent: fg-413-frontend-reviewer
     - agent: fg-413-frontend-reviewer
       mode: a11y-only
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
-    - agent: fg-411-security-reviewer
-      focus: "server-side auth, input validation, data exposure"
   batch_2:
     - agent: fg-410-code-reviewer
-      focus: "general correctness, maintainability"
+      focus: "general correctness, maintainability, error handling, DRY/KISS"
+    - agent: fg-420-dependency-reviewer
+      condition: manifest_changed
+      focus: "vulnerable, outdated, unmaintained dependencies"
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 

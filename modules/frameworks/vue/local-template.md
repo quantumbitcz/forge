@@ -42,19 +42,27 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-413-frontend-reviewer
-      focus: "Composition API usage, SSR safety, useFetch patterns, Pinia store structure"
+    - agent: fg-412-architecture-reviewer
+      focus: "Composition API structure, composable boundaries, Pinia store architecture"
     - agent: fg-411-security-reviewer
       focus: "Server route input validation, runtimeConfig secrets, v-html usage, auth middleware"
     - agent: fg-413-frontend-reviewer
+      focus: "Composition API usage, SSR safety, useFetch patterns, Pinia store structure"
+    - agent: fg-413-frontend-reviewer
       mode: a11y-only
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
+  batch_2:
     - agent: fg-410-code-reviewer
-      focus: "general correctness, maintainability"
+      focus: "general correctness, maintainability, error handling, DRY/KISS"
+    - agent: fg-420-dependency-reviewer
+      condition: manifest_changed
+      focus: "vulnerable, outdated, unmaintained dependencies"
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-  batch_2:
+  batch_3:
     - agent: "Security Engineer"
       source: builtin
       focus: "Server route authorization, runtimeConfig public exposure, XSS via v-html"
@@ -64,15 +72,12 @@ quality_gate:
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, missing error handling in useFetch"
-  batch_3:
     - agent: "pr-review-toolkit:code-simplifier"
       source: plugin
       focus: "unnecessary complexity, Options API remnants, over-engineered composables"
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "defineProps generics, defineEmits types, Pinia store types, composable return types"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 

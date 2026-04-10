@@ -44,19 +44,27 @@ scaffolder:
 quality_gate:
   max_review_cycles: 2
   batch_1:
-    - agent: fg-413-frontend-reviewer
-      focus: "Server vs Client component boundaries, SSR/SSG correctness, metadata"
+    - agent: fg-412-architecture-reviewer
+      focus: "Server vs Client component boundaries, SSR/SSG correctness, module structure"
     - agent: fg-411-security-reviewer
       focus: "Server Action input validation, NEXT_PUBLIC_ secrets, CSRF, XSS"
     - agent: fg-413-frontend-reviewer
+      focus: "Server vs Client component boundaries, SSR/SSG correctness, metadata"
+    - agent: fg-413-frontend-reviewer
       mode: a11y-only
       focus: "WCAG 2.2 AA deep audit, color contrast, ARIA tree, touch targets"
+  batch_2:
     - agent: fg-410-code-reviewer
-      focus: "general correctness, maintainability"
+      focus: "general correctness, maintainability, error handling, DRY/KISS"
+    - agent: fg-420-dependency-reviewer
+      condition: manifest_changed
+      focus: "vulnerable, outdated, unmaintained dependencies"
+    - agent: fg-418-docs-consistency-reviewer
+      focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"
       source: plugin
       focus: "CLAUDE.md adherence"
-  batch_2:
+  batch_3:
     - agent: "Security Engineer"
       source: builtin
       focus: "Server Action authorization, Route Handler auth, env var exposure"
@@ -66,15 +74,12 @@ quality_gate:
     - agent: "pr-review-toolkit:silent-failure-hunter"
       source: plugin
       focus: "swallowed errors, empty catch, missing error.tsx boundaries"
-  batch_3:
     - agent: "pr-review-toolkit:code-simplifier"
       source: plugin
       focus: "unnecessary Client Components, over-engineering"
     - agent: "pr-review-toolkit:type-design-analyzer"
       source: plugin
       focus: "Server Action types, page prop types, discriminated unions"
-    - agent: fg-418-docs-consistency-reviewer
-      focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
     - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
