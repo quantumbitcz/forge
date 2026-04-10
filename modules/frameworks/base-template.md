@@ -390,6 +390,5 @@ These are documented exceptions, not drift:
 - **k8s**: No `language_file`, `conventions_variant`, `conventions_testing` (language is null)
 - **k8s**: Adds `infra:` section (unique to infrastructure templates)
 - **nextjs, vue**: `commands.build_timeout: 180` (SSR builds are slower)
-- **axum, express, fastapi, go-stdlib, nestjs, svelte, sveltekit**: Missing `inline_checks` in `quality_gate` (drift -- should be added)
 - **Frontend templates**: Extra `analysis_agents` entry in `test_gate` (coverage auditor)
 - **Frontend templates**: Include `frontend_polish` section

@@ -54,6 +54,8 @@ quality_gate:
       focus: "CLAUDE.md adherence"
     - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
+  inline_checks:
+    - script: "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --verify"
 
 test_gate:
   command: "cargo test"
