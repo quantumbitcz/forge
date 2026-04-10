@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Dispatch Response",
+  "description": "Expected output structure from dispatched review agents.",
+  "type": "object",
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "finding-schema.json" },
+      "maxItems": 100
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of review focus area"
+    },
+    "coverage": {
+      "type": "string",
+      "description": "What was and wasn't covered"
+    }
+  }
+}

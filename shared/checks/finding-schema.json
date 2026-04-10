@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Finding",
+  "description": "Schema for a single quality finding emitted by review agents.",
+  "type": "object",
+  "required": ["file", "line", "category", "severity", "description", "fix_hint"],
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Project-relative path",
+      "pattern": "^[^\\s]"
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "1-based line number, 0 for file-level"
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9-]+$",
+      "description": "Category code from category-registry.json"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "WARNING", "INFO"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fix_hint": {
+      "type": "string",
+      "description": "May be empty string"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW"],
+      "default": "HIGH"
+    }
+  }
+}

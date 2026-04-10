@@ -65,3 +65,7 @@ Emit one line per finding location. Group in post-processing.
 ### JSON metadata keys
 
 Underscore-prefixed keys (`_match_order`, `_severity_map`, `_note`) in any JSON config file are documentation/metadata. Parsers must skip keys starting with `_`.
+
+### Machine-Readable Schema Reference
+
+For machine-readable validation, see `shared/checks/finding-schema.json` and `shared/checks/dispatch-response-schema.json`. The pipe-delimited text format is the primary communication format; the JSON schemas document the structural contract.
