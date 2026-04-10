@@ -32,6 +32,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Entry condition:** User invokes `/forge-run` with a requirement string.
 
+**Phase grouping:** PREFLIGHT is decomposed into two phases. Phase A runs a Config Group (§0.1-§0.10: mode detection, config parsing, convention resolution, rule cache generation) and an Integration Group (§0.11, §0.22, §0.23: documentation discovery, graph context, MCP detection) in parallel. Config Group failure aborts the pipeline; Integration Group failures degrade gracefully. Phase B (§0.12-§0.21: state integrity, worktree creation, tracking) runs after Phase A completes. See `fg-100-orchestrator-boot.md` "PREFLIGHT Phase Structure" for the full breakdown.
+
 **Inputs:**
 - User's requirement string (from `/forge-run` argument)
 - `forge.local.md` (static project config)

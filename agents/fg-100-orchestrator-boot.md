@@ -10,6 +10,53 @@
 
 ---
 
+### PREFLIGHT Phase Structure
+
+PREFLIGHT steps are organized into two phases. Phase A runs two groups in parallel; Phase B runs only after Phase A completes.
+
+```
+Phase A (parallel)
+├── Config Group (§0.1–§0.10)        ── must all succeed or abort
+│   §0.1  Requirement Mode Detection
+│   §0.2  Read Project Config
+│   §0.3  Read Mutable Runtime Params
+│   §0.4  Config Validation
+│   §0.5  Convention Fingerprinting
+│   §0.6  PREEMPT System + Version Detection
+│   §0.6a Detect Project Dependency Versions
+│   §0.7  Deprecation Refresh
+│   §0.8  Config Mode Detection
+│   §0.9  Multi-Component Convention Resolution
+│   §0.10 Check Engine Rule Cache
+│
+└── Integration Group (§0.11, §0.22, §0.23) ── failures degrade, never abort
+    §0.11 Documentation Discovery
+    §0.22 Graph Context
+    §0.23 MCP Detection
+
+Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
+    §0.12 Check Coverage Baseline
+    §0.13 State Integrity Check
+    §0.14 Check for Interrupted Runs
+    §0.15 --from Flag Precedence
+    §0.16 Pipeline Lock
+    §0.17 Initialize State
+    §0.18 Create Worktree
+    §0.18a Bugfix Source Resolution
+    §0.19 Create Visual Task Tracker
+    §0.20 Kanban Status Transitions
+    §0.21 Runtime Convention Lookup
+```
+
+**Failure rules:**
+- **Config Group failure → abort pipeline.** Missing config or invalid constraints are unrecoverable at this stage.
+- **Integration Group failure → degraded mode.** Each integration (docs discovery, graph, MCP) degrades independently. Set `integrations.{name}.available: false` and continue.
+- **Phase B depends on Phase A.** Phase B steps require resolved config, convention stacks, and integration availability flags before they can execute. Phase B does not start until both Config Group and Integration Group have completed (or degraded).
+
+---
+
+> **Config Group starts here**
+
 ### §0.1 Requirement Mode Detection
 
 Before reading config, detect the requirement mode from the user's input:
@@ -215,6 +262,8 @@ After resolving all convention stacks, generate per-component rule caches for th
 
 ---
 
+> **Integration Group starts here**
+
 ### §0.11 Documentation Discovery (dispatch fg-130-docs-discoverer)
 
 If `documentation.enabled` is `true` (default): dispatch `fg-130-docs-discoverer` with:
@@ -231,6 +280,8 @@ Store discovery metrics in `state.json.documentation` (files_discovered, section
 **On failure/timeout:** Log INFO: `"Documentation discovery skipped — {reason}."` Continue. Do NOT invoke the recovery engine — this step is advisory. Set `state.json.documentation` to `{}`.
 
 ---
+
+> **Phase B starts here**
 
 ### §0.12 Check Coverage Baseline (Test Bootstrapper)
 
