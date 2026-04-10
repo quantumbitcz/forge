@@ -1960,6 +1960,7 @@ CREATE (:SharedContract {name: 'agent-consolidation-analysis', file_path: 'share
 CREATE (:SharedContract {name: 'agent-defaults', file_path: 'shared/agent-defaults.md'});
 CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-philosophy.md'});
 CREATE (:SharedContract {name: 'agent-ui', file_path: 'shared/agent-ui.md'});
+CREATE (:SharedContract {name: 'conventions-index', file_path: 'shared/conventions-index.md'});
 CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
 CREATE (:SharedContract {name: 'cross-repo-contracts', file_path: 'shared/cross-repo-contracts.md'});
 CREATE (:SharedContract {name: 'debugging-techniques', file_path: 'shared/debugging-techniques.md'});
