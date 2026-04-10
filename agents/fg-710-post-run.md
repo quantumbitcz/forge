@@ -3,7 +3,7 @@ name: fg-710-post-run
 description: Records user corrections as structured feedback and creates human-readable pipeline run recap.
 model: inherit
 color: magenta
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'AskUserQuestion']
 ui:
   ask: true
   tasks: false

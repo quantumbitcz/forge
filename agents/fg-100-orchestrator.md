@@ -11,7 +11,7 @@ description: |
   </example>
 model: inherit
 color: cyan
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'neo4j-mcp']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'neo4j-mcp', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true
   ask: true

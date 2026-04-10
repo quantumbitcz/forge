@@ -16,7 +16,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 }
 
 @test "category-registry: all 19 categories from scoring.md present" {
-  local categories=(ARCH SEC PERF FE-PERF TEST CONV DOC QUAL APPROACH SCOUT A11Y DEPS COMPAT CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)
+  local categories=(ARCH SEC PERF FE-PERF TEST CONV DOC QUAL APPROACH SCOUT A11Y DEP COMPAT CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)
   for cat in "${categories[@]}"; do
     python3 -c "
 import json, sys
@@ -71,7 +71,7 @@ assert scout.get('score_impact') == 'NONE', f'SCOUT score_impact: {scout.get(\"s
 import json, sys
 with open('$REGISTRY') as f:
     data = json.load(f)
-for cat_name in ['DEPS', 'COMPAT']:
+for cat_name in ['COMPAT']:
     cat = data['categories'][cat_name]
     assert cat.get('status') == 'reserved', f'{cat_name} status: {cat.get(\"status\")}'
     assert cat.get('agents') == [], f'{cat_name} agents: {cat.get(\"agents\")}'

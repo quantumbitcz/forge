@@ -63,7 +63,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-22 skills provide the user-facing interface to the pipeline and its subsystems.
+25 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -346,7 +346,7 @@ Reference the cross-cutting review agents (`fg-412-architecture-reviewer`, `fg-4
 ```
 forge/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.4.0)
+    plugin.json                         # Plugin manifest (v1.11.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 38 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
@@ -416,7 +416,7 @@ forge/
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.4.0
+    state-schema.md                     # State schema v1.5.0
     checks/                             # 3-layer generalized check engine
       engine.sh                         #   Main engine script (--hook, --verify, --review modes)
       test-engine.sh                    #   Engine test harness

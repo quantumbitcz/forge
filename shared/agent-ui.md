@@ -62,6 +62,6 @@ When `autonomous: true` in `forge-config.md`:
 | Tier | UI Capabilities | Agents |
 |------|----------------|--------|
 | 1 | tasks + ask + plan_mode | fg-010-shaper, fg-015-scope-decomposer, fg-200-planner, fg-160-migration-planner, fg-050-project-bootstrapper, fg-090-sprint-orchestrator |
-| 2 | tasks + ask | fg-100-orchestrator, fg-020-bug-investigator, fg-400-quality-gate, fg-500-test-gate, fg-600-pr-builder, fg-103-cross-repo-coordinator |
+| 2 | tasks + ask | fg-100-orchestrator, fg-020-bug-investigator, fg-400-quality-gate, fg-500-test-gate, fg-600-pr-builder, fg-103-cross-repo-coordinator, fg-710-post-run |
 | 3 | tasks only | fg-300-implementer, fg-320-frontend-polisher, fg-700-retrospective, fg-130-docs-discoverer, fg-140-deprecation-refresh, fg-650-preview-validator, fg-590-pre-ship-verifier, fg-610-infra-deploy-verifier, fg-310-scaffolder, fg-350-docs-generator, fg-250-contract-validator, fg-150-test-bootstrapper |
-| 4 | none | All 8 reviewers, fg-210-validator, fg-710-post-run, fg-101-worktree-manager, fg-102-conflict-resolver |
+| 4 | none | All 9 reviewers, fg-210-validator, fg-101-worktree-manager, fg-102-conflict-resolver |

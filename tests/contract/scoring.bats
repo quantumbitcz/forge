@@ -102,7 +102,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 #     TEST-*, FE-PERF-*, SCOUT-*, A11Y-*, DEP-*, COMPAT-*, REVIEW-GAP
 # ---------------------------------------------------------------------------
 @test "scoring: category code prefixes documented" {
-  local categories=(ARCH SEC PERF QUAL CONV DOC TEST FE-PERF SCOUT A11Y DEPS COMPAT APPROACH CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)
+  local categories=(ARCH SEC PERF QUAL CONV DOC TEST FE-PERF SCOUT A11Y DEP COMPAT APPROACH CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)
   for cat in "${categories[@]}"; do
     grep -q "${cat}" "$SCORING" || fail "Category prefix ${cat} not found in scoring.md"
   done

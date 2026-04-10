@@ -3,7 +3,7 @@
 Analysis of review agent overlap and consolidation candidates. This is an advisory document — no implementation changes are proposed here. Any consolidation would be a separate initiative.
 
 **Date:** 2026-04-10
-**Context:** 39 agent `.md` files (36 unique agents, orchestrator split across 4 files). 7 review agents dispatched per REVIEW cycle by the quality gate (`fg-400`).
+**Context:** 38 agent `.md` files (orchestrator is a single file). 9 review agents dispatched per REVIEW cycle by the quality gate (`fg-400`).
 
 ## Review Agent Inventory
 

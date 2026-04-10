@@ -83,7 +83,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 
 - **Frontmatter required:** `name` (must match filename sans `.md`), `description`, `tools`. Dispatch agents must include `Agent`.
 - **UI:** `AskUserQuestion` for multi-option choices (never `Options: (1)...`). `EnterPlanMode`/`ExitPlanMode` for planning (skip in autonomous/replanning). `TaskCreate`/`TaskUpdate` wraps every dispatch.
-- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier. Tier 4 (none): all reviewers, validator, post-run, worktree manager, conflict resolver.
+- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier. Tier 4 (none): all reviewers (fg-410 through fg-420), validator, worktree manager, conflict resolver.
 - **`ui:` frontmatter** declares capabilities; enforced by `ui-frontmatter-consistency.bats`.
 - **Config:** `components:` in `forge.local.md` — core: `language:`, `framework:`, `variant:`, `testing:`. Framework-specific: `web`, `persistence` (distinct from crosscutting `modules/persistence/`). Optional crosscutting: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality` (list type, supports object form with external ruleset). Multi-service: entries with `path:`. Documentation config: `documentation:` section controls generation.
 - **`mode_config:`** defines per-stage agent selection and mode overlays. `mode_config.stages` maps each pipeline stage to its default agent. `mode_config.mode_overlays` overrides specific stages per pipeline mode (bugfix, migration, bootstrap). Resolution: overlay > stage default > hardcoded fallback.
@@ -91,7 +91,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
-- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 7): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
+- **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
 
@@ -170,7 +170,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (25), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 2 agents, full: 7; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check).
 
 **Hooks** (4): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
