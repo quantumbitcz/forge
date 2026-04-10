@@ -65,7 +65,7 @@ load '../helpers/test-helpers'
 @test "docs-scenario: ADR significance criteria documented" {
   local found=0
   grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/fg-350-docs-generator.md" && found=1
-  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" && found=1
+  grep -qi "significance criteria\|2+ criteria\|alternatives evaluated" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" && found=1
   (( found > 0 )) || fail "ADR significance criteria not documented in generator or orchestrator"
 }
 

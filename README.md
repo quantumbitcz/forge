@@ -349,7 +349,7 @@ forge/
   agents/                               # 38 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
     fg-050-project-bootstrapper.md
-    fg-100-orchestrator-core.md       # + boot, execute, ship phase files
+    fg-100-orchestrator.md
     fg-130-docs-discoverer.md
     fg-140-deprecation-refresh.md
     fg-150-test-bootstrapper.md

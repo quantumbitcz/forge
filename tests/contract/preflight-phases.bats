@@ -3,7 +3,7 @@
 
 load '../helpers/test-helpers'
 
-BOOT_DOC="$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md"
+BOOT_DOC="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 
 # ---------------------------------------------------------------------------
@@ -69,6 +69,6 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 # 8. Stage contract references boot doc phase structure
 # ---------------------------------------------------------------------------
 @test "preflight-phases: stage contract references boot doc phase structure" {
-  grep -qi "phase.*group\|Config Group\|Integration Group\|orchestrator-boot" "$STAGE_CONTRACT" \
-    || fail "Stage contract does not reference boot doc phase structure"
+  grep -qi "phase.*group\|Config Group\|Integration Group\|orchestrator" "$STAGE_CONTRACT" \
+    || fail "Stage contract does not reference orchestrator phase structure"
 }

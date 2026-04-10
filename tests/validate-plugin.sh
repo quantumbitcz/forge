@@ -36,19 +36,9 @@ echo "=== forge structural validation ==="
 echo ""
 echo "--- AGENTS ---"
 
-# Helper: orchestrator phase files (no frontmatter — loaded as includes, not standalone agents)
-is_orch_phase_file() {
-  local name
-  name="$(basename "$1" .md)"
-  [[ "$name" == fg-100-orchestrator-boot ]] || \
-  [[ "$name" == fg-100-orchestrator-execute ]] || \
-  [[ "$name" == fg-100-orchestrator-ship ]]
-}
-
 # Check 1: All agents have valid YAML frontmatter (name + description between --- delimiters)
 check1_fail=0
 for f in "$ROOT/agents/"*.md; do
-  is_orch_phase_file "$f" && continue
   # Frontmatter must start on line 1 with ---, end with a second ---
   # name: must appear in the frontmatter, description: must appear too
   has_open=$(awk 'NR==1{print ($0=="---")?1:0}' "$f")
@@ -67,14 +57,9 @@ check "All agents have valid YAML frontmatter (name, description)" "$check1_fail
 # Check 2: Agent name in frontmatter matches filename without .md
 check2_fail=0
 for f in "$ROOT/agents/"*.md; do
-  is_orch_phase_file "$f" && continue
   expected=$(basename "$f" .md)
   # Extract name from frontmatter (first --- block)
   actual=$(awk '/^---/{c++; next} c==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit} c==2{exit}' "$f")
-  # Core file retains the canonical agent name for dispatch
-  if [ "$expected" = "fg-100-orchestrator-core" ] && [ "$actual" = "fg-100-orchestrator" ]; then
-    continue
-  fi
   if [ "$actual" != "$expected" ]; then
     check2_fail=1; break
   fi
@@ -84,7 +69,6 @@ check "Agent name matches filename without .md" "$check2_fail"
 # Check 3: Pipeline agents (fg-* files) follow fg-{NNN}-{role} naming
 check3_fail=0
 for f in "$ROOT/agents/fg-"*.md; do
-  is_orch_phase_file "$f" && continue
   name=$(basename "$f" .md)
   if ! echo "$name" | grep -qE '^fg-[0-9]{3}-.+$'; then
     check3_fail=1; break
@@ -95,7 +79,6 @@ check "Pipeline agents follow fg-{NNN}-{role} naming" "$check3_fail"
 # Check 4: Cross-cutting review agents (non-fg-* agents) have tools list in frontmatter
 check4_fail=0
 for f in "$ROOT/agents/"*.md; do
-  is_orch_phase_file "$f" && continue
   name=$(basename "$f" .md)
   if echo "$name" | grep -qE '^fg-[0-9]{3}-'; then
     continue
@@ -110,7 +93,6 @@ check "Cross-cutting review agents have tools list in frontmatter" "$check4_fail
 # Check 5: All agents have "Forbidden Actions" section
 check5_fail=0
 for f in "$ROOT/agents/"*.md; do
-  is_orch_phase_file "$f" && continue
   if ! grep -q "Forbidden Actions" "$f"; then
     check5_fail=1; break
   fi
@@ -730,7 +712,7 @@ echo ""
 echo "P0: Orchestrator split and scripts..."
 
 orch_split_fail=0
-for f in fg-100-orchestrator-core.md fg-100-orchestrator-boot.md fg-100-orchestrator-execute.md fg-100-orchestrator-ship.md; do
+for f in fg-100-orchestrator.md fg-100-orchestrator.md fg-100-orchestrator.md fg-100-orchestrator.md; do
   if [[ ! -f "$ROOT/agents/$f" ]]; then
     echo "    Missing: agents/$f"
     orch_split_fail=1
@@ -739,16 +721,26 @@ done
 check "Orchestrator split files exist" "$orch_split_fail"
 
 core_name_fail=0
-if ! grep -q "^name: fg-100-orchestrator$" "$ROOT/agents/fg-100-orchestrator-core.md"; then
+if ! grep -q "^name: fg-100-orchestrator$" "$ROOT/agents/fg-100-orchestrator.md"; then
   core_name_fail=1
 fi
 check "Orchestrator core has correct name in frontmatter" "$core_name_fail"
 
-old_orch_fail=0
-if [[ -f "$ROOT/agents/fg-100-orchestrator.md" ]]; then
-  old_orch_fail=1
+merged_orch_fail=0
+if [[ ! -f "$ROOT/agents/fg-100-orchestrator.md" ]]; then
+  merged_orch_fail=1
 fi
-check "Old monolithic orchestrator removed" "$old_orch_fail"
+check "Merged orchestrator exists" "$merged_orch_fail"
+
+# Verify phase fragment files no longer exist
+phase_fragment_fail=0
+for frag in fg-100-orchestrator-core.md fg-100-orchestrator-boot.md fg-100-orchestrator-execute.md fg-100-orchestrator-ship.md; do
+  if [[ -f "$ROOT/agents/$frag" ]]; then
+    phase_fragment_fail=1
+    break
+  fi
+done
+check "Orchestrator phase fragment files removed" "$phase_fragment_fail"
 
 for script in forge-state.sh forge-state-write.sh check-prerequisites.sh; do
   script_fail=0

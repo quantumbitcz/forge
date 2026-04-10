@@ -4,8 +4,8 @@
 load '../helpers/test-helpers'
 
 DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
-ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
 # ---------------------------------------------------------------------------

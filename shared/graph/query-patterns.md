@@ -125,7 +125,7 @@ RETURN m.name, count(*) AS binding_count ORDER BY binding_count DESC
 
 **Used during:** EXPLORE
 
-Traces the full dependency chain from a given file up to 4 hops deep. The orchestrator runs this during the EXPLORE stage to give `fg-100-orchestrator-core` a prioritized list of files that may need to change, ordered by proximity to the root.
+Traces the full dependency chain from a given file up to 4 hops deep. The orchestrator runs this during the EXPLORE stage to give `fg-100-orchestrator` a prioritized list of files that may need to change, ordered by proximity to the root.
 
 ```cypher
 // Given a file, what's the full dependency chain?

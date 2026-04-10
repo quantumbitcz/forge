@@ -5,22 +5,12 @@ load '../helpers/test-helpers'
 
 AGENTS_DIR="$PLUGIN_ROOT/agents"
 
-# Orchestrator phase files are loaded as includes (no frontmatter)
-is_orch_phase_file() {
-  local name
-  name="$(basename "$1" .md)"
-  [[ "$name" == fg-100-orchestrator-boot ]] || \
-  [[ "$name" == fg-100-orchestrator-execute ]] || \
-  [[ "$name" == fg-100-orchestrator-ship ]]
-}
-
 # ---------------------------------------------------------------------------
 # 1. All agents have YAML frontmatter (first line is ---)
 # ---------------------------------------------------------------------------
 @test "agent-frontmatter: all agents start with --- on line 1" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local first_line
     first_line="$(head -1 "$agent_file")"
     if [[ "$first_line" != "---" ]]; then
@@ -38,7 +28,6 @@ is_orch_phase_file() {
 @test "agent-frontmatter: all agents have name: field" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     if ! grep -qE '^name:' "$agent_file"; then
       failures+=("$(basename "$agent_file")")
     fi
@@ -54,7 +43,6 @@ is_orch_phase_file() {
 @test "agent-frontmatter: all agents have description: field" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     if ! grep -qE '^description:' "$agent_file"; then
       failures+=("$(basename "$agent_file")")
     fi
@@ -70,7 +58,6 @@ is_orch_phase_file() {
 @test "agent-frontmatter: pipeline agent names match fg-NNN-role pattern" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/fg-*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local name_value
     name_value="$(grep -E '^name:' "$agent_file" | head -1 | sed 's/^name:[[:space:]]*//')"
     if ! printf '%s' "$name_value" | grep -qE '^fg-[0-9]{3}-[a-z][a-z0-9-]+$'; then
@@ -88,15 +75,10 @@ is_orch_phase_file() {
 @test "agent-frontmatter: name field matches filename" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local expected_name
     expected_name="$(basename "$agent_file" .md)"
     local actual_name
     actual_name="$(grep -E '^name:' "$agent_file" | head -1 | sed 's/^name:[[:space:]]*//')"
-    # Core file retains the canonical agent name for dispatch
-    if [[ "$expected_name" == "fg-100-orchestrator-core" && "$actual_name" == "fg-100-orchestrator" ]]; then
-      continue
-    fi
     if [[ "$actual_name" != "$expected_name" ]]; then
       failures+=("$(basename "$agent_file"): expected='$expected_name' got='$actual_name'")
     fi

@@ -4,7 +4,7 @@
 load '../helpers/test-helpers'
 
 DECISION_LOG="$PLUGIN_ROOT/shared/decision-log.md"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 CONVERGENCE="$PLUGIN_ROOT/shared/convergence-engine.md"
 
 # ---------------------------------------------------------------------------

@@ -4,8 +4,8 @@ setup() {
   load '../lib/bats-support/load'
   load '../lib/bats-assert/load'
   PLUGIN_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
-  ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
-  ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-execute.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator-ship.md")
+  ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
+  ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
   STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 }
 
@@ -16,7 +16,7 @@ setup() {
 @test "tracking-contract: orchestrator creates worktree at PREFLIGHT" {
   grep -q "Create Worktree" "${ORCHESTRATOR_ALL[@]}"
   # The worktree section should be in the boot file (PREFLIGHT phase)
-  grep -q "Create Worktree" "$PLUGIN_ROOT/agents/fg-100-orchestrator-boot.md"
+  grep -q "Create Worktree" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 }
 
 @test "tracking-contract: orchestrator has sub-agent dispatch pattern" {

@@ -6,7 +6,7 @@
 load '../helpers/test-helpers'
 
 CONVERGENCE="$PLUGIN_ROOT/shared/convergence-engine.md"
-ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator-core.md"
+ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
 # ---------------------------------------------------------------------------

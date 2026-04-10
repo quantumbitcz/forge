@@ -6,15 +6,6 @@ load '../helpers/test-helpers'
 
 AGENTS_DIR="$PLUGIN_ROOT/agents"
 
-# Orchestrator phase files are loaded as includes (no frontmatter)
-is_orch_phase_file() {
-  local name
-  name="$(basename "$1" .md)"
-  [[ "$name" == fg-100-orchestrator-boot ]] || \
-  [[ "$name" == fg-100-orchestrator-execute ]] || \
-  [[ "$name" == fg-100-orchestrator-ship ]]
-}
-
 # Helper: extract tools from agent frontmatter (handles both inline and multi-line YAML)
 get_agent_tools() {
   local file="$1"
@@ -38,7 +29,6 @@ get_agent_body() {
 @test "agent-tools: agents dispatching sub-agents have Agent in tools" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local name
     name="$(basename "$agent_file" .md)"
     local tools
@@ -69,7 +59,6 @@ get_agent_body() {
 @test "agent-tools: agents using context7 have MCP tools in tools list" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local name
     name="$(basename "$agent_file" .md)"
     local tools
@@ -102,7 +91,6 @@ get_agent_body() {
 @test "agent-tools: agents invoking skills have Skill in tools list" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local name
     name="$(basename "$agent_file" .md)"
     local tools
@@ -157,7 +145,6 @@ get_agent_body() {
 @test "agent-tools: agents with Agent tool actually dispatch sub-agents" {
   local failures=()
   for agent_file in "$AGENTS_DIR"/*.md; do
-    is_orch_phase_file "$agent_file" && continue
     local name
     name="$(basename "$agent_file" .md)"
     local tools
