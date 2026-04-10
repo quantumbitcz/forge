@@ -61,7 +61,7 @@ Before dispatching review agents:
    - Log WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old_hash}, now: {new_hash})`
    - Include drift context in dispatch prompts to reviewers: "NOTE: Conventions updated mid-run. Evaluate against current conventions."
    - Add informational finding: `REVIEW-CONTEXT | INFO | Conventions changed mid-run; review performed against current version`
-4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform fg-410-code-reviewer)
+4. Optionally compare per-section hashes to inform specific reviewers about section changes (e.g., architecture section changed → inform fg-412-architecture-reviewer)
 
 ---
 
@@ -142,7 +142,7 @@ Agents with a `condition` field are only dispatched when the condition is met. E
 
 - `"condition": "migrations_changed"` -- check if any `.sql` files are in the changed list
 - `"condition": "api_spec_changed"` -- check if `api.yml` or similar spec files changed
-- `"condition": "dependencies_changed"` -- check if `build.gradle.kts`, `package.json`, lock files changed
+- `"condition": "dependencies_changed"` or `"condition": "manifest_changed"` -- check if `build.gradle.kts`, `package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `*.csproj`, lock files, or other dependency manifests changed
 - Custom conditions: interpret the condition string and match against the changed file paths
 
 If no agents in a batch qualify after condition evaluation, skip the batch entirely.
@@ -471,13 +471,15 @@ list is authoritative — if an agent is not listed here, it cannot be dispatche
 this gate. The `generate-seed.sh` script reads this section to build DISPATCHES edges
 in the knowledge graph.
 
-- `fg-410-code-reviewer` — architecture pattern compliance AND code quality (error handling, DRY/KISS, defensive programming, test quality)
+- `fg-410-code-reviewer` — code quality (error handling, DRY/KISS, defensive programming, test quality, naming, complexity)
 - `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs
+- `fg-412-architecture-reviewer` — architecture pattern compliance, layer boundaries, dependency rules, module structure
 - `fg-413-frontend-reviewer` — conventions, accessibility (WCAG 2.2 AA), performance (bundle size, rendering, lazy loading), framework-specific patterns, design system compliance, visual coherence, responsive behavior. Supports review modes: `full` (default), `conventions-only`, `a11y-only`, `performance-only`.
 - `fg-416-backend-performance-reviewer` — N+1 queries, missing indexes, connection pools, caching
 - `fg-417-version-compat-reviewer` — dependency tree conflicts, language feature compatibility
-- `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
 - `fg-418-docs-consistency-reviewer` — consistency with documented decisions and constraints
+- `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
+- `fg-420-dependency-reviewer` — vulnerable, outdated, unmaintained dependencies, version conflicts, license compliance
 
 ---
 
