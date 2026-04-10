@@ -31,7 +31,7 @@ Run the pipeline's check engine in full review mode across the entire project to
    ```
    file:line | CATEGORY | SEVERITY | message | fix_hint
    ```
-   Collect all output lines. Count findings by severity (CRITICAL, WARNING, INFO) and by category prefix (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*, FE-PERF-*, APPROACH-*, A11Y-*, DEPS-*, COMPAT-*).
+   Collect all output lines. Count findings by severity (CRITICAL, WARNING, INFO) and by category prefix (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*, FE-PERF-*, APPROACH-*, A11Y-*, DEP-*, COMPAT-*).
 
 5. **Calculate quality score:** Use the scoring formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. Determine verdict: PASS (>= 80), CONCERNS (60-79), FAIL (< 60 or any CRITICAL).
 
@@ -83,7 +83,7 @@ Run the pipeline's check engine in full review mode across the entire project to
    - `FE-PERF-*` → Frontend Perf
    - `APPROACH-*` → Approach
    - `A11Y-*` → Accessibility
-   - `DEPS-*` → Dependencies
+   - `DEP-*` → Dependencies
    - `COMPAT-*` → Compatibility
    - `SCOUT-*` → omit from table (no deduction, tracked separately)
 

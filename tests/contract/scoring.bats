@@ -99,7 +99,7 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 
 # ---------------------------------------------------------------------------
 # 11. Category codes documented: ARCH-*, SEC-*, PERF-*, QUAL-*, CONV-*, DOC-*,
-#     TEST-*, FE-PERF-*, SCOUT-*, A11Y-*, DEPS-*, COMPAT-*, REVIEW-GAP
+#     TEST-*, FE-PERF-*, SCOUT-*, A11Y-*, DEP-*, COMPAT-*, REVIEW-GAP
 # ---------------------------------------------------------------------------
 @test "scoring: category code prefixes documented" {
   local categories=(ARCH SEC PERF QUAL CONV DOC TEST FE-PERF SCOUT A11Y DEPS COMPAT APPROACH CONTRACT STRUCT INFRA REVIEW-GAP DESIGN-TOKEN DESIGN-MOTION)

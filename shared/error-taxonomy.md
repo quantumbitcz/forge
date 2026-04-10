@@ -108,7 +108,7 @@ Some error types produce scoring findings in addition to (or instead of) trigger
 | AGENT_TIMEOUT | REVIEW-GAP finding when review agent times out | `REVIEW-GAP` | INFO (WARNING for critical-domain agents) | REVIEW stage only |
 | AGENT_ERROR | REVIEW-GAP finding when review agent fails | `REVIEW-GAP` | INFO (WARNING for critical-domain agents) | REVIEW stage only |
 | MCP_UNAVAILABLE | No scoring deduction — inline degradation only | — | — | All stages |
-| DEPRECATION_WARNING | May produce `DEPS-*` findings if severe | `DEPS-*` | WARNING | PREFLIGHT |
+| DEPRECATION_WARNING | May produce `DEP-*` findings if severe | `DEP-*` | WARNING | PREFLIGHT |
 | BUDGET_EXHAUSTED | No direct scoring — triggers pipeline abort | — | — | — |
 
 Cross-reference: see `shared/scoring.md` section "Partial Failure Handling" for REVIEW-GAP rules.

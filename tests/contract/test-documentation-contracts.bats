@@ -4,7 +4,7 @@
 load '../helpers/test-helpers'
 
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
-ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
+ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 VALIDATOR="$PLUGIN_ROOT/agents/fg-210-validator.md"
 QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"

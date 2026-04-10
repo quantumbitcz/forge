@@ -5,7 +5,7 @@ setup() {
   load '../lib/bats-assert/load'
   PLUGIN_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
   ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
-  ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
+  ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
   STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 }
 

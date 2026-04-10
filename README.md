@@ -260,7 +260,7 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 
 ## Agents
 
-36 agents organized by pipeline stage and cross-cutting concerns.
+38 agents organized by pipeline stage and cross-cutting concerns.
 
 ### Pipeline agents (shared)
 

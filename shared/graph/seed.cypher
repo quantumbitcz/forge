@@ -1872,6 +1872,7 @@ CREATE (:Agent {name: 'fg-015-scope-decomposer', role: 'other', file_path: 'agen
 CREATE (:Agent {name: 'fg-020-bug-investigator', role: 'other', file_path: 'agents/fg-020-bug-investigator.md'});
 CREATE (:Agent {name: 'fg-050-project-bootstrapper', role: 'other', file_path: 'agents/fg-050-project-bootstrapper.md'});
 CREATE (:Agent {name: 'fg-090-sprint-orchestrator', role: 'other', file_path: 'agents/fg-090-sprint-orchestrator.md'});
+CREATE (:Agent {name: 'fg-100-orchestrator', role: 'orchestrator', file_path: 'agents/fg-100-orchestrator.md'});
 CREATE (:Agent {name: 'fg-101-worktree-manager', role: 'other', file_path: 'agents/fg-101-worktree-manager.md'});
 CREATE (:Agent {name: 'fg-102-conflict-resolver', role: 'other', file_path: 'agents/fg-102-conflict-resolver.md'});
 CREATE (:Agent {name: 'fg-103-cross-repo-coordinator', role: 'other', file_path: 'agents/fg-103-cross-repo-coordinator.md'});
@@ -1907,8 +1908,10 @@ CREATE (:Agent {name: 'fg-710-post-run', role: 'other', file_path: 'agents/fg-71
 
 // --- Agent DISPATCHES edges ---
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-090-sprint-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-100-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
+MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-100-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-103-cross-repo-coordinator'}) CREATE (a)-[:DISPATCHES]->(b);

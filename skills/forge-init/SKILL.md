@@ -522,7 +522,7 @@ This step always runs — no user prompt. It takes under 5 seconds.
 
 4. **Save report** to `.forge/baseline-report.md` with all findings grouped by severity. This file is always written regardless of what the user chooses next.
 
-   Map category prefixes: `ARCH-*` → Architecture, `SEC-*` → Security, `PERF-*` → Performance, `TEST-*` → Test Quality, `CONV-*` → Conventions, `DOC-*` → Documentation, `QUAL-*` → Code Quality, `FE-PERF-*` → Frontend Perf, `APPROACH-*` → Approach, `A11Y-*` → Accessibility, `DEPS-*` → Dependencies, `COMPAT-*` → Compatibility. `SCOUT-*` findings have no deduction.
+   Map category prefixes: `ARCH-*` → Architecture, `SEC-*` → Security, `PERF-*` → Performance, `TEST-*` → Test Quality, `CONV-*` → Conventions, `DOC-*` → Documentation, `QUAL-*` → Code Quality, `FE-PERF-*` → Frontend Perf, `APPROACH-*` → Approach, `A11Y-*` → Accessibility, `DEP-*` → Dependencies, `COMPAT-*` → Compatibility. `SCOUT-*` findings have no deduction.
 
 #### Step 2: Deeper Analysis (optional)
 

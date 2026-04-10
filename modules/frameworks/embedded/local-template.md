@@ -46,6 +46,9 @@ quality_gate:
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, memory safety, const correctness"
+    - agent: fg-420-dependency-reviewer
+      condition: "dependencies_changed"
+      focus: "dependency necessity, bloat, pinning, licenses"
     - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
     - agent: "pr-review-toolkit:code-reviewer"

@@ -323,7 +323,7 @@ At each stage transition, output: `[STAGE {N}/10] {STAGE_NAME} — {status} ({el
 
 ---
 
-## §9 Decision Framework
+## §8 Decision Framework
 
 ### Autonomy
 
@@ -353,7 +353,7 @@ Only after this verification pass, dispatch the implementer with the verified fi
 
 ---
 
-## §10 Mode Resolution
+## §9 Mode Resolution
 
 After detecting mode at PREFLIGHT:
 1. Read `shared/modes/${mode}.md` (if it exists)
@@ -376,7 +376,7 @@ Cross-repo operations delegated to `fg-103-cross-repo-coordinator` — see `agen
 
 ---
 
-## §11 Reference Documents
+## §10 Reference Documents
 
 The orchestrator references these shared documents but never modifies them:
 
@@ -469,7 +469,7 @@ Strip the mode prefix from the requirement before passing it to downstream agent
 
 **Note:** `fg-010-shaper` is NOT dispatched by the orchestrator — it runs via the `/forge-shape` skill as a pre-pipeline phase.
 
-After detecting mode, load mode overlay per core §10.
+After detecting mode, load mode overlay per core §9.
 
 ---
 

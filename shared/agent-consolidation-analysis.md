@@ -13,7 +13,7 @@ Analysis of review agent overlap and consolidation candidates. This is an adviso
 | `fg-411-security-reviewer` | Security (SEC-*) | Medium (specialized) |
 | `fg-413-frontend-reviewer` | Frontend (FE-PERF-*, A11Y-*, DESIGN-*) | Medium (4 modes) |
 | `fg-416-backend-performance-reviewer` | Backend performance (PERF-*) | Medium (specialized) |
-| `fg-417-version-compat-reviewer` | Version compatibility (COMPAT-*, DEPS-*) | Low (narrow) |
+| `fg-417-version-compat-reviewer` | Version compatibility (COMPAT-*) | Low (narrow) |
 | `fg-418-docs-consistency-reviewer` | Documentation (DOC-*) | Low (narrow) |
 | `fg-419-infra-deploy-reviewer` | Infrastructure (INFRA-*) | Medium (specialized) |
 

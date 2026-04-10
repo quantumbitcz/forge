@@ -185,14 +185,10 @@ emit_blank
 emit "// --- Agents ---"
 
 # Collect all agent names first (for DISPATCHES matching)
-# Skip orchestrator phase files (loaded as includes, not standalone agents)
 declare -a AGENT_NAMES=()
 for f in "${PLUGIN_ROOT}"/agents/*.md; do
   [[ -e "$f" ]] || continue
   local_name="$(basename "$f" .md)"
-  [[ "$local_name" == fg-100-orchestrator ]] && continue
-  [[ "$local_name" == fg-100-orchestrator ]] && continue
-  [[ "$local_name" == fg-100-orchestrator ]] && continue
   AGENT_NAMES+=("$local_name")
 done
 
@@ -200,10 +196,6 @@ for f in "${PLUGIN_ROOT}"/agents/*.md; do
   [[ -e "$f" ]] || continue
   # Parse YAML frontmatter for name
   agent_name="$(basename "$f" .md)"
-  # Skip orchestrator phase files (loaded as includes, not standalone agents)
-  [[ "$agent_name" == fg-100-orchestrator ]] && continue
-  [[ "$agent_name" == fg-100-orchestrator ]] && continue
-  [[ "$agent_name" == fg-100-orchestrator ]] && continue
   rel="agents/${agent_name}.md"
 
   # Determine role

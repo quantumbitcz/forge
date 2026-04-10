@@ -53,6 +53,9 @@ quality_gate:
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "manifest correctness, DRY violations, configuration consistency"
+    - agent: fg-420-dependency-reviewer
+      condition: "dependencies_changed"
+      focus: "dependency necessity, bloat, pinning, licenses"
     - agent: fg-418-docs-consistency-reviewer
       focus: "code-docs consistency, decision violations, stale documentation"
   inline_checks:
