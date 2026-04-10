@@ -90,6 +90,8 @@ print(len(unfixable))
 }
 
 @test "convergence-arith: first-cycle exempt from plateau via phase_iterations > 0" {
+  # Note: P2 changed the guard to phase_iterations >= 2 (smoothed delta needs 2 cycles).
+  # This test still validates that phase_iterations=0 is exempt (which remains true).
   local phase_iterations=0 delta=0 plateau_threshold=2
   if [[ $delta -le $plateau_threshold && $phase_iterations -gt 0 ]]; then
     fail "First cycle (phase_iterations=0) should be exempt from plateau detection"
@@ -104,4 +106,99 @@ print(len(unfixable))
 @test "convergence-arith: diminishing returns detection documented" {
   grep -qi "diminishing.*return\|diminishing_count" "$ENGINE" \
     || fail "Diminishing returns not documented in convergence-engine.md"
+}
+
+# ---------------------------------------------------------------------------
+# P2: Smoothed delta (moving average) tests
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Helper: compute smoothed_delta from a space-separated score history
+# Implements the 4-case smoothed_delta function from convergence-engine.md
+# ---------------------------------------------------------------------------
+compute_smoothed_delta() {
+  local -a scores=($@)
+  local len=${#scores[@]}
+
+  if [[ $len -lt 2 ]]; then
+    echo "0"
+    return
+  fi
+
+  if [[ $len -eq 2 ]]; then
+    # Raw delta
+    echo "${scores[1]} - ${scores[0]}" | bc
+    return
+  fi
+
+  if [[ $len -eq 3 ]]; then
+    # 2-point weighted: d1*0.6 + d2*0.4
+    local d1 d2
+    d1=$(echo "${scores[2]} - ${scores[1]}" | bc)
+    d2=$(echo "${scores[1]} - ${scores[0]}" | bc)
+    echo "$d1 * 0.6 + $d2 * 0.4" | bc
+    return
+  fi
+
+  # 4+ scores: 3-point weighted using last 4 scores
+  local d1 d2 d3
+  d1=$(echo "${scores[$((len-1))]} - ${scores[$((len-2))]}" | bc)
+  d2=$(echo "${scores[$((len-2))]} - ${scores[$((len-3))]}" | bc)
+  d3=$(echo "${scores[$((len-3))]} - ${scores[$((len-4))]}" | bc)
+  echo "$d1 * 0.5 + $d2 * 0.3 + $d3 * 0.2" | bc
+}
+
+@test "convergence-arith: smoothed_delta with 2 scores uses raw delta" {
+  local result
+  result=$(compute_smoothed_delta 80 85)
+  [[ "$result" == "5" ]] || fail "Expected 5, got $result"
+}
+
+@test "convergence-arith: smoothed_delta with 3 scores uses 2-point avg" {
+  # history=[80, 85, 87] -> deltas=[2, 5], smoothed = 2*0.6 + 5*0.4 = 1.2 + 2.0 = 3.2
+  local result
+  result=$(compute_smoothed_delta 80 85 87)
+  [[ "$result" == "3.2" ]] || fail "Expected 3.2, got $result"
+}
+
+@test "convergence-arith: smoothed_delta with 4+ scores uses last 3 deltas" {
+  # history=[80, 85, 87, 88] -> deltas=[1, 2, 5], smoothed = 1*0.5 + 2*0.3 + 5*0.2 = 0.5 + 0.6 + 1.0 = 2.1
+  local result
+  result=$(compute_smoothed_delta 80 85 87 88)
+  [[ "$result" == "2.1" ]] || fail "Expected 2.1, got $result"
+}
+
+@test "convergence-arith: noise cancellation — alternating +1/-1 smoothed to ~0" {
+  # history=[85, 86, 85, 86] -> deltas=[1, -1, 1], smoothed = 1*0.5 + (-1)*0.3 + 1*0.2 = 0.5 - 0.3 + 0.2 = 0.4
+  local result
+  result=$(compute_smoothed_delta 85 86 85 86)
+  [[ "$result" == ".4" || "$result" == "0.4" ]] || fail "Expected 0.4, got $result"
+}
+
+@test "convergence-arith: steady improvement smoothed correctly" {
+  # history=[80, 84, 88, 92] -> deltas=[4, 4, 4], smoothed = 4*0.5 + 4*0.3 + 4*0.2 = 2.0 + 1.2 + 0.8 = 4.0
+  local result
+  result=$(compute_smoothed_delta 80 84 88 92)
+  [[ "$result" == "4.0" ]] || fail "Expected 4.0, got $result"
+}
+
+@test "convergence-arith: plateau guard requires phase_iterations >= 2" {
+  # phase_iterations=1, smoothed_delta=0 -> NOT counted as plateau
+  # The convergence engine uses: IF smoothed_delta <= plateau_threshold AND phase_iterations >= 2
+  local phase_iterations=1
+  local smoothed_delta=0
+  local plateau_threshold=2
+
+  if [[ $phase_iterations -ge 2 ]] && [[ $(echo "$smoothed_delta <= $plateau_threshold" | bc) -eq 1 ]]; then
+    fail "phase_iterations=1 should NOT trigger plateau counting"
+  fi
+
+  # phase_iterations=2 should trigger
+  phase_iterations=2
+  if [[ $phase_iterations -ge 2 ]] && [[ $(echo "$smoothed_delta <= $plateau_threshold" | bc) -eq 1 ]]; then
+    # This is correct — plateau detected
+    true
+  else
+    fail "phase_iterations=2 with smoothed_delta=0 should trigger plateau counting"
+  fi
 }

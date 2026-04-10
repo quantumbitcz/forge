@@ -126,11 +126,11 @@ ENGINE="$PLUGIN_ROOT/shared/convergence-engine.md"
 }
 
 # ---------------------------------------------------------------------------
-# 14. First-cycle plateau prevention (phase_iterations > 0)
+# 14. First-cycle plateau prevention (phase_iterations >= 2, P2 smoothed delta)
 # ---------------------------------------------------------------------------
 @test "convergence-engine: first-cycle plateau prevention documented" {
-  grep -q "phase_iterations > 0" "$ENGINE" \
-    || fail "First-cycle plateau prevention (phase_iterations > 0) not documented"
+  grep -q "phase_iterations >= 2" "$ENGINE" \
+    || fail "First-cycle plateau prevention (phase_iterations >= 2) not documented"
 }
 
 # ---------------------------------------------------------------------------

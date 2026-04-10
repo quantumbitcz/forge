@@ -90,6 +90,7 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
     "perfection":
       score = review_result.score
       delta = score - previous_score  (0 if first perfection cycle)
+      smoothed_delta = compute_smoothed_delta(score_history)
 
       IF score >= target_score:
         -> transition to "safety_gate"
@@ -98,11 +99,13 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
         -> ESCALATE (global cap applies to perfection phase too)
 
       ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance:
+        // REGRESSING detection uses raw delta (not smoothed) for responsiveness
         -> convergence_state = "REGRESSING", ESCALATE
 
-      ELSE IF delta <= plateau_threshold AND phase_iterations > 0:
-        // Note: phase_iterations > 0 prevents the very first perfection cycle
-        // from counting toward plateau (delta is hardcoded to 0 on first cycle)
+      ELSE IF smoothed_delta <= plateau_threshold AND phase_iterations >= 2:
+        // Note: phase_iterations >= 2 ensures at least 2 cycles of data before
+        // plateau detection activates. The first 2 cycles always count as IMPROVING.
+        // smoothed_delta filters LLM sampling noise via weighted moving average.
         -> plateau_count += 1
         -> IF plateau_count >= plateau_patience:
             convergence_state = "PLATEAUED"
@@ -144,10 +147,26 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
            -> NOTE: total_iterations is NOT reset — it counts across all phases
               including restarts. The global cap (max_iterations) applies cumulatively.
            -> NOTE: After restart, the first perfection cycle will have phase_iterations = 0
-              and last_score_delta = 0. Per the plateau detection logic (phase_iterations > 0
-              guard), this first cycle is exempt from plateau counting — it establishes
-              a new baseline. This is correct and intentional.
+              and last_score_delta = 0. Per the plateau detection logic (phase_iterations >= 2
+              guard), the first two cycles are exempt from plateau counting — they establish
+              a new baseline with enough data for the smoothed delta. This is correct and intentional.
         -> increment total_iterations
+
+FUNCTION compute_smoothed_delta(score_history):
+  IF len(score_history) < 2: return 0
+  IF len(score_history) == 2:
+    # Only 1 delta available — use raw delta
+    return score_history[-1] - score_history[-2]
+  IF len(score_history) == 3:
+    # Only 2 deltas available — use 2-point weighted average
+    d1 = score_history[-1] - score_history[-2]  # most recent
+    d2 = score_history[-2] - score_history[-3]  # previous
+    return d1 * 0.6 + d2 * 0.4
+  # 4+ scores: 3-point weighted average of most recent 3 deltas
+  d1 = score_history[-1] - score_history[-2]
+  d2 = score_history[-2] - score_history[-3]
+  d3 = score_history[-3] - score_history[-4]
+  return d1 * 0.5 + d2 * 0.3 + d3 * 0.2
 ```
 
 ### Phase 3: Evidence
