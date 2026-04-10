@@ -329,7 +329,7 @@ CLOSED → (failures_count >= threshold) → OPEN → (cooldown elapsed) → HAL
 ```
 
 - **CLOSED** — Normal operation. Recovery strategies execute as usual. Each failure increments `failures_count` for the category. When `failures_count >= threshold`, the circuit transitions to OPEN.
-- **OPEN** — Category is blocked. No recovery strategies are attempted for error types in this category. The recovery engine returns `ESCALATE` immediately with reason `"circuit_breaker_open: {category}"`. The orchestrator raises a `circuit_breaker_open` event (see `shared/state-transitions.md` row E3). After `cooldown_seconds` elapses from `last_failure_timestamp`, the circuit transitions to HALF_OPEN.
+- **OPEN** — Category is blocked. No recovery strategies are attempted for error types in this category. The recovery engine returns `ESCALATE` immediately with reason `"circuit_breaker_open: {category}"`. The orchestrator raises a `circuit_breaker_open` event (see `shared/state-transitions.md` row E3). After `cooldown_seconds + jitter_seconds` elapses from `last_failure_timestamp`, the circuit transitions to HALF_OPEN. The `jitter_seconds` value is computed as `random(0, cooldown_seconds * cooldown_jitter_pct / 100)` when the circuit transitions to OPEN.
 - **HALF_OPEN** — Probe state. The next failure in this category is allowed one recovery attempt. If the probe succeeds (strategy returns `RECOVERED` or `DEGRADED`), the circuit resets to CLOSED with `failures_count = 0`. If the probe fails, the circuit returns to OPEN with a fresh cooldown.
 
 ### Configuration
@@ -337,7 +337,10 @@ CLOSED → (failures_count >= threshold) → OPEN → (cooldown elapsed) → HAL
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `threshold` | 2 | Consecutive failures before circuit opens |
-| `cooldown_seconds` | 300 | Seconds before OPEN transitions to HALF_OPEN |
+| `cooldown_seconds` | 300 | Base seconds before OPEN transitions to HALF_OPEN |
+| `cooldown_jitter_pct` | 20 | Maximum jitter percentage. Actual cooldown = `cooldown_seconds + random(0, cooldown_seconds * cooldown_jitter_pct / 100)` |
+
+Jitter prevents synchronized probe storms in sprint mode where multiple features may open circuits for the same category simultaneously. A new jitter value is computed each time the circuit transitions to OPEN (including re-OPEN after a failed HALF_OPEN probe) and stored in the `jitter_seconds` field.
 
 ### Decision Order
 
@@ -361,13 +364,15 @@ Circuit breaker state is tracked in `recovery.circuit_breakers`:
         "state": "CLOSED",
         "failures_count": 0,
         "last_failure_timestamp": null,
-        "cooldown_seconds": 300
+        "cooldown_seconds": 300,
+        "jitter_seconds": 0
       },
       "test": {
         "state": "OPEN",
         "failures_count": 2,
         "last_failure_timestamp": "2026-03-22T14:30:00Z",
-        "cooldown_seconds": 300
+        "cooldown_seconds": 300,
+        "jitter_seconds": 42
       }
     }
   }

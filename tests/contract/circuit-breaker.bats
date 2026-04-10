@@ -79,3 +79,39 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   echo "$section" | grep -qi "budget" \
     || fail "Budget integration not documented in circuit breaker section"
 }
+
+# ---------------------------------------------------------------------------
+# P2: Cooldown jitter tests
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# 8. Cooldown jitter parameter documented
+# ---------------------------------------------------------------------------
+@test "circuit-breaker-contract: cooldown_jitter_pct parameter documented" {
+  local section
+  section=$(sed -n '/^## 8.1 Circuit Breaker/,/^## [0-9]/p' "$RECOVERY_ENGINE")
+  echo "$section" | grep -q "cooldown_jitter_pct" \
+    || fail "cooldown_jitter_pct parameter not documented in circuit breaker section"
+}
+
+# ---------------------------------------------------------------------------
+# 9. jitter_seconds field in circuit breaker schema
+# ---------------------------------------------------------------------------
+@test "circuit-breaker-contract: jitter_seconds field in schema" {
+  local section
+  section=$(sed -n '/^## 8.1 Circuit Breaker/,/^## [0-9]/p' "$RECOVERY_ENGINE")
+  echo "$section" | grep -q "jitter_seconds" \
+    || fail "jitter_seconds field not documented in circuit breaker schema"
+}
+
+# ---------------------------------------------------------------------------
+# 10. Jitter range is 0 to 20% of cooldown
+# ---------------------------------------------------------------------------
+@test "circuit-breaker-contract: jitter range is 0 to 20% of cooldown" {
+  local section
+  section=$(sed -n '/^## 8.1 Circuit Breaker/,/^## [0-9]/p' "$RECOVERY_ENGINE")
+  echo "$section" | grep -q "20" \
+    || fail "20% jitter range not documented in circuit breaker section"
+  echo "$section" | grep -qi "jitter" \
+    || fail "Jitter concept not documented in circuit breaker section"
+}
