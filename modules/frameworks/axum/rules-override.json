@@ -11,7 +11,7 @@
       "scope_pattern": "src/handler/",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "Blocking call in async handler (std::thread::sleep, std::fs, etc.) \u2014 use tokio async equivalents",
+      "message": "Blocking call in async handler (std::thread::sleep, std::fs, etc.) — use tokio async equivalents",
       "fix_hint": "Replace std::thread::sleep with tokio::time::sleep, std::fs with tokio::fs, or use spawn_blocking for CPU-heavy work.",
       "example_ref": ""
     },
@@ -22,7 +22,7 @@
       "scope_pattern": "src/handler/",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "unwrap()/expect() in handler \u2014 use ? with AppError for proper error responses",
+      "message": "unwrap()/expect() in handler — use ? with AppError for proper error responses",
       "fix_hint": "Replace .unwrap() with ? operator and ensure the error type implements IntoResponse via AppError.",
       "example_ref": ""
     },
@@ -33,7 +33,7 @@
       "scope_pattern": "src/service/",
       "severity": "INFO",
       "category": "QUAL-NULL",
-      "message": "unwrap()/expect() in service \u2014 prefer returning Result with descriptive error",
+      "message": "unwrap()/expect() in service — prefer returning Result with descriptive error",
       "fix_hint": "Replace .unwrap() with .map_err() or ? and a custom error type.",
       "example_ref": ""
     },
@@ -44,7 +44,7 @@
       "scope_pattern": "src/handler/",
       "severity": "INFO",
       "category": "ARCH-BOUNDARY",
-      "message": "Direct database pool usage in handler \u2014 prefer accessing DB through service layer",
+      "message": "Direct database pool usage in handler — prefer accessing DB through service layer",
       "fix_hint": "Move database operations to a service method. Handlers should use State<Arc<AppState>> and call service methods.",
       "example_ref": ""
     }

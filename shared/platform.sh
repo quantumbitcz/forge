@@ -384,6 +384,9 @@ atomic_increment() {
 # The python expression receives 'data' (parsed JSON dict) and should mutate it in-place.
 # Example: atomic_json_update state.json "data['lastCheckpoint'] = '2026-01-01T00:00:00Z'"
 # Exit 1 on failure (lock timeout, missing file, invalid JSON, no python).
+#
+# SECURITY: py_expr is interpolated directly into a Python script. Only pass
+# hardcoded expressions from trusted code — NEVER pass user-controlled input.
 atomic_json_update() {
   local file="$1"
   local py_expr="$2"

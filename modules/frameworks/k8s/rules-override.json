@@ -11,7 +11,7 @@
       "exclude_pattern": "^\\s*#|CHANGE_ME|REPLACE_ME|\\{\\{",
       "severity": "CRITICAL",
       "category": "SEC-CRED",
-      "message": "Hardcoded secret detected in values.yaml \u2014 secrets must never be stored in Helm values.",
+      "message": "Hardcoded secret detected in values.yaml — secrets must never be stored in Helm values.",
       "fix_hint": "Use ExternalSecret, SealedSecret, or reference a K8s Secret via secretKeyRef. Never commit plaintext credentials.",
       "scope": "values.yaml"
     },
@@ -22,7 +22,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-PRIV",
-      "message": "Privileged container detected \u2014 this grants full host access and breaks container isolation.",
+      "message": "Privileged container detected — this grants full host access and breaks container isolation.",
       "fix_hint": "Remove privileged: true. Add only the specific capabilities needed via securityContext.capabilities.add.",
       "scope": "all"
     },
@@ -33,7 +33,7 @@
       "structural_check": "dockerfile_no_user",
       "severity": "WARNING",
       "category": "SEC-ROOT",
-      "message": "Dockerfile has no USER instruction \u2014 container will run as root by default.",
+      "message": "Dockerfile has no USER instruction — container will run as root by default.",
       "fix_hint": "Add a non-root user (adduser/addgroup) and a USER instruction before CMD/ENTRYPOINT.",
       "scope": "Dockerfile"
     },
@@ -44,7 +44,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "INFRA-TAG",
-      "message": "Image uses :latest tag \u2014 defeats reproducibility and safe rollback.",
+      "message": "Image uses :latest tag — defeats reproducibility and safe rollback.",
       "fix_hint": "Pin to a specific version (semver or git SHA). Example: image: nginx:1.25.4",
       "scope": "all"
     },
@@ -55,7 +55,7 @@
       "structural_check": "k8s_no_probes",
       "severity": "WARNING",
       "category": "INFRA-HEALTH",
-      "message": "Deployment has no liveness or readiness probes \u2014 K8s cannot detect unhealthy pods.",
+      "message": "Deployment has no liveness or readiness probes — K8s cannot detect unhealthy pods.",
       "fix_hint": "Add livenessProbe and readinessProbe to every container spec. Use /healthz for liveness and /readyz for readiness.",
       "scope": "deployment.yaml"
     },
@@ -66,7 +66,7 @@
       "structural_check": "k8s_no_resource_limits",
       "severity": "WARNING",
       "category": "INFRA-RES",
-      "message": "Container has no resource limits \u2014 risks noisy-neighbor issues and node instability.",
+      "message": "Container has no resource limits — risks noisy-neighbor issues and node instability.",
       "fix_hint": "Add resources.requests and resources.limits for both cpu and memory to every container.",
       "scope": "deployment.yaml"
     },
@@ -77,7 +77,7 @@
       "structural_check": "chart_no_networkpolicy",
       "severity": "INFO",
       "category": "INFRA-NET",
-      "message": "No NetworkPolicy found in chart \u2014 all pod-to-pod traffic is allowed by default.",
+      "message": "No NetworkPolicy found in chart — all pod-to-pod traffic is allowed by default.",
       "fix_hint": "Add a default-deny NetworkPolicy and whitelist required ingress/egress paths.",
       "scope": "chart"
     }

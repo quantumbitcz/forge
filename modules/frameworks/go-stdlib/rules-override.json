@@ -11,7 +11,7 @@
       "scope_pattern": "internal/",
       "severity": "INFO",
       "category": "CONV-CTX",
-      "message": "Exported function without context.Context parameter \u2014 consider adding ctx for I/O operations",
+      "message": "Exported function without context.Context parameter — consider adding ctx for I/O operations",
       "fix_hint": "Add `ctx context.Context` as the first parameter if this function performs any I/O (DB, HTTP, file).",
       "example_ref": ""
     },
@@ -22,7 +22,7 @@
       "scope_pattern": "",
       "severity": "INFO",
       "category": "CONV-ERR",
-      "message": "Error string starts with capital letter \u2014 Go convention is lowercase, no trailing punctuation",
+      "message": "Error string starts with capital letter — Go convention is lowercase, no trailing punctuation",
       "fix_hint": "Start error strings with a lowercase letter and omit trailing periods: `errors.New(\"not found\")` instead of `errors.New(\"Not found.\")`.",
       "example_ref": ""
     },
@@ -33,7 +33,7 @@
       "scope_pattern": "internal/",
       "severity": "WARNING",
       "category": "CONV-SAFETY",
-      "message": "panic() in application code \u2014 return errors instead of panicking",
+      "message": "panic() in application code — return errors instead of panicking",
       "fix_hint": "Replace panic() with returning an error. Only use panic in main() or test helpers.",
       "example_ref": ""
     },
@@ -44,7 +44,7 @@
       "scope_pattern": "internal/handler/",
       "severity": "WARNING",
       "category": "ARCH-PLACE",
-      "message": "Request/Response struct defined in handler file \u2014 move to model/ or a dedicated dto/ package",
+      "message": "Request/Response struct defined in handler file — move to model/ or a dedicated dto/ package",
       "fix_hint": "Extract the struct to internal/model/ (domain types) or a handler-level dto package. Handler structs (e.g., UserHandler) are fine in handler files.",
       "example_ref": ""
     },
@@ -55,7 +55,7 @@
       "scope_pattern": "internal/handler/",
       "severity": "CRITICAL",
       "category": "ARCH-PLACE",
-      "message": "SQL query in handler file \u2014 database access belongs in repository layer",
+      "message": "SQL query in handler file — database access belongs in repository layer",
       "fix_hint": "Move the SQL query to a repository method in internal/repository/.",
       "example_ref": ""
     }

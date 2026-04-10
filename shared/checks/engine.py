@@ -121,16 +121,19 @@ def detect_language(filepath):
 
 
 def detect_module(filepath, forge_dir):
-    """Detect module from component cache or config."""
+    """Detect module from component cache (text format: prefix=component per line)."""
     cache_path = os.path.join(forge_dir, '.component-cache')
     if os.path.isfile(cache_path):
         try:
             with open(cache_path) as f:
-                components = json.load(f)
-            for comp in components:
-                if filepath.startswith(comp.get('path', '')):
-                    return comp.get('framework')
-        except (json.JSONDecodeError, KeyError, TypeError):
+                for line in f:
+                    line = line.strip()
+                    if '=' in line:
+                        prefix, comp = line.split('=', 1)
+                        if filepath.startswith(prefix) or os.path.basename(filepath).startswith(prefix):
+                            return comp
+                        break  # first match wins (consistency with engine.sh)
+        except (IOError, ValueError):
             pass
     return None
 
@@ -195,6 +198,7 @@ def _find_override(filepath, project_root):
                         rel = os.path.relpath(filepath, project_root) if filepath.startswith(project_root) else filepath
                         if rel.startswith(prefix) or rel == prefix:
                             component = comp
+                            break  # first match wins (consistency with engine.sh)
         except (IOError, ValueError):
             pass
 

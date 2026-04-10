@@ -17,11 +17,11 @@ OUTPUT="$SCRIPT_DIR/conventions-index.md"
 
 # Pattern categories to index (grep -i patterns)
 declare -A CATEGORIES=(
-  ["Error Handling"]="error\|exception\|catch\|throw\|Error\|Exception\|fault\|failure"
-  ["Architecture Boundaries"]="boundary\|import\|layer\|depend\|core.*adapter\|adapter.*core\|separation"
-  ["Naming Conventions"]="naming\|convention\|prefix\|suffix\|case\|camelCase\|snake_case\|PascalCase"
-  ["Testing Patterns"]="test\|assert\|mock\|fixture\|setup\|teardown\|describe\|it("
-  ["State Management"]="state\|store\|context\|signal\|reactive\|observable"
+  ["Error Handling"]="error handl\|exception.*mapp\|Error Boundar\|error propagat\|error message\|fault toleran"
+  ["Architecture Boundaries"]="boundary\|must not import\|layer.*violat\|depend.*rule\|core.*adapter\|adapter.*core\|cross-module\|separation of"
+  ["Naming Conventions"]="naming\|file naming\|class naming\|prefix.*convention\|suffix.*convention\|camelCase\|snake_case\|PascalCase\|kebab-case"
+  ["Testing Patterns"]="test.*strateg\|test.*pattern\|assert.*quality\|mock.*only\|fixture\|test isolat\|edge case\|TDD"
+  ["State Management"]="state manage\|global state\|store.*pattern\|context.*provider\|signal.*store\|reactive.*state\|observable.*state"
 )
 
 # Ordered category list (bash assoc arrays don't preserve order)

@@ -11,7 +11,7 @@
       "scope_pattern": "internal/handler/",
       "severity": "CRITICAL",
       "category": "CONV-SAFETY",
-      "message": "panic() in handler \u2014 return errors instead; only Recovery middleware should catch panics",
+      "message": "panic() in handler — return errors instead; only Recovery middleware should catch panics",
       "fix_hint": "Replace panic() with an error return. Use c.AbortWithStatusJSON() to send an error response, or attach to c.Error() and let centralized error middleware respond.",
       "example_ref": ""
     },
@@ -22,7 +22,7 @@
       "scope_pattern": "internal/",
       "severity": "WARNING",
       "category": "ARCH-STATE",
-      "message": "Package-level variable \u2014 use dependency injection via constructors instead of global state",
+      "message": "Package-level variable — use dependency injection via constructors instead of global state",
       "fix_hint": "Move the variable into a struct and inject it via the constructor (e.g., NewUserHandler(...)). Package-level vars for singletons are acceptable only in main().",
       "example_ref": ""
     },
@@ -33,10 +33,10 @@
       "scope_pattern": "internal/",
       "severity": "INFO",
       "category": "CONV-ERR",
-      "message": "Potential ignored error return \u2014 ensure all error return values are checked",
+      "message": "Potential ignored error return — ensure all error return values are checked",
       "fix_hint": "Check the error return value. If the error is intentionally ignored, use _ = to make it explicit.",
       "example_ref": "",
-      "_note": "Structural check \u2014 layer-2 linter (golangci-lint errcheck) provides accurate detection. This rule documents the convention."
+      "_note": "Structural check — layer-2 linter (golangci-lint errcheck) provides accurate detection. This rule documents the convention."
     },
     {
       "id": "GIN-PLACE-001",
@@ -45,7 +45,7 @@
       "scope_pattern": "internal/handler/",
       "severity": "WARNING",
       "category": "ARCH-PLACE",
-      "message": "Request/Response struct defined in handler file \u2014 move to model/ or a dedicated dto/ package",
+      "message": "Request/Response struct defined in handler file — move to model/ or a dedicated dto/ package",
       "fix_hint": "Extract the struct to internal/model/ (domain types) or internal/handler/dto/ (request/response types). Handler structs (e.g., UserHandler) are fine in handler files.",
       "example_ref": ""
     },
@@ -56,7 +56,7 @@
       "scope_pattern": "internal/handler/",
       "severity": "CRITICAL",
       "category": "ARCH-PLACE",
-      "message": "SQL query in handler file \u2014 database access belongs in repository layer",
+      "message": "SQL query in handler file — database access belongs in repository layer",
       "fix_hint": "Move the SQL query to a repository method in internal/repository/.",
       "example_ref": ""
     }

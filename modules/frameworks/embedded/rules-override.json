@@ -11,7 +11,7 @@
       "scope_pattern": "IRQHandler|_isr|_ISR|CRITICAL_SECTION",
       "severity": "CRITICAL",
       "category": "SEC-MEM",
-      "message": "malloc/calloc/realloc/free in ISR or critical section \u2014 dynamic allocation is forbidden in real-time critical paths",
+      "message": "malloc/calloc/realloc/free in ISR or critical section — dynamic allocation is forbidden in real-time critical paths",
       "fix_hint": "Use statically allocated buffers or a pre-allocated pool. Move allocation to initialization code guarded by /* INIT-ONLY: dynamic alloc */.",
       "example_ref": ""
     },
@@ -33,7 +33,7 @@
       "scope_pattern": "IRQHandler|_isr|_ISR",
       "severity": "WARNING",
       "category": "PERF-FLOAT",
-      "message": "Floating-point type in interrupt context \u2014 use fixed-point arithmetic (Q15/Q31) instead",
+      "message": "Floating-point type in interrupt context — use fixed-point arithmetic (Q15/Q31) instead",
       "fix_hint": "Replace float/double with fixed-point types (int16_t for Q15, int32_t for Q31) and use shift-based arithmetic.",
       "example_ref": ""
     }

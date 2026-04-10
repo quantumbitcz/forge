@@ -11,7 +11,7 @@
         "scope_pattern": "commonMain",
         "severity": "CRITICAL",
         "category": "ARCH-BOUNDARY",
-        "message": "JVM-only library imported in commonMain \u2014 this will fail to compile on iOS/JS/Wasm targets",
+        "message": "JVM-only library imported in commonMain — this will fail to compile on iOS/JS/Wasm targets",
         "fix_hint": "Replace Gson/Jackson with kotlinx.serialization. Replace Hilt with Koin. Replace Room with SQLDelight. These alternatives work across all Kotlin targets.",
         "example_ref": ""
       },
@@ -22,7 +22,7 @@
         "scope_pattern": "commonMain",
         "severity": "CRITICAL",
         "category": "ARCH-BOUNDARY",
-        "message": "Android SDK import in commonMain \u2014 move this code to androidMain or use expect/actual abstraction",
+        "message": "Android SDK import in commonMain — move this code to androidMain or use expect/actual abstraction",
         "fix_hint": "If this is platform-specific behavior, use expect/actual: define expect fun in commonMain and actual fun in androidMain. If the API has a cross-platform alternative, prefer that instead.",
         "example_ref": ""
       },
@@ -33,7 +33,7 @@
         "scope_pattern": "commonMain",
         "severity": "WARNING",
         "category": "ARCH-CONCURRENCY",
-        "message": "Dispatchers.Main used in commonMain \u2014 inject CoroutineDispatcher as a parameter for platform-independence and testability",
+        "message": "Dispatchers.Main used in commonMain — inject CoroutineDispatcher as a parameter for platform-independence and testability",
         "fix_hint": "Add a CoroutineDispatcher constructor parameter (default to Dispatchers.Default). Callers on each platform inject the appropriate main dispatcher. Use UnconfinedTestDispatcher in tests.",
         "example_ref": ""
       },
@@ -44,7 +44,7 @@
         "scope_pattern": "commonMain",
         "severity": "INFO",
         "category": "ARCH-DESIGN",
-        "message": "New expect declaration \u2014 verify that an interface + DI approach would not be simpler and more testable",
+        "message": "New expect declaration — verify that an interface + DI approach would not be simpler and more testable",
         "fix_hint": "Consider defining an interface in commonMain and injecting platform implementations via Koin. Reserve expect/actual for truly platform-primitive operations (logging, crypto, file I/O).",
         "example_ref": ""
       },
@@ -55,7 +55,7 @@
         "scope_pattern": "commonMain",
         "severity": "CRITICAL",
         "category": "ARCH-BOUNDARY",
-        "message": "RxJava import in commonMain \u2014 RxJava is JVM-only; use kotlinx.coroutines Flow instead",
+        "message": "RxJava import in commonMain — RxJava is JVM-only; use kotlinx.coroutines Flow instead",
         "fix_hint": "Replace Observable/Single/Completable with Flow/suspend fun. Replace RxJava operators with Flow operators (map, filter, flatMap, etc.).",
         "example_ref": ""
       },
@@ -66,7 +66,7 @@
         "scope_pattern": "commonMain",
         "severity": "WARNING",
         "category": "ARCH-BOUNDARY",
-        "message": "java.util collection type in commonMain \u2014 use Kotlin stdlib collection types instead",
+        "message": "java.util collection type in commonMain — use Kotlin stdlib collection types instead",
         "fix_hint": "Replace java.util.ArrayList with MutableList / mutableListOf(). Replace java.util.HashMap with MutableMap / mutableMapOf(). Kotlin stdlib collections compile on all platforms.",
         "example_ref": ""
       }

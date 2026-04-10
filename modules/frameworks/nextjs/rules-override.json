@@ -11,7 +11,7 @@
       "scope_pattern": "app/",
       "severity": "WARNING",
       "category": "ARCH-COMPONENT",
-      "message": "\"use client\" directive found \u2014 verify this route segment truly requires client-side interactivity",
+      "message": "\"use client\" directive found — verify this route segment truly requires client-side interactivity",
       "fix_hint": "Move interactive parts to a small leaf Client Component. The page/layout itself should remain a Server Component to enable SSR and data fetching.",
       "example_ref": ""
     },
@@ -22,7 +22,7 @@
       "scope_pattern": "app/",
       "severity": "INFO",
       "category": "ARCH-COMPONENT",
-      "message": "useState detected \u2014 ensure this file has \"use client\" directive, or refactor to a Server Component",
+      "message": "useState detected — ensure this file has \"use client\" directive, or refactor to a Server Component",
       "fix_hint": "If the component only fetches data (no interactivity), remove useState and use async Server Component with direct data fetching. If interactivity is required, add \"use client\" at the top of the file.",
       "example_ref": ""
     },
@@ -33,7 +33,7 @@
       "scope_pattern": "app/",
       "severity": "WARNING",
       "category": "PERF-IMAGE",
-      "message": "Raw <img> element \u2014 use <Image> from next/image for automatic optimization",
+      "message": "Raw <img> element — use <Image> from next/image for automatic optimization",
       "fix_hint": "Replace <img src=\"...\" /> with <Image src=\"...\" width={...} height={...} alt=\"...\" /> from next/image. Add external hostname to next.config.ts remotePatterns if needed.",
       "example_ref": ""
     },
@@ -43,7 +43,7 @@
       "pattern": "NEXT_PUBLIC_(?:SECRET|KEY|TOKEN|PASSWORD|PRIVATE|API_KEY)",
       "severity": "CRITICAL",
       "category": "SEC-SECRETS",
-      "message": "Sensitive value in NEXT_PUBLIC_ variable \u2014 NEXT_PUBLIC_ variables are inlined at build time and visible to all clients",
+      "message": "Sensitive value in NEXT_PUBLIC_ variable — NEXT_PUBLIC_ variables are inlined at build time and visible to all clients",
       "fix_hint": "Remove NEXT_PUBLIC_ prefix. Access this value only in Server Components, Route Handlers, or Server Actions where it is never sent to the browser.",
       "example_ref": ""
     },
@@ -54,7 +54,7 @@
       "scope_pattern": "app/",
       "severity": "WARNING",
       "category": "PERF-NAV",
-      "message": "Raw <a> for internal link \u2014 use <Link> from next/link for client-side navigation",
+      "message": "Raw <a> for internal link — use <Link> from next/link for client-side navigation",
       "fix_hint": "Replace <a href=\"/path\"> with <Link href=\"/path\"> from next/link to enable prefetching and client-side navigation without full page reload.",
       "example_ref": ""
     },
@@ -65,7 +65,7 @@
       "scope_exclude": "actions/|app/.*/(action|server)",
       "severity": "INFO",
       "category": "STRUCT-PLACE",
-      "message": "Server Action defined outside actions/ directory \u2014 consider co-locating server actions in an actions/ directory or alongside the route",
+      "message": "Server Action defined outside actions/ directory — consider co-locating server actions in an actions/ directory or alongside the route",
       "fix_hint": "Move server action to actions/ directory or a file next to the route that uses it."
     },
     {

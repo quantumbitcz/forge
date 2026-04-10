@@ -11,7 +11,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "CONV-REACTIVE",
-      "message": "Old Svelte 3/4 reactive declaration ($:) \u2014 use $derived() or $effect() runes in Svelte 5",
+      "message": "Old Svelte 3/4 reactive declaration ($:) — use $derived() or $effect() runes in Svelte 5",
       "fix_hint": "Replace '$: value = expr' with 'let value = $derived(expr)'. Replace '$: { statements }' with '$effect(() => { statements })'.",
       "example_ref": ""
     },
@@ -22,7 +22,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "CONV-EVENTS",
-      "message": "Old Svelte 3/4 event directive (on:event) \u2014 use standard DOM event attribute (onclick, oninput) in Svelte 5",
+      "message": "Old Svelte 3/4 event directive (on:event) — use standard DOM event attribute (onclick, oninput) in Svelte 5",
       "fix_hint": "Replace 'on:click={handler}' with 'onclick={handler}'. Replace 'on:input={handler}' with 'oninput={handler}'.",
       "example_ref": ""
     },
@@ -33,7 +33,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "CONV-PROPS",
-      "message": "Old Svelte 3/4 prop syntax (export let) \u2014 use $props() rune in Svelte 5",
+      "message": "Old Svelte 3/4 prop syntax (export let) — use $props() rune in Svelte 5",
       "fix_hint": "Replace 'export let propName' with destructured $props(): 'let { propName } = $props()'.",
       "example_ref": ""
     },
@@ -45,7 +45,7 @@
       "exclude_pattern": "\\.test\\.|spec\\.",
       "severity": "WARNING",
       "category": "CONV-THEME",
-      "message": "Hardcoded color value \u2014 use CSS custom properties (var(--color-*))",
+      "message": "Hardcoded color value — use CSS custom properties (var(--color-*))",
       "fix_hint": "Replace hardcoded colors with CSS custom properties defined in your global stylesheet. Example: replace #3b82f6 with var(--color-primary).",
       "example_ref": ""
     },
@@ -56,7 +56,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "PERF-CLEANUP",
-      "message": "$effect creates a subscription/timer/listener but does not return a cleanup function \u2014 potential memory leak",
+      "message": "$effect creates a subscription/timer/listener but does not return a cleanup function — potential memory leak",
       "fix_hint": "Return a cleanup function from $effect: $effect(() => { const id = setInterval(...); return () => clearInterval(id); }).",
       "example_ref": ""
     }

@@ -13,7 +13,7 @@
       "scope_exclude": "src/app/components/ui/",
       "severity": "WARNING",
       "category": "CONV-THEME",
-      "message": "Hardcoded color class \u2014 use theme tokens (bg-background, text-foreground, etc.)",
+      "message": "Hardcoded color class — use theme tokens (bg-background, text-foreground, etc.)",
       "fix_hint": "Replace bg-white with bg-background, bg-black with bg-foreground, bg-gray-* with bg-muted or bg-accent, text-white with text-primary-foreground, text-black with text-foreground, text-gray-* with text-muted-foreground.",
       "example_ref": ""
     },
@@ -26,7 +26,7 @@
       "scope_exclude": "src/app/components/ui/",
       "severity": "WARNING",
       "category": "CONV-THEME",
-      "message": "Tailwind font-size class \u2014 use inline style={{ fontSize }} with the project type scale",
+      "message": "Tailwind font-size class — use inline style={{ fontSize }} with the project type scale",
       "fix_hint": "Replace text-sm / text-lg / etc. with style={{ fontSize: '0.875rem' }} or the appropriate project type scale value.",
       "example_ref": ""
     },
@@ -49,7 +49,7 @@
       "scope_pattern": "hooks/",
       "severity": "WARNING",
       "category": "STRUCT-NAME",
-      "message": "Hook file exports a function not starting with 'use' \u2014 React hooks must follow the useXxx naming convention",
+      "message": "Hook file exports a function not starting with 'use' — React hooks must follow the useXxx naming convention",
       "fix_hint": "Rename the function to start with 'use' (e.g., useAuth, useTheme). This is required by React's rules-of-hooks ESLint rule."
     },
     {
@@ -59,7 +59,7 @@
       "scope_pattern": "src/app/components/",
       "severity": "INFO",
       "category": "STRUCT-NAME",
-      "message": "Component import from a lowercase filename \u2014 React component files should use PascalCase (e.g., Button.tsx, UserCard.tsx)",
+      "message": "Component import from a lowercase filename — React component files should use PascalCase (e.g., Button.tsx, UserCard.tsx)",
       "fix_hint": "Rename the file to PascalCase matching the exported component name."
     },
     {
@@ -70,7 +70,7 @@
       "scope_exclude": "src/app/components/ui/|src/app/components/shared/",
       "severity": "WARNING",
       "category": "STRUCT-PLACE",
-      "message": "Page component defined in components directory \u2014 page components should be in src/routes/ or src/pages/ for framework routing",
+      "message": "Page component defined in components directory — page components should be in src/routes/ or src/pages/ for framework routing",
       "fix_hint": "Move page components to the appropriate routing directory (src/routes/ for TanStack Router, src/pages/ for file-based routing)."
     }
   ],
@@ -83,7 +83,7 @@
       ],
       "severity": "CRITICAL",
       "category": "STRUCT-BOUNDARY",
-      "message": "Shared component imports from a feature directory \u2014 shared components must not depend on feature-specific code"
+      "message": "Shared component imports from a feature directory — shared components must not depend on feature-specific code"
     }
   ],
   "disabled_rules": [

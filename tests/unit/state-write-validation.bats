@@ -34,10 +34,16 @@ STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
 
   local invalid_json='{"version":"1.5.0","_seq":0,"complete":false,"story_id":"X","requirement":"x","story_state":"INVALID_STATE","mode":"standard","dry_run":false,"convergence":{"phase":"correctness","phase_iterations":0,"total_iterations":0,"plateau_count":0,"last_score_delta":0,"convergence_state":"IMPROVING","phase_history":[],"safety_gate_passed":false,"safety_gate_failures":0,"unfixable_findings":[],"diminishing_count":0,"unfixable_info_count":0},"recovery":{"total_failures":0,"total_recoveries":0,"degraded_capabilities":[],"failures":[],"budget_warning_issued":false},"recovery_budget":{"total_weight":0,"max_weight":5.5,"applications":[]},"integrations":{},"cost":{"wall_time_seconds":0,"stages_completed":0},"score_history":[]}'
 
-  run bash "$STATE_WRITER" write "$invalid_json" --forge-dir "$forge_dir"
-  assert_success
-  # Should emit a warning to stderr — check the file was still written
+  # Capture stderr separately for WARNING check
+  local stderr_file="$TEST_TEMP/stderr.txt"
+  bash "$STATE_WRITER" write "$invalid_json" --forge-dir "$forge_dir" 2>"$stderr_file"
+  local rc=$?
+
+  # File should still be written (advisory validation never blocks)
   [[ -f "$forge_dir/state.json" ]]
+
+  # Should emit a WARNING to stderr about invalid story_state
+  grep -q "WARNING" "$stderr_file" || fail "Expected WARNING on stderr, got: $(cat "$stderr_file")"
 }
 
 # ---------------------------------------------------------------------------

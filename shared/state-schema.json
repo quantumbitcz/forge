@@ -127,6 +127,11 @@
         "type": "number"
       }
     },
+    "lastCheckpoint": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "ISO 8601 UTC timestamp of last checkpoint, set by forge-checkpoint.sh hook"
+    },
     "convergence": {
       "type": "object",
       "required": [

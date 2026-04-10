@@ -13,6 +13,10 @@
 *.swp
 *.swo
 
+# Generated artifacts
+shared/conventions-index.md
+__pycache__/
+
 # Claude local overrides
 .claude.local.md
 .claude/settings.local.json
