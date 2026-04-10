@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "typescript",
   "framework": "svelte",
   "additional_rules": [
@@ -9,7 +11,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "CONV-REACTIVE",
-      "message": "Old Svelte 3/4 reactive declaration ($:) — use $derived rune in Svelte 5",
+      "message": "Old Svelte 3/4 reactive declaration ($:) \u2014 use $derived rune in Svelte 5",
       "fix_hint": "Replace '$: value = expr' with 'let value = $derived(expr)'. Replace '$: { statements }' with '$effect(() => { statements })'.",
       "example_ref": ""
     },
@@ -20,7 +22,7 @@
       "scope_pattern": "src/",
       "severity": "INFO",
       "category": "CONV-STATE",
-      "message": "Svelte store API (writable/readable/derived) — use $state/$derived runes in Svelte 5",
+      "message": "Svelte store API (writable/readable/derived) \u2014 use $state/$derived runes in Svelte 5",
       "fix_hint": "Replace writable()/readable() with $state() in a .svelte.ts file. Replace derived() with $derived(). See conventions.md for the shared state pattern.",
       "example_ref": ""
     },
@@ -31,7 +33,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "CONV-PROPS",
-      "message": "Old Svelte 3/4 prop syntax (export let) — use $props() rune in Svelte 5",
+      "message": "Old Svelte 3/4 prop syntax (export let) \u2014 use $props() rune in Svelte 5",
       "fix_hint": "Replace 'export let propName' with destructured $props(): 'let { propName } = $props()'.",
       "example_ref": ""
     },
@@ -42,7 +44,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "PERF-CLEANUP",
-      "message": "$effect creates a subscription/timer but does not return a cleanup function — potential memory leak",
+      "message": "$effect creates a subscription/timer but does not return a cleanup function \u2014 potential memory leak",
       "fix_hint": "Return a cleanup function from $effect: $effect(() => { const id = setInterval(...); return () => clearInterval(id); }).",
       "example_ref": ""
     },
@@ -53,7 +55,7 @@
       "scope_pattern": "src/",
       "severity": "INFO",
       "category": "CONV-EVENTS",
-      "message": "createEventDispatcher is Svelte 3/4 — use callback props in Svelte 5",
+      "message": "createEventDispatcher is Svelte 3/4 \u2014 use callback props in Svelte 5",
       "fix_hint": "Replace createEventDispatcher with callback props: pass 'onEvent: () => void' via $props() instead.",
       "example_ref": ""
     }

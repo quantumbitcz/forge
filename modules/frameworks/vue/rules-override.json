@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "typescript",
   "framework": "vue",
   "additional_rules": [
@@ -9,7 +11,7 @@
       "scope_pattern": ".(vue|ts|js)$",
       "severity": "WARNING",
       "category": "ARCH-COMPONENT",
-      "message": "Options API pattern detected — use Composition API with <script setup lang=\"ts\"> exclusively",
+      "message": "Options API pattern detected \u2014 use Composition API with <script setup lang=\"ts\"> exclusively",
       "fix_hint": "Migrate to <script setup lang=\"ts\">. Replace data() with ref()/reactive(), methods with plain functions, computed: with computed(), lifecycle hooks with onMounted()/onCreated() etc. Pinia replaces Vuex options.",
       "example_ref": ""
     },
@@ -20,7 +22,7 @@
       "scope_pattern": ".(vue|ts|js)$",
       "severity": "WARNING",
       "category": "ARCH-COMPONENT",
-      "message": "this.$ access detected — in <script setup> there is no 'this'; use Nuxt/Vue composables directly",
+      "message": "this.$ access detected \u2014 in <script setup> there is no 'this'; use Nuxt/Vue composables directly",
       "fix_hint": "Replace this.$router with useRouter(), this.$route with useRoute(), this.$store with the relevant Pinia store, this.$emit with the emit function from defineEmits().",
       "example_ref": ""
     },
@@ -31,7 +33,7 @@
       "scope_pattern": ".(vue)$",
       "severity": "INFO",
       "category": "ARCH-COMPONENT",
-      "message": "Potential .value access in template — Vue auto-unwraps refs in <template>, .value is only needed in <script>",
+      "message": "Potential .value access in template \u2014 Vue auto-unwraps refs in <template>, .value is only needed in <script>",
       "fix_hint": "In <template>, access reactive refs directly (e.g., {{ count }} not {{ count.value }}). The .value suffix is required only inside <script setup> and composables.",
       "example_ref": ""
     },
@@ -42,7 +44,7 @@
       "scope_pattern": ".(vue)$",
       "severity": "WARNING",
       "category": "SEC-XSS",
-      "message": "v-html directive found — ensure content is from a trusted source and sanitized to prevent XSS",
+      "message": "v-html directive found \u2014 ensure content is from a trusted source and sanitized to prevent XSS",
       "fix_hint": "If the content is user-supplied or from an external API, sanitize it with DOMPurify before rendering. If only static or developer-controlled content, document the trust assumption.",
       "example_ref": ""
     },
@@ -53,7 +55,7 @@
       "scope_pattern": ".(ts|js|vue)$",
       "severity": "CRITICAL",
       "category": "SEC-SECRETS",
-      "message": "Sensitive value in runtimeConfig.public — runtimeConfig.public is exposed to the client bundle",
+      "message": "Sensitive value in runtimeConfig.public \u2014 runtimeConfig.public is exposed to the client bundle",
       "fix_hint": "Move secrets to runtimeConfig (server-only). Access via useRuntimeConfig() in server routes and server plugins only. Client-safe config belongs in runtimeConfig.public.",
       "example_ref": ""
     },
@@ -64,7 +66,7 @@
       "scope_pattern": ".(vue)$",
       "severity": "WARNING",
       "category": "PERF-IMAGE",
-      "message": "Raw <img> element — use <NuxtImg> from @nuxt/image for automatic optimization",
+      "message": "Raw <img> element \u2014 use <NuxtImg> from @nuxt/image for automatic optimization",
       "fix_hint": "Replace <img src=\"...\" /> with <NuxtImg src=\"...\" width=\"...\" height=\"...\" alt=\"...\" /> for automatic WebP conversion, lazy loading, and responsive sizing.",
       "example_ref": ""
     },
@@ -75,7 +77,7 @@
       "scope_pattern": ".(vue)$",
       "severity": "WARNING",
       "category": "PERF-NAV",
-      "message": "Raw <a> for internal link — use <NuxtLink> for client-side navigation with prefetching",
+      "message": "Raw <a> for internal link \u2014 use <NuxtLink> for client-side navigation with prefetching",
       "fix_hint": "Replace <a href=\"/path\"> with <NuxtLink to=\"/path\"> to enable client-side routing, prefetching, and active link classes.",
       "example_ref": ""
     }

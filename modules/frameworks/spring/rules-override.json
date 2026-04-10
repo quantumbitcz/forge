@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "spring",
   "variant_rules": {
     "kotlin": {
@@ -10,7 +12,7 @@
           "scope_pattern": "core/src/main",
           "severity": "WARNING",
           "category": "CONV-TYPE",
-          "message": "java.util.UUID in core — use kotlin.uuid.Uuid with typed ID wrapper",
+          "message": "java.util.UUID in core \u2014 use kotlin.uuid.Uuid with typed ID wrapper",
           "fix_hint": "Replace java.util.UUID with kotlin.uuid.Uuid and wrap in a domain-specific value class (e.g., XxxId).",
           "example_ref": ""
         },
@@ -21,7 +23,7 @@
           "scope_pattern": "core/src/main",
           "severity": "WARNING",
           "category": "CONV-TYPE",
-          "message": "java.time in core — use kotlinx.datetime.Instant",
+          "message": "java.time in core \u2014 use kotlinx.datetime.Instant",
           "fix_hint": "Replace java.time.* imports with kotlinx.datetime equivalents (Instant, LocalDate, etc.).",
           "example_ref": ""
         },
@@ -32,7 +34,7 @@
           "scope_pattern": "/controller/",
           "severity": "WARNING",
           "category": "ARCH-PLACE",
-          "message": "Data class defined in controller file — move to domain/ (commands), schemas/ (DTOs), or adapter/input/api/mapper/",
+          "message": "Data class defined in controller file \u2014 move to domain/ (commands), schemas/ (DTOs), or adapter/input/api/mapper/",
           "fix_hint": "Extract the data class to its own file in the appropriate package: domain/ for domain types, or mapper/ for API DTOs.",
           "example_ref": ""
         },
@@ -43,7 +45,7 @@
           "scope_pattern": "/controller/",
           "severity": "WARNING",
           "category": "ARCH-PLACE",
-          "message": "Mapper extension function in controller file — move to mapper/ package",
+          "message": "Mapper extension function in controller file \u2014 move to mapper/ package",
           "fix_hint": "Extract mapper extensions to a dedicated XxxMapper.kt file in the mapper/ package.",
           "example_ref": ""
         },
@@ -54,7 +56,7 @@
           "scope_pattern": "/(domain|impl|port|mapper|entity|repository)/",
           "severity": "CRITICAL",
           "category": "ARCH-PLACE",
-          "message": "Controller annotation in non-controller package — violates hexagonal architecture",
+          "message": "Controller annotation in non-controller package \u2014 violates hexagonal architecture",
           "fix_hint": "Move this class to adapter/input/api/controller/ package.",
           "example_ref": ""
         },
@@ -65,7 +67,7 @@
           "scope_pattern": "src/main",
           "severity": "INFO",
           "category": "CONV-LOG",
-          "message": "Console output in non-test code — use structured logging instead",
+          "message": "Console output in non-test code \u2014 use structured logging instead",
           "fix_hint": "Replace println/print/System.out with a logger (e.g., KotlinLogging.logger or SLF4J).",
           "example_ref": ""
         }
@@ -91,7 +93,7 @@
           "scope_pattern": "src/main",
           "severity": "WARNING",
           "category": "ARCH-DI",
-          "message": "@Autowired on field — use constructor injection instead",
+          "message": "@Autowired on field \u2014 use constructor injection instead",
           "fix_hint": "Remove @Autowired from the field. Add a constructor parameter (or use Lombok @RequiredArgsConstructor) and assign to a private final field.",
           "example_ref": ""
         },
@@ -102,7 +104,7 @@
           "scope_pattern": "/controller/",
           "severity": "WARNING",
           "category": "ARCH-BOUNDARY",
-          "message": "Entity returned from controller — use a DTO (Response record) instead",
+          "message": "Entity returned from controller \u2014 use a DTO (Response record) instead",
           "fix_hint": "Create a response DTO (e.g., XxxResponse record) and map the entity to it before returning from the controller.",
           "example_ref": ""
         },
@@ -113,7 +115,7 @@
           "scope_pattern": "/controller/",
           "severity": "WARNING",
           "category": "ARCH-PLACE",
-          "message": "DTO record defined in controller file — move to dto/ package",
+          "message": "DTO record defined in controller file \u2014 move to dto/ package",
           "fix_hint": "Extract the record to a dedicated file in the dto/ or mapper/ package.",
           "example_ref": ""
         },
@@ -124,7 +126,7 @@
           "scope_pattern": "/(entity|repository|service|model|dto|mapper)/",
           "severity": "CRITICAL",
           "category": "ARCH-PLACE",
-          "message": "Controller annotation in non-controller package — violates architecture",
+          "message": "Controller annotation in non-controller package \u2014 violates architecture",
           "fix_hint": "Move this class to the controller/ package.",
           "example_ref": ""
         },
@@ -135,7 +137,7 @@
           "scope_pattern": "/controller/",
           "severity": "WARNING",
           "category": "SEC-HTTP",
-          "message": "@RequestMapping without explicit method — should specify GET, POST, etc. or use @GetMapping/@PostMapping",
+          "message": "@RequestMapping without explicit method \u2014 should specify GET, POST, etc. or use @GetMapping/@PostMapping",
           "fix_hint": "Replace @RequestMapping with a specific mapping annotation (@GetMapping, @PostMapping, etc.) or add method = RequestMethod.GET/POST.",
           "example_ref": ""
         },
@@ -146,7 +148,7 @@
           "scope_pattern": "src/main",
           "severity": "INFO",
           "category": "CONV-LOG",
-          "message": "Console output or printStackTrace in production code — use SLF4J logger instead",
+          "message": "Console output or printStackTrace in production code \u2014 use SLF4J logger instead",
           "fix_hint": "Replace System.out/System.err with an SLF4J logger. Replace printStackTrace() with log.error(\"message\", exception).",
           "example_ref": ""
         }
@@ -173,7 +175,7 @@
         "scope_pattern": "/adapter/",
         "severity": "WARNING",
         "category": "ARCH-BOUNDARY",
-        "message": "@Transactional on adapter class — should be on use case / service only",
+        "message": "@Transactional on adapter class \u2014 should be on use case / service only",
         "fix_hint": "Move @Transactional to the use-case / service layer; adapters should not own transaction boundaries.",
         "example_ref": ""
       }

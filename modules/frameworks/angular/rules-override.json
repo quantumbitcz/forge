@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "typescript",
   "framework": "angular",
   "additional_rules": [
@@ -9,7 +11,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-ANGULAR",
-      "message": "NgModule detected — prefer standalone components for new code",
+      "message": "NgModule detected \u2014 prefer standalone components for new code",
       "fix_hint": "Replace NgModule-based components with standalone: true in the @Component decorator. Move imports array to the component's imports field."
     },
     {
@@ -19,7 +21,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-ANGULAR",
-      "message": "Legacy @Input() decorator — prefer signal input() function",
+      "message": "Legacy @Input() decorator \u2014 prefer signal input() function",
       "fix_hint": "Replace @Input() foo: T with foo = input<T>() or foo = input.required<T>() from @angular/core."
     },
     {
@@ -29,7 +31,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-ANGULAR",
-      "message": "Legacy @Output() decorator — prefer signal output() function",
+      "message": "Legacy @Output() decorator \u2014 prefer signal output() function",
       "fix_hint": "Replace @Output() myEvent = new EventEmitter<T>() with myEvent = output<T>() from @angular/core."
     },
     {
@@ -39,9 +41,9 @@
       "exclude_pattern": "ChangeDetectionStrategy\\.OnPush",
       "severity": "WARNING",
       "category": "CONV-ANGULAR",
-      "message": "Component may be missing OnPush change detection — set changeDetection: ChangeDetectionStrategy.OnPush",
+      "message": "Component may be missing OnPush change detection \u2014 set changeDetection: ChangeDetectionStrategy.OnPush",
       "fix_hint": "Add changeDetection: ChangeDetectionStrategy.OnPush to the @Component decorator. Ensure template reads only signals or pure pipes.",
-      "_note": "This is a structural check — engine delegates to layer-2 linter or agent. Rule documents the convention."
+      "_note": "This is a structural check \u2014 engine delegates to layer-2 linter or agent. Rule documents the convention."
     },
     {
       "id": "NG-RX-001",
@@ -50,7 +52,7 @@
       "exclude_pattern": "takeUntilDestroyed|unsubscribe|spec\\.ts|test\\.ts",
       "severity": "WARNING",
       "category": "CONV-ANGULAR",
-      "message": "Manual .subscribe() detected — prefer toSignal() or takeUntilDestroyed() to prevent memory leaks",
+      "message": "Manual .subscribe() detected \u2014 prefer toSignal() or takeUntilDestroyed() to prevent memory leaks",
       "fix_hint": "Use toSignal(observable$) for template consumption or pipe(takeUntilDestroyed(this.destroyRef)) for long-lived subscriptions."
     },
     {
@@ -60,7 +62,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-ANGULAR",
-      "message": "async pipe detected — prefer toSignal() for OnPush-compatible reactive templates",
+      "message": "async pipe detected \u2014 prefer toSignal() for OnPush-compatible reactive templates",
       "fix_hint": "Replace '| async' with toSignal(observable$, { initialValue: ... }) in the component class. Works transparently with OnPush."
     },
     {
@@ -70,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\\.spec\\.ts",
       "severity": "INFO",
       "category": "CONV-ANGULAR",
-      "message": "Constructor injection detected — prefer inject() function for tree-shakeable DI",
+      "message": "Constructor injection detected \u2014 prefer inject() function for tree-shakeable DI",
       "fix_hint": "Replace constructor(private service: MyService) with private service = inject(MyService) as a class field."
     },
     {
@@ -103,7 +105,7 @@
       ],
       "severity": "WARNING",
       "category": "STRUCT-BOUNDARY",
-      "message": "Feature module imports from another feature module — shared code should be in a shared/ directory"
+      "message": "Feature module imports from another feature module \u2014 shared code should be in a shared/ directory"
     }
   ],
   "disabled_rules": [],

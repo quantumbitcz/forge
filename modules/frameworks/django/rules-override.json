@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "python",
   "framework": "django",
   "additional_rules": [
@@ -9,7 +11,7 @@
       "scope_pattern": "/views\\.py$|/api/views\\.py$",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY",
-      "message": "Business logic method defined in view/viewset — move to a service module",
+      "message": "Business logic method defined in view/viewset \u2014 move to a service module",
       "fix_hint": "Create a {app}/services.py file and move business logic there. The view should only call the service and serialize the result.",
       "example_ref": ""
     },
@@ -20,7 +22,7 @@
       "scope_pattern": "/views\\.py$|/api/views\\.py$",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY",
-      "message": "Direct ORM query in view — use a service or model manager method instead",
+      "message": "Direct ORM query in view \u2014 use a service or model manager method instead",
       "fix_hint": "Move ORM queries to services.py or a custom model manager. Views should delegate data access, not perform it directly.",
       "example_ref": ""
     },
@@ -31,7 +33,7 @@
       "scope_pattern": "src/|apps/|\\w+/services\\.py$",
       "severity": "WARNING",
       "category": "PERF-DB",
-      "message": "Loop over queryset with attribute access — likely N+1 query. Use select_related() or prefetch_related().",
+      "message": "Loop over queryset with attribute access \u2014 likely N+1 query. Use select_related() or prefetch_related().",
       "fix_hint": "Add .select_related('field') or .prefetch_related('field') to the queryset before the loop.",
       "example_ref": ""
     },
@@ -42,7 +44,7 @@
       "scope_pattern": "src/|apps/",
       "severity": "CRITICAL",
       "category": "SEC-INJECTION",
-      "message": "Raw SQL with string formatting — SQL injection risk. Use parameterized queries.",
+      "message": "Raw SQL with string formatting \u2014 SQL injection risk. Use parameterized queries.",
       "fix_hint": "Use .raw('SELECT ... WHERE id = %s', [user_id]) or cursor.execute('... WHERE id = %s', [user_id]) with a separate params list.",
       "example_ref": ""
     },
@@ -53,7 +55,7 @@
       "scope_pattern": "src/|apps/",
       "severity": "WARNING",
       "category": "SEC-XSS",
-      "message": "mark_safe() used — verify this is not applied to user-supplied content",
+      "message": "mark_safe() used \u2014 verify this is not applied to user-supplied content",
       "fix_hint": "Only use mark_safe() on strings generated entirely by trusted code. User input must be escaped first with django.utils.html.escape().",
       "example_ref": ""
     },
@@ -64,7 +66,7 @@
       "scope_pattern": "/migrations/",
       "severity": "WARNING",
       "category": "MAINT-MIGRATION",
-      "message": "RunPython migration without reverse_code — migration is not reversible",
+      "message": "RunPython migration without reverse_code \u2014 migration is not reversible",
       "fix_hint": "Add a reverse_code argument: RunPython(forwards_func, reverse_code=backwards_func). Use RunPython.noop for intentionally irreversible migrations with explicit documentation.",
       "example_ref": ""
     },
@@ -75,7 +77,7 @@
       "scope_pattern": "src/|apps/|\\w+/services\\.py$|\\w+/views\\.py$",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "print() in application code — use structured logging instead",
+      "message": "print() in application code \u2014 use structured logging instead",
       "fix_hint": "Replace print() with logger = logging.getLogger(__name__) and logger.info() / logger.error().",
       "example_ref": ""
     },
@@ -86,7 +88,7 @@
       "scope_pattern": "/views\\.py$",
       "severity": "WARNING",
       "category": "STRUCT-PLACE",
-      "message": "Django Model class defined in views.py — models must be in models.py or models/ package",
+      "message": "Django Model class defined in views.py \u2014 models must be in models.py or models/ package",
       "fix_hint": "Move model class to models.py or models/ directory."
     },
     {
@@ -96,7 +98,7 @@
       "scope_pattern": "/models\\.py$",
       "severity": "WARNING",
       "category": "STRUCT-PLACE",
-      "message": "Django Form class defined in models.py — forms should be in forms.py",
+      "message": "Django Form class defined in models.py \u2014 forms should be in forms.py",
       "fix_hint": "Move form class to forms.py in the same app directory."
     }
   ],

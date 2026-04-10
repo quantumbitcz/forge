@@ -1,4 +1,6 @@
 {
+  "_version": 1,
+  "_updated": "2026-04-10T00:00:00Z",
   "extends": "typescript",
   "framework": "node",
   "additional_rules": [
@@ -9,7 +11,7 @@
       "scope_pattern": "src/",
       "severity": "WARNING",
       "category": "SEC-INJECTION",
-      "message": "Unsanitized req.body/req.params passed to database call — validate and sanitize input first",
+      "message": "Unsanitized req.body/req.params passed to database call \u2014 validate and sanitize input first",
       "fix_hint": "Validate input with Zod/class-validator before passing to the database layer. Use parameterized queries or ORM methods, never string interpolation.",
       "example_ref": ""
     },
@@ -20,7 +22,7 @@
       "scope_pattern": "/middleware/",
       "severity": "WARNING",
       "category": "ASYNC-ERROR",
-      "message": "Missing next(err) in catch block — errors may be swallowed silently",
+      "message": "Missing next(err) in catch block \u2014 errors may be swallowed silently",
       "fix_hint": "Call next(err) in catch blocks within Express middleware/route handlers to propagate errors to the global error handler.",
       "example_ref": ""
     },
@@ -31,7 +33,7 @@
       "scope_pattern": "src/",
       "severity": "INFO",
       "category": "CONV-IMPORT",
-      "message": "CommonJS require() used — prefer ESM import syntax in TypeScript",
+      "message": "CommonJS require() used \u2014 prefer ESM import syntax in TypeScript",
       "fix_hint": "Replace require('module') with import module from 'module' or import { named } from 'module'.",
       "example_ref": ""
     },
@@ -42,7 +44,7 @@
       "scope_pattern": "src/",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "console.log in production code — use a structured logger (winston, pino) instead",
+      "message": "console.log in production code \u2014 use a structured logger (winston, pino) instead",
       "fix_hint": "Replace console.log/warn/error with a structured logger instance.",
       "example_ref": ""
     }
