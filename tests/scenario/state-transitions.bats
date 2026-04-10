@@ -166,3 +166,149 @@ with open('$forge_dir/state.json', 'w') as f:
   run bash "$SCRIPT" query --forge-dir "$forge_dir"
   echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['convergence']['phase']=='safety_gate'"
 }
+
+# ---------------------------------------------------------------------------
+# 6. Row 50: score_diminishing triggers safety_gate
+# ---------------------------------------------------------------------------
+
+@test "scenario: score_diminishing routes to safety_gate (Row 50)" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'REVIEWING'
+d['convergence']['phase'] = 'perfection'
+d['convergence']['diminishing_count'] = 2
+d['score_history'] = [85, 86, 87]
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+  run bash "$SCRIPT" transition score_diminishing \
+    --guard "diminishing_count=2" --guard "score=87" --guard "pass_threshold=80" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='VERIFYING'"
+
+  run bash "$SCRIPT" query --forge-dir "$forge_dir"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['convergence']['phase']=='safety_gate'"
+}
+
+# ---------------------------------------------------------------------------
+# 7. Row 42: evidence_BLOCK routes to IMPLEMENTING (correctness phase)
+# ---------------------------------------------------------------------------
+
+@test "scenario: evidence_BLOCK routes to IMPLEMENTING via Phase 1 (Row 42)" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'SHIPPING'
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+  run bash "$SCRIPT" transition evidence_BLOCK \
+    --guard "block_reason=tests" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='IMPLEMENTING'"
+
+  run bash "$SCRIPT" query --forge-dir "$forge_dir"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['convergence']['phase']=='correctness'"
+}
+
+# ---------------------------------------------------------------------------
+# 8. Row 43: evidence_BLOCK routes to IMPLEMENTING (perfection phase)
+# ---------------------------------------------------------------------------
+
+@test "scenario: evidence_BLOCK routes to IMPLEMENTING via Phase 2 (Row 43)" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'SHIPPING'
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+  run bash "$SCRIPT" transition evidence_BLOCK \
+    --guard "block_reason=review" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='IMPLEMENTING'"
+
+  run bash "$SCRIPT" query --forge-dir "$forge_dir"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['convergence']['phase']=='perfection'"
+}
+
+# ---------------------------------------------------------------------------
+# 9. Row 41: stale evidence re-verifies (stays in SHIPPING)
+# ---------------------------------------------------------------------------
+
+@test "scenario: stale evidence re-verifies (Row 41)" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'SHIPPING'
+d['evidence_refresh_count'] = 0
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+  run bash "$SCRIPT" transition evidence_SHIP \
+    --guard "evidence_fresh=false" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='SHIPPING', f'Expected SHIPPING but got {d[\"new_state\"]}'"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row']=='41', f'Expected row 41 but got {d[\"row\"]}'"
+}
+
+# ---------------------------------------------------------------------------
+# 10. Row 52: evidence refresh loop cap escalates
+# ---------------------------------------------------------------------------
+
+@test "scenario: evidence refresh loop cap escalates (Row 52)" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+d['story_state'] = 'SHIPPING'
+d['evidence_refresh_count'] = 3
+d['_seq'] = d.get('_seq', 0)
+with open('$forge_dir/state.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+  run bash "$SCRIPT" transition evidence_SHIP \
+    --guard "evidence_fresh=false" \
+    --forge-dir "$forge_dir"
+  assert_success
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='ESCALATED', f'Expected ESCALATED but got {d[\"new_state\"]}'"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row']=='52', f'Expected row 52 but got {d[\"row\"]}'"
+}

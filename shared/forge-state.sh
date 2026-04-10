@@ -137,6 +137,7 @@ state = {
         'budget_warning_issued': False
     },
     'scout_improvements': 0,
+    'evidence_refresh_count': 0,
     'conventions_hash': '',
     'conventions_section_hashes': {},
     'detected_versions': {},
@@ -487,10 +488,15 @@ def match_transition():
          lambda: g('evidence_fresh', True) == True,
          'SHIPPING', '40', 'evidence_SHIP (fresh)',
          {}, {}),
-        # Row 41: SHIPPING + evidence_SHIP + stale -> SHIPPING (re-verify)
+        # Row 41: SHIPPING + evidence_SHIP + stale + refresh_count < 3 -> SHIPPING (re-verify)
         ('SHIPPING', 'evidence_SHIP',
-         lambda: g('evidence_fresh', True) != True,
+         lambda: g('evidence_fresh', True) != True and int(g('evidence_refresh_count', state.get('evidence_refresh_count', 0))) < 3,
          'SHIPPING', '41', 'evidence_SHIP (stale, re-verify)',
+         {'evidence_refresh_count': '+1'}, {}),
+        # Row 52: SHIPPING + evidence_SHIP + stale + refresh_count >= 3 -> ESCALATED (loop cap)
+        ('SHIPPING', 'evidence_SHIP',
+         lambda: g('evidence_fresh', True) != True and int(g('evidence_refresh_count', state.get('evidence_refresh_count', 0))) >= 3,
+         'ESCALATED', '52', 'evidence_SHIP (stale, refresh loop cap)',
          {}, {}),
         # Row 42: SHIPPING + evidence_BLOCK + build/lint/tests -> IMPLEMENTING
         ('SHIPPING', 'evidence_BLOCK',
