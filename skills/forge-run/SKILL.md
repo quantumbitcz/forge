@@ -50,20 +50,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    If no ticket ID provided, the orchestrator will create one during PREFLIGHT (if tracking is initialized).
 
-2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint`, `--parallel`), classify the requirement to determine the correct pipeline mode. Reference: `shared/intent-classification.md`.
-
-   **Classification order** (first match wins):
-   1. Explicit prefix/flag → use that mode directly (skip classification)
-   2. Bugfix signals (fix, bug, broken, regression, error, stack traces) → `Mode: bugfix`
-   3. Migration signals (upgrade X to Y, replace X with Y, migrate) → `Mode: migration`
-   4. Bootstrap signals (scaffold, create new, start from scratch, empty project) → `Mode: bootstrap`
-   5. Multi-feature signals (3+ distinct domain nouns, enumerated capabilities) → `Mode: multi-feature`
-   6. Testing signals (add tests, test coverage, e2e tests, unit tests) → `Mode: testing`
-   7. Documentation signals (document, write docs, generate API docs, ADR) → `Mode: documentation`
-   8. Refactor signals (refactor, extract, consolidate, reduce duplication) → `Mode: refactor`
-   9. Performance signals (optimize, performance, slow, latency, bundle size) → `Mode: performance`
-   10. Vague signals (very short/long input, no ACs, exploratory language, OR feature completeness check: under 50 words missing 3+ of: actors, entities, surface, criteria) → `Mode: vague`
-   11. Default → `Mode: standard`
+2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint`, `--parallel`), classify the requirement using the priority table and signal rules in `shared/intent-classification.md`. First match wins. Modes: bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance, vague, standard (default).
 
    **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.
 
@@ -77,14 +64,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
        - "Override: choose mode" (description: "Let me pick the mode manually")
    - If `autonomous: true`: Use classified mode directly. Log: `[AUTO-ROUTE] Classified as {mode} based on: {signals}`
 
-   ### Scope Fast Scan
-
-   If classification didn't already detect multi-feature mode (and `scope.fast_scan` is not `false` in `forge-config.md`), perform a quick text scan:
-   - 3+ distinct domain nouns joined by "and", "plus", comma-separated
-   - Enumerated capabilities ("1. X 2. Y 3. Z")
-   - Additive language ("also add", "on top of that", "additionally")
-
-   If detected: set `Mode: multi-feature`.
+   **Scope fast scan**: If classification didn't detect multi-feature and `scope.fast_scan` is not `false`, scan for 3+ distinct domain nouns, enumerated items, or additive language ("also add", "additionally"). If detected: set `Mode: multi-feature`.
 
 3. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
 
