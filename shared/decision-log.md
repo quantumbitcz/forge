@@ -51,6 +51,31 @@ Each line is a self-contained JSON object:
 | `reviewer_conflict` | fg-400-quality-gate | Conflicting findings between reviewers and resolution |
 | `evidence_verdict` | fg-590-pre-ship-verifier | Ship/no-ship verdict from evidence collection |
 
+## Required Decision Points
+
+Every pipeline run MUST log the following decision types. Missing entries are detected by the retrospective agent (`fg-700-retrospective`) and logged as `QUAL-DECISION-GAP | INFO` findings in the run report.
+
+| Decision Type | Agent | When | Logged Fields |
+|---------------|-------|------|---------------|
+| `intent_classification` | Orchestrator | PREFLIGHT | `intent`, `signals`, `confidence`, `mode` |
+| `scope_assessment` | Orchestrator | EXPLORING | `scope_size`, `decomposition_triggered`, `threshold` |
+| `plan_approach` | Planner (fg-200) | PLANNING | `approach`, `alternatives_considered`, `rationale` |
+| `validation_verdict` | Validator (fg-210) | VALIDATING | `verdict` (GO/REVISE/NOGO), `perspectives`, `findings` |
+| `convergence_evaluation` | Orchestrator | VERIFY/REVIEW | `phase`, `state`, `score`, `delta`, `action` |
+| `convergence_phase_transition` | Orchestrator | Phase boundaries | `from_phase`, `to_phase`, `reason` |
+| `recovery_classification` | Recovery Engine | On failure | `error_type`, `category`, `strategy`, `budget_impact` |
+| `finding_severity` | Review Agents (fg-41x) | REVIEW | `category`, `severity`, `confidence`, `rationale` |
+| `dedup_merge` | Quality Gate (fg-400) | REVIEW | `merged_count`, `kept_severity`, `dropped_count` |
+| `evidence_verdict` | fg-590-pre-ship-verifier | SHIP | `verdict`, `block_reasons`, `score` |
+| `user_escalation` | Orchestrator | Any | `reason`, `options_presented`, `user_choice` |
+| `auto_tune` | Retrospective (fg-700) | LEARN | `parameter`, `old_value`, `new_value`, `pattern` |
+
+### Gap Detection
+
+The retrospective compares the set of decision types found in `.forge/decisions.jsonl` against the required catalog for the current pipeline mode. For each catalog entry whose agent participated in the run (determined from task completion records in stage notes) but did not emit the required decision type, the retrospective flags a `QUAL-DECISION-GAP | INFO` finding.
+
+Decision types whose agent was never dispatched (e.g., `finding_severity` when the REVIEW stage was skipped in dry-run mode) are not flagged as gaps.
+
 ## Emission Protocol
 
 1. Construct the JSON object with all required fields.
