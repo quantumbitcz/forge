@@ -75,3 +75,8 @@ VALIDATOR="$PLUGIN_ROOT/shared/validate-finding.sh"
   run bash "$VALIDATOR" "src/User.kt:42 | ARCH-BOUNDARY | WARNING | msg | hint | confidence:MAYBE"
   assert_failure
 }
+
+@test "validate-finding: escaped pipe in message accepted" {
+  run bash "$VALIDATOR" 'src/User.kt:42 | ARCH-BOUNDARY | WARNING | message with \| pipe | hint'
+  assert_success
+}

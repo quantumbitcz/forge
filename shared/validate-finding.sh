@@ -18,19 +18,19 @@ if [[ -z "${LINE:-}" ]]; then
 fi
 
 # Split on ' | ' delimiter
+# Protect escaped pipes (\|) from being treated as delimiters
+ESCAPED="$(echo "$LINE" | sed 's/\\|/__ESCAPED_PIPE__/g')"
 # Append sentinel to preserve trailing empty fields (bash read strips them)
-NORMALIZED="$(echo "$LINE" | sed 's/ | /|/g')"
+NORMALIZED="$(echo "$ESCAPED" | sed 's/ | /|/g')"
 IFS='|' read -ra RAW_FIELDS <<< "${NORMALIZED}|__SENTINEL__"
 
 # Remove the sentinel entry
 unset 'RAW_FIELDS[${#RAW_FIELDS[@]}-1]'
 
-FIELD_COUNT=${#RAW_FIELDS[@]}
-
-# Trim whitespace from each field
+# Trim whitespace from each field and restore escaped pipes
 FIELDS=()
 for f in "${RAW_FIELDS[@]}"; do
-  trimmed="$(echo "$f" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  trimmed="$(echo "$f" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/__ESCAPED_PIPE__/\\|/g')"
   FIELDS+=("$trimmed")
 done
 
@@ -54,7 +54,7 @@ if ! echo "$FILE_LINE" | grep -qE '^[^:]+:[0-9]+$'; then
   exit 1
 fi
 
-# Field 2: CATEGORY-CODE — must match ^[A-Z][A-Z0-9-]+$
+# Field 2: CATEGORY-CODE — must match ^[A-Z][A-Z0-9]+-[A-Z0-9_-]+$
 CATEGORY="${FIELDS[1]}"
 if ! echo "$CATEGORY" | grep -qE '^[A-Z][A-Z0-9]+-[A-Z0-9_-]+$'; then
   echo "ERROR: field 2 (CATEGORY-CODE) must match 'PREFIX-CODE' uppercase pattern, got: $CATEGORY" >&2
