@@ -193,7 +193,7 @@ touch .claude/forge-log.md
 |   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
 |    scoring, state)        |  recovery, graph, discovery)
 |                           |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (22 user-facing commands)
+|                           |  skills/ (25 user-facing commands)
 +---------------------------+
 ```
 
@@ -379,12 +379,14 @@ forge/
     fg-420-dependency-reviewer.md
     fg-610-infra-deploy-verifier.md
     fg-418-docs-consistency-reviewer.md
-  skills/                               # 22 user-facing skills
+  skills/                               # 25 user-facing skills
     bootstrap-project/
     codebase-health/
+    config-validate/
     deep-health/
     deploy/
     docs-generate/
+    forge-diagnose/
     forge-fix/
     forge-history/
     forge-init/
@@ -400,6 +402,7 @@ forge/
     graph-rebuild/
     graph-status/
     migration/
+    repair-state/
     security-audit/
     verify/
   hooks/                                # 3 hooks (registered in hooks.json)

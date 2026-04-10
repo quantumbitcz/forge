@@ -26,11 +26,11 @@ Run these checks against `state.json` and report each as PASS or PROBLEM:
 - PROBLEM if missing or mismatched: "State schema version {found} does not match expected 1.5.0. May indicate stale state from an older plugin version."
 
 **Required fields:**
-- Check these fields exist and are non-null: `story_id`, `story_state`, `mode`, `complete`.
+- Check these fields exist and are non-null: `story_id`, `requirement`, `story_state`, `mode`, `complete`.
 - PROBLEM for each missing field: "Required field `{field}` is missing or null."
 
 **Story state validity:**
-- PASS if `story_state` is one of: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ESCALATED`, `DECOMPOSED`, `MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`.
+- PASS if `story_state` is one of: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, `ESCALATED`, `DECOMPOSED`, `MIGRATING`, `MIGRATION_PAUSED`, `MIGRATION_CLEANUP`, `MIGRATION_VERIFY`.
 - PROBLEM if not: "Invalid story_state: `{value}`. Not a recognized pipeline state."
 
 **Mode validity:**
@@ -95,7 +95,16 @@ Report which integrations are available vs configured:
 - If `integrations.linear.available` is true but `linear.epic_id` is empty: WARNING: "Linear available but no epic linked."
 - If `integrations.neo4j.available` is true but `integrations.neo4j.node_count` is 0: WARNING: "Neo4j available but graph is empty."
 
-### 7. Report
+### 7. Evidence Status
+
+Check `.forge/evidence.json` if it exists:
+- Read `evidence.timestamp` and `evidence.verdict`.
+- If `verdict` is `"SHIP"`: report "Evidence: SHIP (generated {timestamp})"
+- If `verdict` is `"BLOCK"`: report "Evidence: BLOCKED — reasons: {block_reasons}"
+- Compute evidence age: `now - evidence.timestamp`. If age > 30 minutes (default `evidence_max_age_minutes`): WARNING: "Evidence is stale ({age} minutes old). Pipeline will re-verify before shipping."
+- If file does not exist and `story_state` is `SHIPPING`: WARNING: "In SHIPPING state but no evidence.json found."
+
+### 8. Report
 
 Present results in this format:
 

@@ -36,8 +36,9 @@ Run each check below. Collect all needed repairs before applying any.
 - If `version` is missing or not `"1.5.0"`: propose setting `version` to `"1.5.0"`.
 
 **R2: Missing required fields**
-- For each of `story_id`, `story_state`, `mode`, `complete`: if missing, propose a repair.
+- For each of `story_id`, `requirement`, `story_state`, `mode`, `complete`: if missing, propose a repair.
   - `story_id`: set to `"unknown-repair-{date}"` (e.g., `"unknown-repair-2026-04-10"`).
+  - `requirement`: set to `"unknown (recovered by repair-state)"`.
   - `story_state`: infer from `stage_timestamps` (latest completed stage + 1). If no timestamps: set to `"PREFLIGHT"`.
   - `mode`: set to `"standard"`.
   - `complete`: set to `false`.
@@ -58,8 +59,8 @@ Run each check below. Collect all needed repairs before applying any.
 - If `convergence.total_iterations` > configured `max_iterations`: propose capping to `max_iterations`.
 
 **R7: Completion inconsistency**
-- If `complete: true` but `story_state` is not `COMPLETE` and no `abort_reason`: propose setting `story_state` to `"COMPLETE"`.
-- If `complete: false` but `story_state` is `COMPLETE`: propose setting `complete` to `true`.
+- If `complete: true` but `story_state` is not `COMPLETE` or `ABORTED`: propose setting `story_state` to `"COMPLETE"`.
+- If `complete: false` but `story_state` is `COMPLETE` or `ABORTED`: propose setting `complete` to `true`.
 
 **R8: Stale lock file**
 - If `.forge/.lock` exists:
@@ -122,11 +123,20 @@ If the user confirms:
    import json, sys
    state = json.load(open('.forge/state.json'))
    # ... apply mutations ...
+   state['_seq'] = state.get('_seq', 0) + 1  # increment _seq for consistency
    print(json.dumps(state, indent=2))
-   " > .forge/state.json.tmp && mv .forge/state.json.tmp .forge/state.json
+   " > /tmp/forge-repair-state.json
    ```
-3. If a stale lock was detected (R8): remove `.forge/.lock`.
-4. Verify the repaired state.json is valid JSON by reading it back.
+3. Write the repaired state using `forge-state-write.sh` (preserves WAL and atomic write semantics):
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/shared/forge-state-write.sh" write "$(cat /tmp/forge-repair-state.json)" --forge-dir .forge
+   ```
+   If `forge-state-write.sh` is not available, fall back to direct write with `mv`:
+   ```bash
+   mv /tmp/forge-repair-state.json .forge/state.json
+   ```
+4. If a stale lock was detected (R8): remove `.forge/.lock`.
+5. Verify the repaired state.json is valid JSON by reading it back.
 5. Report what was fixed:
 
 ```

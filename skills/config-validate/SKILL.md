@@ -26,6 +26,7 @@ Check that these required fields exist in the YAML frontmatter. Report PASS or E
 - `components.language` — must be one of: kotlin, java, typescript, python, go, rust, swift, c, csharp, ruby, php, dart, elixir, scala, cpp, or `null` (for k8s).
 - `components.framework` — must be one of: spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform, angular, nestjs, vue, svelte, or `null`.
 - `components.testing` — must be one of: kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest. WARNING if missing (not all frameworks require explicit testing config).
+- `components.variant` (if present) — must match a file in `${CLAUDE_PLUGIN_ROOT}/modules/frameworks/{framework}/variants/{value}.md`. WARNING if file not found.
 
 **commands section:**
 - `commands.build` — ERROR if missing or empty.
@@ -109,6 +110,7 @@ Report PASS or WARNING for each. Do NOT run the actual commands.
 **Framework-component compatibility:**
 - If `components.framework` is `k8s`, then `components.language` should be `null`. WARNING if not.
 - If `components.framework` is `go-stdlib`, then `components.language` should be `go`. WARNING if not.
+- If `components.framework` is `embedded`, then `components.language` should be `c` or `cpp`. WARNING if not.
 
 ### 7. Report
 
