@@ -77,7 +77,7 @@ import json, sys
 try:
     with open(sys.argv[1]) as f:
         data = json.load(f)
-    print(data.get('run_id', ''))
+    print(data.get('story_id', ''))
 except Exception:
     print('')
 " "$STATE_FILE" 2>/dev/null || true)

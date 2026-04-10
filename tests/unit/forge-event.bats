@@ -150,8 +150,8 @@ assert lines[1]['event'] == 'second_event'
   local forge_dir="${TEST_TEMP}/project/.forge"
   mkdir -p "$forge_dir"
 
-  # Create a minimal state.json with run_id
-  echo '{"run_id": "feat-test-123", "_seq": 1}' > "$forge_dir/state.json"
+  # Create a minimal state.json with story_id (the run identifier)
+  echo '{"story_id": "feat-test-123", "_seq": 1}' > "$forge_dir/state.json"
 
   bash "$SCRIPT" test_event --forge-dir "$forge_dir"
 
