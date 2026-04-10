@@ -157,3 +157,68 @@ run_hook_in() {
   line_count="$(wc -l < "$project_dir/.forge/feedback/auto-captured.md")"
   [ "$line_count" -ge 2 ]
 }
+
+# ---------------------------------------------------------------------------
+# feedback hook — enriched capture (3.2)
+# ---------------------------------------------------------------------------
+
+# 11. Captures structured context when state.json exists
+@test "feedback: captures stage mode score when state.json exists" {
+  local project_dir="${TEST_TEMP}/feedback-enriched"
+  mkdir -p "$project_dir/.forge"
+  cat > "$project_dir/.forge/state.json" <<'EOF'
+{
+  "story_state": "IMPLEMENTING",
+  "mode": "standard",
+  "score_history": [60, 75, 85],
+  "convergence": {
+    "phase": "correctness",
+    "total_iterations": 3
+  },
+  "total_retries": 1,
+  "cost": {
+    "wall_time_seconds": 120
+  }
+}
+EOF
+
+  run_hook_in "$FEEDBACK_HOOK" "$project_dir"
+  assert_success
+
+  local content
+  content="$(cat "$project_dir/.forge/feedback/auto-captured.md")"
+  # Verify structured fields are present
+  [[ "$content" == *"state=IMPLEMENTING"* ]] || fail "Missing state=IMPLEMENTING in: $content"
+  [[ "$content" == *"mode=standard"* ]] || fail "Missing mode=standard in: $content"
+  [[ "$content" == *"score=85"* ]] || fail "Missing score=85 in: $content"
+  [[ "$content" == *"iterations=3"* ]] || fail "Missing iterations=3 in: $content"
+}
+
+# 12. Falls back to simple timestamp when state.json is missing
+@test "feedback: simple timestamp fallback when state.json missing" {
+  local project_dir="${TEST_TEMP}/feedback-no-state"
+  mkdir -p "$project_dir/.forge"
+  # No state.json created
+
+  run_hook_in "$FEEDBACK_HOOK" "$project_dir"
+  assert_success
+
+  local content
+  content="$(cat "$project_dir/.forge/feedback/auto-captured.md")"
+  [[ "$content" == *"Session ended"* ]] || fail "Missing 'Session ended' in: $content"
+  [[ "$content" == *"no pipeline state"* ]] || fail "Missing 'no pipeline state' in: $content"
+}
+
+# 13. Falls back to simple timestamp when state.json is unreadable
+@test "feedback: simple timestamp fallback when state.json is malformed" {
+  local project_dir="${TEST_TEMP}/feedback-bad-state"
+  mkdir -p "$project_dir/.forge"
+  echo "not json {{{" > "$project_dir/.forge/state.json"
+
+  run_hook_in "$FEEDBACK_HOOK" "$project_dir"
+  assert_success
+
+  local content
+  content="$(cat "$project_dir/.forge/feedback/auto-captured.md")"
+  [[ "$content" == *"Session ended"* ]] || fail "Missing 'Session ended' in: $content"
+}
