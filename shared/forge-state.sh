@@ -755,6 +755,21 @@ print(json.dumps(output))
     return 2
   fi
 
+  # Emit state_transition event (fire-and-forget)
+  local event_script="${SCRIPT_DIR}/forge-event.sh"
+  if [[ -x "$event_script" ]]; then
+    local _from _to _row
+    _from=$(python3 -c "import json,sys;print(json.loads(sys.argv[1]).get('previous_state',''))" "$result" 2>/dev/null || true)
+    _to=$(python3 -c "import json,sys;print(json.loads(sys.argv[1]).get('new_state',''))" "$result" 2>/dev/null || true)
+    _row=$(python3 -c "import json,sys;print(json.loads(sys.argv[1]).get('row',''))" "$result" 2>/dev/null || true)
+    bash "$event_script" state_transition \
+      --field "from=${_from}" \
+      --field "to=${_to}" \
+      --field "trigger=${EVENT}" \
+      --field "row=${_row}" \
+      --forge-dir "$FORGE_DIR" 2>/dev/null || true
+  fi
+
   # Output the result JSON
   echo "$result"
 }

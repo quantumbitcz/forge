@@ -693,3 +693,33 @@ assert d['verify_fix_count'] == 0
 assert d['validation_retries'] == 0
 "
 }
+
+# ---------------------------------------------------------------------------
+# Event emission on transition
+# ---------------------------------------------------------------------------
+@test "forge-state: transition emits state_transition event" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+
+  # Initialize state
+  bash "$PLUGIN_ROOT/shared/forge-state.sh" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
+
+  # Transition from PREFLIGHT to EXPLORING
+  bash "$PLUGIN_ROOT/shared/forge-state.sh" transition preflight_complete --forge-dir "$forge_dir"
+
+  # Verify events.jsonl was created and has a state_transition event
+  assert [ -f "$forge_dir/events.jsonl" ]
+
+  python3 -c "
+import json
+with open('$forge_dir/events.jsonl') as f:
+    events = [json.loads(line) for line in f if line.strip()]
+# Find state_transition events
+transitions = [e for e in events if e['event'] == 'state_transition']
+assert len(transitions) >= 1, f'Expected at least 1 state_transition event, got {len(transitions)}'
+last = transitions[-1]
+assert last['fields']['from'] == 'PREFLIGHT', f'from: {last[\"fields\"][\"from\"]}'
+assert last['fields']['to'] == 'EXPLORING', f'to: {last[\"fields\"][\"to\"]}'
+assert last['fields']['trigger'] == 'preflight_complete', f'trigger: {last[\"fields\"][\"trigger\"]}'
+" || fail "state_transition event not emitted correctly"
+}
