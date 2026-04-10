@@ -1911,24 +1911,6 @@ MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (b:Agent {name: 'fg-200-plann
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-102-conflict-resolver'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-090-sprint-orchestrator'}), (b:Agent {name: 'fg-103-cross-repo-coordinator'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-010-shaper'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-020-bug-investigator'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-050-project-bootstrapper'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-130-docs-discoverer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-140-deprecation-refresh'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-150-test-bootstrapper'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-160-migration-planner'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-200-planner'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-210-validator'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-250-contract-validator'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-310-scaffolder'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-400-quality-gate'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-410-code-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-413-frontend-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-416-backend-performance-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-100-orchestrator-boot'}), (b:Agent {name: 'fg-700-retrospective'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-core'}), (b:Agent {name: 'fg-090-sprint-orchestrator'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-core'}), (b:Agent {name: 'fg-101-worktree-manager'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-100-orchestrator-core'}), (b:Agent {name: 'fg-103-cross-repo-coordinator'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -1974,6 +1956,7 @@ MATCH (a:Agent {name: 'fg-700-retrospective'}), (b:Agent {name: 'fg-710-post-run
 
 // --- Shared Contracts ---
 CREATE (:SharedContract {name: 'agent-communication', file_path: 'shared/agent-communication.md'});
+CREATE (:SharedContract {name: 'agent-consolidation-analysis', file_path: 'shared/agent-consolidation-analysis.md'});
 CREATE (:SharedContract {name: 'agent-defaults', file_path: 'shared/agent-defaults.md'});
 CREATE (:SharedContract {name: 'agent-philosophy', file_path: 'shared/agent-philosophy.md'});
 CREATE (:SharedContract {name: 'agent-ui', file_path: 'shared/agent-ui.md'});
