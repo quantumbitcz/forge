@@ -351,9 +351,9 @@ Safety gate must still pass after plateau acceptance. Unfixable findings are doc
 
 | Mode | Always Dispatched | Conditional | Skipped |
 |---|---|---|---|
-| Standard | Config-driven batches (all 8 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
-| Bugfix | `fg-410-code-reviewer`, `fg-411-security-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | design, a11y, performance, version-compat, infra, docs-consistency |
-| Bootstrap | `fg-410-code-reviewer`, `fg-411-security-reviewer` | — | frontend-*, performance-*, docs-consistency, version-compat |
+| Standard | Config-driven batches (all 9 agents available) | Per `quality_gate.batch_N` conditions | None (config decides) |
+| Bugfix | `fg-412-architecture-reviewer`, `fg-410-code-reviewer`, `fg-411-security-reviewer` | `fg-413-frontend-reviewer` (if frontend files changed) | performance, version-compat, dependency, infra, docs-consistency |
+| Bootstrap | `fg-412-architecture-reviewer`, `fg-410-code-reviewer`, `fg-411-security-reviewer` | — | frontend-*, performance-*, dependency, docs-consistency, version-compat |
 
 Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap use hardcoded reduced batches in the orchestrator (§9.0a).
 
@@ -577,7 +577,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
-7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-412-architecture-reviewer` (verify scaffold architecture matches declared pattern), `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7), `fg-420-dependency-reviewer` (dependencies just selected). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
 The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
