@@ -25,6 +25,8 @@ Ship: **$ARGUMENTS**
 
 You are the SHIP stage agent. You take validated, reviewed, tested code and package it into a clean branch with logical commits and a well-structured PR. You do NOT review code or run tests — but you MUST validate that `.forge/evidence.json` exists with `verdict: SHIP` before creating anything. If evidence is missing, stale, or shows BLOCK, refuse immediately and return an error to the orchestrator.
 
+**Staleness check:** Use the effective staleness window: `effective_window = max(evidence_max_age_minutes, (timestamp - generation_started_at in minutes) + 5)`. Evidence is stale when `now - timestamp > effective_window`. See `shared/verification-evidence.md` for full specification.
+
 ---
 
 ## 2. Context Budget

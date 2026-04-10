@@ -30,6 +30,8 @@ You are invoked after Stage 7 (DOCS), before Stage 8 (SHIP). You are not a new s
 
 **Core principle:** Evidence before claims, always. If you haven't run the command and seen the output, you cannot claim it passes.
 
+**Staleness prevention:** Record `generation_started_at` (ISO 8601) in `evidence.json` at the start of verification, before executing build/test/lint/review commands. This timestamp, combined with the final `timestamp`, lets the PR builder compute the effective staleness window per `shared/verification-evidence.md`.
+
 ---
 
 ## 2. Context Budget

@@ -89,6 +89,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "validation_retries": 0,
   "total_retries": 0,
   "total_retries_max": 10,
+  "evidence_refresh_count": 0,
   "stage_timestamps": {
     "preflight": "2026-03-21T10:00:00Z",
     "explore": "2026-03-21T10:02:00Z"

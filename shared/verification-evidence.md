@@ -11,6 +11,7 @@ This document defines the evidence artifact that `fg-590-pre-ship-verifier` prod
 ```json
 {
   "evidence": {
+    "generation_started_at": "2026-04-05T14:28:00Z",
     "timestamp": "2026-04-05T14:32:00Z",
     "build": {
       "command": "npm run build",
@@ -52,6 +53,7 @@ This document defines the evidence artifact that `fg-590-pre-ship-verifier` prod
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `timestamp` | string (ISO 8601) | Yes | When verification ran. Used for staleness check. |
+| `generation_started_at` | string (ISO 8601) | Yes | When fg-590 started. Used with `timestamp` to compute generation duration for staleness window adjustment. |
 | `build.command` | string | Yes | Actual build command executed (from `forge.local.md` `commands.build`) |
 | `build.exit_code` | integer | Yes | Must be 0 for SHIP verdict |
 | `build.duration_ms` | integer | Yes | Wall-clock build time |
@@ -87,7 +89,24 @@ Any violation → `verdict: "BLOCK"` with `block_reasons` listing each failing c
 
 ## Staleness
 
-Evidence older than `shipping.evidence_max_age_minutes` (default: 30, range: 5-60) is treated as missing. The PR builder checks `timestamp` against the current time and refuses to create a PR with stale evidence.
+Evidence older than the **effective staleness window** is treated as missing. The PR builder checks `timestamp` against the current time and refuses to create a PR with stale evidence.
+
+### Effective Staleness Window
+
+```
+generation_duration = timestamp - generation_started_at (minutes)
+effective_window = max(evidence_max_age_minutes, generation_duration + 5)
+```
+
+Evidence is stale when: `now - timestamp > effective_window`
+
+This ensures that slow builds (where `generation_duration` exceeds `evidence_max_age_minutes`) do not immediately invalidate their own evidence. The 5-minute buffer accounts for PR builder startup time.
+
+The configured `evidence_max_age_minutes` (default: 30, range: 5-60) remains the minimum window. The effective window only extends beyond it when the generation itself took longer.
+
+### Evidence Refresh Loop Cap
+
+If evidence is stale on re-check, the orchestrator re-dispatches fg-590. The field `evidence_refresh_count` (in `state.json`) tracks how many times this has occurred. After 3 stale-evidence refreshes, the pipeline escalates to the user instead of looping. See row 52 in `shared/state-transitions.md`.
 
 ## Lifecycle
 

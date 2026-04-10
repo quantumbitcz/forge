@@ -66,6 +66,7 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 49 | `LEARNING` | `retrospective_complete` | — | `COMPLETE` | Write run report, auto-tune config, archive tracking ticket |
 | 50 | `REVIEWING` | `score_diminishing` | `diminishing_count >= 2 AND score >= pass_threshold` | `VERIFYING` | Transition to "safety_gate", document diminishing gains as unfixable |
 | 51 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations >= max_iterations` | ESCALATED | Global iteration cap reached despite patience remaining |
+| 52 | `SHIPPING` | `evidence_SHIP` | `evidence_stale AND evidence_refresh_count >= 3` | ESCALATED | Evidence refresh loop cap reached, escalate to user |
 
 ---
 
