@@ -110,3 +110,16 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 #         agent: "fg-050-project-bootstrapper"
 #       implement:
 #         skip: true
+
+sla:
+  stage_defaults:
+    explore: 120
+    plan: 300
+    validate: 120
+    implement: 600
+    verify: 600
+    review: 300
+    docs: 180
+    ship: 300
+    learn: 60
+  warn_threshold: 0.8

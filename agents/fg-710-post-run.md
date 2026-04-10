@@ -4,6 +4,10 @@ description: Records user corrections as structured feedback and creates human-r
 model: inherit
 color: magenta
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash']
+ui:
+  ask: true
+  tasks: false
+  plan_mode: false
 ---
 
 # Post-Run Agent (fg-710)

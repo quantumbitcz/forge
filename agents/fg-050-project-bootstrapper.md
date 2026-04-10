@@ -763,6 +763,8 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the bootstrap plan for user approv
 
 ## 20. Optional Integrations
 
+**Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
+
 If Context7 MCP is available, use it for version resolution (primary).
 If unavailable, fall back to conventions file versions.
 Never fail because an optional MCP is down.

@@ -435,6 +435,8 @@ Common principles: `shared/agent-defaults.md`.
 
 ## Optional Integrations
 
+**Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
+
 Use Context7 MCP for API docs when available; fall back to CHANGELOG/conventions file. Never fail due to MCP unavailability.
 
 ## Linear Tracking

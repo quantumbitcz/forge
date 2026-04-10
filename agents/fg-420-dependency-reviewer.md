@@ -165,4 +165,6 @@ Category codes: `DEP-CVE-DIRECT`, `DEP-CVE-TRANSITIVE`, `DEP-OUTDATED-MAJOR`, `D
 
 **Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
 
+**Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
+
 **Conditional dispatch:** This agent is dispatched only when the quality gate detects dependency manifest files in the changed file set. If no manifest files are in the diff, the agent is not dispatched — this is handled by the quality gate, not by this agent.

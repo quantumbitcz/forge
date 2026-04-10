@@ -918,6 +918,24 @@ First MCP failure → set `integrations.{name}.available: false`, add to `recove
 
 Attempt → on failure: retry once (3s delay) → if retry fails: log to `linear_sync.failed_operations[]`, set `in_sync: false`, continue. First post-PREFLIGHT failure → disable Linear for rest of run. Recovery engine NOT invoked for MCP failures (per `error-taxonomy.md`).
 
+### Context7 Library Prefetch
+
+After detecting Context7 availability:
+
+1. If Context7 MCP is available AND `context7_libraries` is configured in `forge.local.md`:
+   - For each library in `context7_libraries`: call `resolve-library-id` MCP tool
+   - Write results to `.forge/context7-cache.json`:
+     ```json
+     {
+       "resolved_at": "<ISO8601 timestamp>",
+       "libraries": {
+         "<library-name>": { "id": "<resolved-id>", "resolved": true }
+       }
+     }
+     ```
+2. If Context7 MCP is unavailable: write cache with `"resolved": false` for all entries
+3. In ALL subsequent agent dispatch prompts, include: `Context7 cache: .forge/context7-cache.json`
+
 ---
 
 ## PREFLIGHT Completion

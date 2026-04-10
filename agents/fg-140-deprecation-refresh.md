@@ -262,3 +262,5 @@ Create tasks upfront and update as deprecation refresh progresses:
 - DO NOT modify conventions files
 - DO NOT remove existing deprecation entries -- they may cover older project versions
 - DO NOT fail the pipeline -- always return gracefully
+
+**Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.

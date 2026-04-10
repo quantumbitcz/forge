@@ -127,7 +127,7 @@ state = {
     'linear': {'epic_id': '', 'story_ids': [], 'task_ids': {}},
     'linear_sync': {'in_sync': True, 'failed_operations': []},
     'modules': [],
-    'cost': {'wall_time_seconds': 0, 'stages_completed': 0},
+    'cost': {'wall_time_seconds': 0, 'stages_completed': 0, 'stage_times': {}},
     'recovery_budget': {'total_weight': 0.0, 'max_weight': 5.5, 'applications': []},
     'recovery': {
         'total_failures': 0,
