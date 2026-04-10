@@ -332,3 +332,99 @@ read_components() {
   # Extract component names (2-space indented keys under components:)
   awk '/^components:/{found=1; next} found && /^  [a-zA-Z]/{sub(/:.*/, ""); print $1; next} found && /^[^ ]/{exit}' "$config_file"
 }
+
+# ── Atomic Operations ───────────────────────────────────────────────────────
+#
+# Thread-safe primitives for hooks and scripts. Uses flock (Linux) with
+# mkdir-based fallback (macOS/bash 3.2). Hooks that do NOT source platform.sh
+# should use inline patterns instead.
+
+# Atomic increment of a counter file.
+# Usage: atomic_increment "/path/to/counter.file"
+# Returns: new value on stdout. Exit 1 on lock timeout.
+# Thread-safe via flock (Linux) or mkdir-lock (macOS).
+atomic_increment() {
+  local file="$1"
+  local lock_file="${file}.lock"
+  local new_val
+
+  if command -v flock &>/dev/null; then
+    (
+      flock -w 5 9 || { echo "0"; return 1; }
+      local count=0
+      [ -f "$file" ] && count=$(cat "$file" 2>/dev/null || echo 0)
+      # Guard against non-numeric content
+      [[ "$count" =~ ^[0-9]+$ ]] || count=0
+      new_val=$((count + 1))
+      echo "$new_val" > "$file"
+      echo "$new_val"
+    ) 9>"$lock_file"
+  else
+    # macOS fallback: mkdir-based lock
+    local lock_dir="${file}.lockdir"
+    local retries=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+      retries=$((retries + 1))
+      [ "$retries" -ge 50 ] && { echo "0"; return 1; }
+      sleep 0.1
+    done
+    trap "rmdir '$lock_dir' 2>/dev/null || rm -rf '$lock_dir' 2>/dev/null" RETURN
+    local count=0
+    [ -f "$file" ] && count=$(cat "$file" 2>/dev/null || echo 0)
+    # Guard against non-numeric content
+    [[ "$count" =~ ^[0-9]+$ ]] || count=0
+    new_val=$((count + 1))
+    echo "$new_val" > "$file"
+    echo "$new_val"
+  fi
+}
+
+# Atomic read-modify-write of a JSON file via Python.
+# Usage: atomic_json_update "/path/to/file.json" "python_expression"
+# The python expression receives 'data' (parsed JSON dict) and should mutate it in-place.
+# Example: atomic_json_update state.json "data['lastCheckpoint'] = '2026-01-01T00:00:00Z'"
+# Exit 1 on failure (lock timeout, missing file, invalid JSON, no python).
+atomic_json_update() {
+  local file="$1"
+  local py_expr="$2"
+  local lock_file="${file}.lock"
+  local tmp
+
+  _do_update() {
+    local _py=""
+    command -v python3 &>/dev/null && _py="python3"
+    [ -z "$_py" ] && command -v python &>/dev/null && _py="python"
+    [ -z "$_py" ] && return 1
+
+    tmp=$(mktemp "${TMPDIR:-/tmp}/forge-atomic.XXXXXX")
+
+    "$_py" -c "
+import json, sys, os
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+$py_expr
+with open(sys.argv[2], 'w') as f:
+    json.dump(data, f, indent=2)
+" "$file" "$tmp" && mv "$tmp" "$file"
+    local rc=$?
+    rm -f "$tmp" 2>/dev/null
+    return $rc
+  }
+
+  if command -v flock &>/dev/null; then
+    (
+      flock -w 5 9 || return 1
+      _do_update
+    ) 9>"$lock_file"
+  else
+    local lock_dir="${file}.lockdir"
+    local retries=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+      retries=$((retries + 1))
+      [ "$retries" -ge 50 ] && return 1
+      sleep 0.1
+    done
+    trap "rmdir '$lock_dir' 2>/dev/null || rm -rf '$lock_dir' 2>/dev/null" RETURN
+    _do_update
+  fi
+}

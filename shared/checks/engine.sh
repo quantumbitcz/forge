@@ -21,16 +21,21 @@ set -euo pipefail
 if (( BASH_VERSINFO[0] < 4 )); then
   echo "[check-engine] WARNING: Bash 4.0+ required. Current: ${BASH_VERSION}. Skipping checks." >&2
   # Increment skip counter so VERIFY stage surfaces that checks were skipped.
-  # Cannot reuse handle_skip() — it's defined after this guard and may use
-  # bash 4+ constructs (flock subshell). Simple non-atomic increment is fine
-  # since this code path only runs once per session (not concurrent).
   _skip_file=".forge/.check-engine-skipped"
   _log_dir="${FORGE_DIR:-.forge}"
   if [ -d ".forge" ]; then
-    _count=0; [ -f "$_skip_file" ] && _count=$(cat "$_skip_file" 2>/dev/null || echo 0)
-    echo $((_count + 1)) > "$_skip_file" 2>/dev/null || true
+    # Try atomic_increment from platform.sh; fall back to simple increment
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    source "${SCRIPT_DIR}/../platform.sh" 2>/dev/null || true
+    if type atomic_increment &>/dev/null; then
+      atomic_increment "$_skip_file" >/dev/null 2>&1
+    else
+      # Ultra-fallback for when platform.sh can't load
+      _count=0; [ -f "$_skip_file" ] && _count=$(cat "$_skip_file" 2>/dev/null || echo 0)
+      echo $((_count + 1)) > "$_skip_file" 2>/dev/null || true
+    fi
   fi
-  # Log failure inline (handle_failure not yet defined; see comment above)
+  # Log failure inline (handle_failure not yet defined at this point)
   if [ -d "$_log_dir" ]; then
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | skip:bash_version_${BASH_VERSION} | n/a" \
       >> "${_log_dir}/.hook-failures.log" 2>/dev/null || true

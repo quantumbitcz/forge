@@ -15,15 +15,23 @@ done
 
 [[ -d "$FORGE_DIR" ]] || exit 0
 
+# Source platform.sh for atomic_increment
+source "$(dirname "${BASH_SOURCE[0]}")/platform.sh" 2>/dev/null
+
 TOKEN_FILE="${FORGE_DIR}/.token-estimate"
 SUGGEST_FILE="${FORGE_DIR}/.compact-suggestion"
 
-count=0
-if [[ -f "$TOKEN_FILE" ]]; then
-  count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "0")
+if type atomic_increment &>/dev/null; then
+  count=$(atomic_increment "$TOKEN_FILE")
+else
+  # Fallback if platform.sh failed to load
+  count=0
+  if [[ -f "$TOKEN_FILE" ]]; then
+    count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "0")
+  fi
+  count=$((count + 1))
+  echo "$count" > "$TOKEN_FILE"
 fi
-count=$((count + 1))
-echo "$count" > "$TOKEN_FILE"
 
 if (( count % 5 == 0 )); then
   echo "Consider running /compact to free context space (${count} agent dispatches since last compact)" > "$SUGGEST_FILE"
