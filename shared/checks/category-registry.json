@@ -1,7 +1,7 @@
 {
   "_note": "Canonical registry of finding category codes. Source of truth for scoring.md, output-format.md, and all review agents. When adding a new category, update this registry first.",
   "categories": {
-    "ARCH": { "description": "Architectural violation (SRP, DIP, layer boundary)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 2 },
+    "ARCH": { "description": "Architectural violation (SRP, DIP, layer boundary)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2 },
     "SEC": { "description": "Security concern (auth, injection, exposure)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1 },
     "PERF": { "description": "Backend performance issue (N+1, O(n^2), blocking I/O)", "agents": ["fg-416-backend-performance-reviewer"], "wildcard": true, "priority": 4 },
     "FE-PERF": { "description": "Frontend performance issue (re-renders, bundle size, DOM)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true, "priority": 4 },
@@ -15,7 +15,7 @@
     "DEPS": { "description": "Dependency health (vulnerable, unmaintained, outdated)", "agents": [], "wildcard": true, "status": "reserved", "priority": 5 },
     "COMPAT": { "description": "Compatibility issue (browser, platform, API version)", "agents": [], "wildcard": true, "status": "reserved", "priority": 5 },
     "CONTRACT": { "description": "Contract validation (breaking changes, schema violations)", "agents": ["fg-250-contract-validator"], "wildcard": true, "priority": 3 },
-    "STRUCT": { "description": "Project structure violation (file placement, naming, boundaries)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 2 },
+    "STRUCT": { "description": "Project structure violation (file placement, naming, boundaries)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2 },
     "INFRA": { "description": "Infrastructure/deployment issue (health, smoke, contract, image)", "agents": ["fg-419-infra-deploy-reviewer"], "wildcard": true, "priority": 4 },
     "REVIEW-GAP": { "description": "Coverage gap from timed-out or failed review agent", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 5 },
     "DESIGN-TOKEN": { "description": "Frontend design token violation (hardcoded hex/rgb instead of theme tokens)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5 },

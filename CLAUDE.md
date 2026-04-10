@@ -77,7 +77,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (7, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-418-docs-consistency-reviewer`.
+**Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-420-dependency-reviewer`.
 
 ### Agent rules
 
