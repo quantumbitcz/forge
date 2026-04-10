@@ -218,7 +218,8 @@ The `score_diminishing` event is Row 50 in the transition table (`shared/state-t
 In Phase 2 iterations after the first:
 1. Compare current findings with previous cycle's findings
 2. INFO findings that persist across 2+ cycles without being fixed: increment `convergence.unfixable_info_count`
-3. Compute `effective_target = min(target_score, 100 - 2 * unfixable_info_count)`
+3. Compute `effective_target = max(pass_threshold, min(target_score, 100 - 2 * unfixable_info_count))`
+   This floor ensures the target never drops below `pass_threshold`, preventing technical debt accumulation where persistent INFOs lower the bar to unacceptable levels.
 4. Use `effective_target` instead of `target_score` for convergence decisions
 
 The `unfixable_info_count` field is already added to the state schema (v1.5.0). It resets to 0 at the start of each run.
