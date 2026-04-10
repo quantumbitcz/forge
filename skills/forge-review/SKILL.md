@@ -62,7 +62,12 @@ Report: "Reviewing {count} files in {mode} mode."
 - `forge:fg-410-code-reviewer`
 - `forge:fg-411-security-reviewer`
 
-**Full mode (`--full`):** Core 2 + conditional agents based on file types present:
+**Full mode (`--full`):** Core 2 + always-on + conditional agents based on file types present:
+
+Always-on in full mode:
+- `forge:fg-412-architecture-reviewer`
+
+Conditional:
 
 | Agent | Dispatch condition |
 |---|---|
@@ -71,6 +76,7 @@ Report: "Reviewing {count} files in {mode} mode."
 | `forge:fg-416-backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
 | `forge:fg-417-version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
 | `forge:fg-419-infra-deploy-reviewer` | Any `Dockerfile`, `docker-compose.*`, `*.yaml`/`*.yml` with k8s markers, Helm charts |
+| `forge:fg-420-dependency-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj`, `pyproject.toml`, lock files |
 
 Report: "Dispatching {count} review agents: {agent_names}"
 

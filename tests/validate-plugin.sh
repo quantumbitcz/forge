@@ -709,22 +709,19 @@ check "state-integrity.sh exists and is executable" "$check_si_fail"
 
 # --- P0: Orchestrator split files ---
 echo ""
-echo "P0: Orchestrator split and scripts..."
+echo "P0: Orchestrator and scripts..."
 
-orch_split_fail=0
-for f in fg-100-orchestrator.md fg-100-orchestrator.md fg-100-orchestrator.md fg-100-orchestrator.md; do
-  if [[ ! -f "$ROOT/agents/$f" ]]; then
-    echo "    Missing: agents/$f"
-    orch_split_fail=1
-  fi
-done
-check "Orchestrator split files exist" "$orch_split_fail"
+orch_merged_check_fail=0
+if [[ ! -f "$ROOT/agents/fg-100-orchestrator.md" ]]; then
+  orch_merged_check_fail=1
+fi
+check "Orchestrator merged file exists" "$orch_merged_check_fail"
 
 core_name_fail=0
 if ! grep -q "^name: fg-100-orchestrator$" "$ROOT/agents/fg-100-orchestrator.md"; then
   core_name_fail=1
 fi
-check "Orchestrator core has correct name in frontmatter" "$core_name_fail"
+check "Orchestrator has correct name in frontmatter" "$core_name_fail"
 
 merged_orch_fail=0
 if [[ ! -f "$ROOT/agents/fg-100-orchestrator.md" ]]; then
