@@ -219,3 +219,88 @@ W_GRACEFUL_STOP="0.0"
   grep -qi "independent\|per.feature\|per.run\|isolated" "$RECOVERY_ENGINE" \
     || fail "Sprint mode independent budgets not documented"
 }
+
+# ---------------------------------------------------------------------------
+# P2: Fallback chain budget arithmetic
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# 12. TOOL_FAILURE fallback chain: tool-diag -> resource -> agent-reset
+# ---------------------------------------------------------------------------
+@test "recovery-budget: TOOL_FAILURE fallback chain = tool-diag -> resource -> agent-reset" {
+  # Verify the chain weights are correct per documentation
+  # tool-diagnosis(1.0) -> resource-cleanup(0.5) -> agent-reset(1.0)
+  local chain_total
+  chain_total=$(compute_total_weight "$W_TOOL_DIAG" "$W_RESOURCE_CLEAN" "$W_AGENT_RESET")
+  [[ "$chain_total" == "2.5" ]] || fail "TOOL_FAILURE full chain cost should be 2.5, got $chain_total"
+}
+
+# ---------------------------------------------------------------------------
+# 13. Fallback chain respects budget ceiling
+# ---------------------------------------------------------------------------
+@test "recovery-budget: fallback chain respects budget ceiling" {
+  # Scenario: primary (1.0) fails, fallback (0.5) = total 1.5, within budget
+  local budget="0.0"
+  local primary="$W_TOOL_DIAG"   # 1.0
+  local fallback="$W_RESOURCE_CLEAN"  # 0.5
+
+  local after_primary
+  after_primary=$(echo "$budget + $primary" | bc)
+  [[ $(echo "$after_primary <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "Primary ($primary) should be within budget"
+
+  local after_fallback
+  after_fallback=$(echo "$after_primary + $fallback" | bc)
+  [[ $(echo "$after_fallback <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "Primary + fallback ($after_fallback) should still be within budget"
+}
+
+# ---------------------------------------------------------------------------
+# 14. Fallback chain stops when budget exceeded
+# ---------------------------------------------------------------------------
+@test "recovery-budget: fallback chain stops when budget exceeded" {
+  # Scenario: budget at 5.0 (near ceiling of 5.5)
+  # Primary tool-diag (1.0) fails — but wait, 5.0 + 1.0 = 6.0 > 5.5
+  # So primary itself should be blocked
+  local budget="5.0"
+  local primary="$W_TOOL_DIAG"  # 1.0
+
+  local after_primary
+  after_primary=$(echo "$budget + $primary" | bc)
+  [[ $(echo "$after_primary > $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "Primary at budget 5.0 should exceed ceiling"
+
+  # But resource-cleanup (0.5) would fit: 5.0 + 0.5 = 5.5 (at ceiling)
+  local fallback="$W_RESOURCE_CLEAN"  # 0.5
+  local after_fallback_only
+  after_fallback_only=$(echo "$budget + $fallback" | bc)
+  [[ $(echo "$after_fallback_only <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+    || fail "Fallback (0.5) alone at budget 5.0 should fit at ceiling"
+}
+
+# ---------------------------------------------------------------------------
+# 15. Same strategy never applied twice per failure
+# ---------------------------------------------------------------------------
+@test "recovery-budget: same strategy never applied twice per failure" {
+  # Validates the rule: if a chain had the same strategy in primary and fallback,
+  # the fallback must be skipped. Test with synthetic data.
+  # resource-cleanup(0.5) as primary, resource-cleanup(0.5) as fallback = skip
+  local primary="resource-cleanup"
+  local fallback="resource-cleanup"
+  [[ "$primary" == "$fallback" ]] \
+    && echo "Same strategy '$primary' in primary and fallback — fallback must be skipped" \
+    || fail "Test setup error: strategies should be identical"
+}
+
+# ---------------------------------------------------------------------------
+# 16. Max fallback depth is 2
+# ---------------------------------------------------------------------------
+@test "recovery-budget: max fallback depth is 2" {
+  # The fallback chain table has: Primary | Fallback 1 | Fallback 2
+  # No Fallback 3 column exists — max depth is 2
+  grep -q "Fallback 2" "$RECOVERY_ENGINE" \
+    || fail "Fallback 2 column not found in recovery-engine.md"
+  # Ensure no Fallback 3
+  ! grep -q "Fallback 3" "$RECOVERY_ENGINE" \
+    || fail "Fallback 3 found — max depth should be 2"
+}

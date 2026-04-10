@@ -412,7 +412,7 @@ Recovery strategies have different costs. The budget uses weighted accounting tr
 
 ### Inter-Strategy Cascade
 
-When a recovery strategy returns `ESCALATE`, the recovery engine does **not** automatically try alternate strategies. It reports `ESCALATE` to the orchestrator, which decides whether to retry with different parameters or escalate to the user. The recovery budget is cumulative across the entire pipeline run (not per-stage) and does not reset between stages.
+When a recovery strategy returns `ESCALATE`, the recovery engine checks the fallback chain (section 10). If a fallback strategy exists and budget allows, execute the fallback. Otherwise, return `ESCALATE` to the orchestrator. The recovery budget is cumulative across the entire pipeline run (not per-stage) and does not reset between stages.
 
 ### Multi-Error Ordering
 
@@ -472,7 +472,31 @@ If recovery itself fails (e.g., state-reconstruction runs `git log` but git is u
 
 ---
 
-## 10. Principles
+## 10. Fallback Chains
+
+When a recovery strategy returns `ESCALATE`, the recovery engine checks this fallback chain before escalating to the orchestrator. If a fallback strategy exists and budget allows, execute the fallback. Otherwise, return `ESCALATE` to the orchestrator.
+
+| Category | Primary | Fallback 1 | Fallback 2 |
+|----------|---------|------------|------------|
+| TRANSIENT | `transient-retry` (0.5) | `resource-cleanup` (0.5) | — |
+| TOOL_FAILURE | `tool-diagnosis` (1.0) | `resource-cleanup` (0.5) | `agent-reset` (1.0) |
+| AGENT_FAILURE | `agent-reset` (1.0) | `resource-cleanup` (0.5) | — |
+| STATE_CORRUPTION | `state-reconstruction` (1.5) | `graceful-stop` (0.0) | — |
+| EXTERNAL_DEPENDENCY | `dependency-health` (1.0) | `transient-retry` (0.5) | — |
+| RESOURCE_EXHAUSTION | `resource-cleanup` (0.5) | `agent-reset` (1.0) | — |
+| UNRECOVERABLE | `graceful-stop` (0.0) | — | — |
+
+**Fallback rules:**
+
+1. Each strategy in the chain consumes its own weight independently.
+2. If the total budget would be exceeded by the fallback, skip to ESCALATE.
+3. The same strategy is never applied twice for the same failure (no retry of fallback).
+4. Circuit breaker checks apply to each fallback attempt independently. If a circuit breaker is OPEN for the fallback strategy's category, the fallback is skipped (no budget consumed) and the next fallback in the chain is tried.
+5. Maximum depth: 2 fallbacks (prevent deep chains that mask fundamental issues).
+
+---
+
+## 11. Principles
 
 1. **Never silently discard data** — always save state before attempting recovery.
 2. **Classify before acting** — wrong classification leads to wrong strategy.
