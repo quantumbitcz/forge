@@ -85,3 +85,27 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 #   min_score: 90                     # Minimum quality score to ship (pass_threshold-100). Default 90.
 #   evidence_review: true             # Dispatch code reviewer in fg-590 (true/false)
 #   evidence_max_age_minutes: 30      # Evidence staleness threshold (5-60)
+
+# Config-driven agent selection (per-stage defaults and mode overrides)
+# mode_config:
+#   stages:
+#     explore:
+#       agent: "${explore_agents.primary}"
+#     plan:
+#       agent: "fg-200-planner"
+#     implement:
+#       agent: "fg-300-implementer"
+#     docs:
+#       agent: "fg-350-docs-generator"
+#   mode_overlays:
+#     bugfix:
+#       plan:
+#         agent: "fg-020-bug-investigator"
+#     migration:
+#       plan:
+#         agent: "fg-160-migration-planner"
+#     bootstrap:
+#       plan:
+#         agent: "fg-050-project-bootstrapper"
+#       implement:
+#         skip: true
