@@ -35,6 +35,12 @@ parallel_threshold: 4    # from implementation.parallel_threshold in forge-confi
 
 ## Algorithm
 
+## Graph Fallback Behavior
+
+When Neo4j is unavailable (`graph.enabled=false`, container down, or MCP failure), fall back to file-level overlap detection using `affected_paths` from each feature's plan. Log `[DEGRADED] Graph unavailable — using file-level conflict detection only.`
+
+File-level detection uses path prefix matching: if any path from Feature A is a prefix of any path from Feature B (or vice versa), a conflict is detected and the features are serialized. This is more conservative than graph-based analysis (which can detect shared symbols without path overlap) but ensures safety.
+
 ### Phase 1 — File-Level Analysis (always available)
 
 Estimate the set of files each work item will touch:
