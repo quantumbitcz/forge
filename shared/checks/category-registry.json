@@ -12,7 +12,7 @@
     "APPROACH": { "description": "Solution quality (suboptimal pattern, unnecessary complexity)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "INFO_ONLY", "accumulation_rule": "3+ recurrences escalate to convention", "priority": 6 },
     "SCOUT": { "description": "Boy Scout improvement (tracked, no point deduction)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "NONE", "priority": 6 },
     "A11Y": { "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true, "priority": 5 },
-    "DEPS": { "description": "Dependency health (vulnerable, unmaintained, outdated)", "agents": [], "wildcard": true, "status": "reserved", "priority": 5 },
+    "DEP": { "description": "Dependency health (vulnerable, unmaintained, outdated, conflicts, license)", "agents": ["fg-420-dependency-reviewer"], "wildcard": true, "priority": 5 },
     "COMPAT": { "description": "Compatibility issue (browser, platform, API version)", "agents": [], "wildcard": true, "status": "reserved", "priority": 5 },
     "CONTRACT": { "description": "Contract validation (breaking changes, schema violations)", "agents": ["fg-250-contract-validator"], "wildcard": true, "priority": 3 },
     "STRUCT": { "description": "Project structure violation (file placement, naming, boundaries)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2 },

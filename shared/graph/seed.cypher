@@ -1889,11 +1889,13 @@ CREATE (:Agent {name: 'fg-350-docs-generator', role: 'other', file_path: 'agents
 CREATE (:Agent {name: 'fg-400-quality-gate', role: 'other', file_path: 'agents/fg-400-quality-gate.md'});
 CREATE (:Agent:Reviewer {name: 'fg-410-code-reviewer', role: 'reviewer', file_path: 'agents/fg-410-code-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-411-security-reviewer', role: 'reviewer', file_path: 'agents/fg-411-security-reviewer.md'});
+CREATE (:Agent:Reviewer {name: 'fg-412-architecture-reviewer', role: 'reviewer', file_path: 'agents/fg-412-architecture-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-413-frontend-reviewer', role: 'reviewer', file_path: 'agents/fg-413-frontend-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-416-backend-performance-reviewer', role: 'reviewer', file_path: 'agents/fg-416-backend-performance-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-417-version-compat-reviewer', role: 'reviewer', file_path: 'agents/fg-417-version-compat-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-418-docs-consistency-reviewer', role: 'reviewer', file_path: 'agents/fg-418-docs-consistency-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-419-infra-deploy-reviewer', role: 'reviewer', file_path: 'agents/fg-419-infra-deploy-reviewer.md'});
+CREATE (:Agent:Reviewer {name: 'fg-420-dependency-reviewer', role: 'reviewer', file_path: 'agents/fg-420-dependency-reviewer.md'});
 CREATE (:Agent {name: 'fg-500-test-gate', role: 'other', file_path: 'agents/fg-500-test-gate.md'});
 CREATE (:Agent {name: 'fg-505-build-verifier', role: 'other', file_path: 'agents/fg-505-build-verifier.md'});
 CREATE (:Agent {name: 'fg-590-pre-ship-verifier', role: 'other', file_path: 'agents/fg-590-pre-ship-verifier.md'});
@@ -2048,6 +2050,8 @@ MATCH (a:Agent {name: 'fg-410-code-reviewer'}), (c:SharedContract {name: 'agent-
 MATCH (a:Agent {name: 'fg-410-code-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-411-security-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-411-security-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-412-architecture-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-412-architecture-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
@@ -2059,6 +2063,8 @@ MATCH (a:Agent {name: 'fg-418-docs-consistency-reviewer'}), (c:SharedContract {n
 MATCH (a:Agent {name: 'fg-418-docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-419-infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-419-infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-420-dependency-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-420-dependency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'convergence-engine'}) CREATE (a)-[:READS]->(c);

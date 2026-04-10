@@ -144,7 +144,7 @@ Additional category codes for specialized review domains:
 | Code | Meaning |
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
-| `DEPS-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions). Reserved — currently `fg-417-version-compat-reviewer` uses `QUAL-COMPAT` for version compatibility findings. `DEPS-*` may be activated by a future dedicated dependency auditing agent. |
+| `DEP-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions, license compliance). Subcategories: `DEP-CVE-*` (vulnerabilities), `DEP-OUTDATED-*` (outdated), `DEP-UNMAINTAINED` / `DEP-DEPRECATED` (maintenance), `DEP-CONFLICT-*` (version conflicts), `DEP-LICENSE-*` (license compliance). Emitted by `fg-420-dependency-reviewer`. |
 | `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-version-compat-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
 | `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
