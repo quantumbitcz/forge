@@ -231,3 +231,22 @@ When an agent receives a convention stack with both generic and framework-bindin
 - **Contradiction rule:** when the binding explicitly contradicts the generic (e.g., different implementation strategy), the binding wins. When the binding adds without contradicting, both apply.
 
 Agents read BOTH files: generic first (for foundational patterns), then binding (for framework-specific adaptations).
+
+## Design Context in Stage Notes
+
+When Figma MCP is available and the requirement references a Figma URL, the planner extracts design context and stores it in stage notes:
+
+```yaml
+design_context:
+  source: figma
+  file_key: "abc123"
+  node_id: "1:2"
+  tokens:
+    colors: [{name: "primary", value: "#1a73e8"}]
+    spacing: [{name: "gap-md", value: "16px"}]
+    typography: [{name: "heading-lg", size: "24px", weight: 600}]
+  screenshot_taken: true
+  code_connect_available: false
+```
+
+Downstream agents (polisher, reviewer) read this from stage notes to ground their work in the design.

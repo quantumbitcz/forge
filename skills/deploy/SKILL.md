@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Trigger deployment to staging, production, or preview environments. Supports ArgoCD, Helm, kubectl, and docker-compose deployment methods.
+description: "Trigger deployment to staging, production, or preview. Supports ArgoCD, Helm, kubectl, docker-compose. Requires confirmation for production."
 ---
 
 # /deploy -- Environment Deployment

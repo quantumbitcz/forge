@@ -470,6 +470,23 @@ If recovery itself fails (e.g., state-reconstruction runs `git log` but git is u
 2. Escalate to user with the standard escalation format
 3. Never enter recursive recovery (recovery of recovery)
 
+## Budget Interaction with Pipeline Retries
+
+The recovery budget (`max_weight: 5.5`) and pipeline retry budget (`total_retries_max`) are **independent** budgets:
+
+| Budget | Scope | Incremented By | Exhaustion Row |
+|--------|-------|---------------|---------------|
+| `recovery_budget.total_weight` | Recovery strategies only | Each recovery attempt (weighted by strategy) | E2 |
+| `total_retries` | All convergence iterations | Every IMPLEMENT→VERIFY→REVIEW cycle, every PR rejection retry | E1 |
+
+**Interaction rules:**
+1. Recovery attempts do NOT increment `total_retries` — they are orthogonal
+2. Convergence iterations DO increment `total_retries` — each cycle counts
+3. Either budget exhaustion triggers ESCALATED — first one to exhaust wins
+4. `user_continue` (E5) resets NEITHER budget — the user accepts the risk
+5. Both budgets reset per run (not per phase)
+6. Sprint mode: each feature pipeline has independent budgets
+
 ---
 
 ## 10. Fallback Chains

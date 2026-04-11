@@ -68,7 +68,10 @@ Read from `forge.local.md` under the `migration` key. Apply defaults when not sp
 
 ## 5. Migration Flow
 
-**Plan Mode:** Call `EnterPlanMode` before starting the migration planning process. This enters the Claude Code plan mode UI, allowing you to audit the codebase and design the phased migration plan without writing code. After the migration plan is finalized (Phase 3 complete), call `ExitPlanMode` to present the plan for user approval. If the orchestrator is running autonomously, skip plan mode — the validator serves as the approval gate instead.
+**Plan Mode:**
+- **Interactive mode** (`autonomous: false`, default): Call `EnterPlanMode` before presenting the migration plan. Wait for user approval via `ExitPlanMode`.
+- **Autonomous mode** (`autonomous: true`): Skip `EnterPlanMode`. The validator (fg-210) serves as the approval gate.
+- **Replanning** (REVISE from validator): Skip `EnterPlanMode`. Apply feedback directly.
 
 ### Phase 0 -- DETECT (auto-detection of current and target versions)
 

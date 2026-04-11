@@ -57,6 +57,31 @@ When `autonomous: true` in `forge-config.md`:
 - Tasks → still created (visual progress is always useful)
 - PlanMode → still used, auto-approved after validator passes
 
+### Autonomous Mode Activation
+
+The `autonomous` flag is resolved at PREFLIGHT from `forge-config.md`:
+
+```yaml
+autonomous: false  # Default. Set to true for fully autonomous pipeline.
+```
+
+**Propagation:**
+1. Orchestrator reads `autonomous` from config at PREFLIGHT
+2. Stored in `state.json.autonomous` (boolean)
+3. Passed to dispatched agents via dispatch context
+4. Agents check `autonomous` in dispatch context to decide AskUserQuestion vs auto-selection
+
+**When autonomous is true:**
+- AskUserQuestion → automatic recommended-choice selection, logged `[AUTO]`
+- EnterPlanMode → still entered, auto-approved after validator (fg-210) passes
+- Escalation (E1-E4) → still escalates (safety overrides autonomous mode)
+- User's 3 touchpoints reduced to 2: Start and Escalation (Approval is automatic)
+
+**When autonomous is false (default):**
+- All UI affordances work normally per agent tier
+- Plan mode requires explicit user approval
+- AskUserQuestion pauses for user input
+
 ## Agent Tier Reference
 
 | Tier | UI Capabilities | Agents |

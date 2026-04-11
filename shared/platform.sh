@@ -350,7 +350,7 @@ atomic_increment() {
 
   if command -v flock &>/dev/null; then
     (
-      flock -w 5 9 || { echo "0"; return 1; }
+      flock -w 5 9 || { echo "0"; exit 1; }
       local count=0
       [ -f "$file" ] && count=$(cat "$file" 2>/dev/null || echo 0)
       # Guard against non-numeric content

@@ -1,9 +1,16 @@
 ---
 name: forge-fix
-description: Start a bugfix workflow. Accepts a kanban ticket ID, Linear issue, or plain bug description.
+description: "Start a bugfix workflow. Preferred over /forge-run bugfix: for richer source resolution. Accepts kanban ticket ID, Linear issue, or plain bug description."
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
 You are a thin launcher. Your ONLY job is to resolve the bug source and dispatch the forge orchestrator in bugfix mode.
 

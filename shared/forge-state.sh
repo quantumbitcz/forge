@@ -121,6 +121,7 @@ state = {
         'playwright': {'available': False},
         'slack': {'available': False},
         'figma': {'available': False},
+        'excalidraw': {'available': False},
         'context7': {'available': False},
         'neo4j': {'available': False, 'last_build_sha': '', 'node_count': 0}
     },
@@ -144,6 +145,7 @@ state = {
     'check_engine_skipped': 0,
     'mode': sys.argv[3],
     'dry_run': sys.argv[4] == 'true',
+    'autonomous': False,
     'shallow_clone': False,
     'cross_repo': {},
     'spec': None,
@@ -175,11 +177,35 @@ do_query() {
 # ── Transition ───────────────────────────────────────────────────────────
 
 do_transition() {
+  # Acquire transition lock BEFORE reading state to prevent concurrent transitions
+  local _transition_lock="${FORGE_DIR}/.transition.lock"
+
+  if command -v flock &>/dev/null; then
+    exec 201>"$_transition_lock"
+    if ! flock -w 10 201; then
+      echo "ERROR: transition lock timeout (another transition in progress)" >&2
+      exec 201>&- 2>/dev/null
+      return 2
+    fi
+    trap 'exec 201>&- 2>/dev/null; rm -f "${FORGE_DIR}/.state-transition.tmp" 2>/dev/null' RETURN
+  else
+    local _retries=0
+    while ! mkdir "${_transition_lock}.d" 2>/dev/null; do
+      _retries=$((_retries + 1))
+      if [ "$_retries" -ge 100 ]; then
+        echo "ERROR: transition lock timeout (another transition in progress)" >&2
+        return 2
+      fi
+      sleep 0.1
+    done
+    trap 'rmdir "${_transition_lock}.d" 2>/dev/null; rm -f "${FORGE_DIR}/.state-transition.tmp" 2>/dev/null' RETURN
+  fi
+
   local current_state_json
   current_state_json=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
   if [[ $? -ne 0 ]]; then
     echo "ERROR: failed to read current state" >&2
-    exit 2
+    return 2
   fi
 
   # Build guards JSON from --guard args
@@ -432,35 +458,46 @@ def match_transition():
          lambda: int(g('total_iterations', conv.get('total_iterations', 0))) >= int(g('max_iterations', 8)),
          'ESCALATED', '32', 'score_improving (iterations exhausted)',
          {}, {}),
-        # Row 33: REVIEWING + score_plateau + patience reached + score >= pass -> VERIFYING (safety_gate)
+        # Row 33: REVIEWING + score_plateau + phase_iterations >= 2 + patience reached + score >= pass -> VERIFYING (safety_gate)
         ('REVIEWING', 'score_plateau',
-         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) >= 2
+                  and int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
                   and int(g('score', 0)) >= int(g('pass_threshold', 80))),
          'VERIFYING', '33', 'score_plateau (patience reached, score >= pass)',
          {}, {'phase': 'safety_gate'}),
-        # Row 34: REVIEWING + score_plateau + patience reached + concerns range -> ESCALATED
+        # Row 34: REVIEWING + score_plateau + phase_iterations >= 2 + patience reached + concerns range -> ESCALATED
         ('REVIEWING', 'score_plateau',
-         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) >= 2
+                  and int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
                   and int(g('score', 0)) >= int(g('concerns_threshold', 60))
                   and int(g('score', 0)) < int(g('pass_threshold', 80))),
          'ESCALATED', '34', 'score_plateau (patience reached, concerns range)',
          {}, {}),
-        # Row 35: REVIEWING + score_plateau + patience reached + score < concerns -> ESCALATED
+        # Row 35: REVIEWING + score_plateau + phase_iterations >= 2 + patience reached + score < concerns -> ESCALATED
         ('REVIEWING', 'score_plateau',
-         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) >= 2
+                  and int(g('plateau_count', conv.get('plateau_count', 0))) >= int(g('plateau_patience', 3))
                   and int(g('score', 0)) < int(g('concerns_threshold', 60))),
          'ESCALATED', '35', 'score_plateau (patience reached, score < concerns)',
          {}, {}),
-        # Row 36: REVIEWING + score_plateau + within patience + within iterations -> IMPLEMENTING
+        # Row 36: REVIEWING + score_plateau + phase_iterations >= 2 + within patience + within iterations -> IMPLEMENTING
         ('REVIEWING', 'score_plateau',
-         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) < int(g('plateau_patience', 3))
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) >= 2
+                  and int(g('plateau_count', conv.get('plateau_count', 0))) < int(g('plateau_patience', 3))
                   and int(g('total_iterations', conv.get('total_iterations', 0))) < int(g('max_iterations', 8))),
          'IMPLEMENTING', '36', 'score_plateau (within patience)',
          {'convergence.plateau_count': '+1', 'convergence.phase_iterations': '+1',
           'convergence.total_iterations': '+1', 'total_retries': '+1'}, {}),
+        # Row 36a: REVIEWING + score_plateau + phase_iterations < 2 (baseline exempt) -> IMPLEMENTING
+        ('REVIEWING', 'score_plateau',
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) < 2),
+         'IMPLEMENTING', '36a', 'score_plateau (first 2 cycles exempt, establishing baseline)',
+         {'convergence.phase_iterations': '+1', 'convergence.plateau_count': '=0',
+          'convergence.total_iterations': '+1', 'total_retries': '+1'}, {}),
         # Row 51: REVIEWING + score_plateau + within patience + iteration cap reached -> ESCALATED
         ('REVIEWING', 'score_plateau',
-         lambda: (int(g('plateau_count', conv.get('plateau_count', 0))) < int(g('plateau_patience', 3))
+         lambda: (int(g('phase_iterations', conv.get('phase_iterations', 0))) >= 2
+                  and int(g('plateau_count', conv.get('plateau_count', 0))) < int(g('plateau_patience', 3))
                   and int(g('total_iterations', conv.get('total_iterations', 0))) >= int(g('max_iterations', 8))),
          'ESCALATED', '51', 'score_plateau (within patience + iteration cap reached)',
          {}, {}),
@@ -586,6 +623,11 @@ def match_transition():
          lambda: True,
          'PLANNING', 'E7', 'user_reshape',
          {}, {}),
+        # E9: ANY (not COMPLETE, not ABORTED) + user_abort_direct -> ABORTED
+        ('ANY', 'user_abort_direct',
+         lambda: current not in ('COMPLETE', 'ABORTED'),
+         'ABORTED', 'E9', 'user_abort_direct (from /forge-abort)',
+         {}, {}),
         # E8: ANY + token_budget_exhausted -> ESCALATED
         ('ANY', 'token_budget_exhausted',
          lambda: int(g('estimated_total', state.get('tokens', {}).get('estimated_total', 0))) >= int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) and int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) > 0,
@@ -624,7 +666,7 @@ if matched is None:
         'event': event,
         'guards': guards
     }
-    print(json.dumps(result))
+    print(json.dumps(result), file=sys.stderr)
     sys.exit(1)
 
 r_state, r_event, r_guard, r_next, r_id, r_desc, r_counters, r_conv = matched
@@ -688,6 +730,13 @@ for key, change in r_conv.items():
 if new_state == 'COMPLETE':
     state['story_state'] = new_state
     state['complete'] = True
+elif new_state == 'ABORTED' and r_id == 'E9':
+    state['story_state'] = new_state
+    state['abort_reason'] = 'user abort (direct)'
+    try:
+        state['abort_timestamp'] = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    except AttributeError:
+        state['abort_timestamp'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 else:
     state['story_state'] = new_state
 

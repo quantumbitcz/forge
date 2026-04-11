@@ -1,7 +1,7 @@
 ---
 name: forge-sprint
 description: |
-  Execute multiple features in parallel from a Linear sprint or manual list.
+  Execute multiple features in parallel. Preferred over /forge-run --sprint. Reads from Linear sprint or manual feature list.
   Entry point for sprint-level orchestration.
 
   Usage:

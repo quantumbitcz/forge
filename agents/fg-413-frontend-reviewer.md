@@ -345,6 +345,20 @@ If Playwright MCP is available AND a preview URL is provided:
 
 If Playwright MCP is not available: perform static analysis only (still highly valuable for contrast computation, ARIA validation, structural checks). Log INFO noting that runtime checks were skipped.
 
+### Keyboard Traversal Test (Playwright-assisted, conditional)
+
+If Playwright MCP available:
+
+1. `browser_navigate` to page under test
+2. `browser_evaluate` with Tab traversal script to collect focus order
+3. Analyze focus order for:
+   - Focus traps (same element appears consecutively)
+   - Unreachable interactive elements (buttons/links not in order)
+   - Illogical ordering (footer before main content)
+4. Report `A11Y-KEYBOARD` findings
+
+If Playwright unavailable: skip, assess from code analysis only.
+
 ---
 
 # Part D: Performance

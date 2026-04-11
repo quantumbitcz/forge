@@ -5,6 +5,13 @@ description: Universal pipeline entry point. Auto-classifies intent (feature, bu
 
 # /forge-run — Universal Pipeline Entry Point
 
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+
 You are the universal entry point for the forge pipeline. Your job is to classify the user's intent, detect available integrations, and dispatch the correct agent. You handle routing — not planning, implementation, or review.
 
 ## Instructions

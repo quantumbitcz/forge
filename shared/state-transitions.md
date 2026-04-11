@@ -84,6 +84,7 @@ These transitions can fire from any current_state. They take priority over norma
 | E6 | ANY (ESCALATED) | `user_abort` | — | `ABORTED` | Write abort-report.md, clean up worktree, release lock |
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
 | E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user |
+| E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-abort skill. Set abort_reason, release lock, preserve worktree. |
 
 ---
 
@@ -110,12 +111,31 @@ Sub-state machine governing the IMPLEMENTING <-> VERIFYING <-> REVIEWING iterati
 | C5 | `correctness` | `verify_pass` | `tests_pass AND analysis_pass` | `perfection` | Reset phase_iterations = 0, transition to Phase 2 |
 | C6 | `perfection` | `score_target_reached` | `score >= target_score` | `safety_gate` | Transition to safety gate, dispatch final VERIFY |
 | C7 | `perfection` | `score_improving` | `delta > plateau_threshold AND total_iterations < max_iterations` | `perfection` | Reset plateau_count = 0, increment phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
-| C8 | `perfection` | `score_plateau` | `plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) |
+| C8 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) |
 | C9 | `perfection` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
-| C10 | `perfection` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations < max_iterations` | `perfection` | Increment plateau_count + phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
+| C10 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count < plateau_patience AND total_iterations < max_iterations` | `perfection` | Increment plateau_count + phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
+| C10a | `perfection` | `score_plateau` | `phase_iterations < 2` | `perfection` | First 2 cycles exempt from plateau counting (establishing baseline). Increment phase_iterations + total_iterations + total_retries, treat as IMPROVING. |
 | C11 | `safety_gate` | `verify_pass` | `tests_pass` | CONVERGED | Set safety_gate_passed = true, proceed to DOCS |
 | C12 | `safety_gate` | `safety_gate_fail` | `safety_gate_failures < 2` | `correctness` | Increment safety_gate_failures + total_iterations, reset phase_iterations + plateau_count + last_score_delta + convergence_state to IMPROVING |
 | C13 | `safety_gate` | `safety_gate_fail` | `safety_gate_failures >= 2` | ESCALATED | Cross-phase oscillation detected, escalate |
+
+---
+
+## Mode Overlay Effects on Transitions
+
+Mode overlays (defined in `shared/modes/*.md`) modify the effective values used in guard evaluation:
+
+| Mode | Affected Guard | Override |
+|------|---------------|----------|
+| bugfix | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
+| bootstrap | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
+| testing | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
+| standard | — | No overrides |
+| migration | — | No target_score override |
+| refactor | — | No target_score override |
+| performance | — | No target_score override |
+
+**Resolution:** At PREFLIGHT, the orchestrator resolves the effective `target_score` based on the active mode's `review.target_score` or `ship.target_score` override and stores it in `state.json`. All transition guards reference this resolved value.
 
 ---
 

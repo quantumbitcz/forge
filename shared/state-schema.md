@@ -122,6 +122,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "playwright": { "available": false },
     "slack": { "available": false },
     "figma": { "available": false },
+    "excalidraw": { "available": false },
     "context7": { "available": false },
     "neo4j": { "available": false, "last_build_sha": "", "node_count": 0 }
   },
@@ -182,6 +183,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "check_engine_skipped": 0,
   "mode": "standard",
   "dry_run": false,
+  "autonomous": false,
   "shallow_clone": false,
   "cross_repo": {},
   "spec": null,
@@ -290,6 +292,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `recovery_failed` | boolean | No | Set to `true` by the recovery engine when recovery itself fails (e.g., state-reconstruction attempted but git unavailable). Triggers immediate escalation to user. Absent or `false` during normal operation. See `shared/recovery/recovery-engine.md` section 9. |
 | `last_known_stage` | integer | No | Set by the recovery engine alongside `recovery_failed`. Records the last successfully entered stage (0-9) before recovery failure, enabling manual resume. Absent during normal operation. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
+| `autonomous` | boolean | No | `true` when pipeline runs in autonomous mode (resolved from `forge-config.md` at PREFLIGHT). When true, `AskUserQuestion` auto-selects recommended choices (logged `[AUTO]`), plan mode auto-approves after validator passes, but escalation events (E1-E4) still pause. Default: `false`. |
+| `abort_timestamp` | string | No | ISO 8601 timestamp of when abort was requested. Set alongside `abort_reason` by E9 transition. Absent when not aborted. |
 | `shallow_clone` | boolean | No | `true` when the host repository is a shallow clone (detected via `git rev-parse --is-shallow-repository`). Set at PREFLIGHT by the worktree manager. When true, downstream agents should skip history-dependent analysis (`git log` depth, `git blame` hotspots, diff-based drift detection) and fall back to file-based analysis. Default: `false`. Absent or `false` for full clones. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
 | `spec` | object\|null | No | Present when pipeline was invoked with `--spec <path>`. Contains `path`, `epic_title`, `story_count`, `has_technical_notes`, `has_nfr`, and `loaded_at`. `null` when not using spec-driven invocation. See the [spec section](#spec-object-optional) above. |

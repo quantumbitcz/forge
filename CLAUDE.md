@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.12.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.13.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -149,7 +149,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 ## Integrations
 
 - **Linear** (optional): Epic/Stories/Tasks at PLAN, status per stage. Disabled by default. MCP failures → graceful degradation (no recovery engine).
-- **MCP detection:** Detects Linear, Playwright, Slack, Context7, Figma. First failure → degraded for run. No MCP required.
+- **MCP detection:** Detects Linear, Playwright, Slack, Context7, Figma, Excalidraw, Neo4j. First failure → degraded for run. No MCP required.
 - **Cross-repo:** 5-step discovery at `/forge-init`. Contract validation, linked PRs, multi-repo worktrees. Timeout: 30min (configurable). Alphabetical lock ordering. PR failures don't block main PR. Discovery results stored with `detected_via`.
 
 ## Knowledge graph
@@ -168,9 +168,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Missing tools skip tiers. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (25), hooks, kanban, git
+## Skills (28), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis).
 
 **Hooks** (4): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
@@ -270,7 +270,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.12.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.13.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

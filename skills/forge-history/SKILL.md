@@ -1,6 +1,6 @@
 ---
 name: forge-history
-description: View quality score trends, agent effectiveness, and run metrics across pipeline runs
+description: "View trends across multiple pipeline runs (score oscillations, agent effectiveness, common findings). For current run state use /forge-status."
 disable-model-invocation: false
 ---
 

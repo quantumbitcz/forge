@@ -139,3 +139,27 @@ MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials
    - `forge.local.md` under `mcps.{name}.api_key` (last resort — prefer env vars to avoid committing secrets)
 
 3. **Validation:** If a credential source is found, test connectivity during the MCP probe at PREFLIGHT step 15. If the credential is invalid (auth failure), log WARNING and mark MCP as unavailable — do not retry or prompt again during this run.
+
+---
+
+## MCP Entries
+
+### Figma
+
+**Detection:** Check for tool `mcp__plugin_figma_figma__get_design_context`
+
+**Used by:** fg-200-planner (design context extraction), fg-320-frontend-polisher (design reference), fg-413-frontend-reviewer (design fidelity audit)
+
+**Degradation:** Skip design-grounded planning and visual comparison. Frontend reviewer falls back to convention-only checks. Log INFO: "Figma MCP not available — design fidelity checks skipped."
+
+**First failure:** Set `integrations.figma.available = false` for the remainder of the run.
+
+### Excalidraw
+
+**Detection:** Check for tool `mcp__claude_ai_Excalidraw__create_view`
+
+**Used by:** fg-200-planner (architecture diagrams), fg-400-quality-gate (findings heatmap), fg-700-retrospective (convergence charts), fg-090-sprint-orchestrator (dependency graphs), forge-status skill (pipeline visualization)
+
+**Degradation:** Skip diagram generation. Text-only output. Log INFO: "Excalidraw MCP not available — visual diagrams skipped."
+
+**First failure:** Set `integrations.excalidraw.available = false` for the remainder of the run.

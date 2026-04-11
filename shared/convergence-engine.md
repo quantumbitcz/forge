@@ -144,6 +144,12 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
            -> NOTE: score_history is NOT cleared — it carries across phases for
               retrospective analysis. The perfection phase uses last_score_delta
               (reset to 0) for its own delta calculations, not score_history.
+           -> NOTE: When computing `smoothed_delta` after a safety gate restart,
+              use only scores from the CURRENT phase. Implementation: smoothed_delta
+              is computed from the last `min(3, phase_iterations)` entries in score_history,
+              NOT the full history. Since phase_iterations resets to 0, the first cycle
+              has no delta data (smoothed_delta = 0, treated as IMPROVING). This prevents
+              pre-restart perfection scores from contaminating post-restart delta calculations.
            -> NOTE: total_iterations is NOT reset — it counts across all phases
               including restarts. The global cap (max_iterations) applies cumulatively.
            -> NOTE: After restart, the first perfection cycle will have phase_iterations = 0

@@ -1,6 +1,6 @@
 ---
 name: forge-status
-description: Show current pipeline state, last run results, quality score, and Linear tracking status
+description: "Show current pipeline run state (stage, score, convergence phase, integrations). For cross-run trends use /forge-history."
 disable-model-invocation: false
 ---
 

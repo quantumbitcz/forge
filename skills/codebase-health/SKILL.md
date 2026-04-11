@@ -1,10 +1,17 @@
 ---
 name: codebase-health
-description: Run the check engine across all project source files and report convention violations, quality issues, and security findings
+description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. For iterative fixing use /deep-health. For changed-files-only use /forge-review."
 disable-model-invocation: false
 ---
 
 # Codebase Health Check
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
 Run the pipeline's check engine in full review mode across the entire project to assess codebase health against the plugin's convention rules.
 

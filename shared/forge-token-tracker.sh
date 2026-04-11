@@ -83,10 +83,10 @@ do_record() {
 import json, sys
 
 state = json.load(sys.stdin)
-stage = '$STAGE'
-agent = '$AGENT'
-input_t = int('$INPUT_TOKENS')
-output_t = int('$OUTPUT_TOKENS')
+stage = sys.argv[1]
+agent = sys.argv[2]
+input_t = int(sys.argv[3])
+output_t = int(sys.argv[4])
 
 # Ensure tokens section exists
 if 'tokens' not in state:
@@ -116,12 +116,49 @@ tokens['by_agent'][agent]['output'] += output_t
 tokens['estimated_total'] += input_t + output_t
 
 json.dump(state, sys.stdout, indent=2)
-")
+" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS")
 
   [[ $? -ne 0 ]] && { echo "ERROR: failed to compute token update" >&2; exit 2; }
 
-  # Write back via state writer
-  bash "$STATE_WRITER" write "$updated_state" --forge-dir "$FORGE_DIR" > /dev/null
+  # Write back via state writer (with retry on stale _seq)
+  local _max_retries=3 _attempt=0
+  while true; do
+    bash "$STATE_WRITER" write "$updated_state" --forge-dir "$FORGE_DIR" > /dev/null
+    local _rc=$?
+    if [[ $_rc -eq 0 ]]; then
+      break
+    elif [[ $_rc -eq 3 && $_attempt -lt $_max_retries ]]; then
+      # Stale _seq: re-read, recompute, retry
+      _attempt=$((_attempt + 1))
+      current_state=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
+      [[ $? -ne 0 ]] && { echo "ERROR: re-read failed on retry $_attempt" >&2; exit 2; }
+      updated_state=$(echo "$current_state" | python3 -c "
+import json, sys
+state = json.load(sys.stdin)
+stage = sys.argv[1]
+agent = sys.argv[2]
+input_t = int(sys.argv[3])
+output_t = int(sys.argv[4])
+if 'tokens' not in state:
+    state['tokens'] = {'estimated_total': 0, 'budget_ceiling': 0, 'by_stage': {}, 'by_agent': {}, 'budget_warning_issued': False}
+tokens = state['tokens']
+if stage not in tokens['by_stage']:
+    tokens['by_stage'][stage] = {'input': 0, 'output': 0}
+tokens['by_stage'][stage]['input'] += input_t
+tokens['by_stage'][stage]['output'] += output_t
+if agent not in tokens['by_agent']:
+    tokens['by_agent'][agent] = {'input': 0, 'output': 0}
+tokens['by_agent'][agent]['input'] += input_t
+tokens['by_agent'][agent]['output'] += output_t
+tokens['estimated_total'] += input_t + output_t
+json.dump(state, sys.stdout, indent=2)
+" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS")
+      [[ $? -ne 0 ]] && { echo "ERROR: recompute failed on retry $_attempt" >&2; exit 2; }
+    else
+      echo "ERROR: token update write failed (rc=$_rc, attempt=$_attempt)" >&2
+      exit 2
+    fi
+  done
 }
 
 # ── Check ─────────────────────────────────────────────────────────────────

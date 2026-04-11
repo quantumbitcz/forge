@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install bash 4+
+        run: |
+          bash --version
+          which bash
+
+      - name: Install python3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Structural validation
+        run: ./tests/run-all.sh structural
+
+      - name: Unit tests
+        run: ./tests/run-all.sh unit
+
+      - name: Contract tests
+        run: ./tests/run-all.sh contract
+
+      - name: Scenario tests
+        run: ./tests/run-all.sh scenario

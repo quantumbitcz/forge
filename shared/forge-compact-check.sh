@@ -24,13 +24,25 @@ SUGGEST_FILE="${FORGE_DIR}/.compact-suggestion"
 if type atomic_increment &>/dev/null; then
   count=$(atomic_increment "$TOKEN_FILE")
 else
-  # Fallback if platform.sh failed to load
-  count=0
-  if [[ -f "$TOKEN_FILE" ]]; then
-    count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "0")
+  # Fallback with inline flock if available
+  if command -v flock &>/dev/null; then
+    count=$(
+      flock -w 2 9 || { echo "0"; exit 1; }
+      c=0
+      [ -f "$TOKEN_FILE" ] && c=$(cat "$TOKEN_FILE" 2>/dev/null || echo 0)
+      [[ "$c" =~ ^[0-9]+$ ]] || c=0
+      c=$((c + 1))
+      echo "$c" > "$TOKEN_FILE"
+      echo "$c"
+    ) 9>"${TOKEN_FILE}.lock" || count=0
+  else
+    # Last resort: accept possible race on systems without flock
+    count=0
+    [[ -f "$TOKEN_FILE" ]] && count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "0")
+    [[ "$count" =~ ^[0-9]+$ ]] || count=0
+    count=$((count + 1))
+    echo "$count" > "$TOKEN_FILE"
   fi
-  count=$((count + 1))
-  echo "$count" > "$TOKEN_FILE"
 fi
 
 if (( count % 5 == 0 )); then

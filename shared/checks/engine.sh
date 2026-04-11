@@ -21,7 +21,7 @@ set -euo pipefail
 #
 # Requires bash 4.0+ for BASH_REMATCH (regex capture groups).
 # macOS ships bash 3.2 — install bash 4+ via: brew install bash
-if (( BASH_VERSINFO[0] < 4 )); then
+if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
   # Try Python entry point (no bash 4.0+ requirement)
   _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if command -v python3 &>/dev/null && [ -f "${_SCRIPT_DIR}/engine.py" ]; then
@@ -81,6 +81,8 @@ handle_failure() {
 
 # shellcheck disable=SC2329  # invoked indirectly via hook timeout handler
 handle_skip() {
+  # Close instance lock FD if open (prevents FD exhaustion over many hook calls)
+  exec 200>&- 2>/dev/null
   local skip_file=".forge/.check-engine-skipped"
   if [ -d ".forge" ]; then
     # Atomic increment: use flock if available, else mkdir-based lock
@@ -439,6 +441,9 @@ mode_hook() {
   [[ -z "$file" || ! -f "$file" ]] && return 0
   [[ "$file" == *"build/generated-sources"* ]] && return 0
 
+  # Skip empty files — not worth the overhead
+  [[ ! -s "$file" ]] && return 0
+
   # Deferred batch mode: queue file instead of processing immediately
   if [[ "${FORGE_BATCH_HOOK:-}" == "1" && -n "${FORGE_HOOK_QUEUE:-}" ]]; then
     echo "$file" >> "$FORGE_HOOK_QUEUE"
@@ -568,6 +573,7 @@ if [[ -d "$_LOCK_DIR" ]]; then
   if command -v flock &>/dev/null; then
     exec 200>"$LOCK_FILE"
     flock -n 200 || exit 0  # Another instance running, skip silently
+    trap 'exec 200>&- 2>/dev/null' EXIT
   else
     # macOS fallback: mkdir-based lock (atomic on POSIX)
     if ! mkdir "$LOCK_FILE.d" 2>/dev/null; then

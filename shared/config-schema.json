@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Forge Configuration Schema",
+  "description": "Validates forge.local.md and forge-config.md YAML frontmatter",
+  "type": "object",
+  "required": ["components"],
+  "properties": {
+    "components": {
+      "type": "object",
+      "required": ["language", "framework", "testing"],
+      "properties": {
+        "language": {
+          "type": ["string", "null"],
+          "enum": ["kotlin", "java", "typescript", "python", "go", "rust", "swift", "c", "csharp", "ruby", "php", "dart", "elixir", "scala", "cpp", null]
+        },
+        "framework": {
+          "type": ["string", "null"],
+          "enum": ["spring", "react", "fastapi", "axum", "swiftui", "vapor", "express", "sveltekit", "k8s", "embedded", "go-stdlib", "aspnet", "django", "nextjs", "gin", "jetpack-compose", "kotlin-multiplatform", "angular", "nestjs", "vue", "svelte", null]
+        },
+        "variant": { "type": ["string", "null"] },
+        "testing": {
+          "type": ["string", "null"],
+          "enum": ["kotest", "junit5", "vitest", "jest", "pytest", "go-testing", "xctest", "rust-test", "xunit-nunit", "testcontainers", "playwright", "cypress", "cucumber", "k6", "detox", "rspec", "phpunit", "exunit", "scalatest", null]
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "critical_weight": { "type": "number", "minimum": 10 },
+        "warning_weight": { "type": "number", "minimum": 1 },
+        "info_weight": { "type": "number", "minimum": 0 },
+        "pass_threshold": { "type": "number", "minimum": 60, "maximum": 100 },
+        "concerns_threshold": { "type": "number", "minimum": 40 },
+        "oscillation_tolerance": { "type": "number", "minimum": 0, "maximum": 20 }
+      }
+    },
+    "convergence": {
+      "type": "object",
+      "properties": {
+        "max_iterations": { "type": "integer", "minimum": 3, "maximum": 20 },
+        "plateau_threshold": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "plateau_patience": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "target_score": { "type": "number", "minimum": 60, "maximum": 100 },
+        "safety_gate": { "type": "boolean" }
+      }
+    },
+    "shipping": {
+      "type": "object",
+      "properties": {
+        "min_score": { "type": "number", "minimum": 60, "maximum": 100 },
+        "evidence_max_age_minutes": { "type": "integer", "minimum": 5, "maximum": 60 }
+      }
+    },
+    "total_retries_max": { "type": "integer", "minimum": 5, "maximum": 30 },
+    "autonomous": { "type": "boolean" }
+  }
+}

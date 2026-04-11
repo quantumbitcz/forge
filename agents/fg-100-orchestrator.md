@@ -249,7 +249,7 @@ Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check
 ### Degraded Capability Check
 
 Before any MCP-dependent dispatch, check `recovery.degraded_capabilities[]`. If the needed capability is listed:
-- **Optional capability** (Linear, Playwright, Slack, Figma, Context7): skip the MCP-dependent operation silently. Log INFO in stage notes.
+- **Optional capability** (Linear, Playwright, Slack, Figma, Excalidraw, Context7): skip the MCP-dependent operation silently. Log INFO in stage notes.
 - **Required capability** (build, test, git): escalate to user immediately. These cannot be skipped.
 
 ### Decision Logging
@@ -908,11 +908,40 @@ See `shared/graph/query-patterns.md` for the Cypher templates used. If Neo4j is 
 
 ### §0.23 MCP Detection
 
-Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Auto-provisioning rules apply per `shared/mcp-provisioning.md`. Pipeline runs without any MCPs.
+Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Excalidraw, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Auto-provisioning rules apply per `shared/mcp-provisioning.md`. Pipeline runs without any MCPs.
+
+#### MCP Tool Detection
+
+| MCP | Detection tool | Degradation | Used by |
+|-----|---------------|-------------|---------|
+| Figma | `mcp__plugin_figma_figma__get_design_context` | Skip design fidelity checks | Frontend reviewer, planner, polisher |
+| Excalidraw | `mcp__claude_ai_Excalidraw__create_view` | Skip visual diagrams | Planner, quality gate, retrospective, sprint orchestrator |
 
 #### MCP Mid-Run Health
 
 First MCP failure → set `integrations.{name}.available: false`, add to `recovery.degraded_capabilities[]`. Subsequent dispatches skip without re-checking. No explicit health pings.
+
+### Neo4j Health Verification
+
+After detecting Neo4j MCP is available:
+
+1. Execute trivial query: `RETURN 1` (via neo4j-mcp)
+2. If succeeds within 5 seconds: mark healthy
+3. If fails or times out:
+   - Set `state.json.integrations.neo4j.available = false`
+   - Log WARNING: "Neo4j health check failed — using grep/glob fallback"
+   - All graph-dependent operations skip for remainder of run
+
+### Neo4j Staleness Check
+
+After health check passes:
+
+1. Read `state.json.integrations.neo4j.last_build_sha`
+2. Compare with `git rev-parse HEAD`
+3. If different:
+   - Count commits between: `git rev-list --count {last_sha}..HEAD`
+   - If < 10 commits: log INFO "Graph {N} commits behind — acceptable"
+   - If >= 10 commits: log WARNING "Graph is stale ({N} commits behind). Consider /graph-rebuild"
 
 #### Linear Operation Resilience
 
@@ -1322,6 +1351,14 @@ Mark Validate as completed.
 ## Stage 4: IMPLEMENT
 
 **story_state:** `IMPLEMENTING` | **TaskUpdate:** Mark "Stage 3: Validate" -> `completed`, Mark "Stage 4: Implement" -> `in_progress`
+
+### IMPLEMENT Stage Dispatch Order
+
+1. **fg-310-scaffolder** runs FIRST — boilerplate, directory structure, config
+2. **fg-300-implementer** runs SECOND — business logic, tests (per task)
+3. **fg-320-frontend-polisher** runs THIRD — visual polish (if `frontend_polish.enabled`)
+
+On fix loops: only fg-300 is re-dispatched. fg-310 never re-runs.
 
 If `dry_run` is true in state.json, skip this stage and all subsequent stages. The pipeline already output the dry-run report after VALIDATE.
 

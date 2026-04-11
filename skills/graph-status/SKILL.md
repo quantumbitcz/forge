@@ -5,6 +5,14 @@ description: Show Neo4j knowledge graph status — node counts, container health
 
 # /graph-status — Knowledge Graph Status
 
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **Neo4j available:** Check Docker container running. If not: report "Neo4j not running. Run /graph-init first." and STOP.
+
 You are the graph status reporter. Your job is to display the current state of the Neo4j knowledge graph: container health, node and relationship counts, last build SHA, and enrichment coverage.
 
 ## Container Name Resolution

@@ -27,8 +27,9 @@ state_file = os.path.join('$FORGE_DIR', 'state.json')
 try:
     with open(state_file) as f:
         s = json.load(f)
-except:
-    print(f'[{datetime.utcnow():%Y-%m-%d %H:%M} UTC] Session ended (state unreadable).')
+except (IOError, json.JSONDecodeError, ValueError, KeyError) as e:
+    ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+    print('[{0} UTC] Session ended (state error: {1}).'.format(ts, type(e).__name__))
     sys.exit(0)
 
 stage = s.get('story_state', 'UNKNOWN')
@@ -41,14 +42,22 @@ iters = conv.get('total_iterations', 0)
 retries = s.get('total_retries', 0)
 wall = s.get('cost', {}).get('wall_time_seconds', 0)
 
-print(f'[{datetime.utcnow():%Y-%m-%d %H:%M} UTC] Session ended | '
-      f'state={stage} mode={mode} score={last_score} '
-      f'phase={phase} iterations={iters} retries={retries} '
-      f'wall_time={wall}s')
+ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+print('[{0} UTC] Session ended | state={1} mode={2} score={3} phase={4} iterations={5} retries={6} wall_time={7}s'.format(
+    ts, stage, mode, last_score, phase, iters, retries, wall))
 " >> "$FORGE_DIR/feedback/auto-captured.md"
   else
     printf '[%s] Session ended.\n' "$(date -u '+%Y-%m-%d %H:%M UTC')" \
       >> "$FORGE_DIR/feedback/auto-captured.md"
+  fi
+  # Surface hook failures in session summary
+  _fail_log="$FORGE_DIR/.hook-failures.log"
+  if [[ -f "$_fail_log" ]]; then
+    _fc=$(wc -l < "$_fail_log" 2>/dev/null | tr -d ' ')
+    if [[ "$_fc" -gt 0 ]]; then
+      printf '  Hook failures: %s (see .forge/.hook-failures.log)\n' "$_fc" \
+        >> "$FORGE_DIR/feedback/auto-captured.md" 2>/dev/null
+    fi
   fi
 } 2>/dev/null
 

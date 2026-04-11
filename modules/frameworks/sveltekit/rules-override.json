@@ -58,6 +58,46 @@
       "message": "createEventDispatcher is Svelte 3/4 — use callback props in Svelte 5",
       "fix_hint": "Replace createEventDispatcher with callback props: pass 'onEvent: () => void' via $props() instead.",
       "example_ref": ""
+    },
+    {
+      "id": "a11y-alt-text",
+      "name": "img-missing-alt",
+      "pattern": "<img(?![^>]*alt=)",
+      "severity": "WARNING",
+      "category": "A11Y-IMG",
+      "message": "Image missing alt attribute",
+      "fix_hint": "Add alt=\"descriptive text\" or alt=\"\" for decorative images",
+      "scope_pattern": "**/*.svelte"
+    },
+    {
+      "id": "a11y-click-handler",
+      "name": "click-without-keyboard",
+      "pattern": "on:click(?![^}]*on:keydown|on:keypress|on:keyup)",
+      "severity": "WARNING",
+      "category": "A11Y-KEYBOARD",
+      "message": "Click handler without keyboard equivalent",
+      "fix_hint": "Add on:keydown handler or use a <button> element",
+      "scope_pattern": "**/*.svelte"
+    },
+    {
+      "id": "a11y-color-contrast",
+      "name": "hardcoded-color-no-contrast-check",
+      "pattern": "color:\\s*#[0-9a-fA-F]{3,8}",
+      "severity": "INFO",
+      "category": "A11Y-CONTRAST",
+      "message": "Hardcoded color — verify WCAG contrast ratio (4.5:1 for text)",
+      "fix_hint": "Use design tokens or verify contrast with a tool",
+      "scope_pattern": "**/*.{css,scss,svelte}"
+    },
+    {
+      "id": "a11y-form-label",
+      "name": "input-without-label",
+      "pattern": "<input(?![^>]*(aria-label|aria-labelledby))",
+      "severity": "WARNING",
+      "category": "A11Y-FORM",
+      "message": "Form input without associated label",
+      "fix_hint": "Add aria-label, aria-labelledby, or a <label> with matching for/id",
+      "scope_pattern": "**/*.svelte"
     }
   ],
   "additional_boundaries": [

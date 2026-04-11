@@ -127,6 +127,19 @@ Findings:
 - **WARNING**: Console errors that are not uncaught exceptions, slow page load (>5s)
 - **INFO**: Console warnings, minor network failures (e.g., analytics endpoints)
 
+### Form Smoke Test (conditional)
+
+If Playwright available AND `browser_snapshot` reveals form elements:
+
+1. Identify first visible form with input fields
+2. `browser_fill` each text input with placeholder test data
+3. `browser_click` the submit/primary action button
+4. Wait 2 seconds, check `browser_console_messages` for JS errors
+5. Check `browser_network_requests` for 4xx/5xx responses
+6. Report `INFRA-SMOKE | WARNING` if submission fails
+
+If no forms detected or Playwright unavailable: skip silently.
+
 ### 4.3 LIGHTHOUSE -- Performance & Accessibility Audit
 
 Run Lighthouse CLI in headless mode for the root route:

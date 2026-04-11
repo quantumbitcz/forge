@@ -72,6 +72,46 @@
       "category": "STRUCT-PLACE",
       "message": "Page component defined in components directory — page components should be in src/routes/ or src/pages/ for framework routing",
       "fix_hint": "Move page components to the appropriate routing directory (src/routes/ for TanStack Router, src/pages/ for file-based routing)."
+    },
+    {
+      "id": "a11y-alt-text",
+      "name": "img-missing-alt",
+      "pattern": "<img(?![^>]*alt=)",
+      "severity": "WARNING",
+      "category": "A11Y-IMG",
+      "message": "Image missing alt attribute",
+      "fix_hint": "Add alt=\"descriptive text\" or alt=\"\" for decorative images",
+      "scope_pattern": "**/*.{tsx,jsx}"
+    },
+    {
+      "id": "a11y-click-handler",
+      "name": "click-without-keyboard",
+      "pattern": "onClick(?![^}]*onKeyDown|onKeyPress|onKeyUp)",
+      "severity": "WARNING",
+      "category": "A11Y-KEYBOARD",
+      "message": "Click handler without keyboard equivalent",
+      "fix_hint": "Add onKeyDown handler or use a <button> element",
+      "scope_pattern": "**/*.{tsx,jsx}"
+    },
+    {
+      "id": "a11y-color-contrast",
+      "name": "hardcoded-color-no-contrast-check",
+      "pattern": "color:\\s*#[0-9a-fA-F]{3,8}",
+      "severity": "INFO",
+      "category": "A11Y-CONTRAST",
+      "message": "Hardcoded color — verify WCAG contrast ratio (4.5:1 for text)",
+      "fix_hint": "Use design tokens or verify contrast with a tool",
+      "scope_pattern": "**/*.{css,scss,tsx,jsx}"
+    },
+    {
+      "id": "a11y-form-label",
+      "name": "input-without-label",
+      "pattern": "<input(?![^>]*(aria-label|aria-labelledby))",
+      "severity": "WARNING",
+      "category": "A11Y-FORM",
+      "message": "Form input without associated label",
+      "fix_hint": "Add aria-label, aria-labelledby, or a <label> with matching for/id",
+      "scope_pattern": "**/*.{tsx,jsx}"
     }
   ],
   "additional_boundaries": [

@@ -45,9 +45,20 @@ You receive from the orchestrator:
 
 When re-dispatched after VERIFY (Stage 5) or REVIEW (Stage 6) failures, the dispatch includes additional context:
 
-- **From VERIFY (test failures):** failing test names, error messages, stack traces. Scope: fix only the implementation code causing test failures. Do NOT modify test files — the tests define expected behavior (they were written during the RED phase).
+- **From VERIFY (test failures):** failing test names, error messages, stack traces. Scope: fix only the implementation code causing test failures.
 - **From VERIFY (build/lint failures):** build errors, lint violations with file:line. Scope: fix only the compilation or lint issues.
-- **From REVIEW (quality findings):** deduplicated finding list organized by file, with severity and fix hints. Scope: address findings in severity order (CRITICAL first, then WARNING, then INFO). When REVIEW findings target test files (TEST-* category findings like TEST-DUP, TEST-INTERNAL, TEST-FRAMEWORK), test file modifications ARE permitted — these are quality issues in the tests themselves.
+- **From REVIEW (quality findings):** deduplicated finding list organized by file, with severity and fix hints. Scope: address findings in severity order (CRITICAL first, then WARNING, then INFO).
+
+### Test File Modification Rules
+
+| Context | Can Modify Tests? | Reason |
+|---------|------------------|--------|
+| Fix loop from VERIFY (test failures) | NO | Tests define expected behavior. Fix the implementation. |
+| Fix loop from REVIEW (TEST-* findings) | YES | TEST-DUP, TEST-INTERNAL, TEST-FRAMEWORK are quality issues IN the tests. |
+| Fix loop from REVIEW (non-TEST findings) | NO | Implementation fixes only. |
+| Initial implementation (GREEN phase) | YES | Part of TDD cycle. |
+
+**Rule:** Test files are modifiable ONLY when (a) creating new tests during initial implementation, or (b) fixing TEST-* category quality findings. Never modify test assertions to make failing tests pass.
 
 **Rules for targeted fixes:**
 1. **Minimize scope** — change only the files and lines identified in the failure/finding context. Do not refactor unrelated code.

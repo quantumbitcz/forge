@@ -98,7 +98,10 @@ During convergence Phase 2 (perfection), INFO findings follow "fix if easy, skip
 1. On first iteration: attempt to fix ALL findings (including INFO)
 2. On subsequent iterations: if an INFO finding was present in the previous cycle and the implementer did not fix it, mark it as `unfixable_info` in convergence state
 3. Unfixable INFO findings are excluded from the convergence target calculation:
-   `effective_target = min(target_score, 100 - 2 * unfixable_info_count)`
+   `effective_target = max(pass_threshold, min(target_score, 100 - 2 * unfixable_info_count))`
+   The `max(pass_threshold, ...)` floor ensures the effective target never drops below the passing
+   threshold, preventing scenarios where many persistent INFOs could lower the bar to unacceptable levels.
+   This matches the canonical formula in `convergence-engine.md`.
 4. The pipeline converges when `score >= effective_target` (not raw `target_score`)
 
 This prevents the pipeline from spending 3-4 iterations to squeeze out the last 2-3 INFO fixes when the score is already above pass_threshold.

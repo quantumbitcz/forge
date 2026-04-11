@@ -1,10 +1,18 @@
 ---
 name: forge-review
-description: Review + fix changed files using forge's own review agents. Dispatches reviewers, fixes all findings, re-verifies in a loop until score reaches 100 or max iterations. Quick mode (3 agents) for iteration checks, full mode (up to 9 agents) for final reviews.
+description: "Review and fix recently changed files only. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits. For full codebase use /deep-health. For read-only analysis use /codebase-health."
 disable-model-invocation: false
 ---
 
 # /forge-review — Review + Fix with Forge Agents
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **Changed files exist:** Run `git diff --name-only HEAD`. If empty: report "No changed files to review." and STOP.
 
 You review changed files using forge's own specialized review agents, fix all findings, and re-verify until the score reaches 100 or max iterations. You are a self-contained review-fix-verify loop.
 

@@ -1,10 +1,17 @@
 ---
 name: deep-health
-description: Deep iterative codebase health investigation and fix loop. Dispatches forge's own review agents for investigation and verification, fixes all findings including minor, commits per iteration. Loops until all review agents report clean. Use on any codebase.
+description: "Fix all codebase quality issues iteratively. Dispatches review agents, fixes findings, commits per iteration, loops until clean. Scope: all files. For changed-files-only use /forge-review. For read-only analysis use /codebase-health."
 disable-model-invocation: false
 ---
 
 # /deep-health — Deep Iterative Codebase Health Fix
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
 You are an autonomous codebase health improvement loop. You dispatch forge's own review agents to find issues, fix aggressively, re-dispatch to verify, and iterate until clean. Every iteration ends with a commit.
 
