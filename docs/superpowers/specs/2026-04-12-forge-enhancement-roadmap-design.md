@@ -63,30 +63,33 @@ model_routing:
 
 **Problem:** The EXPLORE stage re-analyzes the entire codebase on every run, even when only a few files changed. This is one of the most token-intensive stages.
 
-**Solution:** Persist an explore cache across runs. On subsequent runs, only re-analyze files changed since the last explored commit SHA (via `git diff`). Reuse cached data for unchanged files.
+**Solution:** Persist an explore cache as a **separate file** (`.forge/explore-cache.json`) that survives across runs. Unlike `state.json` (which is recreated at PREFLIGHT for each run), the explore cache is a long-lived artifact — similar to `docs-index.json`. On subsequent runs, only re-analyze files changed since the last explored commit SHA (via `git diff`). Reuse cached data for unchanged files.
 
-**State schema addition (persisted across runs, not reset by `/forge-reset`):**
+**Stored in `.forge/explore-cache.json` (NOT in state.json — state.json is per-run):**
 ```json
 {
-  "explore_cache": {
-    "last_explored_sha": "abc123",
-    "file_index": {
-      "src/domain/Plan.kt": {
-        "hash": "def456",
-        "patterns": ["repository", "entity"],
-        "dependencies": ["PlanRepository", "PlanService"]
-      }
-    },
-    "cache_age_runs": 3,
-    "max_cache_age_runs": 10
-  }
+  "last_explored_sha": "abc123",
+  "file_index": {
+    "src/domain/Plan.kt": {
+      "hash": "def456",
+      "patterns": ["repository", "entity"],
+      "dependencies": ["PlanRepository", "PlanService"]
+    }
+  },
+  "cache_age_runs": 3,
+  "max_cache_age_runs": 10,
+  "created_at": "2026-04-10T10:00:00Z",
+  "last_updated_at": "2026-04-12T10:00:00Z"
 }
 ```
 
+**`/forge-reset` behavior:** Preserves `explore-cache.json` (like `docs-index.json` and `feedback/`). Only `--hard` flag or manual deletion removes it.
+
 **Integration points:**
 - `shared/explore-cache.md` — new contract (cache structure, invalidation rules, staleness threshold)
-- `shared/state-schema.md` — add `explore_cache` (persisted section)
+- `shared/state-schema.md` — add `.forge/explore-cache.json` to directory structure and file lifecycle table
 - `agents/fg-100-orchestrator.md` — cache check at PREFLIGHT, partial EXPLORE dispatch
+- `skills/forge-reset.md` — preserve explore-cache.json
 - `forge-config.md` templates — `explore: { cache_enabled: true, max_cache_age_runs: 10 }`
 
 **Invalidation rules:**
@@ -143,6 +146,8 @@ model_routing:
 - Plans older than 30 days are evicted
 - Cache miss is the normal path — no degradation when cache is empty
 
+**Known limitation:** Jaccard similarity on keyword sets is brittle for short texts with varied wording. "Add user comments" vs "implement comment threading for users" may not match despite semantic similarity. This is acceptable for v1.17 — the cache is an optimization, not a requirement. Future enhancement: replace Jaccard with embedding-based similarity (e.g., via a lightweight local model or Anthropic embeddings API) for higher recall.
+
 ---
 
 ### Feature 4: Context Isolation per Agent
@@ -182,30 +187,39 @@ model_routing:
 
 **Problem:** Without per-stage token measurement, you can't make data-driven decisions about model routing, identify expensive stages, or track cost optimization progress.
 
-**Solution:** Extend `forge-token-tracker.sh` and `state.json.cost` to record per-stage and per-agent token breakdowns.
+**Solution:** Extend the **existing** `state.json.tokens` object (which already has `by_stage`, `by_agent`, `estimated_total`, `budget_ceiling`) with model distribution and input/output breakdowns. Also extend `state.json.cost` (which already has `wall_time_seconds`, `stages_completed`) with estimated USD cost.
 
-**State schema extension:**
+**Extends existing `state.json.tokens` (NOT a new object — fields added to existing schema):**
 ```json
 {
-  "cost": {
-    "total_input_tokens": 450000,
-    "total_output_tokens": 85000,
-    "per_stage": {
+  "tokens": {
+    "estimated_total": 450000,
+    "budget_ceiling": 2000000,
+    "by_stage": {
       "PREFLIGHT": { "input": 15000, "output": 3000, "agents": ["fg-130", "fg-140"] },
       "EXPLORE":   { "input": 120000, "output": 25000, "agents": ["explorer"] },
       "PLAN":      { "input": 45000, "output": 12000, "agents": ["fg-200"] },
       "REVIEW":    { "input": 180000, "output": 30000, "agents": ["fg-410","fg-411","fg-412"] }
     },
+    "by_agent": {
+      "fg-200-planner": { "input": 45000, "output": 12000, "model": "opus" }
+    },
     "model_distribution": { "haiku": 0.35, "sonnet": 0.45, "opus": 0.20 },
+    "budget_warning_issued": false
+  },
+  "cost": {
     "wall_time_seconds": 340,
+    "stages_completed": 10,
     "estimated_cost_usd": 2.40
   }
 }
 ```
 
+**Key:** The `by_stage` and `by_agent` fields already exist in `state-schema.md` (v1.5.0) but are empty objects (`{}`). This feature populates them with input/output breakdowns and adds `model_distribution` and `estimated_cost_usd`.
+
 **Integration points:**
-- `shared/state-schema.md` — extend `cost` object with per-stage breakdown
-- `shared/forge-token-tracker.sh` — per-stage tracking (increment on each agent dispatch)
+- `shared/state-schema.md` — extend existing `tokens.by_stage` and `tokens.by_agent` with input/output fields, add `tokens.model_distribution` and `cost.estimated_cost_usd`
+- `shared/forge-token-tracker.sh` — populate by_stage/by_agent on each agent dispatch
 - `agents/fg-700-retrospective.md` — analyze token distribution, suggest routing changes
 - `agents/fg-710-post-run.md` — include token summary in recap report
 
@@ -255,11 +269,11 @@ mutation_testing:
 
 **Flow:**
 1. `fg-500-test-gate` completes Phase B (tests pass)
-2. If `mutation_testing.enabled`: orchestrator dispatches `fg-510-mutation-analyzer`
+2. `fg-500-test-gate` dispatches `fg-510-mutation-analyzer` as a **sub-agent within Stage 5** (VERIFY). This is valid per `agent-communication.md` section 5: coordinator agents may dispatch sub-agents within their own stage.
 3. Agent reads changed files, generates 3-5 targeted mutants per file
 4. Agent runs existing test suite against each mutant (in worktree copy)
 5. Surviving mutants become `TEST-MUTATION-*` findings
-6. Findings flow into quality gate as normal (convergence handles fix cycles)
+6. `fg-500-test-gate` includes mutation findings in `stage_5_notes`. The **orchestrator** reads stage notes and routes findings to the quality gate (Stage 6) — there is no direct fg-500 → fg-400 communication.
 
 **Integration points:**
 - `agents/fg-510-mutation-analyzer.md` — new agent
@@ -306,32 +320,35 @@ quality_gate:
 
 ---
 
-### Feature 8: Per-Finding Confidence Scores
+### Feature 8: Activate and Enforce Confidence Scoring
 
-**Problem:** All findings are treated with equal certainty. A reviewer that's 95% sure about a security flaw and 30% sure about a style nit both produce findings with the same authority. This hurts trust — developers learn to ignore findings when too many are false positives.
+**Problem:** The finding format already supports a `confidence:HIGH|MEDIUM|LOW` field (`shared/checks/output-format.md` line 10, 22-26) and `state.json.decision_quality` already tracks `findings_with_low_confidence` and `overridden_findings`. But these are currently **passive** — confidence doesn't affect scoring weight, routing decisions, or implementer dispatch. All findings are treated equally regardless of reviewer certainty.
 
-**Solution:** Extend finding format with a confidence field (HIGH/MEDIUM/LOW). Confidence affects scoring weight and routing.
+**Solution:** Activate the existing confidence field with scoring weight and routing behavior. This is NOT a format change — it's making the existing field consequential.
 
-**Extended finding format:**
+**Existing format (unchanged):**
 ```
-file:line | CATEGORY-CODE | SEVERITY | CONFIDENCE | message | fix_hint
+file:line | CATEGORY-CODE | SEVERITY | message | fix_hint | confidence:HIGH
 ```
 
-**Scoring interaction:**
+**NEW scoring interaction (added to `scoring.md`):**
 | Confidence | Deduction Multiplier | Routing |
 |------------|---------------------|---------|
 | HIGH | 1.0x (full) | Auto-sent to implementer |
 | MEDIUM | 1.0x (full) | Sent to implementer with annotation |
-| LOW | 0.5x (half) | Flagged for human review, NOT auto-sent |
+| LOW | 0.5x (half) | Flagged for human review, NOT auto-sent to implementer |
 
-**Backward compatibility:** If confidence is omitted, default to HIGH (current behavior).
+**NEW quality gate routing logic (added to `fg-400`):**
+- Before dispatching findings to the implementer, filter out LOW-confidence findings
+- LOW-confidence findings are included in stage notes and recap, but not in the fix cycle
+- `decision_quality.findings_with_low_confidence` counter is already in `state.json` — now actively populated
 
 **Integration points:**
-- `shared/checks/output-format.md` — add confidence field
-- `shared/scoring.md` — confidence-weighted scoring rules
-- `shared/agent-defaults.md` — confidence guidelines for reviewers
-- All 9 reviewer agents — add confidence to output
-- `agents/fg-400-quality-gate.md` — confidence-based routing
+- `shared/scoring.md` — add confidence-weighted scoring rules (formula becomes `deduction * confidence_multiplier`)
+- `shared/agent-defaults.md` — mandate confidence guidelines: when to use LOW vs MEDIUM vs HIGH
+- All 9 reviewer agents — enforce consistent confidence usage (many currently omit = default HIGH)
+- `agents/fg-400-quality-gate.md` — confidence-based routing (LOW → human, HIGH/MEDIUM → implementer)
+- `shared/checks/output-format.md` — no change needed (format already supports confidence)
 
 ---
 
@@ -532,6 +549,17 @@ automations:
     action: codebase-health
 ```
 
+**How events reach forge (Claude Code session model):**
+Forge is a local CLI plugin — there is no built-in webhook listener. Each trigger type uses a different mechanism:
+| Trigger | Mechanism | Dependency |
+|---------|-----------|-----------|
+| `cron` | Claude Code's `CronCreate` tool — native, no external deps | None |
+| `ci_failure`, `pr_opened`, `dependabot_pr` | GitHub Actions workflow calls Claude Code's `RemoteTrigger` API, or a GitHub Action that dispatches `claude --skill forge-fix` | GitHub Actions + Claude Code CLI in CI |
+| `linear_status` | Polling via Linear MCP at configurable interval (not true webhook) | Linear MCP |
+| `file_changed` | Claude Code PostToolUse hook on `Edit`/`Write` (already exists for check engine) | None |
+
+**Important:** True push webhooks (HTTP listener) are out of scope. All "event-driven" triggers are implemented as either (a) Claude Code native primitives (CronCreate, RemoteTrigger, hooks) or (b) polling via MCP. This is a pragmatic constraint of the local CLI architecture.
+
 **Safety constraints:**
 - Cooldown period per automation (prevent loops)
 - Max concurrent automations: 3
@@ -539,11 +567,12 @@ automations:
 - All automations log to `.forge/automation-log.jsonl`
 
 **Integration points:**
-- `shared/automations.md` — new contract
-- `hooks/automation-trigger.sh` — new script
+- `shared/automations.md` — new contract (trigger mechanisms, polling intervals, CI integration guide)
+- `hooks/automation-trigger.sh` — new script (dispatches skills based on trigger type)
 - `skills/forge-automation.md` — new skill for managing automations
 - `shared/state-schema.md` — add `.forge/automation-log.jsonl`
 - `forge-config.md` templates — `automations:` section
+- Documentation: CI integration guide for GitHub Actions + RemoteTrigger setup
 
 ---
 
@@ -597,25 +626,30 @@ automations:
 | `completed` | SHIPPED |
 | `failed` | Abort |
 
-**Agent card (`.well-known/agent.json`):**
+**Agent card location:** A2A places agent cards at `.well-known/agent.json` under the service URL. Since forge is a local CLI plugin (not a web service), the agent card is stored at `.forge/agent-card.json` in the consuming project — generated by `/forge-init`. For cross-repo coordination, `fg-103` reads the agent card from each repo's `.forge/` directory via the worktree filesystem.
+
+**Agent card (`.forge/agent-card.json`, generated by `/forge-init`):**
 ```json
 {
   "name": "forge-pipeline",
   "description": "Autonomous 10-stage development pipeline",
+  "url": "local://forge",
   "capabilities": { "streaming": false, "stateTransitionHistory": true },
   "skills": [
     { "id": "implement-feature" },
     { "id": "fix-bug" },
     { "id": "review-code" }
-  ]
+  ],
+  "project_id": "git@github.com:org/repo.git"
 }
 ```
 
 **Integration points:**
-- `shared/a2a-protocol.md` — new contract
-- `agents/fg-103-cross-repo-coordinator.md` — A2A dispatch logic
-- `.well-known/agent.json` — agent card
-- `shared/agent-communication.md` — section 7 updated
+- `shared/a2a-protocol.md` — new contract (local A2A adaptation, agent card schema, task lifecycle)
+- `agents/fg-103-cross-repo-coordinator.md` — A2A dispatch logic (reads `.forge/agent-card.json` per repo)
+- `skills/forge-init.md` — generate `.forge/agent-card.json` during project initialization
+- `shared/agent-communication.md` — section 7 updated with A2A task lifecycle
+- `shared/state-schema.md` — add `.forge/agent-card.json` to directory structure
 
 ---
 
@@ -825,12 +859,11 @@ forge_ask:
 
 ## New Files Summary
 
-### New agents (3)
+### New agents (2 new, total 40 up from 38)
 | Agent | Number | Tier | Release |
 |-------|--------|------|---------|
 | `fg-135-wiki-generator` | 135 | 3 | v1.20 |
 | `fg-510-mutation-analyzer` | 510 | 4 | v1.18 |
-| (Total: 40 agents, up from 38) | | | |
 
 ### New shared contracts (12)
 | File | Release |
@@ -863,11 +896,13 @@ forge_ask:
 
 ### Modified existing files (per release)
 
-**v1.17:** `shared/agent-defaults.md`, `shared/state-schema.md`, `shared/checks/category-registry.json`, `shared/agent-communication.md`, `shared/forge-token-tracker.sh`, `agents/fg-100-orchestrator.md`, `agents/fg-200-planner.md`, `agents/fg-400-quality-gate.md`, `agents/fg-700-retrospective.md`, `agents/fg-710-post-run.md`, all `forge-config-template.md` files
+**Every release:** `CLAUDE.md` (agent count, skill count, config sections), `plugin.json` (version bump), `marketplace.json` (version sync), `tests/lib/module-lists.bash` (MIN_* guards if new agents/modules added), `tests/validate-plugin.sh` (structural checks for new files)
 
-**v1.18:** `shared/scoring.md`, `shared/checks/output-format.md`, `shared/checks/category-registry.json`, `shared/agent-defaults.md`, `agents/fg-500-test-gate.md`, `agents/fg-400-quality-gate.md`, `agents/fg-413-frontend-reviewer.md`, `agents/fg-320-frontend-polisher.md`, `agents/fg-412-architecture-reviewer.md`, `agents/fg-410-code-reviewer.md`, `agents/fg-300-implementer.md`, `shared/agent-registry.md`, all 9 reviewer agents (confidence)
+**v1.17:** `shared/agent-defaults.md`, `shared/state-schema.md`, `shared/checks/category-registry.json`, `shared/agent-communication.md`, `shared/forge-token-tracker.sh`, `agents/fg-100-orchestrator.md`, `agents/fg-200-planner.md`, `agents/fg-400-quality-gate.md`, `agents/fg-700-retrospective.md`, `agents/fg-710-post-run.md`, `skills/forge-reset.md` (preserve explore-cache.json), all `forge-config-template.md` files
 
-**v1.19:** `shared/checks/engine.sh`, `shared/checks/rules-override.json`, `shared/state-schema.md`, `shared/agent-communication.md`, `agents/fg-100-orchestrator.md`, `agents/fg-103-cross-repo-coordinator.md`, `agents/fg-411-security-reviewer.md`, `SECURITY.md`, `skills/forge-status.md`
+**v1.18:** `shared/scoring.md`, `shared/checks/category-registry.json`, `shared/agent-defaults.md`, `agents/fg-500-test-gate.md`, `agents/fg-400-quality-gate.md`, `agents/fg-413-frontend-reviewer.md`, `agents/fg-320-frontend-polisher.md`, `agents/fg-412-architecture-reviewer.md`, `agents/fg-410-code-reviewer.md`, `agents/fg-300-implementer.md`, `shared/agent-registry.md`, all 9 reviewer agents (enforce confidence usage). Note: `shared/checks/output-format.md` already has confidence — no change needed.
+
+**v1.19:** `shared/checks/engine.sh`, `shared/checks/rules-override.json`, `shared/state-schema.md`, `shared/agent-communication.md`, `agents/fg-100-orchestrator.md`, `agents/fg-103-cross-repo-coordinator.md`, `agents/fg-411-security-reviewer.md`, `SECURITY.md`, `skills/forge-status.md`, `skills/forge-init.md` (generate agent-card.json)
 
 **v1.20:** `agents/fg-100-orchestrator.md`, `agents/fg-700-retrospective.md`, `agents/fg-710-post-run.md`, `shared/learnings/README.md`, `shared/agent-registry.md`
 
