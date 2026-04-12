@@ -124,25 +124,22 @@ sla:
     learn: 60
   warn_threshold: 0.8
 
-## Model Routing
+# Model routing (multi-tier model selection)
+model_routing:
+  enabled: false
+  default_tier: standard
+  overrides:
+    tier_1_fast: []
+    tier_3_premium: []
 
-    model_routing:
-      enabled: false
-      default_tier: standard
-      overrides:
-        tier_1_fast: []
-        tier_3_premium: []
+# Explore cache
+explore:
+  cache_enabled: true
+  max_cache_age_runs: 10
 
-## Explore Cache
-
-    explore:
-      cache_enabled: true
-      max_cache_age_runs: 10
-
-## Plan Cache
-
-    plan_cache:
-      enabled: true
-      similarity_threshold: 0.6
-      max_entries: 20
-      max_age_days: 30
+# Plan cache
+plan_cache:
+  enabled: true
+  similarity_threshold: 0.6
+  max_entries: 20
+  max_age_days: 30
