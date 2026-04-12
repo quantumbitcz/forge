@@ -62,6 +62,8 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Domain detection | `shared/domain-detection.md` |
 | Decision log | `shared/decision-log.md` |
 | State integrity | `shared/state-integrity.sh` |
+| Agent registry | `shared/agent-registry.md` |
+| MCP detection | `shared/mcp-detection.md` |
 
 ## Agents (38 total, `agents/*.md`)
 

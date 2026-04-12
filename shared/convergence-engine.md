@@ -175,7 +175,7 @@ FUNCTION compute_smoothed_delta(score_history):
   return d1 * 0.5 + d2 * 0.3 + d3 * 0.2
 ```
 
-> **Clarification:** Cycles 1-2 establish a baseline — `plateau_count` remains 0 and convergence state is IMPROVING regardless of the smoothed delta value. Starting from cycle 3 (`phase_iterations >= 2` in `state-transitions.md`), the smoothed delta is evaluated against `oscillation_tolerance`. If `|smoothed_delta| <= oscillation_tolerance`, `plateau_count` increments. Escalation occurs when `plateau_count >= plateau_patience`.
+> **Clarification:** Cycles 1-2 establish a baseline — `plateau_count` remains 0 and convergence state is IMPROVING regardless of the smoothed delta value. Starting from cycle 3 (`phase_iterations >= 2` in `state-transitions.md`), the smoothed delta is evaluated against `plateau_threshold`. If `smoothed_delta <= plateau_threshold`, `plateau_count` increments. Escalation occurs when `plateau_count >= plateau_patience`. (Note: `oscillation_tolerance` is used separately for REGRESSING detection on raw delta — see line 101 above.)
 
 ### Phase 3: Evidence
 

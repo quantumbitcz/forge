@@ -11,7 +11,7 @@ Skills MUST reference this document instead of inline detection logic.
 | Playwright | `mcp__plugin_playwright_playwright__` | `mcp__plugin_playwright_playwright__browser_navigate` | Browser automation, E2E testing, screenshots | Skip preview validation; manual testing |
 | Slack | `mcp__claude_ai_Slack__` | `mcp__claude_ai_Slack__slack_send_message` | Channel messaging, search, canvas | Skip notifications; console output only |
 | Context7 | `mcp__plugin_context7_context7__` | `mcp__plugin_context7_context7__resolve-library-id` | Live documentation lookup, version-aware API refs | Fall back to training data + WebSearch |
-| Figma | `mcp__plugin_figma_figma__` / `mcp__claude_ai_Figma__` | `mcp__plugin_figma_figma__get_design_context` | Design-to-code, screenshots, component mapping | Skip design system validation |
+| Figma | `mcp__claude_ai_Figma__` / `mcp__plugin_figma_figma__` | `mcp__claude_ai_Figma__get_design_context` | Design-to-code, screenshots, component mapping | Skip design system validation |
 | Excalidraw | `mcp__claude_ai_Excalidraw__` | `mcp__claude_ai_Excalidraw__create_view` | Architecture diagrams, visual documentation | Text-based diagrams only |
 | Neo4j | `neo4j-mcp` | `neo4j-mcp` (tool name) | Knowledge graph queries, codebase graph | Skip graph enrichment; file-based analysis |
 
