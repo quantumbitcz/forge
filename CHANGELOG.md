@@ -3,6 +3,15 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.16.0] - 2026-04-12
+
+### Changed
+- CI test tiers run in parallel via matrix strategy (structural → unit/contract/scenario concurrent)
+- `fail-fast: false` ensures all tiers report independently — no hidden failures
+
+### Fixed
+- Skip mkdir lock contention test when flock is available (platform-dependent CI failure)
+
 ## [1.15.0] - 2026-04-12
 
 ### Added

@@ -411,7 +411,7 @@ Reference the cross-cutting review agents (`fg-412-architecture-reviewer`, `fg-4
 ```
 forge/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.15.0)
+    plugin.json                         # Plugin manifest (v1.16.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 38 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
