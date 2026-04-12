@@ -90,3 +90,53 @@ When the orchestrator dispatches an agent with a `model` parameter (via `Agent(m
 - Pass `model` parameter on every `Agent(...)` dispatch when `model_routing.enabled`
 - Handle fallbacks when a model is unavailable
 - Track token usage per agent per model via `shared/forge-token-tracker.sh`
+
+## Confidence Reporting
+
+All review agents MUST include the `confidence` field in every finding. The field is the 6th pipe-delimited value in the standard finding format (see `shared/checks/output-format.md`).
+
+### When to Use Each Level
+
+| Confidence | When to Use |
+|------------|------------|
+| `confidence:HIGH` | Strong evidence: pattern clearly violates convention, security flaw confirmed by multiple signals, test gap verified by analysis |
+| `confidence:MEDIUM` | Likely issue but context-dependent: convention might not apply here, pattern could be intentional, fix has trade-offs |
+| `confidence:LOW` | Uncertain: might be a false positive, edge case behavior unclear, limited context about the code's purpose |
+
+### Rules
+
+- Default to `confidence:HIGH` when certain. Do not over-use LOW to hedge — LOW findings receive half scoring weight and are excluded from fix cycles.
+- If two or more reviewers independently flag the same issue, the quality gate promotes the finding's confidence to HIGH regardless of individual agent assessments.
+- The confidence field applies to all categories including SCOUT-* (though SCOUT findings are already zero-scored).
+
+## Deliberation Response Format
+
+When the quality gate detects conflicting findings at the same `(file, line)` and `quality_gate.deliberation` is enabled, it re-dispatches both originating reviewers with a narrow deliberation prompt. Each reviewer responds with one of:
+
+| Response | Meaning | Effect |
+|----------|---------|--------|
+| `MAINTAIN` | Keep finding as-is, add reasoning | Finding survives with original severity |
+| `REVISE` | Adjust severity, explain why | Finding updated with new severity |
+| `WITHDRAW` | Concede to other agent's perspective | Finding removed |
+
+### Deliberation Prompt Format (received by reviewers)
+
+    Your finding conflicts with another reviewer's finding at the same location.
+
+    YOUR FINDING:
+      file:line | CATEGORY | SEVERITY | CONFIDENCE | description | fix_hint
+
+    CONFLICTING FINDING (from {other_agent}):
+      file:line | CATEGORY | SEVERITY | CONFIDENCE | description | fix_hint
+
+    Review both findings and respond with exactly one of:
+    - MAINTAIN: {reasoning why your finding should stand}
+    - REVISE severity to {WARNING|INFO}: {reasoning for downgrade}
+    - WITHDRAW: {reasoning why the other finding is more appropriate}
+
+### Constraints
+
+- Max 1 deliberation round per conflict (no back-and-forth)
+- Only triggered for conflicts involving at least one WARNING or CRITICAL finding
+- 60-second timeout per reviewer response. On timeout, original finding stands unchanged.
+- Deliberation is disabled by default (`quality_gate.deliberation: false`)
