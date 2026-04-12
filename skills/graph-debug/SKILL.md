@@ -19,7 +19,10 @@ Targeted diagnostic skill for the Neo4j knowledge graph. Provides structured dia
 Nodes with no relationships (potential data quality issue):
 
 ```cypher
-MATCH (n) WHERE NOT (n)--() RETURN labels(n) AS type, count(n) AS count
+MATCH (n {project_id: $project_id})
+WHERE NOT (n)--()
+RETURN labels(n) AS type, count(n) AS count
+LIMIT 50
 ```
 
 ### 2. Stale Nodes
@@ -63,6 +66,7 @@ Quick health overview by label:
 MATCH (n {project_id: $project_id})
 RETURN labels(n)[0] AS label, count(n) AS count
 ORDER BY count DESC
+LIMIT 50
 ```
 
 ## Procedure
