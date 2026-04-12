@@ -1173,10 +1173,7 @@ Before dispatching any planner agent:
 2. If no match or cache disabled: normal dispatch
 3. Record in `stage_2_notes`: "Plan cache: hit (similarity {score}, domain: {area}) / miss"
 
-After SHIP stage completes successfully:
-1. Save current plan to `.forge/plan-cache/plan-{date}-{slug}.json`
-2. Update `index.json`
-3. Run eviction per `shared/plan-cache.md` §Eviction Rules
+**Plan cache persistence:** After a run reaches SHIP successfully, the orchestrator saves the current plan to the plan cache. See §8 post-SHIP section for the full persistence and eviction logic.
 
 ---
 

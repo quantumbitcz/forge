@@ -132,7 +132,7 @@ model_routing:
 **Similarity algorithm:**
 1. Extract keywords from new requirement (nouns, verbs, domain terms)
 2. Compute Jaccard similarity with each cached plan's `requirement_keywords`
-3. If similarity > 0.6 AND same `domain_area`: offer as starting point
+3. If similarity >= 0.6: offer as starting point. Matching `domain_area` adds +0.1 bonus to the similarity score
 4. Planner receives cached plan as optional context, adapts rather than creates from scratch
 
 **Integration points:**
