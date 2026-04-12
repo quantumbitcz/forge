@@ -291,7 +291,7 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 **Verify result classification:** The verify stage produces one of three outcomes consumed by the convergence engine:
 - **PHASE_A_FAILURE**: Build or lint failed before tests ran. Phase B (test gate) is not executed. `analysis_pass` is not evaluated. Routes to IMPLEMENT with build/lint errors.
 - **Tests fail** (`tests_pass: false`): Build/lint passed but tests failed. Routes to IMPLEMENT with failing test details.
-- **Full pass** (`tests_pass: true AND analysis_pass: true`): All verification passed. Transitions to Phase 2 (Perfection) or confirms safety gate.
+- **Full pass** (`tests_pass: true AND analysis_pass: true`): All verification passed. Transitions to Phase 2 (Perfection) or confirms safety gate. (where `analysis_pass` = no CRITICAL findings from review agents AND quality gate verdict != FAIL — see `convergence-engine.md` Phase B exit condition)
 
 **Phase A failure escalation:** If `verify_fix_count >= max_fix_loops`, the pipeline escalates to the user. Each Phase A retry increments `total_retries`. Escalation format:
 

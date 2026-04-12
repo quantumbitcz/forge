@@ -163,3 +163,19 @@ MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials
 **Degradation:** Skip diagram generation. Text-only output. Log INFO: "Excalidraw MCP not available — visual diagrams skipped."
 
 **First failure:** Set `integrations.excalidraw.available = false` for the remainder of the run.
+
+### Slack
+
+- **Tool name prefix:** `mcp__claude_ai_Slack__`
+- **Detection probe:** `mcp__claude_ai_Slack__slack_send_message`
+- **Capability:** Channel messaging, search, canvas creation, user profile lookup
+- **Degradation:** Skip Slack notifications. Use console output and file-based tracking only. Log INFO: `MCP-UNAVAILABLE: Slack`
+- **Provisioning:** User-configured via Claude AI MCP settings. Not auto-installable by forge.
+
+### Context7
+
+- **Tool name prefix:** `mcp__plugin_context7_context7__`
+- **Detection probe:** `mcp__plugin_context7_context7__resolve-library-id`
+- **Capability:** Live documentation lookup for libraries and frameworks. Version-aware API references. Used by review agents (fg-410 through fg-420) and deprecation refresh (fg-140) for current API validation.
+- **Degradation:** Fall back to training data knowledge and WebSearch. Version-specific guidance may be stale. Log INFO: `MCP-UNAVAILABLE: Context7`
+- **Provisioning:** Plugin-installed MCP. Auto-detected when available.

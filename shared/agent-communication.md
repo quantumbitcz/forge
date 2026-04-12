@@ -175,6 +175,23 @@ During implementation, agents that receive PREEMPT items in their dispatch promp
     PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
     PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
 
+### PREEMPT Marker Format
+
+Markers are written to stage notes under `## Attempt N` headers.
+
+**Format:**
+```
+PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
+PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
+```
+
+**Parsing regex:** `^PREEMPT_(APPLIED|SKIPPED): (\S+) — (.+)$`
+
+**Rules:**
+- Only markers from the **last attempt** in a stage are authoritative
+- Earlier attempt markers are superseded (the fix may have changed applicability)
+- Orchestrator counts APPLIED/SKIPPED per item-id for decay tracking
+
 The orchestrator reads these markers from stage notes and populates `state.json.preempt_items_status`:
 - `{ "applied": true, "false_positive": false }` — item was used and relevant
 - `{ "applied": false, "false_positive": true }` — item was loaded but inapplicable
