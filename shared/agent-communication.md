@@ -66,6 +66,33 @@ Cap dedup hints at **top 20 findings by severity** (all CRITICALs first, then WA
     ...
     ({N-20} additional findings omitted — focus on your domain, post-hoc dedup will catch overlaps)
 
+### Domain-Scoped Deduplication Hints
+
+When dispatching batch 2+ agents, the quality gate filters dedup hints by **category affinity** (defined in `shared/checks/category-registry.json`, `affinity` field). Each reviewer only sees findings from categories relevant to its domain:
+
+- `fg-411-security-reviewer` receives: `SEC-*`, `QUAL-ERR-*` (error handling has security implications)
+- `fg-412-architecture-reviewer` receives: `ARCH-*`, `STRUCT-*`, `QUAL-COMPLEX`
+- `fg-413-frontend-reviewer` receives: `FE-PERF-*`, `A11Y-*`, `CONV-*` (frontend conventions), `DESIGN-*`
+- `fg-416-backend-performance-reviewer` receives: `PERF-*`
+- `fg-418-docs-consistency-reviewer` receives: `DOC-*`
+- `fg-419-infra-deploy-reviewer` receives: `INFRA-*`
+- `fg-420-dependency-reviewer` receives: `DEP-*`
+- `fg-410-code-reviewer` receives: `TEST-*`, `CONV-*`, `QUAL-*`
+
+**Affinity resolution:** For each finding in the dedup hints:
+1. Look up the finding's category prefix in `category-registry.json`
+2. Check the `affinity` array for the target reviewer's agent ID
+3. If the reviewer is in the affinity list, OR if affinity is `[]` (empty — send to all): include the finding
+4. Otherwise: exclude the finding from this reviewer's dedup hints
+
+**Subcategory affinity:** Subcategories (e.g., `QUAL-ERR-*`) may have different affinity than their parent (`QUAL-*`). When a subcategory has explicit affinity documented here, use the subcategory's affinity. Otherwise, fall through to the parent category's affinity in `category-registry.json`.
+
+Subcategory affinity overrides:
+- `QUAL-ERR-*`: `["fg-410-code-reviewer", "fg-411-security-reviewer"]` (error handling is a security concern)
+- `QUAL-COMPLEX`: `["fg-410-code-reviewer", "fg-412-architecture-reviewer"]` (complexity is an architecture concern)
+
+**Backward compatibility:** If `affinity` is missing for a category in the registry, the finding is sent to ALL reviewers (pre-v1.17 behavior).
+
 ### Cross-Agent References
 
 If a review agent finds an issue that relates to another agent's domain, note it:
