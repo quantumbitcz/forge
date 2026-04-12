@@ -112,6 +112,17 @@ When dispatching batch 2+ agents, include timeout information alongside dedup hi
 
 This ensures subsequent batch agents are aware of coverage gaps and can partially compensate.
 
+**Domain-scoped filtering (v1.17+):** Before including dedup hints in a batch 2+ dispatch, filter by category affinity:
+
+1. Read `shared/checks/category-registry.json` `affinity` field for each finding's category
+2. For the target reviewer agent, include only findings where:
+   - The reviewer's agent ID is in the category's `affinity` array, OR
+   - The category's `affinity` is empty `[]` (cross-cutting finding)
+3. Check subcategory overrides in `shared/agent-communication.md` §3 (Domain-Scoped Deduplication Hints)
+4. Apply the existing top-20-by-severity cap AFTER filtering (not before — the cap applies to the filtered set)
+
+This ensures each reviewer receives only domain-relevant dedup context, reducing per-reviewer token consumption by ~60-80%.
+
 ### 5.3 Agent Dispatch Prompt
 
 Each dispatched agent receives a prompt containing:
@@ -135,6 +146,16 @@ Where:
 - description: what is wrong and why it matters
 - suggested fix: concrete action to resolve
 ```
+
+**Model selection:** If `model_routing.enabled` in the orchestrator's dispatch context, include the `model` parameter in every reviewer dispatch:
+
+    Agent(
+      subagent_type: "forge:fg-411-security-reviewer",
+      model: <resolved from orchestrator's model map>,
+      prompt: "..."
+    )
+
+The model map is passed to the quality gate via the orchestrator's dispatch prompt (not read from config directly — the quality gate is a sub-agent of the orchestrator).
 
 ### 5.4 Conditional Agents
 
