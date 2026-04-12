@@ -247,6 +247,13 @@ Fences must not nest. If fences are malformed (unmatched open/close), treat all 
 | 7 | Score consistently reaches target (100) for 3+ runs | Decrease `convergence.max_iterations` by 1 (min: 3) |
 | 8 | Score trajectory cut short by `max_iterations` cap for 3+ runs | Increase `convergence.max_iterations` by 1 (max: 20) |
 | 9 | Frequent false plateaus (plateau followed by improvement in next run) for 3+ runs | Increase `convergence.plateau_threshold` by 1 (max: 10) |
+| 10 | `model_routing.enabled` and `state.json.tokens.by_agent` data available for 3+ runs | See Rule 10 details below |
+
+**Rule 10 — Model tier optimization:** If `model_routing.enabled` and `state.json.tokens.by_agent` data is available for 3+ runs:
+- If a `fast`-tier (haiku) agent's findings have > 30% false positive rate (from `decision_quality`): suggest upgrading to `standard`. Log: "Agent {id} on haiku tier has high false positive rate ({rate}%). Consider upgrading to standard tier."
+- If a `premium`-tier (opus) agent's finding quality is indistinguishable from `standard`-tier runs of the same agent type: suggest downgrading to `standard`. Log: "Agent {id} on opus tier shows no quality improvement over sonnet. Consider downgrading to save costs."
+- At most one model routing adjustment per run
+- `model_routing.enabled` and `model_routing.default_tier` are never auto-tuned
 
 **Note:** Rules 6-9 are documented in `shared/convergence-engine.md` § Retrospective Auto-Tuning. `target_score` and `safety_gate` are never auto-tuned — these are intentional project decisions. All convergence parameter adjustments respect PREFLIGHT constraint ranges.
 
@@ -260,7 +267,20 @@ Scan all PREEMPT items in the log. If any item appears 3+ times:
 2. Add a note suggesting it should become a hook, lint rule, or static analysis check
 3. Draft the suggested rule description (for detekt, ktlint, ESLint, or a pre-commit hook)
 
-#### 2g. Health Assessment
+#### 2g. Model Effectiveness Analysis
+
+When `model_routing.enabled`:
+1. Read `state.json.tokens.by_agent` for model assignments
+2. Read `state.json.tokens.model_distribution` for usage ratios
+3. Compute cost-per-finding for each model tier:
+   - `cost_per_finding[tier] = tokens_used[tier] / findings_produced[tier]`
+4. Log in `forge-log.md` run entry:
+
+       **Model routing:** haiku 35% / sonnet 45% / opus 20% | est. $2.40 (vs ~$6.80 all-opus baseline)
+
+5. If `model_fallbacks` is non-empty: log each fallback event for visibility
+
+#### 2h. Health Assessment
 
 | Condition | Assessment |
 |-----------|------------|

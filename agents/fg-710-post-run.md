@@ -357,6 +357,19 @@ If all findings were fixed: "All findings resolved. Score: 100/100."}
 | PREEMPT items applied | {count from state} |
 | Boy Scout improvements | {scout_improvements from state} |
 
+## Token & Cost Summary
+
+| Stage | Tokens (in/out) | Model | Duration |
+|-------|----------------|-------|----------|
+| PREFLIGHT | {in}K / {out}K | {model} | {dur} |
+| EXPLORE | {in}K / {out}K | {model} | {dur} |
+| ... | ... | ... | ... |
+
+**Total:** {total_in}K in / {total_out}K out | Est. cost: ${cost}
+**Model distribution:** haiku {pct}% / sonnet {pct}% / opus {pct}%
+
+Read from `state.json.tokens` and `state.json.cost`. If `model_routing.enabled` is false, omit the model column and distribution line.
+
 ## Learnings Captured
 
 {List PREEMPT items added or updated during this run, with context:
