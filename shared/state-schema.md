@@ -16,6 +16,10 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 |   +-- archive/                        # Incorporated feedback moved here
 +-- docs-index.json                     # Documentation index (fallback when Neo4j unavailable)
 +-- evidence.json                       # Pre-ship verification evidence (created by fg-590)
++-- explore-cache.json                  # Codebase exploration cache (persisted across runs)
++-- plan-cache/                         # Cached PLAN outputs for similarity matching
+|   +-- index.json                      # Plan cache index
+|   +-- plan-{date}-{slug}.json         # Individual cached plans
 +-- reports/
     +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-710-post-run)
@@ -34,6 +38,8 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `evidence.json` | After Stage 7 (DOCS) | `fg-590-pre-ship-verifier` | No (overwritten each invocation) | No |
 | `reports/forge-*.md` | Stage 9 (LEARN) | Retrospective agent | Yes (trend data) | No |
 | `reports/recap-*.md` | Stage 9 (LEARN) | Post-run agent (fg-710-post-run) | Yes (project history) | No |
+| `explore-cache.json` | Stage 1 (EXPLORE) | Orchestrator | Yes (survives /forge-reset) | No |
+| `plan-cache/*.json` | Stage 2 (PLAN) | Orchestrator | Yes (survives /forge-reset) | No |
 
 ### Related Files (outside `.forge/`, committed to git)
 
@@ -138,13 +144,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "modules": [],
   "cost": {
     "wall_time_seconds": 0,
-    "stages_completed": 0
+    "stages_completed": 0,
+    "estimated_cost_usd": 0.0
   },
   "tokens": {
     "estimated_total": 0,
     "budget_ceiling": 2000000,
     "by_stage": {},
     "by_agent": {},
+    "model_distribution": {},
+    "model_fallbacks": [],
     "budget_warning_issued": false
   },
   "decision_quality": {
@@ -266,13 +275,16 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `visual_companion` | boolean | No | Whether the superpowers visual companion is available. Detected at PREFLIGHT. Absent or `false` when superpowers plugin is not installed. |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
 | `modules` | object[] | Yes | **Distinct from `components`.** Per-module state for cross-repo multi-module projects (different git repos with different frameworks). Each entry: `{ "module": "spring", "story_state": "IMPLEMENTING", "story_id": "story-1" }`. `"FAILED"` and `"BLOCKED"` are module-only states (see below). Blocked modules include `blocked_by`. The orchestrator manages transitions: backend modules complete through VERIFY before frontend enters IMPLEMENT. Empty array for single-module projects. **Relationship to `components`:** `components` tracks per-service state within a single monorepo (same git repo, potentially different frameworks). `modules` tracks per-repo state across related repositories. A monorepo uses `components`; a multi-repo architecture uses `modules`. Both can be active simultaneously (e.g., a monorepo backend component with a cross-repo mobile frontend module). |
-| `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
+| `cost` | object | Yes | Pipeline run cost tracking. `wall_time_seconds`: total elapsed wall-clock time from PREFLIGHT start to current stage (updated at each stage transition). `stages_completed`: count of stages that have finished (0-10). `estimated_cost_usd`: estimated USD cost based on token consumption and model pricing. Used by the retrospective for trend analysis and by the orchestrator for timeout detection. |
+| `cost.estimated_cost_usd` | number | — | Estimated USD cost based on token consumption and model pricing. Computed by `forge-token-tracker.sh` using approximate pricing: haiku ~$0.25/MTok input, sonnet ~$3/MTok input, opus ~$15/MTok input. Updated after each stage. Default: `0.0`. |
 | `tokens` | object | No | Token usage tracking. Populated by `forge-token-tracker.sh` via orchestrator calls at stage boundaries. |
 | `tokens.estimated_total` | integer | — | Cumulative estimated token usage (input + output) across all stages and agents. Updated by the `record` command. Default: 0. |
 | `tokens.budget_ceiling` | integer | — | Maximum allowed token usage for the run. 0 means no limit. Configurable in `forge-config.md`. Default: 2000000. |
 | `tokens.by_stage` | object | — | Per-stage token breakdown. Keys are stage names (e.g., `"explore"`, `"plan"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple agent calls within a stage. |
 | `tokens.by_agent` | object | — | Per-agent token breakdown. Keys are agent names (e.g., `"fg-200-planner"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple calls to the same agent. |
 | `tokens.budget_warning_issued` | boolean | — | `true` when `estimated_total >= 80%` of `budget_ceiling`. Prevents duplicate warnings. Default: `false`. |
+| `tokens.model_distribution` | object | — | Model usage fractions. Keys are model names, values are usage fractions. Updated by `forge-token-tracker.sh` after each stage. Default: `{}`. |
+| `tokens.model_fallbacks` | array | — | Fallback events when requested model was unavailable. Default: `[]`. |
 | `decision_quality` | object | No | Decision quality metrics for the current run. Populated by the quality gate and orchestrator. |
 | `decision_quality.reviewer_agreement_rate` | float | — | Percentage of findings where multiple reviewers agreed on severity for the same `(file, line)`. 0.0 when no overlapping findings exist. Updated by `fg-400-quality-gate`. |
 | `decision_quality.findings_with_low_confidence` | integer | — | Count of findings tagged with `confidence:LOW` or `confidence:MEDIUM`. Updated by `fg-400-quality-gate`. Default: 0. |
@@ -313,6 +325,32 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
 | `documentation.generation_error` | boolean | Yes | `true` if `fg-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
 | `exploration_degraded` | boolean | Yes | `true` if all exploration agents timed out or failed during EXPLORE stage. Default: `false`. When true, the planner operates with reduced codebase context. |
+
+### tokens.by_stage entry schema
+
+When populated by `forge-token-tracker.sh`, each stage entry has:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `input` | integer | Input tokens consumed in this stage |
+| `output` | integer | Output tokens generated in this stage |
+| `agents` | string[] | Agent IDs dispatched in this stage |
+
+### tokens.by_agent entry schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `input` | integer | Input tokens consumed by this agent |
+| `output` | integer | Output tokens generated by this agent |
+| `model` | string | Model used for this agent dispatch (`haiku`, `sonnet`, `opus`, or empty) |
+
+### tokens.model_distribution
+
+Object mapping model names to usage fractions. Example: `{ "haiku": 0.35, "sonnet": 0.45, "opus": 0.20 }`. Computed by `forge-token-tracker.sh` after each stage.
+
+### tokens.model_fallbacks
+
+Array of fallback events. Each entry: `{ "agent": "fg-200-planner", "requested": "opus", "actual": "sonnet", "reason": "model unavailable" }`.
 
 ### Tracking Fields
 
