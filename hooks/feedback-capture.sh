@@ -5,15 +5,35 @@
 {
   FORGE_DIR=".forge"
   [ ! -d "$FORGE_DIR" ] && exit 0
+
+  # Rotate auto-captured.md when it exceeds 100KB to prevent unbounded growth
+  _rotate_feedback() {
+    local target="$1"
+    if [ -f "$target" ]; then
+      local size=0
+      if command -v stat &>/dev/null; then
+        # GNU stat vs BSD stat (macOS)
+        size=$(stat -f%z "$target" 2>/dev/null || stat -c%s "$target" 2>/dev/null || echo 0)
+      fi
+      if [ "$size" -gt 102400 ] 2>/dev/null; then
+        local archive_name
+        archive_name="$FORGE_DIR/feedback/auto-captured-$(date -u '+%Y%m%d-%H%M%S').md"
+        mv "$target" "$archive_name" 2>/dev/null || true
+      fi
+    fi
+  }
+
   [ ! -f "$FORGE_DIR/state.json" ] && {
     # No state — simple timestamp entry (backward compat)
     mkdir -p "$FORGE_DIR/feedback" 2>/dev/null
+    _rotate_feedback "$FORGE_DIR/feedback/auto-captured.md"
     printf '[%s] Session ended (no pipeline state).\n' \
       "$(date -u '+%Y-%m-%d %H:%M UTC')" >> "$FORGE_DIR/feedback/auto-captured.md"
     exit 0
   }
 
   mkdir -p "$FORGE_DIR/feedback" 2>/dev/null
+  _rotate_feedback "$FORGE_DIR/feedback/auto-captured.md"
   _py=""
   command -v python3 &>/dev/null && _py="python3"
   [ -z "$_py" ] && command -v python &>/dev/null && _py="python"

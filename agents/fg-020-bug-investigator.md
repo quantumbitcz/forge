@@ -9,6 +9,7 @@ description: |
   assistant: "I'll dispatch the bug investigator to trace the error and write a failing test."
   </example>
 model: inherit
+color: purple
 tools: ['Read', 'Write', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'neo4j-mcp']
 ui:
   tasks: true

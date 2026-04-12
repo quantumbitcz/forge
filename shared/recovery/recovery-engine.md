@@ -383,6 +383,21 @@ Circuit breaker state is tracked in `recovery.circuit_breakers`:
 
 Only categories that have recorded at least one failure appear in the map. Absent categories are implicitly CLOSED with `failures_count = 0`.
 
+### Transition Timing Check
+
+The OPEN → HALF_OPEN transition is checked lazily — not by a timer, but evaluated each time the recovery engine receives a failure in the OPEN category:
+
+```
+elapsed = current_time - last_failure_timestamp
+cooldown = cooldown_seconds + jitter_seconds
+if state == OPEN and elapsed >= cooldown:
+    state = HALF_OPEN
+```
+
+There is no background timer. If no failures occur for the category during the cooldown period, the transition happens on the next failure arrival. This avoids unnecessary timer infrastructure and is consistent with the recovery engine's pull-based design.
+
+When transitioning from OPEN to HALF_OPEN, the `failures_count` is NOT reset — it only resets to 0 on a successful probe (HALF_OPEN → CLOSED).
+
 ### Principles
 
 1. **Category not strategy** — Circuit breakers aggregate by failure category, not by recovery strategy. A `build` circuit opening means all build-related error types are blocked, regardless of which strategy would be selected.

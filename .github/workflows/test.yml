@@ -28,13 +28,14 @@ jobs:
 
   test:
     needs: structural
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
         tier: [unit, contract, scenario]
     steps:
       - uses: actions/checkout@v6

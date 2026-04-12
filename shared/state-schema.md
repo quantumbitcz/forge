@@ -561,13 +561,21 @@ Extended example showing `path` and `convention_stack`:
 ```
 
 **Fields per component:**
-- `story_state` — current pipeline stage for this component (same enum as top-level)
-- `conventions_hash` — SHA256 first 8 chars of the composed convention stack
-- `conventions_section_hashes` — per-section hashes for drift detection
-- `detected_versions` — extracted from manifest files in the component path
-- `score_history` — `number[]`, default `[]`. Per-component quality score history for oscillation tracking. Populated during REVIEW.
-- `convention_stack` (optional) — array of resolved convention file paths in composition order. Populated by PREFLIGHT. Empty array if not yet resolved.
-- `path` (optional) — relative path prefix for this component. Used by the check engine for per-file convention routing. Required in multi-service mode. Defaults to project root in single-service mode.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `story_state` | string | Yes | Pipeline state for this component. Same valid values as top-level `story_state`. Independent per component — frontend can be EXPLORING while backend is IMPLEMENTING. |
+| `conventions_hash` | string | Yes | SHA-256 hash of the resolved convention stack for this component. Updated at PREFLIGHT. Used for mid-run convention drift detection. |
+| `conventions_section_hashes` | object | Yes | Per-section hashes within the convention stack. Keys are section names, values are SHA-256 hashes. Enables agents to react only to changes in their relevant sections. |
+| `detected_versions` | object | Yes | Runtime-detected versions for this component. Fields: `language_version` (string), `framework_version` (string), `key_dependencies` (object, dependency_name → version_string). Populated at PREFLIGHT from manifests (package.json, build.gradle.kts, Cargo.toml, etc.). |
+| `score_history` | integer[] | No | Per-component quality scores from review cycles. Only present after the component has been through REVIEW. The top-level `score_history` contains the aggregate scores. |
+| `convergence` | object | No | Per-component convergence state (same schema as top-level `convergence`). Only present for multi-component projects where components iterate independently. |
+| `convention_stack` | string[] | No | Array of resolved convention file paths in composition order. Populated by PREFLIGHT. Empty array if not yet resolved. |
+| `path` | string | No | Relative path prefix for this component. Used by the check engine for per-file convention routing. Required in multi-service mode. Defaults to project root in single-service mode. |
+
+**Component key derivation:** For single-component projects, the key comes from the `forge.local.md` config (e.g., `"backend"`). For multi-component projects with `components:` block and `path:` fields, keys are the component names from config. Components without a `path:` field use the component name as both key and path prefix.
+
+**Initialization:** Components are initialized at PREFLIGHT with `story_state: "PREFLIGHT"`, empty hashes, and detected versions from manifest scanning. If version detection fails for a component, `detected_versions` is set to `{ "language_version": "unknown", "framework_version": "unknown" }` and a WARNING is logged.
 
 ---
 

@@ -36,9 +36,9 @@
 - Don't use `useEffect` for derived state -- use `useMemo` or compute inline
 - Don't store server data in `useState` -- use a data fetching library
 
-## Typography (inline style, NOT Tailwind classes)
+## Typography (design token scale, NOT Tailwind text utilities)
 
-Use `style={{ fontSize }}` with project type scale. Never use Tailwind `text-sm`, `text-lg` etc.
+Use `style={{ fontSize }}` with the project's design token type scale for font sizing. Tailwind text utilities (`text-sm`, `text-lg`, etc.) are prohibited for font-size — they bypass the token system and create inconsistency. Other Tailwind text utilities (`leading-*`, `tracking-*`, `font-*`) are acceptable when no design token equivalent exists.
 
 ## Colors (theme tokens, NEVER hardcoded)
 

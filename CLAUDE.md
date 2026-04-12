@@ -87,6 +87,18 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Deploy | `/deploy` | Staging, production, preview, rollback |
 | Migrate framework | `/migration` | Library/framework version upgrades |
 
+### Getting started flows
+
+```
+New project:       /forge-init → /config-validate → /verify → /forge-run <requirement>
+Existing project:  /forge-init → /codebase-health → /deep-health → /forge-run <requirement>
+Bug fix:           /forge-fix <description or ticket ID>
+Code quality:      /forge-review --full  (changed files) or /codebase-health (all files)
+Before shipping:   /verify → /forge-review --full
+Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resume
+Multiple features: /forge-sprint (reads from Linear or manual list)
+```
+
 ## Agents (38 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):

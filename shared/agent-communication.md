@@ -218,6 +218,30 @@ PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller 
 - Earlier attempt markers are superseded — do not double-count
 - If the same item is marked `PREEMPT_APPLIED` in attempt 1 and `PREEMPT_SKIPPED` in attempt 2, use the attempt 2 status
 
+### PREEMPT Confidence Decay
+
+Items decay toward archival based on usage patterns. Decay is tracked per item in `forge-log.md`:
+
+**Decay score formula:** `decay_score = unused_runs + (false_positives * 3)`
+
+Where:
+- `unused_runs` — consecutive runs where the item was loaded but neither APPLIED nor SKIPPED (item was in scope but the domain area didn't trigger it)
+- `false_positives` — times the item was marked `PREEMPT_SKIPPED` with reason indicating inapplicability (each false positive counts as 3 unused runs toward decay)
+
+**Confidence tiers:** HIGH (decay_score 0-3) → MEDIUM (4-6) → LOW (7-9) → ARCHIVED (10+)
+
+**Tier transitions:**
+- Items start at HIGH when first recorded in `forge-log.md`
+- Tier decreases when `decay_score` crosses thresholds
+- A single APPLIED resets `decay_score` to 0 and restores HIGH confidence
+- ARCHIVED items are excluded from PREEMPT loading at PREFLIGHT (but remain in `forge-log.md` for historical reference)
+
+**Retrospective update logic:**
+1. For each PREEMPT item in `preempt_items_status`:
+   - If `applied: true` → reset `decay_score = 0`, set tier = HIGH
+   - If `applied: false, false_positive: true` → increment `decay_score += 3`
+2. For items in `preempt_items_applied` but NOT in `preempt_items_status` (loaded but not reported) → increment `decay_score += 1`
+
 ## 8. Plan Mode Integration
 
 Planning agents (`fg-200-planner`, `fg-010-shaper`, `fg-160-migration-planner`, `fg-050-project-bootstrapper`) use `EnterPlanMode`/`ExitPlanMode` to present their designs for user approval in the Claude Code UI before implementation proceeds.

@@ -69,13 +69,30 @@ _CURRENT_FILE=""
 
 # Log hook failures to .forge/.hook-failures.log for observability.
 # Called before silent exits so operators can audit skipped checks.
+# Uses flock/mkdir locking to prevent garbled lines from concurrent hooks.
 handle_failure() {
   local reason="$1"
   local file="${2:-unknown}"
   local log_dir="${FORGE_DIR:-.forge}"
   if [[ -d "$log_dir" ]]; then
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | ${reason} | ${file}" \
-      >> "${log_dir}/.hook-failures.log"
+    local log_file="${log_dir}/.hook-failures.log"
+    local entry
+    entry="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | ${reason} | ${file}"
+    if command -v flock &>/dev/null; then
+      (
+        flock -w 2 9 || { echo "$entry" >> "$log_file" 2>/dev/null; exit 0; }
+        echo "$entry" >> "$log_file"
+      ) 9>"${log_file}.lock"
+    else
+      local lock_dir="${log_file}.lockdir"
+      if mkdir "$lock_dir" 2>/dev/null; then
+        echo "$entry" >> "$log_file"
+        rmdir "$lock_dir" 2>/dev/null
+      else
+        # Lock contention — append without lock (best-effort)
+        echo "$entry" >> "$log_file" 2>/dev/null
+      fi
+    fi
   fi
 }
 

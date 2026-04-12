@@ -224,6 +224,31 @@ Features and repos with `waiting_for` set are subject to a timeout:
 - **Deadlock detection:** If feature A waits for B and B waits for A (direct or transitive cycle), escalate immediately without waiting for timeout. Use topological sort on the `waiting_for` graph — if sort produces fewer nodes than input, a cycle exists.
 - **Lock ordering normalization:** When sorting by `project_id` for lock acquisition, normalize URLs first: strip protocol prefix (`git@`, `https://`), strip trailing `.git`, lowercase the result. E.g., `git@github.com:Org/Backend.git` normalizes to `github.com:org/backend`.
 
+### Deadlock Prevention Algorithm
+
+The sprint orchestrator prevents deadlocks using a 3-step approach at ANALYZE phase:
+
+**Step 1: Dependency graph construction**
+Build a directed graph where each edge represents a `waiting_for` relationship:
+- Serial chain `[A, B, C]` produces edges: B→A, C→B
+- Cross-repo dependencies produce edges: consumer_repo→producer_repo
+
+**Step 2: Cycle detection via topological sort**
+Run Kahn's algorithm (BFS topological sort) on the dependency graph:
+1. Compute in-degree for each node
+2. Enqueue all nodes with in-degree 0
+3. Process queue: dequeue node, reduce in-degree of neighbors, enqueue neighbors with in-degree 0
+4. If processed count < total nodes, a cycle exists
+
+**Step 3: Cycle resolution**
+When a cycle is detected:
+1. Identify the cycle nodes (nodes not processed by topological sort)
+2. Find the lowest-priority feature in the cycle (last in sprint backlog order)
+3. Escalate to user: "Dependency cycle detected between {features}. Options: (1) Remove dependency {lowest} → {target} and run {lowest} independently, (2) Abort {lowest}, (3) Manual resolution"
+4. Log cycle detection in sprint notes and `.forge/decisions.jsonl`
+
+Cycles are detected BEFORE dispatch (at ANALYZE phase). Runtime deadlocks cannot occur because the dependency graph is validated upfront and `waiting_for` edges are never added after DISPATCH begins.
+
 ---
 
 ## Sprint Completion Criteria
