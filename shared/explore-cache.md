@@ -46,7 +46,7 @@ Persists codebase exploration data across pipeline runs in `.forge/explore-cache
 | `cache_age_runs > max_cache_age_runs` (config, default 10) | Full re-explore |
 | `conventions_hash` differs from current `forge-config.md` hash | Full re-explore |
 | Cache file missing or corrupt (invalid JSON, missing `schema_version`) | Full re-explore |
-| `schema_version` mismatch with current plugin version | Full re-explore |
+| `schema_version` mismatch with expected cache schema version (currently 1.0.0) | Full re-explore |
 | `--full-explore` flag passed to `/forge-run` | Full re-explore |
 | None of the above | Partial re-explore (changed files only) |
 
