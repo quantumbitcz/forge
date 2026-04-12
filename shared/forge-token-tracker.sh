@@ -3,9 +3,9 @@
 # Estimates token counts, records usage per stage/agent, and checks budget ceiling.
 #
 # Commands:
-#   estimate <file-path>                                        — rough token count (chars / 4)
-#   record <stage> <agent> <input> <output> [--forge-dir PATH]  — accumulate usage in state.json
-#   check [--forge-dir PATH]                                    — exit 0=OK, 1=warning (>=80%), 2=exceeded
+#   estimate <file-path>                                                    — rough token count (chars / 4)
+#   record <stage> <agent> <input> <output> [model] [--forge-dir PATH]     — accumulate usage in state.json
+#   check [--forge-dir PATH]                                                — exit 0=OK, 1=warning (>=80%), 2=exceeded
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +18,7 @@ STAGE=""
 AGENT=""
 INPUT_TOKENS=""
 OUTPUT_TOKENS=""
+MODEL=""
 
 # ── Argument parsing ──────────────────────────────────────────────────────
 
@@ -36,6 +37,10 @@ while [[ $# -gt 0 ]]; do
       AGENT="${1:?record requires <agent-name>}"; shift
       INPUT_TOKENS="${1:?record requires <input-tokens>}"; shift
       OUTPUT_TOKENS="${1:?record requires <output-tokens>}"; shift
+      # Optional 5th positional: model (skip if looks like a flag)
+      if [[ $# -gt 0 && "${1:0:2}" != "--" ]]; then
+        MODEL="$1"; shift
+      fi
       ;;
     check)
       CMD="check"
@@ -87,6 +92,7 @@ stage = sys.argv[1]
 agent = sys.argv[2]
 input_t = int(sys.argv[3])
 output_t = int(sys.argv[4])
+model = sys.argv[5] if len(sys.argv) > 5 else ''
 
 # Ensure tokens section exists
 if 'tokens' not in state:
@@ -95,28 +101,80 @@ if 'tokens' not in state:
         'budget_ceiling': 0,
         'by_stage': {},
         'by_agent': {},
+        'model_distribution': {},
         'budget_warning_issued': False
     }
 
 tokens = state['tokens']
 
-# Accumulate by_stage
-if stage not in tokens['by_stage']:
-    tokens['by_stage'][stage] = {'input': 0, 'output': 0}
-tokens['by_stage'][stage]['input'] += input_t
-tokens['by_stage'][stage]['output'] += output_t
+# Ensure model_distribution exists
+if 'model_distribution' not in tokens:
+    tokens['model_distribution'] = {}
 
-# Accumulate by_agent
+# Accumulate by_stage (with agents tracking)
+if stage not in tokens['by_stage']:
+    tokens['by_stage'][stage] = {'input': 0, 'output': 0, 'agents': []}
+bs = tokens['by_stage'][stage]
+bs['input'] = bs.get('input', 0) + input_t
+bs['output'] = bs.get('output', 0) + output_t
+if 'agents' not in bs:
+    bs['agents'] = []
+if agent not in bs['agents']:
+    bs['agents'].append(agent)
+
+# Accumulate by_agent (with model tracking)
 if agent not in tokens['by_agent']:
-    tokens['by_agent'][agent] = {'input': 0, 'output': 0}
-tokens['by_agent'][agent]['input'] += input_t
-tokens['by_agent'][agent]['output'] += output_t
+    tokens['by_agent'][agent] = {'input': 0, 'output': 0, 'model': ''}
+ba = tokens['by_agent'][agent]
+ba['input'] = ba.get('input', 0) + input_t
+ba['output'] = ba.get('output', 0) + output_t
+if model:
+    ba['model'] = model
 
 # Update estimated_total
 tokens['estimated_total'] += input_t + output_t
 
+# Recompute model_distribution from by_agent data
+model_totals = {}
+grand_total = 0
+for a_name, a_data in tokens['by_agent'].items():
+    a_total = a_data.get('input', 0) + a_data.get('output', 0)
+    m = a_data.get('model', '') or ''
+    if not m:
+        m = 'unknown'
+    model_totals[m] = model_totals.get(m, 0) + a_total
+    grand_total += a_total
+if grand_total > 0:
+    tokens['model_distribution'] = {m: round(t / grand_total, 4) for m, t in model_totals.items()}
+else:
+    tokens['model_distribution'] = {}
+
+# Compute estimated_cost_usd using approximate pricing (per million tokens)
+PRICING = {
+    'haiku':   {'input': 0.25,  'output': 1.25},
+    'sonnet':  {'input': 3.0,   'output': 15.0},
+    'opus':    {'input': 15.0,  'output': 75.0},
+}
+DEFAULT_PRICING = PRICING['sonnet']
+
+total_cost = 0.0
+for a_name, a_data in tokens['by_agent'].items():
+    m = a_data.get('model', '') or ''
+    pricing = DEFAULT_PRICING
+    for key in PRICING:
+        if key in m.lower():
+            pricing = PRICING[key]
+            break
+    total_cost += a_data.get('input', 0) * pricing['input'] / 1_000_000
+    total_cost += a_data.get('output', 0) * pricing['output'] / 1_000_000
+
+# Update cost section
+if 'cost' not in state:
+    state['cost'] = {'wall_time_seconds': 0, 'stages_completed': 0, 'estimated_cost_usd': 0.0}
+state['cost']['estimated_cost_usd'] = round(total_cost, 6)
+
 json.dump(state, sys.stdout, indent=2)
-" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS")
+" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS" "$MODEL")
 
   [[ $? -ne 0 ]] && { echo "ERROR: failed to compute token update" >&2; exit 2; }
 
@@ -139,20 +197,59 @@ stage = sys.argv[1]
 agent = sys.argv[2]
 input_t = int(sys.argv[3])
 output_t = int(sys.argv[4])
+model = sys.argv[5] if len(sys.argv) > 5 else ''
 if 'tokens' not in state:
-    state['tokens'] = {'estimated_total': 0, 'budget_ceiling': 0, 'by_stage': {}, 'by_agent': {}, 'budget_warning_issued': False}
+    state['tokens'] = {'estimated_total': 0, 'budget_ceiling': 0, 'by_stage': {}, 'by_agent': {}, 'model_distribution': {}, 'budget_warning_issued': False}
 tokens = state['tokens']
+if 'model_distribution' not in tokens:
+    tokens['model_distribution'] = {}
 if stage not in tokens['by_stage']:
-    tokens['by_stage'][stage] = {'input': 0, 'output': 0}
-tokens['by_stage'][stage]['input'] += input_t
-tokens['by_stage'][stage]['output'] += output_t
+    tokens['by_stage'][stage] = {'input': 0, 'output': 0, 'agents': []}
+bs = tokens['by_stage'][stage]
+bs['input'] = bs.get('input', 0) + input_t
+bs['output'] = bs.get('output', 0) + output_t
+if 'agents' not in bs:
+    bs['agents'] = []
+if agent not in bs['agents']:
+    bs['agents'].append(agent)
 if agent not in tokens['by_agent']:
-    tokens['by_agent'][agent] = {'input': 0, 'output': 0}
-tokens['by_agent'][agent]['input'] += input_t
-tokens['by_agent'][agent]['output'] += output_t
+    tokens['by_agent'][agent] = {'input': 0, 'output': 0, 'model': ''}
+ba = tokens['by_agent'][agent]
+ba['input'] = ba.get('input', 0) + input_t
+ba['output'] = ba.get('output', 0) + output_t
+if model:
+    ba['model'] = model
 tokens['estimated_total'] += input_t + output_t
+model_totals = {}
+grand_total = 0
+for a_name, a_data in tokens['by_agent'].items():
+    a_total = a_data.get('input', 0) + a_data.get('output', 0)
+    m = a_data.get('model', '') or ''
+    if not m:
+        m = 'unknown'
+    model_totals[m] = model_totals.get(m, 0) + a_total
+    grand_total += a_total
+if grand_total > 0:
+    tokens['model_distribution'] = {m: round(t / grand_total, 4) for m, t in model_totals.items()}
+else:
+    tokens['model_distribution'] = {}
+PRICING = {'haiku': {'input': 0.25, 'output': 1.25}, 'sonnet': {'input': 3.0, 'output': 15.0}, 'opus': {'input': 15.0, 'output': 75.0}}
+DEFAULT_PRICING = PRICING['sonnet']
+total_cost = 0.0
+for a_name, a_data in tokens['by_agent'].items():
+    m = a_data.get('model', '') or ''
+    pricing = DEFAULT_PRICING
+    for key in PRICING:
+        if key in m.lower():
+            pricing = PRICING[key]
+            break
+    total_cost += a_data.get('input', 0) * pricing['input'] / 1_000_000
+    total_cost += a_data.get('output', 0) * pricing['output'] / 1_000_000
+if 'cost' not in state:
+    state['cost'] = {'wall_time_seconds': 0, 'stages_completed': 0, 'estimated_cost_usd': 0.0}
+state['cost']['estimated_cost_usd'] = round(total_cost, 6)
 json.dump(state, sys.stdout, indent=2)
-" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS")
+" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS" "$MODEL")
       [[ $? -ne 0 ]] && { echo "ERROR: recompute failed on retry $_attempt" >&2; exit 2; }
     else
       echo "ERROR: token update write failed (rc=$_rc, attempt=$_attempt)" >&2
