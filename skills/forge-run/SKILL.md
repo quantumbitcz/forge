@@ -73,15 +73,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    **Scope fast scan**: If classification didn't detect multi-feature and `scope.fast_scan` is not `false`, scan for 3+ distinct domain nouns, enumerated items, or additive language ("also add", "additionally"). If detected: set `Mode: multi-feature`.
 
-3. **Detect available MCPs**: Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
-
-   | Tool pattern | Integration |
-   |---|---|
-   | `mcp__plugin_linear_linear__*` | Linear |
-   | `mcp__plugin_playwright_playwright__*` | Playwright |
-   | `mcp__plugin_slack_slack__*` | Slack |
-   | `mcp__plugin_figma_figma__*` | Figma |
-   | `mcp__plugin_context7_context7__*` | Context7 |
+3. **Detect available MCPs**: Detect available MCPs per `shared/mcp-detection.md` detection table. For each MCP, check if its probe tool is available. Mark unavailable MCPs as degraded and apply the documented degradation behavior.
 
    Build a comma-separated list of detected integrations (e.g., `Linear, Context7`). If none detected, use `none`.
 

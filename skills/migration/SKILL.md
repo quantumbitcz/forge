@@ -87,7 +87,7 @@ You are a thin launcher. Your ONLY job is to dispatch the migration planner agen
 
 1. **Parse input**: The user's argument (everything after `/migration`) is the migration description — a free-text string like "Upgrade Spring Boot from 3.2 to 3.4" or "Migrate from Moment.js to date-fns". It may also be a keyword command like `check` or `upgrade all`.
 
-2. **Detect available MCPs**: Before dispatching, check whether Context7 is available by looking for `mcp__plugin_context7_context7__*` tool patterns. Include this in the dispatch prompt so the planner knows whether to use Context7 for migration guide lookups.
+2. **Detect available MCPs**: Detect available MCPs per `shared/mcp-detection.md` detection table. For each MCP, check if its probe tool is available. Mark unavailable MCPs as degraded and apply the documented degradation behavior. Include Context7 availability in the dispatch prompt so the planner knows whether to use it for migration guide lookups.
 
 3. **Dispatch the migration planner**: Use the Agent tool to invoke `fg-160-migration-planner` with the following prompt:
 

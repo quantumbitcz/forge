@@ -22,27 +22,39 @@ TOKEN_FILE="${FORGE_DIR}/.token-estimate"
 SUGGEST_FILE="${FORGE_DIR}/.compact-suggestion"
 
 if type atomic_increment &>/dev/null; then
-  count=$(atomic_increment "$TOKEN_FILE")
+  count=$(atomic_increment "$TOKEN_FILE") || count=""
 else
   # Fallback with inline flock if available
   if command -v flock &>/dev/null; then
     count=$(
-      flock -w 2 9 || { echo "0"; exit 1; }
+      flock -w 2 9 || { echo ""; exit 1; }
       c=0
       [ -f "$TOKEN_FILE" ] && c=$(cat "$TOKEN_FILE" 2>/dev/null || echo 0)
       [[ "$c" =~ ^[0-9]+$ ]] || c=0
       c=$((c + 1))
       echo "$c" > "$TOKEN_FILE"
       echo "$c"
-    ) 9>"${TOKEN_FILE}.lock" || count=0
+    ) 9>"${TOKEN_FILE}.lock" || count=""
   else
     # Last resort: accept possible race on systems without flock
-    count=0
-    [[ -f "$TOKEN_FILE" ]] && count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "0")
-    [[ "$count" =~ ^[0-9]+$ ]] || count=0
-    count=$((count + 1))
-    echo "$count" > "$TOKEN_FILE"
+    count=""
+    if [[ -f "$TOKEN_FILE" ]]; then
+      count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "")
+    fi
+    if [[ "$count" =~ ^[0-9]+$ ]]; then
+      count=$((count + 1))
+      echo "$count" > "$TOKEN_FILE"
+    else
+      count=""
+    fi
   fi
+fi
+
+# Log failure if increment failed or returned empty
+if [[ -z "$count" ]]; then
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) compact-check: atomic_increment failed or returned empty" \
+    >> "${FORGE_DIR}/.hook-failures.log" 2>/dev/null
+  count=0
 fi
 
 if (( count % 5 == 0 )); then

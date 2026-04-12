@@ -52,15 +52,7 @@ If input is free text (not a ticket pattern and no `--linear` flag):
 
 ### 2. MCP Detection
 
-Before dispatching, check which optional MCP tools are available in your current session by looking for these tool name patterns:
-
-| Tool pattern | Integration |
-|---|---|
-| `mcp__plugin_linear_linear__*` | Linear |
-| `mcp__plugin_playwright_playwright__*` | Playwright |
-| `mcp__plugin_slack_slack__*` | Slack |
-| `mcp__plugin_figma_figma__*` | Figma |
-| `mcp__plugin_context7_context7__*` | Context7 |
+Detect available MCPs per `shared/mcp-detection.md` detection table. For each MCP, check if its probe tool is available. Mark unavailable MCPs as degraded and apply the documented degradation behavior.
 
 Build a comma-separated list of detected integrations (e.g., `Linear, Playwright`). If none detected, use `none`.
 
