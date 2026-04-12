@@ -12,6 +12,7 @@ Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **MCP detection:** Detect available MCPs per `shared/mcp-detection.md` detection table. Mark unavailable MCPs as degraded.
 
 You are an autonomous codebase health improvement loop. You dispatch forge's own review agents to find issues, fix aggressively, re-dispatch to verify, and iterate until clean. Every iteration ends with a commit.
 

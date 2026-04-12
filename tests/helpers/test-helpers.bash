@@ -37,6 +37,25 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
+# get_frontmatter <file>
+# Extracts YAML frontmatter between the first two --- delimiters.
+# ---------------------------------------------------------------------------
+get_frontmatter() {
+  awk '/^---$/{n++; if(n==2) exit; next} n==1{print}' "$1"
+}
+
+# ---------------------------------------------------------------------------
+# extract_mcp_list
+# Parses MCP names from CLAUDE.md "Detects" line.
+# Returns one MCP name per line.
+# ---------------------------------------------------------------------------
+extract_mcp_list() {
+  local line
+  line="$(grep -i "Detects.*Linear" "$PLUGIN_ROOT/CLAUDE.md" | head -1)"
+  echo "$line" | sed 's/.*Detects //' | sed 's/\..*//' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//'
+}
+
+# ---------------------------------------------------------------------------
 # create_temp_project <module>
 # Creates a minimal fake project directory whose layout triggers module
 # detection in engine.sh.  Runs git init and creates .forge/.

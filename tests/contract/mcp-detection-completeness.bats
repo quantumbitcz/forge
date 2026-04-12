@@ -12,17 +12,14 @@ load '../helpers/test-helpers'
 }
 
 @test "mcp-detection: documents all MCPs listed in CLAUDE.md" {
+  # extract_mcp_list() provided by test-helpers.bash
   local failures=()
   local detect_file="$PLUGIN_ROOT/shared/mcp-detection.md"
-  local mcp_line
-  mcp_line="$(grep -i "Detects.*Linear" "$PLUGIN_ROOT/CLAUDE.md" | head -1)"
-  local mcps
-  mcps="$(echo "$mcp_line" | sed 's/.*Detects //' | sed 's/\..*//' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//')"
 
   while IFS= read -r mcp_name; do
     [[ -z "$mcp_name" ]] && continue
     grep -qi "$mcp_name" "$detect_file" || failures+=("$mcp_name")
-  done <<< "$mcps"
+  done < <(extract_mcp_list)
 
   if (( ${#failures[@]} > 0 )); then
     printf 'Missing: %s\n' "${failures[@]}"

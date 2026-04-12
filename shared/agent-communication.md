@@ -172,8 +172,7 @@ The following agents are dispatched conditionally and receive data from the orch
 
 During implementation, agents that receive PREEMPT items in their dispatch prompt must report usage in stage notes. PREEMPT producers are: `fg-300-implementer` (primary — receives PREEMPT items for the implementation domain), `fg-310-scaffolder` (when PREEMPT items reference scaffold patterns), and `fg-320-frontend-polisher` (when PREEMPT items reference frontend patterns). If multiple agents report on the same PREEMPT item, the orchestrator uses the marker from the **last agent to complete** (since later agents may override earlier work).
 
-    PREEMPT_APPLIED: {item-id} — applied at {file}:{line}
-    PREEMPT_SKIPPED: {item-id} — not applicable ({reason})
+See **PREEMPT Marker Format** below for the exact format specification and parsing regex.
 
 ### PREEMPT Marker Format
 

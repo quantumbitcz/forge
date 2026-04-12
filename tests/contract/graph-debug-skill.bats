@@ -10,11 +10,31 @@ SKILL_FILE="$PLUGIN_ROOT/skills/graph-debug/SKILL.md"
 }
 
 @test "graph-debug: has valid frontmatter with name and description" {
-  # Extract frontmatter
+  # get_frontmatter() provided by test-helpers.bash
   local frontmatter
-  frontmatter="$(awk '/^---$/{n++; if(n==2) exit; next} n==1{print}' "$SKILL_FILE")"
+  frontmatter="$(get_frontmatter "$SKILL_FILE")"
   echo "$frontmatter" | grep -q "^name: graph-debug" || fail "Missing name: graph-debug"
   echo "$frontmatter" | grep -q "^description:" || fail "Missing description field"
+}
+
+@test "graph-debug: all Cypher queries have LIMIT clause" {
+  # Safety section claims "All queries enforce LIMIT"
+  local missing=0
+  local block=""
+  local in_block=0
+  while IFS= read -r line; do
+    if [[ "$line" =~ \`\`\`cypher ]]; then
+      in_block=1; block=""; continue
+    fi
+    if [[ "$line" =~ \`\`\` ]] && (( in_block )); then
+      if ! echo "$block" | grep -qi "LIMIT"; then
+        missing=$((missing + 1))
+      fi
+      in_block=0; continue
+    fi
+    (( in_block )) && block="${block}${line}\n"
+  done < "$SKILL_FILE"
+  [[ "$missing" -eq 0 ]] || fail "$missing Cypher blocks missing LIMIT clause"
 }
 
 @test "graph-debug: all Cypher queries are read-only" {

@@ -15,10 +15,7 @@ TIER1_AGENTS=(
   fg-200-planner
 )
 
-# Extract full YAML frontmatter
-get_frontmatter() {
-  awk '/^---$/{n++; if(n==2) exit; next} n==1{print}' "$1"
-}
+# get_frontmatter() provided by test-helpers.bash
 
 @test "tier1-examples: all Tier 1 agents have <example> blocks in description" {
   local failures=()

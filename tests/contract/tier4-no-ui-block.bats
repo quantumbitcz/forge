@@ -23,10 +23,7 @@ TIER4_AGENTS=(
   fg-420-dependency-reviewer
 )
 
-# Helper: extract YAML frontmatter between first two --- lines
-get_frontmatter() {
-  awk '/^---$/{n++; if(n==2) exit; next} n==1{print}' "$1"
-}
+# get_frontmatter() provided by test-helpers.bash
 
 @test "tier4-no-ui: Tier 4 agents do not have ui: block in frontmatter" {
   local failures=()

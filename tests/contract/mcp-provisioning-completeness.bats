@@ -3,14 +3,7 @@
 
 load '../helpers/test-helpers'
 
-# Extract MCP names from CLAUDE.md "Detects" line
-# Format: "Detects Linear, Playwright, Slack, Context7, Figma, Excalidraw, Neo4j."
-extract_mcp_list() {
-  local line
-  line="$(grep -i "Detects.*Linear" "$PLUGIN_ROOT/CLAUDE.md" | head -1)"
-  # Extract names between "Detects " and the period
-  echo "$line" | sed 's/.*Detects //' | sed 's/\..*//' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//'
-}
+# extract_mcp_list() provided by test-helpers.bash
 
 @test "mcp-completeness: every detected MCP has section in mcp-provisioning.md" {
   local failures=()
