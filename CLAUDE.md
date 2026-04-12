@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.16.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.17.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -66,6 +66,9 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | MCP detection | `shared/mcp-detection.md` |
 | Learnings | `shared/learnings/README.md` |
 | Checkpoints | `shared/state-schema.md` §checkpoint-{storyId}.json |
+| Model routing | `shared/model-routing.md` |
+| Explore cache | `shared/explore-cache.md` |
+| Plan cache | `shared/plan-cache.md` |
 
 ## Skill selection guide
 
@@ -134,6 +137,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - `/forge-run` auto-classifies intent and routes. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint`, `--parallel`) override. Config: `routing.*`, `scope.*` in `forge-config.md`.
 - Multi-feature detected via fast scan (text) or deep scan (post-EXPLORE). Triggers `fg-015-scope-decomposer` → `fg-090-sprint-orchestrator`.
 - Frontend design preview via superpowers visual companion during PLAN (optional, graceful degradation).
+- Additional `forge-config.md` sections: `model_routing:` (tiered model selection), `explore:` (explore cache settings), `plan_cache:` (plan reuse settings).
 
 ## Core contracts
 
@@ -160,6 +164,11 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Convention drift:** Mid-run SHA256 hash comparison. Agents react only to their relevant section changes.
 - **Learnings** (`learnings/`): Per-module files + JSON schemas for rule evolution and agent effectiveness.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion.
+- **Model routing** (`model-routing.md`): Tiered model selection per agent (fast/standard/premium). Config: `model_routing.*` in `forge-config.md`. Disabled by default.
+- **Explore cache** (`explore-cache.md`): Incremental codebase indexing across runs. `.forge/explore-cache.json`. Survives `/forge-reset`.
+- **Plan cache** (`plan-cache.md`): Keyword-based plan reuse for similar requirements. `.forge/plan-cache/`. Survives `/forge-reset`.
+- **Context isolation**: Domain-scoped dedup hints via `affinity` field in `category-registry.json`. Each reviewer only sees findings from its domain.
+- **Token reporting**: Extended `state.json.tokens` with per-stage/agent/model breakdowns and `cost.estimated_cost_usd`.
 
 ### Deterministic Control Flow
 
@@ -261,6 +270,8 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
+- `explore-cache.json` and `plan-cache/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `model_routing.enabled` defaults to `false`. When disabled, no `model` parameter is passed to Agent dispatches.
 
 ### Check engine
 
@@ -276,6 +287,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Tracking: `tracking.archive_after_days` 30-365 or 0 (default 90).
 - Scope: `decomposition_threshold` 2-10 (default 3). Routing: `vague_threshold` low/medium/high (default medium).
 - Shipping: `min_score` ∈ [pass_threshold, 100] (default 90), `evidence_max_age_minutes` 5-60 (default 30).
+- Model routing: `model_routing.default_tier` must be `fast`, `standard`, or `premium`. Agent IDs in overrides validated against `agent-registry.md`.
 
 ### Pipeline modes
 
@@ -306,7 +318,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.16.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.17.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
