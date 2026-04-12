@@ -1,6 +1,6 @@
 ---
 name: graph-debug
-description: Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when graph-status shows anomalies or graph queries return unexpected results.
+description: "Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /graph-status shows anomalies, graph queries return unexpected results, or after a failed /graph-rebuild."
 ---
 
 # Graph Debug

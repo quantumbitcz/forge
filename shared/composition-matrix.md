@@ -18,12 +18,12 @@ variant > framework-binding > framework > language > code-quality > generic-laye
 | java | spring | junit5 | — | Java+Spring default |
 | typescript | react | vitest | — | React SPA |
 | typescript | nextjs | vitest | — | Next.js SSR |
-| typescript | angular | jest | — | Angular default |
+| typescript | angular | vitest | — | Angular default |
 | typescript | vue | vitest | — | Vue 3 + Composition API |
 | typescript | svelte | vitest | — | Svelte 5 standalone |
 | typescript | sveltekit | vitest | — | SvelteKit full-stack |
-| typescript | nestjs | jest | — | NestJS backend |
-| typescript | express | jest | — | Express.js API |
+| typescript | nestjs | vitest | — | NestJS backend |
+| typescript | express | vitest | — | Express.js API |
 | python | fastapi | pytest | — | FastAPI default |
 | python | django | pytest | — | Django default |
 | rust | axum | rust-test | — | Axum web framework |

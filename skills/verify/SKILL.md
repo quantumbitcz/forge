@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Quick build + lint + test check for the current module without running the full pipeline
+description: "Quick build + lint + test check for the current module without running the full pipeline. Use after making manual code changes to confirm nothing is broken, or before starting a pipeline run to check baseline health."
 disable-model-invocation: false
 ---
 

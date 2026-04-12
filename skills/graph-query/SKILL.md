@@ -1,6 +1,6 @@
 ---
 name: graph-query
-description: Run a Cypher query against the Neo4j knowledge graph. Pass the query as an argument.
+description: "Run a Cypher query against the Neo4j knowledge graph. Pass the query as an argument. Use to find bug hotspots, trace cross-feature dependencies, check test coverage gaps, or explore module relationships."
 ---
 
 # /graph-query — Run a Cypher Query

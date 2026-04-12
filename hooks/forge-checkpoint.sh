@@ -12,6 +12,13 @@ source "${PLUGIN_ROOT}/shared/platform.sh" 2>/dev/null || exit 0
 # Verify atomic_json_update was loaded before calling
 type atomic_json_update &>/dev/null || exit 0
 
+# Validate state.json is valid JSON before updating
+"${FORGE_PYTHON:-python3}" -c "import json; json.load(open('$STATE_FILE'))" 2>/dev/null || {
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | forge-checkpoint | invalid_json | $STATE_FILE" \
+    >> ".forge/.hook-failures.log" 2>/dev/null
+  exit 0
+}
+
 timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 atomic_json_update "$STATE_FILE" "data['lastCheckpoint'] = '$timestamp'" 2>/dev/null || {
   # Log failure instead of silently swallowing

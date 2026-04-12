@@ -1,6 +1,6 @@
 ---
 name: migration
-description: Plan and execute a library or framework migration using the migration planner agent
+description: "Plan and execute a library or framework migration using the migration planner agent (fg-160). Use when upgrading major framework versions (e.g., Spring Boot 2→3, Angular 16→17), migrating between libraries (e.g., Enzyme→Testing Library), or checking for breaking changes before upgrading."
 disable-model-invocation: false
 ---
 

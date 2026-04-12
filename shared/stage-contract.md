@@ -4,6 +4,8 @@ This document defines the 10 pipeline stages as a contract between the orchestra
 
 Any agent or module that needs to understand where it fits in the pipeline should read this document.
 
+**Related contracts:** Stage notes have a 2K token budget (see `shared/agent-communication.md` §1). State transitions follow the formal table in `shared/state-transitions.md`. Convergence phases (Stages 4-6) are governed by `shared/convergence-engine.md`.
+
 ## Stage Overview
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |

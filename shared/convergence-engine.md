@@ -216,7 +216,20 @@ SCOUT items represent improvements already made — they do not affect the score
 
 **No "Continue anyway" or "Accept and ship" option exists.** The pipeline never offers to ship below `shipping.min_score`.
 
-**Autonomous mode:** On plateau below `shipping.min_score`, auto-select option 1 ("Keep trying"). On `max_iterations` exhausted, hard abort — write `.forge/abort-report.md` with final score, remaining findings, last evidence, iteration history. Never auto-ship below `shipping.min_score`.
+**Autonomous mode** (`state.json.autonomous: true`): All `AskUserQuestion` calls auto-select the forward-progress choice (logged `[AUTO]`), except safety escalations which always pause. Specific decisions:
+
+| Decision Point | Auto-Selection | Still Pauses? |
+|---|---|---|
+| Plan approval (VALIDATE GO) | Auto-approve | No |
+| Plateau below `shipping.min_score` | Option 1: "Keep trying" | No |
+| Plateau at CONCERNS (60-79) | Option 1: "Keep trying" | No |
+| Plateau at FAIL (<60) | Option 1: "Keep trying" | No |
+| `max_iterations` exhausted | Hard abort → `.forge/abort-report.md` | No |
+| REGRESSING (oscillation) | Escalate | **Yes** |
+| Escalation events E1-E4 | Escalate | **Yes** |
+| Unrecoverable CRITICAL | Escalate | **Yes** |
+
+**Never auto-ship below `shipping.min_score`.** When hard-aborting, write `.forge/abort-report.md` with final score, remaining findings, last evidence, and iteration history.
 
 **Precedence between oscillation detection and score escalation ladder:**
 The REGRESSING state and the score escalation ladder serve different purposes and do NOT conflict:

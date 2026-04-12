@@ -63,7 +63,7 @@ Then add to `.claude/settings.json`:
 
 ## Available skills
 
-25 skills provide the user-facing interface to the pipeline and its subsystems.
+29 skills provide the user-facing interface to the pipeline and its subsystems.
 
 | Skill | Description |
 |-------|-------------|
@@ -88,7 +88,14 @@ Then add to `.claude/settings.json`:
 | `/graph-status` | Show knowledge graph connection status and node/relationship counts |
 | `/graph-query` | Run Cypher queries against the knowledge graph |
 | `/graph-rebuild` | Rebuild the knowledge graph from the current codebase |
+| `/graph-debug` | Targeted Neo4j diagnostics for graph issues |
 | `/docs-generate` | Generate or update project documentation (standalone or pipeline mode, coverage reporting, framework-aware) |
+| `/forge-diagnose` | Read-only diagnostic of pipeline health (state.json integrity, recovery budget, convergence status) |
+| `/repair-state` | Targeted state.json fixes (WAL recovery, counter repair, stale lock cleanup) |
+| `/config-validate` | Pre-pipeline validation of forge.local.md and forge-config.md |
+| `/forge-abort` | Graceful pipeline stop, preserves state for `/forge-resume` |
+| `/forge-resume` | Resume a previously aborted pipeline from its last checkpoint |
+| `/forge-profile` | Analyze pipeline performance (time per stage, per agent, bottlenecks) |
 
 ## Available modules
 
@@ -199,6 +206,46 @@ touch .claude/forge-log.md
 
 **Resolution order** for parameters: project config (`forge-config.md`) overrides module defaults (`local-template.md`) which override plugin defaults.
 
+### Pipeline architecture
+
+```
+  User: /forge-run "Add user dashboard"
+         │
+         ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  fg-100-orchestrator (coordinator — never writes code)          │
+  │                                                                 │
+  │  Stage 0: PREFLIGHT ──► Stage 1: EXPLORE ──► Stage 2: PLAN     │
+  │    ├ load config           ├ map domain         ├ fg-200-planner│
+  │    ├ detect versions       └ index docs         └ risk-assessed │
+  │    └ apply learnings                              stories/tasks │
+  │                                                        │        │
+  │  Stage 3: VALIDATE ◄──────────────────────────────────┘        │
+  │    ├ fg-210-validator (7 perspectives)                          │
+  │    └ GO / REVISE (loop to PLAN) / NO-GO (escalate)             │
+  │              │ GO                                               │
+  │              ▼                                                  │
+  │  ┌─── Convergence Engine (3-phase loop) ────────────────────┐  │
+  │  │                                                           │  │
+  │  │  Phase 1: Correctness    Phase 2: Perfection              │  │
+  │  │  IMPLEMENT ◄──► VERIFY   IMPLEMENT ◄──► REVIEW            │  │
+  │  │  (tests green)           (score → target)                 │  │
+  │  │       │                       │                           │  │
+  │  │       └── Safety Gate ◄───────┘                           │  │
+  │  │           (VERIFY: no regressions)                        │  │
+  │  └───────────────────────────────────────────────────────────┘  │
+  │              │ CONVERGED                                        │
+  │              ▼                                                  │
+  │  Stage 7: DOCS ──► Stage 8: SHIP ──► Stage 9: LEARN            │
+  │    ├ fg-350-docs      ├ fg-590-evidence    ├ fg-700-retrospect  │
+  │    └ update docs      ├ fg-600-pr-builder  └ auto-tune config   │
+  │                       └ worktree → PR                           │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Module Resolution (most specific wins):
+  variant ──► framework-binding ──► framework ──► language ──► code-quality
+```
+
 ### Stage flow
 
 The orchestrator (`fg-100-orchestrator`) drives a linear flow from Preflight through Learn, with retry loops:
@@ -302,6 +349,24 @@ The plugin includes a 4-tier test suite covering structural integrity, shell scr
 | `fg-420-dependency-reviewer` | Vulnerable, outdated, unmaintained dependencies, license compliance |
 | `fg-610-infra-deploy-verifier` | Deployment health verification |
 
+## Troubleshooting
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| "No active pipeline" | `.forge/state.json` missing or deleted | Run `/forge-init` then `/forge-run` again |
+| Pipeline stuck at a stage | State corruption or exhausted retries | Run `/forge-diagnose` (read-only), then `/repair-state` if needed |
+| Lock file blocks new run | Previous run crashed without cleanup | Run `/forge-reset` or remove `.forge/.lock` manually |
+| Check engine errors on every edit | Broken `engine.sh` or missing bash 4.0+ | Install bash 4+ (`brew install bash` on macOS). Check `.forge/.hook-failures.log` |
+| Score oscillating (not converging) | Fixes introduce new issues | Check `oscillation_tolerance` in `forge-config.md` (default 5). See `shared/convergence-engine.md` |
+| "Budget exhausted" | Too many retries across stages | Check `total_retries_max` in `forge-config.md` (default 10, range 5-30) |
+| Recovery keeps failing | All 7 strategies tried | Recovery budget ceiling is 5.5. See `shared/recovery/recovery-engine.md` |
+| Evidence stale after build | Build took longer than evidence window | Increase `shipping.evidence_max_age_minutes` in `forge-config.md` (default 30, range 5-60) |
+| MCP not detected | MCP server not running or not configured | Check with `/forge-status`. Pipeline degrades gracefully — no MCP is required |
+| Tests pass locally but fail in pipeline | Worktree isolation | Pipeline runs in `.forge/worktree`. Check for path-dependent tests |
+
+For detailed error types, see `shared/error-taxonomy.md` (22 error types with recovery strategies).
+For recovery logic, see `shared/recovery/recovery-engine.md` (7 strategies, budget-weighted).
+
 ## Adding a new module
 
 To support a new framework (e.g., `fastapi`):
@@ -346,7 +411,7 @@ Reference the cross-cutting review agents (`fg-412-architecture-reviewer`, `fg-4
 ```
 forge/
   .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.12.0)
+    plugin.json                         # Plugin manifest (v1.15.0)
     marketplace.json                    # Marketplace catalog for quantumbitcz
   agents/                               # 38 agent definitions (YAML frontmatter + instructions)
     fg-010-shaper.md
@@ -379,7 +444,7 @@ forge/
     fg-420-dependency-reviewer.md
     fg-610-infra-deploy-verifier.md
     fg-418-docs-consistency-reviewer.md
-  skills/                               # 25 user-facing skills
+  skills/                               # 29 user-facing skills
     bootstrap-project/
     codebase-health/
     config-validate/
@@ -405,14 +470,14 @@ forge/
     repair-state/
     security-audit/
     verify/
-  hooks/                                # 3 hooks (registered in hooks.json)
+  hooks/                                # 4 hooks (registered in hooks.json)
     hooks.json                          #   Hook manifest
     forge-checkpoint.sh                 #   PostToolUse on Skill -- saves checkpoint
     feedback-capture.sh                 #   Stop -- captures user feedback on session exit
   shared/
     agent-communication.md              # Inter-agent data flow contract
     agent-philosophy.md                 # Critical thinking principles for all agents
-    error-taxonomy.md                   # 20 standard error types with recovery strategies
+    error-taxonomy.md                   # 22 standard error types with recovery strategies
     frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
     scoring.md                          # Quality scoring formula and verdict thresholds
     stage-contract.md                   # Stage definitions, entry/exit conditions, data flow

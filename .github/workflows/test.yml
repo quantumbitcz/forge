@@ -33,6 +33,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
       - name: Structural validation
         run: ./tests/run-all.sh structural
 

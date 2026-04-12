@@ -60,13 +60,31 @@ resolve_bin() {
   esac
 }
 
+# Portable timeout: GNU timeout > perl > no timeout
+LINTER_TIMEOUT="${FORGE_LINTER_TIMEOUT:-30}"
+_run_with_timeout() {
+  if command -v timeout &>/dev/null; then
+    timeout "${LINTER_TIMEOUT}s" "$@"
+  elif command -v perl &>/dev/null; then
+    perl -e "alarm $LINTER_TIMEOUT; exec @ARGV" -- "$@"
+  else
+    "$@"
+  fi
+}
+
 # Try primary, then fallback; run the matching adapter
 run_adapter() {
   local linter="$1"
   local adapter="$ADAPTER_DIR/${linter}.sh"
   [[ ! -x "$adapter" ]] && return 1
 
-  "$adapter" "$PROJECT_ROOT" "$TARGET" "$SEVERITY_MAP"
+  local rc=0
+  _run_with_timeout "$adapter" "$PROJECT_ROOT" "$TARGET" "$SEVERITY_MAP" || rc=$?
+  if [[ $rc -eq 124 || $rc -eq 142 ]]; then
+    echo "WARNING: Linter $linter timed out after ${LINTER_TIMEOUT}s, skipping Layer 2" >&2
+    return 1
+  fi
+  return $rc
 }
 
 primary="${PRIMARY[$LANGUAGE]:-}"

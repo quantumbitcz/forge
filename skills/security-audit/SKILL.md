@@ -1,6 +1,6 @@
 ---
 name: security-audit
-description: Run module-appropriate security scanners and aggregate vulnerability results
+description: "Run module-appropriate security scanners and aggregate vulnerability results. Use before releases, after dependency updates, or when reviewing third-party package security."
 disable-model-invocation: false
 ---
 

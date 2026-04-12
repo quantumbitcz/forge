@@ -3,6 +3,31 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.15.0] - 2026-04-12
+
+### Added
+- Skill selection guide in CLAUDE.md for intent→skill routing
+- Architecture diagram in README.md (pipeline flow + module resolution)
+- Troubleshooting section in README.md (10 common issues with fixes)
+- Checkpoint schema reference in CLAUDE.md key entry points (`shared/state-schema.md` §checkpoint)
+- Autonomous mode decision documentation in convergence-engine.md
+- Cross-references: stage-contract→agent-communication (2K budget), agent-registry tier legend
+- Learnings/ and checkpoint-schema references in CLAUDE.md key entry points
+- 9 missing skills added to README.md skill table (29 total)
+- `portable_timeout` wrapper in run-linter.sh for adapter timeout enforcement
+- State validation guard in forge-checkpoint.sh hook
+- New test files: hook-failure-scenarios.bats, recovery-burndown.bats, concurrent-state-access.bats
+- PREEMPT items populated across 19 framework learnings files
+
+### Fixed
+- README.md skill count updated from 25 to 29
+- Test framework binding mismatches resolved (angular, express, nestjs)
+- 8 skill descriptions improved with "when to use" triggering context
+
+### Changed
+- CLAUDE.md updated from 25 to 29 skills with selection guide
+- forge-checkpoint.sh validates state.json structure before atomic update
+
 ## [1.13.0] - 2026-04-12
 
 ### Added

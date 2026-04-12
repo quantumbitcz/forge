@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.14.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.15.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -64,6 +64,28 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | State integrity | `shared/state-integrity.sh` |
 | Agent registry | `shared/agent-registry.md` |
 | MCP detection | `shared/mcp-detection.md` |
+| Learnings | `shared/learnings/README.md` |
+| Checkpoints | `shared/state-schema.md` §checkpoint-{storyId}.json |
+
+## Skill selection guide
+
+| Intent | Skill | Notes |
+|---|---|---|
+| Build a feature | `/forge-run` | Full 10-stage pipeline |
+| Fix a bug | `/forge-fix` | Root cause investigation + targeted fix |
+| Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
+| Review changed files | `/forge-review` | Quick (3 agents) or full (9 agents) |
+| Review entire codebase | `/codebase-health` | Read-only analysis, no fixes |
+| Fix all codebase issues | `/deep-health` | Iterative fix loop until clean |
+| Quick build+lint+test | `/verify` | No pipeline, just check commands |
+| Security scan | `/security-audit` | Module-appropriate vulnerability scanners |
+| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/repair-state` to fix |
+| Resume aborted run | `/forge-resume` | Continues from last checkpoint |
+| Start fresh | `/forge-reset` | Clears state, preserves learnings |
+| Multiple features | `/forge-sprint` | Parallel orchestration |
+| Generate docs | `/docs-generate` | README, ADRs, API specs, changelogs |
+| Deploy | `/deploy` | Staging, production, preview, rollback |
+| Migrate framework | `/migration` | Library/framework version upgrades |
 
 ## Agents (38 total, `agents/*.md`)
 
@@ -170,7 +192,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Missing tools skip tiers. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (29), hooks, kanban, git
+## Skills (29 total), hooks, kanban, git
 
 **Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis).
 
@@ -250,7 +272,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - **Bugfix:** `fg-020-bug-investigator` → reproduction (max 3) → 4-perspective validation → reduced reviewers. Patterns in `.forge/forge-log.md`.
 - **Migration:** All 10 stages. `fg-160-migration-planner` at Stage 2. Stage 4 cycles through MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY.
 - **Dry-run:** PREFLIGHT→VALIDATE only. No worktree/Linear/lock/checkpoints.
-- **Autonomous:** `autonomous: true` → auto-selection (logged `[AUTO]`). Never pauses except unrecoverable CRITICAL.
+- **Autonomous:** `autonomous: true` → auto-selection (logged `[AUTO]`). Never pauses except safety escalations (REGRESSING, E1-E4, unrecoverable CRITICAL).
 - **Sprint:** `--sprint`/`--parallel`. Independence analysis → parallel orchestrators. Isolation: `.forge/runs/{id}/` + `.forge/worktrees/{id}/`. Serialize = complete SHIP before second starts IMPLEMENT.
 
 ### Convergence & review
@@ -272,7 +294,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.14.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.15.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
