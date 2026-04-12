@@ -1,6 +1,13 @@
 ---
 name: fg-200-planner
-description: Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups.
+description: |
+  Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups.
+
+  <example>
+  Context: Developer wants to implement a new feature
+  user: "Implement plan comment feature"
+  assistant: "I'll dispatch the planner to decompose this into stories, assess risk per task, and identify which tasks can run in parallel."
+  </example>
 model: inherit
 color: blue
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs', 'neo4j-mcp']

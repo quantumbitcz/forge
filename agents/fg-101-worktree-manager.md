@@ -4,10 +4,6 @@ description: Manages git worktree lifecycle — creation, cleanup, branch naming
 model: inherit
 color: gray
 tools: ['Bash', 'Read', 'Glob']
-ui:
-  ask: false
-  tasks: false
-  plan_mode: false
 ---
 
 # Worktree Manager (fg-101)

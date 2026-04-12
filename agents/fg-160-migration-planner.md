@@ -1,6 +1,13 @@
 ---
 name: fg-160-migration-planner
-description: Plans and orchestrates multi-phase library migrations and major upgrades with per-batch rollback.
+description: |
+  Plans and orchestrates multi-phase library migrations and major upgrades with per-batch rollback.
+
+  <example>
+  Context: Developer wants to upgrade a major framework version
+  user: "migrate: Spring Boot 2.7 to 3.2"
+  assistant: "I'll dispatch the migration planner to analyze the upgrade path, identify breaking changes, and create a phased migration plan with rollback points."
+  </example>
 model: inherit
 color: orange
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']

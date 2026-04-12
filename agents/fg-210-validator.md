@@ -4,10 +4,6 @@ description: Validates implementation plans across 7 perspectives. Produces GO/R
 model: inherit
 color: yellow
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp']
-ui:
-  ask: false
-  tasks: false
-  plan_mode: false
 ---
 
 # Pipeline Validator (fg-210)
