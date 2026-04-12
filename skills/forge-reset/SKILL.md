@@ -12,8 +12,8 @@ Clear the pipeline run state so you can start fresh.
 
 1. Use `AskUserQuestion` to confirm with the user:
    - Header: "Pipeline Reset"
-   - Question: "This will remove the `.forge/` directory (run state, checkpoints, stage notes). Learnings in `.claude/forge-log.md` are preserved."
-   - Options: "Reset — remove .forge/ and start fresh" / "Cancel — keep current state"
+   - Question: "This will clear run state inside `.forge/` (state.json, checkpoints, stage notes, reports). Cross-run caches (explore-cache, plan-cache) are preserved. Learnings in `.claude/forge-log.md` are preserved."
+   - Options: "Reset — clear run state and start fresh" / "Cancel — keep current state"
 
 2. If confirmed:
 
@@ -38,7 +38,34 @@ Clear the pipeline run state so you can start fresh.
       - This prevents dangling worktree entries in `.git/worktrees/`
       - **On failure:** Log warning "Worktree cleanup failed: {error}. Run `git worktree list` to check for dangling entries and `git worktree prune` to clean up." Continue with reset.
 
-   - Remove `.forge/` directory: `rm -rf .forge/`
+   ## Cleanup (selective — preserves cross-run caches)
+
+   Remove run state files but preserve cross-run caches:
+
+       # Remove run state
+       rm -f .forge/state.json
+       rm -f .forge/checkpoint-*.json
+       rm -f .forge/stage_*_notes_*.md
+       rm -f .forge/stage_final_notes_*.md
+       rm -f .forge/.lock
+       rm -f .forge/.check-engine-skipped
+       rm -rf .forge/reports/
+       rm -rf .forge/feedback/
+       rm -rf .forge/tracking/
+       rm -rf .forge/progress/
+       rm -f .forge/evidence.json
+       rm -f .forge/decisions.jsonl
+       rm -f .forge/automation-log.jsonl
+
+       # Preserve (do NOT delete):
+       # .forge/explore-cache.json — cross-run codebase index
+       # .forge/plan-cache/ — cross-run plan cache
+       # .forge/docs-index.json — documentation index
+       # .forge/wiki/ — auto-generated wiki (v1.20)
+       # .forge/agent-card.json — A2A agent card (v1.19)
+
+   For full wipe including caches, manually run: `rm -rf .forge/`
+
    - Report what was cleaned: state.json, checkpoint files, stage notes, reports
    - If any cleanup warnings occurred, include them in the report
    - Confirm: "Pipeline state cleared. Learnings preserved in `.claude/forge-log.md`. Ready for a fresh run with `/forge-run`."
@@ -48,9 +75,11 @@ Clear the pipeline run state so you can start fresh.
 
 ## What gets deleted
 
-Deletes: state.json, checkpoint-*.json, stage_*_notes_*.md, stage_final_notes_*.md, .lock, .check-engine-skipped, reports/, feedback/ (but NOT forge-log.md, forge-config.md, or forge.local.md — these survive resets)
+Deletes: state.json, checkpoint-*.json, stage_*_notes_*.md, stage_final_notes_*.md, .lock, .check-engine-skipped, reports/, feedback/, tracking/, progress/, evidence.json, decisions.jsonl
 
-Note: `rm -rf .forge/` deletes ALL files under `.forge/` including `.forge/.lock` (concurrent run lock) and `.forge/.check-engine-skipped` (inline check skip counter). These are ephemeral files that should not survive a reset.
+Preserves (inside .forge/): explore-cache.json, plan-cache/, docs-index.json, wiki/, agent-card.json
+
+Does NOT touch (outside .forge/): forge-log.md, forge.local.md, forge-config.md
 
 ## Important
 - NEVER delete `.claude/forge-log.md` — this contains accumulated learnings across all runs
