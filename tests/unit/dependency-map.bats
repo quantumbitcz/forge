@@ -40,6 +40,7 @@ PYEOF
     total=$(( total + 1 ))
 
     # Search across all layer module directories for {module_name}.md
+    # or a framework directory {module_name}/conventions.md
     local found=0
     for layer_dir in \
       "$PLUGIN_ROOT/modules/databases" \
@@ -55,6 +56,11 @@ PYEOF
       "$PLUGIN_ROOT/modules/frameworks"
     do
       if find "$layer_dir" -name "${module_name}.md" -maxdepth 3 | grep -q .; then
+        found=1
+        break
+      fi
+      # Frameworks use directory structure: {name}/conventions.md
+      if [[ -f "$layer_dir/${module_name}/conventions.md" ]]; then
         found=1
         break
       fi

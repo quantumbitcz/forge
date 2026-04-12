@@ -77,10 +77,30 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   printf 'package com.example\nval x = someValue!!\n' > "$kt_file"
   git -C "$project_dir" add . && git -C "$project_dir" commit -q -m "init"
 
-  # Pre-create the mkdir-based lock directory to simulate a concurrent instance.
-  # On macOS (no flock), the engine uses mkdir for locking.
-  local lock_dir="${project_dir}/.forge/.engine.lock.d"
-  mkdir -p "$lock_dir"
+  local lock_file="${project_dir}/.forge/.engine.lock"
+
+  if command -v flock &>/dev/null; then
+    # Linux: hold an exclusive flock via a background subshell.
+    # Use a sentinel file so we don't rely on a fixed sleep duration.
+    local ready_file="${lock_file}.ready"
+    (
+      exec 200>"$lock_file"
+      flock -n 200
+      touch "$ready_file"
+      sleep 5
+    ) &
+    local lock_pid=$!
+    # Wait for the background process to actually acquire the lock
+    local waited=0
+    while [[ ! -f "$ready_file" ]]; do
+      sleep 0.05
+      waited=$(( waited + 1 ))
+      [[ $waited -ge 40 ]] && fail "Background process did not acquire lock within 2s"
+    done
+  else
+    # macOS fallback: pre-create the mkdir-based lock directory
+    mkdir -p "${lock_file}.d"
+  fi
 
   run env \
     FORGE_DIR="${project_dir}/.forge" \
@@ -91,8 +111,12 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
   assert_success
   assert_no_findings "$output"
 
-  # Clean up the lock dir
-  rmdir "$lock_dir" 2>/dev/null || true
+  # Clean up the lock
+  if [[ -n "${lock_pid:-}" ]]; then
+    kill "$lock_pid" 2>/dev/null; wait "$lock_pid" 2>/dev/null || true
+  else
+    rmdir "${lock_file}.d" 2>/dev/null || true
+  fi
 }
 
 # ---------------------------------------------------------------------------
