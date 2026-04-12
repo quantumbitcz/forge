@@ -137,6 +137,20 @@ TaskUpdate(taskId = sub_task_id, status = "completed")
 
 All sub-tasks use `addBlockedBy: [stage_task_id]` to create parent→child hierarchy.
 
+**Model parameter in dispatch:** When `model_routing.enabled`, include `model: <tier>` in every Agent dispatch. The model map is built at §0.3a. When disabled, omit the `model` parameter entirely. Example:
+
+    Agent(
+      subagent_type: "forge:fg-200-planner",
+      model: "opus",  # from model map; omit if routing disabled
+      prompt: "..."
+    )
+
+**Post-dispatch token tracking:** After every Agent dispatch returns, call:
+
+    shared/forge-token-tracker.sh record <stage_name> <agent_id> <input_tokens> <output_tokens> <model>
+
+Where `<input_tokens>` and `<output_tokens>` are from the Agent tool's usage metadata, and `<model>` is the resolved model tier (or empty if model routing disabled).
+
 ---
 
 ## §5 Argument Parsing
@@ -251,6 +265,14 @@ Before calling the recovery engine (`shared/recovery/recovery-engine.md`), check
 Before any MCP-dependent dispatch, check `recovery.degraded_capabilities[]`. If the needed capability is listed:
 - **Optional capability** (Linear, Playwright, Slack, Figma, Excalidraw, Context7): skip the MCP-dependent operation silently. Log INFO in stage notes.
 - **Required capability** (build, test, git): escalate to user immediately. These cannot be skipped.
+
+### Model Fallback
+
+**Model fallback:** If an agent dispatch fails with a model-related error (message contains "model" and "unavailable" or "not supported"):
+1. Log WARNING: "Model {model} unavailable for {agent}, retrying with default tier"
+2. Record in `state.json.tokens.model_fallbacks[]`: `{ "agent": "{agent}", "requested": "{model}", "actual": "{default_tier}", "reason": "unavailable" }`
+3. Retry dispatch without `model` parameter
+4. This does NOT consume a recovery budget point -- model fallback is expected operational behavior
 
 ### Decision Logging
 
@@ -391,6 +413,7 @@ The orchestrator references these shared documents but never modifies them:
 - `shared/decision-log.md` -- decision logging format for `.forge/decisions.jsonl`
 - `shared/forge-state.sh` -- executable state machine for all state transitions and counter changes
 - `shared/modes/` -- mode overlay files (bugfix, migration, bootstrap, testing, refactor, performance)
+- `shared/model-routing.md` -- model tier definitions, resolution order, dispatch integration
 
 ---
 
@@ -410,6 +433,7 @@ Phase A (parallel)
 │   §0.1  Requirement Mode Detection
 │   §0.2  Read Project Config
 │   §0.3  Read Mutable Runtime Params
+│   §0.3a Model Route Resolution
 │   §0.4  Config Validation
 │   §0.5  Convention Fingerprinting
 │   §0.6  PREEMPT System + Version Detection
@@ -503,6 +527,30 @@ Read `forge-config.md` (path from `config_file` or default `.claude/forge-config
 1. `forge-config.md` -- auto-tuned values (if the parameter exists here, use it)
 2. `forge.local.md` frontmatter -- fallback defaults
 3. Plugin defaults -- hardcoded fallbacks: `max_fix_loops: 3`, `max_review_loops: 2`, `auto_proceed_risk: MEDIUM`, `parallel_impl_threshold: 3`
+
+---
+
+### §0.3a Model Route Resolution
+
+Read `model_routing` from `forge-config.md`. If `model_routing.enabled` is `false` or absent, skip -- all agents use platform default.
+
+If enabled:
+1. Build a model map: `agent_id → model_parameter`
+   - For each agent in `tier_1_fast`: map to `haiku`
+   - For each agent in `tier_3_premium`: map to `opus`
+   - All other agents: map to the tier name from `default_tier` (`fast` → `haiku`, `standard` → `sonnet`, `premium` → `opus`)
+2. Validate agent IDs against `shared/agent-registry.md`. Unknown IDs: log WARNING, skip.
+3. Store the model map in orchestrator context (not in state.json -- ephemeral per-run).
+4. Record summary in `stage_0_notes`:
+
+       ## Model Routing
+       - Enabled: true
+       - Default tier: standard (sonnet)
+       - Fast tier (haiku): fg-310-scaffolder, fg-350-docs-generator, fg-130-docs-discoverer, fg-140-deprecation-refresh
+       - Premium tier (opus): fg-200-planner, fg-210-validator, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-020-bug-investigator, fg-300-implementer
+       - Standard tier (sonnet): all remaining agents
+
+See `shared/model-routing.md` for tier definitions and resolution order.
 
 ---
 
