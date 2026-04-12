@@ -50,5 +50,11 @@ jobs:
       - name: Install Python dependencies
         run: pip install pyyaml
 
+      - name: Install bash 4+ (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install bash
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
       - name: Run ${{ matrix.tier }} tests
         run: ./tests/run-all.sh ${{ matrix.tier }}
