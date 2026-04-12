@@ -166,16 +166,20 @@ MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials
 
 ### Slack
 
-- **Tool name prefix:** `mcp__claude_ai_Slack__`
-- **Detection probe:** `mcp__claude_ai_Slack__slack_send_message`
-- **Capability:** Channel messaging, search, canvas creation, user profile lookup
-- **Degradation:** Skip Slack notifications. Use console output and file-based tracking only. Log INFO: `MCP-UNAVAILABLE: Slack`
-- **Provisioning:** User-configured via Claude AI MCP settings. Not auto-installable by forge.
+**Detection:** Check for tool `mcp__claude_ai_Slack__slack_send_message`
+
+**Used by:** fg-100-orchestrator (pipeline notifications), fg-710-post-run (completion summaries)
+
+**Degradation:** Skip Slack notifications. Use console output and file-based tracking only. Log INFO: "Slack MCP not available — notifications skipped."
+
+**First failure:** Set `integrations.slack.available = false` for the remainder of the run.
 
 ### Context7
 
-- **Tool name prefix:** `mcp__plugin_context7_context7__`
-- **Detection probe:** `mcp__plugin_context7_context7__resolve-library-id`
-- **Capability:** Live documentation lookup for libraries and frameworks. Version-aware API references. Used by review agents (fg-410 through fg-420) and deprecation refresh (fg-140) for current API validation.
-- **Degradation:** Fall back to training data knowledge and WebSearch. Version-specific guidance may be stale. Log INFO: `MCP-UNAVAILABLE: Context7`
-- **Provisioning:** Plugin-installed MCP. Auto-detected when available.
+**Detection:** Check for tool `mcp__plugin_context7_context7__resolve-library-id`
+
+**Used by:** fg-410-code-reviewer through fg-420-dependency-reviewer (live API validation), fg-140-deprecation-refresh (current deprecation data), fg-300-implementer (version-aware patterns)
+
+**Degradation:** Fall back to training data knowledge and WebSearch. Version-specific guidance may be stale. Log INFO: "Context7 MCP not available — using training data fallback."
+
+**First failure:** Set `integrations.context7.available = false` for the remainder of the run.
