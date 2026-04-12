@@ -443,9 +443,10 @@ Phase A (parallel)
 │   §0.9  Multi-Component Convention Resolution
 │   §0.10 Check Engine Rule Cache
 │
-└── Integration Group (§0.11, §0.22, §0.23) ── failures degrade, never abort
+└── Integration Group (§0.11, §0.22, §0.22a, §0.23) ── failures degrade, never abort
     §0.11 Documentation Discovery
     §0.22 Graph Context
+    §0.22a Explore Cache Check
     §0.23 MCP Detection
 
 Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
@@ -954,6 +955,23 @@ See `shared/graph/query-patterns.md` for the Cypher templates used. If Neo4j is 
 
 ---
 
+### §0.22a Explore Cache Check
+
+1. Check if `.forge/explore-cache.json` exists
+2. If exists:
+   a. Parse JSON. If invalid: log WARNING "Corrupt explore cache, will do full explore", delete file
+   b. Check `schema_version` matches expected (`1.0.0`)
+   c. Check `conventions_hash` matches current `state.json.conventions_hash`
+   d. Check `cache_age_runs < max_cache_age_runs` from config (`explore.max_cache_age_runs`, default 10)
+   e. If all valid: set `explore_mode = "partial"`, compute changed files via `git diff --name-only {last_explored_sha}..HEAD`
+   f. If any invalid: set `explore_mode = "full"`, log reason
+3. If not exists: set `explore_mode = "full"`
+4. Record in `stage_0_notes`: "Explore cache: {mode} ({reason}). Changed files: {count}"
+
+See `shared/explore-cache.md` for the full cache schema and lifecycle.
+
+---
+
 ### §0.23 MCP Detection
 
 Parse `Available MCPs:` from the `forge-run` dispatch prompt (comma-separated: Linear, Playwright, Slack, Figma, Excalidraw, Context7). Fallback: read `.mcp.json` keys under `mcpServers`. Store in `state.json.integrations.{name}.available`. Report OK/MISSING with install commands. Auto-provisioning rules apply per `shared/mcp-provisioning.md`. Pipeline runs without any MCPs.
@@ -1058,6 +1076,16 @@ Mark Explore as completed. Skip to Stage 2.
 
 **Standard / Migration / Bootstrap Mode:**
 
+**EXPLORE dispatch with cache (§1.1a):**
+
+If `explore_mode == "partial"`:
+- Include in dispatch prompt: the cached `file_index` (as structured context) + list of changed files
+- Instruct explorer: "Focus analysis on the {N} changed files listed below. For unchanged files, the cached patterns and dependencies are provided -- verify they are still accurate by spot-checking 2-3 unchanged files."
+
+If `explore_mode == "full"`:
+- Normal EXPLORE dispatch (no cache context)
+- After EXPLORE completes: write `.forge/explore-cache.json` with the exploration results per `shared/explore-cache.md` schema
+
 Dispatch exploration agents configured in `forge.local.md` under `explore_agents`. Default: `feature-dev:code-explorer` (primary) + `Explore` (secondary, subagent_type=Explore).
 [dispatch per protocol]
 
@@ -1133,6 +1161,24 @@ After exploration completes (standard mode only -- skip for bugfix, migration, b
 ## Stage 2: PLAN
 
 **story_state:** `PLANNING` | **TaskUpdate:** Mark "Stage 1: Explore" -> `completed`, Mark "Stage 2: Plan" -> `in_progress`
+
+### Plan cache check (§2.0a)
+
+Before dispatching any planner agent:
+1. If `plan_cache.enabled` (default true) and `.forge/plan-cache/index.json` exists:
+   a. Extract keywords from current requirement per `shared/plan-cache.md` algorithm
+   b. Run similarity matching against index
+   c. If match >= `similarity_threshold` (default 0.6): read the matched plan file
+   d. Include cached plan in planner dispatch prompt (see `shared/plan-cache.md` §Orchestrator Integration)
+2. If no match or cache disabled: normal dispatch
+3. Record in `stage_2_notes`: "Plan cache: hit (similarity {score}, domain: {area}) / miss"
+
+After SHIP stage completes successfully:
+1. Save current plan to `.forge/plan-cache/plan-{date}-{slug}.json`
+2. Update `index.json`
+3. Run eviction per `shared/plan-cache.md` §Eviction Rules
+
+---
 
 ### SS2.1 Mode-Aware Planning
 
@@ -2077,6 +2123,14 @@ Write `.forge/stage_8_notes_{storyId}.md` with PR details.
 Update state: add `ship` timestamp.
 
 Mark Ship as completed.
+
+**Plan cache persistence (§2.0a follow-up):**
+
+After SHIP completes successfully (PR created):
+1. Save current plan to `.forge/plan-cache/plan-{date}-{slug}.json` per `shared/plan-cache.md` schema
+2. Update `.forge/plan-cache/index.json` with new entry (keywords, domain, similarity metadata)
+3. Run eviction per `shared/plan-cache.md` §Eviction Rules (max entries, max age)
+4. Update `.forge/explore-cache.json` with `last_explored_sha = HEAD` if explore cache exists
 
 ---
 
