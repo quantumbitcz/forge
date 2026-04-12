@@ -308,7 +308,13 @@ print('OK')
 
 @test "concurrent-state: mkdir lock contention resolves within 10 seconds" {
   # On systems without flock (macOS), the script uses mkdir-based locking
-  # and retries up to 50 times with 0.1s sleep = 5s max wait
+  # and retries up to 50 times with 0.1s sleep = 5s max wait.
+  # On systems WITH flock (Linux), flock is used instead and the mkdir lockdir
+  # does not block writes. This test only validates the mkdir path.
+  if command -v flock &>/dev/null; then
+    skip "flock available — mkdir lock path not exercised on this platform"
+  fi
+
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
 
@@ -317,7 +323,6 @@ print('OK')
   mkdir -p "$lock_dir"
 
   # Write should eventually fail (lock timeout) rather than hanging
-  # Use a background process with a kill timer as portable timeout alternative
   bash "$SCRIPT" write '{"version":"1.5.0","_seq":0}' --forge-dir "$forge_dir" &
   local pid=$!
   # Wait up to 10 seconds
