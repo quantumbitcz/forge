@@ -77,6 +77,40 @@ Note: CRITICALs trigger fix cycles (per Aim-for-Target policy) before determinin
 - **Looser** (lower weights/thresholds): prototypes, internal tools, early-stage startups
 - **Default works for most projects.** Only customize if the default scoring is causing false gates (blocking good code) or false passes (allowing bad code).
 
+## Confidence-Weighted Scoring
+
+When findings include a confidence field (`confidence:HIGH`, `confidence:MEDIUM`, `confidence:LOW`), the scoring formula applies a confidence multiplier:
+
+    deduction = severity_weight * confidence_multiplier
+
+| Confidence | Multiplier | Effect |
+|------------|-----------|--------|
+| `HIGH` | 1.0 | Full deduction (default when confidence omitted) |
+| `MEDIUM` | 1.0 | Full deduction (reviewer stands behind it) |
+| `LOW` | 0.5 | Half deduction (reviewer uncertain) |
+
+### Example
+
+| Finding | Severity | Confidence | Raw Deduction | Weighted Deduction |
+|---------|----------|-----------|--------------|-------------------|
+| SEC-AUTH-001 | CRITICAL | HIGH | -20 | -20 |
+| ARCH-LAYER-002 | WARNING | MEDIUM | -5 | -5 |
+| QUAL-NAME-003 | INFO | LOW | -2 | -1 |
+
+Score: `100 - 20 - 5 - 1 = 74` (vs. `100 - 20 - 5 - 2 = 73` without confidence weighting)
+
+### Backward Compatibility
+
+When confidence is omitted, the default is `HIGH` (multiplier 1.0). This preserves existing scoring behavior for findings without a confidence field.
+
+### Routing by Confidence
+
+The quality gate uses confidence for dispatch routing:
+- **HIGH/MEDIUM findings:** Auto-dispatched to implementer for fixing
+- **LOW findings:** Flagged for human review, NOT auto-dispatched to implementer. Included in stage notes and recap but excluded from fix cycles.
+
+The `decision_quality.findings_with_low_confidence` counter in `state.json` tracks LOW-confidence findings per run, feeding into the retrospective's reviewer accuracy analysis.
+
 ## Verdict Thresholds
 
 | Verdict | Condition | Pipeline Action |
