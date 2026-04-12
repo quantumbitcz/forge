@@ -72,3 +72,21 @@ Rationale: Training data versions are stale. Always resolve at runtime. See `sha
 ### Convention Stack Layers
 
 Agents loading conventions for a component resolve these layers in order (most specific wins): variant → framework-binding → framework → language → code-quality → generic-layer → testing. The `code_quality` field is a list; each tool in the list loads its generic file (`modules/code-quality/{tool}.md`) and framework binding (`modules/frameworks/{fw}/code-quality/{tool}.md`) if it exists.
+
+## Model Routing
+
+When the orchestrator dispatches an agent with a `model` parameter (via `Agent(model: "haiku")`), the agent runs on the specified model tier. Agents do not control their own model selection.
+
+### Agent Responsibilities
+
+- **Do not** attempt to override or change the model assignment
+- **Do not** adjust behavior based on perceived model capability (the orchestrator chose the tier based on the agent's task complexity)
+- **Do** record the model assignment in stage notes if producing diagnostic output
+- **Do** report if the task requires capabilities the assigned model may lack (e.g., a haiku-tier agent encountering a task that requires deep architectural reasoning should note this in stage notes, not silently produce lower-quality output)
+
+### Orchestrator Responsibilities
+
+- Resolve model tier from `forge-config.md` `model_routing` section per `shared/model-routing.md`
+- Pass `model` parameter on every `Agent(...)` dispatch when `model_routing.enabled`
+- Handle fallbacks when a model is unavailable
+- Track token usage per agent per model via `shared/forge-token-tracker.sh`
