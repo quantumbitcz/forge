@@ -129,6 +129,14 @@ Before emitting any finding:
 
 If any answer is no, do not emit the finding.
 
+### LSP-Enhanced Analysis (v1.18+)
+
+When `lsp.enabled` and LSP is available for the project language:
+- Use LSP find-references to verify layer boundary violations (precise import checking)
+- Use LSP go-to-definition to trace interface implementations across modules
+- Use LSP workspace symbols to build accurate module dependency graph
+- Fall back to Grep if LSP unavailable (see `shared/lsp-integration.md`)
+
 ---
 
 ## 3. Output Format

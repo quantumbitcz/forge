@@ -202,6 +202,13 @@ Before emitting any finding:
 
 If any answer is no, do not emit the finding.
 
+### LSP-Enhanced Analysis (v1.18+)
+
+When `lsp.enabled` and LSP is available for the project language:
+- Use LSP diagnostics as an additional finding source (compiler warnings, unused code)
+- Use LSP find-references to verify dead code detection (code that appears unused via grep may be referenced via reflection or dynamic imports — LSP is more accurate)
+- Fall back to Grep if LSP unavailable (see `shared/lsp-integration.md`)
+
 ---
 
 ## 3. Output Format

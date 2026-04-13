@@ -3,7 +3,7 @@ name: fg-300-implementer
 description: TDD implementation agent — writes tests first (RED), implements to pass (GREEN), refactors.
 model: inherit
 color: green
-tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'LSP', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true
   ask: false
@@ -100,6 +100,14 @@ Before writing any code, load current framework/library documentation:
 5. **Never use a version from training data** — always verify against the current registry. Training data may be months or years behind
 
 This prevents using deprecated methods, outdated APIs, or antipatterns from training data. Especially critical for fast-moving frameworks.
+
+### LSP-Enhanced Refactoring (v1.18+)
+
+When `lsp.enabled` and LSP is available:
+- Use LSP go-to-definition before modifying a symbol (verify you're changing the right definition)
+- Use LSP find-references before renaming (ensure all call sites are updated)
+- Use LSP diagnostics after changes (catch type errors immediately)
+- Fall back to Grep if LSP unavailable (see `shared/lsp-integration.md`)
 
 ---
 
