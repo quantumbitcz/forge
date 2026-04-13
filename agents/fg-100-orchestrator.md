@@ -385,6 +385,15 @@ Enabled: build model map (`agent_id → model`): tier_1_fast → haiku, tier_3_p
 
 ### §0.4 Config Validation
 
+Run `${CLAUDE_PLUGIN_ROOT}/shared/validate-config.sh` on the project's `forge.local.md`.
+
+- **ERROR (exit 1)** → Abort pipeline. Show error message with suggestion. Do NOT proceed to EXPLORING.
+- **WARNING (exit 2)** → Log to stage notes as INFO. Continue pipeline.
+- **PASS (exit 0)** → Continue.
+
+This step runs BEFORE convention stack resolution to prevent loading invalid module files.
+
+Fallback (script unavailable): inline checks:
 1. `forge.local.md` must exist with valid YAML. Missing → ERROR. Invalid → ERROR with line.
 2. Required: `project_type`, `framework`, `module`, `commands.build/test/lint`, `quality_gate`. Missing → ERROR.
 3. `conventions_file` missing → WARN, continue degraded.

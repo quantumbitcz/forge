@@ -173,6 +173,16 @@ Present results in this format:
 - Errors in file references: "Referenced convention files are missing. Re-run `/forge-init` or fix paths manually."
 - Errors in value ranges: "Parameter values are out of PREFLIGHT constraints. Fix in `.claude/forge-config.md`."
 
+## Validation Engine
+
+Delegates to `${CLAUDE_PLUGIN_ROOT}/shared/validate-config.sh` for:
+- Component enum validation with fuzzy matching
+- Framework+language compatibility checks
+- PREFLIGHT constraint bounds checking
+- File existence validation for variant/testing/persistence bindings
+
+The script exits 0 (PASS), 1 (ERROR), or 2 (WARNING only).
+
 ## Important
 
 - NEVER modify config files. This is a validation-only tool.
