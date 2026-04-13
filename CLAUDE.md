@@ -20,7 +20,7 @@ Layered, resolution top-down:
    - `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Algorithm in `shared/composition.md`.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 42 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 41 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -56,6 +56,8 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Model routing | `shared/model-routing.md` |
 | Confidence scoring | `shared/confidence-scoring.md` |
 | Output compression | `shared/output-compression.md` |
+| Input compression | `shared/input-compression.md` |
+| Rule promotion | `shared/learnings/rule-promotion.md` |
 
 Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verification-evidence.md`, `tracking/tracking-schema.md`, `git-conventions.md`, `mcp-provisioning.md`, `version-resolution.md`, `agent-ui.md`, `sprint-state-schema.md`, `intent-classification.md`, `domain-detection.md`, `decision-log.md`, `state-integrity.sh`, `mcp-detection.md`, `learnings/README.md`, `learnings/memory-discovery.md`, `explore-cache.md`, `plan-cache.md`, `visual-verification.md`, `lsp-integration.md`, `observability.md`, `data-classification.md`, `security-posture.md`, `automations.md`, `background-execution.md`, `a2a-protocol.md`, `composition.md`, `living-specifications.md`, `spec-inference.md`, `accessibility-automation.md`, `i18n-validation.md`, `performance-regression.md`, `next-task-prediction.md`, `dx-metrics.md`, `monorepo-integration.md`, `feature-flag-management.md`, `a2a-http-transport.md`, `deployment-strategies.md`, `consumer-driven-contracts.md`.
 
@@ -82,6 +84,7 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Pipeline analytics | `/forge-insights` | Quality, cost, convergence, memory trends |
 | Reusable recipes | `/forge-playbooks` | Create, list, run, analyze pipeline playbooks |
 | Compress agents | `/forge-compress` | Reduce agent .md token cost via terse rewriting |
+| Toggle terse output | `/forge-caveman` | User-facing output compression (lite/full/ultra/off) |
 
 ### Getting started flows
 
@@ -95,7 +98,7 @@ Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resu
 Multiple features: /forge-sprint (reads from Linear or manual list)
 ```
 
-## Agents (42 total, `agents/*.md`)
+## Agents (41 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -194,6 +197,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | A2A protocol | — | Local filesystem coordination (`.forge/agent-card.json`) |
 | Pipeline timeline | — | Per-stage timing via `/forge-insights` |
 | Codebase Q&A | `forge_ask.*` | Wiki + graph + explore cache queries |
+| Caveman I/O (S01) | `caveman.*` | Input compression + user-facing output modes (lite/full/ultra) |
 
 ### Deterministic Control Flow
 
@@ -235,7 +239,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 4 layers on `Edit`/`Write` operations:
 - **L0** (tree-sitter AST, pre-edit via PreToolUse hook): blocks syntactically invalid edits. Config: `check_engine.l0_enabled`, `check_engine.l0_languages`, `check_engine.l0_timeout_ms`.
 - **L1** (regex, sub-second, PostToolUse hook): design tokens, animation perf. **L2** (linter adapters). **L3** (AI-driven): deprecation refresh + version compat, version-gated.
-- `rules-override.json` extends defaults; `"disabled": true` to suppress. Skip tracking in `.forge/.check-engine-skipped`.
+- `rules-override.json` extends defaults; `"disabled": true` to suppress. Skip tracking in `.forge/.check-engine-skipped`. `learned-rules-override.json` loaded at L1 (auto-promoted from retrospective, see `shared/learnings/rule-promotion.md`).
 
 **Deprecation registries** (`modules/frameworks/*/known-deprecations.json`): Schema v2 (`pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`). Skip when project version < `applies_from`. WARNING if deprecated, CRITICAL if `removed_in` reached.
 
@@ -243,9 +247,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (34 total), hooks, kanban, git
+## Skills (35 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings), `forge-caveman` (user-facing output compression toggle).
 
 **Hooks** (6): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 

@@ -317,6 +317,7 @@ Phase A (parallel)
 │   §0.10 Check Engine Rule Cache
 │   §0.10a Rule Promotion
 │   §0.10b Rule Decay
+│   §0.10c Caveman Mode Detection
 │
 └── Integration Group (§0.11, §0.22, §0.22a, §0.23) ── failures degrade, never abort
     §0.11 Documentation Discovery
@@ -525,6 +526,18 @@ For each promoted rule in `shared/checks/learned-rules-override.json`:
 2. If no matches: increment `inactive_runs` counter in `learned-candidates.json`
 3. If `inactive_runs >= 5`: remove from `learned-rules-override.json`, set status to `"demoted"`
 4. Log demotion in `.forge/forge-log.md`
+
+---
+
+### §0.10c Caveman Mode Detection
+
+If `.forge/caveman-mode` exists:
+1. Read mode value (`off`, `lite`, `full`, `ultra`)
+2. Store in orchestrator context for user-facing output formatting
+3. If mode != `off`: apply compression rules from `shared/input-compression.md` to all orchestrator messages to the user
+4. Auto-clarity exceptions (SEC-* CRITICAL, AskUserQuestion, escalation, PR descriptions) bypass caveman mode
+
+If `.forge/caveman-mode` does not exist: default to `off` (no compression).
 
 ---
 

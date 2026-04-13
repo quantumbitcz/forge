@@ -20,7 +20,6 @@ TIER4_AGENTS=(
   fg-417-dependency-reviewer
   fg-418-docs-consistency-reviewer
   fg-419-infra-deploy-reviewer
-  fg-417-dependency-reviewer
 )
 
 # get_frontmatter() provided by test-helpers.bash

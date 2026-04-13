@@ -1931,7 +1931,6 @@ MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-416-performan
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-417-dependency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-418-docs-consistency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-419-infra-deploy-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
-MATCH (a:Agent {name: 'fg-400-quality-gate'}), (b:Agent {name: 'fg-417-dependency-reviewer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-300-implementer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-510-mutation-analyzer'}) CREATE (a)-[:DISPATCHES]->(b);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (b:Agent {name: 'fg-515-property-test-generator'}) CREATE (a)-[:DISPATCHES]->(b);
@@ -2113,8 +2112,6 @@ MATCH (a:Agent {name: 'fg-418-docs-consistency-reviewer'}), (c:SharedContract {n
 MATCH (a:Agent {name: 'fg-418-docs-consistency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-419-infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-419-infra-deploy-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-417-dependency-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-417-dependency-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-500-test-gate'}), (c:SharedContract {name: 'flaky-test-management'}) CREATE (a)-[:READS]->(c);

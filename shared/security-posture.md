@@ -135,7 +135,7 @@ Agent permissions are tiered according to the existing UI tier classification (s
 | Tier 1 | Shaper, scope decomposer, planner, migration planner, bootstrapper, sprint orchestrator | Tasks + AskUser + EnterPlanMode. Can prompt user for clarification. Can create/modify plans. Cannot write code directly. |
 | Tier 2 | Orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run | Tasks + AskUser. Can prompt user for decisions. Can dispatch sub-agents. Cannot write code directly. |
 | Tier 3 | Implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier | Tasks only. Can write code (within worktree). Can run build/test/lint commands. No user interaction. |
-| Tier 4 | All reviewers (fg-410 through fg-420), validator, worktree manager, conflict resolver | No UI. Read-only analysis. Can emit findings. Cannot write code, dispatch agents, or interact with user. |
+| Tier 4 | All reviewers (fg-410 through fg-419), validator, worktree manager, conflict resolver | No UI. Read-only analysis. Can emit findings. Cannot write code, dispatch agents, or interact with user. |
 
 ### Enforcement
 
