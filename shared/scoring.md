@@ -103,9 +103,16 @@ MEDIUM findings are less certain than HIGH and carry reduced scoring weight. A M
 
 Score: `100 - 20 - 4 - 1 = 75` (vs. `100 - 20 - 5 - 2 = 73` without confidence weighting)
 
-### Backward Compatibility
+### Confidence Field
 
-When confidence is omitted, the default is `HIGH` (multiplier 1.0). This preserves existing scoring behavior for findings without a confidence field.
+Every finding MUST include a confidence level (HIGH, MEDIUM, LOW). Findings without confidence are logged as `COMPRESSION_DRIFT` by the quality gate and returned to the emitting reviewer for correction.
+
+Weight multipliers:
+- HIGH (1.0x): Strong evidence — deterministic check, clear violation
+- MEDIUM (0.75x): Likely issue — heuristic match, pattern-based
+- LOW (0.5x): Possible issue — uncertain, context-dependent
+
+LOW-confidence findings are flagged for human review, NOT auto-dispatched to implementer. Included in stage notes and recap but excluded from fix cycles.
 
 ### Routing by Confidence
 
@@ -114,6 +121,16 @@ The quality gate uses confidence for dispatch routing:
 - **LOW findings:** Flagged for human review, NOT auto-dispatched to implementer. Included in stage notes and recap but excluded from fix cycles.
 
 The `decision_quality.findings_with_low_confidence` counter in `state.json` tracks LOW-confidence findings per run, feeding into the retrospective's reviewer accuracy analysis.
+
+### Confidence Promotion
+
+When 2+ reviewers independently report the same finding (same file, same line range, overlapping category), promote the finding's confidence:
+- Both MEDIUM → HIGH
+- One HIGH + one MEDIUM → HIGH
+- Both LOW → MEDIUM
+- One LOW + one MEDIUM → MEDIUM
+
+Quality gate (fg-400) applies promotion during deduplication. See also agent-defaults.md §Confidence Reporting.
 
 ## Verdict Thresholds
 

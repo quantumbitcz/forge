@@ -104,14 +104,14 @@ Sub-state machine governing the IMPLEMENTING <-> VERIFYING <-> REVIEWING iterati
 
 | # | current_phase | event | guard | next_phase | action |
 |---|---------------|-------|-------|------------|--------|
-| C1 | `correctness` | `phase_a_failure` | `verify_fix_count < max_fix_loops AND total_iterations < max_iterations` | `correctness` | Increment verify_fix_count + total_iterations, dispatch IMPLEMENT with build/lint errors then VERIFY |
+| C1 | `correctness` | `phase_a_failure` | `verify_fix_count < max_fix_loops AND total_iterations < max_iterations` | `correctness` | Increment verify_fix_count + total_iterations, dispatch IMPLEMENT with build/lint errors then VERIFY. Note: Phase A failures always skip Phase B. verify_fix_count tracks inner-loop retries (separate from phase_iterations which tracks Phase B cycles). See convergence-engine.md §Phase A. |
 | C2 | `correctness` | `phase_a_failure` | `verify_fix_count >= max_fix_loops OR total_iterations >= max_iterations` | ESCALATED | Cap exhausted, escalate |
 | C3 | `correctness` | `tests_fail` | `phase_iterations < max_test_cycles AND total_iterations < max_iterations` | `correctness` | Increment phase_iterations + total_iterations, dispatch IMPLEMENT with test failures then VERIFY |
 | C4 | `correctness` | `tests_fail` | `phase_iterations >= max_test_cycles OR total_iterations >= max_iterations` | ESCALATED | Cap exhausted, escalate |
 | C5 | `correctness` | `verify_pass` | `tests_pass AND analysis_pass` | `perfection` | Reset phase_iterations = 0, transition to Phase 2 |
 | C6 | `perfection` | `score_target_reached` | `score >= target_score` | `safety_gate` | Transition to safety gate, dispatch final VERIFY |
 | C7 | `perfection` | `score_improving` | `delta > plateau_threshold AND total_iterations < max_iterations` | `perfection` | Reset plateau_count = 0, increment phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
-| C8 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) |
+| C8 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) (Note: Plateau detection guarded by phase_iterations >= 2 per convergence-engine.md §Plateau Detection. First 2 cycles always classified as IMPROVING regardless of delta.) |
 | C9 | `perfection` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
 | C10 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count < plateau_patience AND total_iterations < max_iterations` | `perfection` | Increment plateau_count + phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
 | C10a | `perfection` | `score_plateau` | `phase_iterations < 2` | `perfection` | First 2 cycles exempt from plateau counting (establishing baseline). Increment phase_iterations + total_iterations + total_retries, treat as IMPROVING. |

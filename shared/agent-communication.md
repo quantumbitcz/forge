@@ -93,6 +93,8 @@ Subcategory affinity overrides:
 
 **Backward compatibility:** If `affinity` is missing for a category in the registry, the finding is sent to ALL reviewers (pre-v1.17 behavior).
 
+**Registry unavailability fallback:** If `category-registry.json` is unavailable or corrupted, fall back to sending all findings to all reviewers (conservative deduplication). Log as WARNING: "Category registry unavailable, broadcasting all findings."
+
 ### Cross-Agent References
 
 If a review agent finds an issue that relates to another agent's domain, note it:

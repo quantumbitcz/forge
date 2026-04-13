@@ -91,6 +91,10 @@ When the orchestrator dispatches an agent with a `model` parameter (via `Agent(m
 - Handle fallbacks when a model is unavailable
 - Track token usage per agent per model via `shared/forge-token-tracker.sh`
 
+### Model Unavailability Fallback
+
+If assigned model is unavailable at dispatch time, orchestrator applies cascade: premium → standard → fast → no-param (inherit parent). Agent is notified via dispatch prompt: "Model fallback active: requested {original}, using {fallback}."
+
 ## LSP Integration
 
 The `LSP` tool provides compiler-level code analysis (go-to-definition, find-references, diagnostics). It is ALWAYS optional — agents must fall back to Grep/Glob when LSP is unavailable.
@@ -111,7 +115,7 @@ All review agents MUST include the `confidence` field in every finding. The fiel
 
 ### Rules
 
-- Default to `confidence:HIGH` when certain. Do not over-use LOW to hedge — LOW findings receive half scoring weight and are excluded from fix cycles.
+- Confidence is MANDATORY on every finding — no default, no fallback. Do not over-use LOW to hedge — LOW findings receive half scoring weight and are excluded from fix cycles.
 - If two or more reviewers independently flag the same issue, the quality gate promotes the finding's confidence to HIGH regardless of individual agent assessments.
 - The confidence field applies to all categories including SCOUT-* (though SCOUT findings are already zero-scored).
 

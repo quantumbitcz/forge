@@ -487,6 +487,11 @@ If recovery itself fails (e.g., state-reconstruction runs `git log` but git is u
 2. Escalate to user with the standard escalation format
 3. Never enter recursive recovery (recovery of recovery)
 
+Guard: Recovery engine NEVER attempts recovery of its own failure. Maximum recovery nesting depth: 1. If state-reconstruction fails:
+1. Write minimal state via shell: `echo '{"recovery_failed":true}' > .forge/state.json`
+2. Escalate to user immediately
+3. Do NOT invoke any recovery strategy
+
 ## Budget Interaction with Pipeline Retries
 
 The recovery budget (`max_weight: 5.5`) and pipeline retry budget (`total_retries_max`) are **independent** budgets:
@@ -503,6 +508,15 @@ The recovery budget (`max_weight: 5.5`) and pipeline retry budget (`total_retrie
 4. `user_continue` (E5) resets NEITHER budget — the user accepts the risk
 5. Both budgets reset per run (not per phase)
 6. Sprint mode: each feature pipeline has independent budgets
+
+### Simultaneous Budget Exhaustion
+
+If both budgets exhaust at the same decision point:
+
+1. Recovery budget exhaustion (E2) takes precedence over pipeline retry exhaustion (E1) in the escalation message.
+2. Rationale: recovery budget exhaustion indicates systemic failure (infrastructure, tools, state) whereas pipeline retry exhaustion indicates convergence failure (code quality). Systemic failure is more urgent.
+3. User sees: "Recovery budget exhausted (E2). Pipeline retry budget also exhausted (E1). Recommend: /forge-abort followed by /forge-diagnose."
+4. Both counters are logged in state.json for retrospective analysis.
 
 ---
 

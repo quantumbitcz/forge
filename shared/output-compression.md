@@ -75,6 +75,8 @@ Example stage notes (VERIFY):
   Build: OK (4.2s)
 ```
 
+> **Single source of truth:** This table is authoritative. The YAML template in the Configuration section below MUST mirror these values. If they diverge, this table wins.
+
 ## Per-Stage Default Assignments
 
 | Stage | Default Level | Rationale |
