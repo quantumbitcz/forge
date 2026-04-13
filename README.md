@@ -8,7 +8,7 @@
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
 [![Finding Categories](https://img.shields.io/badge/finding_categories-85+-purple?style=flat-square)](#quality-scoring)
 [![Build Systems](https://img.shields.io/badge/build_systems-9-blue?style=flat-square)](#available-modules)
-[![Tests](https://img.shields.io/badge/tests-1880+-brightgreen?style=flat-square)](#testing)
+[![Tests](https://img.shields.io/badge/tests-3040+-brightgreen?style=flat-square)](#testing)
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
