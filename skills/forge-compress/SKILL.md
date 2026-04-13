@@ -104,7 +104,49 @@ Target: 30-50% line reduction across all files.
 | Frontmatter parse error after compression | File was corrupted -- revert entire file |
 | Line reduction < 20% for a file | Acceptable for highly technical files with minimal prose |
 
+## Extended Options
+
+Parse flags from `$ARGUMENTS`:
+
+| Flag | Default | Behavior |
+|------|---------|----------|
+| `--level <1\|2\|3>` | auto (per file type, see `input-compression.md`) | Compression intensity: 1=conservative, 2=aggressive, 3=ultra |
+| `--scope <agents\|modules\|shared\|config\|all>` | `agents` | Target file group |
+| `--dry-run` | false | Report estimated savings without modifying files |
+| `--restore` | false | Restore all `.original.md` backups |
+
+### Scope Targets
+
+| Scope | Files Targeted |
+|-------|---------------|
+| `agents` | `agents/*.md` |
+| `modules` | `modules/frameworks/*/conventions.md`, `modules/frameworks/*/testing/*.md` |
+| `shared` | `shared/*.md` (excluding `shared/checks/`) |
+| `config` | Convention templates (`local-template.md`, `forge-config-template.md`) |
+| `all` | All of the above |
+
+### --dry-run Mode
+
+For each target file:
+1. Read file, estimate token count (word count × 1.3)
+2. Estimate reduction based on level (1=20%, 2=45%, 3=65%)
+3. Report per-file: `{filename}: ~{current} tokens → ~{estimated} tokens ({reduction}% reduction)`
+4. Report total savings
+5. Do NOT modify any files
+
+### --restore Mode
+
+1. Find all `*.original.md` files in target scope directories
+2. For each: rename `.original.md` back to `.md` (overwrite compressed version)
+3. Report count of restored files
+4. If no `.original.md` files found: "No backups to restore."
+
+### Backup Rule
+
+Before compressing any file, copy original to `{filename}.original.md`. Never compress a `.original.md` file (skip silently). Never compress files in `tests/`, `.git/`, or `node_modules/`.
+
 ## See Also
 
 - `/forge-review` -- review changed files for quality
 - `/verify` -- build + lint + test check
+- `shared/input-compression.md` -- compression rules and intensity levels
