@@ -228,6 +228,23 @@ When `memory_discovery.enabled`:
 5. Max 5 discoveries per run
 6. Log: "Memory discovery: {N} new, {M} promoted, {K} decayed"
 
+#### 2h-bis. Learning Extraction: Rule Candidates
+
+After analyzing findings across the current run:
+
+1. **Group** findings by (category, pattern similarity) — findings flagging the same code pattern across different files
+2. **For groups with >=3 instances** in this run:
+   a. Read `.forge/learned-candidates.json` (create if missing)
+   b. If candidate with matching pattern exists: increment `occurrences`, increment `runs_seen`, update `last_seen`
+   c. If new pattern: create candidate entry with `status: "candidate"`, `occurrences: N`, `runs_seen: 1`, `confidence: "MEDIUM"`, `source` = this reviewer agent ID
+3. **For candidates reaching promotion threshold** (occurrences >= 3, runs_seen >= 2): set `status: "ready_for_promotion"`
+4. Write updated candidates to `.forge/learned-candidates.json`
+5. Report in pipeline recap: "N new rule candidates, M ready for promotion"
+
+Do NOT promote rules directly — orchestrator handles promotion at next PREFLIGHT.
+
+See `shared/learnings/rule-promotion.md` for candidate schema, status lifecycle, and promotion algorithm.
+
 #### 2j. Telemetry Analysis (v1.19+)
 
 When `observability.enabled` and spans available:
@@ -452,6 +469,7 @@ At retrospective start: delete `.forge/*.pre-recover.*` files older than 7 days.
 12. Analyze agent effectiveness
 13. Run PREEMPT lifecycle (decay, archive, promotion)
 14. Run memory discovery (§2h)
+14a. Extract rule candidates (§2h-bis)
 15. Check cross-project promotion
 16. Analyze for CLAUDE.md proposals
 17. Check skill/agent evolution

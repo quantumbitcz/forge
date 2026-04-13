@@ -315,6 +315,8 @@ Phase A (parallel)
 │   §0.8  Config Mode Detection
 │   §0.9  Multi-Component Convention Resolution
 │   §0.10 Check Engine Rule Cache
+│   §0.10a Rule Promotion
+│   §0.10b Rule Decay
 │
 └── Integration Group (§0.11, §0.22, §0.22a, §0.23) ── failures degrade, never abort
     §0.11 Documentation Discovery
@@ -497,6 +499,32 @@ Store paths in `state.json.components.{name}.convention_stack`. Compute per-comp
 ### §0.10 Check Engine Rule Cache
 
 Per component: collect `rules-override.json` from stack (framework, layer bindings, generic layers). Deep-merge. Write `.forge/.rules-cache-{component}.json` and `.forge/.component-cache`.
+
+---
+
+### §0.10a Rule Promotion
+
+If `.forge/learned-candidates.json` exists:
+1. Read candidates with `status: "ready_for_promotion"`
+2. For each candidate:
+   a. Validate: has `pattern`, `severity`, `category`, `language` fields
+   b. Test regex validity: `echo "" | grep -P "{pattern}" >/dev/null 2>&1`
+   c. Check no duplicate in `shared/checks/learned-rules-override.json` or L1 patterns
+3. Append valid candidates to `shared/checks/learned-rules-override.json`
+4. Update candidate status to `"promoted"` with `promoted_at` timestamp
+5. Log in `.forge/forge-log.md`: "Promoted LEARNED-NNN: {category} pattern to L1"
+
+See `shared/learnings/rule-promotion.md` for candidate schema and promotion algorithm.
+
+---
+
+### §0.10b Rule Decay
+
+For each promoted rule in `shared/checks/learned-rules-override.json`:
+1. Check if rule produced matches in last run (from `.forge/state.json` findings)
+2. If no matches: increment `inactive_runs` counter in `learned-candidates.json`
+3. If `inactive_runs >= 5`: remove from `learned-rules-override.json`, set status to `"demoted"`
+4. Log demotion in `.forge/forge-log.md`
 
 ---
 

@@ -82,9 +82,13 @@ def _run_files(files_changed, args, project_root):
         if args['mode'] == 'hook':
             # Layer 1 only (fast patterns)
             run_layer1(filepath, language, overrides, effective_root or os.getcwd())
+            # Learned rules (auto-promoted from retrospective)
+            _run_learned_rules(filepath, language, effective_root or os.getcwd())
         elif args['mode'] in ('verify', 'review'):
             # Layer 1 + Layer 2 (linters)
             run_layer1(filepath, language, overrides, effective_root or os.getcwd())
+            # Learned rules (auto-promoted from retrospective)
+            _run_learned_rules(filepath, language, effective_root or os.getcwd())
             run_layer2(filepath, language, overrides, effective_root or os.getcwd())
 
 
@@ -228,6 +232,32 @@ def _find_override(filepath, project_root):
             return override
 
     return ''
+
+
+def _run_learned_rules(filepath, language, project_root):
+    """Run learned rules (auto-promoted from retrospective) as additional Layer 1 pass."""
+    plugin_root = os.environ.get('CLAUDE_PLUGIN_ROOT', '')
+    if not plugin_root:
+        return
+    learned_rules = os.path.join(plugin_root, 'shared', 'checks', 'learned-rules-override.json')
+    if not os.path.isfile(learned_rules):
+        return
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    patterns_dir = os.path.join(script_dir, 'layer-1-fast', 'patterns')
+    pattern_file = os.path.join(patterns_dir, f'{language}.json')
+    runner = os.path.join(script_dir, 'layer-1-fast', 'run-patterns.sh')
+    if os.path.isfile(pattern_file) and os.path.isfile(runner):
+        try:
+            result = subprocess.run(
+                [runner, filepath, pattern_file, learned_rules],
+                timeout=5, capture_output=True, text=True
+            )
+            if result.stdout:
+                sys.stdout.write(result.stdout)
+            if result.stderr:
+                sys.stderr.write(result.stderr)
+        except (subprocess.TimeoutExpired, OSError):
+            pass
 
 
 def run_layer2(filepath, language, overrides, project_root):

@@ -479,6 +479,12 @@ run_layer1() {
   else
     "$SCRIPT_DIR/layer-1-fast/run-patterns.sh" "$file" "$rules"
   fi
+
+  # Load learned rules (auto-promoted from retrospective)
+  LEARNED_RULES="${PLUGIN_ROOT}/shared/checks/learned-rules-override.json"
+  if [[ -f "$LEARNED_RULES" ]]; then
+    "$SCRIPT_DIR/layer-1-fast/run-patterns.sh" "$file" "$rules" "$LEARNED_RULES" || handle_failure "learned_rules_load_failed" "$file"
+  fi
 }
 
 # --- Mode: --hook (PostToolUse, single file, Layer 1 only) ---
