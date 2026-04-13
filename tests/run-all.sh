@@ -70,6 +70,7 @@ case "$TIER" in
   all)
     run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
     run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
+    run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
     print_summary
@@ -90,8 +91,12 @@ case "$TIER" in
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
     print_summary
     ;;
+  hooks)
+    run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
+    print_summary
+    ;;
   *)
-    echo "Usage: $0 [all|structural|unit|contract|scenario]"
+    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks]"
     exit 1
     ;;
 esac
