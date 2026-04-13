@@ -162,8 +162,8 @@ When coordinating with a target repository, detect whether it exposes an A2A-com
 1. **Discovery:** Before dispatching work to a target repo, check for `.forge/agent-card.json` in the repo root
 2. **If present (A2A mode):** Use the A2A task lifecycle for cross-repo coordination:
    - Create a task in the remote agent via `tasks/send` with the feature requirement
-   - Monitor task state transitions: `submitted` → `working` → `input-required` → `completed` / `failed` / `canceled`
-   - Map A2A states to sprint-state.json statuses: `working` → `implementing`, `completed` → `shipped`, `failed` → `failed`
+   - Monitor task state transitions: `pending` → `in-progress` → `input-required` → `completed` / `failed`
+   - Map A2A states to sprint-state.json statuses: `in-progress` → `implementing`, `completed` → `shipped`, `failed` → `failed`
    - When remote task enters `input-required`, surface `AskUserQuestion` with the remote agent's message
    - Respect the remote agent's `capabilities` declared in `agent-card.json` (streaming, pushNotifications)
    - Timeout: same `cross_repo.timeout_minutes` as file-based polling

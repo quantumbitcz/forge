@@ -593,7 +593,7 @@ If `observability.enabled` is true in config:
 3. **Stage spans**: on every state transition (PREFLIGHT → EXPLORING → ... → LEARNING), emit a child span `stage:{stage_name}` under the root span with `start_ts`, `end_ts`, `duration_ms`, and `outcome` (PASSED/FAILED/SKIPPED)
 4. **Agent spans**: on every agent dispatch, emit a child span `agent:{agent_name}` under the current stage span with `start_ts`, `end_ts`, `duration_ms`, `token_usage`, and `finding_count`
 5. **Final metrics**: on pipeline completion, compute and attach to `state.json.telemetry.metrics`: `total_duration_ms`, `stage_durations` (map), `agent_durations` (map), `total_tokens`, `total_findings`, `final_score`, `iteration_counts`
-6. **Export**: if `observability.mode` is `otel`, export spans as OpenTelemetry-compatible JSON to `.forge/traces/{run_id}.json`
+6. **Export**: if `observability.export` is `otel`, export spans as OpenTelemetry-compatible JSON to `.forge/traces/{run_id}.json`
 
 If `observability.enabled` is false or absent, skip all telemetry. Pipeline behavior is unchanged — telemetry is purely additive.
 
@@ -621,6 +621,23 @@ Apply security policies from config before any pipeline processing:
    - On each agent dispatch, track cumulative tool calls per agent
    - If an agent exceeds its budget: force-stop the agent, log CRITICAL — "Agent {name} exceeded tool call budget ({used}/{max}). Agent terminated."
    - Continue pipeline with partial results from the terminated agent
+
+---
+
+### §0.4c Background Execution Mode (v1.19+)
+
+When `--background` flag is active (passed via skill dispatch context):
+1. Suppress all `AskUserQuestion` calls — auto-select forward-progress options (same as autonomous mode)
+2. Write progress artifacts to `.forge/progress/` per `shared/background-execution.md`:
+   - Update `status.json` on every stage transition
+   - Append to `timeline.jsonl` on every significant event
+   - Write stage summaries to `stage-summary/` on stage completion
+3. On escalation points (REGRESSING, CONCERNS, unrecoverable CRITICAL):
+   - Write alert to `alerts.json`
+   - Set `state.json.background_paused = true`
+   - If Slack MCP available: post alert notification
+   - Poll `alerts.json` for resolution (user acknowledges via `/forge-status`)
+4. On pipeline completion: remove `.forge/progress/` directory (clean up)
 
 ---
 

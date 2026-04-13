@@ -208,6 +208,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "mode": "standard",
   "dry_run": false,
   "autonomous": false,
+  "background": false,
+  "background_paused": false,
+  "background_paused_at": null,
+  "background_alert_id": null,
   "shallow_clone": false,
   "cross_repo": {},
   "spec": null,
@@ -301,7 +305,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.model_distribution` | object | — | Model usage fractions. Keys are model names, values are usage fractions. Updated by `forge-token-tracker.sh` after each stage. Default: `{}`. |
 | `tokens.model_fallbacks` | array | — | Fallback events when requested model was unavailable. Default: `[]`. |
 | `telemetry` | object | No | OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` via orchestrator calls at stage boundaries. |
-| `telemetry.spans` | array | — | Append-only array of span objects. Each span: `{ "trace_id": "<hex>", "span_id": "<hex>", "parent_span_id": "<hex>|null", "name": "<stage|agent>", "start": "<ISO8601>", "end": "<ISO8601>|null", "status": "OK|ERROR", "attributes": {} }`. Capped at 500 entries per run. Default: `[]`. |
+| `telemetry.spans` | array | — | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. Default: `[]`. |
 | `telemetry.metrics` | object | — | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`, `"findings.critical_count"`). Values are numbers. Updated at stage boundaries. Default: `{}`. |
 | `telemetry.export_status` | string | — | Export pipeline state. Valid values: `"pending"` (not yet exported), `"exported"` (successfully sent to collector), `"failed"` (export attempted but failed). Default: `"pending"`. |
 | `decision_quality` | object | No | Decision quality metrics for the current run. Populated by the quality gate and orchestrator. |
@@ -325,6 +329,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `last_known_stage` | integer | No | Set by the recovery engine alongside `recovery_failed`. Records the last successfully entered stage (0-9) before recovery failure, enabling manual resume. Absent during normal operation. |
 | `dry_run` | boolean | Yes | `true` when pipeline was invoked with `--dry-run` flag. Gates IMPLEMENT entry — if true, stages 4-9 are skipped and the pipeline outputs a dry-run report after VALIDATE. Default: `false`. |
 | `autonomous` | boolean | No | `true` when pipeline runs in autonomous mode (resolved from `forge-config.md` at PREFLIGHT). When true, `AskUserQuestion` auto-selects recommended choices (logged `[AUTO]`), plan mode auto-approves after validator passes, but escalation events (E1-E4) still pause. Default: `false`. |
+| `background` | boolean | No | `true` when the run is in background mode (activated via `--background` flag). Implies `autonomous: true`. Orchestrator suppresses interactive UI and writes progress artifacts to `.forge/progress/`. See `shared/background-execution.md`. Default: `false`. |
+| `background_paused` | boolean | No | `true` when the background run is paused on an alert awaiting user resolution. Set alongside `background_alert_id`. Default: `false`. |
+| `background_paused_at` | string\|null | No | ISO 8601 timestamp when the background pause began. `null` when not paused. |
+| `background_alert_id` | string\|null | No | ID of the alert blocking progress (references `alerts.json`). `null` when not paused. |
 | `abort_timestamp` | string | No | ISO 8601 timestamp of when abort was requested. Set alongside `abort_reason` by E9 transition. Absent when not aborted. |
 | `shallow_clone` | boolean | No | `true` when the host repository is a shallow clone (detected via `git rev-parse --is-shallow-repository`). Set at PREFLIGHT by the worktree manager. When true, downstream agents should skip history-dependent analysis (`git log` depth, `git blame` hotspots, diff-based drift detection) and fall back to file-based analysis. Default: `false`. Absent or `false` for full clones. |
 | `cross_repo` | object | No | Tracks cross-repo worktrees and status when `related_projects` is configured. Keys are project names; values contain `path`, `branch`, `status`, `files_changed`, and `pr_url`. See the [cross_repo section](#cross_repo-object-optional) above. Omitted when no cross-repo tasks exist. |
@@ -377,7 +385,7 @@ OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `spans` | array | Append-only array of span objects. Each span: `{ "trace_id": "<hex>", "span_id": "<hex>", "parent_span_id": "<hex>|null", "name": "<stage|agent>", "start": "<ISO8601>", "end": "<ISO8601>|null", "status": "OK|ERROR", "attributes": {} }`. Capped at 500 entries per run. |
+| `spans` | array | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. |
 | `metrics` | object | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`). Values are numbers. Updated at stage boundaries. |
 | `export_status` | string | Export pipeline state: `"pending"` (not yet exported), `"exported"` (sent to collector), `"failed"` (export attempted but failed). Default: `"pending"`. |
 
