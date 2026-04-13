@@ -91,6 +91,12 @@ When the orchestrator dispatches an agent with a `model` parameter (via `Agent(m
 - Handle fallbacks when a model is unavailable
 - Track token usage per agent per model via `shared/forge-token-tracker.sh`
 
+## LSP Integration
+
+The `LSP` tool provides compiler-level code analysis (go-to-definition, find-references, diagnostics). It is ALWAYS optional — agents must fall back to Grep/Glob when LSP is unavailable.
+
+See `shared/lsp-integration.md` for the full integration contract.
+
 ## Confidence Reporting
 
 All review agents MUST include the `confidence` field in every finding. The field is the 6th pipe-delimited value in the standard finding format (see `shared/checks/output-format.md`).

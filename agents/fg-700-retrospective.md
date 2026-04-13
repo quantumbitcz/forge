@@ -293,6 +293,15 @@ When `memory_discovery.enabled`:
 5. Max 5 new discoveries per run (constraint from `memory_discovery.max_discoveries_per_run`)
 6. Log: "Memory discovery: {N} new patterns discovered, {M} promoted to HIGH, {K} decayed"
 
+#### 2j. Telemetry Analysis (v1.19+)
+
+When `observability.enabled` and `state.json.telemetry` contains spans:
+1. Compute per-stage duration from span start/end timestamps
+2. Identify slowest stage and slowest agent
+3. Compare with previous run durations (from `.forge/reports/`)
+4. Log in `forge-log.md`: "Telemetry: {total_duration}s, slowest stage: {stage} ({duration}s), slowest agent: {agent}"
+5. If `observability.export == "otel"`: trigger `shared/forge-otel-export.sh export`
+
 #### 2i. Health Assessment
 
 | Condition | Assessment |

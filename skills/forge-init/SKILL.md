@@ -820,6 +820,27 @@ Options:
 If (A): Create kanban tickets for each task, dispatch `/forge-run` with bundled requirement (runs in worktree).
 If (B): Create kanban tickets for future runs.
 
+### A2A Agent Card (v1.19+)
+
+Generate `.forge/agent-card.json` for cross-repo A2A communication:
+
+```json
+{
+  "name": "forge-pipeline",
+  "description": "Autonomous 10-stage development pipeline",
+  "url": "local://forge",
+  "capabilities": { "streaming": false, "stateTransitionHistory": true },
+  "skills": [
+    { "id": "implement-feature" },
+    { "id": "fix-bug" },
+    { "id": "review-code" }
+  ],
+  "project_id": "<detected from git remote>"
+}
+```
+
+See `shared/a2a-protocol.md` for the full agent card schema.
+
 ### End of Phase 6d
 
 ---

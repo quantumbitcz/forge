@@ -1877,6 +1877,7 @@ CREATE (:Agent {name: 'fg-101-worktree-manager', role: 'other', file_path: 'agen
 CREATE (:Agent {name: 'fg-102-conflict-resolver', role: 'other', file_path: 'agents/fg-102-conflict-resolver.md'});
 CREATE (:Agent {name: 'fg-103-cross-repo-coordinator', role: 'other', file_path: 'agents/fg-103-cross-repo-coordinator.md'});
 CREATE (:Agent {name: 'fg-130-docs-discoverer', role: 'other', file_path: 'agents/fg-130-docs-discoverer.md'});
+CREATE (:Agent {name: 'fg-135-wiki-generator', role: 'other', file_path: 'agents/fg-135-wiki-generator.md'});
 CREATE (:Agent {name: 'fg-140-deprecation-refresh', role: 'other', file_path: 'agents/fg-140-deprecation-refresh.md'});
 CREATE (:Agent {name: 'fg-150-test-bootstrapper', role: 'other', file_path: 'agents/fg-150-test-bootstrapper.md'});
 CREATE (:Agent {name: 'fg-160-migration-planner', role: 'other', file_path: 'agents/fg-160-migration-planner.md'});
@@ -1899,6 +1900,7 @@ CREATE (:Agent:Reviewer {name: 'fg-419-infra-deploy-reviewer', role: 'reviewer',
 CREATE (:Agent:Reviewer {name: 'fg-420-dependency-reviewer', role: 'reviewer', file_path: 'agents/fg-420-dependency-reviewer.md'});
 CREATE (:Agent {name: 'fg-500-test-gate', role: 'other', file_path: 'agents/fg-500-test-gate.md'});
 CREATE (:Agent {name: 'fg-505-build-verifier', role: 'other', file_path: 'agents/fg-505-build-verifier.md'});
+CREATE (:Agent {name: 'fg-510-mutation-analyzer', role: 'other', file_path: 'agents/fg-510-mutation-analyzer.md'});
 CREATE (:Agent {name: 'fg-590-pre-ship-verifier', role: 'other', file_path: 'agents/fg-590-pre-ship-verifier.md'});
 CREATE (:Agent {name: 'fg-600-pr-builder', role: 'other', file_path: 'agents/fg-600-pr-builder.md'});
 CREATE (:Agent {name: 'fg-610-infra-deploy-verifier', role: 'other', file_path: 'agents/fg-610-infra-deploy-verifier.md'});
@@ -2560,6 +2562,7 @@ CREATE (:Learnings {name: 'mariadb', file_path: 'shared/learnings/mariadb.md'});
 CREATE (:Learnings {name: 'maven', file_path: 'shared/learnings/maven.md'});
 CREATE (:Learnings {name: 'meilisearch', file_path: 'shared/learnings/meilisearch.md'});
 CREATE (:Learnings {name: 'memcached', file_path: 'shared/learnings/memcached.md'});
+CREATE (:Learnings {name: 'memory-discovery', file_path: 'shared/learnings/memory-discovery.md'});
 CREATE (:Learnings {name: 'messaging', file_path: 'shared/learnings/messaging.md'});
 CREATE (:Learnings {name: 'microk8s', file_path: 'shared/learnings/microk8s.md'});
 CREATE (:Learnings {name: 'micrometer', file_path: 'shared/learnings/micrometer.md'});

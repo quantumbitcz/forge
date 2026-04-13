@@ -106,7 +106,7 @@ DOC="$PLUGIN_ROOT/shared/learnings/memory-discovery.md"
 # 12. Configuration parameters documented
 # ---------------------------------------------------------------------------
 @test "memory-discovery: all configuration parameters documented" {
-  for param in "memory_discovery.enabled\|enabled" \
+  for param in "memory_discovery.enabled|enabled" \
                "max_discoveries_per_run" \
                "min_evidence_files" \
                "auto_promote_after_runs"; do

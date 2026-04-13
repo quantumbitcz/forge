@@ -193,7 +193,7 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **A2A protocol** (`a2a-protocol.md`): Agent-to-Agent cross-repo coordination via local filesystem (not HTTP). Enables multi-repo pipeline orchestration with shared state.
 - **Wiki generator** (`fg-135-wiki-generator`): Auto-generates `.forge/wiki/` from codebase analysis at PREFLIGHT. Covers architecture, API surface, data model, module map. Survives `/forge-reset`. Config: `wiki.*`.
 - **Memory discovery** (`shared/learnings/memory-discovery.md`): Retrospective auto-discovers codebase patterns across runs. Items start at MEDIUM confidence with `source: auto-discovered`, promote to HIGH after 3 successful applications, decay 2x faster than normal. Config: `memory_discovery.*`.
-- **Pipeline timeline** (`forge-insights`): Per-stage timing, cost breakdown, and convergence trends across runs. Accessible via `/forge-insights`.
+- **Pipeline timeline** (`fg-710-post-run`): Per-stage timing, cost breakdown, and convergence trends across runs. Accessible via `/forge-insights`.
 - **Codebase Q&A** (`forge-ask`): Natural language queries against wiki, graph, explore cache, and docs index. Supports deep mode for multi-source synthesis. Config: `forge_ask.*`.
 - **Insights dashboard** (`forge-insights`): Quality trends, cost analysis, convergence patterns, and memory effectiveness across pipeline runs.
 

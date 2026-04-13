@@ -467,6 +467,17 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the implementation plan for user a
 
 **Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
 
+### Plan Cache Integration (v1.17+)
+
+When the orchestrator's dispatch prompt includes a cached plan:
+1. Read the cached plan as a **starting point**, not a template to copy
+2. Adapt to the current requirement: verify assumptions, update file paths, adjust scope
+3. Remove or modify stories that don't apply to the new requirement
+4. Add stories for aspects not covered by the cached plan
+5. Note in stage notes: "Plan based on cached plan from {date}, adapted for current requirement"
+
+If no cached plan provided: create plan from scratch (normal flow).
+
 If Context7 MCP is available, use it to check current API documentation.
 If unavailable, rely on conventions file and codebase grep. Log: "Context7 unavailable -- using conventions file for API reference."
 Never fail because an optional MCP is down.

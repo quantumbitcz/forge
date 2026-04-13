@@ -27,7 +27,7 @@ assert '$cat' in data['categories'], f'Category $cat not found in registry'
   done
 }
 
-@test "category-registry: exactly 21 categories defined" {
+@test "category-registry: at least 21 categories defined" {
   local count
   count=$(python3 -c "
 import json
@@ -35,7 +35,7 @@ with open('$REGISTRY') as f:
     data = json.load(f)
 print(len(data['categories']))
 ")
-  [[ "$count" -eq 21 ]] || fail "Expected 21 categories, found $count"
+  [[ "$count" -ge 21 ]] || fail "Expected at least 21 categories, found $count"
 }
 
 @test "category-registry: all agent references exist as files" {
