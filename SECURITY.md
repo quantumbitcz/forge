@@ -49,3 +49,22 @@ All project-specific config lives in the consuming repo's `.claude/` directory.
 ## Supported Versions
 
 Only the latest version on `master` is actively maintained.
+
+## OWASP Agentic Security Compliance (v1.19+)
+
+Forge addresses the OWASP Top 10 for Agentic Applications (2026):
+
+| Risk | ID | Mitigation |
+|------|-----|-----------|
+| Agent Goal Hijacking | ASI01 | Input sanitization strips injection attempts from requirements |
+| Tool Misuse | ASI02 | Tool call budget per agent (default 50, configurable) |
+| Identity & Privilege Abuse | ASI03 | Worktree isolation, tier-based permission model |
+| Agentic Supply Chain | ASI04 | Convention file SHA256 signature verification at PREFLIGHT |
+| Unexpected Code Execution | ASI05 | All implementation in isolated worktree |
+| Memory & Context Poisoning | ASI06 | PREEMPT confidence decay, data classification |
+| Insecure Inter-Agent Communication | ASI07 | All communication via orchestrator, A2A protocol for cross-repo |
+| Cascading Failures | ASI08 | Recovery engine with circuit breakers, fan-out caps |
+| Human-Agent Trust Exploitation | ASI09 | Confidence scoring, human-in-the-loop escalation |
+| Rogue Agents | ASI10 | Forbidden actions list, tool call budget enforcement |
+
+Configuration: `security.*` section in `forge-config.md`. See `shared/security-posture.md` for full details.
