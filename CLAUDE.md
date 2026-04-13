@@ -68,7 +68,7 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Build a feature | `/forge-run` | Full 10-stage pipeline |
 | Fix a bug | `/forge-fix` | Root cause investigation + targeted fix |
 | Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
-| Review changed files | `/forge-review` | Quick (3 agents) or full (9 agents) |
+| Review changed files | `/forge-review` | Quick (3 agents) or full (8 agents) |
 | Review entire codebase | `/codebase-health` | Read-only analysis, no fixes |
 | Fix all codebase issues | `/deep-health` | Iterative fix loop until clean |
 | Quick build+lint+test | `/verify` | No pipeline, just check commands |

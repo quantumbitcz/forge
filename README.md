@@ -2,7 +2,7 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
-[![Agents](https://img.shields.io/badge/agents-42-green?style=flat-square)](#agents)
+[![Agents](https://img.shields.io/badge/agents-41-green?style=flat-square)](#agents)
 [![Skills](https://img.shields.io/badge/skills-38-green?style=flat-square)](#available-skills)
 [![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
@@ -12,7 +12,7 @@
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **42 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **41 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -52,7 +52,7 @@ Then add to `.claude/settings.json`:
 - **Inner-loop lint+test** -- Tight edit-lint-test-fix cycle inside the implementer. 3-strategy affected test detection (explore cache, code graph, directory heuristic).
 - **Model routing** -- Curated tier assignments: 9 fast (haiku), 19 standard (sonnet), 14 premium (opus). 60-80% cost reduction with cascade fallback.
 - **Output compression** -- 4 verbosity levels (verbose/standard/terse/minimal) per pipeline stage. 30-45% output token savings. Auto-clarity safety valve for security warnings.
-- **Agent prompt compression** -- All 42 agent .md files compressed 27% (17,127 to 12,441 lines). Orchestrator reduced 53%.
+- **Agent prompt compression** -- All 41 agent .md files compressed 27% (17,127 to 12,441 lines). Orchestrator reduced 53%.
 - **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.5) handle transient failures, tool issues, and state corruption automatically.
 - **4-layer check engine** -- L0 (tree-sitter pre-edit), L1 (regex sub-second), L2 (linter adapters), L3 (AI-driven deprecation + version compat).
 - **Confidence scoring** -- 4-dimension weighted algorithm (clarity, familiarity, complexity, history) with adaptive trust model. Gates execution based on confidence.
@@ -81,7 +81,7 @@ Then add to `.claude/settings.json`:
 | 3 | Validate | 7-perspective validation (architecture, security, edge cases, tests, conventions, approach, docs) |
 | 4 | Implement | TDD loop per task -- scaffold, write tests (RED), implement (GREEN), refactor. Inner-loop lint+test. |
 | 5 | Verify | Build, lint, static analysis, full test suite, mutation testing, property-based testing |
-| 6 | Review | Multi-agent quality review (up to 9 reviewers) with scoring and fix cycles |
+| 6 | Review | Multi-agent quality review (up to 8 reviewers) with scoring and fix cycles |
 | 7 | Docs | Update documentation, ADRs, API specs, changelogs |
 | 8 | Ship | Evidence verification, branch, commit, PR with quality gate results |
 | 9 | Learn | Retrospective analysis, config tuning, knowledge base updates, trend tracking, next-task prediction |
@@ -105,7 +105,7 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 | `/forge-fix` | Bugfix workflow -- root cause investigation + targeted fix |
 | `/forge-shape` | Collaboratively shape features into structured specs |
 | `/forge-sprint` | Parallel multi-feature orchestration |
-| `/forge-review` | Review changed files (quick: 3 agents, full: 9 agents) |
+| `/forge-review` | Review changed files (quick: 3 agents, full: 8 agents) |
 | `/forge-status` | Show pipeline state, score, budgets |
 | `/forge-diagnose` | Read-only pipeline health diagnostic |
 | `/forge-resume` | Resume from last checkpoint |
@@ -159,7 +159,7 @@ All framework modules include `conventions.md` (with Dos/Don'ts), `local-templat
 
 ## Agents
 
-42 agents organized by pipeline stage. See `shared/agent-registry.md` for the full list.
+41 agents organized by pipeline stage. See `shared/agent-registry.md` for the full list.
 
 **Pipeline agents**: fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-150-test-bootstrapper, fg-160-migration-planner, fg-200-planner, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
 
