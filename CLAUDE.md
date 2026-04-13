@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.18.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.19.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -71,6 +71,12 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Plan cache | `shared/plan-cache.md` |
 | Visual verification | `shared/visual-verification.md` |
 | LSP integration | `shared/lsp-integration.md` |
+| Observability | `shared/observability.md` |
+| Data classification | `shared/data-classification.md` |
+| Security posture | `shared/security-posture.md` |
+| Automations | `shared/automations.md` |
+| Background execution | `shared/background-execution.md` |
+| A2A protocol | `shared/a2a-protocol.md` |
 
 ## Skill selection guide
 
@@ -145,7 +151,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 21 shared categories (18 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 iteration counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 24 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 iteration counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -176,6 +182,12 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Confidence scoring**: Finding confidence (HIGH/MEDIUM/LOW) affects scoring weight and routing. LOW findings excluded from fix cycles.
 - **Visual verification** (`visual-verification.md`): Screenshot-based UI verification via Playwright MCP. Config: `visual_verification.*`.
 - **LSP integration** (`lsp-integration.md`): Compiler-level code analysis via Language Server Protocol. Config: `lsp.*`.
+- **Observability** (`observability.md`): OTel traces and metrics for pipeline execution. Exported via `forge-otel-export.sh`. Config: `observability.*`.
+- **Data classification** (`data-classification.md`): Secret detection and redaction in pipeline outputs. Prevents accidental credential leaks. Config: `data_classification.*`.
+- **Security posture** (`security-posture.md`): OWASP Agentic Security (ASI01-ASI10) compliance checks. Validates tool use, prompt injection resistance, and privilege boundaries.
+- **Event-driven automations** (`automations.md`): Cron-scheduled, CI-triggered, and MCP-initiated pipeline runs. Managed via `automation-trigger.sh`. Config: `automations.*`.
+- **Background execution** (`background-execution.md`): `--background` flag for headless pipeline runs. Progress via `.forge/progress.json` artifacts. Escalations written to `.forge/alerts.json`.
+- **A2A protocol** (`a2a-protocol.md`): Agent-to-Agent cross-repo coordination via local filesystem (not HTTP). Enables multi-repo pipeline orchestration with shared state.
 
 ### Deterministic Control Flow
 
@@ -193,6 +205,8 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-timeout.sh` | Pipeline timeout enforcement |
 | `forge-compact-check.sh` | Compaction suggestion hook |
 | `check-prerequisites.sh` | bash 4+ and python3 validation |
+| `forge-otel-export.sh` | OpenTelemetry trace and metric export |
+| `automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
 
 ### Mode overlays (`shared/modes/`)
 
@@ -220,9 +234,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Missing tools skip tiers. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (29 total), hooks, kanban, git
+## Skills (30 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management).
 
 **Hooks** (4): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
@@ -279,6 +293,9 @@ All 21 share the same base structure. Non-obvious conventions only:
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
 - `explore-cache.json` and `plan-cache/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `false`. When disabled, no `model` parameter is passed to Agent dispatches.
+- Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
+- Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
+- A2A protocol uses local filesystem coordination (`.forge/a2a/`), not HTTP. Requires shared filesystem access between repos.
 
 ### Check engine
 
@@ -325,7 +342,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.18.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.19.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
