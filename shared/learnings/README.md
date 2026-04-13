@@ -109,6 +109,19 @@ PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
 
 This supersedes the simple "Pruning" rules previously defined. The confidence decay model provides gradual deprecation instead of abrupt removal.
 
+## Auto-Discovered PREEMPT Items (v1.20+)
+
+Starting in v1.20, the retrospective (fg-700) autonomously discovers codebase patterns across runs and stores them as PREEMPT items with `source: auto-discovered`. These are distinct from user-defined or retrospective-suggested items.
+
+Key properties:
+- **Initial confidence:** MEDIUM (not HIGH — human hasn't confirmed)
+- **Promotion:** After 3 successful applications → promoted to HIGH
+- **Decay:** 2x faster than normal items (`decay_multiplier: 2`)
+- **Labeling:** Clearly marked with `source: auto-discovered` in `forge-log.md`
+- **User control:** Can be promoted to HIGH (`source: user-confirmed`) or dismissed entirely
+
+See `shared/learnings/memory-discovery.md` for the full discovery contract.
+
 ## Privacy guarantees
 
 Before a learning is promoted from per-project to cross-project:
