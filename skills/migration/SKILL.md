@@ -55,6 +55,17 @@ Before dispatching the migration planner, verify:
 1. **Git repository:** Run `git rev-parse --is-inside-work-tree`. If not: "Not a git repository."
 2. **Clean working tree recommended:** Run `git status --porcelain`. If dirty, warn: "You have uncommitted changes. Migrations create commits per batch — consider committing or stashing first."
 
+## What to Expect
+
+After dispatch, fg-160-migration-planner will:
+1. Detect current version from project manifests
+2. Query Context7 for breaking changes between versions
+3. Create a phased migration plan with per-batch commits
+4. Execute batches with rollback points between each
+5. Verify each batch passes tests before proceeding
+
+Total time: 10-45 minutes depending on version gap. High-risk upgrades will ask for confirmation.
+
 ## What happens
 
 The migration planner will:

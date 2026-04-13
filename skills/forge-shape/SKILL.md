@@ -12,6 +12,16 @@ Before any action, verify:
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
+## What to Expect
+
+After dispatch, fg-010-shaper will:
+1. Ask clarifying questions about your requirement (~3-5 questions)
+2. Propose epics, stories, and acceptance criteria
+3. Iterate based on your feedback until you're satisfied
+4. Save the structured spec to `.forge/specs/` for use with `/forge-run --spec`
+
+This is interactive — expect a ~5 minute conversation. The result is a spec file, not code.
+
 ## Instructions
 
 1. **Parse input**: The user's argument (everything after `/forge-shape`) is the feature idea -- a free-text description like "Add notification system" or "I want users to share plans". If no input is provided, ask the user: "What feature would you like to shape? Describe your idea, even if it's rough (e.g., 'users should be able to share plans with each other')."
