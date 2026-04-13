@@ -24,6 +24,10 @@
     "INFRA": { "description": "Infrastructure/deployment issue (health, smoke, contract, image)", "agents": ["fg-419-infra-deploy-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-419-infra-deploy-reviewer"] },
     "REVIEW-GAP": { "description": "Coverage gap from timed-out or failed review agent", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 5, "affinity": [] },
     "DESIGN-TOKEN": { "description": "Frontend design token violation (hardcoded hex/rgb instead of theme tokens)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "DESIGN-MOTION": { "description": "Frontend animation performance issue (non-GPU properties, missing will-change)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] }
+    "DESIGN-MOTION": { "description": "Frontend animation performance issue (non-GPU properties, missing will-change)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
+    "FE-VISUAL-REGRESSION": { "description": "Unexpected visual change detected (layout shift, element missing)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
+    "FE-VISUAL-RESPONSIVE": { "description": "Layout breaks at specific viewport breakpoint", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
+    "FE-VISUAL-CONTRAST": { "description": "Text contrast ratio below WCAG AA threshold", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
+    "FE-VISUAL-FIDELITY": { "description": "Visual output deviates from design specification", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] }
   }
 }
