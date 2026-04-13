@@ -777,6 +777,23 @@ Store discovery metrics in `state.json.documentation` (files_discovered, section
 
 **On failure/timeout:** Log INFO: `"Documentation discovery skipped — {reason}."` Continue. Do NOT invoke the recovery engine — this step is advisory. Set `state.json.documentation` to `{}`.
 
+### §0.11a Wiki Generation (dispatch fg-135-wiki-generator) (v1.20+)
+
+If `wiki.enabled` is `true`:
+1. Read `.forge/wiki/.wiki-meta.json` for `last_sha`
+2. Compare `last_sha` with current `HEAD` SHA
+3. If stale (different SHA) or `.wiki-meta.json` does not exist:
+   - [dispatch fg-135-wiki-generator]
+   - Dispatch `fg-135-wiki-generator` in **full mode** with:
+     - Project root path
+     - Convention stack from §0.9
+     - Exploration cache (if available from previous run)
+     - Graph availability flag
+   - Store updated wiki metadata in `.forge/wiki/.wiki-meta.json`
+4. If current (same SHA): skip — log INFO: `"Wiki up to date (SHA {last_sha}), skipping generation."`
+
+**On failure/timeout:** Log INFO: `"Wiki generation skipped — {reason}."` Continue. Advisory step — do NOT invoke the recovery engine.
+
 ---
 
 > **Phase B starts here**
@@ -1168,6 +1185,8 @@ List test classes with scenarios. Check for coverage gaps.
 ```
 
 Dispatch both in parallel. Collect and **summarize** results -- file paths, pattern files, test classes, identified gaps. Do NOT keep raw agent output.
+
+**Memory discovery context (v1.20+):** Include structural pattern observations in stage notes for memory discovery. When explorers identify recurring code patterns (e.g., consistent error handling, naming conventions, architectural layering), record them explicitly in `stage_1_notes_{storyId}.md` under a `## Structural Patterns Observed` heading so the retrospective's memory discovery (§2h) can detect cross-run recurrences.
 
 **Documentation context:** If documentation was discovered at PREFLIGHT (check `state.json.documentation.files_discovered > 0`):
 - Include doc discovery summary (`stage_0_docs_discovery.md`) in exploration context
@@ -2247,6 +2266,20 @@ Write report to .forge/reports/forge-{date}.md.
 ```
 
 After retrospective completes, update `state.json`: `complete` -> `true`.
+
+### Wiki Incremental Update (v1.20+)
+
+If `wiki.auto_update` is `true` (default when `wiki.enabled`):
+1. Dispatch `fg-135-wiki-generator` in **incremental mode** with:
+   [dispatch fg-135-wiki-generator]
+   - Project root path
+   - Changed files from this pipeline run (from stage notes)
+   - Retrospective learnings summary
+   - New PREEMPT items added this run
+2. Wiki generator updates only affected module docs and the index
+3. Update `.forge/wiki/.wiki-meta.json` with current HEAD SHA
+
+**On failure/timeout:** Log INFO: `"Wiki incremental update skipped — {reason}."` Continue. Advisory step.
 
 **Linear tracking:**
 
