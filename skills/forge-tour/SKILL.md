@@ -1,0 +1,122 @@
+---
+name: forge-tour
+description: >
+  Guided introduction to Forge's 5 most important skills with a sample workflow.
+  Trigger: /forge-tour, "how does forge work", "getting started with forge",
+  "teach me forge", "forge tutorial", "new to forge"
+disable-model-invocation: false
+---
+
+# Forge Tour — 5-Stop Guided Introduction
+
+Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks you through the 5 skills you'll use most, in the order you'll need them.
+
+## Stop 1: /forge-init (Setup)
+
+**What it does:** Configures Forge for your project by detecting your tech stack (language, framework, testing) and generating local config files.
+
+**When to use:** First time setting up Forge in a project.
+
+**What happens:**
+- Detects your language, framework, and testing setup
+- Generates `.claude/forge.local.md` (project config)
+- Generates `.claude/forge-config.md` (pipeline settings)
+- Detects available MCP integrations (Linear, Playwright, etc.)
+
+**Try it:** Run `/forge-init` in any project.
+
+---
+
+## Stop 2: /verify (Quick Health Check)
+
+**What it does:** Runs build + lint + test and reports pass/fail. No pipeline, no agents — just a quick sanity check.
+
+**When to use:** Before any pipeline run, after manual changes, before committing.
+
+**What happens:**
+- Runs your build command (if configured)
+- Runs your lint command (if configured)
+- Runs your test command (if configured)
+- Reports PASS / FAIL / SKIPPED per step
+
+**Try it:** Run `/verify` to check your project's baseline health.
+
+---
+
+## Stop 3: /forge-run (Build Features)
+
+**What it does:** The main entry point. Give it a requirement, and it runs the full 10-stage pipeline: explore → plan → implement (TDD) → verify → review → ship.
+
+**When to use:** When you have a clear feature to build.
+
+**Example:**
+```
+/forge-run Add email validation to user registration with error messages
+```
+
+**What happens:**
+1. Explores your codebase for context (~1 min)
+2. Creates an implementation plan (may ask for approval)
+3. Implements via TDD — writes tests first, then code
+4. Verifies: runs tests, lint, and code review
+5. Fixes any issues found in review (may loop 2-5 times)
+6. Generates documentation and creates a PR
+
+---
+
+## Stop 4: /forge-fix (Fix Bugs)
+
+**What it does:** Specialized bugfix workflow — investigates root cause, writes a failing test that reproduces the bug, implements the fix.
+
+**When to use:** When you have a bug to fix.
+
+**Example:**
+```
+/forge-fix Users get 404 when accessing /api/groups endpoint
+```
+
+**What happens:**
+1. Investigates the bug (max 3 reproduction attempts)
+2. Writes a failing test demonstrating the bug
+3. Implements the minimal fix
+4. Verifies no regressions
+
+---
+
+## Stop 5: /forge-review (Review Changes)
+
+**What it does:** Reviews your recent code changes using 3-8 specialized review agents (security, architecture, performance, accessibility, etc.).
+
+**When to use:** After making changes, before committing or creating a PR.
+
+**Example:**
+```
+/forge-review          # Quick mode: 3 agents
+/forge-review --full   # Full mode: up to 8 agents
+```
+
+**What happens:**
+- Detects changed files (staged + unstaged)
+- Dispatches review agents in parallel
+- Reports findings by severity (CRITICAL / WARNING / INFO)
+- Calculates quality score (0-100)
+- Offers to fix findings automatically
+
+---
+
+## Summary
+
+| Skill | When | Time |
+|-------|------|------|
+| `/forge-init` | First time setup | ~1 min |
+| `/verify` | Quick health check | ~30s |
+| `/forge-run` | Build a feature | 5-30 min |
+| `/forge-fix` | Fix a bug | 3-15 min |
+| `/forge-review` | Review code quality | 1-5 min |
+
+## What's Next?
+
+- **All 38 skills:** `/forge-help`
+- **Reduce token usage:** `/forge-caveman`
+- **Pipeline analytics:** `/forge-insights`
+- **Multiple features:** `/forge-sprint`
