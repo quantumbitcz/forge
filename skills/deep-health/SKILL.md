@@ -67,10 +67,9 @@ Dispatch forge's own review agents to investigate the scoped files. Select agent
 | `forge:fg-412-architecture-reviewer` | Always (unless `--focus` excludes) |
 | `forge:fg-418-docs-consistency-reviewer` | Always (or `--focus docs`) |
 | `forge:fg-413-frontend-reviewer` (mode: `full`) | Frontend files (code, styling, layout, a11y, performance) |
-| `forge:fg-416-backend-performance-reviewer` | Backend files present |
-| `forge:fg-417-version-compat-reviewer` | Dependency files changed (package.json, build.gradle.kts, go.mod, etc.) |
+| `forge:fg-416-performance-reviewer` | Backend files present |
+| `forge:fg-417-dependency-reviewer` | Dependency files or manifests changed/present |
 | `forge:fg-419-infra-deploy-reviewer` | Infra files present (Dockerfile, helm, k8s manifests) |
-| `forge:fg-420-dependency-reviewer` | Dependency manifests present |
 
 Dispatch applicable agents **in parallel** (max 3 at a time to manage context). Each receives:
 - File list to investigate

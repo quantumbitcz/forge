@@ -75,6 +75,8 @@ Example stage notes (VERIFY):
   Build: OK (4.2s)
 ```
 
+> **Single source of truth:** This table is authoritative. The YAML template in the Configuration section below MUST mirror these values. If they diverge, this table wins.
+
 ## Per-Stage Default Assignments
 
 | Stage | Default Level | Rationale |
@@ -198,3 +200,8 @@ Two fields added to `state.json.tokens`:
 
 - `compression_level_distribution`: `{ "verbose": N, "standard": N, "terse": N, "minimal": N }` — count of agent dispatches per level
 - `output_tokens_per_agent`: `{ "fg-410": N, "fg-411": N, ... }` — raw output token count per agent
+
+## Related
+
+- **Input compression** (`input-compression.md`): Compresses files loaded as system prompt context (agent `.md`, convention stacks). Independent from output compression. Applied offline via `/forge-compress`.
+- **Caveman mode** (`skills/forge-caveman/SKILL.md`): User-configurable terseness for Forge's own user-facing messages.

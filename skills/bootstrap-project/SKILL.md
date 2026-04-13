@@ -13,6 +13,17 @@ Before any action, verify:
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 3. **Project is empty or near-empty:** Check that the project has no existing source code (only config files like `.gitignore`, `README.md`, `LICENSE`). If the project already has source code, warn: "This project already has source code. Bootstrap is designed for empty projects. Use /forge-run for existing projects." and ask the user to confirm before proceeding.
 
+## What to Expect
+
+After dispatch, fg-050-project-bootstrapper will:
+1. Ask about your tech stack preferences (language, framework, testing, CI/CD)
+2. Scaffold project structure with production-grade patterns
+3. Generate build configuration, Dockerfile, CI pipeline
+4. Create initial test infrastructure
+5. Run initial build + test to verify everything works
+
+Total time: 3-10 minutes. You'll be asked to confirm stack choices before scaffolding begins.
+
 ## Instructions
 
 1. **Parse input**: The user's argument (everything after `/bootstrap-project`) is the project description -- a free-text string like "Kotlin Spring Boot REST API with PostgreSQL" or "React Vite frontend with shared component library". If no input is provided, ask the user: "What kind of project would you like to scaffold? Describe the tech stack and purpose (e.g., 'Kotlin Spring Boot REST API with PostgreSQL')."

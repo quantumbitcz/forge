@@ -9,7 +9,7 @@ stages:
   explore:
     include_profiling: true
   review:
-    mandatory_reviewers: [fg-416-backend-performance-reviewer]
+    mandatory_reviewers: [fg-416-performance-reviewer]
 output_compression:
   verifying: terse
 ---

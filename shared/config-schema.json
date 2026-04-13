@@ -21,6 +21,28 @@
         "testing": {
           "type": ["string", "null"],
           "enum": ["kotest", "junit5", "vitest", "jest", "pytest", "go-testing", "xctest", "rust-test", "xunit-nunit", "testcontainers", "playwright", "cypress", "cucumber", "k6", "detox", "rspec", "phpunit", "exunit", "scalatest", null]
+        },
+        "web": { "type": ["string", "null"] },
+        "persistence": { "type": ["string", "null"] },
+        "database": { "type": ["string", "null"] },
+        "migrations": { "type": ["string", "null"] },
+        "api_protocol": { "type": ["string", "null"] },
+        "messaging": { "type": ["string", "null"] },
+        "caching": { "type": ["string", "null"] },
+        "search": { "type": ["string", "null"] },
+        "storage": { "type": ["string", "null"] },
+        "auth": { "type": ["string", "null"] },
+        "observability": { "type": ["string", "null"] },
+        "build_system": { "type": ["string", "null"] },
+        "ci": { "type": ["string", "null"] },
+        "container": { "type": ["string", "null"] },
+        "orchestrator": { "type": ["string", "null"] },
+        "code_quality": {
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "array", "items": { "type": "object" } },
+            { "type": "null" }
+          ]
         }
       }
     },
@@ -53,6 +75,23 @@
       }
     },
     "total_retries_max": { "type": "integer", "minimum": 5, "maximum": 30 },
-    "autonomous": { "type": "boolean" }
+    "autonomous": { "type": "boolean" },
+    "caveman": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "default_mode": { "enum": ["lite", "full", "ultra"] },
+        "output_mode": { "enum": ["off", "lite", "full", "ultra"] },
+        "auto_clarity": { "type": "boolean" },
+        "input_compression": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "auto_compress_on_init": { "type": "boolean" },
+            "backup_suffix": { "type": "string", "pattern": "^\\." }
+          }
+        }
+      }
+    }
   }
 }

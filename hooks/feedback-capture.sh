@@ -4,6 +4,18 @@
 # Uses atomic write (temp file + locked append) to prevent garbled output
 # from concurrent Stop hooks (e.g., parallel sprint orchestrators).
 
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-3}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  fi
+  exit 0
+fi
+
 {
   FORGE_DIR=".forge"
   [ ! -d "$FORGE_DIR" ] && exit 0
@@ -120,7 +132,11 @@ print('[{0} UTC] Session ended | state={1} mode={2} score={3} phase={4} iteratio
   if [[ -f "$_fail_log" ]]; then
     _fc=$(wc -l < "$_fail_log" 2>/dev/null | tr -d ' ')
     if [[ "$_fc" -gt 0 ]]; then
+      _last_failure=$(tail -1 "$_fail_log" 2>/dev/null | head -c 200)
       _fail_entry="$(printf '  Hook failures: %s (see .forge/.hook-failures.log)' "$_fc")"
+      if [[ -n "$_last_failure" ]]; then
+        _fail_entry="$(printf '%s\n  Last failure: %s' "$_fail_entry" "$_last_failure")"
+      fi
       _atomic_append "$_fail_entry" "$_feedback_file"
     fi
   fi

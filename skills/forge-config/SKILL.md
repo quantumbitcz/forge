@@ -1,77 +1,79 @@
 ---
 name: forge-config
-description: "Interactive configuration editor for forge.local.md and forge-config.md. Use when changing framework, adding testing, updating scoring thresholds, or toggling features. Validates changes against schema before applying. Trigger: /forge-config, change forge config, update my config"
+description: "Interactive configuration editor for forge.local.md and forge-config.md. Use when changing framework, adding testing, updating scoring thresholds, or toggling features. Validates changes against schema. Trigger: /forge-config, change forge config, update my config"
+disable-model-invocation: false
 ---
 
-# /forge-config -- Configuration Editor
+# Forge Config — Interactive Configuration Editor
 
-Interactive editor for Forge project configuration. Validates all changes against the schema before applying.
+## Operations
 
-## Prerequisites
-
-1. **forge.local.md must exist:** Check `.claude/forge.local.md`. If missing: "Run `/forge-init` first." STOP.
+| Command | Action |
+|---------|--------|
+| `/forge-config` | Show current config summary |
+| `/forge-config set <key> <value>` | Set a config value |
+| `/forge-config add <key> <value>` | Add to list field (e.g., code_quality) |
+| `/forge-config remove <key> <value>` | Remove from list field |
+| `/forge-config validate` | Run validation (delegates to /config-validate) |
+| `/forge-config show <section>` | Show specific section (components, scoring, convergence, caveman) |
+| `/forge-config diff` | Show changes since last pipeline run |
 
 ## Instructions
 
-### 1. Load current configuration
+### Show (default, no arguments)
 
-Read both config files:
-- `.claude/forge.local.md` -- static project config (YAML frontmatter)
-- `.claude/forge-config.md` -- mutable runtime config (markdown tables)
+1. Read `.claude/forge.local.md` and `.claude/forge-config.md`
+2. Display summary: components, scoring thresholds, convergence settings, enabled features
+3. Highlight any validation warnings
 
-Parse and display the current values for the section the user wants to edit.
+### Set Operation
 
-### 2. Present editable sections
+1. Parse key path and new value from `$ARGUMENTS` (e.g., `set components.testing vitest`)
+2. Run `${CLAUDE_PLUGIN_ROOT}/shared/validate-config.sh` with the proposed change
+3. If ERROR: show error message with suggestion, do NOT apply
+4. If WARNING: show warning and ask user to confirm
+5. If PASS: apply change to appropriate file
+   - `components.*` → `forge.local.md`
+   - `scoring.*`, `convergence.*`, `caveman.*` → `forge-config.md`
+6. Show before/after diff
 
-Group configuration into categories:
+### Add / Remove Operations
 
-**Core stack:**
-- `components.language` -- one of 15 supported languages
-- `components.framework` -- one of 21 supported frameworks
-- `components.testing` -- one of 19 supported test frameworks
-- `components.variant` -- framework variant (optional)
+1. Parse key and value from `$ARGUMENTS`
+2. Verify key is a list field (e.g., `code_quality`)
+3. For `add`: append value if not already present
+4. For `remove`: delete value if present, warn if not found
+5. Validate after change
 
-**Commands:**
-- `commands.build`, `commands.test`, `commands.lint`, `commands.format`
+### Validate Operation
 
-**Scoring:**
-- `critical_weight`, `warning_weight`, `info_weight`
-- `pass_threshold`, `concerns_threshold`
-- `oscillation_tolerance`, `total_retries_max`
+Delegates to `/config-validate` skill. Shows results inline.
 
-**Convergence:**
-- `max_iterations`, `plateau_threshold`, `plateau_patience`, `target_score`
+### Diff Operation
 
-**Features (toggles):**
-- `model_routing.enabled`, `output_compression.enabled`, `code_graph.enabled`
-- `property_testing.enabled`, `living_specs.enabled`, `confidence.planning_gate`
+1. Read current config from `forge.local.md` and `forge-config.md`
+2. Read last pipeline state from `.forge/state.json` (if exists)
+3. Show fields that changed since last run
+4. If no `.forge/state.json`: show "No previous run to compare against"
 
-### 3. Validate changes
+## Safeguards
 
-Before applying any change:
-1. Check value is within PREFLIGHT constraints (see `shared/schemas/forge-config-schema.json`)
-2. Check cross-field consistency (e.g., `pass_threshold` > `concerns_threshold` + 10)
-3. Report validation result before writing
-
-### 4. Apply changes
-
-Write validated changes to the appropriate config file:
-- Stack/commands -> `forge.local.md` (YAML frontmatter)
-- Runtime parameters -> `forge-config.md` (markdown tables)
-
-Confirm each change with before/after values.
+- **Locked sections:** `<!-- locked -->` fences in `forge-config.md` cannot be modified. Show: "This value is locked. Remove the <!-- locked --> fence to unlock."
+- **Auto-tuned values:** Values previously modified by retrospective (fg-700) show warning: "This value was auto-tuned by the pipeline. Override? [y/n]"
+- **Always validate:** Every `set`/`add`/`remove` operation runs validation before applying
+- **Show diff:** Always show before/after diff before applying changes
 
 ## Error Handling
 
 | Condition | Action |
 |-----------|--------|
-| forge.local.md missing | "Run `/forge-init` first." STOP |
-| YAML parse failure | Report syntax error location, do not write |
-| Value out of range | Report constraint, suggest valid range |
-| Unknown config key | Report "Unknown key: {key}. Check docs." |
+| Config file missing | Suggest: "Run /forge-init first" |
+| Invalid key path | Show valid keys from config-schema.json |
+| Invalid value | Show valid values with fuzzy suggestion |
+| Locked section | Refuse edit, explain how to unlock |
 
 ## See Also
 
-- `/config-validate` -- validate config without editing
-- `/forge-init` -- initial project setup
-- `/forge-help` -- find the right skill
+- `/config-validate` — validate config without editing
+- `/forge-init` — initial project setup
+- `/forge-help` — find the right skill

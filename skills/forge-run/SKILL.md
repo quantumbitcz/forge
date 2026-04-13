@@ -12,6 +12,18 @@ Before any action, verify:
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
+## What to Expect
+
+After dispatch, fg-100-orchestrator will:
+1. Run PREFLIGHT checks (config validation, MCP detection, convention loading) — ~30s
+2. EXPLORE the codebase for relevant context — ~1-2 min
+3. Generate an implementation PLAN and ask for approval (if confidence < 0.7)
+4. IMPLEMENT via TDD (tests first, then code) — varies by complexity
+5. VERIFY (tests + lint + review) and fix any findings — may loop 2-5 times
+6. Generate DOCUMENTATION and create a PR
+
+Total time: 5-30 minutes depending on complexity. You may be asked to approve the plan, resolve ambiguities, or choose between options.
+
 You are the universal entry point for the forge pipeline. Your job is to classify the user's intent, detect available integrations, and dispatch the correct agent. You handle routing — not planning, implementation, or review.
 
 ## Instructions

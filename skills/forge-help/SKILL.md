@@ -1,11 +1,10 @@
 ---
 name: forge-help
 description: "Interactive decision tree to find the right Forge skill. Use when unsure which skill to use, exploring capabilities, or need help choosing between similar skills. Trigger: /forge-help, which skill should I use, help me choose, what can forge do"
+disable-model-invocation: true
 ---
 
-# /forge-help -- Skill Decision Tree
-
-Interactive guide to find the right Forge skill for your situation.
+# Forge Help — Skill Decision Tree
 
 ## Prerequisites
 
@@ -15,66 +14,84 @@ None. This skill is a reference guide.
 
 Display the decision tree below. If the user asks a specific question, navigate to the relevant category.
 
-### Decision Tree
-
-**What do you want to do?**
-
-1. **Build something new**
-   - Clear requirement? -> `/forge-run`
-   - Vague idea? -> `/forge-shape` then `/forge-run`
-   - Multiple features? -> `/forge-sprint`
-   - New project from scratch? -> `/bootstrap-project`
-
-2. **Fix something**
-   - Bug with reproduction steps? -> `/forge-fix`
-   - Flaky test? -> `/forge-fix` (auto-detects flaky patterns)
-   - Pipeline broken? -> `/forge-diagnose` then `/repair-state`
-   - Config issues? -> `/config-validate`
-
-3. **Review code**
-   - Changed files only? -> `/forge-review`
-   - Full codebase audit? -> `/codebase-health`
-   - Fix all issues? -> `/deep-health`
-   - Security focused? -> `/security-audit`
-
-4. **Manage pipeline**
-   - Check status? -> `/forge-status`
-   - Resume stopped run? -> `/forge-resume`
-   - Stop a run? -> `/forge-abort`
-   - Start fresh? -> `/forge-reset`
-   - Rollback changes? -> `/forge-rollback`
-   - View history? -> `/forge-history`
-
-5. **Documentation & config**
-   - Generate docs? -> `/docs-generate`
-   - Edit config? -> `/forge-config`
-   - Validate config? -> `/config-validate`
-   - Deploy? -> `/deploy`
-
-6. **Analytics & insights**
-   - Pipeline analytics? -> `/forge-insights`
-   - Performance profiling? -> `/forge-profile`
-   - Codebase Q&A? -> `/forge-ask`
-   - Playbook templates? -> `/forge-playbooks`
-
-7. **Knowledge graph**
-   - Initialize? -> `/graph-init`
-   - Check health? -> `/graph-status`
-   - Query? -> `/graph-query`
-   - Rebuild? -> `/graph-rebuild`
-   - Debug issues? -> `/graph-debug`
-
-8. **Advanced**
-   - Compress agent prompts? -> `/forge-compress`
-   - Terse output mode? -> `/forge-caveman`
-   - Framework migration? -> `/migration`
-   - Automations? -> `/forge-automation`
-
 ## Error Handling
 
 None. This skill displays static content.
 
+## What do you want to do?
+
+### A) Build something new
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Vague idea, needs refinement | `/forge-shape` | Collaborative spec refinement with epics, stories, AC |
+| Clear requirement, single feature | `/forge-run` | Full 10-stage pipeline (explore→plan→implement→verify→review→ship) |
+| Multiple features in parallel | `/forge-sprint` | Parallel pipeline orchestration |
+| New project from scratch | `/bootstrap-project` | Scaffold project with architecture, CI/CD, tooling |
+| Library/framework upgrade | `/migration` | Phased migration plan with rollback |
+
+### B) Fix something broken
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Specific bug with description or ticket | `/forge-fix` | Root cause investigation + targeted fix |
+| Failing tests / broken build | `/verify` | Quick build+lint+test check |
+| Pipeline stuck or broken | `/forge-diagnose` → `/repair-state` | Read-only diagnostic, then targeted fixes |
+| Need to undo pipeline changes | `/forge-rollback` | Revert worktree, state, or commits |
+
+### C) Review or improve code quality
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Just my recent changes | `/forge-review` | 3-8 review agents on changed files |
+| Entire codebase health check | `/codebase-health` | Read-only analysis, no fixes |
+| Fix all issues iteratively | `/deep-health` | Review → fix → re-review loop until clean |
+| Security vulnerabilities | `/security-audit` | Module-appropriate vulnerability scanners |
+
+### D) Manage the pipeline
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Check current status | `/forge-status` | Stage, score, convergence, integrations |
+| Resume aborted run | `/forge-resume` | Continue from last checkpoint |
+| Start completely fresh | `/forge-reset` | Clear state, preserve learnings |
+| Abort current run | `/forge-abort` | Graceful stop, preserve for resume |
+| Validate config before running | `/config-validate` | Check forge.local.md + forge-config.md |
+| Change config settings | `/forge-config` | Interactive config editor with validation |
+| See pipeline performance | `/forge-profile` | Time per stage, per agent, per iteration |
+| See quality trends | `/forge-insights` | Cross-run analytics |
+| View run history | `/forge-history` | Score oscillations, agent effectiveness |
+
+### E) Documentation
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Generate/update docs | `/docs-generate` | README, ADRs, API specs, changelogs |
+
+### F) Understand the codebase
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Ask a question about code | `/forge-ask` | Wiki, graph, explore cache, docs index |
+| Explore knowledge graph | `/graph-query` | Run Cypher queries |
+| See available playbooks | `/forge-playbooks` | List, run, analyze pipeline recipes |
+
+### G) Reduce token usage
+
+| Situation | Skill | What it does |
+|-----------|-------|-------------|
+| Terse pipeline output | `/forge-caveman` | User-facing output compression (lite/full/ultra) |
+| Compress agent prompts | `/forge-compress` | Input token reduction for .md files |
+
+## Quick Reference
+
+```
+Build → /forge-run    Fix → /forge-fix    Review → /forge-review
+Health → /codebase-health    Pipeline broken → /forge-diagnose
+New here → /forge-tour    This help → /forge-help
+```
+
 ## See Also
 
-- `/forge-tour` -- guided 5-stop introduction for new users
-- `/forge-init` -- first-time project setup
+- `/forge-tour` — guided 5-stop introduction for new users
+- `/forge-init` — first-time project setup

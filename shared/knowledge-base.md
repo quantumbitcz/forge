@@ -16,7 +16,7 @@ Forge's existing PREEMPT system captures learnings only at the LEARN stage after
 
 Emitted by reviewer agents when they identify a generalizable pattern that should become a convention. Contains the detection pattern, recommended fix, applicable contexts, and evidence linking to the specific finding.
 
-Source agents: `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer`, `fg-416-backend-performance-reviewer`.
+Source agents: `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer`, `fg-416-performance-reviewer`.
 
 ### PATTERN_DISCOVERY
 
@@ -172,7 +172,7 @@ Each contributing agent writes to `.forge/knowledge/inbox/` during its execution
 | `fg-412-architecture-reviewer` | `CANDIDATE_RULE` | Architectural violation represents a convention worth enforcing |
 | `fg-410-code-reviewer` | `CANDIDATE_RULE` | Code quality finding reveals a recurring anti-pattern |
 | `fg-413-frontend-reviewer` | `CANDIDATE_RULE` | Frontend finding reveals a reusable design/perf rule |
-| `fg-416-backend-performance-reviewer` | `CANDIDATE_RULE` | Performance finding reveals a general optimization pattern |
+| `fg-416-performance-reviewer` | `CANDIDATE_RULE` | Performance finding reveals a general optimization pattern |
 | `fg-300-implementer` | `PATTERN_DISCOVERY` | Observes consistent patterns across 3+ files during implementation |
 | `fg-020-bug-investigator` | `ROOT_CAUSE_PATTERN` | Root cause analysis reveals a systemic issue pattern |
 | `fg-400-quality-gate` | (finding, fix) pair | Finding is fixed by implementer; records pair for rule learning |

@@ -14,7 +14,7 @@ The `model` parameter on the Agent tool accepts exactly: `haiku`, `sonnet`, `opu
 
 ## Default Tier Assignments
 
-All 42 agents have explicit tier assignments (9 fast, 19 standard, 14 premium). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
+All 41 agents have explicit tier assignments (9 fast, 18 standard, 14 premium). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
 
 ### Fast (haiku) — 9 agents
 
@@ -32,7 +32,7 @@ All 42 agents have explicit tier assignments (9 fast, 19 standard, 14 premium). 
 
 These perform structured, template-driven, or command-execution tasks. Haiku handles them at equivalent quality because the reasoning is in the prompt/template, not in the model.
 
-### Standard (sonnet) — 19 agents
+### Standard (sonnet) — 18 agents
 
 | Agent | Rationale |
 |---|---|
@@ -40,11 +40,10 @@ These perform structured, template-driven, or command-execution tasks. Haiku han
 | `fg-410-code-reviewer` | Code quality analysis, convention matching |
 | `fg-411-security-reviewer` | Security pattern detection, vulnerability assessment |
 | `fg-413-frontend-reviewer` | UI/UX convention checking |
-| `fg-416-backend-performance-reviewer` | Performance pattern detection |
-| `fg-417-version-compat-reviewer` | Version compatibility analysis |
+| `fg-416-performance-reviewer` | Performance pattern detection |
+| `fg-417-dependency-reviewer` | Dependency health + version compatibility analysis |
 | `fg-418-docs-consistency-reviewer` | Documentation accuracy checking |
 | `fg-419-infra-deploy-reviewer` | Infrastructure review |
-| `fg-420-dependency-reviewer` | Dependency health analysis |
 | `fg-400-quality-gate` | Review coordination, finding synthesis |
 | `fg-500-test-gate` | Test coordination, Phase A/B routing |
 | `fg-510-mutation-analyzer` | Mutation testing with LLM-generated mutants |
@@ -193,5 +192,5 @@ The orchestrator records model assignments in `stage_0_notes`:
     ## Model Routing
     - Mode: enabled
     - Default tier: standard (sonnet)
-    - Overrides: 9 fast, 14 premium, 19 standard (remaining)
-    - Total agents: 42
+    - Overrides: 9 fast, 14 premium, 18 standard (remaining)
+    - Total agents: 41

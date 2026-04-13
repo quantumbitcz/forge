@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-10}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  fi
+  exit 0
+fi
+
 # Unified check engine entry point.
 # Detects language + module, dispatches to the appropriate layer runner(s).
 # Always exits 0 — never blocks the pipeline.
@@ -467,6 +479,12 @@ run_layer1() {
   else
     "$SCRIPT_DIR/layer-1-fast/run-patterns.sh" "$file" "$rules"
   fi
+
+  # Load learned rules (auto-promoted from retrospective)
+  LEARNED_RULES="${PLUGIN_ROOT}/shared/checks/learned-rules-override.json"
+  if [[ -f "$LEARNED_RULES" ]]; then
+    "$SCRIPT_DIR/layer-1-fast/run-patterns.sh" "$file" "$rules" "$LEARNED_RULES" || handle_failure "learned_rules_load_failed" "$file"
+  fi
 }
 
 # --- Mode: --hook (PostToolUse, single file, Layer 1 only) ---
@@ -579,8 +597,8 @@ mode_review() {
   done
   # Layer 3 (agent intelligence) is handled by dedicated agent dispatch, not shell execution.
   # - fg-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
-  # - fg-417-version-compat-reviewer: dispatched during REVIEW via quality gate batches
-  # See agents/fg-140-deprecation-refresh.md and agents/fg-417-version-compat-reviewer.md
+  # - fg-417-dependency-reviewer: dispatched during REVIEW via quality gate batches
+  # See agents/fg-140-deprecation-refresh.md and agents/fg-417-dependency-reviewer.md
 }
 
 # --- Mode: --flush-queue (process deferred hook queue) ---

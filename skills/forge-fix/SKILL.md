@@ -12,6 +12,17 @@ Before any action, verify:
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
+## What to Expect
+
+After dispatch, fg-100-orchestrator (bugfix mode) will:
+1. Investigate the bug via fg-020-bug-investigator (max 3 reproduction attempts)
+2. Write a failing test that demonstrates the bug
+3. Implement the minimal fix to make the test pass
+4. Verify no regressions via full test suite
+5. Create a PR with the fix
+
+Total time: 3-15 minutes. You may be asked to clarify reproduction steps or confirm the root cause.
+
 You are a thin launcher. Your ONLY job is to resolve the bug source and dispatch the forge orchestrator in bugfix mode.
 
 ## Instructions

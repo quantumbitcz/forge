@@ -1,51 +1,59 @@
-# React + Vitest Testing Patterns
+# React + Vitest Testing Conventions
 
-> React-specific testing patterns for Vitest. Extends `modules/testing/vitest.md`.
+## Test Structure
 
-## Testing Library Setup
+- Co-locate tests: `Component.test.tsx` next to `Component.tsx`
+- Integration tests: `__tests__/` directory at feature boundary
+- Use `describe` blocks matching component/hook name
+- Name tests by behavior: `it('shows error when email is invalid')`
 
-- Use `@testing-library/react` for component rendering
-- Prefer queries: `getByRole` > `getByLabelText` > `getByText` > `getByTestId`
-- Never use `getByTestId` unless no semantic alternative exists
-- Use `screen` object for all queries -- not destructured from `render()`
+## Component Testing
 
-```tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+- Render via `render()` from `@testing-library/react`
+- Query by role, label, text — NEVER by test-id unless no semantic alternative
+- Use `userEvent` (not `fireEvent`) for user interactions
+- Wrap state updates in `act()` only when not using RTL's built-in waiting
+- Prefer `screen` import for all queries
 
-test('submits form with valid data', async () => {
-  const user = userEvent.setup();
-  render(<LoginForm onSubmit={mockSubmit} />);
+## Hook Testing
 
-  await user.type(screen.getByLabelText('Email'), 'test@example.com');
-  await user.click(screen.getByRole('button', { name: /submit/i }));
+- Use `renderHook()` from `@testing-library/react`
+- Test hooks in isolation first, then integration with components
+- For hooks with effects: use `waitFor` to assert async state
 
-  expect(mockSubmit).toHaveBeenCalledWith({ email: 'test@example.com' });
-});
-```
+## Async Testing
 
-## Network Mocking with MSW
+- `await screen.findByText()` for async content (NOT `waitFor` + `getBy`)
+- `waitFor` only for assertions on changing state
+- Mock timers with `vi.useFakeTimers()` for debounce/throttle
 
-- Mock at the network level with Mock Service Worker (MSW), not component-level mocks
-- Define handlers in `src/tests/mocks/handlers.ts`
-- Use `server.use()` for test-specific overrides
+## Mocking
 
-## What to Test
+- MSW (Mock Service Worker) for API mocking — intercept at network level
+- `vi.mock()` for module mocking — use sparingly, prefer dependency injection
+- Never mock React internals (useState, useEffect)
+- Mock child components only when they have complex side effects
 
-- User interactions: click, type, submit -- test what the user sees and does
-- Conditional rendering: both branches (loading, error, success, empty)
-- Form validation: messages appear for invalid input
-- API integration: mock at network level (MSW)
+## Error Boundaries
 
-## What NOT to Test
+- Test error boundaries at route level
+- Use `vi.spyOn(console, 'error')` to suppress expected React warnings
+- Verify fallback UI renders on error
 
-- Implementation details: internal state values, method calls
-- Styling: don't assert CSS classes or inline styles
-- Third-party libraries: don't test that React Router navigates correctly
-- Snapshot tests for large components: they break on every change
+## Dos
 
-## Async Patterns
+- Test user behavior, not implementation details
+- One assertion per behavior (group related assertions)
+- Use `screen` import for all queries
+- Test loading states explicitly
+- Test keyboard navigation for interactive components
+- Clean up side effects in `afterEach`
 
-- Use `findByRole` / `findByText` for elements that appear after async operations
-- Use `waitFor` only when no `findBy*` query applies
-- Use `waitForElementToBeRemoved` for loading states
+## Don'ts
+
+- Don't test styled-components/CSS classes
+- Don't snapshot-test complex components (brittle)
+- Don't mock child components by default (test integration)
+- Don't use `container.querySelector` (breaks accessibility contract)
+- Don't test library behavior (e.g., Router navigation internals)
+- Don't test implementation details (internal state, method calls)

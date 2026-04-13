@@ -45,8 +45,8 @@ Review changed files, flag ONLY confirmed violations: **$ARGUMENTS**
 - Security vulnerabilities (OWASP) -> `fg-411-security-reviewer`
 - Frontend conventions/design/a11y -> `frontend-*` reviewers
 - Backend/frontend performance -> `*-performance-reviewer`
-- Version compatibility -> `fg-417-version-compat-reviewer`
-- Dependency health (outdated, vulnerable, conflicting) -> `fg-420-dependency-reviewer`
+- Version compatibility -> `fg-417-dependency-reviewer`
+- Dependency health (outdated, vulnerable, conflicting) -> `fg-417-dependency-reviewer`
 - Infrastructure deployment -> `fg-419-infra-deploy-reviewer`
 - External documentation consistency (README, ADRs, guides, diagrams) -> `fg-418-docs-consistency-reviewer`
 

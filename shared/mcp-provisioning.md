@@ -178,7 +178,7 @@ MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials
 
 **Detection:** Check for tool `mcp__plugin_context7_context7__resolve-library-id`
 
-**Used by:** fg-410-code-reviewer through fg-420-dependency-reviewer (live API validation), fg-140-deprecation-refresh (current deprecation data), fg-300-implementer (version-aware patterns)
+**Used by:** fg-410-code-reviewer through fg-417-dependency-reviewer (live API validation), fg-140-deprecation-refresh (current deprecation data), fg-300-implementer (version-aware patterns)
 
 **Degradation:** Fall back to training data knowledge and WebSearch. Version-specific guidance may be stale. Log INFO: "Context7 MCP not available — using training data fallback."
 

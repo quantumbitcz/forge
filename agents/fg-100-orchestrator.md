@@ -315,6 +315,9 @@ Phase A (parallel)
 │   §0.8  Config Mode Detection
 │   §0.9  Multi-Component Convention Resolution
 │   §0.10 Check Engine Rule Cache
+│   §0.10a Rule Promotion
+│   §0.10b Rule Decay
+│   §0.10c Caveman Mode Detection
 │
 └── Integration Group (§0.11, §0.22, §0.22a, §0.23) ── failures degrade, never abort
     §0.11 Documentation Discovery
@@ -385,6 +388,15 @@ Enabled: build model map (`agent_id → model`): tier_1_fast → haiku, tier_3_p
 
 ### §0.4 Config Validation
 
+Run `${CLAUDE_PLUGIN_ROOT}/shared/validate-config.sh` on the project's `forge.local.md`.
+
+- **ERROR (exit 1)** → Abort pipeline. Show error message with suggestion. Do NOT proceed to EXPLORING.
+- **WARNING (exit 2)** → Log to stage notes as INFO. Continue pipeline.
+- **PASS (exit 0)** → Continue.
+
+This step runs BEFORE convention stack resolution to prevent loading invalid module files.
+
+Fallback (script unavailable): inline checks:
 1. `forge.local.md` must exist with valid YAML. Missing → ERROR. Invalid → ERROR with line.
 2. Required: `project_type`, `framework`, `module`, `commands.build/test/lint`, `quality_gate`. Missing → ERROR.
 3. `conventions_file` missing → WARN, continue degraded.
@@ -488,6 +500,44 @@ Store paths in `state.json.components.{name}.convention_stack`. Compute per-comp
 ### §0.10 Check Engine Rule Cache
 
 Per component: collect `rules-override.json` from stack (framework, layer bindings, generic layers). Deep-merge. Write `.forge/.rules-cache-{component}.json` and `.forge/.component-cache`.
+
+---
+
+### §0.10a Rule Promotion
+
+If `.forge/learned-candidates.json` exists:
+1. Read candidates with `status: "ready_for_promotion"`
+2. For each candidate:
+   a. Validate: has `pattern`, `severity`, `category`, `language` fields
+   b. Test regex validity: `echo "" | grep -P "{pattern}" >/dev/null 2>&1`
+   c. Check no duplicate in `shared/checks/learned-rules-override.json` or L1 patterns
+3. Append valid candidates to `shared/checks/learned-rules-override.json`
+4. Update candidate status to `"promoted"` with `promoted_at` timestamp
+5. Log in `.forge/forge-log.md`: "Promoted LEARNED-NNN: {category} pattern to L1"
+
+See `shared/learnings/rule-promotion.md` for candidate schema and promotion algorithm.
+
+---
+
+### §0.10b Rule Decay
+
+For each promoted rule in `shared/checks/learned-rules-override.json`:
+1. Check if rule produced matches in last run (from `.forge/state.json` findings)
+2. If no matches: increment `inactive_runs` counter in `learned-candidates.json`
+3. If `inactive_runs >= 5`: remove from `learned-rules-override.json`, set status to `"demoted"`
+4. Log demotion in `.forge/forge-log.md`
+
+---
+
+### §0.10c Caveman Mode Detection
+
+If `.forge/caveman-mode` exists:
+1. Read mode value (`off`, `lite`, `full`, `ultra`)
+2. Store in orchestrator context for user-facing output formatting
+3. If mode != `off`: apply compression rules from `shared/input-compression.md` to all orchestrator messages to the user
+4. Auto-clarity exceptions (SEC-* CRITICAL, AskUserQuestion, escalation, PR descriptions) bypass caveman mode
+
+If `.forge/caveman-mode` does not exist: default to `off` (no compression).
 
 ---
 
@@ -916,7 +966,7 @@ Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 
 
 Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
 
-After batches: inline checks. Then [dispatch fg-417-version-compat-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
+After batches: inline checks. Then [dispatch fg-417-dependency-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
 
 ### SS6.3 Score and Verdict
 

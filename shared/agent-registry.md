@@ -32,11 +32,10 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-411-security-reviewer | 4 | No | Review | Security |
 | fg-412-architecture-reviewer | 4 | No | Review | Architecture |
 | fg-413-frontend-reviewer | 4 | No | Review | Frontend |
-| fg-416-backend-performance-reviewer | 4 | No | Review | Performance |
-| fg-417-version-compat-reviewer | 4 | No | Review | Compatibility |
+| fg-416-performance-reviewer | 4 | No | Review | Performance |
+| fg-417-dependency-reviewer | 4 | No | Review | Dependencies |
 | fg-418-docs-consistency-reviewer | 4 | No | Review | Documentation |
 | fg-419-infra-deploy-reviewer | 4 | No | Review | Infrastructure |
-| fg-420-dependency-reviewer | 4 | No | Review | Dependencies |
 | fg-500-test-gate | 2 | Yes | Verify | Coordination |
 | fg-505-build-verifier | 3 | No | Verify | Build |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |

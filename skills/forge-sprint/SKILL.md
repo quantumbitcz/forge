@@ -28,6 +28,16 @@ Before any action, verify:
 3. **No active sprint:** Check `.forge/sprint-state.json` for `status != complete|failed`. If active sprint found, offer resume via AskUserQuestion: "Active sprint found ({sprint_id}, {N} features, {status}). Resume / Start fresh / Abort"
 4. **Forge directory:** Verify `.forge/` directory exists (create if not)
 
+## What to Expect
+
+After dispatch, fg-090-sprint-orchestrator will:
+1. Analyze features for independence (can they run in parallel?)
+2. Create isolated worktrees per feature
+3. Run parallel pipeline instances (one per feature)
+4. Merge results and create PRs
+
+Total time: 15-60 minutes depending on feature count and complexity. Features with shared file conflicts run sequentially.
+
 ## Instructions
 
 ### Usage

@@ -1,11 +1,10 @@
 ---
 name: forge-tour
 description: "Guided 5-stop introduction to Forge covering init, verify, run, fix, and review. Use when new to Forge, onboarding team members, or want a walkthrough of the most important skills. Trigger: /forge-tour, how does forge work, getting started, teach me forge"
+disable-model-invocation: false
 ---
 
-# /forge-tour -- Guided Introduction
-
-A 5-stop walkthrough of the most important Forge skills. Covers the essentials to get productive quickly.
+# Forge Tour — 5-Stop Guided Introduction
 
 ## Prerequisites
 
@@ -15,71 +14,124 @@ None. Works before or after /forge-init.
 
 Present each stop sequentially. Pause between stops to let the user ask questions or try the skill.
 
-### Stop 1: Initialize -- `/forge-init`
-
-Sets up your project for Forge. Auto-detects framework, language, testing, and generates config files.
-
-```bash
-/forge-init
-```
-
-**What it creates:** `.claude/forge.local.md`, `.claude/forge-config.md`, `.forge/` directory.
-
-### Stop 2: Verify -- `/verify`
-
-Quick sanity check: build + lint + test. No pipeline, just confirms your project is healthy.
-
-```bash
-/verify
-```
-
-**When to use:** Before starting work, after manual changes, as a pre-commit check.
-
-### Stop 3: Build -- `/forge-run`
-
-The main skill. Give it a requirement and it runs the full 10-stage pipeline: explore, plan, validate, implement (TDD), verify, review, document, and ship.
-
-```bash
-/forge-run Add user dashboard with activity feed
-```
-
-**Key flags:** `--dry-run` (plan only), `--from=implement` (resume from stage).
-
-### Stop 4: Fix -- `/forge-fix`
-
-Targeted bugfix workflow. Investigates root cause, writes reproduction test, fixes, and verifies.
-
-```bash
-/forge-fix Users get 404 on group endpoint
-```
-
-**Accepts:** Description, kanban ticket ID, or Linear issue URL.
-
-### Stop 5: Review -- `/forge-review`
-
-Reviews your changed files with multiple specialized agents (code, security, architecture, frontend, performance).
-
-```bash
-/forge-review          # Quick: 3 agents
-/forge-review --full   # Full: up to 9 agents
-```
-
-**Loops** until score reaches 100 or max iterations.
-
-### What's next?
-
-All skills are listed in `/forge-help`. Key next steps:
-
-- `/forge-shape` -- refine vague ideas into structured specs
-- `/codebase-health` -- full codebase quality audit
-- `/forge-sprint` -- parallel multi-feature execution
-
 ## Error Handling
 
 None. This skill displays informational content.
 
+Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks you through the 5 skills you'll use most, in the order you'll need them.
+
+## Stop 1: /forge-init (Setup)
+
+**What it does:** Configures Forge for your project by detecting your tech stack (language, framework, testing) and generating local config files.
+
+**When to use:** First time setting up Forge in a project.
+
+**What happens:**
+- Detects your language, framework, and testing setup
+- Generates `.claude/forge.local.md` (project config)
+- Generates `.claude/forge-config.md` (pipeline settings)
+- Detects available MCP integrations (Linear, Playwright, etc.)
+
+**Try it:** Run `/forge-init` in any project.
+
+---
+
+## Stop 2: /verify (Quick Health Check)
+
+**What it does:** Runs build + lint + test and reports pass/fail. No pipeline, no agents — just a quick sanity check.
+
+**When to use:** Before any pipeline run, after manual changes, before committing.
+
+**What happens:**
+- Runs your build command (if configured)
+- Runs your lint command (if configured)
+- Runs your test command (if configured)
+- Reports PASS / FAIL / SKIPPED per step
+
+**Try it:** Run `/verify` to check your project's baseline health.
+
+---
+
+## Stop 3: /forge-run (Build Features)
+
+**What it does:** The main entry point. Give it a requirement, and it runs the full 10-stage pipeline: explore → plan → implement (TDD) → verify → review → ship.
+
+**When to use:** When you have a clear feature to build.
+
+**Example:**
+```
+/forge-run Add email validation to user registration with error messages
+```
+
+**What happens:**
+1. Explores your codebase for context (~1 min)
+2. Creates an implementation plan (may ask for approval)
+3. Implements via TDD — writes tests first, then code
+4. Verifies: runs tests, lint, and code review
+5. Fixes any issues found in review (may loop 2-5 times)
+6. Generates documentation and creates a PR
+
+---
+
+## Stop 4: /forge-fix (Fix Bugs)
+
+**What it does:** Specialized bugfix workflow — investigates root cause, writes a failing test that reproduces the bug, implements the fix.
+
+**When to use:** When you have a bug to fix.
+
+**Example:**
+```
+/forge-fix Users get 404 when accessing /api/groups endpoint
+```
+
+**What happens:**
+1. Investigates the bug (max 3 reproduction attempts)
+2. Writes a failing test demonstrating the bug
+3. Implements the minimal fix
+4. Verifies no regressions
+
+---
+
+## Stop 5: /forge-review (Review Changes)
+
+**What it does:** Reviews your recent code changes using 3-8 specialized review agents (security, architecture, performance, accessibility, etc.).
+
+**When to use:** After making changes, before committing or creating a PR.
+
+**Example:**
+```
+/forge-review          # Quick mode: 3 agents
+/forge-review --full   # Full mode: up to 8 agents
+```
+
+**What happens:**
+- Detects changed files (staged + unstaged)
+- Dispatches review agents in parallel
+- Reports findings by severity (CRITICAL / WARNING / INFO)
+- Calculates quality score (0-100)
+- Offers to fix findings automatically
+
+---
+
+## Summary
+
+| Skill | When | Time |
+|-------|------|------|
+| `/forge-init` | First time setup | ~1 min |
+| `/verify` | Quick health check | ~30s |
+| `/forge-run` | Build a feature | 5-30 min |
+| `/forge-fix` | Fix a bug | 3-15 min |
+| `/forge-review` | Review code quality | 1-5 min |
+
+## What's Next?
+
+- **All skills:** `/forge-help`
+- **Reduce token usage:** `/forge-caveman`
+- **Pipeline analytics:** `/forge-insights`
+- **Multiple features:** `/forge-sprint`
+
 ## See Also
 
-- `/forge-help` -- full skill decision tree
-- `/forge-init` -- first-time project setup
-- `/forge-run` -- build a feature
+- `/forge-help` — full skill decision tree
+- `/forge-init` — first-time project setup
+- `/forge-run` — build a feature

@@ -2,6 +2,18 @@
 # PostToolUse hook (Skill): Updates forge state timestamp after skill invocations.
 # Best-effort — logs failures to .hook-failures.log. Uses atomic_json_update from platform.sh.
 
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-5}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
+  fi
+  exit 0
+fi
+
 STATE_FILE=".forge/state.json"
 [ ! -f "$STATE_FILE" ] && exit 0
 

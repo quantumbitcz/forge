@@ -1,52 +1,62 @@
-# FastAPI + pytest Testing Patterns
+# FastAPI + Pytest Testing Conventions
 
-> FastAPI-specific testing patterns for pytest. Extends `modules/testing/pytest.md`.
+## Test Structure
 
-## Test Client
+- Tests in `tests/` directory mirroring `app/` structure
+- Name files: `test_<module>.py`
+- Use `pytest` fixtures for shared setup
+- Async tests: `@pytest.mark.anyio` or `@pytest.mark.asyncio`
 
-- Use `httpx.AsyncClient` with `ASGITransport` for async integration tests
-- Alternative: `TestClient` from `starlette.testclient` for sync tests
+## Client Testing
 
-```python
-import pytest
-from httpx import ASGITransport, AsyncClient
-from app.main import app
+- Use `TestClient` from `starlette.testclient` for sync tests
+- Use `httpx.AsyncClient` for async tests:
+  ```python
+  async with AsyncClient(app=app, base_url="http://test") as client:
+      response = await client.get("/endpoint")
+  ```
+- Create client fixture: `@pytest.fixture` returning `TestClient(app)`
 
-@pytest.fixture
-async def client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield ac
+## Dependency Override
 
-@pytest.mark.asyncio
-async def test_create_user(client: AsyncClient):
-    response = await client.post("/api/users", json={"name": "Alice"})
-    assert response.status_code == 201
-    assert response.json()["name"] == "Alice"
-```
+- Override dependencies per test:
+  ```python
+  app.dependency_overrides[get_db] = lambda: test_db
+  ```
+- Reset after test: `app.dependency_overrides.clear()`
+- Use fixture with `yield` for automatic cleanup
 
 ## Database Testing
 
-- Use test database with transaction rollback per test or testcontainers
-- Override the DB session dependency in tests
-- Use factories (`factory_boy` or fixture functions) for test data
+- Use Testcontainers for PostgreSQL: `PostgresContainer("postgres:16")`
+- Create test database per session, rollback per test
+- Async session fixture with `async_sessionmaker`
+- Override `get_db` dependency to use test session
 
-```python
-@pytest.fixture
-async def db_session():
-    async with async_test_engine.connect() as conn:
-        async with conn.begin() as txn:
-            yield AsyncSession(bind=conn)
-            await txn.rollback()
-```
+## Async Testing
 
-## Dependency Overrides
+- All test functions: `async def test_...` with `@pytest.mark.anyio`
+- Use `anyio` over `asyncio` for broader compatibility
+- Test background tasks with `await` on task completion
 
-- Override `Depends()` callables for isolated testing
-- `app.dependency_overrides[get_db] = override_get_db`
-- Reset overrides in fixture teardown
+## Mocking
 
-## Fixtures
+- `unittest.mock.patch` or `pytest-mock` for service mocking
+- Override FastAPI dependencies instead of mocking internals
+- Mock external HTTP with `respx` or `httpx_mock`
 
-- Shared fixtures in `conftest.py`: `async_client`, `db_session`, factory fixtures
-- Use `pytest.mark.parametrize` for testing multiple input variants
-- Use `pytest.mark.asyncio` for all async test functions
+## Dos
+
+- Test each endpoint: status code, response body, headers
+- Test validation errors (422) with invalid input
+- Test authentication/authorization per endpoint
+- Test OpenAPI schema generation: `client.get("/openapi.json")`
+- Use `conftest.py` for shared fixtures
+
+## Don'ts
+
+- Don't test Pydantic model validation separately (test through endpoints)
+- Don't use `requests` library (use `TestClient` or `httpx`)
+- Don't share database state between tests
+- Don't test framework internals (dependency injection mechanics)
+- Don't use `time.sleep` in async tests (use `anyio.sleep`)

@@ -41,12 +41,12 @@ quality_gate:
       focus: "HAL layer boundaries, module isolation, driver interface patterns"
     - agent: fg-411-security-reviewer
       focus: "buffer overflows, format strings, integer overflows, use-after-free"
-    - agent: fg-416-backend-performance-reviewer
+    - agent: fg-416-performance-reviewer
       focus: "ISR allocation, cache-friendly access, busy-wait loops, volatile usage"
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, memory safety, const correctness"
-    - agent: fg-420-dependency-reviewer
+    - agent: fg-417-dependency-reviewer
       condition: "dependencies_changed"
       focus: "dependency necessity, bloat, pinning, licenses"
     - agent: fg-418-docs-consistency-reviewer

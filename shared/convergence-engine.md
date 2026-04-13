@@ -75,6 +75,15 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
             consistent with stage-contract.md escalation rules)
         -> ELSE: dispatch IMPLEMENT with build/lint errors, then VERIFY again
         (analysis_pass is not evaluated — Phase B did not run)
+        Note: Phase A failures are counted against verify_fix_count (inner
+        cap, default max_fix_loops = 3). When verify_fix_count >= max_fix_loops:
+        - If total_iterations < max_iterations: escalate to user with CONCERNS
+          (recommend re-plan or manual fix)
+        - If total_iterations >= max_iterations: escalate as budget-exhausted
+          (recommend abort)
+        Phase B is skipped entirely on ANY Phase A failure — the pipeline loops
+        back to IMPLEMENT to fix test/build/lint issues before attempting
+        perfection-mode review.
 
       ELSE IF verify_result.tests_pass AND verify_result.analysis_pass:
         -> transition to "perfection", reset phase_iterations to 0
@@ -100,6 +109,9 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
 
       ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance:
         // REGRESSING detection uses raw delta (not smoothed) for responsiveness
+        // oscillation_tolerance applies to Phase 2 (perfection) and Phase 3
+        // (safety gate) score oscillation only. Phase 1 (correctness) uses
+        // binary pass/fail from test results — oscillation is not applicable.
         -> convergence_state = "REGRESSING", ESCALATE
 
       ELSE IF smoothed_delta <= plateau_threshold AND phase_iterations >= 2:
@@ -439,6 +451,22 @@ Condensation state is tracked under `state.json.convergence.condensation`:
 ```
 
 See `shared/context-condensation.md` for the full condensation algorithm, tag-based retention rules, configuration, and error handling.
+
+## Worked Examples
+
+See `convergence-examples.md` for 3 annotated walkthrough scenarios (happy path, fix loop, plateau escalation).
+
+## Executable Specification
+
+The canonical convergence algorithm is implemented in `convergence-engine-sim.sh`. This document is a prose explanation. If this document and the script disagree, the script is authoritative.
+
+```bash
+# Example: run the simulator
+./shared/convergence-engine-sim.sh \
+  --scores "43,78,75,76" \
+  --pass-threshold 80 \
+  --plateau-patience 2
+```
 
 ## Retrospective Auto-Tuning
 

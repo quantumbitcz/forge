@@ -301,6 +301,8 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 
 **Phase B failure escalation:** If `test_cycles >= max_test_cycles`, the orchestrator **escalates via AskUserQuestion** with header "Blocked", question "Test fix loop exhausted ({test_cycles}/{max_test_cycles}). Failing tests: {test_summary}.", options: "Fix manually" (fix the failing tests and resume from Stage 5), "Re-plan" (go back to Stage 2 and redesign the approach), "Abort" (stop the pipeline run).
 
+See `convergence-examples.md` for walkthrough scenarios of the VERIFY convergence loop.
+
 ---
 
 ### Stage 6: REVIEW
@@ -564,7 +566,7 @@ The orchestrator detects the pipeline mode from the requirement prefix at PREFLI
    - `MIGRATION_VERIFY` — running verification against the migrated codebase
    These states replace `IMPLEMENTING` in `story_state` during migration execution.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass after migration.
-7. Stage 6 (REVIEW): Runs normally with full reviewer set. `fg-417-version-compat-reviewer` is especially important — verifies no deprecated APIs remain.
+7. Stage 6 (REVIEW): Runs normally with full reviewer set. `fg-417-dependency-reviewer` is especially important — verifies no deprecated APIs remain.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. Documentation updates include migration notes and upgraded version references.
 
 The `/migration` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
@@ -579,7 +581,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
-7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-412-architecture-reviewer` (verify scaffold architecture matches declared pattern), `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-backend-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-version-compat-reviewer` (versions just resolved from context7), `fg-420-dependency-reviewer` (dependencies just selected). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
+7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-412-architecture-reviewer` (verify scaffold architecture matches declared pattern), `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-dependency-reviewer` (versions just resolved, dependencies just selected). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
 The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.

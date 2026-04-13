@@ -58,7 +58,7 @@ This budget is separate from the 2,000-token stage notes cap defined in `agent-c
 
 ### Per-Agent Logging Guidance
 
-- **Reviewers (fg-410 through fg-420):** Emit structured findings, not log messages. Findings ARE the output. Do not wrap findings in log entries.
+- **Reviewers (fg-410 through fg-419):** Emit structured findings, not log messages. Findings ARE the output. Do not wrap findings in log entries.
 - **Coordinators (fg-400, fg-500, fg-600):** Log dispatch decisions ("Dispatching batch 2 with 4 agents"), cycle outcomes ("Quality cycle 2: score 85 -> 88"), and escalation triggers ("Second consecutive dip detected, escalating").
 - **Implementer (fg-300):** Log task completion status ("Task 1/3 complete, 2 files modified") and PREEMPT markers. Do not log code diffs.
 - **Orchestrator (fg-100):** Log state transitions, convergence phase changes, and recovery actions. Use both stage notes and state.json fields.

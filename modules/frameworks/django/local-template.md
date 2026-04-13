@@ -50,12 +50,12 @@ quality_gate:
       focus: "MTV layering violations, business logic in views, direct ORM in views"
     - agent: fg-411-security-reviewer
       focus: "auth, permissions, SQL injection risk, ALLOWED_HOSTS, DEBUG, secrets"
-    - agent: fg-416-backend-performance-reviewer
+    - agent: fg-416-performance-reviewer
       focus: "N+1 queries, missing select_related/prefetch_related, queryset in loops"
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability, error handling, DRY/KISS"
-    - agent: fg-420-dependency-reviewer
+    - agent: fg-417-dependency-reviewer
       condition: manifest_changed
       focus: "vulnerable, outdated, unmaintained dependencies"
     - agent: fg-418-docs-consistency-reviewer

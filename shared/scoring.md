@@ -103,9 +103,16 @@ MEDIUM findings are less certain than HIGH and carry reduced scoring weight. A M
 
 Score: `100 - 20 - 4 - 1 = 75` (vs. `100 - 20 - 5 - 2 = 73` without confidence weighting)
 
-### Backward Compatibility
+### Confidence Field
 
-When confidence is omitted, the default is `HIGH` (multiplier 1.0). This preserves existing scoring behavior for findings without a confidence field.
+Every finding MUST include a confidence level (HIGH, MEDIUM, LOW). Findings without confidence are logged as `COMPRESSION_DRIFT` by the quality gate and returned to the emitting reviewer for correction.
+
+Weight multipliers:
+- HIGH (1.0x): Strong evidence — deterministic check, clear violation
+- MEDIUM (0.75x): Likely issue — heuristic match, pattern-based
+- LOW (0.5x): Possible issue — uncertain, context-dependent
+
+LOW-confidence findings are flagged for human review, NOT auto-dispatched to implementer. Included in stage notes and recap but excluded from fix cycles.
 
 ### Routing by Confidence
 
@@ -114,6 +121,16 @@ The quality gate uses confidence for dispatch routing:
 - **LOW findings:** Flagged for human review, NOT auto-dispatched to implementer. Included in stage notes and recap but excluded from fix cycles.
 
 The `decision_quality.findings_with_low_confidence` counter in `state.json` tracks LOW-confidence findings per run, feeding into the retrospective's reviewer accuracy analysis.
+
+### Confidence Promotion
+
+When 2+ reviewers independently report the same finding (same file, same line range, overlapping category), promote the finding's confidence:
+- Both MEDIUM → HIGH
+- One HIGH + one MEDIUM → HIGH
+- Both LOW → MEDIUM
+- One LOW + one MEDIUM → MEDIUM
+
+Quality gate (fg-400) applies promotion during deduplication. See also agent-defaults.md §Confidence Reporting.
 
 ## Verdict Thresholds
 
@@ -191,8 +208,8 @@ Additional category codes for specialized review domains:
 | Code | Meaning |
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
-| `DEP-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions, license compliance). Subcategories: `DEP-CVE-*` (vulnerabilities), `DEP-OUTDATED-*` (outdated), `DEP-UNMAINTAINED` / `DEP-DEPRECATED` (maintenance), `DEP-CONFLICT-*` (version conflicts), `DEP-LICENSE-*` (license compliance). Emitted by `fg-420-dependency-reviewer`. |
-| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-version-compat-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
+| `DEP-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions, license compliance). Subcategories: `DEP-CVE-*` (vulnerabilities), `DEP-OUTDATED-*` (outdated), `DEP-UNMAINTAINED` / `DEP-DEPRECATED` (maintenance), `DEP-CONFLICT-*` (version conflicts), `DEP-LICENSE-*` (license compliance). Emitted by `fg-417-dependency-reviewer`. |
+| `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-dependency-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
 | `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
 | `DESIGN-TOKEN` | Frontend design token violation (hardcoded hex/rgb instead of theme tokens) |
@@ -367,3 +384,7 @@ These sub-bands provide granularity for documentation and reporting. When Linear
 | 80-94 | PASS | Each unfixed WARNING documented with options. Architectural WARNINGs get follow-up tickets. |
 | 60-79 | CONCERNS | Full findings posted. User asked for guidance via escalation format. |
 | < 60 | FAIL | Recommend abort or replan. Architectural root cause analysis posted. |
+
+## Examples
+
+See `convergence-examples.md` for worked scoring calculations in context.

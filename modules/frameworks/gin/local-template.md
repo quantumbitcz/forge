@@ -47,12 +47,12 @@ quality_gate:
       focus: "handler/service/repository layering, interface boundaries, no global state"
     - agent: fg-411-security-reviewer
       focus: "input validation, SQL injection, JWT auth, CORS, rate limiting"
-    - agent: fg-416-backend-performance-reviewer
+    - agent: fg-416-performance-reviewer
       focus: "connection pooling, context timeouts, N+1 queries, goroutine leaks"
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability, error handling, DRY/KISS"
-    - agent: fg-420-dependency-reviewer
+    - agent: fg-417-dependency-reviewer
       condition: manifest_changed
       focus: "vulnerable, outdated, unmaintained dependencies"
     - agent: fg-418-docs-consistency-reviewer
