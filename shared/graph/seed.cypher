@@ -2675,6 +2675,7 @@ CREATE (:Learnings {name: 'rspec', file_path: 'shared/learnings/rspec.md'});
 CREATE (:Learnings {name: 'rubocop', file_path: 'shared/learnings/rubocop.md'});
 CREATE (:Learnings {name: 'ruby', file_path: 'shared/learnings/ruby.md'});
 CREATE (:Learnings {name: 'ruff', file_path: 'shared/learnings/ruff.md'});
+CREATE (:Learnings {name: 'rule-promotion', file_path: 'shared/learnings/rule-promotion.md'});
 CREATE (:Learnings {name: 'rust-test', file_path: 'shared/learnings/rust-test.md'});
 CREATE (:Learnings {name: 'rust', file_path: 'shared/learnings/rust.md'});
 CREATE (:Learnings {name: 'rustdoc', file_path: 'shared/learnings/rustdoc.md'});
@@ -3615,6 +3616,10 @@ MATCH (l:Learnings {name: 'ruff'}), (m:LayerModule {name: 'ruff'}) CREATE (m)-[:
 MATCH (l:Learnings {name: 'ruff'}), (t:TestingFramework {name: 'ruff'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'ruff'}), (la:Language {name: 'ruff'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'ruff'}), (f:Framework {name: 'ruff'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'rule-promotion'}), (m:LayerModule {name: 'rule-promotion'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'rule-promotion'}), (t:TestingFramework {name: 'rule-promotion'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'rule-promotion'}), (la:Language {name: 'rule-promotion'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'rule-promotion'}), (f:Framework {name: 'rule-promotion'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rust-test'}), (m:LayerModule {name: 'rust-test'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rust-test'}), (t:TestingFramework {name: 'rust-test'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rust-test'}), (la:Language {name: 'rust-test'}) CREATE (la)-[:HAS_LEARNINGS]->(l);

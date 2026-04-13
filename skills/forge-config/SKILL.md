@@ -18,6 +18,10 @@ disable-model-invocation: false
 | `/forge-config show <section>` | Show specific section (components, scoring, convergence, caveman) |
 | `/forge-config diff` | Show changes since last pipeline run |
 
+## Prerequisites
+
+1. Verify `.claude/forge.local.md` or `.claude/forge-config.md` exists. If neither: "No forge configuration found. Run `/forge-init` first." STOP.
+
 ## Instructions
 
 ### Show (default, no arguments)

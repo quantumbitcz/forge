@@ -15,11 +15,15 @@ yaml_content=$(sed -n '/^```yaml/,/^```$/p' "$CONFIG_FILE" | sed '1d;$d')
 [[ -z "$yaml_content" ]] && { echo "ERROR: No \`\`\`yaml block found in $CONFIG_FILE"; exit 1; }
 
 # Use Python for reliable YAML parsing and validation
-python3 << 'PYEOF' "$yaml_content"
-import sys, json
+export FORGE_YAML_CONTENT="$yaml_content"
+python3 << 'PYEOF'
+import sys, json, os
 
-# Read YAML content from argument
-yaml_text = sys.argv[1]
+# Read YAML content from environment variable
+yaml_text = os.environ.get("FORGE_YAML_CONTENT", "")
+if not yaml_text:
+    print("ERROR: No YAML content provided")
+    sys.exit(1)
 
 # Try yaml import, fall back to simple parsing
 try:
