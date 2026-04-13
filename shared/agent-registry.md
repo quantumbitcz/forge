@@ -38,6 +38,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-420-dependency-reviewer | 4 | No | Review | Dependencies |
 | fg-500-test-gate | 2 | Yes | Verify | Coordination |
 | fg-505-build-verifier | 3 | No | Verify | Build |
+| fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |
 | fg-610-infra-deploy-verifier | 3 | No | Ship | Infrastructure |
