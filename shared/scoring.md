@@ -203,6 +203,15 @@ Specific INFRA finding codes for tiered infra verification:
 | `INFRA-E2E` | Full stack integration test failure | CRITICAL |
 | `INFRA-IMAGE` | Image resolution failure (pull/build) | WARNING (auto fallback) / CRITICAL (explicit mode) |
 
+Additional category codes for visual verification:
+
+| Code | Meaning |
+|------|---------|
+| `FE-VISUAL-REGRESSION` | Unexpected visual change detected (layout shift, element missing) |
+| `FE-VISUAL-RESPONSIVE` | Layout breaks at specific viewport breakpoint |
+| `FE-VISUAL-CONTRAST` | Text contrast ratio below WCAG AA threshold |
+| `FE-VISUAL-FIDELITY` | Visual output deviates from design specification |
+
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule. "Same finding" is identified by matching on `(category, description_hash)` where `description_hash` is the first 8 characters of SHA256 of the normalized description (lowercase, trimmed). Accumulation is tracked in `forge-log.md` under the `approach_accumulations` section, updated by `fg-700-retrospective` at the end of each run.

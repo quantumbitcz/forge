@@ -430,8 +430,8 @@ Analyze captured screenshots for:
 
 Report visual findings using `FE-VISUAL-*` categories:
 
-    page:breakpoint | FE-VISUAL-REGRESSION | WARNING | confidence:MEDIUM | Header overlaps navigation at 375px viewport | Add responsive breakpoint for header layout
-    page:breakpoint | FE-VISUAL-RESPONSIVE | WARNING | confidence:HIGH | Horizontal scroll at 375px — content overflows container | Set max-width: 100% on .card-grid
+    page:breakpoint | FE-VISUAL-REGRESSION | WARNING | Header overlaps navigation at 375px viewport | Add responsive breakpoint for header layout | confidence:MEDIUM
+    page:breakpoint | FE-VISUAL-RESPONSIVE | WARNING | Horizontal scroll at 375px — content overflows container | Set max-width: 100% on .card-grid | confidence:HIGH
 
 If no visual issues found, do not emit visual findings.
 
