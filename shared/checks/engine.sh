@@ -132,13 +132,6 @@ trap handle_skip ERR
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-"$(cd "$SCRIPT_DIR/../.." && pwd)"}"
 
-# TODO(v1.19): Add SEC-SECRET and SEC-PII L1 patterns to per-language pattern
-# files in layer-1-fast/patterns/*.json. Patterns should detect:
-#   SEC-SECRET: API keys, tokens, private keys, connection strings with credentials
-#   SEC-PII: email addresses, SSNs, phone numbers in string literals
-# Each pattern needs language-appropriate exclude_pattern to avoid false positives
-# in test fixtures and documentation strings.
-
 # --- Language detection from file extension ---
 detect_language() {
   # Dockerfile detection by filename (no standard extension)

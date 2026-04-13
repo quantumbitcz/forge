@@ -123,6 +123,49 @@
       "fix_hint": "Add a NULL check before dereferencing, or use assert() for invariant enforcement.",
       "example_ref": "c/null-safety.md#null-check",
       "scope": "all"
+    },
+    {
+      "id": "C-SEC-SECRET-001",
+      "name": "api-key-exposure",
+      "pattern": "(api[_-]?key|api[_-]?secret|bearer[_-]?token|access[_-]?token|client[_-]?secret)\\s*[:=]\\s*['\"][\\w\\-\\./_+]{20,}['\"]",
+      "exclude_pattern": "^\\s*//|test|fixture|example|mock|fake|placeholder|TODO|CHANGEME|your[_-]",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRET",
+      "message": "Possible API key or access token in source code",
+      "fix_hint": "Move to environment variables or a secrets vault. Never commit secrets.",
+      "scope": "main"
+    },
+    {
+      "id": "C-SEC-SECRET-002",
+      "name": "private-key-block",
+      "pattern": "-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRET",
+      "message": "Private key detected in source code",
+      "fix_hint": "Remove private key from source. Use key management service or environment variable.",
+      "scope": "all"
+    },
+    {
+      "id": "C-SEC-SECRET-003",
+      "name": "connection-string-credentials",
+      "pattern": "(postgres|mysql|mongodb|redis|amqp)://[^:]+:[^@]+@[^\\s'\"]+",
+      "exclude_pattern": "^\\s*//|localhost|127\\.0\\.0\\.1|example\\.com|test|fixture",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRET",
+      "message": "Connection string with embedded credentials detected",
+      "fix_hint": "Use environment variables for connection strings. Never embed passwords in URIs.",
+      "scope": "main"
+    },
+    {
+      "id": "C-SEC-PII-001",
+      "name": "email-in-source",
+      "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+      "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
+      "severity": "INFO",
+      "category": "SEC-PII",
+      "message": "Email address detected in source — verify this is not PII",
+      "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
     }
   ],
   "thresholds": {
