@@ -301,6 +301,8 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 
 **Phase B failure escalation:** If `test_cycles >= max_test_cycles`, the orchestrator **escalates via AskUserQuestion** with header "Blocked", question "Test fix loop exhausted ({test_cycles}/{max_test_cycles}). Failing tests: {test_summary}.", options: "Fix manually" (fix the failing tests and resume from Stage 5), "Re-plan" (go back to Stage 2 and redesign the approach), "Abort" (stop the pipeline run).
 
+See `convergence-examples.md` for walkthrough scenarios of the VERIFY convergence loop.
+
 ---
 
 ### Stage 6: REVIEW

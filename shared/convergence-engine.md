@@ -452,6 +452,10 @@ Condensation state is tracked under `state.json.convergence.condensation`:
 
 See `shared/context-condensation.md` for the full condensation algorithm, tag-based retention rules, configuration, and error handling.
 
+## Worked Examples
+
+See `convergence-examples.md` for 3 annotated walkthrough scenarios (happy path, fix loop, plateau escalation).
+
 ## Retrospective Auto-Tuning
 
 `fg-700-retrospective` can adjust convergence parameters based on historical patterns:

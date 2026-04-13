@@ -384,3 +384,7 @@ These sub-bands provide granularity for documentation and reporting. When Linear
 | 80-94 | PASS | Each unfixed WARNING documented with options. Architectural WARNINGs get follow-up tickets. |
 | 60-79 | CONCERNS | Full findings posted. User asked for guidance via escalation format. |
 | < 60 | FAIL | Recommend abort or replan. Architectural root cause analysis posted. |
+
+## Examples
+
+See `convergence-examples.md` for worked scoring calculations in context.
