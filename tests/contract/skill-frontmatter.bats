@@ -80,15 +80,15 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 }
 
 # ---------------------------------------------------------------------------
-# 5. At least 35 skills exist (updated v2.3.0: 34 original + forge-caveman)
+# 5. At least 38 skills exist (updated v2.3.0: 35 + forge-help + forge-tour + forge-config)
 # ---------------------------------------------------------------------------
-@test "skill-frontmatter: at least 35 skills exist" {
+@test "skill-frontmatter: at least 38 skills exist" {
   local count=0
   for d in "$SKILLS_DIR"/*/; do
     [ -d "$d" ] && count=$(( count + 1 ))
   done
-  if (( count < 35 )); then
-    fail "Expected >= 35 skills, found $count"
+  if (( count < 38 )); then
+    fail "Expected >= 38 skills, found $count"
   fi
 }
 
