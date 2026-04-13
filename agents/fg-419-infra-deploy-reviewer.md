@@ -143,4 +143,6 @@ Then provide a summary with PASS/FAIL per category (Security, Reliability, Scala
 
 **Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
 
+See `shared/reviewer-boundaries.md` for ownership boundaries.
+
 Per `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.

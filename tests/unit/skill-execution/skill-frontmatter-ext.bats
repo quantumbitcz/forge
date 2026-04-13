@@ -8,7 +8,7 @@ setup() {
 @test "skill-frontmatter: all skills have SKILL.md" {
   local count=0
   for dir in "$SKILLS_DIR"/*/; do
-    assert [ -f "${dir}SKILL.md" ] "Missing SKILL.md in $dir"
+    [ -f "${dir}SKILL.md" ] || fail "Missing SKILL.md in $dir"
     count=$((count + 1))
   done
   [[ "$count" -ge 35 ]]
@@ -27,7 +27,7 @@ setup() {
     local dirname
     dirname=$(basename "$dir")
     local name
-    name=$(sed -n 's/^name: *//p' "${dir}SKILL.md")
+    name=$(awk '/^---$/{n++; next} n==1 && /^name:/{sub(/^name: */, ""); print}' "${dir}SKILL.md")
     assert_equal "$name" "$dirname"
   done
 }

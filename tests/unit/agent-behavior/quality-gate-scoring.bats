@@ -8,11 +8,10 @@ setup() {
 @test "fg-400: dispatches only existing reviewer agents" {
   local agent="$AGENTS_DIR/fg-400-quality-gate.md"
   local refs
-  refs=$(grep -oP 'fg-4[0-9]{2}-[\w-]+' "$agent" | sort -u)
+  refs=$(grep -oE 'fg-4[0-9]{2}-[a-z-]+' "$agent" | sort -u)
   while IFS= read -r ref; do
     [[ -z "$ref" ]] && continue
-    assert [ -f "$AGENTS_DIR/${ref}.md" ] \
-      "fg-400 dispatches ${ref} but agent file missing"
+    [ -f "$AGENTS_DIR/${ref}.md" ] || fail "fg-400 dispatches ${ref} but agent file missing"
   done <<< "$refs"
 }
 

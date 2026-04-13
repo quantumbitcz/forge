@@ -9,11 +9,10 @@ setup() {
 @test "fg-100: dispatches only existing agents" {
   local agent="$AGENTS_DIR/fg-100-orchestrator.md"
   local refs
-  refs=$(grep -oP 'fg-\d{3}-[\w-]+' "$agent" | sort -u)
+  refs=$(grep -oE 'fg-[0-9]{3}-[a-z-]+' "$agent" | sort -u)
   while IFS= read -r ref; do
     [[ -z "$ref" ]] && continue
-    assert [ -f "$AGENTS_DIR/${ref}.md" ] \
-      "fg-100 references ${ref} but agent file missing"
+    [ -f "$AGENTS_DIR/${ref}.md" ] || fail "fg-100 references ${ref} but agent file missing"
   done <<< "$refs"
 }
 

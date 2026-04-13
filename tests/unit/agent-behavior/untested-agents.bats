@@ -22,7 +22,7 @@ UNTESTED_AGENTS=(
 
 @test "untested-agents: all agent files exist" {
   for a in "${UNTESTED_AGENTS[@]}"; do
-    assert [ -f "$AGENTS_DIR/${a}.md" ] "Missing agent: ${a}"
+    [ -f "$AGENTS_DIR/${a}.md" ] || fail "Missing agent: ${a}"
   done
 }
 

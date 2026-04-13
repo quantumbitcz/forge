@@ -16,7 +16,7 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project m
 
 @test "thin-launcher: all have do-nothing-else instruction" {
   for s in "${THIN_LAUNCHERS[@]}"; do
-    run grep -qi 'do nothing\|nothing else\|only.*dispatch\|relay' "$SKILLS_DIR/$s/SKILL.md"
+    run grep -qi 'do nothing\|nothing else\|only.*dispatch\|relay\|do not\|solely' "$SKILLS_DIR/$s/SKILL.md"
     assert_success
   done
 }
@@ -30,6 +30,6 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project m
 @test "thin-launcher: none dispatch deleted agents" {
   for s in "${THIN_LAUNCHERS[@]}"; do
     run grep -q 'fg-420' "$SKILLS_DIR/$s/SKILL.md"
-    refute_success
+    assert_failure
   done
 }

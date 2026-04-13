@@ -13,11 +13,10 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project m
   for s in "${THIN_LAUNCHERS[@]}"; do
     local skill="$SKILLS_DIR/$s/SKILL.md"
     local refs
-    refs=$(grep -oP 'fg-\d{3}-[\w-]+' "$skill" 2>/dev/null | sort -u)
+    refs=$(grep -oE 'fg-[0-9]{3}-[a-z-]+' "$skill" 2>/dev/null | sort -u)
     while IFS= read -r ref; do
       [[ -z "$ref" ]] && continue
-      assert [ -f "$AGENTS_DIR/${ref}.md" ] \
-        "Skill $s references ${ref} but agent file missing"
+      [ -f "$AGENTS_DIR/${ref}.md" ] || fail "Skill $s references ${ref} but agent file missing"
     done <<< "$refs"
   done
 }
@@ -45,6 +44,6 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project m
 @test "skill-agent-refs: no skill references deleted fg-420" {
   for dir in "$SKILLS_DIR"/*/; do
     run grep -q 'fg-420' "${dir}SKILL.md"
-    refute_success  # Should NOT find fg-420
+    assert_failure  # Should NOT find fg-420
   done
 }

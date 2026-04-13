@@ -18,13 +18,13 @@ REVIEWERS=(
 
 @test "reviewers: all 8 reviewer agent files exist" {
   for r in "${REVIEWERS[@]}"; do
-    assert [ -f "$AGENTS_DIR/${r}.md" ] "Missing reviewer: ${r}"
+    [ -f "$AGENTS_DIR/${r}.md" ] || fail "Missing reviewer: ${r}"
   done
 }
 
 @test "reviewers: all have pipe-delimited output format reference" {
   for r in "${REVIEWERS[@]}"; do
-    run grep -qi 'pipe.delimited\|output.format\|finding.*format\|\|.*\|' "$AGENTS_DIR/${r}.md"
+    run grep -qi 'pipe.delimited\|output.format\|finding.*format' "$AGENTS_DIR/${r}.md"
     assert_success
   done
 }

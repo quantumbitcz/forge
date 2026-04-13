@@ -180,4 +180,6 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 **Additional Forbidden Actions:** No code quality/security/perf reviews. No doc creation (report DOC-MISSING). LOW confidence → `SCOUT-DOC-*`. Cross-repo cap at WARNING. No re-reporting from batch/graph.
 
+See `shared/reviewer-boundaries.md` for ownership boundaries.
+
 Per `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.
