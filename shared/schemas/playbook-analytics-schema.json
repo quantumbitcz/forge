@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Playbook Analytics",
+  "description": "Schema for .forge/playbook-analytics.json. Tracks per-playbook usage metrics, parameter frequency, common findings, and version history.",
+  "type": "object",
+  "required": ["schema_version", "playbooks", "last_updated"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "playbooks": {
+      "type": "object",
+      "description": "Per-playbook analytics keyed by playbook name (kebab-case)",
+      "additionalProperties": {
+        "$ref": "#/$defs/playbook_stats"
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the last analytics update"
+    }
+  },
+  "$defs": {
+    "playbook_stats": {
+      "type": "object",
+      "required": [
+        "run_count",
+        "success_count",
+        "fail_count",
+        "avg_score",
+        "avg_iterations",
+        "avg_duration_seconds",
+        "avg_cost_usd",
+        "last_used",
+        "parameter_frequency",
+        "common_findings",
+        "version_history"
+      ],
+      "properties": {
+        "run_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of invocations"
+        },
+        "success_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs that reached SHIP"
+        },
+        "fail_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs that failed or were aborted"
+        },
+        "avg_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Average final quality score across all runs"
+        },
+        "avg_iterations": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Average convergence iterations across all runs"
+        },
+        "avg_duration_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Average wall-clock duration in seconds"
+        },
+        "avg_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Average estimated cost in USD per run"
+        },
+        "last_used": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the most recent invocation"
+        },
+        "parameter_frequency": {
+          "type": "object",
+          "description": "Per-parameter value frequency. Keys are parameter names, values are objects mapping parameter values to occurrence counts. Top 5 values tracked plus an 'other' count.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "common_findings": {
+          "type": "object",
+          "description": "Finding categories that recur across playbook runs. Keys are category codes (e.g., SEC-INJECTION), values are occurrence counts.",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "version_history": {
+          "type": "array",
+          "description": "Per-version run statistics ordered by version",
+          "items": {
+            "$ref": "#/$defs/version_entry"
+          }
+        }
+      }
+    },
+    "version_entry": {
+      "type": "object",
+      "required": ["version", "runs", "avg_score"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Playbook version string"
+        },
+        "runs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs with this version"
+        },
+        "avg_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Average quality score for this version"
+        }
+      }
+    }
+  }
+}

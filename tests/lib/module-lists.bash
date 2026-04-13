@@ -76,6 +76,18 @@ MIN_CI_PLATFORMS=7
 MIN_CONTAINER_ORCH=11
 MIN_LAYERS=12
 
+# Cross-cutting module file counts per directory (accidental-deletion guards)
+MIN_AUTH_MODULES=10
+MIN_OBSERVABILITY_MODULES=10
+MIN_MESSAGING_MODULES=5
+MIN_CACHING_MODULES=3
+MIN_SEARCH_MODULES=2
+MIN_STORAGE_MODULES=3
+MIN_DATABASES_MODULES=5
+MIN_PERSISTENCE_MODULES=3
+MIN_MIGRATIONS_MODULES=3
+MIN_API_PROTOCOLS_MODULES=3
+
 DISCOVERED_DOC_BINDINGS=()
 for d in "$PLUGIN_ROOT"/modules/frameworks/*/documentation/; do
   [[ -d "$d" ]] && DISCOVERED_DOC_BINDINGS+=("$(basename "$(dirname "$d")")")
@@ -87,7 +99,7 @@ MIN_DOCUMENTATION_BINDINGS=21
 # Test file count guards (update when adding new test files)
 # ---------------------------------------------------------------------------
 MIN_UNIT_TESTS=55         # Current: 55 files (54 existing + 1 new discovery-detection.bats)
-MIN_CONTRACT_TESTS=78     # Current: 78 files
+MIN_CONTRACT_TESTS=83     # Current: 83 files (78 + 2 conformance + 3 other additions)
 MIN_SCENARIO_TESTS=29     # Current: 29 files
 
 # guard_min_count <label> <actual> <minimum>

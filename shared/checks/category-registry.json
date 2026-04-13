@@ -42,6 +42,11 @@
     "SEC-SUPPLY-LOWPOP": { "description": "Dependency has very low download count (potential low-trust package)", "agents": ["fg-420-dependency-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-420-dependency-reviewer"] },
     "SEC-ENTROPY": { "description": "High-entropy string detected — potential obfuscated secret", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
     "SEC-CLOUD-CRED": { "description": "Cloud provider credential detected (AWS, GCP, Azure, GitHub, Slack, Stripe)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-CACHE-TAMPER": { "description": "Cached artifact integrity check failed (SHA256 mismatch)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 2, "affinity": ["fg-411-security-reviewer"] }
+    "SEC-CACHE-TAMPER": { "description": "Cached artifact integrity check failed (SHA256 mismatch)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 2, "affinity": ["fg-411-security-reviewer"] },
+    "SPEC-DRIFT": { "description": "Specification drift detected (implementation deviates from spec)", "agents": ["fg-400-quality-gate"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
+    "SPEC-DRIFT-COVERAGE-GAP": { "description": "Acceptance criterion exists but no test covers it", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
+    "SPEC-DRIFT-VIOLATION": { "description": "Test exists for acceptance criterion but fails", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 1, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
+    "SPEC-DRIFT-UNDOCUMENTED": { "description": "Implementation adds behavior not captured in any acceptance criterion", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
+    "SPEC-DRIFT-UNIMPLEMENTED": { "description": "Acceptance criterion has no corresponding implementation", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 1, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] }
   }
 }

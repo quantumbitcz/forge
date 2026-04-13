@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spec Registry",
+  "description": "Schema for the living specifications registry (.forge/specs/index.json). Tracks spec status, acceptance criteria, and AC-to-artifact mappings.",
+  "type": "object",
+  "required": ["schema_version", "specs"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Registry format version for forward compatibility"
+    },
+    "specs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/spec"
+      },
+      "description": "Keyed by spec slug (matches filename sans .md)"
+    }
+  },
+  "$defs": {
+    "spec": {
+      "type": "object",
+      "required": [
+        "file",
+        "created_at",
+        "last_checked_at",
+        "status",
+        "acceptance_criteria"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Relative path to the spec file (e.g., .forge/specs/notification-system.md)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the spec was first shaped"
+        },
+        "last_checked_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null,
+          "description": "ISO 8601 timestamp of last drift check"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "SATISFIED", "DRIFTED", "ARCHIVED"],
+          "description": "Spec lifecycle status"
+        },
+        "story_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Kanban ticket IDs linked to this spec"
+        },
+        "acceptance_criteria": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/acceptance_criterion"
+          },
+          "description": "Keyed by AC identifier (AC-001, AC-002, ...)"
+        }
+      }
+    },
+    "acceptance_criterion": {
+      "type": "object",
+      "required": [
+        "text",
+        "status",
+        "mappable"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The full acceptance criterion text"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "SATISFIED", "DRIFTED", "UNIMPLEMENTED"],
+          "description": "AC verification status"
+        },
+        "mappable": {
+          "type": "boolean",
+          "description": "Whether AC follows Given/When/Then and can be auto-mapped to tests"
+        },
+        "mapped_tests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Test file paths with optional #methodName suffix"
+        },
+        "mapped_implementation": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Implementation file paths covering this AC"
+        },
+        "drift_detail": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Human-readable drift explanation when status is DRIFTED"
+        },
+        "last_verified_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null,
+          "description": "ISO 8601 timestamp of last verification"
+        }
+      }
+    }
+  }
+}

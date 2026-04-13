@@ -1,0 +1,574 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pipeline Event",
+  "description": "Schema for individual event entries in .forge/events.jsonl. Each line in the JSONL file conforms to this schema.",
+  "type": "object",
+  "required": ["id", "ts", "type", "run_id", "stage", "agent", "parent_id", "data"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing sequence number within the run. Starts at 1."
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in ISO 8601 format with millisecond precision."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "PIPELINE_START",
+        "PIPELINE_END",
+        "STAGE_TRANSITION",
+        "AGENT_DISPATCH",
+        "AGENT_COMPLETE",
+        "FINDING",
+        "DECISION",
+        "STATE_WRITE",
+        "RECOVERY",
+        "USER_INTERACTION",
+        "CONVERGENCE",
+        "CHECKPOINT"
+      ],
+      "description": "Event type identifier."
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Run identifier matching state.json.run_id. Links events to a specific pipeline execution."
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "PRE_PIPELINE",
+        "PREFLIGHT",
+        "EXPLORING",
+        "PLANNING",
+        "VALIDATING",
+        "IMPLEMENTING",
+        "VERIFYING",
+        "REVIEWING",
+        "DOCUMENTING",
+        "SHIPPING",
+        "LEARNING",
+        "POST_PIPELINE"
+      ],
+      "description": "Current pipeline stage at time of event."
+    },
+    "agent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Agent that emitted the event (e.g., fg-100-orchestrator)."
+    },
+    "parent_id": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "null" }
+      ],
+      "description": "ID of the causally preceding event. null for root events (PIPELINE_START)."
+    },
+    "data": {
+      "type": "object",
+      "description": "Type-specific payload. Schema varies by event type."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "PIPELINE_START" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["requirement", "mode"],
+            "properties": {
+              "requirement": {
+                "type": "string",
+                "description": "The original user requirement."
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["standard", "migration", "bootstrap", "bugfix", "testing", "refactor", "performance"],
+                "description": "Pipeline execution mode."
+              },
+              "spec_file": {
+                "type": ["string", "null"],
+                "description": "Path to spec file if using --spec invocation."
+              },
+              "background": {
+                "type": "boolean",
+                "description": "Whether the run is in background mode."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "description": "Whether the run is a dry run."
+              },
+              "components": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of components involved in this run."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "PIPELINE_END" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["outcome"],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": ["success", "aborted", "failed", "dry_run_complete"],
+                "description": "Pipeline run outcome."
+              },
+              "final_score": {
+                "type": ["integer", "null"],
+                "description": "Final quality score. null if run did not reach scoring."
+              },
+              "total_iterations": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total convergence iterations."
+              },
+              "duration_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total wall-clock duration of the run."
+              },
+              "pr_url": {
+                "type": ["string", "null"],
+                "description": "Pull request URL if created."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "STAGE_TRANSITION" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["from_stage", "to_stage"],
+            "properties": {
+              "from_stage": {
+                "type": "string",
+                "description": "Stage transitioning from."
+              },
+              "to_stage": {
+                "type": "string",
+                "description": "Stage transitioning to."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Human-readable reason for the transition."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "AGENT_DISPATCH" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["target_agent"],
+            "properties": {
+              "target_agent": {
+                "type": "string",
+                "description": "Agent being dispatched."
+              },
+              "task_id": {
+                "type": ["string", "null"],
+                "description": "Kanban task ID if applicable."
+              },
+              "model": {
+                "type": ["string", "null"],
+                "description": "Model tier used for this dispatch."
+              },
+              "prompt_hash": {
+                "type": ["string", "null"],
+                "description": "SHA256 hash of the prompt for dedup."
+              },
+              "prompt_tokens_estimate": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Estimated prompt token count."
+              },
+              "context_summary": {
+                "type": "string",
+                "description": "Brief summary of the dispatch context."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "AGENT_COMPLETE" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["target_agent", "outcome"],
+            "properties": {
+              "target_agent": {
+                "type": "string",
+                "description": "Agent that completed."
+              },
+              "task_id": {
+                "type": ["string", "null"],
+                "description": "Kanban task ID if applicable."
+              },
+              "duration_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Agent execution duration."
+              },
+              "tokens_in": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Input tokens consumed."
+              },
+              "tokens_out": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Output tokens generated."
+              },
+              "model": {
+                "type": ["string", "null"],
+                "description": "Model used."
+              },
+              "outcome": {
+                "type": "string",
+                "enum": ["success", "failure", "timeout", "skipped"],
+                "description": "Agent completion outcome."
+              },
+              "files_changed": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Files modified by the agent."
+              },
+              "findings_count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of findings produced."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "FINDING" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["category", "severity", "message"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Finding category code (e.g., SEC-INJECTION, TEST-FAIL)."
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["CRITICAL", "WARNING", "INFO"],
+                "description": "Finding severity."
+              },
+              "confidence": {
+                "type": "string",
+                "enum": ["HIGH", "MEDIUM", "LOW"],
+                "description": "Finding confidence level."
+              },
+              "file": {
+                "type": ["string", "null"],
+                "description": "File path where finding was detected."
+              },
+              "line": {
+                "type": ["integer", "null"],
+                "minimum": 1,
+                "description": "Line number in the file."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable finding description."
+              },
+              "agent": {
+                "type": "string",
+                "description": "Review agent that raised this finding."
+              },
+              "dedup_key": {
+                "type": ["string", "null"],
+                "description": "Deduplication key (component|file|line|category)."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "DECISION" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["decision", "input", "choice", "reason"],
+            "properties": {
+              "decision": {
+                "type": "string",
+                "description": "Decision type per shared/decision-log.md."
+              },
+              "input": {
+                "type": "object",
+                "description": "Context/inputs that informed the decision."
+              },
+              "choice": {
+                "type": "string",
+                "description": "The outcome selected."
+              },
+              "alternatives": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Other options considered."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Brief rationale for the choice."
+              },
+              "confidence": {
+                "type": "string",
+                "enum": ["HIGH", "MEDIUM", "LOW"],
+                "description": "Decision confidence level."
+              },
+              "agreement": {
+                "type": "object",
+                "properties": {
+                  "agents": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "agreed": { "type": "boolean" },
+                  "resolved_by": { "type": "string" }
+                },
+                "description": "Reviewer agreement metadata for conflict resolutions."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "STATE_WRITE" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["field", "new_value", "seq"],
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "State field that was modified."
+              },
+              "old_value": {
+                "description": "Previous value of the field."
+              },
+              "new_value": {
+                "description": "New value of the field."
+              },
+              "seq": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "state.json _seq number after this write."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "RECOVERY" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["error_type", "strategy"],
+            "properties": {
+              "error_type": {
+                "type": "string",
+                "description": "Error type that triggered recovery."
+              },
+              "strategy": {
+                "type": "string",
+                "description": "Recovery strategy selected."
+              },
+              "budget_before": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Recovery budget weight before this attempt."
+              },
+              "budget_after": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Recovery budget weight after this attempt."
+              },
+              "budget_cost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Cost of this recovery strategy."
+              },
+              "circuit_breaker_state": {
+                "type": "string",
+                "enum": ["CLOSED", "OPEN", "HALF_OPEN"],
+                "description": "Circuit breaker state for this failure category."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "USER_INTERACTION" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["question"],
+            "properties": {
+              "question": {
+                "type": "string",
+                "description": "Question presented to the user."
+              },
+              "options": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Options presented to the user."
+              },
+              "response": {
+                "type": ["string", "null"],
+                "description": "User's response. null if not yet answered."
+              },
+              "response_time_seconds": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "description": "Time taken for the user to respond."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "CONVERGENCE" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["phase", "state", "score", "action"],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "enum": ["correctness", "perfection", "safety_gate"],
+                "description": "Current convergence phase."
+              },
+              "state": {
+                "type": "string",
+                "enum": ["IMPROVING", "PLATEAUED", "REGRESSING"],
+                "description": "Convergence state classification."
+              },
+              "score": {
+                "type": "number",
+                "description": "Current quality score."
+              },
+              "previous_score": {
+                "type": ["number", "null"],
+                "description": "Score from previous cycle. null on first evaluation."
+              },
+              "delta": {
+                "type": "number",
+                "description": "Score change from previous cycle."
+              },
+              "phase_iteration": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Iteration count within current phase."
+              },
+              "total_iterations": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Cumulative iteration count across all phases."
+              },
+              "action": {
+                "type": "string",
+                "enum": ["continue", "converged", "escalate", "restart"],
+                "description": "Action taken based on convergence evaluation."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "CHECKPOINT" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["create", "restore"],
+                "description": "Whether the checkpoint was created or restored."
+              },
+              "checkpoint_file": {
+                "type": "string",
+                "description": "Path to the checkpoint file."
+              },
+              "task_id": {
+                "type": ["string", "null"],
+                "description": "Kanban task ID associated with the checkpoint."
+              },
+              "stage": {
+                "type": "string",
+                "description": "Pipeline stage at time of checkpoint."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

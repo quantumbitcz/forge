@@ -307,3 +307,20 @@ condensation:
   summary_target_tokens: 2000   # Target summary length
   model_tier: fast              # Use fast tier for summarization
   preserve_last_n_findings: 20  # Keep N most recent findings verbatim
+
+# Playbooks (v2.0+)
+playbooks:
+  enabled: true
+  directory: .claude/forge-playbooks
+  suggestion_confidence_threshold: MEDIUM
+
+# Living Specifications (v2.0+)
+living_specs:
+  enabled: true
+  drift_detection: true
+  auto_update_at_learn: true
+
+# Event Log (v2.0+)
+events:
+  enabled: true
+  retention_days: 90

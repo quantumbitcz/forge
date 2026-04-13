@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.23.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.24.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ Layered, resolution top-down:
    - `databases/`, `persistence/`, `migrations/`, `api-protocols/`, `messaging/`, `caching/`, `search/`, `storage/`, `auth/`, `observability/` — domain-specific best practices
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
-   - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
+   - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. The composition algorithm is documented in `shared/composition.md`. When convention stacks are resolved at PREFLIGHT, files are loaded in this order with later files overriding earlier ones for conflicting rules.
 3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 40 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
@@ -80,6 +80,8 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Background execution | `shared/background-execution.md` |
 | A2A protocol | `shared/a2a-protocol.md` |
 | Confidence scoring | `shared/confidence-scoring.md` |
+| Composition order | `shared/composition.md` |
+| Living specifications | `shared/living-specifications.md` |
 
 ## Skill selection guide
 
@@ -102,6 +104,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Migrate framework | `/migration` | Library/framework version upgrades |
 | Ask about codebase | `/forge-ask` | Wiki, graph, explore cache, docs index |
 | Pipeline analytics | `/forge-insights` | Quality, cost, convergence, memory trends |
+| Reusable recipes | `/forge-playbooks` | Create, list, run, analyze pipeline playbooks |
 
 ### Getting started flows
 
@@ -156,7 +159,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 32 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 11 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-SUPPLY-NEW-DEP`, `SEC-SUPPLY-LOWPOP`, `SEC-ENTROPY`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 47 shared categories (18 wildcard prefixes + 29 discrete). See `shared/checks/category-registry.json` for the full list. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `SPEC-DRIFT-*`. Key discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -202,6 +205,9 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Enhanced security** (v2.0, F10): Extended security analysis with supply chain auditing, license compliance, and runtime policy enforcement. Config: `security.*`.
 - **Flaky test management** (v2.0, F14): Automatic detection and quarantine of flaky tests. Tracks test stability across runs with statistical confidence. Flaky tests excluded from gating decisions. Config: `flaky_tests.*`.
 - **Context condensation** (v2.0, F08): Automatic context compression for long-running pipelines. Reduces token consumption by summarizing completed stage outputs. Config: `condensation.*`.
+- **Living specifications** (v2.0, F05): Drift detection between structured specs and implementation. Specs carry machine-parseable `AC-NNN` acceptance criteria. Quality gate detects drift at REVIEW, retrospective proposes updates at LEARN. Spec registry at `.forge/specs/index.json`. Config: `living_specs.*`.
+- **Event-sourced pipeline log** (v2.0, F07): Unified append-only event log at `.forge/events.jsonl`. Captures all pipeline events with causal linking (parent_id chains). Subsumes `decisions.jsonl` and `progress/timeline.jsonl` as filtered views. Config: `events.*`.
+- **Playbooks** (v2.0, F11): Reusable pipeline recipes for common workflows. Defined in `.forge/playbooks/` as YAML. Usage analytics tracked in `.forge/playbook-analytics.json`. Managed via `/forge-playbooks`. Config: `playbooks.*`.
 
 ### Deterministic Control Flow
 
@@ -251,9 +257,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Missing tools skip tiers. Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (32 total), hooks, kanban, git
+## Skills (33 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management).
 
 **Hooks** (5): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
@@ -308,7 +314,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `trust.json` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, and `playbook-analytics.json` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. When disabled, no `model` parameter is passed to Agent dispatches. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
@@ -364,7 +370,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.23.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.24.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

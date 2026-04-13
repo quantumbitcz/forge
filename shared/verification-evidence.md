@@ -114,3 +114,46 @@ If evidence is stale on re-check, the orchestrator re-dispatches fg-590. The fie
 2. Read by orchestrator (`fg-100`) to decide SHIP vs loop-back
 3. Read by PR builder (`fg-600`) as a hard gate before PR creation
 4. Overwritten on each fg-590 invocation (no append, no history — history is in `state.json.evidence.block_history`)
+
+## Partial Failure Handling
+
+Evidence collection runs four checks sequentially: build, tests, lint, review. If any check partially fails (timeout, crash, indeterminate result), the following rules apply.
+
+### Check-Level Failure Modes
+
+| Check | Failure Mode | Evidence Field | Verdict Effect |
+|-------|-------------|---------------|----------------|
+| Build | Command times out (`build_timeout` exceeded) | `build.exit_code: -1`, `build.output_tail: "TIMEOUT after {N}s"` | BLOCK with `block_reasons: ["build_timeout"]` |
+| Build | Command crashes (signal) | `build.exit_code: {signal + 128}` | BLOCK with `block_reasons: ["build_crash"]` |
+| Tests | Command times out (`test_timeout` exceeded) | `tests.exit_code: -1`, `tests.total: 0` | BLOCK with `block_reasons: ["test_timeout"]` |
+| Tests | Partial completion (some suites pass, runner crashes) | `tests.exit_code: {code}`, `tests.passed: {partial}`, `tests.failed: -1` | BLOCK with `block_reasons: ["test_partial_failure"]` |
+| Lint | Command times out (`lint_timeout` exceeded) | `lint.exit_code: -1` | BLOCK with `block_reasons: ["lint_timeout"]` |
+| Review | Agent timeout (>10min) | `review.dispatched: true`, `review.critical_issues: -1` | BLOCK with `block_reasons: ["review_timeout"]` |
+| Review | Agent crash | `review.dispatched: false` | BLOCK with `block_reasons: ["review_not_dispatched"]` |
+
+### Sentinel Values
+
+- `exit_code: -1` indicates timeout (the command did not produce an exit code)
+- `tests.failed: -1` indicates the test runner crashed before reporting results
+- `review.critical_issues: -1` indicates the review agent did not return a structured result
+
+### Sequential Short-Circuit
+
+Evidence collection is sequential: build -> tests -> lint -> review. If build fails (non-zero exit code), subsequent checks are **not skipped** -- all four run regardless. Rationale: even with a build failure, lint and review may surface additional issues that inform the fix cycle.
+
+**Exception:** If `build.exit_code` is -1 (timeout), tests are skipped (they cannot run without a successful build). Lint and review still run against the source code (they do not require a build artifact). Skipped checks are recorded with their sentinel values, not omitted from `evidence.json`.
+
+### Block History
+
+Each BLOCK verdict appends to `state.json.evidence.block_history[]`:
+
+```json
+{
+  "attempt": 2,
+  "reasons": ["test_timeout"],
+  "scores": { "build": 0, "tests": -1, "lint": 0, "review": 0 },
+  "timestamp": "2026-04-13T10:00:00Z"
+}
+```
+
+The orchestrator uses `block_history` to detect patterns (e.g., tests consistently timing out across attempts) and may adjust timeouts or escalate to the user.

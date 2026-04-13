@@ -277,6 +277,82 @@ If the answer to any is "no," the design needs more intentional direction.
 
 ---
 
+## Mapping to Review Finding Categories
+
+This table maps design theory violations to finding categories emitted by `fg-413-frontend-reviewer` and `fg-320-frontend-polisher`. When evaluating code, use this as the authoritative mapping.
+
+### Gestalt Principle Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| Proximity | Related elements not grouped; ambiguous spacing | `FE-VISUAL-LAYOUT` | WARNING |
+| Similarity | Same-function elements with inconsistent styling | `FE-VISUAL-LAYOUT` | WARNING |
+| Continuity | Grid misalignment; inconsistent visual flow | `FE-VISUAL-LAYOUT` | WARNING |
+| Closure | Over-bordered UI; nested cage effect | `FE-VISUAL-LAYOUT` | INFO |
+| Figure-Ground | Poor content-background separation | `FE-VISUAL-CONTRAST` | WARNING |
+
+### Visual Hierarchy Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| Squint test failure | No clear primary focal point | `FE-VISUAL-LAYOUT` | WARNING |
+| Heading scale | Ratio between heading levels < 1.2x | `FE-VISUAL-TYPE` | INFO |
+| Weight hierarchy | Competing bold elements with no clear primary | `FE-VISUAL-LAYOUT` | INFO |
+
+### Color Theory Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| 60/30/10 rule | Dominant color exceeds 70% or accent exceeds 15% | `FE-VISUAL-COLOR` | INFO |
+| Contrast ratio | Text contrast below WCAG AA (4.5:1 normal, 3:1 large) | `FE-VISUAL-CONTRAST` | CRITICAL |
+| Hardcoded color values | Hex/RGB literals instead of design tokens | `DESIGN-TOKEN` | WARNING |
+| Color-only signaling | Meaning conveyed only through color (a11y) | `A11Y-COLOR` | WARNING |
+
+### Typography Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| Font count | More than 2 font families | `FE-VISUAL-TYPE` | WARNING |
+| Hardcoded font sizes | Pixel values instead of design tokens/scale | `DESIGN-TOKEN` | WARNING |
+| Line length | Body text exceeding 80ch or below 45ch | `FE-VISUAL-TYPE` | INFO |
+| Line height | Line height < 1.4 for body text | `FE-VISUAL-TYPE` | INFO |
+
+### 8pt Grid Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| Spacing off-grid | Padding/margin not a multiple of 8px (or 4px for small elements) | `FE-VISUAL-SPACING` | WARNING |
+| Inconsistent spacing | Same logical spacing using different values | `FE-VISUAL-SPACING` | WARNING |
+| Hardcoded spacing | Pixel values instead of spacing tokens | `DESIGN-TOKEN` | WARNING |
+
+### Motion Violations
+
+| Theory Concept | Violation | Finding Category | Default Severity |
+|---------------|-----------|-----------------|-----------------|
+| Non-GPU animation | Animating width/height/top/left instead of transform/opacity | `DESIGN-MOTION` | WARNING |
+| Missing will-change | Complex animation without will-change hint | `DESIGN-MOTION` | INFO |
+| Missing prefers-reduced-motion | Animation without reduced-motion media query | `A11Y-MOTION` | WARNING |
+| Duration too long | Animation > 500ms for UI transitions | `DESIGN-MOTION` | INFO |
+| Duration too short | Animation < 100ms (imperceptible) | `DESIGN-MOTION` | INFO |
+
+### Category Cross-Reference
+
+| Finding Category | Defined in | Scoring Weight |
+|-----------------|-----------|---------------|
+| `FE-VISUAL-LAYOUT` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-COLOR` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-TYPE` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-SPACING` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-CONTRAST` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-REGRESSION` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-RESPONSIVE` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `FE-VISUAL-FIDELITY` | scoring.md (`FE-VISUAL-*` wildcard) | Standard per severity |
+| `DESIGN-TOKEN` | scoring.md (discrete) | Standard per severity |
+| `DESIGN-MOTION` | scoring.md (discrete) | Standard per severity |
+| `A11Y-*` | scoring.md (`A11Y-*` wildcard) | Standard per severity |
+
+---
+
 ## 8. Multi-Viewport Design Theory
 
 ### Mobile-First Is Content-First

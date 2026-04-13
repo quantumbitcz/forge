@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-local-schema",
+  "title": "Forge Local Schema",
+  "description": "Schema for .claude/forge.local.md YAML frontmatter. Defines per-project configuration including tech stack, commands, and module bindings.",
+  "type": "object",
+  "required": ["components", "commands"],
+  "properties": {
+    "components": {
+      "type": "object",
+      "description": "Tech stack component declarations. Single-component projects use flat keys; multi-service uses named entries with path:",
+      "required": ["framework"],
+      "properties": {
+        "language": {
+          "type": ["string", "null"],
+          "enum": [
+            "kotlin", "java", "typescript", "python", "go", "rust",
+            "swift", "c", "csharp", "ruby", "php", "dart", "elixir",
+            "scala", "cpp", null
+          ],
+          "description": "Primary language. Must match a file in modules/languages/. null for k8s."
+        },
+        "framework": {
+          "type": ["string", "null"],
+          "enum": [
+            "spring", "react", "fastapi", "axum", "swiftui", "vapor",
+            "express", "sveltekit", "k8s", "embedded", "go-stdlib",
+            "aspnet", "django", "nextjs", "gin", "jetpack-compose",
+            "kotlin-multiplatform", "angular", "nestjs", "vue", "svelte",
+            null
+          ],
+          "description": "Framework. Must match a directory in modules/frameworks/."
+        },
+        "testing": {
+          "type": ["string", "null"],
+          "enum": [
+            "kotest", "junit5", "vitest", "jest", "pytest", "go-testing",
+            "xctest", "rust-test", "xunit-nunit", "testcontainers",
+            "playwright", "cypress", "cucumber", "k6", "detox", "rspec",
+            "phpunit", "exunit", "scalatest", null
+          ],
+          "description": "Testing framework. Must match a file in modules/testing/."
+        },
+        "variant": {
+          "type": ["string", "null"],
+          "description": "Framework variant. Must match a file in modules/frameworks/{framework}/variants/{value}.md."
+        },
+        "web": {
+          "type": ["string", "null"],
+          "description": "Web layer binding (e.g., thymeleaf, htmx). Framework-specific."
+        },
+        "persistence": {
+          "type": ["string", "null"],
+          "description": "Persistence layer binding (e.g., jpa, exposed, r2dbc). Framework-specific."
+        },
+        "database": {
+          "type": ["string", "null"],
+          "description": "Database module. Must match a file in modules/databases/."
+        },
+        "migrations": {
+          "type": ["string", "null"],
+          "description": "Migration tool module. Must match a file in modules/migrations/."
+        },
+        "api_protocol": {
+          "type": ["string", "null"],
+          "description": "API protocol module. Must match a file in modules/api-protocols/."
+        },
+        "messaging": {
+          "type": ["string", "null"],
+          "description": "Messaging module. Must match a file in modules/messaging/."
+        },
+        "caching": {
+          "type": ["string", "null"],
+          "description": "Caching module. Must match a file in modules/caching/."
+        },
+        "search": {
+          "type": ["string", "null"],
+          "description": "Search module. Must match a file in modules/search/."
+        },
+        "storage": {
+          "type": ["string", "null"],
+          "description": "Storage module. Must match a file in modules/storage/."
+        },
+        "auth": {
+          "type": ["string", "null"],
+          "description": "Auth module. Must match a file in modules/auth/."
+        },
+        "observability": {
+          "type": ["string", "null"],
+          "description": "Observability module. Must match a file in modules/observability/."
+        },
+        "build_system": {
+          "type": ["string", "null"],
+          "description": "Build system module. Must match a file in modules/build-systems/."
+        },
+        "ci": {
+          "type": ["string", "null"],
+          "description": "CI/CD module. Must match a file in modules/ci-cd/."
+        },
+        "container": {
+          "type": ["string", "null"],
+          "description": "Container orchestration module. Must match a file in modules/container-orchestration/."
+        },
+        "orchestrator": {
+          "type": ["string", "null"],
+          "description": "Container orchestrator. Must match a file in modules/container-orchestration/."
+        },
+        "documentation": {
+          "type": ["string", "null"],
+          "description": "Documentation conventions."
+        },
+        "code_quality": {
+          "description": "Code quality tools list. Each entry must match a file in modules/code-quality/. Supports string list or object form with external ruleset.",
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "type": "string" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": { "type": "string" },
+                      "ruleset": { "type": "string" }
+                    },
+                    "required": ["tool"]
+                  }
+                ]
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "Service path for multi-service (monorepo) projects"
+        }
+      },
+      "additionalProperties": true
+    },
+    "commands": {
+      "type": "object",
+      "description": "Build/test/lint commands for the project",
+      "required": ["build", "test", "lint"],
+      "properties": {
+        "build": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Build command. Required."
+        },
+        "test": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Test command. Required."
+        },
+        "lint": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Lint command. Required."
+        },
+        "format": {
+          "type": "string",
+          "description": "Format command. Optional."
+        },
+        "test_single": {
+          "type": "string",
+          "description": "Command to run a single test file. Optional."
+        },
+        "build_timeout": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 600,
+          "default": 120,
+          "description": "Build command timeout in seconds"
+        },
+        "test_timeout": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 1800,
+          "default": 300,
+          "description": "Test command timeout in seconds"
+        },
+        "lint_timeout": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 300,
+          "default": 60,
+          "description": "Lint command timeout in seconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "conventions_file": {
+      "type": "string",
+      "description": "Path to main framework conventions file. Required."
+    },
+    "conventions_variant": {
+      "type": "string",
+      "description": "Path to variant conventions file. Optional."
+    },
+    "conventions_testing": {
+      "type": "string",
+      "description": "Path to testing conventions file. Optional."
+    },
+    "conventions_web": {
+      "type": "string",
+      "description": "Path to web layer conventions file. Optional."
+    },
+    "conventions_persistence": {
+      "type": "string",
+      "description": "Path to persistence layer conventions file. Optional."
+    },
+    "language_file": {
+      "type": "string",
+      "description": "Path to language module file."
+    },
+    "preempt_file": {
+      "type": "string",
+      "description": "Path to forge-log.md for preemptive pattern loading."
+    },
+    "config_file": {
+      "type": "string",
+      "description": "Path to forge-config.md."
+    },
+    "modules": {
+      "type": "array",
+      "description": "Multi-repo module declarations. Each entry represents a repo.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "components": { "type": "object" }
+        }
+      }
+    },
+    "test_gate": {
+      "type": "object",
+      "description": "Test gate overrides",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Override test command for test gate. Should match commands.test."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

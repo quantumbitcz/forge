@@ -1,0 +1,579 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-config-schema",
+  "title": "Forge Config Schema",
+  "description": "Schema for .claude/forge-config.md YAML frontmatter. Defines all validated parameters with range constraints from scoring.md, convergence-engine.md, CLAUDE.md, and related source documents.",
+  "type": "object",
+  "properties": {
+    "scoring": {
+      "type": "object",
+      "description": "Score calculation parameters. Formula: max(0, 100 - critical_weight*CRITICAL - warning_weight*WARNING - info_weight*INFO)",
+      "properties": {
+        "critical_weight": {
+          "type": "integer",
+          "minimum": 10,
+          "default": 20,
+          "description": "Point deduction per CRITICAL finding"
+        },
+        "warning_weight": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Point deduction per WARNING finding"
+        },
+        "info_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 2,
+          "description": "Point deduction per INFO finding. Must be less than warning_weight."
+        },
+        "pass_threshold": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 100,
+          "default": 80,
+          "description": "Minimum score for PASS verdict"
+        },
+        "concerns_threshold": {
+          "type": "integer",
+          "minimum": 40,
+          "default": 60,
+          "description": "Minimum score for CONCERNS verdict. Must be at least 10 less than pass_threshold."
+        },
+        "oscillation_tolerance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum allowed score regression before escalation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "convergence": {
+      "type": "object",
+      "description": "Iteration convergence parameters",
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 20,
+          "default": 15,
+          "description": "Maximum pipeline iterations before forced stop"
+        },
+        "plateau_threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3,
+          "description": "Score improvement below this is considered a plateau"
+        },
+        "plateau_patience": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 3,
+          "description": "Number of plateau iterations before escalation"
+        },
+        "target_score": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 100,
+          "default": 90,
+          "description": "Target score for convergence. Must be >= scoring.pass_threshold."
+        }
+      },
+      "additionalProperties": false
+    },
+    "total_retries_max": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 30,
+      "default": 10,
+      "description": "Global retry budget per pipeline run"
+    },
+    "shipping": {
+      "type": "object",
+      "description": "Pre-ship verification parameters",
+      "properties": {
+        "min_score": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 100,
+          "default": 90,
+          "description": "Minimum score to allow shipping. Must be >= scoring.pass_threshold."
+        },
+        "evidence_max_age_minutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 60,
+          "default": 30,
+          "description": "Maximum age of evidence.json for ship verdict"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sprint": {
+      "type": "object",
+      "description": "Sprint/parallel orchestration parameters",
+      "properties": {
+        "poll_interval_seconds": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 120,
+          "default": 30,
+          "description": "Polling interval for sprint status checks"
+        },
+        "dependency_timeout_minutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 180,
+          "default": 60,
+          "description": "Maximum wait time for inter-feature dependencies"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tracking": {
+      "type": "object",
+      "description": "Kanban tracking parameters",
+      "properties": {
+        "prefix": {
+          "type": "string",
+          "default": "FG",
+          "description": "Ticket ID prefix"
+        },
+        "archive_after_days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365,
+          "default": 90,
+          "description": "Days before archiving completed tickets. 0 = disabled."
+        }
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "description": "Scope decomposition parameters",
+      "properties": {
+        "decomposition_threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 3,
+          "description": "Number of features that triggers scope decomposition"
+        }
+      },
+      "additionalProperties": false
+    },
+    "routing": {
+      "type": "object",
+      "description": "Intent routing parameters",
+      "properties": {
+        "vague_threshold": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "medium",
+          "description": "Threshold for triggering the shaper on vague requirements"
+        }
+      },
+      "additionalProperties": false
+    },
+    "model_routing": {
+      "type": "object",
+      "description": "Tiered model selection per agent. Disabled by default.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable model routing. When disabled, no model parameter is passed to Agent dispatches."
+        },
+        "default_tier": {
+          "type": "string",
+          "enum": ["fast", "standard", "premium"],
+          "default": "standard",
+          "description": "Default model tier for agents without explicit overrides"
+        },
+        "overrides": {
+          "type": "object",
+          "description": "Per-agent tier overrides. Keys are agent IDs from agent-registry.md.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["fast", "standard", "premium"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "quality_gate": {
+      "type": "object",
+      "description": "Quality gate configuration",
+      "properties": {
+        "deliberation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable reviewer deliberation for conflicting findings"
+        },
+        "quick_reviewers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reviewer agents for quick review mode"
+        },
+        "full_reviewers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reviewer agents for full review mode"
+        }
+      },
+      "additionalProperties": true
+    },
+    "mutation_testing": {
+      "type": "object",
+      "description": "LLM-generated mutation testing configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable mutation analysis after tests pass"
+        },
+        "max_mutants": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 10,
+          "description": "Maximum number of mutants to generate per changed file"
+        }
+      },
+      "additionalProperties": true
+    },
+    "visual_verification": {
+      "type": "object",
+      "description": "Screenshot-based UI verification via Playwright MCP",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable visual verification"
+        }
+      },
+      "additionalProperties": true
+    },
+    "lsp": {
+      "type": "object",
+      "description": "Language Server Protocol integration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable LSP-based code analysis"
+        }
+      },
+      "additionalProperties": true
+    },
+    "observability": {
+      "type": "object",
+      "description": "OpenTelemetry traces and metrics export",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable OTel export"
+        }
+      },
+      "additionalProperties": true
+    },
+    "data_classification": {
+      "type": "object",
+      "description": "Secret detection and redaction in pipeline outputs",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable data classification checks"
+        }
+      },
+      "additionalProperties": true
+    },
+    "automations": {
+      "type": "array",
+      "description": "Event-driven automation triggers",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Automation rule name"
+          },
+          "trigger": {
+            "type": "string",
+            "description": "Trigger type: cron, ci, mcp"
+          },
+          "cooldown_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Minimum interval between identical triggers"
+          }
+        }
+      }
+    },
+    "wiki": {
+      "type": "object",
+      "description": "Wiki generator configuration",
+      "properties": {
+        "auto_update": {
+          "type": "boolean",
+          "default": true,
+          "description": "Regenerate wiki at PREFLIGHT"
+        }
+      },
+      "additionalProperties": true
+    },
+    "memory_discovery": {
+      "type": "object",
+      "description": "Retrospective auto-discovery of codebase patterns",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto-discovery of patterns"
+        }
+      },
+      "additionalProperties": true
+    },
+    "forge_ask": {
+      "type": "object",
+      "description": "Codebase Q&A configuration",
+      "properties": {
+        "deep_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable multi-source synthesis for deep queries"
+        }
+      },
+      "additionalProperties": true
+    },
+    "graph": {
+      "type": "object",
+      "description": "Neo4j knowledge graph configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable knowledge graph"
+        }
+      },
+      "additionalProperties": true
+    },
+    "linear": {
+      "type": "object",
+      "description": "Linear integration configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Linear sync"
+        }
+      },
+      "additionalProperties": true
+    },
+    "frontend_polish": {
+      "type": "object",
+      "description": "Frontend polisher agent configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable frontend polisher (fg-320)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "preview": {
+      "type": "object",
+      "description": "Preview validator configuration",
+      "properties": {
+        "max_fix_loops": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3,
+          "description": "Maximum fix loops for preview gating"
+        }
+      },
+      "additionalProperties": true
+    },
+    "infra": {
+      "type": "object",
+      "description": "Infrastructure verification tier",
+      "properties": {
+        "max_verification_tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 3,
+          "description": "Maximum infra verification tier (T1-T5)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "autonomous": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable autonomous mode (auto-selection, no pause except safety escalations)"
+    },
+    "documentation": {
+      "type": "object",
+      "description": "Documentation generation configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable documentation generation stage"
+        }
+      },
+      "additionalProperties": true
+    },
+    "explore": {
+      "type": "object",
+      "description": "Explore cache settings for incremental codebase indexing",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable explore cache"
+        }
+      },
+      "additionalProperties": true
+    },
+    "plan_cache": {
+      "type": "object",
+      "description": "Plan reuse settings for similar requirements",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable plan cache"
+        }
+      },
+      "additionalProperties": true
+    },
+    "confidence": {
+      "type": "object",
+      "description": "Finding confidence scoring configuration",
+      "properties": {
+        "exclude_low": {
+          "type": "boolean",
+          "default": true,
+          "description": "Exclude LOW confidence findings from fix cycles"
+        }
+      },
+      "additionalProperties": true
+    },
+    "test_history": {
+      "type": "object",
+      "description": "Test history tracking across runs",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable test history tracking"
+        }
+      },
+      "additionalProperties": true
+    },
+    "condensation": {
+      "type": "object",
+      "description": "Context condensation configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context condensation"
+        }
+      },
+      "additionalProperties": true
+    },
+    "check_engine": {
+      "type": "object",
+      "description": "Check engine hook configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable check engine on Edit/Write"
+        }
+      },
+      "additionalProperties": true
+    },
+    "code_graph": {
+      "type": "object",
+      "description": "Code graph analysis configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable code graph analysis"
+        }
+      },
+      "additionalProperties": true
+    },
+    "living_specs": {
+      "type": "object",
+      "description": "Living specification tracking",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable living specs"
+        }
+      },
+      "additionalProperties": true
+    },
+    "events": {
+      "type": "object",
+      "description": "Event system configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable event system"
+        }
+      },
+      "additionalProperties": true
+    },
+    "playbooks": {
+      "type": "object",
+      "description": "Playbook execution configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable playbook execution"
+        }
+      },
+      "additionalProperties": true
+    },
+    "mode_config": {
+      "type": "object",
+      "description": "Per-stage agent selection and mode overlays",
+      "properties": {
+        "stages": {
+          "type": "object",
+          "description": "Maps each pipeline stage to its default agent",
+          "additionalProperties": { "type": "string" }
+        },
+        "mode_overlays": {
+          "type": "object",
+          "description": "Per-mode stage overrides (bugfix, migration, bootstrap)",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
