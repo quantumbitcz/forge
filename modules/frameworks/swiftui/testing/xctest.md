@@ -1,48 +1,60 @@
-# SwiftUI + XCTest Testing Patterns
+# SwiftUI + XCTest Testing Conventions
 
-> SwiftUI-specific testing patterns for XCTest. Extends `modules/testing/xctest.md`.
+## Test Structure
+
+- Tests in `Tests/` target matching main target name
+- Name files: `<Feature>Tests.swift`
+- Use `XCTestCase` subclasses
+- `@MainActor` for UI-related tests
+
+## View Testing with ViewInspector
+
+- Add `ViewInspector` via SPM for view inspection
+- Access view hierarchy: `try view.inspect().find(text: "Hello")`
+- Test view modifiers: `try view.inspect().find(ViewType.Button.self)`
+- Test navigation: inspect `NavigationLink` destinations
 
 ## ViewModel Testing
 
-- Test state transitions and action outcomes directly
-- Mock services via protocols
-- Assert `@Published` / `@Observable` state changes
+- Test `@Published` properties via `XCTestExpectation`:
+  ```swift
+  let expectation = expectation(description: "value changed")
+  viewModel.$value.dropFirst().sink { _ in expectation.fulfill() }.store(in: &cancellables)
+  viewModel.loadData()
+  await fulfillment(of: [expectation], timeout: 1.0)
+  ```
+- Test `@Observable` (iOS 17+): observe property changes directly
 
-```swift
-@MainActor
-final class UserProfileViewModelTests: XCTestCase {
-    func testLoadProfile_success_updatesState() async {
-        let mockService = MockUserService(user: .stub)
-        let vm = UserProfileViewModel(userService: mockService)
+## Async Testing
 
-        await vm.loadProfile(id: "123")
+- Use `async` test methods: `func testFetch() async throws`
+- Use `XCTestExpectation` for Combine publishers
+- Test `Task` cancellation explicitly
 
-        XCTAssertEqual(vm.state, .loaded)
-        XCTAssertEqual(vm.user?.name, "Alice")
-    }
-}
-```
+## Core Data Testing
 
-## Test Naming Convention
+- Use in-memory persistent store: `NSPersistentStoreDescription().url = URL(fileURLWithPath: "/dev/null")`
+- Create test context per test case
+- Reset context in `tearDown`
 
-- Pattern: `test{Action}_{condition}_{expectedResult}`
-- Example: `testLogin_withInvalidEmail_showsError`
+## Mocking
 
-## Service Testing
+- Protocol-based mocking: define protocols for services, create mock implementations
+- Use `@Dependency` from swift-dependencies for DI in TCA
+- Mock `URLSession` with `URLProtocol` subclass
 
-- Mock `URLProtocol` for network tests
-- Test error mapping: HTTP status codes -> domain errors
-- Test retry logic with simulated failures
+## Dos
 
-## View Testing
+- Test ViewModels independently from Views
+- Test Combine pipelines with `expectation` pattern
+- Test error states and loading states
+- Use `@MainActor` for tests touching UI state
+- Test accessibility labels exist
 
-- ViewInspector for snapshot/interaction tests (optional)
-- XCUITest for critical user flows only (login, purchase, onboarding)
-- Test `@Observable` / `ObservableObject` state changes via unit tests on ViewModel
+## Don'ts
 
-## Mocking Pattern
-
-- Define protocols for all services
-- Create mock implementations in test target
-- Inject via init parameters (not singletons)
-- No network in tests -- mock all network calls
+- Don't test SwiftUI layout rendering (positions, frames)
+- Don't test system views (NavigationView internals)
+- Don't use `sleep` in async tests (use expectations)
+- Don't test previews at runtime
+- Don't mock SwiftUI environment values in unit tests

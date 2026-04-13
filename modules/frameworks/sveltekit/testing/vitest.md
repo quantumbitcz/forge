@@ -1,49 +1,57 @@
-# SvelteKit + Vitest Testing Patterns
+# SvelteKit + Vitest Testing Conventions
 
-> SvelteKit-specific testing patterns for Vitest. Extends `modules/testing/vitest.md`.
+## Test Structure
 
-## Component Testing
-
-- Use `@testing-library/svelte` for component rendering and interaction
-- Prefer queries: `getByRole` > `getByLabelText` > `getByText` > `getByTestId`
-- Test Svelte 5 rune-based components by interacting with rendered output
-
-```typescript
-import { render, screen } from '@testing-library/svelte';
-import userEvent from '@testing-library/user-event';
-import MyComponent from './MyComponent.svelte';
-
-test('handles user interaction', async () => {
-  render(MyComponent, { props: { items: mockItems } });
-  const button = screen.getByRole('button', { name: /submit/i });
-  await userEvent.click(button);
-  expect(screen.getByText('Success')).toBeInTheDocument();
-});
-```
+- Unit tests: `src/lib/**/*.test.ts` for library code
+- Route tests: `src/routes/**/*.test.ts` alongside `+page.svelte`
+- Server tests: `src/routes/**/*.server.test.ts` for server-only code
 
 ## Load Function Testing
 
-- Import load functions directly and call with mocked event objects
-- Mock `fetch`, `params`, `locals` as needed
-- Assert return shape matches expected data
+- Import `load` function from `+page.ts` or `+page.server.ts`
+- Create mock `RequestEvent` or `LoadEvent`:
+  ```typescript
+  const event = { params: { id: '1' }, fetch: vi.fn() } as unknown as LoadEvent;
+  const result = await load(event);
+  ```
+- Assert returned data structure
 
-```typescript
-import { load } from './+page.server';
+## Server Route Testing
 
-test('load returns user data', async () => {
-  const result = await load({ params: { id: '123' }, locals: { user: mockUser } });
-  expect(result.user).toBeDefined();
-});
-```
+- Import handler from `+server.ts`
+- Create mock `RequestEvent` with `Request` object
+- Assert `Response` status and body
 
 ## Form Action Testing
 
-- Test actions by providing mocked `request` with `FormData`
-- Assert `fail()` returns for validation errors
-- Assert redirect for successful mutations
+- Import actions from `+page.server.ts`
+- Create mock `RequestEvent` with `FormData`
+- Assert redirect or returned data
 
-## Accessibility Testing
+## Component Testing
 
-- Use `@testing-library/svelte` with `getByRole`, `getByLabelText` queries
-- Run axe-core in tests: `@axe-core/playwright` for E2E
-- Test keyboard navigation for critical flows
+- Same as Svelte testing conventions (see `modules/frameworks/svelte/testing/vitest.md`)
+- Additional: test layout components with slot content
+- Test error pages (`+error.svelte`) with mock `$page.error`
+
+## Mocking
+
+- Mock `$app/stores`: `vi.mock('$app/stores', () => ({ page: writable({...}) }))`
+- Mock `$app/navigation`: `vi.mock('$app/navigation', () => ({ goto: vi.fn() }))`
+- Mock `$env`: `vi.mock('$env/static/private', () => ({ API_KEY: 'test' }))`
+
+## Dos
+
+- Test load functions independently from components
+- Test server-only code without browser APIs
+- Test form validation in actions
+- Use `vitest-fetch-mock` or MSW for API mocking in load functions
+- Test error handling in load functions (throw `error()`)
+
+## Don'ts
+
+- Don't import server code in client test files
+- Don't test SvelteKit routing internals
+- Don't mock `fetch` globally (use per-test mocking)
+- Don't test prerendered pages at runtime
+- Don't rely on `$app/environment` values in tests

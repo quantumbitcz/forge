@@ -1,151 +1,46 @@
-# Svelte 5 + Vitest Testing Patterns
+# Svelte + Vitest Testing Conventions
 
-> Svelte 5 standalone-specific testing patterns for Vitest. Extends `modules/testing/vitest.md`.
+## Test Structure
 
-## Setup
-
-```typescript
-// vite.config.ts (or vitest.config.ts)
-import { defineConfig } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
-
-export default defineConfig({
-  plugins: [svelte({ hot: !process.env.VITEST })],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./tests/setup.ts'],
-  },
-});
-```
-
-```typescript
-// tests/setup.ts
-import '@testing-library/jest-dom';
-```
-
-Required packages: `@testing-library/svelte`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`.
+- Co-locate tests: `Component.test.ts` next to `Component.svelte`
+- Use `describe` matching component name
 
 ## Component Testing
 
-- Use `@testing-library/svelte` for component rendering and interaction
-- Prefer queries: `getByRole` > `getByLabelText` > `getByText` > `getByTestId`
-- Test Svelte 5 rune-based components by interacting with rendered output — not internal state
-- Use `cleanup` after each test (Testing Library handles this automatically with `afterEach`)
+- Render via `render()` from `@testing-library/svelte`
+- Query with `screen.getByRole()`, `screen.getByText()` — same as React Testing Library
+- Use `userEvent` from `@testing-library/user-event` for interactions
+- Await `tick()` from `svelte` for reactive updates
 
-```typescript
-import { render, screen } from '@testing-library/svelte';
-import userEvent from '@testing-library/user-event';
-import Button from './Button.svelte';
+## Svelte 5 Runes Testing
 
-test('calls onclick prop when clicked', async () => {
-  const user = userEvent.setup();
-  const handleClick = vi.fn();
-  render(Button, { props: { onclick: handleClick, label: 'Submit' } });
+- Test `$state` runes through component rendering
+- `$derived` values: change source, assert derived output renders
+- `$effect` side effects: use `flushSync()` to force synchronous updates
 
-  await user.click(screen.getByRole('button', { name: /submit/i }));
-  expect(handleClick).toHaveBeenCalledOnce();
-});
-```
+## Store Testing
 
-## Testing Reactive State Changes
+- Svelte stores: `get(store)` for current value
+- Writable stores: `store.set(newValue)`, then assert component updated
+- Derived stores: test through source store changes
 
-Test by triggering user interactions, not by directly mutating `$state` internals.
+## Mocking
 
-```typescript
-import { render, screen } from '@testing-library/svelte';
-import userEvent from '@testing-library/user-event';
-import Counter from './Counter.svelte';
-
-test('increments count on button click', async () => {
-  const user = userEvent.setup();
-  render(Counter, { props: { initialCount: 0 } });
-
-  await user.click(screen.getByRole('button', { name: /increment/i }));
-  expect(screen.getByText('1')).toBeInTheDocument();
-});
-```
-
-## Testing Snippet / Children Props
-
-```typescript
-import { render, screen } from '@testing-library/svelte';
-import Card from './Card.svelte';
-
-// For components accepting children snippets, use the slot-like approach:
-test('renders children content', () => {
-  render(Card, {
-    props: {},
-    // snippets are tested via wrapper components or raw HTML where testing-library/svelte supports it
-  });
-  // Verify the shell structure renders
-  expect(screen.getByRole('article')).toBeInTheDocument();
-});
-```
-
-## Store Testing (`.svelte.ts` files)
-
-Test store behavior by importing the store module directly — no component needed.
-
-```typescript
-import { userStore } from '../stores/user.svelte.ts';
-
-test('stores and clears user', () => {
-  userStore.set({ id: '1', name: 'Alice' });
-  expect(userStore.current?.name).toBe('Alice');
-
-  userStore.clear();
-  expect(userStore.current).toBeNull();
-});
-```
-
-## Service Testing
-
-Test service modules in isolation with mocked `fetch` via `vi.stubGlobal` or MSW.
-
-```typescript
-import { vi } from 'vitest';
-import { fetchUser } from '../services/user.service.ts';
-
-test('fetchUser returns parsed user', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({ id: '1', name: 'Alice' }),
-  }));
-
-  const user = await fetchUser('1');
-  expect(user.name).toBe('Alice');
-
-  vi.unstubAllGlobals();
-});
-```
-
-## Mocking Service Modules
-
-```typescript
-import { vi } from 'vitest';
-
-vi.mock('../services/user.service.ts', () => ({
-  fetchUser: vi.fn().mockResolvedValue({ id: '1', name: 'Alice' }),
-}));
-```
-
-## Accessibility Testing
-
-- Use `getByRole`, `getByLabelText` queries for accessibility-first assertions
-- Run `@axe-core/playwright` in Playwright E2E for WCAG compliance at the page level
-- Test keyboard navigation for critical interactive flows (modals, dropdowns, forms)
+- Mock modules: `vi.mock('$app/stores')` for SvelteKit stores
+- Mock context: provide via wrapper component or `setContext` in test
 
 ## Dos
 
-- Test the component's rendered output, not internal rune state
-- Use `userEvent` over `fireEvent` for realistic DOM interactions (fires all associated events)
-- Co-locate component tests with the component file (`Button.test.ts` next to `Button.svelte`)
-- Mock services, not fetch — inject behavior at the module boundary
+- Test component behavior through rendered output
+- Test event dispatching: `component.$on('event', handler)`
+- Test transitions via `vi.useFakeTimers()` + fast-forward
+- Test accessibility with `@testing-library/jest-dom` matchers
+- Clean up with `cleanup()` in `afterEach`
 
 ## Don'ts
 
-- Don't assert on `$state` values directly — test rendered output instead
-- Don't import Svelte stores and mutate them between tests without cleanup — use factory functions
-- Don't skip `await` on user interactions — `userEvent` returns promises
-- Don't test that Svelte renders components — test that your component logic renders the right output
+- Don't test Svelte compiler output
+- Don't access component internals (`$$`)
+- Don't test CSS scoping
+- Don't mock Svelte runtime functions
+- Don't use `innerHTML` for assertions (fragile)
