@@ -1,5 +1,10 @@
 ---
 mode: bootstrap
+convergence:
+  max_iterations: 5       # Scaffolding rarely needs many iterations
+  plateau_threshold: 5     # Generous -- scaffolding scores may fluctuate
+  plateau_patience: 1      # No patience -- scaffold works or it doesn't
+  max_quality_cycles: 1    # Single review pass for scaffolded code
 stages:
   plan:
     agent: fg-050-project-bootstrapper

@@ -127,15 +127,61 @@ Mode overlays (defined in `shared/modes/*.md`) modify the effective values used 
 
 | Mode | Affected Guard | Override |
 |------|---------------|----------|
+| standard | — | No overrides (uses forge-config.md defaults) |
 | bugfix | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
+| bugfix | `max_iterations` in C1-C10 | 10 (default 15) |
+| bugfix | `plateau_patience` in C8/C10 | 2 (default 3) |
+| bugfix | `max_quality_cycles` | 2 (default 3) |
 | bootstrap | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
+| bootstrap | `max_iterations` in C1-C10 | 5 |
+| bootstrap | `plateau_patience` in C8/C10 | 1 |
+| bootstrap | `max_quality_cycles` | 1 |
+| migration | `max_iterations` in C1-C10 | 15 |
 | testing | `target_score` in C6, C8 | Uses `pass_threshold` instead of `target_score` |
-| standard | — | No overrides |
-| migration | — | No target_score override |
-| refactor | — | No target_score override |
-| performance | — | No target_score override |
+| testing | `max_iterations` in C1-C10 | 10 |
+| testing | `plateau_patience` in C8/C10 | 2 |
+| testing | `max_quality_cycles` | 2 |
+| refactor | `plateau_threshold` in C7/C8 | 2 (default 3) |
+| refactor | `max_iterations` in C1-C10 | 12 |
+| performance | `max_iterations` in C1-C10 | 12 |
+| performance | `max_quality_cycles` | 4 |
 
-**Resolution:** At PREFLIGHT, the orchestrator resolves the effective `target_score` based on the active mode's `review.target_score` or `ship.target_score` override and stores it in `state.json`. All transition guards reference this resolved value.
+**Resolution:** At PREFLIGHT, the orchestrator resolves the effective values based on the active mode's overrides and stores them in `state.json.convergence`. All transition guards reference these resolved values.
+
+---
+
+## Oscillation Detection Interaction
+
+Two complementary oscillation detection mechanisms operate concurrently during the convergence loop:
+
+| Mechanism | Scope | Operates on | Authority |
+|-----------|-------|-------------|-----------|
+| Convergence engine REGRESSING | Cross-iteration | `convergence.score_history[]` across IMPLEMENT->REVIEW cycles | **Authoritative** (triggers state transition C9) |
+| Quality gate Consecutive Dip Rule | Within-iteration | `score_history[]` within a single convergence iteration's quality gate cycles | **Advisory** (logs WARNING, escalates within iteration) |
+
+### Interaction Rules
+
+1. **Convergence engine is authoritative for state transitions.** When the convergence engine detects REGRESSING (score delta exceeds `oscillation_tolerance` across iterations), it triggers transition C9 -> ESCALATED. The quality gate's inner dip detection cannot override or delay this.
+
+2. **Quality gate is authoritative within its iteration.** When the quality gate detects two consecutive dips within its review cycles (the Consecutive Dip Rule in `scoring.md`), it escalates within the current convergence iteration. This causes the convergence engine to receive a `score_regressing` event for C9 evaluation.
+
+3. **No double escalation.** If the quality gate's Consecutive Dip Rule triggers an escalation AND the convergence engine independently detects REGRESSING on the same score delta, only one ESCALATED transition fires. The convergence engine checks `story_state == ESCALATED` before transitioning.
+
+4. **Precedence on simultaneous detection.** If both mechanisms detect regression on the same review cycle completion:
+   - The quality gate emits its Consecutive Dip escalation first (it runs synchronously within the review stage)
+   - The convergence engine, receiving the review result, detects REGRESSING
+   - The orchestrator sees `story_state` is already ESCALATED and does not re-escalate
+   - The decision log records both detections with `source: quality_gate_dip_rule` and `source: convergence_engine_regressing`
+
+5. **Advisory dips that do not trigger convergence REGRESSING.** A single dip within tolerance (scoring.md rule 4) is logged by the quality gate as WARNING but does not trigger convergence engine REGRESSING. The convergence engine only evaluates score deltas between iterations, not within quality gate cycles.
+
+### State Field Mapping
+
+| Field | Written by | Read by |
+|-------|-----------|---------|
+| `score_history[]` (state.json) | Quality gate (append after each cycle) | Convergence engine (cross-iteration delta), quality gate (within-iteration dip detection) |
+| `convergence.state` | Convergence engine | Orchestrator (transition lookup) |
+| `convergence.last_score_delta` | Convergence engine | Orchestrator (oscillation tolerance check) |
 
 ---
 

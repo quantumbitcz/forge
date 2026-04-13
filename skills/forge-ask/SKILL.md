@@ -1,6 +1,6 @@
 ---
 name: forge-ask
-description: "Answer questions about the codebase using wiki, graph, explore cache, and docs index."
+description: "Answer questions about the codebase using wiki, graph, explore cache, and docs index. Use when you want to understand how something works, find where something is implemented, trace dependencies, or get answers about the codebase architecture."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
@@ -140,3 +140,23 @@ These are illustrative — the skill handles any freeform question:
 - If no data sources are available (no wiki, no graph, no cache), fall back to direct search regardless of deep_mode setting.
 - If the question is about forge plugin internals (not the project), answer from plugin knowledge directly without querying data sources.
 - If the answer is uncertain, say so explicitly. Do not fabricate information.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| No question provided | Ask: "What would you like to know about this codebase?" |
+| No data sources available (no wiki, graph, cache, docs) | Fall back to direct search (grep/glob) regardless of deep_mode setting |
+| Neo4j unavailable | Skip graph source. Log INFO. Continue with other sources |
+| Invalid Cypher query generated | Skip graph source for this query. Continue with other sources |
+| Cache write fails | Log WARNING. Answer is still returned, just not cached |
+| All sources return empty results | Report "Could not find relevant information. Try rephrasing the question or use `--deep` for exhaustive search." |
+| State corruption | This skill does not depend on state.json -- it queries knowledge sources independently |
+
+## See Also
+
+- `/forge-insights` -- Cross-run analytics (overlaps with "what changed" questions)
+- `/forge-history` -- Pipeline run history (overlaps with "what happened in recent runs" questions)
+- `/graph-query` -- Run raw Cypher queries when you need precise graph data
+- `/docs-generate` -- Generate documentation that forge-ask can then query

@@ -1,6 +1,6 @@
 ---
 name: forge-automation
-description: Manage event-driven pipeline automations — list, add, remove, test triggers
+description: "Manage event-driven pipeline automations -- list, add, remove, and test triggers. Use when you want to set up automatic pipeline runs on CI failures, PR events, cron schedules, or file changes."
 disable-model-invocation: false
 ---
 
@@ -186,3 +186,11 @@ If entries have `error` field (non-null), append a section:
 - **Never dispatch skills.** The `test` subcommand simulates only. Actual dispatch is handled by the automation engine (`hooks/automation-trigger.sh`).
 - **Never modify `.forge/automation-log.jsonl`.** That file is append-only, written by the automation engine.
 - **Preserve file content.** When editing `forge-config.md`, only modify the `automations:` section. Never alter other configuration.
+
+## See Also
+
+- `/forge-run` -- The pipeline that automations typically invoke
+- `/forge-fix` -- Common action for CI failure automations
+- `/forge-review` -- Common action for PR opened automations
+- `/codebase-health` -- Common action for scheduled health check automations
+- `/config-validate` -- Validate forge-config.md after modifying automations

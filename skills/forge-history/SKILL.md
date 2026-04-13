@@ -1,49 +1,112 @@
 ---
 name: forge-history
-description: "View trends across multiple pipeline runs (score oscillations, agent effectiveness, common findings). For current run state use /forge-status."
+description: "View trends across multiple pipeline runs -- score oscillations, agent effectiveness, common findings, and PREEMPT health. Use when you want to see how quality has changed over time, identify recurring issues, or review past pipeline run outcomes."
 disable-model-invocation: false
 ---
 
-# Pipeline History
+# /forge-history -- Pipeline Run History
 
-View trends across pipeline runs for this project.
+## Prerequisites
 
-## What to do
+Before any action, verify:
 
-1. Read `.claude/forge-log.md` for run history
-   - If missing: report "No pipeline history found. Run `/forge-run` to start building history."
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **History data exists:** Check at least one of these sources:
+   - `.claude/forge-log.md` with run entries
+   - `.forge/reports/` with report files
+   If neither exists: report "No pipeline history found. Run `/forge-run` to start building history." and STOP.
 
-2. Read `.forge/reports/` for detailed run reports (if available)
+## Instructions
 
-3. Present a summary:
+### 1. Gather History Data
 
-   ## Pipeline Run History
+Read all available history sources:
 
-   ### Quality Score Trend
-   | Date | Requirement | Score | Verdict | Fix Cycles | Duration |
-   |------|-------------|-------|---------|------------|----------|
+1. **Forge log** (`.claude/forge-log.md`): Primary source -- contains per-run entries with dates, requirements, scores, verdicts, and retrospective notes.
+2. **Run reports** (`.forge/reports/`): Detailed per-run reports with findings, agent dispatches, and timing data.
+3. **Learnings** (`shared/learnings/` and `.forge/learnings/`): PREEMPT items and agent effectiveness records.
 
-   Extract from forge-log.md: each run's date, requirement summary, final quality score, verdict, total fix cycles (verify + review), and wall time.
+If forge-log.md is very large (>500 lines), summarize the last 10 runs instead of all runs.
 
-   ### Most Common Findings
-   Aggregate finding categories across all runs. Show top 5 by frequency:
-   1. {CATEGORY} ({N} runs) — {typical description}
+### 2. Present Quality Score Trend
 
-   ### Agent Effectiveness
-   If agent effectiveness data exists in forge-log.md (added by retrospective):
-   | Agent | Runs | Avg Time | Avg Findings | FP Rate |
-   |---|---|---|---|---|
+Extract from forge-log.md each run's date, requirement summary, final quality score, verdict, total fix cycles (verify + review), and wall time:
 
-   If no effectiveness data: "Agent effectiveness tracking not yet available. Will populate after future runs."
+```
+## Pipeline Run History
 
-   ### PREEMPT Health
-   - Active items: {count} (HIGH: {n}, MEDIUM: {n}, LOW: {n})
-   - Archived items: {count}
-   - Last promotion: {date} — {item description}
+### Quality Score Trend
+| Date | Requirement | Score | Verdict | Fix Cycles | Duration |
+|------|-------------|-------|---------|------------|----------|
+```
 
-   If no PREEMPT data: "No PREEMPT items found."
+Compute trend direction: improving (last 3 scores ascending), declining (descending), or stable (within oscillation tolerance).
+
+### 3. Present Most Common Findings
+
+Aggregate finding categories across all runs. Show top 5 by frequency:
+
+```
+### Most Common Findings
+1. {CATEGORY} ({N} runs) -- {typical description}
+2. ...
+```
+
+Identify findings that appear in 3+ runs as convention candidates -- patterns the team consistently triggers that should be codified as project rules.
+
+### 4. Present Agent Effectiveness
+
+If agent effectiveness data exists in forge-log.md (added by retrospective):
+
+```
+### Agent Effectiveness
+| Agent | Runs | Avg Time | Avg Findings | FP Rate |
+|---|---|---|---|---|
+```
+
+If no effectiveness data: report "Agent effectiveness tracking not yet available. Will populate after future runs."
+
+### 5. Present PREEMPT Health
+
+Read learnings files for PREEMPT items:
+
+```
+### PREEMPT Health
+- Active items: {count} (HIGH: {n}, MEDIUM: {n}, LOW: {n})
+- Archived items: {count}
+- Last promotion: {date} -- {item description}
+- Decay candidates: {count} items with 10+ unused runs
+```
+
+If no PREEMPT data: report "No PREEMPT items found."
+
+### 6. Cross-Run Trend Summary
+
+Synthesize the data into actionable observations:
+- Score trajectory over the last 5 runs
+- Whether convergence is getting faster or slower
+- Top recurring finding that should become a convention
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| forge-log.md missing | Fall back to reports directory. If also missing, STOP with guidance |
+| forge-log.md unparseable | Report "forge-log.md has unexpected format. Showing raw content summary." and display what can be extracted |
+| Reports directory empty | Work from forge-log.md alone, note limited data |
+| State corruption | This skill is read-only and does not depend on state.json |
 
 ## Important
-- This is read-only — do not modify any files
+
+- This is read-only -- do not modify any files
 - If forge-log.md is very large (>500 lines), summarize the last 10 runs instead of all runs
-- If reports directory doesn't exist, work from forge-log.md alone
+- If reports directory does not exist, work from forge-log.md alone
+
+## See Also
+
+- `/forge-status` -- Check the current (active) pipeline run state
+- `/forge-insights` -- Deeper cross-run analytics with cost analysis, convergence patterns, and memory health
+- `/forge-profile` -- Detailed performance profiling of a single pipeline run
+- `/forge-diagnose` -- Diagnose pipeline health issues when something looks wrong

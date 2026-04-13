@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.20.1, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.21.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -175,14 +175,14 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Convention drift:** Mid-run SHA256 hash comparison. Agents react only to their relevant section changes.
 - **Learnings** (`learnings/`): Per-module files + JSON schemas for rule evolution and agent effectiveness.
 - **Frontend design** (`frontend-design-theory.md`): Gestalt, visual hierarchy, color theory, typography, 8pt grid, motion.
-- **Model routing** (`model-routing.md`): Tiered model selection per agent (fast/standard/premium). Config: `model_routing.*` in `forge-config.md`. Disabled by default.
+- **Model routing** (`model-routing.md`): Tiered model selection per agent (fast/standard/premium). Config: `model_routing.*` in `forge-config.md`. Enabled by default with curated tier assignments (9 fast, 17 standard, 14 premium).
 - **Explore cache** (`explore-cache.md`): Incremental codebase indexing across runs. `.forge/explore-cache.json`. Survives `/forge-reset`.
 - **Plan cache** (`plan-cache.md`): Keyword-based plan reuse for similar requirements. `.forge/plan-cache/`. Survives `/forge-reset`.
 - **Context isolation**: Domain-scoped dedup hints via `affinity` field in `category-registry.json`. Each reviewer only sees findings from its domain.
 - **Token reporting**: Extended `state.json.tokens` with per-stage/agent/model breakdowns and `cost.estimated_cost_usd`.
 - **Mutation testing** (`fg-510-mutation-analyzer`): LLM-generated targeted mutants for changed code. Dispatched by test gate after tests pass. Config: `mutation_testing.*`.
 - **Reviewer deliberation**: Conflicting reviewers debate findings before quality gate synthesis. Disabled by default. Config: `quality_gate.deliberation`.
-- **Confidence scoring**: Finding confidence (HIGH/MEDIUM/LOW) affects scoring weight and routing. LOW findings excluded from fix cycles.
+- **Confidence scoring**: Finding confidence (HIGH/MEDIUM/LOW) affects scoring weight and routing. Multipliers: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x. Fractional deductions rounded to nearest integer. LOW findings excluded from fix cycles.
 - **Visual verification** (`visual-verification.md`): Screenshot-based UI verification via Playwright MCP. Config: `visual_verification.*`.
 - **LSP integration** (`lsp-integration.md`): Compiler-level code analysis via Language Server Protocol. Config: `lsp.*`.
 - **Observability** (`observability.md`): OTel traces and metrics for pipeline execution. Exported via `forge-otel-export.sh`. Config: `observability.*`.
@@ -300,7 +300,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
 - `explore-cache.json` and `plan-cache/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
-- `model_routing.enabled` defaults to `false`. When disabled, no `model` parameter is passed to Agent dispatches.
+- `model_routing.enabled` defaults to `true`. When disabled, no `model` parameter is passed to Agent dispatches. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
@@ -352,7 +352,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.20.1), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.21.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

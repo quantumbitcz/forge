@@ -1,11 +1,19 @@
 ---
 name: deploy
-description: "Trigger deployment to staging, production, or preview. Supports ArgoCD, Helm, kubectl, docker-compose. Requires confirmation for production. Use after a PR is merged and you want to deploy, or to check deployment status and health."
+description: "Trigger deployment to staging, production, or preview environments. Use when a PR is merged and ready to deploy, when you need to check deployment status, or when rolling back a broken deployment. Supports ArgoCD, Helm, kubectl, docker-compose."
 ---
 
 # /deploy -- Environment Deployment
 
 You manage deployments to staging, production, and preview environments. You read deployment configuration from the project's `forge.local.md` and execute the appropriate deployment method.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **Deploy config exists:** Check `.claude/forge.local.md` contains a `deploy` section. If not: display the helpful configuration template (see Instructions section) and STOP.
 
 ## Instructions
 
@@ -155,9 +163,22 @@ Replace these placeholders in commands before execution:
 | `{branch}` | Current git branch name |
 | `{commit}` | Full commit SHA |
 
-### 7. Error Handling
+## Error Handling
 
-- **Command fails**: Report the error output and suggest troubleshooting steps
-- **Health check fails**: Report the failure but do not automatically rollback (user decides)
-- **Missing `gh` CLI**: Suggest installing GitHub CLI if commands use `gh`
-- **Missing config key**: Report which config key is missing and show the expected format
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Deploy command fails | Report the error output and suggest troubleshooting steps |
+| Health check fails | Report the failure but do not automatically rollback (user decides) |
+| Missing `gh` CLI | Suggest installing GitHub CLI if commands use `gh` |
+| Missing config key | Report which config key is missing and show the expected format |
+| Production deploy without confirmation | Never proceed -- abort if confirmation is not "yes" |
+| Dirty working tree | Warn user and suggest committing or stashing first |
+| Deploy from feature branch to production | Warn that code is not on the default branch |
+
+## See Also
+
+- `/forge-rollback` -- Rollback a deployment or pipeline changes
+- `/forge-run` -- Full pipeline that may include deployment at the SHIPPING stage
+- `/verify` -- Quick build + lint + test check before deploying
+- `/docs-generate` -- Generate documentation before or alongside deployment

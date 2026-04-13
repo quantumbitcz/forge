@@ -1,11 +1,19 @@
 ---
 name: graph-init
-description: Initialize Neo4j knowledge graph. Starts Docker container, imports plugin seed, builds project codebase graph. Requires /forge-init to have run first. Idempotent.
+description: "Initialize Neo4j knowledge graph -- starts Docker container, imports plugin seed, builds project codebase graph. Use when setting up the knowledge graph for the first time, after Docker was restarted, or when /graph-status shows the graph is unavailable. Idempotent."
 ---
 
 # /graph-init — Neo4j Knowledge Graph Initialization
 
 You are the graph initializer. Your job is to start the Neo4j container, import the plugin seed data, and build the project codebase graph. Be idempotent — detect what is already done and skip those steps.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Pipeline not initialized. Run `/forge-init` first." and STOP.
+2. **Graph enabled:** Read `graph.enabled` from `.claude/forge.local.md`. If `false` or absent: report "Graph integration is disabled in forge.local.md. Set `graph.enabled: true` to use this feature." and STOP.
+3. **Docker available:** Run `docker info`. If fails: report "Docker is not available. Cannot start Neo4j container." and STOP.
 
 ## Container Name Resolution
 
@@ -192,3 +200,25 @@ Graph initialized successfully.
 ```
 
 Note any steps that were skipped (idempotency).
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| forge.local.md missing | Report "Pipeline not initialized. Run `/forge-init` first." and STOP |
+| graph.enabled is false | Report "Graph integration is disabled in forge.local.md. Set `graph.enabled: true` to use this feature." and STOP |
+| Docker not available | Report "Docker is not available. Cannot start Neo4j container." Update state integrations and STOP |
+| Docker image pull fails | Report "Failed to pull Neo4j image. Check internet connection and Docker Hub access." and STOP |
+| Container start fails | Report error output. Suggest checking port conflicts (`docker ps`) and disk space |
+| Neo4j health timeout (60s) | Report "Neo4j did not become healthy within 60 seconds. Check container logs: `docker logs forge-neo4j`." and STOP |
+| Seed import fails | Report error. Container is running but seed is missing. Suggest retrying `/graph-init` |
+| Build script fails | Report error. Suggest checking that `build-project-graph.sh` is executable |
+| State corruption | Graph init creates/updates state.json integrations block independently |
+
+## See Also
+
+- `/graph-status` -- Check graph health and node counts after initialization
+- `/graph-query` -- Run Cypher queries against the initialized graph
+- `/graph-rebuild` -- Rebuild project graph from scratch (preserves seed)
+- `/graph-debug` -- Diagnose graph issues if initialization produced unexpected results
+- `/forge-init` -- Full project setup which includes graph initialization as an optional step

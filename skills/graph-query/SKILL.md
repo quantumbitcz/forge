@@ -1,6 +1,6 @@
 ---
 name: graph-query
-description: "Run a Cypher query against the Neo4j knowledge graph. Pass the query as an argument. Use to find bug hotspots, trace cross-feature dependencies, check test coverage gaps, or explore module relationships."
+description: "Run a Cypher query against the Neo4j knowledge graph. Use when you need to find bug hotspots, trace cross-feature dependencies, check test coverage gaps, or explore module relationships. Pass the query as an argument."
 ---
 
 # /graph-query — Run a Cypher Query
@@ -105,3 +105,23 @@ After displaying results, offer useful next steps based on the query type:
 - If the query was a `MATCH ... RETURN` with no LIMIT: suggest adding `LIMIT` for large graphs.
 - If the query returned 0 results: suggest checking node labels with `MATCH (n) RETURN DISTINCT labels(n)`.
 - Always remind the user they can run `/graph-status` to see all available labels and relationship types.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Neo4j not healthy | Report "Neo4j is not available. Run `/graph-init` to start the graph." and STOP |
+| No query provided | Prompt the user: "Enter your Cypher query:" |
+| Invalid Cypher syntax | Display the error output from cypher-shell and suggest checking query syntax |
+| Query returns no results | Report "Query returned no results." Suggest checking node labels with `MATCH (n) RETURN DISTINCT labels(n)` |
+| Query returns too many rows (>50) | Truncate to 50 rows with note. Suggest adding LIMIT clause |
+| Docker connection fails | Report "Cannot connect to Neo4j container. Check if Docker is running." and STOP |
+
+## See Also
+
+- `/graph-status` -- See available node labels and relationship types before querying
+- `/graph-debug` -- Structured diagnostic recipes without needing raw Cypher knowledge
+- `/graph-rebuild` -- Rebuild the graph if queries return stale or missing data
+- `/graph-init` -- Initialize the graph if it is not running
+- `/forge-ask` -- Natural language queries about the codebase (uses graph as one of its data sources)

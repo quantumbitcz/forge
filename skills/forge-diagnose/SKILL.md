@@ -1,11 +1,18 @@
 ---
 name: forge-diagnose
-description: Read-only diagnostic of pipeline health — state.json integrity, recovery budget, convergence status, and stalled-stage detection. Never modifies files.
+description: "Read-only diagnostic of pipeline health -- state.json integrity, recovery budget, convergence status, and stalled-stage detection. Use when a pipeline run seems stuck, produced unexpected results, or you want to inspect state before resuming. Never modifies files."
 ---
 
 # /forge-diagnose — Pipeline Health Diagnostic
 
 You are a read-only diagnostic tool. Your job is to inspect the current pipeline state and report problems without changing anything. You never modify files, dispatch agents, or trigger recovery.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **State file exists:** Check `.forge/state.json` exists. If not: report "No pipeline state found. Nothing to diagnose. Run `/forge-run` to start a pipeline." and STOP.
 
 ## Instructions
 
@@ -163,3 +170,20 @@ Present results in this format:
 - NEVER dispatch agents or trigger recovery.
 - NEVER attempt to fix problems. Report them and recommend the appropriate skill.
 - If state.json is unparseable JSON, report "state.json is not valid JSON" and recommend `/forge-reset`.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| state.json missing | Report "No pipeline state found. Nothing to diagnose. Run `/forge-run` to start a pipeline." and STOP |
+| state.json unparseable JSON | Report "state.json is not valid JSON. Run `/forge-reset` to start fresh." and STOP |
+| forge-config.md missing | Use default values for all parameter checks. Note in report that config file is absent |
+| Lock file PID check fails | Report lock file status as "unknown" and note the check could not be performed |
+
+## See Also
+
+- `/repair-state` -- Fix specific state.json issues found by this diagnostic
+- `/forge-resume` -- Resume an aborted pipeline after confirming health with diagnose
+- `/forge-reset` -- Clear all state when diagnose shows corruption beyond repair
+- `/forge-status` -- Quick overview of pipeline state (less detailed than diagnose)
+- `/forge-profile` -- Performance analysis of pipeline execution (complementary to health diagnostic)

@@ -1,11 +1,19 @@
 ---
 name: graph-rebuild
-description: Rebuild the project codebase graph from scratch. Keeps the plugin seed graph intact. Use when incremental updates are stale.
+description: "Rebuild the project codebase graph from scratch while preserving the plugin seed graph. Use when incremental updates are stale, after major refactoring, or when /graph-status shows the graph is out of date with the codebase."
 ---
 
 # /graph-rebuild — Rebuild Project Codebase Graph
 
 You are the graph rebuilder. Your job is to wipe all project-derived nodes from the knowledge graph and rebuild them from the current codebase. The plugin seed graph (framework conventions, patterns, rules) is preserved.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --is-inside-work-tree`. If not: report "Not a git repository." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+3. **Neo4j available:** Run the health check script. If not healthy: report "Neo4j is not available. Run `/graph-init` to start the graph first." and STOP.
 
 ## Container Name Resolution
 
@@ -169,3 +177,23 @@ Graph rebuilt successfully.
 ```
 
 If any step failed partway through, clearly indicate the graph may be in an inconsistent state and suggest running `/graph-init` to fully reinitialize.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Not a git repository | Report "Not a git repository." and STOP |
+| Neo4j not healthy | Report "Neo4j is not available. Run `/graph-init` to start the graph first." and STOP |
+| User cancels rebuild | Report "Rebuild cancelled. Graph unchanged." and STOP |
+| Node deletion fails | Report error. Do not proceed. Suggest `/graph-init` to fully reinitialize |
+| Build script fails | Report error. Graph may be in partial state. Suggest `/graph-init` |
+| Enrichment backup fails | Log WARNING. Continue rebuild -- enrichment data will be lost |
+| Enrichment restoration fails | Log WARNING "Enrichment restoration failed -- bugfix telemetry will restart from zero." Continue |
+| Docker connection lost mid-rebuild | Report error. Graph is in inconsistent state. Suggest `/graph-init` |
+
+## See Also
+
+- `/graph-status` -- Check graph health before and after rebuild
+- `/graph-debug` -- Diagnose specific graph issues before deciding to rebuild
+- `/graph-init` -- Full initialization including container start (use when rebuild fails)
+- `/graph-query` -- Explore the rebuilt graph

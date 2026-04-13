@@ -1,6 +1,6 @@
 ---
 name: forge-run
-description: Universal pipeline entry point. Auto-classifies intent (feature, bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance) and routes to the correct pipeline mode. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel.
+description: "Universal pipeline entry point. Auto-classifies intent and routes to the correct pipeline mode. Use when you want to build a feature, implement a requirement, or run the full development pipeline. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel."
 ---
 
 # /forge-run — Universal Pipeline Entry Point
@@ -125,3 +125,24 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 5. **Do nothing else**: Do not plan, implement, review, or make decisions. The dispatched agent handles everything autonomously.
 
 6. **Relay the result**: When the dispatched agent completes, relay its final output (PR URL, summary, decomposition plan, or escalation) back to the user unchanged.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Empty requirement (no input after stripping flags) | Ask the user for a requirement description before dispatching |
+| Intent classification ambiguous | Present classification result to user for confirmation (unless autonomous mode) |
+| Ticket ID not found in tracking store | Warn user and ask for requirement description directly |
+| Agent dispatch fails | Report "Pipeline orchestrator failed to start. Check plugin installation." and STOP |
+| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
+| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/repair-state` or `/forge-reset` |
+
+## See Also
+
+- `/forge-fix` -- Preferred entry point for bugfixes (richer source resolution than `bugfix:` prefix)
+- `/forge-shape` -- Shape a vague idea into a structured spec before running the pipeline
+- `/forge-sprint` -- Execute multiple features in parallel (preferred over `--sprint` flag)
+- `/forge-status` -- Check pipeline progress during or after a run
+- `/forge-diagnose` -- Diagnose pipeline health issues if a run fails
+- `/forge-resume` -- Resume an aborted or failed run from its last checkpoint

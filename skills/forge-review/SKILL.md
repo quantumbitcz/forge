@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: "Review and fix recently changed files only. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits. For full codebase use /deep-health. For read-only analysis use /codebase-health."
+description: "Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
 disable-model-invocation: false
 ---
 
@@ -172,15 +172,7 @@ Verdict thresholds:
 - **CONCERNS**: score 60-79 AND 0 CRITICALs
 - **FAIL**: score < 60 OR any CRITICAL remaining
 
-### 5. Error Handling
-
-- **Agent dispatch failure:** Skip failed agent, continue with remaining. Log WARNING. If all agents fail, report ERROR and exit.
-- **Fix introduces regression (tests fail):** Revert the specific fix (`git checkout -- <file>`), mark finding as "unfixable: fix caused regression", continue with next finding.
-- **No conventions file:** Agents run without conventions context. Log INFO: "No forge.local.md found — agents running without project conventions."
-- **Build/test/lint command unknown:** Skip verification step. Log WARNING: "No build/test/lint commands detected — fixes not verified against test suite."
-- **No git repository:** Report ERROR: "Not a git repository. Cannot determine changed files." and exit.
-
-### 6. Important Rules
+### 5. Important Rules
 
 - **Target is always 100.** Fix ALL severities — CRITICAL, WARNING, and INFO. Do not stop at "good enough."
 - **Challenge before fixing.** For each finding, ask: is there a fundamentally better approach? Search docs if needed.
@@ -189,3 +181,24 @@ Verdict thresholds:
 - **Do NOT create PRs, tickets, or state files.** This skill is a pure review+fix loop.
 - **Do NOT run the check engine.** That is `/codebase-health`. This skill dispatches review agents only.
 - **Do NOT commit.** The caller decides when to commit. You only fix files.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| No changed files | Report "No changed files to review." and STOP |
+| Agent dispatch failure | Skip failed agent, continue with remaining. Log WARNING. If all agents fail, report ERROR and STOP |
+| Fix introduces regression (tests fail) | Revert the specific fix (`git checkout -- <file>`), mark as "unfixable: fix caused regression", continue |
+| No conventions file | Agents run without conventions context. Log INFO |
+| Build/test/lint command unknown | Skip verification step. Log WARNING |
+| Score stagnation (no improvement across iterations) | Report remaining findings and exit loop |
+| State corruption | This skill does not depend on state.json -- it runs independently |
+
+## See Also
+
+- `/codebase-health` -- Read-only analysis of the full codebase (no fixes)
+- `/deep-health` -- Iteratively fix all codebase quality issues with commits per iteration
+- `/verify` -- Quick build + lint + test check without review agents
+- `/security-audit` -- Focused security vulnerability scanning
+- `/forge-run` -- Full pipeline including review as part of the workflow

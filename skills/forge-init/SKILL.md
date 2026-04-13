@@ -1,25 +1,22 @@
 ---
 name: forge-init
-description: Auto-configures a project for the forge. Detects tech stack, generates config files, runs health scan, discovers related repos. Zero-config setup.
+description: "Auto-configures a project for the forge pipeline. Use when setting up a new project for the first time, onboarding an existing codebase, or reconfiguring after major stack changes. Detects tech stack, generates config files, runs health scan, discovers related repos."
 ---
 
 # /forge-init — Zero-Config Project Setup
 
 You are the pipeline initializer. Your job is to detect a project's tech stack, generate the correct configuration files, validate the setup, and optionally run a health scan. Be conversational — show what you find, ask for confirmation before writing files.
 
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel`. If fails: report "Not a git repository. Initialize with `git init` first." and STOP.
+2. **System prerequisites:** Run `bash shared/check-prerequisites.sh`. If fails: show the error messages and STOP. The user must install the missing prerequisites before the forge can operate.
+
 ## Instructions
 
-Work through these phases in order. Do NOT skip ahead — each phase builds on the previous one.
-
----
-
-### Prerequisites Check
-
-Before any initialization, verify system prerequisites:
-```
-bash shared/check-prerequisites.sh
-```
-If this fails (exit code > 0), show the error messages and abort init. The user must install the missing prerequisites before the forge can operate.
+Work through these phases in order. Do NOT skip ahead -- each phase builds on the previous one.
 
 ---
 
@@ -869,3 +866,26 @@ Pipeline initialized successfully!
 ```
 
 If any phase was skipped or had issues, note them clearly so the user knows the state.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Not a git repository | Report "Not a git repository. Initialize with `git init` first." and STOP |
+| .claude/ not writable | Report "`.claude/` directory is not writable. Check permissions." and STOP |
+| Prerequisites check fails (bash/python3) | Show missing prerequisites and abort. User must install them |
+| Stack detection ambiguous | Present detected frameworks and ask user to choose primary module |
+| Stack detection fails entirely | Present available frameworks table for manual selection |
+| Build command fails during validation | Report error. Ask whether to continue or fix first (hard blocker) |
+| Test command fails during validation | Report error. Note this may be OK for new projects. Ask to continue |
+| Config file already exists | Ask user: Overwrite or Keep existing |
+| Docker unavailable for graph init | Skip graph init with note. Suggest running `/graph-init` later |
+| Discovery script not found | Skip cross-repo discovery silently with INFO note |
+| Convention validation fails | Show missing references, suggest corrections, ask to fix or continue |
+
+## See Also
+
+- `/config-validate` -- Validate configuration after init (catches misconfigurations before pipeline runs)
+- `/forge-run` -- Run the full pipeline after initialization is complete
+- `/bootstrap-project` -- Scaffold a new project from scratch (dispatched by init for greenfield projects)
+- `/codebase-health` -- Run a full codebase scan after initialization to establish a quality baseline

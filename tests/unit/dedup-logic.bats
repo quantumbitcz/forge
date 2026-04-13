@@ -128,3 +128,99 @@ compute_score() {
   grep -q "component, file, line, category" "$SCORING" \
     || fail "Dedup key not documented in scoring.md"
 }
+
+# ===========================================================================
+# NEW TESTS: Dedup algorithm expansion (Q04)
+# ===========================================================================
+
+@test "dedup: malformed input line (missing fields) is passed through" {
+  local input="this is not a valid finding line"
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  # Malformed lines should be passed through (not cause errors)
+  echo "$output" | grep -q "this is not" || fail "Malformed line should be passed through"
+}
+
+@test "dedup: input with unicode characters in description preserved" {
+  local input
+  input=$(printf '%s\n' \
+    "src/User.kt:42 | ARCH-BOUNDARY | WARNING | crosses boundary \xC3\xBC\xC3\xB6\xC3\xA4 | fix")
+  run bash -c "printf '%s\n' '$input' | bash '$DEDUP'"
+  assert_success
+  [[ -n "$output" ]] || fail "Expected output with unicode content"
+}
+
+@test "dedup: 50+ findings deduplicates correctly (stress test)" {
+  local input=""
+  # Generate 50 unique findings + 50 duplicates (same file:line, same category)
+  for i in $(seq 1 50); do
+    input+="src/File${i}.kt:${i} | QUAL-NAMING | WARNING | naming issue ${i} | rename"$'\n'
+    input+="src/File${i}.kt:${i} | QUAL-NAMING | WARNING | naming issue ${i} short | rename"$'\n'
+  done
+  run bash -c "printf '%s' '$input' | bash '$DEDUP'"
+  assert_success
+  local line_count
+  line_count=$(echo "$output" | grep -c "QUAL-NAMING" || true)
+  [[ $line_count -eq 50 ]] || fail "Expected 50 deduplicated findings from 100 input, got $line_count"
+}
+
+@test "dedup: findings with empty file field handled" {
+  local input
+  input=$(printf '%s\n' \
+    ":0 | ARCH-GENERAL | WARNING | project-level issue | restructure")
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  echo "$output" | grep -q "ARCH-GENERAL" || fail "Finding with empty file should be preserved"
+}
+
+@test "dedup: findings with no line number (file-level) dedup by file+category" {
+  local input
+  input=$(printf '%s\n%s\n' \
+    "src/User.kt:0 | CONV-NAMING | INFO | file-level naming | rename file" \
+    "src/User.kt:0 | CONV-NAMING | WARNING | file-level naming issue | rename file")
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  local line_count
+  line_count=$(echo "$output" | grep -c "CONV-NAMING" || true)
+  [[ $line_count -eq 1 ]] || fail "Expected 1 deduplicated file-level finding, got $line_count"
+  echo "$output" | grep -q "WARNING" || fail "Expected WARNING severity to survive (higher than INFO)"
+}
+
+@test "dedup: findings from timed-out reviewers (INFO severity) not promoted" {
+  local input
+  input=$(printf '%s\n%s\n' \
+    "src/User.kt:42 | ARCH-BOUNDARY | INFO | timed out reviewer | hint" \
+    "src/User.kt:99 | SEC-INJECTION | WARNING | real finding | fix")
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  # Both should survive (different file:line or different category)
+  local info_count
+  info_count=$(echo "$output" | grep -c "INFO" || true)
+  [[ $info_count -eq 1 ]] || fail "Expected INFO finding preserved, got $info_count"
+  local warn_count
+  warn_count=$(echo "$output" | grep -c "WARNING" || true)
+  [[ $warn_count -eq 1 ]] || fail "Expected WARNING finding preserved, got $warn_count"
+}
+
+@test "dedup: pipe characters in description field do not break parsing" {
+  local input
+  input=$(printf '%s\n' \
+    "src/User.kt:42 | ARCH-BOUNDARY | WARNING | uses A | B pattern | use C instead")
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  echo "$output" | grep -q "ARCH-BOUNDARY" || fail "Finding with pipe in description should be handled"
+}
+
+@test "dedup: cross-reviewer dedup (two reviewers same finding, keep highest severity)" {
+  # Simulate two different reviewers reporting the same issue at the same location
+  local input
+  input=$(printf '%s\n%s\n' \
+    "src/Service.kt:10 | SEC-INJECTION | WARNING | SQL injection risk | use parameterized" \
+    "src/Service.kt:10 | SEC-INJECTION | CRITICAL | SQL injection vulnerability | use parameterized queries")
+  run bash -c "echo '$input' | bash '$DEDUP'"
+  assert_success
+  local line_count
+  line_count=$(echo "$output" | grep -c "SEC-INJECTION" || true)
+  [[ $line_count -eq 1 ]] || fail "Expected 1 deduplicated finding from cross-reviewer, got $line_count"
+  echo "$output" | grep -q "CRITICAL" || fail "Expected CRITICAL severity to survive cross-reviewer dedup"
+}

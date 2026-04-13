@@ -1,6 +1,6 @@
 ---
 name: forge-insights
-description: "Analyze trends across pipeline runs — quality trajectory, agent effectiveness, cost analysis, convergence patterns, memory health."
+description: "Analyze trends across pipeline runs -- quality trajectory, agent effectiveness, cost analysis, convergence patterns, memory health. Use when you want to understand how pipeline quality has evolved, identify cost optimization opportunities, or review agent and memory effectiveness across runs."
 allowed-tools: ['Read', 'Bash', 'Glob']
 ---
 
@@ -203,3 +203,22 @@ Write the full report to `.forge/reports/insights-{date}.md` where `{date}` is t
 - Do not fabricate data. If a metric cannot be computed, report "Insufficient data" rather than estimating.
 - For projects with fewer than 3 runs, note that trend analysis requires more data points and focus on single-run metrics instead.
 - Token-to-USD conversion is approximate. Use $3/MTok input, $15/MTok output as defaults unless project config specifies otherwise.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| No run data available | Report "No pipeline run data found. Run `/forge-run` to generate data, then try again." and STOP |
+| Only one data source available | Generate partial report and note which categories have insufficient data |
+| Fewer than 3 runs | Note that trend analysis requires more data points. Focus on single-run metrics |
+| Report directory does not exist | Create `.forge/reports/` before writing the report |
+| Data source unparseable | Skip the malformed source, log WARNING, continue with remaining sources |
+| State corruption | This skill reads state.json for telemetry but does not depend on valid pipeline state |
+
+## See Also
+
+- `/forge-history` -- View run history with scores and verdicts (simpler than insights)
+- `/forge-profile` -- Detailed performance profiling of a single pipeline run
+- `/forge-status` -- Check current pipeline run state
+- `/forge-diagnose` -- Diagnose pipeline health issues for the current run

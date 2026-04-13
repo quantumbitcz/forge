@@ -7,6 +7,13 @@ description: "Generate or update project documentation on demand. Use when start
 
 Generates project documentation independently of the pipeline. Run this skill at any time to bootstrap a full documentation suite for an undocumented codebase, update specific document types, or audit coverage gaps — without triggering a pipeline run or touching `.forge/` state.
 
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized (optional):** Check `.claude/forge.local.md` exists. If not: proceed with auto-detection of framework (the skill handles this in Step 1). Log INFO "No forge config found -- will auto-detect framework."
+
 ## Arguments
 
 Parse `$ARGUMENTS` for the following flags:
@@ -23,7 +30,7 @@ Parse `$ARGUMENTS` for the following flags:
 
 Multiple `--type` flags may be combined. `--from-code` applies as a scope filter to any generation step.
 
-## What to do
+## Instructions
 
 ### Step 1: Detect Framework
 
@@ -136,3 +143,22 @@ If `--export` was passed and external systems are configured, report export stat
 - Do NOT create a worktree — all writes go directly to the project working tree.
 - If generation produces no useful content for a doc type (e.g., no API endpoints found for `api-spec`), skip that type and log INFO "Skipped {type}: no source content found."
 - This skill may be run at any time, including mid-pipeline.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Not a git repository | Report "Not a git repository. Navigate to a project directory." and STOP |
+| Framework detection fails | Log INFO "Framework not detected; using generic conventions only." Continue with generic doc generation |
+| Docs discoverer dispatch fails | Report error. Proceed with generation using available information |
+| Docs generator dispatch fails | Report "Documentation generator failed to start. Check plugin installation." and STOP |
+| No source content for a doc type | Skip that type. Log INFO "Skipped {type}: no source content found." |
+| Export target not configured | Log INFO "No external export targets configured; skipping --export." |
+| docs-index.json stale or missing | Re-run discovery by dispatching docs-discoverer |
+
+## See Also
+
+- `/forge-run` -- Full pipeline which includes documentation generation at the DOCUMENTING stage
+- `/codebase-health` -- Read-only codebase analysis (complementary to documentation generation)
+- `/forge-ask` -- Query codebase knowledge including generated documentation
+- `/deploy` -- Deploy after documentation is generated

@@ -249,6 +249,14 @@ resolve_component() {
   local cache_file="${project_root}/.forge/.component-cache"
   local cfg="${project_root}/.claude/forge.local.md"
 
+  # --- 0. Cache invalidation: delete stale cache if config is newer ---
+  if [[ -f "$cache_file" && -f "$cfg" ]]; then
+    if [[ "$cfg" -nt "$cache_file" ]]; then
+      rm -f "$cache_file"
+      handle_failure "component_cache_invalidated:config_newer" "${file_path}"
+    fi
+  fi
+
   # --- 1. Fast path: component cache exists ---
   if [[ -f "$cache_file" ]]; then
     # Derive the path of the file relative to project_root so we can compare
@@ -344,12 +352,28 @@ resolve_component() {
       if [[ $indent_warned -eq 0 && $in_component_block -eq 0 ]]; then
         if [[ "$line" =~ ^$'\t' ]]; then
           echo "[check-engine] WARNING: Tab indentation detected in components: block of forge.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /forge-init to regenerate config." >&2
+          handle_failure "component_indent_fallback:tab_indentation" "$file_path"
+          # Write one-time warning marker for forge-status
+          if [[ -d "${project_root}/.forge" ]]; then
+            local _warn_file="${project_root}/.forge/.component-indent-warning"
+            if [[ ! -f "$_warn_file" ]]; then
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: tab indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge-init to regenerate config." > "$_warn_file" 2>/dev/null || true
+            fi
+          fi
           indent_warned=1
           break  # Stop parsing — will fall through to detect_module()
         elif [[ "$line" =~ ^[[:space:]]{3,}[a-zA-Z_] ]]; then
           # 3+ leading spaces: this is NOT the expected 2-space indent for component names.
           # (2-space lines are caught by the component regex below, so reaching here means non-standard.)
           echo "[check-engine] WARNING: Non-standard indentation detected in components: block of forge.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /forge-init to regenerate config." >&2
+          handle_failure "component_indent_fallback:non_standard_spacing" "$file_path"
+          # Write one-time warning marker for forge-status
+          if [[ -d "${project_root}/.forge" ]]; then
+            local _warn_file="${project_root}/.forge/.component-indent-warning"
+            if [[ ! -f "$_warn_file" ]]; then
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: non-standard indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge-init to regenerate config." > "$_warn_file" 2>/dev/null || true
+            fi
+          fi
           indent_warned=1
           break  # Stop parsing — will fall through to detect_module()
         fi
@@ -447,15 +471,44 @@ run_layer1() {
 
 # --- Mode: --hook (PostToolUse, single file, Layer 1 only) ---
 mode_hook() {
-  local file=""
-  local py_cmd="python3"
-  command -v python3 &>/dev/null || py_cmd="python"
-  file="$(echo "${TOOL_INPUT:-}" | "$py_cmd" -c "import json,sys; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)" || true
-  if [[ -z "$file" ]]; then
-    file="$(echo "${TOOL_INPUT:-}" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//; s/"$//' || true)"
+  # Orphan detection: if a queue file exists, is >60s old, and FORGE_BATCH_HOOK
+  # is NOT set, auto-flush it before processing the current file.
+  if [[ -z "${FORGE_BATCH_HOOK:-}" && -d ".forge" ]]; then
+    for _orphan in .forge/.hook-queue-*; do
+      [[ -f "$_orphan" ]] || continue
+      local _file_age=0
+      _file_age=$(( $(date +%s) - $(stat -f%m "$_orphan" 2>/dev/null || stat -c%Y "$_orphan" 2>/dev/null || echo 0) ))
+      if [[ $_file_age -gt 60 && -s "$_orphan" ]]; then
+        handle_failure "orphan_queue_flushed:age_${_file_age}s" "$_orphan"
+        local _orphan_root
+        _orphan_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+        "$0" --flush-queue --queue-file "$_orphan" --project-root "$_orphan_root" 2>/dev/null || true
+      fi
+    done
   fi
 
-  [[ -z "$file" || ! -f "$file" ]] && return 0
+  local file=""
+  local parse_method="none"
+  local py_cmd="python3"
+  command -v python3 &>/dev/null || py_cmd="python"
+  file="$(echo "${TOOL_INPUT:-}" | "$py_cmd" -c "import json,sys; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)" && parse_method="json" || true
+  if [[ -z "$file" ]]; then
+    file="$(echo "${TOOL_INPUT:-}" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//; s/"$//' || true)"
+    [[ -n "$file" ]] && parse_method="regex"
+  fi
+
+  # Log when regex fallback was used (may indicate Claude Code API change)
+  if [[ "$parse_method" == "regex" ]]; then
+    handle_failure "parse_fallback:regex" "${file:-unknown}"
+  fi
+
+  # Validate extracted path exists before proceeding
+  if [[ -n "$file" && ! -f "$file" ]]; then
+    handle_failure "file_path_not_found:${file}" "TOOL_INPUT_parse"
+    return 0
+  fi
+
+  [[ -z "$file" ]] && return 0
   [[ "$file" == *"build/generated-sources"* ]] && return 0
 
   # Skip empty files — not worth the overhead

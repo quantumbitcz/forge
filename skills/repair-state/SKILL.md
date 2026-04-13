@@ -1,11 +1,18 @@
 ---
 name: repair-state
-description: Validate and repair .forge/state.json — fix corrupted counters, stale locks, invalid states, and WAL recovery. Confirms changes before writing.
+description: "Validate and repair .forge/state.json -- fix corrupted counters, stale locks, invalid states, and WAL recovery. Use when /forge-diagnose reports problems, when the pipeline fails with state errors, or when counters are inconsistent. Confirms changes before writing."
 ---
 
 # /repair-state — State Repair Tool
 
 You validate `.forge/state.json` and fix specific issues found. Unlike `/forge-diagnose` (read-only) and `/forge-reset` (full wipe), this skill makes targeted repairs while preserving pipeline progress.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **State file exists:** Check `.forge/state.json` exists. If not: report "No pipeline state found. Nothing to repair. Run `/forge-run` to start a pipeline." and STOP.
 
 ## Instructions
 
@@ -159,3 +166,22 @@ If the user cancels: report "Repair cancelled. State unchanged."
 - Always confirm repairs with the user before writing.
 - Use `forge-state-write.sh recover` for WAL recovery — do not manually parse the WAL file.
 - Back up the original state by reporting all changes so the user knows what was modified.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| state.json missing | Report "No pipeline state found. Nothing to repair. Run `/forge-run` to start a pipeline." and STOP |
+| state.json unparseable JSON | Attempt WAL recovery first. If WAL recovery fails, report "state.json is corrupted beyond repair. Run `/forge-reset` to start fresh." and STOP |
+| WAL file missing or corrupt | Log INFO "No WAL to recover." Continue with remaining checks |
+| forge-state-write.sh unavailable | Fall back to direct write with `mv` (atomic on same filesystem) |
+| User cancels repair | Report "Repair cancelled. State unchanged." and STOP |
+| Write fails (permissions) | Report "Could not write repaired state. Check file permissions." and STOP |
+| forge-config.md missing | Use default values for all maximum checks |
+
+## See Also
+
+- `/forge-diagnose` -- Read-only diagnostic to identify issues before repairing (run diagnose first, then repair)
+- `/forge-reset` -- Clear all state when repair is insufficient (more destructive)
+- `/forge-resume` -- Resume pipeline after state is repaired
+- `/forge-status` -- Check pipeline state after repair to verify

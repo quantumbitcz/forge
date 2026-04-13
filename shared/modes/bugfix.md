@@ -1,5 +1,10 @@
 ---
 mode: bugfix
+convergence:
+  max_iterations: 10      # Bugfixes should converge quickly
+  plateau_threshold: 3     # Same sensitivity as standard
+  plateau_patience: 2      # Less patience -- fix should be targeted
+  max_quality_cycles: 2    # Fewer review cycles for focused changes
 stages:
   explore:
     agent: fg-020-bug-investigator

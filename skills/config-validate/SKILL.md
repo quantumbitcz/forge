@@ -1,11 +1,18 @@
 ---
 name: config-validate
-description: Pre-pipeline validation of forge.local.md and forge-config.md — checks required fields, value ranges, file references, and command executability before running /forge-run.
+description: "Pre-pipeline validation of forge.local.md and forge-config.md. Use when you want to verify configuration is correct before running the pipeline, after editing config files manually, or when pipeline runs fail at PREFLIGHT with config errors."
 ---
 
 # /config-validate — Configuration Validator
 
 You validate the project's forge configuration files before a pipeline run. Catches misconfigurations that would fail at PREFLIGHT or cause runtime errors deep in the pipeline.
+
+## Prerequisites
+
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge config exists:** Check `.claude/forge.local.md` exists. If not: report "No project config found. Run `/forge-init` to set up." and STOP.
 
 ## Instructions
 
@@ -172,3 +179,21 @@ Present results in this format:
 - NEVER run build, test, or lint commands. Only check that executables exist.
 - NEVER dispatch agents or start the pipeline.
 - Report all issues at once rather than stopping at the first error.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| forge.local.md missing | Report "No project config found. Run `/forge-init` to set up." and STOP |
+| forge.local.md YAML parse failure | Report "Could not parse YAML frontmatter in forge.local.md. Check syntax." and STOP |
+| forge-config.md missing | Log WARNING. Validate forge.local.md only, note that pipeline will use defaults |
+| forge-config.md unparseable | Log WARNING. Skip value range checks, continue with other validations |
+| Plugin root not found | Report "Could not locate forge plugin root. Check plugin installation." File reference checks will be skipped |
+| State corruption | This skill does not depend on state.json -- it validates config files only |
+
+## See Also
+
+- `/forge-init` -- Generate configuration files from scratch (use when config is missing entirely)
+- `/forge-diagnose` -- Diagnose pipeline runtime issues (complementary to config validation)
+- `/forge-run` -- Run the pipeline after configuration is validated
+- `/repair-state` -- Fix state.json issues (config-validate checks config files, not state)

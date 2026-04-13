@@ -10,7 +10,7 @@ Plan and execute a library or framework migration.
 
 Dispatches `fg-160-migration-planner` to handle the migration in phases.
 
-## Usage
+## Instructions
 
 Provide a description of what to migrate:
 
@@ -100,3 +100,23 @@ You are a thin launcher. Your ONLY job is to dispatch the migration planner agen
 4. **Do nothing else**: Do not analyze dependencies, modify files, or make migration decisions. The migration planner handles detection, auditing, migration, cleanup, and verification autonomously.
 
 5. **Relay the result**: When the migration planner completes, relay its final output (migration summary, rollback instructions, or escalation) back to the user unchanged.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Empty input (no migration description) | Ask user what to migrate: "What would you like to migrate? e.g., 'Upgrade Spring Boot from 3.2 to 3.4'" |
+| Migration planner dispatch fails | Report "Migration planner failed to start. Check plugin installation." and STOP |
+| Migration planner returns error | Relay the error unchanged. Each batch has its own commit for independent rollback |
+| Context7 unavailable | Migration planner falls back to CHANGELOG analysis and conservative migration. Log INFO |
+| Version detection fails | Migration planner will ask user for current and target versions interactively |
+| Build/test fails after batch | Migration planner handles rollback of the failed batch. Suggest reviewing rollback instructions |
+| State corruption | Suggest `/repair-state` to fix state, then retry |
+
+## See Also
+
+- `/forge-run` -- Full pipeline entry point (use `migrate:` prefix for migration routing)
+- `/forge-rollback` -- Rollback migration changes if something goes wrong
+- `/forge-diagnose` -- Diagnose pipeline health if the migration stalls
+- `/config-validate` -- Validate configuration before starting a migration

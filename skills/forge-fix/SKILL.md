@@ -1,6 +1,6 @@
 ---
 name: forge-fix
-description: "Start a bugfix workflow. Preferred over /forge-run bugfix: for richer source resolution. Accepts kanban ticket ID, Linear issue, or plain bug description."
+description: "Start a bugfix workflow with rich source resolution. Use when you have a bug to fix, a failing test to investigate, or a ticket ID to resolve. Preferred over /forge-run bugfix: for richer source resolution. Accepts kanban ticket ID, Linear issue, or plain bug description."
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point
@@ -85,3 +85,22 @@ When the orchestrator completes, relay its final output (PR URL, escalation, or 
 - Do NOT create tracking tickets manually (the orchestrator does this during PREFLIGHT)
 - Do NOT fetch Linear issues directly (the orchestrator handles Linear integration)
 - Do NOT make any decisions about the fix approach
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Empty input (no bug description or ticket ID) | Ask user for bug description or ticket ID before dispatching |
+| Kanban ticket not found | Warn user and ask for bug description directly |
+| Linear issue fetch fails | Fall back to description-based mode. Log WARNING about Linear unavailability |
+| Orchestrator dispatch fails | Report "Bugfix orchestrator failed to start. Check plugin installation." and STOP |
+| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
+| State corruption | Suggest `/repair-state` to fix state, then retry |
+
+## See Also
+
+- `/forge-run` -- Full pipeline entry point (use `bugfix:` prefix for quick bugfix routing)
+- `/forge-diagnose` -- Diagnose pipeline health if the bugfix run fails
+- `/forge-shape` -- Shape a complex bug investigation into a structured spec first
+- `/forge-resume` -- Resume an aborted bugfix run from its last checkpoint

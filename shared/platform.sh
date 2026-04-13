@@ -333,6 +333,87 @@ read_components() {
   awk '/^components:/{found=1; next} found && /^  [a-zA-Z]/{sub(/:.*/, ""); print $1; next} found && /^[^ ]/{exit}' "$config_file"
 }
 
+# ── TOOL_INPUT File Path Extraction ─────────────────────────────────────────
+#
+# Extracts file_path from Claude Code TOOL_INPUT environment variable.
+# Used by hooks that need the edited file path (engine.sh, automation-trigger-hook.sh).
+# Tries JSON parse first (jq), falls back to regex.
+# Returns: file path on stdout, or empty string if extraction fails.
+# Sets FORGE_PARSE_METHOD to "json", "regex", or "none" for callers to inspect.
+#
+# Usage: file_path=$(extract_file_path_from_tool_input "$TOOL_INPUT")
+
+FORGE_PARSE_METHOD="none"
+
+extract_file_path_from_tool_input() {
+  local input="$1"
+  FORGE_PARSE_METHOD="none"
+
+  # Strategy 1: JSON parse via jq or python3
+  if command -v jq &>/dev/null; then
+    local result
+    result="$(printf '%s' "$input" | jq -r '.file_path // .file // empty' 2>/dev/null)" && [[ -n "$result" ]] && {
+      FORGE_PARSE_METHOD="json"
+      printf '%s' "$result"
+      return 0
+    }
+  elif [[ -n "${FORGE_PYTHON:-}" ]]; then
+    local result
+    result="$("$FORGE_PYTHON" -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('file_path', d.get('file', '')))" <<< "$input" 2>/dev/null)" && [[ -n "$result" ]] && {
+      FORGE_PARSE_METHOD="json"
+      printf '%s' "$result"
+      return 0
+    }
+  fi
+
+  # Strategy 2: Regex fallback
+  local regex_result
+  regex_result="$(printf '%s' "$input" | grep -oE '"file_path"\s*:\s*"([^"]*)"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//')"
+  if [[ -n "$regex_result" ]]; then
+    FORGE_PARSE_METHOD="regex"
+    printf '%s' "$regex_result"
+    return 0
+  fi
+
+  # Strategy 3: Try 'file' key via regex
+  regex_result="$(printf '%s' "$input" | grep -oE '"file"\s*:\s*"([^"]*)"' | head -1 | sed 's/.*"file"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//')"
+  if [[ -n "$regex_result" ]]; then
+    FORGE_PARSE_METHOD="regex"
+    printf '%s' "$regex_result"
+    return 0
+  fi
+
+  return 1
+}
+
+# ── Lock with Retry ────────────────────────────────────────────────────────
+#
+# Attempts to acquire a mkdir-based lock with exponential backoff.
+# Returns 0 on success (lock acquired), 1 on failure (all retries exhausted).
+# Caller is responsible for releasing: rmdir "$lock_dir"
+#
+# Usage: if acquire_lock_with_retry "/path/to/.lock" 3; then ... rmdir "/path/to/.lock"; fi
+
+acquire_lock_with_retry() {
+  local lock_dir="$1"
+  local max_retries="${2:-3}"
+  local delay_ms=100
+
+  local attempt=0
+  while (( attempt < max_retries )); do
+    if mkdir "$lock_dir" 2>/dev/null; then
+      return 0
+    fi
+    # Exponential backoff: 100ms, 200ms, 400ms
+    local delay_s
+    delay_s="$(printf '0.%03d' "$delay_ms")"
+    sleep "$delay_s" 2>/dev/null || sleep 1
+    delay_ms=$(( delay_ms * 2 ))
+    attempt=$(( attempt + 1 ))
+  done
+  return 1
+}
+
 # ── Atomic Operations ───────────────────────────────────────────────────────
 #
 # Thread-safe primitives for hooks and scripts. Uses flock (Linux) with

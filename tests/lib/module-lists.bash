@@ -83,6 +83,13 @@ done
 
 MIN_DOCUMENTATION_BINDINGS=21
 
+# ---------------------------------------------------------------------------
+# Test file count guards (update when adding new test files)
+# ---------------------------------------------------------------------------
+MIN_UNIT_TESTS=55         # Current: 55 files (54 existing + 1 new discovery-detection.bats)
+MIN_CONTRACT_TESTS=78     # Current: 78 files
+MIN_SCENARIO_TESTS=29     # Current: 29 files
+
 # guard_min_count <label> <actual> <minimum>
 # Returns 0 if actual >= minimum, 1 otherwise. Prints message on failure.
 guard_min_count() {

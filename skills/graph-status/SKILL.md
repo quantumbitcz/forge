@@ -1,6 +1,6 @@
 ---
 name: graph-status
-description: Show Neo4j knowledge graph status — node counts, container health, last build SHA, enrichment coverage.
+description: "Show Neo4j knowledge graph status -- node counts, container health, last build SHA, enrichment coverage. Use when you want to check if the graph is healthy, see what data is indexed, or verify the graph is up to date with the latest code changes."
 ---
 
 # /graph-status — Knowledge Graph Status
@@ -133,3 +133,22 @@ Knowledge Graph Status
 ```
 
 If Neo4j is unavailable, show what can be determined from local files (last build SHA, enriched files) and suggest running `/graph-init`.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Docker not available | Report "Docker is not available. Cannot check graph status." Show local file data only |
+| Neo4j container not running | Report "Neo4j not running. Run `/graph-init` first." Show local file data if available |
+| Neo4j unhealthy | Report container status as UNAVAILABLE with error output. Show local file data |
+| Cypher query fails | Report the error. Suggest checking container logs with `docker logs forge-neo4j` |
+| .last-build-sha missing | Report "No build recorded yet." |
+| .enriched-files missing | Report "No enrichment data recorded." |
+
+## See Also
+
+- `/graph-init` -- Initialize or restart the graph if status shows it is unavailable
+- `/graph-rebuild` -- Rebuild the graph if status shows stale data
+- `/graph-debug` -- Diagnose specific graph issues (orphaned nodes, missing enrichments)
+- `/graph-query` -- Run Cypher queries to explore graph data

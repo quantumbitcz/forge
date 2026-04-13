@@ -129,11 +129,34 @@ sla:
 
 # Model routing (multi-tier model selection)
 model_routing:
-  enabled: false
+  enabled: true
   default_tier: standard
   overrides:
-    tier_1_fast: []
-    tier_3_premium: []
+    tier_1_fast:
+      - fg-101-worktree-manager
+      - fg-102-conflict-resolver
+      - fg-130-docs-discoverer
+      - fg-135-wiki-generator
+      - fg-140-deprecation-refresh
+      - fg-310-scaffolder
+      - fg-350-docs-generator
+      - fg-505-build-verifier
+      - fg-710-post-run
+    tier_3_premium:
+      - fg-010-shaper
+      - fg-015-scope-decomposer
+      - fg-020-bug-investigator
+      - fg-050-project-bootstrapper
+      - fg-090-sprint-orchestrator
+      - fg-100-orchestrator
+      - fg-103-cross-repo-coordinator
+      - fg-150-test-bootstrapper
+      - fg-160-migration-planner
+      - fg-200-planner
+      - fg-210-validator
+      - fg-300-implementer
+      - fg-320-frontend-polisher
+      - fg-412-architecture-reviewer
 
 # Explore cache
 explore:

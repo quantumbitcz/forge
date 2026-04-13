@@ -1,0 +1,29 @@
+{
+  "_comment": "Model pricing reference for cost estimation. Updated manually. Prices in USD per 1M tokens.",
+  "_updated": "2026-04-13",
+  "models": {
+    "haiku": {
+      "input": 0.80,
+      "output": 4.00,
+      "cache_read": 0.08,
+      "cache_write": 1.00
+    },
+    "sonnet": {
+      "input": 3.00,
+      "output": 15.00,
+      "cache_read": 0.30,
+      "cache_write": 3.75
+    },
+    "opus": {
+      "input": 15.00,
+      "output": 75.00,
+      "cache_read": 1.50,
+      "cache_write": 18.75
+    }
+  },
+  "tier_mapping": {
+    "fast": "haiku",
+    "standard": "sonnet",
+    "premium": "opus"
+  }
+}

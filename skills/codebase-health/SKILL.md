@@ -1,10 +1,10 @@
 ---
 name: codebase-health
-description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. For iterative fixing use /deep-health. For changed-files-only use /forge-review."
+description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. Use when you want a quality baseline before starting work, after merging multiple PRs, or to audit convention compliance without making changes."
 disable-model-invocation: false
 ---
 
-# Codebase Health Check
+# /codebase-health -- Codebase Health Check
 
 ## Prerequisites
 
@@ -15,18 +15,16 @@ Before any action, verify:
 
 Run the pipeline's check engine in full review mode across the entire project to assess codebase health against the plugin's convention rules.
 
-## What to do
+## Instructions
 
-1. **Verify git repository:** Run `git rev-parse --show-toplevel` to get the project root. If not a git repo: report "Not a git repository." and stop.
-
-2. **Discover source files:** Find all tracked source files:
+1. **Discover source files:** Find all tracked source files:
    ```bash
    PROJECT_ROOT=$(git rev-parse --show-toplevel)
    SOURCE_FILES=$(git -C "$PROJECT_ROOT" ls-files --cached --others --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|csx|cpp|cc|cxx|hpp|swift|rb|php|dart|ex|exs|scala|sc)$')
    ```
    Count the files and report: "Found {count} source files to scan."
 
-3. **Run the check engine:** Execute Layer 1 + Layer 2 checks on all discovered files:
+2. **Run the check engine:** Execute Layer 1 + Layer 2 checks on all discovered files:
    ```bash
    echo "$SOURCE_FILES" | while read -r f; do
      "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh" --review --project-root "$PROJECT_ROOT" --files-changed "$PROJECT_ROOT/$f"
@@ -34,15 +32,15 @@ Run the pipeline's check engine in full review mode across the entire project to
    ```
    If the engine script is not executable or not found: report "Check engine not available. Verify the forge plugin is installed." and stop.
 
-4. **Parse findings:** The engine outputs pipe-delimited findings:
+3. **Parse findings:** The engine outputs pipe-delimited findings:
    ```
    file:line | CATEGORY | SEVERITY | message | fix_hint
    ```
    Collect all output lines. Count findings by severity (CRITICAL, WARNING, INFO) and by category prefix (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*, FE-PERF-*, APPROACH-*, A11Y-*, DEP-*, COMPAT-*).
 
-5. **Calculate quality score:** Use the scoring formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. Determine verdict: PASS (>= 80), CONCERNS (60-79), FAIL (< 60 or any CRITICAL).
+4. **Calculate quality score:** Use the scoring formula: `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. Determine verdict: PASS (>= 80), CONCERNS (60-79), FAIL (< 60 or any CRITICAL).
 
-6. **Present the report:**
+5. **Present the report:**
 
    ```
    ## Codebase Health Report
@@ -80,22 +78,41 @@ Run the pipeline's check engine in full review mode across the entire project to
    ```
 
    Map category prefixes to human-readable names:
-   - `ARCH-*` → Architecture
-   - `SEC-*` → Security
-   - `PERF-*` → Performance
-   - `TEST-*` → Test Quality
-   - `CONV-*` → Conventions
-   - `DOC-*` → Documentation
-   - `QUAL-*` → Code Quality
-   - `FE-PERF-*` → Frontend Perf
-   - `APPROACH-*` → Approach
-   - `A11Y-*` → Accessibility
-   - `DEP-*` → Dependencies
-   - `COMPAT-*` → Compatibility
-   - `SCOUT-*` → omit from table (no deduction, tracked separately)
+   - `ARCH-*` -> Architecture
+   - `SEC-*` -> Security
+   - `PERF-*` -> Performance
+   - `TEST-*` -> Test Quality
+   - `CONV-*` -> Conventions
+   - `DOC-*` -> Documentation
+   - `QUAL-*` -> Code Quality
+   - `FE-PERF-*` -> Frontend Perf
+   - `APPROACH-*` -> Approach
+   - `A11Y-*` -> Accessibility
+   - `DEP-*` -> Dependencies
+   - `COMPAT-*` -> Compatibility
+   - `SCOUT-*` -> omit from table (no deduction, tracked separately)
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Check engine not found or not executable | Report "Check engine not available. Verify the forge plugin is installed." and STOP |
+| Check engine times out on a file | Skip the file, log WARNING, continue scanning remaining files |
+| No source files found | Report "No source files found in the repository." and STOP |
+| Engine produces unparseable output | Skip malformed lines, log WARNING, continue with valid findings |
+| State corruption | This skill does not depend on state.json -- it runs independently |
 
 ## Important
-- Do NOT fix issues — only report them
+
+- Do NOT fix issues -- only report them
 - This runs Layer 1 (patterns) + Layer 2 (linters) across ALL files, which may take longer than hook-mode
-- If you want to fix issues, run `/forge-run` or offer remediation options
+- If you want to fix issues, run `/deep-health` or offer remediation options
 - Save the full report to `.forge/health-report.md` for reference
+
+## See Also
+
+- `/deep-health` -- Iteratively fix all codebase quality issues (use when you want fixes, not just a report)
+- `/forge-review` -- Review and fix only recently changed files
+- `/verify` -- Quick build + lint + test check without convention scanning
+- `/security-audit` -- Focused security vulnerability scanning

@@ -8,6 +8,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh --hook",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/automation-trigger-hook.sh",
+            "timeout": 3
           }
         ]
       },

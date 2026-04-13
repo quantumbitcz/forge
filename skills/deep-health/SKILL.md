@@ -1,6 +1,6 @@
 ---
 name: deep-health
-description: "Fix all codebase quality issues iteratively. Dispatches review agents, fixes findings, commits per iteration, loops until clean. Scope: all files. For changed-files-only use /forge-review. For read-only analysis use /codebase-health."
+description: "Fix all codebase quality issues iteratively. Use when you want to clean up technical debt, polish a codebase before release, or fix all convention violations. Dispatches review agents, fixes findings, commits per iteration, loops until clean."
 disable-model-invocation: false
 ---
 
@@ -180,3 +180,21 @@ Respects `forge-config.md` parameters when available:
 - Hard cap of 5 iterations prevents infinite loops (configurable via `--max-iterations`)
 - If the project has no tests, fix phase skips test verification but review agents still run
 - Internet search (Context7, WebSearch) validates fixes against current documentation
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| Agent dispatch fails | Skip failed agent, continue with remaining. Log WARNING. If all agents fail, report ERROR and STOP |
+| Fix introduces regression (tests fail) | Revert the specific fix, mark finding as unfixable, continue with next finding |
+| Build/test command unknown | Skip verification step. Log WARNING: "No build/test commands detected." |
+| Max iterations reached with issues remaining | Report remaining issues and suggest manual review |
+| State corruption | This skill does not depend on state.json -- it runs independently |
+
+## See Also
+
+- `/codebase-health` -- Read-only analysis without fixes (use to preview what deep-health would fix)
+- `/forge-review` -- Review and fix only recently changed files (narrower scope)
+- `/verify` -- Quick build + lint + test check
+- `/security-audit` -- Focused security vulnerability scanning

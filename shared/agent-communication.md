@@ -296,6 +296,40 @@ Where:
 
 **Confidence tiers:** HIGH (decay_score 0-3) → MEDIUM (4-6) → LOW (7-9) → ARCHIVED (10+)
 
+### PREEMPT Decay Counting Rules
+
+Three states a PREEMPT item can be in during a pipeline run:
+
+| State | Counts as | Decay effect |
+|-------|-----------|-------------|
+| Loaded + checked + finding reported | "Used" | Resets decay counter to 0 |
+| Loaded + checked + no match in changeset | "Loaded but not reported" | +1 decay unit |
+| Not loaded (agent context too small) | Not counted | No decay change |
+
+**Example 1: Item loaded, checked, finding reported (resets decay)**
+
+PREEMPT item: "Always use `@Transactional(readOnly = true)` for query-only service methods."
+
+Run N: The implementer writes a new service method with `@Transactional`. The code reviewer loads this PREEMPT item, checks the new method, and finds it has `@Transactional` without `readOnly = true` on a query method. Finding reported: `CONV-TX-READONLY | WARNING`. Decay counter resets to 0.
+
+**Example 2: Item loaded, checked, no match found (+1 decay unit)**
+
+PREEMPT item: "Never use `Thread.sleep()` in production code."
+
+Run N: The implementer writes a new REST controller. The code reviewer loads this PREEMPT item and checks all new/modified files. No `Thread.sleep()` calls found in the changeset. The item was loaded and checked but produced no finding. Decay counter increments by 1.
+
+After 10 such runs (loaded but never triggered), the item decays: HIGH -> MEDIUM -> LOW -> ARCHIVED.
+
+**Example 3: Item not loaded, agent context too small (no decay change)**
+
+PREEMPT item: "Prefer `kotlinx.serialization` over `Jackson` for Kotlin multiplatform modules."
+
+Run N: The pipeline runs in bugfix mode with reduced review (3 agents). The code reviewer's context is filled with bugfix-specific findings and the PREEMPT item list exceeds the agent's context window. This item is not included in the dispatch prompt. The decay counter is unchanged -- the item was not given a chance to prove relevance.
+
+**Detection mechanism:** The orchestrator tracks which PREEMPT items were included in each agent dispatch prompt via `preempt_items_loaded[]` in stage notes. Items not in `preempt_items_loaded` for any agent in the run are classified as "not loaded." Items in `preempt_items_loaded` but not in any agent's `findings[]` are classified as "loaded but not reported."
+
+**Auto-discovered items:** Items with `source: auto-discovered` follow the same rules but decay 2x faster (5 non-reports instead of 10).
+
 **Tier transitions:**
 - Items start at HIGH when first recorded in `forge-log.md`
 - Tier decreases when `decay_score` crosses thresholds

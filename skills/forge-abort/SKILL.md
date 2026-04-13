@@ -1,6 +1,6 @@
 ---
 name: forge-abort
-description: "Stop an active pipeline run gracefully. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
+description: "Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ---
 
@@ -8,7 +8,7 @@ allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 1. Check `.forge/state.json` exists. If not: "No active pipeline to abort." STOP.
 2. Read `story_state` from state.json. If `COMPLETE` or `ABORTED`: "Pipeline already finished (state: {story_state})." STOP.
 
-## Abort Procedure
+## Instructions
 
 1. **Read current state:** `story_state`, `convergence.phase`, `total_iterations`
 2. **Confirm with user via AskUserQuestion:**
@@ -33,3 +33,22 @@ allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 - All counters preserved
 - Worktree preserved
 - Lock released
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Prerequisites fail | Report specific error message and STOP |
+| state.json missing | Report "No active pipeline to abort." and STOP |
+| Pipeline already finished | Report "Pipeline already finished (state: {story_state})." and STOP |
+| State transition fails | Report "Could not transition to ABORTED state. State machine error: {error}." Suggest `/repair-state` |
+| Lock file removal fails | Log WARNING. Lock file will be detected as stale on next run |
+| state.json write fails | Report error. State may be partially updated. Suggest `/repair-state` |
+| State corruption | Attempt abort anyway via state machine. If that fails, suggest `/forge-reset` |
+
+## See Also
+
+- `/forge-resume` -- Resume the aborted pipeline from where it stopped
+- `/forge-reset` -- Clear all state (more destructive -- use when resume is not needed)
+- `/forge-status` -- Check pipeline state before deciding to abort
+- `/forge-rollback` -- Rollback code changes made before the abort

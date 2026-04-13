@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BATS="$SCRIPT_DIR/lib/bats-core/bin/bats"
@@ -14,14 +14,55 @@ fi
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; BOLD='\033[1m'; NC='\033[0m'
 
+# Track results across all suites
+RESULTS=()
+FAILURES=0
+TOTAL_START=$(date +%s)
+
 run_tier() {
   local name="$1"; shift
+  local start_time end_time duration
+  start_time=$(date +%s)
   printf '\n%b=== %s ===%b\n' "$BOLD" "$name" "$NC"
   if "$@"; then
-    printf '%b%s: PASSED%b\n' "$GREEN" "$name" "$NC"
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    printf '%b%s: PASSED (%ds)%b\n' "$GREEN" "$name" "$duration" "$NC"
+    RESULTS+=("PASS|$name|${duration}s")
   else
-    printf '%b%s: FAILED%b\n' "$RED" "$name" "$NC"
-    exit 1
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    printf '%b%s: FAILED (%ds)%b\n' "$RED" "$name" "$duration" "$NC"
+    RESULTS+=("FAIL|$name|${duration}s")
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+
+print_summary() {
+  local total_end
+  total_end=$(date +%s)
+  local total_elapsed=$((total_end - TOTAL_START))
+
+  printf '\n%b=== Summary ===%b\n' "$BOLD" "$NC"
+  printf '%-12s %-35s %s\n' "Result" "Suite" "Duration"
+  printf '%-12s %-35s %s\n' "------" "-----" "--------"
+  for result in "${RESULTS[@]}"; do
+    IFS='|' read -r status suite duration <<< "$result"
+    if [[ "$status" == "PASS" ]]; then
+      printf '%b%-12s%b %-35s %s\n' "$GREEN" "$status" "$NC" "$suite" "$duration"
+    else
+      printf '%b%-12s%b %-35s %s\n' "$RED" "$status" "$NC" "$suite" "$duration"
+    fi
+  done
+
+  local passed=$((${#RESULTS[@]} - FAILURES))
+  printf '\n%bTotal: %d passed, %d failed (%.0fs)%b\n' \
+    "$BOLD" "$passed" "$FAILURES" "$total_elapsed" "$NC"
+
+  if [[ $FAILURES -eq 0 ]]; then
+    printf '%bAll tiers passed.%b\n' "${GREEN}${BOLD}" "$NC"
+  else
+    printf '%b%d suite(s) failed.%b\n' "${RED}${BOLD}" "$FAILURES" "$NC"
   fi
 }
 
@@ -31,11 +72,28 @@ case "$TIER" in
     run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
-    printf '\n%bAll tiers passed.%b\n' "${GREEN}${BOLD}" "$NC"
+    print_summary
     ;;
-  structural) run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh" ;;
-  unit)       run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats ;;
-  contract)   run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats ;;
-  scenario)   run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats ;;
-  *)          echo "Usage: $0 [all|structural|unit|contract|scenario]"; exit 1 ;;
+  structural)
+    run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
+    print_summary
+    ;;
+  unit)
+    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
+    print_summary
+    ;;
+  contract)
+    run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
+    print_summary
+    ;;
+  scenario)
+    run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
+    print_summary
+    ;;
+  *)
+    echo "Usage: $0 [all|structural|unit|contract|scenario]"
+    exit 1
+    ;;
 esac
+
+exit "$FAILURES"

@@ -86,18 +86,22 @@ When findings include a confidence field (`confidence:HIGH`, `confidence:MEDIUM`
 | Confidence | Multiplier | Effect |
 |------------|-----------|--------|
 | `HIGH` | 1.0 | Full deduction (default when confidence omitted) |
-| `MEDIUM` | 1.0 | Full deduction (reviewer stands behind it) |
+| `MEDIUM` | 0.75 | 75% deduction (reviewer likely correct but acknowledges uncertainty) |
 | `LOW` | 0.5 | Half deduction (reviewer uncertain) |
+
+MEDIUM findings are less certain than HIGH and carry reduced scoring weight. A MEDIUM CRITICAL costs 15 points (20 x 0.75) instead of 20. This creates meaningful differentiation between the three confidence tiers rather than collapsing HIGH and MEDIUM into a single effective tier.
+
+**Rounding rule:** Fractional deductions from confidence multipliers are rounded to the nearest integer (standard rounding: 0.5 rounds up). This prevents accumulation of fractional points across many findings.
 
 ### Example
 
 | Finding | Severity | Confidence | Raw Deduction | Weighted Deduction |
 |---------|----------|-----------|--------------|-------------------|
 | SEC-AUTH-001 | CRITICAL | HIGH | -20 | -20 |
-| ARCH-LAYER-002 | WARNING | MEDIUM | -5 | -5 |
+| ARCH-LAYER-002 | WARNING | MEDIUM | -5 | -4 (5 x 0.75 = 3.75, rounded to 4) |
 | QUAL-NAME-003 | INFO | LOW | -2 | -1 |
 
-Score: `100 - 20 - 5 - 1 = 74` (vs. `100 - 20 - 5 - 2 = 73` without confidence weighting)
+Score: `100 - 20 - 4 - 1 = 75` (vs. `100 - 20 - 5 - 2 = 73` without confidence weighting)
 
 ### Backward Compatibility
 

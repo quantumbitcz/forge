@@ -9,8 +9,11 @@ Targeted diagnostic skill for the Neo4j knowledge graph. Provides structured dia
 
 ## Prerequisites
 
-- Neo4j container running (check via `shared/graph/neo4j-health.sh`)
-- Graph initialized (`/graph-init` completed)
+Before any action, verify:
+
+1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Neo4j container running:** Run `shared/graph/neo4j-health.sh`. If unhealthy: report "Neo4j is not available. Run `/graph-init` first." and STOP.
+3. **Graph initialized:** Verify graph has nodes (check via node count query). If empty: report "Graph is empty. Run `/graph-init` to build the project graph." and STOP.
 
 ## Diagnostic Recipes
 
@@ -69,7 +72,7 @@ ORDER BY count DESC
 LIMIT 50
 ```
 
-## Procedure
+## Instructions
 
 1. Run Neo4j health check via `shared/graph/neo4j-health.sh`
 2. If unhealthy: report status and suggest `/graph-init` or Docker troubleshooting
@@ -82,4 +85,21 @@ LIMIT 50
 
 - All queries are READ-ONLY (no CREATE, MERGE, DELETE, SET)
 - All queries enforce LIMIT (max 50 rows default, configurable)
-- Never modify graph state — diagnostic only
+- Never modify graph state -- diagnostic only
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Neo4j container not running | Report status and suggest `/graph-init` or Docker troubleshooting |
+| Neo4j unhealthy | Report error output. Suggest checking container logs |
+| Cypher query fails | Display error output. Suggest `/graph-init` if persistent |
+| No project_id derivable (no git remote) | Fall back to basename of project root |
+| Query returns too many rows | Enforce LIMIT (max 50 default). Suggest narrowing the diagnostic |
+
+## See Also
+
+- `/graph-status` -- Quick overview of graph health and node counts
+- `/graph-rebuild` -- Rebuild the graph when debug shows widespread staleness or corruption
+- `/graph-init` -- Full initialization when the container is not running
+- `/graph-query` -- Run custom Cypher queries for deeper investigation
