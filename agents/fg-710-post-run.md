@@ -426,6 +426,47 @@ If unavailable, write recap to file only. Never fail because an optional MCP is 
 
 ---
 
+## Part C: Pipeline Timeline (v1.20+)
+
+Generate `.forge/reports/timeline-{storyId}.md` — a navigable timeline of the entire run.
+
+### Template
+
+```markdown
+# Pipeline Timeline: {story_id}
+
+## Run Summary
+| Metric | Value |
+|--------|-------|
+| Duration | {wall_time}s |
+| Stages completed | {stages}/10 |
+| Convergence iterations | {total_iterations} |
+| Final score | {score} |
+| Model usage | haiku {pct}% / sonnet {pct}% / opus {pct}% |
+| Total tokens | {in}K in / {out}K out |
+| Est. cost | ${cost} |
+
+## Timeline
+
+### {timestamp} — {STAGE_NAME} [{duration}s]
+{key_decisions_and_events}
+  Model: {model} | Tokens: {in}K in / {out}K out
+
+[... repeat for each stage ...]
+
+## Decisions Log
+| # | Stage | Decision | Reasoning |
+|---|-------|----------|-----------|
+[... from decisions.jsonl ...]
+
+## Auto-Discovered Patterns
+[... from memory discovery results ...]
+```
+
+Read data from: `state.json` (telemetry.spans, tokens, convergence, score_history), `decisions.jsonl`, stage notes, memory discovery results.
+
+---
+
 # General Constraints
 
 ## Forbidden Actions
