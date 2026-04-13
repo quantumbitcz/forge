@@ -131,6 +131,37 @@ The config defines which agents to dispatch. Common analysis agent focuses inclu
 
 The quality gate does not prescribe which agents to use -- the project config does.
 
+### §4.3 Mutation Analysis Dispatch (v1.18+)
+
+After Phase B passes (all tests green) AND `mutation_testing.enabled` in config:
+
+1. Dispatch `fg-510-mutation-analyzer` as a sub-agent:
+
+       Agent(
+         subagent_type: "forge:fg-510-mutation-analyzer",
+         model: <from orchestrator model map if model_routing.enabled>,
+         prompt: "
+           Changed files: {changed_files_list}
+           Test command: {test_command from forge.local.md}
+           Mutation categories: {mutation_testing.categories}
+           Max mutants per file: {mutation_testing.max_mutants_per_file}
+         "
+       )
+
+2. Collect `TEST-MUTATION-*` findings from the mutation analyzer response
+3. Include mutation findings in `stage_5_notes` alongside test results:
+
+       ## Mutation Analysis
+       - Mutants generated: 15
+       - Killed: 12 (80%)
+       - Survived: 2 (TEST-MUTATION-SURVIVE findings)
+       - Equivalent: 1
+       - Kill rate: 80% (target: 75%)
+
+4. If `mutation_testing.enabled` is `false` or absent: skip entirely
+
+**Interaction with convergence:** Mutation findings flow to the quality gate as normal Stage 5 output. The convergence engine treats them like any other finding — surviving mutants trigger fix cycles if they push the score below target.
+
 ---
 
 ### Infrastructure Test Commands
