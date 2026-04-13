@@ -40,6 +40,12 @@ You receive from the orchestrator:
 6. **`context7_libraries`** -- libraries to prefetch docs for
 7. **PREEMPT checklist** -- proactive checks from previous pipeline runs to apply before each step
 8. **`max_fix_loops`** -- maximum fix attempts before reporting failure (from config)
+9. **`inner_loop` config** -- inner-loop settings from `implementer.inner_loop` in forge-config.md:
+   - `enabled` (boolean, default `true`): whether to run inner-loop validation after each TDD cycle
+   - `max_fix_cycles` (integer, default 3): max fix attempts within the inner loop per task
+   - `run_lint` (boolean, default `true`): whether to run lint on changed files
+   - `run_tests` (boolean, default `true`): whether to run affected tests
+   - If not provided in dispatch, use the defaults above
 
 ### 2.1 Targeted Re-Implementation (Fix Loops)
 
@@ -175,6 +181,56 @@ Document the self-review result in stage notes: "Self-review: {clean | refactore
 This is NOT optional. The retrospective tracks self-review frequency and quality.
 
 Reference: Principle 4 from `shared/agent-philosophy.md`
+
+### 5.4.1 Inner-Loop Quick Verification (after REFACTOR, before next task)
+
+After the REFACTOR step passes and the self-review checkpoint is complete, run the inner-loop validation. This catches lint violations and broken affected tests before moving to the next task, preventing issues that would otherwise require a full Stage 5 round-trip.
+
+**When to run:** After completing a RED-GREEN-REFACTOR cycle for a task. NOT after every individual edit. NOT for tasks without tests (section 5.7 exemptions). Skip entirely when `implementer.inner_loop.enabled` is `false` in config.
+
+**L0 syntax check:** Already handled by the PreToolUse hook — do NOT re-run it in the inner loop.
+
+**Step 1: Quick Lint**
+
+1. Identify changed files from this task (files created + files modified)
+2. Run `{commands.lint} {changed_files}` (file-scoped lint, not full codebase)
+   - If the project's lint command does not support file arguments, skip to Step 2
+   - If `implementer.inner_loop.run_lint` is `false`, skip to Step 2
+3. If lint errors found:
+   a. Fix the errors (same approach as section 5.6 Handle Failures)
+   b. Re-run lint on changed files
+   c. Track fix attempts against `implementer_fix_cycles` budget
+   d. If budget exhausted: log remaining lint errors in stage notes, proceed
+
+**Step 2: Affected Tests**
+
+1. Detect affected tests using a three-strategy approach (first strategy that produces results wins):
+   - **Strategy 1 (preferred): Explore cache** — query `.forge/explore-cache.json` for dependents of changed files, filter to test files
+   - **Strategy 2: Code graph** — use SQLite (`code-graph-query.sh search_callers`) or Neo4j to find test files that import/reference changed files
+   - **Strategy 3 (fallback): Directory heuristic** — find test mirror paths (e.g., `src/main/.../Foo.kt` -> `src/test/.../FooTest.kt`), same-directory test files, or test files importing the changed module via grep
+2. If `implementer.inner_loop.run_tests` is `false`, skip test execution
+3. Run affected tests via `{commands.test_single} {test_files}`
+   - Cap at 20 test files per invocation (configurable via `implementer.inner_loop.affected_test_cap`)
+   - If more than 20 detected, run the 20 most directly related (by import distance)
+4. If tests fail:
+   a. Analyze failure (same approach as section 5.6)
+   b. Fix the failing code (NOT the test — same rules as section 2.1)
+   c. Re-run affected tests
+   d. Track fix attempts against remaining `implementer_fix_cycles` budget
+   e. If budget exhausted: log remaining test failures in stage notes, proceed
+
+**Budget:** Inner-loop fix cycles are tracked separately as `implementer_fix_cycles` in `state.json`. They do NOT count against `max_fix_loops` (the per-step fix budget) or any convergence engine counter (`verify_fix_count`, `test_cycles`, `quality_cycles`, `total_iterations`, `total_retries`). Default: 3 per task. Configurable via `implementer.inner_loop.max_fix_cycles`.
+
+**Output:** Log inner-loop results in stage notes:
+```
+INNER_LOOP: task=CreateUserUseCase fix_cycles=1/3 lint=PASS tests=PASS
+INNER_LOOP: task=UserController fix_cycles=2/3 lint=PASS tests=PASS (1 fixed)
+INNER_LOOP: task=UserRepository fix_cycles=0/3 lint=PASS tests=SKIP (no affected tests found)
+```
+
+If the inner loop exceeds its budget, log remaining issues and continue to the next task. The VERIFY stage (Stage 5) catches anything the inner loop missed.
+
+---
 
 ### Self-Review Before Completion
 
@@ -437,6 +493,20 @@ When a step fails:
    - What was attempted
    - Suggested next steps
 
+### Inner Loop vs Fix Loop
+
+The inner loop (section 5.4.1) and the fix loop (this section) serve different purposes:
+
+| Aspect | Inner Loop (5.4.1) | Fix Loop (13) |
+|---|---|---|
+| When | After each TDD cycle, before next task | When a step fails during implementation |
+| What | Lint + affected tests | Build + test for the specific step |
+| Budget | `implementer_fix_cycles` (default 3/task) | `max_fix_loops` (default 3/step) |
+| Scope | Changed files + dependents | The specific failing step |
+| Counter | `state.json.inner_loop` | `state.json.verify_fix_count` |
+
+Both budgets are independent. A task could use 2 inner-loop fix cycles (catching lint issues) and still have its full `max_fix_loops` budget for step-level failures.
+
 ### Time Budget Per Fix Attempt
 
 Max 5 minutes per fix attempt. If you haven't found the root cause after 5 minutes:
@@ -518,6 +588,11 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Total fix attempts: [N]
 - Steps requiring fixes: [list]
 - Unresolved failures: [list or "none"]
+
+### Inner Loop Summary
+- Total inner-loop fix cycles: [N] across [M] tasks
+- Tasks with inner-loop fixes: [list]
+- Remaining inner-loop issues: [list or "none"]
 
 ### Notes for Retrospective
 - [Any observations about patterns, recurring issues, or suggestions for PREEMPT items]

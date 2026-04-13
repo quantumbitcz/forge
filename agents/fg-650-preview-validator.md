@@ -1,6 +1,6 @@
 ---
 name: fg-650-preview-validator
-description: Validates preview environments after PR creation — smoke tests, Lighthouse, visual regression, Playwright E2E.
+description: Validates preview environments after PR creation. Dispatched by the orchestrator at Stage 8 (SHIP) when preview.enabled is true and a preview URL is available. Runs smoke tests, Lighthouse audits, visual regression, and Playwright E2E against the deployed preview.
 model: inherit
 color: green
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_playwright_playwright__browser_navigate', 'mcp__plugin_playwright_playwright__browser_snapshot', 'mcp__plugin_playwright_playwright__browser_take_screenshot', 'mcp__plugin_playwright_playwright__browser_console_messages', 'mcp__plugin_playwright_playwright__browser_network_requests', 'mcp__plugin_playwright_playwright__browser_wait_for']
@@ -345,6 +345,17 @@ If the preview environment includes backend APIs:
 2. Verify API endpoints respond with expected status codes (200 for GET, 401 for protected routes)
 3. Log any 5xx errors as CRITICAL findings
 4. This is a smoke check only -- full API testing is handled by the test gate
+
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Preview URL never returns 200 | CRITICAL | Report: "fg-650: Preview failed to deploy within {timeout}s (last status: {status_code}). Check deployment pipeline logs. Skipping all subsequent checks." |
+| Playwright MCP unavailable at start | WARNING | Report: "fg-650: Playwright MCP unavailable — skipping smoke tests, visual regression, and form checks. Only CLI-based checks (Lighthouse, E2E command) will run." |
+| Lighthouse CLI not installed | INFO | Report: "fg-650: Lighthouse CLI not available — skipping performance and accessibility audit. Install lighthouse for preview audits." |
+| E2E test command not configured | WARNING | Report: "fg-650: No E2E test command configured in preview.checks — skipping Playwright E2E suite. Configure checks[type: playwright].test_command." |
+| `gh` CLI not available for PR comment | WARNING | Report: "fg-650: gh CLI not available — printing preview report to stdout instead of PR comment. Install gh CLI for automatic PR commenting." |
+| 10-minute timeout exceeded | WARNING | Report: "fg-650: Preview validation exceeded 10-minute time limit. Scoring with {completed_checks}/{total_checks} completed checks. Remaining checks skipped." |
 
 ## Playwright Fallback
 If Playwright MCP becomes unreachable mid-check:

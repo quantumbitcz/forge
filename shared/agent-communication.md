@@ -372,6 +372,80 @@ When an agent receives a convention stack with both generic and framework-bindin
 
 Agents read BOTH files: generic first (for foundational patterns), then binding (for framework-specific adaptations).
 
+## 10. Structured Output Standard
+
+Coordinator agents (fg-400-quality-gate, fg-500-test-gate, fg-700-retrospective) embed machine-readable JSON within their Markdown output. The JSON is wrapped in an HTML comment so it is invisible in rendered Markdown but trivially extractable by downstream consumers (orchestrator, retrospective, post-run agent, `/forge-insights`).
+
+### Format
+
+```markdown
+<!-- FORGE_STRUCTURED_OUTPUT
+{
+  "schema": "coordinator-output/v1",
+  "agent": "<agent-id>",
+  "timestamp": "<ISO-8601>",
+  ...agent-specific fields...
+}
+-->
+```
+
+The block MUST appear at the end of the coordinator's Markdown output, after all human-readable sections. This ensures the Markdown is complete and readable even if the structured block is stripped.
+
+### Schema Versioning
+
+The `schema` field (`coordinator-output/v1`) enables forward compatibility. Consumers MUST check the schema version before parsing. Unknown schema versions trigger fallback to Markdown parsing.
+
+### Extraction Algorithm
+
+Consumers extract the structured block using a regex with DOTALL (single-line) mode:
+
+**Python:**
+```python
+import re, json
+
+def extract_structured_output(markdown_text):
+    """Extract FORGE_STRUCTURED_OUTPUT from coordinator Markdown output."""
+    pattern = r'<!-- FORGE_STRUCTURED_OUTPUT\n(.*?)\n-->'
+    match = re.search(pattern, markdown_text, re.DOTALL)
+    if match:
+        return json.loads(match.group(1))
+    return None  # Trigger fallback to Markdown parsing
+```
+
+**Bash:**
+```bash
+extract_structured_output() {
+  local text="$1"
+  echo "$text" | sed -n '/<!-- FORGE_STRUCTURED_OUTPUT/,/-->/{ /<!-- FORGE_STRUCTURED_OUTPUT/d; /-->/d; p; }'
+}
+```
+
+### Backward Compatibility
+
+If the `FORGE_STRUCTURED_OUTPUT` block is missing from a coordinator's output, consumers MUST fall back to their existing Markdown parsing logic. This ensures the pipeline continues to function during rollout and when agents truncate output due to token limits.
+
+When falling back, consumers SHOULD log a WARNING:
+
+```
+WARNING: {agent-id} did not include structured output, using Markdown fallback
+```
+
+This makes fallback events observable for monitoring and migration tracking.
+
+### Producing Agents
+
+| Agent | Schema Fields | Consumers |
+|-------|--------------|-----------|
+| `fg-400-quality-gate` | verdict, score, findings_summary, batches, dedup_stats, cycle_info, reviewer_agreement, coverage_gaps | fg-100 (convergence), fg-700 (trends), fg-710 (timeline) |
+| `fg-500-test-gate` | phase_a, phase_b, mutation_testing, verdict | fg-100 (convergence), fg-700 (trends) |
+| `fg-700-retrospective` | run_summary, learnings, config_changes, agent_effectiveness, trend_comparison, approach_accumulations | fg-710 (timeline), `/forge-insights` |
+
+### Token Budget Impact
+
+The structured block adds approximately 500-2000 tokens per coordinator invocation. This is within the stage notes budget (2,000 tokens per stage). If the combined Markdown + JSON exceeds the budget, the coordinator MUST compress the Markdown prose (shorter descriptions, fewer examples) rather than omitting the structured block. The structured block carries higher priority than verbose Markdown because downstream consumers depend on it.
+
+---
+
 ## Design Context in Stage Notes
 
 When Figma MCP is available and the requirement references a Figma URL, the planner extracts design context and stores it in stage notes:

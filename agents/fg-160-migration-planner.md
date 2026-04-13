@@ -425,17 +425,16 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the migration plan for user approv
 
 ---
 
-## Context7 Fallback
-If Context7 MCP is unavailable for API mapping:
-- Use the library's CHANGELOG or migration guide from the repository
-- DO NOT guess API equivalents from training data
-- Log WARNING: "Context7 unavailable — using CHANGELOG for API mapping"
+## Failure Modes
 
-## Circular Dependency Handling
-If a circular dependency is discovered mid-migration:
-- Pause the current migration phase
-- Report with a dependency graph showing the cycle
-- Escalate: "Circular dependency found: A → B → C → A. Manual resolution needed."
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Context7 unavailable for API mapping | WARNING | Report: "fg-160: Context7 MCP unavailable — using CHANGELOG for API mapping. DO NOT guess API equivalents from training data. Migration plan accuracy may be reduced." |
+| Circular dependency discovered | ERROR | Report to orchestrator: "fg-160: Circular dependency found: {A} -> {B} -> {C} -> {A}. Pausing migration phase. Manual resolution needed before proceeding." Include dependency graph. |
+| Current version undetectable | WARNING | Report: "fg-160: Cannot detect current version of {library} — checked state.json.detected_versions and manifest files ({files_checked}). Specify version explicitly: 'migrate: {lib} from X.Y to Z.W'." |
+| Target version unresolvable | ERROR | Report to orchestrator: "fg-160: Cannot determine target version for {library} — Context7 unavailable and package manager query failed ({error}). Specify target version explicitly." |
+| Rollback count exceeds 3 in a phase | WARNING | Report: "fg-160: {rollback_count} rollbacks in phase '{phase_name}' — systemic issue detected. Transitioning to MIGRATION_PAUSED. Review rollback reasons before resuming." |
+| Audit finds zero usages of old library | INFO | Report: "fg-160: No usages of {old_library} found in codebase. Migration may be unnecessary — verify the library is actually in use (may be transitive only)." |
 
 ## Forbidden Actions
 

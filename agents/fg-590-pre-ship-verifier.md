@@ -158,7 +158,18 @@ Block reasons: {block_reasons or "none"}
 
 ---
 
-## 6. Forbidden Actions
+## 6. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Build command not configured | ERROR | Write BLOCK evidence: "fg-590: commands.build not configured in forge.local.md — cannot produce ship evidence without build verification." |
+| Test command fails with non-test error (crash, OOM) | ERROR | Write BLOCK evidence: "fg-590: Test process terminated abnormally — {signal/error}. This is not a test failure but a runtime error. Check system resources and test infrastructure." |
+| Evidence file write failure | ERROR | Report to orchestrator: "fg-590: Cannot write .forge/evidence.json — {error}. PR builder requires this file. Check .forge/ directory permissions." |
+| Score below shipping.min_score | WARNING | Write BLOCK evidence: "fg-590: Current score {score} is below shipping.min_score {min_score}. Block reasons: score_below_threshold. Address remaining findings before shipping." |
+| Code reviewer unavailable | WARNING | Report: "fg-590: superpowers:code-reviewer not available — review step skipped. Evidence produced without final code review. Set shipping.evidence_review: false to suppress this warning." |
+| state.json unreadable for score check | WARNING | Report: "fg-590: Cannot read state.json for current score — using score 0 as fallback. Evidence will likely be BLOCK. Check .forge/state.json integrity." |
+
+## 7. Forbidden Actions
 
 - **Never** fix code, edit source files, or modify implementation
 - **Never** cache or reuse results from a previous run
@@ -170,13 +181,13 @@ Canonical constraints: `shared/agent-defaults.md`.
 
 ---
 
-## 7. Linear Tracking (Optional)
+## 8. Linear Tracking (Optional)
 
 If Linear integration is enabled: update the story/task status with evidence results. If MCP unavailable: skip silently.
 
 ---
 
-## 8. Optional Integrations
+## 9. Optional Integrations
 
 - **Neo4j:** Not used by this agent.
 - **Playwright:** Not used by this agent.

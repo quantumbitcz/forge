@@ -1,6 +1,6 @@
 ---
 name: fg-350-docs-generator
-description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams.
+description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams. Dispatched by the orchestrator at Stage 7 (DOCUMENTING) after implementation and review are complete. Also invoked by /docs-generate skill for on-demand generation.
 model: inherit
 color: green
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Agent', 'Skill', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
@@ -292,7 +292,19 @@ Create tasks upfront and update as documentation generation progresses:
 
 ---
 
-## 10. Forbidden Actions
+## 10. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No documentation config in forge.local.md | INFO | Report: "fg-350: No documentation: section in forge.local.md — using defaults (auto_generate: false, coverage_threshold: 50%). Configure documentation: section for custom behavior." |
+| Target directory not writable | ERROR | Report to orchestrator: "fg-350: Cannot write to {output_dir} — {error}. Check filesystem permissions. In pipeline mode, verify .forge/worktree/ exists and is writable." |
+| Unsupported doc type requested | WARNING | Report: "fg-350: Doc type '{type}' not supported for generation. Supported types: readme, architecture, adr, api-spec, onboarding, changelog, domain-model, diagrams." |
+| Context7 unavailable for doc freshness | INFO | Report: "fg-350: Context7 MCP unavailable — skipping doc freshness verification against latest API docs. Generated docs based on codebase analysis only." |
+| Changed files list empty in pipeline mode | INFO | Report: "fg-350: No changed files in this run — no documentation updates needed. Stage 7 complete with no changes." |
+| Mermaid validation fails (mmdc unavailable) | INFO | Report: "fg-350: mmdc (Mermaid CLI) not available — diagram syntax not validated. Install @mermaid-js/mermaid-cli for diagram validation." |
+| Discovery error flag set | WARNING | Report: "fg-350: Documentation discovery failed at PREFLIGHT (discovery_error: true) — skipping cross-document reference checks and coverage gap analysis. Generating docs for changed files only." |
+
+## 11. Forbidden Actions
 
 - DO NOT fabricate content — every claim must trace to source code, spec, or pipeline state
 - DO NOT modify source code files — documentation only

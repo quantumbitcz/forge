@@ -115,6 +115,37 @@ All review agents MUST include the `confidence` field in every finding. The fiel
 - If two or more reviewers independently flag the same issue, the quality gate promotes the finding's confidence to HIGH regardless of individual agent assessments.
 - The confidence field applies to all categories including SCOUT-* (though SCOUT findings are already zero-scored).
 
+## Tool Availability Pre-Check
+
+Before first use of an optional tool, verify availability with a minimal probe call. On failure, set a flag to prevent repeated attempts during the run.
+
+### Pre-Check Patterns
+
+1. **Context7:** Attempt `mcp__plugin_context7_context7__resolve-library-id` with a known library (e.g., the project's primary framework).
+   - Success: mark `context7_available = true`
+   - Failure: mark `context7_available = false`, log INFO: "Context7 unavailable — skipping documentation lookups"
+
+2. **Playwright:** Attempt `mcp__plugin_playwright_playwright__browser_tabs`.
+   - Success: mark `playwright_available = true`
+   - Failure: mark `playwright_available = false`, log INFO: "Playwright unavailable — skipping visual verification"
+
+3. **Neo4j:** Attempt a minimal neo4j-mcp health check query (e.g., `RETURN 1`).
+   - Success: mark `neo4j_available = true`
+   - Failure: mark `neo4j_available = false`, log INFO: "Neo4j unavailable — using fallback index"
+
+4. **LSP:** Check `lsp.enabled` in forge-config.md and verify LSP server responds to a basic request.
+   - Available: use LSP for type checking and references
+   - Unavailable: fall back to grep/glob, log INFO: "LSP unavailable — using text-based analysis"
+
+### Rules
+
+- **Check once, cache for the run.** After the first probe, use the cached availability flag for all subsequent decisions. Never retry a failed tool within the same agent invocation.
+- **Log degradation, never fail.** Every unavailable tool produces an INFO-level log message stating what will be skipped and what fallback is used.
+- **Adjust behavior based on available tools.** When a tool is unavailable, disable all code paths that depend on it rather than attempting calls that will fail.
+- **Agents with pre-check responsibility:** fg-130 (Neo4j), fg-140 (Context7), fg-200 (Neo4j), fg-350 (Context7), fg-417 (Context7), fg-650 (Playwright). The orchestrator (fg-100) handles detection at PREFLIGHT and passes availability flags to downstream agents when possible.
+
+---
+
 ## Deliberation Response Format
 
 When the quality gate detects conflicting findings at the same `(file, line)` and `quality_gate.deliberation` is enabled, it re-dispatches both originating reviewers with a narrow deliberation prompt. Each reviewer responds with one of:

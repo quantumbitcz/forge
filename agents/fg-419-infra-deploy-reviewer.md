@@ -139,6 +139,28 @@ Then provide a summary with PASS/FAIL per category (Security, Reliability, Scala
 
 ---
 
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No infrastructure files in scope | INFO | Report: "fg-419: No infrastructure files (Helm, K8s, Terraform, Dockerfiles) in changed files — skipping infra review with 0 findings." |
+| Docker not available for image analysis | INFO | Report: "fg-419: Docker unavailable — skipping Dockerfile layer analysis. Review based on static file analysis only." |
+| K8s manifest parse failure | WARNING | Report: "fg-419: Failed to parse {path} as valid Kubernetes YAML — {parse_error}. File may contain templating syntax (Helm). Review manually." |
+| Terraform config unreadable | WARNING | Report: "fg-419: Cannot parse Terraform config at {path} — {error}. Check HCL syntax. Terraform-specific checks skipped for this file." |
+| Context7 unavailable for K8s/Helm docs | INFO | Report: "fg-419: Context7 unavailable — reviewing against hardcoded K8s/Helm best practices only. Version-specific recommendations may be outdated." |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
 ## Constraints
 
-**Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
+**Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.

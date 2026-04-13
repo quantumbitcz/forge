@@ -219,13 +219,18 @@ Return EXACTLY this structure after generation:
 
 ---
 
-## 13. Error Handling
+## 13. Failure Modes
 
-- If a source file cannot be read (permissions, encoding): skip and log INFO — never fail
-- If the project has no recognizable source code: write a minimal `index.md` noting the empty state and exit cleanly
-- If Neo4j is unavailable: proceed with static analysis only, log INFO
-- If explore cache is stale or missing: fall back to direct scanning, log INFO
-- Never fail the pipeline — wiki generation is advisory
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Source file unreadable (permissions, encoding) | INFO | Report: "fg-135: Source file {path} unreadable — {error}. Skipping file; wiki coverage may be incomplete for this module." |
+| No recognizable source code in project | INFO | Report: "fg-135: No recognizable source code found — writing minimal index.md noting empty state. Wiki will be populated after code is added." |
+| Neo4j unavailable for enrichment | INFO | Report: "fg-135: Neo4j unavailable — generating wiki from static code analysis only. Graph-enriched data (bug hotspots, class hierarchies) will be absent." |
+| Explore cache stale or missing | INFO | Report: "fg-135: Explore cache at .forge/explore-cache.json not found or stale — falling back to direct Glob/Read scanning. This may be slower for large codebases." |
+| Codebase too large for token budget | WARNING | Report: "fg-135: Codebase exceeds analysis budget — {files_found} source files found but only {files_analyzed} analyzed within token limits. Wiki covers top-level modules; deeper analysis deferred." |
+| `.forge/wiki/` directory write failure | ERROR | Report to orchestrator: "fg-135: Cannot write to .forge/wiki/ — {error}. Check filesystem permissions on .forge/ directory." |
+
+Never fail the pipeline — wiki generation is advisory.
 
 ---
 

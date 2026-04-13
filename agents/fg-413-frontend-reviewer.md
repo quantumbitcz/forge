@@ -524,6 +524,18 @@ Then provide a summary:
 
 If no issues found, report PASS for all categories. Do not invent issues. Omit sections not covered by the active review mode.
 
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
 ## Constraints
 
 **Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally: no design theory file modifications, never fail the pipeline — return findings gracefully.

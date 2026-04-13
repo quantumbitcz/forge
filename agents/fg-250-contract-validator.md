@@ -235,16 +235,21 @@ Create tasks upfront and update as contract validation progresses:
 
 ---
 
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No contracts configured | INFO | Report: "fg-250: No contracts section in forge.local.md — skipping contract validation. Configure contracts: entries to enable API breaking change detection." |
+| Contract file not found on disk | ERROR | Report to orchestrator: "fg-250: Contract source file {path} does not exist. Check contracts[].source path in forge.local.md." |
+| Contract format unrecognized | INFO | Report: "fg-250: Unsupported contract type '{type}' for {name} — skipping analysis. Supported types: openapi. Future: protobuf, graphql, typescript-types." |
+| `git show` fails for baseline | WARNING | Report: "fg-250: Baseline not available for {path} on branch {baseline_branch} — file not present in baseline. Running structure-only validation without diff. Breaking change detection skipped for this contract." |
+| Consumer path unreachable | INFO | Report: "fg-250: Consumer path {path} not found or not readable — running diff-only mode without consumer impact analysis. Other consumers may still be affected." |
+| OpenAPI parse failure | ERROR | Report to orchestrator: "fg-250: Failed to parse {path} as OpenAPI spec — {parse_error}. Verify the file is valid OpenAPI 3.x YAML/JSON." |
+
 ## New Contract Handling
 If a contract file has no git baseline (new contract, not yet committed):
 - Treat all fields as "added" — no breaking changes possible for a new contract
 - Report as INFO: "New contract {path} — all fields are additions"
-
-## Git Show Fallback
-If `git show` fails for the baseline (file not in baseline branch):
-- Log WARNING: "Baseline not available for {path}"
-- Run current-state-only analysis: validate structure, types, naming — without diff
-- Skip breaking change detection for this contract
 
 ### Mobile API Contracts
 Mobile apps (React Native, Flutter, Jetpack Compose, SwiftUI) typically consume REST APIs via OpenAPI specs or gRPC via Protobuf definitions. When `related_projects` includes a mobile project:

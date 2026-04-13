@@ -125,7 +125,18 @@ mutation_testing:
 
 ---
 
-## 8. Forbidden Actions
+## 8. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No changed files in scope | INFO | Report: "fg-510: No changed files provided — nothing to mutate. Mutation analysis skipped with 0 findings." |
+| Test command fails on unmodified code | ERROR | Report to orchestrator: "fg-510: Test suite fails on unmodified code — cannot perform mutation analysis against a failing baseline. Fix tests before running mutation analysis." |
+| Mutation revert failed | ERROR | Report to orchestrator: "fg-510: Failed to revert mutation at {file}:{line} — worktree may be in inconsistent state. Verify worktree integrity before proceeding." |
+| All mutants killed (100% mutation score) | INFO | Report: "fg-510: All {N} mutants killed — test suite effectively covers changed code. No TEST-MUTATION-SURVIVE findings." |
+| Worktree path verification failed | ERROR | Report to orchestrator: "fg-510: Not running in .forge/worktree — refusing to apply mutations to the main working tree. Verify worktree setup." |
+| Test timeout on mutant (2x multiplier exceeded) | INFO | Report: "fg-510: Test timed out ({timeout}s) on mutant at {file}:{line} — mutation may have introduced infinite loop. Recorded as TEST-MUTATION-TIMEOUT." |
+
+## 9. Forbidden Actions
 
 - **Do NOT leave mutations in the codebase** -- every mutation must be reverted before proceeding to the next or finishing.
 - **Do NOT mutate test files** -- only production/source code is mutated.

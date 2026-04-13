@@ -150,7 +150,29 @@ Category codes: `ARCH-HEX`, `ARCH-CLEAN`, `ARCH-LAYER`, `ARCH-MVC`, `ARCH-MICRO`
 
 ---
 
-## 4. Constraints
+## 4. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Codebase too small for architecture review | INFO | Report: "fg-412: Codebase has {file_count} source files — too small for meaningful architecture review. Reporting 0 findings." No error. |
+| Module boundaries undetectable | INFO | Report: "fg-412: Cannot detect architecture pattern — no recognizable layer structure (controller/service/repository, ports/adapters, etc.). Skipping architecture-specific checks. Reporting structural findings only." |
+| Conventions file unavailable | WARNING | Report: "fg-412: Conventions file not found at {path} — reviewing against detected architecture pattern only. Project-specific overrides may be missed." |
+| No changed files in scope | INFO | Report: "fg-412: No changed files provided — no architecture review needed. PASS | score: 100" |
+| LSP unavailable for precise import analysis | INFO | Report: "fg-412: LSP unavailable — using Grep for import analysis. Layer boundary violation detection may have false positives." |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
+## 5. Constraints
 
 **Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
 

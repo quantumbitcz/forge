@@ -296,8 +296,26 @@ Return EXACTLY this structure. No preamble or explanation outside the format.
 
 ---
 
-## 9. Constraints
+## 9. Failure Modes
 
-**Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally: do not modify deprecation registries, do not fail the pipeline — always return findings gracefully.
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No dependency file found | INFO | Report: "fg-417: No dependency manifest found — skipping version compatibility review with 0 findings." |
+| Context7 unavailable for verification | INFO | Report: "fg-417: Context7 unavailable — skipping live documentation lookups. Findings based on curated baselines and native ecosystem tools only." |
+| Native audit tool unavailable | INFO | Report: "fg-417: {tool_name} not available for {ecosystem} — skipping dependency conflict detection via native tooling. Manual check recommended." |
+| Target language version undetectable | WARNING | Report: "fg-417: Cannot detect target language version from project config — feature usage checks skipped. Configure language version in tsconfig.json/build.gradle.kts/go.mod/etc." |
+| Runtime version undetectable | WARNING | Report: "fg-417: Cannot detect target runtime version — API removal checks skipped. Configure runtime version in .nvmrc, Dockerfile, or engine settings." |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, no deprecation registry modifications, evidence-based findings only, never fail the pipeline — always return findings gracefully.
 
 **Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.

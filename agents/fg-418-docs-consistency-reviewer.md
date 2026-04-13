@@ -267,9 +267,31 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 ---
 
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No documentation sources found | INFO | Report: "fg-418: No project documentation found for changed files. Consider running /docs-generate to create a documentation baseline." Return 0 findings. |
+| Neo4j unavailable for graph queries | INFO | Report: "fg-418: Neo4j unavailable — falling back to file-based analysis via .forge/docs-index.json and grep. Analysis precision may be reduced." |
+| Discovery error flag set (discovery_error: true) | WARNING | Emit SCOUT-DOC-DEGRADED finding. Cap all finding confidence to MEDIUM. Skip Sections 4.4 and 4.6 (depend on discovery data). |
+| docs-index.json missing (no Neo4j, no index) | WARNING | Report: "fg-418: Neither Neo4j nor docs-index.json available — using grep-based fallback for doc discovery. Review coverage limited to explicitly referenced docs." |
+| No changed files in scope | INFO | Report: "fg-418: No changed files provided — no documentation consistency review needed. PASS | score: 100" |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
 ## Constraints
 
-**Forbidden Actions:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints. Additionally:
+**Additional Forbidden Actions:**
 - DO NOT review code quality, security, or performance — out of scope
 - DO NOT create documentation — report DOC-MISSING findings instead
 - DO NOT report LOW confidence findings as scored `DOC-*` — use `SCOUT-DOC-*` prefix

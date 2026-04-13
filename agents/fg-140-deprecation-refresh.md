@@ -1,6 +1,6 @@
 ---
 name: fg-140-deprecation-refresh
-description: Refreshes known-deprecations JSON files by querying context7 and package registries for newly deprecated APIs.
+description: Refreshes known-deprecations JSON files by querying Context7 and package registries for newly deprecated APIs. Dispatched by the orchestrator at PREFLIGHT when Context7 MCP is available. Skipped gracefully when Context7 is unavailable.
 model: inherit
 color: cyan
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
@@ -235,13 +235,18 @@ Refreshed {N} deprecation entries across {M} registries. Added {X} new, updated 
 
 ---
 
-## 9. Error Handling
+## 9. Failure Modes
 
-- If context7 is unavailable (connection error, timeout), log an INFO note and continue with registry-only lookups.
-- If a package registry is unreachable, skip that library and note it in the report.
-- If no dependency file is found, report: `"No dependency file found. Nothing to refresh."` and exit cleanly.
-- If all registries are fresh (within 7 days), report: `"All registries are fresh. No refresh needed."` and exit cleanly.
-- Never fail the pipeline -- this agent is advisory. Return gracefully with whatever data was gathered.
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Context7 unavailable (connection error, timeout) | INFO | Report: "fg-140: Context7 MCP unavailable — skipping documentation-based deprecation lookups. Continuing with package registry changelogs only. Re-run with Context7 for comprehensive coverage." |
+| Package registry unreachable | WARNING | Report: "fg-140: Package registry for {ecosystem} unreachable — skipping {N} libraries ({library_names}). Check network connectivity or registry status." |
+| No dependency file found | INFO | Report: "fg-140: No dependency manifest found (checked: package.json, build.gradle.kts, Cargo.toml, go.mod, pyproject.toml, Package.swift). Nothing to refresh." |
+| All registries fresh (within 7 days) | INFO | Report: "fg-140: All {N} deprecation registries are fresh (last refreshed within 7 days). No refresh needed." |
+| JSON write failure for known-deprecations.json | ERROR | Report to orchestrator: "fg-140: Failed to write {path} — {error}. Check filesystem permissions. Deprecation data is stale; downstream checks may miss removed APIs." |
+| Malformed existing known-deprecations.json | WARNING | Report: "fg-140: Existing {path} is malformed JSON — {parse_error}. Creating fresh registry from discovered deprecations. Original file preserved as {path}.bak." |
+
+Never fail the pipeline — this agent is advisory. Return gracefully with whatever data was gathered.
 
 ---
 

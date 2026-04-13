@@ -113,6 +113,26 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "validation_retries": 0,
   "total_retries": 0,
   "total_retries_max": 10,
+  "implementer_fix_cycles": 0,
+  "inner_loop": {
+    "enabled": true,
+    "fix_cycles_used": 0,
+    "fix_cycles_max": 3,
+    "tasks_total": 0,
+    "tasks_with_fixes": 0,
+    "lint_fixes": 0,
+    "test_fixes": 0,
+    "tests_run": 0,
+    "tests_passed": 0,
+    "lint_issues_fixed": 0,
+    "remaining_issues": []
+  },
+  "check_engine": {
+    "l0_blocks": 0,
+    "l0_total_checks": 0,
+    "l0_skipped": 0,
+    "l0_avg_latency_ms": 0
+  },
   "evidence_refresh_count": 0,
   "stage_timestamps": {
     "preflight": "2026-03-21T10:00:00Z",
@@ -276,6 +296,24 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `validation_retries` | integer | Yes | Number of REVISE verdicts received at Stage 3 (VALIDATE). Starts at 0, incremented when the validator returns REVISE and the planner revises the plan. Max is `validation.max_validation_retries` from config (default: 2). |
 | `total_retries` | integer | Yes | Cumulative retry count across all loops (validation_retries + verify_fix_count + test_cycles + quality_cycles + direct PR rejection increments). Used for the global retry budget. Starts at 0, incremented on every retry anywhere in the pipeline. |
 | `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `forge-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
+| `implementer_fix_cycles` | integer | Yes | Total inner-loop fix cycles across all tasks in this run. Tracked separately from convergence engine counters (`verify_fix_count`, `test_cycles`, `quality_cycles`, `total_iterations`, `total_retries`). Does NOT feed into `total_retries`. Starts at 0, incremented by the implementer's inner-loop validation (section 5.4.1 of fg-300). |
+| `inner_loop` | object | Yes | Inner-loop validation state for the implementer. Tracks per-run metrics for lint and affected test execution within Stage 4. Initialized at PREFLIGHT with all counters at 0. |
+| `inner_loop.enabled` | boolean | Yes | Whether inner-loop validation is active for this run. Mirrors `implementer.inner_loop.enabled` from config. Default: `true`. |
+| `inner_loop.fix_cycles_used` | integer | Yes | Total inner-loop fix cycles consumed across all tasks. Mirrors top-level `implementer_fix_cycles` (canonical counter). Kept for convenience when reading the `inner_loop` object in isolation. |
+| `inner_loop.fix_cycles_max` | integer | Yes | Per-task fix cycle budget. From `implementer.inner_loop.max_fix_cycles` config. Default: 3. Range: 1-5. |
+| `inner_loop.tasks_total` | integer | Yes | Total tasks processed through the inner loop in this run. |
+| `inner_loop.tasks_with_fixes` | integer | Yes | Number of tasks that required at least one inner-loop fix cycle. |
+| `inner_loop.lint_fixes` | integer | Yes | Fix cycles spent on lint issues across all tasks. |
+| `inner_loop.test_fixes` | integer | Yes | Fix cycles spent on test failures across all tasks. |
+| `inner_loop.tests_run` | integer | Yes | Total number of affected test files executed by the inner loop. |
+| `inner_loop.tests_passed` | integer | Yes | Number of affected test files that passed. |
+| `inner_loop.lint_issues_fixed` | integer | Yes | Total lint issues fixed by the inner loop across all tasks. |
+| `inner_loop.remaining_issues` | array | Yes | Issues that exhausted the inner-loop budget (passed to VERIFY). Each entry: `{ "task": "<name>", "type": "lint"\|"test", "detail": "<description>" }`. Empty array when all issues resolved. |
+| `check_engine` | object | Yes | L0 check engine metrics for the run. Populated from `.forge/.l0-*` counter files by the orchestrator at stage transitions. |
+| `check_engine.l0_blocks` | integer | Yes | Number of edits blocked by L0 syntax validation. Higher counts may indicate the implementer is producing poor syntax. |
+| `check_engine.l0_total_checks` | integer | Yes | Total number of L0 syntax checks performed this run. |
+| `check_engine.l0_skipped` | integer | Yes | Number of L0 checks skipped (tree-sitter unavailable, language unsupported, timeout). |
+| `check_engine.l0_avg_latency_ms` | number | Yes | Average L0 check latency in milliseconds. Should be <500ms; higher values indicate tree-sitter performance issues. |
 | `evidence_refresh_count` | integer | Yes | Tracks stale-evidence refresh attempts at SHIPPING entry. Starts at 0, capped at 3 before user escalation. See `verification-evidence.md` §Staleness and `state-transitions.md` row 52. |
 | `stage_timestamps` | object | Yes | Map of stage name (lowercase) to ISO 8601 timestamp marking when that stage started. Keys are: `"preflight"`, `"explore"`, `"plan"`, `"validate"`, `"implement"`, `"verify"`, `"review"`, `"docs"`, `"ship"`, `"learn"`. Only stages that have started appear in the map. |
 | `last_commit_sha` | string | Yes | Git commit SHA of the most recent forge-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |

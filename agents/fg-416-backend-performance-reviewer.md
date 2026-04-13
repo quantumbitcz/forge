@@ -95,6 +95,28 @@ When `lsp.enabled` and LSP is available for the project language:
 
 ---
 
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No backend code in scope | INFO | Report: "fg-416: No backend code in changed files — skipping backend performance review with 0 findings." |
+| Profiling data unavailable | INFO | Report: "fg-416: No profiling data or benchmark baselines available — review based on static code analysis only. Runtime performance characteristics cannot be verified." |
+| LSP unavailable for type analysis | INFO | Report: "fg-416: LSP unavailable — using Grep for collection/query analysis. Lazy vs eager collection distinction may be imprecise." |
+| Context7 unavailable for framework perf docs | INFO | Report: "fg-416: Context7 unavailable — using conventions file for performance patterns. Framework-specific performance best practices not verified against latest docs." |
+| All changed files are configuration/non-code | INFO | Report: "fg-416: Changed files contain no executable backend code (config files only). Skipping with 0 findings." |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
 ## Constraints
 
-**Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
+**Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.

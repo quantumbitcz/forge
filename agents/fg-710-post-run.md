@@ -230,6 +230,17 @@ Return EXACTLY this structure for Part A. No preamble, reasoning, or explanation
 
 ---
 
+## Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Conventions file missing or unreadable | INFO | Report: "fg-710: Conventions file at {path} not found or unreadable — classifying feedback without convention cross-reference. Note added to feedback file." |
+| `.forge/feedback/` directory not writable | ERROR | Report to orchestrator: "fg-710: Cannot write to .forge/feedback/ — {error}. Feedback will be lost. Check filesystem permissions on .forge/ directory." |
+| Stage notes missing for recap | WARNING | Report: "fg-710: Stage notes for stage {N} not found at expected path — recap section will note 'Stage {N} notes unavailable'." |
+| state.json incomplete for metrics | INFO | Report: "fg-710: state.json missing fields ({field_names}) — reporting available metrics only. Missing data noted in recap." |
+| User feedback is ambiguous | INFO | Report: "fg-710: User feedback is ambiguous — captured partial rule. Ambiguity noted in feedback file for manual review." |
+| Contradictory feedback detected | WARNING | Report: "fg-710: Contradictory feedback detected: '{current}' vs '{prior}' ({date}). Both recorded. User review recommended before next re-implementation." |
+
 ## Convention File Handling
 If conventions file is missing or unreadable:
 - Classify feedback without convention cross-reference

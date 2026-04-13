@@ -256,3 +256,28 @@ forge_ask:
   deep_mode: false
   max_source_files: 20
   cache_answers: true
+
+# Implementer inner loop (v2.0+)
+implementer:
+  inner_loop:
+    enabled: true           # Enable/disable inner-loop validation after each TDD cycle. Default: true.
+    max_fix_cycles: 3       # Max fix attempts per task within the inner loop. Default: 3. Range: 1-5.
+    run_lint: true          # Run lint on changed files after each TDD cycle. Default: true.
+    run_tests: true         # Run affected tests after each TDD cycle. Default: true.
+    affected_test_cap: 20   # Max test files to run per inner loop invocation. Default: 20. Range: 5-50.
+    affected_test_strategy: auto  # Test detection: auto | explore | graph | directory. Default: auto.
+
+    # Check Engine (L0 syntax validation)
+    check_engine:
+      l0_enabled: true
+      l0_languages: [auto]           # auto = detect from file extension
+      l0_timeout_ms: 500             # Per-file tree-sitter parse timeout
+      l0_block_on_error: true        # Block edits with syntax errors
+
+    # Code Graph (SQLite-based AST graph)
+    code_graph:
+      enabled: true
+      backend: auto                  # auto = SQLite always, Neo4j when available
+      incremental: true
+      max_file_size_kb: 512
+      exclude_patterns: [node_modules, .git, vendor, build, dist, __pycache__]

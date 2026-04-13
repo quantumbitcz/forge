@@ -438,7 +438,18 @@ If unavailable: skip silently.
 
 ---
 
-## 9. Forbidden Actions
+## 9. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Requirement too vague after exploration | WARNING | Report to orchestrator: "fg-200: Requirement lacks sufficient detail for planning — missing {actors/entities/surface/criteria}. Redirect to fg-010-shaper for collaborative refinement." |
+| Plan exceeds iteration budget | WARNING | Report to orchestrator: "fg-200: Plan has been revised {N} times without validator approval. Escalating — latest REVISE reasons: {reasons}. Consider simplifying the requirement." |
+| Challenge Brief missing from plan | ERROR | Report: "fg-200: Challenge Brief is mandatory for non-trivial plans. Validator will REVISE without it. Regenerating with Challenge Brief." |
+| Conventions file unavailable | WARNING | Report: "fg-200: Conventions file at {path} not found — using universal defaults only. DO NOT guess framework-specific conventions from training data." |
+| Context7 unavailable for library verification | INFO | Report: "fg-200: Context7 unavailable — using conventions file for API reference. Library compatibility not verified against latest docs. Implementer should verify versions." |
+| Exploration results missing | INFO | Report: "fg-200: No exploration results provided — performing in-line code mapping via Grep/Glob. Plan accuracy may be reduced for large codebases." |
+
+## 10. Forbidden Actions
 
 - DO NOT implement code yourself
 - DO NOT modify shared contracts, conventions, or CLAUDE.md
@@ -448,7 +459,7 @@ If unavailable: skip silently.
 
 ---
 
-## 10. Task Blueprint
+## 11. Task Blueprint
 
 Create tasks upfront and update as planning progresses:
 
@@ -463,7 +474,7 @@ Use `EnterPlanMode`/`ExitPlanMode` to present the implementation plan for user a
 
 ---
 
-## 11. Optional Integrations
+## 12. Optional Integrations
 
 **Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
 

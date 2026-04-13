@@ -685,6 +685,106 @@ If `fix_cost_per_point > 50,000 tokens/point`, propose increasing `shipping.min_
 
 ---
 
+## 15. Structured Output
+
+After producing all three outputs (report, configuration updates, improvement proposals), you MUST append a structured JSON block wrapped in an HTML comment at the very end of your output. This block is for machine consumption by the post-run agent (fg-710) for timeline generation and by `/forge-insights` for cross-run analytics. It enables reliable data extraction without fragile Markdown parsing.
+
+**The Markdown report and log entries remain the human-readable outputs.** The structured block is invisible in rendered Markdown but trivially extractable by consumers.
+
+**Format:**
+
+```
+<!-- FORGE_STRUCTURED_OUTPUT
+{
+  "schema": "coordinator-output/v1",
+  "agent": "fg-700-retrospective",
+  "timestamp": "<ISO-8601>",
+  "run_summary": {
+    "mode": "standard|bugfix|migration|bootstrap",
+    "total_iterations": <number>,
+    "total_retries": <number>,
+    "wall_time_seconds": <number>,
+    "final_score": <number>,
+    "final_verdict": "PASS|CONCERNS|FAIL",
+    "convergence_phase_reached": "<phase name>"
+  },
+  "learnings": {
+    "extracted": [
+      {
+        "type": "preempt|pattern|tuning|preempt_critical",
+        "description": "<learning text>",
+        "source": "run-analysis|auto-discovered|user-feedback",
+        "confidence": "HIGH|MEDIUM|LOW",
+        "category": "<finding category if applicable>"
+      }
+    ],
+    "promoted": [],
+    "archived": [],
+    "total_active": <number>
+  },
+  "config_changes": {
+    "proposed": [
+      {
+        "field": "<config field path>",
+        "current": <value>,
+        "proposed": <value>,
+        "rationale": "<why>",
+        "locked": <boolean>
+      }
+    ],
+    "applied": [],
+    "blocked_by_lock": []
+  },
+  "agent_effectiveness": [
+    {
+      "agent_id": "<full agent ID>",
+      "findings_reported": <number>,
+      "findings_after_dedup": <number>,
+      "findings_fixed": <number>,
+      "fix_rate_pct": <number>,
+      "average_confidence": "HIGH|MEDIUM|LOW",
+      "false_positive_estimate": <number>
+    }
+  ],
+  "trend_comparison": {
+    "runs_compared": <number>,
+    "score_trend": [<number>, ...],
+    "iteration_trend": [<number>, ...],
+    "recurring_categories": ["<category>", ...],
+    "improving_categories": ["<category>", ...]
+  },
+  "approach_accumulations": {
+    "new_this_run": [],
+    "escalated_to_convention": []
+  }
+}
+-->
+```
+
+**Field rules:**
+
+- `run_summary`: High-level run metrics sourced from `state.json`
+- `run_summary.mode`: Pipeline mode (standard, bugfix, migration, bootstrap)
+- `run_summary.convergence_phase_reached`: Last convergence phase name (e.g., "correctness", "perfection", "safety_gate")
+- `learnings.extracted[]`: New PREEMPT/PATTERN/TUNING items discovered this run
+- `learnings.promoted[]`: Items promoted from MEDIUM to HIGH confidence
+- `learnings.archived[]`: Items that decayed to ARCHIVED this run
+- `learnings.total_active`: Total non-archived PREEMPT items after this run
+- `config_changes.proposed[]`: All auto-tune proposals (including locked ones)
+- `config_changes.applied[]`: Changes actually written to `forge-config.md`
+- `config_changes.blocked_by_lock[]`: Changes blocked by `<!-- locked -->` fences
+- `agent_effectiveness[]`: Per-reviewer agent metrics from this run
+- `trend_comparison`: Present when 2+ previous runs exist; omit the object if first run
+- `approach_accumulations`: APPROACH-* finding accumulation and escalation status
+
+**Placement:** The structured block MUST appear at the end of the output, after all three outputs are complete. If output approaches the 2,000 token budget, compress the Markdown prose rather than omitting the structured block.
+
+**Token impact:** The structured block adds approximately 800-2000 tokens depending on the number of agents and learnings. If the combined output exceeds budget, compress the pipeline report prose (shorter stage breakdown, fewer examples) rather than omitting structured fields.
+
+**First-run handling:** On the first pipeline run (no previous reports), set `trend_comparison` to `null` and `learnings.total_active` to the count of items created in this run.
+
+---
+
 ## Execution Order
 You run FIRST in Stage 9 (LEARN), before fg-710-post-run. The orchestrator closes the Linear Epic AFTER both you and the post-run agent complete. This means your learnings are available for the recap to reference.
 

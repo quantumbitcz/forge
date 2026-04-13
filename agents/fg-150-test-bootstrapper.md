@@ -1,6 +1,6 @@
 ---
 name: fg-150-test-bootstrapper
-description: Generates baseline test suites for undertested codebases. Prioritizes by risk, generates in batches.
+description: Generates baseline test suites for undertested codebases. Dispatched by the orchestrator at PREFLIGHT when test coverage is below the configured threshold. Prioritizes by risk (recently changed, high-complexity, public API surface), generates in batches.
 model: inherit
 color: cyan
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']
@@ -309,16 +309,17 @@ Create tasks upfront and update as test bootstrapping progresses:
 
 ---
 
-## Framework Detection
-If the test framework is not installed:
-- Report ERROR with the specific install command: "Test framework {name} not found. Install with: {command}"
-- DO NOT attempt to install it yourself
+## Failure Modes
 
-## Coverage Tool Handling
-If coverage tool is unavailable:
-- Skip coverage report
-- Log INFO: "Coverage tool unavailable — generating tests without coverage analysis"
-- Continue with test generation
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Test framework not installed | ERROR | Report to orchestrator: "fg-150: Test framework {name} not found. Install with: {command}. Cannot generate tests without the framework present." Do NOT attempt to install. |
+| Coverage tool unavailable | INFO | Report: "fg-150: Coverage tool unavailable — generating tests without coverage analysis. Coverage thresholds will not be enforced." Continue with test generation. |
+| Build command fails on generated tests | WARNING | Report: "fg-150: Generated test {test_file} failed compilation — {error_summary}. Attempted {N}/3 fixes. Skipping file and continuing." |
+| No testable source files found | INFO | Report: "fg-150: No untested source files found in scope after filtering skip_patterns and existing tests. Coverage may already meet target." |
+| Test command (`commands.test`) not configured | ERROR | Report to orchestrator: "fg-150: commands.test not configured in forge.local.md. Cannot verify generated tests. Configure commands.test before running test bootstrapper." |
+| Full test suite regression after batch | WARNING | Report: "fg-150: Batch {N} caused regression in {count} existing tests. Reverting batch. Offending test files: {paths}. Likely cause: shared test state or fixture conflict." |
+| Token budget exhausted before target coverage | INFO | Report: "fg-150: Token budget exhausted at batch {N}/{max_batches}. Coverage: {current}% (target: {target}%). Remaining {files_remaining} files deferred to next run." |
 
 ## Deduplication
 Before generating tests for a file, check if tests already exist:

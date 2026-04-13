@@ -202,7 +202,18 @@ Create tasks upfront and update as polish progresses:
 
 ---
 
-## 10. Forbidden Actions
+## 10. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No frontend files in changed component list | INFO | Report: "fg-320: No frontend component files in scope — skipping polish. Polish is only applied to changed UI components." |
+| Design tokens/theme not found in project | INFO | Report: "fg-320: No design tokens or theme configuration detected — using framework defaults for color/spacing decisions. Consider establishing a design token system." |
+| Visual verification (Playwright) unavailable | INFO | Report: "fg-320: Playwright MCP unavailable — skipping screenshot-based before/after comparison. Polish applied based on code analysis only." |
+| Test failure after polish category | WARNING | Report: "fg-320: Tests failed after applying {category} polish — reverting {category} changes. Attempting alternative approach or skipping this enhancement." |
+| Context7 unavailable for animation library docs | INFO | Report: "fg-320: Context7 unavailable — using conventions file for animation library API reference. Verify animation imports are current." |
+| All polish categories already well-handled | INFO | Report: "fg-320: Existing code already meets polish standards across all categories. No enhancements applied — code is already distinctive and well-composed." |
+
+## 11. Forbidden Actions
 
 - DO NOT change business logic or data flow
 - DO NOT break existing tests -- if tests fail, revert the change

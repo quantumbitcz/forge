@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.21.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.22.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -47,7 +47,8 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | State | `shared/state-schema.md` (v1.5.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design | `shared/agent-philosophy.md` + `shared/agent-communication.md` |
-| Graph | `shared/graph/schema.md` |
+| Graph (Neo4j) | `shared/graph/schema.md` |
+| Graph (SQLite) | `shared/graph/code-graph-schema.sql` |
 | Tokens | `shared/agent-defaults.md` + `shared/logging-rules.md` |
 | Convergence | `shared/convergence-engine.md` |
 | Evidence | `shared/verification-evidence.md` |
@@ -121,7 +122,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
-- Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
+- Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
@@ -154,7 +155,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 24 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 iteration counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 24 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -230,10 +231,13 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 
 Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. Docker-managed, disable with `graph.enabled: false`. Scoped by `project_id` (git remote) + optional `component`. 8 agents with `neo4j-mcp`: fg-010/020/090/100/102/200/210/400. Doc nodes for coverage tracking. Auto-updates post-IMPLEMENT/VERIFY/pre-REVIEW. Pipeline works without Neo4j. Query patterns: Bug Hotspots (14), Test Coverage (15), Cross-Feature Overlap (19), Cross-Repo Deps (20).
 
+**SQLite code graph** (zero-dependency alternative): Tree-sitter + SQLite at `.forge/code-graph.db`. Built by `shared/graph/build-code-graph.sh`, queried via `shared/graph/code-graph-query.sh`, incrementally updated by `shared/graph/incremental-code-graph.sh`. Supports all 15 languages. 15 node types (File, Module, Class, Interface, Function, Method, Variable, Import, Export, Type, Enum, Constant, Decorator, Test, Fixture) and 17 edge types. Coexists with Neo4j: when Neo4j is available it remains primary; SQLite provides structural code intelligence when Neo4j is unavailable. Config: `code_graph.enabled` (default true), `code_graph.backend` (auto/sqlite/neo4j), `code_graph.exclude_patterns`. `code-graph.db` survives `/forge-reset`.
+
 ## Check engine (`shared/checks/`)
 
-3 layers on every `Edit`/`Write` via PostToolUse hook:
-- **L1** (regex, sub-second): design tokens, animation perf. **L2** (linter adapters). **L3** (AI-driven, not in `engine.sh`): deprecation refresh + version compat, version-gated.
+4 layers on `Edit`/`Write` operations:
+- **L0** (tree-sitter AST, pre-edit via PreToolUse hook): blocks syntactically invalid edits before file is modified. Graceful degradation when tree-sitter is not installed. Config: `check_engine.l0_enabled`, `check_engine.l0_languages`, `check_engine.l0_timeout_ms`. Scripts in `shared/checks/l0-syntax/`.
+- **L1** (regex, sub-second, PostToolUse hook): design tokens, animation perf. **L2** (linter adapters). **L3** (AI-driven, not in `engine.sh`): deprecation refresh + version compat, version-gated.
 - `rules-override.json` extends defaults; `"disabled": true` to suppress. Skip tracking in `.forge/.check-engine-skipped`.
 
 **Deprecation registries** (`modules/frameworks/*/known-deprecations.json`): Schema v2 (`pattern`, `replacement`, `package`, `since`, `removed_in`, `applies_from`, `applies_to`, `added`, `addedBy`). Skip when project version < `applies_from`. WARNING if deprecated, CRITICAL if `removed_in` reached. Auto-updated at PREFLIGHT.
@@ -246,7 +250,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 **Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics).
 
-**Hooks** (4): check engine on `Edit|Write`, checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
+**Hooks** (5): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`.
 
 **Kanban** (`.forge/tracking/`): File-based board (`backlog/`, `in-progress/`, `review/`, `done/`). Prefix configurable (default `FG`). IDs never reused. Shaper creates → orchestrator moves → PR builder updates → retrospective closes. Silently skips if uninitialized.
 
@@ -299,7 +303,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
-- `explore-cache.json` and `plan-cache/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, and `code-graph.db` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. When disabled, no `model` parameter is passed to Agent dispatches. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
@@ -322,6 +326,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Scope: `decomposition_threshold` 2-10 (default 3). Routing: `vague_threshold` low/medium/high (default medium).
 - Shipping: `min_score` ∈ [pass_threshold, 100] (default 90), `evidence_max_age_minutes` 5-60 (default 30).
 - Model routing: `model_routing.default_tier` must be `fast`, `standard`, or `premium`. Agent IDs in overrides validated against `agent-registry.md`.
+- Implementer inner loop: `implementer.inner_loop.enabled` (boolean, default `true`), `implementer.inner_loop.max_fix_cycles` 1-5 (default 3), `implementer.inner_loop.affected_test_cap` 5-50 (default 20).
 
 ### Pipeline modes
 
@@ -349,10 +354,11 @@ All 21 share the same base structure. Non-obvious conventions only:
 - `components` = per-service (monorepo). `modules` = per-repo (multi-repo). Both can coexist.
 - **Version resolution:** NEVER use training data versions. Always search internet at runtime.
 - **Test counts:** Auto-discovered via `module-lists.bash`. Bump `MIN_*` when adding modules.
+- **Implementer inner loop:** After each TDD cycle, `fg-300-implementer` runs lint on changed files + affected tests (explore cache / graph / directory heuristic, capped at 20 files). Fix cycles tracked as `implementer_fix_cycles` (separate from convergence counters). Disabled via `implementer.inner_loop.enabled: false`. Budget exhaustion logs remaining issues for VERIFY to catch.
 
 ## Distribution
 
-`plugin.json` (v1.21.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.22.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

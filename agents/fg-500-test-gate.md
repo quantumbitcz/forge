@@ -390,7 +390,100 @@ Use `AskUserQuestion` for: unresolvable test failures after max fix cycles where
 
 ---
 
-## 15. Context Management
+## 15. Structured Output
+
+After producing the Markdown report (section 10), you MUST append a structured JSON block wrapped in an HTML comment at the very end of your output. This block is for machine consumption by the orchestrator (fg-100) for convergence engine input and by the retrospective (fg-700) for trend analysis. It enables reliable data extraction without fragile Markdown parsing.
+
+**The Markdown report remains the human-readable output.** The structured block is invisible in rendered Markdown but trivially extractable by consumers.
+
+**Format:**
+
+```
+<!-- FORGE_STRUCTURED_OUTPUT
+{
+  "schema": "coordinator-output/v1",
+  "agent": "fg-500-test-gate",
+  "timestamp": "<ISO-8601>",
+  "phase_a": {
+    "build": {
+      "command": "<build command>",
+      "exit_code": <number>,
+      "duration_ms": <number>,
+      "passed": <boolean>
+    },
+    "lint": {
+      "command": "<lint command>",
+      "exit_code": <number>,
+      "duration_ms": <number>,
+      "passed": <boolean>
+    },
+    "is_phase_a_failure": <boolean>
+  },
+  "phase_b": {
+    "tests": {
+      "command": "<test command>",
+      "exit_code": <number>,
+      "total": <number>,
+      "passed": <number>,
+      "failed": <number>,
+      "skipped": <number>,
+      "duration_ms": <number>,
+      "tests_pass": <boolean>
+    },
+    "analysis": {
+      "agents_dispatched": ["fg-510-mutation-analyzer", ...],
+      "agents_completed": ["fg-510-mutation-analyzer", ...],
+      "critical_findings": <number>,
+      "analysis_pass": <boolean>
+    },
+    "flaky_tests": {
+      "detected": <boolean>,
+      "tests": ["<test name>", ...]
+    },
+    "coverage": {
+      "available": <boolean>,
+      "line_coverage_pct": <number|null>,
+      "branch_coverage_pct": <number|null>,
+      "uncovered_files": ["<path>", ...]
+    }
+  },
+  "mutation_testing": {
+    "enabled": <boolean>,
+    "mutants_generated": <number>,
+    "mutants_killed": <number>,
+    "mutants_survived": <number>,
+    "mutation_score_pct": <number|null>
+  },
+  "verdict": {
+    "tests_pass": <boolean>,
+    "analysis_pass": <boolean>,
+    "is_phase_a_failure": <boolean>,
+    "proceed_to": "REVIEWING|IMPLEMENTING|ESCALATED"
+  }
+}
+-->
+```
+
+**Field rules:**
+
+- `phase_a.is_phase_a_failure`: True if build or lint failed (blocks Phase B)
+- `phase_b.tests.tests_pass`: True if all tests pass (after flaky re-run if applicable)
+- `phase_b.analysis.analysis_pass`: True if no CRITICAL analysis findings
+- `phase_b.analysis.agents_dispatched`: Full agent IDs dispatched for test analysis
+- `phase_b.flaky_tests.detected`: True if any test was flaky (passed on re-run)
+- `phase_b.coverage`: Present when coverage tools are configured; null fields when unavailable
+- `mutation_testing`: Present when `mutation_testing.enabled`; all zeros when disabled
+- `verdict.proceed_to`: Next pipeline state for orchestrator consumption (`REVIEWING` on pass, `IMPLEMENTING` on test failure, `ESCALATED` on max cycles)
+
+**Placement:** The structured block MUST appear at the end of the output, after the complete Markdown report. If output approaches the 2,000 token budget, compress the Markdown prose rather than omitting the structured block.
+
+**Token impact:** The structured block adds approximately 500-1000 tokens. Account for this in the 2,000 token output budget.
+
+**When tests fail:** Still emit the structured block. Set `phase_b.tests.tests_pass` to `false`, `verdict.proceed_to` to `IMPLEMENTING`, and populate `phase_b.tests.failed` with the count. Analysis fields can be zeroed out since analysis agents are not dispatched on test failure.
+
+---
+
+## 16. Context Management
 
 - **Read test output and changed file list** -- these are your primary inputs
 - **Dispatch prompts under 2,000 tokens** -- include only file list, focus area, expected output format

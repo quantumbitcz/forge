@@ -541,7 +541,101 @@ in the knowledge graph.
 
 ---
 
-## 21. Forbidden Actions
+## 21. Structured Output
+
+After producing the Markdown report (section 15), you MUST append a structured JSON block wrapped in an HTML comment at the very end of your output. This block is for machine consumption by the orchestrator (fg-100), retrospective (fg-700), and post-run agent (fg-710). It enables reliable data extraction without fragile Markdown parsing.
+
+**The Markdown report remains the human-readable output.** The structured block is invisible in rendered Markdown but trivially extractable by consumers.
+
+**Format:**
+
+```
+<!-- FORGE_STRUCTURED_OUTPUT
+{
+  "schema": "coordinator-output/v1",
+  "agent": "fg-400-quality-gate",
+  "timestamp": "<ISO-8601>",
+  "verdict": "PASS|CONCERNS|FAIL",
+  "score": {
+    "current": <number>,
+    "target": <number>,
+    "effective_target": <number>,
+    "unfixable_info_count": <number>
+  },
+  "findings_summary": {
+    "total": <number>,
+    "deduplicated": <number>,
+    "by_severity": {
+      "CRITICAL": <n>,
+      "WARNING": <n>,
+      "INFO": <n>
+    },
+    "by_confidence": {
+      "HIGH": <n>,
+      "MEDIUM": <n>,
+      "LOW": <n>
+    },
+    "by_category_prefix": {
+      "ARCH": <n>,
+      "SEC": <n>,
+      ...
+    }
+  },
+  "batches": [
+    {
+      "batch_id": <number>,
+      "agents_dispatched": ["fg-410-code-reviewer", ...],
+      "agents_completed": ["fg-410-code-reviewer", ...],
+      "agents_timed_out": [],
+      "raw_findings": <number>,
+      "duration_ms": <number>
+    }
+  ],
+  "dedup_stats": {
+    "pre_dedup_count": <number>,
+    "post_dedup_count": <number>,
+    "duplicates_removed": <number>,
+    "scout_findings_separated": <number>
+  },
+  "cycle_info": {
+    "quality_cycles": <number>,
+    "score_history": [<number>, ...],
+    "dip_count": <number>,
+    "oscillation_detected": <boolean>
+  },
+  "reviewer_agreement": {
+    "conflicting_findings": <number>,
+    "deliberation_triggered": <boolean>
+  },
+  "coverage_gaps": []
+}
+-->
+```
+
+**Field rules:**
+
+- `verdict`: One of `PASS`, `CONCERNS`, or `FAIL` (matches section 11 thresholds)
+- `score.current`: Final deduplicated quality score (integer, 0-100)
+- `score.target`: Configured target score from `forge-config.md`
+- `score.effective_target`: Target after INFO efficiency adjustment
+- `findings_summary.total`: Raw findings before dedup
+- `findings_summary.deduplicated`: Findings after dedup (this count drives scoring)
+- `findings_summary.by_severity`: Count per severity level (CRITICAL, WARNING, INFO)
+- `findings_summary.by_confidence`: Count per confidence level (HIGH, MEDIUM, LOW)
+- `findings_summary.by_category_prefix`: Count per top-level category prefix (ARCH, SEC, CONV, etc.)
+- `batches[]`: One entry per batch dispatched, with agent lists and timing
+- `dedup_stats`: Deduplication metrics including SCOUT-* separation
+- `cycle_info`: Inner-cycle convergence data including full score history
+- `reviewer_agreement`: Conflict detection and deliberation results
+- `coverage_gaps[]`: REVIEW-GAP findings from timed-out agents
+
+**Placement:** The structured block MUST appear at the end of the output, after the complete Markdown report. If output approaches the 2,000 token budget, compress the Markdown prose rather than omitting the structured block.
+
+**Token impact:** The structured block adds approximately 500-800 tokens. Account for this in the 2,000 token output budget.
+
+---
+
+## 22. Forbidden Actions
 
 - DO NOT read source files — dispatched agents do the analysis
 - DO NOT modify shared contracts (scoring.md, stage-contract.md, state-schema.md)

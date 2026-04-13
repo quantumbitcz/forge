@@ -163,7 +163,29 @@ Category codes: `DEP-CVE-DIRECT`, `DEP-CVE-TRANSITIVE`, `DEP-OUTDATED-MAJOR`, `D
 
 ---
 
-## 4. Constraints
+## 4. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No dependency manifests found | INFO | Report: "fg-420: No dependency manifests found (checked: package.json, build.gradle.kts, Cargo.toml, go.mod, pyproject.toml, etc.). Skipping with 0 findings." |
+| Audit tool unavailable (npm audit, pip audit, etc.) | INFO | Report: "fg-420: Audit tool for {ecosystem} not available — skipping vulnerability scan. Install {tool_name} for CVE detection. Falling back to manifest-only analysis." |
+| Package registry unreachable | WARNING | Report: "fg-420: Package registry for {ecosystem} unreachable — cannot verify latest versions or vulnerability advisories. Findings limited to manifest analysis." |
+| License detection inconclusive | INFO | Report: "fg-420: License for {package} could not be determined — no SPDX identifier in manifest or registry. Flagged as DEP-LICENSE-UNKNOWN for manual review." |
+| Context7 unavailable for compatibility info | INFO | Report: "fg-420: Context7 unavailable — using audit tool output and manifest analysis only. Breaking pair detection limited to hardcoded known-incompatible combinations." |
+
+### Critical Constraints (from agent-defaults.md)
+
+See `shared/agent-defaults.md` for full constraints. Critical constraints inlined below for efficiency.
+
+**Output format:** `file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint` — one finding per line, sorted by severity (CRITICAL first). If no issues: `PASS | score: {N}`
+
+**Token constraints:**
+- Output: max 2,000 tokens
+- Findings: max 50 per reviewer invocation
+
+**Forbidden Actions:** Read-only (no source modifications), no shared contract changes, evidence-based findings only, never fail due to optional MCP unavailability.
+
+## 5. Constraints
 
 **Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
 

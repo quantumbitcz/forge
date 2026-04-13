@@ -198,7 +198,18 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 8. Forbidden Actions
+## 8. Failure Modes
+
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| Pattern file not found | ERROR | Report to orchestrator: "fg-310: Pattern file {path} does not exist — cannot scaffold without a pattern to follow. Check scaffolder.patterns config in forge.local.md." |
+| No scaffolder.patterns configured | ERROR | Report to orchestrator: "fg-310: No scaffolder.patterns section in forge.local.md — cannot determine file structure. Configure named patterns pointing to existing reference files." |
+| Context7 unavailable for import verification | WARNING | Report: "fg-310: Context7 MCP unavailable — using conventions file and codebase grep for import verification. Scaffolded imports may use stale API patterns." |
+| Compilation fails after 3 fix attempts | WARNING | Report: "fg-310: Scaffolded file {path} failed compilation after 3 attempts — {last_error}. Partial scaffold delivered; implementer will need to fix remaining type errors." |
+| Build command timeout exceeded | WARNING | Report: "fg-310: Build command exceeded {timeout}s timeout during compilation check. Treating as TOOL_FAILURE — scaffold may have unverified compilation errors." |
+| Version resolution failure for new dependency | ERROR | Report to orchestrator: "fg-310: Cannot resolve latest version of {library} — Context7 and WebSearch both failed. Do NOT use training data versions. Add dependency manually with verified version." |
+
+## 9. Forbidden Actions
 - DO NOT implement business logic -- placeholder/TODO bodies only
 - DO NOT invent new patterns -- always follow the pattern file
 - DO NOT modify shared contracts, conventions, or CLAUDE.md
@@ -207,14 +218,14 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 
 ---
 
-## 9. Linear Tracking
+## 10. Linear Tracking
 If `integrations.linear.available` in state.json:
 - Update the corresponding Linear Task status to "In Progress" when starting scaffold
 If unavailable: skip silently.
 
 ---
 
-## 10. Optional Integrations
+## 11. Optional Integrations
 
 **Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
 If Context7 MCP is available, use it to verify current framework API for imports.
@@ -223,7 +234,7 @@ Never fail because an optional MCP is down.
 
 ---
 
-## 11. Task Blueprint
+## 12. Task Blueprint
 
 Create one task per file group to scaffold:
 
@@ -233,7 +244,7 @@ Use `activeForm` naming for spinner display (e.g., "Scaffolding PlanComment doma
 
 ---
 
-## 12. Context Management
+## 13. Context Management
 
 - **Return only the structured output format** -- no preamble, reasoning, or disclaimers
 - **Read at most 3-4 pattern files** -- the task spec already identifies them

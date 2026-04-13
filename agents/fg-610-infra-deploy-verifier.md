@@ -416,12 +416,18 @@ The pipeline should never fail because an optional tool is unavailable. The veri
 
 ---
 
-## 11. Error Handling
+## 11. Failure Modes
 
-- **Tier 1 failure**: Report findings but continue to Tier 2/3 if configured. Static validation failures do not block container/cluster tests.
-- **Tier 2 Docker build failure**: Skip compose and trivy (they depend on a built image). Report the build failure.
-- **Tier 3 cluster creation failure**: Skip all cluster tests. Report the failure and suggest running manually.
-- **Timeout**: If any single command exceeds its tier's time budget, kill it and record a timeout. Do not let a hung process block the pipeline.
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| No infrastructure files in scope | INFO | Report: "fg-610: No infrastructure files (Helm charts, Dockerfiles, K8s manifests, Terraform configs) found in changeset. Skipping with 0 findings." |
+| Docker unavailable | WARNING | Report: "fg-610: Docker not available — skipping Tier 2 (container validation) and Tier 3+ (cluster tests). Install Docker for full infrastructure verification." |
+| kubectl unavailable | WARNING | Report: "fg-610: kubectl not available — skipping K8s manifest dry-run validation and cluster tests. Install kubectl for Kubernetes verification." |
+| Tier 1 static validation failure | WARNING | Report findings but continue to Tier 2/3 if configured. Static validation failures do not block container/cluster tests. |
+| Tier 2 Docker build failure | ERROR | Report: "fg-610: Docker build failed for {Dockerfile} — {error_summary}. Skipping compose health and trivy scan (depend on built image)." |
+| Tier 3 cluster creation failure | ERROR | Report: "fg-610: Failed to create ephemeral cluster with {tool} — {error}. Skipping all cluster tests. Try running manually: {cluster_create_command}." |
+| Command timeout exceeded | WARNING | Report: "fg-610: Command exceeded {tier} time budget ({timeout}s) — killed. Recording as timeout. Check for hung processes in {command}." |
+| Cluster cleanup failure | WARNING | Report: "fg-610: Cluster cleanup failed — {error}. Orphaned cluster 'forge-verify' may need manual deletion: {cleanup_command}." |
 
 ---
 

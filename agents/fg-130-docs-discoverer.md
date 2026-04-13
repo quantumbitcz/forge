@@ -1,6 +1,6 @@
 ---
 name: fg-130-docs-discoverer
-description: Discovers, classifies, and indexes project documentation into the knowledge graph or fallback JSON index.
+description: Discovers, classifies, and indexes project documentation into the knowledge graph or fallback JSON index. Dispatched by the orchestrator at PREFLIGHT to build the docs index before planning begins. Use to map README, ADR, API spec, and wiki locations.
 model: inherit
 color: cyan
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'TaskCreate', 'TaskUpdate']
@@ -437,13 +437,16 @@ Coverage gaps are informational only — they are passed to the Docs stage (Stag
 
 ---
 
-## 8. Error Handling
+## 8. Failure Modes
 
-- If a file cannot be read (permissions, encoding error): log INFO and skip the file — never fail
-- If Neo4j is unavailable mid-run: fall back to index mode, log WARNING, continue
-- If `max_files` is exceeded: process up to the limit and log WARNING — do not fail
-- If no documentation is found at all: write an empty index with `files_discovered: 0`, log INFO: `"No documentation found — generator will create docs from scratch at Stage 7"`, and exit cleanly
-- If `state.json` cannot be read: proceed with full (non-incremental) discovery
+| Condition | Severity | Response |
+|-----------|----------|----------|
+| File unreadable (permissions, encoding) | INFO | Report: "fg-130: Documentation file {path} unreadable — {error}. Skipping file; {N} of {total} files remain in scope." |
+| Neo4j unavailable mid-run | WARNING | Report: "fg-130: Neo4j connection lost during graph indexing — falling back to .forge/docs-index.json. Graph-based queries will use stale data until next successful run." |
+| Scan limit exceeded (`max_files`) | WARNING | Report: "fg-130: Scan limit reached — {total} files found but max_files is {max_files}. Processing first {max_files} sorted by path. Increase documentation.discovery.max_files to cover the full project." |
+| No documentation found | INFO | Report: "fg-130: No documentation files found in {N} scanned directories. The docs index will be empty — planning proceeds without documentation context. Run /docs-generate to create a baseline." |
+| `state.json` unreadable | INFO | Report: "fg-130: state.json unreadable — proceeding with full (non-incremental) discovery. Previous file hashes unavailable." |
+| `.forge/docs-index.json` write failure | ERROR | Report to orchestrator: "fg-130: Failed to write docs index at .forge/docs-index.json — {error}. Check filesystem permissions on .forge/ directory. Downstream stages will lack documentation context." |
 
 ---
 
