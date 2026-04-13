@@ -216,8 +216,8 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   for skill_dir in "$SKILLS_DIR"/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
-  if (( count < 32 )); then
-    fail "Expected at least 32 skills, found $count"
+  if (( count < 35 )); then
+    fail "Expected at least 35 skills, found $count"
   fi
 }
 

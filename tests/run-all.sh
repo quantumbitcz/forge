@@ -69,7 +69,7 @@ print_summary() {
 case "$TIER" in
   all)
     run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
-    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
+    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
     run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
@@ -80,7 +80,7 @@ case "$TIER" in
     print_summary
     ;;
   unit)
-    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats
+    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
     print_summary
     ;;
   contract)
