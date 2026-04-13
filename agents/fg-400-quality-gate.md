@@ -232,6 +232,31 @@ The demoted finding is reclassified with a `SCOUT-CONFLICT-{N}` category (where 
 
 Without conflict resolution, the implementer receives opposing instructions from different reviewers. This causes fix oscillation: fixing one finding introduces the other, then fixing that reintroduces the first. By resolving conflicts at the quality gate level, the implementer receives a single coherent set of instructions.
 
+### §6.2 Deliberation Protocol (v1.18+)
+
+When `quality_gate.deliberation` is `true` in the orchestrator's dispatch context:
+
+1. After collecting all findings and detecting conflicts (per §6.1):
+2. For each conflict where at least one finding is WARNING or CRITICAL:
+   a. Re-dispatch both originating reviewers with the deliberation prompt (format in `shared/agent-defaults.md` §Deliberation Response Format)
+   b. Set timeout per dispatch: `quality_gate.deliberation_timeout` (default 60s)
+   c. Apply responses:
+      - MAINTAIN + MAINTAIN: both findings survive, highest severity wins in scoring
+      - MAINTAIN + WITHDRAW: surviving finding wins
+      - REVISE + any: apply the severity revision
+      - WITHDRAW + WITHDRAW: both findings removed
+   d. If one times out: responding agent's decision applies, timed-out agent's finding stands unchanged
+   e. If both time out: fall back to §6.1 priority ordering (pre-v1.18 behavior)
+3. Log deliberation results in stage notes:
+
+       ## Deliberation Results
+       - ARCH-LAYER vs PERF-INLINE at src/Service.kt:42: fg-412 MAINTAIN, fg-416 WITHDRAW → ARCH-LAYER survives
+       - Total: 1 conflict deliberated, 1 resolved
+
+4. Deliberation does NOT trigger additional review cycles — it is a one-shot resolution within the current cycle.
+
+When `quality_gate.deliberation` is `false` (default): skip this section entirely, use §6.1 priority ordering only.
+
 ---
 
 ## 7. Finding Deduplication
@@ -276,6 +301,18 @@ score = max(0, 100 - 20 * CRITICAL - 5 * WARNING - 2 * INFO)
 Every run starts at 100. Each finding deducts points based on severity. The score cannot go below 0.
 
 After scoring, append the score to the quality gate report for the orchestrator to add to `state.json.score_history`.
+
+### §8.1 Confidence-Based Routing (v1.18+)
+
+Before dispatching findings to the implementer for fixing:
+
+1. Separate findings into two groups:
+   - **Actionable (HIGH/MEDIUM confidence):** Dispatched to implementer normally
+   - **Review-flagged (LOW confidence):** Withheld from implementer, included in stage notes with annotation: "LOW confidence — flagged for human review"
+2. Increment `state.json.decision_quality.findings_with_low_confidence` by the count of LOW-confidence findings
+3. Include LOW-confidence findings in the quality gate report for the recap, but do NOT include them in the fix cycle dispatch
+
+When confidence is omitted from a finding, treat as HIGH (backward compatible).
 
 ---
 
