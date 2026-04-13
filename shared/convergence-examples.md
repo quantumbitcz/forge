@@ -55,7 +55,7 @@ score = 95
 | `score` | 95 |
 | **Verdict** | **PASS** |
 
-**State transitions used:** Row for PASS with score ≥ pass_threshold.
+**State transitions used:** C5 (verify_pass → perfection phase), C6 (score_target_reached with score 95 >= target_score 90 → safety_gate), C11 (verify_pass in safety_gate → CONVERGED).
 
 ---
 
@@ -131,7 +131,7 @@ score = 84
 | `score` | 84 |
 | **Verdict** | **PASS** |
 
-**State transitions used:** Row for FAIL (dispatch fixes), then row for PASS.
+**State transitions used:** Row 31 (score_improving in REVIEWING, cycle 1 — dispatches implementer with CRITICAL findings), then row 30 (score_target_reached in REVIEWING, cycle 2 — score 84 meets target) → C6 (perfection → safety_gate) → C11 (safety_gate verify_pass → CONVERGED).
 
 ---
 
@@ -217,7 +217,47 @@ Options:
 
 **If user chooses option 3:** `/forge-abort` → state transitions to ABORTED.
 
-**State transitions used:** Rows for CONTINUE (cycles 1-3), PLATEAU detection (cycle 3-4), ESCALATE (cycle 4).
+**State transitions used:** C7 (score_improving, cycles 1-2), C10 (score_plateau with plateau_count < plateau_patience, cycle 3), C8 (score_plateau with plateau_count >= plateau_patience, cycle 4 → ESCALATED per score escalation ladder).
+
+---
+
+## Scenario 4: Score Regression → Escalation
+
+**Requirement:** "Migrate auth from JWT to OAuth2 session tokens"
+**Risk:** HIGH | **Confidence:** MEDIUM (0.48)
+
+### Stage 5 (VERIFY) — Phase B, Cycle 1
+
+**Score: 82** | Verdict: PASS
+- `phase_iterations` = 1
+- Phase: **IMPROVING** (first cycle, score above pass_threshold)
+- Not yet at target_score (82 < 90) → continue perfection phase
+
+### Phase B, Cycle 2
+
+**Score: 68** | Delta: -14
+- `phase_iterations` = 2
+- Raw delta: -14. |delta| = 14 > oscillation_tolerance (5)
+- **REGRESSING detected** — score dropped significantly
+- → Escalate immediately to user:
+
+```
+Score REGRESSING: 82 → 68 (delta -14, tolerance 5).
+Fix attempt introduced regressions. Options:
+  1. Revert last fix and retry with different approach
+  2. Continue (risk: further regression)
+  3. Abort (/forge-abort)
+```
+
+| Field | Final Value |
+|-------|-------------|
+| `total_iterations` | 2 |
+| `quality_cycles` | 2 |
+| `phase_iterations` | 2 |
+| `score` | 68 |
+| **Phase** | **REGRESSING** |
+
+**State transitions used:** C7 (score_improving, cycle 1 — first cycle treated as IMPROVING), C9 (score_regressing with |delta| > oscillation_tolerance, cycle 2 → ESCALATED).
 
 ---
 
@@ -228,3 +268,4 @@ Options:
 | 1: Clean | 1 | 95 | PASS | Single-cycle pass |
 | 2: Fix loop | 2 | 84 | PASS | CRITICAL fix → re-review |
 | 3: Plateau | 4 | 76 | PLATEAUED | Smoothed delta ≤ threshold × patience |
+| 4: Regression | 2 | 68 | REGRESSING | Raw |delta| > oscillation_tolerance |

@@ -116,7 +116,11 @@ All review agents MUST include the `confidence` field in every finding. The fiel
 ### Rules
 
 - Confidence is MANDATORY on every finding — no default, no fallback. Do not over-use LOW to hedge — LOW findings receive half scoring weight and are excluded from fix cycles.
-- If two or more reviewers independently flag the same issue, the quality gate promotes the finding's confidence to HIGH regardless of individual agent assessments.
+- If two or more reviewers independently flag the same issue, the quality gate promotes the finding's confidence per the promotion rules in scoring.md §Confidence Promotion:
+  - Both MEDIUM → HIGH
+  - One HIGH + one MEDIUM → HIGH
+  - Both LOW → MEDIUM
+  - One LOW + one MEDIUM → MEDIUM
 - The confidence field applies to all categories including SCOUT-* (though SCOUT findings are already zero-scored).
 
 ## Tool Availability Pre-Check

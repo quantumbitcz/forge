@@ -18,6 +18,11 @@ set -euo pipefail
 #   --target-score 90             Target for perfection phase (default: 90)
 #   --help                        Show this help
 #
+# Limitations:
+#   - SAFETY_GATE phase requires test pass/fail input not modeled by this
+#     simulator. See convergence-engine.md §Safety Gate for the full algorithm.
+#   - Input validation is minimal — non-numeric scores produce undefined behavior.
+#
 # Output (one line per cycle):
 #   cycle=N score=S delta=D smoothed=SM phase=PHASE plateau_count=PC decision=DECISION
 
