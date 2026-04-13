@@ -22,3 +22,5 @@ stages:
 ## Bootstrap Mode
 
 Scaffolds new projects. Uses project bootstrapper at Stage 2. Stage 4 (IMPLEMENT) is skipped (scaffolding done in Stage 2). Reduced validation and review.
+
+Output compression uses the default per-stage levels (no mode-level overrides).

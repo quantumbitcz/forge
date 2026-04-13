@@ -11,3 +11,5 @@ stages: {}
 ## Standard Mode
 
 Default pipeline behavior. No stage overrides. All stages run with their default agents and configurations. Convergence parameters use forge-config.md values (no mode-level overrides).
+
+Output compression uses the default per-stage levels from `shared/output-compression.md` (no mode-level overrides).

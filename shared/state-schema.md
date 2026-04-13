@@ -386,6 +386,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.condensation_count` | integer | — | Total number of condensation operations performed during the run. Derived from `convergence.condensation.count` (authoritative source). Written at stage transitions by the orchestrator. Default: 0. |
 | `tokens.condensation_cost` | integer | — | Tokens consumed by the condensation LLM calls themselves (fast tier summarization input + output). Default: 0. |
 | `tokens.effective_token_ratio` | float | — | `actual_tokens / (actual_tokens + condensation_savings)`. Lower is better — 0.6 means 40% of potential tokens were saved. 1.0 when no condensation occurred. Default: 1.0. |
+| `tokens.compression_level_distribution` | object | — | Count of agent dispatches per compression verbosity level. Keys: `"verbose"`, `"standard"`, `"terse"`, `"minimal"`. Values: integer counts. Default: `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`. See `shared/output-compression.md`. |
+| `tokens.output_tokens_per_agent` | object | — | Raw output token count per agent. Keys are agent IDs (e.g., `"fg-410"`). Values: integer token counts. Used by the retrospective to detect compression drift. Default: `{}`. |
 | `telemetry` | object | No | OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` via orchestrator calls at stage boundaries. |
 | `telemetry.spans` | array | — | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. Default: `[]`. |
 | `telemetry.metrics` | object | — | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`, `"findings.critical_count"`). Values are numbers. Updated at stage boundaries. Default: `{}`. |
@@ -884,6 +886,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.4.0 | 1.5.0 | Added convention drift tracking, WAL versioning, preempt status | `_seq`, `previous_state`, `convergence.diminishing_count`, `convergence.unfixable_info_count`, `preempt_items_status`, `conventions_section_hashes` | `1`, `""`, `0`, `0`, `{}`, `{}` |
 | 1.5.0 | 1.6.0 | (v2.0) Added inner-loop validation, implementer fix cycles, L0 check engine metrics | `inner_loop`, `implementer_fix_cycles`, `check_engine`, `telemetry` | See inner_loop/check_engine defaults above, `0`, `{ "spans": [], "metrics": {}, "export_status": "pending" }` |
 | 1.6.0 | 1.7.0 | (v2.0) Added confidence scoring, adaptive trust, context condensation, knowledge references | `confidence`, `convergence.condensation`, `tokens.condensation_savings`, `tokens.condensation_count`, `tokens.condensation_cost`, `tokens.effective_token_ratio` | `null` (computed at PLAN), see condensation defaults above, `0`, `0`, `0`, `1.0` |
+| 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
 
 ### Version Detection and Upgrade Protocol
 

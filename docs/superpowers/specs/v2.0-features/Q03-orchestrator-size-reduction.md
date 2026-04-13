@@ -1,11 +1,11 @@
 # Q03: Orchestrator Size Reduction via Modular Stage Instructions
 
 ## Status
-DEFERRED — 2026-04-13
+REVISED — 2026-04-13
 
-**Reason:** User has established that the orchestrator size is acceptable (loads once per run, not per stage). The token cost analysis in this spec conflates context window presence with per-call billing — Claude's prompt caching means the system prompt is cached after the first call, reducing the incremental cost significantly. Additionally, splitting the orchestrator risks behavioral regression since LLMs treat system prompt instructions with higher priority than mid-conversation Read output. This spec is retained for future evaluation if prompt caching economics change, but is NOT scheduled for implementation in v2.0.
+**Previously deferred.** Now unblocked: backward compatibility is NOT required, and F27 (agent prompt compression) provides the tooling. Revised approach: apply F27 compression directly to the orchestrator file rather than splitting into separate files. This avoids the behavioral regression risk while achieving 35-50% size reduction.
 
-**If revisited:** The modular approach is sound architecturally. The key risk is LLM behavioral regression — instructions read via the Read tool during a conversation may carry less weight than system prompt instructions. Any future implementation must include A/B testing against the monolithic orchestrator to verify no quality degradation.
+**Approach**: Use `/forge-compress` (F27) to compress fg-100-orchestrator.md in-place. No splitting, no modular architecture. Just tighter prose. Depends on F27 being implemented first.
 
 ## Problem Statement
 

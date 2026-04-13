@@ -15,3 +15,5 @@ stages:
 ## Migration Mode
 
 Uses migration planner at Stage 2. Implementation stage cycles through migration-specific states.
+
+Output compression uses the default per-stage levels (no mode-level overrides).

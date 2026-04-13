@@ -395,3 +395,9 @@ feature_flags:
   enabled: false                 # Opt-in
   provider: auto
   stale_threshold_days: 30
+
+# Output Compression (v2.0+)
+output_compression:
+  enabled: true
+  default_level: terse
+  auto_clarity: true

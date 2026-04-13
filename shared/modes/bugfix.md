@@ -24,8 +24,12 @@ stages:
     target_score: pass_threshold
   ship:
     target_score: pass_threshold
+output_compression:
+  verifying: terse
 ---
 
 ## Bugfix Mode
 
 Focused pipeline for bug fixes. Uses bug investigator for exploration and planning. Reduced validation (4 perspectives). Reduced review batch. Target score is pass_threshold, not target_score.
+
+Output compression overrides VERIFYING from `minimal` to `terse` — bugfix verification needs more context than structured data alone.

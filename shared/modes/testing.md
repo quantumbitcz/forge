@@ -12,8 +12,12 @@ stages:
     batch_override:
       batch_1: [fg-410-code-reviewer]
     target_score: pass_threshold
+output_compression:
+  verifying: terse
 ---
 
 ## Testing Mode
 
 Focused on test files. Implementation only modifies test files. Reduced review batch. Target score is pass_threshold.
+
+Output compression overrides VERIFYING from `minimal` to `terse` — test-focused runs benefit from more verbose verification output.

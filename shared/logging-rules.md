@@ -63,6 +63,15 @@ This budget is separate from the 2,000-token stage notes cap defined in `agent-c
 - **Implementer (fg-300):** Log task completion status ("Task 1/3 complete, 2 files modified") and PREEMPT markers. Do not log code diffs.
 - **Orchestrator (fg-100):** Log state transitions, convergence phase changes, and recovery actions. Use both stage notes and state.json fields.
 
+### Output Compression Interaction
+
+Pipeline logging follows the output compression levels from `shared/output-compression.md`:
+- **Stage notes** follow the stage's verbosity level (e.g., VERIFYING stage notes use level 3 minimal — structured data only)
+- **Findings** are always pipe-delimited per `output-format.md` (effectively level 3 regardless of stage)
+- **Decision log entries** use level 2 (terse) — `[subject] [action] [reason]` pattern, no articles or filler
+
+When `output_compression.enabled: false`, all logging reverts to normal verbosity.
+
 ### What NOT to Log
 
 The following are prohibited in all pipeline log output:

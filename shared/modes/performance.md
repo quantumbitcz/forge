@@ -10,8 +10,12 @@ stages:
     include_profiling: true
   review:
     mandatory_reviewers: [fg-416-backend-performance-reviewer]
+output_compression:
+  verifying: terse
 ---
 
 ## Performance Mode
 
 Includes profiling/benchmarking context in exploration. Performance reviewer mandatory in review batch.
+
+Output compression overrides VERIFYING from `minimal` to `terse` — performance verification benefits from more detailed output for benchmark analysis.

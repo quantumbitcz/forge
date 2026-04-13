@@ -15,3 +15,5 @@ stages:
 ## Refactor Mode
 
 Preserves existing behavior. Planner uses refactor constraints. Architecture reviewer mandatory in review batch.
+
+Output compression uses the default per-stage levels (no mode-level overrides).

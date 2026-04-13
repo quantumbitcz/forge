@@ -146,6 +146,26 @@ Before first use of an optional tool, verify availability with a minimal probe c
 
 ---
 
+## Output Compression
+
+All agents MUST follow the output compression level set for their stage.
+The orchestrator passes `output_verbosity: <level>` in the dispatch context.
+
+Level 0 (verbose): Normal output. No constraints.
+Level 1 (standard): Drop pleasantries and preamble. Full sentences.
+Level 2 (terse): Drop articles, filler, hedging. Pattern: [thing] [action] [reason].
+Level 3 (minimal): Structured data only. No prose.
+
+Auto-clarity: revert to verbose for security warnings (`SEC-*` CRITICAL), user questions (`AskUserQuestion`), escalations, irreversible actions, and coordinator structured output (`FORGE_STRUCTURED_OUTPUT`). Resume compression after.
+
+Coordinators (fg-400, fg-500, fg-700) are capped at level 2 (terse) maximum — never level 3 (minimal).
+
+When in doubt, prefer terse over verbose. Technical precision matters more than grammatical correctness in inter-agent communication.
+
+See `shared/output-compression.md` for the full per-stage assignment table, auto-clarity triggers, and configuration reference.
+
+---
+
 ## Deliberation Response Format
 
 When the quality gate detects conflicting findings at the same `(file, line)` and `quality_gate.deliberation` is enabled, it re-dispatches both originating reviewers with a narrow deliberation prompt. Each reviewer responds with one of:

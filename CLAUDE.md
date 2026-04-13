@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v2.0.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v2.1.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -96,6 +96,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | A2A HTTP transport | `shared/a2a-http-transport.md` |
 | Deployment strategies | `shared/deployment-strategies.md` |
 | Consumer-driven contracts | `shared/consumer-driven-contracts.md` |
+| Output compression | `shared/output-compression.md` |
 
 ## Skill selection guide
 
@@ -159,7 +160,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - **Worktree:** All impl in `.forge/worktree`. User's tree never modified. Branch collision → epoch suffix.
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
 - **APPROACH-*/DOC-* findings:** APPROACH scored as INFO (-2), escalated at 3+ recurrences. DOC ranges CRITICAL→WARNING→INFO.
-- **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines.
+- **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines. Output compression (`shared/output-compression.md`) sets per-stage verbosity levels to reduce output tokens.
 - **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
 ### Routing & decomposition
@@ -234,6 +235,7 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Feature flag management** (v2.0, F23): Feature flag lifecycle management with stale flag detection, dual-path testing verification, and deploy-time flag state checks. Provider modules: LaunchDarkly, Unleash. Finding categories: `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP`. Config: `feature_flags.*`.
 - **A2A HTTP transport** (v2.0, F21): HTTP transport alongside filesystem for cross-machine A2A coordination. Agent cards served via HTTP, task submission/polling, token/mTLS auth. Falls back to filesystem transparently. Config: `a2a.*`.
 - **Deployment strategies** (v2.0, F24): Canary (step-based traffic progression), blue-green (parallel environments), and rolling deployment strategies with metric-based promotion/rollback. New `fg-620-deploy-verifier` agent. Argo Rollouts integration. Finding categories: `DEPLOY-*`. Config: `deployment.*`.
+- **Output compression** (v2.0, F26): Per-stage output verbosity system (4 levels: verbose/standard/terse/minimal). Reduces inter-agent output tokens by 20-65% via system prompt injection. Auto-clarity safety valve suspends compression for security warnings, user-facing content, and coordinator structured output. Retrospective detects drift. Config: `output_compression.*`.
 - **Consumer-driven contracts** (v2.0, F25): Pact integration for consumer-driven contract testing. Broker/local/A2A pact sources. Can-i-deploy gate at SHIPPING. Alternative frameworks: Specmatic, Spring Cloud Contract. Finding categories: `CONTRACT-PACT-*`. Config: `contract_testing.*`.
 
 ### Deterministic Control Flow
@@ -366,6 +368,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Model routing: `model_routing.default_tier` must be `fast`, `standard`, or `premium`. Agent IDs in overrides validated against `agent-registry.md`.
 - Implementer inner loop: `implementer.inner_loop.enabled` (boolean, default `true`), `implementer.inner_loop.max_fix_cycles` 1-5 (default 3), `implementer.inner_loop.affected_test_cap` 5-50 (default 20).
 - Confidence: `confidence.planning_gate` (boolean, default `true`), `confidence.autonomous_threshold` 0.3-0.95 (default 0.7), `confidence.pause_threshold` 0.1-0.7 (default 0.4), `confidence.initial_trust` 0.0-1.0 (default 0.5). `autonomous_threshold` must be > `pause_threshold` (gap >= 0.1). Weights must sum to 1.0 (+/- 0.01).
+- Output compression: `output_compression.enabled` (boolean, default `true`), `output_compression.default_level` must be `verbose`, `standard`, `terse`, or `minimal` (default `terse`), `output_compression.per_stage` keys must match 10 stage names, `output_compression.auto_clarity` (boolean, default `true`).
 
 ### Pipeline modes
 
@@ -397,7 +400,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v2.0.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v2.1.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
