@@ -76,6 +76,16 @@ Before any action, verify:
    - Show PR URL if available
    - If `recovery_failed: true`: report "Recovery engine failed at stage {last_known_stage}"
 
+### Hook Health
+
+If `.forge/.hook-failures.log` exists and is non-empty:
+1. Count total failure entries: `wc -l < .forge/.hook-failures.log`
+2. Count unique failure types: `awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}' .forge/.hook-failures.log | sort -u | wc -l`
+3. Show last 3 failures with timestamps
+4. If count > 10: show warning "High hook failure rate. Run /forge-diagnose for details."
+
+If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy (no failures logged)"
+
 ## Error Handling
 
 | Condition | Action |

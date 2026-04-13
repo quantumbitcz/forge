@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-5}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
+    exit $?
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
+    exit $?
+  fi
+fi
+
 # L0 Pre-Edit Syntax Validation
 # PreToolUse hook for Edit|Write — validates that the resulting file parses cleanly.
 # Exit 0 = allow edit. Exit 1 = block edit (stdout = error message to agent).

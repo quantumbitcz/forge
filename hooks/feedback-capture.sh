@@ -4,6 +4,19 @@
 # Uses atomic write (temp file + locked append) to prevent garbled output
 # from concurrent Stop hooks (e.g., parallel sprint orchestrators).
 
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-3}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
+    exit $?
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
+    exit $?
+  fi
+fi
+
 {
   FORGE_DIR=".forge"
   [ ! -d "$FORGE_DIR" ] && exit 0
