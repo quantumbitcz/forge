@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.quantumbit.cz/schemas/benchmarks.json",
+  "title": "Forge Performance Benchmarks",
+  "description": "Rolling window of performance metrics per pipeline run. Stored at .forge/benchmarks.json. Survives /forge-reset.",
+  "type": "object",
+  "required": ["version", "runs", "rolling_average"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version"
+    },
+    "runs": {
+      "type": "array",
+      "description": "Per-run metric entries, ordered chronologically. Trimmed to rolling_window * 2.",
+      "items": {
+        "$ref": "#/$defs/run_entry"
+      }
+    },
+    "rolling_average": {
+      "$ref": "#/$defs/rolling_average",
+      "description": "Computed average over the most recent rolling_window runs."
+    }
+  },
+  "$defs": {
+    "run_entry": {
+      "type": "object",
+      "required": ["run_id", "timestamp", "metrics"],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "description": "Story ID or timestamp-based identifier for the pipeline run."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when metrics were recorded."
+        },
+        "branch": {
+          "type": ["string", "null"],
+          "description": "Git branch name for the run."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["standard", "bugfix", "migration", "bootstrap", "testing", "refactor", "performance"],
+          "description": "Pipeline mode for this run."
+        },
+        "metrics": {
+          "$ref": "#/$defs/metrics"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "build_time_ms": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Build command wall-clock time in milliseconds."
+        },
+        "lint_time_ms": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Lint command wall-clock time in milliseconds."
+        },
+        "test_duration_ms": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Test suite wall-clock time in milliseconds."
+        },
+        "test_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of tests executed."
+        },
+        "bundle_size_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Total frontend bundle size in bytes."
+        },
+        "binary_size_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Backend binary size in bytes."
+        },
+        "artifact_sizes": {
+          "type": ["object", "null"],
+          "description": "Individual artifact file sizes in bytes. Keys are relative file paths.",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "custom": {
+          "type": "object",
+          "description": "Custom metric values extracted via user-defined regex patterns.",
+          "additionalProperties": {
+            "type": ["number", "null"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "rolling_average": {
+      "type": "object",
+      "required": ["window_size"],
+      "properties": {
+        "window_size": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 50,
+          "description": "Number of recent runs used to compute the average."
+        },
+        "build_time_ms": {
+          "type": ["number", "null"],
+          "description": "Average build time across the window."
+        },
+        "lint_time_ms": {
+          "type": ["number", "null"],
+          "description": "Average lint time across the window."
+        },
+        "test_duration_ms": {
+          "type": ["number", "null"],
+          "description": "Average test duration across the window."
+        },
+        "test_count": {
+          "type": ["number", "null"],
+          "description": "Average test count across the window."
+        },
+        "bundle_size_bytes": {
+          "type": ["number", "null"],
+          "description": "Average bundle size across the window."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

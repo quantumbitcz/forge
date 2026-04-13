@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.quantumbit.cz/schemas/dx-metrics.json",
+  "title": "Forge Developer Experience Metrics",
+  "description": "Aggregated DX metrics across pipeline runs. Stored at .forge/dx-metrics.json. Survives /forge-reset.",
+  "type": "object",
+  "required": ["version", "runs", "aggregates"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version"
+    },
+    "runs": {
+      "type": "array",
+      "description": "Per-run DX metric entries, ordered chronologically. Trimmed to retention_runs.",
+      "items": {
+        "$ref": "#/$defs/run_entry"
+      }
+    },
+    "aggregates": {
+      "$ref": "#/$defs/aggregates",
+      "description": "Computed aggregates across all retained runs. Recomputed on each append."
+    },
+    "sprint": {
+      "$ref": "#/$defs/sprint_data",
+      "description": "Sprint burndown data. Present only when mode == sprint."
+    }
+  },
+  "$defs": {
+    "run_entry": {
+      "type": "object",
+      "required": ["run_id", "timestamp", "mode", "metrics"],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "description": "Story ID or timestamp-based identifier."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of run completion."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["standard", "bugfix", "migration", "bootstrap", "testing", "refactor", "performance"],
+          "description": "Pipeline mode for this run."
+        },
+        "branch": {
+          "type": ["string", "null"],
+          "description": "Git branch name."
+        },
+        "requirement_summary": {
+          "type": ["string", "null"],
+          "description": "Short summary of the pipeline requirement."
+        },
+        "completed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the pipeline reached SHIPPING. Aborted runs are false."
+        },
+        "metrics": {
+          "$ref": "#/$defs/metrics"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "cycle_time_minutes": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Wall-clock time from PREFLIGHT to SHIPPING in minutes."
+        },
+        "first_attempt_success": {
+          "type": ["boolean", "null"],
+          "description": "True if no safety gate restarts and all phase_iterations == 1."
+        },
+        "cost_usd": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Estimated token cost for the entire run in USD."
+        },
+        "convergence_efficiency": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "1 - (iterations_used / max_iterations). Higher is better."
+        },
+        "review_efficiency": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Findings resolved per review iteration."
+        },
+        "human_interventions": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Count of AskUserQuestion invocations."
+        },
+        "autonomy_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "1 - (human_interventions / total_agent_dispatches)."
+        },
+        "finding_density": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Findings per 1,000 lines changed."
+        },
+        "stage_durations": {
+          "type": ["object", "null"],
+          "description": "Per-stage wall-clock time in minutes.",
+          "properties": {
+            "PREFLIGHT": { "type": "number", "minimum": 0 },
+            "EXPLORING": { "type": "number", "minimum": 0 },
+            "PLANNING": { "type": "number", "minimum": 0 },
+            "VALIDATING": { "type": "number", "minimum": 0 },
+            "IMPLEMENTING": { "type": "number", "minimum": 0 },
+            "VERIFYING": { "type": "number", "minimum": 0 },
+            "REVIEWING": { "type": "number", "minimum": 0 },
+            "DOCUMENTING": { "type": "number", "minimum": 0 },
+            "SHIPPING": { "type": "number", "minimum": 0 },
+            "LEARNING": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "lines_changed": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Total lines added or modified."
+        },
+        "files_changed": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of files created or modified."
+        },
+        "test_count_added": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of tests written in this run."
+        },
+        "findings_total": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Total findings emitted by reviewers."
+        },
+        "findings_resolved": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Findings fixed during convergence."
+        }
+      },
+      "additionalProperties": false
+    },
+    "aggregates": {
+      "type": "object",
+      "properties": {
+        "total_runs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of all tracked runs."
+        },
+        "avg_cycle_time_minutes": {
+          "type": ["number", "null"],
+          "description": "Mean cycle time across completed runs."
+        },
+        "first_attempt_success_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ratio of first-attempt successes (excludes incomplete runs)."
+        },
+        "avg_cost_usd": {
+          "type": ["number", "null"],
+          "description": "Mean cost per run."
+        },
+        "avg_cost_per_feature_usd": {
+          "type": ["number", "null"],
+          "description": "Mean cost for standard mode runs."
+        },
+        "avg_cost_per_bugfix_usd": {
+          "type": ["number", "null"],
+          "description": "Mean cost for bugfix mode runs."
+        },
+        "avg_convergence_efficiency": {
+          "type": ["number", "null"],
+          "description": "Mean convergence efficiency."
+        },
+        "avg_autonomy_rate": {
+          "type": ["number", "null"],
+          "description": "Mean autonomy rate."
+        },
+        "slowest_stage": {
+          "type": ["string", "null"],
+          "description": "Stage with highest average duration."
+        },
+        "most_common_mode": {
+          "type": ["string", "null"],
+          "description": "Most frequently used pipeline mode."
+        }
+      },
+      "additionalProperties": false
+    },
+    "sprint_data": {
+      "type": ["object", "null"],
+      "properties": {
+        "sprint_id": {
+          "type": "string",
+          "description": "Sprint identifier."
+        },
+        "planned_features": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of features planned for the sprint."
+        },
+        "completed_features": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of features completed so far."
+        },
+        "burndown": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["timestamp", "completed", "remaining"],
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "completed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remaining": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

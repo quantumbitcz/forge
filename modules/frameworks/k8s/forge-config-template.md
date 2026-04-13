@@ -322,3 +322,43 @@ living_specs:
 events:
   enabled: true
   retention_days: 90
+
+# Monorepo (v2.0+)
+monorepo:
+  tool: auto                     # auto | nx | turborepo | none
+  affected_base: origin/main
+  scope_to_affected: true
+
+# Performance Regression Tracking (v2.0+)
+performance_tracking:
+  enabled: false                 # Opt-in
+  thresholds:
+    build_time_pct: 20
+    test_duration_pct: 30
+    bundle_size_pct: 10
+
+# Next-Task Prediction (v2.0+)
+predictions:
+  enabled: true
+  max_suggestions: 5
+
+# Property-Based Testing (v2.0+)
+property_testing:
+  enabled: false                 # Opt-in
+  max_properties_per_function: 5
+  timeout_per_property_ms: 10000
+
+# Developer Experience Metrics (v2.0+)
+dx_metrics:
+  enabled: true
+
+# Accessibility Automation (v2.0+)
+accessibility:
+  dynamic_checks: true
+  cross_browser: false           # Opt-in (adds latency)
+
+# i18n Validation (v2.0+)
+i18n:
+  enabled: false                 # Opt-in
+  source_locale: en
+  frameworks: [auto]

@@ -429,8 +429,8 @@ echo "--- BUILD SYSTEMS ---"
 # Check 27: All build system generic modules exist
 check27_fail=0
 for bs in "${BUILD_SYSTEMS[@]}"; do
-  if [ ! -f "$ROOT/modules/build-systems/$bs.md" ]; then
-    echo "    Missing: modules/build-systems/$bs.md"
+  if [ ! -f "$ROOT/modules/build-systems/$bs.md" ] && [ ! -f "$ROOT/modules/build-systems/$bs/conventions.md" ]; then
+    echo "    Missing: modules/build-systems/$bs.md or modules/build-systems/$bs/conventions.md"
     check27_fail=1
   fi
 done

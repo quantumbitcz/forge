@@ -216,6 +216,39 @@ After Phase B passes (all tests green) AND `mutation_testing.enabled` in config:
 
 **Interaction with convergence:** Mutation findings flow to the quality gate as normal Stage 5 output. The convergence engine treats them like any other finding — surviving mutants trigger fix cycles if they push the score below target.
 
+### §4.4 Property-Based Test Dispatch (v2.0+)
+
+After Phase B passes (all tests green) AND after mutation analysis completes (if enabled) AND `property_testing.enabled` in config:
+
+1. Dispatch `fg-515-property-test-generator` as a sub-agent:
+
+       Agent(
+         subagent_type: "forge:fg-515-property-test-generator",
+         model: <from orchestrator model map if model_routing.enabled>,
+         prompt: "
+           Changed files: {changed_files_list}
+           Language: {language from forge.local.md}
+           Test command: {test_command from forge.local.md}
+           Property testing config: {property_testing.* from forge-config.md}
+         "
+       )
+
+2. Collect `TEST-PROPERTY-*` findings from the property test generator response
+3. Include property test findings in `stage_5_notes` alongside test and mutation results:
+
+       ## Property-Based Test Results
+       - Properties generated: 15
+       - Passed: 12
+       - Failed: 2
+       - Skipped: 1
+       - Framework: Hypothesis
+
+4. If `property_testing.enabled` is `false` or absent: skip entirely
+
+**Dispatch order:** Mutation testing runs first (faster, lower-risk). Property test generation runs second. Both are optional and independent — if mutation testing is disabled, property testing still runs when enabled.
+
+**Interaction with convergence:** Property findings flow to the quality gate as normal Stage 5 output. The convergence engine treats them like any other finding — failing properties trigger fix cycles if they push the score below target.
+
 ---
 
 ### Infrastructure Test Commands
@@ -485,8 +518,8 @@ After producing the Markdown report (section 10), you MUST append a structured J
       "tests_pass": <boolean>
     },
     "analysis": {
-      "agents_dispatched": ["fg-510-mutation-analyzer", ...],
-      "agents_completed": ["fg-510-mutation-analyzer", ...],
+      "agents_dispatched": ["fg-510-mutation-analyzer", "fg-515-property-test-generator", ...],
+      "agents_completed": ["fg-510-mutation-analyzer", "fg-515-property-test-generator", ...],
       "critical_findings": <number>,
       "analysis_pass": <boolean>
     },
@@ -516,6 +549,14 @@ After producing the Markdown report (section 10), you MUST append a structured J
     "mutants_survived": <number>,
     "mutation_score_pct": <number|null>
   },
+  "property_testing": {
+    "enabled": <boolean>,
+    "properties_generated": <number>,
+    "properties_passed": <number>,
+    "properties_failed": <number>,
+    "properties_skipped": <number>,
+    "frameworks_used": ["<framework name>"]
+  },
   "verdict": {
     "tests_pass": <boolean>,
     "analysis_pass": <boolean>,
@@ -541,6 +582,7 @@ After producing the Markdown report (section 10), you MUST append a structured J
 - `phase_b.flaky_management.targeted_test_pct`: Percentage of suite in targeted pass (null if not used)
 - `phase_b.coverage`: Present when coverage tools are configured; null fields when unavailable
 - `mutation_testing`: Present when `mutation_testing.enabled`; all zeros when disabled
+- `property_testing`: Present when `property_testing.enabled`; all zeros when disabled
 - `verdict.proceed_to`: Next pipeline state for orchestrator consumption (`REVIEWING` on pass, `IMPLEMENTING` on test failure, `ESCALATED` on max cycles)
 
 **Placement:** The structured block MUST appear at the end of the output, after the complete Markdown report. If output approaches the 2,000 token budget, compress the Markdown prose rather than omitting the structured block.

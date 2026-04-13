@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-04-13",
+  "deprecations": [
+    {
+      "pattern": "workspace\\.json",
+      "replacement": "Use nx.json with inferred project configuration — workspace.json was removed in Nx 18",
+      "package": "nx",
+      "since": "16.0.0",
+      "removed_in": "18.0.0",
+      "applies_from": "16.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"tasksRunnerOptions\"",
+      "replacement": "Use nxCloudAccessToken in nx.json directly — tasksRunnerOptions is deprecated in Nx 17+ in favor of top-level cache and cloud config",
+      "package": "nx",
+      "since": "17.0.0",
+      "removed_in": null,
+      "applies_from": "17.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "@nrwl/",
+      "replacement": "The @nrwl/* packages were renamed to @nx/* in Nx 16 — update all imports and dependencies",
+      "package": "@nrwl",
+      "since": "16.0.0",
+      "removed_in": "17.0.0",
+      "applies_from": "16.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"defaultProject\"",
+      "replacement": "defaultProject in nx.json is deprecated — use nx run <project>:<target> explicitly or configure defaultBase instead",
+      "package": "nx",
+      "since": "16.0.0",
+      "removed_in": "18.0.0",
+      "applies_from": "16.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"implicitDependencies\"",
+      "replacement": "Use namedInputs and inputs in targetDefaults — implicitDependencies is deprecated in Nx 17+ in favor of explicit input configuration",
+      "package": "nx",
+      "since": "17.0.0",
+      "removed_in": null,
+      "applies_from": "17.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "nx\\.json.*\"npmScope\"",
+      "replacement": "npmScope in nx.json is deprecated since Nx 16.2 — the scope is now inferred from package.json name prefixes",
+      "package": "nx",
+      "since": "16.2.0",
+      "removed_in": "18.0.0",
+      "applies_from": "16.2.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"decorate-angular-cli\\.js\"",
+      "replacement": "decorate-angular-cli.js is no longer needed — Nx 16+ integrates with Angular CLI natively without the postinstall hook",
+      "package": "nx",
+      "since": "16.0.0",
+      "removed_in": "17.0.0",
+      "applies_from": "16.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    }
+  ]
+}

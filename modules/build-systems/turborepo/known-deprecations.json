@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-04-13",
+  "deprecations": [
+    {
+      "pattern": "\"pipeline\"\\s*:",
+      "replacement": "Rename pipeline to tasks in turbo.json — the pipeline key was renamed to tasks in Turborepo 2.0",
+      "package": "turbo",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"globalDependencies\"",
+      "replacement": "Use globalDotEnv or inputs with {workspaceRoot} prefix — globalDependencies was renamed in Turborepo 2.0",
+      "package": "turbo",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"experimentalSpaces\"",
+      "replacement": "Spaces feature was removed — use standard workspace configuration with turbo.json tasks",
+      "package": "turbo",
+      "since": "1.10.0",
+      "removed_in": "2.0.0",
+      "applies_from": "1.10.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "turbo\\.json.*\"dotEnv\"",
+      "replacement": "Per-task dotEnv in turbo.json is deprecated — use globalDotEnv at the root level or inputs with dotEnv file paths",
+      "package": "turbo",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "--include-dependencies|--no-deps",
+      "replacement": "Use --filter syntax instead — --include-dependencies and --no-deps flags were removed in Turborepo 2.0",
+      "package": "turbo",
+      "since": "2.0.0",
+      "removed_in": "2.0.0",
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "--scope=",
+      "replacement": "Use --filter instead of --scope — the --scope flag was removed in Turborepo 2.0 in favor of the more powerful --filter syntax",
+      "package": "turbo",
+      "since": "1.2.0",
+      "removed_in": "2.0.0",
+      "applies_from": "1.2.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    },
+    {
+      "pattern": "\"outputMode\"\\s*:\\s*\"new-only\"",
+      "replacement": "outputMode new-only was renamed to errors-only in Turborepo 2.0 for clarity",
+      "package": "turbo",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": null,
+      "added": "2026-04-13",
+      "addedBy": "seed"
+    }
+  ]
+}

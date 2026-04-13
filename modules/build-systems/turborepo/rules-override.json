@@ -1,0 +1,57 @@
+{
+  "extends": "turborepo",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "BUILD-TURBO-001",
+        "name": "missing-outputs-config",
+        "pattern": "\"dependsOn\":\\s*\\[.*\\]\\s*[,}](?!.*\"outputs\")",
+        "scope_pattern": "turbo.json",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Task has dependsOn but no outputs configured — Turborepo cannot cache task results without declared outputs",
+        "fix_hint": "Add \"outputs\": [\"dist/**\"] (or appropriate output paths) to enable output caching for this task"
+      },
+      {
+        "id": "BUILD-TURBO-002",
+        "name": "wildcard-output-glob",
+        "pattern": "\"outputs\":\\s*\\[\\s*\"\\*\\*",
+        "scope_pattern": "turbo.json",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Overly broad output glob (**) — cache will include unnecessary files, slowing cache restore",
+        "fix_hint": "Narrow outputs to specific directories like [\"dist/**\", \".next/**\"] instead of catching everything"
+      },
+      {
+        "id": "BUILD-TURBO-003",
+        "name": "direct-npm-script-in-ci",
+        "pattern": "(npm|pnpm|yarn)\\s+run\\s+(build|test|lint)\\b(?!.*turbo)",
+        "scope_pattern": "*.{yml,yaml}",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Direct package manager task invocation in CI — use turbo run to preserve caching and dependency ordering",
+        "fix_hint": "Replace with 'turbo run build' (or test/lint) to leverage Turborepo's caching and parallelism"
+      },
+      {
+        "id": "BUILD-TURBO-004",
+        "name": "missing-env-declaration",
+        "pattern": "process\\.env\\.((?!NODE_ENV|CI)[A-Z_]+)",
+        "scope_pattern": "*.{ts,tsx,js,jsx}",
+        "severity": "INFO",
+        "category": "CONV-BUILD",
+        "message": "Environment variable access — verify it is declared in turbo.json env or globalEnv to ensure cache correctness",
+        "fix_hint": "Add the environment variable to the appropriate task's env array in turbo.json, or to globalEnv if used by all tasks"
+      },
+      {
+        "id": "BUILD-TURBO-005",
+        "name": "cache-false-on-cacheable-task",
+        "pattern": "\"cache\":\\s*false",
+        "scope_pattern": "turbo.json",
+        "severity": "INFO",
+        "category": "CONV-BUILD",
+        "message": "Task has caching disabled — verify this is intentional (appropriate for dev servers, not for build/test/lint)",
+        "fix_hint": "Remove cache: false if this is a build/test/lint task. Only disable cache for persistent dev tasks."
+      }
+    ]
+  }
+}

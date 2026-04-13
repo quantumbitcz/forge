@@ -113,7 +113,52 @@ For the highest-confidence hypothesis:
 
 If the top hypothesis is disproved during isolation, move to the next hypothesis. Do not report a disproved hypothesis as the root cause.
 
-### 3.4 Phase 1 Output (Stage Notes)
+### 3.4 Specification Inference (v2.0+)
+
+After isolating the root cause, extract a `{Location, Specification}` pair for each buggy function. The specification is a natural-language description of the function's intended contract — what it *should* do, not what it currently does. This gives the implementer structured intent alongside the failing test.
+
+**When to run:** Always in bugfix mode, unless `spec_inference.enabled: false` in config. Skip for trivial getters/setters, infrastructure bugs (config errors, missing dependencies), or generated code.
+
+**Evidence sources (in priority order):**
+
+1. **Docstrings** — KDoc, JSDoc, rustdoc, docstrings. Most authoritative when present.
+2. **Existing tests** — what they assert about the function's behavior (expected inputs, outputs, error handling).
+3. **Callers** — what callers pass and what they expect back (top 3-5 callers only).
+4. **Naming** — function name, parameter names, return type name (semantic inference).
+5. **Type signatures** — parameter types, return types, generics, nullability constraints.
+
+**Synthesis process:**
+
+1. Read each evidence source for the identified buggy function(s)
+2. Merge findings into a structured specification
+3. Assess confidence: HIGH (3+ sources agree), MEDIUM (2 sources or partial conflict), LOW (single source or significant ambiguity)
+4. If evidence sources contradict (e.g., tests assert X but docstring describes Y), report `SPEC-INFERENCE-CONFLICT` (WARNING) and include both interpretations
+5. Filter by `spec_inference.min_confidence` (default: MEDIUM) — do not include LOW-confidence specs unless configured
+6. Cap at `spec_inference.max_specs_per_bug` (default: 5) pairs, prioritized by root cause relevance
+
+**Spec pair format** (include in stage notes for each function):
+
+```
+### Spec Pair: {function_name}
+
+- **Location:** `{file_path}:{start_line}-{end_line}`
+- **Function:** `{qualified_name}` (e.g., `UserService.findByEmail`)
+- **Specification:**
+  - **Purpose:** {one-sentence summary of what this function should do}
+  - **Inputs:** {parameter descriptions with expected types/ranges}
+  - **Outputs:** {return value description, including edge cases}
+  - **Side effects:** {database writes, events emitted, cache mutations — or "none"}
+  - **Invariants:** {conditions that must hold before/after — or "none identified"}
+  - **Error conditions:** {what should happen on invalid input, missing data, etc.}
+- **Confidence:** HIGH | MEDIUM | LOW
+- **Evidence sources:** [docstring, tests, callers, naming, types]
+```
+
+If no evidence sources are available for a function, skip it and log: "Spec inference skipped for {function}: no evidence sources available."
+
+For full specification of the inference system, confidence scoring, and integration details, see `shared/spec-inference.md`.
+
+### 3.5 Phase 1 Output (Stage Notes)
 
 Write stage notes (max 2000 tokens) with the following structure:
 
@@ -147,6 +192,18 @@ Write stage notes (max 2000 tokens) with the following structure:
 ## Graph Context
 
 {Summary of knowledge graph findings, or "Graph unavailable — codebase search used" if neo4j-mcp not available}
+
+## Specification Inference Summary
+
+- Specs generated: {count}
+- High confidence: {count}
+- Medium confidence: {count}
+- Low confidence: {count}
+- Primary evidence source: {most common source type}
+
+### Spec Pair: {function_name}
+
+[One spec pair block per function — see Section 3.4 for format]
 ```
 
 ---

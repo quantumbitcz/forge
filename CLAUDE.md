@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.24.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.25.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -16,10 +16,10 @@ Layered, resolution top-down:
    - `frameworks/` (21): spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform, angular, nestjs, vue, svelte — each with `conventions.md`, config files, `variants/`, and subdirectory bindings (`testing/`, `persistence/`, `messaging/`, etc.)
    - `testing/` (19): kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest
    - `databases/`, `persistence/`, `migrations/`, `api-protocols/`, `messaging/`, `caching/`, `search/`, `storage/`, `auth/`, `observability/` — domain-specific best practices
-   - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
+   - `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. The composition algorithm is documented in `shared/composition.md`. When convention stacks are resolved at PREFLIGHT, files are loaded in this order with later files overriding earlier ones for conflicting rules.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 40 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 41 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -82,6 +82,13 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Confidence scoring | `shared/confidence-scoring.md` |
 | Composition order | `shared/composition.md` |
 | Living specifications | `shared/living-specifications.md` |
+| Spec inference | `shared/spec-inference.md` |
+| Accessibility automation | `shared/accessibility-automation.md` |
+| i18n validation | `shared/i18n-validation.md` |
+| Performance regression | `shared/performance-regression.md` |
+| Next-task prediction | `shared/next-task-prediction.md` |
+| DX metrics | `shared/dx-metrics.md` |
+| Monorepo integration | `shared/monorepo-integration.md` |
 
 ## Skill selection guide
 
@@ -118,7 +125,7 @@ Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resu
 Multiple features: /forge-sprint (reads from Linear or manual list)
 ```
 
-## Agents (40 total, `agents/*.md`)
+## Agents (41 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -128,7 +135,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
-- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`
+- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`)
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
@@ -138,7 +145,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 - **Frontmatter required:** `name` (must match filename sans `.md`), `description`, `tools`. Dispatch agents must include `Agent`.
 - **UI:** `AskUserQuestion` for multi-option choices (never `Options: (1)...`). `EnterPlanMode`/`ExitPlanMode` for planning (skip in autonomous/replanning). `TaskCreate`/`TaskUpdate` wraps every dispatch.
-- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier. Tier 4 (none): all reviewers (fg-410 through fg-420), mutation analyzer, validator, worktree manager, conflict resolver.
+- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier, property-test-generator. Tier 4 (none): all reviewers (fg-410 through fg-420), mutation analyzer, validator, worktree manager, conflict resolver.
 - **`ui:` frontmatter** declares capabilities; enforced by `ui-frontmatter-consistency.bats`.
 - **Config:** `components:` in `forge.local.md` — core: `language:`, `framework:`, `variant:`, `testing:`. Framework-specific: `web`, `persistence` (distinct from crosscutting `modules/persistence/`). Optional crosscutting: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality` (list type, supports object form with external ruleset). Multi-service: entries with `path:`. Documentation config: `documentation:` section controls generation.
 - **`mode_config:`** defines per-stage agent selection and mode overlays. `mode_config.stages` maps each pipeline stage to its default agent. `mode_config.mode_overlays` overrides specific stages per pipeline mode (bugfix, migration, bootstrap). Resolution: overlay > stage default > hardcoded fallback.
@@ -159,7 +166,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 47 shared categories (18 wildcard prefixes + 29 discrete). See `shared/checks/category-registry.json` for the full list. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `SPEC-DRIFT-*`. Key discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 68 shared categories (19 wildcard prefixes + 49 discrete). See `shared/checks/category-registry.json` for the full list. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `SPEC-DRIFT-*`, `PERF-REGRESSION-*`. Key discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`, `SPEC-INFERENCE-LOW`, `SPEC-INFERENCE-CONFLICT`, `TEST-PROPERTY-INVARIANT`, `TEST-PROPERTY-ROUNDTRIP`, `TEST-PROPERTY-IDEMPOTENT`, `TEST-PROPERTY-METAMORPHIC`, `TEST-PROPERTY-COMMUTATIVE`, `TEST-PROPERTY-MONOTONIC`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -208,6 +215,14 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Living specifications** (v2.0, F05): Drift detection between structured specs and implementation. Specs carry machine-parseable `AC-NNN` acceptance criteria. Quality gate detects drift at REVIEW, retrospective proposes updates at LEARN. Spec registry at `.forge/specs/index.json`. Config: `living_specs.*`.
 - **Event-sourced pipeline log** (v2.0, F07): Unified append-only event log at `.forge/events.jsonl`. Captures all pipeline events with causal linking (parent_id chains). Subsumes `decisions.jsonl` and `progress/timeline.jsonl` as filtered views. Config: `events.*`.
 - **Playbooks** (v2.0, F11): Reusable pipeline recipes for common workflows. Defined in `.forge/playbooks/` as YAML. Usage analytics tracked in `.forge/playbook-analytics.json`. Managed via `/forge-playbooks`. Config: `playbooks.*`.
+- **Spec inference** (v2.0, F12): Function-level specification extraction during bug investigation. `fg-020-bug-investigator` synthesizes `{Location, Specification}` pairs from docstrings, tests, callers, naming, and types. Confidence scoring (HIGH/MEDIUM/LOW) based on evidence source agreement. Passed to implementer via stage notes. Finding categories: `SPEC-INFERENCE-LOW` (INFO), `SPEC-INFERENCE-CONFLICT` (WARNING). Config: `spec_inference.*`.
+- **Property-based testing** (v2.0, F13): Optional `fg-515-property-test-generator` dispatched by test gate after standard tests pass. Infers function properties (invariants, round-trips, idempotence, metamorphic, commutativity, monotonicity) and generates framework-appropriate PBT tests (Hypothesis, jqwik, fast-check, proptest, gopter, etc.). Dependency check runs before code generation. Finding categories: `TEST-PROPERTY-*`. Config: `property_testing.*`.
+- **Dynamic accessibility** (v2.0, F15): Enhanced `fg-413-frontend-reviewer` with Playwright-driven tab-order verification, focus visibility audit, keyboard-only navigation, ARIA completeness. Optional cross-browser testing (Chromium/Firefox/WebKit pixel diff). Config: `accessibility.*`.
+- **i18n validation** (v2.0, F16): Hardcoded string detection for React/Angular/Vue/Swift/Android, RTL CSS violations, locale formatting. Module: `modules/code-quality/i18n-validation/`. Finding categories: `I18N-*`. Config: `i18n.*`.
+- **Performance regression tracking** (v2.0, F17): Benchmark store (`.forge/benchmarks.json`) tracking build time, test duration, bundle size across runs. Rolling average comparison at REVIEW. Finding categories: `PERF-REGRESSION-*`. Config: `performance_tracking.*`.
+- **Next-task prediction** (v2.0, F18): `fg-710-post-run` analyzes changes and predicts follow-up tasks using 19 pattern rules + graph queries. Accuracy tracking in `.forge/predictions.json`. Config: `predictions.*`.
+- **DX metrics** (v2.0, F19): 10 developer experience metrics (cycle time, first-attempt success, cost-per-feature, convergence efficiency, etc.) in `.forge/dx-metrics.json`. Sprint burndown support. Config: `dx_metrics.*`.
+- **Monorepo tooling** (v2.0, F20): Nx and Turborepo modules with affected detection, scoped testing/building. Auto-detection at PREFLIGHT from `nx.json` or `turbo.json`. Config: `monorepo.*`.
 
 ### Deterministic Control Flow
 
@@ -370,7 +385,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.24.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.25.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

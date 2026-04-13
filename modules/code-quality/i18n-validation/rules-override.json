@@ -1,0 +1,105 @@
+{
+  "_module": "i18n-validation",
+  "_note": "L1 regex patterns for i18n validation. Loaded by check engine when i18n.enabled: true.",
+  "rules": [
+    {
+      "id": "i18n-hardcoded-jsx",
+      "pattern": ">([A-Z][a-z]+(\\s+[a-z]+){2,})</",
+      "file_pattern": "*.{tsx,jsx}",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded text in JSX — wrap with t() or <Trans>",
+      "exclude_patterns": ["*.test.*", "*.stories.*", "*.spec.*"]
+    },
+    {
+      "id": "i18n-hardcoded-angular",
+      "pattern": ">([A-Z][a-z]+(\\s+[a-z]+){2,})</",
+      "file_pattern": "*.component.html",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded text in Angular template — use {{ key | translate }} or i18n attribute",
+      "exclude_patterns": ["*.spec.*"]
+    },
+    {
+      "id": "i18n-hardcoded-vue",
+      "pattern": ">([A-Z][a-z]+(\\s+[a-z]+){2,})</",
+      "file_pattern": "*.vue",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded text in Vue template — wrap with {{ $t('key') }}",
+      "exclude_patterns": ["*.spec.*", "*.test.*"]
+    },
+    {
+      "id": "i18n-hardcoded-swift",
+      "pattern": "Text\\(\"[A-Z][a-z]+(\\s+[a-z]+)+\"\\)",
+      "file_pattern": "*.swift",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded string in SwiftUI Text() — use String(localized:) or NSLocalizedString",
+      "exclude_patterns": ["*Tests*", "*Preview*"]
+    },
+    {
+      "id": "i18n-hardcoded-android-xml",
+      "pattern": "(android:text|android:hint|android:contentDescription)=\"[^@][^\"]*\"",
+      "file_pattern": "*.xml",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded string in Android layout — use @string/ resource reference",
+      "exclude_patterns": ["*test*"]
+    },
+    {
+      "id": "i18n-hardcoded-android-kotlin",
+      "pattern": "setText\\(\"",
+      "file_pattern": "*.{kt,java}",
+      "category": "I18N-HARDCODED",
+      "severity": "WARNING",
+      "description": "Hard-coded string via setText() — use getString(R.string.*) instead",
+      "exclude_patterns": ["*Test*", "*test*"]
+    },
+    {
+      "id": "i18n-rtl-css-properties",
+      "pattern": "(margin|padding|border|text-align|float)\\s*:\\s*(left|right)",
+      "file_pattern": "*.{css,scss,less}",
+      "category": "I18N-RTL",
+      "severity": "INFO",
+      "description": "Use logical properties (start/end) instead of physical (left/right) for RTL support",
+      "exclude_patterns": ["*.min.css", "vendor/*"]
+    },
+    {
+      "id": "i18n-rtl-tailwind",
+      "pattern": "\\b(ml-|mr-|pl-|pr-|left-|right-)\\d",
+      "file_pattern": "*.{tsx,jsx,vue,html,svelte}",
+      "category": "I18N-RTL",
+      "severity": "INFO",
+      "description": "Use Tailwind logical utilities (ms-/me-/ps-/pe-/start-/end-) instead of physical (ml-/mr-/pl-/pr-/left-/right-) for RTL support",
+      "exclude_patterns": ["*.test.*", "*.spec.*"]
+    },
+    {
+      "id": "i18n-format-date-tostring",
+      "pattern": "new Date\\(\\)\\.(toString|toDateString|toTimeString)\\(\\)",
+      "file_pattern": "*.{ts,tsx,js,jsx}",
+      "category": "I18N-FORMAT",
+      "severity": "INFO",
+      "description": "Use Intl.DateTimeFormat or toLocaleDateString(locale) for locale-aware date formatting",
+      "exclude_patterns": ["*.test.*", "*.spec.*"]
+    },
+    {
+      "id": "i18n-format-locale-empty",
+      "pattern": "(toLocaleDateString|toLocaleString)\\(\\)",
+      "file_pattern": "*.{ts,tsx,js,jsx}",
+      "category": "I18N-FORMAT",
+      "severity": "INFO",
+      "description": "Pass explicit locale to toLocaleDateString()/toLocaleString() for consistent formatting",
+      "exclude_patterns": ["*.test.*", "*.spec.*"]
+    },
+    {
+      "id": "i18n-format-tofixed",
+      "pattern": "\\d+\\.toFixed\\(\\d+\\)",
+      "file_pattern": "*.{ts,tsx,js,jsx}",
+      "category": "I18N-FORMAT",
+      "severity": "INFO",
+      "description": "Use Intl.NumberFormat for locale-aware number formatting instead of toFixed()",
+      "exclude_patterns": ["*.test.*", "*.spec.*"]
+    }
+  ]
+}

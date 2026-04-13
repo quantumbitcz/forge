@@ -1,0 +1,57 @@
+{
+  "extends": "nx",
+  "shared_rules": {
+    "additional_rules": [
+      {
+        "id": "BUILD-NX-001",
+        "name": "circular-dependency-import",
+        "pattern": "import\\s+.*from\\s+['\"]\\.\\./(apps|libs)/",
+        "scope_pattern": "*.{ts,tsx,js,jsx}",
+        "severity": "CRITICAL",
+        "category": "ARCH-CIRCULAR-DEP",
+        "message": "Relative import crossing project boundary — use workspace alias (e.g., @myorg/lib-name) to enforce module boundaries",
+        "fix_hint": "Replace relative cross-project import with the project's public API alias defined in tsconfig.base.json paths"
+      },
+      {
+        "id": "BUILD-NX-002",
+        "name": "missing-project-tags",
+        "pattern": "\"tags\":\\s*\\[\\s*\\]",
+        "scope_pattern": "project.json",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Project has empty tags — add type and scope tags for module boundary enforcement",
+        "fix_hint": "Add tags like [\"type:lib\", \"scope:shared\"] to enable @nx/enforce-module-boundaries constraints"
+      },
+      {
+        "id": "BUILD-NX-003",
+        "name": "direct-tool-invocation",
+        "pattern": "\"(test|build|lint)\":\\s*\"(jest|tsc|eslint|vitest|webpack)\\b",
+        "scope_pattern": "package.json",
+        "severity": "WARNING",
+        "category": "CONV-BUILD",
+        "message": "Direct tool invocation in package.json scripts — use Nx executors or inferred targets to preserve caching and task ordering",
+        "fix_hint": "Remove direct tool scripts and configure targets in project.json or let Nx infer them from the tool config files"
+      },
+      {
+        "id": "BUILD-NX-004",
+        "name": "workspace-json-legacy",
+        "pattern": "workspace\\.json",
+        "scope_pattern": "*.{json,ts,js}",
+        "severity": "INFO",
+        "category": "CONV-BUILD",
+        "message": "workspace.json is a legacy Nx format — use nx.json with inferred project configuration",
+        "fix_hint": "Migrate to nx.json targetDefaults and remove workspace.json. Run nx migrate to automate."
+      },
+      {
+        "id": "BUILD-NX-005",
+        "name": "missing-outputs-config",
+        "pattern": "\"dependsOn\":\\s*\\[",
+        "scope_pattern": "nx.json",
+        "severity": "INFO",
+        "category": "CONV-BUILD",
+        "message": "Target with dependsOn should also declare outputs for proper cache behavior",
+        "fix_hint": "Add \"outputs\": [\"{projectRoot}/dist\"] (or appropriate output paths) alongside dependsOn to enable output caching"
+      }
+    ]
+  }
+}

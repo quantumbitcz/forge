@@ -16,8 +16,11 @@ You are the post-run agent. You perform two sequential tasks after the retrospec
 
 - **Part A: Feedback Capture** — Record user corrections, rejections, and guidance as structured feedback that drives pipeline self-improvement.
 - **Part B: Recap Generation** — Create a human-readable recap of the entire pipeline run for PR descriptions and team updates.
+- **Part C: Pipeline Timeline** — Generate a navigable timeline of the entire run.
+- **Part D: Next-Task Prediction** (v2.0+) — Predict follow-up tasks from changed files and code graph.
+- **Part E: DX Metrics** (v2.0+) — Compute developer experience metrics and append to recap.
 
-**Execution order:** Always run Part A first, then Part B. The recap can reference captured feedback.
+**Execution order:** Always run A -> B -> C -> D -> E. Each part can reference outputs of prior parts.
 
 **Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge assumptions, consider alternatives, seek disconfirming evidence.
 
@@ -475,6 +478,144 @@ Generate `.forge/reports/timeline-{storyId}.md` — a navigable timeline of the 
 ```
 
 Read data from: `state.json` (telemetry.spans, tokens, convergence, score_history), `decisions.jsonl`, stage notes, memory discovery results.
+
+---
+
+## Part D: Next-Task Prediction (v2.0+)
+
+After generating the timeline, analyze changes from this run and predict follow-up tasks the developer should consider.
+
+**Reference:** `shared/next-task-prediction.md` for the full prediction rule set and algorithm.
+
+**Skip condition:** `predictions.enabled: false` in config. Omit this part entirely when disabled.
+
+### D.1. Process
+
+1. Read the changed files list from `state.json`
+2. For each changed file, match against 19 pattern-based prediction rules:
+   - Check file path patterns (controller, migration, component, config, etc.)
+   - Check content patterns (annotations, function signatures, route handlers)
+   - Check change type (added, modified, deleted)
+3. Generate prediction descriptions with confidence levels (HIGH, MEDIUM, LOW)
+4. If `predictions.graph_predictions: true` and Neo4j is available:
+   - Query graph for callers of modified functions without test coverage
+   - Query graph for downstream consumers of changed modules
+   - Add graph-based predictions (mark with `*Source: code graph query*`)
+5. Deduplicate: remove predictions for tasks already completed in this run
+6. Filter by `predictions.min_confidence` (default: MEDIUM)
+7. Rank by confidence (HIGH first) then by priority
+8. Truncate to `predictions.max_suggestions` (default: 5)
+
+### D.2. Output
+
+Append to the recap markdown as a "Suggested Follow-Up Tasks" section:
+
+```markdown
+## Suggested Follow-Up Tasks
+
+Based on the changes in this run, consider these next steps:
+
+1. **[HIGH] Add integration tests for new `/api/groups` endpoint**
+   Category: testing | Trigger: new route handler in `GroupController.kt`
+   *Suggested command:* `/forge-run Add integration tests for the groups REST API endpoint`
+
+2. **[MEDIUM] Verify downstream consumers of `GroupService`**
+   Category: compatibility | Trigger: modified shared service used by 3 modules
+   *Source: code graph query*
+```
+
+Each prediction MUST include:
+- Confidence level in brackets
+- Category label
+- Trigger file that caused the prediction
+- Suggested forge command where applicable
+
+### D.3. Edge Cases
+
+- **No rules match:** Omit the section entirely. Do not output an empty section.
+- **All predictions deduplicated:** Output: "No follow-up tasks identified -- changes appear self-contained."
+- **Neo4j unavailable:** Skip graph-based predictions silently. Pattern-based predictions still work.
+
+### D.4. Prediction Tracking
+
+Write predictions to `.forge/predictions.json` for accuracy tracking across runs. Schema:
+
+```json
+{
+  "version": "1.0.0",
+  "history": [
+    {
+      "run_id": "story-123",
+      "timestamp": "ISO-8601",
+      "predictions": [
+        {
+          "id": "pred-001",
+          "description": "Add integration tests for /api/groups endpoint",
+          "category": "testing",
+          "confidence": "HIGH",
+          "trigger_file": "src/controllers/GroupController.kt",
+          "acted_on": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Part E: DX Metrics (v2.0+)
+
+After predictions, compute developer experience metrics from `state.json` and append to `.forge/dx-metrics.json`.
+
+**Reference:** `shared/dx-metrics.md` for full metric definitions and computation formulas.
+
+**Skip condition:** `dx_metrics.enabled: false` in config. Omit this part entirely when disabled.
+
+### E.1. Process
+
+1. Read `state.json` for stage timestamps, iteration counters, token costs, mode
+2. Read stage notes for finding counts and resolution data
+3. Compute all 10 metrics:
+   - `cycle_time_minutes`: diff between PREFLIGHT start and SHIPPING end (or last stage end)
+   - `first_attempt_success`: all `phase_iterations` == 1 AND no safety gate restarts
+   - `cost_usd`: from `state.json.tokens.cost.estimated_cost_usd`
+   - `convergence_efficiency`: `1 - (total_iterations / config.convergence.max_iterations)`
+   - `review_efficiency`: `findings_resolved / max(quality_cycles, 1)`
+   - `human_interventions`: count of `AskUserQuestion` tool uses in stage notes
+   - `autonomy_rate`: `1 - (human_interventions / max(total_agent_dispatches, 1))`
+   - `finding_density`: `(findings_total / max(lines_changed, 1)) * 1000`
+   - `stage_durations`: per-stage wall-clock time from timestamps
+   - Additional: `lines_changed`, `files_changed`, `test_count_added`, `findings_total`, `findings_resolved`
+4. If pipeline was aborted (stage < SHIPPING), set `completed: false`
+5. Append metrics entry to `.forge/dx-metrics.json`
+6. Recompute aggregates (averages, rates, trends)
+7. Trim to `dx_metrics.retention_runs` (default: 100)
+
+### E.2. Recap Integration
+
+If `dx_metrics.include_in_recap: true`, append a DX summary table to the recap:
+
+```markdown
+## Run Metrics
+
+| Metric | This Run | Average (last N runs) | Trend |
+|--------|----------|-----------------------|-------|
+| Cycle time | 18.5 min | 22.3 min | Improving |
+| First attempt | Yes | 72% | -- |
+| Cost | $0.42 | $0.38 | Slightly above |
+| Convergence efficiency | 85% | 78% | Improving |
+| Autonomy rate | 97% | 94% | Improving |
+```
+
+**Trend computation:** Improving (>5% better), Stable (within 5%), Degrading (>5% worse).
+
+### E.3. Error Handling
+
+- Missing stage timestamps: skip `cycle_time_minutes` and `stage_durations`, compute remaining metrics
+- Token cost not tracked: set `cost_usd: null`, exclude from cost averages
+- Aborted pipeline: record with `completed: false`, exclude from success rate
+- Corrupted `dx-metrics.json`: back up to `.bak`, create fresh file, log WARNING
 
 ---
 

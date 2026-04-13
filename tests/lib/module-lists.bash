@@ -32,10 +32,13 @@ for f in "$PLUGIN_ROOT"/modules/testing/*.md; do
   [[ -f "$f" ]] && DISCOVERED_TESTING_FILES+=("$(basename "$f")")
 done
 
-# Build systems: .md files under modules/build-systems/
+# Build systems: .md files and directories (with conventions.md) under modules/build-systems/
 DISCOVERED_BUILD_SYSTEMS=()
 for f in "$PLUGIN_ROOT"/modules/build-systems/*.md; do
   [[ -f "$f" ]] && DISCOVERED_BUILD_SYSTEMS+=("$(basename "$f" .md)")
+done
+for d in "$PLUGIN_ROOT"/modules/build-systems/*/; do
+  [[ -d "$d" && -f "$d/conventions.md" ]] && DISCOVERED_BUILD_SYSTEMS+=("$(basename "$d")")
 done
 
 # CI/CD platforms: .md files under modules/ci-cd/
@@ -71,7 +74,7 @@ REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md forge-config-template
 MIN_FRAMEWORKS=21
 MIN_LANGUAGES=15
 MIN_TESTING_FILES=19
-MIN_BUILD_SYSTEMS=7
+MIN_BUILD_SYSTEMS=9
 MIN_CI_PLATFORMS=7
 MIN_CONTAINER_ORCH=11
 MIN_LAYERS=12
