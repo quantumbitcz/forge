@@ -1,11 +1,6 @@
 ---
 name: forge-config
-description: >
-  Interactive configuration editor for forge.local.md and forge-config.md.
-  Validates changes against schema before applying. Supports common operations:
-  change framework, add testing, update scoring thresholds, toggle features.
-  Trigger: /forge-config [operation], "change forge config", "update my config",
-  "configure forge", "edit forge settings"
+description: "Interactive configuration editor for forge.local.md and forge-config.md. Use when changing framework, adding testing, updating scoring thresholds, or toggling features. Validates changes against schema. Trigger: /forge-config, change forge config, update my config"
 disable-model-invocation: false
 ---
 
@@ -76,3 +71,9 @@ Delegates to `/config-validate` skill. Shows results inline.
 | Invalid key path | Show valid keys from config-schema.json |
 | Invalid value | Show valid values with fuzzy suggestion |
 | Locked section | Refuse edit, explain how to unlock |
+
+## See Also
+
+- `/config-validate` — validate config without editing
+- `/forge-init` — initial project setup
+- `/forge-help` — find the right skill

@@ -1,13 +1,22 @@
 ---
 name: forge-help
-description: >
-  Interactive decision tree to find the right Forge skill for your situation.
-  Trigger: /forge-help, "which skill should I use", "help me choose",
-  "what can forge do", "forge commands"
+description: "Interactive decision tree to find the right Forge skill. Use when unsure which skill to use, exploring capabilities, or need help choosing between similar skills. Trigger: /forge-help, which skill should I use, help me choose, what can forge do"
 disable-model-invocation: true
 ---
 
 # Forge Help — Skill Decision Tree
+
+## Prerequisites
+
+None. This skill is a reference guide.
+
+## Instructions
+
+Display the decision tree below. If the user asks a specific question, navigate to the relevant category.
+
+## Error Handling
+
+None. This skill displays static content.
 
 ## What do you want to do?
 
@@ -81,3 +90,8 @@ Build → /forge-run    Fix → /forge-fix    Review → /forge-review
 Health → /codebase-health    Pipeline broken → /forge-diagnose
 New here → /forge-tour    This help → /forge-help
 ```
+
+## See Also
+
+- `/forge-tour` — guided 5-stop introduction for new users
+- `/forge-init` — first-time project setup

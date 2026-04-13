@@ -1,13 +1,22 @@
 ---
 name: forge-tour
-description: >
-  Guided introduction to Forge's 5 most important skills with a sample workflow.
-  Trigger: /forge-tour, "how does forge work", "getting started with forge",
-  "teach me forge", "forge tutorial", "new to forge"
+description: "Guided 5-stop introduction to Forge covering init, verify, run, fix, and review. Use when new to Forge, onboarding team members, or want a walkthrough of the most important skills. Trigger: /forge-tour, how does forge work, getting started, teach me forge"
 disable-model-invocation: false
 ---
 
 # Forge Tour — 5-Stop Guided Introduction
+
+## Prerequisites
+
+None. Works before or after /forge-init.
+
+## Instructions
+
+Present each stop sequentially. Pause between stops to let the user ask questions or try the skill.
+
+## Error Handling
+
+None. This skill displays informational content.
 
 Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks you through the 5 skills you'll use most, in the order you'll need them.
 
@@ -116,7 +125,13 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 
 ## What's Next?
 
-- **All 38 skills:** `/forge-help`
+- **All skills:** `/forge-help`
 - **Reduce token usage:** `/forge-caveman`
 - **Pipeline analytics:** `/forge-insights`
 - **Multiple features:** `/forge-sprint`
+
+## See Also
+
+- `/forge-help` — full skill decision tree
+- `/forge-init` — first-time project setup
+- `/forge-run` — build a feature

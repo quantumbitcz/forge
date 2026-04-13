@@ -3,7 +3,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-42-green?style=flat-square)](#agents)
-[![Skills](https://img.shields.io/badge/skills-34-green?style=flat-square)](#available-skills)
+[![Skills](https://img.shields.io/badge/skills-38-green?style=flat-square)](#available-skills)
 [![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
 [![Finding Categories](https://img.shields.io/badge/finding_categories-85+-purple?style=flat-square)](#quality-scoring)
@@ -96,7 +96,7 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 
 ## Available skills
 
-34 skills provide the user-facing interface.
+38 skills provide the user-facing interface.
 
 | Skill | Description |
 |-------|-------------|

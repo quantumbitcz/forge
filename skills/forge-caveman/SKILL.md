@@ -1,9 +1,6 @@
 ---
 name: forge-caveman
-description: >
-  Toggle caveman-style terse output for Forge pipeline messages.
-  Reduces user-facing output tokens by 40-70% while preserving technical substance.
-  Trigger: /forge-caveman [mode], "caveman mode", "less tokens", "be brief"
+description: "Toggle caveman-style terse output for Forge pipeline messages. Use when you want to reduce user-facing output tokens by 40-70% while preserving technical substance. Trigger: /forge-caveman [mode], caveman mode, less tokens, be brief"
 disable-model-invocation: true
 ---
 
@@ -75,8 +72,24 @@ BEFORE: "Review done. Score 75 (CONCERNS). 2 CRITICAL, 3 WARNING."
 AFTER:  "Rev: 75/CONCERNS. 2C 3W."
 ```
 
+## Prerequisites
+
+None. Works in any project.
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Invalid mode argument | Default to `full` |
+| `.forge/` directory missing | Create it |
+
 ## Persistence
 
 - Mode persists in `.forge/caveman-mode` across pipeline runs
 - Orchestrator reads at PREFLIGHT and applies to user-facing messages
 - `.forge/caveman-mode` survives `/forge-reset`
+
+## See Also
+
+- `/forge-compress` — compress input files (agent prompts, convention stacks)
+- `/forge-help` — find the right skill for your situation
