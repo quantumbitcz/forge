@@ -208,3 +208,10 @@ security:
 
 # Automations (v1.19+)
 automations: []
+
+# Background execution (v1.19+)
+background:
+  alert_timeout_minutes: 60
+  poll_interval_seconds: 5
+  slack_notifications: true
+  progress_update_interval_seconds: 30

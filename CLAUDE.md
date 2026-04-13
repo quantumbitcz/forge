@@ -206,7 +206,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-compact-check.sh` | Compaction suggestion hook |
 | `check-prerequisites.sh` | bash 4+ and python3 validation |
 | `forge-otel-export.sh` | OpenTelemetry trace and metric export |
-| `automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
+| `hooks/automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
 
 ### Mode overlays (`shared/modes/`)
 

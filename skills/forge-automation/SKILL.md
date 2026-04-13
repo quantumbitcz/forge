@@ -183,6 +183,6 @@ If entries have `error` field (non-null), append a section:
 ## Important
 
 - **Read-only by default.** Only `add` and `remove` modify `forge-config.md`. All other subcommands are read-only.
-- **Never dispatch skills.** The `test` subcommand simulates only. Actual dispatch is handled by the automation engine (`shared/forge-automation-trigger.sh`).
+- **Never dispatch skills.** The `test` subcommand simulates only. Actual dispatch is handled by the automation engine (`hooks/automation-trigger.sh`).
 - **Never modify `.forge/automation-log.jsonl`.** That file is append-only, written by the automation engine.
 - **Preserve file content.** When editing `forge-config.md`, only modify the `automations:` section. Never alter other configuration.
