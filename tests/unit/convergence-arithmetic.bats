@@ -202,3 +202,46 @@ compute_smoothed_delta() {
     fail "phase_iterations=2 with smoothed_delta=0 should trigger plateau counting"
   fi
 }
+
+# --- Simulator-based tests (S14) ---
+
+@test "convergence-sim: exists and is executable" {
+  assert [ -x "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" ]
+}
+
+@test "convergence-sim: happy path PASS on first cycle" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --scores "95" --pass-threshold 80
+  assert_success
+  assert_output --partial "decision=PASS"
+}
+
+@test "convergence-sim: fix loop converges to PASS" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --scores "43,84" --pass-threshold 80
+  assert_success
+  assert_line --index 1 --partial "decision=PASS"
+}
+
+@test "convergence-sim: plateau detection below threshold escalates" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --scores "72,78,75,76" --pass-threshold 80 --plateau-patience 2
+  assert_success
+  assert_line --index 3 --partial "phase=PLATEAUED"
+  assert_line --index 3 --partial "decision=ESCALATE"
+}
+
+@test "convergence-sim: budget exhaustion at max-iterations" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --scores "50,55,60,65,70" --max-iterations 5
+  assert_success
+  assert_line --index 4 --partial "phase=BUDGET_EXHAUSTED"
+}
+
+@test "convergence-sim: regressing beyond tolerance escalates" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --scores "80,70" --oscillation-tolerance 5
+  assert_success
+  assert_line --index 1 --partial "phase=REGRESSING"
+}
+
+@test "convergence-sim: --help shows usage" {
+  run "$BATS_TEST_DIRNAME/../../shared/convergence-engine-sim.sh" --help
+  assert_success
+  assert_output --partial "Convergence Engine Simulator"
+}

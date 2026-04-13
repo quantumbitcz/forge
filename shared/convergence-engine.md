@@ -456,6 +456,18 @@ See `shared/context-condensation.md` for the full condensation algorithm, tag-ba
 
 See `convergence-examples.md` for 3 annotated walkthrough scenarios (happy path, fix loop, plateau escalation).
 
+## Executable Specification
+
+The canonical convergence algorithm is implemented in `convergence-engine-sim.sh`. This document is a prose explanation. If this document and the script disagree, the script is authoritative.
+
+```bash
+# Example: run the simulator
+./shared/convergence-engine-sim.sh \
+  --scores "43,78,75,76" \
+  --pass-threshold 80 \
+  --plateau-patience 2
+```
+
 ## Retrospective Auto-Tuning
 
 `fg-700-retrospective` can adjust convergence parameters based on historical patterns:
