@@ -280,7 +280,20 @@ When `model_routing.enabled`:
 
 5. If `model_fallbacks` is non-empty: log each fallback event for visibility
 
-#### 2h. Health Assessment
+#### 2h. Memory Discovery (v1.20+)
+
+When `memory_discovery.enabled`:
+1. Read stage notes from EXPLORE and REVIEW for structural pattern observations
+2. Compare observations with patterns from previous runs (stored in `forge-log.md`)
+3. For patterns observed in 2+ consecutive runs with code evidence (3+ matching files):
+   a. Generate candidate PREEMPT item with `source: auto-discovered`, `confidence: MEDIUM`, `decay_multiplier: 2`
+   b. Validate evidence: grep for the pattern, count matching files, count violations
+   c. If evidence confirms: add to `forge-log.md` as new PREEMPT item
+4. For existing auto-discovered items applied successfully in 3+ consecutive runs: promote to `confidence: HIGH`
+5. Max 5 new discoveries per run (constraint from `memory_discovery.max_discoveries_per_run`)
+6. Log: "Memory discovery: {N} new patterns discovered, {M} promoted to HIGH, {K} decayed"
+
+#### 2i. Health Assessment
 
 | Condition | Assessment |
 |-----------|------------|
@@ -599,13 +612,14 @@ When invoked, follow this sequence:
 11. **Update metrics** in `forge-config.md`
 12. **Analyze agent effectiveness** -- compute per-agent metrics, check auto-tuning triggers
 13. **Run PREEMPT lifecycle** -- decay confidence, archive stale items, check promotion triggers
-14. **Check cross-project promotion** -- propose module-level learnings for promoted PREEMPTs
-15. **Analyze for CLAUDE.md proposals** -- check for repeated violations and emerging patterns
-16. **Check skill/agent evolution needs** -- review quality gaps, scaffolding patterns
-17. **Check self-improvement triggers** -- compare against historical reports for 3+ run patterns
-18. **Consolidate feedback** (if threshold met) -- clean up the feedback directory
-19. **Append bug pattern entry** (bugfix mode only) -- write structured entry to forge-log.md `## Bug Patterns` section
-20. **Summarize** -- report what was found, what was proposed, and what was updated
+14. **Run memory discovery** (§2h) -- scan stage notes for structural patterns, cross-reference with previous runs, generate candidate PREEMPTs
+15. **Check cross-project promotion** -- propose module-level learnings for promoted PREEMPTs
+16. **Analyze for CLAUDE.md proposals** -- check for repeated violations and emerging patterns
+17. **Check skill/agent evolution needs** -- review quality gaps, scaffolding patterns
+18. **Check self-improvement triggers** -- compare against historical reports for 3+ run patterns
+19. **Consolidate feedback** (if threshold met) -- clean up the feedback directory
+20. **Append bug pattern entry** (bugfix mode only) -- write structured entry to forge-log.md `## Bug Patterns` section
+21. **Summarize** -- report what was found, what was proposed, and what was updated
 
 ---
 
