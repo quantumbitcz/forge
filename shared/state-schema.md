@@ -32,6 +32,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 |   +-- index.md                        # Table of contents
 |   +-- architecture.md                 # Detected architecture
 |   +-- modules/                        # Per-domain module docs
++-- trust.json                          # Per-developer adaptive trust level (survives /forge-reset)
 +-- reports/
     +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-710-post-run)
@@ -58,6 +59,7 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `agent-card.json` | `/forge-init` | `/forge-init` | Yes (survives /forge-reset) | No |
 | `wiki/` | Stage 0 (PREFLIGHT) | `fg-135-wiki-generator`, retrospective (LEARN) | Yes (survives /forge-reset) | No |
 | `reports/timeline-*.md` | Stage 9 (LEARN) | Post-run agent (fg-710-post-run) | Yes (project history) | No |
+| `trust.json` | First pipeline run | Retrospective agent (fg-700) | Yes (survives /forge-reset) | No |
 
 ### Related Files (outside `.forge/`, committed to git)
 
@@ -159,7 +161,13 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "safety_gate_failures": 0,
     "unfixable_findings": [],
     "diminishing_count": 0,
-    "unfixable_info_count": 0
+    "unfixable_info_count": 0,
+    "condensation": {
+      "count": 0,
+      "last_condensed_at_iteration": null,
+      "total_tokens_saved": 0,
+      "retained_tags": []
+    }
   },
   "integrations": {
     "linear": { "available": false, "team": "" },
@@ -192,7 +200,11 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "by_agent": {},
     "model_distribution": {},
     "model_fallbacks": [],
-    "budget_warning_issued": false
+    "budget_warning_issued": false,
+    "condensation_savings": 0,
+    "condensation_count": 0,
+    "condensation_cost": 0,
+    "effective_token_ratio": 1.0
   },
   "telemetry": {
     "spans": [],
@@ -267,6 +279,14 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     ]
   },
   "bugfix": null,
+  "confidence": {
+    "overall": 0.72,
+    "clarity": 0.85,
+    "familiarity": 0.60,
+    "complexity": 0.70,
+    "history": 0.75,
+    "gate_decision": "PROCEED"
+  },
   "graph": {
     "last_update_stage": -1,
     "last_update_files": [],
@@ -336,6 +356,11 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `convergence.unfixable_findings` | array | Yes | Findings that survived all iterations with documented rationale. Each entry: `{ "category": "<CATEGORY-CODE>", "file": "<path>", "line": <int>, "severity": "<CRITICAL\|WARNING\|INFO>", "reason": "<why not fixed>", "options": ["<option1>", "<option2>"] }`. Populated when Phase 2 converges below target. |
 | `convergence.diminishing_count` | integer | Yes | Consecutive low-gain iterations (gain <= 2 points). Reset to 0 when gain > 2. Triggers `score_diminishing` event at 2. Default: 0. |
 | `convergence.unfixable_info_count` | integer | Yes | INFO findings not fixed after first attempt. Used to compute effective_target. Default: 0. |
+| `convergence.condensation` | object | Yes | Context condensation state for the current run. Tracks how many times the orchestrator condensed convergence loop context to reduce token consumption. See `shared/context-condensation.md`. Initialized at PREFLIGHT. |
+| `convergence.condensation.count` | integer | Yes | Number of condensation operations performed in this run. Starts at 0, incremented each time the orchestrator condenses context between iterations. |
+| `convergence.condensation.last_condensed_at_iteration` | integer\|null | Yes | Iteration number (`total_iterations`) at which the last condensation occurred. `null` before the first condensation. Used by the consecutive-condensation guard to prevent condensing on every iteration (minimum gap: 1 iteration). |
+| `convergence.condensation.total_tokens_saved` | integer | Yes | Cumulative input tokens saved across all condensations in this run. Computed as `tokens_before_condensation - tokens_after_condensation` for each condensation. Default: 0. |
+| `convergence.condensation.retained_tags` | string[] | Yes | Tag names that survived the most recent condensation (e.g., `["active_findings", "test_status", "acceptance_criteria"]`). Updated on each condensation. Default: `[]`. See `shared/context-condensation.md` for tag definitions. |
 | `integrations` | object | Yes | Detected MCP integration availability. Populated at PREFLIGHT by probing for each MCP server. Each key is an integration name with an `available` boolean. The `linear` integration also includes a `team` string (Linear team key). The `neo4j` integration includes `last_build_sha` (SHA of the commit the graph was built from) and `node_count` (total nodes in the graph) — set by the `graph-init` skill; when available, the orchestrator pre-queries graph context at stage boundaries. Used by agents to conditionally use integrations (e.g., create Linear issues, post Slack messages). |
 | `visual_companion` | boolean | No | Whether the superpowers visual companion is available. Detected at PREFLIGHT. Absent or `false` when superpowers plugin is not installed. |
 | `linear` | object | Yes | Linear project management state for the current run. `epic_id`: Linear epic ID if the pipeline run is tracked as an epic (empty string if Linear unavailable). `story_ids`: array of Linear issue IDs created for pipeline stories. `task_ids`: map of task ID (e.g., `"T001"`) to Linear sub-issue ID. Populated during PLAN and IMPLEMENT stages. |
@@ -350,6 +375,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.budget_warning_issued` | boolean | — | `true` when `estimated_total >= 80%` of `budget_ceiling`. Prevents duplicate warnings. Default: `false`. |
 | `tokens.model_distribution` | object | — | Model usage fractions. Keys are model names, values are usage fractions. Updated by `forge-token-tracker.sh` after each stage. Default: `{}`. |
 | `tokens.model_fallbacks` | array | — | Fallback events when requested model was unavailable. Default: `[]`. |
+| `tokens.condensation_savings` | integer | — | Total input tokens avoided by context condensation across all condensation operations. Computed as cumulative `tokens_before - tokens_after` for each condensation. Default: 0. See `shared/context-condensation.md`. |
+| `tokens.condensation_count` | integer | — | Total number of condensation operations performed during the run. Derived from `convergence.condensation.count` (authoritative source). Written at stage transitions by the orchestrator. Default: 0. |
+| `tokens.condensation_cost` | integer | — | Tokens consumed by the condensation LLM calls themselves (fast tier summarization input + output). Default: 0. |
+| `tokens.effective_token_ratio` | float | — | `actual_tokens / (actual_tokens + condensation_savings)`. Lower is better — 0.6 means 40% of potential tokens were saved. 1.0 when no condensation occurred. Default: 1.0. |
 | `telemetry` | object | No | OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` via orchestrator calls at stage boundaries. |
 | `telemetry.spans` | array | — | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. Default: `[]`. |
 | `telemetry.metrics` | object | — | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`, `"findings.critical_count"`). Values are numbers. Updated at stage boundaries. Default: `{}`. |
@@ -398,6 +427,13 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `documentation.generation_history[].confidence_changes` | array | No | Array of confidence level changes made during this generation run. Each entry: `id` (decision/constraint ID), `from` (old level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for new items), `to` (new level: `"LOW"`, `"MEDIUM"`, `"HIGH"`, or `null` for dismissed items), `reason` (`"user_confirmed"`, `"user_dismissed"`, `"consistent_extraction_3_runs"`). |
 | `documentation.generation_error` | boolean | Yes | `true` if `fg-350-docs-generator` timed out or failed during DOCUMENTING stage. Default: `false`. When true, the pipeline proceeds to SHIP without generated docs; the retrospective flags the failure. |
 | `exploration_degraded` | boolean | Yes | `true` if all exploration agents timed out or failed during EXPLORE stage. Default: `false`. When true, the planner operates with reduced codebase context. |
+| `confidence` | object | No | Confidence scoring data computed at PLAN completion. See `shared/confidence-scoring.md` for full algorithm. Absent before PLAN stage. |
+| `confidence.overall` | number | — | Effective confidence score (0.0-1.0) after applying trust modifier. Computed as `raw_score * (0.5 + 0.5 * trust_level)`. |
+| `confidence.clarity` | number | — | Requirement clarity dimension score (0.0-1.0). Regex-based assessment of word count, actors, entities, acceptance criteria. |
+| `confidence.familiarity` | number | — | Pattern familiarity dimension score (0.0-1.0). Based on PREEMPT item matches, plan cache hits, and domain run history. |
+| `confidence.complexity` | number | — | Codebase complexity dimension score (0.0-1.0, inverted -- higher means simpler). Based on affected file count, cross-component changes, cyclomatic complexity. |
+| `confidence.history` | number | — | Historical success rate dimension score (0.0-1.0). Based on last 5 runs for the same `domain_area`. 0.3 when no prior runs exist. |
+| `confidence.gate_decision` | string | — | Gate decision after confidence evaluation. Valid values: `"PROCEED"` (HIGH confidence), `"ASK"` (MEDIUM -- user confirmation requested), `"SUGGEST_SHAPE"` (LOW -- `/forge-shape` recommended). In autonomous mode, always logged but not enforced. |
 
 ### tokens.by_stage entry schema
 
@@ -807,6 +843,7 @@ The recovery engine checks the `version` field before parsing state files:
 | 1.3.0 | 1.4.0 | `evidence` | `{ "last_run": null, "verdict": null, "attempts": 0, "block_history": [] }` |
 | 1.4.0 | 1.5.0 | `_seq`, `previous_state`, `convergence.diminishing_count`, `convergence.unfixable_info_count` | `1`, `""`, `0`, `0` |
 | 1.5.0 | 1.6.0 | `telemetry` | `{ "spans": [], "metrics": {}, "export_status": "pending" }` |
+| 1.6.0 | 1.7.0 | `confidence` | `null` (computed at PLAN, absent before) |
 
 **Manual reset:** Use `/forge-reset` to clear stale state if automatic migration is insufficient.
 

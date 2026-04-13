@@ -112,6 +112,60 @@ memory_discovery:
 5. **No project-specific data in shared learnings** — discovered patterns follow the same privacy guarantees as standard learnings (see `shared/learnings/README.md`)
 6. **Idempotent** — re-running the same pipeline on the same codebase does not create duplicate discoveries
 
+## Promotion to Active Knowledge Rules (v2.0+)
+
+Auto-discovered PREEMPT items can be promoted to active knowledge rules in `.forge/knowledge/`. This bridges the gap between passive discovery and active enforcement.
+
+### Promotion path
+
+```
+Auto-discovered PREEMPT (forge-log.md)
+    │
+    │  Confidence reaches HIGH (3+ successful applications)
+    │  AND pattern is generalizable (not project-specific)
+    │
+    ▼
+CANDIDATE_RULE (.forge/knowledge/inbox/)
+    │
+    │  Retrospective validates evidence, checks for duplicates
+    │
+    ▼
+VALIDATED (.forge/knowledge/rules.json, state: VALIDATED)
+    │
+    │  Applied in 2+ additional runs without false positives
+    │
+    ▼
+ACTIVE (.forge/knowledge/rules.json, state: ACTIVE)
+    │
+    │  If detection_type: regex AND confidence: HIGH
+    │
+    ▼
+L1 Check Engine (shared/checks/learned-rules-override.json)
+```
+
+### How it works
+
+1. When a memory-discovered PREEMPT item reaches HIGH confidence (after 3 successful applications per `auto_promote_after_runs`), the retrospective evaluates whether it can be expressed as a structured rule.
+2. If the pattern has a concrete detection signature (regex or semantic), the retrospective writes a CANDIDATE_RULE to `.forge/knowledge/inbox/` with `source: auto-discovered`.
+3. The standard knowledge base lifecycle takes over: validation, deduplication, promotion to VALIDATED, then ACTIVE after further application.
+4. Auto-discovered rules that reach ACTIVE with `detection_type: regex` and HIGH confidence are promoted to the L1 check engine via `learned-rules-override.json`.
+
+### Distinction from direct knowledge contribution
+
+- **Direct contribution:** Agents (reviewers, implementer, bug investigator) write knowledge items to the inbox during execution. These are one-shot observations from the current run.
+- **Memory discovery promotion:** Patterns accumulate evidence across multiple runs in `forge-log.md` before being promoted to knowledge rules. This path provides stronger validation because the pattern has been observed repeatedly.
+
+Auto-discovered rules that are promoted to the knowledge base retain `source: auto-discovered` and follow the standard 2x decay multiplier until they reach ACTIVE state. Once ACTIVE, they follow standard decay rates.
+
+### Configuration
+
+Promotion is controlled by two configuration sections:
+
+- `memory_discovery.auto_promote_after_runs` (default 3): consecutive successful applications before a PREEMPT item reaches HIGH confidence and becomes eligible for knowledge rule promotion.
+- `knowledge.enabled` (default true): master toggle. When disabled, no promotion occurs even if PREEMPT items reach HIGH confidence.
+
+See `shared/knowledge-base.md` for the full active knowledge base contract.
+
 ## Integration with Retrospective
 
 The `fg-700-retrospective` agent drives the discovery process:
@@ -122,3 +176,4 @@ The `fg-700-retrospective` agent drives the discovery process:
 4. **Generate candidates** — patterns observed in 2+ runs with sufficient evidence become candidates
 5. **Confirm or discard** — candidates meeting `min_evidence_files` threshold are written as PREEMPT items; others are logged but not persisted
 6. **Update existing** — increments hit counts and adjusts confidence for previously discovered patterns that were applied in this run
+7. **Evaluate for knowledge promotion** — HIGH-confidence items with generalizable patterns are written as CANDIDATE_RULE items to `.forge/knowledge/inbox/` (v2.0+)

@@ -122,6 +122,54 @@ Key properties:
 
 See `shared/learnings/memory-discovery.md` for the full discovery contract.
 
+## Active Knowledge Base (v2.0+)
+
+Starting in v2.0, Forge introduces an active knowledge base that extends the passive PREEMPT system with structured, lifecycle-managed knowledge items. The full contract is defined in `shared/knowledge-base.md`.
+
+### Relationship to PREEMPT learnings
+
+The existing PREEMPT system (per-project in `forge-log.md`, cross-project in `shared/learnings/`) remains unchanged. The active knowledge base is an additive layer:
+
+| Dimension | PREEMPT Learnings | Active Knowledge Items |
+|---|---|---|
+| Storage | `.claude/forge-log.md` + `shared/learnings/*.md` | `.forge/knowledge/` (rules.json, patterns.json, root-causes.json) |
+| When written | LEARN stage only (retrospective) | During execution (agents) + LEARN stage (retrospective validates) |
+| Granularity | Free-text markdown items | Structured JSON with schemas (`shared/schemas/knowledge-rule-schema.json`, `shared/schemas/knowledge-pattern-schema.json`) |
+| Lifecycle | Confidence decay (HIGH/MEDIUM/LOW/ARCHIVED) | Explicit state machine (CANDIDATE/VALIDATED/ACTIVE/ARCHIVED/REJECTED) |
+| Scope | Per-module cross-project wisdom | Per-project active rules and patterns |
+| Check engine | Not directly integrated | Regex rules auto-promoted to L1 via `shared/checks/learned-rules-override.json` |
+
+### The `.forge/knowledge/` directory
+
+```
+.forge/knowledge/
+├── inbox/                          # Pending items from current run
+│   └── candidate-{timestamp}-{agent}.json
+├── rules.json                      # Validated and active rules (schema: shared/schemas/knowledge-rule-schema.json)
+├── patterns.json                   # Discovered codebase patterns (schema: shared/schemas/knowledge-pattern-schema.json)
+├── root-causes.json                # Root cause patterns from bugfixes
+└── metrics.json                    # Application tracking and effectiveness
+```
+
+The knowledge directory survives `/forge-reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-reset --hard` removes it.
+
+### Key distinction: learnings vs knowledge items
+
+- **Learnings** are per-module cross-project wisdom. They describe framework patterns, library quirks, and toolchain gotchas. They ship with the plugin in `shared/learnings/` and grow in `forge-log.md` per project.
+- **Knowledge items** are per-project active rules. They describe coding standards, conventions, and root cause patterns specific to how the project is built. They live in `.forge/knowledge/` and are managed through a structured lifecycle with effectiveness tracking.
+
+A knowledge item with `application_count >= 3` and HIGH confidence may be flagged for promotion to a cross-project learning (requires `knowledge.cross_project_promotion: true` and manual plugin maintainer review).
+
+### Three knowledge item types
+
+1. **CANDIDATE_RULE** — emitted by reviewers when a finding reveals a generalizable pattern. Validated by retrospective, promoted through lifecycle.
+2. **PATTERN_DISCOVERY** — emitted by implementer when it observes consistent codebase patterns across 3+ files.
+3. **ROOT_CAUSE_PATTERN** — emitted by bug investigator when root cause analysis reveals a systemic issue.
+
+### Integration with PREEMPT
+
+At PREFLIGHT, ACTIVE knowledge items are converted to PREEMPT format with `source: learned-rule` and injected into the pipeline context alongside standard PREEMPT items. Deduplication uses >80% description similarity; the higher-confidence item wins.
+
 ## Privacy guarantees
 
 Before a learning is promoted from per-project to cross-project:

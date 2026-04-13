@@ -34,6 +34,14 @@
     "FE-VISUAL-REGRESSION": { "description": "Unexpected visual change detected (layout shift, element missing)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
     "FE-VISUAL-RESPONSIVE": { "description": "Layout breaks at specific viewport breakpoint", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
     "FE-VISUAL-CONTRAST": { "description": "Text contrast ratio below WCAG AA threshold", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-VISUAL-FIDELITY": { "description": "Visual output deviates from design specification", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] }
+    "FE-VISUAL-FIDELITY": { "description": "Visual output deviates from design specification", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
+    "TEST-FLAKY": { "description": "Quarantined flaky test failed (non-blocking)", "agents": ["fg-500-test-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-500-test-gate", "fg-410-code-reviewer"] },
+    "TEST-QUARANTINE": { "description": "Test quarantine status changed (quarantined or unquarantined)", "agents": ["fg-500-test-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-500-test-gate"] },
+    "SEC-MCP-UNAUTHORIZED": { "description": "Unapproved MCP server detected — blocked by governance allowlist", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-SUPPLY-NEW-DEP": { "description": "New dependency added — provenance unverified", "agents": ["fg-420-dependency-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-420-dependency-reviewer", "fg-411-security-reviewer"] },
+    "SEC-SUPPLY-LOWPOP": { "description": "Dependency has very low download count (potential low-trust package)", "agents": ["fg-420-dependency-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-420-dependency-reviewer"] },
+    "SEC-ENTROPY": { "description": "High-entropy string detected — potential obfuscated secret", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-CLOUD-CRED": { "description": "Cloud provider credential detected (AWS, GCP, Azure, GitHub, Slack, Stripe)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-CACHE-TAMPER": { "description": "Cached artifact integrity check failed (SHA256 mismatch)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 2, "affinity": ["fg-411-security-reviewer"] }
   }
 }

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Test History",
+  "description": "Persistent test result history for flaky detection, quarantine, and predictive test selection. Stored at .forge/test-history.json.",
+  "type": "object",
+  "required": ["schema_version", "last_updated", "run_count", "tests"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "History format version"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last write"
+    },
+    "run_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total pipeline runs that wrote to this file"
+    },
+    "tests": {
+      "type": "object",
+      "description": "Keyed by fully qualified test identifier",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["last_10_results", "flaky_score", "quarantine_status", "consecutive_passes", "avg_duration_ms", "associated_files", "last_run"],
+        "properties": {
+          "last_10_results": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["PASS", "FAIL", "SKIP", "ERROR", "FLAKY"]
+            },
+            "maxItems": 100,
+            "description": "Last N run outcomes (bounded by history_window config). Most recent first."
+          },
+          "flaky_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Computed flaky score (0.0 = stable, 1.0 = maximally flaky). Null-equivalent 0.0 when insufficient data."
+          },
+          "quarantine_status": {
+            "type": "string",
+            "enum": ["HEALTHY", "QUARANTINED", "OBSERVATION"],
+            "description": "Current quarantine lifecycle state"
+          },
+          "consecutive_passes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Consecutive passes since entering OBSERVATION. 0 when HEALTHY or QUARANTINED."
+          },
+          "avg_duration_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Rolling average test execution duration in milliseconds"
+          },
+          "associated_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Implementation files associated with this test (imports, naming, historical correlation)"
+          },
+          "last_run": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the most recent run that included this test (ISO 8601 date)"
+          }
+        }
+      }
+    },
+    "prediction_accuracy": {
+      "type": "object",
+      "description": "Prediction accuracy tracking for predictive test selection",
+      "properties": {
+        "targeted_catches": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Runs where the targeted pass caught all failures"
+        },
+        "targeted_misses": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Runs where remaining tests revealed failures not in targeted set"
+        },
+        "accuracy_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of runs where targeted pass caught all failures"
+        }
+      },
+      "required": ["targeted_catches", "targeted_misses", "accuracy_pct"]
+    }
+  }
+}

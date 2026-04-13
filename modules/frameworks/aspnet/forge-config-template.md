@@ -281,3 +281,27 @@ implementer:
       incremental: true
       max_file_size_kb: 512
       exclude_patterns: [node_modules, .git, vendor, build, dist, __pycache__]
+
+# Flaky test management (v2.0+)
+test_history:
+  enabled: true
+  flaky_threshold: 0.2          # Flip rate to trigger quarantine
+  quarantine_passes: 5          # Consecutive passes to unquarantine
+  history_window: 10            # Number of recent results to track
+  predictive_selection: true    # Use file associations for test ordering
+
+# Confidence Scoring (v2.0+)
+confidence:
+  planning_gate: true              # Enable pre-execution gating at PLAN
+  autonomous_threshold: 0.7        # HIGH confidence threshold (0.3-0.95)
+  pause_threshold: 0.4             # MEDIUM/LOW boundary (0.1-0.7)
+  initial_trust: 0.5               # Starting trust level for new projects (0.0-1.0)
+  trust_decay: 0.05                # Trust decay per run without interaction (0.0-0.2)
+
+# Context Condensation (v2.0+)
+condensation:
+  enabled: true
+  threshold_pct: 60             # Trigger at this % of context window
+  summary_target_tokens: 2000   # Target summary length
+  model_tier: fast              # Use fast tier for summarization
+  preserve_last_n_findings: 20  # Keep N most recent findings verbatim

@@ -1,0 +1,6 @@
+{
+  "rules": [],
+  "_comment": "Auto-populated from .forge/knowledge/rules.json by the retrospective agent. Only ACTIVE rules with detection_type: regex and confidence: HIGH are promoted here. Same schema as framework rules-override.json but each entry includes source: learned-rule.",
+  "_source": "learned-rule",
+  "_schema_note": "Each rule entry follows the same format as entries in modules/frameworks/*/rules-override.json shared_rules.additional_rules, with an added source field."
+}

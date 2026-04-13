@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.22.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.23.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -79,6 +79,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Automations | `shared/automations.md` |
 | Background execution | `shared/background-execution.md` |
 | A2A protocol | `shared/a2a-protocol.md` |
+| Confidence scoring | `shared/confidence-scoring.md` |
 
 ## Skill selection guide
 
@@ -155,7 +156,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 24 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 32 shared categories (21 wildcard prefixes: `ARCH-*`, `SEC-*`, `SEC-SECRET-*`, `SEC-PII-*`, `SEC-REDACT-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 11 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-SUPPLY-NEW-DEP`, `SEC-SUPPLY-LOWPOP`, `SEC-ENTROPY`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -183,7 +184,7 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Token reporting**: Extended `state.json.tokens` with per-stage/agent/model breakdowns and `cost.estimated_cost_usd`.
 - **Mutation testing** (`fg-510-mutation-analyzer`): LLM-generated targeted mutants for changed code. Dispatched by test gate after tests pass. Config: `mutation_testing.*`.
 - **Reviewer deliberation**: Conflicting reviewers debate findings before quality gate synthesis. Disabled by default. Config: `quality_gate.deliberation`.
-- **Confidence scoring**: Finding confidence (HIGH/MEDIUM/LOW) affects scoring weight and routing. Multipliers: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x. Fractional deductions rounded to nearest integer. LOW findings excluded from fix cycles.
+- **Confidence scoring** (`confidence-scoring.md`): Two-level system: (1) finding confidence (HIGH/MEDIUM/LOW per finding) affects scoring weight — multipliers: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x, fractional deductions rounded to nearest integer, LOW findings excluded from fix cycles; (2) pipeline confidence — 4-dimension weighted algorithm (clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25) computes overall confidence at PLAN. Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks confirmation, LOW (<0.4) suggests `/forge-shape`. Adaptive trust model in `.forge/trust.json` (per-developer, not committed). Zero token cost. Config: `confidence.*`.
 - **Visual verification** (`visual-verification.md`): Screenshot-based UI verification via Playwright MCP. Config: `visual_verification.*`.
 - **LSP integration** (`lsp-integration.md`): Compiler-level code analysis via Language Server Protocol. Config: `lsp.*`.
 - **Observability** (`observability.md`): OTel traces and metrics for pipeline execution. Exported via `forge-otel-export.sh`. Config: `observability.*`.
@@ -197,6 +198,10 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Pipeline timeline** (`fg-710-post-run`): Per-stage timing, cost breakdown, and convergence trends across runs. Accessible via `/forge-insights`.
 - **Codebase Q&A** (`forge-ask`): Natural language queries against wiki, graph, explore cache, and docs index. Supports deep mode for multi-source synthesis. Config: `forge_ask.*`.
 - **Insights dashboard** (`forge-insights`): Quality trends, cost analysis, convergence patterns, and memory effectiveness across pipeline runs.
+- **Active knowledge base** (v2.0, F09): Learned rules evolve across runs with confidence tracking. Rules auto-promote from MEDIUM to HIGH after repeated successful application. Feeds into confidence familiarity dimension. Config: `active_knowledge.*`.
+- **Enhanced security** (v2.0, F10): Extended security analysis with supply chain auditing, license compliance, and runtime policy enforcement. Config: `security.*`.
+- **Flaky test management** (v2.0, F14): Automatic detection and quarantine of flaky tests. Tracks test stability across runs with statistical confidence. Flaky tests excluded from gating decisions. Config: `flaky_tests.*`.
+- **Context condensation** (v2.0, F08): Automatic context compression for long-running pipelines. Reduces token consumption by summarizing completed stage outputs. Config: `condensation.*`.
 
 ### Deterministic Control Flow
 
@@ -303,7 +308,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
-- `explore-cache.json`, `plan-cache/`, and `code-graph.db` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `trust.json` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. When disabled, no `model` parameter is passed to Agent dispatches. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
@@ -327,6 +332,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Shipping: `min_score` ∈ [pass_threshold, 100] (default 90), `evidence_max_age_minutes` 5-60 (default 30).
 - Model routing: `model_routing.default_tier` must be `fast`, `standard`, or `premium`. Agent IDs in overrides validated against `agent-registry.md`.
 - Implementer inner loop: `implementer.inner_loop.enabled` (boolean, default `true`), `implementer.inner_loop.max_fix_cycles` 1-5 (default 3), `implementer.inner_loop.affected_test_cap` 5-50 (default 20).
+- Confidence: `confidence.planning_gate` (boolean, default `true`), `confidence.autonomous_threshold` 0.3-0.95 (default 0.7), `confidence.pause_threshold` 0.1-0.7 (default 0.4), `confidence.initial_trust` 0.0-1.0 (default 0.5). `autonomous_threshold` must be > `pause_threshold` (gap >= 0.1). Weights must sum to 1.0 (+/- 0.01).
 
 ### Pipeline modes
 
@@ -358,7 +364,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.22.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.23.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

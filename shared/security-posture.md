@@ -11,9 +11,9 @@ The following table maps each OWASP Agentic Security Initiative (ASI) risk to th
 | ASI01 | Excessive Agency / Goal Hijacking | Pipeline stages are deterministic (state-transitions.md); orchestrator never writes code | Input sanitization strips injection patterns from requirement text before pipeline entry |
 | ASI02 | Tool Misuse | Tools declared per-agent in frontmatter; orchestrator dispatches only listed tools | Tool call audit log with per-agent budget enforcement and anomaly detection |
 | ASI03 | Privilege Escalation / Identity | Agent tiers (1-4) with distinct UI capabilities; Tier 4 agents have no user interaction | Document explicit permission model per tier; enforce read-only for Tier 4 |
-| ASI04 | Supply Chain Compromise | Convention files loaded from plugin directory only; no remote fetch at runtime | SHA256 signature verification of convention files at PREFLIGHT |
+| ASI04 | Supply Chain Compromise | Convention files loaded from plugin directory only; no remote fetch at runtime. MCP governance allowlist (`shared/mcp-governance.md`) blocks unapproved MCP servers at PREFLIGHT. | SHA256 signature verification of convention files at PREFLIGHT. MCP server allowlist with modes: allowlist (default), audit, disabled. Supply chain verification for new dependencies (typosquatting, provenance, popularity). |
 | ASI05 | Unsafe Code Execution | Code runs in worktree isolation; user tree never modified | Document sandbox options (gVisor, Firecracker) for high-security environments |
-| ASI06 | Memory Poisoning / Data Leakage | State files in `.forge/` (gitignored); no secrets in state.json | Data classification contract (shared/data-classification.md) for pipeline artifacts |
+| ASI06 | Memory Poisoning / Data Leakage | State files in `.forge/` (gitignored); no secrets in state.json. Cache integrity verification (`shared/cache-integrity.md`) detects tampered explore-cache, plan-cache, knowledge, and code-graph files via SHA256 checksums. | Data classification contract (shared/data-classification.md) for pipeline artifacts. SHA256 checksums on all cached artifacts with tamper detection and automatic invalidation. |
 | ASI07 | Insecure Inter-Agent Communication | All inter-agent communication via orchestrator stage notes; no direct agent-to-agent calls | A2A protocol contract (shared/a2a-protocol.md) with message signing and schema validation |
 | ASI08 | Cascading Hallucination Failures | Recovery engine with circuit breakers (7 strategies, budget ceiling 5.5); 3 consecutive transients in 60s = non-recoverable | Fan-out caps per dispatch; anomaly detection on call frequency and cost |
 | ASI09 | Trust Boundary Exploitation | Explicit trust boundaries: plugin code vs. project code vs. runtime state | Confidence scores on inter-agent findings (v1.18 scoring.md); trust attestation chain |
@@ -177,3 +177,78 @@ security:
 ```
 
 All security settings are optional. When omitted, plugin defaults (documented above) apply. Settings are read from `forge-config.md` or `forge.local.md` with the standard resolution order (`forge-config.md` > `forge.local.md` > plugin defaults).
+
+## MCP Governance (ASI04)
+
+Allowlist-based authorization for MCP servers detected at PREFLIGHT. Prevents untrusted external tools from being used by pipeline agents. Full specification in `shared/mcp-governance.md`.
+
+### Summary
+
+- **Default allowlist:** context7, playwright, neo4j, slack, linear, figma, excalidraw (the 7 servers from `shared/mcp-detection.md`)
+- **Modes:** `allowlist` (block unapproved, default), `audit` (allow all, log everything), `disabled` (no checks)
+- **On unapproved server:** CRITICAL finding `SEC-MCP-UNAUTHORIZED`, server blocked for the run
+- **Audit trail:** All governance decisions logged to `.forge/security-audit.jsonl` (see `shared/security-audit-trail.md`)
+- **Configuration:** `security.mcp_governance` in `forge-config.md`
+
+## Cache Integrity Verification (ASI06)
+
+SHA256 checksum verification for cached pipeline artifacts. Detects tampered or corrupted cache entries before the pipeline consumes them. Full specification in `shared/cache-integrity.md`.
+
+### Summary
+
+- **Protected files:** `explore-cache.json`, `plan-cache/**`, `knowledge/**`, `code-graph.db`
+- **Checksums computed at write time**, verified at read time
+- **Tampered entries:** WARNING finding `SEC-CACHE-TAMPER`, cache invalidated, automatic re-exploration or re-planning
+- **Integrity store:** `.forge/integrity.json`
+- **Configuration:** `security.cache_integrity` in `forge-config.md`
+
+## Enhanced Secret Detection
+
+Extended L1 secret detection with entropy analysis and cloud credential patterns. Supplements existing SEC-SECRET and SEC-PII regex patterns from `shared/data-classification.md`.
+
+### High-Entropy String Detection
+
+Shannon entropy calculation via `shared/checks/l1-security/entropy-check.py`. Post-filter on L1 regex matches:
+- **Threshold:** entropy > 4.5 AND length >= 16 AND not in test/fixture context
+- **Exclusions:** UUIDs, SHA hashes, hex color codes, known test patterns
+- **Finding category:** `SEC-ENTROPY` (WARNING)
+
+### Cloud Credential Patterns
+
+18 provider-specific patterns in `shared/checks/l1-security/cloud-credentials.json`:
+- AWS (access keys, secret keys)
+- GCP (service account keys, API keys)
+- Azure (connection strings, SAS tokens)
+- GitHub (PATs, fine-grained tokens)
+- Slack (bot tokens, webhooks)
+- Stripe (live keys, test keys)
+- JWT tokens, Bearer tokens
+- Private key headers (RSA, EC, Ed25519, OpenSSH, encrypted)
+
+### AST-Context-Aware Severity
+
+When F01's tree-sitter code graph is available, L1 matches are classified by code context. Test code reduces severity from CRITICAL to WARNING; test fixtures reduce to INFO. Production and configuration code retain original severity. See the F10 spec for the full context classification table.
+
+## Security Audit Trail
+
+All security-relevant events are logged to `.forge/security-audit.jsonl` in JSON Lines format. Full format specification in `shared/security-audit-trail.md`.
+
+### Event Types
+
+| Event | Trigger |
+|---|---|
+| `MCP_CONNECTION` | MCP governance evaluates a detected server at PREFLIGHT |
+| `MCP_TOOL_INVOCATION` | MCP tool call (when audit enabled or MEDIUM/HIGH risk server) |
+| `SECRET_DETECTED` | L1 check engine or entropy detection finds a credential |
+| `CACHE_INTEGRITY_FAIL` | SHA256 verification of a cached artifact fails |
+| `DEPENDENCY_NEW` | Supply chain verification detects a new dependency |
+
+### Configuration
+
+```yaml
+security:
+  audit_trail:
+    enabled: true
+    max_file_size_mb: 10
+    retention_runs: 50
+```

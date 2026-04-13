@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Knowledge Patterns",
+  "description": "Schema for the active knowledge base patterns file (.forge/knowledge/patterns.json). Patterns are codebase regularities discovered by the implementer during execution.",
+  "type": "object",
+  "required": ["schema_version", "patterns"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "patterns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pattern"
+      }
+    }
+  },
+  "$defs": {
+    "pattern": {
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "domain",
+        "description",
+        "pattern",
+        "evidence_file_count",
+        "confidence",
+        "application_count",
+        "false_positive_count",
+        "created_at",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^pattern-[a-z0-9-]+-[0-9]{3}$",
+          "description": "Unique identifier: pattern-{domain_slug}-{NNN}"
+        },
+        "state": {
+          "type": "string",
+          "enum": ["CANDIDATE", "VALIDATED", "ACTIVE", "ARCHIVED", "REJECTED"],
+          "description": "Lifecycle state of the pattern"
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Domain area (e.g., persistence, naming, architecture, testing, configuration)"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the discovered pattern"
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Regex or glob pattern describing the structural regularity"
+        },
+        "evidence_file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files that conform to this pattern"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"],
+          "description": "Pattern reliability. Starts at MEDIUM for auto-discovered, promoted after successful applications."
+        },
+        "application_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Times this pattern was applied as context for an agent. Minimum 3 for meaningful scoring."
+        },
+        "false_positive_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Times this pattern was loaded but did not match the current context"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp"
+        },
+        "last_applied": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null,
+          "description": "ISO 8601 timestamp of last successful application"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["pattern-discovery", "auto-discovered", "manual"],
+          "description": "pattern-discovery = from implementer observation; auto-discovered = from memory discovery; manual = user-authored"
+        }
+      }
+    }
+  }
+}

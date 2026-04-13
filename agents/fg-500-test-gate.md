@@ -64,7 +64,7 @@ If the test suite has >500 tests:
 2. If targeted tests pass: run full suite for regression
 3. If targeted tests fail: enter fix cycle without running full suite (faster feedback)
 
-### Flaky Test Detection
+### Flaky Test Detection (per-run)
 On first test failure:
 1. Re-run ONLY the failing tests (use `test_gate.test_single_command` or `commands.test_single` with failing test names)
 2. If they PASS on re-run: mark as FLAKY
@@ -72,6 +72,60 @@ On first test failure:
    - Proceed to analysis agents (treat as PASS for pipeline purposes)
    - Record flaky test in stage notes for retrospective
 3. If they FAIL again: genuine failure, enter normal fix cycle
+
+### Flaky Test Management (cross-run, v2.0+)
+
+Full specification: `shared/flaky-test-management.md`. Schema: `shared/schemas/test-history-schema.json`.
+
+When `test_history.enabled` (default `true`), the test gate maintains `.forge/test-history.json` across pipeline runs. Three subsystems consume this history:
+
+#### Loading Test History
+
+Before running tests, load `.forge/test-history.json`:
+- If the file does not exist: create empty history, proceed with existing behavior (no flaky detection, no quarantine, full suite).
+- If the file is corrupt (invalid JSON): rebuild from empty, log WARNING.
+
+#### Quarantine Check
+
+After collecting test results, for each failing test:
+1. Look up the test in `test-history.json` by fully qualified test identifier.
+2. If the test has `quarantine_status: QUARANTINED` or `OBSERVATION`:
+   - Emit `TEST-FLAKY` (INFO): "Quarantined flaky test failed: {test_id}".
+   - Do NOT count as pipeline failure.
+   - If in `OBSERVATION` state: reset `consecutive_passes` to 0, set status back to `QUARANTINED`.
+3. If the test is `HEALTHY`: proceed with normal failure handling (re-run for flaky detection).
+
+#### Updating Test History
+
+After all tests complete (pass or fail), update `test-history.json`:
+1. Record each test result: append outcome to `last_10_results` (trim to `history_window`).
+2. Recompute `flaky_score` using the configured algorithm (`flip_rate` default, threshold from `flaky_threshold`).
+3. Apply quarantine decisions:
+   - If `flaky_score > flaky_threshold` and test is `HEALTHY`: quarantine it, emit `TEST-QUARANTINE` INFO.
+   - If quarantined test has `consecutive_passes >= quarantine_passes`: unquarantine it, emit `TEST-QUARANTINE` INFO.
+4. Update `avg_duration_ms`, `associated_files`, `last_run`.
+5. Write `test-history.json` atomically.
+
+#### Predictive Test Selection
+
+When `test_history.predictive_selection` is `true` and history has 10+ runs:
+1. Compute targeted tests from changed files using file-test associations.
+2. Prioritize tests: (1) previously failing, (2) associated with changed files, (3) highest flaky score, (4) shortest duration.
+3. Run targeted tests first.
+4. If targeted pass: run remaining tests for regression coverage.
+5. If targeted fail: process failures without running remaining tests (faster feedback).
+6. Track prediction accuracy in `test-history.json`.
+
+When insufficient history or predictive selection disabled: run full test suite, apply prioritization if any history available.
+
+#### Finding Categories
+
+| Code | Severity | Meaning |
+|------|----------|---------|
+| `TEST-FLAKY` | INFO | Quarantined flaky test failed. Non-blocking. |
+| `TEST-QUARANTINE` | INFO | Test quarantine status changed. Informational. |
+
+These do not block the pipeline. Genuine test failures remain standard CRITICAL findings.
 
 ### On Failure
 
@@ -440,6 +494,14 @@ After producing the Markdown report (section 10), you MUST append a structured J
       "detected": <boolean>,
       "tests": ["<test name>", ...]
     },
+    "flaky_management": {
+      "enabled": <boolean>,
+      "quarantined_failures": <number>,
+      "newly_quarantined": <number>,
+      "unquarantined": <number>,
+      "predictive_selection_used": <boolean>,
+      "targeted_test_pct": <number|null>
+    },
     "coverage": {
       "available": <boolean>,
       "line_coverage_pct": <number|null>,
@@ -471,6 +533,12 @@ After producing the Markdown report (section 10), you MUST append a structured J
 - `phase_b.analysis.analysis_pass`: True if no CRITICAL analysis findings
 - `phase_b.analysis.agents_dispatched`: Full agent IDs dispatched for test analysis
 - `phase_b.flaky_tests.detected`: True if any test was flaky (passed on re-run)
+- `phase_b.flaky_management.enabled`: True if `test_history.enabled` and history file loaded
+- `phase_b.flaky_management.quarantined_failures`: Count of quarantined tests that failed (non-blocking)
+- `phase_b.flaky_management.newly_quarantined`: Tests quarantined during this run
+- `phase_b.flaky_management.unquarantined`: Tests unquarantined during this run
+- `phase_b.flaky_management.predictive_selection_used`: True if predictive selection was active
+- `phase_b.flaky_management.targeted_test_pct`: Percentage of suite in targeted pass (null if not used)
 - `phase_b.coverage`: Present when coverage tools are configured; null fields when unavailable
 - `mutation_testing`: Present when `mutation_testing.enabled`; all zeros when disabled
 - `verdict.proceed_to`: Next pipeline state for orchestrator consumption (`REVIEWING` on pass, `IMPLEMENTING` on test failure, `ESCALATED` on max cycles)

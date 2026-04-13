@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Knowledge Rules",
+  "description": "Schema for the active knowledge base rules file (.forge/knowledge/rules.json). Rules are learned from review findings, convention violations, and security patterns.",
+  "type": "object",
+  "required": ["schema_version", "rules"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "category",
+        "description",
+        "detection_pattern",
+        "detection_type",
+        "recommended_fix",
+        "source_agent",
+        "severity_default",
+        "confidence",
+        "created_at",
+        "application_count",
+        "false_positive_count",
+        "effectiveness_score",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rule-[a-z0-9-]+-[0-9]{3}$",
+          "description": "Unique identifier: rule-{category_slug}-{NNN}"
+        },
+        "state": {
+          "type": "string",
+          "enum": ["CANDIDATE", "VALIDATED", "ACTIVE", "ARCHIVED", "REJECTED"],
+          "description": "Lifecycle state of the rule"
+        },
+        "category": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9-]+$",
+          "description": "Finding category this rule relates to (from category-registry.json)"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the rule"
+        },
+        "detection_pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Regex or natural-language pattern to detect the issue"
+        },
+        "detection_type": {
+          "type": "string",
+          "enum": ["regex", "semantic"],
+          "description": "regex = L1 check engine eligible; semantic = requires agent review"
+        },
+        "recommended_fix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concrete action to resolve the detected issue"
+        },
+        "applicable_contexts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Domain areas where the rule applies (from domain-detection.md)"
+        },
+        "applicable_languages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Languages this rule applies to. Empty array = all languages."
+        },
+        "source_agent": {
+          "type": "string",
+          "pattern": "^fg-[0-9]{3}-",
+          "description": "Agent that originally created the rule"
+        },
+        "source_finding": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Finding ID that triggered this rule (e.g., SEC-AUTH-001-abc123)"
+        },
+        "severity_default": {
+          "type": "string",
+          "enum": ["CRITICAL", "WARNING", "INFO"],
+          "description": "Default severity when the rule triggers"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"],
+          "description": "Rule reliability — tracks via lifecycle promotion"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp"
+        },
+        "last_applied": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null,
+          "description": "ISO 8601 timestamp of last successful application"
+        },
+        "application_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Times this rule has been applied. Minimum 3 for meaningful effectiveness scoring."
+        },
+        "false_positive_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Times this rule triggered but was irrelevant"
+        },
+        "effectiveness_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "application_count / (application_count + false_positive_count). Only meaningful when application_count >= 3."
+        },
+        "promoted_from": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Filename of the inbox item that created this rule"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["learned-rule", "manual", "auto-discovered"],
+          "description": "learned-rule = from review finding+fix pair; manual = user-authored; auto-discovered = from memory discovery"
+        }
+      }
+    }
+  }
+}

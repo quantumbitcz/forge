@@ -389,6 +389,57 @@ New `convergence` object in `state.json` (see `state-schema.md` for the full sch
 
 **`oscillation_tolerance` = 0 note:** Setting `oscillation_tolerance` to 0 means ANY score decrease triggers REGRESSING escalation. This is intentionally allowed but aggressive — even a 1-point drop from findings being reclassified would escalate. PREFLIGHT logs a WARNING when `oscillation_tolerance` is 0 to alert users that this configuration is very strict.
 
+## Context Condensation Integration
+
+The context condensation system (`shared/context-condensation.md`) integrates with the convergence engine to reduce token consumption during long iteration sequences.
+
+### When Condensation Triggers
+
+Condensation is checked **between** convergence iterations, not during them. The sequence is:
+
+```
+1. Agent dispatch completes (IMPLEMENT, VERIFY, or REVIEW)
+2. Convergence engine evaluates result (decide_next)
+3. Decision: iterate again
+4. --> CONDENSATION CHECK (before next dispatch) <--
+5. If threshold exceeded: condense context
+6. Dispatch next agent (with condensed or full context)
+```
+
+Condensation never interrupts an agent dispatch or convergence evaluation. It operates in the gap between "decision to iterate" and "next agent dispatch."
+
+### What Condensation Does NOT Affect
+
+- **Convergence counters are NOT reset**: `total_iterations`, `phase_iterations`, `plateau_count`, and all other convergence state remain unchanged after condensation. Condensation reduces context size, not iteration budget.
+- **Convergence evaluation is NOT affected**: The `decide_next()` function receives the same `verify_result` and `review_result` regardless of whether condensation occurred. Score history, delta calculations, and plateau detection use state counters, not context content.
+- **Phase transitions are NOT triggered**: Condensation cannot cause a phase transition. Only `decide_next()` manages transitions.
+
+### Interaction with Convergence Phases
+
+- **Within a phase**: Condensation summarizes iteration history from the current phase. Older iterations get condensed; the last N iterations (configurable via `retain_last_n_iterations`, default: 2) are preserved verbatim.
+- **At phase boundaries**: Phase transitions reset context naturally. When moving from Correctness to Perfection, the Phase 1 history is already in stage notes. No condensation is needed at the boundary.
+- **Safety gate restart**: If the safety gate fails and routes back to Phase 1, the Phase 2 history is condensed normally before the restart. The Phase 1 restart gets fresh context.
+- **Sprint isolation**: Each sprint task has independent convergence and condensation state. No cross-task interference.
+
+### State Tracking
+
+Condensation state is tracked under `state.json.convergence.condensation`:
+
+```json
+{
+  "convergence": {
+    "condensation": {
+      "count": 0,
+      "last_condensed_at_iteration": null,
+      "total_tokens_saved": 0,
+      "retained_tags": []
+    }
+  }
+}
+```
+
+See `shared/context-condensation.md` for the full condensation algorithm, tag-based retention rules, configuration, and error handling.
+
 ## Retrospective Auto-Tuning
 
 `fg-700-retrospective` can adjust convergence parameters based on historical patterns:
