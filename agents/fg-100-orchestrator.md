@@ -925,7 +925,7 @@ Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 
 
 Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
 
-After batches: inline checks. Then [dispatch fg-417-version-compat-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
+After batches: inline checks. Then [dispatch fg-417-dependency-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
 
 ### SS6.3 Score and Verdict
 

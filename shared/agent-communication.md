@@ -73,10 +73,10 @@ When dispatching batch 2+ agents, the quality gate filters dedup hints by **cate
 - `fg-411-security-reviewer` receives: `SEC-*`, `QUAL-ERR-*` (error handling has security implications)
 - `fg-412-architecture-reviewer` receives: `ARCH-*`, `STRUCT-*`, `QUAL-COMPLEX`
 - `fg-413-frontend-reviewer` receives: `FE-PERF-*`, `A11Y-*`, `CONV-*` (frontend conventions), `DESIGN-*`
-- `fg-416-backend-performance-reviewer` receives: `PERF-*`
+- `fg-416-performance-reviewer` receives: `PERF-*`
+- `fg-417-dependency-reviewer` receives: `DEP-*`
 - `fg-418-docs-consistency-reviewer` receives: `DOC-*`
 - `fg-419-infra-deploy-reviewer` receives: `INFRA-*`
-- `fg-420-dependency-reviewer` receives: `DEP-*`
 - `fg-410-code-reviewer` receives: `TEST-*`, `CONV-*`, `QUAL-*`
 
 **Affinity resolution:** For each finding in the dedup hints:

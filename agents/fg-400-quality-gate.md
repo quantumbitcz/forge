@@ -397,11 +397,10 @@ Authoritative list — unlisted agents cannot be dispatched. `generate-seed.sh` 
 - `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets, dependency CVEs
 - `fg-412-architecture-reviewer` — pattern compliance, layer boundaries, dependency rules, module structure
 - `fg-413-frontend-reviewer` — conventions, a11y (WCAG 2.2 AA), performance, framework patterns, design system, visual coherence. Modes: `full`/`conventions-only`/`a11y-only`/`performance-only`.
-- `fg-416-backend-performance-reviewer` — N+1, missing indexes, connection pools, caching
-- `fg-417-version-compat-reviewer` — dependency conflicts, language feature compatibility
+- `fg-416-performance-reviewer` — N+1, missing indexes, connection pools, caching strategy, caching library choice, concurrency
+- `fg-417-dependency-reviewer` — dependency health (CVEs, outdated, unmaintained, license), version conflicts, language feature compatibility
 - `fg-418-docs-consistency-reviewer` — consistency with documented decisions/constraints
 - `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
-- `fg-420-dependency-reviewer` — vulnerable/outdated/unmaintained deps, version conflicts, license compliance
 
 ---
 

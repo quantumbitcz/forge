@@ -40,11 +40,11 @@ These perform structured, template-driven, or command-execution tasks. Haiku han
 | `fg-410-code-reviewer` | Code quality analysis, convention matching |
 | `fg-411-security-reviewer` | Security pattern detection, vulnerability assessment |
 | `fg-413-frontend-reviewer` | UI/UX convention checking |
-| `fg-416-backend-performance-reviewer` | Performance pattern detection |
-| `fg-417-version-compat-reviewer` | Version compatibility analysis |
+| `fg-416-performance-reviewer` | Performance pattern detection |
+| `fg-417-dependency-reviewer` | Version compatibility analysis |
 | `fg-418-docs-consistency-reviewer` | Documentation accuracy checking |
 | `fg-419-infra-deploy-reviewer` | Infrastructure review |
-| `fg-420-dependency-reviewer` | Dependency health analysis |
+| `fg-417-dependency-reviewer` | Dependency health analysis |
 | `fg-400-quality-gate` | Review coordination, finding synthesis |
 | `fg-500-test-gate` | Test coordination, Phase A/B routing |
 | `fg-510-mutation-analyzer` | Mutation testing with LLM-generated mutants |

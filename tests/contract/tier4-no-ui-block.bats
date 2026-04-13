@@ -16,11 +16,11 @@ TIER4_AGENTS=(
   fg-411-security-reviewer
   fg-412-architecture-reviewer
   fg-413-frontend-reviewer
-  fg-416-backend-performance-reviewer
-  fg-417-version-compat-reviewer
+  fg-416-performance-reviewer
+  fg-417-dependency-reviewer
   fg-418-docs-consistency-reviewer
   fg-419-infra-deploy-reviewer
-  fg-420-dependency-reviewer
+  fg-417-dependency-reviewer
 )
 
 # get_frontmatter() provided by test-helpers.bash

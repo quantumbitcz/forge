@@ -100,7 +100,7 @@ quality_gate:
   #     focus: "<framework-specific arch focus>"
   #   - agent: fg-411-security-reviewer
   #     focus: "<framework-specific security focus>"
-  #   - agent: fg-416-backend-performance-reviewer
+  #   - agent: fg-416-performance-reviewer
   #     focus: "N+1 queries, blocking I/O, algorithm complexity, DB efficiency"
   # batch_2:
   #   - agent: fg-410-code-reviewer

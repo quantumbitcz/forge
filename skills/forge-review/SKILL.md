@@ -81,10 +81,10 @@ Conditional:
 |---|---|
 | `forge:fg-418-docs-consistency-reviewer` | Any `.md` files in scope |
 | `forge:fg-413-frontend-reviewer` (mode: `full`) | Any `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, `.styled.*` files |
-| `forge:fg-416-backend-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
-| `forge:fg-417-version-compat-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
+| `forge:fg-416-performance-reviewer` | Any `.kt`, `.java`, `.py`, `.go`, `.rs`, `.cs` files |
+| `forge:fg-417-dependency-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj` |
 | `forge:fg-419-infra-deploy-reviewer` | Any `Dockerfile`, `docker-compose.*`, `*.yaml`/`*.yml` with k8s markers, Helm charts |
-| `forge:fg-420-dependency-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj`, `pyproject.toml`, lock files |
+| `forge:fg-417-dependency-reviewer` | Any `package.json`, `build.gradle.kts`, `go.mod`, `Cargo.toml`, `*.csproj`, `pyproject.toml`, lock files |
 
 Report: "Dispatching {count} review agents: {agent_names}"
 

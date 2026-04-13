@@ -19,7 +19,7 @@ Defines how forge agents use the LSP tool (Language Server Protocol) available i
 | Agent | Use Case |
 |-------|----------|
 | `fg-412-architecture-reviewer` | Detect layering violations, circular dependencies, unused public APIs |
-| `fg-416-backend-performance-reviewer` | Find hot paths via callers-of-callers, identify N+1 query origins |
+| `fg-416-performance-reviewer` | Find hot paths via callers-of-callers, identify N+1 query origins |
 | `fg-300-implementer` | Navigate to interfaces before implementing, verify no existing implementation |
 | `fg-410-code-reviewer` | Confirm dead code, trace impact of changed signatures, validate encapsulation |
 | EXPLORE stage | Build accurate dependency maps, discover entry points, map module boundaries |

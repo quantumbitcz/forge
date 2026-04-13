@@ -73,12 +73,12 @@ quality_gate:
       focus: "source set boundary violations, JVM-only imports in commonMain, actual/expect misuse"
     - agent: fg-411-security-reviewer
       focus: "data handling, key storage, certificate pinning"
-    - agent: fg-416-backend-performance-reviewer
+    - agent: fg-416-performance-reviewer
       focus: "coroutine scope management, blocking calls on wrong dispatcher, SQLDelight query efficiency"
   batch_2:
     - agent: fg-410-code-reviewer
       focus: "general correctness, maintainability, error handling, DRY/KISS"
-    - agent: fg-420-dependency-reviewer
+    - agent: fg-417-dependency-reviewer
       condition: manifest_changed
       focus: "vulnerable, outdated, unmaintained dependencies"
     - agent: fg-418-docs-consistency-reviewer

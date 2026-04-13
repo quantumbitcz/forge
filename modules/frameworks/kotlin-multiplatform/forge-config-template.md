@@ -21,7 +21,7 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | quality-gate | true | primary | GO/NO-GO verdict — orchestrator uses this for ship decision |
 | fg-410-code-reviewer | true | secondary | Source set boundary violations, commonMain purity — findings merged into quality-gate |
 | fg-411-security-reviewer | true | secondary | Key storage, certificate pinning, data exposure — findings merged into quality-gate |
-| fg-416-backend-performance-reviewer | true | secondary | Dispatcher misuse, blocking calls, SQLDelight efficiency — findings merged into quality-gate |
+| fg-416-performance-reviewer | true | secondary | Dispatcher misuse, blocking calls, SQLDelight efficiency — findings merged into quality-gate |
 | fg-419-infra-deploy-reviewer | conditional | secondary | Build, CI/CD, container & orchestration review — dispatched when `build_system`, `ci`, `container`, or `orchestrator` is configured |
 
 <!-- Applicable build-system bindings: gradle -->

@@ -591,8 +591,8 @@ mode_review() {
   done
   # Layer 3 (agent intelligence) is handled by dedicated agent dispatch, not shell execution.
   # - fg-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
-  # - fg-417-version-compat-reviewer: dispatched during REVIEW via quality gate batches
-  # See agents/fg-140-deprecation-refresh.md and agents/fg-417-version-compat-reviewer.md
+  # - fg-417-dependency-reviewer: dispatched during REVIEW via quality gate batches
+  # See agents/fg-140-deprecation-refresh.md and agents/fg-417-dependency-reviewer.md
 }
 
 # --- Mode: --flush-queue (process deferred hook queue) ---
