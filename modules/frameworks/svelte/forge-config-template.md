@@ -146,3 +146,33 @@ plan_cache:
   similarity_threshold: 0.6
   max_entries: 20
   max_age_days: 30
+
+# Mutation testing (v1.18+)
+mutation_testing:
+  enabled: false
+  scope: changed_files_only
+  max_mutants_per_file: 5
+  severity_on_surviving: WARNING
+  categories:
+    - boundary_conditions
+    - null_handling
+    - error_paths
+    - logic_inversions
+
+# Deliberation (v1.18+)
+quality_gate:
+  deliberation: false
+  deliberation_threshold: WARNING
+  deliberation_timeout: 60
+
+# Visual verification (v1.18+)
+visual_verification:
+  enabled: false
+  dev_server_url: ""
+  breakpoints: [375, 768, 1440]
+  pages: []
+
+# LSP integration (v1.18+)
+lsp:
+  enabled: true
+  languages: []
