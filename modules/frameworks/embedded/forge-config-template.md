@@ -213,3 +213,25 @@ background:
   poll_interval_seconds: 5
   slack_notifications: true
   progress_update_interval_seconds: 30
+
+# Wiki generation (v1.20+)
+wiki:
+  enabled: true
+  auto_update: true
+  include_api_surface: true
+  include_data_model: true
+  max_module_depth: 3
+
+# Memory discovery (v1.20+)
+memory_discovery:
+  enabled: true
+  max_discoveries_per_run: 5
+  min_evidence_files: 3
+  auto_promote_after_runs: 3
+
+# Codebase Q&A (v1.20+)
+forge_ask:
+  enabled: true
+  deep_mode: false
+  max_source_files: 20
+  cache_answers: true
