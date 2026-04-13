@@ -75,19 +75,23 @@ LOG_FILE="$FORGE_DIR/automation-log.jsonl"
 
 _log_entry() {
   local name="$1" trigger="$2" action="$3" result="$4"
+  local duration_ms="${5:-}" triggered_by="${6:-$trigger}" error="${7:-}"
   local ts
   ts=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
   "$_py" -c "
 import json, sys
 entry = {
-    'timestamp': sys.argv[1],
+    'ts': sys.argv[1],
     'automation': sys.argv[2],
     'trigger': sys.argv[3],
     'action': sys.argv[4],
-    'result': sys.argv[5]
+    'result': sys.argv[5],
+    'duration_ms': int(sys.argv[6]) if sys.argv[6] else None,
+    'triggered_by': sys.argv[7],
+    'error': sys.argv[8] if sys.argv[8] else None
 }
 print(json.dumps(entry))
-" "$ts" "$name" "$trigger" "$action" "$result" >> "$LOG_FILE"
+" "$ts" "$name" "$trigger" "$action" "$result" "$duration_ms" "$triggered_by" "$error" >> "$LOG_FILE"
 }
 
 # ── Parse Automations from Config ───────────────────────────────────────────

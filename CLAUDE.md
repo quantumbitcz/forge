@@ -186,7 +186,7 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Data classification** (`data-classification.md`): Secret detection and redaction in pipeline outputs. Prevents accidental credential leaks. Config: `data_classification.*`.
 - **Security posture** (`security-posture.md`): OWASP Agentic Security (ASI01-ASI10) compliance checks. Validates tool use, prompt injection resistance, and privilege boundaries.
 - **Event-driven automations** (`automations.md`): Cron-scheduled, CI-triggered, and MCP-initiated pipeline runs. Managed via `automation-trigger.sh`. Config: `automations.*`.
-- **Background execution** (`background-execution.md`): `--background` flag for headless pipeline runs. Progress via `.forge/progress.json` artifacts. Escalations written to `.forge/alerts.json`.
+- **Background execution** (`background-execution.md`): `--background` flag for headless pipeline runs. Progress via `.forge/progress/` artifacts. Escalations written to `.forge/alerts.json`.
 - **A2A protocol** (`a2a-protocol.md`): Agent-to-Agent cross-repo coordination via local filesystem (not HTTP). Enables multi-repo pipeline orchestration with shared state.
 
 ### Deterministic Control Flow
@@ -295,7 +295,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - `model_routing.enabled` defaults to `false`. When disabled, no `model` parameter is passed to Agent dispatches.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
-- A2A protocol uses local filesystem coordination (`.forge/a2a/`), not HTTP. Requires shared filesystem access between repos.
+- A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
 
 ### Check engine
 
