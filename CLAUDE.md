@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.19.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.20.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 39 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 40 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -65,6 +65,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Agent registry | `shared/agent-registry.md` |
 | MCP detection | `shared/mcp-detection.md` |
 | Learnings | `shared/learnings/README.md` |
+| Memory discovery | `shared/learnings/memory-discovery.md` |
 | Checkpoints | `shared/state-schema.md` §checkpoint-{storyId}.json |
 | Model routing | `shared/model-routing.md` |
 | Explore cache | `shared/explore-cache.md` |
@@ -112,13 +113,13 @@ Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resu
 Multiple features: /forge-sprint (reads from Linear or manual list)
 ```
 
-## Agents (39 total, `agents/*.md`)
+## Agents (40 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
 - Sprint: `fg-090-sprint-orchestrator`
 - Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
-- Preflight: `fg-130-docs-discoverer`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
+- Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
@@ -190,6 +191,11 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Event-driven automations** (`automations.md`): Cron-scheduled, CI-triggered, and MCP-initiated pipeline runs. Managed via `automation-trigger.sh`. Config: `automations.*`.
 - **Background execution** (`background-execution.md`): `--background` flag for headless pipeline runs. Progress via `.forge/progress/` artifacts. Escalations written to `.forge/alerts.json`.
 - **A2A protocol** (`a2a-protocol.md`): Agent-to-Agent cross-repo coordination via local filesystem (not HTTP). Enables multi-repo pipeline orchestration with shared state.
+- **Wiki generator** (`fg-135-wiki-generator`): Auto-generates `.forge/wiki/` from codebase analysis at PREFLIGHT. Covers architecture, API surface, data model, module map. Survives `/forge-reset`. Config: `wiki.*`.
+- **Memory discovery** (`shared/learnings/memory-discovery.md`): Retrospective auto-discovers codebase patterns across runs. Items start at MEDIUM confidence with `source: auto-discovered`, promote to HIGH after 3 successful applications, decay 2x faster than normal. Config: `memory_discovery.*`.
+- **Pipeline timeline** (`forge-insights`): Per-stage timing, cost breakdown, and convergence trends across runs. Accessible via `/forge-insights`.
+- **Codebase Q&A** (`forge-ask`): Natural language queries against wiki, graph, explore cache, and docs index. Supports deep mode for multi-source synthesis. Config: `forge_ask.*`.
+- **Insights dashboard** (`forge-insights`): Quality trends, cost analysis, convergence patterns, and memory effectiveness across pipeline runs.
 
 ### Deterministic Control Flow
 
@@ -298,6 +304,8 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts. Poll or watch this file for CRITICAL findings.
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
+- `.forge/wiki/` survives `/forge-reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
+- Auto-discovered PREEMPT items (`source: auto-discovered`) decay 2x faster than normal items. They start at MEDIUM confidence, not HIGH. After 3 successful applications they promote to HIGH.
 
 ### Check engine
 
@@ -344,7 +352,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.19.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.20.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
