@@ -177,3 +177,33 @@ visual_verification:
 lsp:
   enabled: true
   languages: []
+
+# Observability (v1.19+)
+observability:
+  enabled: true
+  export: local
+  otel_endpoint: ""
+  trace_all_agents: true
+  metrics_in_recap: true
+
+# Data classification (v1.19+)
+data_classification:
+  enabled: true
+  redact_artifacts: true
+  custom_patterns: []
+  pii_detection: true
+  block_restricted: true
+
+# Security (v1.19+)
+security:
+  input_sanitization: true
+  tool_call_budget:
+    default: 50
+    overrides: {}
+  anomaly_detection:
+    max_calls_per_minute: 30
+    max_session_cost_usd: 10
+  convention_signatures: true
+
+# Automations (v1.19+)
+automations: []
