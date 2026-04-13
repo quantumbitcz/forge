@@ -3,6 +3,9 @@
   "categories": {
     "ARCH": { "description": "Architectural violation (SRP, DIP, layer boundary)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-412-architecture-reviewer"] },
     "SEC": { "description": "Security concern (auth, injection, exposure)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-SECRET": { "description": "Secret or credential detected in source code or pipeline artifact", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-PII": { "description": "Potential PII detected (email, phone — verify manually)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-411-security-reviewer"] },
+    "SEC-REDACT": { "description": "Value auto-redacted from pipeline artifact", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-411-security-reviewer"] },
     "PERF": { "description": "Backend performance issue (N+1, O(n^2), blocking I/O)", "agents": ["fg-416-backend-performance-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-416-backend-performance-reviewer"] },
     "FE-PERF": { "description": "Frontend performance issue (re-renders, bundle size, DOM)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-413-frontend-reviewer"] },
     "TEST": { "description": "Test quality issue (coverage, mocks, assertions, isolation)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },

@@ -167,6 +167,9 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 |------|---------|
 | `ARCH-*` | Architectural violation (SRP, DIP, layer boundary) |
 | `SEC-*` | Security concern (auth, injection, exposure) |
+| `SEC-SECRET` | Secret or credential in source code or pipeline artifact |
+| `SEC-PII` | Potential PII detected (email, phone — verify manually) |
+| `SEC-REDACT` | Value auto-redacted from pipeline artifact |
 | `PERF-*` | Backend performance issue (N+1, O(n^2), blocking I/O, unnecessary allocation) |
 | `FE-PERF-*` | Frontend performance issue (re-renders, bundle size, DOM efficiency, assets) |
 | `TEST-*` | Test quality (missing coverage, testing framework behavior, mock-only tests, weak assertions, edge case gaps, isolation). Subcategories: `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`. Emitted by `fg-410-code-reviewer`. |
