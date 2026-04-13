@@ -201,6 +201,25 @@ When `--wait-for <project_id>` is set, the feature orchestrator:
 3. Poll interval: 30 seconds
 4. Timeout: `cross_repo.timeout_minutes` (default 30)
 
+### A2A Cross-Repo Communication
+
+When a target repository exposes `.forge/agent-card.json`, the cross-repo coordinator (fg-103) switches from file-based polling to the A2A (Agent-to-Agent) protocol for inter-repo coordination.
+
+**Activation criteria:**
+- `.forge/agent-card.json` exists in the target repo root
+- The agent card declares supported capabilities (streaming, pushNotifications)
+- The coordinator has network access to the target agent's endpoint
+
+**Communication flow:**
+1. fg-103 discovers the agent card during `setup-worktrees` or `coordinate-implementation`
+2. Tasks are created via A2A `tasks/send` instead of dispatching a local fg-100 instance
+3. State synchronization uses A2A task state transitions (`working`, `completed`, `failed`) rather than polling `sprint-state.json`
+4. Artifacts returned by the remote agent (PR URLs, test results) are written to sprint-state.json
+
+**Fallback:** If the agent card is absent or the A2A endpoint is unreachable, fg-103 falls back to the standard file-based polling described above (reading per-run `state.json` files).
+
+**Protocol reference:** See `shared/a2a-protocol.md` for the full A2A message format, agent card schema, and error handling conventions.
+
 ### Conditional Agents
 
 The following agents are dispatched conditionally and receive data from the orchestrator only when their trigger conditions are met:

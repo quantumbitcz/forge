@@ -155,6 +155,26 @@ options:
 
 ---
 
+## A2A Protocol Integration
+
+When coordinating with a target repository, detect whether it exposes an A2A-compatible agent:
+
+1. **Discovery:** Before dispatching work to a target repo, check for `.forge/agent-card.json` in the repo root
+2. **If present (A2A mode):** Use the A2A task lifecycle for cross-repo coordination:
+   - Create a task in the remote agent via `tasks/send` with the feature requirement
+   - Monitor task state transitions: `submitted` → `working` → `input-required` → `completed` / `failed` / `canceled`
+   - Map A2A states to sprint-state.json statuses: `working` → `implementing`, `completed` → `shipped`, `failed` → `failed`
+   - When remote task enters `input-required`, surface `AskUserQuestion` with the remote agent's message
+   - Respect the remote agent's `capabilities` declared in `agent-card.json` (streaming, pushNotifications)
+   - Timeout: same `cross_repo.timeout_minutes` as file-based polling
+3. **If absent (file-based fallback):** Use the existing file-based polling mechanism (read `sprint-state.json` / per-run `state.json`)
+
+**A2A task artifacts:** When the remote agent attaches artifacts to the completed task (e.g., PR URL, test results), extract them and write to the corresponding `features[].repos[]` entry in sprint-state.json.
+
+**Protocol reference:** See `shared/a2a-protocol.md` for the full A2A message format, agent card schema, and error handling conventions.
+
+---
+
 ## Constraints
 
 - **Alphabetical lock ordering is mandatory** — always sort projects by `project_id` before acquiring locks, regardless of dependency order
