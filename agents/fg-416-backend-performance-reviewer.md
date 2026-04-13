@@ -8,6 +8,7 @@ tools:
   - Glob
   - Grep
   - Bash
+  - LSP
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
 ---
@@ -81,6 +82,16 @@ Category codes: `BE-PERF-DB`, `BE-PERF-ALGO`, `BE-PERF-CONCURRENCY`, `BE-PERF-CA
 - **CRITICAL**: N+1 query in loop without limit, unbounded collection fetch, full table scan on large table without pagination, missing transaction on multi-write operation, thread-unsafe shared mutable state
 - **WARNING**: Missing database index on frequently queried column, O(n²) algorithm on unbounded input, missing connection pool configuration, cache-aside without TTL, blocking I/O in async context
 - **INFO**: Suboptimal query that could use projection, minor algorithmic improvement, optional caching opportunity, non-critical API payload optimization
+
+---
+
+### LSP-Enhanced Analysis (v1.18+)
+
+When `lsp.enabled` and LSP is available for the project language:
+- Use LSP type information to distinguish lazy vs eager collections (affects N+1 analysis)
+- Use LSP find-references to identify all callers of a slow method (blast radius)
+- Use LSP diagnostics for type constraint violations that affect performance
+- Fall back to Grep if LSP unavailable (see `shared/lsp-integration.md`)
 
 ---
 

@@ -150,6 +150,8 @@ mutation_testing:
   scope: changed_files_only
   max_mutants_per_file: 5
   severity_on_surviving: WARNING
+  max_mutants_total: 30
+  timeout_multiplier: 2
   categories:
     - boundary_conditions
     - null_handling
