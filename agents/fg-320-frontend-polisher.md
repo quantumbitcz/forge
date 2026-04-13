@@ -136,6 +136,26 @@ Apply in this order. Skip categories where the existing code is already well-han
 9. **Final test** -- run the full test suite one last time to confirm everything passes
 10. **Output** the polish report (Section 8 format)
 
+### §7.1 Screenshot Evidence (v1.18+)
+
+When visual verification prerequisites are met (see `shared/visual-verification.md`):
+
+1. **Before polish:** Take baseline screenshots at all configured breakpoints
+2. **After each polish category** (layout, typography, color, animation, responsive):
+   - Take new screenshots at same breakpoints
+   - Compare with baseline — verify changes are intentional improvements
+   - If unexpected regression detected: revert that category, try alternative approach
+3. **Include evidence** in output report:
+
+       ### Visual Evidence
+       | Viewport | Before | After | Changes |
+       |----------|--------|-------|---------|
+       | 375px | baseline | polished | Card spacing improved, touch targets enlarged |
+       | 768px | baseline | polished | Two-column layout applied |
+       | 1440px | baseline | polished | Hover states added, whitespace balanced |
+
+If prerequisites not met: skip screenshot evidence. Polish based on code analysis alone.
+
 ---
 
 ## 8. Output Format

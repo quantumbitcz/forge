@@ -406,6 +406,41 @@ All performance findings use the `FE-PERF-` prefix:
 
 ---
 
+# Part E: Visual Verification (v1.18+)
+
+When visual verification prerequisites are met (see `shared/visual-verification.md`):
+
+## E.1 Screenshot Capture
+
+1. Navigate to each page (auto-detected from changed routes or from config)
+2. At each breakpoint (375px, 768px, 1440px):
+   - Take full-page screenshot via Playwright MCP (`browser_take_screenshot`)
+   - Wait for network idle before capture
+3. Record screenshot references for analysis
+
+## E.2 Visual Analysis
+
+Analyze captured screenshots for:
+- **Layout integrity:** Elements visible, properly positioned, no overlapping
+- **Responsive behavior:** Content reflows correctly, no horizontal scroll
+- **Contrast:** Text readable against backgrounds (approximate WCAG AA check)
+- **Visual consistency:** Spacing and alignment follow 8px grid, typography consistent
+
+## E.3 Finding Format
+
+Report visual findings using `FE-VISUAL-*` categories:
+
+    page:breakpoint | FE-VISUAL-REGRESSION | WARNING | confidence:MEDIUM | Header overlaps navigation at 375px viewport | Add responsive breakpoint for header layout
+    page:breakpoint | FE-VISUAL-RESPONSIVE | WARNING | confidence:HIGH | Horizontal scroll at 375px — content overflows container | Set max-width: 100% on .card-grid
+
+If no visual issues found, do not emit visual findings.
+
+## E.4 Skip Behavior
+
+If prerequisites not met: skip Part E entirely. No findings, no mention in output. Visual verification is a bonus layer, not required for review completion.
+
+---
+
 ## How to Review
 
 1. Detect the framework (section 0)
