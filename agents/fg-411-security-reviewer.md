@@ -206,7 +206,45 @@ Apply the patterns matching the detected language/framework:
 
 ---
 
-## 9. Infrastructure-as-Code Security
+## 9. Data Classification Checks (v1.19+)
+
+When `data_classification.enabled` is set in `forge.local.md`:
+
+1. **Secret detection:** Scan changed files for patterns defined in `shared/data-classification.md` — hardcoded API keys, private keys, connection strings, bearer tokens, cloud credentials (AWS/GCP/Azure), and webhook secrets.
+2. **PII detection:** Flag unprotected personally identifiable information — email addresses, phone numbers, national IDs, credit card numbers, health records — appearing in logs, error messages, API responses, or persisted without encryption.
+3. **Classification enforcement:** Verify that data marked as CONFIDENTIAL or RESTRICTED in project data-classification config is not logged, cached in plaintext, or exposed through debug endpoints.
+
+**Findings:** Use `SEC-SECRET` (CRITICAL) for detected secrets in non-test code. Use `SEC-PII` (WARNING for unprotected PII in logs/responses, CRITICAL for PII persisted without encryption or transmitted without TLS).
+
+---
+
+## 10. OWASP Agentic Security (v1.19+)
+
+When reviewing agent-executed code (LLM tool calls, autonomous pipelines, agent-to-agent communication), apply the OWASP Agentic Security checklist. Reference `shared/security-posture.md` for project-specific posture settings.
+
+### ASI01: Excessive Agency — Input Handling
+- [ ] Agent inputs are validated and sanitized before processing — no blind trust of upstream agent outputs
+- [ ] Tool call parameters are bounded (string lengths, numeric ranges, enum sets)
+- [ ] User-supplied prompts or instructions embedded in agent context are escaped or sandboxed
+- [ ] No prompt injection vectors through data fields that flow into agent system prompts
+
+### ASI05: Unexpected Execution
+- [ ] Agents cannot execute arbitrary code paths based solely on LLM output without deterministic guardrails
+- [ ] Tool allowlists are enforced — agents only invoke tools declared in their frontmatter `tools:` list
+- [ ] Shell commands constructed from agent reasoning are parameterized, not interpolated
+- [ ] File system access is scoped to declared working directories (e.g., `.forge/worktree`)
+
+### ASI08: Cascading Failures
+- [ ] Agent failures are isolated — one agent's error does not propagate unvalidated state to downstream agents
+- [ ] Recovery strategies have budget ceilings — no unbounded retry loops
+- [ ] Cross-agent data passing validates schema at each boundary (stage contracts)
+- [ ] Circuit breakers exist for external service calls made by agents (MCP, APIs)
+
+**Findings:** Use `SEC-AGENT-INPUT` (WARNING/CRITICAL depending on exploitability) for ASI01 violations. Use `SEC-AGENT-EXEC` (CRITICAL) for ASI05 violations. Use `SEC-AGENT-CASCADE` (WARNING) for ASI08 violations.
+
+---
+
+## 11. Infrastructure-as-Code Security
 
 When reviewing infrastructure files (Helm charts, K8s manifests, Terraform, Dockerfiles):
 - Delegate detailed infrastructure security checks to `fg-419-infra-deploy-reviewer` (it has specialized rules)
@@ -215,13 +253,13 @@ When reviewing infrastructure files (Helm charts, K8s manifests, Terraform, Dock
 
 ---
 
-## 10. Output Format
+## 12. Output Format
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first). If no issues found, return: `PASS | score: {N}`
 
 **Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
 
-Category codes: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`.
+Category codes: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`, `SEC-SECRET`, `SEC-PII`, `SEC-AGENT-INPUT`, `SEC-AGENT-EXEC`, `SEC-AGENT-CASCADE`.
 
 **Severity rules:**
 - SQL/command injection, hardcoded production secrets, RCE, deserialization of untrusted data -> **CRITICAL**
