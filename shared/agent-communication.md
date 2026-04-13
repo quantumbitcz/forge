@@ -124,6 +124,26 @@ When two findings conflict at the same priority level, the finding with the high
 
 Agents should NOT attempt to resolve conflicts themselves. Report the conflict and let the quality gate arbitrate.
 
+### Deliberation Protocol (v1.18+)
+
+When `quality_gate.deliberation` is enabled, the quality gate may re-dispatch reviewers for a deliberation round on conflicting findings. This is an extension of the conflict reporting protocol — not a replacement.
+
+**Flow:**
+1. Quality gate detects conflict per the reporting protocol above
+2. If deliberation enabled AND conflict involves >= WARNING: quality gate re-dispatches both agents
+3. Each agent receives the deliberation prompt (format in `shared/agent-defaults.md` §Deliberation Response Format)
+4. Agents respond with MAINTAIN/REVISE/WITHDRAW
+5. Quality gate applies results before scoring
+
+**Key constraints:**
+- Max 1 deliberation round (no recursive re-dispatch)
+- Only for >= WARNING severity conflicts (INFO-vs-INFO uses priority ordering)
+- 60-second timeout per agent (configurable: `quality_gate.deliberation_timeout`)
+- Deliberation adds at most 2 sub-agent dispatches per conflict cluster
+- Reviewers in deliberation mode are read-only — they cannot modify files or produce new findings, only respond to the deliberation prompt
+
+**This does NOT change the conflict reporting protocol.** Agents still report conflicts in the same format. Deliberation is an additional resolution step that the quality gate performs after collection.
+
 ## 4. State.json (orchestrator-managed)
 
 The orchestrator is the sole writer of state.json. Agents read it (for integrations, conventions_hash, etc.) but never write to it.
