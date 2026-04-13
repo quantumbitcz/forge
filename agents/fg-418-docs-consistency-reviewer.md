@@ -176,8 +176,10 @@ Do NOT report cross-repo cross-doc inconsistencies as `CRITICAL` — cap at `WAR
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first).
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 ```
-file:line | CATEGORY-CODE | SEVERITY | message | fix_hint
+file:line | CATEGORY-CODE | SEVERITY | confidence:{HIGH|MEDIUM|LOW} | message | fix_hint
 ```
 
 If no issues found, return: `PASS | score: {N}`

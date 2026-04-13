@@ -266,6 +266,8 @@ If context7 tools are unavailable (connection error, timeout, or tool not regist
 
 ## 8. Output Format
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Return EXACTLY this structure. No preamble or explanation outside the format.
 
 ```markdown

@@ -459,10 +459,12 @@ Only report issues with HIGH or MEDIUM confidence.
 
 ## Output Format
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Return findings in this exact format, one per line:
 
 ```
-file:line | {CATEGORY-CODE} | {SEVERITY} | {description} | {fix_hint}
+file:line | {CATEGORY-CODE} | {SEVERITY} | confidence:{HIGH|MEDIUM|LOW} | {description} | {fix_hint}
 ```
 
 Where:

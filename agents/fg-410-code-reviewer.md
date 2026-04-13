@@ -215,6 +215,8 @@ When `lsp.enabled` and LSP is available for the project language:
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first). If no issues found, return: `PASS | score: 100`
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Category codes: `QUAL-ERR-*`, `QUAL-DRY-*`, `QUAL-DEF-*`, `QUAL-PLAN-*`, `QUAL-NAME`, `QUAL-COMPLEX`, `QUAL-MAGIC`, `QUAL-LENGTH`, `QUAL-KISS-*`, `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`, `CONV-*`, `APPROACH-*`, `SCOUT-*`.
 
 ---

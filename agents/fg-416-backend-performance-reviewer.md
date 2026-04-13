@@ -73,6 +73,8 @@ Review the changed files (use `git diff master...HEAD` or `git diff` to find the
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first). If no issues found, return: `PASS | score: {N}`
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Category codes: `BE-PERF-DB`, `BE-PERF-ALGO`, `BE-PERF-CONCURRENCY`, `BE-PERF-CACHE`, `BE-PERF-API`.
 
 **Severity rules:**

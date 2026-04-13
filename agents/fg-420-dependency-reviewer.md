@@ -157,6 +157,8 @@ If any answer is no, do not emit the finding.
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first). If no issues found, return: `PASS | score: 100`
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Category codes: `DEP-CVE-DIRECT`, `DEP-CVE-TRANSITIVE`, `DEP-OUTDATED-MAJOR`, `DEP-OUTDATED-EOL`, `DEP-OUTDATED-LOCK`, `DEP-UNMAINTAINED`, `DEP-DEPRECATED`, `DEP-CONFLICT-DUPLICATE`, `DEP-CONFLICT-PEER`, `DEP-CONFLICT-OVERRIDE`, `DEP-LICENSE-COPYLEFT`, `DEP-LICENSE-UNKNOWN`, `DEP-LICENSE-CHANGE`.
 
 ---

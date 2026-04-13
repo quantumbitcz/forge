@@ -219,6 +219,8 @@ When reviewing infrastructure files (Helm charts, K8s manifests, Terraform, Dock
 
 Return findings per `shared/checks/output-format.md`: one per line, sorted by severity (CRITICAL first). If no issues found, return: `PASS | score: {N}`
 
+**Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
+
 Category codes: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`.
 
 **Severity rules:**
