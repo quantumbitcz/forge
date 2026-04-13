@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 
 setup() {
-  load '../../helpers/test-helpers'
-  load '../hooks/helpers/mock-tool-input'
+  load '../helpers/test-helpers'
+  load './helpers/mock-tool-input'
   HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../shared/checks/l0-syntax/validate-syntax.sh"
 }
 

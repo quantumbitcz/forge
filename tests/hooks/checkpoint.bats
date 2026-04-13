@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  load '../../helpers/test-helpers'
+  load '../helpers/test-helpers'
   HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/forge-checkpoint.sh"
 }
 

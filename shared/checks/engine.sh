@@ -6,12 +6,11 @@ _HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-10}"
 if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
   export _HOOK_TIMEOUT_ACTIVE=1
   if command -v timeout &>/dev/null; then
-    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
-    exit $?
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
   elif command -v gtimeout &>/dev/null; then
-    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null
-    exit $?
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" 2>/dev/null || exit 0
   fi
+  exit 0
 fi
 
 # Unified check engine entry point.

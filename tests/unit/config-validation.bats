@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 setup() {
-  load '../lib/test-helpers'
+  load '../helpers/test-helpers'
   SCRIPT="$BATS_TEST_DIRNAME/../../shared/validate-config.sh"
   FIXTURES="$BATS_TEST_DIRNAME/../fixtures/config"
 }

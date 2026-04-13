@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  load '../../helpers/test-helpers'
+  load '../helpers/test-helpers'
   HOOKS_JSON="$BATS_TEST_DIRNAME/../../hooks/hooks.json"
   PLUGIN_ROOT="$BATS_TEST_DIRNAME/../.."
 }

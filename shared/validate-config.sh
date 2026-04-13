@@ -117,6 +117,34 @@ if fw in LEGAL_COMBOS and lang not in LEGAL_COMBOS[fw]:
     valid_langs = ", ".join(str(l) for l in sorted(LEGAL_COMBOS[fw], key=str))
     errors.append(f'framework "{fw}" is not compatible with language "{lang}" (valid: {valid_langs})')
 
+# Phase 2b: Variant must match language
+variant = components.get("variant")
+if variant and fw and lang:
+    checks += 1
+    VARIANT_LANG = {
+        "spring": {"kotlin": "kotlin", "java": "java"},
+    }
+    if fw in VARIANT_LANG:
+        if lang in VARIANT_LANG[fw] and variant != VARIANT_LANG[fw][lang]:
+            warnings.append(f'variant "{variant}" may not match language "{lang}" for framework "{fw}"')
+
+# Phase 2c: Testing framework must match language ecosystem
+TESTING_LANG = {
+    "kotlin": {"kotest", "junit5"},
+    "java": {"junit5"},
+    "typescript": {"vitest", "jest", "playwright", "cypress"},
+    "python": {"pytest"},
+    "go": {"go-testing"},
+    "rust": {"rust-test"},
+    "swift": {"xctest"},
+    "csharp": {"xunit-nunit"},
+}
+if test and lang and lang in TESTING_LANG:
+    checks += 1
+    if test not in TESTING_LANG[lang]:
+        valid_tests = ", ".join(sorted(TESTING_LANG[lang]))
+        warnings.append(f'testing "{test}" is unusual for language "{lang}" (common: {valid_tests})')
+
 # --- Phase 3: PREFLIGHT constraint validation ---
 scoring = config.get("scoring", {})
 convergence = config.get("convergence", {})
