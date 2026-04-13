@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.17.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v1.18.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Layered, resolution top-down:
    - `build-systems/` (7), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 38 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 39 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -69,6 +69,8 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Model routing | `shared/model-routing.md` |
 | Explore cache | `shared/explore-cache.md` |
 | Plan cache | `shared/plan-cache.md` |
+| Visual verification | `shared/visual-verification.md` |
+| LSP integration | `shared/lsp-integration.md` |
 
 ## Skill selection guide
 
@@ -102,7 +104,7 @@ Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resu
 Multiple features: /forge-sprint (reads from Linear or manual list)
 ```
 
-## Agents (38 total, `agents/*.md`)
+## Agents (39 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
@@ -112,7 +114,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer`, `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
-- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`
+- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
@@ -143,7 +145,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 19 shared categories (16 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 iteration counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 21 shared categories (18 wildcard prefixes: `ARCH-*`, `SEC-*`, `PERF-*`, `FE-PERF-*`, `TEST-*`, `TEST-MUTATION-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `APPROACH-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `COMPAT-*`, `CONTRACT-*`, `STRUCT-*`, `INFRA-*`, `FE-VISUAL-*` + 3 discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`). Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 iteration counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -169,6 +171,11 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Plan cache** (`plan-cache.md`): Keyword-based plan reuse for similar requirements. `.forge/plan-cache/`. Survives `/forge-reset`.
 - **Context isolation**: Domain-scoped dedup hints via `affinity` field in `category-registry.json`. Each reviewer only sees findings from its domain.
 - **Token reporting**: Extended `state.json.tokens` with per-stage/agent/model breakdowns and `cost.estimated_cost_usd`.
+- **Mutation testing** (`fg-510-mutation-analyzer`): LLM-generated targeted mutants for changed code. Dispatched by test gate after tests pass. Config: `mutation_testing.*`.
+- **Reviewer deliberation**: Conflicting reviewers debate findings before quality gate synthesis. Disabled by default. Config: `quality_gate.deliberation`.
+- **Confidence scoring**: Finding confidence (HIGH/MEDIUM/LOW) affects scoring weight and routing. LOW findings excluded from fix cycles.
+- **Visual verification** (`visual-verification.md`): Screenshot-based UI verification via Playwright MCP. Config: `visual_verification.*`.
+- **LSP integration** (`lsp-integration.md`): Compiler-level code analysis via Language Server Protocol. Config: `lsp.*`.
 
 ### Deterministic Control Flow
 
@@ -318,7 +325,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.17.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v1.18.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
