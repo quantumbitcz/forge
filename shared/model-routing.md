@@ -14,7 +14,7 @@ The `model` parameter on the Agent tool accepts exactly: `haiku`, `sonnet`, `opu
 
 ## Default Tier Assignments
 
-All 40 agents have explicit tier assignments (9 fast, 17 standard, 14 premium). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
+All 42 agents have explicit tier assignments (9 fast, 19 standard, 14 premium). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
 
 ### Fast (haiku) — 9 agents
 
@@ -32,7 +32,7 @@ All 40 agents have explicit tier assignments (9 fast, 17 standard, 14 premium). 
 
 These perform structured, template-driven, or command-execution tasks. Haiku handles them at equivalent quality because the reasoning is in the prompt/template, not in the model.
 
-### Standard (sonnet) — 17 agents
+### Standard (sonnet) — 19 agents
 
 | Agent | Rationale |
 |---|---|
@@ -52,6 +52,8 @@ These perform structured, template-driven, or command-execution tasks. Haiku han
 | `fg-600-pr-builder` | PR description generation, Linear updates |
 | `fg-610-infra-deploy-verifier` | Infrastructure deployment verification |
 | `fg-650-preview-validator` | Preview environment validation |
+| `fg-515-property-test-generator` | Property inference and PBT test generation |
+| `fg-620-deploy-verifier` | Deployment health monitoring, metric comparison |
 | `fg-700-retrospective` | Run analysis, pattern detection, config tuning |
 
 These perform analytical tasks requiring judgment (finding classification, severity assessment, pattern recognition) but do not make architectural decisions. Sonnet provides sufficient reasoning quality.
@@ -191,5 +193,5 @@ The orchestrator records model assignments in `stage_0_notes`:
     ## Model Routing
     - Mode: enabled
     - Default tier: standard (sonnet)
-    - Overrides: 9 fast, 14 premium, 17 standard (remaining)
-    - Total agents: 40
+    - Overrides: 9 fast, 14 premium, 19 standard (remaining)
+    - Total agents: 42

@@ -1,8 +1,18 @@
 # forge
 
+[![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
+[![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
+[![Agents](https://img.shields.io/badge/agents-42-green?style=flat-square)](#agents)
+[![Skills](https://img.shields.io/badge/skills-34-green?style=flat-square)](#available-skills)
+[![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
+[![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
+[![Finding Categories](https://img.shields.io/badge/finding_categories-85+-purple?style=flat-square)](#quality-scoring)
+[![Build Systems](https://img.shields.io/badge/build_systems-9-blue?style=flat-square)](#available-modules)
+[![Tests](https://img.shields.io/badge/tests-1880+-brightgreen?style=flat-square)](#testing)
+
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating 38 specialized agents across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **42 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -38,541 +48,198 @@ Then add to `.claude/settings.json`:
 ## Key features
 
 - **Worktree isolation** -- Your working tree is never modified. All implementation runs in a git worktree (`.forge/worktree`).
+- **L0 linter-gated editing** -- Tree-sitter syntax validation blocks invalid edits via PreToolUse hook before files are modified. Prevents cascading fix loops.
+- **Inner-loop lint+test** -- Tight edit-lint-test-fix cycle inside the implementer. 3-strategy affected test detection (explore cache, code graph, directory heuristic).
+- **Model routing** -- Curated tier assignments: 9 fast (haiku), 19 standard (sonnet), 14 premium (opus). 60-80% cost reduction with cascade fallback.
+- **Output compression** -- 4 verbosity levels (verbose/standard/terse/minimal) per pipeline stage. 30-45% output token savings. Auto-clarity safety valve for security warnings.
+- **Agent prompt compression** -- All 42 agent .md files compressed 27% (17,127 to 12,441 lines). Orchestrator reduced 53%.
 - **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.5) handle transient failures, tool issues, and state corruption automatically.
-- **3-layer check engine** -- Fires on every Edit/Write. Fast regex patterns (sub-second), framework-aware linters, and AI-driven agents with version-gated deprecation rules.
-- **Self-improving** -- Learnings from past runs are proactively applied to future runs via the PREEMPT system. Confidence decay prevents stale learnings from persisting.
-- **Adaptive MCP detection** -- Auto-detects Linear, Playwright, Slack, Context7, and Figma at PREFLIGHT. No MCP is required -- the pipeline degrades gracefully.
-- **Version-aware deprecations** -- Schema v2 registries with `applies_from` and `removed_in` fields. Rules only fire when the project version matches.
-- **Frontend design quality** -- Creative polish, WCAG 2.2 AA audits, design system compliance, and responsive validation across breakpoints.
+- **4-layer check engine** -- L0 (tree-sitter pre-edit), L1 (regex sub-second), L2 (linter adapters), L3 (AI-driven deprecation + version compat).
+- **Confidence scoring** -- 4-dimension weighted algorithm (clarity, familiarity, complexity, history) with adaptive trust model. Gates execution based on confidence.
+- **Active knowledge base** -- BugBot-style learned rules from code review findings. Rules vs Memories distinction. PREEMPT integration.
+- **Enhanced security** -- MCP governance allowlist, cache integrity (SHA256), Shannon entropy secret detection, 18 cloud credential patterns. OWASP ASI01-ASI10.
+- **Flaky test management** -- flip_rate detection, automatic quarantine, predictive test selection via file associations (15-20% of suite).
+- **Context condensation** -- LLM-powered summarization at 60% context threshold. Tag-based retention. 40-50% token savings on long convergence runs.
+- **Living specifications** -- Machine-parseable AC-NNN acceptance criteria with drift detection at REVIEW. SPEC-DRIFT-* finding categories.
+- **Event-sourced pipeline log** -- 12 event types with causal chains. Replay from any point. `.forge/events.jsonl`.
+- **Playbooks** -- 5 built-in task templates (add-endpoint, fix-flaky-test, db-migration, webhook, extract-service) with analytics tracking.
+- **Self-improving** -- Learnings from past runs proactively applied via PREEMPT system. Confidence decay prevents stale learnings.
+- **Adaptive MCP detection** -- Auto-detects Linear, Playwright, Slack, Context7, Figma, Excalidraw, Neo4j at PREFLIGHT. No MCP required.
+- **Version-aware deprecations** -- Schema v2 registries with `applies_from` and `removed_in` fields. Version-gated rules.
+- **Frontend design quality** -- Creative polish, WCAG 2.2 AA audits (static + dynamic), cross-browser pixel diff, design system compliance.
+- **Property-based testing** -- Optional fg-515 agent generates invariant/round-trip/idempotence/metamorphic tests for 10 PBT frameworks.
 - **Concurrent run protection** -- Lock file prevents parallel runs. Global retry budget (default 10) prevents unbounded cascades.
+- **Monorepo support** -- Nx and Turborepo modules with affected detection, scoped testing/building.
 
 ### The 10 stages
 
 | # | Stage | What happens |
 |---|-------|-------------|
-| 0 | Preflight | Load config, detect interrupted runs, detect versions, apply learnings |
+| 0 | Preflight | Load config, detect versions, apply learnings, build code graph, assess confidence |
 | 1 | Explore | Map domain models, tests, and patterns relevant to the requirement |
 | 2 | Plan | Risk-assessed implementation plan with stories, tasks, parallel groups |
-| 3 | Validate | 7-perspective validation (architecture, security, edge cases, tests, conventions, approach quality, documentation consistency) |
-| 4 | Implement | TDD loop per task -- scaffold, write tests (RED), implement (GREEN), refactor |
-| 5 | Verify | Build, lint, static analysis, full test suite |
-| 6 | Review | Multi-agent quality review with scoring and fix cycles |
-| 7 | Docs | Update CLAUDE.md, KDoc/TSDoc on new public interfaces |
-| 8 | Ship | Branch, commit, PR with quality gate results |
-| 9 | Learn | Retrospective analysis, config tuning, trend tracking |
+| 3 | Validate | 7-perspective validation (architecture, security, edge cases, tests, conventions, approach, docs) |
+| 4 | Implement | TDD loop per task -- scaffold, write tests (RED), implement (GREEN), refactor. Inner-loop lint+test. |
+| 5 | Verify | Build, lint, static analysis, full test suite, mutation testing, property-based testing |
+| 6 | Review | Multi-agent quality review (up to 9 reviewers) with scoring and fix cycles |
+| 7 | Docs | Update documentation, ADRs, API specs, changelogs |
+| 8 | Ship | Evidence verification, branch, commit, PR with quality gate results |
+| 9 | Learn | Retrospective analysis, config tuning, knowledge base updates, trend tracking, next-task prediction |
+
+## Quality scoring
+
+```
+score = max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)
+```
+
+PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighted: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x. **85+ finding categories** across 19 wildcard prefixes and 60+ discrete codes. See `shared/checks/category-registry.json`.
 
 ## Available skills
 
-29 skills provide the user-facing interface to the pipeline and its subsystems.
+34 skills provide the user-facing interface.
 
 | Skill | Description |
 |-------|-------------|
-| `/forge-run` | Main entry point -- runs the full 10-stage pipeline |
-| `/forge-init` | Initialize project config files (auto-detects framework module) |
-| `/forge-status` | Show current pipeline state, quality score, retry budgets, recovery budget, Linear sync, and detected versions |
-| `/forge-reset` | Clear pipeline run state (including lock and skip counter) while preserving accumulated learnings |
-| `/forge-rollback` | Safely rollback pipeline changes (4 modes: worktree, post-merge, Linear, state-only) |
-| `/forge-history` | View quality score trends, agent effectiveness, and PREEMPT health across runs |
-| `/migration` | Plan and execute library/framework migrations (auto-detect versions, explicit versions, `upgrade all`, `check` dry-run, Context7 integration) |
-| `/bootstrap-project` | Scaffold a new project from a module template |
-| `/deploy` | Trigger deployment workflow via infra-deploy agents (staging, production, preview, rollback, status) |
-| `/forge-shape` | Collaboratively shape features into structured specs with epics, stories, and acceptance criteria |
-| `/forge-fix` | Bugfix entry point -- root cause investigation, reproduction, targeted fix |
-| `/forge-review` | Review + fix changed files using forge's own review agents (quick: 2 agents, full: 9 agents) |
-| `/forge-sprint` | Parallel multi-feature orchestration -- decomposes and runs features concurrently |
-| `/security-audit` | Run module-appropriate security scanners (npm audit, cargo audit, govulncheck, trivy, etc.) |
-| `/codebase-health` | Run the check engine in full review mode for a comprehensive health report |
-| `/deep-health` | Iterative investigation + fix + review loop using forge review agents -- loops until clean |
-| `/verify` | Quick build + lint + test check without a full pipeline run |
-| `/graph-init` | Initialize the Neo4j knowledge graph (Docker-managed, enabled by default) |
-| `/graph-status` | Show knowledge graph connection status and node/relationship counts |
-| `/graph-query` | Run Cypher queries against the knowledge graph |
-| `/graph-rebuild` | Rebuild the knowledge graph from the current codebase |
-| `/graph-debug` | Targeted Neo4j diagnostics for graph issues |
-| `/docs-generate` | Generate or update project documentation (standalone or pipeline mode, coverage reporting, framework-aware) |
-| `/forge-diagnose` | Read-only diagnostic of pipeline health (state.json integrity, recovery budget, convergence status) |
-| `/repair-state` | Targeted state.json fixes (WAL recovery, counter repair, stale lock cleanup) |
-| `/config-validate` | Pre-pipeline validation of forge.local.md and forge-config.md |
-| `/forge-abort` | Graceful pipeline stop, preserves state for `/forge-resume` |
-| `/forge-resume` | Resume a previously aborted pipeline from its last checkpoint |
-| `/forge-profile` | Analyze pipeline performance (time per stage, per agent, bottlenecks) |
+| `/forge-run` | Main entry -- full 10-stage pipeline |
+| `/forge-init` | Initialize project config (auto-detects framework) |
+| `/forge-fix` | Bugfix workflow -- root cause investigation + targeted fix |
+| `/forge-shape` | Collaboratively shape features into structured specs |
+| `/forge-sprint` | Parallel multi-feature orchestration |
+| `/forge-review` | Review changed files (quick: 3 agents, full: 9 agents) |
+| `/forge-status` | Show pipeline state, score, budgets |
+| `/forge-diagnose` | Read-only pipeline health diagnostic |
+| `/forge-resume` | Resume from last checkpoint |
+| `/forge-abort` | Graceful pipeline stop |
+| `/forge-reset` | Clear state, preserve learnings |
+| `/forge-rollback` | Rollback pipeline changes (4 modes) |
+| `/forge-history` | Quality trends across runs |
+| `/forge-profile` | Pipeline performance analysis |
+| `/forge-insights` | Quality, cost, convergence analytics |
+| `/forge-ask` | Codebase Q&A via wiki, graph, docs |
+| `/forge-playbooks` | Manage reusable task templates |
+| `/forge-compress` | Compress agent .md files for token savings |
+| `/verify` | Quick build + lint + test check |
+| `/security-audit` | Module-appropriate security scanners |
+| `/codebase-health` | Full check engine health report |
+| `/deep-health` | Iterative fix loop until clean |
+| `/docs-generate` | Generate project documentation |
+| `/deploy` | Deployment (staging, production, preview, rollback) |
+| `/migration` | Framework/library version migrations |
+| `/bootstrap-project` | Scaffold new project from template |
+| `/config-validate` | Pre-pipeline config validation |
+| `/repair-state` | Targeted state.json fixes |
+| `/forge-automation` | Event-driven automation management |
+| `/graph-init` | Initialize Neo4j knowledge graph |
+| `/graph-status` | Graph connection and node counts |
+| `/graph-query` | Run Cypher queries |
+| `/graph-rebuild` | Rebuild graph from codebase |
+| `/graph-debug` | Targeted Neo4j diagnostics |
 
 ## Available modules
 
-21 framework modules under `modules/frameworks/`, 15 language files under `modules/languages/`, 19 testing framework files under `modules/testing/`, and 15 crosscutting layer directories: `modules/databases/`, `modules/persistence/`, `modules/migrations/`, `modules/api-protocols/`, `modules/messaging/`, `modules/caching/`, `modules/search/`, `modules/storage/`, `modules/auth/`, `modules/observability/`, `modules/build-systems/`, `modules/ci-cd/`, `modules/container-orchestration/`, `modules/documentation/`, and `modules/code-quality/`. Each framework module provides `conventions.md`, `local-template.md`, `forge-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2 deprecation registry). Some modules include additional scripts, hooks, variants, or framework-specific binding patterns.
+| Category | Count | Examples |
+|----------|-------|---------|
+| Frameworks | 21 | spring, react, nextjs, fastapi, django, axum, angular, nestjs, vue, svelte, sveltekit, express, gin, go-stdlib, swiftui, vapor, jetpack-compose, kotlin-multiplatform, aspnet, embedded, k8s |
+| Languages | 15 | kotlin, java, typescript, python, go, rust, swift, c, csharp, ruby, php, dart, elixir, scala, cpp |
+| Testing | 19 | kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest, xunit-nunit, testcontainers |
+| Build Systems | 9 | gradle, maven, npm, cargo, go, cmake, bazel, nx, turborepo |
+| CI/CD | 7 | github-actions, gitlab-ci, circleci, azure-pipelines, bitbucket-pipelines, jenkins, tekton |
+| Container/Orchestration | 11+ | docker, docker-compose, helm, k3s, argocd, fluxcd, openshift, rancher, podman + deployment strategies (canary, blue-green, rolling) |
+| ML-Ops | 4 | mlflow, dvc, wandb, sagemaker |
+| Data Pipelines | 3 | airflow, dagster, dbt |
+| Feature Flags | 3 | conventions, launchdarkly, unleash |
+| API Protocols | 4+ | rest, graphql, grpc, websocket, pact |
+| Crosscutting | 10 dirs | databases, persistence, migrations, messaging, caching, search, storage, auth, observability, code-quality (~70 tools) |
 
-| Framework | Target stack |
-|-----------|-------------|
-| `spring` | Kotlin/Java with Spring Boot (hexagonal architecture, WebFlux, R2DBC). Variants: `kotlin`, `java` |
-| `react` | React + Vite + TypeScript + shadcn/ui. Design tokens, animation & motion conventions |
-| `nextjs` | Next.js with App Router, Server/Client Components, Server Actions |
-| `sveltekit` | SvelteKit with TypeScript |
-| `express` | Express/NestJS with TypeScript |
-| `fastapi` | Python with FastAPI and Pydantic |
-| `django` | Python with Django + DRF (apps as bounded contexts) |
-| `gin` | Go with Gin web framework |
-| `go-stdlib` | Go with standard library conventions |
-| `axum` | Rust with Axum + Tokio |
-| `swiftui` | Swift for iOS/macOS applications (memory safety, SPM) |
-| `vapor` | Swift with Vapor server framework |
-| `jetpack-compose` | Android with Jetpack Compose + MVVM + Hilt |
-| `kotlin-multiplatform` | KMP shared module + platform targets (Ktor, Koin, SQLDelight) |
-| `aspnet` | .NET with ASP.NET Core (Clean Architecture, EF Core) |
-| `embedded` | C for embedded systems (real-time safety, ISR conventions, RTOS) |
-| `k8s` | Kubernetes infrastructure (resource limits, probes, security contexts) |
-| `angular` | TypeScript + Angular 17+ (standalone components, signals, NgRx SignalStore) |
-| `nestjs` | TypeScript + NestJS (module-based DI, decorators, microservices transport) |
-| `vue` | TypeScript + Vue 3 / Nuxt 3 (Composition API, Pinia, server routes) |
-| `svelte` | TypeScript + Svelte 5 (runes, standalone SPAs, no SvelteKit) |
-
-All modules include conventions with a Dos/Don'ts section, config templates, check engine rule overrides, and a version-aware deprecation registry (`known-deprecations.json`).
-
-## Integrations
-
-The pipeline auto-detects available MCP servers at PREFLIGHT and adapts its behavior. No integration is required -- each one is optional and the pipeline degrades gracefully when unavailable.
-
-| Integration | What it does | Used by |
-|-------------|-------------|---------|
-| **Linear** | Creates Epics, Stories, and Tasks during PLAN. Updates ticket statuses per stage. Posts quality findings and recap summaries as comments. Mid-run failures retry once, then degrade silently. | Orchestrator, planner, quality gate, retrospective |
-| **Context7** | Documentation lookup for migration guides, breaking changes, and API references. Powers `fg-140-deprecation-refresh` (PREFLIGHT) and `fg-417-version-compat-reviewer` (REVIEW). | Migration planner, deprecation refresh, version compat reviewer, implementer |
-| **Playwright** | Preview/staging deployment validation before merge. Visual regression checks. | Preview validator |
-| **Slack** | Notifications and status updates (configured via consuming project). | PR builder, retrospective |
-| **Figma** | Design reference and component mapping (configured via consuming project). | Frontend reviewer |
-
-Configure Linear integration in `.claude/forge.local.md` under the `linear:` section (disabled by default).
-
-## Setup details
-
-After running the [Quick start](#quick-start) above, customize your project:
-
-### Configure your project
-
-Open `.claude/forge.local.md` and set:
-- `commands.build`, `commands.test`, etc. to match your build tool
-- `scaffolder.patterns` to match your directory structure
-- `quality_gate` batches and `inline_checks` for your review needs
-- `context7_libraries` for the frameworks your project uses
-
-`/forge-init` automatically adds `.forge/` to `.gitignore`. For manual setups, add it yourself:
-
-<details>
-<summary>Manual setup (without /forge-init)</summary>
-
-```bash
-# Copy the module's local template (replace <module> with your framework)
-cp .claude/plugins/forge/modules/frameworks/<module>/local-template.md .claude/forge.local.md
-cp .claude/plugins/forge/modules/frameworks/<module>/forge-config-template.md .claude/forge-config.md
-touch .claude/forge-log.md
-```
-
-</details>
-
-### Usage examples
-
-```bash
-# Full pipeline run
-/forge-run Add plan comment feature
-/forge-run Fix 404 on client group endpoint
-
-# Dry-run (PREFLIGHT through VALIDATE — no worktree, no Linear tickets, no file changes)
-/forge-run --dry-run "Add user dashboard"
-
-# Resume from a specific stage
-/forge-run "Add plan versioning" --from=implement
-```
-
-## How it works
-
-### Three-layer architecture
-
-```
-+---------------------------+
-|   Project config          |  .claude/forge.local.md (static)
-|   (.claude/)              |  .claude/forge-config.md (mutable, auto-tuned)
-|                           |  .claude/forge-log.md (learnings + run history)
-+---------------------------+
-|   Module                  |  modules/ (21 frameworks, 15 languages, 19 testing,
-|   (conventions, rules,    |  15 crosscutting layers incl. build-systems,
-|    deprecations, scripts) |  ci-cd, container-orchestration, documentation, code-quality)
-|                           |  conventions.md, rules-override.json, etc.
-+---------------------------+
-|   Shared core             |  agents/ (38 pipeline + review agents)
-|   (orchestrator, stages,  |  shared/ (contracts, check engine, learnings,
-|    scoring, state)        |  recovery, graph, discovery)
-|                           |  hooks/ (check engine, checkpoint, feedback capture)
-|                           |  skills/ (25 user-facing commands)
-+---------------------------+
-```
-
-**Resolution order** for parameters: project config (`forge-config.md`) overrides module defaults (`local-template.md`) which override plugin defaults.
-
-### Pipeline architecture
-
-```
-  User: /forge-run "Add user dashboard"
-         │
-         ▼
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  fg-100-orchestrator (coordinator — never writes code)          │
-  │                                                                 │
-  │  Stage 0: PREFLIGHT ──► Stage 1: EXPLORE ──► Stage 2: PLAN     │
-  │    ├ load config           ├ map domain         ├ fg-200-planner│
-  │    ├ detect versions       └ index docs         └ risk-assessed │
-  │    └ apply learnings                              stories/tasks │
-  │                                                        │        │
-  │  Stage 3: VALIDATE ◄──────────────────────────────────┘        │
-  │    ├ fg-210-validator (7 perspectives)                          │
-  │    └ GO / REVISE (loop to PLAN) / NO-GO (escalate)             │
-  │              │ GO                                               │
-  │              ▼                                                  │
-  │  ┌─── Convergence Engine (3-phase loop) ────────────────────┐  │
-  │  │                                                           │  │
-  │  │  Phase 1: Correctness    Phase 2: Perfection              │  │
-  │  │  IMPLEMENT ◄──► VERIFY   IMPLEMENT ◄──► REVIEW            │  │
-  │  │  (tests green)           (score → target)                 │  │
-  │  │       │                       │                           │  │
-  │  │       └── Safety Gate ◄───────┘                           │  │
-  │  │           (VERIFY: no regressions)                        │  │
-  │  └───────────────────────────────────────────────────────────┘  │
-  │              │ CONVERGED                                        │
-  │              ▼                                                  │
-  │  Stage 7: DOCS ──► Stage 8: SHIP ──► Stage 9: LEARN            │
-  │    ├ fg-350-docs      ├ fg-590-evidence    ├ fg-700-retrospect  │
-  │    └ update docs      ├ fg-600-pr-builder  └ auto-tune config   │
-  │                       └ worktree → PR                           │
-  └─────────────────────────────────────────────────────────────────┘
-
-  Module Resolution (most specific wins):
-  variant ──► framework-binding ──► framework ──► language ──► code-quality
-```
-
-### Stage flow
-
-The orchestrator (`fg-100-orchestrator`) drives a linear flow from Preflight through Learn, with retry loops:
-
-- **Plan revision**: Validate returns REVISE, loops back to Plan (max 2 retries)
-- **Build/lint fix**: Verify Phase A fails, auto-fixes, and retries (max 3 loops)
-- **Test fix**: Verify Phase B fails, dispatches implementer, retries tests (max 2 cycles)
-- **Quality fix**: Review score below 100, dispatches implementer, rescores (max 2 cycles)
-- **PR rejection**: User rejects PR, feedback captured, re-enters Implement stage
-
-The pipeline pauses and escalates to the user when:
-- Risk exceeds the `auto_proceed` threshold
-- Validator returns NO-GO
-- Max retries are exhausted at any stage
-
-## Configuration
-
-### `forge.local.md` (static project config)
-
-Defines the project's identity and tooling. Checked into git. Rarely changes.
-
-Key sections:
-- `components` -- project identity (`language`, `framework`, `variant`, `testing`)
-- `commands` -- build, lint, test, format commands
-- `scaffolder.patterns` -- file path templates for code generation
-- `quality_gate` -- review agent batches and inline checks
-- `test_gate` -- test command and analysis agents
-- `conventions_file` -- path to module conventions
-- `context7_libraries` -- frameworks for documentation prefetch
-- `linear` -- Linear integration settings (disabled by default)
-
-### `forge-config.md` (mutable runtime config)
-
-Tunable parameters that the retrospective agent updates after each run. Also checked into git.
-
-Key sections:
-- `max_fix_loops`, `max_review_loops` -- retry limits
-- `total_retries_max` -- global retry budget ceiling (default 10, range 5-30)
-- `oscillation_tolerance` -- score regression tolerance before escalation (default 5, range 0-20)
-- `auto_proceed_risk` -- highest risk level for autonomous operation
-- `Domain Hotspots` -- frequently problematic domains (auto-populated)
-- `Metrics` -- cross-run statistics (total runs, success rate, averages)
-- `Auto-Tuning Rules` -- conditions under which the retrospective adjusts parameters
-
-## Testing
-
-The plugin includes a 4-tier test suite covering structural integrity, shell script behavior, document contracts, and multi-script integration.
-
-```bash
-# Run all tests (~623 tests, ~30s)
-./tests/run-all.sh
-
-# Run individual tiers
-./tests/run-all.sh structural   # Plugin integrity (51 checks, no bats needed)
-./tests/run-all.sh unit         # Shell script behavior (141 tests)
-./tests/run-all.sh contract     # Document contract compliance (349 tests)
-./tests/run-all.sh scenario     # Multi-script integration (82 tests)
-```
+All framework modules include `conventions.md` (with Dos/Don'ts), `local-template.md`, `forge-config-template.md`, `rules-override.json`, and `known-deprecations.json` (schema v2).
 
 ## Agents
 
-38 agents organized by pipeline stage and cross-cutting concerns.
+42 agents organized by pipeline stage. See `shared/agent-registry.md` for the full list.
 
-### Pipeline agents (shared)
+**Pipeline agents**: fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-150-test-bootstrapper, fg-160-migration-planner, fg-200-planner, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
 
-| Agent                         | Stage        | Role                                                              |
-|-------------------------------|--------------|-------------------------------------------------------------------|
-| `fg-010-shaper`               | Pre-pipeline | Feature spec shaping (epics, stories, AC)                         |
-| `fg-050-project-bootstrapper` | Pre-pipeline | Bootstraps new projects with module scaffolding and config        |
-| `fg-100-orchestrator`         | All          | Coordinates the 10-stage lifecycle, manages state and recovery    |
-| `fg-130-docs-discoverer`      | 0 Preflight  | Discovers and indexes project documentation                       |
-| `fg-140-deprecation-refresh`  | 0 Preflight  | Refreshes `known-deprecations.json` via Context7                  |
-| `fg-150-test-bootstrapper`    | 0 Preflight  | Bootstraps test coverage when below threshold                     |
-| `fg-160-migration-planner`    | 0 Preflight  | Library/framework migration planning                              |
-| `fg-200-planner`              | 2 Plan       | Decomposes requirements into risk-assessed plans with stories and tasks |
-| `fg-210-validator`            | 3 Validate   | Validates plans across 7 perspectives, returns GO/REVISE/NO-GO   |
-| `fg-250-contract-validator`   | 3 Validate   | Cross-repo API contract breaking change detection                 |
-| `fg-300-implementer`          | 4 Implement  | TDD implementation -- tests first (RED), implement (GREEN), refactor |
-| `fg-310-scaffolder`           | 4 Implement  | Generates boilerplate with correct structure and TODO markers     |
-| `fg-320-frontend-polisher`    | 4 Implement  | Creative frontend polish (animations, responsive, dark mode)      |
-| `fg-350-docs-generator`       | 7 Docs       | Generates/updates documentation, ADRs, changelogs, API specs     |
-| `fg-400-quality-gate`         | 6 Review     | Multi-batch quality coordinator with scoring and fix cycles       |
-| `fg-500-test-gate`            | 5 Verify     | Test execution and coverage analysis coordinator                  |
-| `fg-600-pr-builder`           | 8 Ship       | Creates branch, commits, and PR with quality gate results         |
-| `fg-650-preview-validator`    | 8 Ship       | Preview deployment validation (Lighthouse, visual regression)     |
-| `fg-700-retrospective`        | 9 Learn      | Post-run analysis, learning extraction, config auto-tuning        |
-| `fg-710-post-run`             | 9 Learn      | Records user corrections as structured feedback and generates human-readable pipeline run recap |
+**Review agents** (9): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-416-backend-performance-reviewer, fg-417-version-compat-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer, fg-420-dependency-reviewer.
 
-### Cross-cutting review agents
+## Integrations
 
-| Agent | Role |
-|---|---|
-| `fg-410-code-reviewer` | Error handling, DRY/KISS, defensive programming, test quality, naming, complexity |
-| `fg-411-security-reviewer` | OWASP, auth, injection, secrets |
-| `fg-412-architecture-reviewer` | Architecture patterns, SRP, DIP, layer boundaries, module structure |
-| `fg-413-frontend-reviewer` | Frontend conventions, a11y (WCAG 2.2 AA), performance (bundle, rendering, lazy loading), framework rules, design system, visual hierarchy, Figma comparison. Modes: full/conventions-only/a11y-only/performance-only |
-| `fg-416-backend-performance-reviewer` | DB queries, caching, algorithms, N+1 |
-| `fg-417-version-compat-reviewer` | Dependency conflicts, language features, runtime API removals |
-| `fg-418-docs-consistency-reviewer` | Documentation accuracy, cross-doc consistency, decision/constraint violations |
-| `fg-419-infra-deploy-reviewer` | K8s, Helm, Terraform, Docker configuration |
-| `fg-420-dependency-reviewer` | Vulnerable, outdated, unmaintained dependencies, license compliance |
-| `fg-610-infra-deploy-verifier` | Deployment health verification |
+Auto-detected MCP servers at PREFLIGHT. All optional -- pipeline degrades gracefully.
+
+| Integration | Purpose |
+|-------------|---------|
+| **Linear** | Epic/Story/Task tracking, status sync, quality comments |
+| **Context7** | Library docs, migration guides, deprecation lookup |
+| **Playwright** | Preview validation, visual regression, dynamic a11y |
+| **Slack** | Notifications and status updates |
+| **Figma** | Design reference and component mapping |
+| **Neo4j** | Knowledge graph (dual-purpose: plugin seed + project codebase) |
+| **Excalidraw** | Architecture diagrams |
+
+## Configuration
+
+### `forge.local.md` (static, checked into git)
+Project identity: `language`, `framework`, `testing`, `commands` (build/test/lint), `scaffolder.patterns`, `quality_gate` batches, `context7_libraries`, `linear` settings.
+
+### `forge-config.md` (mutable, auto-tuned by retrospective)
+Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-config-schema.json` for the full schema.
+
+## Testing
+
+```bash
+# Full suite
+./tests/run-all.sh
+
+# Individual tiers
+./tests/run-all.sh structural   # Plugin integrity (73 checks)
+./tests/run-all.sh unit         # Shell script behavior
+./tests/run-all.sh contract     # Document contract compliance
+./tests/run-all.sh scenario     # Multi-script integration
+```
+
+## Setup details
+
+After [Quick start](#quick-start):
+
+```bash
+# Customize your project config
+# Open .claude/forge.local.md and set commands, scaffolder patterns, quality gate
+
+# Usage examples
+/forge-run Add plan comment feature          # Full pipeline
+/forge-run --dry-run "Add user dashboard"    # Dry-run (PREFLIGHT→VALIDATE only)
+/forge-run "Add versioning" --from=implement # Resume from stage
+/forge-run --playbook=add-rest-endpoint entity=Task  # Use playbook template
+/forge-fix Users get 404 on group endpoint   # Bugfix workflow
+/forge-sprint                                # Multi-feature parallel execution
+```
 
 ## Troubleshooting
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| "No active pipeline" | `.forge/state.json` missing or deleted | Run `/forge-init` then `/forge-run` again |
-| Pipeline stuck at a stage | State corruption or exhausted retries | Run `/forge-diagnose` (read-only), then `/repair-state` if needed |
-| Lock file blocks new run | Previous run crashed without cleanup | Run `/forge-reset` or remove `.forge/.lock` manually |
-| Check engine errors on every edit | Broken `engine.sh` or missing bash 4.0+ | Install bash 4+ (`brew install bash` on macOS). Check `.forge/.hook-failures.log` |
-| Score oscillating (not converging) | Fixes introduce new issues | Check `oscillation_tolerance` in `forge-config.md` (default 5). See `shared/convergence-engine.md` |
-| "Budget exhausted" | Too many retries across stages | Check `total_retries_max` in `forge-config.md` (default 10, range 5-30) |
-| Recovery keeps failing | All 7 strategies tried | Recovery budget ceiling is 5.5. See `shared/recovery/recovery-engine.md` |
-| Evidence stale after build | Build took longer than evidence window | Increase `shipping.evidence_max_age_minutes` in `forge-config.md` (default 30, range 5-60) |
-| MCP not detected | MCP server not running or not configured | Check with `/forge-status`. Pipeline degrades gracefully — no MCP is required |
-| Tests pass locally but fail in pipeline | Worktree isolation | Pipeline runs in `.forge/worktree`. Check for path-dependent tests |
+| Problem | Fix |
+|---------|-----|
+| "No active pipeline" | Run `/forge-init` then `/forge-run` |
+| Pipeline stuck | `/forge-diagnose` (read-only), then `/repair-state` |
+| Lock file blocks run | `/forge-reset` or remove `.forge/.lock` |
+| Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
+| Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |
+| Budget exhausted | Check `total_retries_max` (default 10, range 5-30) |
+| Evidence stale | Increase `shipping.evidence_max_age_minutes` (default 30) |
+| MCP not detected | `/forge-status`. Pipeline degrades gracefully |
 
-For detailed error types, see `shared/error-taxonomy.md` (22 error types with recovery strategies).
-For recovery logic, see `shared/recovery/recovery-engine.md` (7 strategies, budget-weighted).
+See `shared/error-taxonomy.md` (22 error types) and `shared/recovery/recovery-engine.md` (7 strategies).
 
 ## Adding a new module
 
-To support a new framework (e.g., `fastapi`):
-
-### 1. Create the directory structure
-
 ```
-modules/frameworks/fastapi/
-  conventions.md              # Agent-readable framework conventions (must include Dos/Don'ts)
-  local-template.md           # Project config template (YAML frontmatter + context)
-  forge-config-template.md    # Runtime config template (must include total_retries_max, oscillation_tolerance)
-  rules-override.json         # Module-specific rule overrides for the check engine
-  known-deprecations.json     # Registry of deprecated APIs (schema v2, seed with 5-15 entries)
-  scripts/                    # Optional verification scripts (must be executable with shebang)
-  hooks/                      # Optional guard hooks (must be executable with shebang)
+modules/frameworks/{name}/
+  conventions.md              # Must include Dos/Don'ts
+  local-template.md           # Project config template
+  forge-config-template.md    # Must include total_retries_max, oscillation_tolerance
+  rules-override.json         # Check engine rule overrides
+  known-deprecations.json     # Schema v2 (5-15 entries)
 ```
 
-### 2. Create a learnings file
-
-Add `shared/learnings/fastapi.md` to track module-specific learnings across runs. For new languages, also add `shared/learnings/{lang}.md`. For new testing frameworks, also add `shared/learnings/{test-framework}.md`.
-
-### 3. Update test minimum counts
-
-Module lists are auto-discovered from disk via `tests/lib/module-lists.bash`. Bump the corresponding `MIN_*` constant (e.g., `MIN_FRAMEWORKS`) to catch accidental deletions. Skipping this step means the new module is tested but accidental removal goes undetected.
-
-### 4. Wire agents into the local template
-
-Reference the cross-cutting review agents (`fg-412-architecture-reviewer`, `fg-411-security-reviewer`, `fg-410-code-reviewer`, `fg-420-dependency-reviewer`, etc.) and any module-specific inline checks in the `quality_gate.batch_N` section of the local template.
-
-### 5. Naming conventions
-
-- Module directory: `modules/frameworks/{name}`, lowercase with hyphens (`fastapi`, `go-stdlib`)
-- Review agents: descriptive names without module prefix (`fg-410-code-reviewer`, `fg-411-security-reviewer`)
-- Pipeline agents: `fg-{NNN}-{role}` (shared, not module-specific)
-- Scripts: `check-{what}.sh` or `{what}-guard.sh`
-
-## File inventory
-
-<details>
-<summary>Full directory structure</summary>
-
-```
-forge/
-  .claude-plugin/
-    plugin.json                         # Plugin manifest (v1.16.0)
-    marketplace.json                    # Marketplace catalog for quantumbitcz
-  agents/                               # 38 agent definitions (YAML frontmatter + instructions)
-    fg-010-shaper.md
-    fg-050-project-bootstrapper.md
-    fg-100-orchestrator.md
-    fg-130-docs-discoverer.md
-    fg-140-deprecation-refresh.md
-    fg-150-test-bootstrapper.md
-    fg-160-migration-planner.md
-    fg-200-planner.md
-    fg-210-validator.md
-    fg-250-contract-validator.md
-    fg-300-implementer.md
-    fg-310-scaffolder.md
-    fg-320-frontend-polisher.md
-    fg-400-quality-gate.md
-    fg-500-test-gate.md
-    fg-600-pr-builder.md
-    fg-650-preview-validator.md
-    fg-700-retrospective.md
-    fg-710-post-run.md
-    fg-410-code-reviewer.md
-    fg-411-security-reviewer.md
-    fg-412-architecture-reviewer.md
-    fg-413-frontend-reviewer.md
-    fg-416-backend-performance-reviewer.md
-    fg-417-version-compat-reviewer.md
-    fg-418-docs-consistency-reviewer.md
-    fg-419-infra-deploy-reviewer.md
-    fg-420-dependency-reviewer.md
-    fg-610-infra-deploy-verifier.md
-    fg-418-docs-consistency-reviewer.md
-  skills/                               # 29 user-facing skills
-    bootstrap-project/
-    codebase-health/
-    config-validate/
-    deep-health/
-    deploy/
-    docs-generate/
-    forge-diagnose/
-    forge-fix/
-    forge-history/
-    forge-init/
-    forge-reset/
-    forge-review/
-    forge-rollback/
-    forge-run/
-    forge-shape/
-    forge-sprint/
-    forge-status/
-    graph-init/
-    graph-query/
-    graph-rebuild/
-    graph-status/
-    migration/
-    repair-state/
-    security-audit/
-    verify/
-  hooks/                                # 4 hooks (registered in hooks.json)
-    hooks.json                          #   Hook manifest
-    forge-checkpoint.sh                 #   PostToolUse on Skill -- saves checkpoint
-    feedback-capture.sh                 #   Stop -- captures user feedback on session exit
-  shared/
-    agent-communication.md              # Inter-agent data flow contract
-    agent-philosophy.md                 # Critical thinking principles for all agents
-    error-taxonomy.md                   # 22 standard error types with recovery strategies
-    frontend-design-theory.md           # Design theory guardrails (Gestalt, color, typography, motion)
-    scoring.md                          # Quality scoring formula and verdict thresholds
-    stage-contract.md                   # Stage definitions, entry/exit conditions, data flow
-    state-schema.md                     # State schema v1.5.0
-    checks/                             # 3-layer generalized check engine
-      engine.sh                         #   Main engine script (--hook, --verify, --review modes)
-      test-engine.sh                    #   Engine test harness
-      output-format.md                  #   Standardized output format spec
-      layer-1-fast/                     #   Regex-based pattern matching (sub-second)
-        run-patterns.sh                 #     Pattern matching entry point
-      layer-2-linter/                   #   Framework-aware linter adapters
-        run-linter.sh                   #     Linter dispatch entry point
-        adapters/                       #     Per-language linter adapters
-        config/                         #     Linter configurations
-        defaults/                       #     Default linter settings
-      layer-3-agent/                    #   Redirect stubs (agents live in agents/)
-        deprecation-refresh.md          #     -> agents/fg-140-deprecation-refresh.md
-        version-compat.md               #     -> agents/fg-417-version-compat-reviewer.md
-        known-deprecations/
-      examples/                         #   Per-language pattern examples
-        c/ go/ java/ kotlin/
-        python/ rust/ swift/ typescript/
-    discovery/                          # Cross-repo project discovery
-      detect-project-type.sh            #   Framework/language auto-detection
-      discover-projects.sh              #   Multi-repo discovery
-    graph/                              # Knowledge graph (Neo4j, enabled by default)
-      schema.md                         #   Node types, relationships, lifecycle
-      query-patterns.md                 #   Cypher query templates
-      seed.cypher                       #   Pre-computed module relationship seed
-      generate-seed.sh                  #   Generates seed.cypher from module data
-      canonical-pairings.json           #   Module relationship data
-      dependency-map.json               #   Module dependency data
-      build-project-graph.sh            #   Build graph from codebase
-      enrich-symbols.sh                 #   Enrich graph with symbol analysis
-      incremental-update.sh             #   Incremental graph updates
-      neo4j-health.sh                   #   Neo4j health checks
-      docker-compose.neo4j.yml          #   Docker-managed Neo4j instance
-    learnings/                          # Per-module learnings + schemas
-      README.md                         #   Learnings system overview
-      {module-name}.md                  #   Framework, language, testing, and layer learnings files
-      agent-effectiveness-template.md   #   Template for agent performance tracking
-      rule-learning-schema.json         #   Check rule evolution tracking
-      agent-effectiveness-schema.json   #   Agent performance tracking
-    recovery/                           # Recovery engine + strategies
-      recovery-engine.md                #   7 strategies, weighted budget (ceiling 5.5)
-      strategies/                       #   Individual strategy definitions
-        transient-retry.md (0.5)
-        tool-diagnosis.md (1.0)
-        state-reconstruction.md (1.5)
-        agent-reset.md (1.0)
-        dependency-health.md (1.0)
-        resource-cleanup.md (0.5)
-        graceful-stop.md (0.0)
-      health-checks/                    #   Pre-stage validation scripts
-        pre-stage-health.sh
-        dependency-check.sh
-  modules/                              # 21 frameworks + 15 languages + 19 testing + 15 crosscutting layers
-    frameworks/                         # Per-framework conventions and config
-      angular/ aspnet/ axum/ django/ embedded/ express/ fastapi/
-      gin/ go-stdlib/ jetpack-compose/ k8s/
-      kotlin-multiplatform/ nestjs/ nextjs/ react/ spring/
-      sveltekit/ svelte/ swiftui/ vapor/ vue/
-    languages/                          # Per-language idioms, type conventions, and baseline rules
-    testing/                            # Per-testing-framework generic test patterns
-    databases/                          # Database engine best practices
-    persistence/                        # ORM/mapping patterns
-    migrations/                         # Schema migration tool patterns
-    api-protocols/                      # API protocol patterns (REST, GraphQL, gRPC, WebSocket)
-    messaging/                          # Event-driven patterns
-    caching/                            # Cache strategy patterns
-    search/                             # Full-text search patterns
-    storage/                            # Object storage patterns
-    auth/                               # Authentication/authorization patterns
-    observability/                      # Metrics, tracing, and logging patterns
-    build-systems/                      # Build tool patterns (Gradle, Maven, CMake, Bazel, etc.)
-    ci-cd/                              # CI/CD platform patterns (GitHub Actions, GitLab CI, etc.)
-    container-orchestration/            # Container/orchestration patterns (Docker, Helm, ArgoCD, etc.)
-    documentation/                      # Documentation conventions (doc structure, ADR patterns, cross-references)
-    code-quality/                       # Code quality tooling (~70 tools: linters, formatters, coverage, security scanners)
-    (each framework contains: conventions.md, local-template.md,
-     forge-config-template.md, rules-override.json,
-     known-deprecations.json)
-  tests/                                # 4-tier test suite (~623 tests)
-    run-all.sh                          #   Test runner (all tiers or individual)
-    validate-plugin.sh                  #   Structural validation (no bats needed)
-    fixtures/                           #   Test fixture data
-    helpers/                            #   Shared test helpers
-    lib/                                #   bats-core, bats-assert, bats-support, module-lists.bash
-  CLAUDE.md
-  CONTRIBUTING.md
-  SECURITY.md
-  LICENSE
-```
-
-</details>
+Also add `shared/learnings/{name}.md` and bump `MIN_*` in `tests/lib/module-lists.bash`.
 
 ## License
 
