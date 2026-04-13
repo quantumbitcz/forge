@@ -16,6 +16,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-102-conflict-resolver | 4 | No | Core | Analysis |
 | fg-103-cross-repo-coordinator | 2 | Yes | Core | Coordination |
 | fg-130-docs-discoverer | 3 | No | Preflight | Discovery |
+| fg-135-wiki-generator | 3 | No | Preflight | Documentation |
 | fg-140-deprecation-refresh | 3 | No | Preflight | Maintenance |
 | fg-150-test-bootstrapper | 3 | Yes | Preflight | Testing |
 | fg-160-migration-planner | 1 | Yes | Preflight | Migration |
