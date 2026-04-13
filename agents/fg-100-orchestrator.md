@@ -435,6 +435,8 @@ Phase A (parallel)
 │   §0.3  Read Mutable Runtime Params
 │   §0.3a Model Route Resolution
 │   §0.4  Config Validation
+│   §0.4a Telemetry Initialization
+│   §0.4b Security Enforcement
 │   §0.5  Convention Fingerprinting
 │   §0.6  PREEMPT System + Version Detection
 │   §0.6a Detect Project Dependency Versions
@@ -579,6 +581,46 @@ After reading config files, validate before proceeding:
    - `oscillation_tolerance`: must be >= 0 and <= 20, default 5. If out of range: WARN — use default (5).
 
 If any ERROR-level validation fails, stop the pipeline and report all errors together. Do not fail on the first error — collect all validation failures and present them as a batch.
+
+---
+
+### §0.4a Telemetry Initialization
+
+If `observability.enabled` is true in config:
+
+1. **Init telemetry state**: create `state.json.telemetry` with `run_id`, `start_ts`, empty `spans[]`, and `metrics: {}`
+2. **Root span**: create a root span `pipeline:{run_id}` with `start_ts` and `status: ACTIVE`
+3. **Stage spans**: on every state transition (PREFLIGHT → EXPLORING → ... → LEARNING), emit a child span `stage:{stage_name}` under the root span with `start_ts`, `end_ts`, `duration_ms`, and `outcome` (PASSED/FAILED/SKIPPED)
+4. **Agent spans**: on every agent dispatch, emit a child span `agent:{agent_name}` under the current stage span with `start_ts`, `end_ts`, `duration_ms`, `token_usage`, and `finding_count`
+5. **Final metrics**: on pipeline completion, compute and attach to `state.json.telemetry.metrics`: `total_duration_ms`, `stage_durations` (map), `agent_durations` (map), `total_tokens`, `total_findings`, `final_score`, `iteration_counts`
+6. **Export**: if `observability.mode` is `otel`, export spans as OpenTelemetry-compatible JSON to `.forge/traces/{run_id}.json`
+
+If `observability.enabled` is false or absent, skip all telemetry. Pipeline behavior is unchanged — telemetry is purely additive.
+
+---
+
+### §0.4b Security Enforcement
+
+Apply security policies from config before any pipeline processing:
+
+1. **Input sanitization** (if `security.input_sanitization` is true):
+   - Strip HTML tags, `<script>` blocks, and embedded JS from requirement text
+   - Remove common injection patterns (template literals `${}`, shell expansions `$(...)`, backtick execution)
+   - Log WARNING if any content was stripped: "Sanitized {N} potentially unsafe patterns from requirement input"
+   - If requirement text is empty after sanitization: ERROR — "Requirement text contains only unsafe content"
+
+2. **Convention signature verification** (if `security.convention_signatures` is true):
+   - At PREFLIGHT, compute SHA256 of each loaded conventions file
+   - Compare against `security.convention_signatures_map` (map of `file_path → expected_sha256`)
+   - If a signature does not match: ERROR — "Convention file {path} has been modified (expected {expected}, got {actual}). Aborting to prevent convention tampering."
+   - If a file is missing from the signature map: WARN — "Convention file {path} has no registered signature. Proceeding with unverified conventions."
+
+3. **Tool call budget** (if `security.tool_call_budget` is configured):
+   - Load budget map from config: `{ agent_name: max_tool_calls }` with optional `_default` key
+   - Store in `state.json.security.tool_call_budget`
+   - On each agent dispatch, track cumulative tool calls per agent
+   - If an agent exceeds its budget: force-stop the agent, log CRITICAL — "Agent {name} exceeded tool call budget ({used}/{max}). Agent terminated."
+   - Continue pipeline with partial results from the terminated agent
 
 ---
 
