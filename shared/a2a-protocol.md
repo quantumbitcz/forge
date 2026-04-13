@@ -219,14 +219,140 @@ fg-103 reads: /path/to/producer/.forge/state.json
 
 ---
 
+## HTTP Transport (v2.0+)
+
+Starting with v2.0, forge supports HTTP as an alternative transport alongside the existing filesystem transport. HTTP enables cross-machine coordination between forge pipelines running on different hosts, CI runners, or cloud dev environments (Codespaces, Gitpod, DevPod). The filesystem transport remains the default. HTTP is opt-in via `a2a.transport: http` in `forge-config.md`.
+
+Full HTTP transport specification: `shared/a2a-http-transport.md`.
+
+### Transport Abstraction
+
+All coordination agents (fg-103, fg-090, fg-250) use a unified transport interface (`shared/a2a/transport.sh`) that routes operations to the configured transport. Callers do not need to know whether a remote agent is reachable via filesystem or HTTP — the transport layer handles routing transparently.
+
+```
+fg-103 calls transport.read_agent_card(target)
+  ├─ target.transport == "filesystem" → read .forge/agent-card.json from path
+  └─ target.transport == "http"       → GET {url}/.well-known/agent-card.json
+```
+
+### Agent Card (HTTP Extension)
+
+When HTTP transport is active, the agent card includes additional fields:
+
+```json
+{
+  "name": "forge",
+  "description": "Forge autonomous pipeline for backend-service",
+  "url": "http://192.168.1.10:9473",
+  "version": "2.0.0",
+  "protocol_version": "a2a/0.2.1",
+  "project_id": "git@github.com:org/backend-service.git",
+  "transport": "http",
+  "capabilities": {
+    "streaming": true,
+    "stateTransitionHistory": true,
+    "pushNotifications": true
+  },
+  "authentication": {
+    "schemes": ["bearer"],
+    "credentials_ref": ".forge/a2a-credentials.json"
+  },
+  "skills": [ ... ],
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"]
+}
+```
+
+| Field | Filesystem | HTTP |
+|---|---|---|
+| `url` | `"local://forge"` | `"http://{host}:{port}"` |
+| `transport` | absent or `"filesystem"` | `"http"` |
+| `capabilities.streaming` | `false` | `true` (when WebSocket active) |
+| `capabilities.pushNotifications` | `false` | `true` (when WebSocket active) |
+| `authentication` | absent | `{ "schemes": ["bearer"], "credentials_ref": "..." }` |
+
+### HTTP Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/.well-known/agent-card.json` | None (public) | Agent card discovery (per Google A2A spec) |
+| POST | `/tasks/send` | Required | Submit a task or message |
+| GET | `/tasks/{id}` | Required | Get task state (mapped from `state.json`) |
+| POST | `/tasks/{id}/cancel` | Required | Request task cancellation |
+| WS | `/tasks/{id}/subscribe` | Required | WebSocket for real-time state updates (optional, requires `websockets` library) |
+| GET | `/health` | None | Server health check |
+| GET | `/files/{path}` | Required | Serve `.forge/` files for cross-repo contract validation (read-only) |
+
+### Discovery
+
+Remote agents are discovered via two mechanisms:
+
+1. **Explicit configuration:** `a2a.remote_agents` in `forge-config.md` lists known agent URLs and project IDs.
+2. **Local registry:** When `a2a.discovery_enabled: true`, agents broadcast their presence via UDP on `a2a.discovery_port` (default 9474). Other forge instances on the same network segment discover them automatically.
+
+Explicit configuration takes precedence. Discovery results are stored in `state.json.a2a.discovered_agents[]`.
+
+### Security
+
+| Mode | Description | When to use |
+|---|---|---|
+| `token` (default) | Auto-generated bearer token, rotated every `token_ttl_hours` (default 24). Stored in `.forge/a2a-credentials.json` (gitignored). Clients refresh on 401. | LAN, trusted networks |
+| `mtls` | Mutual TLS with client certificates. Requires `a2a.tls.cert_path`, `a2a.tls.key_path`, `a2a.tls.ca_path`. | Enterprise, zero-trust environments |
+| `none` | No authentication. Only allowed when `a2a.http_bind: 127.0.0.1` (localhost-only). PREFLIGHT rejects `auth_mode: none` with non-localhost bind. | Local development only |
+
+### Fallback to Filesystem
+
+If HTTP transport fails at any point, the system falls back to filesystem transport transparently:
+
+- **Python 3 not available:** WARNING logged, filesystem transport used for the entire run.
+- **Port conflict:** Tries `http_port` through `http_port + 10`. All fail: WARNING, filesystem fallback.
+- **Remote agent unreachable:** 3 retries (5s, 15s, 30s backoff). After exhaustion: agent marked `unreachable`. If a filesystem path exists in `related_projects`, it is used instead.
+- **Server crash mid-run:** Orchestrator detects missing PID, restarts. Two restart failures: filesystem fallback.
+- **mTLS certificate invalid:** CRITICAL logged. Server not started. Filesystem fallback.
+
+The transport layer logs all fallbacks as WARNING so they are visible in pipeline output without blocking the run.
+
+### WebSocket (Optional Enhancement)
+
+When `a2a.websocket_enabled: true` (default) and HTTP transport is active, the server provides a WebSocket endpoint at `/tasks/{id}/subscribe`. Consumers receive real-time state change notifications instead of polling:
+
+```
+Server pushes: { "event": "state_change", "from": "REVIEWING", "to": "SHIPPING" }
+```
+
+WebSocket requires the `websockets` Python library. If unavailable, the server starts without WebSocket support and clients fall back to HTTP polling. Disconnected WebSocket clients reconnect with backoff (1s, 2s, 4s, max 30s) and fall back to polling after 3 failed reconnects.
+
+### Server Lifecycle
+
+1. **Start (PREFLIGHT):** Orchestrator reads `a2a.transport` from config. If `http`: start `a2a-server.sh` as background Python process, record PID in `.forge/.a2a-server.pid`, update agent card with HTTP URL.
+2. **Run:** Server reads `.forge/state.json` on each request (cached, refreshed every 2s). Memory: 10-30MB. CPU: <1% idle.
+3. **Stop (LEARNING/ABORT):** SIGTERM to server PID. 5s grace period for WebSocket drain. PID file removed.
+
+---
+
 ## Configuration
 
-A2A is implicit — no explicit configuration is required. The protocol activates when:
+### Filesystem Transport (Implicit)
+
+A2A filesystem transport requires no explicit configuration. The protocol activates when:
 
 1. `.forge/agent-card.json` exists in a target repository
 2. `fg-103` detects the card during cross-repo setup
 
 There is no `a2a.enabled` flag. Presence of the agent card is the signal.
+
+### HTTP Transport (Explicit)
+
+HTTP transport is configured via the `a2a:` section in `forge-config.md`:
+
+```yaml
+a2a:
+  transport: filesystem           # filesystem (default) | http
+  http_port: 9473                 # Port for A2A HTTP server
+  auth_mode: token                # token | mtls | none
+```
+
+See `shared/a2a-http-transport.md` for the full configuration reference.
 
 ### Opting Out
 
@@ -239,18 +365,27 @@ To prevent A2A discovery for a specific project, do not run `/forge-init` in tha
 ```
 /forge-init
   → Detects git remote, generates .forge/agent-card.json
+  → If a2a.transport == "http": includes transport and authentication fields in card
 
 /forge-run (producer repo)
+  → PREFLIGHT: if a2a.transport == "http", start A2A HTTP server on configured port
   → state.json updated at each stage transition
   → No agent-card.json changes during run
+  → LEARNING/ABORT: stop A2A HTTP server if running
 
 fg-103 (consumer repo)
-  → Reads producer's agent-card.json for capabilities
-  → Polls producer's state.json, maps to A2A task states
+  → Reads producer's agent-card.json for capabilities (filesystem or HTTP GET)
+  → Polls producer's state.json, maps to A2A task states (filesystem read or HTTP GET)
+  → If WebSocket available: subscribes for real-time state push notifications
   → Dispatches consumer when producer reaches "completed"
 
 Fallback (no agent card)
   → fg-103 polls state.json directly
   → Uses story_state without A2A mapping
   → Logs INFO about missing agent card
+
+Transport fallback (HTTP failure)
+  → Falls back to filesystem if path available
+  → Logs WARNING about HTTP failure
+  → Run continues without interruption
 ```

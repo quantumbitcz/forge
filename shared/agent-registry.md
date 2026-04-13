@@ -44,6 +44,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |
 | fg-610-infra-deploy-verifier | 3 | No | Ship | Infrastructure |
+| fg-620-deploy-verifier | 3 | No | Ship | Deployment |
 | fg-650-preview-validator | 3 | No | Ship | Preview |
 | fg-700-retrospective | 3 | No | Learn | Learning |
 | fg-710-post-run | 2 | No | Learn | Feedback |

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v1.25.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v2.0.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -16,10 +16,13 @@ Layered, resolution top-down:
    - `frameworks/` (21): spring, react, fastapi, axum, swiftui, vapor, express, sveltekit, k8s, embedded, go-stdlib, aspnet, django, nextjs, gin, jetpack-compose, kotlin-multiplatform, angular, nestjs, vue, svelte — each with `conventions.md`, config files, `variants/`, and subdirectory bindings (`testing/`, `persistence/`, `messaging/`, etc.)
    - `testing/` (19): kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, xunit-nunit, testcontainers, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest
    - `databases/`, `persistence/`, `migrations/`, `api-protocols/`, `messaging/`, `caching/`, `search/`, `storage/`, `auth/`, `observability/` — domain-specific best practices
+   - `ml-ops/` (4): mlflow, dvc, wandb, sagemaker — ML experiment tracking, model registry, data version control
+   - `data-pipelines/` (3): airflow, dagster, dbt — data orchestration and transformation
+   - `feature-flags/` (3): conventions + launchdarkly, unleash — feature flag lifecycle and provider patterns
    - `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. The composition algorithm is documented in `shared/composition.md`. When convention stacks are resolved at PREFLIGHT, files are loaded in this order with later files overriding earlier ones for conflicting rules.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 41 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 42 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -89,6 +92,10 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Next-task prediction | `shared/next-task-prediction.md` |
 | DX metrics | `shared/dx-metrics.md` |
 | Monorepo integration | `shared/monorepo-integration.md` |
+| Feature flag management | `shared/feature-flag-management.md` |
+| A2A HTTP transport | `shared/a2a-http-transport.md` |
+| Deployment strategies | `shared/deployment-strategies.md` |
+| Consumer-driven contracts | `shared/consumer-driven-contracts.md` |
 
 ## Skill selection guide
 
@@ -136,7 +143,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`)
-- Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
+- Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-620-deploy-verifier` (conditional on deployment strategy), `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
 **Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-backend-performance-reviewer`, `fg-417-version-compat-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`, `fg-420-dependency-reviewer`.
@@ -145,9 +152,9 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 - **Frontmatter required:** `name` (must match filename sans `.md`), `description`, `tools`. Dispatch agents must include `Agent`.
 - **UI:** `AskUserQuestion` for multi-option choices (never `Options: (1)...`). `EnterPlanMode`/`ExitPlanMode` for planning (skip in autonomous/replanning). `TaskCreate`/`TaskUpdate` wraps every dispatch.
-- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier, property-test-generator. Tier 4 (none): all reviewers (fg-410 through fg-420), mutation analyzer, validator, worktree manager, conflict resolver.
+- **UI tiers:** Tier 1 (tasks+ask+plan): shaper, scope-decomposer, planner, migration planner, bootstrapper, sprint orchestrator. Tier 2 (tasks+ask): orchestrator, bug investigator, quality gate, test gate, PR builder, cross-repo coordinator, post-run. Tier 3 (tasks): implementer, frontend polisher, retrospective, docs discoverer, deprecation refresh, preview validator, pre-ship verifier, infra verifier, scaffolder, docs generator, contract validator, test bootstrapper, build-verifier, property-test-generator, deploy-verifier. Tier 4 (none): all reviewers (fg-410 through fg-420), mutation analyzer, validator, worktree manager, conflict resolver.
 - **`ui:` frontmatter** declares capabilities; enforced by `ui-frontmatter-consistency.bats`.
-- **Config:** `components:` in `forge.local.md` — core: `language:`, `framework:`, `variant:`, `testing:`. Framework-specific: `web`, `persistence` (distinct from crosscutting `modules/persistence/`). Optional crosscutting: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality` (list type, supports object form with external ruleset). Multi-service: entries with `path:`. Documentation config: `documentation:` section controls generation.
+- **Config:** `components:` in `forge.local.md` — core: `language:`, `framework:`, `variant:`, `testing:`. Framework-specific: `web`, `persistence` (distinct from crosscutting `modules/persistence/`). Optional crosscutting: `database`, `migrations`, `api_protocol`, `messaging`, `caching`, `search`, `storage`, `auth`, `observability`, `build_system`, `ci`, `container`, `orchestrator`, `documentation`, `code_quality` (list type, supports object form with external ruleset), `ml_ops`, `data_pipeline`, `feature_flags`. Multi-service: entries with `path:`. Documentation config: `documentation:` section controls generation.
 - **`mode_config:`** defines per-stage agent selection and mode overlays. `mode_config.stages` maps each pipeline stage to its default agent. `mode_config.mode_overlays` overrides specific stages per pipeline mode (bugfix, migration, bootstrap). Resolution: overlay > stage default > hardcoded fallback.
 - **Worktree:** All impl in `.forge/worktree`. User's tree never modified. Branch collision → epoch suffix.
 - **Challenge Brief required** in every plan. Validator returns REVISE if missing.
@@ -166,7 +173,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 68 shared categories (19 wildcard prefixes + 49 discrete). See `shared/checks/category-registry.json` for the full list. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `SPEC-DRIFT-*`, `PERF-REGRESSION-*`. Key discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`, `SPEC-INFERENCE-LOW`, `SPEC-INFERENCE-CONFLICT`, `TEST-PROPERTY-INVARIANT`, `TEST-PROPERTY-ROUNDTRIP`, `TEST-PROPERTY-IDEMPOTENT`, `TEST-PROPERTY-METAMORPHIC`, `TEST-PROPERTY-COMMUTATIVE`, `TEST-PROPERTY-MONOTONIC`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 83 shared categories (23 wildcard prefixes + 60 discrete). See `shared/checks/category-registry.json` for the full list. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `SPEC-DRIFT-*`, `PERF-REGRESSION-*`, `ML-VERSION-*`, `ML-REPRO-*`, `ML-DATA-*`, `ML-PIPELINE-*`. Key discrete: `REVIEW-GAP`, `DESIGN-TOKEN`, `DESIGN-MOTION`, `TEST-FLAKY`, `TEST-QUARANTINE`, `SEC-MCP-UNAUTHORIZED`, `SEC-CLOUD-CRED`, `SEC-CACHE-TAMPER`, `SPEC-INFERENCE-LOW`, `SPEC-INFERENCE-CONFLICT`, `TEST-PROPERTY-INVARIANT`, `TEST-PROPERTY-ROUNDTRIP`, `TEST-PROPERTY-IDEMPOTENT`, `TEST-PROPERTY-METAMORPHIC`, `TEST-PROPERTY-COMMUTATIVE`, `TEST-PROPERTY-MONOTONIC`, `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop quick verification within Stage 4, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -223,6 +230,11 @@ States: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING →
 - **Next-task prediction** (v2.0, F18): `fg-710-post-run` analyzes changes and predicts follow-up tasks using 19 pattern rules + graph queries. Accuracy tracking in `.forge/predictions.json`. Config: `predictions.*`.
 - **DX metrics** (v2.0, F19): 10 developer experience metrics (cycle time, first-attempt success, cost-per-feature, convergence efficiency, etc.) in `.forge/dx-metrics.json`. Sprint burndown support. Config: `dx_metrics.*`.
 - **Monorepo tooling** (v2.0, F20): Nx and Turborepo modules with affected detection, scoped testing/building. Auto-detection at PREFLIGHT from `nx.json` or `turbo.json`. Config: `monorepo.*`.
+- **AI/ML pipeline support** (v2.0, F22): ML-ops modules (mlflow, dvc, wandb, sagemaker) and data pipeline modules (airflow, dagster, dbt) with convention enforcement, L1 pattern rules, and auto-detection at PREFLIGHT. Finding categories: `ML-VERSION-*`, `ML-REPRO-*`, `ML-DATA-*`, `ML-PIPELINE-*`. Config: `ml_ops.*`.
+- **Feature flag management** (v2.0, F23): Feature flag lifecycle management with stale flag detection, dual-path testing verification, and deploy-time flag state checks. Provider modules: LaunchDarkly, Unleash. Finding categories: `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP`. Config: `feature_flags.*`.
+- **A2A HTTP transport** (v2.0, F21): HTTP transport alongside filesystem for cross-machine A2A coordination. Agent cards served via HTTP, task submission/polling, token/mTLS auth. Falls back to filesystem transparently. Config: `a2a.*`.
+- **Deployment strategies** (v2.0, F24): Canary (step-based traffic progression), blue-green (parallel environments), and rolling deployment strategies with metric-based promotion/rollback. New `fg-620-deploy-verifier` agent. Argo Rollouts integration. Finding categories: `DEPLOY-*`. Config: `deployment.*`.
+- **Consumer-driven contracts** (v2.0, F25): Pact integration for consumer-driven contract testing. Broker/local/A2A pact sources. Can-i-deploy gate at SHIPPING. Alternative frameworks: Specmatic, Spring Cloud Contract. Finding categories: `CONTRACT-PACT-*`. Config: `contract_testing.*`.
 
 ### Deterministic Control Flow
 
@@ -385,7 +397,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 
 ## Distribution
 
-`plugin.json` (v1.25.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v2.0.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 

@@ -364,3 +364,33 @@ i18n:
   enabled: false                 # Opt-in
   source_locale: en
   frameworks: [auto]
+
+# A2A Protocol (v2.0+)
+a2a:
+  transport: filesystem          # filesystem (default) | http
+  http_port: 9473
+  auth_mode: token
+
+# Deployment Strategies (v2.0+)
+deployment:
+  default_strategy: rolling
+  canary_steps: [5, 25, 50, 100]
+  metric_threshold:
+    error_rate_pct: 1
+    latency_p99_ms: 500
+
+# Consumer-Driven Contracts (v2.0+)
+contract_testing:
+  provider: auto
+  can_i_deploy: true
+
+# AI/ML Pipeline (v2.0+)
+ml_ops:
+  enabled: false                 # Opt-in
+  frameworks: [auto]
+
+# Feature Flags (v2.0+)
+feature_flags:
+  enabled: false                 # Opt-in
+  provider: auto
+  stale_threshold_days: 30
