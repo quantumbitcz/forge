@@ -25,7 +25,7 @@ Process: **$ARGUMENTS**
 
 Analyzes project codebase, produces navigable wiki under `.forge/wiki/`. Living reference for downstream agents (PLAN, IMPLEMENT, REVIEW) and developer onboarding.
 
-No source code modification. No files outside `.forge/wiki/`. Read-only codebase access + wiki writes only.
+DO NOT modify source code. No files outside `.forge/wiki/`. Read-only codebase access + wiki writes only.
 
 ---
 
@@ -201,4 +201,4 @@ Never fail pipeline — wiki generation is advisory.
 
 ## 14. Forbidden Actions
 
-No source code modifications. No files outside `.forge/wiki/`. No shared contract changes. No external HTTP requests. Never fail pipeline.
+DO NOT modify source code. No files outside `.forge/wiki/`. No shared contract changes. No external HTTP requests. Never fail pipeline.

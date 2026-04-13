@@ -61,6 +61,11 @@ sqldelight {
 }
 ```
 
+## Testing
+- Use `Schema.migrate(driver, 1, currentVersion)` to test full migration path
+- Enable `verifyMigrations = true` for compile-time drift detection
+- Test each `.sqm` file individually with snapshot assertions
+
 ## Dos
 - Enable `verifyMigrations = true` — catches schema drift at compile time
 - Test full migration path in CI (`Schema.migrate(driver, 1, currentVersion)`)

@@ -214,7 +214,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 @test "skill-quality: minimum skill count is met" {
   local count=0
   for skill_dir in "$SKILLS_DIR"/*/; do
-    [[ -f "$skill_dir/SKILL.md" ]] && (( count++ ))
+    [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
   if (( count < 32 )); then
     fail "Expected at least 32 skills, found $count"

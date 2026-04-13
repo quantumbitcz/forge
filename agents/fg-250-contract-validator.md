@@ -3,7 +3,7 @@ name: fg-250-contract-validator
 description: Detects breaking changes in shared API contracts (OpenAPI, Protobuf, GraphQL) between producer and consumer repos.
 model: inherit
 color: yellow
-tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']
+tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true
   ask: false

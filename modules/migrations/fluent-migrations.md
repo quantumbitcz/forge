@@ -49,6 +49,11 @@ app.migrations.add(CreateOrder())   // after CreateUser (FK dependency)
 app.migrations.add(AddOrderNotes())
 ```
 
+## Testing
+- Use `app.autoRevert()` in test teardown to roll back migrations cleanly
+- Test both `prepare()` and `revert()` for every migration
+- Use an in-memory SQLite database for fast migration tests
+
 ## Dos
 - Always implement `revert()` — enables clean teardown in test pipelines
 - Register migrations in dependency order (parent tables before child tables)

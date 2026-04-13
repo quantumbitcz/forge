@@ -41,7 +41,7 @@ _collect_crosscutting_files() {
   for dir in "${CROSSCUTTING_DIRS[@]}"; do
     count=0
     for f in "$MODULES_DIR/$dir"/*.md; do
-      [[ -f "$f" ]] && (( count++ ))
+      [[ -f "$f" ]] && (( ++count ))
     done
     local min_var="MIN_${dir^^}_MODULES"
     min_var="${min_var//-/_}"

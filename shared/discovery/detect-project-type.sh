@@ -215,7 +215,7 @@ if [[ "$type" == "unknown" ]]; then
     type="infra"
     framework="k8s"
     language="yaml"
-  elif [[ -f "$DIR/Dockerfile" ]] && [[ ! -f "$DIR/package.json" && ! $has_gradle_kts && ! $has_cargo ]]; then
+  elif [[ -f "$DIR/Dockerfile" && ! -f "$DIR/package.json" ]] && ! $has_gradle_kts && ! $has_cargo; then
     # Standalone Dockerfile without k8s manifests — no framework module applies.
     # k8s conventions (Helm, pod security) don't apply to plain containerized apps.
     type="infra"

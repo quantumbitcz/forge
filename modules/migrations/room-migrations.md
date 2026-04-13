@@ -50,6 +50,11 @@ class Migration2To3Spec : AutoMigrationSpec
 }
 ```
 
+## Testing
+- Use `MigrationTestHelper` for every manual migration
+- Test full migration path from version 1 to current in CI
+- Validate exported schema JSONs match expected structure
+
 ## Dos
 - Use `AutoMigration` for additive changes (add column, add table, rename column)
 - Write `MigrationTestHelper` tests for every manual migration

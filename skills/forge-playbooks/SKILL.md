@@ -149,4 +149,4 @@ If `$ARGUMENTS` contains a playbook name, show the detailed view for that specif
 - `/forge-run --playbook={name}` -- Run a specific playbook
 - `/forge-shape` -- Shape a requirement that could become a playbook
 - `/forge-insights` -- Cross-run analytics including playbook effectiveness
-- `shared/playbooks.md` -- Playbook format specification and interpolation syntax
+- `playbooks.md` (in shared) -- Playbook format specification and interpolation syntax

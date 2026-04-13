@@ -172,6 +172,7 @@ Validates against 57-row table from `shared/state-transitions.md`. Follow return
 ```bash
 bash shared/forge-state.sh init <story-id> "<requirement>" --mode <mode> --forge-dir .forge
 ```
+Init sets `"convergence"` object with `"phase"` = `"correctness"`, counters zeroed. Mode `"bugfix"` populates `bugfix.source`, `bugfix.reproduction`, `bugfix.root_cause` (all null until populated by fg-020).
 
 ### Query
 ```bash
@@ -909,7 +910,7 @@ Each iteration increments `total_iterations` + `total_retries`. Exceeded → esc
 
 Graph available → "Documentation Impact" + "Stale Docs Detection" queries.
 
-Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 + fg-410 + fg-411 (+ fg-413 if frontend files).
+Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 + fg-410-code-reviewer + fg-411 (+ fg-413 if frontend files). Bugfix mode: reduced batch dispatches fg-410-code-reviewer alongside fg-411-security-reviewer.
 
 ### SS6.2 Batch Dispatch
 
@@ -1002,7 +1003,7 @@ After fix → re-run DOCS + re-dispatch fg-590.
 
 ---
 
-## 8.1 Stage 8: SHIP (dispatch fg-600)
+## 8.1 Stage 8: SHIPPING (dispatch fg-600)
 
 **Pre-condition:** evidence.json verdict=SHIP, timestamp fresh.
 
