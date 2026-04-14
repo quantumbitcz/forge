@@ -484,6 +484,11 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `confidence.complexity` | number | — | Codebase complexity dimension score (0.0-1.0, inverted -- higher means simpler). Based on affected file count, cross-component changes, cyclomatic complexity. |
 | `confidence.history` | number | — | Historical success rate dimension score (0.0-1.0). Based on last 5 runs for the same `domain_area`. 0.3 when no prior runs exist. |
 | `confidence.gate_decision` | string | — | Gate decision after confidence evaluation. Valid values: `"PROCEED"` (HIGH confidence), `"ASK"` (MEDIUM -- user confirmation requested), `"SUGGEST_SHAPE"` (LOW -- `/forge-shape` recommended). In autonomous mode, always logged but not enforced. |
+| `eval` | object | No | Last eval run metadata. Informational only, not consumed by pipeline agents. Updated by `eval-runner.sh` after a live eval run completes (best-effort -- skipped if no `state.json` exists). |
+| `eval.last_suite` | string | — | Name of the last eval suite that was run (e.g., `"lite"`, `"smoke"`). |
+| `eval.last_run_timestamp` | string | — | ISO 8601 timestamp of the last eval run completion. |
+| `eval.last_pass_rate` | number | — | Pass rate (0.0-1.0) from the last eval run. |
+| `eval.last_result_file` | string | — | Relative path to the result JSON file from the last eval run (e.g., `"evals/pipeline/results/2026-04-14-10-30-00-lite.json"`). |
 
 ### tokens.by_stage entry schema
 
