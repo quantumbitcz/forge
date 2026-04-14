@@ -322,6 +322,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
 - `.forge/wiki/` survives `/forge-reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
 - Auto-discovered PREEMPT items (`source: auto-discovered`) decay 2x faster than normal items. They start at MEDIUM confidence, not HIGH. After 3 successful applications they promote to HIGH.
+- **Platform requirements:** Forge requires bash 4.0+ (macOS needs `brew install bash`). PowerShell and CMD are not supported — on Windows, use WSL2 (recommended) or Git Bash (limited). All scripts use `#!/usr/bin/env bash`. Git Bash has known MSYS path translation issues (commit `0ac4874`). Docker features require Docker Desktop with WSL2 backend on Windows.
 
 ### Check engine
 
