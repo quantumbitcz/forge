@@ -262,7 +262,7 @@ fixtures_dir = '${FIXTURES_DIR}'
 task_results_dir = '${task_results_dir}'
 model = '${model}' or None
 tags_filter = '${tags}'.split(',') if '${tags}' else []
-keep_workdirs = ${keep_workdirs} if '${keep_workdirs}' != 'false' else False
+keep_workdirs = True if '${keep_workdirs}' != 'false' else False
 timeout_min = ${EVAL_DEFAULT_TIMEOUT}
 
 results = {
