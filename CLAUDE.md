@@ -225,6 +225,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-timeout.sh` | Pipeline timeout enforcement |
 | `forge-compact-check.sh` | Compaction suggestion hook |
 | `check-prerequisites.sh` | bash 4+ and python3 validation |
+| `check-environment.sh` | Optional tool + integration detection for forge-init |
 | `forge-otel-export.sh` | OpenTelemetry trace and metric export |
 | `hooks/automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
 
