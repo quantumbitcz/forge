@@ -647,18 +647,22 @@ Entering stage → `in_progress`. Completing → `completed`. `--from` skips →
 
 When entering each stage, create substage tasks as children of the stage task. Each substage represents a discrete step within the stage. Use `addBlockedBy: [stage_task_id]` to nest them.
 
-**Substage naming convention:** `{agent_color_dot} {agent_name}: {what it does}`
+**Substage naming convention:** `{color_dot} Dispatching {agent_name}`
 
-Color dots for agent identification (use Unicode):
-- 🟢 green agents (fg-300, fg-310, fg-320, fg-350, fg-610, fg-619, fg-620, fg-650)
+Color dots for agent identification (from `color:` frontmatter field):
+- 🟢 green agents (fg-300, fg-310, fg-350, fg-419, fg-610, fg-620, fg-650)
 - 🔴 red agents (fg-400, fg-411, fg-590)
 - 🔵 blue agents (fg-200, fg-600)
-- 🟡 yellow agents (fg-210, fg-416, fg-500, fg-505, fg-250)
-- 🟣 magenta agents (fg-010, fg-050, fg-090, fg-320, fg-700, fg-710, fg-015)
+- 🟡 yellow agents (fg-210, fg-250, fg-416, fg-500, fg-505)
+- 🟣 magenta agents (fg-010, fg-015, fg-050, fg-090, fg-320, fg-700, fg-710)
 - 🟤 purple agents (fg-020)
-- ⚪ cyan agents (fg-100, fg-130, fg-140, fg-150, fg-410, fg-412, fg-417)
+- 🔷 teal agents (fg-413)
+- 🟠 orange agents (fg-160)
+- ⚪ cyan agents (fg-100, fg-130, fg-135, fg-140, fg-150, fg-410, fg-412, fg-417, fg-510, fg-515)
 - ⬜ gray agents (fg-101, fg-102, fg-103)
 - ⬛ white agents (fg-418)
+
+Agents without `color:` in frontmatter default to ⚪ cyan.
 
 **Per-stage substage templates:**
 

@@ -1,6 +1,7 @@
 ---
 name: fg-135-wiki-generator
 description: Auto-generates codebase wiki from code analysis. Dispatched at PREFLIGHT (full) and LEARN (incremental).
+color: cyan
 tools:
   - Read
   - Glob

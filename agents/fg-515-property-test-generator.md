@@ -1,6 +1,7 @@
 ---
 name: fg-515-property-test-generator
 description: Generates property-based tests for changed functions. Dispatched by fg-500-test-gate after standard tests pass and mutation analysis completes, when property_testing.enabled is true.
+color: cyan
 tools:
   - Read
   - Write
