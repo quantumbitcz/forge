@@ -96,18 +96,43 @@ config_path = os.path.join(os.environ.get('FORGE_CONFIG_DIR', '.'), 'forge-confi
 try:
     if os.path.exists(config_path):
         with open(config_path) as cf:
-            parts = cf.read().split('---')
-        if len(parts) >= 3:
+            content = cf.read()
+        # Try yaml first, fall back to regex parsing
+        cg = {}
+        try:
             import yaml
-            cfg = yaml.safe_load(parts[1]) or {}
-            cg = cfg.get('context_guard', {})
-            if cg.get('enabled') is False:
-                print('EXIT:10')
-                print('DISABLED')
-                sys.exit(0)
-            cond_threshold = int(cg.get('condensation_threshold', cond_threshold))
-            crit_threshold = int(cg.get('critical_threshold', crit_threshold))
-            max_triggers = int(cg.get('max_condensation_triggers', max_triggers))
+            parts = content.split('---')
+            if len(parts) >= 3:
+                cfg = yaml.safe_load(parts[1]) or {}
+                cg = cfg.get('context_guard', {})
+        except ImportError:
+            # No PyYAML — use regex fallback for simple key: value pairs
+            import re
+            in_cg = False
+            for line in content.splitlines():
+                if re.match(r'context_guard:', line):
+                    in_cg = True
+                    continue
+                if in_cg and not line.startswith(' '):
+                    break
+                if in_cg:
+                    m = re.match(r'\s+(\w+):\s*(.+)', line)
+                    if m:
+                        val = m.group(2).strip()
+                        if val == 'false': val = False
+                        elif val == 'true': val = True
+                        elif val.isdigit(): val = int(val)
+                        cg[m.group(1)] = val
+        if cg.get('enabled') is False:
+            print('EXIT:10')
+            print('DISABLED')
+            sys.exit(0)
+        if 'condensation_threshold' in cg:
+            cond_threshold = int(cg['condensation_threshold'])
+        if 'critical_threshold' in cg:
+            crit_threshold = int(cg['critical_threshold'])
+        if 'max_condensation_triggers' in cg:
+            max_triggers = int(cg['max_condensation_triggers'])
 except Exception:
     pass
 
