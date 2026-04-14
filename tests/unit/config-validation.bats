@@ -43,3 +43,68 @@ setup() {
   assert_failure
   assert_output --partial "ERROR"
 }
+
+@test "validate-config: accepts platform.windows_mode: auto" {
+  local config_file="${BATS_TEST_TMPDIR}/platform-auto.md"
+  cat > "$config_file" << 'EOF'
+```yaml
+components:
+  language: kotlin
+  framework: spring
+  testing: kotest
+platform:
+  windows_mode: auto
+```
+EOF
+  run bash "$PLUGIN_ROOT/shared/validate-config.sh" "$config_file"
+  assert_success
+}
+
+@test "validate-config: accepts platform.windows_mode: wsl" {
+  local config_file="${BATS_TEST_TMPDIR}/platform-wsl.md"
+  cat > "$config_file" << 'EOF'
+```yaml
+components:
+  language: kotlin
+  framework: spring
+  testing: kotest
+platform:
+  windows_mode: wsl
+```
+EOF
+  run bash "$PLUGIN_ROOT/shared/validate-config.sh" "$config_file"
+  assert_success
+}
+
+@test "validate-config: accepts platform.windows_mode: gitbash" {
+  local config_file="${BATS_TEST_TMPDIR}/platform-gitbash.md"
+  cat > "$config_file" << 'EOF'
+```yaml
+components:
+  language: kotlin
+  framework: spring
+  testing: kotest
+platform:
+  windows_mode: gitbash
+```
+EOF
+  run bash "$PLUGIN_ROOT/shared/validate-config.sh" "$config_file"
+  assert_success
+}
+
+@test "validate-config: warns on invalid platform.windows_mode" {
+  local config_file="${BATS_TEST_TMPDIR}/platform-invalid.md"
+  cat > "$config_file" << 'EOF'
+```yaml
+components:
+  language: kotlin
+  framework: spring
+  testing: kotest
+platform:
+  windows_mode: native
+```
+EOF
+  run bash "$PLUGIN_ROOT/shared/validate-config.sh" "$config_file"
+  [[ "$status" -eq 2 ]]
+  assert_output --partial "platform.windows_mode"
+}
