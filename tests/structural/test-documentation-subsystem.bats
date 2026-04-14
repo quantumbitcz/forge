@@ -37,9 +37,9 @@ MODULES_DIR="$PLUGIN_ROOT/modules"
   grep -q "tools:" "$agent_file" || fail "Missing tools field"
 }
 
-@test "docs-structural: docs-generate skill exists" {
-  [ -f "$SKILLS_DIR/docs-generate/SKILL.md" ] || fail "Skill file not found"
-  grep -q "^name: docs-generate" "$SKILLS_DIR/docs-generate/SKILL.md" || fail "Missing or incorrect name field"
+@test "docs-structural: forge-docs-generate skill exists" {
+  [ -f "$SKILLS_DIR/forge-docs-generate/SKILL.md" ] || fail "Skill file not found"
+  grep -q "^name: forge-docs-generate" "$SKILLS_DIR/forge-docs-generate/SKILL.md" || fail "Missing or incorrect name field"
 }
 
 @test "docs-structural: modules/documentation/conventions.md exists" {

@@ -3,7 +3,7 @@
 setup() {
   load '../../helpers/test-helpers'
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/verify/SKILL.md"
+  SKILL_FILE="$SKILLS_DIR/forge-verify/SKILL.md"
 }
 
 @test "verify-integration: skill documents forge.local.md prerequisite" {

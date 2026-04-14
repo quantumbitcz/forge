@@ -124,3 +124,21 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
     fail "Skills with empty description: ${empty[*]}"
   fi
 }
+
+# ---------------------------------------------------------------------------
+# 8. Every SKILL.md has allowed-tools: in frontmatter
+# ---------------------------------------------------------------------------
+@test "skill-frontmatter: every SKILL.md has allowed-tools field" {
+  local missing=()
+  for f in "$SKILLS_DIR"/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    local skill_dir
+    skill_dir="$(basename "$(dirname "$f")")"
+    if ! grep -q '^allowed-tools:' "$f"; then
+      missing+=("$skill_dir")
+    fi
+  done
+  if [ ${#missing[@]} -gt 0 ]; then
+    fail "Skills missing allowed-tools: field: ${missing[*]}"
+  fi
+}

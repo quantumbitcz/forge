@@ -5,7 +5,7 @@ setup() {
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
 }
 
-THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project migration)
+THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint forge-bootstrap forge-migration)
 
 @test "thin-launcher: all have dispatch instruction" {
   for s in "${THIN_LAUNCHERS[@]}"; do

@@ -31,7 +31,7 @@ setup() {
 
 @test "skill-completeness: verify skill has content" {
   local body_lines
-  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/verify/SKILL.md" | grep -c '[^[:space:]]')
+  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-verify/SKILL.md" | grep -c '[^[:space:]]')
   [[ "$body_lines" -ge 10 ]]
 }
 

@@ -46,3 +46,24 @@ load '../helpers/test-helpers'
 
   [[ "$violations" -eq 0 ]]
 }
+
+@test "all skill references in agents point to existing skills" {
+  local violations=0
+  local skills_dir="$PLUGIN_ROOT/skills"
+
+  while IFS= read -r -d '' agent; do
+    # Extract /skill-name references (backtick-escaped, lowercase with hyphens)
+    local refs
+    refs=$(grep -oE '`/[a-z][-a-z]+`' "$agent" 2>/dev/null | sed 's/`//g; s|^/||' | sort -u || true)
+
+    while IFS= read -r ref; do
+      [[ -z "$ref" ]] && continue
+      if [[ ! -d "$skills_dir/$ref" ]]; then
+        echo "BROKEN: $(basename "$agent") references /$ref but skills/$ref/ not found"
+        violations=$((violations + 1))
+      fi
+    done <<< "$refs"
+  done < <(find "$PLUGIN_ROOT/agents" -name "*.md" -print0 2>/dev/null)
+
+  [[ "$violations" -eq 0 ]]
+}

@@ -1,23 +1,23 @@
 #!/usr/bin/env bats
-# Contract test: graph-debug skill structure and safety.
+# Contract test: forge-graph-debug skill structure and safety.
 
 load '../helpers/test-helpers'
 
-SKILL_FILE="$PLUGIN_ROOT/skills/graph-debug/SKILL.md"
+SKILL_FILE="$PLUGIN_ROOT/skills/forge-graph-debug/SKILL.md"
 
-@test "graph-debug: skill file exists" {
+@test "forge-graph-debug: skill file exists" {
   [[ -f "$SKILL_FILE" ]]
 }
 
-@test "graph-debug: has valid frontmatter with name and description" {
+@test "forge-graph-debug: has valid frontmatter with name and description" {
   # get_frontmatter() provided by test-helpers.bash
   local frontmatter
   frontmatter="$(get_frontmatter "$SKILL_FILE")"
-  echo "$frontmatter" | grep -q "^name: graph-debug" || fail "Missing name: graph-debug"
+  echo "$frontmatter" | grep -q "^name: forge-graph-debug" || fail "Missing name: forge-graph-debug"
   echo "$frontmatter" | grep -q "^description:" || fail "Missing description field"
 }
 
-@test "graph-debug: all Cypher queries have LIMIT clause" {
+@test "forge-graph-debug: all Cypher queries have LIMIT clause" {
   # Safety section claims "All queries enforce LIMIT"
   local missing=0
   local block=""
@@ -37,7 +37,7 @@ SKILL_FILE="$PLUGIN_ROOT/skills/graph-debug/SKILL.md"
   [[ "$missing" -eq 0 ]] || fail "$missing Cypher blocks missing LIMIT clause"
 }
 
-@test "graph-debug: all Cypher queries are read-only" {
+@test "forge-graph-debug: all Cypher queries are read-only" {
   # No CREATE, MERGE, DELETE, SET, DETACH, REMOVE in Cypher blocks
   local violations=()
   while IFS= read -r line; do

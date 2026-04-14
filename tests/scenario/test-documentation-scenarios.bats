@@ -47,18 +47,18 @@ load '../helpers/test-helpers'
   grep -qi "Never in Pipeline Mode\|never.*pipeline\|runbook.*standalone\|standalone.*only" "$agent" || fail "Missing pipeline mode guardrails"
 }
 
-@test "docs-scenario: docs-generate skill supports --coverage flag" {
-  local skill="$PLUGIN_ROOT/skills/docs-generate/SKILL.md"
+@test "docs-scenario: forge-docs-generate skill supports --coverage flag" {
+  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
   grep -q "\-\-coverage" "$skill" || fail "Missing --coverage flag"
 }
 
-@test "docs-scenario: docs-generate skill supports --confirm-decisions flag" {
-  local skill="$PLUGIN_ROOT/skills/docs-generate/SKILL.md"
+@test "docs-scenario: forge-docs-generate skill supports --confirm-decisions flag" {
+  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
   grep -q "\-\-confirm-decisions" "$skill" || fail "Missing --confirm-decisions flag"
 }
 
-@test "docs-scenario: docs-generate skill detects framework without pipeline config" {
-  local skill="$PLUGIN_ROOT/skills/docs-generate/SKILL.md"
+@test "docs-scenario: forge-docs-generate skill detects framework without pipeline config" {
+  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
   grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" "$skill" || fail "Missing standalone framework detection"
 }
 
