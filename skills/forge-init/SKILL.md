@@ -14,6 +14,52 @@ Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel`. If fails: report "Not a git repository. Initialize with `git init` first." and STOP.
 2. **System prerequisites:** Run `bash shared/check-prerequisites.sh`. If fails: show the error messages and STOP. The user must install the missing prerequisites before the forge can operate.
+3. **Environment health check (informational):** Run `bash "${CLAUDE_PLUGIN_ROOT}/shared/check-environment.sh"`. Parse the JSON output and display a categorized dashboard:
+
+   ```
+   ## Environment Health
+
+   ### Required
+     ✅ bash 5.2.26         Shell runtime
+     ✅ python3 3.12.4      State management, check engine
+     ✅ git 2.45.1          Version control
+
+   ### Recommended (improves pipeline quality)
+     ✅ jq 1.7.1            JSON processing for state management
+     ❌ docker              Required for Neo4j knowledge graph
+     ❌ tree-sitter         L0 AST-based syntax validation
+     ✅ gh 2.49.0           GitHub CLI for cross-repo discovery
+     ✅ sqlite3 3.45.0      SQLite code graph
+   ```
+
+   Use `✅` for available tools (with version) and `❌` for missing tools. Only show optional tools if they were detected (language-specific probes).
+
+   **MCP Integration Detection:** After displaying CLI tools, detect available MCP servers per `shared/mcp-detection.md`. For each MCP, check if its detection probe tool is available in your tool list. Display:
+
+   ```
+   ### MCP Integrations
+     ✅ Context7            Library documentation lookups
+     ❌ Playwright          Visual verification + a11y testing
+     ❌ Linear              Issue tracking integration
+     ❌ Figma               Design-to-code workflows
+     ✅ Excalidraw          Architecture diagrams
+   ```
+
+   **Install suggestions:** If any recommended tools or useful MCPs are missing, show platform-specific install commands from the JSON output's `install` field:
+
+   ```
+   ### Suggested Installations
+
+   For best pipeline experience:
+     docker:       brew install --cask docker       # Neo4j knowledge graph
+     tree-sitter:  brew install tree-sitter         # AST-based syntax validation
+
+   For optional MCP integrations:
+     Playwright:   Claude Code Settings → MCP → Add "Playwright"
+     Linear:       Claude Code Settings → MCP → Add "Linear"
+   ```
+
+   This step is informational only — never block on missing optional tools. Continue immediately after displaying. If the script is missing or fails, skip this step silently.
 
 ## Instructions
 
