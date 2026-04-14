@@ -1,0 +1,6 @@
+# Duplicated validation logic
+PATTERN: src/handlers.ts:* | QUAL-DRY | INFO | *duplicat* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: QUAL-DRY
+VERDICT: PASS|CONCERNS

@@ -1,0 +1,6 @@
+# Inconsistent naming conventions
+PATTERN: src/utils/helpers.ts:* | QUAL-NAMING | INFO | *naming* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 5
+HAS_CATEGORY: QUAL-NAMING
+VERDICT: PASS|CONCERNS

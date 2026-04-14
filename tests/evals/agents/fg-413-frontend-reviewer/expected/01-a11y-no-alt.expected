@@ -1,0 +1,6 @@
+# Image missing alt attribute
+PATTERN: src/components/ProductCard.tsx:* | A11Y-IMG-ALT | WARNING | *alt* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: A11Y-IMG-ALT
+VERDICT: CONCERNS

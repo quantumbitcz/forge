@@ -82,6 +82,8 @@ None. This skill displays static content.
 |-----------|-------|-------------|
 | Terse pipeline output | `/forge-caveman` | User-facing output compression (lite/full/ultra) |
 | Compress agent prompts | `/forge-compress` | Input token reduction for .md files |
+| Quick commit messages | `/forge-commit` | Terse conventional commit from staged changes |
+| Compression overview | `/forge-compression-help` | Quick reference card for all compression features |
 
 ## Quick Reference
 

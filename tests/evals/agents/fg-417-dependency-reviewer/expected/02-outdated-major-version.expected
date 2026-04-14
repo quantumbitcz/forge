@@ -1,0 +1,6 @@
+# Dependencies on old major versions
+PATTERN: package.json:* | DEP-OUTDATED | WARNING | *major*version* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 5
+HAS_CATEGORY: DEP-OUTDATED
+VERDICT: CONCERNS|FAIL

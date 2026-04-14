@@ -1,0 +1,6 @@
+# Form inputs without labels
+PATTERN: src/components/LoginForm.tsx:* | A11Y-FORM-LABEL | WARNING | *label* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: A11Y-FORM-LABEL
+VERDICT: CONCERNS

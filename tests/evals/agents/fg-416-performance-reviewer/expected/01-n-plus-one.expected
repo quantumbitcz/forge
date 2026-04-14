@@ -1,0 +1,6 @@
+# N+1 query pattern
+PATTERN: src/services/report-service.ts:* | PERF-N-PLUS-ONE | CRITICAL | *N+1*query* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: PERF-N-PLUS-ONE
+VERDICT: FAIL

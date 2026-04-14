@@ -1,0 +1,6 @@
+# Nullable dereference without check
+PATTERN: src/user-service.ts:* | QUAL-DEFENSIVE | WARNING | *null* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: QUAL-DEFENSIVE
+VERDICT: CONCERNS

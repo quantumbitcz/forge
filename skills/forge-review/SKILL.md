@@ -171,7 +171,49 @@ Verdict thresholds:
 - **CONCERNS**: score 60-79 AND 0 CRITICALs
 - **FAIL**: score < 60 OR any CRITICAL remaining
 
-### 5. Important Rules
+### 5. Terse Review Mode
+
+When `.forge/caveman-mode` exists and is not `off`, compress the final report using text markers instead of full severity names. The finding data is unchanged -- only the presentation format is compressed.
+
+**Text markers:**
+
+| Severity | Marker |
+|----------|--------|
+| CRITICAL | `[CRIT]` |
+| WARNING | `[WARN]` |
+| INFO | `[INFO]` |
+| PERFECT (score 100) | `[PASS]` |
+
+**Terse report format (caveman full/ultra):**
+
+```
+## Review -- [PASS] 100/100
+Mode: quick | Files: 12 | Agents: 3 | Iter: 1/3 | Fixed: 0
+
+No findings.
+```
+
+```
+## Review -- CONCERNS 72/100
+Mode: full | Files: 8 | Agents: 5 | Iter: 3/3 | Fixed: 4 | Remaining: 3
+
+Fixed (4):
+- `auth/jwt.ts:45` | SEC-TOKEN | [CRIT] | added expiry check
+- `api/handler.ts:12` | QUAL-ERR | [WARN] | added error boundary
+- `api/handler.ts:30` | QUAL-LOG | [INFO] | added structured logging
+- `db/pool.ts:8` | PERF-CONN | [WARN] | added connection pooling
+
+Remaining (3):
+- `auth/oauth.ts:90` | SEC-CSRF | [CRIT] | needs CSRF token -- manual review required
+- `api/routes.ts:5` | ARCH-LAYER | [WARN] | handler imports repository directly
+- `config/app.ts:22` | CONV-NAME | [INFO] | non-standard export name
+```
+
+**Lite mode:** Use full severity names but drop filler from messages.
+
+**Standard mode (caveman off):** Use the default report format from section 4.
+
+### 6. Important Rules
 
 - **Target is always 100.** Fix ALL severities — CRITICAL, WARNING, and INFO. Do not stop at "good enough."
 - **Challenge before fixing.** For each finding, ask: is there a fundamentally better approach? Search docs if needed.

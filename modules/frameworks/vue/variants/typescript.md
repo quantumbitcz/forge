@@ -139,3 +139,34 @@ const { data: posts } = await useAsyncData<Post[]>('posts-list', () =>
 - No `any` — use `unknown` and narrow with type guards or Zod `.parse()`
 - No `as` type assertions unless narrowing from `unknown`
 - TSDoc on all exported composables, store actions, and server route handlers (what + why, not how)
+
+## Typed Slots
+
+Use `defineSlots<T>()` for typed slot props:
+
+```ts
+const slots = defineSlots<{
+  default: (props: { item: Item }) => any
+  header: (props: { title: string }) => any
+}>()
+```
+
+## Typed Refs
+
+- Use typed `ref<T>()` for explicit types when inference is insufficient
+- Use `Ref<T>` for function parameter types
+- Template refs: `const el = ref<HTMLInputElement | null>(null)`
+
+## Dos
+
+- Use `vue-tsc` for type checking
+- Use Volar extension for IDE support
+- Type all composable return values
+- Use discriminated unions for component variants
+
+## Don'ts
+
+- Don't use `any` for props or emits
+- Don't use Options API in new TypeScript components
+- Don't mix `<script>` and `<script setup>` unnecessarily
+- Don't use `this` -- Composition API does not use `this`

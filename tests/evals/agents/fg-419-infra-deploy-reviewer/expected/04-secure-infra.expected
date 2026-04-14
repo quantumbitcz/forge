@@ -1,0 +1,4 @@
+# Well-configured infra, no findings
+MIN_FINDINGS: 0
+MAX_FINDINGS: 0
+VERDICT: PASS

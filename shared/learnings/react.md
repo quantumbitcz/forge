@@ -19,3 +19,11 @@
 - **Pattern:** Use bg-background, text-foreground, etc. from theme.css custom properties
 - **Confidence:** HIGH
 - **Hit count:** 0
+
+## TypeScript Variant Learnings
+
+### Common Pitfalls
+<!-- Populated by retrospective agent -->
+
+### Effective Patterns
+<!-- Populated by retrospective agent -->

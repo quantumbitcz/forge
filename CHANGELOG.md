@@ -3,6 +3,47 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.4.0] - 2026-04-14
+
+### Added
+- SessionStart hook — auto-activates caveman mode, displays forge status and unacknowledged alerts at session start
+- `/forge-commit` skill — terse conventional commit message generator (<=50 char subject, why over what)
+- `/forge-compression-help` skill — quick reference card for all compression features
+- Next.js App Router variant (`modules/frameworks/nextjs/variants/app-router.md`)
+- Agent eval suite (`tests/evals/`) — 41 canonical input/expected pairs for all 8 review agents with convention-coverage checks
+- Compression benchmarks (`benchmarks/`) — input compression measurement via programmatic rules, output compression 3-arm eval harness
+- Graph schema versioning (`shared/graph/schema-versioning.md`) with migration infrastructure
+- 9 new scenario tests: oscillation, recovery budget exhaustion, safety gate, cross-repo, multi-framework composition, nested errors, mode transitions, feedback loop, preview gating
+- 57 hook and skill behavioral tests (L0 syntax, check engine, feedback capture, checkpoint, automation trigger, compact check, skill integration)
+- Compression semantic integrity tests (verify compressed files preserve category codes, severities, frontmatter, code blocks)
+- Cross-reference audit tests (validate markdown links, orchestrator agent references)
+- Module overview length enforcement test (15-line soft cap)
+- Deprecation migration examples in DEPRECATIONS.md (before/after for all active deprecations)
+- Terse review format with text markers `[CRIT]`/`[WARN]`/`[INFO]`/`[PASS]` in forge-review
+- Natural language trigger documentation for caveman mode
+- `token_pricing` config section for overridable model pricing
+- Log rotation for `.hook-failures.log` and `.forge/forge.log`
+
+### Changed
+- React TypeScript variant extended with generic components, context typing, strict TypeScript patterns
+- Angular TypeScript variant extended with standalone components, signals, built-in control flow, `@defer`
+- Vue TypeScript variant extended with typed slots, typed refs, composable patterns
+- Django Python variant extended with Python 3.10+ patterns (match statements, async views, Django 5.0+ features)
+- Composition engine documents variant selection rules (explicit config > language matching)
+- Skill count 38 → 40, hook count 6 → 7
+- `MIN_UNIT_TESTS` guard bumped to 93, `MIN_SCENARIO_TESTS` to 40
+- Structural check count 51 → 73+
+- CLAUDE.md and README.md updated with all new skills, hooks, and test counts
+
+### Fixed
+- Race condition in WAL recovery (`forge-state-write.sh`) — mkdir-based lock before concurrent recovery
+- WAL truncation race — moved inside write lock scope, cleanup on failure
+- Token tracker retry without backoff — exponential backoff with jitter (5 retries)
+- Non-atomic compact counter (`forge-compact-check.sh`) — mkdir-based lock
+- Datetime format inconsistency — Z suffix added to all timestamp fallback paths
+- Model detection substring collision (`forge-token-tracker.sh`) — longest-match-first pattern list
+- macOS `sed` compatibility in `derive_project_id()` — replaced non-greedy `+?` with two-step sed
+
 ## [1.16.0] - 2026-04-12
 
 ### Changed

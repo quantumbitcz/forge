@@ -12,6 +12,15 @@ When the orchestrator resolves the convention stack for a component at PREFLIGHT
 6. **Framework binding** (`modules/frameworks/{name}/{layer}/{binding}.md`) -- framework-specific layer binding (e.g., spring/persistence/hibernate.md)
 7. **Variant** (`modules/frameworks/{name}/variants/{variant}.md`) -- variant-specific overrides
 
+### Variant Selection Rules
+
+When a framework has multiple variant files, selection follows this priority:
+1. **Explicit config:** `variant: app-router` in `forge.local.md` selects `app-router.md`
+2. **Language matching:** If no explicit variant, the variant matching the project's `language:` is used (e.g., `typescript.md` for `language: typescript`)
+3. **No variant:** If no match, no variant is loaded (base conventions only)
+
+Only one variant is loaded per framework per component.
+
 Files loaded later (higher number) take precedence for conflicting rules. Example: if the language module says "use camelCase" but the framework variant says "use snake_case for database columns," the variant wins.
 
 ## Soft Cap

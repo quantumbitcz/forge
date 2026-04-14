@@ -1,0 +1,6 @@
+# SQL injection via string concatenation
+PATTERN: src/repositories/user-repo.ts:* | SEC-INJECTION | CRITICAL | *SQL*inject* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: SEC-INJECTION
+VERDICT: FAIL

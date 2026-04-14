@@ -72,7 +72,7 @@ do_emit() {
 
   # Build log entry
   local ts
-  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S)
+  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
 
   local entry
   entry=$(python3 -c "

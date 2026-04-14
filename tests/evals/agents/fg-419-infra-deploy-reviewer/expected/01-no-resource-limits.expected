@@ -1,0 +1,6 @@
+# Missing resource limits on container
+PATTERN: k8s/deployment.yaml:* | INFRA-RESOURCE | WARNING | *resource*limit* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: INFRA-RESOURCE
+VERDICT: CONCERNS

@@ -49,3 +49,11 @@
 - **Pattern:** Nuxt auto-imports `ref`, `computed`, `useFetch`, `useRoute`, etc., making it unclear where APIs come from when reading code. While convenient, this causes confusion for new team members and IDE issues. Document which auto-imports are used in the project CLAUDE.md.
 - **Confidence:** MEDIUM
 - **Hit count:** 0
+
+## TypeScript Variant Learnings
+
+### Common Pitfalls
+<!-- Populated by retrospective agent: Volar quirks, defineProps type inference -->
+
+### Effective Patterns
+<!-- Populated by retrospective agent -->

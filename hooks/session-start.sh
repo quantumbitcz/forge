@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# SessionStart event hook: Detects forge project, activates caveman mode,
+# displays pipeline status, and surfaces unacknowledged alerts.
+# Best-effort — fails silently. Always exits 0.
+
+# Self-enforcing timeout — mirrors hooks.json value
+_HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-3}"
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+  export _HOOK_TIMEOUT_ACTIVE=1
+  if command -v timeout &>/dev/null; then
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" || true
+    exit 0
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" || true
+    exit 0
+  fi
+  # No timeout command available — continue without enforcement
+fi
+
+(
+  # --- Forge project detection ---
+  # Require both .claude/forge.local.md and .forge/ to exist
+  [[ -f ".claude/forge.local.md" && -d ".forge" ]] || exit 0
+
+  # --- Caveman mode auto-activation ---
+  _caveman_mode=""
+  if [[ -f ".forge/caveman-mode" ]]; then
+    _caveman_mode="$(head -1 ".forge/caveman-mode" 2>/dev/null | tr -d '[:space:]')"
+  else
+    # Check if caveman.enabled is true in forge-config.md
+    _caveman_enabled=""
+    _caveman_default=""
+    if [[ -f ".claude/forge-config.md" ]]; then
+      _py=""
+      command -v python3 &>/dev/null && _py="python3"
+      [[ -z "$_py" ]] && command -v python &>/dev/null && _py="python"
+
+      if [[ -n "$_py" ]]; then
+        _caveman_enabled="$("$_py" -c "
+import re, sys
+try:
+    content = open('.claude/forge-config.md').read()
+    # Extract YAML block (between --- or from caveman: key)
+    m = re.search(r'caveman:\s*\n((?:\s+\S.*\n)*)', content)
+    if m:
+        block = m.group(1)
+        em = re.search(r'enabled:\s*(true|false)', block)
+        if em:
+            print(em.group(1))
+        else:
+            print('false')
+    else:
+        print('false')
+except Exception:
+    print('false')
+" 2>/dev/null)" || _caveman_enabled="false"
+        _caveman_default="$("$_py" -c "
+import re, sys
+try:
+    content = open('.claude/forge-config.md').read()
+    m = re.search(r'caveman:\s*\n((?:\s+\S.*\n)*)', content)
+    if m:
+        block = m.group(1)
+        dm = re.search(r'default_mode:\s*(lite|full|ultra)', block)
+        if dm:
+            print(dm.group(1))
+        else:
+            print('full')
+    else:
+        print('full')
+except Exception:
+    print('full')
+" 2>/dev/null)" || _caveman_default="full"
+      else
+        # Fallback: grep-based parsing
+        _caveman_enabled="$(grep -A5 'caveman:' ".claude/forge-config.md" 2>/dev/null | grep 'enabled:' | head -1 | grep -o 'true\|false' || echo "false")"
+        _caveman_default="$(grep -A5 'caveman:' ".claude/forge-config.md" 2>/dev/null | grep 'default_mode:' | head -1 | grep -oE 'lite|full|ultra' || echo "full")"
+      fi
+    fi
+
+    if [[ "$_caveman_enabled" == "true" ]]; then
+      mkdir -p ".forge" 2>/dev/null
+      printf '%s' "${_caveman_default:-full}" > ".forge/caveman-mode"
+      _caveman_mode="${_caveman_default:-full}"
+    fi
+  fi
+
+  # --- Emit caveman compression instructions ---
+  if [[ -n "$_caveman_mode" && "$_caveman_mode" != "off" ]]; then
+    case "$_caveman_mode" in
+      lite)
+        echo "[forge] Caveman lite active. Drop filler/hedging, keep grammar and articles."
+        ;;
+      full)
+        echo "[forge] Caveman mode active. Pattern: [thing] [action] [reason]. [next step]."
+        ;;
+      ultra)
+        echo "[forge] CAVEMAN ULTRA. Max compress. Abbrev all. Arrows for causality."
+        ;;
+    esac
+  fi
+
+  # --- Pipeline status display ---
+  if [[ -f ".forge/state.json" ]]; then
+    _py=""
+    command -v python3 &>/dev/null && _py="python3"
+    [[ -z "$_py" ]] && command -v python &>/dev/null && _py="python"
+
+    if [[ -n "$_py" ]]; then
+      "$_py" -c "
+import json, os, sys
+from datetime import datetime
+
+try:
+    with open('.forge/state.json') as f:
+        s = json.load(f)
+except (IOError, json.JSONDecodeError, ValueError):
+    sys.exit(0)
+
+stage = s.get('story_state', 'UNKNOWN')
+mode = s.get('mode', 'standard')
+scores = s.get('score_history', [])
+last_score = scores[-1] if scores else 'N/A'
+
+# File modification time as last activity indicator
+try:
+    mtime = os.path.getmtime('.forge/state.json')
+    last_active = datetime.utcfromtimestamp(mtime).strftime('%Y-%m-%d %H:%M UTC')
+except Exception:
+    last_active = 'unknown'
+
+print('[forge] Pipeline: state={0} mode={1} score={2} last_active={3}'.format(
+    stage, mode, last_score, last_active))
+" 2>/dev/null || true
+    fi
+  fi
+
+  # --- Unacknowledged alerts ---
+  if [[ -f ".forge/alerts.json" ]]; then
+    _py=""
+    command -v python3 &>/dev/null && _py="python3"
+    [[ -z "$_py" ]] && command -v python &>/dev/null && _py="python"
+
+    if [[ -n "$_py" ]]; then
+      "$_py" -c "
+import json, sys
+
+try:
+    with open('.forge/alerts.json') as f:
+        data = json.load(f)
+except (IOError, json.JSONDecodeError, ValueError):
+    sys.exit(0)
+
+alerts = data.get('alerts', [])
+unresolved = [a for a in alerts if not a.get('resolved', False)]
+if unresolved:
+    print('[forge] {0} unacknowledged alert(s):'.format(len(unresolved)))
+    for a in unresolved[:3]:
+        atype = a.get('type', 'UNKNOWN')
+        msg = a.get('message', '')[:80]
+        print('  [{0}] {1}'.format(atype, msg))
+    if len(unresolved) > 3:
+        print('  ... and {0} more'.format(len(unresolved) - 3))
+" 2>/dev/null || true
+    fi
+  fi
+) || true
+
+exit 0

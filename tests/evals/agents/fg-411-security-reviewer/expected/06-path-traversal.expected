@@ -1,0 +1,6 @@
+# Path traversal via unsanitized filename
+PATTERN: src/handlers/files.ts:* | SEC-PATH-TRAVERSAL | CRITICAL | *path*traversal* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: SEC-PATH-TRAVERSAL
+VERDICT: FAIL

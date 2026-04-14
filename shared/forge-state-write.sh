@@ -6,6 +6,31 @@
 #   forge-state-write.sh recover [--forge-dir <path>]
 set -uo pipefail
 
+# Rotate log files when they exceed max size
+_rotate_log_if_needed() {
+  local log_file="$1"
+  local max_size="${2:-102400}"  # Default 100KB
+  if [[ -f "$log_file" ]]; then
+    local size
+    size=$(wc -c < "$log_file" 2>/dev/null || echo 0)
+    if [[ "$size" -gt "$max_size" ]]; then
+      tail -1000 "$log_file" > "${log_file}.tmp" 2>/dev/null && \
+        mv "${log_file}.tmp" "$log_file" 2>/dev/null || \
+        rm -f "${log_file}.tmp" 2>/dev/null
+    fi
+  fi
+}
+
+_log_warning() {
+  local reason="$1"
+  local log_dir="${FORGE_DIR:-.forge}"
+  if [[ -d "$log_dir" ]]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | WARNING | state-write | $reason" \
+      >> "${log_dir}/forge.log" 2>/dev/null || true
+    _rotate_log_if_needed "${log_dir}/forge.log"
+  fi
+}
+
 FORGE_DIR=".forge"
 CMD=""
 JSON_CONTENT=""
@@ -140,31 +165,44 @@ except Exception as e:
     if [[ "$validation_result" == FAIL:* ]]; then
       echo "WARNING: State validation failed: ${validation_result#FAIL: }" >&2
     fi
+  else
+    _log_warning "schema validation SKIPPED (VALIDATE=false)"
   fi
 
   # Append to WAL
   local ts
-  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S)
+  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
   {
     echo "--- SEQ:${new_seq} TS:${ts} ---"
     echo "$updated_json"
   } >> "$WAL_FILE"
 
-  # Truncate WAL if over limit
+  # Truncate WAL if over limit (inside write lock scope)
   local wal_count
   wal_count=$(grep -c "^--- SEQ:" "$WAL_FILE" 2>/dev/null || echo "0")
   if [[ "$wal_count" -gt "$WAL_MAX_ENTRIES" ]]; then
     python3 -c "
 import re, sys, os
-with open('$WAL_FILE') as f:
-    content = f.read()
-entries = re.split(r'(?=^--- SEQ:)', content, flags=re.MULTILINE)
-entries = [e for e in entries if e.strip()]
-keep = entries[-$WAL_MAX_ENTRIES:]
-with open('$WAL_FILE.tmp', 'w') as f:
-    f.write(''.join(keep))
-os.replace('$WAL_FILE.tmp', '$WAL_FILE')
-"
+try:
+    with open('$WAL_FILE') as f:
+        content = f.read()
+    entries = re.split(r'(?=^--- SEQ:)', content, flags=re.MULTILINE)
+    entries = [e for e in entries if e.strip()]
+    keep = entries[-$WAL_MAX_ENTRIES:]
+    tmp_path = '$WAL_FILE.tmp'
+    with open(tmp_path, 'w') as f:
+        f.write(''.join(keep))
+    os.replace(tmp_path, '$WAL_FILE')
+except Exception as e:
+    try:
+        os.remove('$WAL_FILE.tmp')
+    except OSError:
+        pass
+    print(f'WARNING: WAL truncation failed: {e}', file=sys.stderr)
+" 2>/dev/null || {
+      rm -f "${WAL_FILE}.tmp" 2>/dev/null
+      _log_warning "WAL truncation failed, wal_count=${wal_count}"
+    }
   fi
 
   # Atomic write: tmp + mv
@@ -193,8 +231,46 @@ do_read() {
 
   if [[ -f "$WAL_FILE" ]]; then
     echo "WARNING: state.json missing, recovering from WAL" >&2
-    do_recover
-    return $?
+    local lock_dir="${FORGE_DIR}/.state-recovery.lockdir"
+    if mkdir "$lock_dir" 2>/dev/null; then
+      if [[ ! -f "$STATE_FILE" ]] && [[ -f "$WAL_FILE" ]]; then
+        do_recover
+        local rc=$?
+        rmdir "$lock_dir" 2>/dev/null
+        return $rc
+      fi
+      rmdir "$lock_dir" 2>/dev/null
+      if [[ -f "$STATE_FILE" ]]; then
+        cat "$STATE_FILE"
+        return 0
+      fi
+    else
+      local _wait=0
+      while [[ ! -f "$STATE_FILE" ]] && [[ $_wait -lt 20 ]]; do
+        sleep 0.1
+        _wait=$((_wait + 1))
+      done
+      if [[ -f "$STATE_FILE" ]]; then
+        cat "$STATE_FILE"
+        return 0
+      fi
+      python3 -c "
+import re, json, sys
+with open('$WAL_FILE') as f:
+    content = f.read()
+entries = re.split(r'^--- SEQ:\d+ TS:\S+ ---$', content, flags=re.MULTILINE)
+entries = [e.strip() for e in entries if e.strip()]
+for entry in reversed(entries):
+    try:
+        d = json.loads(entry)
+        json.dump(d, sys.stdout, indent=2)
+        sys.exit(0)
+    except json.JSONDecodeError:
+        continue
+sys.exit(1)
+" 2>/dev/null
+      return $?
+    fi
   fi
 
   echo "ERROR: no state.json or WAL found in $FORGE_DIR" >&2

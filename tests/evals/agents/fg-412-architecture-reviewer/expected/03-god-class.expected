@@ -1,0 +1,6 @@
+# God class with too many responsibilities
+PATTERN: src/services/user_manager.py:* | ARCH-COHESION | WARNING | *responsibilit* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: ARCH-COHESION
+VERDICT: CONCERNS

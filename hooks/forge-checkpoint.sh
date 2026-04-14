@@ -40,4 +40,15 @@ atomic_json_update "$STATE_FILE" "data['lastCheckpoint'] = '$timestamp'" 2>/dev/
     >> ".forge/.hook-failures.log" 2>/dev/null
 }
 
+# Rotate hook failures log if too large
+_hook_log="${FORGE_DIR:-.forge}/.hook-failures.log"
+if [[ -f "$_hook_log" ]]; then
+  _size=$(wc -c < "$_hook_log" 2>/dev/null || echo 0)
+  if [[ "$_size" -gt 102400 ]]; then
+    tail -1000 "$_hook_log" > "${_hook_log}.tmp" 2>/dev/null && \
+      mv "${_hook_log}.tmp" "$_hook_log" 2>/dev/null || \
+      rm -f "${_hook_log}.tmp" 2>/dev/null
+  fi
+fi
+
 exit 0

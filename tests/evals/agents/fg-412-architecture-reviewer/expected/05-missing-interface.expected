@@ -1,0 +1,6 @@
+# Concrete dependency without interface
+PATTERN: src/services/notification-service.ts:* | ARCH-COUPLING | INFO | *concrete*interface* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: ARCH-COUPLING
+VERDICT: PASS|CONCERNS

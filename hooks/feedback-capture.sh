@@ -141,6 +141,13 @@ print('[{0} UTC] Session ended | state={1} mode={2} score={3} phase={4} iteratio
       fi
       _atomic_append "$_fail_entry" "$_feedback_file"
     fi
+    # Rotate hook failures log if too large (>100KB)
+    _fsize=$(wc -c < "$_fail_log" 2>/dev/null || echo 0)
+    if [[ "$_fsize" -gt 102400 ]]; then
+      tail -1000 "$_fail_log" > "${_fail_log}.tmp" 2>/dev/null && \
+        mv "${_fail_log}.tmp" "$_fail_log" 2>/dev/null || \
+        rm -f "${_fail_log}.tmp" 2>/dev/null
+    fi
   fi
 } 2>/dev/null
 

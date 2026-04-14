@@ -1,0 +1,6 @@
+# Memory leak from uncleared resources
+PATTERN: src/services/poller.ts:* | PERF-MEMORY | WARNING | *memory*leak* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: PERF-MEMORY
+VERDICT: CONCERNS

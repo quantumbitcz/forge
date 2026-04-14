@@ -1,0 +1,6 @@
+# Full lodash import inflating bundle
+PATTERN: src/utils/format.ts:* | PERF-BUNDLE | INFO | *bundle*import* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: PERF-BUNDLE
+VERDICT: PASS|CONCERNS

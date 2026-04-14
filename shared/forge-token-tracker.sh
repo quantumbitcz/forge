@@ -141,24 +141,58 @@ if grand_total > 0:
 else:
     tokens["model_distribution"] = {}
 
-# Compute estimated_cost_usd using approximate pricing (per million tokens)
-# Pricing per MTok as of April 2026 — update when Anthropic adjusts pricing
-# See: https://docs.anthropic.com/en/docs/about-claude/models for current rates
-PRICING = {
+# Default pricing per MTok — last verified 2026-04-14
+# Override via forge-config.md token_pricing section
+DEFAULT_PRICING_TABLE = {
     "haiku":   {"input": 0.25,  "output": 1.25},
     "sonnet":  {"input": 3.0,   "output": 15.0},
     "opus":    {"input": 15.0,  "output": 75.0},
 }
+
+import os, re as _re
+config_path = os.path.join(os.environ.get("FORGE_CONFIG_DIR", "."), "forge-config.md")
+PRICING = {k: dict(v) for k, v in DEFAULT_PRICING_TABLE.items()}
+try:
+    if os.path.exists(config_path):
+        with open(config_path) as cf:
+            cfg_text = cf.read()
+        parts = cfg_text.split("---")
+        if len(parts) >= 3:
+            import yaml
+            cfg = yaml.safe_load(parts[1]) or {}
+            tp = cfg.get("token_pricing", {})
+            if tp:
+                for tier in ("haiku", "sonnet", "opus"):
+                    if f"{tier}_input" in tp:
+                        PRICING[tier]["input"] = float(tp[f"{tier}_input"])
+                    if f"{tier}_output" in tp:
+                        PRICING[tier]["output"] = float(tp[f"{tier}_output"])
+except Exception:
+    pass
+
 DEFAULT_PRICING = PRICING["sonnet"]
+
+MODEL_PATTERNS = [
+    ("claude-opus-4", "opus"),
+    ("claude-sonnet-4", "sonnet"),
+    ("claude-haiku-4", "haiku"),
+    ("opus", "opus"),
+    ("sonnet", "sonnet"),
+    ("haiku", "haiku"),
+]
+
+def classify_model(model_name):
+    m = model_name.lower()
+    for pattern, category in MODEL_PATTERNS:
+        if pattern in m:
+            return category
+    return "sonnet"
 
 total_cost = 0.0
 for a_name, a_data in tokens["by_agent"].items():
     m = a_data.get("model", "") or ""
-    pricing = DEFAULT_PRICING
-    for key in PRICING:
-        if key in m.lower():
-            pricing = PRICING[key]
-            break
+    model_class = classify_model(m)
+    pricing = PRICING.get(model_class, DEFAULT_PRICING)
     total_cost += a_data.get("input", 0) * pricing["input"] / 1_000_000
     total_cost += a_data.get("output", 0) * pricing["output"] / 1_000_000
 
@@ -191,20 +225,26 @@ do_record() {
   [[ $? -ne 0 ]] && { echo "ERROR: failed to compute token update" >&2; exit 2; }
 
   # Write back via state writer (with retry on stale _seq)
-  local _max_retries=3 _attempt=0
+  local _max_retries=5 _attempt=0
   while true; do
     bash "$STATE_WRITER" write "$updated_state" --forge-dir "$FORGE_DIR" > /dev/null
     local _rc=$?
     if [[ $_rc -eq 0 ]]; then
       break
     elif [[ $_rc -eq 3 && $_attempt -lt $_max_retries ]]; then
-      # Stale _seq: re-read, recompute, retry
       _attempt=$((_attempt + 1))
+      local _delay
+      _delay=$(python3 -c "import random; print(0.05 * (2 ** ($_attempt - 1)) + random.random() * 0.02)")
+      sleep "$_delay" 2>/dev/null || sleep 0.1
       current_state=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
       [[ $? -ne 0 ]] && { echo "ERROR: re-read failed on retry $_attempt" >&2; exit 2; }
       updated_state=$(_compute_token_update "$current_state")
       [[ $? -ne 0 ]] && { echo "ERROR: recompute failed on retry $_attempt" >&2; exit 2; }
     else
+      if [[ $_attempt -ge $_max_retries ]]; then
+        echo "WARNING: token record lost after $_max_retries retries (high contention)" >&2
+        break
+      fi
       echo "ERROR: token update write failed (rc=$_rc, attempt=$_attempt)" >&2
       exit 2
     fi

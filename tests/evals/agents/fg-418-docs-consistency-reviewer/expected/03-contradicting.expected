@@ -1,0 +1,6 @@
+# Documentation contradicts implementation
+PATTERN: src/services/parser.ts:* | DOC-CONTRADICTION | WARNING | *contradict* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: DOC-CONTRADICTION
+VERDICT: CONCERNS

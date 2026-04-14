@@ -1,0 +1,6 @@
+# Swallowed exception in catch block
+PATTERN: src/api-client.ts:* | QUAL-ERR-HANDLING | WARNING | *catch* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: QUAL-ERR-HANDLING
+VERDICT: CONCERNS

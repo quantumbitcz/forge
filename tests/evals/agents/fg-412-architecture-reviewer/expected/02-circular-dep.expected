@@ -1,0 +1,6 @@
+# Circular dependency between modules
+PATTERN: src/modules/*/: * | ARCH-CIRCULAR | WARNING | *circular* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: ARCH-CIRCULAR
+VERDICT: CONCERNS

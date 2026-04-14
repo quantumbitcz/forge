@@ -1,0 +1,6 @@
+# Weak cryptographic algorithm (MD5)
+PATTERN: src/auth/password.ts:* | SEC-CRYPTO | WARNING | *MD5*weak* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: SEC-CRYPTO
+VERDICT: CONCERNS|FAIL

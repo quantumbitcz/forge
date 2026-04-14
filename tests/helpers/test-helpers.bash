@@ -227,16 +227,18 @@ create_state_json() {
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v1.1.0 state object (matches state-schema.md v1.1.0)
+  # Base v1.5.0 state object (matches state-schema.md v1.5.0)
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "version": "1.1.0",
+  "version": "1.5.0",
+  "_seq": 0,
   "complete": false,
   "story_id": "TEST-001",
   "requirement": "Test requirement",
   "domain_area": "test",
   "risk_level": "LOW",
+  "previous_state": "",
   "story_state": "PREFLIGHT",
   "active_component": "default",
   "components": {
@@ -272,7 +274,8 @@ create_state_json() {
     "phase_history": [],
     "safety_gate_passed": false,
     "safety_gate_failures": 0,
-    "unfixable_findings": []
+    "unfixable_findings": [],
+    "diminishing_count": 0
   },
   "integrations": {
     "linear": { "available": false, "team": "" },
@@ -414,4 +417,74 @@ setup_tracking() {
   local forge_dir="$1"
   mkdir -p "$forge_dir/tracking/backlog" "$forge_dir/tracking/in-progress" "$forge_dir/tracking/review" "$forge_dir/tracking/done"
   echo '{"next": 1, "prefix": "FG"}' > "$forge_dir/tracking/counter.json"
+}
+
+# ---------------------------------------------------------------------------
+# create_score_sequence_state <scores_string> [extra_json]
+# Creates a state.json with score_history set from a space-separated score
+# array. Computes convergence fields automatically:
+#   - convergence.total_iterations = length of score array
+#   - convergence.phase_iterations = length of score array (single phase)
+#   - convergence.last_score_delta = last - second-to-last (or 0 if only 1)
+#   - convergence.convergence_state = "IMPROVING" (caller overrides if needed)
+#   - convergence.plateau_count = 0 (caller overrides if needed)
+#   - convergence.phase = "correctness"
+#   - story_state defaults to "REVIEWING" (caller overrides via extra_json)
+#
+# Usage: create_score_sequence_state "78 82 77 83" '{"oscillation_tolerance": 5}'
+# ---------------------------------------------------------------------------
+create_score_sequence_state() {
+  local scores_str="${1:?scores required}"
+  local extra="${2:-\{\}}"
+  local -a scores=($scores_str)
+  local len=${#scores[@]}
+  local last_delta=0
+  if (( len >= 2 )); then
+    last_delta=$(( scores[len-1] - scores[len-2] ))
+  fi
+  local score_json
+  score_json=$(printf '%s\n' "${scores[@]}" | jq -s '.')
+  local conv_extra
+  conv_extra=$(jq -n \
+    --argjson sh "$score_json" \
+    --argjson ti "$len" \
+    --argjson pi "$len" \
+    --argjson ld "$last_delta" \
+    '{
+      story_state: "REVIEWING",
+      score_history: $sh,
+      convergence: {
+        total_iterations: $ti,
+        phase_iterations: $pi,
+        last_score_delta: $ld
+      }
+    }')
+  # Merge conv_extra with caller extra
+  local merged
+  merged=$(printf '%s\n%s\n' "$conv_extra" "$extra" | jq -s '.[0] * .[1]')
+  create_state_json "$merged"
+}
+
+# ---------------------------------------------------------------------------
+# assert_convergence_state <expected> [forge_dir]
+# Reads convergence.convergence_state from state.json and asserts equality.
+# ---------------------------------------------------------------------------
+assert_convergence_state() {
+  local expected="${1:?expected state required}"
+  local forge_dir="${2:-${TEST_TEMP}/project/.forge}"
+  local actual
+  actual="$(jq -r '.convergence.convergence_state' "$forge_dir/state.json")"
+  [[ "$actual" == "$expected" ]] || fail "Expected convergence_state=$expected, got $actual"
+}
+
+# ---------------------------------------------------------------------------
+# assert_story_state <expected> [forge_dir]
+# Reads story_state from state.json and asserts equality.
+# ---------------------------------------------------------------------------
+assert_story_state() {
+  local expected="${1:?expected state required}"
+  local forge_dir="${2:-${TEST_TEMP}/project/.forge}"
+  local actual
+  actual="$(jq -r '.story_state' "$forge_dir/state.json")"
+  [[ "$actual" == "$expected" ]] || fail "Expected story_state=$expected, got $actual"
 }

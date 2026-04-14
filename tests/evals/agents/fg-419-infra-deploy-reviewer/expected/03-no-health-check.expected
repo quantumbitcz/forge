@@ -1,0 +1,6 @@
+# Missing liveness and readiness probes
+PATTERN: k8s/deployment.yaml:* | INFRA-HEALTH | CRITICAL | *health*probe* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: INFRA-HEALTH
+VERDICT: FAIL

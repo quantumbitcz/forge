@@ -1,0 +1,6 @@
+# Unbounded query without limit
+PATTERN: src/repositories/audit-repo.ts:* | PERF-UNBOUNDED | WARNING | *unbounded*limit* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: PERF-UNBOUNDED
+VERDICT: CONCERNS

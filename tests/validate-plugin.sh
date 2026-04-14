@@ -398,6 +398,37 @@ if [ -z "$plugin_ver" ] || [ -z "$claude_ver" ] || [ "$plugin_ver" != "$claude_v
 fi
 check "plugin.json version matches CLAUDE.md version ($plugin_ver == $claude_ver)" "$check25_fail"
 
+# Check 25b: CHANGELOG.md has entry for current plugin version (advisory — does not fail)
+if [[ -n "$plugin_ver" ]] && [[ -f "$ROOT/CHANGELOG.md" ]]; then
+  if ! grep -q "\[${plugin_ver}\]" "$ROOT/CHANGELOG.md" && \
+     ! grep -q "## ${plugin_ver}" "$ROOT/CHANGELOG.md"; then
+    echo "    ADVISORY: CHANGELOG.md has no entry for current version ${plugin_ver}"
+  fi
+fi
+
+echo ""
+echo "--- PHASE 1 (A+ UPGRADE) ---"
+
+# Graph versioning (SPEC-09)
+check_graph_ver_fail=0
+[[ -f "$ROOT/shared/graph/schema-versioning.md" ]] || { echo "    Missing: shared/graph/schema-versioning.md"; check_graph_ver_fail=1; }
+[[ -d "$ROOT/shared/graph/migrations" ]] || { echo "    Missing: shared/graph/migrations/"; check_graph_ver_fail=1; }
+check "Graph schema versioning exists" "$check_graph_ver_fail"
+
+# Next.js App Router variant (SPEC-08) — conditional
+check_app_router_fail=0
+if [[ -d "$ROOT/modules/frameworks/nextjs/variants" ]]; then
+  [[ -f "$ROOT/modules/frameworks/nextjs/variants/app-router.md" ]] || { echo "    Missing: nextjs/variants/app-router.md"; check_app_router_fail=1; }
+  check "Next.js App Router variant exists" "$check_app_router_fail"
+fi
+
+# Compression benchmarks (SPEC-06) — conditional
+if [[ -d "$ROOT/benchmarks" ]]; then
+  check_bench_fail=0
+  [[ -f "$ROOT/benchmarks/count-tokens.py" ]] || { echo "    Missing: benchmarks/count-tokens.py"; check_bench_fail=1; }
+  check "Compression benchmark harness exists" "$check_bench_fail"
+fi
+
 # --- CROSSCUTTING LAYERS ---
 echo ""
 echo "--- CROSSCUTTING LAYERS ---"
@@ -804,6 +835,63 @@ if [[ "$sim_count" -lt 10 ]]; then
   sim_fail=1
 fi
 check "At least 10 simulation scenario files exist" "$sim_fail"
+
+echo ""
+echo "--- EVAL SUITE ---"
+
+# Check: tests/evals/framework.bash exists
+check_eval_framework_fail=0
+if [[ ! -f "$ROOT/tests/evals/framework.bash" ]]; then
+  echo "    Missing: tests/evals/framework.bash"
+  check_eval_framework_fail=1
+fi
+check "Eval framework.bash exists" "$check_eval_framework_fail"
+
+# Check: tests/evals/README.md exists
+check_eval_readme_fail=0
+if [[ ! -f "$ROOT/tests/evals/README.md" ]]; then
+  echo "    Missing: tests/evals/README.md"
+  check_eval_readme_fail=1
+fi
+check "Eval README.md exists" "$check_eval_readme_fail"
+
+# Check: Each review agent (fg-410 through fg-419) has a matching eval directory
+check_eval_agents_fail=0
+eval_agent_count=0
+for agent_file in "$ROOT"/agents/fg-41*.md; do
+  [[ -f "$agent_file" ]] || continue
+  agent_name=$(basename "$agent_file" .md)
+  eval_dir="$ROOT/tests/evals/agents/$agent_name"
+  if [[ ! -d "$eval_dir" ]]; then
+    echo "    Missing eval directory for $agent_name"
+    check_eval_agents_fail=1
+  else
+    eval_agent_count=$((eval_agent_count + 1))
+    # Check each eval dir has inputs/, expected/, and eval.bats
+    if [[ ! -d "$eval_dir/inputs" ]]; then
+      echo "    Missing: $agent_name/inputs/"
+      check_eval_agents_fail=1
+    fi
+    if [[ ! -d "$eval_dir/expected" ]]; then
+      echo "    Missing: $agent_name/expected/"
+      check_eval_agents_fail=1
+    fi
+    if [[ ! -f "$eval_dir/eval.bats" ]]; then
+      echo "    Missing: $agent_name/eval.bats"
+      check_eval_agents_fail=1
+    fi
+    # Check input/expected counts match
+    if [[ -d "$eval_dir/inputs" && -d "$eval_dir/expected" ]]; then
+      input_count=$(ls "$eval_dir"/inputs/*.md 2>/dev/null | wc -l | tr -d ' ')
+      expected_count=$(ls "$eval_dir"/expected/*.expected 2>/dev/null | wc -l | tr -d ' ')
+      if [[ "$input_count" != "$expected_count" ]]; then
+        echo "    Mismatch in $agent_name: $input_count inputs vs $expected_count expected"
+        check_eval_agents_fail=1
+      fi
+    fi
+  fi
+done
+check "All review agents have eval directories with inputs/expected/eval.bats ($eval_agent_count agents)" "$check_eval_agents_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

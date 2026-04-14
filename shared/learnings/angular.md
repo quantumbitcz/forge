@@ -49,3 +49,11 @@
 - **Pattern:** `@defer` without a trigger condition (e.g., `on viewport`, `on interaction`, `when condition`) renders the content immediately, defeating the purpose. Always specify an explicit trigger.
 - **Confidence:** MEDIUM
 - **Hit count:** 0
+
+## Standalone/Signals Variant Learnings
+
+### Common Pitfalls
+<!-- Populated by retrospective agent: signal migration issues, NgModule interop -->
+
+### Effective Patterns
+<!-- Populated by retrospective agent -->

@@ -46,8 +46,8 @@ setup() {
   done
 }
 
-@test "skill-frontmatter: at least 38 skills exist" {
+@test "skill-frontmatter: at least 40 skills exist" {
   local count
   count=$(find "$SKILLS_DIR" -name "SKILL.md" | wc -l)
-  [[ "$count" -ge 38 ]]
+  [[ "$count" -ge 40 ]]
 }

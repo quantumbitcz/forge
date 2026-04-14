@@ -1,0 +1,6 @@
+# Domain imports infrastructure
+PATTERN: src/main/kotlin/domain/OrderService.kt:* | ARCH-LAYER | WARNING | *layer*violation* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: ARCH-LAYER
+VERDICT: CONCERNS

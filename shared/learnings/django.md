@@ -49,3 +49,11 @@
 - **Pattern:** Iterating a queryset inside a `for` loop that itself queries the database creates O(N) queries. Build the full queryset with filters, annotations, and prefetches before evaluating. Use `django-debug-toolbar` in development to detect unexpected query counts.
 - **Confidence:** MEDIUM
 - **Hit count:** 0
+
+## Python 3.10+ Variant Learnings
+
+### Common Pitfalls
+<!-- Populated by retrospective agent: async ORM limitations, type stub gaps -->
+
+### Effective Patterns
+<!-- Populated by retrospective agent -->

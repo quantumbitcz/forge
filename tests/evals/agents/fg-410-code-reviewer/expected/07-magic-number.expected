@@ -1,0 +1,6 @@
+# Magic numbers without named constants
+PATTERN: src/pricing.ts:* | QUAL-READABILITY | INFO | *magic*number* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: QUAL-READABILITY
+VERDICT: PASS|CONCERNS

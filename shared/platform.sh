@@ -313,7 +313,8 @@ derive_project_id() {
   if [[ -n "$remote_url" ]]; then
     # Strip protocol/host prefix and .git suffix
     # Handles: git@github.com:org/repo.git, https://github.com/org/repo.git, ssh://...
-    echo "$remote_url" | sed -E 's|^.*[:/]([^/]+/[^/]+?)(\.git)?$|\1|'
+    # Two-step to avoid non-greedy quantifier (+?) which BSD sed (macOS) does not support
+    echo "$remote_url" | sed -E 's|\.git$||' | sed -E 's|^.*[:/]([^/]+/[^/]+)$|\1|'
   else
     # Fallback: absolute path
     (cd "$project_root" && pwd)

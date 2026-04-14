@@ -1,0 +1,6 @@
+# Reflected XSS via unsanitized user input
+PATTERN: src/handlers/search.ts:* | SEC-XSS | CRITICAL | *XSS* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: SEC-XSS
+VERDICT: FAIL

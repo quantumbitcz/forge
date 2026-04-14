@@ -3,7 +3,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-41-green?style=flat-square)](#agents)
-[![Skills](https://img.shields.io/badge/skills-38-green?style=flat-square)](#available-skills)
+[![Skills](https://img.shields.io/badge/skills-40-green?style=flat-square)](#available-skills)
 [![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
 [![Finding Categories](https://img.shields.io/badge/finding_categories-85+-purple?style=flat-square)](#quality-scoring)
@@ -96,7 +96,7 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 
 ## Available skills
 
-38 skills provide the user-facing interface.
+40 skills provide the user-facing interface.
 
 | Skill | Description |
 |-------|-------------|
@@ -135,6 +135,8 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 | `/graph-rebuild` | Rebuild graph from codebase |
 | `/graph-debug` | Targeted Neo4j diagnostics |
 | `/forge-caveman` | Toggle terse output mode (40-70% fewer tokens) |
+| `/forge-commit` | Terse conventional commit from staged changes |
+| `/forge-compression-help` | Quick reference card for all compression features |
 | `/forge-help` | Interactive decision tree to find the right skill |
 | `/forge-tour` | Guided 5-stop introduction to Forge |
 | `/forge-config` | Interactive configuration editor |
@@ -199,6 +201,34 @@ Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plat
 ./tests/run-all.sh contract     # Document contract compliance
 ./tests/run-all.sh scenario     # Multi-script integration
 ```
+
+## Benchmarks
+
+Compression effectiveness measurements and accuracy evals. Local-only (not CI).
+
+```bash
+# Input compression: measure regex-based rule application
+cd benchmarks/input-compression
+./measure.sh                          # Aggressive (level 2)
+./measure.sh --level 1                # Conservative
+./measure.sh --level 3                # Ultra
+
+# Output compression: 10 tasks x 5 arms via API (~$0.50)
+cd benchmarks/output-compression
+export ANTHROPIC_API_KEY=sk-ant-...
+python3 run-benchmark.py
+python3 run-benchmark.py --dry-run    # Cost estimate only
+
+# Eval harness: 3-arm accuracy/token trade-off (~$0.50)
+cd evals
+python3 run-evals.py                  # Run all 10 tasks x 3 arms
+python3 measure.py                    # Analyze cached results
+
+# Token estimation (zero dependencies)
+python3 benchmarks/count-tokens.py agents/fg-100-orchestrator.md
+```
+
+See `evals/README.md` for eval design, task definitions, and cost breakdown.
 
 ## Setup details
 

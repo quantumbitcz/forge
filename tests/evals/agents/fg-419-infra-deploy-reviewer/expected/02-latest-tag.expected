@@ -1,0 +1,6 @@
+# Image using :latest tag
+PATTERN: k8s/deployment.yaml:* | INFRA-IMAGE | WARNING | *latest*tag* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: INFRA-IMAGE
+VERDICT: CONCERNS

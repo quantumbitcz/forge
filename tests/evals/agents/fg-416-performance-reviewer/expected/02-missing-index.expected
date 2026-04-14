@@ -1,0 +1,6 @@
+# Query on unindexed column
+PATTERN: src/repositories/product-repo.ts:* | PERF-INDEX | WARNING | *index* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: PERF-INDEX
+VERDICT: CONCERNS

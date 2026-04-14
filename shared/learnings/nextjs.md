@@ -49,3 +49,11 @@
 - **Pattern:** `dynamic(() => import('./Chart'), { ssr: false })` renders nothing on the server. If the component's parent is a Server Component that passes server-fetched data, the data is available but the component is not rendered until client hydration. Use `<Suspense>` fallback to avoid layout shift.
 - **Confidence:** MEDIUM
 - **Hit count:** 0
+
+## App Router Variant Learnings
+
+### Common Pitfalls
+<!-- Populated by retrospective agent: server/client boundary issues, caching gotchas -->
+
+### Effective Patterns
+<!-- Populated by retrospective agent -->

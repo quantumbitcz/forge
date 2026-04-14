@@ -73,6 +73,7 @@ case "$TIER" in
     run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
     run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
+    run_tier "Eval Suite" "$BATS" "$SCRIPT_DIR"/evals/agents/*/eval.bats
     print_summary
     ;;
   structural)
@@ -95,8 +96,12 @@ case "$TIER" in
     run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
     print_summary
     ;;
+  eval|evals)
+    run_tier "Eval Suite" "$BATS" "$SCRIPT_DIR"/evals/agents/*/eval.bats
+    print_summary
+    ;;
   *)
-    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks]"
+    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks|eval]"
     exit 1
     ;;
 esac

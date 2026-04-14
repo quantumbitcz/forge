@@ -92,6 +92,19 @@
           }
         }
       }
+    },
+    "token_pricing": {
+      "type": "object",
+      "description": "Token pricing overrides (per million tokens). Falls back to built-in defaults.",
+      "properties": {
+        "opus_input": { "type": "number", "minimum": 0 },
+        "opus_output": { "type": "number", "minimum": 0 },
+        "sonnet_input": { "type": "number", "minimum": 0 },
+        "sonnet_output": { "type": "number", "minimum": 0 },
+        "haiku_input": { "type": "number", "minimum": 0 },
+        "haiku_output": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
     }
   }
 }

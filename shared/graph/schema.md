@@ -1,4 +1,5 @@
-# Knowledge Graph Schema
+# Knowledge Graph Schema — Version 1.0
+<!-- schema_version: 1.0 — update this AND shared/graph/schema-versioning.md when schema changes -->
 
 This document defines the node labels, properties, and relationship types used in the Neo4j knowledge graph. The graph has two layers:
 

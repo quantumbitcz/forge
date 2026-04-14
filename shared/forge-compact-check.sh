@@ -50,16 +50,25 @@ else
       echo "$c"
     ) 9>"${TOKEN_FILE}.lock" || count=""
   else
-    # Last resort: accept possible race on systems without flock
-    count=""
-    if [[ -f "$TOKEN_FILE" ]]; then
-      count=$(cat "$TOKEN_FILE" 2>/dev/null || echo "")
-    fi
-    if [[ "$count" =~ ^[0-9]+$ ]]; then
+    lock="${TOKEN_FILE}.lockdir"
+    max_wait=10
+    i=0
+    while ! mkdir "$lock" 2>/dev/null; do
+      i=$((i + 1))
+      if [[ $i -ge $max_wait ]]; then
+        rmdir "$lock" 2>/dev/null || rm -rf "$lock" 2>/dev/null
+        mkdir "$lock" 2>/dev/null || { count=""; break; }
+        break
+      fi
+      sleep 0.1
+    done
+    if [[ -d "$lock" ]]; then
+      count=0
+      [[ -f "$TOKEN_FILE" ]] && count=$(cat "$TOKEN_FILE" 2>/dev/null || echo 0)
+      [[ "$count" =~ ^[0-9]+$ ]] || count=0
       count=$((count + 1))
-      echo "$count" > "$TOKEN_FILE"
-    else
-      count=""
+      echo "$count" > "$TOKEN_FILE" 2>/dev/null || true
+      rmdir "$lock" 2>/dev/null
     fi
   fi
 fi
@@ -67,7 +76,17 @@ fi
 # Log failure if increment failed or returned empty
 if [[ -z "$count" ]]; then
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) compact-check: atomic_increment failed or returned empty" \
-    >> "${FORGE_DIR}/.hook-failures.log" 2>/dev/null
+    >> "${FORGE_DIR}/forge.log" 2>/dev/null
+  # Rotate forge.log if too large (>100KB)
+  _log_file="${FORGE_DIR}/forge.log"
+  if [[ -f "$_log_file" ]]; then
+    _lsize=$(wc -c < "$_log_file" 2>/dev/null || echo 0)
+    if [[ "$_lsize" -gt 102400 ]]; then
+      tail -1000 "$_log_file" > "${_log_file}.tmp" 2>/dev/null && \
+        mv "${_log_file}.tmp" "$_log_file" 2>/dev/null || \
+        rm -f "${_log_file}.tmp" 2>/dev/null
+    fi
+  fi
   count=0
 fi
 

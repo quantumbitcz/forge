@@ -17,6 +17,18 @@ Toggle user-facing output compression. Does NOT affect inter-agent communication
 | `ultra` | `/forge-caveman ultra` | Abbreviate everything (DB, auth, req/res, impl, config), arrows for causality, no conjunctions |
 | `off` | `/forge-caveman off` or "stop caveman" or "normal mode" | Standard verbose output |
 
+## Natural Language Triggers
+
+These phrases are guidance for the LLM to recognize user intent -- they are NOT routing enforcement. The LLM may interpret these as requests to activate caveman mode, but matching is best-effort:
+
+- "caveman mode", "go caveman", "caveman on"
+- "less tokens", "fewer tokens", "reduce output"
+- "be brief", "be terse", "be concise"
+- "shorter replies", "compress output"
+- "stop caveman", "normal mode", "verbose again"
+
+These phrases help the LLM understand intent. They do not trigger deterministic routing.
+
 ## Instructions
 
 1. Parse argument from `$ARGUMENTS`:
@@ -24,13 +36,18 @@ Toggle user-facing output compression. Does NOT affect inter-agent communication
    - "lite" → mode = `lite`
    - "ultra" → mode = `ultra`
    - "off", "stop", "normal" → mode = `off`
-2. Write mode to `.forge/caveman-mode` (single line: `off`, `lite`, `full`, `ultra`)
+   - "status" → check current mode and report (see step 2a)
+2. **Check current status first:**
+   - Read `.forge/caveman-mode` if it exists
+   - If the requested mode matches the current mode, report: "Caveman {mode} already active." and STOP (no re-write needed)
+   - 2a. If argument is "status": report current mode and STOP
+3. Write mode to `.forge/caveman-mode` (single line: `off`, `lite`, `full`, `ultra`)
    - If `.forge/` does not exist, create it
-3. Confirm to user:
+4. Confirm to user with savings estimate:
    - `off`: "Caveman mode off. Normal output."
-   - `lite`: "Caveman lite active. Drop filler, keep grammar."
-   - `full`: "Caveman on. [thing] [action] [reason]. [next step]."
-   - `ultra`: "CAVEMAN ULTRA. Max compress. Abbrev all."
+   - `lite`: "Caveman lite active. Drop filler, keep grammar. (~20% output reduction)"
+   - `full`: "Caveman on. [thing] [action] [reason]. [next step]. (~45% output reduction)"
+   - `ultra`: "CAVEMAN ULTRA. Max compress. Abbrev all. (~65% output reduction)"
 
 ## Auto-Clarity Exceptions
 
@@ -89,7 +106,40 @@ None. Works in any project.
 - Orchestrator reads at PREFLIGHT and applies to user-facing messages
 - `.forge/caveman-mode` survives `/forge-reset`
 
+## Auto-Activation via SessionStart Hook
+
+Caveman mode can activate automatically at the start of every session without requiring `/forge-caveman` each time.
+
+### Configuration
+
+In `.claude/forge-config.md`:
+
+```yaml
+caveman:
+  enabled: true
+  default_mode: full    # lite | full | ultra
+```
+
+### Behavior
+
+When `caveman.enabled: true` in config:
+1. The `SessionStart` hook checks for `.forge/caveman-mode`
+2. If the file is missing, the hook creates it with the `default_mode` value
+3. If the file exists, the hook reads the current mode (preserving manual overrides)
+4. The hook emits compression instructions for the active mode
+
+This allows set-and-forget configuration: enable once in `forge-config.md`, and every session starts in caveman mode. Manual `/forge-caveman [mode]` overrides persist until the file is deleted.
+
+### Disabling
+
+- Set `caveman.enabled: false` (or omit the section) to disable auto-activation
+- Run `/forge-caveman off` to disable for the current session while keeping auto-activation for future sessions
+- Delete `.forge/caveman-mode` to reset to config defaults on next session
+
 ## See Also
 
-- `/forge-compress` — compress input files (agent prompts, convention stacks)
-- `/forge-help` — find the right skill for your situation
+- `/forge-compress` -- compress input files (agent prompts, convention stacks)
+- `/forge-compression-help` -- quick reference card for all compression features
+- `/forge-commit` -- terse conventional commit messages
+- `/forge-help` -- find the right skill for your situation
+- See `benchmarks/` for compression measurements (if available)

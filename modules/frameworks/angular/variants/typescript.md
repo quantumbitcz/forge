@@ -172,3 +172,84 @@ Import order with aliases:
 - No `as` type assertions unless narrowing from `unknown` or DOM types
 - No non-null assertion (`!`) on values that could legitimately be null/undefined — handle the null case
 - TSDoc on all exported services, stores, and public component APIs (what + why, not how)
+
+## Standalone Components (Angular 17+)
+
+All components are `standalone: true` (default in Angular 17+). No NgModule declarations -- components import their own dependencies.
+
+```typescript
+@Component({
+  selector: 'app-user-profile',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, UserAvatarComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `...`,
+})
+export class UserProfileComponent {
+  // ...
+}
+```
+
+Use `importProvidersFrom()` for module-based libraries in `app.config.ts`.
+
+## Built-in Control Flow (Angular 17+)
+
+Use `@if`, `@for`, `@switch` instead of `*ngIf`, `*ngFor`, `*ngSwitch`:
+
+```html
+@if (user()) {
+  <app-user-card [user]="user()" />
+} @else {
+  <app-login-prompt />
+}
+
+@for (item of items(); track item.id) {
+  <app-list-item [item]="item" />
+} @empty {
+  <p>No items found.</p>
+}
+```
+
+`@for` requires a `track` expression.
+
+## Deferred Loading
+
+Use `@defer` for heavy components to reduce initial bundle size:
+
+```html
+@defer (on viewport) {
+  <app-heavy-chart [data]="chartData()" />
+} @placeholder {
+  <app-chart-skeleton />
+}
+```
+
+## Provider Configuration
+
+Use functional providers instead of NgModules:
+
+```typescript
+// app.config.ts
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(withInterceptors([authInterceptor, loggingInterceptor])),
+    provideAnimationsAsync(),
+  ],
+};
+```
+
+## Dos
+
+- Use `inject()` function instead of constructor injection
+- Use `OnPush` change detection strategy on all components
+- Use `provideHttpClient(withInterceptors([...]))` not `HttpClientModule`
+- Defer heavy components with `@defer`
+
+## Don'ts
+
+- Don't create NgModules for new code
+- Don't use `*ngIf` / `*ngFor` / `*ngSwitch` -- use built-in control flow
+- Don't use `@Input()` / `@Output()` decorators -- use signal-based `input()` / `output()`
+- Don't use `BehaviorSubject` for component-level state -- use signals
+- Don't use class-based route guards

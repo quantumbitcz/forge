@@ -59,3 +59,34 @@ type AsyncState<T> =
 - No `any` type -- use `unknown` and narrow with type guards
 - No `as` type assertions unless narrowing from `unknown`
 - TSDoc on all exported functions, types, components (what + why, not how)
+
+## Generic Components
+
+Use generic components for lists, tables, selects -- constrain with `extends`:
+
+```typescript
+interface ListProps<T extends { id: string }> {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  keyExtractor?: (item: T) => string;
+}
+
+function List<T extends { id: string }>({ items, renderItem, keyExtractor }: ListProps<T>) {
+  return <ul>{items.map(item => <li key={keyExtractor?.(item) ?? item.id}>{renderItem(item)}</li>)}</ul>;
+}
+```
+
+## Dos
+
+- Use strict TypeScript config (`strict: true`, `noUncheckedIndexedAccess: true`)
+- Define API response types matching backend contracts
+- Use Zod or similar for runtime validation at API boundaries
+- Type CSS custom properties with `CSSProperties` extension
+- Export component props for documentation and testing
+
+## Don'ts
+
+- Don't use `@ts-ignore` -- fix the type or use `@ts-expect-error` with explanation
+- Don't use non-null assertion (`!`) except in `createContext` pattern
+- Don't type state as `Object` or `{}` -- use specific interfaces
+- Don't spread props without `Omit` to prevent DOM leakage

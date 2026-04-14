@@ -1,0 +1,6 @@
+# Missing auth middleware on admin routes
+PATTERN: src/routes/admin.ts:* | SEC-AUTH | CRITICAL | *auth* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: SEC-AUTH
+VERDICT: FAIL

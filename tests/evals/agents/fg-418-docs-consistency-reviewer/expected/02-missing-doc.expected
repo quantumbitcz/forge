@@ -1,0 +1,6 @@
+# Missing documentation on public API
+PATTERN: src/lib/calculator.ts:* | DOC-MISSING | INFO | *missing*doc* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: DOC-MISSING
+VERDICT: PASS|CONCERNS

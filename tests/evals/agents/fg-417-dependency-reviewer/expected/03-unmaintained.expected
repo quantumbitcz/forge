@@ -1,0 +1,6 @@
+# Unmaintained or deprecated packages
+PATTERN: package.json:* | DEP-UNMAINTAINED | INFO | *deprecated*unmaintained* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 4
+HAS_CATEGORY: DEP-UNMAINTAINED
+VERDICT: PASS|CONCERNS

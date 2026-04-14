@@ -1,0 +1,6 @@
+# README documents nonexistent endpoints
+PATTERN: README.md:* | DOC-STALE | WARNING | *stale*outdated* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 4
+HAS_CATEGORY: DOC-STALE
+VERDICT: CONCERNS

@@ -1,0 +1,6 @@
+# Inline object allocations in render
+PATTERN: src/components/UserList.tsx:* | CONV-REACT-PERF | WARNING | *inline* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 3
+HAS_CATEGORY: CONV-REACT-PERF
+VERDICT: CONCERNS

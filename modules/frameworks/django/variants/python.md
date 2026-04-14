@@ -1,6 +1,6 @@
 # Django + Python Variant
 
-> Python-specific patterns for Django projects. Extends `modules/languages/python.md` and `modules/frameworks/django/conventions.md`.
+> Python 3.10+ patterns for Django projects. Extends `modules/languages/python.md` and `modules/frameworks/django/conventions.md`. Applies when Python >= 3.10.
 
 ## Type Hints with Django Stubs
 
@@ -75,3 +75,37 @@
 - Use `ruff` for linting and formatting (replaces `flake8` + `black`)
 - Use `mypy` with `django-stubs` for type checking — run in CI
 - Environment management: `python-decouple` or `django-environ` for reading `.env` files
+
+## Match Statements (Python 3.10+, PEP 634)
+
+Use `match` for complex dispatch (view branching, serializer selection). Prefer match over if/elif chains for 3+ branches with pattern matching:
+
+```python
+match request.method:
+    case "GET":
+        return self.list(request)
+    case "POST":
+        return self.create(request)
+    case _:
+        return HttpResponseNotAllowed(["GET", "POST"])
+```
+
+## Django 5.0+ Features
+
+- Use `GeneratedField` for computed database columns
+- Use `Field.db_default` for database-level defaults
+- Use facet filters in admin
+
+```python
+from django.db.models import GeneratedField, F, Value
+from django.db.models.functions import Concat
+
+class UserProfile(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    full_name = GeneratedField(
+        expression=Concat(F("first_name"), Value(" "), F("last_name")),
+        output_field=models.CharField(max_length=201),
+        db_persist=True,
+    )
+```

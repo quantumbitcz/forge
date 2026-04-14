@@ -17,6 +17,10 @@
 shared/conventions-index.md
 __pycache__/
 
+# Benchmark and eval generated results (JSON is generated, .md summaries committed)
+benchmarks/output-compression/results.json
+evals/results/*.json
+
 # Claude local overrides
 .claude.local.md
 .claude/settings.local.json
