@@ -123,3 +123,14 @@ load '../helpers/test-helpers'
     fail "Python fcntl imports must use try/except with msvcrt fallback"
   fi
 }
+
+@test "cross-platform CI workflow exists" {
+  assert [ -f "$PLUGIN_ROOT/.github/workflows/cross-platform.yml" ]
+}
+
+@test "cross-platform CI workflow includes macOS, Ubuntu, and Windows" {
+  local ci="$PLUGIN_ROOT/.github/workflows/cross-platform.yml"
+  run grep -c 'macos-latest\|ubuntu-latest\|windows-latest' "$ci"
+  assert_success
+  [[ "${output}" -ge 3 ]]
+}
