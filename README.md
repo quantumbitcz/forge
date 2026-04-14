@@ -118,22 +118,22 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 | `/forge-ask` | Codebase Q&A via wiki, graph, docs |
 | `/forge-playbooks` | Manage reusable task templates |
 | `/forge-compress` | Compress agent .md files for token savings |
-| `/verify` | Quick build + lint + test check |
-| `/security-audit` | Module-appropriate security scanners |
-| `/codebase-health` | Full check engine health report |
-| `/deep-health` | Iterative fix loop until clean |
-| `/docs-generate` | Generate project documentation |
-| `/deploy` | Deployment (staging, production, preview, rollback) |
-| `/migration` | Framework/library version migrations |
-| `/bootstrap-project` | Scaffold new project from template |
-| `/config-validate` | Pre-pipeline config validation |
-| `/repair-state` | Targeted state.json fixes |
+| `/forge-verify` | Quick build + lint + test check |
+| `/forge-security-audit` | Module-appropriate security scanners |
+| `/forge-codebase-health` | Full check engine health report |
+| `/forge-deep-health` | Iterative fix loop until clean |
+| `/forge-docs-generate` | Generate project documentation |
+| `/forge-deploy` | Deployment (staging, production, preview, rollback) |
+| `/forge-migration` | Framework/library version migrations |
+| `/forge-bootstrap` | Scaffold new project from template |
+| `/forge-config-validate` | Pre-pipeline config validation |
+| `/forge-repair-state` | Targeted state.json fixes |
 | `/forge-automation` | Event-driven automation management |
-| `/graph-init` | Initialize Neo4j knowledge graph |
-| `/graph-status` | Graph connection and node counts |
-| `/graph-query` | Run Cypher queries |
-| `/graph-rebuild` | Rebuild graph from codebase |
-| `/graph-debug` | Targeted Neo4j diagnostics |
+| `/forge-graph-init` | Initialize Neo4j knowledge graph |
+| `/forge-graph-status` | Graph connection and node counts |
+| `/forge-graph-query` | Run Cypher queries |
+| `/forge-graph-rebuild` | Rebuild graph from codebase |
+| `/forge-graph-debug` | Targeted Neo4j diagnostics |
 | `/forge-caveman` | Toggle terse output mode (40-70% fewer tokens) |
 | `/forge-commit` | Terse conventional commit from staged changes |
 | `/forge-compression-help` | Quick reference card for all compression features |
@@ -252,7 +252,7 @@ After [Quick start](#quick-start):
 | Problem | Fix |
 |---------|-----|
 | "No active pipeline" | Run `/forge-init` then `/forge-run` |
-| Pipeline stuck | `/forge-diagnose` (read-only), then `/repair-state` |
+| Pipeline stuck | `/forge-diagnose` (read-only), then `/forge-repair-state` |
 | Lock file blocks run | `/forge-reset` or remove `.forge/.lock` |
 | Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
 | Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |

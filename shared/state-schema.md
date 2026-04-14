@@ -772,7 +772,7 @@ All other fields in the Field Reference table marked "Yes" are also required; th
 
 ### Migration State (stored in `state.json.migration` during migration runs)
 
-During migration mode (triggered by `/migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
+During migration mode (triggered by `/forge-migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -929,7 +929,7 @@ The orchestrator detects the state version at PREFLIGHT (Stage 0) and applies mi
 | `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
 | `"DECOMPOSED"` | - | Requirement decomposed into multiple features; sprint orchestrator taking over |
 
-Migration states are used exclusively by `fg-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
+Migration states are used exclusively by `fg-160-migration-planner` during `/forge-migration` runs. They are not part of the standard pipeline flow.
 
 **Multi-module only states** (used in `modules[].story_state`, never at top level):
 

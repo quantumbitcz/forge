@@ -69,17 +69,17 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Fix a bug | `/forge-fix` | Root cause investigation + targeted fix |
 | Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
 | Review changed files | `/forge-review` | Quick (3 agents) or full (8 agents) |
-| Review entire codebase | `/codebase-health` | Read-only analysis, no fixes |
-| Fix all codebase issues | `/deep-health` | Iterative fix loop until clean |
-| Quick build+lint+test | `/verify` | No pipeline, just check commands |
-| Security scan | `/security-audit` | Module-appropriate vulnerability scanners |
-| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/repair-state` to fix |
+| Review entire codebase | `/forge-codebase-health` | Read-only analysis, no fixes |
+| Fix all codebase issues | `/forge-deep-health` | Iterative fix loop until clean |
+| Quick build+lint+test | `/forge-verify` | No pipeline, just check commands |
+| Security scan | `/forge-security-audit` | Module-appropriate vulnerability scanners |
+| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/forge-repair-state` to fix |
 | Resume aborted run | `/forge-resume` | Continues from last checkpoint |
 | Start fresh | `/forge-reset` | Clears state, preserves learnings |
 | Multiple features | `/forge-sprint` | Parallel orchestration |
-| Generate docs | `/docs-generate` | README, ADRs, API specs, changelogs |
-| Deploy | `/deploy` | Staging, production, preview, rollback |
-| Migrate framework | `/migration` | Library/framework version upgrades |
+| Generate docs | `/forge-docs-generate` | README, ADRs, API specs, changelogs |
+| Deploy | `/forge-deploy` | Staging, production, preview, rollback |
+| Migrate framework | `/forge-migration` | Library/framework version upgrades |
 | Ask about codebase | `/forge-ask` | Wiki, graph, explore cache, docs index |
 | Pipeline analytics | `/forge-insights` | Quality, cost, convergence, memory trends |
 | Reusable recipes | `/forge-playbooks` | Create, list, run, analyze pipeline playbooks |
@@ -95,12 +95,12 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 
 ```
 First time?        /forge-tour (5-stop guided introduction)
-New project:       /forge-init → /config-validate → /verify → /forge-run <requirement>
-Existing project:  /forge-init → /codebase-health → /deep-health → /forge-run <requirement>
+New project:       /forge-init → /forge-config-validate → /forge-verify → /forge-run <requirement>
+Existing project:  /forge-init → /forge-codebase-health → /forge-deep-health → /forge-run <requirement>
 Bug fix:           /forge-fix <description or ticket ID>
-Code quality:      /forge-review --full  (changed files) or /codebase-health (all files)
-Before shipping:   /verify → /forge-review --full
-Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resume
+Code quality:      /forge-review --full  (changed files) or /forge-codebase-health (all files)
+Before shipping:   /forge-verify → /forge-review --full
+Pipeline trouble:  /forge-diagnose → /forge-repair-state (if needed) → /forge-resume
 Multiple features: /forge-sprint (reads from Linear or manual list)
 Quick decision:    /forge-help (interactive skill picker)
 ```
@@ -135,9 +135,11 @@ Quick decision:    /forge-help (interactive skill picker)
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines. Output compression (`shared/output-compression.md`) sets per-stage verbosity levels to reduce output tokens.
 - **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
+See `shared/agent-role-hierarchy.md` for the complete dispatch graph and tier definitions.
+
 ### Routing & decomposition
 
-- `/forge-run` auto-classifies intent and routes. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint`, `--parallel`) override. Config: `routing.*`, `scope.*` in `forge-config.md`.
+- `/forge-run` auto-classifies intent and routes. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint` (deprecated, use `/forge-sprint`), `--parallel`) override. Config: `routing.*`, `scope.*` in `forge-config.md`.
 - Multi-feature detected via fast scan (text) or deep scan (post-EXPLORE). Triggers `fg-015-scope-decomposer` → `fg-090-sprint-orchestrator`.
 - Frontend design preview via superpowers visual companion during PLAN (optional, graceful degradation).
 - Additional `forge-config.md` sections: `model_routing:` (tiered model selection), `explore:` (explore cache settings), `plan_cache:` (plan reuse settings).
@@ -256,9 +258,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (40 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings), `forge-caveman` (user-facing output compression toggle), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-compression-help` (compression quick reference card).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `forge-verify`, `forge-security-audit`, `forge-codebase-health`, `forge-deep-health`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph-init`, `forge-graph-status`, `forge-graph-query`, `forge-graph-rebuild`, `forge-graph-debug` (targeted Neo4j diagnostics), `forge-docs-generate`, `forge-diagnose` (read-only diagnostic), `forge-repair-state` (targeted state.json fixes), `forge-config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings), `forge-caveman` (user-facing output compression toggle), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-compression-help` (compression quick reference card).
 
-**Hooks** (7): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`, session-start on `SessionStart`.
+**Hooks** (7): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`, session-start on `SessionStart`. See `shared/hook-design.md` for execution model and script contract.
 
 **Kanban** (`.forge/tracking/`): File-based board (`backlog/`, `in-progress/`, `review/`, `done/`). Prefix configurable (default `FG`). IDs never reused. Silently skips if uninitialized.
 

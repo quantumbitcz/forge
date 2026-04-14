@@ -70,7 +70,7 @@ jest.spyOn(featureFlags, "isEnabled").mockReturnValue(false);
 
 ## Deploy-Time Verification
 
-When `feature_flags.deploy_flag_check: true` and the `/deploy` skill is invoked:
+When `feature_flags.deploy_flag_check: true` and the `/forge-deploy` skill is invoked:
 
 ### Pre-Deploy Check
 
