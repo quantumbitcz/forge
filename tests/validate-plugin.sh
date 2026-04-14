@@ -289,23 +289,27 @@ check "hooks/hooks.json has PostToolUse and Stop event types" "$check18_fail"
 
 # Check 18b: All hook command scripts exist, are executable, and have shebangs
 check18b_fail=0
-# Extract command paths from hooks.json, replace ${CLAUDE_PLUGIN_ROOT} with $ROOT.
-# Uses 'ls' for existence check which handles Windows Git Bash paths better than test -f.
+# Strip ${CLAUDE_PLUGIN_ROOT}/ to get relative paths, then check from repo root.
+# This avoids absolute path resolution issues on Windows Git Bash (where neither
+# /d/a/... nor D:/a/... paths reliably resolve with test -f or ls).
+pushd "$ROOT" > /dev/null 2>&1 || true
 while IFS= read -r cmd; do
   [[ -z "$cmd" ]] && continue
   script_path="${cmd%% *}"
-  script_path="${script_path/\$\{CLAUDE_PLUGIN_ROOT\}/$ROOT}"
-  if ! ls "$script_path" >/dev/null 2>&1; then
-    echo "    DETAIL: Hook script not found: $script_path" >&2
+  # Strip the variable prefix to get the relative path
+  rel_path="${script_path#\$\{CLAUDE_PLUGIN_ROOT\}/}"
+  if [[ ! -f "$rel_path" ]]; then
+    echo "    DETAIL: Hook script not found: $rel_path" >&2
     check18b_fail=1
-  elif [[ ! -x "$script_path" ]] && ! ls -la "$script_path" 2>/dev/null | grep -q '^-..x'; then
-    echo "    DETAIL: Hook script not executable: $script_path (run: chmod +x $script_path)" >&2
+  elif [[ ! -x "$rel_path" ]]; then
+    echo "    DETAIL: Hook script not executable: $rel_path (run: chmod +x $rel_path)" >&2
     check18b_fail=1
-  elif ! head -n 1 "$script_path" | grep -q '^#!'; then
-    echo "    DETAIL: Hook script missing shebang: $script_path (add: #!/usr/bin/env bash)" >&2
+  elif ! head -n 1 "$rel_path" | grep -q '^#!'; then
+    echo "    DETAIL: Hook script missing shebang: $rel_path (add: #!/usr/bin/env bash)" >&2
     check18b_fail=1
   fi
 done < <(jq -r '.. | objects | select(has("command")) | .command' "$HOOKS_JSON" 2>/dev/null)
+popd > /dev/null 2>&1 || true
 check "All hook command scripts exist, are executable, and have shebangs" "$check18b_fail"
 
 echo ""
