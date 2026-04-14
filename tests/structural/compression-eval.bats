@@ -78,6 +78,16 @@ print('OK')
   assert_output "OK"
 }
 
+@test "session-start.sh emits STATUS badge for caveman mode" {
+  grep -q '\[STATUS:' "$PLUGIN_ROOT/hooks/session-start.sh"
+}
+
+@test "session-start.sh contains full compression rule blocks" {
+  grep -q "OUTPUT COMPRESSION -- LITE MODE" "$PLUGIN_ROOT/hooks/session-start.sh"
+  grep -q "OUTPUT COMPRESSION -- FULL" "$PLUGIN_ROOT/hooks/session-start.sh"
+  grep -q "OUTPUT COMPRESSION -- ULTRA" "$PLUGIN_ROOT/hooks/session-start.sh"
+}
+
 @test "prompts.json prompts have required_facts" {
   run python3 -c "
 import json
