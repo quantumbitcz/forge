@@ -185,6 +185,45 @@ This ordering ensures the longest possible cache prefix match. The Anthropic API
 
 This is advisory guidance for the orchestrator's dispatch logic. Model routing itself does not enforce prompt ordering.
 
+## Cost-Per-Quality-Point Tracking
+
+After each run, compute cost efficiency per (stage, model tier):
+
+- **cost_per_point** = `stage_tokens / score_delta` for the stage
+- **score_delta**: REVIEWING = `score_after - score_before`. IMPLEMENTING = test pass delta. Stages without score impact (PREFLIGHT, EXPLORING, DOCUMENTING, LEARNING) have `score_delta: null` and are excluded from efficiency analysis.
+- Stored in `state.json.cost.per_stage[stage].score_delta`
+
+### Trust File: `model_efficiency`
+
+Cross-run efficiency data in `.forge/trust.json`:
+
+```json
+{
+  "model_efficiency": {
+    "implementing": {
+      "opus": { "avg_cost_per_point": 1200, "runs": 8, "avg_score_delta": 45 },
+      "sonnet": { "avg_cost_per_point": 900, "runs": 2, "avg_score_delta": 42 }
+    }
+  }
+}
+```
+
+Running averages accumulate across runs. After 5+ data points for a (stage, tier), the retrospective may suggest tier changes.
+
+### Suggestion Algorithm
+
+Quality gate: cheaper tier must produce >= 90% of premium tier's score delta. Confidence: HIGH at 10+ runs, MEDIUM at 5-9 runs. At most 2 tier changes per run (existing constraint). Respects `<!-- locked -->` fences.
+
+### State Tracking
+
+Per-run efficiency stored in `state.json.cost`:
+- `cost.per_stage[stage].score_delta` -- quality contribution
+- `cost.efficiency_score` -- `quality_points_gained / (tokens_spent / 100000)`
+
+### Cost-Aware Routing Override
+
+When `state.json.cost_alerting.routing_override` is set (by `cost-alerting.sh apply-downgrade`), the orchestrator checks it before the standard model routing resolution. Override entries take precedence: if an agent ID appears in `routing_override`, that tier is used instead of the configured tier. The override is temporary (cleared on next run) and logged as `[COST] Using downgrade override for {agent}: {tier}`.
+
 ## Stage Notes
 
 The orchestrator records model assignments in `stage_0_notes`:
