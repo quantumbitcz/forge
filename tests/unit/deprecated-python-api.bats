@@ -28,7 +28,7 @@ count_bare_deprecated() {
 
 @test "no bare utcnow() in hooks without fallback" {
   local result
-  result=$(count_bare_deprecated "utcnow()" hooks/*.sh)
+  result=$(count_bare_deprecated "utcnow()" $PLUGIN_ROOT/hooks/*.sh)
   local count
   count=$(echo "$result" | tail -1)
   if [ "$count" -gt 0 ]; then
@@ -39,7 +39,7 @@ count_bare_deprecated() {
 
 @test "no bare utcnow() in shared scripts without fallback" {
   local result
-  result=$(count_bare_deprecated "utcnow()" shared/forge-event.sh shared/forge-state.sh shared/forge-state-write.sh shared/forge-token-tracker.sh)
+  result=$(count_bare_deprecated "utcnow()" $PLUGIN_ROOT/shared/forge-event.sh $PLUGIN_ROOT/shared/forge-state.sh $PLUGIN_ROOT/shared/forge-state-write.sh $PLUGIN_ROOT/shared/forge-token-tracker.sh)
   local count
   count=$(echo "$result" | tail -1)
   if [ "$count" -gt 0 ]; then
@@ -50,7 +50,7 @@ count_bare_deprecated() {
 
 @test "no bare utcfromtimestamp() anywhere without fallback" {
   local result
-  result=$(count_bare_deprecated "utcfromtimestamp(" hooks/*.sh shared/*.sh)
+  result=$(count_bare_deprecated "utcfromtimestamp(" $PLUGIN_ROOT/hooks/*.sh $PLUGIN_ROOT/shared/*.sh)
   local count
   count=$(echo "$result" | tail -1)
   if [ "$count" -gt 0 ]; then
