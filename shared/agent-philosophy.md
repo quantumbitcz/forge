@@ -114,3 +114,11 @@ The Challenge Brief is not a formality. It is the artifact that proves the plann
 These steps add minutes, not hours. A 2-minute alternatives check before a 4-hour implementation is not a bottleneck — it is insurance. The pipeline's retry budget exists because implementations sometimes go wrong. Principles 1–5 exist to spend less of it.
 
 The pipeline is fast when it is right the first time. Critical thinking is not the enemy of speed; rework is.
+
+## See Also
+
+- `agents/fg-200-planner.md` — Enforces Challenge Brief (Principle 1) at planning stage
+- `agents/fg-300-implementer.md` — Self-review checkpoint (Principle 4) after GREEN phase
+- `agents/fg-400-quality-gate.md` — Devil's advocate pass (Principle 2) after all review batches
+- `shared/agent-communication.md` — PREEMPT system tracks "times better approach found in review"
+- `shared/stage-contract.md` — Challenge Brief required in stage notes (validated by fg-210)
