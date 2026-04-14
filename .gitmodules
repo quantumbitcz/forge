@@ -1,9 +1,12 @@
 [submodule "tests/lib/bats-core"]
 	path = tests/lib/bats-core
-	url = https://github.com/bats-core/bats-core.git
+	url = git@github.com:denissajnar/bats-core.git
+	branch = master
 [submodule "tests/lib/bats-support"]
 	path = tests/lib/bats-support
-	url = https://github.com/bats-core/bats-support.git
+	url = git@github.com:denissajnar/bats-support.git
+	branch = master
 [submodule "tests/lib/bats-assert"]
 	path = tests/lib/bats-assert
-	url = https://github.com/bats-core/bats-assert.git
+	url = git@github.com:denissajnar/bats-assert.git
+	branch = master
