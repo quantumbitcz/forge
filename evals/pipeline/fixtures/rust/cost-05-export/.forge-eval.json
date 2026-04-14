@@ -1,0 +1,17 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "rust",
+  "build_command": "cargo build",
+  "test_command": "cargo test export -- --nocapture",
+  "known_failing_tests": [],
+  "forge_local_template": {
+    "language": "rust",
+    "testing": "rust-test",
+    "commands": {
+      "build": "cargo build",
+      "test": "cargo test",
+      "lint": "cargo clippy -- -D warnings"
+    }
+  }
+}

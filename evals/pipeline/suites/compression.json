@@ -1,0 +1,82 @@
+{
+  "name": "compression",
+  "version": "1.0.0",
+  "description": "5-task A/B paired compression comparison suite",
+  "default_timeout_minutes": 30,
+  "default_model": "sonnet",
+  "tasks": [
+    {
+      "id": "comp-01-ts-verb",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy values. Baseline verbose run without output compression.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["compression", "verbose", "baseline"],
+      "forge_config": {
+        "output_compression": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "comp-02-ts-ters",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy values. Terse compression comparison against verbose baseline.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["compression", "terse", "comparison"],
+      "forge_config": {
+        "output_compression": {
+          "enabled": true,
+          "default_level": "terse"
+        }
+      }
+    },
+    {
+      "id": "comp-03-ts-min",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy values. Minimal compression comparison against verbose baseline.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["compression", "minimal", "comparison"],
+      "forge_config": {
+        "output_compression": {
+          "enabled": true,
+          "default_level": "minimal"
+        }
+      }
+    },
+    {
+      "id": "comp-04-py-verb",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "KeyError from case-sensitive email lookup. Baseline verbose run for Python comparison.",
+      "fixture": "python/py-01-dict-keyerror",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "tags": ["compression", "verbose", "baseline"],
+      "forge_config": {
+        "output_compression": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "comp-05-py-ters",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "KeyError from case-sensitive email lookup. Terse compression comparison for Python.",
+      "fixture": "python/py-01-dict-keyerror",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "tags": ["compression", "terse", "comparison"],
+      "forge_config": {
+        "output_compression": {
+          "enabled": true,
+          "default_level": "terse"
+        }
+      }
+    }
+  ]
+}

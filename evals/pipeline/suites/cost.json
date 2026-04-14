@@ -1,0 +1,89 @@
+{
+  "name": "cost",
+  "version": "1.0.0",
+  "description": "5-task cost-per-feature measurement suite using /forge-run",
+  "default_timeout_minutes": 60,
+  "default_model": "sonnet",
+  "tasks": [
+    {
+      "id": "cost-01-crud",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Add a Comment entity with full CRUD operations (model, routes, controller, tests) to an existing Express REST API that already has a User model.",
+      "fixture": "typescript/cost-01-crud",
+      "validation_command": "npm test -- --grep Comment",
+      "skill": "forge-run",
+      "expected_files_changed": ["src/models/comment.ts", "src/routes/comments.ts", "src/controllers/comment.controller.ts", "tests/comment.test.ts"],
+      "tags": ["cost", "crud", "feature"],
+      "expected_cost": {
+        "max_input_tokens": 500000,
+        "max_output_tokens": 100000,
+        "max_total_cost_usd": 5.00
+      }
+    },
+    {
+      "id": "cost-02-auth",
+      "language": "python",
+      "difficulty": "medium",
+      "description": "Add JWT authentication middleware and login endpoint to an existing FastAPI application with unprotected endpoints.",
+      "fixture": "python/cost-02-auth",
+      "validation_command": "python3 -m pytest tests/test_auth.py -v",
+      "skill": "forge-run",
+      "expected_files_changed": ["src/auth/middleware.py", "src/auth/jwt_handler.py", "src/routes/auth.py", "tests/test_auth.py"],
+      "tags": ["cost", "auth", "feature"],
+      "expected_cost": {
+        "max_input_tokens": 800000,
+        "max_output_tokens": 150000,
+        "max_total_cost_usd": 8.00
+      }
+    },
+    {
+      "id": "cost-03-search",
+      "language": "kotlin",
+      "difficulty": "medium",
+      "description": "Add search endpoint with filtering, pagination, and sorting to an existing Spring Boot product catalog API.",
+      "fixture": "kotlin/cost-03-search",
+      "validation_command": "./gradlew test --tests '*SearchTest*'",
+      "skill": "forge-run",
+      "expected_files_changed": ["src/main/kotlin/controller/SearchController.kt", "src/main/kotlin/service/SearchService.kt", "src/test/kotlin/SearchTest.kt"],
+      "tags": ["cost", "search", "feature"],
+      "expected_cost": {
+        "max_input_tokens": 800000,
+        "max_output_tokens": 150000,
+        "max_total_cost_usd": 8.00
+      }
+    },
+    {
+      "id": "cost-04-notify",
+      "language": "go",
+      "difficulty": "easy",
+      "description": "Add email notification on task assignment to an existing Go task management API.",
+      "fixture": "go/cost-04-notify",
+      "validation_command": "go test ./internal/notification/... -v",
+      "skill": "forge-run",
+      "expected_files_changed": ["internal/notification/sender.go", "internal/notification/sender_test.go"],
+      "tags": ["cost", "notification", "feature"],
+      "expected_cost": {
+        "max_input_tokens": 500000,
+        "max_output_tokens": 100000,
+        "max_total_cost_usd": 5.00
+      }
+    },
+    {
+      "id": "cost-05-export",
+      "language": "rust",
+      "difficulty": "medium",
+      "description": "Add CSV export endpoint for dashboard data to an existing Rust analytics service.",
+      "fixture": "rust/cost-05-export",
+      "validation_command": "cargo test export -- --nocapture",
+      "skill": "forge-run",
+      "expected_files_changed": ["src/export.rs", "src/routes.rs", "tests/export_test.rs"],
+      "tags": ["cost", "export", "feature"],
+      "expected_cost": {
+        "max_input_tokens": 600000,
+        "max_output_tokens": 120000,
+        "max_total_cost_usd": 6.00
+      }
+    }
+  ]
+}

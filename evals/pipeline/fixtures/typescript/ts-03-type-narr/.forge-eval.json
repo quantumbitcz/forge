@@ -1,0 +1,19 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "typescript",
+  "build_command": "npm install",
+  "test_command": "npx vitest run --reporter=verbose",
+  "known_failing_tests": [
+    "src/handlers/event-processor.test.ts > narrows type across await"
+  ],
+  "forge_local_template": {
+    "language": "typescript",
+    "testing": "vitest",
+    "commands": {
+      "build": "npm install",
+      "test": "npx vitest run",
+      "lint": "npx eslint src/"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "smoke",
+  "version": "1.0.0",
+  "description": "5-task quick validation suite (one easy task per language)",
+  "default_timeout_minutes": 20,
+  "default_model": "sonnet",
+  "tasks": [
+    {
+      "id": "py-01-dict-keyerror",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "KeyError from case-sensitive email lookup. The lookup_user function uses the raw email as dict key without normalizing case.",
+      "fixture": "python/py-01-dict-keyerror",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "tags": ["smoke", "dict", "case-sensitivity"]
+    },
+    {
+      "id": "ts-01-null-coal",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy 0/empty-string. Using ?? instead of || means 0 and empty string are treated as valid values.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["smoke", "nullish-coalescing"]
+    },
+    {
+      "id": "kt-02-sealed-ex",
+      "language": "kotlin",
+      "difficulty": "easy",
+      "description": "Non-exhaustive when on sealed class. Missing branch for recently added subclass causes NoWhenBranchMatchedException.",
+      "fixture": "kotlin/kt-02-sealed-ex",
+      "validation_command": "./gradlew test --tests '*SealedExhaustTest*'",
+      "tags": ["smoke", "sealed-class"]
+    },
+    {
+      "id": "go-01-gortn-leak",
+      "language": "go",
+      "difficulty": "easy",
+      "description": "Goroutine leak from unbuffered channel with no reader. Goroutine writes to channel but reader was removed.",
+      "fixture": "go/go-01-gortn-leak",
+      "validation_command": "go test ./... -v -count=1",
+      "tags": ["smoke", "goroutine"]
+    },
+    {
+      "id": "rs-01-life-dang",
+      "language": "rust",
+      "difficulty": "easy",
+      "description": "Dangling reference from returned local borrow. Function creates local String and tries to return reference to it.",
+      "fixture": "rust/rs-01-life-dang",
+      "validation_command": "cargo test -- --nocapture",
+      "tags": ["smoke", "lifetime"]
+    }
+  ]
+}

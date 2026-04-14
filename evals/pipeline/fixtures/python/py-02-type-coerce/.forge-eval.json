@@ -1,0 +1,19 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "python",
+  "build_command": "pip install -e .",
+  "test_command": "python3 -m pytest tests/ -v",
+  "known_failing_tests": [
+    "tests/test_pricing.py::test_price_comparison_ordering"
+  ],
+  "forge_local_template": {
+    "language": "python",
+    "testing": "pytest",
+    "commands": {
+      "build": "pip install -e .",
+      "test": "python3 -m pytest tests/ -v",
+      "lint": "ruff check src/"
+    }
+  }
+}
