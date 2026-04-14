@@ -30,7 +30,7 @@ State transitions:
 
 Key behaviors:
 
-- **Phase A / Phase B within VERIFY:** Phase A is build + lint. Phase B is tests + analysis. **If Phase A fails, Phase B is skipped entirely** — `tests_pass` and `analysis_pass` are not meaningful when `is_phase_a_failure` is true. The convergence engine must check `is_phase_a_failure` first before evaluating Phase B results.
+- **Phase A / Phase B within VERIFY:** Phase A is build + lint. Phase B is tests + analysis (see `stage-contract.md` Stage 5 for the authoritative Phase A/B definition). **If Phase A fails, Phase B is skipped entirely** — `tests_pass` and `analysis_pass` are not meaningful when `is_phase_a_failure` is true. The convergence engine must check `is_phase_a_failure` first before evaluating Phase B results.
 - **`analysis_pass` definition:** The `verify_result.analysis_pass` boolean is `true` when all Phase B analysis agents dispatched by `fg-500-test-gate` (e.g., coverage analysis, quality heuristics) return without CRITICAL findings AND the overall analysis verdict is not FAIL. If no analysis agents are configured, `analysis_pass` defaults to `true`.
 - **Phase 2 skips VERIFY** per iteration. Only REVIEW scores matter. The safety gate at the end catches regressions from Phase 2 fixes.
 - **Safety gate failure routes to Phase 1**, not Phase 2. If Phase 2 fixes broke tests, correctness must be restored before perfection resumes.
@@ -460,6 +460,8 @@ See `convergence-examples.md` for 3 annotated walkthrough scenarios (happy path,
 
 The canonical convergence algorithm is implemented in `convergence-engine-sim.sh`. This document is a prose explanation. If this document and the script disagree, the script is authoritative.
 
+Tests: `tests/unit/convergence-arithmetic.bats`, `tests/scenario/safety-gate.bats`, `tests/scenario/oscillation.bats`.
+
 ```bash
 # Example: run the simulator
 ./shared/convergence-engine-sim.sh \
@@ -484,3 +486,11 @@ The canonical convergence algorithm is implemented in `convergence-engine-sim.sh
 - At most one parameter is adjusted per run (prevent cascading changes).
 - Adjustments are logged in `forge-log.md` with rationale.
 - `target_score` and `safety_gate` are never auto-tuned -- these are intentional project decisions.
+
+## See Also
+
+- `shared/stage-contract.md` — Stage 5 VERIFY defines Phase A/B separation and fix loop budgets
+- `shared/scoring.md` — Scoring formula and verdict thresholds used by the convergence engine
+- `shared/state-schema.md` — `convergence` sub-schema with phase_history and unfixable_findings
+- `shared/recovery/recovery-engine.md` — Recovery strategies triggered on convergence failure
+- `shared/convergence-engine-sim.sh` — Standalone simulator for testing convergence scenarios
