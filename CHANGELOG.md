@@ -3,6 +3,11 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.6.1] - 2026-04-15
+
+### Fixed
+- Skill descriptions for `forge-automation`, `forge-config-validate`, and `forge-graph-init` now include the required 'Use when' trigger clause, fixing `skill-quality` contract test failure
+
 ## [2.6.0] - 2026-04-14
 
 ### Added
