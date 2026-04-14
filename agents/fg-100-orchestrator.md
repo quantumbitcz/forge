@@ -96,9 +96,9 @@ One TaskCreate per stage at PREFLIGHT (§0.19). Update as stages execute.
 
 ```
 sub_task_id = TaskCreate(
-  subject = "{color_dot} fg-NNN-name: {what it does}",
-  description = "Running: {detailed description}",
-  activeForm = "{action in progress}"
+  subject = "{color_dot} Dispatching fg-NNN-name",
+  description = "Running agent description",
+  activeForm = "Running fg-NNN-name"
 )
 TaskUpdate(taskId = sub_task_id, addBlockedBy = [current_stage_task_id])
 
@@ -108,15 +108,17 @@ TaskUpdate(taskId = sub_task_id, status = "completed")
 // If agent fails: TaskUpdate(taskId = sub_task_id, description = "Failed: {reason}")
 ```
 
-| Context | Subject Example |
-|---------|-----------------|
-| Named agent | `🟢 fg-300: TDD implement UserService` |
-| Review batch | `Review batch 1: ⚪fg-410 ⚪fg-412 🔴fg-411` |
-| Inline work | `Load config and detect stack` |
-| Convergence | `Convergence iteration 2/10 (score: 65 → 78)` |
-| Fix loop | `Fix loop iteration 1: 3 findings` |
+| Context | Subject |
+|---------|---------|
+| Named agent | `🟢 Dispatching fg-300-implementer` |
+| Inline work | Descriptive: `Loading project config` |
+| Review batch | `Review batch {N}: 🔴fg-411 ⚪fg-410 ⚪fg-412` |
+| Convergence | `Convergence iteration {N}/{max} (score: {prev} → {current})` |
+| Fix loop | `Fix loop iteration {N}: {count} findings` |
 
 All sub-tasks use `addBlockedBy: [stage_task_id]`.
+
+**Note:** Dispatched agents already display with their colored status bar in Claude Code (from `color:` frontmatter). The color dots in task subjects are a redundant visual aid for the task list, which does not support colored rendering.
 
 **Model parameter:** `model_routing.enabled` → include `model: <tier>` in every dispatch. Disabled → omit.
 
@@ -669,61 +671,61 @@ TaskCreate: subject="Create worktree and init state",   activeForm="Setting up w
 
 Stage 1 (Explore):
 ```
-TaskCreate: subject="⚪ fg-130: Discover documentation",    activeForm="Discovering docs"
-TaskCreate: subject="Primary codebase exploration",          activeForm="Mapping codebase"
-TaskCreate: subject="Test landscape exploration",            activeForm="Mapping tests"
+TaskCreate: subject="⚪ Dispatching fg-130-docs-discoverer",   activeForm="Discovering docs"
+TaskCreate: subject="Primary codebase exploration",             activeForm="Mapping codebase"
+TaskCreate: subject="Test landscape exploration",               activeForm="Mapping tests"
 ```
 
 Stage 2 (Plan):
 ```
-TaskCreate: subject="🔵 fg-200: Decompose into stories",   activeForm="Creating implementation plan"
-TaskCreate: subject="Plan cache check",                      activeForm="Checking plan cache"
+TaskCreate: subject="🔵 Dispatching fg-200-planner",          activeForm="Creating implementation plan"
+TaskCreate: subject="Plan cache check",                         activeForm="Checking plan cache"
 ```
 
 Stage 3 (Validate):
 ```
-TaskCreate: subject="🟡 fg-210: Validate plan (7 perspectives)",  activeForm="Validating plan"
-TaskCreate: subject="Decision gate",                                 activeForm="Evaluating risk"
+TaskCreate: subject="🟡 Dispatching fg-210-validator",         activeForm="Validating plan"
+TaskCreate: subject="Decision gate",                             activeForm="Evaluating risk"
 ```
 
 Stage 4 (Implement) — per task in plan:
 ```
-TaskCreate: subject="🟢 fg-310: Scaffold {task}",           activeForm="Scaffolding {task}"
-TaskCreate: subject="🟢 fg-300: TDD implement {task}",      activeForm="Implementing {task}"
-TaskCreate: subject="🟣 fg-320: Polish frontend",            activeForm="Polishing frontend"  (conditional)
+TaskCreate: subject="🟢 Dispatching fg-310-scaffolder",        activeForm="Scaffolding"
+TaskCreate: subject="🟢 Dispatching fg-300-implementer",       activeForm="Implementing (TDD)"
+TaskCreate: subject="🟣 Dispatching fg-320-frontend-polisher", activeForm="Polishing frontend"  (conditional)
 ```
 
 Stage 5 (Verify):
 ```
-TaskCreate: subject="🟡 fg-505: Build + lint verification",  activeForm="Verifying build"
-TaskCreate: subject="🟡 fg-500: Test gate analysis",          activeForm="Running test gate"
-TaskCreate: subject="Convergence check",                       activeForm="Checking convergence"
+TaskCreate: subject="🟡 Dispatching fg-505-build-verifier",   activeForm="Verifying build"
+TaskCreate: subject="🟡 Dispatching fg-500-test-gate",         activeForm="Running test gate"
+TaskCreate: subject="Convergence check",                        activeForm="Checking convergence"
 ```
 
 Stage 6 (Review) — per batch:
 ```
-TaskCreate: subject="Review batch 1: ⚪fg-410 ⚪fg-412 🔴fg-411",  activeForm="Running review batch 1"
+TaskCreate: subject="Review batch 1: 🔴fg-411 ⚪fg-410 ⚪fg-412",  activeForm="Running review batch 1"
 TaskCreate: subject="Review batch 2: 🟡fg-416 ⚪fg-417 ⬛fg-418",  activeForm="Running review batch 2"
-TaskCreate: subject="🔴 fg-400: Quality gate scoring",               activeForm="Scoring quality"
-TaskCreate: subject="Fix loop iteration {N}",                          activeForm="Fixing findings"  (conditional)
+TaskCreate: subject="🔴 Dispatching fg-400-quality-gate",            activeForm="Scoring quality"
+TaskCreate: subject="Fix loop iteration {N}",                         activeForm="Fixing findings"  (conditional)
 ```
 
 Stage 7 (Docs):
 ```
-TaskCreate: subject="🟢 fg-350: Generate documentation",   activeForm="Generating docs"
+TaskCreate: subject="🟢 Dispatching fg-350-docs-generator",   activeForm="Generating docs"
 ```
 
 Stage 8 (Ship):
 ```
-TaskCreate: subject="🔴 fg-590: Pre-ship evidence check",  activeForm="Collecting evidence"
-TaskCreate: subject="🔵 fg-600: Create pull request",       activeForm="Building PR"
-TaskCreate: subject="🟢 fg-650: Preview validation",        activeForm="Validating preview"  (conditional)
+TaskCreate: subject="🔴 Dispatching fg-590-pre-ship-verifier", activeForm="Collecting evidence"
+TaskCreate: subject="🔵 Dispatching fg-600-pr-builder",        activeForm="Building PR"
+TaskCreate: subject="🟢 Dispatching fg-650-preview-validator", activeForm="Validating preview"  (conditional)
 ```
 
 Stage 9 (Learn):
 ```
-TaskCreate: subject="🟣 fg-700: Retrospective analysis",   activeForm="Running retrospective"
-TaskCreate: subject="🟣 fg-710: Post-run recap",            activeForm="Writing recap"
+TaskCreate: subject="🟣 Dispatching fg-700-retrospective",    activeForm="Running retrospective"
+TaskCreate: subject="🟣 Dispatching fg-710-post-run",          activeForm="Writing recap"
 ```
 
 **Rules:**
