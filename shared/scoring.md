@@ -410,3 +410,11 @@ These sub-bands provide granularity for documentation and reporting. When Linear
 ## Examples
 
 See `convergence-examples.md` for worked scoring calculations in context.
+
+## See Also
+
+- `shared/convergence-engine.md` — Uses score history for IMPROVING/PLATEAUED/REGRESSING detection
+- `shared/checks/category-registry.json` — Master list of 87 scoring categories (27 wildcard + 60 discrete)
+- `shared/agent-communication.md` — Finding format validation and deduplication rules
+- `shared/confidence-scoring.md` — Finding confidence weights (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x)
+- `shared/state-schema.md` — `score_history` and `convergence` state fields
