@@ -119,7 +119,7 @@ Quick decision:    /forge-help (interactive skill picker)
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-620-deploy-verifier` (conditional on deployment strategy), `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (8, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`.
+**Review** (8, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`. Quality gate scales reviewer count by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting note.
 
 ### Agent rules
 
@@ -227,6 +227,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `check-prerequisites.sh` | bash 4+ and python3 validation |
 | `check-environment.sh` | Optional tool + integration detection for forge-init |
 | `forge-otel-export.sh` | OpenTelemetry trace and metric export |
+| `caveman-benchmark.sh` | Token savings measurement for caveman modes |
 | `hooks/automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
 
 ### Mode overlays (`shared/modes/`)
