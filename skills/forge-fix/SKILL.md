@@ -1,6 +1,7 @@
 ---
 name: forge-fix
 description: "Start a bugfix workflow with rich source resolution. Use when you have a bug to fix, a failing test to investigate, or a ticket ID to resolve. Preferred over /forge-run bugfix: for richer source resolution. Accepts kanban ticket ID, Linear issue, or plain bug description."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point

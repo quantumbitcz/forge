@@ -1,6 +1,7 @@
 ---
 name: forge-review
 description: "Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: forge-docs-generate
 description: "Generate or update project documentation on demand. Use when starting a new project without docs, after adding major features that need documentation, or to audit documentation coverage gaps. Supports README, architecture, ADRs, API docs, onboarding, runbooks, changelogs, diagrams, domain docs, user guides, migration guides."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-docs-generate — On-Demand Documentation Generation

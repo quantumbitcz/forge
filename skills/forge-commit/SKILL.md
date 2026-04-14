@@ -1,6 +1,7 @@
 ---
 name: forge-commit
 description: "Generate terse conventional commit messages from staged changes. Use when you have staged files and want a well-structured commit message that follows Conventional Commits format. Analyzes diffs, infers type and scope, presents options."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-commit -- Terse Conventional Commit Generator

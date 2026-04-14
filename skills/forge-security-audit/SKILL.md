@@ -1,6 +1,7 @@
 ---
 name: forge-security-audit
 description: "Run module-appropriate security scanners and aggregate vulnerability results. Use when preparing for a release, after dependency updates, when reviewing third-party package security, or when onboarding to a new codebase to assess its security posture."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

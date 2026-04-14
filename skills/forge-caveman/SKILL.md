@@ -1,6 +1,7 @@
 ---
 name: forge-caveman
 description: "Toggle caveman-style terse output for Forge pipeline messages. Use when you want to reduce user-facing output tokens by 40-70% while preserving technical substance. Trigger: /forge-caveman [mode], caveman mode, less tokens, be brief"
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash']
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: forge-repair-state
 description: "Validate and repair .forge/state.json -- fix corrupted counters, stale locks, invalid states, and WAL recovery. Use when /forge-diagnose reports problems, when the pipeline fails with state errors, or when counters are inconsistent. Confirms changes before writing."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'AskUserQuestion']
 ---
 
 # /forge-repair-state — State Repair Tool

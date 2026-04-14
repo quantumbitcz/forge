@@ -1,6 +1,7 @@
 ---
 name: forge-verify
 description: "Quick build + lint + test check for the current module without running the full pipeline. Use when you want to confirm nothing is broken after manual code changes, before starting a pipeline run to check baseline health, or as a pre-commit sanity check."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

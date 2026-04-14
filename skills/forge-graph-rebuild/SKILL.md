@@ -1,6 +1,7 @@
 ---
 name: forge-graph-rebuild
 description: "Rebuild the project codebase graph from scratch while preserving the plugin seed graph. Use when incremental updates are stale, after major refactoring, or when /graph-status shows the graph is out of date with the codebase."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-graph-rebuild — Rebuild Project Codebase Graph

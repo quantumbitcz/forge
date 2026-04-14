@@ -1,6 +1,7 @@
 ---
 name: forge-deep-health
 description: "Fix all codebase quality issues iteratively. Use when you want to clean up technical debt, polish a codebase before release, or fix all convention violations. Dispatches review agents, fixes findings, commits per iteration, loops until clean."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 

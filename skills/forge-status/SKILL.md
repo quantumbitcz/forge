@@ -1,6 +1,7 @@
 ---
 name: forge-status
 description: "Show current pipeline run state -- stage, score, convergence phase, integrations, and background run progress. Use when you want to check what stage the pipeline is at, monitor a background run, or see the outcome of the last completed run."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

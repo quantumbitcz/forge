@@ -1,6 +1,7 @@
 ---
 name: forge-graph-query
 description: "Run a Cypher query against the Neo4j knowledge graph. Use when you need to find bug hotspots, trace cross-feature dependencies, check test coverage gaps, or explore module relationships. Pass the query as an argument."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-graph-query — Run a Cypher Query

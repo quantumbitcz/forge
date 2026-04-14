@@ -1,6 +1,7 @@
 ---
 name: forge-compression-help
 description: "Quick reference card for all Forge compression features -- output modes, inter-agent compression, input compression, and configuration. Use when you need a reminder of compression options or want to understand how compression works."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: true
 ---
 

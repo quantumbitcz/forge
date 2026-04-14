@@ -1,6 +1,7 @@
 ---
 name: forge-reset
 description: "Clear pipeline run state and start fresh while preserving accumulated learnings and cross-run caches. Use when you want to abandon the current run completely, when state is too corrupted for /repair-state, or before starting a clean pipeline run."
+allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 disable-model-invocation: false
 ---
 

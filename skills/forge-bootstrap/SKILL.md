@@ -1,6 +1,7 @@
 ---
 name: forge-bootstrap
 description: "Scaffold a new project with production-grade structure, build system, architecture, CI/CD, and tooling. Use when starting a new project from scratch, creating a greenfield application, or scaffolding a new service in a multi-repo setup."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-bootstrap -- Project Scaffolding Entry Point

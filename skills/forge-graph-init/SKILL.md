@@ -1,6 +1,7 @@
 ---
 name: forge-graph-init
 description: "Initialize Neo4j knowledge graph -- starts Docker container, imports plugin seed, builds project codebase graph. Use when setting up the knowledge graph for the first time, after Docker was restarted, or when /graph-status shows the graph is unavailable. Idempotent."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-graph-init — Neo4j Knowledge Graph Initialization

@@ -1,6 +1,7 @@
 ---
 name: forge-config-validate
 description: "Pre-pipeline validation of forge.local.md and forge-config.md. Use when you want to verify configuration is correct before running the pipeline, after editing config files manually, or when pipeline runs fail at PREFLIGHT with config errors."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
 # /forge-config-validate — Configuration Validator

@@ -1,6 +1,7 @@
 ---
 name: forge-tour
 description: "Guided 5-stop introduction to Forge covering init, verify, run, fix, and review. Use when new to Forge, onboarding team members, or want a walkthrough of the most important skills. Trigger: /forge-tour, how does forge work, getting started, teach me forge"
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

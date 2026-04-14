@@ -1,6 +1,7 @@
 ---
 name: forge-codebase-health
 description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. Use when you want a quality baseline before starting work, after merging multiple PRs, or to audit convention compliance without making changes."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

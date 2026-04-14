@@ -1,6 +1,7 @@
 ---
 name: forge-deploy
 description: "Trigger deployment to staging, production, or preview environments. Use when a PR is merged and ready to deploy, when you need to check deployment status, or when rolling back a broken deployment. Supports ArgoCD, Helm, kubectl, docker-compose."
+allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ---
 
 # /forge-deploy -- Environment Deployment

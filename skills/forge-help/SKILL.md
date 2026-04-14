@@ -1,6 +1,7 @@
 ---
 name: forge-help
 description: "Interactive decision tree to find the right Forge skill. Use when unsure which skill to use, exploring capabilities, or need help choosing between similar skills. Trigger: /forge-help, which skill should I use, help me choose, what can forge do"
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: true
 ---
 

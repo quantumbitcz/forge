@@ -1,6 +1,7 @@
 ---
 name: forge-run
 description: "Universal pipeline entry point. Auto-classifies intent and routes to the correct pipeline mode. Use when you want to build a feature, implement a requirement, or run the full development pipeline. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-run — Universal Pipeline Entry Point
