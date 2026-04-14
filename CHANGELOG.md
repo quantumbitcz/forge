@@ -3,6 +3,32 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.6.0] - 2026-04-14
+
+### Added
+- **Environment Health Check:** New `shared/check-environment.sh` script probes for optional CLI tools (jq, docker, tree-sitter, gh, sqlite3) and outputs structured JSON via Python. `/forge-init` now displays a categorized dashboard (required/recommended/optional tools + MCP integrations) with platform-specific install suggestions during Phase 1.1
+- **Caveman Benchmark:** New `shared/caveman-benchmark.sh` measures estimated token savings across lite/full/ultra modes. `/forge-caveman benchmark [file]` subcommand for on-demand measurement
+- **Dynamic Reviewer Scaling:** Quality gate (`fg-400`) now scales reviewer count by change scope: <50 lines dispatches batch 1 only, 50-500 dispatches all batches, >500 emits `APPROACH-SCOPE | INFO` splitting suggestion. Override with `quality_gate.force_full_review: true`
+- **Forge-Help 3-Tier Structure:** Reorganized from flat A-G categories into Essential (7 skills) / Power User (12) / Advanced (20) tiers with "Similar Skills" disambiguation table
+- **Platform Troubleshooting:** `/forge-tour` now includes platform-specific setup instructions for WSL2, Git Bash, macOS, and Linux
+- **Windows Long Path Guard:** Worktree manager (`fg-101`) detects Windows filesystem paths and enables `core.longpaths`, truncates branch slugs over 200 chars
+- **Cross-Reference Network:** Added See Also sections to `convergence-engine.md`, `scoring.md`, `agent-philosophy.md` with bidirectional links
+- **PREEMPT Auto-Discovery Rules:** Formalized auto-discovered item decay (MEDIUM start, 2x faster decay, archive at decay_score >= 5, promote after 3 successes)
+- **Structural Validation Tests:** `skill-descriptions.bats` (5 tests), `doc-cross-references` (5 tests), 3 new portability checks in `platform-portability.bats`
+- **Regression Tests:** `deprecated-python-api.bats` (3 tests), `automation-cooldown.bats` (4 tests), `caveman-benchmark.bats` (5 tests), `check-environment.bats` (10 tests)
+
+### Changed
+- Caveman auto-activation default changed from `full` to `lite` (safer compression — keeps grammar and articles). Manual `/forge-caveman` invocation still defaults to `full`. Updated `session-start.sh`, `config-schema.json`, skill docs
+- 11 skill descriptions rewritten for better trigger accuracy: forge-fix, forge-shape, forge-diagnose, forge-config, forge-config-validate, forge-compress, forge-automation, forge-bootstrap, forge-graph-init, forge-repair-state, forge-rollback
+- Module documentation examples updated to use non-deprecated `datetime.now(timezone.utc)`: cassandra.md, pulsar.md, oauth2.md
+- Documented PowerShell incompatibility and platform requirements in CLAUDE.md structural gotchas
+
+### Fixed
+- **Critical:** Automation cooldown never fired — `automation-trigger.sh` wrote timestamp as `'ts'` but cooldown reader looked for `'timestamp'`. `KeyError` silently swallowed by `except` clause
+- Deprecated `datetime.utcnow()` replaced with `datetime.now(timezone.utc)` + `ImportError` fallback in `automation-trigger.sh`, `session-start.sh`, `feedback-capture.sh`
+- Deprecated `datetime.utcfromtimestamp()` replaced with `datetime.fromtimestamp(ts, tz=timezone.utc)` + fallback in `session-start.sh`
+- Deprecated `datetime.datetime.utcnow()` replaced with `datetime.datetime.now(datetime.timezone.utc)` + `AttributeError` fallback in `forge-event.sh`
+
 ## [2.5.0] - 2026-04-14
 
 ### Added

@@ -6,7 +6,7 @@
 [![Skills](https://img.shields.io/badge/skills-40-green?style=flat-square)](#available-skills)
 [![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
-[![Finding Categories](https://img.shields.io/badge/finding_categories-85+-purple?style=flat-square)](#quality-scoring)
+[![Finding Categories](https://img.shields.io/badge/finding_categories-87+-purple?style=flat-square)](#quality-scoring)
 [![Build Systems](https://img.shields.io/badge/build_systems-9-blue?style=flat-square)](#available-modules)
 [![Tests](https://img.shields.io/badge/tests-3040+-brightgreen?style=flat-square)](#testing)
 
@@ -70,6 +70,9 @@ Then add to `.claude/settings.json`:
 - **Property-based testing** -- Optional fg-515 agent generates invariant/round-trip/idempotence/metamorphic tests for 10 PBT frameworks.
 - **Concurrent run protection** -- Lock file prevents parallel runs. Global retry budget (default 10) prevents unbounded cascades.
 - **Monorepo support** -- Nx and Turborepo modules with affected detection, scoped testing/building.
+- **Environment health check** -- `/forge-init` probes for optional tools (jq, docker, tree-sitter, gh, sqlite3) and MCP integrations, displays a dashboard with platform-specific install suggestions.
+- **Dynamic reviewer scaling** -- Quality gate scales review agents by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting recommendation.
+- **Caveman benchmark** -- `/forge-caveman benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
 
 ### The 10 stages
 
@@ -92,7 +95,7 @@ Then add to `.claude/settings.json`:
 score = max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)
 ```
 
-PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighted: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x. **85+ finding categories** across 19 wildcard prefixes and 60+ discrete codes. See `shared/checks/category-registry.json`.
+PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighted: HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x. **87+ finding categories** across 27 wildcard prefixes and 60+ discrete codes. See `shared/checks/category-registry.json`.
 
 ## Available skills
 
