@@ -171,7 +171,7 @@ oauth2:
 def create_test_token(sub: str, roles: list) -> str:
     return jwt.encode(
         {"sub": sub, "aud": TEST_AUDIENCE, "iss": TEST_ISSUER,
-         "exp": datetime.utcnow() + timedelta(hours=1), "roles": roles},
+         "exp": datetime.now(timezone.utc) + timedelta(hours=1), "roles": roles},
         test_private_key, algorithm="RS256"
     )
 ```

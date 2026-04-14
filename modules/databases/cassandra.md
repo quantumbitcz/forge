@@ -127,7 +127,7 @@ SELECT * FROM events WHERE event_type = 'click' ALLOW FILTERING;
 **Use prepared statements for all parameterized queries:**
 ```python
 stmt = session.prepare("INSERT INTO events (device_id, occurred_at, payload) VALUES (?, ?, ?)")
-session.execute(stmt, [device_id, datetime.utcnow(), payload])
+session.execute(stmt, [device_id, datetime.now(timezone.utc), payload])
 ```
 Prepared statements are parsed once per node and reused — significant overhead reduction at high throughput.
 

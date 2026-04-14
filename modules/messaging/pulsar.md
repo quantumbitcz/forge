@@ -123,7 +123,7 @@ from pulsar import Function
 class EnrichOrderFunction(Function):
     def process(self, input: bytes, context) -> bytes:
         event = json.loads(input)
-        event["enriched_at"] = datetime.utcnow().isoformat()
+        event["enriched_at"] = datetime.now(timezone.utc).isoformat()
         event["region"] = context.get_user_config_value("region")
         return json.dumps(event).encode()
 
