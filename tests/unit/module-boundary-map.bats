@@ -214,7 +214,8 @@ assert 'core' in modules['api']['depends_on']
 include ':lib', ':app'
 GEOF
   touch "$proj/lib/build.gradle" "$proj/app/build.gradle"
-  run "$BOUNDARY_MAP" --project-root "$proj" --build-system gradle
+  # Skip Gradle CLI Strategy 1 by hiding gradle from PATH to test file-based parsing
+  PATH="/usr/bin:/bin:$(dirname "$(command -v python3)")" run "$BOUNDARY_MAP" --project-root "$proj" --build-system gradle
   assert_success
   echo "$output" | python3 -c "
 import json, sys
