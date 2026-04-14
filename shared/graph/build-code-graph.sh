@@ -23,7 +23,7 @@ else
   _SOURCE_ONLY=false
 fi
 
-PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
 
