@@ -50,6 +50,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
    - Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100
    - Sprint: `sprint.poll_interval_seconds` 10-120, `sprint.dependency_timeout_minutes` 5-180
    - Tracking: `tracking.archive_after_days` 30-365 or 0 (disabled)
+   - Build graph: `build_graph.introspection` (boolean, default `true`), `build_graph.introspection_timeout_seconds` 10-300 (default 60), `build_graph.fallback` must be `heuristic` or `skip` (default `heuristic`), `build_graph.cache_enabled` (boolean, default `true`), `build_graph.module_boundary_discovery` (boolean, default `true`), `build_graph.exclude_external_deps` (boolean, default `false`)
 3. Read `forge-log.md` (PREEMPT items for the domain area, last 3 runs).
 4. Check `.forge/state.json` for interrupted runs:
    - If `complete: false`: validate checkpoint artifacts, detect git drift via `git diff` against `last_commit_sha`.

@@ -406,6 +406,13 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.effective_token_ratio` | float | — | `actual_tokens / (actual_tokens + condensation_savings)`. Lower is better — 0.6 means 40% of potential tokens were saved. 1.0 when no condensation occurred. Default: 1.0. |
 | `tokens.compression_level_distribution` | object | — | Count of agent dispatches per compression verbosity level. Keys: `"verbose"`, `"standard"`, `"terse"`, `"minimal"`. Values: integer counts. Default: `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`. See `shared/output-compression.md`. |
 | `tokens.output_tokens_per_agent` | object | — | Raw output token count per agent. Keys are agent IDs (e.g., `"fg-410"`). Values: integer token counts. Used by the retrospective to detect compression drift. Default: `{}`. |
+| `build_graph` | object | No | Build system intelligence metrics. Written by `build-code-graph.sh` after cross-file edge resolution. |
+| `build_graph.edges_total` | integer | — | Total number of IMPORTS edges in the code graph. Default: 0. |
+| `build_graph.edges_resolved` | integer | — | Edges resolved via same-module or declared-dependency matching (confidence: `resolved`). Default: 0. |
+| `build_graph.edges_module_inferred` | integer | — | Edges resolved via undeclared cross-module matching (confidence: `module-inferred`). Default: 0. |
+| `build_graph.edges_heuristic` | integer | — | Edges resolved via heuristic basename matching (confidence: `heuristic`). Default: 0. |
+| `build_graph.edges_unresolved` | integer | — | Import nodes with no matching target file. Default: 0. |
+| `build_graph.resolution_accuracy` | float | — | Fraction of edges that are `resolved` or `module-inferred` (0.0-1.0). Higher is better. Default: 0.0. |
 | `cost_alerting` | object | Yes | Budget alerting runtime state. Created by `cost-alerting.sh init` at PREFLIGHT. |
 | `cost_alerting.enabled` | boolean | Yes | Whether cost alerting is active. Default: `true`. |
 | `cost_alerting.thresholds` | float[] | Yes | Three ascending fractions [INFO, WARNING, CRITICAL]. Default: `[0.50, 0.75, 0.90]`. |
