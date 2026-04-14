@@ -1,6 +1,6 @@
 ---
 name: forge-config-validate
-description: "Check if your Forge configuration is valid before running the pipeline. Use after editing config files, when PREFLIGHT fails with config errors, or to verify your setup is correct. Catches misconfigured thresholds, missing commands, and schema violations. Trigger: /forge-config-validate, check my config, validate setup, config broken"
+description: "Pre-pipeline configuration validator. Use when you want to check if your Forge configuration is valid before running the pipeline — after editing config files, when PREFLIGHT fails with config errors, or to verify your setup is correct. Catches misconfigured thresholds, missing commands, and schema violations. Trigger: /forge-config-validate, check my config, validate setup, config broken"
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
