@@ -42,9 +42,28 @@ Rules:
 
 ### Three-Level Nesting Maximum
 - **Level 1:** Orchestrator stage tasks (`"Stage 4: Implement"`)
-- **Level 2:** Coordinator sub-tasks (`"Dispatch review batch 1"`)
+- **Level 2:** Substage tasks with agent color dots (`"🟢 fg-300: TDD implement UserService"`)
 - **Level 3:** Leaf agent sub-sub-tasks (`"Write failing test for UserService"`)
 - No deeper nesting.
+
+### Substage Tasks
+
+When entering a stage, the orchestrator creates substage tasks for each discrete step within that stage. Substages are children of the stage task (Level 2).
+
+**Naming format:** `{color_dot} {agent_id}: {what it does}` (for agent dispatches) or `{description}` (for inline work).
+
+**Color dots identify agent roles** (from agent frontmatter `color:` field):
+- 🟢 green: implementers, scaffolders, docs, infra verifiers
+- 🔴 red: quality gates, security reviewers, pre-ship verification
+- 🔵 blue: planners, PR builders
+- 🟡 yellow: validators, performance reviewers, test gates, build verifiers
+- 🟣 magenta: shapers, polishers, retrospective, bootstrappers
+- 🟤 purple: bug investigators
+- ⚪ cyan: orchestrator, code reviewers, docs discoverer, dependency reviewer
+- ⬜ gray: worktree manager, conflict resolver, cross-repo coordinator
+- ⬛ white: docs-consistency reviewer
+
+**Lifecycle:** Create when entering stage → `in_progress` when starting → `completed` when done. Conditional substages (frontend polish, preview, fix loops) only created when triggered. Dynamic substages for convergence iterations and fix loops are created on-the-fly.
 
 ## EnterPlanMode/ExitPlanMode
 

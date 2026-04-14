@@ -96,9 +96,9 @@ One TaskCreate per stage at PREFLIGHT (§0.19). Update as stages execute.
 
 ```
 sub_task_id = TaskCreate(
-  subject = "Dispatching fg-NNN-name",
-  description = "Running agent description",
-  activeForm = "Running fg-NNN-name"
+  subject = "{color_dot} fg-NNN-name: {what it does}",
+  description = "Running: {detailed description}",
+  activeForm = "{action in progress}"
 )
 TaskUpdate(taskId = sub_task_id, addBlockedBy = [current_stage_task_id])
 
@@ -108,12 +108,13 @@ TaskUpdate(taskId = sub_task_id, status = "completed")
 // If agent fails: TaskUpdate(taskId = sub_task_id, description = "Failed: {reason}")
 ```
 
-| Context | Subject |
-|---------|---------|
-| Named agent | `Dispatching fg-NNN-name` |
-| Inline work | Descriptive: `Loading project config` |
-| Review batch | `Review batch {N}: {reviewers}` |
-| Convergence | `Convergence iteration {N}/{max} (score: {prev} → {current})` |
+| Context | Subject Example |
+|---------|-----------------|
+| Named agent | `🟢 fg-300: TDD implement UserService` |
+| Review batch | `Review batch 1: ⚪fg-410 ⚪fg-412 🔴fg-411` |
+| Inline work | `Load config and detect stack` |
+| Convergence | `Convergence iteration 2/10 (score: 65 → 78)` |
+| Fix loop | `Fix loop iteration 1: 3 findings` |
 
 All sub-tasks use `addBlockedBy: [stage_task_id]`.
 
@@ -623,22 +624,116 @@ Read source: kanban → ticket file, linear → MCP issue, description → creat
 
 ### §0.19 Create Visual Task Tracker
 
-Create 10 tasks upfront:
+Create 10 stage tasks upfront with descriptions listing key substeps:
 
 ```
-TaskCreate: subject="Stage 0: Preflight",      activeForm="Running preflight checks"
-TaskCreate: subject="Stage 1: Explore",         activeForm="Exploring codebase"
-TaskCreate: subject="Stage 2: Plan",            activeForm="Planning implementation"
-TaskCreate: subject="Stage 3: Validate",        activeForm="Validating plan"
-TaskCreate: subject="Stage 4: Implement",       activeForm="Implementing (TDD)"
-TaskCreate: subject="Stage 5: Verify",          activeForm="Verifying build and tests"
-TaskCreate: subject="Stage 6: Review",          activeForm="Reviewing quality"
-TaskCreate: subject="Stage 7: Docs",            activeForm="Updating documentation"
-TaskCreate: subject="Stage 8: Ship",            activeForm="Creating pull request"
-TaskCreate: subject="Stage 9: Learn",           activeForm="Running retrospective"
+TaskCreate: subject="Stage 0: Preflight",   description="Config → conventions → MCP detection → worktree", activeForm="Running preflight checks"
+TaskCreate: subject="Stage 1: Explore",      description="Codebase scan → domain mapping → test discovery", activeForm="Exploring codebase"
+TaskCreate: subject="Stage 2: Plan",         description="Decompose → stories → risk assess → parallel groups", activeForm="Planning implementation"
+TaskCreate: subject="Stage 3: Validate",     description="7-perspective validation → GO/REVISE/NO-GO", activeForm="Validating plan"
+TaskCreate: subject="Stage 4: Implement",    description="Scaffold → TDD (RED→GREEN→REFACTOR) → polish", activeForm="Implementing (TDD)"
+TaskCreate: subject="Stage 5: Verify",       description="Phase A: build+lint → Phase B: test gate → convergence", activeForm="Verifying build and tests"
+TaskCreate: subject="Stage 6: Review",       description="Batch 1 reviewers → batch 2 → score → fix loop", activeForm="Reviewing quality"
+TaskCreate: subject="Stage 7: Docs",         description="README → ADRs → API specs → changelog", activeForm="Updating documentation"
+TaskCreate: subject="Stage 8: Ship",         description="Evidence check → PR creation → preview validation", activeForm="Creating pull request"
+TaskCreate: subject="Stage 9: Learn",        description="Retrospective → PREEMPT update → metrics → recap", activeForm="Running retrospective"
 ```
 
 Entering stage → `in_progress`. Completing → `completed`. `--from` skips → mark `completed`. Failure → leave `in_progress`.
+
+### §0.19a Substage Task Creation
+
+When entering each stage, create substage tasks as children of the stage task. Each substage represents a discrete step within the stage. Use `addBlockedBy: [stage_task_id]` to nest them.
+
+**Substage naming convention:** `{agent_color_dot} {agent_name}: {what it does}`
+
+Color dots for agent identification (use Unicode):
+- 🟢 green agents (fg-300, fg-310, fg-320, fg-350, fg-610, fg-619, fg-620, fg-650)
+- 🔴 red agents (fg-400, fg-411, fg-590)
+- 🔵 blue agents (fg-200, fg-600)
+- 🟡 yellow agents (fg-210, fg-416, fg-500, fg-505, fg-250)
+- 🟣 magenta agents (fg-010, fg-050, fg-090, fg-320, fg-700, fg-710, fg-015)
+- 🟤 purple agents (fg-020)
+- ⚪ cyan agents (fg-100, fg-130, fg-140, fg-150, fg-410, fg-412, fg-417)
+- ⬜ gray agents (fg-101, fg-102, fg-103)
+- ⬛ white agents (fg-418)
+
+**Per-stage substage templates:**
+
+Stage 0 (Preflight) — create inline, no agent dispatch subtasks:
+```
+TaskCreate: subject="Load config and detect stack",     activeForm="Loading forge config"
+TaskCreate: subject="Resolve conventions and MCPs",     activeForm="Resolving conventions"
+TaskCreate: subject="Create worktree and init state",   activeForm="Setting up workspace"
+```
+
+Stage 1 (Explore):
+```
+TaskCreate: subject="⚪ fg-130: Discover documentation",    activeForm="Discovering docs"
+TaskCreate: subject="Primary codebase exploration",          activeForm="Mapping codebase"
+TaskCreate: subject="Test landscape exploration",            activeForm="Mapping tests"
+```
+
+Stage 2 (Plan):
+```
+TaskCreate: subject="🔵 fg-200: Decompose into stories",   activeForm="Creating implementation plan"
+TaskCreate: subject="Plan cache check",                      activeForm="Checking plan cache"
+```
+
+Stage 3 (Validate):
+```
+TaskCreate: subject="🟡 fg-210: Validate plan (7 perspectives)",  activeForm="Validating plan"
+TaskCreate: subject="Decision gate",                                 activeForm="Evaluating risk"
+```
+
+Stage 4 (Implement) — per task in plan:
+```
+TaskCreate: subject="🟢 fg-310: Scaffold {task}",           activeForm="Scaffolding {task}"
+TaskCreate: subject="🟢 fg-300: TDD implement {task}",      activeForm="Implementing {task}"
+TaskCreate: subject="🟣 fg-320: Polish frontend",            activeForm="Polishing frontend"  (conditional)
+```
+
+Stage 5 (Verify):
+```
+TaskCreate: subject="🟡 fg-505: Build + lint verification",  activeForm="Verifying build"
+TaskCreate: subject="🟡 fg-500: Test gate analysis",          activeForm="Running test gate"
+TaskCreate: subject="Convergence check",                       activeForm="Checking convergence"
+```
+
+Stage 6 (Review) — per batch:
+```
+TaskCreate: subject="Review batch 1: ⚪fg-410 ⚪fg-412 🔴fg-411",  activeForm="Running review batch 1"
+TaskCreate: subject="Review batch 2: 🟡fg-416 ⚪fg-417 ⬛fg-418",  activeForm="Running review batch 2"
+TaskCreate: subject="🔴 fg-400: Quality gate scoring",               activeForm="Scoring quality"
+TaskCreate: subject="Fix loop iteration {N}",                          activeForm="Fixing findings"  (conditional)
+```
+
+Stage 7 (Docs):
+```
+TaskCreate: subject="🟢 fg-350: Generate documentation",   activeForm="Generating docs"
+```
+
+Stage 8 (Ship):
+```
+TaskCreate: subject="🔴 fg-590: Pre-ship evidence check",  activeForm="Collecting evidence"
+TaskCreate: subject="🔵 fg-600: Create pull request",       activeForm="Building PR"
+TaskCreate: subject="🟢 fg-650: Preview validation",        activeForm="Validating preview"  (conditional)
+```
+
+Stage 9 (Learn):
+```
+TaskCreate: subject="🟣 fg-700: Retrospective analysis",   activeForm="Running retrospective"
+TaskCreate: subject="🟣 fg-710: Post-run recap",            activeForm="Writing recap"
+```
+
+**Rules:**
+- Create substage tasks WHEN ENTERING the stage (not upfront at §0.19)
+- Each substage uses `addBlockedBy: [stage_task_id]`
+- Mark substage `in_progress` when starting, `completed` when done
+- Conditional substages (frontend polish, preview, fix loops) only created when triggered
+- Fix loop substages created dynamically: `"Fix loop iteration {N}: {findings_count} findings"`
+- Convergence iterations: `"Convergence iteration {N}/{max} (score: {score})"`
+- The stage task itself transitions `in_progress` → `completed` only after ALL substages complete
 
 ---
 
