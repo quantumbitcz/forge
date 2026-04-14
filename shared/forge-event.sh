@@ -99,8 +99,13 @@ for arg in field_args:
         k, v = arg.split('=', 1)
         fields[k] = v
 
+try:
+    _now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+except AttributeError:
+    _now_str = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
 event = {
-    'ts': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+    'ts': _now_str,
     'event': event_type,
     'run_id': run_id,
     'seq': seq,
