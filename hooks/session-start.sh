@@ -152,7 +152,12 @@ RULES
     if [[ -n "$_py" ]]; then
       "$_py" -c "
 import json, os, sys
-from datetime import datetime
+try:
+    from datetime import datetime, timezone
+    _utc = timezone.utc
+except ImportError:
+    from datetime import datetime
+    _utc = None
 
 try:
     with open('.forge/state.json') as f:
@@ -168,7 +173,10 @@ last_score = scores[-1] if scores else 'N/A'
 # File modification time as last activity indicator
 try:
     mtime = os.path.getmtime('.forge/state.json')
-    last_active = datetime.utcfromtimestamp(mtime).strftime('%Y-%m-%d %H:%M UTC')
+    if _utc:
+        last_active = datetime.fromtimestamp(mtime, tz=_utc).strftime('%Y-%m-%d %H:%M UTC')
+    else:
+        last_active = datetime.utcfromtimestamp(mtime).strftime('%Y-%m-%d %H:%M UTC')
 except Exception:
     last_active = 'unknown'
 
