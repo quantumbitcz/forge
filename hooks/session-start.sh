@@ -65,23 +65,23 @@ try:
         if dm:
             print(dm.group(1))
         else:
-            print('full')
+            print('lite')
     else:
-        print('full')
+        print('lite')
 except Exception:
-    print('full')
-" 2>/dev/null)" || _caveman_default="full"
+    print('lite')
+" 2>/dev/null)" || _caveman_default="lite"
       else
         # Fallback: grep-based parsing
         _caveman_enabled="$(grep -A5 'caveman:' ".claude/forge-config.md" 2>/dev/null | grep 'enabled:' | head -1 | grep -o 'true\|false' || echo "false")"
-        _caveman_default="$(grep -A5 'caveman:' ".claude/forge-config.md" 2>/dev/null | grep 'default_mode:' | head -1 | grep -oE 'lite|full|ultra' || echo "full")"
+        _caveman_default="$(grep -A5 'caveman:' ".claude/forge-config.md" 2>/dev/null | grep 'default_mode:' | head -1 | grep -oE 'lite|full|ultra' || echo "lite")"
       fi
     fi
 
     if [[ "$_caveman_enabled" == "true" ]]; then
       mkdir -p ".forge" 2>/dev/null
-      printf '%s' "${_caveman_default:-full}" > ".forge/caveman-mode"
-      _caveman_mode="${_caveman_default:-full}"
+      printf '%s' "${_caveman_default:-lite}" > ".forge/caveman-mode"
+      _caveman_mode="${_caveman_default:-lite}"
     fi
   fi
 

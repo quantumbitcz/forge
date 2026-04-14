@@ -123,7 +123,7 @@ In `.claude/forge-config.md`:
 ```yaml
 caveman:
   enabled: true
-  default_mode: full    # lite | full | ultra
+  default_mode: lite    # lite | full | ultra
 ```
 
 ### Behavior

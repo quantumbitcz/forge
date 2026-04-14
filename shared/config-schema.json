@@ -80,7 +80,7 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
-        "default_mode": { "enum": ["lite", "full", "ultra"] },
+        "default_mode": { "enum": ["lite", "full", "ultra"], "default": "lite" },
         "output_mode": { "enum": ["off", "lite", "full", "ultra"] },
         "auto_clarity": { "type": "boolean" },
         "input_compression": {
