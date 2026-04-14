@@ -207,4 +207,4 @@ The script exits 0 (PASS), 1 (ERROR), or 2 (WARNING only).
 - `/forge-init` -- Generate configuration files from scratch (use when config is missing entirely)
 - `/forge-diagnose` -- Diagnose pipeline runtime issues (complementary to config validation)
 - `/forge-run` -- Run the pipeline after configuration is validated
-- `/repair-state` -- Fix state.json issues (config-validate checks config files, not state)
+- `/forge-repair-state` -- Fix state.json issues (config-validate checks config files, not state)

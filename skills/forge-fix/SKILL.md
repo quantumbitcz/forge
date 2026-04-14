@@ -108,7 +108,7 @@ When the orchestrator completes, relay its final output (PR URL, escalation, or 
 | Linear issue fetch fails | Fall back to description-based mode. Log WARNING about Linear unavailability |
 | Orchestrator dispatch fails | Report "Bugfix orchestrator failed to start. Check plugin installation." and STOP |
 | Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption | Suggest `/repair-state` to fix state, then retry |
+| State corruption | Suggest `/forge-repair-state` to fix state, then retry |
 
 ## See Also
 

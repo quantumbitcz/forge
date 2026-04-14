@@ -149,7 +149,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 | Ticket ID not found in tracking store | Warn user and ask for requirement description directly |
 | Agent dispatch fails | Report "Pipeline orchestrator failed to start. Check plugin installation." and STOP |
 | Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/repair-state` or `/forge-reset` |
+| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/forge-repair-state` or `/forge-reset` |
 
 ## See Also
 

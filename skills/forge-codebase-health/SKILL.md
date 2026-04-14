@@ -108,12 +108,12 @@ Run the pipeline's check engine in full review mode across the entire project to
 
 - Do NOT fix issues -- only report them
 - This runs Layer 1 (patterns) + Layer 2 (linters) across ALL files, which may take longer than hook-mode
-- If you want to fix issues, run `/deep-health` or offer remediation options
+- If you want to fix issues, run `/forge-deep-health` or offer remediation options
 - Save the full report to `.forge/health-report.md` for reference
 
 ## See Also
 
-- `/deep-health` -- Iteratively fix all codebase quality issues (use when you want fixes, not just a report)
+- `/forge-deep-health` -- Iteratively fix all codebase quality issues (use when you want fixes, not just a report)
 - `/forge-review` -- Review and fix only recently changed files
-- `/verify` -- Quick build + lint + test check without convention scanning
-- `/security-audit` -- Focused security vulnerability scanning
+- `/forge-verify` -- Quick build + lint + test check without convention scanning
+- `/forge-security-audit` -- Focused security vulnerability scanning

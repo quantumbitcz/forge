@@ -15,7 +15,7 @@ disable-model-invocation: false
 | `/forge-config set <key> <value>` | Set a config value |
 | `/forge-config add <key> <value>` | Add to list field (e.g., code_quality) |
 | `/forge-config remove <key> <value>` | Remove from list field |
-| `/forge-config validate` | Run validation (delegates to /config-validate) |
+| `/forge-config validate` | Run validation (delegates to /forge-config-validate) |
 | `/forge-config show <section>` | Show specific section (components, scoring, convergence, caveman) |
 | `/forge-config diff` | Show changes since last pipeline run |
 
@@ -52,7 +52,7 @@ disable-model-invocation: false
 
 ### Validate Operation
 
-Delegates to `/config-validate` skill. Shows results inline.
+Delegates to `/forge-config-validate` skill. Shows results inline.
 
 ### Diff Operation
 
@@ -79,6 +79,6 @@ Delegates to `/config-validate` skill. Shows results inline.
 
 ## See Also
 
-- `/config-validate` — validate config without editing
+- `/forge-config-validate` — validate config without editing
 - `/forge-init` — initial project setup
 - `/forge-help` — find the right skill

@@ -27,7 +27,7 @@ Total time: 3-10 minutes. You'll be asked to confirm stack choices before scaffo
 
 ## Instructions
 
-1. **Parse input**: The user's argument (everything after `/bootstrap-project`) is the project description -- a free-text string like "Kotlin Spring Boot REST API with PostgreSQL" or "React Vite frontend with shared component library". If no input is provided, ask the user: "What kind of project would you like to scaffold? Describe the tech stack and purpose (e.g., 'Kotlin Spring Boot REST API with PostgreSQL')."
+1. **Parse input**: The user's argument (everything after `/forge-bootstrap`) is the project description -- a free-text string like "Kotlin Spring Boot REST API with PostgreSQL" or "React Vite frontend with shared component library". If no input is provided, ask the user: "What kind of project would you like to scaffold? Describe the tech stack and purpose (e.g., 'Kotlin Spring Boot REST API with PostgreSQL')."
 
 2. **Validate input**: Ensure the description contains at least a language or framework reference. If the description is too vague (e.g., just "a web app"), ask for clarification: "Could you specify the tech stack? For example: language, framework, database, or a template like 'React Vite TypeScript frontend'."
 
@@ -53,11 +53,11 @@ Total time: 3-10 minutes. You'll be asked to confirm stack choices before scaffo
 | Empty input | Ask user for project description before dispatching |
 | Bootstrapper agent dispatch fails | Report "Project bootstrapper failed to start. Check plugin installation and try again." and STOP |
 | Bootstrapper returns error | Relay the error unchanged. Suggest `/forge-diagnose` if state was partially created |
-| State corruption after partial bootstrap | Run `/repair-state` to fix state, then retry or use `/forge-reset` to start fresh |
+| State corruption after partial bootstrap | Run `/forge-repair-state` to fix state, then retry or use `/forge-reset` to start fresh |
 
 ## See Also
 
 - `/forge-init` -- Configure an existing project for the forge (use instead when the project already has code)
 - `/forge-run` -- Run the full pipeline after bootstrapping is complete
-- `/migration` -- Upgrade or migrate frameworks in an existing project
+- `/forge-migration` -- Upgrade or migrate frameworks in an existing project
 - `/forge-shape` -- Shape a vague idea into a structured spec before building

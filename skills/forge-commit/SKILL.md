@@ -115,5 +115,5 @@ The commit message itself is NEVER compressed -- only surrounding output.
 ## See Also
 
 - `/forge-review` -- review changed files before committing
-- `/verify` -- build + lint + test check
+- `/forge-verify` -- build + lint + test check
 - `/forge-caveman` -- toggle terse output mode

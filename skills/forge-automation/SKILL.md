@@ -193,5 +193,5 @@ If entries have `error` field (non-null), append a section:
 - `/forge-run` -- The pipeline that automations typically invoke
 - `/forge-fix` -- Common action for CI failure automations
 - `/forge-review` -- Common action for PR opened automations
-- `/codebase-health` -- Common action for scheduled health check automations
-- `/config-validate` -- Validate forge-config.md after modifying automations
+- `/forge-codebase-health` -- Common action for scheduled health check automations
+- `/forge-config-validate` -- Validate forge-config.md after modifying automations

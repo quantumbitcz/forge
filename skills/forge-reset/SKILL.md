@@ -1,6 +1,6 @@
 ---
 name: forge-reset
-description: "Clear pipeline run state and start fresh while preserving accumulated learnings and cross-run caches. Use when you want to abandon the current run completely, when state is too corrupted for /repair-state, or before starting a clean pipeline run."
+description: "Clear pipeline run state and start fresh while preserving accumulated learnings and cross-run caches. Use when you want to abandon the current run completely, when state is too corrupted for /forge-repair-state, or before starting a clean pipeline run."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 disable-model-invocation: false
 ---
@@ -112,5 +112,5 @@ Does NOT touch (outside .forge/): forge-log.md, forge.local.md, forge-config.md
 
 - `/forge-abort` -- Stop an active pipeline gracefully while preserving state for resume (less destructive)
 - `/forge-resume` -- Resume an aborted pipeline from its last checkpoint
-- `/repair-state` -- Fix specific state.json issues without wiping everything
+- `/forge-repair-state` -- Fix specific state.json issues without wiping everything
 - `/forge-diagnose` -- Read-only diagnostic to understand what went wrong before deciding to reset

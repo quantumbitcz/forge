@@ -12,7 +12,7 @@ Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
-3. **Neo4j available:** Check Docker container running. If not: report "Neo4j not running. Run /graph-init first." and STOP.
+3. **Neo4j available:** Check Docker container running. If not: report "Neo4j not running. Run /forge-graph-init first." and STOP.
 
 You are the graph query executor. Your job is to accept a Cypher query, validate that the graph is available, execute the query, and display formatted results.
 
@@ -32,7 +32,7 @@ Run the health check script:
 "${CLAUDE_PLUGIN_ROOT}/shared/graph/neo4j-health.sh"
 ```
 
-- If Neo4j is not healthy: **ERROR** — "Neo4j is not available. Run `/graph-init` to start the graph." Abort.
+- If Neo4j is not healthy: **ERROR** — "Neo4j is not available. Run `/forge-graph-init` to start the graph." Abort.
 
 ---
 
@@ -49,7 +49,7 @@ User can override by specifying their own `:param project_id` in the query, or o
 
 ### Step 2: GET QUERY
 
-Accept the Cypher query from the skill argument (the text following `/graph-query` on the command line).
+Accept the Cypher query from the skill argument (the text following `/forge-graph-query` on the command line).
 
 - If no argument is provided: prompt the user — "Enter your Cypher query:"
 - Wait for the user to type the query before proceeding.
@@ -105,14 +105,14 @@ After displaying results, offer useful next steps based on the query type:
 
 - If the query was a `MATCH ... RETURN` with no LIMIT: suggest adding `LIMIT` for large graphs.
 - If the query returned 0 results: suggest checking node labels with `MATCH (n) RETURN DISTINCT labels(n)`.
-- Always remind the user they can run `/graph-status` to see all available labels and relationship types.
+- Always remind the user they can run `/forge-graph-status` to see all available labels and relationship types.
 
 ## Error Handling
 
 | Condition | Action |
 |-----------|--------|
 | Prerequisites fail | Report specific error message and STOP |
-| Neo4j not healthy | Report "Neo4j is not available. Run `/graph-init` to start the graph." and STOP |
+| Neo4j not healthy | Report "Neo4j is not available. Run `/forge-graph-init` to start the graph." and STOP |
 | No query provided | Prompt the user: "Enter your Cypher query:" |
 | Invalid Cypher syntax | Display the error output from cypher-shell and suggest checking query syntax |
 | Query returns no results | Report "Query returned no results." Suggest checking node labels with `MATCH (n) RETURN DISTINCT labels(n)` |
@@ -121,8 +121,8 @@ After displaying results, offer useful next steps based on the query type:
 
 ## See Also
 
-- `/graph-status` -- See available node labels and relationship types before querying
-- `/graph-debug` -- Structured diagnostic recipes without needing raw Cypher knowledge
-- `/graph-rebuild` -- Rebuild the graph if queries return stale or missing data
-- `/graph-init` -- Initialize the graph if it is not running
+- `/forge-graph-status` -- See available node labels and relationship types before querying
+- `/forge-graph-debug` -- Structured diagnostic recipes without needing raw Cypher knowledge
+- `/forge-graph-rebuild` -- Rebuild the graph if queries return stale or missing data
+- `/forge-graph-init` -- Initialize the graph if it is not running
 - `/forge-ask` -- Natural language queries about the codebase (uses graph as one of its data sources)

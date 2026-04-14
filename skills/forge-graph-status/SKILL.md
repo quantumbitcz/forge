@@ -12,7 +12,7 @@ Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
-3. **Neo4j available:** Check Docker container running. If not: report "Neo4j not running. Run /graph-init first." and STOP.
+3. **Neo4j available:** Check Docker container running. If not: report "Neo4j not running. Run /forge-graph-init first." and STOP.
 
 You are the graph status reporter. Your job is to display the current state of the Neo4j knowledge graph: container health, node and relationship counts, last build SHA, and enrichment coverage.
 
@@ -129,11 +129,11 @@ Knowledge Graph Status
 
   Enrichment coverage: 89/142 files (63%)
 
-  Run /graph-init to rebuild if stale.
-  Run /graph-query <cypher> to explore.
+  Run /forge-graph-init to rebuild if stale.
+  Run /forge-graph-query <cypher> to explore.
 ```
 
-If Neo4j is unavailable, show what can be determined from local files (last build SHA, enriched files) and suggest running `/graph-init`.
+If Neo4j is unavailable, show what can be determined from local files (last build SHA, enriched files) and suggest running `/forge-graph-init`.
 
 ## Error Handling
 
@@ -141,7 +141,7 @@ If Neo4j is unavailable, show what can be determined from local files (last buil
 |-----------|--------|
 | Prerequisites fail | Report specific error message and STOP |
 | Docker not available | Report "Docker is not available. Cannot check graph status." Show local file data only |
-| Neo4j container not running | Report "Neo4j not running. Run `/graph-init` first." Show local file data if available |
+| Neo4j container not running | Report "Neo4j not running. Run `/forge-graph-init` first." Show local file data if available |
 | Neo4j unhealthy | Report container status as UNAVAILABLE with error output. Show local file data |
 | Cypher query fails | Report the error. Suggest checking container logs with `docker logs forge-neo4j` |
 | .last-build-sha missing | Report "No build recorded yet." |
@@ -149,7 +149,7 @@ If Neo4j is unavailable, show what can be determined from local files (last buil
 
 ## See Also
 
-- `/graph-init` -- Initialize or restart the graph if status shows it is unavailable
-- `/graph-rebuild` -- Rebuild the graph if status shows stale data
-- `/graph-debug` -- Diagnose specific graph issues (orphaned nodes, missing enrichments)
-- `/graph-query` -- Run Cypher queries to explore graph data
+- `/forge-graph-init` -- Initialize or restart the graph if status shows it is unavailable
+- `/forge-graph-rebuild` -- Rebuild the graph if status shows stale data
+- `/forge-graph-debug` -- Diagnose specific graph issues (orphaned nodes, missing enrichments)
+- `/forge-graph-query` -- Run Cypher queries to explore graph data

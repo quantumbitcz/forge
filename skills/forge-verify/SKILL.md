@@ -78,6 +78,6 @@ Before any action, verify:
 ## See Also
 
 - `/forge-review` -- Review and fix changed files using forge review agents
-- `/codebase-health` -- Full codebase scan against convention rules (read-only)
-- `/deep-health` -- Iteratively fix all codebase quality issues
+- `/forge-codebase-health` -- Full codebase scan against convention rules (read-only)
+- `/forge-deep-health` -- Iteratively fix all codebase quality issues
 - `/forge-run` -- Full pipeline including verification as part of the workflow

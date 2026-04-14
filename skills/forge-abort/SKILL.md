@@ -41,9 +41,9 @@ allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 | Prerequisites fail | Report specific error message and STOP |
 | state.json missing | Report "No active pipeline to abort." and STOP |
 | Pipeline already finished | Report "Pipeline already finished (state: {story_state})." and STOP |
-| State transition fails | Report "Could not transition to ABORTED state. State machine error: {error}." Suggest `/repair-state` |
+| State transition fails | Report "Could not transition to ABORTED state. State machine error: {error}." Suggest `/forge-repair-state` |
 | Lock file removal fails | Log WARNING. Lock file will be detected as stale on next run |
-| state.json write fails | Report error. State may be partially updated. Suggest `/repair-state` |
+| state.json write fails | Report error. State may be partially updated. Suggest `/forge-repair-state` |
 | State corruption | Attempt abort anyway via state machine. If that fails, suggest `/forge-reset` |
 
 ## See Also

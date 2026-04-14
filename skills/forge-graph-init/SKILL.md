@@ -1,6 +1,6 @@
 ---
 name: forge-graph-init
-description: "Initialize Neo4j knowledge graph -- starts Docker container, imports plugin seed, builds project codebase graph. Use when setting up the knowledge graph for the first time, after Docker was restarted, or when /graph-status shows the graph is unavailable. Idempotent."
+description: "Initialize Neo4j knowledge graph -- starts Docker container, imports plugin seed, builds project codebase graph. Use when setting up the knowledge graph for the first time, after Docker was restarted, or when /forge-graph-status shows the graph is unavailable. Idempotent."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
@@ -196,8 +196,8 @@ Graph initialized successfully.
     ProjectFunction    215
     ...
 
-  Run /graph-query to explore the graph.
-  Run /graph-status for health and coverage details.
+  Run /forge-graph-query to explore the graph.
+  Run /forge-graph-status for health and coverage details.
 ```
 
 Note any steps that were skipped (idempotency).
@@ -212,14 +212,14 @@ Note any steps that were skipped (idempotency).
 | Docker image pull fails | Report "Failed to pull Neo4j image. Check internet connection and Docker Hub access." and STOP |
 | Container start fails | Report error output. Suggest checking port conflicts (`docker ps`) and disk space |
 | Neo4j health timeout (60s) | Report "Neo4j did not become healthy within 60 seconds. Check container logs: `docker logs forge-neo4j`." and STOP |
-| Seed import fails | Report error. Container is running but seed is missing. Suggest retrying `/graph-init` |
+| Seed import fails | Report error. Container is running but seed is missing. Suggest retrying `/forge-graph-init` |
 | Build script fails | Report error. Suggest checking that `build-project-graph.sh` is executable |
 | State corruption | Graph init creates/updates state.json integrations block independently |
 
 ## See Also
 
-- `/graph-status` -- Check graph health and node counts after initialization
-- `/graph-query` -- Run Cypher queries against the initialized graph
-- `/graph-rebuild` -- Rebuild project graph from scratch (preserves seed)
-- `/graph-debug` -- Diagnose graph issues if initialization produced unexpected results
+- `/forge-graph-status` -- Check graph health and node counts after initialization
+- `/forge-graph-query` -- Run Cypher queries against the initialized graph
+- `/forge-graph-rebuild` -- Rebuild project graph from scratch (preserves seed)
+- `/forge-graph-debug` -- Diagnose graph issues if initialization produced unexpected results
 - `/forge-init` -- Full project setup which includes graph initialization as an optional step

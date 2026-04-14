@@ -158,5 +158,5 @@ These are illustrative — the skill handles any freeform question:
 
 - `/forge-insights` -- Cross-run analytics (overlaps with "what changed" questions)
 - `/forge-history` -- Pipeline run history (overlaps with "what happened in recent runs" questions)
-- `/graph-query` -- Run raw Cypher queries when you need precise graph data
-- `/docs-generate` -- Generate documentation that forge-ask can then query
+- `/forge-graph-query` -- Run raw Cypher queries when you need precise graph data
+- `/forge-docs-generate` -- Generate documentation that forge-ask can then query

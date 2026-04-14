@@ -160,6 +160,6 @@ If `--export` was passed and external systems are configured, report export stat
 ## See Also
 
 - `/forge-run` -- Full pipeline which includes documentation generation at the DOCUMENTING stage
-- `/codebase-health` -- Read-only codebase analysis (complementary to documentation generation)
+- `/forge-codebase-health` -- Read-only codebase analysis (complementary to documentation generation)
 - `/forge-ask` -- Query codebase knowledge including generated documentation
-- `/deploy` -- Deploy after documentation is generated
+- `/forge-deploy` -- Deploy after documentation is generated

@@ -124,11 +124,11 @@ You are a thin launcher. Your ONLY job is to dispatch the migration planner agen
 | Context7 unavailable | Migration planner falls back to CHANGELOG analysis and conservative migration. Log INFO |
 | Version detection fails | Migration planner will ask user for current and target versions interactively |
 | Build/test fails after batch | Migration planner handles rollback of the failed batch. Suggest reviewing rollback instructions |
-| State corruption | Suggest `/repair-state` to fix state, then retry |
+| State corruption | Suggest `/forge-repair-state` to fix state, then retry |
 
 ## See Also
 
 - `/forge-run` -- Full pipeline entry point (use `migrate:` prefix for migration routing)
 - `/forge-rollback` -- Rollback migration changes if something goes wrong
 - `/forge-diagnose` -- Diagnose pipeline health if the migration stalls
-- `/config-validate` -- Validate configuration before starting a migration
+- `/forge-config-validate` -- Validate configuration before starting a migration

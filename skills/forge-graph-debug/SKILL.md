@@ -1,6 +1,6 @@
 ---
 name: forge-graph-debug
-description: "Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /graph-status shows anomalies, graph queries return unexpected results, or after a failed /graph-rebuild."
+description: "Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /forge-graph-status shows anomalies, graph queries return unexpected results, or after a failed /forge-graph-rebuild."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
@@ -13,8 +13,8 @@ Targeted diagnostic skill for the Neo4j knowledge graph. Provides structured dia
 Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
-2. **Neo4j container running:** Run `shared/graph/neo4j-health.sh`. If unhealthy: report "Neo4j is not available. Run `/graph-init` first." and STOP.
-3. **Graph initialized:** Verify graph has nodes (check via node count query). If empty: report "Graph is empty. Run `/graph-init` to build the project graph." and STOP.
+2. **Neo4j container running:** Run `shared/graph/neo4j-health.sh`. If unhealthy: report "Neo4j is not available. Run `/forge-graph-init` first." and STOP.
+3. **Graph initialized:** Verify graph has nodes (check via node count query). If empty: report "Graph is empty. Run `/forge-graph-init` to build the project graph." and STOP.
 
 ## Diagnostic Recipes
 
@@ -76,11 +76,11 @@ LIMIT 50
 ## Instructions
 
 1. Run Neo4j health check via `shared/graph/neo4j-health.sh`
-2. If unhealthy: report status and suggest `/graph-init` or Docker troubleshooting
+2. If unhealthy: report status and suggest `/forge-graph-init` or Docker troubleshooting
 3. If healthy: derive `project_id` from git remote origin URL
 4. Run diagnostic recipes 1-5, report findings in table format
 5. If user provides a specific concern, run targeted Cypher (read-only, enforce LIMIT)
-6. Suggest remediation: `/graph-rebuild` for widespread staleness, manual fixes for isolated issues
+6. Suggest remediation: `/forge-graph-rebuild` for widespread staleness, manual fixes for isolated issues
 
 ## Safety
 
@@ -92,15 +92,15 @@ LIMIT 50
 
 | Condition | Action |
 |-----------|--------|
-| Neo4j container not running | Report status and suggest `/graph-init` or Docker troubleshooting |
+| Neo4j container not running | Report status and suggest `/forge-graph-init` or Docker troubleshooting |
 | Neo4j unhealthy | Report error output. Suggest checking container logs |
-| Cypher query fails | Display error output. Suggest `/graph-init` if persistent |
+| Cypher query fails | Display error output. Suggest `/forge-graph-init` if persistent |
 | No project_id derivable (no git remote) | Fall back to basename of project root |
 | Query returns too many rows | Enforce LIMIT (max 50 default). Suggest narrowing the diagnostic |
 
 ## See Also
 
-- `/graph-status` -- Quick overview of graph health and node counts
-- `/graph-rebuild` -- Rebuild the graph when debug shows widespread staleness or corruption
-- `/graph-init` -- Full initialization when the container is not running
-- `/graph-query` -- Run custom Cypher queries for deeper investigation
+- `/forge-graph-status` -- Quick overview of graph health and node counts
+- `/forge-graph-rebuild` -- Rebuild the graph when debug shows widespread staleness or corruption
+- `/forge-graph-init` -- Full initialization when the container is not running
+- `/forge-graph-query` -- Run custom Cypher queries for deeper investigation

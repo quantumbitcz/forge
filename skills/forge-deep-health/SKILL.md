@@ -155,7 +155,7 @@ Commits: {list of commit SHAs + messages}
 - {issue}: {reason not fixed — out of scope / intentional design / accepted trade-off}
 ```
 
-Save to `.forge/deep-health-report.md`.
+Save to `.forge/forge-deep-health-report.md`.
 
 ## Configuration
 
@@ -175,7 +175,7 @@ Respects `forge-config.md` parameters when available:
 
 ## Important
 
-- This skill **MODIFIES files** — it's not read-only like `/codebase-health`
+- This skill **MODIFIES files** — it's not read-only like `/forge-codebase-health`
 - Each iteration creates a commit — review with `git log`
 - Hard cap of 5 iterations prevents infinite loops (configurable via `--max-iterations`)
 - If the project has no tests, fix phase skips test verification but review agents still run
@@ -194,7 +194,7 @@ Respects `forge-config.md` parameters when available:
 
 ## See Also
 
-- `/codebase-health` -- Read-only analysis without fixes (use to preview what deep-health would fix)
+- `/forge-codebase-health` -- Read-only analysis without fixes (use to preview what deep-health would fix)
 - `/forge-review` -- Review and fix only recently changed files (narrower scope)
-- `/verify` -- Quick build + lint + test check
-- `/security-audit` -- Focused security vulnerability scanning
+- `/forge-verify` -- Quick build + lint + test check
+- `/forge-security-audit` -- Focused security vulnerability scanning

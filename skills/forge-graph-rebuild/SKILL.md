@@ -1,6 +1,6 @@
 ---
 name: forge-graph-rebuild
-description: "Rebuild the project codebase graph from scratch while preserving the plugin seed graph. Use when incremental updates are stale, after major refactoring, or when /graph-status shows the graph is out of date with the codebase."
+description: "Rebuild the project codebase graph from scratch while preserving the plugin seed graph. Use when incremental updates are stale, after major refactoring, or when /forge-graph-status shows the graph is out of date with the codebase."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
@@ -14,7 +14,7 @@ Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --is-inside-work-tree`. If not: report "Not a git repository." and STOP.
 2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
-3. **Neo4j available:** Run the health check script. If not healthy: report "Neo4j is not available. Run `/graph-init` to start the graph first." and STOP.
+3. **Neo4j available:** Run the health check script. If not healthy: report "Neo4j is not available. Run `/forge-graph-init` to start the graph first." and STOP.
 
 ## Container Name Resolution
 
@@ -38,7 +38,7 @@ Run the health check script:
 "${CLAUDE_PLUGIN_ROOT}/shared/graph/neo4j-health.sh"
 ```
 
-- If Neo4j is not healthy: **ERROR** — "Neo4j is not available. Run `/graph-init` to start the graph first." Abort.
+- If Neo4j is not healthy: **ERROR** — "Neo4j is not available. Run `/forge-graph-init` to start the graph first." Abort.
 
 ---
 
@@ -101,7 +101,7 @@ echo "MATCH (n) WHERE (n:ProjectFile OR n:ProjectClass OR n:ProjectFunction OR n
   docker exec -i forge-neo4j cypher-shell -u neo4j -p forge-local
 ```
 
-- If the command exits non-zero: **ERROR** — display the error output. Do not proceed. The graph may be in a partial state — suggest running `/graph-init` to fully reinitialize.
+- If the command exits non-zero: **ERROR** — display the error output. Do not proceed. The graph may be in a partial state — suggest running `/forge-graph-init` to fully reinitialize.
 - If successful: note how many nodes were deleted (cypher-shell reports `Deleted N nodes, deleted M relationships`).
 
 Also clear the stale build marker so the next step always runs:
@@ -173,28 +173,28 @@ Graph rebuilt successfully.
     ProjectDependency   27
     _SeedMarker          1    (seed preserved)
 
-  Run /graph-status for enrichment coverage details.
-  Run /graph-query to explore the graph.
+  Run /forge-graph-status for enrichment coverage details.
+  Run /forge-graph-query to explore the graph.
 ```
 
-If any step failed partway through, clearly indicate the graph may be in an inconsistent state and suggest running `/graph-init` to fully reinitialize.
+If any step failed partway through, clearly indicate the graph may be in an inconsistent state and suggest running `/forge-graph-init` to fully reinitialize.
 
 ## Error Handling
 
 | Condition | Action |
 |-----------|--------|
 | Not a git repository | Report "Not a git repository." and STOP |
-| Neo4j not healthy | Report "Neo4j is not available. Run `/graph-init` to start the graph first." and STOP |
+| Neo4j not healthy | Report "Neo4j is not available. Run `/forge-graph-init` to start the graph first." and STOP |
 | User cancels rebuild | Report "Rebuild cancelled. Graph unchanged." and STOP |
-| Node deletion fails | Report error. Do not proceed. Suggest `/graph-init` to fully reinitialize |
-| Build script fails | Report error. Graph may be in partial state. Suggest `/graph-init` |
+| Node deletion fails | Report error. Do not proceed. Suggest `/forge-graph-init` to fully reinitialize |
+| Build script fails | Report error. Graph may be in partial state. Suggest `/forge-graph-init` |
 | Enrichment backup fails | Log WARNING. Continue rebuild -- enrichment data will be lost |
 | Enrichment restoration fails | Log WARNING "Enrichment restoration failed -- bugfix telemetry will restart from zero." Continue |
-| Docker connection lost mid-rebuild | Report error. Graph is in inconsistent state. Suggest `/graph-init` |
+| Docker connection lost mid-rebuild | Report error. Graph is in inconsistent state. Suggest `/forge-graph-init` |
 
 ## See Also
 
-- `/graph-status` -- Check graph health before and after rebuild
-- `/graph-debug` -- Diagnose specific graph issues before deciding to rebuild
-- `/graph-init` -- Full initialization including container start (use when rebuild fails)
-- `/graph-query` -- Explore the rebuilt graph
+- `/forge-graph-status` -- Check graph health before and after rebuild
+- `/forge-graph-debug` -- Diagnose specific graph issues before deciding to rebuild
+- `/forge-graph-init` -- Full initialization including container start (use when rebuild fails)
+- `/forge-graph-query` -- Explore the rebuilt graph

@@ -149,5 +149,5 @@ Before compressing any file, copy original to `{filename}.original.md`. Never co
 ## See Also
 
 - `/forge-review` -- review changed files for quality
-- `/verify` -- build + lint + test check
+- `/forge-verify` -- build + lint + test check
 - Compression rules and intensity levels — see `input-compression.md` in `shared`
