@@ -1,6 +1,6 @@
 ---
 name: forge-bootstrap
-description: "Scaffold a new project with production-grade structure, build system, architecture, CI/CD, and tooling. Use when starting a new project from scratch, creating a greenfield application, or scaffolding a new service in a multi-repo setup."
+description: "Scaffold a new project from scratch with production-grade architecture, build system, CI/CD, tests, and tooling. Use when creating a greenfield application, starting a new microservice, or scaffolding a new service in a monorepo. Trigger: /forge-bootstrap, new project, scaffold project, create app from scratch"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 

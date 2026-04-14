@@ -1,6 +1,6 @@
 ---
 name: forge-rollback
-description: "Safely rollback pipeline changes -- revert worktree, restore state, or undo specific commits. Use when a pipeline run produced unwanted changes, a merge introduced regressions, or you need to undo Linear ticket updates."
+description: "Undo pipeline changes — revert worktree, restore state, or rollback specific commits. Use when a pipeline run produced unwanted changes, you need to undo work, or a merge introduced regressions. Trigger: /forge-rollback, undo changes, revert pipeline, go back"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---

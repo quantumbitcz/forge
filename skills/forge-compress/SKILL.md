@@ -1,6 +1,6 @@
 ---
 name: forge-compress
-description: "Use when you want to reduce agent system prompt token cost by compressing verbose prose in .md files. Applies caveman-style terse rewriting while preserving all technical rules, code blocks, and structural elements."
+description: "Reduce token cost of agent .md files by 30-50% through prose compression. Use when agent prompts are too large, you want to save tokens, or pipeline runs are hitting context limits. Preserves all technical rules and code blocks. Trigger: /forge-compress, reduce tokens, agent prompts too large, save money on tokens"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: forge-config
-description: "Interactive configuration editor for forge.local.md and forge-config.md. Use when changing framework, adding testing, updating scoring thresholds, or toggling features. Validates changes against schema. Trigger: /forge-config, change forge config, update my config"
+description: "Edit Forge pipeline settings interactively. Use when changing framework, test runner, scoring thresholds, reviewer selection, convergence limits, or toggling features like caveman mode. Validates changes. Trigger: /forge-config, change settings, edit config, adjust thresholds, update scoring"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 disable-model-invocation: false
 ---

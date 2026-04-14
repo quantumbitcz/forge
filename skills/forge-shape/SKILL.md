@@ -1,6 +1,6 @@
 ---
 name: forge-shape
-description: "Collaboratively shape a feature requirement into a structured spec with epics, stories, and acceptance criteria. Use when you have a vague idea that needs refinement, when requirements are unclear or incomplete, or before running /forge-run on a complex feature."
+description: "Turn a vague idea into a structured spec with stories and acceptance criteria. Use when your requirement is unclear, you're not sure what to build, or you need to think through a feature before implementing. Trigger: /forge-shape, I have an idea, help me think through this, refine my requirements"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ---
 

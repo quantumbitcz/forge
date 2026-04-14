@@ -1,6 +1,6 @@
 ---
 name: forge-diagnose
-description: "Read-only diagnostic of pipeline health -- state.json integrity, recovery budget, convergence status, and stalled-stage detection. Use when a pipeline run seems stuck, produced unexpected results, or you want to inspect state before resuming. Never modifies files."
+description: "Diagnose why a pipeline run is stuck, broken, or behaving unexpectedly. Read-only health check of state.json integrity, recovery budget, convergence status, and stalled stages. Use when the pipeline seems stuck, a run failed with unclear errors, or before resuming. Trigger: /forge-diagnose, pipeline stuck, why did the run fail, what went wrong"
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
