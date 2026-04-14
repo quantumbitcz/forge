@@ -3,6 +3,35 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.5.0] - 2026-04-14
+
+### Added
+- **Cross-Platform Hardening:** `fcntl`→`msvcrt` fallback for Windows Git Bash, full TMPDIR/TMP/TEMP cascade, multi-platform `check-prerequisites.sh`, `shared/platform-support.md`, `platform.windows_mode` config, cross-platform CI matrix (macOS, Ubuntu, Windows Git Bash)
+- **Build System Intelligence:** `build-system-resolver.sh` introspects Maven, Gradle, npm/pnpm/yarn, Go, Cargo, .NET with heuristic fallback. `module-boundary-map.sh` discovers multi-module project boundaries. Module-aware import resolution with confidence tagging (resolved/module-inferred/heuristic). Build graph quality metrics in state.json
+- **Compression & Caveman Alignment:** Unified compression eval harness (`benchmarks/compression-eval.sh`), post-compression validation (`shared/compression-validation.py`) with 8 structural checks, caveman statusline badge `[STATUS: CAVEMAN]`, enhanced SessionStart auto-injection with full compression rule blocks, research references (arXiv:2604.00025)
+- **Eval & Benchmarking Framework:** `evals/pipeline/` with eval-runner, 5 suite definitions (lite/25, convergence/10, cost/5, compression/5, smoke/5), 30 fixture stubs across 5 languages, baseline save/compare with regression detection, CI workflow for automated eval
+- **Observability & Cost Management:** `cost-alerting.sh` with multi-threshold budget alerting (50/75/90/100%), `context-guard.sh` for quality-focused condensation at 30K tokens, E8 orchestrator intercept (advisory before hard ESCALATED), per-stage cost reporting, model routing cost optimization, enhanced forge-insights Category 3
+- **AI-Aware Code Quality:** 4 new wildcard categories (AI-LOGIC-*, AI-PERF-*, AI-CONCURRENCY-*, AI-SEC-*) with 26 discrete sub-categories, 15 L1 regex patterns across 15 language files, cross-category dedup rule for AI-*/non-AI-* overlap, SCOUT-AI learning loop, reviewer guidance for fg-410/fg-411/fg-416
+- `shared/agent-role-hierarchy.md` — complete dispatch graph and tier definitions for all 41 agents
+- `shared/tracking/ticket-format.md` — FG-NNN ticket format documentation
+- `shared/hook-design.md` — hook execution model, ordering, and script contract
+- `allowed-tools:` frontmatter on all 40 skills
+
+### Changed
+- 15 skills renamed to `forge-*` prefix: bootstrap-project→forge-bootstrap, codebase-health→forge-codebase-health, config-validate→forge-config-validate, deep-health→forge-deep-health, deploy→forge-deploy, docs-generate→forge-docs-generate, graph-debug→forge-graph-debug, graph-init→forge-graph-init, graph-query→forge-graph-query, graph-rebuild→forge-graph-rebuild, graph-status→forge-graph-status, migration→forge-migration, repair-state→forge-repair-state, security-audit→forge-security-audit, verify→forge-verify
+- All cross-references updated across 90+ files (skills, agents, CLAUDE.md, README.md, CONTRIBUTING.md, shared docs, tests)
+- Category registry expanded from 83 to 87 entries (23→27 wildcard prefixes)
+- `/forge-deep-health` now documents fg-413 reviewer modes (full/conventions-only/a11y-only/performance-only)
+
+### Deprecated
+- `--sprint` and `--parallel` flags on `/forge-run` — use `/forge-sprint` instead
+
+### Fixed
+- `fcntl` import in `tracking-ops.sh` now uses try/except with msvcrt fallback (Windows compatibility)
+- Incomplete `/tmp` cascade in `platform.sh:484` (`TMPDIR:-/tmp` → `TMPDIR:-${TMP:-${TEMP:-/tmp}}`)
+- `BASH_SOURCE[0]` for path resolution in sourceable graph scripts
+- Context-guard config parsing fallback when PyYAML unavailable
+
 ## [2.4.0] - 2026-04-14
 
 ### Added
