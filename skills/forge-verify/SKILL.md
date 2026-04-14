@@ -1,10 +1,10 @@
 ---
-name: verify
+name: forge-verify
 description: "Quick build + lint + test check for the current module without running the full pipeline. Use when you want to confirm nothing is broken after manual code changes, before starting a pipeline run to check baseline health, or as a pre-commit sanity check."
 disable-model-invocation: false
 ---
 
-# /verify -- Quick Verify
+# /forge-verify -- Quick Verify
 
 Run build, lint, and test commands for the current module without a full pipeline run.
 

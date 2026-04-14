@@ -1,9 +1,9 @@
 ---
-name: graph-debug
+name: forge-graph-debug
 description: "Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /graph-status shows anomalies, graph queries return unexpected results, or after a failed /graph-rebuild."
 ---
 
-# Graph Debug
+# /forge-graph-debug -- Graph Debug
 
 Targeted diagnostic skill for the Neo4j knowledge graph. Provides structured diagnostic recipes without requiring raw Cypher knowledge.
 

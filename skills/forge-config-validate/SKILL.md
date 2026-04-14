@@ -1,9 +1,9 @@
 ---
-name: config-validate
+name: forge-config-validate
 description: "Pre-pipeline validation of forge.local.md and forge-config.md. Use when you want to verify configuration is correct before running the pipeline, after editing config files manually, or when pipeline runs fail at PREFLIGHT with config errors."
 ---
 
-# /config-validate — Configuration Validator
+# /forge-config-validate — Configuration Validator
 
 You validate the project's forge configuration files before a pipeline run. Catches misconfigurations that would fail at PREFLIGHT or cause runtime errors deep in the pipeline.
 

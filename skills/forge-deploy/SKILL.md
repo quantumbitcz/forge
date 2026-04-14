@@ -1,9 +1,9 @@
 ---
-name: deploy
+name: forge-deploy
 description: "Trigger deployment to staging, production, or preview environments. Use when a PR is merged and ready to deploy, when you need to check deployment status, or when rolling back a broken deployment. Supports ArgoCD, Helm, kubectl, docker-compose."
 ---
 
-# /deploy -- Environment Deployment
+# /forge-deploy -- Environment Deployment
 
 You manage deployments to staging, production, and preview environments. You read deployment configuration from the project's `forge.local.md` and execute the appropriate deployment method.
 
@@ -19,19 +19,19 @@ Before any action, verify:
 
 ### 1. Parse Input
 
-The user's argument (everything after `/deploy`) determines the action:
+The user's argument (everything after `/forge-deploy`) determines the action:
 
 | Command | Action |
 |---------|--------|
-| `/deploy staging` | Deploy to staging environment |
-| `/deploy production` | Deploy to production (requires confirmation) |
-| `/deploy preview` | Deploy preview environment for current PR |
-| `/deploy rollback` | Rollback to previous version |
-| `/deploy status` | Check deployment status |
-| `/deploy --dry-run staging` | Show what would happen without executing |
-| `/deploy` (no args) | Show deployment config and available environments |
+| `/forge-deploy staging` | Deploy to staging environment |
+| `/forge-deploy production` | Deploy to production (requires confirmation) |
+| `/forge-deploy preview` | Deploy preview environment for current PR |
+| `/forge-deploy rollback` | Rollback to previous version |
+| `/forge-deploy status` | Check deployment status |
+| `/forge-deploy --dry-run staging` | Show what would happen without executing |
+| `/forge-deploy` (no args) | Show deployment config and available environments |
 
-If `--dry-run` is present in the arguments, execute in dry-run mode: resolve all variables, display the full command that would be executed, show the confirmation prompt (if applicable), but do NOT execute the command. Safety guards (Section 5) still apply in dry-run mode — display any warnings that would be shown during a real deploy. Display: "DRY RUN — no changes made." If `--dry-run` is used without specifying an environment, treat it as `/deploy` (show configuration).
+If `--dry-run` is present in the arguments, execute in dry-run mode: resolve all variables, display the full command that would be executed, show the confirmation prompt (if applicable), but do NOT execute the command. Safety guards (Section 5) still apply in dry-run mode — display any warnings that would be shown during a real deploy. Display: "DRY RUN — no changes made." If `--dry-run` is used without specifying an environment, treat it as `/forge-deploy` (show configuration).
 
 ### 2. Read Configuration
 
@@ -60,7 +60,7 @@ If no `deploy` config is found, display a helpful message:
 ```
 No deployment configuration found.
 
-To enable /deploy, add a `deploy` section to your `.claude/forge.local.md`:
+To enable /forge-deploy, add a `deploy` section to your `.claude/forge.local.md`:
 
 deploy:
   method: argocd
@@ -79,7 +79,7 @@ deploy:
 
 ### 3. Deployment Actions
 
-#### 3.1 `/deploy staging`
+#### 3.1 `/forge-deploy staging`
 
 1. Read `deploy.staging.command` from config
 2. Determine the current version: read the latest git tag or commit SHA
@@ -87,7 +87,7 @@ deploy:
 4. If `post_deploy_check` is configured, wait 10 seconds then run the health check (retry up to 3 times with 10s intervals)
 5. Report: command executed, version deployed, health check result
 
-#### 3.2 `/deploy production`
+#### 3.2 `/forge-deploy production`
 
 1. Read `deploy.production` from config
 2. **Confirmation gate**: If `require_confirmation: true` (default for production), display a confirmation prompt to the user:
@@ -105,7 +105,7 @@ deploy:
 4. If `post_deploy_check` is configured, wait 15 seconds then run the health check (retry up to 5 times with 15s intervals)
 5. Report: command executed, version deployed, health check result
 
-#### 3.3 `/deploy preview`
+#### 3.3 `/forge-deploy preview`
 
 1. Read `deploy.preview.command` from config
 2. Detect the current PR number: run `gh pr view --json number -q .number` to get the PR number for the current branch
@@ -113,7 +113,7 @@ deploy:
 4. Execute the preview command via Bash
 5. Report: command executed, PR number, preview URL if available
 
-#### 3.4 `/deploy rollback`
+#### 3.4 `/forge-deploy rollback`
 
 1. Read `deploy.rollback.command` from config
 2. Ask the user which environment to rollback (staging or production) if not specified
@@ -122,7 +122,7 @@ deploy:
 5. Execute the rollback command via Bash
 6. Report: command executed, environment, rollback status
 
-#### 3.5 `/deploy status`
+#### 3.5 `/forge-deploy status`
 
 1. Read `deploy.status.command` from config
 2. Execute the status command via Bash

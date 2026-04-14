@@ -1,9 +1,9 @@
 ---
-name: graph-init
+name: forge-graph-init
 description: "Initialize Neo4j knowledge graph -- starts Docker container, imports plugin seed, builds project codebase graph. Use when setting up the knowledge graph for the first time, after Docker was restarted, or when /graph-status shows the graph is unavailable. Idempotent."
 ---
 
-# /graph-init — Neo4j Knowledge Graph Initialization
+# /forge-graph-init — Neo4j Knowledge Graph Initialization
 
 You are the graph initializer. Your job is to start the Neo4j container, import the plugin seed data, and build the project codebase graph. Be idempotent — detect what is already done and skip those steps.
 

@@ -1,10 +1,10 @@
 ---
-name: security-audit
+name: forge-security-audit
 description: "Run module-appropriate security scanners and aggregate vulnerability results. Use when preparing for a release, after dependency updates, when reviewing third-party package security, or when onboarding to a new codebase to assess its security posture."
 disable-model-invocation: false
 ---
 
-# /security-audit -- Security Audit
+# /forge-security-audit -- Security Audit
 
 Run security vulnerability scanners appropriate for the current module.
 

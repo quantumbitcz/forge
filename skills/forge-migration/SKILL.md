@@ -1,10 +1,10 @@
 ---
-name: migration
+name: forge-migration
 description: "Plan and execute a library or framework migration using the migration planner agent (fg-160). Use when upgrading major framework versions (e.g., Spring Boot 2→3, Angular 16→17), migrating between libraries (e.g., Enzyme→Testing Library), or checking for breaking changes before upgrading."
 disable-model-invocation: false
 ---
 
-# Migration Assistant
+# /forge-migration -- Migration Assistant
 
 Plan and execute a library or framework migration.
 
@@ -24,11 +24,11 @@ Provide a description of what to migrate:
 
 | Command | Behavior |
 |---------|----------|
-| `/migration upgrade Spring Boot` | Auto-detect current version, propose latest stable target, show analysis |
-| `/migration upgrade Spring Boot to 3.4` | Auto-detect current, use specified target |
-| `/migration upgrade Spring Boot from 3.2 to 3.4` | Use both specified versions |
-| `/migration upgrade all` | Detect ALL outdated dependencies, propose upgrades, prioritize by risk |
-| `/migration check` | Dry-run: detect all outdated deps, show what WOULD be upgraded, no changes |
+| `/forge-migration upgrade Spring Boot` | Auto-detect current version, propose latest stable target, show analysis |
+| `/forge-migration upgrade Spring Boot to 3.4` | Auto-detect current, use specified target |
+| `/forge-migration upgrade Spring Boot from 3.2 to 3.4` | Use both specified versions |
+| `/forge-migration upgrade all` | Detect ALL outdated dependencies, propose upgrades, prioritize by risk |
+| `/forge-migration check` | Dry-run: detect all outdated deps, show what WOULD be upgraded, no changes |
 
 ### Version Auto-Detection
 
@@ -96,7 +96,7 @@ When Context7 is unavailable, fallback to:
 
 You are a thin launcher. Your ONLY job is to dispatch the migration planner agent.
 
-1. **Parse input**: The user's argument (everything after `/migration`) is the migration description — a free-text string like "Upgrade Spring Boot from 3.2 to 3.4" or "Migrate from Moment.js to date-fns". It may also be a keyword command like `check` or `upgrade all`.
+1. **Parse input**: The user's argument (everything after `/forge-migration`) is the migration description — a free-text string like "Upgrade Spring Boot from 3.2 to 3.4" or "Migrate from Moment.js to date-fns". It may also be a keyword command like `check` or `upgrade all`.
 
 2. **Detect available MCPs**: Detect available MCPs per `shared/mcp-detection.md` detection table. For each MCP, check if its probe tool is available. Mark unavailable MCPs as degraded and apply the documented degradation behavior. Include Context7 availability in the dispatch prompt so the planner knows whether to use it for migration guide lookups.
 

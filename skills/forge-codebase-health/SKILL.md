@@ -1,10 +1,10 @@
 ---
-name: codebase-health
+name: forge-codebase-health
 description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. Use when you want a quality baseline before starting work, after merging multiple PRs, or to audit convention compliance without making changes."
 disable-model-invocation: false
 ---
 
-# /codebase-health -- Codebase Health Check
+# /forge-codebase-health -- Codebase Health Check
 
 ## Prerequisites
 

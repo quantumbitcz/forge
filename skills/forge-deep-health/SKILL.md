@@ -1,10 +1,10 @@
 ---
-name: deep-health
+name: forge-deep-health
 description: "Fix all codebase quality issues iteratively. Use when you want to clean up technical debt, polish a codebase before release, or fix all convention violations. Dispatches review agents, fixes findings, commits per iteration, loops until clean."
 disable-model-invocation: false
 ---
 
-# /deep-health — Deep Iterative Codebase Health Fix
+# /forge-deep-health — Deep Iterative Codebase Health Fix
 
 ## Prerequisites
 

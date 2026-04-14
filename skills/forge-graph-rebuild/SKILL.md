@@ -1,9 +1,9 @@
 ---
-name: graph-rebuild
+name: forge-graph-rebuild
 description: "Rebuild the project codebase graph from scratch while preserving the plugin seed graph. Use when incremental updates are stale, after major refactoring, or when /graph-status shows the graph is out of date with the codebase."
 ---
 
-# /graph-rebuild — Rebuild Project Codebase Graph
+# /forge-graph-rebuild — Rebuild Project Codebase Graph
 
 You are the graph rebuilder. Your job is to wipe all project-derived nodes from the knowledge graph and rebuild them from the current codebase. The plugin seed graph (framework conventions, patterns, rules) is preserved.
 
