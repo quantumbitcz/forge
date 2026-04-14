@@ -67,10 +67,22 @@ Dispatch forge's own review agents to investigate the scoped files. Select agent
 | `forge:fg-411-security-reviewer` | Always |
 | `forge:fg-412-architecture-reviewer` | Always (unless `--focus` excludes) |
 | `forge:fg-418-docs-consistency-reviewer` | Always (or `--focus docs`) |
-| `forge:fg-413-frontend-reviewer` (mode: `full`) | Frontend files (code, styling, layout, a11y, performance) |
+| `forge:fg-413-frontend-reviewer` | Frontend files. Modes: `full` (default), `conventions-only`, `a11y-only`, `performance-only`. |
 | `forge:fg-416-performance-reviewer` | Backend files present |
 | `forge:fg-417-dependency-reviewer` | Dependency files or manifests changed/present |
 | `forge:fg-419-infra-deploy-reviewer` | Infra files present (Dockerfile, helm, k8s manifests) |
+
+#### Frontend Reviewer Modes
+
+When dispatching `fg-413-frontend-reviewer`, the mode is selected based on `--focus`:
+
+| `--focus` value | fg-413 mode | Sections executed |
+|---|---|---|
+| (none) or `all` | `full` | A+B+C+D+E (conventions, design, a11y, performance, cross-browser) |
+| `frontend` | `full` | A+B+C+D+E |
+| `quality` | `conventions-only` | A+B (conventions, design) |
+| `a11y` | `a11y-only` | C (accessibility including dynamic testing) |
+| `performance` | `performance-only` | D (bundle size, rendering, resource loading) |
 
 Dispatch applicable agents **in parallel** (max 3 at a time to manage context). Each receives:
 - File list to investigate

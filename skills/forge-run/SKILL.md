@@ -70,7 +70,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    If no ticket ID provided, the orchestrator will create one during PREFLIGHT (if tracking is initialized).
 
-2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint`, `--parallel`), classify the requirement using the priority table and signal rules in `shared/intent-classification.md`. First match wins. Modes: bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance, vague, standard (default).
+2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint` or `--parallel` (DEPRECATED: use `/forge-sprint` instead. These flags will be removed in v3.0.)), classify the requirement using the priority table and signal rules in `shared/intent-classification.md`. First match wins. Modes: bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance, vague, standard (default).
 
    **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.
 
@@ -94,7 +94,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    | Mode | Dispatch Target |
    |------|----------------|
-   | `--sprint` or `--parallel` flag | `fg-090-sprint-orchestrator` with `$ARGUMENTS` |
+   | `--sprint` or `--parallel` flag (DEPRECATED) | `fg-090-sprint-orchestrator` with `$ARGUMENTS` |
    | `multi-feature` | `fg-015-scope-decomposer` with requirement + MCPs |
    | `vague` | `fg-010-shaper` with requirement; on spec output, re-invoke with `--spec {path}` |
    | `bugfix` | `fg-100-orchestrator` with `Mode: bugfix` |
