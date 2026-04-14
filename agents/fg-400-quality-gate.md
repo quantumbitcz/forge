@@ -63,6 +63,21 @@ Batches defined by `forge.local.md` `quality_gate.batch_N`. DO NOT hardcode agen
 
 **Graph Context:** Query patterns 10/11/12 via `neo4j-mcp` for review focus. Fall back to file-based if unavailable.
 
+### Change Scope Detection
+
+Before dispatching batches, assess the change scope to optimize reviewer allocation:
+
+1. Read the changed files list and total changed line count from the orchestrator's dispatch context (the orchestrator provides this in the task description). Do NOT run `git diff` — the quality gate reads zero source files per its contract.
+2. Classify scope:
+   - **Small** (<50 changed lines): Dispatch only batch 1 (whatever agents it contains per config). Skip subsequent batches.
+   - **Medium** (50-500 changed lines): Dispatch all configured batches normally.
+   - **Large** (>500 changed lines): Dispatch all configured batches. Emit finding: `APPROACH-SCOPE | INFO | "Large change ({N} lines) — consider splitting for focused review."`
+
+3. If `quality_gate.force_full_review: true` in config: skip scope detection, dispatch all batches always.
+4. Log the decision: `[SCOPE] {small|medium|large} ({N} lines) — dispatching {M}/{total} batches`
+
+**Important:** Do NOT hardcode which agents are in which batch. Batch contents are config-driven per `forge.local.md`. The scope filter only controls HOW MANY batches run, not WHICH agents are in them.
+
 ### 5.1 Batch Execution
 
 Per `batch_N`:
