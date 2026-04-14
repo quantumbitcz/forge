@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*unwrap[^\"]*\"",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "unwrap() usage — can panic at runtime if the value is None or Err.",
+      "message": "unwrap() usage \u2014 can panic at runtime if the value is None or Err.",
       "fix_hint": "Use pattern matching, unwrap_or, unwrap_or_else, or the ? operator instead.",
       "example_ref": "rust/error-handling.md#unwrap",
       "scope": "all"
@@ -24,7 +24,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "QUAL-NULL",
-      "message": "expect() usage — better than unwrap but still panics on None/Err.",
+      "message": "expect() usage \u2014 better than unwrap but still panics on None/Err.",
       "fix_hint": "Prefer the ? operator or match/if-let for recoverable errors; reserve expect for truly unrecoverable cases.",
       "example_ref": "rust/error-handling.md#expect",
       "scope": "all"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "SEC-UNSAFE",
-      "message": "Unsafe block — bypasses Rust's safety guarantees and requires manual correctness proof.",
+      "message": "Unsafe block \u2014 bypasses Rust's safety guarantees and requires manual correctness proof.",
       "fix_hint": "Verify the unsafe block is necessary; document the safety invariant with a // SAFETY: comment.",
       "example_ref": "rust/safety.md#unsafe-blocks",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output — use a structured logger (tracing, log crate) instead.",
+      "message": "Console output \u2014 use a structured logger (tracing, log crate) instead.",
       "fix_hint": "Replace with tracing::info!/debug!/warn! or log::info!/debug!/warn! macros.",
       "example_ref": "rust/logging.md#structured-logging",
       "scope": "main"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "PERF-CLONE",
-      "message": "clone() call — may indicate unnecessary data copying.",
+      "message": "clone() call \u2014 may indicate unnecessary data copying.",
       "fix_hint": "Consider borrowing (&T) or using Cow<T> to avoid unnecessary allocations.",
       "example_ref": "rust/performance.md#clone",
       "scope": "all"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
       "example_ref": "rust/readability.md#nesting",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s|static\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a const with a descriptive name.",
       "example_ref": "rust/readability.md#magic-numbers",
       "scope": "main"
@@ -108,7 +108,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Error result discarded or empty error arm — errors may be silently lost.",
+      "message": "Error result discarded or empty error arm \u2014 errors may be silently lost.",
       "fix_hint": "Log the error, propagate with ?, or use .expect() with an explanatory message.",
       "scope": "all"
     },
@@ -151,8 +151,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "RS-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "RS-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "RS-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

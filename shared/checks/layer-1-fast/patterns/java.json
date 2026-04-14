@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\\.isPresent\\(\\).*\\.get\\(\\)|\"[^\"]*\\.get\\(\\)[^\"]*\"",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Optional.get() without isPresent check — risks NoSuchElementException.",
+      "message": "Optional.get() without isPresent check \u2014 risks NoSuchElementException.",
       "fix_hint": "Use .orElse(), .orElseThrow(), or .ifPresent() instead of raw .get().",
       "example_ref": "java/null-safety.md#optional-get",
       "scope": "all"
@@ -24,7 +24,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "Thread.sleep() blocks the current thread — avoid in production code.",
+      "message": "Thread.sleep() blocks the current thread \u2014 avoid in production code.",
       "fix_hint": "Use ScheduledExecutorService, CompletableFuture.delayedExecutor(), or reactive delay.",
       "example_ref": "java/concurrency.md#blocking-calls",
       "scope": "main"
@@ -48,7 +48,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output or printStackTrace — use a structured logger instead.",
+      "message": "Console output or printStackTrace \u2014 use a structured logger instead.",
       "fix_hint": "Replace with logger.info/debug/warn/error from SLF4J or java.util.logging.",
       "example_ref": "java/logging.md#structured-logging",
       "scope": "main"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Generic exception thrown — use domain-specific exception types.",
+      "message": "Generic exception thrown \u2014 use domain-specific exception types.",
       "fix_hint": "Define a domain exception hierarchy and throw the specific subtype.",
       "example_ref": "java/exceptions.md#domain-exceptions",
       "scope": "all"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Catching generic Exception/Throwable — catch specific exception types.",
+      "message": "Catching generic Exception/Throwable \u2014 catch specific exception types.",
       "fix_hint": "Catch only the specific exception types you can handle; let others propagate.",
       "example_ref": "java/exceptions.md#specific-catch",
       "scope": "all"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named methods or use early returns / guard clauses.",
       "example_ref": "java/readability.md#nesting",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|static\\s+final|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a static final constant with a descriptive name.",
       "example_ref": "java/readability.md#magic-numbers",
       "scope": "main"
@@ -108,7 +108,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-CONCURRENCY",
-      "message": "synchronized block pins virtual threads to carrier threads (Java 21+) — prefer ReentrantLock for virtual thread compatibility.",
+      "message": "synchronized block pins virtual threads to carrier threads (Java 21+) \u2014 prefer ReentrantLock for virtual thread compatibility.",
       "fix_hint": "Replace synchronized(lock) { ... } with ReentrantLock: lock.lock(); try { ... } finally { lock.unlock(); }",
       "example_ref": "java/concurrency.md#virtual-threads",
       "scope": "main"
@@ -163,8 +163,66 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "JV-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "JV-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "JV-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
+      "scope": "main"
+    },
+    {
+      "id": "JV-AI-PERF-001",
+      "name": "ai-query-in-loop",
+      "pattern": "for\\s*\\(.*\\)\\s*\\{[^}]*(repository|Repository|dao|Dao|entityManager|jdbcTemplate|databaseClient)\\.(find|get|save|delete|query|fetch|load|select|execute)",
+      "exclude_pattern": "^\\s*(//|\\*|\\*\\*)|test|Test|@Test",
+      "severity": "WARNING",
+      "category": "AI-PERF-N-PLUS-ONE",
+      "message": "Repository/DAO call inside a loop -- likely N+1 query pattern",
+      "fix_hint": "Batch the operation: use findAllById(), IN clause, or a JOIN query instead of per-item fetches.",
+      "scope": "main"
+    },
+    {
+      "id": "JV-AI-CONC-001",
+      "name": "ai-shared-mutable-collection",
+      "pattern": "static\\s+(final\\s+)?(?:List|Map|Set|Collection)<",
+      "exclude_pattern": "^\\s*(//|\\*)|test|Test|@Test|@Synchronized|synchronized|ConcurrentHashMap|CopyOnWriteArrayList|Collections\\.unmodifiable|Collections\\.synchronized",
+      "severity": "INFO",
+      "category": "AI-CONCURRENCY-RACE",
+      "message": "Static mutable collection -- verify thread safety if accessed concurrently",
+      "fix_hint": "Use ConcurrentHashMap, CopyOnWriteArrayList, or Collections.synchronized* wrapper. Consider making immutable.",
       "scope": "main"
     }
   ],
@@ -194,7 +252,7 @@
         "import org.springframework.data.",
         "import org.hibernate."
       ],
-      "message": "Domain layer must not import persistence libraries — use repository interfaces and plain Java types",
+      "message": "Domain layer must not import persistence libraries \u2014 use repository interfaces and plain Java types",
       "severity": "WARNING",
       "category": "STRUCT-BOUNDARY"
     }

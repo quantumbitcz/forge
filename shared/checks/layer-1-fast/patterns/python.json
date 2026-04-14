@@ -172,9 +172,84 @@
       "exclude_pattern": "^\\s*#|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
       "scope": "main"
+    },
+    {
+      "id": "PY-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "PY-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "PY-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
+      "scope": "main"
+    },
+    {
+      "id": "PY-AI-SEC-004",
+      "name": "ai-format-sql-injection",
+      "pattern": "\\.execute\\(\\s*f['\"]|\\.execute\\(.*\\.format\\(|\\.execute\\(.*%\\s*\\(",
+      "exclude_pattern": "^\\s*#|test|fixture|mock",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-INJECTION",
+      "message": "SQL query built with string formatting in .execute() -- AI generators frequently use f-strings instead of parameterized queries",
+      "fix_hint": "Use parameterized queries: cursor.execute('SELECT * FROM t WHERE id = %s', (id,))",
+      "scope": "all",
+      "exclude_if_existing": [
+        "SEC-INJECTION"
+      ]
+    },
+    {
+      "id": "PY-AI-PERF-001",
+      "name": "ai-sync-sleep-in-async",
+      "pattern": "time\\.sleep\\(",
+      "exclude_pattern": "^\\s*#|test|fixture",
+      "severity": "INFO",
+      "category": "AI-PERF-BLOCKING",
+      "message": "time.sleep() blocks the event loop in async code -- AI generators mix sync and async patterns",
+      "fix_hint": "Use 'await asyncio.sleep()' in async functions.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "PERF-BLOCK"
+      ]
+    },
+    {
+      "id": "PY-AI-SEC-005",
+      "name": "ai-unsafe-deserialization",
+      "pattern": "\\b(yaml\\.load|yaml\\.unsafe_load|marshal\\.loads?)\\(",
+      "exclude_pattern": "^\\s*#|test|fixture|trusted|internal",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-DESERIALIZATION",
+      "message": "Unsafe deserialization can execute arbitrary code -- AI generators use simple deserialization without considering trust boundaries",
+      "fix_hint": "Use yaml.safe_load instead of yaml.load. Use json for untrusted data. Avoid marshal for external input.",
+      "scope": "all"
     }
   ],
   "thresholds": {
@@ -202,7 +277,7 @@
         "from tortoise",
         "from django\\.db"
       ],
-      "message": "Domain/service layer must not import ORM libraries directly — use repository pattern or dependency injection",
+      "message": "Domain/service layer must not import ORM libraries directly \u2014 use repository pattern or dependency injection",
       "severity": "WARNING",
       "category": "STRUCT-BOUNDARY"
     }

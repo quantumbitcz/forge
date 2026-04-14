@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "puts/p/pp — use a structured logger (SemanticLogger, Logger) instead.",
+      "message": "puts/p/pp \u2014 use a structured logger (SemanticLogger, Logger) instead.",
       "fix_hint": "Replace with logger.info/debug/warn from SemanticLogger or Rails.logger.",
       "example_ref": "ruby/logging.md#structured-logging",
       "scope": "main"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-EXEC",
-      "message": "Dynamic code execution — risks arbitrary code execution.",
+      "message": "Dynamic code execution \u2014 risks arbitrary code execution.",
       "fix_hint": "Replace with define_method, send, or a dispatch hash for safe dynamic behavior.",
       "example_ref": "ruby/security.md#code-execution",
       "scope": "all"
@@ -48,7 +48,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "rescue Exception — catches SignalException, SystemExit, and NoMemoryError.",
+      "message": "rescue Exception \u2014 catches SignalException, SystemExit, and NoMemoryError.",
       "fix_hint": "Rescue StandardError or specific exception types instead.",
       "example_ref": "ruby/exceptions.md#rescue-exception",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Silent rescue — swallows all errors without handling.",
+      "message": "Silent rescue \u2014 swallows all errors without handling.",
       "fix_hint": "Name the exception class and at minimum log the error.",
       "example_ref": "ruby/exceptions.md#silent-rescue",
       "scope": "all"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*#|\\$stdout|\\$stderr|\\$LOAD_PATH|\\$VERBOSE|\\$DEBUG",
       "severity": "WARNING",
       "category": "QUAL-STATE",
-      "message": "Global variable assignment — creates invisible coupling between modules.",
+      "message": "Global variable assignment \u2014 creates invisible coupling between modules.",
       "fix_hint": "Use dependency injection, configuration objects, or module-level constants.",
       "example_ref": "ruby/state.md#global-variables",
       "scope": "main"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*#|^\\s*end$",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named methods or use guard clauses (return unless).",
       "example_ref": "ruby/readability.md#nesting",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*#|[A-Z_]+\\s*=|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a UPPER_SNAKE_CASE constant with a descriptive name.",
       "example_ref": "ruby/readability.md#magic-numbers",
       "scope": "main"
@@ -151,8 +151,44 @@
       "exclude_pattern": "^\\s*#|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "RB-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "RB-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "RB-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

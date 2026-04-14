@@ -1,6 +1,9 @@
 {
   "language": "csharp",
-  "extensions": [".cs", ".csx"],
+  "extensions": [
+    ".cs",
+    ".csx"
+  ],
   "source": "Roslyn analyzers, .NET best practices, OWASP .NET guidelines",
   "rules": [
     {
@@ -10,7 +13,7 @@
       "exclude_pattern": "^\\s*//|//.*\\!\\.",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Null-forgiving operator — validate nullability instead.",
+      "message": "Null-forgiving operator \u2014 validate nullability instead.",
       "fix_hint": "Use null checks or nullable reference types.",
       "scope": "all"
     },
@@ -21,7 +24,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "CRITICAL",
       "category": "SEC-EXEC",
-      "message": "Dynamic code execution or process spawn — validate input.",
+      "message": "Dynamic code execution or process spawn \u2014 validate input.",
       "fix_hint": "Avoid dynamic execution; use parameterized approaches.",
       "scope": "main"
     },
@@ -32,7 +35,7 @@
       "exclude_pattern": "^\\s*//|//.*catch",
       "severity": "WARNING",
       "category": "QUAL-ERR",
-      "message": "Catching base Exception — catch specific exception types.",
+      "message": "Catching base Exception \u2014 catch specific exception types.",
       "fix_hint": "Catch specific exceptions (InvalidOperationException, HttpRequestException, etc.).",
       "scope": "main"
     },
@@ -43,7 +46,7 @@
       "exclude_pattern": "^\\s*//|//.*Console",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output in production code — use ILogger.",
+      "message": "Console output in production code \u2014 use ILogger.",
       "fix_hint": "Inject ILogger<T> and use structured logging.",
       "scope": "main"
     },
@@ -65,7 +68,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "String interpolation/concatenation in logging — use structured log templates.",
+      "message": "String interpolation/concatenation in logging \u2014 use structured log templates.",
       "fix_hint": "Use _logger.LogInformation(\"Message {Param}\", param) with template placeholders.",
       "scope": "main"
     },
@@ -76,7 +79,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "CRITICAL",
       "category": "SEC-SQL",
-      "message": "SQL string concatenation — risk of SQL injection.",
+      "message": "SQL string concatenation \u2014 risk of SQL injection.",
       "fix_hint": "Use parameterized queries, EF Core LINQ, or Dapper with parameters.",
       "scope": "main"
     },
@@ -87,7 +90,7 @@
       "exclude_pattern": "^\\s*//|async\\s+void\\s+On\\w+|EventHandler",
       "severity": "WARNING",
       "category": "QUAL-ASYNC",
-      "message": "async void method — exceptions cannot be caught by caller.",
+      "message": "async void method \u2014 exceptions cannot be caught by caller.",
       "fix_hint": "Return Task instead of void. async void is only acceptable for event handlers.",
       "scope": "all"
     },
@@ -98,7 +101,7 @@
       "exclude_pattern": "^\\s*//|^\\s*///|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 4-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 4-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named methods or use early returns / guard clauses.",
       "scope": "all"
     },
@@ -109,7 +112,7 @@
       "exclude_pattern": "^\\s*//|^\\s*///|const\\s|readonly\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a const or static readonly field with a descriptive name.",
       "scope": "main"
     },
@@ -152,8 +155,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "CS-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "CS-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],
@@ -182,7 +221,7 @@
         "using System.Data.SqlClient",
         "using Microsoft.AspNetCore"
       ],
-      "message": "Domain layer must remain infrastructure-free — use interfaces and pure C# types.",
+      "message": "Domain layer must remain infrastructure-free \u2014 use interfaces and pure C# types.",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY"
     }

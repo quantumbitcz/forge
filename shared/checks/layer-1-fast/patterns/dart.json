@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "print()/debugPrint() — use the logging package for structured logging.",
+      "message": "print()/debugPrint() \u2014 use the logging package for structured logging.",
       "fix_hint": "Replace with Logger('Name').info() from package:logging.",
       "example_ref": "dart/logging.md#structured-logging",
       "scope": "main"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|!=",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Null assertion (!) — throws at runtime if value is null.",
+      "message": "Null assertion (!) \u2014 throws at runtime if value is null.",
       "fix_hint": "Use null-aware operators (?., ??, ??=) or explicit null checks instead.",
       "example_ref": "dart/null-safety.md#null-assertion",
       "scope": "all"
@@ -48,7 +48,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-TYPE",
-      "message": "dynamic type disables type checking — use Object? or a specific type.",
+      "message": "dynamic type disables type checking \u2014 use Object? or a specific type.",
       "fix_hint": "Replace with a typed parameter, Object?, or generic type parameter.",
       "example_ref": "dart/type-safety.md#dynamic",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|FormatException|StateError|ArgumentError",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Catching Error — Error represents programming bugs, not recoverable conditions.",
+      "message": "Catching Error \u2014 Error represents programming bugs, not recoverable conditions.",
       "fix_hint": "Catch specific Exception subtypes; let Errors propagate to crash reporting.",
       "example_ref": "dart/exceptions.md#catch-error",
       "scope": "all"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "Synchronous I/O — blocks the event loop. Use async variants.",
+      "message": "Synchronous I/O \u2014 blocks the event loop. Use async variants.",
       "fix_hint": "Replace with the async version (readAsString, writeAsString, etc.).",
       "example_ref": "dart/async.md#sync-io",
       "scope": "main"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*'|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns.",
       "example_ref": "dart/readability.md#nesting",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s|final\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a const or final variable with a descriptive name.",
       "example_ref": "dart/readability.md#magic-numbers",
       "scope": "main"
@@ -151,8 +151,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "DT-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "DT-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "DT-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

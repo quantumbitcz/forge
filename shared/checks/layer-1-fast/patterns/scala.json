@@ -13,7 +13,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "println — use a structured logger (scala-logging, log4cats) instead.",
+      "message": "println \u2014 use a structured logger (scala-logging, log4cats) instead.",
       "fix_hint": "Replace with logger.info/debug/warn from scala-logging (LazyLogging trait).",
       "example_ref": "scala/logging.md#structured-logging",
       "scope": "main"
@@ -37,7 +37,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*null[^\"]*\"",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "null usage — use Option[T] instead; null bypasses the type system.",
+      "message": "null usage \u2014 use Option[T] instead; null bypasses the type system.",
       "fix_hint": "Replace with Option[T], None, or Some(value).",
       "example_ref": "scala/null-safety.md#option",
       "scope": "all"
@@ -49,7 +49,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "Await.result blocks threads — can cause deadlocks in concurrent code.",
+      "message": "Await.result blocks threads \u2014 can cause deadlocks in concurrent code.",
       "fix_hint": "Use map/flatMap/for-comprehensions on Future; use IO/ZIO for referentially transparent async.",
       "example_ref": "scala/concurrency.md#await",
       "scope": "main"
@@ -61,7 +61,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Catch-all pattern — catches all exceptions without discrimination.",
+      "message": "Catch-all pattern \u2014 catches all exceptions without discrimination.",
       "fix_hint": "Match specific exception types or use NonFatal(_) from scala.util.control.",
       "example_ref": "scala/exceptions.md#catch-wildcard",
       "scope": "all"
@@ -73,7 +73,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "QUAL-IDIOM",
-      "message": "Explicit return — in Scala, the last expression is the return value.",
+      "message": "Explicit return \u2014 in Scala, the last expression is the return value.",
       "fix_hint": "Remove return; restructure so the desired value is the last expression.",
       "example_ref": "scala/idioms.md#return",
       "scope": "main"
@@ -85,7 +85,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*\"",
       "severity": "WARNING",
       "category": "QUAL-TYPE",
-      "message": "Any type defeats type safety — use generics or sealed hierarchies.",
+      "message": "Any type defeats type safety \u2014 use generics or sealed hierarchies.",
       "fix_hint": "Replace with a generic type parameter [A] or a sealed trait.",
       "example_ref": "scala/type-safety.md#any",
       "scope": "all"
@@ -97,7 +97,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use for-comprehensions.",
       "example_ref": "scala/readability.md#nesting",
       "scope": "all"
@@ -109,7 +109,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|val\\s|def\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a val with a descriptive PascalCase name (Scala convention).",
       "example_ref": "scala/readability.md#magic-numbers",
       "scope": "main"
@@ -164,8 +164,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "SC-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "SC-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "SC-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],
