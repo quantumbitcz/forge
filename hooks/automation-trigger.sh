@@ -190,7 +190,12 @@ fi
 
 "$_py" -c "
 import json, sys, os, subprocess
-from datetime import datetime, timedelta
+try:
+    from datetime import datetime, timedelta, timezone
+    _utc = timezone.utc
+except ImportError:
+    from datetime import datetime, timedelta
+    _utc = None
 
 automations = json.loads(sys.argv[1])
 trigger = sys.argv[2]
@@ -210,14 +215,14 @@ if os.path.isfile(log_file):
                 except (json.JSONDecodeError, ValueError):
                     pass
 
-now = datetime.utcnow()
+now = datetime.now(_utc).replace(tzinfo=None) if _utc else datetime.utcnow()
 
 def last_dispatch_time(name):
     \"\"\"Find the most recent successful dispatch for this automation.\"\"\"
     for entry in reversed(log_entries):
         if entry.get('automation') == name and entry.get('result') == 'dispatched':
             try:
-                return datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+                return datetime.strptime(entry['ts'], '%Y-%m-%dT%H:%M:%SZ')
             except (KeyError, ValueError):
                 pass
     return None
