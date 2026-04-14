@@ -95,14 +95,24 @@ fi
   if [ -n "$_py" ]; then
     _entry="$("$_py" -c "
 import json, sys, os
-from datetime import datetime
+try:
+    from datetime import datetime, timezone
+    _utc = timezone.utc
+except ImportError:
+    from datetime import datetime
+    _utc = None
+
+def _utcnow_str(fmt='%Y-%m-%d %H:%M'):
+    if _utc:
+        return datetime.now(_utc).strftime(fmt)
+    return datetime.utcnow().strftime(fmt)
 
 state_file = os.path.join('$FORGE_DIR', 'state.json')
 try:
     with open(state_file) as f:
         s = json.load(f)
 except (IOError, json.JSONDecodeError, ValueError, KeyError) as e:
-    ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+    ts = _utcnow_str()
     print('[{0} UTC] Session ended (state error: {1}).'.format(ts, type(e).__name__))
     sys.exit(0)
 
@@ -116,7 +126,7 @@ iters = conv.get('total_iterations', 0)
 retries = s.get('total_retries', 0)
 wall = s.get('cost', {}).get('wall_time_seconds', 0)
 
-ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+ts = _utcnow_str()
 print('[{0} UTC] Session ended | state={1} mode={2} score={3} phase={4} iterations={5} retries={6} wall_time={7}s'.format(
     ts, stage, mode, last_score, phase, iters, retries, wall))
 ")"
