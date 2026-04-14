@@ -292,7 +292,8 @@ check18b_fail=0
 # Strip ${CLAUDE_PLUGIN_ROOT}/ to get relative paths, then check from repo root.
 # This avoids absolute path resolution issues on Windows Git Bash (where neither
 # /d/a/... nor D:/a/... paths reliably resolve with test -f or ls).
-pushd "$ROOT" > /dev/null 2>&1 || true
+# cd to SCRIPT_DIR/.. which is the repo root — avoids Windows absolute path issues
+cd "$SCRIPT_DIR/.." 2>/dev/null || true
 while IFS= read -r cmd; do
   [[ -z "$cmd" ]] && continue
   script_path="${cmd%% *}"
@@ -309,7 +310,7 @@ while IFS= read -r cmd; do
     check18b_fail=1
   fi
 done < <(jq -r '.. | objects | select(has("command")) | .command' "$HOOKS_JSON" 2>/dev/null)
-popd > /dev/null 2>&1 || true
+cd "$SCRIPT_DIR" 2>/dev/null || true
 check "All hook command scripts exist, are executable, and have shebangs" "$check18b_fail"
 
 echo ""
