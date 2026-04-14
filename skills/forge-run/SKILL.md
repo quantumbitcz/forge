@@ -1,6 +1,7 @@
 ---
 name: forge-run
 description: "Universal pipeline entry point. Auto-classifies intent and routes to the correct pipeline mode. Use when you want to build a feature, implement a requirement, or run the full development pipeline. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-run — Universal Pipeline Entry Point
@@ -69,7 +70,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    If no ticket ID provided, the orchestrator will create one during PREFLIGHT (if tracking is initialized).
 
-2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint`, `--parallel`), classify the requirement using the priority table and signal rules in `shared/intent-classification.md`. First match wins. Modes: bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance, vague, standard (default).
+2. **Classify intent**: Unless the user provided an explicit mode prefix (step 1) or flag (`--sprint` or `--parallel` (DEPRECATED: use `/forge-sprint` instead. These flags will be removed in v3.0.)), classify the requirement using the priority table and signal rules in `shared/intent-classification.md`. First match wins. Modes: bugfix, migration, bootstrap, multi-feature, testing, documentation, refactor, performance, vague, standard (default).
 
    **Config check**: If `routing.auto_classify` is `false` in `forge-config.md`, skip classification and use `Mode: standard`.
 
@@ -93,7 +94,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 
    | Mode | Dispatch Target |
    |------|----------------|
-   | `--sprint` or `--parallel` flag | `fg-090-sprint-orchestrator` with `$ARGUMENTS` |
+   | `--sprint` or `--parallel` flag (DEPRECATED) | `fg-090-sprint-orchestrator` with `$ARGUMENTS` |
    | `multi-feature` | `fg-015-scope-decomposer` with requirement + MCPs |
    | `vague` | `fg-010-shaper` with requirement; on spec output, re-invoke with `--spec {path}` |
    | `bugfix` | `fg-100-orchestrator` with `Mode: bugfix` |
@@ -148,7 +149,7 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 | Ticket ID not found in tracking store | Warn user and ask for requirement description directly |
 | Agent dispatch fails | Report "Pipeline orchestrator failed to start. Check plugin installation." and STOP |
 | Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/repair-state` or `/forge-reset` |
+| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/forge-repair-state` or `/forge-reset` |
 
 ## See Also
 

@@ -1,0 +1,259 @@
+{
+  "name": "lite",
+  "version": "1.0.0",
+  "description": "25-task SWE-bench-lite subset across 5 languages",
+  "default_timeout_minutes": 30,
+  "default_model": "sonnet",
+  "tasks": [
+    {
+      "id": "py-01-dict-keyerror",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "KeyError from case-sensitive email lookup. The lookup_user function uses the raw email as dict key without normalizing case, causing KeyError when email has different casing.",
+      "fixture": "python/py-01-dict-keyerror",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "expected_files_changed": ["src/auth/user_lookup.py"],
+      "tags": ["dict", "case-sensitivity", "lookup"]
+    },
+    {
+      "id": "py-02-type-coerce",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "String-typed price comparison ordering wrong. Prices loaded from CSV remain as strings, causing lexicographic comparison where '9.99' > '10.00' evaluates to True.",
+      "fixture": "python/py-02-type-coerce",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "expected_files_changed": ["src/pricing/comparator.py"],
+      "tags": ["type-coercion", "comparison", "csv"]
+    },
+    {
+      "id": "py-03-async-dead",
+      "language": "python",
+      "difficulty": "medium",
+      "description": "asyncio deadlock from nested event loop. batch_fetch calls asyncio.run() inside an already-running event loop, causing RuntimeError about nested event loops.",
+      "fixture": "python/py-03-async-dead",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "expected_files_changed": ["src/fetcher/batch.py"],
+      "tags": ["async", "deadlock", "event-loop"]
+    },
+    {
+      "id": "py-04-import-cyc",
+      "language": "python",
+      "difficulty": "medium",
+      "description": "Circular import causing AttributeError at runtime. user.py imports from auth.py which imports from user.py, creating a circular dependency that fails when accessing attributes.",
+      "fixture": "python/py-04-import-cyc",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "expected_files_changed": ["src/models/user.py", "src/services/auth.py"],
+      "tags": ["import-cycle", "circular-dependency"]
+    },
+    {
+      "id": "py-05-regex-back",
+      "language": "python",
+      "difficulty": "hard",
+      "description": "Catastrophic regex backtracking in input validation. The regex pattern ^(a+)+$ causes exponential backtracking on adversarial input, making validation hang indefinitely.",
+      "fixture": "python/py-05-regex-back",
+      "validation_command": "python3 -m pytest tests/ -v --timeout=10",
+      "expected_files_changed": ["src/validation/input_validator.py"],
+      "tags": ["regex", "backtracking", "performance", "security"]
+    },
+    {
+      "id": "ts-01-null-coal",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy 0/empty-string. Using ?? instead of || means 0 and empty string are treated as valid values when they should fall through to defaults.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "expected_files_changed": ["src/config/defaults.ts"],
+      "tags": ["nullish-coalescing", "falsy", "operator"]
+    },
+    {
+      "id": "ts-02-promise-lk",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Unhandled promise rejection in error path. The error handler returns without awaiting the cleanup promise, leaving database connections open on failure.",
+      "fixture": "typescript/ts-02-promise-lk",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "expected_files_changed": ["src/services/data-fetcher.ts"],
+      "tags": ["promise", "async", "resource-leak"]
+    },
+    {
+      "id": "ts-03-type-narr",
+      "language": "typescript",
+      "difficulty": "medium",
+      "description": "Type narrowing lost across async boundary. A type guard narrows a union type, but after an await the narrowing is lost and TypeScript widens the type back.",
+      "fixture": "typescript/ts-03-type-narr",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "expected_files_changed": ["src/handlers/event-processor.ts"],
+      "tags": ["type-narrowing", "async", "typescript"]
+    },
+    {
+      "id": "ts-04-module-res",
+      "language": "typescript",
+      "difficulty": "medium",
+      "description": "ESM/CJS interop causing runtime import failure. An ESM-only package is imported using CJS require syntax; works in dev with transpilation but fails in production build.",
+      "fixture": "typescript/ts-04-module-res",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "expected_files_changed": ["src/utils/parser.ts", "tsconfig.json"],
+      "tags": ["esm", "cjs", "module-resolution"]
+    },
+    {
+      "id": "ts-05-event-leak",
+      "language": "typescript",
+      "difficulty": "hard",
+      "description": "EventEmitter listener leak across hot-reload cycles. Listeners registered in useEffect without cleanup accumulate on HMR, causing memory leak and duplicate event handling.",
+      "fixture": "typescript/ts-05-event-leak",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "expected_files_changed": ["src/hooks/useEventStream.ts"],
+      "tags": ["event-emitter", "memory-leak", "hmr", "react"]
+    },
+    {
+      "id": "kt-01-co-cancel",
+      "language": "kotlin",
+      "difficulty": "medium",
+      "description": "DB connection leak on coroutine cancellation. The finally block performs a suspending cleanup but without NonCancellable context, so cleanup is skipped when the coroutine is cancelled.",
+      "fixture": "kotlin/kt-01-co-cancel",
+      "validation_command": "./gradlew test --tests '*CoroutineCancelTest*'",
+      "expected_files_changed": ["src/main/kotlin/db/ConnectionManager.kt"],
+      "tags": ["coroutine", "cancellation", "resource-leak"]
+    },
+    {
+      "id": "kt-02-sealed-ex",
+      "language": "kotlin",
+      "difficulty": "easy",
+      "description": "Non-exhaustive when on sealed class. A when expression over a sealed class is missing a branch for a recently added subclass, causing a runtime NoWhenBranchMatchedException.",
+      "fixture": "kotlin/kt-02-sealed-ex",
+      "validation_command": "./gradlew test --tests '*SealedExhaustTest*'",
+      "expected_files_changed": ["src/main/kotlin/model/EventHandler.kt"],
+      "tags": ["sealed-class", "when", "exhaustive"]
+    },
+    {
+      "id": "kt-03-null-plat",
+      "language": "kotlin",
+      "difficulty": "easy",
+      "description": "Platform type from Java interop causing NPE. A Java method returns null but Kotlin code receives it as a non-nullable platform type, causing NullPointerException on access.",
+      "fixture": "kotlin/kt-03-null-plat",
+      "validation_command": "./gradlew test --tests '*NullPlatformTest*'",
+      "expected_files_changed": ["src/main/kotlin/interop/JavaBridge.kt"],
+      "tags": ["platform-type", "java-interop", "npe"]
+    },
+    {
+      "id": "kt-04-flow-coll",
+      "language": "kotlin",
+      "difficulty": "medium",
+      "description": "Flow collection on wrong dispatcher blocking UI. A Flow is collected on Dispatchers.Main but the collector performs blocking IO, freezing the UI thread.",
+      "fixture": "kotlin/kt-04-flow-coll",
+      "validation_command": "./gradlew test --tests '*FlowCollectTest*'",
+      "expected_files_changed": ["src/main/kotlin/ui/DataViewModel.kt"],
+      "tags": ["flow", "dispatcher", "blocking"]
+    },
+    {
+      "id": "kt-05-susp-blk",
+      "language": "kotlin",
+      "difficulty": "hard",
+      "description": "Blocking call inside suspend function stalling thread pool. Thread.sleep() is called inside a suspend fun instead of delay(), blocking the entire coroutine dispatcher and starving other coroutines.",
+      "fixture": "kotlin/kt-05-susp-blk",
+      "validation_command": "./gradlew test --tests '*SuspendBlockTest*'",
+      "expected_files_changed": ["src/main/kotlin/service/DataProcessor.kt"],
+      "tags": ["suspend", "blocking", "thread-pool"]
+    },
+    {
+      "id": "go-01-gortn-leak",
+      "language": "go",
+      "difficulty": "easy",
+      "description": "Goroutine leak from unbuffered channel with no reader. A goroutine writes to an unbuffered channel but the reader was removed, causing the goroutine to block forever and leak.",
+      "fixture": "go/go-01-gortn-leak",
+      "validation_command": "go test ./... -v -count=1",
+      "expected_files_changed": ["internal/worker/pool.go"],
+      "tags": ["goroutine", "channel", "leak"]
+    },
+    {
+      "id": "go-02-slice-app",
+      "language": "go",
+      "difficulty": "easy",
+      "description": "Slice append mutating shared backing array. Two slices created from the same source share a backing array; append to one silently corrupts the other.",
+      "fixture": "go/go-02-slice-app",
+      "validation_command": "go test ./... -v -count=1",
+      "expected_files_changed": ["internal/collection/filter.go"],
+      "tags": ["slice", "append", "backing-array"]
+    },
+    {
+      "id": "go-03-iface-nil",
+      "language": "go",
+      "difficulty": "medium",
+      "description": "Nil interface vs nil concrete type comparison. A function returns (*ConcreteType)(nil) as an error interface; the caller checks err != nil and gets true because the interface wraps a typed nil.",
+      "fixture": "go/go-03-iface-nil",
+      "validation_command": "go test ./... -v -count=1",
+      "expected_files_changed": ["internal/validator/checker.go"],
+      "tags": ["interface", "nil", "comparison"]
+    },
+    {
+      "id": "go-04-ctx-cancel",
+      "language": "go",
+      "difficulty": "medium",
+      "description": "Context cancellation not propagated to child goroutines. Parent context is cancelled but child goroutine uses context.Background() instead of the derived context, ignoring cancellation.",
+      "fixture": "go/go-04-ctx-cancel",
+      "validation_command": "go test ./... -v -count=1 -timeout=30s",
+      "expected_files_changed": ["internal/fetcher/parallel.go"],
+      "tags": ["context", "cancellation", "goroutine"]
+    },
+    {
+      "id": "go-05-map-conc",
+      "language": "go",
+      "difficulty": "hard",
+      "description": "Concurrent map write causing runtime panic. Multiple goroutines write to a map[string]int without synchronization, triggering the Go runtime's concurrent map write detection.",
+      "fixture": "go/go-05-map-conc",
+      "validation_command": "go test -race ./... -v -count=1",
+      "expected_files_changed": ["internal/cache/store.go"],
+      "tags": ["map", "concurrency", "race-condition"]
+    },
+    {
+      "id": "rs-01-life-dang",
+      "language": "rust",
+      "difficulty": "easy",
+      "description": "Dangling reference from returned local borrow. A function creates a local String and tries to return a reference to it, but the borrow outlives the owner.",
+      "fixture": "rust/rs-01-life-dang",
+      "validation_command": "cargo test -- --nocapture",
+      "expected_files_changed": ["src/parser.rs"],
+      "tags": ["lifetime", "borrow", "dangling"]
+    },
+    {
+      "id": "rs-02-borr-move",
+      "language": "rust",
+      "difficulty": "easy",
+      "description": "Use after move in error handling path. A value is moved into the Ok branch of a match, then referenced in the Err branch for the error message, causing a use-after-move error.",
+      "fixture": "rust/rs-02-borr-move",
+      "validation_command": "cargo test -- --nocapture",
+      "expected_files_changed": ["src/handler.rs"],
+      "tags": ["borrow", "move", "error-handling"]
+    },
+    {
+      "id": "rs-03-unwrap-pnc",
+      "language": "rust",
+      "difficulty": "medium",
+      "description": "Unwrap panic on None from HashMap::get in multi-threaded context. HashMap::get().unwrap() panics when a key is absent due to a race condition in concurrent access.",
+      "fixture": "rust/rs-03-unwrap-pnc",
+      "validation_command": "cargo test -- --nocapture",
+      "expected_files_changed": ["src/registry.rs"],
+      "tags": ["unwrap", "panic", "hashmap", "concurrency"]
+    },
+    {
+      "id": "rs-04-send-sync",
+      "language": "rust",
+      "difficulty": "medium",
+      "description": "Type not implementing Send used across thread boundary. Rc<RefCell<T>> is used across a thread spawn boundary but Rc is not Send, causing a compiler error.",
+      "fixture": "rust/rs-04-send-sync",
+      "validation_command": "cargo test -- --nocapture",
+      "expected_files_changed": ["src/worker.rs"],
+      "tags": ["send", "sync", "thread", "rc"]
+    },
+    {
+      "id": "rs-05-async-pin",
+      "language": "rust",
+      "difficulty": "hard",
+      "description": "Self-referential future unpinned causing undefined behavior. A self-referential struct is used as a future without Pin, and moving the future after polling causes UB.",
+      "fixture": "rust/rs-05-async-pin",
+      "validation_command": "cargo test -- --nocapture",
+      "expected_files_changed": ["src/stream.rs"],
+      "tags": ["async", "pin", "self-referential", "ub"]
+    }
+  ]
+}

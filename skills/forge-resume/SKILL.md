@@ -10,7 +10,7 @@ allowed-tools: ['Read', 'Write', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate
 
 ## Instructions
 
-1. **State health check:** Run the same checks as `/repair-state`:
+1. **State health check:** Run the same checks as `/forge-repair-state`:
    a. Validate JSON structure
    b. Check counter consistency
    c. Verify `_seq` field
@@ -50,12 +50,12 @@ allowed-tools: ['Read', 'Write', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate
 | Branch deleted between abort and resume | Report "Cannot resume -- branch no longer exists. Start fresh with /forge-run." and STOP |
 | Worktree missing | Re-create worktree from branch automatically |
 | Orchestrator dispatch fails | Report error. Suggest `/forge-diagnose` to check state health |
-| State corruption | Attempt repair inline, or suggest `/repair-state` before retrying |
+| State corruption | Attempt repair inline, or suggest `/forge-repair-state` before retrying |
 
 ## See Also
 
 - `/forge-abort` -- Stop an active pipeline gracefully (creates the state that /forge-resume resumes from)
 - `/forge-reset` -- Clear all state and start fresh (more destructive than resume)
 - `/forge-diagnose` -- Read-only diagnostic before deciding whether to resume or reset
-- `/repair-state` -- Fix specific state.json issues before attempting resume
+- `/forge-repair-state` -- Fix specific state.json issues before attempting resume
 - `/forge-status` -- Check current pipeline state before resuming

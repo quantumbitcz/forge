@@ -83,7 +83,7 @@ These transitions can fire from any current_state. They take priority over norma
 | E5 | ANY (ESCALATED) | `user_continue` | — | Previous state | Resume from escalation point with user guidance |
 | E6 | ANY (ESCALATED) | `user_abort` | — | `ABORTED` | Write abort-report.md, clean up worktree, release lock |
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
-| E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user |
+| E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user. **Note:** The orchestrator's `cost-alerting.sh` system warns the user at configurable thresholds (default 50%/75%/90%) BEFORE E8 fires. E8 serves as an absolute safety net at the hard ceiling (default 2,000,000 tokens). The orchestrator calls `cost-alerting.sh check` before each agent dispatch; if exit 3 (CRITICAL) or 4 (EXCEEDED), it surfaces options to the user before E8's hard ESCALATED transition fires. |
 | E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-abort skill. Set abort_reason, release lock, preserve worktree. |
 
 ---

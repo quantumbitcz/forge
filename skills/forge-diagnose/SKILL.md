@@ -1,6 +1,7 @@
 ---
 name: forge-diagnose
 description: "Read-only diagnostic of pipeline health -- state.json integrity, recovery budget, convergence status, and stalled-stage detection. Use when a pipeline run seems stuck, produced unexpected results, or you want to inspect state before resuming. Never modifies files."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
 # /forge-diagnose — Pipeline Health Diagnostic
@@ -160,8 +161,8 @@ Present results in this format:
 
 **Recommendations:**
 - 0 problems: "Pipeline state looks healthy."
-- Problems with stale lock: "Run `/forge-reset` to clear stale state, or `/repair-state` to fix specific issues."
-- Problems with counter overflows: "State counters are inconsistent. Run `/repair-state` to attempt automatic correction."
+- Problems with stale lock: "Run `/forge-reset` to clear stale state, or `/forge-repair-state` to fix specific issues."
+- Problems with counter overflows: "State counters are inconsistent. Run `/forge-repair-state` to attempt automatic correction."
 - Problems with invalid state: "State is corrupted. Run `/forge-reset` to start fresh (preserves learnings)."
 
 ## Important
@@ -182,7 +183,7 @@ Present results in this format:
 
 ## See Also
 
-- `/repair-state` -- Fix specific state.json issues found by this diagnostic
+- `/forge-repair-state` -- Fix specific state.json issues found by this diagnostic
 - `/forge-resume` -- Resume an aborted pipeline after confirming health with diagnose
 - `/forge-reset` -- Clear all state when diagnose shows corruption beyond repair
 - `/forge-status` -- Quick overview of pipeline state (less detailed than diagnose)

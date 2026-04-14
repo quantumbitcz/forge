@@ -133,7 +133,7 @@ Check pattern 12 (Contradiction Report) first — skip if already exists and unc
 Higher confidence thresholds for file-based (less precise).
 
 ### No Documentation Found
-Zero findings + INFO: "No project documentation found. Consider /docs-generate."
+Zero findings + INFO: "No project documentation found. Consider /forge-docs-generate."
 
 ---
 
@@ -166,7 +166,7 @@ If no issues found, report PASS for all categories. Do not invent issues.
 
 | Condition | Severity | Response |
 |-----------|----------|----------|
-| No docs found | INFO | 0 findings, suggest /docs-generate |
+| No docs found | INFO | 0 findings, suggest /forge-docs-generate |
 | Neo4j unavailable | INFO | File-based fallback |
 | Discovery error | WARNING | SCOUT-DOC-DEGRADED, MEDIUM cap, skip 4.4/4.6 |
 | No index + no Neo4j | WARNING | Grep-only fallback |

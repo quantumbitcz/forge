@@ -1,6 +1,7 @@
 ---
 name: forge-compress
 description: "Use when you want to reduce agent system prompt token cost by compressing verbose prose in .md files. Applies caveman-style terse rewriting while preserving all technical rules, code blocks, and structural elements."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-compress -- Agent Prompt Compression
@@ -69,14 +70,38 @@ For each prose section:
 - Before: "Before emitting any finding, ask yourself: Can you point to the exact line?"
 - After: "Before emitting: exact line?"
 
-### 4. Validate after compression
+### 3a. Validate compression output
 
-For each compressed file, verify:
-- [ ] Frontmatter `name` field unchanged
-- [ ] All code blocks unchanged (byte-identical)
-- [ ] All tables unchanged (byte-identical)
-- [ ] No section headings removed
-- [ ] All technical rules preserved (thresholds, severity, category codes)
+After compressing each file, run the validation script:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/shared/compression-validation.py" \
+    "{filename}.original.md" "{filename}"
+```
+
+If validation fails (exit code 1):
+1. Read the JSON output to identify which check failed
+2. Send a targeted fix prompt addressing only the failed check:
+   - Code block mutation: "Restore the exact code block content from the original"
+   - Heading removed: "Restore the missing heading: {heading text}"
+   - URL missing: "Restore the URL: {url}"
+   - Frontmatter changed: "Restore the original frontmatter block"
+   - Table changed: "Restore the original table at line {N}"
+3. Re-validate after the fix
+4. If still fails after 2 retries, restore original from `.original.md` backup
+5. Report the file as "compression failed" in the summary
+
+If validation warns (exit code 2):
+- Log the warning (bullet drift or file path drift) but continue
+- Include warning details in the compression report
+
+If validation passes (exit code 0):
+- Continue to next file
+
+### 4. Final validation summary (per-file)
+
+The automated validation (step 3a) handles structural checks. This step summarizes results:
+- [ ] All files passed validation or were restored from backup
 - [ ] No new content added (compression only removes, never adds)
 
 ### 5. Report savings
@@ -148,5 +173,6 @@ Before compressing any file, copy original to `{filename}.original.md`. Never co
 ## See Also
 
 - `/forge-review` -- review changed files for quality
-- `/verify` -- build + lint + test check
-- Compression rules and intensity levels — see `input-compression.md` in `shared`
+- `/forge-verify` -- build + lint + test check
+- Compression rules and intensity levels -- see `input-compression.md` in `shared`
+- Post-compression validation: `shared` directory, `compression-validation.py`

@@ -97,7 +97,7 @@ If multiple run reports exist in `.forge/reports/`, compare performance across r
 | events.jsonl missing | Generate partial report from state.json only, note limited data |
 | events.jsonl has malformed lines | Skip malformed lines, log WARNING, continue with valid entries |
 | No token data available | Report "No token usage data recorded." and skip token analysis sections |
-| State corruption | Suggest `/repair-state` to fix state, then re-run profiler |
+| State corruption | Suggest `/forge-repair-state` to fix state, then re-run profiler |
 
 ## See Also
 

@@ -1,6 +1,6 @@
 ---
 name: fg-620-deploy-verifier
-description: Monitors deployment health during strategy execution. Dispatched when /deploy uses canary, blue-green, or rolling strategy.
+description: Monitors deployment health during strategy execution. Dispatched when /forge-deploy uses canary, blue-green, or rolling strategy.
 model: inherit
 color: green
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate']
@@ -20,7 +20,7 @@ Monitor: **$ARGUMENTS**
 
 ## 1. Identity & Purpose
 
-Monitors deployment health during strategy execution. Collects metrics, compares against baselines/thresholds, produces promotion/rollback findings. Never executes deployment — `/deploy` handles that.
+Monitors deployment health during strategy execution. Collects metrics, compares against baselines/thresholds, produces promotion/rollback findings. Never executes deployment — `/forge-deploy` handles that.
 
 ---
 

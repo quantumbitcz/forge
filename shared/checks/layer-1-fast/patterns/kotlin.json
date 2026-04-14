@@ -1,6 +1,9 @@
 {
   "language": "kotlin",
-  "extensions": [".kt", ".kts"],
+  "extensions": [
+    ".kt",
+    ".kts"
+  ],
   "source": "detekt, SonarKotlin, kotlinlang.org best practices",
   "rules": [
     {
@@ -10,7 +13,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*!![^\"]*\"|//.*!!",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Non-null assertion (!!) — risks NullPointerException at runtime.",
+      "message": "Non-null assertion (!!) \u2014 risks NullPointerException at runtime.",
       "fix_hint": "Replace !! with safe call (?.) or Elvis operator (?:).",
       "example_ref": "kotlin/null-safety.md#non-null-assertion",
       "scope": "all"
@@ -34,7 +37,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "Thread/Executor usage — prefer structured concurrency with coroutines.",
+      "message": "Thread/Executor usage \u2014 prefer structured concurrency with coroutines.",
       "fix_hint": "Use launch, async, or withContext instead of raw threads and executors.",
       "example_ref": "kotlin/coroutines.md#structured-concurrency",
       "scope": "main"
@@ -58,7 +61,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output — use a structured logger instead.",
+      "message": "Console output \u2014 use a structured logger instead.",
       "fix_hint": "Replace with logger.info/debug/warn from SLF4J or kotlin-logging.",
       "example_ref": "kotlin/logging.md#structured-logging",
       "scope": "main"
@@ -70,7 +73,7 @@
       "exclude_pattern": "^\\s*//",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Generic exception thrown — use domain-specific exception types.",
+      "message": "Generic exception thrown \u2014 use domain-specific exception types.",
       "fix_hint": "Define a sealed hierarchy of domain exceptions and throw the specific subtype.",
       "example_ref": "kotlin/exceptions.md#domain-exceptions",
       "scope": "all"
@@ -82,7 +85,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"\"\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
       "example_ref": "kotlin/readability.md#nesting",
       "scope": "all"
@@ -94,7 +97,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s+val|companion\\s+object|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a const val or companion object constant with a descriptive name.",
       "example_ref": "kotlin/readability.md#magic-numbers",
       "scope": "main"
@@ -106,7 +109,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\\.let\\s*\\{|\\bit\\b|lambda|->",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Abbreviated identifier name — prefer descriptive names.",
+      "message": "Abbreviated identifier name \u2014 prefer descriptive names.",
       "fix_hint": "Rename to a descriptive name that conveys intent (exception: i, x, y in lambdas).",
       "example_ref": "kotlin/readability.md#naming",
       "scope": "all"
@@ -118,7 +121,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|import\\s",
       "severity": "WARNING",
       "category": "CONV-CONCURRENCY",
-      "message": "Java threading API used — prefer Kotlin coroutines for structured concurrency and cancellation support.",
+      "message": "Java threading API used \u2014 prefer Kotlin coroutines for structured concurrency and cancellation support.",
       "fix_hint": "Replace Thread/ExecutorService with coroutineScope + launch/async. Replace CompletableFuture with suspend functions.",
       "example_ref": "kotlin/concurrency.md#coroutines",
       "scope": "main"
@@ -162,8 +165,66 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "KT-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "KT-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "KT-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
+      "scope": "main"
+    },
+    {
+      "id": "KT-AI-PERF-001",
+      "name": "ai-query-in-loop",
+      "pattern": "for\\s*\\(.*\\)\\s*\\{[^}]*(repository|Repository|dao|Dao|entityManager|jdbcTemplate|databaseClient)\\.(find|get|save|delete|query|fetch|load|select|execute)",
+      "exclude_pattern": "^\\s*(//|\\*|\\*\\*)|test|Test|@Test",
+      "severity": "WARNING",
+      "category": "AI-PERF-N-PLUS-ONE",
+      "message": "Repository/DAO call inside a loop -- likely N+1 query pattern",
+      "fix_hint": "Batch the operation: use findAllById(), IN clause, or a JOIN query instead of per-item fetches.",
+      "scope": "main"
+    },
+    {
+      "id": "KT-AI-CONC-001",
+      "name": "ai-shared-mutable-list",
+      "pattern": "(var|private)\\s+\\w+\\s*[:=]\\s*(mutableListOf|ArrayList|HashMap|mutableMapOf|HashSet|mutableSetOf)\\s*\\(",
+      "exclude_pattern": "^\\s*(//|\\*)|test|Test|@Test|@Synchronized|synchronized|ConcurrentHashMap|CopyOnWriteArrayList",
+      "severity": "INFO",
+      "category": "AI-CONCURRENCY-RACE",
+      "message": "Mutable collection as instance field -- verify thread safety if accessed concurrently",
+      "fix_hint": "Use ConcurrentHashMap, CopyOnWriteArrayList, or Collections.synchronized* wrapper. Consider making immutable and using copy-on-write.",
       "scope": "main"
     }
   ],
@@ -195,7 +256,7 @@
         "import jakarta.persistence.",
         "import javax.persistence."
       ],
-      "message": "Domain model must remain framework-free — use port interfaces and pure Kotlin types.",
+      "message": "Domain model must remain framework-free \u2014 use port interfaces and pure Kotlin types.",
       "severity": "WARNING",
       "category": "ARCH-BOUNDARY"
     }

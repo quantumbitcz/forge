@@ -19,7 +19,9 @@ __pycache__/
 
 # Benchmark and eval generated results (JSON is generated, .md summaries committed)
 benchmarks/output-compression/results.json
-evals/results/*.json
+evals/compression/results/*.json
+evals/pipeline/results/*
+!evals/pipeline/results/.gitignore
 
 # Claude local overrides
 .claude.local.md

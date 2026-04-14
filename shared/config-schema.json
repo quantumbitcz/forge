@@ -105,6 +105,29 @@
         "haiku_output": { "type": "number", "minimum": 0 }
       },
       "additionalProperties": false
+    },
+    "compression_eval": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable compression evaluation tracking"
+        },
+        "auto_run_after_compress": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run validation automatically after /forge-compress"
+        },
+        "drift_threshold_pct": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 200,
+          "default": 50,
+          "description": "Percentage over expected range to flag as drift"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

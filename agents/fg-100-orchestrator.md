@@ -244,6 +244,36 @@ Timeout: NEVER discard completed work, ALWAYS checkpoint, NEVER retry (user deci
 ### Pipeline Observability
 Each transition: `[STAGE {N}/10] {STAGE_NAME} — {status} ({elapsed}s) — {metric}`. Update `state.json.cost`.
 
+### Cost Alerting Integration
+
+Before each agent dispatch, call `cost-alerting.sh check --forge-dir $FORGE_DIR`:
+
+1. Exit 0 (OK): proceed with dispatch
+2. Exit 1 (INFO): log `[COST] INFO: N% budget used`, proceed
+3. Exit 2 (WARNING): log `[COST] WARNING: N% budget used`, proceed
+4. Exit 3 (CRITICAL): log `[COST] CRITICAL: N% budget used`, proceed (user already warned at lower thresholds)
+5. Exit 4 (EXCEEDED): `AskUserQuestion` header "Budget Exceeded", question "Token budget exceeded ({N}/{ceiling}). Remaining stages: {list}.", options: "Continue (ignore budget)" / "Downgrade model tiers" / "Abort". E8's hard ESCALATED at 2x ceiling remains as absolute safety net.
+6. Exit 10 (disabled): proceed without alerting
+
+On "Downgrade model tiers": call `cost-alerting.sh apply-downgrade --forge-dir $FORGE_DIR`. When dispatching agents, check `state.json.cost_alerting.routing_override` — if an agent has an override entry, use that tier instead of the model routing resolution.
+
+At stage boundaries, emit: `cost-alerting.sh stage-report <stage> --forge-dir $FORGE_DIR` for running cost visibility. During convergence loops, add `--iteration N`.
+
+Autonomous mode: INFO/WARNING/CRITICAL handled silently (logged `[AUTO]`). EXCEEDED auto-selects "Downgrade model tiers".
+
+### Context Guard Integration
+
+Before each agent dispatch, estimate context size and check against the context guard:
+
+1. Estimate context: sum of agent .md tokens + convention stack tokens + stage notes + findings + convergence history + task spec
+2. Call `context-guard.sh check <estimated_tokens> --forge-dir $FORGE_DIR`
+3. On exit 0 (OK): proceed with dispatch
+4. On exit 1 (CONDENSED): run condensation (F08 mechanism), re-estimate, log `[CONTEXT] Condensed: {before} -> {after} tokens`, proceed
+5. On exit 2 (CRITICAL): `AskUserQuestion` with options: "Continue (accept potential quality degradation)" / "Abort and decompose into smaller tasks"
+6. On exit 10 (disabled): proceed without guard
+
+Autonomous mode: CONDENSED handled silently. CRITICAL auto-selects "Continue" (logged `[AUTO]`) unless `condensation_triggers >= max_condensation_triggers * 2`.
+
 ---
 
 ---
@@ -289,7 +319,7 @@ Cross-repo: `fg-103-cross-repo-coordinator`. Dispatch: `setup-worktrees` (post-V
 
 ## §10 Reference Documents
 
-References (never modifies): `shared/scoring.md`, `shared/state-schema.md`, `shared/stage-contract.md`, `shared/error-taxonomy.md`, `shared/agent-communication.md`, `shared/state-transitions.md`, `shared/convergence-engine.md`, `shared/recovery/recovery-engine.md`, `shared/decision-log.md`, `shared/forge-state.sh`, `shared/modes/`, `shared/model-routing.md`
+References (never modifies): `shared/scoring.md`, `shared/state-schema.md`, `shared/stage-contract.md`, `shared/error-taxonomy.md`, `shared/agent-communication.md`, `shared/state-transitions.md`, `shared/convergence-engine.md`, `shared/recovery/recovery-engine.md`, `shared/decision-log.md`, `shared/forge-state.sh`, `shared/modes/`, `shared/model-routing.md`, `shared/cost-alerting.sh`, `shared/context-guard.sh`
 
 ---
 

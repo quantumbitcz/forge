@@ -172,7 +172,7 @@ case "$DEP" in
     container_status="$(docker inspect -f '{{.State.Status}}' "$neo4j_container" 2>/dev/null || true)"
     if [[ "$container_status" != "running" ]]; then
       if [[ -z "$container_status" ]]; then
-        echo "UNAVAILABLE: $neo4j_container container does not exist (run: /graph-init to create it)"
+        echo "UNAVAILABLE: $neo4j_container container does not exist (run: /forge-graph-init to create it)"
       else
         echo "DEGRADED: $neo4j_container container exists but status is '$container_status' (expected: running)"
       fi

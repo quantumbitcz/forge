@@ -85,7 +85,7 @@ Based on the changes in this run, consider these next steps:
 
 2. **[HIGH] Update OpenAPI specification for groups endpoint**
    Category: docs | Trigger: new public API endpoint
-   *Suggested command:* `/docs-generate --scope api`
+   *Suggested command:* `/forge-docs-generate --scope api`
 
 3. **[MEDIUM] Verify downstream consumers of `GroupService`**
    Category: compatibility | Trigger: modified shared service used by 3 modules

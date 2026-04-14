@@ -133,6 +133,19 @@ Apply ALL universal checks (1-7) + language-specific (8).
 - [ ] No secrets in logs
 - [ ] Secrets via env vars/secret managers, not config files
 
+### 6.1 AI Security Pattern Detection
+
+AI-generated code introduces security bugs at higher rates than human code (1.7x, SO Jan 2026). Prioritize these AI-specific patterns:
+
+- **AI-SEC-INJECTION** (CRITICAL): SQL/NoSQL injection via f-strings, template literals, .format(). AI uses string interpolation instead of parameterized queries. Check all `.execute()` calls with dynamic input.
+- **AI-SEC-HARDCODED-SECRET** (CRITICAL): JWT tokens, API keys, passwords embedded in source. AI copies sample credentials from training data. L1 patterns detect JWTs and key=value patterns.
+- **AI-SEC-INSECURE-DEFAULT** (WARNING): Wildcard CORS (`origin: "*"`), disabled CSRF, debug mode. AI copies tutorial defaults.
+- **AI-SEC-MISSING-AUTH** (CRITICAL): Endpoints without auth/authz checks. AI generates functional code without access control when not explicitly required.
+- **AI-SEC-VERBOSE-ERROR** (WARNING): Raw error objects in API responses exposing stack traces and internals.
+- **AI-SEC-DESERIALIZATION** (CRITICAL): `yaml.load`, `marshal.loads`, `ObjectInputStream` on untrusted input. AI uses simplest API.
+
+Cross-category dedup: When both `SEC-*` and `AI-SEC-*` match same location, keep the `AI-SEC-*` (more specific). See `shared/checks/ai-code-patterns.md`.
+
 ---
 
 ## 7. Dependency & Supply Chain
@@ -251,7 +264,7 @@ Delegate detailed IaC checks to `fg-419`. Flag only CRITICAL cross-cutting: hard
 
 Per `shared/checks/output-format.md`. CRITICAL first. Confidence mandatory (v1.18+).
 
-Categories: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`, `SEC-SECRET`, `SEC-PII`, `SEC-AGENT-INPUT`, `SEC-AGENT-EXEC`, `SEC-AGENT-CASCADE`.
+Categories: `SEC-AUTH`, `SEC-AUTHZ`, `SEC-INJECTION`, `SEC-XSS`, `SEC-DATA-EXPOSURE`, `SEC-SECRETS`, `SEC-CSRF`, `SEC-SSRF`, `SEC-DESER`, `SEC-CONFIG`, `SEC-DEPS`, `SEC-CRYPTO`, `SEC-INPUT`, `SEC-LOGGING`, `SEC-SECRET`, `SEC-PII`, `SEC-AGENT-INPUT`, `SEC-AGENT-EXEC`, `SEC-AGENT-CASCADE`, `AI-SEC-*`.
 
 **Severity:** Injection/RCE/hardcoded secrets/deser → CRITICAL. Missing auth/ownership/XSS/SSRF → WARNING. Input validation/data exposure/config → WARNING. CORS/log hygiene → INFO.
 

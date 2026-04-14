@@ -57,6 +57,15 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | 3 | tasks | Internal agents that report progress but don't ask questions (implementer, scaffolder, reviewers with tasks) |
 | 4 | none | Read-only analyzers with no user interaction (all review agents, validator, worktree manager) |
 
+## AI-* Category Assignments
+
+| Category Prefix | Primary Agent | Secondary Agent |
+|---|---|---|
+| `AI-LOGIC-*` | fg-410-code-reviewer | — |
+| `AI-PERF-*` | fg-416-performance-reviewer | — |
+| `AI-CONCURRENCY-*` | fg-410-code-reviewer | fg-416-performance-reviewer |
+| `AI-SEC-*` | fg-411-security-reviewer | — |
+
 ## Rules
 
 1. Agent IDs follow the pattern `fg-{NNN}-{role}` where NNN determines pipeline ordering

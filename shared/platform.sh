@@ -38,6 +38,27 @@ detect_os() {
 # Cache the result (called once per script)
 FORGE_OS="${FORGE_OS:-$(detect_os)}"
 
+# ── Platform Config Override ────────────────────────────────────────────────
+_apply_platform_config() {
+  if [[ "$FORGE_OS" != "windows" ]]; then
+    return 0
+  fi
+  local config_file="${FORGE_PROJECT_ROOT:-.}/.claude/forge-config.md"
+  if [[ ! -f "$config_file" ]]; then
+    return 0
+  fi
+  local mode
+  mode=$(awk '/^  windows_mode:/{gsub(/.*windows_mode:[[:space:]]*/, ""); gsub(/[[:space:]#].*/, ""); print; exit}' "$config_file" 2>/dev/null)
+  case "$mode" in
+    wsl)     FORGE_WINDOWS_MODE="wsl" ;;
+    gitbash) FORGE_WINDOWS_MODE="gitbash" ;;
+    *)       FORGE_WINDOWS_MODE="auto" ;;
+  esac
+  return 0
+}
+_apply_platform_config
+FORGE_WINDOWS_MODE="${FORGE_WINDOWS_MODE:-auto}"
+
 # ── Package Manager Suggestions ──────────────────────────────────────────────
 
 # Returns a platform-appropriate install command for a given tool.
@@ -481,7 +502,7 @@ atomic_json_update() {
     [ -z "$_py" ] && command -v python &>/dev/null && _py="python"
     [ -z "$_py" ] && return 1
 
-    tmp=$(mktemp "${TMPDIR:-/tmp}/forge-atomic.XXXXXX")
+    tmp=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/forge-atomic.XXXXXX")
 
     "$_py" -c "
 import json, sys, os

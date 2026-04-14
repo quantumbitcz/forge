@@ -1,6 +1,7 @@
 ---
 name: forge-tour
 description: "Guided 5-stop introduction to Forge covering init, verify, run, fix, and review. Use when new to Forge, onboarding team members, or want a walkthrough of the most important skills. Trigger: /forge-tour, how does forge work, getting started, teach me forge"
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 
@@ -48,7 +49,7 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 - Runs your test command (if configured)
 - Reports PASS / FAIL / SKIPPED per step
 
-**Try it:** Run `/verify` to check your project's baseline health.
+**Try it:** Run `/forge-verify` to check your project's baseline health.
 
 ---
 
@@ -118,7 +119,7 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 | Skill | When | Time |
 |-------|------|------|
 | `/forge-init` | First time setup | ~1 min |
-| `/verify` | Quick health check | ~30s |
+| `/forge-verify` | Quick health check | ~30s |
 | `/forge-run` | Build a feature | 5-30 min |
 | `/forge-fix` | Fix a bug | 3-15 min |
 | `/forge-review` | Review code quality | 1-5 min |

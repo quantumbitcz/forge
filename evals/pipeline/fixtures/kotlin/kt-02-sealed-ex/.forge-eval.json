@@ -1,0 +1,19 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "kotlin",
+  "build_command": "./gradlew build",
+  "test_command": "./gradlew test --tests \"*SealedExhaustTest*\"",
+  "known_failing_tests": [
+    "SealedExhaustTest.testAllEventTypesHandled"
+  ],
+  "forge_local_template": {
+    "language": "kotlin",
+    "testing": "kotest",
+    "commands": {
+      "build": "./gradlew build",
+      "test": "./gradlew test",
+      "lint": "./gradlew detekt"
+    }
+  }
+}

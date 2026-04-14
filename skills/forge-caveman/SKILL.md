@@ -1,6 +1,7 @@
 ---
 name: forge-caveman
 description: "Toggle caveman-style terse output for Forge pipeline messages. Use when you want to reduce user-facing output tokens by 40-70% while preserving technical substance. Trigger: /forge-caveman [mode], caveman mode, less tokens, be brief"
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash']
 disable-model-invocation: true
 ---
 
@@ -57,8 +58,13 @@ Compression suspends automatically for:
 - `AskUserQuestion` content
 - Escalation messages (convergence failure, budget exhaustion)
 - PR descriptions
+- Error diagnostics (`BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` destined for user)
 
 After the excepted block, caveman mode resumes.
+
+## Research Backing
+
+Brevity constraints improve LLM accuracy by up to 26pp (arXiv:2604.00025, March 2026). The 6-line prompt finding confirms that lite/full/ultra rule blocks (5-10 lines each) are in the effective range for compression instruction. Realistic total session savings are 4-10% (not 45-65%, which is prose-only). Auto-clarity exceptions for security, irreversible actions, and user-facing content are validated as critical by the paper.
 
 ## Output Patterns
 

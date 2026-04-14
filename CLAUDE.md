@@ -69,17 +69,17 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Fix a bug | `/forge-fix` | Root cause investigation + targeted fix |
 | Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
 | Review changed files | `/forge-review` | Quick (3 agents) or full (8 agents) |
-| Review entire codebase | `/codebase-health` | Read-only analysis, no fixes |
-| Fix all codebase issues | `/deep-health` | Iterative fix loop until clean |
-| Quick build+lint+test | `/verify` | No pipeline, just check commands |
-| Security scan | `/security-audit` | Module-appropriate vulnerability scanners |
-| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/repair-state` to fix |
+| Review entire codebase | `/forge-codebase-health` | Read-only analysis, no fixes |
+| Fix all codebase issues | `/forge-deep-health` | Iterative fix loop until clean |
+| Quick build+lint+test | `/forge-verify` | No pipeline, just check commands |
+| Security scan | `/forge-security-audit` | Module-appropriate vulnerability scanners |
+| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/forge-repair-state` to fix |
 | Resume aborted run | `/forge-resume` | Continues from last checkpoint |
 | Start fresh | `/forge-reset` | Clears state, preserves learnings |
 | Multiple features | `/forge-sprint` | Parallel orchestration |
-| Generate docs | `/docs-generate` | README, ADRs, API specs, changelogs |
-| Deploy | `/deploy` | Staging, production, preview, rollback |
-| Migrate framework | `/migration` | Library/framework version upgrades |
+| Generate docs | `/forge-docs-generate` | README, ADRs, API specs, changelogs |
+| Deploy | `/forge-deploy` | Staging, production, preview, rollback |
+| Migrate framework | `/forge-migration` | Library/framework version upgrades |
 | Ask about codebase | `/forge-ask` | Wiki, graph, explore cache, docs index |
 | Pipeline analytics | `/forge-insights` | Quality, cost, convergence, memory trends |
 | Reusable recipes | `/forge-playbooks` | Create, list, run, analyze pipeline playbooks |
@@ -95,12 +95,12 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 
 ```
 First time?        /forge-tour (5-stop guided introduction)
-New project:       /forge-init → /config-validate → /verify → /forge-run <requirement>
-Existing project:  /forge-init → /codebase-health → /deep-health → /forge-run <requirement>
+New project:       /forge-init → /forge-config-validate → /forge-verify → /forge-run <requirement>
+Existing project:  /forge-init → /forge-codebase-health → /forge-deep-health → /forge-run <requirement>
 Bug fix:           /forge-fix <description or ticket ID>
-Code quality:      /forge-review --full  (changed files) or /codebase-health (all files)
-Before shipping:   /verify → /forge-review --full
-Pipeline trouble:  /forge-diagnose → /repair-state (if needed) → /forge-resume
+Code quality:      /forge-review --full  (changed files) or /forge-codebase-health (all files)
+Before shipping:   /forge-verify → /forge-review --full
+Pipeline trouble:  /forge-diagnose → /forge-repair-state (if needed) → /forge-resume
 Multiple features: /forge-sprint (reads from Linear or manual list)
 Quick decision:    /forge-help (interactive skill picker)
 ```
@@ -135,9 +135,11 @@ Quick decision:    /forge-help (interactive skill picker)
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines. Output compression (`shared/output-compression.md`) sets per-stage verbosity levels to reduce output tokens.
 - **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
+See `shared/agent-role-hierarchy.md` for the complete dispatch graph and tier definitions.
+
 ### Routing & decomposition
 
-- `/forge-run` auto-classifies intent and routes. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint`, `--parallel`) override. Config: `routing.*`, `scope.*` in `forge-config.md`.
+- `/forge-run` auto-classifies intent and routes. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint` (deprecated, use `/forge-sprint`), `--parallel`) override. Config: `routing.*`, `scope.*` in `forge-config.md`.
 - Multi-feature detected via fast scan (text) or deep scan (post-EXPLORE). Triggers `fg-015-scope-decomposer` → `fg-090-sprint-orchestrator`.
 - Frontend design preview via superpowers visual companion during PLAN (optional, graceful degradation).
 - Additional `forge-config.md` sections: `model_routing:` (tiered model selection), `explore:` (explore cache settings), `plan_cache:` (plan reuse settings).
@@ -146,7 +148,7 @@ Quick decision:    /forge-help (interactive skill picker)
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 83 shared categories (23 wildcard prefixes + 60 discrete) in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 87 shared categories (27 wildcard prefixes + 60 discrete) in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -192,6 +194,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Deployment strategies (F24) | `deployment.*` | Canary/blue-green/rolling, `fg-620-deploy-verifier`, Argo Rollouts |
 | Consumer-driven contracts (F25) | `contract_testing.*` | Pact, can-i-deploy gate. Categories: `CONTRACT-PACT-*` |
 | Output compression (F26) | `output_compression.*` | 4 levels (verbose/standard/terse/minimal), 20-65% reduction |
+| AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |
 | Memory discovery | `memory_discovery.*` | Auto-discovered items decay 2x faster, start MEDIUM |
 | Background execution | — | `--background`, `.forge/alerts.json` for escalations |
@@ -256,9 +259,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (40 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `verify`, `security-audit`, `codebase-health`, `deep-health`, `migration`, `bootstrap-project`, `deploy`, `graph-init`, `graph-status`, `graph-query`, `graph-rebuild`, `graph-debug` (targeted Neo4j diagnostics), `docs-generate`, `forge-diagnose` (read-only diagnostic), `repair-state` (targeted state.json fixes), `config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings), `forge-caveman` (user-facing output compression toggle), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-compression-help` (compression quick reference card).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-reset`, `forge-rollback`, `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `forge-verify`, `forge-security-audit`, `forge-codebase-health`, `forge-deep-health`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph-init`, `forge-graph-status`, `forge-graph-query`, `forge-graph-rebuild`, `forge-graph-debug` (targeted Neo4j diagnostics), `forge-docs-generate`, `forge-diagnose` (read-only diagnostic), `forge-repair-state` (targeted state.json fixes), `forge-config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-resume` (resume from checkpoint), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agent prompt compression for token savings), `forge-caveman` (user-facing output compression toggle), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-compression-help` (compression quick reference card).
 
-**Hooks** (7): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`, session-start on `SessionStart`.
+**Hooks** (7): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`, session-start on `SessionStart`. See `shared/hook-design.md` for execution model and script contract.
 
 **Kanban** (`.forge/tracking/`): File-based board (`backlog/`, `in-progress/`, `review/`, `done/`). Prefix configurable (default `FG`). IDs never reused. Silently skips if uninitialized.
 
@@ -337,6 +340,12 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Implementer inner loop: `implementer.inner_loop.enabled` (boolean, default `true`), `implementer.inner_loop.max_fix_cycles` 1-5 (default 3), `implementer.inner_loop.affected_test_cap` 5-50 (default 20).
 - Confidence: `confidence.planning_gate` (boolean, default `true`), `confidence.autonomous_threshold` 0.3-0.95 (default 0.7), `confidence.pause_threshold` 0.1-0.7 (default 0.4), `confidence.initial_trust` 0.0-1.0 (default 0.5). `autonomous_threshold` must be > `pause_threshold` (gap >= 0.1). Weights must sum to 1.0 (+/- 0.01).
 - Output compression: `output_compression.enabled` (boolean, default `true`), `output_compression.default_level` must be `verbose`, `standard`, `terse`, or `minimal` (default `terse`), `output_compression.per_stage` keys must match 10 stage names, `output_compression.auto_clarity` (boolean, default `true`).
+- AI quality: `ai_quality.enabled` (boolean, default `true`), `ai_quality.categories` must be array of `AI-LOGIC`/`AI-PERF`/`AI-SEC`/`AI-CONCURRENCY`, `ai_quality.l1_patterns` (boolean, default `true`), `ai_quality.scout_learning` (boolean, default `true`), `ai_quality.severity_overrides` keys must match `AI-*` codes with values `CRITICAL`/`WARNING`/`INFO`. No PREFLIGHT failure -- all violations WARNING + fallback.
+- Build graph: `build_graph.introspection` (boolean, default `true`), `build_graph.introspection_timeout_seconds` 10-300 (default 60), `build_graph.fallback` must be `heuristic` or `skip` (default `heuristic`), `build_graph.cache_enabled` (boolean, default `true`), `build_graph.module_boundary_discovery` (boolean, default `true`).
+- Cost alerting: `cost_alerting.enabled` (boolean, default `true`), `cost_alerting.budget_ceiling_tokens` (integer, 0 or >= 10000, default 2000000), `cost_alerting.alert_thresholds` (array of 3 ascending floats in (0.0, 1.0), default [0.50, 0.75, 0.90]), `cost_alerting.per_stage_limits` (string `"auto"` or object with 10 stage keys, default `"auto"`), `cost_alerting.model_costs.*` (float > 0, see pricing table).
+- Eval: `eval.suite` must be `lite`, `convergence`, `cost`, `compression`, or `smoke` (default `lite`). `eval.timeout_per_task_minutes` 5-120 (default 30). `eval.parallel_tasks` 1-5 (default 1). `eval.validation_timeout_seconds` 5-300 (default 60). `eval.regression_threshold_percent` 5-50 (default 20). `eval.keep_workdirs` (boolean, default `false`). `eval.model_override` must be `null`, `haiku`, `sonnet`, or `opus` (default `null`). No PREFLIGHT failure -- eval config is only used by `eval-runner.sh`, not by pipeline agents.
+- Context guard: `context_guard.enabled` (boolean, default `true`), `context_guard.condensation_threshold` (integer, 5000-100000, default 30000), `context_guard.critical_threshold` (integer, must be > `condensation_threshold`, default 50000), `context_guard.max_condensation_triggers` (integer, 1-20, default 5). Cross-field: `critical_threshold` must be > `condensation_threshold`. On violation: WARNING, use `critical_threshold = condensation_threshold + 20000`.
+- Compression eval: `compression_eval.enabled` (boolean, default `true`), `compression_eval.auto_run_after_compress` (boolean, default `false`), `compression_eval.drift_threshold_pct` 10-200 (default 50).
 
 ### Pipeline modes
 

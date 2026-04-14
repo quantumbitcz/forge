@@ -1,0 +1,157 @@
+name: Eval Pipeline
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Suite to run'
+        required: false
+        default: 'lite'
+        type: choice
+        options:
+          - lite
+          - convergence
+          - cost
+          - compression
+          - smoke
+      live:
+        description: 'Run live eval (requires API key)'
+        required: false
+        default: false
+        type: boolean
+      baseline:
+        description: 'Baseline name for comparison'
+        required: false
+        default: ''
+        type: string
+      model:
+        description: 'Model override'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  eval-structural:
+    name: Structural Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate all suites (dry-run)
+        run: |
+          for suite in lite convergence cost compression smoke; do
+            echo "=== Validating $suite ==="
+            ./evals/pipeline/eval-runner.sh run --suite "$suite" --dry-run
+            echo ""
+          done
+
+      - name: Run structural tests
+        run: |
+          if [ -f tests/lib/bats-core/bin/bats ]; then
+            tests/lib/bats-core/bin/bats tests/structural/eval-structure.bats
+          else
+            echo "BATS not available, skipping structural tests"
+          fi
+
+  eval-live:
+    name: Live Eval
+    needs: eval-structural
+    if: >-
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.live == 'true') ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_SUITE: ${{ github.event.inputs.suite }}
+      INPUT_LIVE: ${{ github.event.inputs.live }}
+      INPUT_BASELINE: ${{ github.event.inputs.baseline }}
+      INPUT_MODEL: ${{ github.event.inputs.model }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Claude CLI
+        run: |
+          echo "Claude CLI installation would go here"
+          echo "For now, eval will fail gracefully if claude is not available"
+
+      - name: Determine suite
+        id: suite
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "name=${INPUT_SUITE:-lite}" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "release" ]; then
+            echo "name=lite" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=smoke" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run eval
+        env:
+          SUITE_NAME: ${{ steps.suite.outputs.name }}
+        run: |
+          MODEL_FLAG=""
+          if [ -n "$INPUT_MODEL" ]; then
+            MODEL_FLAG="--model $INPUT_MODEL"
+          fi
+          ./evals/pipeline/eval-runner.sh run \
+            --suite "$SUITE_NAME" \
+            --live \
+            $MODEL_FLAG \
+            || echo "::warning::Eval run failed or had errors"
+
+      - name: Compare against baseline
+        if: env.INPUT_BASELINE != ''
+        env:
+          SUITE_NAME: ${{ steps.suite.outputs.name }}
+        run: |
+          ./evals/pipeline/eval-runner.sh compare \
+            --baseline "$INPUT_BASELINE" \
+            --suite "$SUITE_NAME" \
+            --format markdown \
+            || echo "::error::Regression detected"
+
+      - name: Generate report
+        if: always()
+        run: |
+          LATEST=$(ls -t evals/pipeline/results/*.json 2>/dev/null | head -1)
+          if [ -n "$LATEST" ]; then
+            ./evals/pipeline/eval-report.sh summary "$LATEST" --format markdown > eval-summary.md
+            cat eval-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ steps.suite.outputs.name }}
+          path: evals/pipeline/results/*.json
+          retention-days: 90
+          if-no-files-found: warn

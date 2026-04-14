@@ -107,7 +107,7 @@ print(json.dumps(entry))
 #     - name: nightly-health
 #       trigger: schedule
 #       cooldown_minutes: 1440
-#       action: /codebase-health
+#       action: /forge-codebase-health
 #
 # Parses the automations section and returns JSON array.
 

@@ -82,6 +82,20 @@ Categories: `PERF-CACHE-LIB-FIT` (WARNING: library mismatch for workload), `PERF
 - [ ] Batch endpoints for bulk ops
 - [ ] No sync external calls in hot paths
 
+### 5.1 AI Performance Pattern Detection
+
+AI-generated code produces 8x more excessive I/O patterns than human code (SO Jan 2026). Watch for:
+
+- **AI-PERF-N-PLUS-ONE** (WARNING): Repository/DAO call inside loop. AI translates requirements into per-item queries. Fix: batch with findAllById(), IN clause, JOIN.
+- **AI-PERF-EXCESSIVE-IO** (WARNING): Repeated file/network reads for same data. AI generates fresh I/O per function call. Fix: read once, pass result.
+- **AI-PERF-MEMORY-LEAK** (WARNING): Unclosed resources, accumulating collections. AI misses cleanup in error paths.
+- **AI-PERF-QUADRATIC** (WARNING): Nested loops where map/set lookup suffices. AI trained on small-scale examples.
+- **AI-PERF-BLOCKING** (WARNING): Sync blocking in async context (fs.readFileSync, time.sleep). AI mixes sync/async patterns.
+- **AI-PERF-REDUNDANT-RENDER** (INFO): Inline object/array props in JSX causing re-renders. Fix: extract to const or useMemo.
+- **AI-PERF-BUNDLE** (INFO): Full library imports instead of tree-shakeable per-function imports (e.g., lodash).
+
+See `shared/checks/ai-code-patterns.md` for full reference with examples and fix patterns.
+
 ---
 
 ## 6. Output Format
@@ -90,7 +104,7 @@ Return findings per `shared/checks/output-format.md`: one per line, sorted by se
 
 **Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
 
-Category codes: `BE-PERF-DB`, `BE-PERF-ALGO`, `BE-PERF-CONCURRENCY`, `BE-PERF-CACHE`, `BE-PERF-API`.
+Category codes: `BE-PERF-DB`, `BE-PERF-ALGO`, `BE-PERF-CONCURRENCY`, `BE-PERF-CACHE`, `BE-PERF-API`, `AI-PERF-*`, `AI-CONCURRENCY-*`.
 
 **Severity rules:**
 - **CRITICAL**: N+1 query in loop without limit, unbounded collection fetch, full table scan on large table without pagination, missing transaction on multi-write operation, thread-unsafe shared mutable state

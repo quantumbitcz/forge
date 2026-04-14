@@ -13,7 +13,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "IO.puts/IO.inspect/dbg — use Logger for structured logging.",
+      "message": "IO.puts/IO.inspect/dbg \u2014 use Logger for structured logging.",
       "fix_hint": "Replace with Logger.info/debug/warning from the built-in Logger module.",
       "example_ref": "elixir/logging.md#structured-logging",
       "scope": "main"
@@ -37,7 +37,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-ATOM",
-      "message": "String.to_atom/1 — atoms are never garbage collected; unbounded creation causes memory exhaustion.",
+      "message": "String.to_atom/1 \u2014 atoms are never garbage collected; unbounded creation causes memory exhaustion.",
       "fix_hint": "Use String.to_existing_atom/1 or keep data as strings.",
       "example_ref": "elixir/security.md#atom-exhaustion",
       "scope": "all"
@@ -49,7 +49,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-EXEC",
-      "message": "Dynamic code execution — risks arbitrary code execution.",
+      "message": "Dynamic code execution \u2014 risks arbitrary code execution.",
       "fix_hint": "Avoid dynamic code execution; use pattern matching or module attributes instead.",
       "example_ref": "elixir/security.md#code-execution",
       "scope": "all"
@@ -61,7 +61,7 @@
       "exclude_pattern": "^\\s*#",
       "severity": "INFO",
       "category": "CONV-DEPREC",
-      "message": "Logger.warn/2 is deprecated since Elixir 1.15 — use Logger.warning/2.",
+      "message": "Logger.warn/2 is deprecated since Elixir 1.15 \u2014 use Logger.warning/2.",
       "fix_hint": "Replace Logger.warn with Logger.warning.",
       "example_ref": "elixir/logging.md#logger-warning",
       "scope": "all"
@@ -73,7 +73,7 @@
       "exclude_pattern": "^\\s*#|Task\\.|spawn_link|spawn_monitor",
       "severity": "WARNING",
       "category": "QUAL-PROC",
-      "message": "Bare spawn — unsupervised processes can crash silently.",
+      "message": "Bare spawn \u2014 unsupervised processes can crash silently.",
       "fix_hint": "Use Task.Supervisor, DynamicSupervisor, or supervised GenServer instead.",
       "example_ref": "elixir/otp.md#supervised-processes",
       "scope": "main"
@@ -85,7 +85,7 @@
       "exclude_pattern": "^\\s*#|^\\s*\"|^\\s*~",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use with/case for composition.",
       "example_ref": "elixir/readability.md#nesting",
       "scope": "all"
@@ -97,7 +97,7 @@
       "exclude_pattern": "^\\s*#|@\\w+\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a module attribute for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a module attribute for clarity.",
       "fix_hint": "Define a module attribute (@max_retries 5) with a descriptive name.",
       "example_ref": "elixir/readability.md#magic-numbers",
       "scope": "main"
@@ -152,8 +152,44 @@
       "exclude_pattern": "^\\s*#|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "EX-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "EX-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "EX-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

@@ -600,3 +600,45 @@ teardown() {
   next_val="$("$FORGE_PYTHON" -c "import json; print(json.load(open('${td}/counter.json'))['next'])")"
   [[ "$next_val" == "6" ]]
 }
+
+# ===========================================================================
+# next_id — platform-adaptive Python locking
+# ===========================================================================
+
+@test "next_id: inline Python uses try/except for fcntl import (not unconditional)" {
+  local python_block
+  python_block=$(sed -n '/\$FORGE_PYTHON.*-c/,/counter_file/p' "$TRACKING_OPS")
+  if echo "$python_block" | grep -q 'import.*fcntl.*os$\|import json.*fcntl'; then
+    fail "tracking-ops.sh still uses unconditional fcntl import — must use try/except"
+  fi
+  run grep -c 'except ImportError' "$TRACKING_OPS"
+  assert_success
+  [[ "${output}" -ge 1 ]]
+}
+
+@test "next_id: inline Python defines lock() and unlock() functions" {
+  run grep -c 'def lock(fd)' "$TRACKING_OPS"
+  assert_success
+  [[ "${output}" -ge 1 ]]
+  run grep -c 'def unlock(fd)' "$TRACKING_OPS"
+  assert_success
+  [[ "${output}" -ge 1 ]]
+}
+
+@test "next_id: inline Python references msvcrt as fallback" {
+  run grep -c 'import msvcrt' "$TRACKING_OPS"
+  assert_success
+  [[ "${output}" -ge 1 ]]
+}
+
+@test "next_id: still works correctly after refactor" {
+  local td
+  td="$(make_tracking_dir)"
+  init_counter "$td" "TEST"
+  run next_id "$td"
+  assert_success
+  assert_output "TEST-001"
+  run next_id "$td"
+  assert_success
+  assert_output "TEST-002"
+}

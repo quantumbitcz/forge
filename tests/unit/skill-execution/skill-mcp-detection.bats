@@ -21,6 +21,6 @@ setup() {
 }
 
 @test "skill-mcp-detection: graph skills check Neo4j availability" {
-  run grep -qi 'neo4j\|docker\|health' "$SKILLS_DIR/graph-init/SKILL.md"
+  run grep -qi 'neo4j\|docker\|health' "$SKILLS_DIR/forge-graph-init/SKILL.md"
   assert_success
 }

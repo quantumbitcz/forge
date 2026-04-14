@@ -1,6 +1,7 @@
 ---
 name: forge-status
 description: "Show current pipeline run state -- stage, score, convergence phase, integrations, and background run progress. Use when you want to check what stage the pipeline is at, monitor a background run, or see the outcome of the last completed run."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 
@@ -91,7 +92,7 @@ If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy 
 | Condition | Action |
 |-----------|--------|
 | Prerequisites fail | Report specific error message and STOP |
-| state.json unparseable | Report "state.json is corrupted. Run `/repair-state` to fix or `/forge-reset` to start fresh." and STOP |
+| state.json unparseable | Report "state.json is corrupted. Run `/forge-repair-state` to fix or `/forge-reset` to start fresh." and STOP |
 | state.json missing fields | Show what is available, note missing fields as "unknown" |
 | progress/status.json malformed | Report "Background progress data is corrupt." and fall back to state.json only |
 | Stage notes file missing | Skip stage notes section, continue with other data |

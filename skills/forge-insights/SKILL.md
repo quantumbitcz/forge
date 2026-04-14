@@ -34,7 +34,7 @@ Read all available data sources:
 
 If a source is unavailable, skip it and note which categories will have incomplete data.
 
-### 2. Analyze — Five Insight Categories
+### 2. Analyze — Six Insight Categories
 
 #### Category 1: Quality Trajectory
 
@@ -83,27 +83,56 @@ Analyze which agents contribute most to quality improvement:
 
 #### Category 3: Cost Analysis
 
-Analyze resource consumption:
+Analyze resource consumption and cost efficiency:
 
-- **Average run cost:** Total tokens (input + output) per run, converted to approximate USD if token pricing is known.
-- **Most expensive stage:** Stage consuming the most tokens on average.
-- **Routing savings:** Estimate tokens saved by correct mode routing (bugfix vs standard, quick review vs full).
-- **Convergence cost:** Extra tokens spent in fix/review cycles beyond the first pass.
+- **Per-run cost trend:** Token counts and USD estimates across recent runs with anomaly detection (>2x average flagged).
+- **Per-stage cost breakdown:** Average tokens, average cost, percentage of total, and trend direction per stage.
+- **Cost-per-quality-point:** Efficiency metric per (stage, model tier) from `.forge/trust.json` `model_efficiency`. Stages without score impact are reported separately as overhead.
+- **Model tier distribution:** Dispatches, tokens, and percentage per tier (premium/standard/fast).
+- **Budget utilization:** Ceiling vs used per run, alert trigger counts.
+- **Top-3 cost recommendations:** Evidence-based suggestions sorted by confidence and expected savings.
+
+Sources: `state.json.cost`, `state.json.tokens`, `.forge/trust.json` `model_efficiency`, `state.json.cost_alerting`.
+
+Recommendation generation:
+1. Model downgrade opportunities (from trust.model_efficiency, requires 5+ data points)
+2. Convergence cost reduction (when avg iterations > 5)
+3. Stage budget overruns (consistently exceeding per-stage limits)
+4. Output compression opportunities (>30% verbose dispatches)
+5. Context guard trigger frequency (avg > 3 triggers/run)
 
 ```markdown
 ### Cost Analysis
 
-| Metric | Value |
-|--------|-------|
-| Avg tokens per run | {n} |
-| Avg wall time | {duration} |
-| Most expensive stage | {stage} ({pct}% of tokens) |
-| Convergence overhead | {pct}% of total (fix cycles: {avg_n}) |
+#### Per-Run Cost Trend
 
-**Stage Breakdown:**
-| Stage | Avg Tokens | Avg Duration | % of Total |
-|-------|-----------|-------------|-----------|
-| {stage} | {tokens} | {duration} | {pct}% |
+| Run | Date | Tokens | Est. Cost | Score | Cost/Point | Budget Used |
+|-----|------|--------|-----------|-------|------------|-------------|
+
+#### Per-Stage Cost Breakdown
+
+| Stage | Avg Tokens | Avg Cost | % of Total | Trend |
+|-------|-----------|----------|-----------|-------|
+
+#### Cost-Per-Quality-Point (Efficiency)
+
+| Stage | Tier | Tokens/Point | Runs | Suggestion |
+|-------|------|-------------|------|------------|
+
+#### Model Tier Distribution
+
+| Tier | Dispatches | Tokens | % of Total | Avg Cost |
+|------|-----------|--------|-----------|----------|
+
+#### Budget Utilization
+
+| Run | Ceiling | Used | % | Alerts Triggered |
+|-----|---------|------|---|-----------------|
+
+#### Top-3 Cost Recommendations
+
+| # | Recommendation | Expected Savings | Confidence |
+|---|---------------|-----------------|------------|
 ```
 
 #### Category 4: Convergence Patterns
@@ -164,9 +193,44 @@ Analyze the accumulated knowledge base:
 - Most active category: {category}
 ```
 
+#### Category 6: Compression Effectiveness
+
+Analyze token savings and compression compliance:
+
+- **Output compression savings:** Compare actual output tokens per agent from `state.json.tokens.output_tokens_per_agent` against the expected range for their stage's compression level. Estimate tokens saved relative to verbose baseline using the stage-level token ranges from `shared/output-compression.md`: verbose 800-2000, standard 800-2000, terse 400-1200, minimal 100-600.
+- **Compression level distribution:** Show dispatch counts per level from `state.json.tokens.compression_level_distribution`. Highlight if distribution is skewed (e.g., 90% verbose suggests misconfiguration or `output_compression.enabled: false`).
+- **Drift detection:** Identify agents consistently exceeding their stage's expected token range by >50%. An agent dispatched at `terse` (expected 400-1200 tokens) producing 1800 tokens is drifting.
+- **Input compression savings:** If `/forge-compress` has been run (detect via `*.original.md` backup files in `agents/`), compute before/after line counts and estimated token savings using `wc -l`.
+- **Caveman mode usage:** Report whether caveman mode was active (read `.forge/caveman-mode`), which level, and how many sessions used it (from `.forge/events.jsonl` if available).
+
+```markdown
+### Compression Effectiveness
+
+**Output Compression:**
+| Metric | Value |
+|--------|-------|
+| Dispatches at verbose | {n} |
+| Dispatches at standard | {n} |
+| Dispatches at terse | {n} |
+| Dispatches at minimal | {n} |
+| Estimated output tokens saved | {n} ({pct}% vs all-verbose baseline) |
+
+**Drift Alerts:**
+| Agent | Stage Level | Expected Range | Actual Tokens | Status |
+|-------|------------|----------------|---------------|--------|
+| {agent} | terse | 400-1200 | {n} | DRIFT / OK |
+
+**Input Compression:**
+| Scope | Files | Before (lines) | After (lines) | Reduction |
+|-------|-------|-----------------|---------------|-----------|
+| agents/ | {n} | {n} | {n} | {pct}% |
+
+**Caveman Mode:** {off/lite/full/ultra}
+```
+
 ### 3. Generate Summary and Recommendations
 
-Synthesize the five categories into actionable recommendations:
+Synthesize the six categories into actionable recommendations:
 
 ```markdown
 ## Pipeline Insights Report
@@ -175,7 +239,7 @@ Synthesize the five categories into actionable recommendations:
 **Runs analyzed:** {count}
 **Date range:** {earliest} to {latest}
 
-{Category 1-5 sections as above}
+{Category 1-6 sections as above}
 
 ### Recommendations
 
@@ -191,6 +255,7 @@ Prioritize recommendations by expected impact:
 3. **Low-value agents** — consider disabling agents with zero findings across 5+ runs.
 4. **Stale PREEMPT items** — archive items that never match to reduce overhead.
 5. **Score regression** — investigate if a recent config change degraded quality.
+6. **High compression drift** — suggest tuning per-stage levels or upgrading drifting agents' model tier.
 
 ### 4. Save Report
 

@@ -126,15 +126,31 @@ next_id() {
 
   # Atomic read-increment-write in a single Python invocation to prevent
   # TOCTOU race when concurrent pipeline runs call next_id() simultaneously.
-  # Uses fcntl.flock for file-level locking (available on Linux and macOS).
+  # Uses fcntl.flock on UNIX, msvcrt.locking on Windows (Git Bash).
   local ticket_id
   ticket_id="$("$FORGE_PYTHON" -c "
-import json, sys, fcntl, os
+import json, sys, os
+
+# Platform-adaptive file locking
+try:
+    import fcntl
+    def lock(fd):
+        fcntl.flock(fd, fcntl.LOCK_EX)
+    def unlock(fd):
+        fcntl.flock(fd, fcntl.LOCK_UN)
+except ImportError:
+    import msvcrt
+    def lock(fd):
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+    def unlock(fd):
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
 
 counter_file = sys.argv[1]
 fd = os.open(counter_file, os.O_RDWR)
 try:
-    fcntl.flock(fd, fcntl.LOCK_EX)
+    lock(fd)
     # dup(fd) so fdopen's context manager closes the copy, not the original fd
     # (we still need fd open for the subsequent write and unlock)
     with os.fdopen(os.dup(fd), 'r') as f:
@@ -152,7 +168,7 @@ try:
     os.write(fd, content.encode())
     print(ticket_id, end='')
 finally:
-    fcntl.flock(fd, fcntl.LOCK_UN)
+    unlock(fd)
     os.close(fd)
 " "$counter_file")"
 

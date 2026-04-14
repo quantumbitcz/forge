@@ -198,7 +198,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "cost": {
     "wall_time_seconds": 0,
     "stages_completed": 0,
-    "estimated_cost_usd": 0.0
+    "estimated_cost_usd": 0.0,
+    "per_stage": {},
+    "budget_remaining_tokens": 2000000,
+    "efficiency_score": 0.0
   },
   "tokens": {
     "estimated_total": 0,
@@ -212,6 +215,21 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "condensation_count": 0,
     "condensation_cost": 0,
     "effective_token_ratio": 1.0
+  },
+  "cost_alerting": {
+    "enabled": true,
+    "thresholds": [0.50, 0.75, 0.90],
+    "per_stage_limits": {},
+    "alerts_issued": [],
+    "last_alert_level": "OK",
+    "routing_override": null
+  },
+  "context": {
+    "peak_tokens": 0,
+    "condensation_triggers": 0,
+    "per_stage_peak": {},
+    "last_estimated_tokens": 0,
+    "guard_checks": 0
   },
   "telemetry": {
     "spans": [],
@@ -378,7 +396,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.estimated_total` | integer | — | Cumulative estimated token usage (input + output) across all stages and agents. Updated by the `record` command. Default: 0. |
 | `tokens.budget_ceiling` | integer | — | Maximum allowed token usage for the run. 0 means no limit. Configurable in `forge-config.md`. Default: 2000000. |
 | `tokens.by_stage` | object | — | Per-stage token breakdown. Keys are stage names (e.g., `"explore"`, `"plan"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple agent calls within a stage. |
-| `tokens.by_agent` | object | — | Per-agent token breakdown. Keys are agent names (e.g., `"fg-200-planner"`). Values: `{ "input": <int>, "output": <int> }`. Accumulates across multiple calls to the same agent. |
+| `tokens.by_agent` | object | — | Per-agent token breakdown. Keys are agent names (e.g., `"fg-200-planner"`). Values: `{ "input": <int>, "output": <int>, "dispatch_count": <int> }`. Accumulates across multiple calls to the same agent. `dispatch_count` tracks the number of times this agent was dispatched (used for cache estimation). |
 | `tokens.budget_warning_issued` | boolean | — | `true` when `estimated_total >= 80%` of `budget_ceiling`. Prevents duplicate warnings. Default: `false`. |
 | `tokens.model_distribution` | object | — | Model usage fractions. Keys are model names, values are usage fractions. Updated by `forge-token-tracker.sh` after each stage. Default: `{}`. |
 | `tokens.model_fallbacks` | array | — | Fallback events when requested model was unavailable. Default: `[]`. |
@@ -388,6 +406,29 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `tokens.effective_token_ratio` | float | — | `actual_tokens / (actual_tokens + condensation_savings)`. Lower is better — 0.6 means 40% of potential tokens were saved. 1.0 when no condensation occurred. Default: 1.0. |
 | `tokens.compression_level_distribution` | object | — | Count of agent dispatches per compression verbosity level. Keys: `"verbose"`, `"standard"`, `"terse"`, `"minimal"`. Values: integer counts. Default: `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`. See `shared/output-compression.md`. |
 | `tokens.output_tokens_per_agent` | object | — | Raw output token count per agent. Keys are agent IDs (e.g., `"fg-410"`). Values: integer token counts. Used by the retrospective to detect compression drift. Default: `{}`. |
+| `build_graph` | object | No | Build system intelligence metrics. Written by `build-code-graph.sh` after cross-file edge resolution. |
+| `build_graph.edges_total` | integer | — | Total number of IMPORTS edges in the code graph. Default: 0. |
+| `build_graph.edges_resolved` | integer | — | Edges resolved via same-module or declared-dependency matching (confidence: `resolved`). Default: 0. |
+| `build_graph.edges_module_inferred` | integer | — | Edges resolved via undeclared cross-module matching (confidence: `module-inferred`). Default: 0. |
+| `build_graph.edges_heuristic` | integer | — | Edges resolved via heuristic basename matching (confidence: `heuristic`). Default: 0. |
+| `build_graph.edges_unresolved` | integer | — | Import nodes with no matching target file. Default: 0. |
+| `build_graph.resolution_accuracy` | float | — | Fraction of edges that are `resolved` or `module-inferred` (0.0-1.0). Higher is better. Default: 0.0. |
+| `cost_alerting` | object | Yes | Budget alerting runtime state. Created by `cost-alerting.sh init` at PREFLIGHT. |
+| `cost_alerting.enabled` | boolean | Yes | Whether cost alerting is active. Default: `true`. |
+| `cost_alerting.thresholds` | float[] | Yes | Three ascending fractions [INFO, WARNING, CRITICAL]. Default: `[0.50, 0.75, 0.90]`. |
+| `cost_alerting.per_stage_limits` | object | Yes | Token budget per stage. Auto-computed or explicit from config. Keys are lowercase stage names. |
+| `cost_alerting.alerts_issued` | string[] | Yes | Alert levels already issued this run (deduplication). Possible values: `"INFO"`, `"WARNING"`, `"CRITICAL"`, `"EXCEEDED"`. |
+| `cost_alerting.last_alert_level` | string | Yes | Most recent alert level. One of: `"OK"`, `"INFO"`, `"WARNING"`, `"CRITICAL"`, `"EXCEEDED"`. |
+| `cost_alerting.routing_override` | object\|null | Yes | Temporary model routing override from cost downgrade. Null when not active. Keys are agent IDs, values are model tier strings. |
+| `context` | object | Yes | Context degradation guard runtime state. Tracks context size metrics for quality protection. |
+| `context.peak_tokens` | integer | Yes | Highest estimated context size observed in this run. Default: 0. |
+| `context.condensation_triggers` | integer | Yes | Number of times the context guard forced condensation this run. Default: 0. |
+| `context.per_stage_peak` | object | Yes | Peak context size per stage. Keys are lowercase stage names, values are integer token counts. |
+| `context.last_estimated_tokens` | integer | Yes | Most recent context size estimate passed to `context-guard.sh check`. Default: 0. |
+| `context.guard_checks` | integer | Yes | Total context guard checks performed this run. Default: 0. |
+| `cost.per_stage` | object | Yes | Per-stage cost breakdown. Keys are stage names. Values: `{ "tokens": <int>, "cost_usd": <float>, "score_delta": <int\|null> }`. Stages without score impact have `score_delta: null`. Default: `{}`. |
+| `cost.budget_remaining_tokens` | integer | Yes | Remaining token budget (`budget_ceiling - estimated_total`). 0 when no ceiling set. |
+| `cost.efficiency_score` | float | Yes | Quality points gained per 100K tokens spent. Computed as `quality_delta / (tokens_spent / 100000)`. Default: 0.0. |
 | `telemetry` | object | No | OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` via orchestrator calls at stage boundaries. |
 | `telemetry.spans` | array | — | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. Default: `[]`. |
 | `telemetry.metrics` | object | — | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`, `"findings.critical_count"`). Values are numbers. Updated at stage boundaries. Default: `{}`. |
@@ -443,6 +484,11 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `confidence.complexity` | number | — | Codebase complexity dimension score (0.0-1.0, inverted -- higher means simpler). Based on affected file count, cross-component changes, cyclomatic complexity. |
 | `confidence.history` | number | — | Historical success rate dimension score (0.0-1.0). Based on last 5 runs for the same `domain_area`. 0.3 when no prior runs exist. |
 | `confidence.gate_decision` | string | — | Gate decision after confidence evaluation. Valid values: `"PROCEED"` (HIGH confidence), `"ASK"` (MEDIUM -- user confirmation requested), `"SUGGEST_SHAPE"` (LOW -- `/forge-shape` recommended). In autonomous mode, always logged but not enforced. |
+| `eval` | object | No | Last eval run metadata. Informational only, not consumed by pipeline agents. Updated by `eval-runner.sh` after a live eval run completes (best-effort -- skipped if no `state.json` exists). |
+| `eval.last_suite` | string | — | Name of the last eval suite that was run (e.g., `"lite"`, `"smoke"`). |
+| `eval.last_run_timestamp` | string | — | ISO 8601 timestamp of the last eval run completion. |
+| `eval.last_pass_rate` | number | — | Pass rate (0.0-1.0) from the last eval run. |
+| `eval.last_result_file` | string | — | Relative path to the result JSON file from the last eval run (e.g., `"evals/pipeline/results/2026-04-14-10-30-00-lite.json"`). |
 
 ### tokens.by_stage entry schema
 
@@ -557,6 +603,33 @@ Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metad
   }
 }
 ```
+
+---
+
+### ai_quality_tracking (object, optional)
+
+Tracks AI-specific finding patterns across pipeline runs. Created by `fg-700-retrospective` on first detection of `AI-*` findings. Persists across runs (not reset by `/forge-reset`).
+
+```json
+{
+  "ai_quality_tracking": {
+    "run_counts": {
+      "AI-LOGIC-ASYNC": 4,
+      "AI-PERF-N-PLUS-ONE": 2
+    },
+    "promoted_preempts": [
+      "SCOUT-AI-LOGIC-ASYNC"
+    ],
+    "last_updated": "2026-04-14T10:30:00Z"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_counts` | `object<string, number>` | Count of runs where each `AI-*` category was detected |
+| `promoted_preempts` | `string[]` | SCOUT-AI categories that have been promoted to PREEMPT items |
+| `last_updated` | `string (ISO 8601)` | Timestamp of last update |
 
 ---
 
@@ -772,7 +845,7 @@ All other fields in the Field Reference table marked "Yes" are also required; th
 
 ### Migration State (stored in `state.json.migration` during migration runs)
 
-During migration mode (triggered by `/migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
+During migration mode (triggered by `/forge-migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -929,7 +1002,7 @@ The orchestrator detects the state version at PREFLIGHT (Stage 0) and applies mi
 | `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
 | `"DECOMPOSED"` | - | Requirement decomposed into multiple features; sprint orchestrator taking over |
 
-Migration states are used exclusively by `fg-160-migration-planner` during `/migration` runs. They are not part of the standard pipeline flow.
+Migration states are used exclusively by `fg-160-migration-planner` during `/forge-migration` runs. They are not part of the standard pipeline flow.
 
 **Multi-module only states** (used in `modules[].story_state`, never at top level):
 

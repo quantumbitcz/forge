@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "echo/print/var_dump — use a PSR-3 logger (Monolog) instead.",
+      "message": "echo/print/var_dump \u2014 use a PSR-3 logger (Monolog) instead.",
       "fix_hint": "Inject Psr\\Log\\LoggerInterface and use $logger->info/debug/warning.",
       "example_ref": "php/logging.md#structured-logging",
       "scope": "main"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-EXEC",
-      "message": "Dynamic code/command execution — high risk of injection.",
+      "message": "Dynamic code/command execution \u2014 high risk of injection.",
       "fix_hint": "Avoid dynamic execution; use escapeshellarg() if shell commands are unavoidable.",
       "example_ref": "php/security.md#code-execution",
       "scope": "all"
@@ -48,7 +48,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
       "severity": "CRITICAL",
       "category": "SEC-SQL",
-      "message": "SQL string concatenation — risk of SQL injection.",
+      "message": "SQL string concatenation \u2014 risk of SQL injection.",
       "fix_hint": "Use PDO prepared statements with parameterized queries.",
       "example_ref": "php/security.md#sql-injection",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Catching \\Throwable — catches Error (OOM, type errors) along with exceptions.",
+      "message": "Catching \\Throwable \u2014 catches Error (OOM, type errors) along with exceptions.",
       "fix_hint": "Catch \\Exception or specific exception types; let fatal Errors propagate.",
       "example_ref": "php/exceptions.md#catch-throwable",
       "scope": "all"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|===",
       "severity": "INFO",
       "category": "QUAL-TYPE",
-      "message": "Loose comparison (==) — type juggling produces surprising results in PHP.",
+      "message": "Loose comparison (==) \u2014 type juggling produces surprising results in PHP.",
       "fix_hint": "Use strict comparison (===) to avoid type coercion.",
       "example_ref": "php/type-safety.md#strict-comparison",
       "scope": "all"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|@param|@return|@var|@throws|@method|@property",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "@ error suppression operator — hides bugs and makes debugging impossible.",
+      "message": "@ error suppression operator \u2014 hides bugs and makes debugging impossible.",
       "fix_hint": "Remove @ and handle the error explicitly with try/catch or null checks.",
       "example_ref": "php/exceptions.md#error-suppression",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|^\\s*'|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named methods or use early returns.",
       "example_ref": "php/readability.md#nesting",
       "scope": "all"
@@ -108,7 +108,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*#|const\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a class constant or const with a descriptive name.",
       "example_ref": "php/readability.md#magic-numbers",
       "scope": "main"
@@ -163,8 +163,44 @@
       "exclude_pattern": "^\\s*//|^\\s*#|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "PH-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "PH-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "PH-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

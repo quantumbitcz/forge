@@ -50,6 +50,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
    - Convergence: `max_iterations` 3-20, `plateau_threshold` 0-10, `plateau_patience` 1-5, `target_score` >= `pass_threshold` and <= 100
    - Sprint: `sprint.poll_interval_seconds` 10-120, `sprint.dependency_timeout_minutes` 5-180
    - Tracking: `tracking.archive_after_days` 30-365 or 0 (disabled)
+   - Build graph: `build_graph.introspection` (boolean, default `true`), `build_graph.introspection_timeout_seconds` 10-300 (default 60), `build_graph.fallback` must be `heuristic` or `skip` (default `heuristic`), `build_graph.cache_enabled` (boolean, default `true`), `build_graph.module_boundary_discovery` (boolean, default `true`), `build_graph.exclude_external_deps` (boolean, default `false`)
 3. Read `forge-log.md` (PREEMPT items for the domain area, last 3 runs).
 4. Check `.forge/state.json` for interrupted runs:
    - If `complete: false`: validate checkpoint artifacts, detect git drift via `git diff` against `last_commit_sha`.
@@ -569,7 +570,7 @@ The orchestrator detects the pipeline mode from the requirement prefix at PREFLI
 7. Stage 6 (REVIEW): Runs normally with full reviewer set. `fg-417-dependency-reviewer` is especially important — verifies no deprecated APIs remain.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. Documentation updates include migration notes and upgraded version references.
 
-The `/migration` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
+The `/forge-migration` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
 
 See `agents/fg-160-migration-planner.md` for the full migration state machine, rollback strategy, and phased execution model.
 
@@ -584,7 +585,7 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-412-architecture-reviewer` (verify scaffold architecture matches declared pattern), `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-dependency-reviewer` (versions just resolved, dependencies just selected). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
-The `/bootstrap-project` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
+The `/forge-bootstrap` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
 
 See `agents/fg-050-project-bootstrapper.md` for supported project types and scaffolding capabilities.
 

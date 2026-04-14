@@ -15,7 +15,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output — use a structured logger (spdlog, quill) instead.",
+      "message": "Console output \u2014 use a structured logger (spdlog, quill) instead.",
       "fix_hint": "Replace with spdlog::info/debug/warn/error or equivalent structured logger.",
       "example_ref": "cpp/logging.md#structured-logging",
       "scope": "main"
@@ -39,7 +39,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-NS",
-      "message": "using namespace std — pollutes the global namespace and causes ambiguity.",
+      "message": "using namespace std \u2014 pollutes the global namespace and causes ambiguity.",
       "fix_hint": "Use std:: prefix or selective using declarations (using std::string;).",
       "example_ref": "cpp/namespaces.md#using-directive",
       "scope": "all"
@@ -51,7 +51,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|std::make_unique|std::make_shared|placement new",
       "severity": "WARNING",
       "category": "QUAL-MEM",
-      "message": "Raw new/delete — use smart pointers (std::unique_ptr, std::make_unique) instead.",
+      "message": "Raw new/delete \u2014 use smart pointers (std::unique_ptr, std::make_unique) instead.",
       "fix_hint": "Replace with std::make_unique<T>() or std::make_shared<T>() for RAII ownership.",
       "example_ref": "cpp/memory.md#smart-pointers",
       "scope": "main"
@@ -63,7 +63,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Catch-all (...) — catches all exceptions including system errors.",
+      "message": "Catch-all (...) \u2014 catches all exceptions including system errors.",
       "fix_hint": "Catch specific exception types (std::exception, std::runtime_error).",
       "example_ref": "cpp/exceptions.md#catch-all",
       "scope": "all"
@@ -75,7 +75,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns.",
       "example_ref": "cpp/readability.md#nesting",
       "scope": "all"
@@ -87,7 +87,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|constexpr|const\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a constexpr or const variable with a descriptive name.",
       "example_ref": "cpp/readability.md#magic-numbers",
       "scope": "main"
@@ -99,7 +99,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|hardware|register|ISR|IRQ",
       "severity": "WARNING",
       "category": "PERF-BLOCK",
-      "message": "volatile for synchronization — it does not provide atomicity or memory ordering.",
+      "message": "volatile for synchronization \u2014 it does not provide atomicity or memory ordering.",
       "fix_hint": "Use std::atomic<T> for thread-safe shared state.",
       "example_ref": "cpp/concurrency.md#volatile",
       "scope": "main"
@@ -154,8 +154,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "CPP-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "CPP-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "CPP-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

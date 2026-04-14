@@ -1,6 +1,7 @@
 ---
 name: forge-fix
 description: "Start a bugfix workflow with rich source resolution. Use when you have a bug to fix, a failing test to investigate, or a ticket ID to resolve. Preferred over /forge-run bugfix: for richer source resolution. Accepts kanban ticket ID, Linear issue, or plain bug description."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point
@@ -107,7 +108,7 @@ When the orchestrator completes, relay its final output (PR URL, escalation, or 
 | Linear issue fetch fails | Fall back to description-based mode. Log WARNING about Linear unavailability |
 | Orchestrator dispatch fails | Report "Bugfix orchestrator failed to start. Check plugin installation." and STOP |
 | Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption | Suggest `/repair-state` to fix state, then retry |
+| State corruption | Suggest `/forge-repair-state` to fix state, then retry |
 
 ## See Also
 

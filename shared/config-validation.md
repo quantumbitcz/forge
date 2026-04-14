@@ -77,6 +77,24 @@ The validator is the single source of truth for config constraints. All consumer
 | `model_routing.default_tier` | enum | enum | standard | model-routing.md |
 | `infra.max_verification_tier` | 1 | 5 | 3 | CLAUDE.md |
 | `preview.max_fix_loops` | 1 | 10 | 3 | CLAUDE.md |
+| `cost_alerting.budget_ceiling_tokens` | 0 or 10000 | — | 2000000 | cost-alerting.sh |
+| `context_guard.condensation_threshold` | 5000 | 100000 | 30000 | context-guard.sh |
+| `context_guard.critical_threshold` | > condensation_threshold | — | 50000 | context-guard.sh |
+| `context_guard.max_condensation_triggers` | 1 | 20 | 5 | context-guard.sh |
+
+### Category B2: Boolean Constraints
+
+| Field | Default | Source |
+|-------|---------|--------|
+| `cost_alerting.enabled` | `true` | cost-alerting.sh |
+| `context_guard.enabled` | `true` | context-guard.sh |
+
+### Category B3: Array/Enum Constraints
+
+| Field | Valid Values | Default | Source |
+|-------|-------------|---------|--------|
+| `cost_alerting.alert_thresholds` | Array of 3 ascending floats in (0.0, 1.0) | `[0.50, 0.75, 0.90]` | cost-alerting.sh |
+| `cost_alerting.per_stage_limits` | `"auto"` or object with 10 stage keys | `"auto"` | cost-alerting.sh |
 
 ### Category C: Cross-Field Constraints
 
@@ -86,6 +104,7 @@ The validator is the single source of truth for config constraints. All consumer
 | Weight ordering | `warning_weight > info_weight` | scoring.md |
 | Target score floor | `convergence.target_score >= scoring.pass_threshold` | scoring.md |
 | Shipping score floor | `shipping.min_score >= scoring.pass_threshold` | CLAUDE.md |
+| Context guard threshold ordering | `context_guard.critical_threshold > context_guard.condensation_threshold` | context-guard.sh |
 
 ### Category D: Command Executability (optional)
 

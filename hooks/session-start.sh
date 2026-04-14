@@ -89,15 +89,58 @@ except Exception:
   if [[ -n "$_caveman_mode" && "$_caveman_mode" != "off" ]]; then
     case "$_caveman_mode" in
       lite)
-        echo "[forge] Caveman lite active. Drop filler/hedging, keep grammar and articles."
+        cat <<'RULES'
+[forge] OUTPUT COMPRESSION -- LITE MODE
+
+Drop: filler (just/really/basically/simply), hedging (perhaps/might/you could consider), pleasantries (sure/certainly/I'd be happy to), restated context (as you mentioned), transition phrases (moving on to/now let's look at).
+Keep: articles (a/an/the), full sentences, technical detail, code blocks, error messages verbatim.
+
+Exceptions: Security warnings (SEC-* CRITICAL), irreversible action confirmations, AskUserQuestion content, escalation messages, and error diagnostics (BUILD_FAILURE/TEST_FAILURE/LINT_FAILURE destined for user) always use full verbosity.
+RULES
         ;;
       full)
-        echo "[forge] Caveman mode active. Pattern: [thing] [action] [reason]. [next step]."
+        cat <<'RULES'
+[forge] OUTPUT COMPRESSION -- FULL (CAVEMAN) MODE
+
+Drop: articles (a/an/the), filler (just/really/basically/simply), pleasantries (sure/certainly/I'd be happy to), hedging (perhaps/might/you could consider), restated context (as you mentioned/based on the requirement), transition phrases (moving on to/now let's look at).
+Keep: technical terms exact, code blocks unchanged, error messages verbatim, file paths, line numbers, finding categories, severity levels.
+Pattern: [subject] [action] [reason]. [next step].
+
+Example:
+  BEFORE: "I've analyzed the authentication middleware and I believe there might be a potential issue with how the session tokens are being validated."
+  AFTER: "Auth middleware: session token validation skips expiry check. Fix: add isExpired() guard before verify()."
+
+Exceptions: Security warnings (SEC-* CRITICAL), irreversible action confirmations, AskUserQuestion content, escalation messages, and error diagnostics (BUILD_FAILURE/TEST_FAILURE/LINT_FAILURE destined for user) always use full verbosity.
+RULES
         ;;
       ultra)
-        echo "[forge] CAVEMAN ULTRA. Max compress. Abbrev all. Arrows for causality."
+        cat <<'RULES'
+[forge] OUTPUT COMPRESSION -- ULTRA (CAVEMAN) MODE
+
+Abbreviate: DB, auth, req/res, impl, config, fn, var, dep, pkg.
+Arrows: cause -> effect. No conjunctions.
+No articles. No filler. Fragments only.
+Keep: code exact, technical terms exact, numbers exact.
+
+Example:
+  BEFORE: "Review done. Score 75 (CONCERNS). 2 CRITICAL, 3 WARNING."
+  AFTER: "Rev: 75/CONCERNS. 2C 3W."
+
+Exceptions: SEC-* CRITICAL, irreversible actions, AskUserQuestion, escalations, error diagnostics -> full verbosity.
+RULES
         ;;
     esac
+  fi
+
+  # --- Statusline badge ---
+  if [[ -n "$_caveman_mode" && "$_caveman_mode" != "off" ]]; then
+    case "$_caveman_mode" in
+      lite)  _badge="CAVEMAN:LITE" ;;
+      full)  _badge="CAVEMAN" ;;
+      ultra) _badge="CAVEMAN:ULTRA" ;;
+    esac
+    # Attempt statusline emission. Graceful degradation if unsupported.
+    echo "[STATUS: ${_badge}]" 2>/dev/null || true
   fi
 
   # --- Pipeline status display ---

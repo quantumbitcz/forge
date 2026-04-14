@@ -1,6 +1,7 @@
 ---
 name: forge-review
 description: "Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 
@@ -53,7 +54,7 @@ FILES=$(git diff --name-only {base}..{head})
 **With --files:**
 Glob expansion against project root.
 
-**Filter** to source files (same extensions as `/codebase-health`):
+**Filter** to source files (same extensions as `/forge-codebase-health`):
 ```bash
 echo "$FILES" | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala|vue|svelte|html|css|scss)$'
 ```
@@ -220,7 +221,7 @@ Remaining (3):
 - **Follow project conventions.** Read `.claude/forge.local.md` for patterns. Match existing code style.
 - **Revert on regression.** If a fix breaks build/test/lint, revert it and mark as unfixable rather than cascading.
 - **Do NOT create PRs, tickets, or state files.** This skill is a pure review+fix loop.
-- **Do NOT run the check engine.** That is `/codebase-health`. This skill dispatches review agents only.
+- **Do NOT run the check engine.** That is `/forge-codebase-health`. This skill dispatches review agents only.
 - **Do NOT commit.** The caller decides when to commit. You only fix files.
 
 ## Error Handling
@@ -238,8 +239,8 @@ Remaining (3):
 
 ## See Also
 
-- `/codebase-health` -- Read-only analysis of the full codebase (no fixes)
-- `/deep-health` -- Iteratively fix all codebase quality issues with commits per iteration
-- `/verify` -- Quick build + lint + test check without review agents
-- `/security-audit` -- Focused security vulnerability scanning
+- `/forge-codebase-health` -- Read-only analysis of the full codebase (no fixes)
+- `/forge-deep-health` -- Iteratively fix all codebase quality issues with commits per iteration
+- `/forge-verify` -- Quick build + lint + test check without review agents
+- `/forge-security-audit` -- Focused security vulnerability scanning
 - `/forge-run` -- Full pipeline including review as part of the workflow

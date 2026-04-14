@@ -24,6 +24,6 @@ setup() {
 }
 
 @test "skill-prerequisites: deploy checks for dirty tree" {
-  run grep -qi 'dirty\|uncommit\|clean' "$SKILLS_DIR/deploy/SKILL.md"
+  run grep -qi 'dirty\|uncommit\|clean' "$SKILLS_DIR/forge-deploy/SKILL.md"
   assert_success
 }

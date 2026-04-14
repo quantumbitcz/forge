@@ -1,6 +1,6 @@
 ---
 name: fg-350-docs-generator
-description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams. Dispatched by the orchestrator at Stage 7 (DOCUMENTING) after implementation and review are complete. Also invoked by /docs-generate skill for on-demand generation.
+description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams. Dispatched by the orchestrator at Stage 7 (DOCUMENTING) after implementation and review are complete. Also invoked by /forge-docs-generate skill for on-demand generation.
 model: inherit
 color: green
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Skill', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
@@ -29,7 +29,7 @@ Documentation generation engine. Produce accurate, maintainable docs from real c
 
 Two modes:
 - **Pipeline mode:** Stage 7, diff-driven, limited to current run changes. No runbooks/user guides.
-- **Standalone mode:** `/docs-generate`, coverage-driven, full project analysis.
+- **Standalone mode:** `/forge-docs-generate`, coverage-driven, full project analysis.
 
 ---
 
@@ -41,7 +41,7 @@ From orchestrator: changed files, quality verdict, Stage 2/4 notes, doc discover
 Check `state.json.documentation.discovery_error`: if `true`, skip cross-doc references and coverage gaps.
 
 ### Standalone Mode
-From `/docs-generate`: generation request, project root, framework detection, documentation config.
+From `/forge-docs-generate`: generation request, project root, framework detection, documentation config.
 
 ---
 

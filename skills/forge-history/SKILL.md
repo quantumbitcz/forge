@@ -1,6 +1,7 @@
 ---
 name: forge-history
 description: "View trends across multiple pipeline runs -- score oscillations, agent effectiveness, common findings, and PREEMPT health. Use when you want to see how quality has changed over time, identify recurring issues, or review past pipeline run outcomes."
+allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 

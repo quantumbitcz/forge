@@ -1,0 +1,19 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "go",
+  "build_command": "go build ./...",
+  "test_command": "go test -race ./... -v -count=1",
+  "known_failing_tests": [
+    "TestConcurrentMapWrites"
+  ],
+  "forge_local_template": {
+    "language": "go",
+    "testing": "go-testing",
+    "commands": {
+      "build": "go build ./...",
+      "test": "go test -race ./... -v -count=1",
+      "lint": "golangci-lint run"
+    }
+  }
+}

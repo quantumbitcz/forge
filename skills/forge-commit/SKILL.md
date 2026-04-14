@@ -1,6 +1,7 @@
 ---
 name: forge-commit
 description: "Generate terse conventional commit messages from staged changes. Use when you have staged files and want a well-structured commit message that follows Conventional Commits format. Analyzes diffs, infers type and scope, presents options."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-commit -- Terse Conventional Commit Generator
@@ -114,5 +115,5 @@ The commit message itself is NEVER compressed -- only surrounding output.
 ## See Also
 
 - `/forge-review` -- review changed files before committing
-- `/verify` -- build + lint + test check
+- `/forge-verify` -- build + lint + test check
 - `/forge-caveman` -- toggle terse output mode

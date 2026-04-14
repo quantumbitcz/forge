@@ -1,6 +1,11 @@
 {
   "language": "typescript",
-  "extensions": [".ts", ".tsx", ".js", ".jsx"],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx"
+  ],
   "source": "ESLint, typescript-eslint, SonarTS",
   "rules": [
     {
@@ -22,7 +27,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "CRITICAL",
       "category": "SEC-EVAL",
-      "message": "eval() is a critical security risk — allows arbitrary code execution.",
+      "message": "eval() is a critical security risk \u2014 allows arbitrary code execution.",
       "fix_hint": "Use JSON.parse(), Function constructor (if absolutely needed), or refactor to avoid dynamic evaluation.",
       "example_ref": "typescript/security.md#no-eval",
       "scope": "all"
@@ -46,7 +51,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "Console output — use a structured logger instead in production code.",
+      "message": "Console output \u2014 use a structured logger instead in production code.",
       "fix_hint": "Replace with a logger (e.g., pino, winston) or remove before merging.",
       "example_ref": "typescript/logging.md#structured-logging",
       "scope": "main"
@@ -70,7 +75,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|!==|!=|\"[^\"]*\"",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Non-null assertion (!) — risks runtime TypeError if value is null/undefined.",
+      "message": "Non-null assertion (!) \u2014 risks runtime TypeError if value is null/undefined.",
       "fix_hint": "Use optional chaining (?.), nullish coalescing (??), or add a proper null check.",
       "example_ref": "typescript/null-safety.md#non-null-assertion",
       "scope": "all"
@@ -82,7 +87,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|^\\s*`|^\\s*\"",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels with 2-space indent) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels with 2-space indent) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use early returns / guard clauses.",
       "example_ref": "typescript/readability.md#nesting",
       "scope": "all"
@@ -94,7 +99,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|const\\s|\"[^\"]*\"",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a const with a descriptive name.",
       "example_ref": "typescript/readability.md#magic-numbers",
       "scope": "main"
@@ -106,7 +111,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|theme|token|--[a-z]|palette|var\\(|colors?\\s*[:=]|_note|_comment",
       "severity": "WARNING",
       "category": "DESIGN-TOKEN",
-      "message": "Hardcoded hex color — use a theme token or CSS custom property instead.",
+      "message": "Hardcoded hex color \u2014 use a theme token or CSS custom property instead.",
       "fix_hint": "Replace with a semantic token (e.g., bg-background, text-foreground) or CSS var(--color-*).",
       "example_ref": "typescript/design-tokens.md#hardcoded-colors",
       "scope": "main"
@@ -118,7 +123,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|theme|token|var\\(|--[a-z]|palette",
       "severity": "WARNING",
       "category": "DESIGN-TOKEN",
-      "message": "Hardcoded rgb/rgba color — use a theme token or CSS custom property.",
+      "message": "Hardcoded rgb/rgba color \u2014 use a theme token or CSS custom property.",
       "fix_hint": "Replace with a CSS var(--color-*) or theme token.",
       "example_ref": "typescript/design-tokens.md#hardcoded-colors",
       "scope": "main"
@@ -130,7 +135,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|max-width|max-height|min-width|min-height",
       "severity": "WARNING",
       "category": "DESIGN-MOTION",
-      "message": "Animating layout property — causes expensive reflow. Use transform/opacity instead.",
+      "message": "Animating layout property \u2014 causes expensive reflow. Use transform/opacity instead.",
       "fix_hint": "Replace with transform: translate/scale or opacity transitions for GPU-composited animation.",
       "example_ref": "typescript/animation.md#gpu-animation",
       "scope": "main"
@@ -142,7 +147,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "DESIGN-MOTION",
-      "message": "CSS keyframes animation defined — ensure prefers-reduced-motion is respected nearby.",
+      "message": "CSS keyframes animation defined \u2014 ensure prefers-reduced-motion is respected nearby.",
       "fix_hint": "Add @media (prefers-reduced-motion: reduce) { animation: none; } for this keyframe.",
       "example_ref": "typescript/animation.md#reduced-motion",
       "scope": "main"
@@ -186,8 +191,99 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "TS-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-LOGIC-001",
+      "name": "ai-return-in-finally",
+      "pattern": "finally\\s*\\{[^}]*\\breturn\\b",
+      "exclude_pattern": "^\\s*(//|\\*)",
+      "severity": "WARNING",
+      "category": "AI-LOGIC-RETURN",
+      "message": "Return statement in finally block overrides the return value from try/catch",
+      "fix_hint": "Move the return outside the try/catch/finally or use a result variable.",
+      "scope": "all"
+    },
+    {
+      "id": "TS-AI-LOGIC-002",
+      "name": "ai-fire-and-forget-async",
+      "pattern": "(?<!await\\s)(?<!return\\s)\\b\\w+\\.(save|create|update|delete|remove|destroy|insert|upsert)\\(",
+      "exclude_pattern": "^\\s*(//|\\*)|test|mock|stub|\\.on\\(|\\.addEventListener",
+      "severity": "INFO",
+      "category": "AI-LOGIC-ASYNC",
+      "message": "Possible fire-and-forget async operation -- mutation method called without await",
+      "fix_hint": "Add 'await' if this is an async operation, or explicitly handle the returned Promise.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-PERF-001",
+      "name": "ai-full-lodash-import",
+      "pattern": "import\\s+(?:_|lodash)\\s+from\\s+['\"]lodash['\"]|require\\(['\"]lodash['\"]\\)",
+      "exclude_pattern": "^\\s*(//|\\*)",
+      "severity": "INFO",
+      "category": "AI-PERF-BUNDLE",
+      "message": "Full lodash import adds ~70KB to bundle -- use per-function imports for tree-shaking",
+      "fix_hint": "Replace with 'import debounce from \"lodash/debounce\"' or use lodash-es for ESM tree-shaking.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-PERF-002",
+      "name": "ai-inline-object-prop",
+      "pattern": "<\\w+[^>]*\\bstyle=\\{\\{",
+      "exclude_pattern": "^\\s*(//|\\*)|test|stories|storybook",
+      "severity": "INFO",
+      "category": "AI-PERF-REDUNDANT-RENDER",
+      "message": "Inline style object in JSX creates a new object on every render, causing unnecessary re-renders in child components",
+      "fix_hint": "Extract the style object to a const outside the component or use useMemo/CSS classes.",
+      "scope": "main"
+    },
+    {
+      "id": "TS-AI-PERF-003",
+      "name": "ai-sync-fs-in-server",
+      "pattern": "\\bfs\\.(readFileSync|writeFileSync|appendFileSync|mkdirSync|existsSync|statSync)\\b",
+      "exclude_pattern": "^\\s*(//|\\*)|test|config|setup|init|bootstrap|cli|bin/|scripts/",
+      "severity": "WARNING",
+      "category": "AI-PERF-BLOCKING",
+      "message": "Synchronous file system operation blocks the Node.js event loop -- use async fs API",
+      "fix_hint": "Use fs.promises.readFile / fs.promises.writeFile or the callback-based API.",
       "scope": "main"
     }
   ],
@@ -212,7 +308,7 @@
         "import.*from\\s+['\"]mongoose",
         "import.*from\\s+['\"]drizzle"
       ],
-      "message": "Domain/model layer must not import ORM or database libraries directly — use repository interfaces",
+      "message": "Domain/model layer must not import ORM or database libraries directly \u2014 use repository interfaces",
       "severity": "WARNING",
       "category": "STRUCT-BOUNDARY"
     }

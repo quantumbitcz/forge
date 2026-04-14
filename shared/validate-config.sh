@@ -14,6 +14,19 @@ yaml_content=$(sed -n '/^```yaml/,/^```$/p' "$CONFIG_FILE" | sed '1d;$d')
 
 [[ -z "$yaml_content" ]] && { echo "ERROR: No \`\`\`yaml block found in $CONFIG_FILE"; exit 1; }
 
+_validate_platform_config() {
+  local config_file="$1"
+  local mode
+  mode=$(awk '/^platform:/{found=1;next} found&&/windows_mode:/{gsub(/.*windows_mode:[[:space:]]*/,"");gsub(/[[:space:]#].*/,"");gsub(/['"'"'"]/,"");print;exit} found&&/^[^ ]/{exit}' "$config_file" 2>/dev/null)
+  if [[ -n "$mode" ]]; then
+    case "$mode" in
+      auto|wsl|gitbash) : ;;
+      *) echo "PREFLIGHT ERROR: platform.windows_mode must be auto|wsl|gitbash, got '$mode'" >&2; return 1 ;;
+    esac
+  fi
+  return 0
+}
+
 # Use Python for reliable YAML parsing and validation
 export FORGE_YAML_CONTENT="$yaml_content"
 python3 << 'PYEOF'
@@ -217,6 +230,16 @@ if convergence:
                 errors.append(f"convergence.plateau_threshold ({pt2}) must be 0-10")
         except (ValueError, TypeError):
             pass
+
+# --- Phase: Platform config validation ---
+platform = config.get("platform", {})
+if platform:
+    checks += 1
+    wm = platform.get("windows_mode")
+    if wm is not None:
+        VALID_WINDOWS_MODES = {"auto", "wsl", "gitbash"}
+        if wm not in VALID_WINDOWS_MODES:
+            warnings.append(f'platform.windows_mode "{wm}" is not valid (allowed: auto, wsl, gitbash)')
 
 # --- Output ---
 if errors:

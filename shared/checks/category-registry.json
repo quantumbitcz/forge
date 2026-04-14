@@ -83,6 +83,10 @@
     "FLAG-STALE": { "description": "Stale feature flag — flag fully rolled out but code branches still present", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer"] },
     "FLAG-UNTESTED": { "description": "Feature-flagged code path without tests for both flag states", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
     "FLAG-HARDCODED": { "description": "Hardcoded boolean toggle that should be a feature flag", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 6, "affinity": ["fg-410-code-reviewer"] },
-    "FLAG-CLEANUP": { "description": "Feature flag eligible for cleanup (fully rolled out, no rollback risk)", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 6, "affinity": ["fg-410-code-reviewer"] }
+    "FLAG-CLEANUP": { "description": "Feature flag eligible for cleanup (fully rolled out, no rollback risk)", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 6, "affinity": ["fg-410-code-reviewer"] },
+    "AI-LOGIC": { "description": "AI-generated logic bug (null handling, boundary, condition, type coercion, return, state, async, edge case)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
+    "AI-PERF": { "description": "AI-generated performance bug (N+1, excessive I/O, memory leak, quadratic, redundant render, blocking, bundle)", "agents": ["fg-416-performance-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
+    "AI-CONCURRENCY": { "description": "AI-generated concurrency bug (race condition, deadlock, atomicity, starvation, lost update)", "agents": ["fg-410-code-reviewer", "fg-416-performance-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-410-code-reviewer", "fg-416-performance-reviewer"] },
+    "AI-SEC": { "description": "AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] }
   }
 }

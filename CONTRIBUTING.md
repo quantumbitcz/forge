@@ -48,7 +48,7 @@ Every agent in `agents/` must have frontmatter with `name` (matching filename wi
 
 ### Skills are the user-facing entry points
 
-Users interact via `/forge-run`, `/forge-fix`, `/forge-init`, `/bootstrap-project`, `/deploy`, and other skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
+Users interact via `/forge-run`, `/forge-fix`, `/forge-init`, `/forge-bootstrap`, `/forge-deploy`, and other skills. Skills live in `skills/{name}/SKILL.md` with YAML frontmatter.
 
 ### State is local and gitignored
 

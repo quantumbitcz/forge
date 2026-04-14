@@ -1,0 +1,18 @@
+{
+  "fixture_version": "1.0.0",
+  "created": "2026-04-14",
+  "language": "typescript",
+  "build_command": "npm install",
+  "test_command": "npm test -- --grep Comment",
+  "known_failing_tests": [],
+  "forge_local_template": {
+    "language": "typescript",
+    "framework": "express",
+    "testing": "vitest",
+    "commands": {
+      "build": "npm install",
+      "test": "npm test",
+      "lint": "npx eslint src/"
+    }
+  }
+}

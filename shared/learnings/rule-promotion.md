@@ -85,6 +85,33 @@ Promoted rules are written to `shared/checks/learned-rules-override.json` in the
 }
 ```
 
+## SCOUT-AI Learning Loop
+
+AI-specific findings (`AI-*` categories) feed the learning pipeline through SCOUT-AI tracking:
+
+1. Review agents emit `AI-*` findings during REVIEWING stage
+2. Implementer fixes findings during convergence
+3. Retrospective (`fg-700`) tracks recurring `AI-*` categories in `state.json.ai_quality_tracking.run_counts`
+4. After 3+ occurrences across runs: retrospective generates a PREEMPT item with `source: SCOUT-AI-{category}`
+5. PREEMPT items start at MEDIUM confidence (auto-discovered), promote to HIGH after 3 successful applications
+6. HIGH-confidence items with 3+ runs at HIGH become candidates for L1 rule promotion
+
+SCOUT-AI source entries follow the standard candidate schema with `source` prefixed by `SCOUT-AI-`:
+
+```json
+{
+  "id": "LEARNED-AI-001",
+  "pattern": "\\b\\w+\\.(save|create|update|delete)\\(",
+  "severity": "INFO",
+  "category": "AI-LOGIC-ASYNC",
+  "language": "typescript",
+  "occurrences": 5,
+  "runs_seen": 3,
+  "source": "SCOUT-AI-LOGIC-ASYNC",
+  "status": "candidate"
+}
+```
+
 ## Files
 
 | File | Purpose |

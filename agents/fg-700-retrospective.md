@@ -245,6 +245,20 @@ Do NOT promote rules directly — orchestrator handles promotion at next PREFLIG
 
 See `shared/learnings/rule-promotion.md` for candidate schema, status lifecycle, and promotion algorithm.
 
+#### 2i. AI Pattern Tracking (v2.5.0)
+
+Track recurring AI-specific findings (`AI-*` categories) across pipeline runs:
+
+1. Read `state.json.ai_quality_tracking.run_counts` (initialize if absent)
+2. For each `AI-*` finding in this run's findings:
+   - Increment `run_counts[category]`
+3. If any category reaches 3+ occurrences:
+   - Generate PREEMPT item: `SCOUT-AI-{category}`, confidence: MEDIUM, source: auto-discovered
+   - Add category to `ai_quality_tracking.promoted_preempts` array
+4. Update `ai_quality_tracking.last_updated` timestamp
+
+Categories: See `shared/checks/ai-code-patterns.md` for full reference.
+
 #### 2j. Telemetry Analysis (v1.19+)
 
 When `observability.enabled` and spans available:

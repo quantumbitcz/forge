@@ -103,3 +103,18 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
   done
   [[ "$missing" -eq 0 ]] || fail "$missing framework local templates missing tracking archive param"
 }
+
+# ---------------------------------------------------------------------------
+# compression_eval config documented in CLAUDE.md
+# ---------------------------------------------------------------------------
+@test "preflight-constraints: compression_eval params in CLAUDE.md" {
+  grep -q "compression_eval.enabled" "$CLAUDE_MD" \
+    || fail "compression_eval.enabled not in CLAUDE.md PREFLIGHT"
+  grep -q "compression_eval.drift_threshold_pct" "$CLAUDE_MD" \
+    || fail "compression_eval.drift_threshold_pct not in CLAUDE.md PREFLIGHT"
+}
+
+@test "preflight-constraints: config schema includes compression_eval" {
+  grep -q '"compression_eval"' "$PLUGIN_ROOT/shared/config-schema.json" \
+    || fail "compression_eval not in config-schema.json"
+}

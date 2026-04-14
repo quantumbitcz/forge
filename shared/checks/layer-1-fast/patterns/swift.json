@@ -12,7 +12,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|!=|!==|@IBOutlet",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Force unwrap (!) — crashes at runtime if the value is nil.",
+      "message": "Force unwrap (!) \u2014 crashes at runtime if the value is nil.",
       "fix_hint": "Use optional binding (if let / guard let), nil-coalescing (??), or optional chaining (?.) instead.",
       "example_ref": "swift/optionals.md#force-unwrap",
       "scope": "all"
@@ -24,7 +24,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Force cast (as!) — crashes at runtime if the type doesn't match.",
+      "message": "Force cast (as!) \u2014 crashes at runtime if the type doesn't match.",
       "fix_hint": "Use conditional cast (as?) with optional binding instead.",
       "example_ref": "swift/optionals.md#force-cast",
       "scope": "all"
@@ -36,7 +36,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|@IBOutlet|@IBAction",
       "severity": "WARNING",
       "category": "QUAL-NULL",
-      "message": "Implicitly unwrapped optional — crashes if accessed while nil.",
+      "message": "Implicitly unwrapped optional \u2014 crashes if accessed while nil.",
       "fix_hint": "Use a regular optional (?) with proper unwrapping, unless required for Interface Builder outlets.",
       "example_ref": "swift/optionals.md#implicitly-unwrapped",
       "scope": "all"
@@ -60,7 +60,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "INFO",
       "category": "CONV-LOG",
-      "message": "print() in production code — use os_log or a structured logger instead.",
+      "message": "print() in production code \u2014 use os_log or a structured logger instead.",
       "fix_hint": "Replace with os_log, Logger (iOS 14+), or a project-specific logging framework.",
       "example_ref": "swift/logging.md#structured-logging",
       "scope": "main"
@@ -72,7 +72,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-EXCEPT",
-      "message": "Force try (try!) — crashes at runtime if the call throws.",
+      "message": "Force try (try!) \u2014 crashes at runtime if the call throws.",
       "fix_hint": "Use do/catch or try? with optional binding for recoverable errors.",
       "example_ref": "swift/error-handling.md#force-try",
       "scope": "all"
@@ -84,7 +84,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*",
       "severity": "WARNING",
       "category": "QUAL-READ",
-      "message": "Deep nesting detected (4+ indent levels) — reduces readability.",
+      "message": "Deep nesting detected (4+ indent levels) \u2014 reduces readability.",
       "fix_hint": "Extract inner logic into named functions or use guard statements for early exits.",
       "example_ref": "swift/readability.md#nesting",
       "scope": "all"
@@ -96,7 +96,7 @@
       "exclude_pattern": "^\\s*//|^\\s*\\*|\"[^\"]*\"|let\\s+\\w+\\s*=\\s*\\d|static\\s+let",
       "severity": "INFO",
       "category": "QUAL-READ",
-      "message": "Magic number in comparison — extract to a named constant for clarity.",
+      "message": "Magic number in comparison \u2014 extract to a named constant for clarity.",
       "fix_hint": "Define a static let constant with a descriptive name.",
       "example_ref": "swift/readability.md#magic-numbers",
       "scope": "main"
@@ -151,8 +151,44 @@
       "exclude_pattern": "^\\s*//|test|fixture|example|@example\\.com|@test\\.com|@localhost|noreply|no-reply",
       "severity": "INFO",
       "category": "SEC-PII",
-      "message": "Email address detected in source — verify this is not PII",
+      "message": "Email address detected in source \u2014 verify this is not PII",
       "fix_hint": "If this is a real email address, consider moving to configuration. Test fixtures should use @example.com.",
+      "scope": "main"
+    },
+    {
+      "id": "SW-AI-SEC-001",
+      "name": "ai-hardcoded-jwt",
+      "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.eyJ[A-Za-z0-9_-]{20,}",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|mock|example|fake",
+      "severity": "CRITICAL",
+      "category": "AI-SEC-HARDCODED-SECRET",
+      "message": "Hardcoded JWT token detected -- AI generators often embed sample tokens that may be valid",
+      "fix_hint": "Remove hardcoded JWT. Load tokens from environment variables or secret managers at runtime.",
+      "scope": "main",
+      "exclude_if_existing": [
+        "SEC-SECRET"
+      ]
+    },
+    {
+      "id": "SW-AI-SEC-002",
+      "name": "ai-cors-wildcard",
+      "pattern": "(cors|access[_-]?control[_-]?allow[_-]?origin).*['\"]\\*['\"]",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|dev\\.config|development",
+      "severity": "WARNING",
+      "category": "AI-SEC-INSECURE-DEFAULT",
+      "message": "CORS wildcard origin (*) -- AI generators default to permissive CORS from tutorial code",
+      "fix_hint": "Restrict CORS to specific allowed origins. Use environment-based origin configuration.",
+      "scope": "main"
+    },
+    {
+      "id": "SW-AI-SEC-003",
+      "name": "ai-verbose-error-response",
+      "pattern": "(res|response)\\.(json|send|write)\\(.*\\b(err|error|exception|stack|traceback)\\b",
+      "exclude_pattern": "^\\s*(//|#|\\*|--|%)|test|fixture|log|debug",
+      "severity": "WARNING",
+      "category": "AI-SEC-VERBOSE-ERROR",
+      "message": "Error object sent directly in response -- may expose internal details to clients",
+      "fix_hint": "Return a generic error message to the client. Log the full error server-side.",
       "scope": "main"
     }
   ],

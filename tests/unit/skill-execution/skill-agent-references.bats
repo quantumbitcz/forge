@@ -7,7 +7,7 @@ setup() {
 }
 
 # Thin launcher skills that dispatch agents
-THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint bootstrap-project migration)
+THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint forge-bootstrap forge-migration)
 
 @test "skill-agent-refs: thin launchers reference valid agents" {
   for s in "${THIN_LAUNCHERS[@]}"; do

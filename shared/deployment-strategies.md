@@ -1,10 +1,10 @@
 # Deployment Strategies
 
-Strategy-aware deployment orchestration for the `/deploy` skill. Extends simple command execution with metric-based canary progression, blue-green traffic switching, and rolling update monitoring.
+Strategy-aware deployment orchestration for the `/forge-deploy` skill. Extends simple command execution with metric-based canary progression, blue-green traffic switching, and rolling update monitoring.
 
 ## Strategy Selection
 
-When `/deploy` is invoked, the strategy is resolved in this order:
+When `/forge-deploy` is invoked, the strategy is resolved in this order:
 
 1. Explicit `--strategy=<name>` flag on the command
 2. Per-environment `strategy` in `forge.local.md` (e.g., `production.strategy: canary`)
@@ -171,7 +171,7 @@ During active deployment, `state.json` includes:
 
 | Agent | Role |
 |-------|------|
-| `/deploy` skill | Orchestrates strategy execution, dispatches fg-620 |
+| `/forge-deploy` skill | Orchestrates strategy execution, dispatches fg-620 |
 | `fg-620-deploy-verifier` | Monitors metrics, produces findings |
 | `fg-610-infra-deploy-verifier` | Validates strategy configuration at PREFLIGHT |
 | `fg-419-infra-deploy-reviewer` | Reviews strategy configuration in code review |

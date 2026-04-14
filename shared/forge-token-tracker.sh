@@ -120,6 +120,7 @@ if agent not in tokens["by_agent"]:
 ba = tokens["by_agent"][agent]
 ba["input"] = ba.get("input", 0) + input_t
 ba["output"] = ba.get("output", 0) + output_t
+ba["dispatch_count"] = ba.get("dispatch_count", 0) + 1
 if model:
     ba["model"] = model
 
@@ -189,17 +190,40 @@ def classify_model(model_name):
     return "sonnet"
 
 total_cost = 0.0
+per_agent_costs = {}
 for a_name, a_data in tokens["by_agent"].items():
     m = a_data.get("model", "") or ""
     model_class = classify_model(m)
     pricing = PRICING.get(model_class, DEFAULT_PRICING)
-    total_cost += a_data.get("input", 0) * pricing["input"] / 1_000_000
-    total_cost += a_data.get("output", 0) * pricing["output"] / 1_000_000
+    agent_cost = (
+        a_data.get("input", 0) * pricing["input"] / 1_000_000
+        + a_data.get("output", 0) * pricing["output"] / 1_000_000
+    )
+    per_agent_costs[a_name] = agent_cost
+    total_cost += agent_cost
+
+# Compute per-stage USD cost
+stage_costs = {}
+for stage_name, stage_data in tokens["by_stage"].items():
+    stage_cost = 0.0
+    for agent_name in stage_data.get("agents", []):
+        if agent_name in per_agent_costs:
+            agent_total_tokens = tokens["by_agent"][agent_name].get("input", 0) + tokens["by_agent"][agent_name].get("output", 0)
+            stage_total_tokens = stage_data.get("input", 0) + stage_data.get("output", 0)
+            if agent_total_tokens > 0:
+                stage_cost += (stage_total_tokens / agent_total_tokens) * per_agent_costs[agent_name]
+    stage_costs[stage_name] = round(stage_cost, 6)
 
 # Update cost section
 if "cost" not in state:
     state["cost"] = {"wall_time_seconds": 0, "stages_completed": 0, "estimated_cost_usd": 0.0}
 state["cost"]["estimated_cost_usd"] = round(total_cost, 6)
+state["cost"]["per_stage"] = stage_costs
+
+# Budget remaining
+ceiling = tokens.get("budget_ceiling", 0)
+if ceiling > 0:
+    state["cost"]["budget_remaining_tokens"] = max(0, ceiling - tokens["estimated_total"])
 
 json.dump(state, sys.stdout, indent=2)
 '

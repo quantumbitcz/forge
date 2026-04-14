@@ -115,3 +115,72 @@ assert d['tokens']['by_agent']['fg-200-planner']['output'] == 3000
   run bash "$SCRIPT" check --forge-dir "$forge_dir"
   assert_success
 }
+
+@test "forge-token-tracker: dispatch_count increments per agent" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$STATE_WRITER" write '{"version":"1.5.0","_seq":0,"tokens":{"estimated_total":0,"budget_ceiling":2000000,"by_stage":{},"by_agent":{},"budget_warning_issued":false}}' --forge-dir "$forge_dir"
+
+  bash "$SCRIPT" record implementing fg-300-implementer 5000 2000 sonnet --forge-dir "$forge_dir"
+  bash "$SCRIPT" record implementing fg-300-implementer 3000 1500 sonnet --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+agent = d['tokens']['by_agent']['fg-300-implementer']
+assert agent.get('dispatch_count') == 2, f'expected 2, got {agent.get(\"dispatch_count\")}'
+"
+}
+
+@test "forge-token-tracker: per-stage cost computed from agent costs" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$STATE_WRITER" write '{"version":"1.5.0","_seq":0,"tokens":{"estimated_total":0,"budget_ceiling":2000000,"by_stage":{},"by_agent":{},"budget_warning_issued":false},"cost":{"wall_time_seconds":0,"stages_completed":0,"estimated_cost_usd":0.0}}' --forge-dir "$forge_dir"
+
+  bash "$SCRIPT" record implementing fg-300-implementer 10000 5000 sonnet --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+per_stage = d.get('cost', {}).get('per_stage', {})
+assert isinstance(per_stage, dict), f'per_stage should be dict, got {type(per_stage)}'
+assert d['cost']['estimated_cost_usd'] > 0, d['cost']['estimated_cost_usd']
+"
+}
+
+@test "forge-token-tracker: budget_remaining_tokens computed" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$STATE_WRITER" write '{"version":"1.5.0","_seq":0,"tokens":{"estimated_total":0,"budget_ceiling":1000000,"by_stage":{},"by_agent":{},"budget_warning_issued":false},"cost":{"wall_time_seconds":0,"stages_completed":0,"estimated_cost_usd":0.0}}' --forge-dir "$forge_dir"
+
+  bash "$SCRIPT" record implementing fg-300-implementer 50000 20000 sonnet --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+remaining = d['cost'].get('budget_remaining_tokens')
+assert remaining is not None, 'budget_remaining_tokens missing'
+assert remaining == 930000, f'expected 930000, got {remaining}'
+"
+}
+
+@test "forge-token-tracker: model_costs config overrides default pricing" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  bash "$STATE_WRITER" write '{"version":"1.5.0","_seq":0,"tokens":{"estimated_total":0,"budget_ceiling":2000000,"by_stage":{},"by_agent":{},"budget_warning_issued":false},"cost":{"wall_time_seconds":0,"stages_completed":0,"estimated_cost_usd":0.0}}' --forge-dir "$forge_dir"
+
+  bash "$SCRIPT" record implementing fg-300-implementer 1000000 500000 sonnet --forge-dir "$forge_dir"
+
+  python3 -c "
+import json
+with open('$forge_dir/state.json') as f:
+    d = json.load(f)
+# Default sonnet pricing: input 3.0/MTok, output 15.0/MTok
+# 1M input * 3.0/1M + 500K output * 15.0/1M = 3.0 + 7.5 = 10.5
+cost = d['cost']['estimated_cost_usd']
+assert 10.0 < cost < 11.0, f'expected ~10.5, got {cost}'
+"
+}

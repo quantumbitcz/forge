@@ -1,0 +1,179 @@
+{
+  "name": "convergence",
+  "version": "1.0.0",
+  "description": "10-task convergence speed measurement suite",
+  "default_timeout_minutes": 45,
+  "default_model": "sonnet",
+  "tasks": [
+    {
+      "id": "cv-01-single-fix",
+      "language": "python",
+      "difficulty": "easy",
+      "description": "KeyError from case-sensitive email lookup. Single-file fix measuring baseline convergence speed.",
+      "fixture": "python/py-01-dict-keyerror",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "tags": ["convergence", "single-file"],
+      "expected_convergence": {
+        "max_iterations": 3,
+        "expected_phase_1_iterations": 1,
+        "expected_phase_2_iterations": 1,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 0
+      }
+    },
+    {
+      "id": "cv-02-type-fix",
+      "language": "python",
+      "difficulty": "medium",
+      "description": "Circular import causing AttributeError. Multi-file fix requiring dependency restructuring.",
+      "fixture": "python/py-04-import-cyc",
+      "validation_command": "python3 -m pytest tests/ -v",
+      "tags": ["convergence", "multi-file"],
+      "expected_convergence": {
+        "max_iterations": 5,
+        "expected_phase_1_iterations": 2,
+        "expected_phase_2_iterations": 2,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 1
+      }
+    },
+    {
+      "id": "cv-03-null-fix",
+      "language": "typescript",
+      "difficulty": "easy",
+      "description": "Nullish coalescing mishandles falsy values. Quick operator fix measuring iteration efficiency.",
+      "fixture": "typescript/ts-01-null-coal",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["convergence", "single-file"],
+      "expected_convergence": {
+        "max_iterations": 3,
+        "expected_phase_1_iterations": 1,
+        "expected_phase_2_iterations": 1,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 0
+      }
+    },
+    {
+      "id": "cv-04-esm-fix",
+      "language": "typescript",
+      "difficulty": "medium",
+      "description": "ESM/CJS interop failure. Config + code changes measuring multi-concern convergence.",
+      "fixture": "typescript/ts-04-module-res",
+      "validation_command": "npx vitest run --reporter=verbose",
+      "tags": ["convergence", "multi-file"],
+      "expected_convergence": {
+        "max_iterations": 5,
+        "expected_phase_1_iterations": 2,
+        "expected_phase_2_iterations": 2,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 1
+      }
+    },
+    {
+      "id": "cv-05-sealed-fix",
+      "language": "kotlin",
+      "difficulty": "easy",
+      "description": "Non-exhaustive when on sealed class. Single branch addition measuring minimal iteration count.",
+      "fixture": "kotlin/kt-02-sealed-ex",
+      "validation_command": "./gradlew test --tests '*SealedExhaustTest*'",
+      "tags": ["convergence", "single-file"],
+      "expected_convergence": {
+        "max_iterations": 3,
+        "expected_phase_1_iterations": 1,
+        "expected_phase_2_iterations": 1,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 0
+      }
+    },
+    {
+      "id": "cv-06-flow-fix",
+      "language": "kotlin",
+      "difficulty": "medium",
+      "description": "Flow collection on wrong dispatcher. Dispatcher change measuring concurrency-aware convergence.",
+      "fixture": "kotlin/kt-04-flow-coll",
+      "validation_command": "./gradlew test --tests '*FlowCollectTest*'",
+      "tags": ["convergence", "concurrency"],
+      "expected_convergence": {
+        "max_iterations": 5,
+        "expected_phase_1_iterations": 2,
+        "expected_phase_2_iterations": 2,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 1
+      }
+    },
+    {
+      "id": "cv-07-gortn-fix",
+      "language": "go",
+      "difficulty": "easy",
+      "description": "Goroutine leak from unbuffered channel. Channel buffering fix measuring Go-specific convergence.",
+      "fixture": "go/go-01-gortn-leak",
+      "validation_command": "go test ./... -v -count=1",
+      "tags": ["convergence", "single-file"],
+      "expected_convergence": {
+        "max_iterations": 3,
+        "expected_phase_1_iterations": 1,
+        "expected_phase_2_iterations": 1,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 0
+      }
+    },
+    {
+      "id": "cv-08-ctx-fix",
+      "language": "go",
+      "difficulty": "medium",
+      "description": "Context cancellation not propagated. Context threading fix measuring multi-goroutine convergence.",
+      "fixture": "go/go-04-ctx-cancel",
+      "validation_command": "go test ./... -v -count=1 -timeout=30s",
+      "tags": ["convergence", "concurrency"],
+      "expected_convergence": {
+        "max_iterations": 5,
+        "expected_phase_1_iterations": 2,
+        "expected_phase_2_iterations": 2,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 1
+      }
+    },
+    {
+      "id": "cv-09-life-fix",
+      "language": "rust",
+      "difficulty": "easy",
+      "description": "Dangling reference from returned local borrow. Ownership fix measuring Rust borrow checker convergence.",
+      "fixture": "rust/rs-01-life-dang",
+      "validation_command": "cargo test -- --nocapture",
+      "tags": ["convergence", "single-file"],
+      "expected_convergence": {
+        "max_iterations": 3,
+        "expected_phase_1_iterations": 1,
+        "expected_phase_2_iterations": 1,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 0
+      }
+    },
+    {
+      "id": "cv-10-conc-fix",
+      "language": "rust",
+      "difficulty": "medium",
+      "description": "Unwrap panic in multi-threaded HashMap access. Concurrency fix measuring thread-safety convergence.",
+      "fixture": "rust/rs-03-unwrap-pnc",
+      "validation_command": "cargo test -- --nocapture",
+      "tags": ["convergence", "concurrency"],
+      "expected_convergence": {
+        "max_iterations": 5,
+        "expected_phase_1_iterations": 2,
+        "expected_phase_2_iterations": 2,
+        "should_not_plateau": true,
+        "should_not_regress": true,
+        "max_safety_gate_restarts": 1
+      }
+    }
+  ]
+}

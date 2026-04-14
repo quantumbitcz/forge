@@ -103,6 +103,16 @@ Categories: `QUAL-NAME`/`COMPLEX`/`MAGIC`/`LENGTH`. WARNING: misleading names. I
 
 Categories: `QUAL-KISS-ABSTRACT`/`OVERENG`. WARNING: harder to maintain. INFO: mild.
 
+#### 1.2.8 AI Code Pattern Detection
+
+AI-generated code has 1.7x more bugs than human-written code (SO Jan 2026). Watch for these patterns:
+
+**AI-LOGIC-\*:** Null dereference in chained access (`AI-LOGIC-NULL`), off-by-one in loops (`AI-LOGIC-BOUNDARY`), inverted boolean conditions (`AI-LOGIC-CONDITION`), implicit type coercion (`AI-LOGIC-TYPE-COERCE`), return in finally (`AI-LOGIC-RETURN`), stale closure state (`AI-LOGIC-STATE`), fire-and-forget async (`AI-LOGIC-ASYNC`), missing edge cases (`AI-LOGIC-EDGE`).
+
+**AI-CONCURRENCY-\*:** Shared mutable state without sync (`AI-CONCURRENCY-RACE`), inconsistent lock ordering (`AI-CONCURRENCY-DEADLOCK`), non-atomic check-then-act (`AI-CONCURRENCY-ATOMICITY`), unbounded queues (`AI-CONCURRENCY-STARVATION`), read-modify-write without locking (`AI-CONCURRENCY-LOST-UPDATE`).
+
+Severity: CRITICAL for RACE/DEADLOCK. WARNING for BOUNDARY/CONDITION/NULL/RETURN/STATE/ATOMICITY/LOST-UPDATE. INFO for TYPE-COERCE/ASYNC/EDGE/STARVATION. See `shared/checks/ai-code-patterns.md` for full reference.
+
 ---
 
 ## 2. Analysis Procedure
@@ -126,7 +136,7 @@ Return findings per `shared/checks/output-format.md`: one per line, sorted by se
 
 **Confidence (v1.18+, MANDATORY):** Every finding MUST include the `confidence` field as the 6th pipe-delimited value. See `shared/agent-defaults.md` §Confidence Reporting for when to use HIGH/MEDIUM/LOW. Omitting confidence defaults to HIGH but is now considered a reporting gap.
 
-Category codes: `QUAL-ERR-*`, `QUAL-DRY-*`, `QUAL-DEF-*`, `QUAL-PLAN-*`, `QUAL-NAME`, `QUAL-COMPLEX`, `QUAL-MAGIC`, `QUAL-LENGTH`, `QUAL-KISS-*`, `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`, `CONV-*`, `APPROACH-*`, `SCOUT-*`.
+Category codes: `QUAL-ERR-*`, `QUAL-DRY-*`, `QUAL-DEF-*`, `QUAL-PLAN-*`, `QUAL-NAME`, `QUAL-COMPLEX`, `QUAL-MAGIC`, `QUAL-LENGTH`, `QUAL-KISS-*`, `TEST-MOCK-ONLY`, `TEST-EDGE-MISSING`, `TEST-ASSERT-WEAK`, `TEST-ISOLATION`, `CONV-*`, `APPROACH-*`, `SCOUT-*`, `AI-LOGIC-*`, `AI-CONCURRENCY-*`.
 
 ---
 

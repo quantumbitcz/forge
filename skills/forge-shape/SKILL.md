@@ -1,6 +1,7 @@
 ---
 name: forge-shape
 description: "Collaboratively shape a feature requirement into a structured spec with epics, stories, and acceptance criteria. Use when you have a vague idea that needs refinement, when requirements are unclear or incomplete, or before running /forge-run on a complex feature."
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ---
 
 # /forge-shape -- Feature Shaping Entry Point
@@ -57,4 +58,4 @@ This is interactive — expect a ~5 minute conversation. The result is a spec fi
 - `/forge-run` -- Run the full pipeline after shaping is complete (use `--spec <path>` to pass the shaped spec)
 - `/forge-sprint` -- Execute multiple shaped features in parallel
 - `/forge-fix` -- For bug reports rather than new features
-- `/bootstrap-project` -- For scaffolding a new project rather than shaping a feature
+- `/forge-bootstrap` -- For scaffolding a new project rather than shaping a feature
