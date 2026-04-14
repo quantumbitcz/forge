@@ -19,3 +19,11 @@ load '../helpers/test-helpers'
     fail "All mktemp calls must use \${TMPDIR:-\${TMP:-\${TEMP:-/tmp}}}"
   fi
 }
+
+@test ".gitattributes enforces LF for .bats files" {
+  local gitattr="$PLUGIN_ROOT/.gitattributes"
+  assert [ -f "$gitattr" ]
+  run grep '^\*\.bats' "$gitattr"
+  assert_success
+  assert_output --partial "eol=lf"
+}
