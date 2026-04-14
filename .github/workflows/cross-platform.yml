@@ -1,6 +1,9 @@
 name: Cross-Platform Tests
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:
@@ -9,7 +12,7 @@ jobs:
         include:
           - os: macos-latest
             shell: bash
-            name: macOS
+            name: MacOS
           - os: ubuntu-latest
             shell: bash
             name: Ubuntu Linux
