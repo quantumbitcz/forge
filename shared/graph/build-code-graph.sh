@@ -45,7 +45,9 @@ PARSE_TIMEOUT_SECONDS=300
 PER_FILE_TIMEOUT_MS=5000
 EXCLUDE_PATTERNS=("node_modules" ".git" "vendor" "build" "dist" ".gradle" ".idea" "__pycache__" ".mypy_cache" "target" ".forge")
 
-# ── Argument parsing ─────────────────────────────────────────────────────────
+# ── Argument parsing & config (skipped in --source-only mode) ────────────────
+
+if [[ "$_SOURCE_ONLY" != "true" ]]; then
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -128,6 +130,8 @@ fi
 FORGE_DIR="${PROJECT_ROOT}/.forge"
 mkdir -p "$FORGE_DIR"
 DB_PATH="${FORGE_DIR}/code-graph.db"
+
+fi # end _SOURCE_ONLY guard
 
 # ── Language extension mapping ───────────────────────────────────────────────
 

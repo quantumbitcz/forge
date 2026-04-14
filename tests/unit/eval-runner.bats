@@ -120,9 +120,22 @@ setup() {
 }
 
 @test "eval-runner live mode requires claude CLI" {
-  # Save original PATH and use a restricted one
+  # Build a restricted PATH that keeps python3 and bash but excludes claude.
+  # python3 is required for suite validation before the claude check runs.
   local orig_path="$PATH"
-  PATH="/usr/bin:/bin"
+  local restricted_path="/usr/bin:/bin"
+  local py_path
+  py_path="$(command -v python3 2>/dev/null || true)"
+  if [[ -n "$py_path" ]]; then
+    restricted_path="$(dirname "$py_path"):${restricted_path}"
+  fi
+  # Also include bash's directory to avoid subshell failures
+  local bash_path
+  bash_path="$(command -v bash 2>/dev/null || true)"
+  if [[ -n "$bash_path" && "$(dirname "$bash_path")" != "/usr/bin" && "$(dirname "$bash_path")" != "/bin" ]]; then
+    restricted_path="$(dirname "$bash_path"):${restricted_path}"
+  fi
+  PATH="$restricted_path"
   run "$EVAL_RUNNER" run --suite smoke --live
   PATH="$orig_path"
   [[ "$status" -ne 0 ]]

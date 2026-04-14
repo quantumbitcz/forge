@@ -181,7 +181,8 @@ discover_gradle_modules() {
     local projects_output
     projects_output="$(cd "$root" && portable_timeout "$INTROSPECTION_TIMEOUT" gradle projects -q 2>/dev/null)" || true
     if [[ -n "$projects_output" ]]; then
-      echo "$projects_output" | "${FORGE_PYTHON:-python3}" << 'PYEOF' - "$root"
+      local strategy1_result
+      strategy1_result="$(echo "$projects_output" | "${FORGE_PYTHON:-python3}" << 'PYEOF' - "$root"
 import re, os, sys, json
 
 root_dir = sys.argv[1]
@@ -192,6 +193,10 @@ for line in sys.stdin:
     m = re.search(r"Project\s+':([\w\-]+)'", line)
     if m:
         modules.append(m.group(1))
+
+if not modules:
+    # No projects found via gradle CLI — signal caller to fall through
+    sys.exit(0)
 
 for mod_name in modules:
     mod_dir = mod_name
@@ -228,7 +233,12 @@ for mod in result["modules"]:
 
 json.dump(result, sys.stdout, indent=2)
 PYEOF
-      return $?
+      )" || true
+      # Only use Strategy 1 result if it actually found modules
+      if [[ -n "$strategy1_result" ]]; then
+        echo "$strategy1_result"
+        return $?
+      fi
     fi
   fi
 
@@ -270,9 +280,17 @@ with open(settings_path, 'r') as f:
     content = f.read()
 
 modules = []
-for m in re.finditer(r'include\s*\(?\s*["\']?:?([^"\')\s,]+)', content):
-    name = m.group(1).strip(":'\"")
-    modules.append(name)
+# Two-pass extraction: handle both include("a", "b") and include ':a', ':b'
+# Match 'include' keyword followed by parens or whitespace (not includeBuild etc.)
+for line in content.splitlines():
+    stripped = line.strip()
+    if not re.match(r'include\s*[(\'"]', stripped):
+        continue
+    # Extract all quoted values from this line, stripping leading colons
+    for qm in re.finditer(r'["\']:?([^"\']+)["\']', stripped):
+        name = qm.group(1).strip().strip(':')
+        if name:
+            modules.append(name)
 
 modules = list(dict.fromkeys(modules))
 

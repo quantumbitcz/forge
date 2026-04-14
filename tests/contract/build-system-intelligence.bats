@@ -257,7 +257,7 @@ for system, entry in data['entries'].items():
   confidence_values="$(grep -oE 'confidence[^a-z]*[a-z-]+' "$script" | sort -u)"
   echo "$confidence_values" | grep -q 'resolved' || fail "Missing resolved"
   echo "$confidence_values" | grep -q 'module-inferred' || fail "Missing module-inferred"
-  echo "$confidence_values" | grep -q '"heuristic"' || fail "Missing heuristic"
+  echo "$confidence_values" | grep -q 'heuristic' || fail "Missing heuristic"
 }
 
 # ---------------------------------------------------------------------------

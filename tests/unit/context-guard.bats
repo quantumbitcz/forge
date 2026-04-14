@@ -126,11 +126,11 @@ assert d['context']['guard_checks'] == 3, d['context']['guard_checks']
   local forge_dir="$TEST_TEMP/project/.forge"
   _setup_guard_state "$forge_dir" 0
 
-  # First trigger (above 30K threshold)
-  bash "$SCRIPT" check 35000 --forge-dir "$forge_dir"
+  # First trigger (above 30K threshold) — exits 1 (CONDENSED)
+  bash "$SCRIPT" check 35000 --forge-dir "$forge_dir" || true
 
-  # Second trigger
-  bash "$SCRIPT" check 32000 --forge-dir "$forge_dir"
+  # Second trigger — exits 1 (CONDENSED)
+  bash "$SCRIPT" check 32000 --forge-dir "$forge_dir" || true
 
   # Below threshold -- should not increment
   bash "$SCRIPT" check 20000 --forge-dir "$forge_dir"
