@@ -331,7 +331,7 @@ build --config=remote-cache
 **Bazelisk (the Bazel Wrapper):**
 ```bash
 # Install Bazelisk
-brew install bazelisk    # macOS
+brew install bazelisk    # MacOS
 npm install -g @bazel/bazelisk  # any platform
 
 # Use Bazelisk as drop-in replacement

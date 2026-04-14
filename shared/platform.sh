@@ -128,7 +128,7 @@ suggest_docker_start() {
 # ── Bash Version Check ───────────────────────────────────────────────────────
 #
 # Scripts using associative arrays (declare -A) require bash 4.0+.
-# macOS ships with bash 3.2 by default; Homebrew bash is the norm for
+# MacOS ships with bash 3.2 by default; Homebrew bash is the norm for
 # developers but CI runners and fresh installs may hit this.
 #
 # Usage: require_bash4 "build-project-graph.sh"
@@ -137,7 +137,7 @@ require_bash4() {
   local caller="${1:-script}"
   if (( BASH_VERSINFO[0] < 4 )); then
     printf 'ERROR: %s requires bash 4.0+ (found %s).\n' "$caller" "$BASH_VERSION" >&2
-    printf '  macOS: brew install bash\n' >&2
+    printf '  MacOS: brew install bash\n' >&2
     printf '  Linux: bash 4+ is standard on all modern distributions.\n' >&2
     return 1
   fi
@@ -194,7 +194,7 @@ pipeline_mktempdir() {
 # use "$FORGE_PYTHON" instead of hardcoding "python3".
 # Scripts that do NOT source platform.sh (engine.sh, run-patterns.sh,
 # linter adapters, hooks) should use inline fallback or direct python3
-# calls — python3 is available on all major platforms (macOS, modern
+# calls — python3 is available on all major platforms (MacOS, modern
 # Linux, Windows with Python installed). These scripts avoid sourcing
 # platform.sh due to invocation frequency (every Edit/Write hook).
 detect_python() {
@@ -267,7 +267,7 @@ portable_normalize_path() {
 # Usage: mod_date=$(portable_file_date "/absolute/path/to/file")
 portable_file_date() {
   local filepath="$1"
-  # 1. BSD stat (macOS)
+  # 1. BSD stat (MacOS)
   stat -f '%Sm' -t '%Y-%m-%d' "$filepath" 2>/dev/null && return
   # 2. GNU stat + GNU date
   local epoch
@@ -286,7 +286,7 @@ portable_file_date() {
 
 # ── sed Compatibility ────────────────────────────────────────────────────────
 
-# In-place sed that works on both BSD (macOS) and GNU (Linux) sed.
+# In-place sed that works on both BSD (MacOS) and GNU (Linux) sed.
 # Avoids the `-i` flag which differs between BSD (`-i ''`) and GNU (`-i`).
 # Usage: portable_sed 's/old/new/g' file.txt
 #
@@ -308,7 +308,7 @@ portable_sed() {
 
 # ── timeout Compatibility ───────────────────────────────────────────────────
 
-# Cross-platform timeout wrapper. Uses GNU timeout, then macOS gtimeout
+# Cross-platform timeout wrapper. Uses GNU timeout, then MacOS gtimeout
 # (from coreutils), then falls back to running without a timeout.
 # Usage: portable_timeout <seconds> <command> [args...]
 portable_timeout() {
@@ -334,7 +334,7 @@ derive_project_id() {
   if [[ -n "$remote_url" ]]; then
     # Strip protocol/host prefix and .git suffix
     # Handles: git@github.com:org/repo.git, https://github.com/org/repo.git, ssh://...
-    # Two-step to avoid non-greedy quantifier (+?) which BSD sed (macOS) does not support
+    # Two-step to avoid non-greedy quantifier (+?) which BSD sed (MacOS) does not support
     echo "$remote_url" | sed -E 's|\.git$||' | sed -E 's|^.*[:/]([^/]+/[^/]+)$|\1|'
   else
     # Fallback: absolute path
@@ -439,13 +439,13 @@ acquire_lock_with_retry() {
 # ── Atomic Operations ───────────────────────────────────────────────────────
 #
 # Thread-safe primitives for hooks and scripts. Uses flock (Linux) with
-# mkdir-based fallback (macOS/bash 3.2). Hooks that do NOT source platform.sh
+# mkdir-based fallback (MacOS/bash 3.2). Hooks that do NOT source platform.sh
 # should use inline patterns instead.
 
 # Atomic increment of a counter file.
 # Usage: atomic_increment "/path/to/counter.file"
 # Returns: new value on stdout. Exit 1 on lock timeout.
-# Thread-safe via flock (Linux) or mkdir-lock (macOS).
+# Thread-safe via flock (Linux) or mkdir-lock (MacOS).
 atomic_increment() {
   local file="$1"
   local lock_file="${file}.lock"
@@ -463,7 +463,7 @@ atomic_increment() {
       echo "$new_val"
     ) 9>"$lock_file"
   else
-    # macOS fallback: mkdir-based lock
+    # MacOS fallback: mkdir-based lock
     local lock_dir="${file}.lockdir"
     local retries=0
     while ! mkdir "$lock_dir" 2>/dev/null; do

@@ -360,7 +360,7 @@ After generating the project config, run the discovery chain to find related pro
    bash "${CLAUDE_PLUGIN_ROOT}/shared/discovery/discover-projects.sh" "$(pwd)" --depth 4
    ```
 
-   This scans in order: in-project references (docker-compose.yml, .env files, CI workflow references), sibling directories (same parent, compatible stack markers), IDE project directories (all JetBrains IDEs, VS Code, Cursor, Windsurf, Zed, Xcode, Eclipse, NetBeans, Visual Studio — plus platform-specific paths for macOS, Linux, and Windows including Documents, drive roots, and XDG dirs), and GitHub org repos (if `gh` CLI is authenticated).
+   This scans in order: in-project references (docker-compose.yml, .env files, CI workflow references), sibling directories (same parent, compatible stack markers), IDE project directories (all JetBrains IDEs, VS Code, Cursor, Windsurf, Zed, Xcode, Eclipse, NetBeans, Visual Studio — plus platform-specific paths for MacOS, Linux, and Windows including Documents, drive roots, and XDG dirs), and GitHub org repos (if `gh` CLI is authenticated).
 
 2. **Present discoveries to user:**
    Show what was found and ask for confirmation:

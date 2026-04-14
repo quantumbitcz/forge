@@ -43,7 +43,7 @@ Use `shared/recovery/health-checks/pre-stage-health.sh <stage>` for the check. I
 
 | Error | Cause | Recovery |
 |-------|-------|----------|
-| `Cannot connect to the Docker daemon` | Docker not running | Attempt: `open -a Docker` (macOS) or `sudo systemctl start docker` (Linux). Wait up to 30s for startup. |
+| `Cannot connect to the Docker daemon` | Docker not running | Attempt: `open -a Docker` (MacOS) or `sudo systemctl start docker` (Linux). Wait up to 30s for startup. |
 | `permission denied` | User not in docker group | Return `ESCALATE` — requires `sudo usermod -aG docker $USER` and re-login. |
 | `docker: command not found` | Not installed | Return `ESCALATE` with install suggestion. |
 

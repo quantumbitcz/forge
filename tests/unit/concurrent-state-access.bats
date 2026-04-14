@@ -95,7 +95,7 @@ print('OK')
 }
 
 @test "concurrent-state: mkdir-based lock used as fallback when flock unavailable" {
-  # Verify the script has a mkdir-based fallback for macOS/systems without flock
+  # Verify the script has a mkdir-based fallback for MacOS/systems without flock
   grep -q "mkdir.*lock" "$SCRIPT" \
     || fail "forge-state-write.sh does not implement mkdir-based lock fallback"
 }
@@ -307,7 +307,7 @@ print('OK')
 }
 
 @test "concurrent-state: mkdir lock contention resolves within 10 seconds" {
-  # On systems without flock (macOS), the script uses mkdir-based locking
+  # On systems without flock (MacOS), the script uses mkdir-based locking
   # and retries up to 50 times with 0.1s sleep = 5s max wait.
   # On systems WITH flock (Linux), flock is used instead and the mkdir lockdir
   # does not block writes. This test only validates the mkdir path.

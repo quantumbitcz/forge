@@ -218,7 +218,7 @@ GEOF
   # Keep bash 4+ (brew) and python3 in PATH
   local restricted_path="/usr/bin:/bin"
   command -v python3 &>/dev/null && restricted_path="$(dirname "$(command -v python3)"):$restricted_path"
-  # Include brew bash path if present (macOS bash 4+)
+  # Include brew bash path if present (MacOS bash 4+)
   [[ -x /opt/homebrew/bin/bash ]] && restricted_path="/opt/homebrew/bin:$restricted_path"
   [[ -x /usr/local/bin/bash ]] && restricted_path="/usr/local/bin:$restricted_path"
   PATH="$restricted_path" run "$BOUNDARY_MAP" --project-root "$proj" --build-system gradle

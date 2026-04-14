@@ -77,7 +77,7 @@ Hook scripts (`.sh` files referenced from `hooks.json`) must follow these 8 rule
 
 1. **Shebang**: `#!/usr/bin/env bash`
 2. **Executable**: `chmod +x` is required.
-3. **Bash 4+**: Scripts may use associative arrays and other bash 4+ features. macOS users need `brew install bash`.
+3. **Bash 4+**: Scripts may use associative arrays and other bash 4+ features. MacOS users need `brew install bash`.
 4. **No interactive input**: Scripts must not use `read` or any interactive prompt. They receive context via environment variables and arguments.
 5. **Exit codes**: `0` = success/allow. Non-zero = block (PreToolUse) or log failure (PostToolUse).
 6. **Stdout**: Hook output is captured and may be displayed to the user. Keep it concise.

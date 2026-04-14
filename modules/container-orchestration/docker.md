@@ -2,7 +2,7 @@
 
 ## Overview
 
-Docker is the de facto standard for building, packaging, and running containerized applications. It provides a declarative image definition format (Dockerfile), a layered filesystem for efficient storage and distribution, and a runtime that isolates processes using Linux namespaces and cgroups (or their platform-native equivalents on macOS and Windows). Docker images are the universal artifact format for deployment — every major orchestrator (Kubernetes, ECS, Nomad, Cloud Run) consumes OCI-compliant images.
+Docker is the de facto standard for building, packaging, and running containerized applications. It provides a declarative image definition format (Dockerfile), a layered filesystem for efficient storage and distribution, and a runtime that isolates processes using Linux namespaces and cgroups (or their platform-native equivalents on MacOS and Windows). Docker images are the universal artifact format for deployment — every major orchestrator (Kubernetes, ECS, Nomad, Cloud Run) consumes OCI-compliant images.
 
 Use Docker for packaging any application that needs consistent, reproducible deployment across environments. This covers microservices, CLI tools, batch jobs, database migrations, static site builds, ML inference servers, and local development environments. Docker's multi-stage build system enables a clean separation between build-time dependencies (compilers, test frameworks, build tools) and runtime dependencies (the application binary plus minimal OS libraries), producing images that are small, secure, and fast to deploy.
 

@@ -28,7 +28,7 @@ fi
     if [ -f "$target" ]; then
       local size=0
       if command -v stat &>/dev/null; then
-        # GNU stat vs BSD stat (macOS)
+        # GNU stat vs BSD stat (MacOS)
         size=$(stat -f%z "$target" 2>/dev/null || stat -c%s "$target" 2>/dev/null || echo 0)
       fi
       if [ "$size" -gt 102400 ] 2>/dev/null; then

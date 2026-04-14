@@ -18,7 +18,7 @@ Doxygen is the de-facto documentation generator for C and C++ (also supports Jav
 ### Installation & Setup
 
 ```bash
-# macOS
+# MacOS
 brew install doxygen graphviz
 
 # Ubuntu/Debian

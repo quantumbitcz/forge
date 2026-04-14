@@ -45,7 +45,7 @@ build-android:
 
 ## Framework-Specific Patterns
 
-### iOS Build on macOS Runner
+### iOS Build on MacOS Runner
 
 ```yaml
 build-ios:
@@ -64,7 +64,7 @@ build-ios:
     expire_in: 7 days
 ```
 
-iOS targets require self-hosted macOS runners with Xcode. Tag them with `macos` and `xcode`.
+iOS targets require self-hosted MacOS runners with Xcode. Tag them with `macos` and `xcode`.
 
 ### JVM and Common Tests
 
@@ -123,7 +123,7 @@ patterns:
 
 ## Additional Dos
 
-- DO use self-hosted macOS runners for iOS targets
+- DO use self-hosted MacOS runners for iOS targets
 - DO run JVM and Android tests on Linux runners for faster execution
 - DO disable Gradle daemon in CI (`-Dorg.gradle.daemon=false`)
 - DO cache `.gradle/caches` and `.gradle/wrapper` keyed by branch
@@ -131,7 +131,7 @@ patterns:
 
 ## Additional Don'ts
 
-- DON'T run iOS builds on shared Linux runners -- they require macOS with Xcode
+- DON'T run iOS builds on shared Linux runners -- they require MacOS with Xcode
 - DON'T run all targets in a single job -- split by platform for parallelism
 - DON'T skip Gradle caching for KMP -- multi-target builds are slow
 - DON'T use `gradle daemon` in CI -- ephemeral runners don't benefit from it

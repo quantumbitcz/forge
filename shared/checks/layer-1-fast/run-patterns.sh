@@ -181,7 +181,7 @@ emit() {
 # Skip binary files to avoid corrupted grep output
 is_binary_file() {
   # Check for null bytes in first 8KB — reliable binary indicator
-  # Uses Python (already a dependency) instead of grep -P (not available on macOS)
+  # Uses Python (already a dependency) instead of grep -P (not available on MacOS)
   if "$_PY" -c "import sys; sys.exit(0 if b'\\x00' in open(sys.argv[1],'rb').read(8192) else 1)" "$1" 2>/dev/null; then
     return 0
   fi
@@ -363,7 +363,7 @@ for key, val in overrides.items():
 
   # Awk pass: line count + function size tracking
   # Function boundary detection uses per-language awk patterns (no shell variable escaping).
-  # Patterns avoid literal parens to prevent awk regex portability issues (macOS awk vs gawk).
+  # Patterns avoid literal parens to prevent awk regex portability issues (MacOS awk vs gawk).
   # Supports Kotlin, Java, Python, Go, Rust, TypeScript/JS, Swift, and C#.
   # Limitation: TS/JS class methods and typed arrow functions are not detected (regex limitation).
   # File size checking works for all languages.

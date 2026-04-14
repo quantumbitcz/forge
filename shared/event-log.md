@@ -307,7 +307,7 @@ emit-event.sh <type> <stage> <agent> '<json_data>'
 The script:
 1. Auto-increments the `id` from the last line of `events.jsonl`.
 2. Generates an ISO 8601 timestamp with millisecond precision.
-3. Uses `mkdir`-based locking for thread-safe appends (no `flock` -- macOS compatible).
+3. Uses `mkdir`-based locking for thread-safe appends (no `flock` -- MacOS compatible).
 4. Sources `platform.sh` for cross-platform helpers.
 5. Exits silently (exit 0) if `.forge/` does not exist.
 
@@ -371,7 +371,7 @@ Constraints enforced at PREFLIGHT:
 
 ## File Locking
 
-Uses `mkdir`-based atomic locking (NOT `flock`) for macOS compatibility. Lock directory: `.forge/events.jsonl.lock`. Exponential backoff on contention (100ms, 200ms, 400ms). Leverages `acquire_lock_with_retry` from `shared/platform.sh`.
+Uses `mkdir`-based atomic locking (NOT `flock`) for MacOS compatibility. Lock directory: `.forge/events.jsonl.lock`. Exponential backoff on contention (100ms, 200ms, 400ms). Leverages `acquire_lock_with_retry` from `shared/platform.sh`.
 
 Sprint mode avoids contention entirely by using per-run event files at `.forge/runs/{id}/events.jsonl`.
 

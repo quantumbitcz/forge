@@ -21,7 +21,7 @@ Go meta-linter that runs 100+ linters in parallel with a single configuration fi
 # Binary install (recommended — do NOT use `go install` for golangci-lint)
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.63.x
 
-# Homebrew (macOS)
+# Homebrew (MacOS)
 brew install golangci-lint
 
 # Verify

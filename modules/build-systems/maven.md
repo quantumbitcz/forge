@@ -499,7 +499,7 @@ The `actions/setup-java` action with `cache: 'maven'` caches `~/.m2/repository` 
 `mvnd` is a daemon-based Maven distribution that keeps the JVM resident between builds, similar to Gradle's daemon. It provides 2-5x faster builds on multi-module projects by avoiding JVM cold starts and leveraging JIT compilation across invocations.
 
 ```bash
-# Install mvnd (macOS)
+# Install mvnd (MacOS)
 brew install mvndaemon/mvnd/mvnd
 
 # Use as drop-in replacement for mvn/mvnw

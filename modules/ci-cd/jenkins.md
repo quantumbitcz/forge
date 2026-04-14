@@ -4,7 +4,7 @@
 
 Open-source automation server orchestrating CI/CD via `Jenkinsfile` (Pipeline-as-Code). Runs on any infrastructure (bare metal, VMs, containers, K8s) with controller-agent distributed execution and 1,800+ plugins.
 
-- **Use for:** air-gapped/on-premise environments, heterogeneous build agents (Linux/Windows/macOS/ARM), long-running pipelines (no timeout limits), complex orchestration with approval gates
+- **Use for:** air-gapped/on-premise environments, heterogeneous build agents (Linux/Windows/MacOS/ARM), long-running pipelines (no timeout limits), complex orchestration with approval gates
 - **Avoid for:** new greenfield projects on GitHub/GitLab (use native CI), teams without capacity to manage Jenkins infrastructure, K8s-native declarative pipelines (use Tekton)
 - **Key features:** shared libraries (org-wide pipeline reuse), multibranch pipeline auto-discovery, horizontal scaling via dynamic agent provisioning (K8s/Docker/cloud VMs), 1,800+ plugin ecosystem
 

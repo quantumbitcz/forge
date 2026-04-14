@@ -203,7 +203,7 @@ Fields:
 # Generate HTML docs
 mix docs
 
-# Open docs in browser (macOS)
+# Open docs in browser (MacOS)
 open doc/index.html
 
 # Check docs build in CI (exit code only)

@@ -5,7 +5,7 @@
 
 ## Integration Setup
 
-Vapor projects run on Linux — use `swift test --enable-code-coverage` and LLVM toolchain rather than `xcodebuild`. The xcov gem and Xcode-based reporting are macOS-only:
+Vapor projects run on Linux — use `swift test --enable-code-coverage` and LLVM toolchain rather than `xcodebuild`. The xcov gem and Xcode-based reporting are MacOS-only:
 
 ```yaml
 # .github/workflows/test.yml — Linux-compatible (preferred for Vapor)
@@ -29,14 +29,14 @@ Vapor projects run on Linux — use `swift test --enable-code-coverage` and LLVM
     fail_ci_if_error: true
 ```
 
-For macOS CI with Xcode:
+For MacOS CI with Xcode:
 
 ```yaml
 - name: Run tests (Xcode)
   run: |
     xcodebuild test \
       -scheme MyApp \
-      -destination "platform=macOS" \
+      -destination "platform=MacOS" \
       -enableCodeCoverage YES \
       -resultBundlePath TestResults.xcresult
 ```

@@ -8,7 +8,7 @@
 For Vapor SPM projects, add SwiftLint as a build tool plugin or run it as a separate CI step. On Linux CI (where Vapor servers often run), install via apt or binary:
 
 ```yaml
-# .github/workflows/quality.yml — macOS runner for lint
+# .github/workflows/quality.yml — MacOS runner for lint
 - name: SwiftLint
   run: swiftlint lint --reporter github-actions-logging --strict
 

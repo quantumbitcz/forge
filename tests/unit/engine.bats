@@ -98,7 +98,7 @@ ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"
       [[ $waited -ge 40 ]] && fail "Background process did not acquire lock within 2s"
     done
   else
-    # macOS fallback: pre-create the mkdir-based lock directory
+    # MacOS fallback: pre-create the mkdir-based lock directory
     mkdir -p "${lock_file}.d"
   fi
 

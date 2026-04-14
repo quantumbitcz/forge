@@ -146,7 +146,7 @@ PARSE_OUTPUT=""
 if command -v timeout &>/dev/null; then
   PARSE_OUTPUT=$(timeout "${TIMEOUT_S}s" tree-sitter parse "$TEMP_FILE" 2>&1) || true
 elif command -v gtimeout &>/dev/null; then
-  # macOS with coreutils: gtimeout
+  # MacOS with coreutils: gtimeout
   PARSE_OUTPUT=$(gtimeout "${TIMEOUT_S}s" tree-sitter parse "$TEMP_FILE" 2>&1) || true
 else
   # No timeout command available, run without timeout

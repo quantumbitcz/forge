@@ -35,7 +35,7 @@ esac
 _suggest_bash() {
   case "$_os" in
     darwin)
-      echo "  macOS:         brew install bash"
+      echo "  MacOS:         brew install bash"
       ;;
     linux)
       if command -v apt-get >/dev/null 2>&1; then
@@ -68,7 +68,7 @@ _suggest_bash() {
 _suggest_python() {
   case "$_os" in
     darwin)
-      echo "  macOS:         brew install python3"
+      echo "  MacOS:         brew install python3"
       ;;
     linux)
       if command -v apt-get >/dev/null 2>&1; then

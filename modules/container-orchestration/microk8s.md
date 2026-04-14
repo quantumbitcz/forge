@@ -6,14 +6,14 @@ MicroK8s is a lightweight, conformant Kubernetes distribution published by Canon
 
 Use MicroK8s when the team operates on Ubuntu or other snap-supporting Linux distributions and wants a Kubernetes installation that tracks upstream releases closely with automatic updates. MicroK8s excels at developer workstations (fast setup, low resource usage), CI/CD environments (snap-based reproducible installs), edge deployments (strict confinement, auto-updates), and GPU workloads (the `gpu` addon integrates NVIDIA device plugins with a single command). MicroK8s's addon system is its primary differentiator — enabling `dns`, `storage`, `ingress`, and `cert-manager` takes seconds rather than the minutes of manual Helm installations.
 
-Do not use MicroK8s on platforms where snap is unavailable or unsupported (macOS native, Windows native without WSL2, some container-optimized Linux distributions). Do not use MicroK8s for large-scale production clusters (50+ nodes) where managed Kubernetes services or enterprise distributions (OpenShift, Tanzu) provide better support SLAs and operational tooling. Do not use MicroK8s when the team needs to customize every cluster component — the addons system provides convenience at the cost of some configuration flexibility.
+Do not use MicroK8s on platforms where snap is unavailable or unsupported (MacOS native, Windows native without WSL2, some container-optimized Linux distributions). Do not use MicroK8s for large-scale production clusters (50+ nodes) where managed Kubernetes services or enterprise distributions (OpenShift, Tanzu) provide better support SLAs and operational tooling. Do not use MicroK8s when the team needs to customize every cluster component — the addons system provides convenience at the cost of some configuration flexibility.
 
 **MicroK8s vs. K3s comparison:**
 
 | Feature | MicroK8s | K3s |
 |---------|----------|-----|
 | Installation method | Snap package | Single binary + install script |
-| Platform support | Linux (snap), macOS/Windows (VM) | Linux (native), macOS/Windows (VM) |
+| Platform support | Linux (snap), MacOS/Windows (VM) | Linux (native), MacOS/Windows (VM) |
 | Auto-updates | Snap auto-refresh | System Upgrade Controller |
 | Default CNI | Calico (via addon) | Flannel |
 | Default storage | hostpath-storage (addon) | local-path-provisioner |

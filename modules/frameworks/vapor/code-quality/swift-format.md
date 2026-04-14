@@ -5,10 +5,10 @@
 
 ## Integration Setup
 
-Vapor projects run on Linux (production) and macOS (development). Install swift-format via SPM toolchain or Mint for consistent versions across both platforms:
+Vapor projects run on Linux (production) and MacOS (development). Install swift-format via SPM toolchain or Mint for consistent versions across both platforms:
 
 ```bash
-# macOS
+# MacOS
 brew install swift-format
 
 # Linux CI
@@ -112,11 +112,11 @@ swift --version
 swift-format --version
 ```
 
-Mismatched versions can produce different formatting output between macOS dev machines and Linux CI, causing spurious diff failures.
+Mismatched versions can produce different formatting output between MacOS dev machines and Linux CI, causing spurious diff failures.
 
 ## Additional Dos
 
-- Pin swift-format to the same version as the production Swift toolchain — version mismatches between macOS (dev) and Linux (CI) produce inconsistent formatting.
+- Pin swift-format to the same version as the production Swift toolchain — version mismatches between MacOS (dev) and Linux (CI) produce inconsistent formatting.
 - Enable `NeverForceUnwrap: true` — Vapor server crashes from force unwraps affect all concurrent requests, not just the failing one.
 - Run `swift-format format --in-place` in pre-commit hooks scoped to staged Swift files only — prevents diff noise from reformatting unrelated files.
 

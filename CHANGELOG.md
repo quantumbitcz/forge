@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2.5.0] - 2026-04-14
 
 ### Added
-- **Cross-Platform Hardening:** `fcntl`→`msvcrt` fallback for Windows Git Bash, full TMPDIR/TMP/TEMP cascade, multi-platform `check-prerequisites.sh`, `shared/platform-support.md`, `platform.windows_mode` config, cross-platform CI matrix (macOS, Ubuntu, Windows Git Bash)
+- **Cross-Platform Hardening:** `fcntl`→`msvcrt` fallback for Windows Git Bash, full TMPDIR/TMP/TEMP cascade, multi-platform `check-prerequisites.sh`, `shared/platform-support.md`, `platform.windows_mode` config, cross-platform CI matrix (MacOS, Ubuntu, Windows Git Bash)
 - **Build System Intelligence:** `build-system-resolver.sh` introspects Maven, Gradle, npm/pnpm/yarn, Go, Cargo, .NET with heuristic fallback. `module-boundary-map.sh` discovers multi-module project boundaries. Module-aware import resolution with confidence tagging (resolved/module-inferred/heuristic). Build graph quality metrics in state.json
 - **Compression & Caveman Alignment:** Unified compression eval harness (`benchmarks/compression-eval.sh`), post-compression validation (`shared/compression-validation.py`) with 8 structural checks, caveman statusline badge `[STATUS: CAVEMAN]`, enhanced SessionStart auto-injection with full compression rule blocks, research references (arXiv:2604.00025)
 - **Eval & Benchmarking Framework:** `evals/pipeline/` with eval-runner, 5 suite definitions (lite/25, convergence/10, cost/5, compression/5, smoke/5), 30 fixture stubs across 5 languages, baseline save/compare with regression detection, CI workflow for automated eval
@@ -71,7 +71,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Non-atomic compact counter (`forge-compact-check.sh`) — mkdir-based lock
 - Datetime format inconsistency — Z suffix added to all timestamp fallback paths
 - Model detection substring collision (`forge-token-tracker.sh`) — longest-match-first pattern list
-- macOS `sed` compatibility in `derive_project_id()` — replaced non-greedy `+?` with two-step sed
+- MacOS `sed` compatibility in `derive_project_id()` — replaced non-greedy `+?` with two-step sed
 
 ## [1.16.0] - 2026-04-12
 

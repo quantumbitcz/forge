@@ -62,7 +62,7 @@ File paths in `checksums` are relative to `.forge/`.
 ### At Write Time
 
 1. Compute SHA256 of the written file: `sha256sum "$file" | cut -d' ' -f1`
-2. Record file size: `stat -f%z "$file"` (macOS) or `stat -c%s "$file"` (Linux)
+2. Record file size: `stat -f%z "$file"` (MacOS) or `stat -c%s "$file"` (Linux)
 3. Store checksum, timestamp, and file size in `.forge/integrity.json` via atomic JSON update (same pattern as `forge-state-write.sh`)
 
 ### At Read Time

@@ -77,7 +77,7 @@ When the system is under memory pressure but not yet at OOM:
 
 1. **Kill orphan processes (cross-platform):**
 
-   On UNIX/macOS/Linux (use `pkill`):
+   On UNIX/MacOS/Linux (use `pkill`):
    ```bash
    pkill -f "GradleDaemon" 2>/dev/null
    pkill -f "node.*--watch" 2>/dev/null

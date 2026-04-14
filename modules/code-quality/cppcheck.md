@@ -21,7 +21,7 @@ Open-source C and C++ static analysis tool focused on finding bugs rather than e
 # Ubuntu/Debian
 sudo apt-get install cppcheck
 
-# macOS
+# MacOS
 brew install cppcheck
 
 # Windows (Chocolatey)

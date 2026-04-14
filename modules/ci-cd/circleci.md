@@ -2,7 +2,7 @@
 
 ## Overview
 
-CircleCI is a cloud-native CI/CD platform that defines pipelines in a `.circleci/config.yml` file. Pipelines consist of workflows (orchestration layer) containing jobs (execution units) that run on CircleCI's managed execution environments — Docker containers, Linux VMs, macOS VMs, Windows VMs, Arm VMs, or self-hosted runners. CircleCI's architecture separates orchestration (workflow engine) from execution (compute environments), enabling efficient resource utilization and fine-grained control over execution contexts.
+CircleCI is a cloud-native CI/CD platform that defines pipelines in a `.circleci/config.yml` file. Pipelines consist of workflows (orchestration layer) containing jobs (execution units) that run on CircleCI's managed execution environments — Docker containers, Linux VMs, MacOS VMs, Windows VMs, Arm VMs, or self-hosted runners. CircleCI's architecture separates orchestration (workflow engine) from execution (compute environments), enabling efficient resource utilization and fine-grained control over execution contexts.
 
 Use CircleCI when the team needs fast build times with sophisticated caching (CircleCI's cache is persistent and content-addressable), advanced test splitting (automatic parallel distribution of test files across containers), or first-class Docker support (Docker layer caching, remote Docker environments). CircleCI excels at polyglot projects where different jobs need different execution environments within the same pipeline, and at organizations that benefit from Contexts (shared secret namespaces with RBAC) for managing credentials across projects.
 

@@ -309,7 +309,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 ### Structural
 
 - Agent `name` must match filename sans `.md`.
-- Scripts need `#!/usr/bin/env bash` + `chmod +x`. Graph scripts, `run-linter.sh`, `engine.sh` require **bash 4.0+** (macOS needs `brew install bash`). All scripts use `_glob_exists()` instead of `compgen -G`.
+- Scripts need `#!/usr/bin/env bash` + `chmod +x`. Graph scripts, `run-linter.sh`, `engine.sh` require **bash 4.0+** (MacOS needs `brew install bash`). All scripts use `_glob_exists()` instead of `compgen -G`.
 - `shared/` files are contracts — changes affect all agents/modules. Verify downstream impact.
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.

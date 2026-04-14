@@ -106,12 +106,12 @@ class FakeXxxRepository : XxxRepository {
 # Run Android unit tests
 ./gradlew :shared:testDebugUnitTest
 
-# Run iOS tests (requires macOS + Xcode)
+# Run iOS tests (requires MacOS + Xcode)
 ./gradlew :shared:iosSimulatorArm64Test
 ```
 
 - `allTests` is the CI gate command — it runs all platform tests in sequence.
-- iOS tests require macOS with Xcode installed; skip with `--exclude-task iosTest` on non-Mac CI.
+- iOS tests require MacOS with Xcode installed; skip with `--exclude-task iosTest` on non-Mac CI.
 - Use `XCTest` or Kotest on iOS targets — both compile to `XCTestCase` for Xcode execution.
 
 ## What to Test at Each Layer

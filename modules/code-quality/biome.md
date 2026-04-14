@@ -29,7 +29,7 @@ npx biome --version   # e.g., 1.9.x
 
 Single binary, no Node.js runtime overhead after install. Can also run as a standalone binary:
 ```bash
-# macOS/Linux
+# MacOS/Linux
 curl -L https://github.com/biomejs/biome/releases/latest/download/biome-darwin-arm64 -o /usr/local/bin/biome
 chmod +x /usr/local/bin/biome
 ```

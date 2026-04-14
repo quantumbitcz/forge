@@ -49,7 +49,7 @@ Multiple `--type` flags may be combined. `--from-code` applies as a scope filter
    - `go.mod` present → `go-stdlib`
    - `requirements.txt` or `pyproject.toml` + FastAPI import → `fastapi`
    - `requirements.txt` or `pyproject.toml` + Django import → `django`
-   - `Package.swift` + iOS/macOS targets → `swiftui`
+   - `Package.swift` + iOS/MacOS targets → `swiftui`
    - `Package.swift` + Vapor dependency → `vapor`
    - `build.gradle.kts` + Android imports → `jetpack-compose`
    - `*.csproj` present → `aspnet`

@@ -7,7 +7,7 @@ set -euo pipefail
 # Bash 4.0+ guard
 if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
   echo "ERROR: generate-conventions-index.sh requires bash 4.0+ (found ${BASH_VERSION})" >&2
-  echo "  macOS: brew install bash" >&2
+  echo "  MacOS: brew install bash" >&2
   exit 1
 fi
 

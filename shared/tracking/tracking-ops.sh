@@ -26,7 +26,7 @@ readonly TRACKING_STATUSES=(backlog in-progress review "done")
 
 # ── Portable in-place sed ─────────────────────────────────────────────────────
 #
-# BSD sed (macOS) requires an explicit empty string: sed -i ''
+# BSD sed (MacOS) requires an explicit empty string: sed -i ''
 # GNU sed (Linux) does not accept -i '' — it needs just: sed -i
 # We use FORGE_OS (set by platform.sh) to pick the right form.
 
@@ -59,10 +59,10 @@ slugify() {
   local max_len="${2:-40}"
 
   local slug
-  # Lowercase — use tr for portability (bash 3.2 on macOS does not support ${var,,})
+  # Lowercase — use tr for portability (bash 3.2 on MacOS does not support ${var,,})
   slug="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]')"
   # Replace any sequence of characters that is NOT a-z or 0-9 with a hyphen.
-  # Use -E (extended regex) so + works on both BSD sed (macOS) and GNU sed (Linux).
+  # Use -E (extended regex) so + works on both BSD sed (MacOS) and GNU sed (Linux).
   slug="$(printf '%s' "$slug" | sed -E 's/[^a-z0-9]+/-/g')"
   # Strip leading/trailing hyphens
   slug="${slug#-}"

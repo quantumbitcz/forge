@@ -2,7 +2,7 @@
 
 ## Overview
 
-CI/CD service within Azure DevOps using YAML pipelines (`azure-pipelines.yml`) with stages, jobs, and steps. Runs on Microsoft-hosted (Ubuntu/macOS/Windows) or self-hosted agents with deep Azure ecosystem integration.
+CI/CD service within Azure DevOps using YAML pipelines (`azure-pipelines.yml`) with stages, jobs, and steps. Runs on Microsoft-hosted (Ubuntu/MacOS/Windows) or self-hosted agents with deep Azure ecosystem integration.
 
 - **Use for:** Azure-invested orgs (AD, Key Vault, AKS), multi-platform builds with MS toolchains (.NET, VS Build Tools), enterprise compliance with template-enforced standards across repos
 - **Avoid for:** GitHub-hosted OSS (GitHub Actions has better contributor UX), orgs with no Azure footprint, Kubernetes-native CI/CD (use Tekton)

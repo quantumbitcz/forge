@@ -76,7 +76,7 @@ jobs:
       - run: ./gradlew ${{ matrix.task }}
 ```
 
-iOS targets require macOS runners. JVM and Android targets run on Ubuntu. Use a matrix to run them in parallel.
+iOS targets require MacOS runners. JVM and Android targets run on Ubuntu. Use a matrix to run them in parallel.
 
 ### Gradle Caching
 
@@ -125,7 +125,7 @@ lint:
     - run: ./gradlew lintKotlin detekt
 ```
 
-Lint and detekt run on JVM only -- no need for macOS runners or Android SDK.
+Lint and detekt run on JVM only -- no need for MacOS runners or Android SDK.
 
 ## Scaffolder Patterns
 
@@ -137,13 +137,13 @@ patterns:
 ## Additional Dos
 
 - DO use a matrix strategy to parallelize JVM, Android, and iOS target builds
-- DO use macOS runners for iOS target compilation and testing
+- DO use MacOS runners for iOS target compilation and testing
 - DO use `gradle/actions/setup-gradle` with aggressive caching for KMP builds
 - DO publish XCFramework on main branch merges for iOS consumers
 
 ## Additional Don'ts
 
-- DON'T run iOS tests on Ubuntu -- they require macOS with Xcode
+- DON'T run iOS tests on Ubuntu -- they require MacOS with Xcode
 - DON'T run all targets sequentially -- use matrix parallelism
 - DON'T skip Gradle caching for KMP -- multi-target builds are slow without it
 - DON'T use `macos-latest` without pinning Xcode -- it may change between runs

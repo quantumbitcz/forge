@@ -6,7 +6,7 @@ Podman is a daemonless, rootless container engine developed by Red Hat that prov
 
 Use Podman when the organization requires rootless containers for security hardening, when Docker's daemon architecture creates operational concerns (daemon crashes affect all running containers), when deploying on RHEL/Fedora where Podman is the native container engine, or when integrating containers with systemd service management (Quadlet). Podman excels in environments where least-privilege principles are paramount — developers can build and run containers without root access, and production containers can run without any privileged process on the host.
 
-Do not use Podman when the team relies heavily on Docker-specific features that Podman does not support (Docker Swarm mode, Docker's built-in networking for macOS/Windows without a VM). Do not use Podman on macOS or Windows for production — while Podman Machine provides a VM-based experience similar to Docker Desktop, native Docker or Docker Desktop is more mature on those platforms. Do not use Podman when the CI/CD pipeline is deeply integrated with Docker-specific APIs — while Podman provides Docker CLI compatibility, some edge cases in build behavior and networking differ.
+Do not use Podman when the team relies heavily on Docker-specific features that Podman does not support (Docker Swarm mode, Docker's built-in networking for MacOS/Windows without a VM). Do not use Podman on MacOS or Windows for production — while Podman Machine provides a VM-based experience similar to Docker Desktop, native Docker or Docker Desktop is more mature on those platforms. Do not use Podman when the CI/CD pipeline is deeply integrated with Docker-specific APIs — while Podman provides Docker CLI compatibility, some edge cases in build behavior and networking differ.
 
 **Podman vs. Docker comparison:**
 
@@ -19,7 +19,7 @@ Do not use Podman when the team relies heavily on Docker-specific features that 
 | Compose support | podman compose / podman-compose | docker compose |
 | Swarm mode | Not supported | Built-in |
 | Image building | Buildah (integrated) | BuildKit |
-| macOS/Windows | Podman Machine (VM) | Docker Desktop |
+| MacOS/Windows | Podman Machine (VM) | Docker Desktop |
 | Socket API | Compatible with Docker API | Native Docker API |
 | Container process model | Direct child of caller | Child of daemon |
 | Image format | OCI native | OCI + Docker format |
@@ -321,7 +321,7 @@ sudo dnf install podman podman-compose
 # Install Podman (Ubuntu)
 sudo apt install podman
 
-# macOS via Podman Machine
+# MacOS via Podman Machine
 brew install podman
 podman machine init --cpus 4 --memory 8192 --disk-size 100
 podman machine start

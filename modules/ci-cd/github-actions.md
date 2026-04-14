@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitHub-integrated CI/CD platform executing YAML workflows in `.github/workflows/`, triggered by repository events. Jobs run on GitHub-hosted (Ubuntu/macOS/Windows) or self-hosted runners in ephemeral environments.
+GitHub-integrated CI/CD platform executing YAML workflows in `.github/workflows/`, triggered by repository events. Jobs run on GitHub-hosted (Ubuntu/MacOS/Windows) or self-hosted runners in ephemeral environments.
 
 - **Use for:** GitHub-hosted projects, PR-gated builds, multi-platform matrix testing, automated releases, OIDC-based cloud deployments
 - **Avoid for:** persistent warm-cache agents (use Jenkins), jobs exceeding 6-hour limit, air-gapped environments, GitLab-hosted repos (use GitLab CI)
@@ -215,7 +215,7 @@ jobs:
           path: '**/build/reports/jacoco/'
 ```
 
-Use `exclude` to remove invalid or unnecessary combinations (macOS + JDK 17 is irrelevant if the project requires JDK 21+). Use `include` to add properties to specific combinations (coverage reporting only on one OS/JDK pair). Set `max-parallel` to avoid overwhelming shared resources (databases, external services). Set `fail-fast: false` for PR checks where seeing all failures matters more than fast feedback.
+Use `exclude` to remove invalid or unnecessary combinations (MacOS + JDK 17 is irrelevant if the project requires JDK 21+). Use `include` to add properties to specific combinations (coverage reporting only on one OS/JDK pair). Set `max-parallel` to avoid overwhelming shared resources (databases, external services). Set `fail-fast: false` for PR checks where seeing all failures matters more than fast feedback.
 
 ### Caching Strategy
 

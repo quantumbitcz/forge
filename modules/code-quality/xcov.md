@@ -127,7 +127,7 @@ end
 THRESHOLD=80
 JSON=$(xcrun xccov view --report --json TestResults.xcresult)
 
-# Extract total coverage using python (available on macOS)
+# Extract total coverage using python (available on MacOS)
 COVERAGE=$(echo "$JSON" | python3 -c "
 import json, sys
 data = json.load(sys.stdin)

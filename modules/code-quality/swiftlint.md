@@ -169,7 +169,7 @@ swiftlint:
 - `--use-script-input-files` in Xcode build phase limits analysis to changed files, reducing incremental build time.
 - Exclude `Pods/`, `Carthage/`, `.build/`, and generated code directories — analyzing dependencies adds minutes without benefit.
 - The `--fix` / `autocorrect` command writes safe fixes in place — run before committing to reduce CI failures.
-- Cache SwiftLint binary in CI (e.g., `cache: brew` in GitHub Actions macOS runners) to avoid re-downloading on each run.
+- Cache SwiftLint binary in CI (e.g., `cache: brew` in GitHub Actions MacOS runners) to avoid re-downloading on each run.
 
 ## Security
 

@@ -21,7 +21,7 @@ Trivy is an open-source multi-target vulnerability scanner by Aqua Security cove
 # Install Trivy (Linux)
 curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-# macOS
+# MacOS
 brew install trivy
 
 # Docker (no install)

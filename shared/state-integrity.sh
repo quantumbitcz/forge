@@ -146,7 +146,7 @@ if [[ -f "$LOCK_FILE" ]]; then
   # Get file modification time (epoch seconds), cross-platform
   lock_mtime=""
   if stat -f %m "$LOCK_FILE" &>/dev/null; then
-    # macOS (BSD stat)
+    # MacOS (BSD stat)
     lock_mtime=$(stat -f %m "$LOCK_FILE")
   elif stat -c %Y "$LOCK_FILE" &>/dev/null; then
     # Linux (GNU stat)

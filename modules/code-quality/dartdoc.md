@@ -194,7 +194,7 @@ dart doc --output docs/api
 # Validate all cross-references and links
 dart doc --validate-links
 
-# Open generated docs locally (macOS)
+# Open generated docs locally (MacOS)
 open doc/api/index.html
 
 # Check for doc warnings (non-zero exit if warnings found)

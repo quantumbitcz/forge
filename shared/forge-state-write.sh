@@ -75,7 +75,7 @@ do_write() {
   fi
 
   # Acquire exclusive lock for the entire read-modify-write cycle.
-  # Uses flock when available (Linux), falls back to mkdir-based lock (macOS).
+  # Uses flock when available (Linux), falls back to mkdir-based lock (MacOS).
   local _lock_mode=""
   local lock_file="${FORGE_DIR}/.state-write.lock"
   local lock_dir="${FORGE_DIR}/.state-write.lockdir"

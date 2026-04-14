@@ -15,7 +15,7 @@ LAYERS=(databases persistence migrations api-protocols messaging caching search 
   [[ -f "$SEED_FILE" ]]    || fail "seed.cypher not found: $SEED_FILE"
   [[ -x "$GENERATOR" ]]   || fail "generate-seed.sh not executable: $GENERATOR"
 
-  # generate-seed.sh produces platform-dependent output (macOS vs Linux differ
+  # generate-seed.sh produces platform-dependent output (MacOS vs Linux differ
   # in glob expansion, Python dict ordering, and file traversal — causing 60+
   # statement count differences). The structural tests below (tests 2-8) verify
   # every module has a corresponding CREATE node, which is the actual invariant.
@@ -36,10 +36,10 @@ LAYERS=(databases persistence migrations api-protocols messaging caching search 
   generated_sorted="$("$GENERATOR" --dry-run | grep '^CREATE\|^MATCH' | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')"
 
   if [[ "$committed_sorted" != "$generated_sorted" ]]; then
-    # On macOS, glob expansion and Python dict ordering may differ from Linux
+    # On MacOS, glob expansion and Python dict ordering may differ from Linux
     # where the seed was generated. Structural tests 2-8 verify correctness.
     if [[ "$(uname -s)" == "Darwin" ]]; then
-      skip "seed.cypher content differs on macOS (expected on cross-platform). Structural tests verify correctness."
+      skip "seed.cypher content differs on MacOS (expected on cross-platform). Structural tests verify correctness."
     fi
     fail "seed.cypher is stale (content mismatch). Run shared/graph/generate-seed.sh to regenerate."
   fi

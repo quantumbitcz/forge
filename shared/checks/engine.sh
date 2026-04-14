@@ -20,7 +20,7 @@ fi
 # Always exits 0 — never blocks the pipeline.
 #
 # When bash 4.0+ is not available, delegates to engine.py (Python) if present.
-# This removes the hard bash 4.0+ requirement for macOS users.
+# This removes the hard bash 4.0+ requirement for MacOS users.
 #
 # Modes:
 #   --hook              PostToolUse hook (single file, Layer 1 only)
@@ -34,7 +34,7 @@ fi
 #   for single-component projects (fully backward compatible).
 #
 # Requires bash 4.0+ for BASH_REMATCH (regex capture groups).
-# macOS ships bash 3.2 — install bash 4+ via: brew install bash
+# MacOS ships bash 3.2 — install bash 4+ via: brew install bash
 if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
   # Try Python entry point (no bash 4.0+ requirement)
   _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -665,7 +665,7 @@ if [[ -d "$_LOCK_DIR" ]]; then
     flock -n 200 || exit 0  # Another instance running, skip silently
     trap 'exec 200>&- 2>/dev/null' EXIT
   else
-    # macOS fallback: mkdir-based lock (atomic on POSIX)
+    # MacOS fallback: mkdir-based lock (atomic on POSIX)
     if ! mkdir "$LOCK_FILE.d" 2>/dev/null; then
       exit 0  # Another instance running
     fi

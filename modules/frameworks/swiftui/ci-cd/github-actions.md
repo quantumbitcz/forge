@@ -48,9 +48,9 @@ jobs:
 
 ## Framework-Specific Patterns
 
-### macOS Runner Selection
+### MacOS Runner Selection
 
-GitHub Actions provides macOS runners with Xcode pre-installed. Use `macos-15` for the latest Xcode versions. Pin the Xcode version with `xcode-select` for reproducibility.
+GitHub Actions provides MacOS runners with Xcode pre-installed. Use `macos-15` for the latest Xcode versions. Pin the Xcode version with `xcode-select` for reproducibility.
 
 ```yaml
 runs-on: macos-15

@@ -21,7 +21,7 @@ C and C++ linter and static analysis tool from the LLVM project. Runs checks acr
 # Ubuntu/Debian
 sudo apt-get install clang-tidy
 
-# macOS (via LLVM Homebrew)
+# MacOS (via LLVM Homebrew)
 brew install llvm
 export PATH="$(brew --prefix llvm)/bin:$PATH"
 

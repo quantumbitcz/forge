@@ -157,7 +157,7 @@ cmake -B build-android \
   -DANDROID_PLATFORM=android-26
 ```
 
-**iOS/macOS cross-compilation:**
+**iOS/MacOS cross-compilation:**
 ```cmake
 # toolchains/ios.cmake
 set(CMAKE_SYSTEM_NAME iOS)

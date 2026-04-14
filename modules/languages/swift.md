@@ -57,7 +57,7 @@
 ## Logging
 
 - Use **swift-log** (`apple/swift-log`) — Apple's official server-side logging API with pluggable backends.
-- For Apple platforms (iOS/macOS), use **`os.Logger`** (`os` framework) — integrates with Console.app and Instruments with near-zero overhead when logs are not collected.
+- For Apple platforms (iOS/MacOS), use **`os.Logger`** (`os` framework) — integrates with Console.app and Instruments with near-zero overhead when logs are not collected.
 - Initialize a logger per subsystem:
   ```swift
   // Server-side (swift-log)

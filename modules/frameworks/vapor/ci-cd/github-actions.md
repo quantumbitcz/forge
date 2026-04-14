@@ -100,6 +100,6 @@ patterns:
 
 ## Additional Don'ts
 
-- DON'T use macOS runners for Linux deployment targets -- use Swift Docker containers
+- DON'T use MacOS runners for Linux deployment targets -- use Swift Docker containers
 - DON'T skip migration verification in CI
 - DON'T cache the entire `.build/` without key rotation

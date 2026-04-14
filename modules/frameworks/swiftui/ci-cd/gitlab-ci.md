@@ -51,9 +51,9 @@ test:
 
 ## Framework-Specific Patterns
 
-### macOS Runner Requirement
+### MacOS Runner Requirement
 
-GitLab CI requires self-hosted macOS runners for iOS builds. Tag runners with `macos` and `xcode` to route jobs correctly.
+GitLab CI requires self-hosted MacOS runners for iOS builds. Tag runners with `macos` and `xcode` to route jobs correctly.
 
 ```yaml
 tags:
@@ -61,7 +61,7 @@ tags:
   - xcode
 ```
 
-Install GitLab Runner on a macOS host with Xcode, then register with these tags.
+Install GitLab Runner on a MacOS host with Xcode, then register with these tags.
 
 ### SwiftLint
 
@@ -126,7 +126,7 @@ patterns:
 
 ## Additional Dos
 
-- DO use self-hosted macOS runners tagged with `macos` and `xcode`
+- DO use self-hosted MacOS runners tagged with `macos` and `xcode`
 - DO pin the Xcode version via `XCODE_VERSION` variable and `xcode-select`
 - DO set `CODE_SIGNING_ALLOWED=NO` for build and test stages
 - DO upload `.xcresult` bundles on test failure
@@ -134,7 +134,7 @@ patterns:
 
 ## Additional Don'ts
 
-- DON'T use Linux runners for iOS builds -- Xcode requires macOS
+- DON'T use Linux runners for iOS builds -- Xcode requires MacOS
 - DON'T embed signing credentials in the pipeline file -- use CI/CD variables
 - DON'T run TestFlight distribution on every commit -- limit to `main` branch
 - DON'T skip `skipPackagePluginValidation` when using SPM plugins

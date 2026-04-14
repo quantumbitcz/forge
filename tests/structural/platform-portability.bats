@@ -48,7 +48,7 @@ load '../helpers/test-helpers'
 
 @test "platform-support.md documents all supported platforms" {
   local doc="$PLUGIN_ROOT/shared/platform-support.md"
-  run grep -c 'macOS\|Ubuntu\|Fedora\|Arch\|Alpine\|WSL2\|Git Bash' "$doc"
+  run grep -c 'MacOS\|Ubuntu\|Fedora\|Arch\|Alpine\|WSL2\|Git Bash' "$doc"
   assert_success
   [[ "${output}" -ge 7 ]]
 }
@@ -124,13 +124,13 @@ load '../helpers/test-helpers'
   fi
 }
 
-@test "cross-platform CI workflow exists" {
-  assert [ -f "$PLUGIN_ROOT/.github/workflows/cross-platform.yml" ]
+@test "CI test workflow exists" {
+  assert [ -f "$PLUGIN_ROOT/.github/workflows/test.yml" ]
 }
 
-@test "cross-platform CI workflow includes macOS, Ubuntu, and Windows" {
-  local ci="$PLUGIN_ROOT/.github/workflows/cross-platform.yml"
-  run grep -c 'macos-latest\|ubuntu-latest\|windows-latest' "$ci"
-  assert_success
-  [[ "${output}" -ge 3 ]]
+@test "CI test workflow includes MacOS, Ubuntu, and Windows" {
+  local ci="$PLUGIN_ROOT/.github/workflows/test.yml"
+  grep -q 'macos-latest' "$ci"
+  grep -q 'ubuntu-latest' "$ci"
+  grep -q 'windows-latest' "$ci"
 }

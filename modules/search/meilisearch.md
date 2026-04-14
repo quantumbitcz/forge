@@ -71,7 +71,7 @@ PATCH /indexes/products/settings/typo-tolerance
     "twoTypos": 8    // "sneakers" (8 chars) allows 2 typos
   },
   "disableOnAttributes": ["sku", "barcode"],  // exact match only for identifiers
-  "disableOnWords": ["iPhone", "macOS"]       // brand names — disable fuzzy matching
+  "disableOnWords": ["iPhone", "MacOS"]       // brand names — disable fuzzy matching
 }
 ```
 

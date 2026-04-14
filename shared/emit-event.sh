@@ -20,7 +20,7 @@
 # may interleave despite locking.
 #       1 on usage error.
 #
-# Thread safety: mkdir-based locking (macOS compatible, no flock dependency).
+# Thread safety: mkdir-based locking (MacOS compatible, no flock dependency).
 
 set -euo pipefail
 
@@ -109,7 +109,7 @@ _timestamp() {
     # Try GNU date with nanoseconds first, fall back to static .000
     local ts
     ts="$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ" 2>/dev/null || date -u +"%Y-%m-%dT%H:%M:%S.000Z")"
-    # On macOS, %3N is not supported and may produce literal "%3N"
+    # On MacOS, %3N is not supported and may produce literal "%3N"
     if [[ "$ts" == *"%3N"* ]]; then
       ts="$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"
     fi

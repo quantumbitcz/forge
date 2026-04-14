@@ -4,7 +4,7 @@
 
 | Platform | Status | Bash Source | Notes |
 |---|---|---|---|
-| macOS 12+ (Monterey) | Full support | Homebrew (`brew install bash`) | Ships with bash 3.2; bash 4+ required |
+| MacOS 12+ (Monterey) | Full support | Homebrew (`brew install bash`) | Ships with bash 3.2; bash 4+ required |
 | Ubuntu 20.04+ | Full support | System default | bash 5.0+ standard |
 | Debian 11+ | Full support | System default | bash 5.1+ standard |
 | Fedora 36+ | Full support | System default | bash 5.1+ standard |
@@ -24,16 +24,16 @@
 
 ## Per-Platform Setup
 
-### macOS
+### MacOS
 
 ```bash
-# Install bash 4+ (macOS ships with bash 3.2)
+# Install bash 4+ (MacOS ships with bash 3.2)
 brew install bash
 
 # Verify
 bash --version  # Should show 4.x or 5.x
 
-# Python 3 (usually pre-installed on macOS 12+)
+# Python 3 (usually pre-installed on MacOS 12+)
 python3 --version
 
 # Optional: GNU coreutils for timeout, gstat, etc.
@@ -115,7 +115,7 @@ python3 --version  # or python --version
 2. **File system performance.** Store the project inside the WSL filesystem (`/home/...`), not on a Windows mount (`/mnt/c/...`), for acceptable I/O performance.
 3. **`/proc/version` detection.** Forge detects WSL via `/proc/version` containing "microsoft" or "wsl". Custom kernels that remove this marker will be detected as plain Linux.
 
-### macOS
+### MacOS
 
 1. **Default bash is 3.2.** Must install bash 4+ via Homebrew. Forge's `check-prerequisites.sh` detects and advises.
 2. **BSD `stat` and `date`.** Forge handles BSD/GNU differences via cascading fallbacks in `portable_file_date()` and `state-integrity.sh`.
@@ -139,7 +139,7 @@ Recommended GitHub Actions matrix for cross-platform validation:
 
 | Runner | OS | Shell | Purpose |
 |---|---|---|---|
-| `macos-latest` | macOS 14+ (Sonoma) | Homebrew bash | Primary dev platform |
+| `macos-latest` | MacOS 14+ (Sonoma) | Homebrew bash | Primary dev platform |
 | `ubuntu-latest` | Ubuntu 24.04 LTS | System bash | Linux baseline |
 | `windows-latest` | Windows Server 2022 | Git Bash | Git Bash compatibility |
 

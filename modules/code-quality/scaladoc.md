@@ -170,7 +170,7 @@ override def findById(id: Long): Option[User]
 # Generate Scaladoc
 sbt doc
 
-# Generate and open (macOS)
+# Generate and open (MacOS)
 sbt doc && open target/scala-3.3/api/index.html
 
 # Watch mode — regenerate on source change

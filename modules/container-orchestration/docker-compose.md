@@ -229,7 +229,7 @@ docker compose --profile seed run --rm seed
 
 ### Watch Mode for Development
 
-Compose Watch (V2.22+) provides file synchronization between host and container, enabling hot-reload workflows without bind mounts. This solves the performance problems of bind mounts on macOS (where Docker Desktop uses a Linux VM) and the `node_modules` conflict problem.
+Compose Watch (V2.22+) provides file synchronization between host and container, enabling hot-reload workflows without bind mounts. This solves the performance problems of bind mounts on MacOS (where Docker Desktop uses a Linux VM) and the `node_modules` conflict problem.
 
 ```yaml
 services:
@@ -466,7 +466,7 @@ volumes:
 
 **Build performance:** Use BuildKit (`DOCKER_BUILDKIT=1` or Docker 23.0+ default) for parallel multi-stage builds. Use `build.cache_from` to leverage registry-based caches in CI. Use `docker compose build --parallel` to build multiple service images concurrently.
 
-**Volume performance on macOS:** Docker Desktop on macOS runs containers in a Linux VM, making bind mounts significantly slower than native filesystem access. For large `node_modules` directories or Go module caches, use named volumes instead of bind mounts for dependency directories. Alternatively, use Compose Watch (`develop.watch`) which uses efficient rsync-like file synchronization instead of filesystem mounts.
+**Volume performance on MacOS:** Docker Desktop on MacOS runs containers in a Linux VM, making bind mounts significantly slower than native filesystem access. For large `node_modules` directories or Go module caches, use named volumes instead of bind mounts for dependency directories. Alternatively, use Compose Watch (`develop.watch`) which uses efficient rsync-like file synchronization instead of filesystem mounts.
 
 **Resource limits:** Always set `deploy.resources.limits` in production Compose files. Without limits, a single runaway container can consume all host memory and trigger the OOM killer, taking down unrelated services.
 
@@ -566,7 +566,7 @@ docker compose up -d --wait
 - Use named volumes for persistent data (database files) and anonymous volumes for ephemeral caches (`node_modules`).
 - Use `.env` files for environment-specific configuration and commit a `.env.example` template with dummy values.
 - Use `restart: unless-stopped` for development and `restart: always` for production single-host deployments.
-- Use Compose Watch (`develop.watch`) for efficient hot-reload workflows, especially on macOS where bind mount performance is poor.
+- Use Compose Watch (`develop.watch`) for efficient hot-reload workflows, especially on MacOS where bind mount performance is poor.
 - Use override files (`compose.override.yml`, `compose.ci.yml`) to separate development, CI, and production concerns.
 
 ## Don'ts
@@ -576,6 +576,6 @@ docker compose up -d --wait
 - Do not hardcode secrets in `environment` blocks — use Docker secrets (`secrets:`) or external secret managers.
 - Do not use Compose for production deployments that require high availability — it provides no multi-host scheduling or self-healing.
 - Do not rely on `depends_on` without `condition: service_healthy` — container start order does not guarantee service readiness.
-- Do not use bind mounts for dependency directories on macOS (`node_modules`, `vendor`) — use named volumes or Compose Watch instead.
+- Do not use bind mounts for dependency directories on MacOS (`node_modules`, `vendor`) — use named volumes or Compose Watch instead.
 - Do not omit resource limits in production Compose files — runaway containers can trigger OOM kills on the host.
 - Do not commit `.env` files with real secrets — commit `.env.example` with placeholder values and add `.env` to `.gitignore`.
