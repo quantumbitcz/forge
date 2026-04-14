@@ -32,6 +32,15 @@ Execute: **$ARGUMENTS**
 8. Verify: `git -C <base-dir> status`
 9. If `.gitmodules` exists: `git -C <base-dir> submodule update --init --recursive`
 
+### Windows Long Path Guard
+
+1. Compute the full absolute worktree path length (base directory + branch name + longest expected relative path in repo)
+2. If running on Windows AND the worktree path starts with `/mnt/` (Windows filesystem via WSL):
+   - Set `git config core.longpaths true` in the new worktree
+   - If the branch slug exceeds 200 characters, truncate it to 200 characters and append the epoch suffix to ensure uniqueness
+   - Log a WARNING noting the Windows long path mitigation was applied
+3. If running on WSL2 native filesystem (path does NOT start with `/mnt/`): skip the guard — ext4 supports paths up to 4096 characters
+
 **Output:**
 
 ```
