@@ -88,6 +88,47 @@ print('OK')
   grep -q "OUTPUT COMPRESSION -- ULTRA" "$PLUGIN_ROOT/hooks/session-start.sh"
 }
 
+@test "output-compression.md references arXiv:2604.00025" {
+  grep -q "2604.00025" "$PLUGIN_ROOT/shared/output-compression.md"
+}
+
+@test "output-compression.md includes error diagnostics auto-clarity trigger" {
+  grep -q "Error diagnostics" "$PLUGIN_ROOT/shared/output-compression.md"
+}
+
+@test "output-compression.md has Session Savings column" {
+  grep -q "Session Savings" "$PLUGIN_ROOT/shared/output-compression.md"
+}
+
+@test "config schema includes compression_eval section" {
+  grep -q '"compression_eval"' "$PLUGIN_ROOT/shared/config-schema.json"
+}
+
+@test "config schema validates compression_eval.enabled as boolean" {
+  run python3 -c "
+import json
+schema = json.load(open('$PLUGIN_ROOT/shared/config-schema.json'))
+ce = schema['properties']['compression_eval']
+assert ce['properties']['enabled']['type'] == 'boolean', 'enabled must be boolean'
+print('OK')
+"
+  assert_success
+  assert_output "OK"
+}
+
+@test "config schema validates compression_eval.drift_threshold_pct range" {
+  run python3 -c "
+import json
+schema = json.load(open('$PLUGIN_ROOT/shared/config-schema.json'))
+dtp = schema['properties']['compression_eval']['properties']['drift_threshold_pct']
+assert dtp.get('minimum', 0) >= 10, 'minimum must be >= 10'
+assert dtp.get('maximum', 999) <= 200, 'maximum must be <= 200'
+print('OK')
+"
+  assert_success
+  assert_output "OK"
+}
+
 @test "prompts.json prompts have required_facts" {
   run python3 -c "
 import json

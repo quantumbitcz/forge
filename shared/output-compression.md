@@ -4,12 +4,12 @@ Per-stage output verbosity system that constrains agent output for inter-agent c
 
 ## Verbosity Levels
 
-| Level | Name | Token Range | Savings | Use When |
-|-------|------|-------------|---------|----------|
-| 0 | `verbose` | 800-2000 | 0% | User-facing reports, escalation messages |
-| 1 | `standard` | 800-2000 | ~20% | Planning, documentation, retrospective |
-| 2 | `terse` | 400-1200 | ~45% | Implementation, verification, review findings |
-| 3 | `minimal` | 100-600 | ~65% | Inner-loop lint/test, mutation analysis, scaffolding |
+| Level | Name | Token Range | Savings (prose-only) | Session Savings (est.) | Use When |
+|-------|------|-------------|----------------------|------------------------|----------|
+| 0 | `verbose` | 800-2000 | 0% | 0% | User-facing reports, escalation messages |
+| 1 | `standard` | 800-2000 | ~20% | ~2-4% | Planning, documentation, retrospective |
+| 2 | `terse` | 400-1200 | ~45% | ~4-7% | Implementation, verification, review findings |
+| 3 | `minimal` | 100-600 | ~65% | ~6-10% | Inner-loop lint/test, mutation analysis, scaffolding |
 
 ### Level 0 (verbose)
 
@@ -101,8 +101,9 @@ Compression automatically suspends (reverts to verbose, level 0) for these trigg
 3. **User-facing output** — `AskUserQuestion` content, PR descriptions (fg-600), and user-visible reports are never compressed
 4. **Escalation messages** — convergence failures, budget exhaustion, abort recommendations
 5. **Coordinator structured output** — `FORGE_STRUCTURED_OUTPUT` JSON blocks are never omitted or compressed. Coordinators (fg-400, fg-500, fg-700) are capped at level 2 (terse) maximum — never level 3 (minimal), to preserve the Markdown + JSON contract from `agent-communication.md` §10.
+6. **Error diagnostics** — when an agent is explaining a build failure, test failure, or runtime error to the user (not inter-agent error reporting), revert to verbose for the diagnostic block. Detection: output contains error stack trace or `BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` classification AND is destined for user consumption (not stage notes).
 
-Detection: agents check the output type. If emitting a finding with `SEC-*` CRITICAL, using `AskUserQuestion`, writing a user-visible report, or producing a PR description, switch to `verbose` (level 0) for that block. Resume compression after.
+Detection: agents check the output type. If emitting a finding with `SEC-*` CRITICAL, using `AskUserQuestion`, writing a user-visible report, producing a PR description, or explaining an error diagnostic to the user, switch to `verbose` (level 0) for that block. Resume compression after.
 
 ## Relationship to Output Token Budget
 
@@ -193,6 +194,18 @@ When `output_compression.enabled: false`, all agents use verbose (level 0). Zero
 | Auto-clarity triggers excessively | Log frequency. If >50% of output is auto-clarity, suggest lowering stage verbosity. |
 | Compression causes ambiguity | User reports confusion → feedback-capture tags as `style-preference` → retrospective adjusts level. |
 | `output_compression.enabled: false` | All agents use verbose (level 0). Zero behavioral change. |
+
+## Research Backing
+
+arXiv:2604.00025 (March 2026) "Brevity Constraints Reverse Performance Hierarchies in Language Models" validates this system's design:
+
+1. **Brevity improves accuracy:** Brevity constraints improve LLM accuracy by up to 26 percentage points. Terse and minimal levels are not just token-efficient -- they produce more accurate technical output.
+
+2. **Minimal prompt sufficiency:** A 6-line compression prompt matches the effectiveness of elaborate multi-page instruction sets. Forge's per-level rule blocks (5-10 lines each) are in the effective range.
+
+3. **Realistic savings expectations:** Real-world total session savings are 4-10%, not the 45-65% figures cited for prose-only compression. The per-stage savings estimates in the Verbosity Levels table represent prose-only reduction. Actual session savings depend on the ratio of prose to code/structured output.
+
+4. **Safety exceptions are critical:** The paper confirms that compressing security warnings, irreversible action confirmations, and user-facing content degrades decision quality. Forge's auto-clarity safety valve (see above) is aligned with this finding.
 
 ## Token Tracking (state.json)
 

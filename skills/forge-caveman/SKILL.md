@@ -58,8 +58,13 @@ Compression suspends automatically for:
 - `AskUserQuestion` content
 - Escalation messages (convergence failure, budget exhaustion)
 - PR descriptions
+- Error diagnostics (`BUILD_FAILURE`/`TEST_FAILURE`/`LINT_FAILURE` destined for user)
 
 After the excepted block, caveman mode resumes.
+
+## Research Backing
+
+Brevity constraints improve LLM accuracy by up to 26pp (arXiv:2604.00025, March 2026). The 6-line prompt finding confirms that lite/full/ultra rule blocks (5-10 lines each) are in the effective range for compression instruction. Realistic total session savings are 4-10% (not 45-65%, which is prose-only). Auto-clarity exceptions for security, irreversible actions, and user-facing content are validated as critical by the paper.
 
 ## Output Patterns
 

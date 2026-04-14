@@ -23,3 +23,8 @@ setup() {
   assert_success
   assert_output --partial "off"
 }
+
+@test "caveman-config: schema includes compression_eval section" {
+  run grep -q '"compression_eval"' "$SCHEMA"
+  assert_success
+}
