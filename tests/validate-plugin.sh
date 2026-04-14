@@ -6,12 +6,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Use git rev-parse for ROOT — works correctly on Windows Git Bash where pwd returns
+# POSIX-style /d/a/... paths that don't resolve with test -f or ls.
+ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || cd "$SCRIPT_DIR/.." && pwd)"
 
 # Check for required dependency
 if ! command -v jq &>/dev/null; then
   echo "ERROR: jq is required but not found. Install it:" >&2
-  echo "  macOS:   brew install jq" >&2
+  echo "  MacOS:   brew install jq" >&2
   echo "  Linux:   sudo apt install jq (or your package manager)" >&2
   echo "  Windows: choco install jq" >&2
   exit 1
