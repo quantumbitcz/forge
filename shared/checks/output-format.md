@@ -14,7 +14,7 @@ file:line | CATEGORY-CODE | SEVERITY | message | fix_hint | confidence:HIGH
 
 - `file` — project-relative path (e.g., `src/main/kotlin/domain/User.kt`)
 - `line` — 1-based line number. `0` for file-level findings (e.g., file too large).
-- `CATEGORY-CODE` — from scoring.md taxonomy: `ARCH-*`, `SEC-*`, `PERF-*`, `QUAL-*`, `CONV-*`, `DOC-*`, `TEST-*`. Module-specific: `HEX-*`, `THEME-*`. Subcategories: `QUAL-NULL`, `QUAL-READ`, `PERF-BLOCK`, `PERF-ASYNC`. (Reserved for Phase 2: `CONTRACT-BREAK`, `CONTRACT-CHANGE`, `CONTRACT-ADD`.)
+- `CATEGORY-CODE` — from scoring.md taxonomy: `ARCH-*`, `SEC-*`, `PERF-*`, `QUAL-*`, `CONV-*`, `DOC-*`, `TEST-*`, `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*`. Module-specific: `HEX-*`, `THEME-*`. Subcategories: `QUAL-NULL`, `QUAL-READ`, `PERF-BLOCK`, `PERF-ASYNC`. (Reserved for Phase 2: `CONTRACT-BREAK`, `CONTRACT-CHANGE`, `CONTRACT-ADD`.)
 - `SEVERITY` — exactly one of: `CRITICAL`, `WARNING`, `INFO`.
 - `message` — human-readable description.
 - `fix_hint` — one-line suggested fix. Empty string if no hint.

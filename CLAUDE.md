@@ -148,7 +148,7 @@ See `shared/agent-role-hierarchy.md` for the complete dispatch graph and tier de
 
 ### Scoring (`scoring.md`)
 
-Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 83 shared categories (23 wildcard prefixes + 60 discrete) in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 87 shared categories (27 wildcard prefixes + 60 discrete) in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*`, `A11Y-*`, `DEP-*`, `INFRA-*`, `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*`. Dedup key: `(component, file, line, category)`. SCOUT-* excluded from score (two-point filtering). 5 convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner-loop); `phase_iterations` (per-phase, resets); `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (inner-loop, does NOT feed into convergence counters or `total_retries`). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 ### State, recovery & errors
 
@@ -194,6 +194,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Deployment strategies (F24) | `deployment.*` | Canary/blue-green/rolling, `fg-620-deploy-verifier`, Argo Rollouts |
 | Consumer-driven contracts (F25) | `contract_testing.*` | Pact, can-i-deploy gate. Categories: `CONTRACT-PACT-*` |
 | Output compression (F26) | `output_compression.*` | 4 levels (verbose/standard/terse/minimal), 20-65% reduction |
+| AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |
 | Memory discovery | `memory_discovery.*` | Auto-discovered items decay 2x faster, start MEDIUM |
 | Background execution | — | `--background`, `.forge/alerts.json` for escalations |
@@ -339,6 +340,7 @@ All 21 share the same base structure. Non-obvious conventions only:
 - Implementer inner loop: `implementer.inner_loop.enabled` (boolean, default `true`), `implementer.inner_loop.max_fix_cycles` 1-5 (default 3), `implementer.inner_loop.affected_test_cap` 5-50 (default 20).
 - Confidence: `confidence.planning_gate` (boolean, default `true`), `confidence.autonomous_threshold` 0.3-0.95 (default 0.7), `confidence.pause_threshold` 0.1-0.7 (default 0.4), `confidence.initial_trust` 0.0-1.0 (default 0.5). `autonomous_threshold` must be > `pause_threshold` (gap >= 0.1). Weights must sum to 1.0 (+/- 0.01).
 - Output compression: `output_compression.enabled` (boolean, default `true`), `output_compression.default_level` must be `verbose`, `standard`, `terse`, or `minimal` (default `terse`), `output_compression.per_stage` keys must match 10 stage names, `output_compression.auto_clarity` (boolean, default `true`).
+- AI quality: `ai_quality.enabled` (boolean, default `true`), `ai_quality.categories` must be array of `AI-LOGIC`/`AI-PERF`/`AI-SEC`/`AI-CONCURRENCY`, `ai_quality.l1_patterns` (boolean, default `true`), `ai_quality.scout_learning` (boolean, default `true`), `ai_quality.severity_overrides` keys must match `AI-*` codes with values `CRITICAL`/`WARNING`/`INFO`. No PREFLIGHT failure -- all violations WARNING + fallback.
 
 ### Pipeline modes
 

@@ -560,6 +560,33 @@ Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metad
 
 ---
 
+### ai_quality_tracking (object, optional)
+
+Tracks AI-specific finding patterns across pipeline runs. Created by `fg-700-retrospective` on first detection of `AI-*` findings. Persists across runs (not reset by `/forge-reset`).
+
+```json
+{
+  "ai_quality_tracking": {
+    "run_counts": {
+      "AI-LOGIC-ASYNC": 4,
+      "AI-PERF-N-PLUS-ONE": 2
+    },
+    "promoted_preempts": [
+      "SCOUT-AI-LOGIC-ASYNC"
+    ],
+    "last_updated": "2026-04-14T10:30:00Z"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_counts` | `object<string, number>` | Count of runs where each `AI-*` category was detected |
+| `promoted_preempts` | `string[]` | SCOUT-AI categories that have been promoted to PREEMPT items |
+| `last_updated` | `string (ISO 8601)` | Timestamp of last update |
+
+---
+
 ### graph (object, optional)
 
 Tracks graph update state for incremental updates at stage boundaries.
