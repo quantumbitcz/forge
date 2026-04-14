@@ -14,10 +14,17 @@ permissions: {}
 
 jobs:
   structural:
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash {0}
     steps:
       - uses: actions/checkout@v6
         with:

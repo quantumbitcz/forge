@@ -83,7 +83,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_SUITE: ${{ github.event.inputs.suite }}
       INPUT_LIVE: ${{ github.event.inputs.live }}
       INPUT_BASELINE: ${{ github.event.inputs.baseline }}
@@ -118,6 +117,7 @@ jobs:
 
       - name: Run eval
         env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUITE_NAME: ${{ steps.suite.outputs.name }}
         run: |
           MODEL_FLAG=""
@@ -144,7 +144,7 @@ jobs:
       - name: Generate report
         if: always()
         run: |
-          LATEST=$(ls -t evals/pipeline/results/*.json 2>/dev/null | head -1)
+          LATEST=$(find evals/pipeline/results -maxdepth 1 -name '*.json' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
           if [ -n "$LATEST" ]; then
             ./evals/pipeline/eval-report.sh summary "$LATEST" --format markdown > eval-summary.md
             cat eval-summary.md >> "$GITHUB_STEP_SUMMARY"
