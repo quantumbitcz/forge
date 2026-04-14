@@ -27,3 +27,28 @@ load '../helpers/test-helpers'
   assert_success
   assert_output --partial "eol=lf"
 }
+
+@test "platform-support.md exists" {
+  assert [ -f "$PLUGIN_ROOT/shared/platform-support.md" ]
+}
+
+@test "platform-support.md contains required sections" {
+  local doc="$PLUGIN_ROOT/shared/platform-support.md"
+  run grep '## Supported Platforms' "$doc"
+  assert_success
+  run grep '## Required Tools' "$doc"
+  assert_success
+  run grep '## Per-Platform Setup' "$doc"
+  assert_success
+  run grep '## Known Limitations' "$doc"
+  assert_success
+  run grep '## Configuration' "$doc"
+  assert_success
+}
+
+@test "platform-support.md documents all supported platforms" {
+  local doc="$PLUGIN_ROOT/shared/platform-support.md"
+  run grep -c 'macOS\|Ubuntu\|Fedora\|Arch\|Alpine\|WSL2\|Git Bash' "$doc"
+  assert_success
+  [[ "${output}" -ge 7 ]]
+}
