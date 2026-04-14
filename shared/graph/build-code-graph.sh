@@ -15,6 +15,14 @@ set -euo pipefail
 # Exit 0 on success or graceful degradation (tree-sitter not found).
 # ============================================================================
 
+# Support --source-only for unit testing
+if [[ "${1:-}" == "--source-only" ]]; then
+  _SOURCE_ONLY=true
+  shift
+else
+  _SOURCE_ONLY=false
+fi
+
 PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../platform.sh
 source "${PLUGIN_ROOT}/shared/platform.sh"
@@ -723,24 +731,19 @@ remove_file_from_db() {
 
 build_cross_file_edges() {
   local db="$1"
+  local boundary_map="${FORGE_DIR}/module-boundary-map.json"
 
   echo "[code-graph] Building cross-file edges..." >&2
 
-  # IMPORTS edges: match Import nodes to File nodes via name resolution
-  # This is a simplified heuristic — matches import names to file names
-  sqlite3 "$db" "
-    INSERT OR IGNORE INTO edges (edge_type, source_id, target_id)
-    SELECT 'IMPORTS', src_file.id, tgt_file.id
-    FROM nodes imp
-    JOIN nodes src_file ON src_file.kind='File' AND src_file.file_path = imp.file_path
-    JOIN nodes tgt_file ON tgt_file.kind='File'
-      AND (tgt_file.name LIKE '%' || REPLACE(REPLACE(imp.name, '.', '/'), '::', '/') || '%'
-           OR imp.name LIKE '%' || REPLACE(tgt_file.file_path, '/', '.') || '%')
-    WHERE imp.kind='Import'
-      AND src_file.file_path != tgt_file.file_path;
-  " 2>/dev/null || true
+  if [[ -f "$boundary_map" && -n "${FORGE_PYTHON:-}" ]]; then
+    echo "[code-graph] Using module-boundary-aware resolution." >&2
+    build_cross_file_edges_with_boundaries "$db" "$boundary_map"
+  else
+    echo "[code-graph] Using heuristic resolution (no boundary map)." >&2
+    build_cross_file_edges_heuristic "$db"
+  fi
 
-  # CALLS edges across files: match call targets to function definitions in other files
+  # CALLS edges across files (unchanged from original)
   sqlite3 "$db" "
     INSERT OR IGNORE INTO edges (edge_type, source_id, target_id)
     SELECT 'CALLS', caller.id, callee.id
@@ -753,7 +756,7 @@ build_cross_file_edges() {
     WHERE caller.kind IN ('Function', 'Method');
   " 2>/dev/null || true
 
-  # TESTS edges: link test files to production files they likely test
+  # TESTS edges (unchanged from original)
   sqlite3 "$db" "
     INSERT OR IGNORE INTO edges (edge_type, source_id, target_id)
     SELECT 'TESTS', test_file.id, prod_file.id
@@ -770,7 +773,291 @@ build_cross_file_edges() {
   " 2>/dev/null || true
 }
 
+build_cross_file_edges_heuristic() {
+  local db="$1"
+
+  # Original IMPORTS heuristic (preserved as fallback)
+  sqlite3 "$db" "
+    INSERT OR IGNORE INTO edges (edge_type, source_id, target_id, properties)
+    SELECT 'IMPORTS', src_file.id, tgt_file.id, '{\"confidence\":\"heuristic\"}'
+    FROM nodes imp
+    JOIN nodes src_file ON src_file.kind='File' AND src_file.file_path = imp.file_path
+    JOIN nodes tgt_file ON tgt_file.kind='File'
+      AND (tgt_file.name LIKE '%' || REPLACE(REPLACE(imp.name, '.', '/'), '::', '/') || '%'
+           OR imp.name LIKE '%' || REPLACE(tgt_file.file_path, '/', '.') || '%')
+    WHERE imp.kind='Import'
+      AND src_file.file_path != tgt_file.file_path;
+  " 2>/dev/null || true
+}
+
+build_cross_file_edges_with_boundaries() {
+  local db="$1" boundary_map="$2"
+
+  "${FORGE_PYTHON:-python3}" << 'PYEOF' - "$db" "$boundary_map"
+import json, sys, sqlite3, os, re
+
+db_path = sys.argv[1]
+boundary_map_path = sys.argv[2]
+
+with open(boundary_map_path) as f:
+    bmap = json.load(f)
+
+modules = bmap.get("modules", [])
+
+# Build file_path -> module_name index
+file_to_module = {}
+module_by_name = {}
+for mod in modules:
+    module_by_name[mod["name"]] = mod
+    for src_dir in mod.get("source_dirs", []) + mod.get("test_dirs", []):
+        file_to_module[src_dir] = mod["name"]
+
+def resolve_file_to_module(file_path):
+    for src_dir, mod_name in file_to_module.items():
+        if file_path.startswith(src_dir + '/') or file_path == src_dir:
+            return mod_name
+    return None
+
+# Build module dependency graph
+module_deps = {m["name"]: set(m.get("depends_on", [])) for m in modules}
+
+conn = sqlite3.connect(db_path)
+conn.row_factory = sqlite3.Row
+c = conn.cursor()
+
+# Get all Import nodes
+imports = c.execute("SELECT id, name, file_path, language FROM nodes WHERE kind='Import'").fetchall()
+
+# Get all File nodes indexed by file_path
+file_nodes = {}
+for row in c.execute("SELECT id, name, file_path FROM nodes WHERE kind='File'"):
+    file_nodes[row["file_path"]] = row["id"]
+
+# Also build a reverse index: basename -> [file_paths]
+basename_to_paths = {}
+for fp in file_nodes:
+    bn = os.path.basename(fp)
+    basename_to_paths.setdefault(bn, []).append(fp)
+
+def generate_candidates(import_name, language):
+    """Generate candidate file paths from an import name."""
+    candidates = []
+    lang = (language or "").lower()
+
+    if lang in ("java", "kotlin", "scala"):
+        # com.example.core.Service -> com/example/core/Service.{java,kt,scala}
+        path_base = import_name.replace(".", "/")
+        for ext in [".java", ".kt", ".scala"]:
+            candidates.append(path_base + ext)
+        # Also try just the class name
+        parts = import_name.rsplit(".", 1)
+        if len(parts) == 2:
+            class_name = parts[1]
+            for ext in [".java", ".kt", ".scala"]:
+                candidates.append(class_name + ext)
+
+    elif lang == "python":
+        # app.services.user -> app/services/user.py, app/services/user/__init__.py
+        path_base = import_name.replace(".", "/")
+        candidates.append(path_base + ".py")
+        candidates.append(path_base + "/__init__.py")
+
+    elif lang == "go":
+        # github.com/example/project/pkg/auth -> pkg/auth/
+        parts = import_name.split("/")
+        if len(parts) >= 3:
+            # Strip the domain (first 3 parts typically)
+            local_parts = parts[3:] if len(parts) > 3 else parts[-1:]
+            local_path = "/".join(local_parts)
+            candidates.append(local_path + "/")
+
+    elif lang == "rust":
+        # crate::models::user -> src/models/user.rs, src/models/user/mod.rs
+        cleaned = import_name.replace("crate::", "").replace("::", "/")
+        candidates.append("src/" + cleaned + ".rs")
+        candidates.append("src/" + cleaned + "/mod.rs")
+
+    elif lang in ("typescript", "javascript", "tsx"):
+        # @scope/pkg -> workspace match; ./services/User -> relative
+        cleaned = import_name.lstrip("./").lstrip("@")
+        for ext in [".ts", ".tsx", ".js", ".jsx"]:
+            candidates.append(cleaned + ext)
+        candidates.append(cleaned + "/index.ts")
+        candidates.append(cleaned + "/index.js")
+
+    elif lang in ("c_sharp", "csharp"):
+        # Project.Models -> Models/
+        parts = import_name.split(".")
+        for i in range(len(parts)):
+            sub = "/".join(parts[i:])
+            candidates.append(sub + ".cs")
+
+    elif lang == "ruby":
+        candidates.append(import_name.replace("::", "/") + ".rb")
+
+    elif lang in ("c", "cpp"):
+        candidates.append(import_name)
+
+    else:
+        # Generic: try dot-to-slash
+        path_base = import_name.replace(".", "/")
+        candidates.append(path_base)
+
+    return candidates
+
+edges_to_insert = []
+
+for imp in imports:
+    imp_id = imp["id"]
+    imp_name = imp["name"]
+    imp_file = imp["file_path"]
+    imp_lang = imp["language"]
+
+    source_file_id = file_nodes.get(imp_file)
+    if not source_file_id:
+        continue
+
+    source_module = resolve_file_to_module(imp_file)
+    candidates = generate_candidates(imp_name, imp_lang)
+
+    resolved = False
+
+    # Step 1: same-module resolution
+    if source_module and source_module in module_by_name:
+        mod = module_by_name[source_module]
+        for src_dir in mod.get("source_dirs", []):
+            for cand in candidates:
+                full_path = src_dir + "/" + cand if not cand.startswith(src_dir) else cand
+                if full_path in file_nodes:
+                    edges_to_insert.append((source_file_id, file_nodes[full_path], "resolved"))
+                    resolved = True
+                    break
+            if resolved:
+                break
+
+    # Step 2: cross-module (declared dependency)
+    if not resolved and source_module:
+        for dep_mod_name in module_deps.get(source_module, []):
+            if dep_mod_name in module_by_name:
+                dep_mod = module_by_name[dep_mod_name]
+                for src_dir in dep_mod.get("source_dirs", []):
+                    for cand in candidates:
+                        full_path = src_dir + "/" + cand if not cand.startswith(src_dir) else cand
+                        if full_path in file_nodes:
+                            edges_to_insert.append((source_file_id, file_nodes[full_path], "resolved"))
+                            resolved = True
+                            break
+                    if resolved:
+                        break
+            if resolved:
+                break
+
+    # Step 3: any module (undeclared dependency)
+    if not resolved:
+        for mod in modules:
+            if mod["name"] == source_module:
+                continue
+            for src_dir in mod.get("source_dirs", []):
+                for cand in candidates:
+                    full_path = src_dir + "/" + cand if not cand.startswith(src_dir) else cand
+                    if full_path in file_nodes:
+                        edges_to_insert.append((source_file_id, file_nodes[full_path], "module-inferred"))
+                        resolved = True
+                        break
+                if resolved:
+                    break
+            if resolved:
+                break
+
+    # Step 4: heuristic fallback (basename matching)
+    if not resolved:
+        # Try matching by the last segment of the import name
+        last_segment = imp_name.rsplit(".", 1)[-1].rsplit("::", 1)[-1]
+        for ext in [".java", ".kt", ".py", ".go", ".rs", ".ts", ".tsx", ".js", ".cs", ".rb", ".scala", ".swift", ".cpp", ".c", ".h", ".php", ".dart", ".ex", ".exs"]:
+            bn = last_segment + ext
+            if bn in basename_to_paths:
+                for fp in basename_to_paths[bn]:
+                    if fp != imp_file:
+                        edges_to_insert.append((source_file_id, file_nodes[fp], "heuristic"))
+                        resolved = True
+                        break
+            if resolved:
+                break
+
+# Batch insert all edges
+for src_id, tgt_id, confidence in edges_to_insert:
+    try:
+        c.execute(
+            "INSERT OR IGNORE INTO edges (edge_type, source_id, target_id, properties) VALUES ('IMPORTS', ?, ?, ?)",
+            (src_id, tgt_id, json.dumps({"confidence": confidence}))
+        )
+    except Exception:
+        pass
+
+conn.commit()
+conn.close()
+
+sys.stderr.write(f"[code-graph] Module-aware resolution: {len(edges_to_insert)} IMPORTS edges created.\n")
+PYEOF
+}
+
+# ── Metrics emission ────────────────────────────────────────────────────────
+
+emit_build_graph_metrics() {
+  local db="$1"
+  local state_file="${FORGE_DIR}/state.json"
+
+  [[ -f "$state_file" ]] || return 0
+  [[ -n "${FORGE_PYTHON:-}" ]] || return 0
+
+  local total resolved inferred heuristic
+
+  total="$(sqlite3 "$db" "SELECT COUNT(*) FROM edges WHERE edge_type='IMPORTS';" 2>/dev/null || echo 0)"
+  resolved="$(sqlite3 "$db" "SELECT COUNT(*) FROM edges WHERE edge_type='IMPORTS' AND json_extract(properties, '$.confidence')='resolved';" 2>/dev/null || echo 0)"
+  inferred="$(sqlite3 "$db" "SELECT COUNT(*) FROM edges WHERE edge_type='IMPORTS' AND json_extract(properties, '$.confidence')='module-inferred';" 2>/dev/null || echo 0)"
+  heuristic="$(sqlite3 "$db" "SELECT COUNT(*) FROM edges WHERE edge_type='IMPORTS' AND json_extract(properties, '$.confidence')='heuristic';" 2>/dev/null || echo 0)"
+
+  local total_imports resolved_imports unresolved
+  total_imports="$(sqlite3 "$db" "SELECT COUNT(*) FROM nodes WHERE kind='Import';" 2>/dev/null || echo 0)"
+  resolved_imports="$(sqlite3 "$db" "SELECT COUNT(DISTINCT n.id) FROM nodes n WHERE n.kind='Import' AND EXISTS (SELECT 1 FROM edges e JOIN nodes src ON src.kind='File' AND src.file_path = n.file_path AND e.source_id = src.id WHERE e.edge_type='IMPORTS');" 2>/dev/null || echo 0)"
+  unresolved=$(( total_imports - resolved_imports ))
+  [[ $unresolved -lt 0 ]] && unresolved=0
+
+  local accuracy="0.0"
+  if [[ $total -gt 0 ]]; then
+    accuracy="$("${FORGE_PYTHON:-python3}" -c "print(round(($resolved + $inferred) / $total, 3))" 2>/dev/null || echo "0.0")"
+  fi
+
+  "${FORGE_PYTHON:-python3}" -c "
+import json, sys
+state_path = sys.argv[1]
+try:
+    with open(state_path) as f:
+        state = json.load(f)
+except (json.JSONDecodeError, IOError):
+    state = {}
+state['build_graph'] = {
+    'edges_total': int(sys.argv[2]),
+    'edges_resolved': int(sys.argv[3]),
+    'edges_module_inferred': int(sys.argv[4]),
+    'edges_heuristic': int(sys.argv[5]),
+    'edges_unresolved': int(sys.argv[6]),
+    'resolution_accuracy': float(sys.argv[7])
+}
+with open(state_path, 'w') as f:
+    json.dump(state, f, indent=2)
+" "$state_file" "$total" "$resolved" "$inferred" "$heuristic" "$unresolved" "$accuracy" \
+    2>/dev/null || true
+
+  echo "[code-graph] Metrics: total=$total resolved=$resolved inferred=$inferred heuristic=$heuristic unresolved=$unresolved accuracy=$accuracy" >&2
+}
+
 # ── Main build logic ────────────────────────────────────────────────────────
+
+if [[ "${_SOURCE_ONLY:-false}" == "true" ]]; then
+  # When sourced for testing, skip main execution
+  return 0 2>/dev/null || true
+fi
 
 echo "[code-graph] Building code graph for ${PROJECT_ROOT}..." >&2
 echo "[code-graph] Mode: $(if [[ "$INCREMENTAL" == "true" ]]; then echo "incremental"; else echo "full"; fi)" >&2
@@ -813,6 +1100,9 @@ done
 
 # Build cross-file relationships
 build_cross_file_edges "$DB_PATH"
+
+# Emit build graph quality metrics to state.json
+emit_build_graph_metrics "$DB_PATH"
 
 # Handle deleted files in incremental mode
 if [[ "$INCREMENTAL" == "true" ]]; then
