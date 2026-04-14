@@ -114,6 +114,6 @@ output_compression:
 
 ## See Also
 
-- `shared/output-compression.md` -- full inter-agent compression spec
-- `shared/input-compression.md` -- full input compression rules and intensity levels
-- See `benchmarks/` for compression measurements (if available)
+- Output compression spec: `shared/output-compression.md`
+- Input compression rules: `shared/input-compression.md`
+- `benchmarks/` -- compression measurements (if available)

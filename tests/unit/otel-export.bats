@@ -1,9 +1,8 @@
 #!/usr/bin/env bats
 
-setup() {
-  load '../helpers/test-helpers'
-  OTEL_SCRIPT="$BATS_TEST_DIRNAME/../../shared/forge-otel-export.sh"
-}
+load '../helpers/test-helpers'
+
+OTEL_SCRIPT="$PLUGIN_ROOT/shared/forge-otel-export.sh"
 
 @test "otel-export: script exists and is executable" {
   assert [ -f "$OTEL_SCRIPT" ]

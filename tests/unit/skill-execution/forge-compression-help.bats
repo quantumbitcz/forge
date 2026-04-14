@@ -1,13 +1,12 @@
 #!/usr/bin/env bats
 
-setup() {
-  load '../../helpers/test-helpers'
-  SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-compression-help/SKILL.md"
-}
+load '../../helpers/test-helpers'
+
+SKILLS_DIR="$PLUGIN_ROOT/skills"
+SKILL_FILE="$SKILLS_DIR/forge-compression-help/SKILL.md"
 
 @test "forge-compression-help: SKILL.md exists" {
-  assert_file_exists "$SKILL_FILE"
+  assert [ -f "$SKILL_FILE" ]
 }
 
 @test "forge-compression-help: has disable-model-invocation true" {

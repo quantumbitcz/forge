@@ -33,8 +33,16 @@ EOF
   assert_success
 
   # Verify failure was logged
-  [[ -f "${TEST_TEMP}/.forge/.hook-failures.log" ]] || fail "No .hook-failures.log created"
-  grep -q "compact-check" "${TEST_TEMP}/.forge/.hook-failures.log" || \
+  # compact-check logs to forge.log (per SPEC-02 revision)
+  [[ -f "${TEST_TEMP}/.forge/forge.log" ]] || [[ -f "${TEST_TEMP}/.forge/.hook-failures.log" ]] || \
+    fail "No forge.log or .hook-failures.log created"
+  local log_file
+  if [[ -f "${TEST_TEMP}/.forge/forge.log" ]]; then
+    log_file="${TEST_TEMP}/.forge/forge.log"
+  else
+    log_file="${TEST_TEMP}/.forge/.hook-failures.log"
+  fi
+  grep -q "compact-check\|COMPACT" "$log_file" || \
     fail "Log does not contain compact-check entry"
 }
 

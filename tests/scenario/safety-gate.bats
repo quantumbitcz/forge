@@ -113,33 +113,35 @@ _advance_to_safety_gate_verifying() {
 }
 
 # ---------------------------------------------------------------------------
-# 4. Two safety gate failures escalate (Row 29)
+# 4. Three safety gate failures escalate (Row 29: safety_gate_failures >= 2)
 # ---------------------------------------------------------------------------
-@test "safety-gate: two safety_gate_fail events escalate to ESCALATED" {
+@test "safety-gate: three safety_gate_fail events escalate to ESCALATED" {
   _advance_to_safety_gate_verifying
 
-  # First failure (safety_gate_failures starts at 0)
-  bash "$FORGE_STATE_SH" transition safety_gate_fail --guard "safety_gate_failures=0" --forge-dir "$FORGE_DIR" > /dev/null
+  # First failure (safety_gate_failures starts at 0, Row 28: < 2 -> IMPLEMENTING)
+  bash "$FORGE_STATE_SH" transition safety_gate_fail --forge-dir "$FORGE_DIR" > /dev/null
 
-  # Need to get back to VERIFYING with safety_gate phase for second failure.
-  # After first fail, state is IMPLEMENTING with phase=correctness.
-  # Fast-track back: implement_complete -> VERIFYING -> verify_pass(correctness) -> REVIEWING
-  #   -> score_target_reached -> VERIFYING(safety_gate)
+  # Return to safety_gate phase: IMPLEMENTING -> VERIFYING -> REVIEWING -> VERIFYING(safety_gate)
   bash "$FORGE_STATE_SH" transition implement_complete --guard "at_least_one_task_passed=true" --forge-dir "$FORGE_DIR" > /dev/null
   bash "$FORGE_STATE_SH" transition verify_pass --guard "convergence.phase=correctness" --forge-dir "$FORGE_DIR" > /dev/null
   bash "$FORGE_STATE_SH" transition score_target_reached --forge-dir "$FORGE_DIR" > /dev/null
 
-  # Second failure (safety_gate_failures is now 1 from first fail)
-  local sgf
-  sgf="$(jq -r '.convergence.safety_gate_failures' "$FORGE_DIR/state.json")"
+  # Second failure (safety_gate_failures=1, Row 28: < 2 -> IMPLEMENTING, increments to 2)
+  bash "$FORGE_STATE_SH" transition safety_gate_fail --forge-dir "$FORGE_DIR" > /dev/null
 
-  run bash "$FORGE_STATE_SH" transition safety_gate_fail --guard "safety_gate_failures=$sgf" --forge-dir "$FORGE_DIR"
+  # Return to safety_gate phase again
+  bash "$FORGE_STATE_SH" transition implement_complete --guard "at_least_one_task_passed=true" --forge-dir "$FORGE_DIR" > /dev/null
+  bash "$FORGE_STATE_SH" transition verify_pass --guard "convergence.phase=correctness" --forge-dir "$FORGE_DIR" > /dev/null
+  bash "$FORGE_STATE_SH" transition score_target_reached --forge-dir "$FORGE_DIR" > /dev/null
+
+  # Third failure (safety_gate_failures=2, Row 29: >= 2 -> ESCALATED)
+  run bash "$FORGE_STATE_SH" transition safety_gate_fail --forge-dir "$FORGE_DIR"
   assert_success
 
   local state
   state="$(jq -r '.story_state' "$FORGE_DIR/state.json")"
   [[ "$state" == "ESCALATED" ]] \
-    || fail "Expected ESCALATED after 2 safety gate failures, got $state"
+    || fail "Expected ESCALATED after 3 safety gate failures (counter >= 2), got $state"
 }
 
 # ---------------------------------------------------------------------------

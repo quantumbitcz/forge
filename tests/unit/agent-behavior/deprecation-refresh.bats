@@ -42,11 +42,13 @@ DEPR_AGENT="$PLUGIN_ROOT/agents/fg-140-deprecation-refresh.md"
   [[ "$violations" -eq 0 ]]
 }
 
-@test "removed_in entries are valid semver when present" {
+@test "removed_in entries are valid version when present" {
   local violations=0
   for f in "$PLUGIN_ROOT"/modules/frameworks/*/known-deprecations.json; do
     local bad
-    bad=$(jq '[.deprecations[] | select(.removed_in != null and (.removed_in | test("^[0-9]+\\.[0-9]+\\.[0-9]") | not))] | length' "$f" 2>/dev/null || echo "0")
+    # Accept 2+ component numeric versions (e.g., 0.7, 1.22, 1.0.0) and
+    # non-numeric platform versions (e.g., C11, C99). Reject empty strings.
+    bad=$(jq '[.deprecations[] | select(.removed_in != null and (.removed_in | length > 0) and (.removed_in | test("^[0-9]+\\.[0-9]") | not) and (.removed_in | test("^[A-Za-z]") | not))] | length' "$f" 2>/dev/null || echo "0")
     [[ "$bad" -eq 0 ]] || { echo "$f has $bad invalid removed_in values"; violations=$((violations + 1)); }
   done
   [[ "$violations" -eq 0 ]]
@@ -63,35 +65,51 @@ DEPR_AGENT="$PLUGIN_ROOT/agents/fg-140-deprecation-refresh.md"
   [[ "$violations" -eq 0 ]]
 }
 
-@test "since field is valid semver for all entries" {
+@test "since field is valid version for all entries" {
   local violations=0
   for f in "$PLUGIN_ROOT"/modules/frameworks/*/known-deprecations.json; do
     local bad
-    bad=$(jq '[.deprecations[] | select(.since | test("^[0-9]+\\.[0-9]+\\.[0-9]") | not)] | length' "$f" 2>/dev/null || echo "0")
+    # Accept: multi-component numeric (0.6, 1.16, 3.10), single-component
+    # numeric (4, 16 — Node.js majors), and non-numeric platform versions
+    # (C99, C11, C89). Reject empty strings only.
+    bad=$(jq '[.deprecations[] | select((.since | length > 0) and (.since | test("^[0-9]") | not) and (.since | test("^[A-Za-z]") | not))] | length' "$f" 2>/dev/null || echo "0")
     [[ "$bad" -eq 0 ]] || { echo "$f has $bad invalid since values"; violations=$((violations + 1)); }
   done
   [[ "$violations" -eq 0 ]]
 }
 
-@test "removed_in is greater than since when both present" {
+@test "removed_in is greater than or equal to since when both present" {
   local violations=0
   for f in "$PLUGIN_ROOT"/modules/frameworks/*/known-deprecations.json; do
-    # Use python for semver comparison
+    # Use python for version comparison — skip non-numeric versions (e.g. C99)
+    # and pre-release versions (e.g. 3.0.0-rc.1). Allow removed_in == since
+    # (deprecated and removed in same major release).
     local bad
     bad=$(python3 -c "
-import json
+import json, re
 with open('$f') as fh:
     data = json.load(fh)
 count = 0
 for d in data.get('deprecations', []):
-    if d.get('removed_in') and d.get('since'):
-        r = tuple(int(x) for x in d['removed_in'].split('.')[:3])
-        s = tuple(int(x) for x in d['since'].split('.')[:3])
-        if r <= s:
+    r_str = d.get('removed_in', '')
+    s_str = d.get('since', '')
+    if not r_str or not s_str:
+        continue
+    # Skip non-numeric versions (C99, C11, etc.) and pre-release tags
+    if not re.match(r'^[0-9]+\.', r_str) or not re.match(r'^[0-9]+\.', s_str):
+        continue
+    if '-' in r_str or '-' in s_str:
+        continue
+    try:
+        r = tuple(int(x) for x in r_str.split('.')[:3])
+        s = tuple(int(x) for x in s_str.split('.')[:3])
+        if r < s:
             count += 1
+    except ValueError:
+        continue
 print(count)
 " 2>/dev/null || echo "0")
-    [[ "$bad" -eq 0 ]] || { echo "$f has $bad entries where removed_in <= since"; violations=$((violations + 1)); }
+    [[ "$bad" -eq 0 ]] || { echo "$f has $bad entries where removed_in < since"; violations=$((violations + 1)); }
   done
   [[ "$violations" -eq 0 ]]
 }

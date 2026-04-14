@@ -1,11 +1,10 @@
 #!/usr/bin/env bats
 
-setup() {
-  load '../../helpers/test-helpers'
-  SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-fix/SKILL.md"
-  FORGE_STATE_SH="$BATS_TEST_DIRNAME/../../../shared/forge-state.sh"
-}
+load '../../helpers/test-helpers'
+
+SKILLS_DIR="$PLUGIN_ROOT/skills"
+SKILL_FILE="$SKILLS_DIR/forge-fix/SKILL.md"
+FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
 
 @test "forge-fix-integration: skill documents forge.local.md prerequisite" {
   run grep -qi 'forge.local.md\|forge-init\|forge\.local\|prerequisit\|require' "$SKILL_FILE"

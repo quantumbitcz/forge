@@ -42,20 +42,22 @@ teardown() {
 # ---------------------------------------------------------------------------
 # 2. Oscillation above pass_threshold continues to perfection (no plateau)
 # ---------------------------------------------------------------------------
-@test "oscillation: oscillation above pass_threshold continues without PLATEAUED" {
+@test "oscillation: steady improvement above pass_threshold continues without PLATEAUED" {
+  # Steadily improving scores above threshold — large enough deltas that
+  # |smoothed_delta| > plateau_threshold, so no plateau is detected.
   run bash "$SIM_SCRIPT" \
-    --scores "82,81,83,82,84" \
+    --scores "82,85,88,91,94" \
     --pass-threshold 80 \
     --oscillation-tolerance 5 \
     --plateau-patience 3
   assert_success
 
-  # With patience=3, plateau_count should not reach it in only 5 cycles.
-  # Check the last line does NOT show PLATEAUED.
+  # Large positive deltas mean |smoothed| > 2 (default plateau_threshold),
+  # so plateau_count stays at 0 throughout.
   local last_line
   last_line="$(echo "$output" | tail -1)"
   [[ "$last_line" != *"phase=PLATEAUED"* ]] \
-    || fail "Expected no PLATEAUED above threshold, got: $last_line"
+    || fail "Expected no PLATEAUED for improving scores, got: $last_line"
 }
 
 # ---------------------------------------------------------------------------

@@ -1,13 +1,12 @@
 #!/usr/bin/env bats
 
-setup() {
-  load '../../helpers/test-helpers'
-  SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-commit/SKILL.md"
-}
+load '../../helpers/test-helpers'
+
+SKILLS_DIR="$PLUGIN_ROOT/skills"
+SKILL_FILE="$SKILLS_DIR/forge-commit/SKILL.md"
 
 @test "forge-commit: SKILL.md exists" {
-  assert_file_exists "$SKILL_FILE"
+  assert [ -f "$SKILL_FILE" ]
 }
 
 @test "forge-commit: frontmatter has correct name" {
