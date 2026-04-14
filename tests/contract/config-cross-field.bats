@@ -6,9 +6,12 @@ setup() {
 }
 
 @test "config-cross-field: script validates framework-language combos" {
-  run grep -c 'spring\|react\|fastapi\|axum\|swiftui\|express\|django\|nextjs\|angular\|gin\|go-stdlib\|vapor\|embedded\|k8s\|aspnet\|jetpack-compose\|nestjs\|vue\|svelte\|sveltekit' "$SCRIPT"
+  # Count unique framework names referenced in the script (grep -o counts occurrences, not lines)
+  run bash -c "grep -oE 'spring|react|fastapi|axum|swiftui|express|django|nextjs|angular|gin|go-stdlib|vapor|embedded|k8s|aspnet|jetpack-compose|nestjs|vue|svelte|sveltekit' '$SCRIPT' | sort -u | wc -l"
   assert_success
-  [[ "${output}" -ge 15 ]]
+  local count
+  count=$(echo "$output" | tr -d ' ')
+  [[ "$count" -ge 15 ]]
 }
 
 @test "config-cross-field: script checks all 22 frameworks" {

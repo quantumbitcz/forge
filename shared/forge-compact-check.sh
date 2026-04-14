@@ -8,9 +8,11 @@ _HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-3}"
 if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
   export _HOOK_TIMEOUT_ACTIVE=1
   if command -v timeout &>/dev/null; then
-    timeout "$_HOOK_TIMEOUT" "$0" "$@" || exit 0
+    timeout "$_HOOK_TIMEOUT" "$0" "$@" || true
+    exit 0
   elif command -v gtimeout &>/dev/null; then
-    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" || exit 0
+    gtimeout "$_HOOK_TIMEOUT" "$0" "$@" || true
+    exit 0
   fi
   # No timeout command available — continue without enforcement
 fi
