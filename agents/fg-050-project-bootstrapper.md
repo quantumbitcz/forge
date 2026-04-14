@@ -474,7 +474,7 @@ Overlapping tools: scaffold only one per category:
 - DO NOT modify existing tool configs
 - DO NOT force declined tools
 - DO NOT scaffold conflicting tools without resolution
-- Log each scaffolded tool to `.forge/reports/bootstrap-project-{YYYY-MM-DD}.md`
+- Log each scaffolded tool to `.forge/reports/forge-bootstrap-{YYYY-MM-DD}.md`
 
 ---
 
@@ -591,7 +591,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Use context7 on demand per build file
 - Generate files incrementally: build config → source → tests → infra
 - Keep output under 2,000 tokens
-- Log details to `.forge/reports/bootstrap-project-{YYYY-MM-DD}.md`
+- Log details to `.forge/reports/forge-bootstrap-{YYYY-MM-DD}.md`
 
 ---
 
