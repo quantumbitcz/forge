@@ -1,0 +1,96 @@
+{
+  "description": "Representative prompt bank for compression evaluation. 15 prompts across 3 categories.",
+  "version": "1.0.0",
+  "categories": {
+    "explanation": {
+      "description": "Prompts requiring technical explanation with preserved accuracy",
+      "prompts": [
+        {
+          "id": "exp-01",
+          "text": "Explain how the convergence engine detects score plateaus and triggers safety gate restarts.",
+          "required_facts": ["plateau_threshold", "plateau_patience", "safety gate", "phase_iterations"]
+        },
+        {
+          "id": "exp-02",
+          "text": "Explain the PREEMPT decay mechanism: how items move from HIGH to ARCHIVED and what triggers demotion.",
+          "required_facts": ["10 unused", "HIGH", "MEDIUM", "LOW", "ARCHIVED", "false positive"]
+        },
+        {
+          "id": "exp-03",
+          "text": "Explain how the recovery engine selects strategies and manages the budget ceiling.",
+          "required_facts": ["7 strategies", "budget ceiling", "5.5", "highest-severity"]
+        },
+        {
+          "id": "exp-04",
+          "text": "Explain the difference between output compression and caveman mode in the forge pipeline.",
+          "required_facts": ["inter-agent", "user-facing", "per-stage", "verbosity"]
+        },
+        {
+          "id": "exp-05",
+          "text": "Explain how the check engine L0 layer validates edits before they are applied.",
+          "required_facts": ["tree-sitter", "AST", "PreToolUse", "syntactically invalid"]
+        }
+      ]
+    },
+    "review": {
+      "description": "Prompts simulating code review output",
+      "prompts": [
+        {
+          "id": "rev-01",
+          "text": "Reviewed 5 Kotlin files in a Spring Boot service. Found: missing @Transactional on use case, N+1 query in repository, hardcoded secret in config.",
+          "required_facts": ["SEC-", "CRITICAL", "@Transactional", "WARNING", "N+1", "score"]
+        },
+        {
+          "id": "rev-02",
+          "text": "Reviewed React component tree. Found: missing Error Boundary at route level, inline styles instead of design tokens, no key prop on list items.",
+          "required_facts": ["Error Boundary", "design tokens", "key prop", "WARNING"]
+        },
+        {
+          "id": "rev-03",
+          "text": "Security review of authentication middleware. Found: JWT tokens not validated for expiry, CORS allows wildcard origin, no rate limiting.",
+          "required_facts": ["SEC-", "CRITICAL", "JWT", "CORS", "rate limit"]
+        },
+        {
+          "id": "rev-04",
+          "text": "Architecture review of hexagonal port-adapter structure. Found: adapter directly imports domain entity, missing port interface for notification service.",
+          "required_facts": ["ARCH-", "port", "adapter", "domain"]
+        },
+        {
+          "id": "rev-05",
+          "text": "Performance review of data pipeline. Found: unbounded in-memory collection, synchronous I/O in hot path, missing index on frequently queried column.",
+          "required_facts": ["PERF-", "memory", "synchronous", "index"]
+        }
+      ]
+    },
+    "code-gen": {
+      "description": "Prompts requiring code generation with preserved code blocks",
+      "prompts": [
+        {
+          "id": "gen-01",
+          "text": "Generate a Kotlin data class for a User entity with validation annotations and a companion factory method.",
+          "required_facts": ["data class", "User", "companion object"]
+        },
+        {
+          "id": "gen-02",
+          "text": "Generate a TypeScript Vitest test suite for a UserService that tests create, read, update, delete operations.",
+          "required_facts": ["describe", "it(", "expect(", "UserService"]
+        },
+        {
+          "id": "gen-03",
+          "text": "Generate a Python FastAPI endpoint for user registration with email validation and password hashing.",
+          "required_facts": ["@app.post", "async def", "validate", "hash"]
+        },
+        {
+          "id": "gen-04",
+          "text": "Generate a Go test for a cache service that tests set, get, expiry, and eviction behavior.",
+          "required_facts": ["func Test", "t.Run", "t.Errorf", "cache"]
+        },
+        {
+          "id": "gen-05",
+          "text": "Generate a Rust implementation of a retry strategy with exponential backoff and maximum attempts.",
+          "required_facts": ["impl", "retry", "backoff", "max_attempts"]
+        }
+      ]
+    }
+  }
+}
