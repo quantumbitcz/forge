@@ -38,6 +38,7 @@ These phrases help the LLM understand intent. They do not trigger deterministic 
    - "ultra" → mode = `ultra`
    - "off", "stop", "normal" → mode = `off`
    - "status" → check current mode and report (see step 2a)
+   - "benchmark" or "bench" → run benchmark (see step 5)
 2. **Check current status first:**
    - Read `.forge/caveman-mode` if it exists
    - If the requested mode matches the current mode, report: "Caveman {mode} already active." and STOP (no re-write needed)
@@ -49,6 +50,12 @@ These phrases help the LLM understand intent. They do not trigger deterministic 
    - `lite`: "Caveman lite active. Drop filler, keep grammar. (~20% output reduction)"
    - `full`: "Caveman on. [thing] [action] [reason]. [next step]. (~45% output reduction)"
    - `ultra`: "CAVEMAN ULTRA. Max compress. Abbrev all. (~65% output reduction)"
+5. **Benchmark mode** (if argument is "benchmark" or "bench"):
+   - Run `bash "${CLAUDE_PLUGIN_ROOT}/shared/caveman-benchmark.sh" [file]`
+   - If user provided a file argument after "benchmark" (e.g., `/forge-caveman benchmark agents/fg-100-orchestrator.md`), pass it to the script
+   - If no file argument, the script uses `.forge/forge-log.md` as default sample
+   - Display the output table to the user
+   - Do NOT change the current caveman mode
 
 ## Auto-Clarity Exceptions
 
