@@ -481,7 +481,7 @@ atomic_json_update() {
     [ -z "$_py" ] && command -v python &>/dev/null && _py="python"
     [ -z "$_py" ] && return 1
 
-    tmp=$(mktemp "${TMPDIR:-/tmp}/forge-atomic.XXXXXX")
+    tmp=$(mktemp "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/forge-atomic.XXXXXX")
 
     "$_py" -c "
 import json, sys, os
