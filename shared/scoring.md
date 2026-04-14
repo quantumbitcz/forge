@@ -236,6 +236,17 @@ Additional category codes for visual verification:
 | `FE-VISUAL-CONTRAST` | Text contrast ratio below WCAG AA threshold |
 | `FE-VISUAL-FIDELITY` | Visual output deviates from design specification |
 
+Additional category codes for AI-aware code quality (v2.5.0):
+
+| Code | Meaning |
+|------|---------|
+| `AI-LOGIC-*` | AI-generated logic bug (null handling, boundary, condition, type coercion, return, state, async, edge case). Assigned to `fg-410-code-reviewer`. |
+| `AI-PERF-*` | AI-generated performance bug (N+1, excessive I/O, memory leak, quadratic, redundant render, blocking, bundle). Assigned to `fg-416-performance-reviewer`. |
+| `AI-CONCURRENCY-*` | AI-generated concurrency bug (race condition, deadlock, atomicity, starvation, lost update). Assigned to `fg-410-code-reviewer` + `fg-416-performance-reviewer`. |
+| `AI-SEC-*` | AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization). Assigned to `fg-411-security-reviewer`. |
+
+See `shared/checks/ai-code-patterns.md` for full reference of all 26 discrete sub-categories with detection strategies and fix patterns.
+
 Module-specific categories (e.g., `HEX-*` for spring, `THEME-*` for react) are defined in each module's `conventions.md`. Layer-1 pattern files may define additional category codes (e.g., `INFRA-BEST`, `INFRA-SCALE`, `INFRA-SIZE`, `INFRA-TAG` for container/infra patterns). Projects may define additional project-specific categories in their `conventions.md`.
 
 **APPROACH-* accumulation rule:** APPROACH-* findings accumulate across runs. If the same APPROACH finding recurs 3+ times, the retrospective escalates it to a convention rule. "Same finding" is identified by matching on `(category, description_hash)` where `description_hash` is the first 8 characters of SHA256 of the normalized description (lowercase, trimmed). Accumulation is tracked in `forge-log.md` under the `approach_accumulations` section, updated by `fg-700-retrospective` at the end of each run.
@@ -290,6 +301,17 @@ Findings at different lines in the same file with the same category are NOT dedu
 - `SCOUT-*` findings are excluded from the dedup pass entirely — they are not compared against non-SCOUT findings.
 - If an agent reports both a `SCOUT-IMPORT-UNUSED` and a regular `QUAL-IMPORT-UNUSED` for the same location, **both are kept**: the SCOUT version for the recap, the non-SCOUT version for scoring.
 - SCOUT findings are passed through to `fg-710-post-run` and `fg-700-retrospective` for reporting but are **filtered out** before dispatch to `fg-300-implementer` (no action required — the improvement was already made).
+
+### Cross-Category Deduplication for AI-* Overlap
+
+Several AI-* categories detect the same bugs as existing categories (e.g., `AI-SEC-INJECTION` vs `SEC-INJECTION`, `AI-SEC-HARDCODED-SECRET` vs `SEC-SECRET`). Without special handling, both findings would survive standard deduplication (different categories at the same file:line) and double-penalize the score.
+
+**Resolution:** After initial dedup by `(component, file, line, category)`, run a second pass: when two findings share the same `(file, line)` and one category is `AI-X-Y` while the other is `X-Y` (prefix match after removing `AI-`), treat them as the same finding for scoring purposes. Keep:
+- The **highest severity** finding
+- The **AI-* category** (more specific root cause metadata)
+- The **longer description** (if descriptions differ)
+
+This prevents double-counting while preserving the more specific AI-* root cause information for the learning pipeline. L1 patterns can also declare `exclude_if_existing` to suppress AI-* findings when the non-AI category already matched at the same location.
 
 ## Partial Failure Handling
 
