@@ -29,8 +29,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install bash 4+ (macOS)
-        if: runner.os == 'macOS'
+      - name: Install bash 4+ (MacOS)
+        if: runner.os == 'MacOS'
         run: brew install bash
 
       - name: Install Python 3 (if missing)
