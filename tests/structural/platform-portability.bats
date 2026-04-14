@@ -134,3 +134,47 @@ load '../helpers/test-helpers'
   grep -q 'ubuntu-latest' "$ci"
   grep -q 'windows-latest' "$ci"
 }
+
+@test "platform-portability: no scripts use sed -i outside portable wrapper functions" {
+  local violations=0
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    while IFS= read -r match; do
+      local linenum
+      linenum=$(echo "$match" | cut -d: -f1)
+      local context
+      context=$(sed -n "1,${linenum}p" "$f" | grep -c 'portable_sed')
+      if [ "$context" -eq 0 ]; then
+        echo "VIOLATION: $f:$linenum — sed -i outside portable wrapper"
+        violations=$((violations + 1))
+      fi
+    done < <(grep -n 'sed -i' "$f" 2>/dev/null | grep -v '^[0-9]*:#' || true)
+  done < <(find "$PLUGIN_ROOT/hooks" "$PLUGIN_ROOT/shared" -name '*.sh' -type f 2>/dev/null)
+  [ "$violations" -eq 0 ]
+}
+
+@test "platform-portability: no scripts use grep -P (Perl regex)" {
+  local violations=0
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    if grep -n 'grep -[^ ]*P' "$f" 2>/dev/null | grep -v '^[0-9]*:#' | grep -q .; then
+      echo "VIOLATION: $f uses grep -P (use grep -E for portability)"
+      violations=$((violations + 1))
+    fi
+  done < <(find "$PLUGIN_ROOT/hooks" "$PLUGIN_ROOT/shared" -name '*.sh' -type f 2>/dev/null)
+  [ "$violations" -eq 0 ]
+}
+
+@test "platform-portability: all .sh scripts use env bash shebang" {
+  local violations=0
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    local shebang
+    shebang=$(head -1 "$f")
+    if [[ "$shebang" == "#!/bin/bash" ]]; then
+      echo "VIOLATION: $f uses #!/bin/bash (should be #!/usr/bin/env bash)"
+      violations=$((violations + 1))
+    fi
+  done < <(find "$PLUGIN_ROOT/hooks" "$PLUGIN_ROOT/shared" -name '*.sh' -type f 2>/dev/null)
+  [ "$violations" -eq 0 ]
+}
