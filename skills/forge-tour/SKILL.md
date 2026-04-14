@@ -131,6 +131,63 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 - **Pipeline analytics:** `/forge-insights`
 - **Multiple features:** `/forge-sprint`
 
+---
+
+## Platform Notes
+
+### Windows (WSL2) — Recommended
+
+WSL2 is the recommended way to run Forge on Windows. All scripts require bash 4.0+ which WSL2 provides natively.
+
+```bash
+# Install WSL2 (PowerShell as Administrator)
+wsl --install -d Ubuntu
+
+# Inside WSL2
+sudo apt update && sudo apt install -y bash python3 git docker.io
+```
+
+**Important:** Run all Forge commands from within WSL2, not PowerShell or CMD.
+
+### Windows (Git Bash) — Limited Support
+
+Git Bash provides a minimal bash environment but has known limitations:
+
+- MSYS path translation causes issues with hook path resolution (see commit `0ac4874`)
+- Docker commands require Docker Desktop with WSL2 backend enabled
+- Some scripts may hit Windows long path limits (260 chars)
+
+```bash
+# Requires Git for Windows with Git Bash
+# Enable long paths in git
+git config --global core.longpaths true
+```
+
+### macOS — Full Support
+
+macOS ships with bash 3.x. Forge requires bash 4.0+.
+
+```bash
+brew install bash python3
+# Verify version
+bash --version  # Must show 4.0+
+```
+
+### Linux — Full Support
+
+All major distributions are supported. Install bash 4+ and python3:
+
+```bash
+# Ubuntu / Debian
+sudo apt update && sudo apt install -y bash python3 git
+
+# Fedora / RHEL
+sudo dnf install -y bash python3 git
+
+# Arch Linux
+sudo pacman -S bash python git
+```
+
 ## See Also
 
 - `/forge-help` — full skill decision tree
