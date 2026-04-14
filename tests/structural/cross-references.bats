@@ -67,3 +67,23 @@ load '../helpers/test-helpers'
 
   [[ "$violations" -eq 0 ]]
 }
+
+@test "cross-references: convergence-engine.md has See Also section" {
+  grep -q "## See Also" "$PLUGIN_ROOT/shared/convergence-engine.md"
+}
+
+@test "cross-references: scoring.md has See Also section" {
+  grep -q "## See Also" "$PLUGIN_ROOT/shared/scoring.md"
+}
+
+@test "cross-references: agent-philosophy.md has See Also section" {
+  grep -q "## See Also" "$PLUGIN_ROOT/shared/agent-philosophy.md"
+}
+
+@test "cross-references: convergence-engine.md references stage-contract.md" {
+  grep -q "stage-contract.md" "$PLUGIN_ROOT/shared/convergence-engine.md"
+}
+
+@test "cross-references: scoring.md references convergence-engine.md" {
+  grep -q "convergence-engine.md" "$PLUGIN_ROOT/shared/scoring.md"
+}
