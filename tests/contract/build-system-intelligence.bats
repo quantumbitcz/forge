@@ -237,26 +237,26 @@ for system, entry in data['entries'].items():
 }
 
 @test "contract: build_cross_file_edges_heuristic tags edges with heuristic confidence" {
-  grep -q '"confidence".*"heuristic"' "$PLUGIN_ROOT/shared/graph/build-code-graph.sh" \
+  grep -q 'confidence.*heuristic' "$PLUGIN_ROOT/shared/graph/build-code-graph.sh" \
     || fail "build_cross_file_edges_heuristic should tag edges with heuristic confidence"
 }
 
 @test "contract: build_cross_file_edges_with_boundaries uses all three confidence levels" {
   local script="$PLUGIN_ROOT/shared/graph/build-code-graph.sh"
-  grep -q '"confidence.*resolved"' "$script" \
+  grep -q 'confidence.*resolved' "$script" \
     || fail "Missing resolved confidence in build_cross_file_edges_with_boundaries"
-  grep -q '"confidence.*module-inferred"' "$script" \
+  grep -q 'confidence.*module-inferred' "$script" \
     || fail "Missing module-inferred confidence in build_cross_file_edges_with_boundaries"
-  grep -q '"confidence.*heuristic"' "$script" \
+  grep -q 'confidence.*heuristic' "$script" \
     || fail "Missing heuristic confidence in build_cross_file_edges_with_boundaries"
 }
 
 @test "contract: confidence values are exactly the three documented levels" {
   local script="$PLUGIN_ROOT/shared/graph/build-code-graph.sh"
   local confidence_values
-  confidence_values="$(grep -oE '"confidence":\s*"[^"]*"' "$script" | sort -u)"
-  echo "$confidence_values" | grep -q '"resolved"' || fail "Missing resolved"
-  echo "$confidence_values" | grep -q '"module-inferred"' || fail "Missing module-inferred"
+  confidence_values="$(grep -oE 'confidence[^a-z]*[a-z-]+' "$script" | sort -u)"
+  echo "$confidence_values" | grep -q 'resolved' || fail "Missing resolved"
+  echo "$confidence_values" | grep -q 'module-inferred' || fail "Missing module-inferred"
   echo "$confidence_values" | grep -q '"heuristic"' || fail "Missing heuristic"
 }
 

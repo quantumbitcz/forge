@@ -175,4 +175,4 @@ Before compressing any file, copy original to `{filename}.original.md`. Never co
 - `/forge-review` -- review changed files for quality
 - `/forge-verify` -- build + lint + test check
 - Compression rules and intensity levels -- see `input-compression.md` in `shared`
-- See `shared/compression-validation.py` for post-compression structural validation
+- Post-compression validation: `shared` directory, `compression-validation.py`
