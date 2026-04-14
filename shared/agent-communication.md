@@ -330,7 +330,11 @@ Run N: The pipeline runs in bugfix mode with reduced review (3 agents). The code
 
 **Detection mechanism:** The orchestrator tracks which PREEMPT items were included in each agent dispatch prompt via `preempt_items_loaded[]` in stage notes. Items not in `preempt_items_loaded` for any agent in the run are classified as "not loaded." Items in `preempt_items_loaded` but not in any agent's `findings[]` are classified as "loaded but not reported."
 
-**Auto-discovered items:** Items with `source: auto-discovered` follow the same rules but decay 2x faster (5 non-reports instead of 10).
+**Auto-discovered items:** Items with `source: auto-discovered` follow the same rules with these modifications:
+- Auto-discovered items start at MEDIUM confidence (not HIGH)
+- Auto-discovered items decay 2x faster — each unused run increments `decay_score` by 2 instead of 1
+- Auto-discovered items archive at `decay_score >= 5` (faster than the standard threshold of 10)
+- Auto-discovered items promote to HIGH after 3 successful applications (3 runs where the item was APPLIED)
 
 **Tier transitions:**
 - Items start at HIGH when first recorded in `forge-log.md`
