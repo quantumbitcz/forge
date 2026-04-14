@@ -114,6 +114,6 @@ output_compression:
 
 ## See Also
 
-- Output compression spec: `shared/output-compression.md`
-- Input compression rules: `shared/input-compression.md`
+- Output compression spec — see `output-compression.md` in `shared`
+- Input compression rules — see `input-compression.md` in `shared`
 - `benchmarks/` -- compression measurements (if available)
