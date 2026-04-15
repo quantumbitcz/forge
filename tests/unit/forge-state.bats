@@ -36,7 +36,7 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"
 import json, sys
 with open('$forge_dir/state.json') as f:
     d = json.load(f)
-assert d['version'] == '1.5.0', f'version: {d[\"version\"]}'
+assert d['version'] == '1.6.0', f'version: {d[\"version\"]}'
 assert d['complete'] == False
 assert d['story_id'] == 'feat-test'
 assert d['story_state'] == 'PREFLIGHT'

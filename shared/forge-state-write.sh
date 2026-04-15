@@ -235,16 +235,16 @@ do_read() {
     echo "WARNING: state.json missing, recovering from WAL" >&2
     (
       if command -v flock &>/dev/null; then
-        flock -w 5 200 || { echo '{}'; return; }
+        flock -w 5 200 || exit 0
       else
         local lock_dir="${FORGE_DIR}/.state-write.lockdir.read"
         local attempts=0
         while ! mkdir "$lock_dir" 2>/dev/null; do
           attempts=$((attempts + 1))
-          [[ $attempts -ge 50 ]] && { echo '{}'; return; }
+          [[ $attempts -ge 50 ]] && exit 0
           sleep 0.1
         done
-        trap "rmdir '$lock_dir' 2>/dev/null" RETURN
+        trap "rmdir '$lock_dir' 2>/dev/null" EXIT
       fi
       # Re-check under lock (another process may have recovered)
       if [[ ! -f "$STATE_FILE" ]] && [[ -f "$WAL_FILE" ]]; then

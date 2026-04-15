@@ -16,8 +16,8 @@ teardown() {
 }
 
 @test "v1.5.0 state migrates to v1.6.0 with new fields" {
-  local state
-  state=$("$PYTHON" "$INIT_SCRIPT" "FG-001" "Test" "standard" "false")
+  # Create a minimal v1.5.0 state (NOT via state_init.py which creates v1.6.0)
+  local state='{"version":"1.5.0","_seq":0,"story_state":"PREFLIGHT","recovery":{},"convergence":{}}'
   local migrated
   migrated=$(echo "$state" | "$PYTHON" "$SCRIPT")
   assert [ $? -eq 0 ]
@@ -37,16 +37,16 @@ assert s['schema_version_history'][0]['from'] == '1.5.0'
 @test "already v1.6.0 state passes through unchanged" {
   local state
   state=$("$PYTHON" "$INIT_SCRIPT" "FG-001" "Test" "standard" "false")
+  # Already v1.6.0, migration is no-op
   local migrated
   migrated=$(echo "$state" | "$PYTHON" "$SCRIPT")
-  local migrated2
-  migrated2=$(echo "$migrated" | "$PYTHON" "$SCRIPT")
   assert [ $? -eq 0 ]
-  echo "$migrated2" | "$PYTHON" -c "
+  echo "$migrated" | "$PYTHON" -c "
 import json, sys
 s = json.load(sys.stdin)
 assert s['version'] == '1.6.0'
-assert len(s['schema_version_history']) == 1
+# schema_version_history should be empty (no migration happened)
+assert len(s.get('schema_version_history', [])) == 0
 "
 }
 

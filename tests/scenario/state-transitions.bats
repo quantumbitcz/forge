@@ -282,7 +282,7 @@ with open('$forge_dir/state.json', 'w') as f:
     --forge-dir "$forge_dir"
   assert_success
   echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='SHIPPING', f'Expected SHIPPING but got {d[\"new_state\"]}'"
-  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row']=='41', f'Expected row 41 but got {d[\"row\"]}'"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row_id']=='41', f'Expected row 41 but got {d[\"row_id\"]}'"
 }
 
 # ---------------------------------------------------------------------------
@@ -310,5 +310,5 @@ with open('$forge_dir/state.json', 'w') as f:
     --forge-dir "$forge_dir"
   assert_success
   echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='ESCALATED', f'Expected ESCALATED but got {d[\"new_state\"]}'"
-  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row']=='52', f'Expected row 52 but got {d[\"row\"]}'"
+  echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['row_id']=='52', f'Expected row 52 but got {d[\"row_id\"]}'"
 }
