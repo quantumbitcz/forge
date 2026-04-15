@@ -1884,6 +1884,7 @@ CREATE (:Agent {name: 'fg-140-deprecation-refresh', role: 'other', file_path: 'a
 CREATE (:Agent {name: 'fg-150-test-bootstrapper', role: 'other', file_path: 'agents/fg-150-test-bootstrapper.md'});
 CREATE (:Agent {name: 'fg-160-migration-planner', role: 'other', file_path: 'agents/fg-160-migration-planner.md'});
 CREATE (:Agent {name: 'fg-200-planner', role: 'other', file_path: 'agents/fg-200-planner.md'});
+CREATE (:Agent {name: 'fg-205-planning-critic', role: 'other', file_path: 'agents/fg-205-planning-critic.md'});
 CREATE (:Agent {name: 'fg-210-validator', role: 'other', file_path: 'agents/fg-210-validator.md'});
 CREATE (:Agent {name: 'fg-250-contract-validator', role: 'other', file_path: 'agents/fg-250-contract-validator.md'});
 CREATE (:Agent {name: 'fg-300-implementer', role: 'other', file_path: 'agents/fg-300-implementer.md'});

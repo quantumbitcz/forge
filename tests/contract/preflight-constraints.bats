@@ -7,6 +7,7 @@ load '../helpers/test-helpers'
 
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
+PREFLIGHT_CONSTRAINTS="$PLUGIN_ROOT/shared/preflight-constraints.md"
 SPRINT_SCHEMA="$PLUGIN_ROOT/shared/sprint-state-schema.md"
 TRACKING_SCHEMA="$PLUGIN_ROOT/shared/tracking/tracking-schema.md"
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
@@ -35,14 +36,16 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 # ---------------------------------------------------------------------------
 # 3. Sprint params in CLAUDE.md PREFLIGHT constraints
 # ---------------------------------------------------------------------------
-@test "preflight-constraints: sprint constraints in CLAUDE.md" {
+@test "preflight-constraints: sprint constraints documented" {
   grep -q "sprint.*poll_interval_seconds" "$CLAUDE_MD" \
-    || fail "sprint.poll_interval_seconds not in CLAUDE.md PREFLIGHT constraints"
+    || grep -q "sprint.*poll_interval_seconds" "$PREFLIGHT_CONSTRAINTS" \
+    || fail "sprint.poll_interval_seconds not in CLAUDE.md or preflight-constraints.md"
 }
 
-@test "preflight-constraints: tracking constraints in CLAUDE.md" {
+@test "preflight-constraints: tracking constraints documented" {
   grep -q "tracking.*archive_after_days" "$CLAUDE_MD" \
-    || fail "tracking.archive_after_days not in CLAUDE.md PREFLIGHT constraints"
+    || grep -q "tracking.*archive_after_days" "$PREFLIGHT_CONSTRAINTS" \
+    || fail "tracking.archive_after_days not in CLAUDE.md or preflight-constraints.md"
 }
 
 # ---------------------------------------------------------------------------
@@ -107,11 +110,13 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 # ---------------------------------------------------------------------------
 # compression_eval config documented in CLAUDE.md
 # ---------------------------------------------------------------------------
-@test "preflight-constraints: compression_eval params in CLAUDE.md" {
+@test "preflight-constraints: compression_eval params documented" {
   grep -q "compression_eval.enabled" "$CLAUDE_MD" \
-    || fail "compression_eval.enabled not in CLAUDE.md PREFLIGHT"
+    || grep -q "compression_eval.enabled" "$PREFLIGHT_CONSTRAINTS" \
+    || fail "compression_eval.enabled not in CLAUDE.md or preflight-constraints.md"
   grep -q "compression_eval.drift_threshold_pct" "$CLAUDE_MD" \
-    || fail "compression_eval.drift_threshold_pct not in CLAUDE.md PREFLIGHT"
+    || grep -q "compression_eval.drift_threshold_pct" "$PREFLIGHT_CONSTRAINTS" \
+    || fail "compression_eval.drift_threshold_pct not in CLAUDE.md or preflight-constraints.md"
 }
 
 @test "preflight-constraints: config schema includes compression_eval" {

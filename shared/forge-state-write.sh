@@ -248,7 +248,7 @@ do_read() {
       fi
       # Re-check under lock (another process may have recovered)
       if [[ ! -f "$STATE_FILE" ]] && [[ -f "$WAL_FILE" ]]; then
-        do_recover
+        do_recover > /dev/null
       fi
     ) 200>"${FORGE_DIR}/.state-read.lock"
     if [[ -f "$STATE_FILE" ]]; then

@@ -112,7 +112,7 @@ do_transition() {
       exec 201>&- 2>/dev/null
       return 2
     fi
-    trap 'exec 201>&- 2>/dev/null; rm -f "${FORGE_DIR}/.state-transition.tmp" 2>/dev/null' RETURN
+    trap 'exec 201>&- 2>/dev/null; ' RETURN
   else
     local _retries=0
     while ! mkdir "${_transition_lock}.d" 2>/dev/null; do
@@ -123,7 +123,7 @@ do_transition() {
       fi
       sleep 0.1
     done
-    trap 'rmdir "${_transition_lock}.d" 2>/dev/null; rm -f "${FORGE_DIR}/.state-transition.tmp" 2>/dev/null' RETURN
+    trap 'rmdir "${_transition_lock}.d" 2>/dev/null; ' RETURN
   fi
 
   local current_state_json
@@ -159,15 +159,13 @@ do_transition() {
     return 1
   fi
 
-  # Read the state JSON from temp file written by Python
-  local state_tmp="${FORGE_DIR}/.state-transition.tmp"
-  if [[ ! -f "$state_tmp" ]]; then
-    echo "ERROR: transition did not produce state output" >&2
+  # Extract updated state from the result JSON (state_transitions.py outputs everything to stdout)
+  local state_json
+  state_json=$(printf '%s' "$result" | "$PYTHON" -c "import json,sys; print(json.dumps(json.load(sys.stdin)['updated_state']))")
+  if [[ $? -ne 0 || -z "$state_json" ]]; then
+    echo "ERROR: failed to extract updated_state from transition result" >&2
     return 2
   fi
-  local state_json
-  state_json=$(cat "$state_tmp")
-  rm -f "$state_tmp"
 
   # Write updated state via forge-state-write.sh
   bash "$STATE_WRITER" write "$state_json" --forge-dir "$FORGE_DIR" > /dev/null

@@ -5,6 +5,7 @@ load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"
 TRANSITIONS="$PLUGIN_ROOT/shared/state-transitions.md"
+TRANSITIONS_PY="$PLUGIN_ROOT/shared/python/state_transitions.py"
 
 @test "state-machine-contract: forge-state.sh exists" {
   assert [ -f "$SCRIPT" ]
@@ -35,31 +36,32 @@ for e in sorted(events):
     print(e)
 ")
 
+  # Transitions are implemented in state_transitions.py (extracted from forge-state.sh in v2.7.0)
   for event in $events; do
-    grep -q "'$event'" "$SCRIPT" || grep -q "\"$event\"" "$SCRIPT" || fail "Event '$event' from state-transitions.md not found in forge-state.sh"
+    grep -q "'$event'" "$TRANSITIONS_PY" || grep -q "\"$event\"" "$TRANSITIONS_PY" || fail "Event '$event' from state-transitions.md not found in state_transitions.py"
   done
 }
 
-@test "state-machine-contract: all error events (E1-E7) exist in forge-state.sh" {
+@test "state-machine-contract: all error events (E1-E7) exist in state_transitions.py" {
   for event in budget_exhausted recovery_budget_exhausted circuit_breaker_open unrecoverable_error user_continue user_abort user_reshape; do
-    grep -q "'$event'" "$SCRIPT" || grep -q "\"$event\"" "$SCRIPT" || fail "Error event '$event' not in forge-state.sh"
+    grep -q "'$event'" "$TRANSITIONS_PY" || grep -q "\"$event\"" "$TRANSITIONS_PY" || fail "Error event '$event' not in state_transitions.py"
   done
 }
 
-@test "state-machine-contract: token_budget_exhausted (E8) exists in forge-state.sh" {
-  grep -q "token_budget_exhausted" "$SCRIPT" || fail "E8 token_budget_exhausted not in forge-state.sh"
+@test "state-machine-contract: token_budget_exhausted (E8) exists in state_transitions.py" {
+  grep -q "token_budget_exhausted" "$TRANSITIONS_PY" || fail "E8 token_budget_exhausted not in state_transitions.py"
 }
 
-@test "state-machine-contract: score_diminishing (row 50) exists in forge-state.sh" {
-  grep -q "score_diminishing" "$SCRIPT" || fail "Row 50 score_diminishing not in forge-state.sh"
+@test "state-machine-contract: score_diminishing (row 50) exists in state_transitions.py" {
+  grep -q "score_diminishing" "$TRANSITIONS_PY" || fail "Row 50 score_diminishing not in state_transitions.py"
 }
 
-@test "state-machine-contract: validate_complete dry-run (D1) exists in forge-state.sh" {
-  grep -q "validate_complete" "$SCRIPT" || fail "D1 validate_complete not in forge-state.sh"
+@test "state-machine-contract: validate_complete dry-run (D1) exists in state_transitions.py" {
+  grep -q "validate_complete" "$TRANSITIONS_PY" || fail "D1 validate_complete not in state_transitions.py"
 }
 
-@test "state-machine-contract: all pipeline states from transitions table exist in forge-state.sh" {
+@test "state-machine-contract: all pipeline states from transitions table exist in state_transitions.py" {
   for state in PREFLIGHT EXPLORING PLANNING VALIDATING IMPLEMENTING VERIFYING REVIEWING DOCUMENTING SHIPPING LEARNING COMPLETE ESCALATED ABORTED DECOMPOSED; do
-    grep -q "'$state'" "$SCRIPT" || grep -q "\"$state\"" "$SCRIPT" || fail "State '$state' not in forge-state.sh"
+    grep -q "'$state'" "$TRANSITIONS_PY" || grep -q "\"$state\"" "$TRANSITIONS_PY" || fail "State '$state' not in state_transitions.py"
   done
 }

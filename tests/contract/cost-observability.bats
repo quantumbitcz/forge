@@ -82,10 +82,12 @@ load '../helpers/test-helpers'
   grep -q "context_guard" "$PLUGIN_ROOT/shared/config-validation.md"
 }
 
-@test "CLAUDE.md PREFLIGHT constraints include cost_alerting" {
-  grep -q "cost_alerting" "$PLUGIN_ROOT/CLAUDE.md"
+@test "PREFLIGHT constraints include cost_alerting" {
+  grep -q "cost_alerting" "$PLUGIN_ROOT/CLAUDE.md" \
+    || grep -q "cost_alerting" "$PLUGIN_ROOT/shared/preflight-constraints.md"
 }
 
-@test "CLAUDE.md PREFLIGHT constraints include context_guard" {
-  grep -q "context_guard" "$PLUGIN_ROOT/CLAUDE.md"
+@test "PREFLIGHT constraints include context_guard" {
+  grep -q "context_guard" "$PLUGIN_ROOT/CLAUDE.md" \
+    || grep -q "context_guard" "$PLUGIN_ROOT/shared/preflight-constraints.md"
 }

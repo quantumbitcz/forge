@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Create the initial v1.5.0 forge pipeline state object.
+"""Create the initial v1.6.0 forge pipeline state object.
 
 Interface:
     state_init.py <story_id> <requirement> <mode> <dry_run>
 
-Output: JSON to stdout (complete v1.5.0 state object)
+Output: JSON to stdout (complete v1.6.0 state object)
 Exit codes: 0 = success, 1 = invalid args
 """
 import json
@@ -22,9 +22,9 @@ VALID_MODES = (
 
 
 def create_initial_state(story_id, requirement, mode, dry_run):
-    """Return the full v1.5.0 state dict."""
+    """Return the full v1.6.0 state dict."""
     return {
-        'version': '1.5.0',
+        'version': '1.6.0',
         '_seq': 0,
         'complete': False,
         'story_id': story_id,
@@ -83,6 +83,7 @@ def create_initial_state(story_id, requirement, mode, dry_run):
             'degraded_capabilities': [],
             'failures': [],
             'budget_warning_issued': False,
+            'circuit_breakers': {},
         },
         'scout_improvements': 0,
         'evidence_refresh_count': 0,
@@ -102,6 +103,8 @@ def create_initial_state(story_id, requirement, mode, dry_run):
         'documentation': {},
         'bugfix': None,
         'graph': {'last_update_stage': -1, 'last_update_files': [], 'stale': False},
+        'critic_revisions': 0,
+        'schema_version_history': [],
     }
 
 

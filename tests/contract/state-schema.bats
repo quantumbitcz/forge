@@ -13,11 +13,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.5.0"
+# 2. Schema version is "1.6.0"
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.5.0 documented" {
-  grep -q '"version": "1.5.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.5.0" not found in state-schema.md'
+@test "state-schema: schema version 1.6.0 documented" {
+  grep -q '"version": "1.6.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.6.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://forge.quantumbit.cz/schemas/state-v1.5.0.json",
+  "$id": "https://forge.quantumbit.cz/schemas/state-v1.6.0.json",
   "title": "Forge Pipeline State",
-  "description": "JSON Schema for .forge/state.json (v1.5.0). Advisory validation — never blocks writes.",
+  "description": "JSON Schema for .forge/state.json (v1.6.0). Advisory validation — never blocks writes.",
   "type": "object",
   "required": [
     "version",

@@ -263,14 +263,18 @@ for system, entry in data['entries'].items():
 # ---------------------------------------------------------------------------
 # Config validation contracts
 # ---------------------------------------------------------------------------
-@test "contract: build_graph config keys documented in CLAUDE.md" {
+@test "contract: build_graph config keys documented" {
   local claude_md="$PLUGIN_ROOT/CLAUDE.md"
+  local preflight_md="$PLUGIN_ROOT/shared/preflight-constraints.md"
   grep -q "build_graph.introspection" "$claude_md" \
-    || fail "build_graph.introspection not in CLAUDE.md"
+    || grep -q "build_graph.introspection" "$preflight_md" \
+    || fail "build_graph.introspection not in CLAUDE.md or preflight-constraints.md"
   grep -q "build_graph.introspection_timeout_seconds" "$claude_md" \
-    || fail "build_graph.introspection_timeout_seconds not in CLAUDE.md"
+    || grep -q "build_graph.introspection_timeout_seconds" "$preflight_md" \
+    || fail "build_graph.introspection_timeout_seconds not in CLAUDE.md or preflight-constraints.md"
   grep -q "build_graph.fallback" "$claude_md" \
-    || fail "build_graph.fallback not in CLAUDE.md"
+    || grep -q "build_graph.fallback" "$preflight_md" \
+    || fail "build_graph.fallback not in CLAUDE.md or preflight-constraints.md"
 }
 
 @test "contract: build_graph.introspection_timeout_seconds range 10-300 documented" {
