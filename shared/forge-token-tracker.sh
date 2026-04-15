@@ -64,7 +64,7 @@ done
 
 do_estimate() {
   [[ ! -f "$FILE_PATH" ]] && { echo "ERROR: file not found: $FILE_PATH" >&2; exit 2; }
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import os, sys
 size = os.path.getsize(sys.argv[1])
 print(size // 4)
@@ -231,7 +231,7 @@ json.dump(state, sys.stdout, indent=2)
 # Run the shared Python token-update script against the current state JSON.
 # Arguments are forwarded as: stage agent input_tokens output_tokens [model]
 _compute_token_update() {
-  echo "$1" | python3 -c "$_TOKEN_UPDATE_PY" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS" "$MODEL"
+  echo "$1" | "${FORGE_PYTHON:-python3}" -c "$_TOKEN_UPDATE_PY" "$STAGE" "$AGENT" "$INPUT_TOKENS" "$OUTPUT_TOKENS" "$MODEL"
 }
 
 do_record() {
@@ -258,7 +258,7 @@ do_record() {
     elif [[ $_rc -eq 3 && $_attempt -lt $_max_retries ]]; then
       _attempt=$((_attempt + 1))
       local _delay
-      _delay=$(python3 -c "import random; print(0.05 * (2 ** ($_attempt - 1)) + random.random() * 0.02)")
+      _delay=$("${FORGE_PYTHON:-python3}" -c "import random; print(0.05 * (2 ** ($_attempt - 1)) + random.random() * 0.02)")
       sleep "$_delay" 2>/dev/null || sleep 0.1
       current_state=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
       [[ $? -ne 0 ]] && { echo "ERROR: re-read failed on retry $_attempt" >&2; exit 2; }
@@ -285,7 +285,7 @@ do_check() {
   current_state=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
   [[ $? -ne 0 ]] && { echo "OK: could not read state.json"; exit 0; }
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 state = json.loads(sys.argv[1])

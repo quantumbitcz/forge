@@ -6,6 +6,8 @@
 #   forge-state-write.sh recover [--forge-dir <path>]
 set -uo pipefail
 
+PYTHON="${FORGE_PYTHON:-python3}"
+
 # Rotate log files when they exceed max size
 _rotate_log_if_needed() {
   local log_file="$1"
@@ -69,7 +71,7 @@ do_write() {
   [[ -z "$JSON_CONTENT" ]] && { echo "ERROR: write requires JSON content" >&2; exit 2; }
 
   # Validate input is valid JSON
-  if ! echo "$JSON_CONTENT" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
+  if ! echo "$JSON_CONTENT" | "$PYTHON" -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
     echo "ERROR: invalid JSON input" >&2
     exit 2
   fi
@@ -102,7 +104,7 @@ do_write() {
   # Read current _seq from existing state.json (0 if not present)
   local current_seq=0
   if [[ -f "$STATE_FILE" ]]; then
-    current_seq=$(python3 -c "
+    current_seq=$("$PYTHON" -c "
 import json, sys
 try:
     with open('$STATE_FILE') as f:
@@ -121,7 +123,7 @@ except Exception as e:
 
   # Read input _seq
   local input_seq
-  input_seq=$(echo "$JSON_CONTENT" | python3 -c "import json,sys; print(json.load(sys.stdin).get('_seq', 0))")
+  input_seq=$(echo "$JSON_CONTENT" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin).get('_seq', 0))")
 
   # Reject stale writes
   if [[ -f "$STATE_FILE" ]] && [[ "$input_seq" -lt "$current_seq" ]]; then
@@ -132,7 +134,7 @@ except Exception as e:
   # Increment _seq
   local new_seq=$((current_seq + 1))
   local updated_json
-  updated_json=$(echo "$JSON_CONTENT" | python3 -c "
+  updated_json=$(echo "$JSON_CONTENT" | "$PYTHON" -c "
 import json, sys
 d = json.load(sys.stdin)
 d['_seq'] = $new_seq
@@ -144,7 +146,7 @@ json.dump(d, sys.stdout, indent=2)
     local SCRIPT_DIR
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local validation_result
-    validation_result=$(python3 -c "
+    validation_result=$("$PYTHON" -c "
 import json, sys
 try:
     from jsonschema import validate, ValidationError
@@ -181,7 +183,7 @@ except Exception as e:
   local wal_count
   wal_count=$(grep -c "^--- SEQ:" "$WAL_FILE" 2>/dev/null || echo "0")
   if [[ "$wal_count" -gt "$WAL_MAX_ENTRIES" ]]; then
-    python3 -c "
+    "$PYTHON" -c "
 import re, sys, os
 try:
     with open('$WAL_FILE') as f:
@@ -254,7 +256,7 @@ do_read() {
         cat "$STATE_FILE"
         return 0
       fi
-      python3 -c "
+      "$PYTHON" -c "
 import re, json, sys
 with open('$WAL_FILE') as f:
     content = f.read()
@@ -287,7 +289,7 @@ do_recover() {
 
   # Split declaration from assignment to preserve $? from python3 subshell
   local recovered
-  recovered=$(python3 -c "
+  recovered=$("$PYTHON" -c "
 import re, json, sys
 with open('$WAL_FILE') as f:
     content = f.read()

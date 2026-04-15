@@ -29,7 +29,7 @@ _validate_platform_config() {
 
 # Use Python for reliable YAML parsing and validation
 export FORGE_YAML_CONTENT="$yaml_content"
-python3 << 'PYEOF'
+"${FORGE_PYTHON:-python3}" << 'PYEOF'
 import sys, json, os
 
 # Read YAML content from environment variable

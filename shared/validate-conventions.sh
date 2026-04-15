@@ -29,7 +29,7 @@ fi
 # Parse YAML frontmatter using python3
 # Extracts component definitions (or flat config) and validates references.
 # ---------------------------------------------------------------------------
-errors=$(python3 -c "
+errors=$("${FORGE_PYTHON:-python3}" -c "
 import sys, os, re
 
 forge_local_path = sys.argv[1]

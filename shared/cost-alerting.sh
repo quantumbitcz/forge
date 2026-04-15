@@ -72,13 +72,13 @@ _write_state() {
       # CAS conflict -- re-read state, re-apply the update, and retry
       _attempt=$((_attempt + 1))
       local _delay
-      _delay=$(python3 -c "import random; print(0.05 * (2 ** ($_attempt - 1)) + random.random() * 0.02)")
+      _delay=$("${FORGE_PYTHON:-python3}" -c "import random; print(0.05 * (2 ** ($_attempt - 1)) + random.random() * 0.02)")
       sleep "$_delay" 2>/dev/null || sleep 0.1
       # Re-read current state and merge our changes on top
       local _fresh_state
       _fresh_state=$(_read_state) || return 2
       # Merge: take the fresh _seq but apply our cost_alerting/context changes
-      _updated=$(python3 -c "
+      _updated=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys
 fresh = json.loads(sys.argv[1])
 ours = json.loads(sys.argv[2])
@@ -108,7 +108,7 @@ do_init() {
   current_state=$(_read_state) || { echo "ERROR: failed to read state.json" >&2; exit 11; }
 
   local updated_state
-  updated_state=$(echo "$current_state" | python3 -c '
+  updated_state=$(echo "$current_state" | "${FORGE_PYTHON:-python3}" -c '
 import json, sys, os
 
 state = json.load(sys.stdin)
@@ -190,7 +190,7 @@ do_check() {
 
   # Python computes alert level, updates state, outputs message + exit code
   local result
-  result=$(echo "$current_state" | python3 -c '
+  result=$(echo "$current_state" | "${FORGE_PYTHON:-python3}" -c '
 import json, sys
 
 state = json.load(sys.stdin)
@@ -291,7 +291,7 @@ do_stage_report() {
   local current_state
   current_state=$(_read_state) || { echo "[COST] $STAGE: state read error"; return 0; }
 
-  echo "$current_state" | python3 -c "
+  echo "$current_state" | "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 state = json.load(sys.stdin)
@@ -354,7 +354,7 @@ do_summary() {
   local current_state
   current_state=$(_read_state) || { echo "No state file"; return 1; }
 
-  echo "$current_state" | python3 -c "
+  echo "$current_state" | "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 state = json.load(sys.stdin)
 cost = state.get('cost', {})
@@ -391,7 +391,7 @@ do_apply_downgrade() {
   current_state=$(_read_state) || exit 11
 
   local updated_state
-  updated_state=$(echo "$current_state" | python3 -c '
+  updated_state=$(echo "$current_state" | "${FORGE_PYTHON:-python3}" -c '
 import json, sys
 
 state = json.load(sys.stdin)

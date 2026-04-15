@@ -9,7 +9,7 @@ MAX_SECONDS="${2:-7200}"
 STATE_FILE="${FORGE_DIR}/state.json"
 [[ -f "$STATE_FILE" ]] || exit 0
 
-start_ts=$(python3 -c "
+start_ts=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys
 try:
     with open('$STATE_FILE') as f:
@@ -22,7 +22,7 @@ except:
 
 [[ -z "$start_ts" ]] && exit 0
 
-elapsed=$(python3 -c "
+elapsed=$("${FORGE_PYTHON:-python3}" -c "
 from datetime import datetime, timezone
 import sys
 try:

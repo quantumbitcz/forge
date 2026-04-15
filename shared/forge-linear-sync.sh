@@ -53,7 +53,7 @@ _linear_available() {
     echo "false"
     return 0
   fi
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 try:
     with open('${FORGE_DIR}/state.json') as f:
@@ -75,7 +75,7 @@ do_emit() {
   ts=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
 
   local entry
-  entry=$(python3 -c "
+  entry=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 event_type = sys.argv[1]

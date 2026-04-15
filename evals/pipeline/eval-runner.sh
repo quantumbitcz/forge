@@ -77,7 +77,7 @@ USAGE
 # ---------------------------------------------------------------------------
 validate_suite_json() {
   local suite_file="$1"
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys, re, os
 
 suite_file = '${suite_file}'
@@ -197,12 +197,12 @@ cmd_run() {
 
     # Count tasks and check fixtures
     local task_count fixture_count missing_fixtures
-    task_count="$(python3 -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
+    task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
     fixture_count=0
     missing_fixtures=0
 
     local fixtures_json
-    fixtures_json="$(python3 -c "
+    fixtures_json="$("${FORGE_PYTHON:-python3}" -c "
 import json
 s = json.load(open('${suite_file}'))
 for t in s['tasks']:
@@ -243,7 +243,7 @@ for t in s['tasks']:
     echo "Parallel: ${parallel}"
 
     local task_count
-    task_count="$(python3 -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
+    task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
     echo "Tasks: ${task_count}"
 
     local timestamp
@@ -254,7 +254,7 @@ for t in s['tasks']:
     local task_results_dir
     task_results_dir="$(mktemp -d "${TMPDIR:-/tmp}/forge-eval.XXXXXX")"
 
-    python3 -c "
+    "${FORGE_PYTHON:-python3}" -c "
 import json, subprocess, sys, os, time, shutil
 
 suite = json.load(open('${suite_file}'))
@@ -475,7 +475,7 @@ cmd_compare() {
     fi
   fi
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 baseline = json.load(open('${baseline_file}'))
@@ -614,7 +614,7 @@ cmd_save() {
   mkdir -p "$baseline_dir"
   local dest="${baseline_dir}/${baseline_name}.json"
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, time
 data = json.load(open('${source_file}'))
 data['baseline_metadata'] = {
@@ -649,8 +649,8 @@ cmd_list() {
         for f in "${SUITES_DIR}"/*.json; do
           local name desc task_count
           name="$(basename "$f" .json)"
-          desc="$(python3 -c "import json; print(json.load(open('$f')).get('description',''))" 2>/dev/null || echo "")"
-          task_count="$(python3 -c "import json; print(len(json.load(open('$f')).get('tasks',[])))" 2>/dev/null || echo "?")"
+          desc="$("${FORGE_PYTHON:-python3}" -c "import json; print(json.load(open('$f')).get('description',''))" 2>/dev/null || echo "")"
+          task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('$f')).get('tasks',[])))" 2>/dev/null || echo "?")"
           echo "  ${name} (${task_count} tasks) -- ${desc}"
         done
       else

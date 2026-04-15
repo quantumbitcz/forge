@@ -56,7 +56,7 @@ cmd_summary() {
     exit 2
   fi
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 data = json.load(open('${result_file}'))
@@ -135,7 +135,7 @@ cmd_compare() {
     baseline_file="${SCRIPT_DIR}/baselines/${baseline}.json"
   fi
 
-  python3 "${SCRIPT_DIR}/compare-results.py" \
+  "${FORGE_PYTHON:-python3}" "${SCRIPT_DIR}/compare-results.py" \
     --baseline "$baseline_file" \
     --current "$result_file" \
     --format "$format"
@@ -162,7 +162,7 @@ cmd_trend() {
     exit 2
   fi
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 files = $(printf '"%s",' "${result_files[@]}" | sed 's/,$//' | sed 's/^/[/' | sed 's/$/]/')
@@ -253,7 +253,7 @@ cmd_cross_model() {
     exit 2
   fi
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 files = $(printf '"%s",' "${result_files[@]}" | sed 's/,$//' | sed 's/^/[/' | sed 's/$/]/')
@@ -315,7 +315,7 @@ cmd_export() {
     exit 2
   fi
 
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 data = json.load(open('${result_file}'))

@@ -57,7 +57,7 @@ _write_state_retry() {
       # Re-read and merge context section
       local _fresh_state
       _fresh_state=$(_read_state) || return 2
-      _updated=$(python3 -c "
+      _updated=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys
 fresh = json.loads(sys.argv[1])
 ours = json.loads(sys.argv[2])
@@ -82,7 +82,7 @@ do_check() {
   current_state=$(_read_state) || { echo "OK: could not read state"; exit 0; }
 
   local result
-  result=$(echo "$current_state" | python3 -c "
+  result=$(echo "$current_state" | "${FORGE_PYTHON:-python3}" -c "
 import json, sys, os
 
 state = json.load(sys.stdin)
@@ -223,7 +223,7 @@ do_metrics() {
   local current_state
   current_state=$(_read_state) || { echo "No context metrics available"; exit 0; }
 
-  echo "$current_state" | python3 -c "
+  echo "$current_state" | "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 state = json.load(sys.stdin)
 ctx = state.get('context', {})

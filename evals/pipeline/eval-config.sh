@@ -57,8 +57,8 @@ eval_validate_config() {
 # ---------------------------------------------------------------------------
 eval_get_forge_version() {
   local plugin_json="${EVAL_PLUGIN_ROOT:-${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}}/plugin.json"
-  if [[ -f "$plugin_json" ]] && command -v python3 &>/dev/null; then
-    python3 -c "import json; print(json.load(open('${plugin_json}'))['version'])" 2>/dev/null || echo "unknown"
+  if [[ -f "$plugin_json" ]] && command -v "${FORGE_PYTHON:-python3}" &>/dev/null; then
+    "${FORGE_PYTHON:-python3}" -c "import json; print(json.load(open('${plugin_json}'))['version'])" 2>/dev/null || echo "unknown"
   else
     echo "unknown"
   fi
@@ -75,7 +75,7 @@ eval_get_environment() {
   platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
   local bash_ver="${BASH_VERSION:-unknown}"
   local python_ver
-  python_ver="$(python3 --version 2>/dev/null | awk '{print $2}' || echo 'unknown')"
+  python_ver="$("${FORGE_PYTHON:-python3}" --version 2>/dev/null | awk '{print $2}' || echo 'unknown')"
 
   printf '{"forge_version":"%s","platform":"%s","bash_version":"%s","python_version":"%s"}' \
     "$forge_version" "$platform" "$bash_ver" "$python_ver"
@@ -93,13 +93,13 @@ eval_load_config() {
     return 1
   fi
 
-  if ! command -v python3 &>/dev/null; then
+  if ! command -v "${FORGE_PYTHON:-python3}" &>/dev/null; then
     echo "WARNING: python3 not available, skipping config load" >&2
     return 0
   fi
 
   local config_json
-  config_json="$(python3 -c "
+  config_json="$("${FORGE_PYTHON:-python3}" -c "
 import re, sys, json
 content = open('${config_file}', 'r').read()
 # Extract YAML from fenced code blocks
@@ -144,8 +144,8 @@ print(json.dumps(result))
   # Validate each numeric key against ranges
   local errors=0
   local key value
-  for key in $(echo "$config_json" | python3 -c "import json,sys; [print(k) for k in json.load(sys.stdin)]" 2>/dev/null); do
-    value="$(echo "$config_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('$key',''))" 2>/dev/null)"
+  for key in $(echo "$config_json" | "${FORGE_PYTHON:-python3}" -c "import json,sys; [print(k) for k in json.load(sys.stdin)]" 2>/dev/null); do
+    value="$(echo "$config_json" | "${FORGE_PYTHON:-python3}" -c "import json,sys; print(json.load(sys.stdin).get('$key',''))" 2>/dev/null)"
     if [[ -v "EVAL_RANGES[$key]" ]]; then
       if ! eval_validate_config "$key" "$value"; then
         errors=$((errors + 1))

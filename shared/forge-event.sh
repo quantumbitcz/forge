@@ -72,7 +72,7 @@ fi
 RUN_ID=""
 STATE_FILE="${FORGE_DIR}/state.json"
 if [[ -f "$STATE_FILE" ]]; then
-  RUN_ID=$(python3 -c "
+  RUN_ID=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys
 try:
     with open(sys.argv[1]) as f:
@@ -84,7 +84,7 @@ except Exception:
 fi
 
 # Build and append the event JSON
-python3 -c "
+"${FORGE_PYTHON:-python3}" -c "
 import json, sys, datetime
 
 event_type = sys.argv[1]

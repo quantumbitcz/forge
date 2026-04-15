@@ -74,7 +74,7 @@ do_export() {
 
   # Extract telemetry and convert to OTLP JSON, then POST
   local otlp_json
-  otlp_json=$(python3 -c "
+  otlp_json=$("${FORGE_PYTHON:-python3}" -c "
 import json, sys, hashlib, time
 
 state_file = sys.argv[1]
@@ -182,7 +182,7 @@ print(json.dumps(payload, separators=(',', ':')))
 
 _update_export_status() {
   local status="$1"
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 
 state_file = sys.argv[1]

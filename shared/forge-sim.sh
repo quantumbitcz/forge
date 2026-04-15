@@ -31,7 +31,7 @@ do_run() {
   fi
 
   # Parse scenario YAML and run simulation via Python
-  python3 "${SCRIPT_DIR}/forge-sim-runner.py" \
+  "${FORGE_PYTHON:-python3}" "${SCRIPT_DIR}/forge-sim-runner.py" \
     "$scenario_file" \
     "$STATE_SCRIPT" \
     "$forge_dir"
@@ -45,7 +45,7 @@ do_validate() {
     echo "ERROR: trace file not found: $trace_file" >&2
     exit 2
   fi
-  python3 -c "
+  "${FORGE_PYTHON:-python3}" -c "
 import json, sys
 with open(sys.argv[1]) as f:
     data = json.load(f)
