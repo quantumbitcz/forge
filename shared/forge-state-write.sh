@@ -233,46 +233,29 @@ do_read() {
 
   if [[ -f "$WAL_FILE" ]]; then
     echo "WARNING: state.json missing, recovering from WAL" >&2
-    local lock_dir="${FORGE_DIR}/.state-recovery.lockdir"
-    if mkdir "$lock_dir" 2>/dev/null; then
+    (
+      if command -v flock &>/dev/null; then
+        flock -w 5 200 || { echo '{}'; return; }
+      else
+        local lock_dir="${FORGE_DIR}/.state-write.lockdir.read"
+        local attempts=0
+        while ! mkdir "$lock_dir" 2>/dev/null; do
+          attempts=$((attempts + 1))
+          [[ $attempts -ge 50 ]] && { echo '{}'; return; }
+          sleep 0.1
+        done
+        trap "rmdir '$lock_dir' 2>/dev/null" RETURN
+      fi
+      # Re-check under lock (another process may have recovered)
       if [[ ! -f "$STATE_FILE" ]] && [[ -f "$WAL_FILE" ]]; then
         do_recover
-        local rc=$?
-        rmdir "$lock_dir" 2>/dev/null
-        return $rc
       fi
-      rmdir "$lock_dir" 2>/dev/null
-      if [[ -f "$STATE_FILE" ]]; then
-        cat "$STATE_FILE"
-        return 0
-      fi
-    else
-      local _wait=0
-      while [[ ! -f "$STATE_FILE" ]] && [[ $_wait -lt 20 ]]; do
-        sleep 0.1
-        _wait=$((_wait + 1))
-      done
-      if [[ -f "$STATE_FILE" ]]; then
-        cat "$STATE_FILE"
-        return 0
-      fi
-      "$PYTHON" -c "
-import re, json, sys
-with open('$WAL_FILE') as f:
-    content = f.read()
-entries = re.split(r'^--- SEQ:\d+ TS:\S+ ---$', content, flags=re.MULTILINE)
-entries = [e.strip() for e in entries if e.strip()]
-for entry in reversed(entries):
-    try:
-        d = json.loads(entry)
-        json.dump(d, sys.stdout, indent=2)
-        sys.exit(0)
-    except json.JSONDecodeError:
-        continue
-sys.exit(1)
-" 2>/dev/null
-      return $?
+    ) 200>"${FORGE_DIR}/.state-read.lock"
+    if [[ -f "$STATE_FILE" ]]; then
+      cat "$STATE_FILE"
+      return 0
     fi
+    return 1
   fi
 
   echo "ERROR: no state.json or WAL found in $FORGE_DIR" >&2
