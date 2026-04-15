@@ -558,6 +558,16 @@ def apply_changes(matched, state, guards, forge_dir):
     except OSError:
         pass  # Non-fatal: caller can read updated_state from stdout
 
+    # Size caps — prevent unbounded growth
+    if len(state.get('score_history', [])) > 50:
+        state['score_history'] = state['score_history'][-50:]
+    conv_data = state.get('convergence', {})
+    if len(conv_data.get('phase_history', [])) > 20:
+        conv_data['phase_history'] = conv_data['phase_history'][-20:]
+    rb = state.get('recovery_budget', {})
+    if len(rb.get('applications', [])) > 30:
+        rb['applications'] = rb['applications'][-30:]
+
     # Include the updated state in stdout output
     output['updated_state'] = state
 
