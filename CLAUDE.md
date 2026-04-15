@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v2.6.1, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v2.7.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ Layered, resolution top-down:
    - `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Algorithm in `shared/composition.md`.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 41 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 42 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -45,7 +45,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Pipeline flow | `shared/stage-contract.md` |
 | Orchestrator | `agents/fg-100-orchestrator.md` |
 | Scoring | `shared/scoring.md` |
-| State | `shared/state-schema.md` (v1.5.0) |
+| State | `shared/state-schema.md` (v1.6.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent design | `shared/agent-philosophy.md` + `shared/agent-communication.md` |
 | Graph (Neo4j) | `shared/graph/schema.md` |
@@ -60,6 +60,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Rule promotion | `shared/learnings/rule-promotion.md` |
 | PREFLIGHT constraints | `shared/preflight-constraints.md` |
 | Framework gotchas | `shared/framework-gotchas.md` |
+| Cross-project learnings | `shared/cross-project-learnings.md` |
 
 Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verification-evidence.md`, `tracking/tracking-schema.md`, `git-conventions.md`, `mcp-provisioning.md`, `version-resolution.md`, `agent-ui.md`, `sprint-state-schema.md`, `intent-classification.md`, `domain-detection.md`, `decision-log.md`, `state-integrity.sh`, `mcp-detection.md`, `learnings/README.md`, `learnings/memory-discovery.md`, `explore-cache.md`, `plan-cache.md`, `visual-verification.md`, `lsp-integration.md`, `observability.md`, `data-classification.md`, `security-posture.md`, `automations.md`, `background-execution.md`, `a2a-protocol.md`, `composition.md`, `living-specifications.md`, `spec-inference.md`, `accessibility-automation.md`, `i18n-validation.md`, `performance-regression.md`, `next-task-prediction.md`, `dx-metrics.md`, `monorepo-integration.md`, `feature-flag-management.md`, `a2a-http-transport.md`, `deployment-strategies.md`, `consumer-driven-contracts.md`.
 
@@ -107,14 +108,14 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 Quick decision:    /forge-help (interactive skill picker)
 ```
 
-## Agents (41 total, `agents/*.md`)
+## Agents (42 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
 - Sprint: `fg-090-sprint-orchestrator`
 - Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
-- Plan/Validate: `fg-200-planner`, `fg-210-validator`, `fg-250-contract-validator`
+- Plan/Validate: `fg-200-planner`, `fg-205-planning-critic`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`)
@@ -154,7 +155,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### State, recovery & errors
 
-- **State** (`state-schema.md`): v1.5.0. `.forge/` (gitignored). Checkpoints per task. Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
+- **State** (`state-schema.md`): v1.6.0. `.forge/` (gitignored). Checkpoints per task. Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
 - **Recovery** (`recovery/`): 7 strategies, budget ceiling 5.5. Highest-severity first. Global retry budget: `total_retries` (default max 10, configurable).
 - **Errors** (`error-taxonomy.md`): 22 types, 16-level severity. MCP failures → inline skip + INFO. 3 consecutive transients in 60s → non-recoverable. `BUILD`/`TEST`/`LINT_FAILURE` → orchestrator fix loop.
 - **Communication:** Inter-stage via orchestrator stage notes. Quality gate includes previous batch findings (top 20). PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED`.
@@ -210,6 +211,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Pipeline timeline | — | Per-stage timing via `/forge-insights` |
 | Codebase Q&A | `forge_ask.*` | Wiki + graph + explore cache queries |
 | Caveman I/O (S01) | `caveman.*` | Input compression + user-facing output modes (lite/full/ultra) |
+| Cross-project learnings (F28) | `cross_project.*` | Shared learnings across repos via `shared/cross-project-learnings.md` |
 
 ### Deterministic Control Flow
 
@@ -357,7 +359,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 
 ## Distribution
 
-`plugin.json` (v2.6.1), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v2.7.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
