@@ -405,6 +405,37 @@ When transitioning from OPEN to HALF_OPEN, the `failures_count` is NOT reset —
 3. **Transparent escalation** — When a circuit opens, the recovery engine includes `"circuit_breaker_open: {category}"` in the escalation reason, enabling the orchestrator and user to understand why recovery was skipped.
 4. **No false safety** — The circuit breaker does not prevent the user from continuing. It only prevents *automatic* recovery. The orchestrator can still present the user with options to retry manually or proceed with degraded capability.
 
+### Flapping Detection
+
+A circuit breaker "flaps" when it repeatedly transitions OPEN → HALF_OPEN → OPEN without ever reaching CLOSED. This indicates a persistent failure that wastes probe attempts.
+
+**Tracking:**
+- Add `flapping_count` field to circuit breaker schema (integer, default 0)
+- When HALF_OPEN → OPEN (probe failed): increment `flapping_count`
+- When HALF_OPEN → CLOSED (probe succeeded): reset `flapping_count = 0`
+
+**Lock threshold:**
+- When `flapping_count >= 3`: set `locked: true` on the circuit breaker
+- Locked circuits remain OPEN indefinitely — no HALF_OPEN probes are attempted
+- Log: `"Circuit locked open after {flapping_count} flapping cycles for {category}"`
+- The orchestrator surfaces this as a WARNING to the user
+
+**Unlocking:**
+- Locked circuits are cleared by:
+  - `/forge-repair-state` (manual intervention)
+  - `/forge-reset` (clears all state)
+  - Starting a new pipeline run (fresh state.json)
+- Locked circuits are NOT cleared by `/forge-resume` (the underlying issue persists)
+
+**Locked Check (added to transition timing):**
+```
+if state == OPEN and locked:
+    # Skip probe — circuit is locked open
+    return ESCALATE with reason "circuit_breaker_locked: {category}"
+if state == OPEN and elapsed >= cooldown:
+    state = HALF_OPEN
+```
+
 ---
 
 ## 9. Recovery Budget

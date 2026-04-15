@@ -58,13 +58,18 @@ When the quality gate dispatches batch 2+ agents, it includes a summary of findi
 
 This prevents batch 2 agents from flagging the same issues batch 1 already found.
 
-### Deduplication Hint Size Cap
+### Deduplication Hint Size Management
 
-Cap dedup hints at **top 20 findings by severity** (all CRITICALs first, then WARNINGs, then INFOs by line number). If previous batches produced > 20 findings, include note:
+Include **all** previous batch findings in dedup hints. Domain affinity filtering (§Domain-Scoped Deduplication Hints) already ensures each reviewer receives only findings relevant to its domain — no global cap is needed.
 
-    Previous batch findings ({N} total, showing top 20 for dedup):
+**Token management:** If a reviewer's domain-filtered findings exceed 50, compress format to single-line entries:
+
+    Previous batch findings ({N} domain-relevant, compressed format):
+    SEC-AUTH-003: controller.kt:15
+    SEC-INJECT-001: query.kt:88
     ...
-    ({N-20} additional findings omitted — focus on your domain, post-hoc dedup will catch overlaps)
+
+This preserves dedup accuracy while managing token cost. The quality gate performs post-hoc dedup regardless, but minimizing re-reports reduces noise and saves review tokens.
 
 ### Domain-Scoped Deduplication Hints
 
@@ -169,7 +174,7 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     IMPLEMENT agent → stage_4_notes → orchestrator → state.json (preempt_items_status)
                                                    → checkpoint.json (preempt_items_used)
     VERIFY (test gate) → stage_5_notes → orchestrator → REVIEW dispatch prompt
-    REVIEW batch 1 → findings → quality gate → batch 2 (top 20 dedup hints)
+    REVIEW batch 1 → findings → quality gate → batch 2 (domain-filtered dedup hints)
     REVIEW final → stage_6_notes → orchestrator → state.json (score_history)
     DOCS agent → stage_7_notes → orchestrator → state.json (documentation)
                                               ← changed files, quality verdict, plan notes,
