@@ -496,6 +496,41 @@ Tests: `tests/unit/convergence-arithmetic.bats`, `tests/scenario/safety-gate.bat
 - Adjustments are logged in `forge-log.md` with rationale.
 - `target_score` and `safety_gate` are never auto-tuned -- these are intentional project decisions.
 
+## Context-Aware PREEMPT Decay
+
+### Context-Aware PREEMPT Decay
+
+PREEMPT items with `applicable_context` only decay when the current project's tech stack matches. A Spring-specific rule won't decay during React projects.
+
+**Schema extension:**
+```json
+{
+  "rule": "Always check for N+1 queries in Spring repositories",
+  "source": "retrospective",
+  "confidence": "HIGH",
+  "unused_count": 0,
+  "applicable_context": {
+    "framework": "spring",
+    "language": ["kotlin", "java"]
+  }
+}
+```
+
+**Decay logic:**
+```
+On each pipeline run:
+  if applicable_context is empty OR current project matches applicable_context:
+    if rule was not applied:
+      unused_count += 1
+  # else: skip — rule wasn't relevant to this project
+```
+
+**Context matching:**
+- `framework` field: match against `components.*.framework` in forge-config
+- `language` field: match against `components.*.language` in forge-config
+- If multiple components exist (monorepo), match if ANY component matches
+- Items without `applicable_context` (created before v1.6.0) decay on every run (legacy behavior)
+
 ## See Also
 
 - `shared/stage-contract.md` — Stage 5 VERIFY defines Phase A/B separation and fix loop budgets
