@@ -227,11 +227,11 @@ create_state_json() {
   mkdir -p "${state_dir}"
   local state_file="${state_dir}/state.json"
 
-  # Base v1.5.0 state object (matches state-schema.md v1.5.0)
+  # Base v1.6.0 state object (matches state-schema.md v1.6.0)
   local base_json
   base_json=$(cat <<'EOF'
 {
-  "version": "1.5.0",
+  "version": "1.6.0",
   "_seq": 0,
   "complete": false,
   "story_id": "TEST-001",
@@ -275,7 +275,8 @@ create_state_json() {
     "safety_gate_passed": false,
     "safety_gate_failures": 0,
     "unfixable_findings": [],
-    "diminishing_count": 0
+    "diminishing_count": 0,
+    "unfixable_info_count": 0
   },
   "integrations": {
     "linear": { "available": false, "team": "" },
@@ -309,8 +310,11 @@ create_state_json() {
     "total_recoveries": 0,
     "degraded_capabilities": [],
     "failures": [],
-    "budget_warning_issued": false
+    "budget_warning_issued": false,
+    "circuit_breakers": {}
   },
+  "critic_revisions": 0,
+  "schema_version_history": [],
   "scout_improvements": 0,
   "conventions_hash": "",
   "conventions_section_hashes": {},
@@ -345,8 +349,9 @@ EOF
 )
 
   # Merge extra_json into base if python3 is available, else just write base
-  if command -v python3 &>/dev/null; then
-    python3 - "${base_json}" "${extra_json}" <<'PYEOF' > "${state_file}"
+  local _py="${FORGE_PYTHON:-python3}"
+  if command -v "$_py" &>/dev/null; then
+    "$_py" - "${base_json}" "${extra_json}" <<'PYEOF' > "${state_file}"
 import json, sys
 base = json.loads(sys.argv[1])
 extra = json.loads(sys.argv[2])

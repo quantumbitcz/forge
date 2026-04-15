@@ -2,9 +2,9 @@
 load '../helpers/test-helpers'
 
 @test "agent-communication.md does not cap dedup hints at 20" {
-  run grep -c 'top 20 findings' "${PLUGIN_ROOT}/shared/agent-communication.md"
-  assert_success
-  assert_output '0'
+  local count
+  count=$(grep -c 'top 20 findings' "${PLUGIN_ROOT}/shared/agent-communication.md" || true)
+  assert [ "$count" -eq 0 ]
 }
 
 @test "agent-communication.md includes all findings with domain affinity" {

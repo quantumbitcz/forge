@@ -139,7 +139,9 @@ do_transition() {
   if [[ "$_version" != "1.6.0" ]]; then
     current_state_json=$(printf '%s' "$current_state_json" | "$PYTHON" "$SCRIPT_DIR/python/state_migrate.py")
     if [[ $? -eq 0 ]]; then
-      bash "$STATE_WRITER" write "$current_state_json" --forge-dir "$FORGE_DIR"
+      bash "$STATE_WRITER" write "$current_state_json" --forge-dir "$FORGE_DIR" > /dev/null
+      # Re-read after migration write to get updated _seq
+      current_state_json=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
     fi
   fi
 
