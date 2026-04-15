@@ -13,7 +13,11 @@ if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
     gtimeout "$_HOOK_TIMEOUT" "$0" "$@" || true
     exit 0
   fi
-  # No timeout command available — continue without enforcement
+  # Fallback: background watchdog kill
+  _SELF_PID=$$
+  ( sleep "$_HOOK_TIMEOUT" && kill -TERM "$_SELF_PID" 2>/dev/null ) &
+  _WATCHDOG_PID=$!
+  trap "kill '$_WATCHDOG_PID' 2>/dev/null" EXIT
 fi
 
 STATE_FILE=".forge/state.json"
