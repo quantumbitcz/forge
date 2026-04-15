@@ -935,6 +935,20 @@ Extract: risk level, stories (1-3 with ACs), tasks (2-8 with parallel groups), t
 
 **Domain validation:** `domain_area` missing → default "general" + WARNING.
 
+### SS2.2b Planning Critic Review
+
+After planner completes, dispatch the planning critic for feasibility and risk review before validation.
+
+[dispatch fg-205-planning-critic] with plan output from SS2.2.
+
+| Verdict | Action |
+|---------|--------|
+| **PROCEED** | Continue to SS2.3 and then Stage 3 (VALIDATE) |
+| **REVISE** | Send plan back to fg-200-planner with critic findings. Increment `critic_revisions`. Max 2 critic revisions — after 2, proceed to VALIDATE regardless. |
+| **RESHAPE** | Escalate to user via AskUserQuestion: "Reshape requirement", "Try replanning", "Abort". |
+
+Track `critic_revisions` in stage notes. Reset to 0 at start of each PLAN stage.
+
 ### SS2.3 Cross-Repo and Multi-Service
 
 **Cross-repo:** `related_projects` configured → check API contract changes → create cross-repo tasks tagged `cross_repo: true`.

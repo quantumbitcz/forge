@@ -21,6 +21,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-150-test-bootstrapper | 3 | Yes | Preflight | Testing |
 | fg-160-migration-planner | 1 | Yes | Preflight | Migration |
 | fg-200-planner | 1 | Yes | Plan | Planning |
+| fg-205-planning-critic | 4 | No | Plan | Quality |
 | fg-210-validator | 4 | No | Validate | Validation |
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
