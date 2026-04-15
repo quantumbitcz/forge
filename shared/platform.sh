@@ -207,7 +207,7 @@ detect_python() {
   fi
 }
 
-FORGE_PYTHON="${FORGE_PYTHON:-$(detect_python)}"
+export FORGE_PYTHON="${FORGE_PYTHON:-$(detect_python)}"
 
 # ── Path Normalisation ───────────────────────────────────────────────────────
 
