@@ -22,6 +22,15 @@ fi
   # Require both .claude/forge.local.md and .forge/ to exist
   [[ -f ".claude/forge.local.md" && -d ".forge" ]] || exit 0
 
+  # --- Bash version check ---
+  if [[ "${BASH_VERSINFO[0]:-0}" -lt 4 ]]; then
+    echo "WARNING: Bash ${BASH_VERSION} detected. Forge check engine L1-L3 disabled."
+    case "${FORGE_OS:-unknown}" in
+      darwin) echo "  Fix: brew install bash" ;;
+      *)      echo "  Fix: Install bash 4.0+ via your package manager" ;;
+    esac
+  fi
+
   # --- Caveman mode auto-activation ---
   _caveman_mode=""
   if [[ -f ".forge/caveman-mode" ]]; then
