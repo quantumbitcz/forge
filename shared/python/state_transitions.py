@@ -13,6 +13,24 @@ import json
 import os
 import sys
 
+SCORE_EPSILON = 0.001
+
+
+def score_gt(a, b):
+    """a > b with epsilon tolerance."""
+    return float(a) - float(b) > SCORE_EPSILON
+
+
+def score_le(a, b):
+    """a <= b with epsilon tolerance."""
+    return float(a) - float(b) <= SCORE_EPSILON
+
+
+def score_eq(a, b):
+    """a == b with epsilon tolerance."""
+    return abs(float(a) - float(b)) < SCORE_EPSILON
+
+
 # Risk level ordering for comparisons
 RISK_ORDER = {'NONE': 0, 'LOW': 1, 'MEDIUM': 2, 'HIGH': 3, 'CRITICAL': 4}
 
@@ -272,7 +290,7 @@ def build_table(g, state, conv, conv_phase):
          {}, {}),
         # Row 37: REVIEWING + score_regressing + beyond tolerance -> ESCALATED
         ('REVIEWING', 'score_regressing',
-         lambda: abs(int(g('delta', 0))) > int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5))),
+         lambda: score_gt(abs(float(g('delta', 0))), int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5)))),
          'ESCALATED', '37', 'score_regressing (beyond tolerance)',
          {}, {'convergence_state': 'REGRESSING'}),
 
