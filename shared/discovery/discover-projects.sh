@@ -334,7 +334,7 @@ step3_ide_directories() {
   done
 
   # Platform-specific paths (skip irrelevant checks per OS)
-  if [[ "$FORGE_OS" == "windows" ]]; then
+  if [[ "$FORGE_OS" == "windows" || "$FORGE_OS" == "wsl" ]]; then
     # Windows: Documents, Visual Studio, GitHub Desktop, drive roots
     for d in "$home/Documents/Projects" "$home/Documents/repos" \
              "$home/Documents/Visual Studio 2022/Projects" \
@@ -351,7 +351,7 @@ step3_ide_directories() {
     done
   fi
 
-  if [[ "$FORGE_OS" == "linux" ]]; then
+  if [[ "$FORGE_OS" == "linux" || "$FORGE_OS" == "wsl" ]]; then
     # Linux: lowercase conventions common on Linux desktops
     for d in "$home/projects" "$home/dev" "$home/devel"; do
       [[ -d "$d" ]] && ide_dirs+=("$d")

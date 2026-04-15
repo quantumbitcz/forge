@@ -85,9 +85,9 @@ case "$DEP" in
     elif curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; then
       echo "UNAVAILABLE: DNS resolution may be failing (raw IP works but github.com does not)"
     elif case "$FORGE_OS" in
-           darwin)  ping -c 1 -t 3 8.8.8.8 ;;
-           windows) ping -n 1 -w 3000 8.8.8.8 ;;
-           *)       ping -c 1 -W 3 8.8.8.8 ;;
+           darwin)      ping -c 1 -t 3 8.8.8.8 ;;
+           windows)     ping -n 1 -w 3000 8.8.8.8 ;;
+           linux|wsl|*) ping -c 1 -W 3 8.8.8.8 ;;
          esac >/dev/null 2>&1; then
       echo "UNAVAILABLE: ICMP works but HTTP does not (possible proxy or firewall issue)"
     else

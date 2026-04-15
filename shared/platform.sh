@@ -4,14 +4,14 @@
 
 # ── OS Detection ─────────────────────────────────────────────────────────────
 
-# Returns: darwin, linux, windows, or unknown
+# Returns: darwin, linux, wsl, windows, or unknown
 detect_os() {
   case "${OSTYPE:-}" in
     darwin*)  printf 'darwin' ;;
     linux*)
       # Distinguish native Linux from WSL
       if [[ -f /proc/version ]] && grep -qi 'microsoft\|wsl' /proc/version 2>/dev/null; then
-        printf 'windows'
+        printf 'wsl'
       else
         printf 'linux'
       fi
@@ -23,7 +23,7 @@ detect_os() {
         Darwin)  printf 'darwin' ;;
         Linux)
           if [[ -f /proc/version ]] && grep -qi 'microsoft\|wsl' /proc/version 2>/dev/null; then
-            printf 'windows'
+            printf 'wsl'
           else
             printf 'linux'
           fi
@@ -40,7 +40,7 @@ FORGE_OS="${FORGE_OS:-$(detect_os)}"
 
 # ── Platform Config Override ────────────────────────────────────────────────
 _apply_platform_config() {
-  if [[ "$FORGE_OS" != "windows" ]]; then
+  if [[ "$FORGE_OS" != "windows" && "$FORGE_OS" != "wsl" ]]; then
     return 0
   fi
   local config_file="${FORGE_PROJECT_ROOT:-.}/.claude/forge-config.md"
@@ -69,7 +69,7 @@ suggest_install() {
     darwin)
       printf 'brew install %s' "$tool"
       ;;
-    linux)
+    linux|wsl)
       if command -v apt-get >/dev/null 2>&1; then
         printf 'sudo apt install %s' "$tool"
       elif command -v dnf >/dev/null 2>&1; then
@@ -102,8 +102,8 @@ suggest_install() {
 # ── WSL Detection ────────────────────────────────────────────────────────────
 
 # Returns 0 (true) if running inside WSL, 1 (false) otherwise.
-# Useful when scripts need WSL-specific behaviour beyond what detect_os provides
-# (detect_os returns 'windows' for both native Windows shells and WSL).
+# detect_os() now returns 'wsl' directly, but this helper remains for
+# scripts that need a quick boolean check without sourcing the full file.
 is_wsl() {
   [[ -f /proc/version ]] && grep -qi 'microsoft\|wsl' /proc/version 2>/dev/null
 }
@@ -114,13 +114,8 @@ suggest_docker_start() {
   case "$FORGE_OS" in
     darwin)  printf 'open -a Docker' ;;
     linux)   printf 'sudo systemctl start docker' ;;
-    windows)
-      if is_wsl; then
-        printf 'start Docker Desktop on the Windows host (or: powershell.exe -Command "Start-Process Docker")'
-      else
-        printf 'start Docker Desktop from the Start menu'
-      fi
-      ;;
+    wsl)     printf 'start Docker Desktop on the Windows host (or: powershell.exe -Command "Start-Process Docker")' ;;
+    windows) printf 'start Docker Desktop from the Start menu' ;;
     *)       printf 'start the Docker daemon' ;;
   esac
 }
