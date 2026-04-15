@@ -10,7 +10,7 @@
 `shared/forge-state.sh` contains ~425 lines of Python embedded as shell strings across 3 blocks:
 - Lines 76-161: State initialization (`do_init()`)
 - Lines 214-233: Guard JSON parser
-- Lines 238-722: 57+9 row transition engine with counter/convergence logic
+- Lines 238-782: 57+9 row transition engine with counter/convergence logic
 
 This creates:
 - **Unmaintainability:** Changes require shell quoting discipline; no syntax checking until runtime
@@ -73,7 +73,7 @@ init_json=$("$PYTHON" "$SCRIPT_DIR/python/state_init.py" "$STORY_ID" "$REQUIREME
 guards_json=$("$PYTHON" "$SCRIPT_DIR/python/guard_parser.py" "${GUARDS[@]}")
 
 # In transition execution:
-result=$("$PYTHON" "$SCRIPT_DIR/python/state_transitions.py" "$current_state_json" "$EVENT" "$guards_json" "$FORGE_DIR")
+result=$(printf '%s' "$current_state_json" | "$PYTHON" "$SCRIPT_DIR/python/state_transitions.py" "$EVENT" "$guards_json" "$FORGE_DIR")
 ```
 
 Shell logic that wraps these calls (error handling, state writing) stays in bash.

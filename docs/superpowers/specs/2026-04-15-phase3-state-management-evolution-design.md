@@ -230,7 +230,7 @@ Checkpoints enable mid-pipeline resume after interruption.
 - Existing state tests (79+) must pass
 - New tests:
   - `tests/unit/state-migration.bats`:
-    - v1.5.0 state migrated to v1.6.0 has `circuit_breakers`, `flapping_count`, `schema_version_history`
+    - v1.5.0 state migrated to v1.6.0 has `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`
     - Already-v1.6.0 state passes through unchanged
     - Unknown version (e.g., "0.9.0") exits with code 2
   - `tests/unit/state-size-caps.bats`:
