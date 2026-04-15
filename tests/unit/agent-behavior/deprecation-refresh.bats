@@ -78,6 +78,17 @@ DEPR_AGENT="$PLUGIN_ROOT/agents/fg-140-deprecation-refresh.md"
   [[ "$violations" -eq 0 ]]
 }
 
+@test "fg-140 has tools in frontmatter" {
+  run get_frontmatter "$DEPR_AGENT"
+  assert_output --partial "tools:"
+}
+
+@test "fg-140 contains expected behavioral keywords" {
+  run grep -ci 'deprecation\|known-deprecations\|Context7' "$DEPR_AGENT"
+  assert_success
+  assert [ "$output" -ge 1 ]
+}
+
 @test "removed_in is greater than or equal to since when both present" {
   local violations=0
   for f in "$PLUGIN_ROOT"/modules/frameworks/*/known-deprecations.json; do

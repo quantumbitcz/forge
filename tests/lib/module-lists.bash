@@ -101,7 +101,7 @@ MIN_DOCUMENTATION_BINDINGS=21
 # ---------------------------------------------------------------------------
 # Test file count guards (update when adding new test files)
 # ---------------------------------------------------------------------------
-MIN_UNIT_TESTS=93         # Current: 95 files
+MIN_UNIT_TESTS=104        # Current: 106 files (added 10 agent behavior + 1 planning critic test)
 MIN_CONTRACT_TESTS=83     # Current: 85 files
 MIN_SCENARIO_TESTS=40     # Current: 41 files
 
