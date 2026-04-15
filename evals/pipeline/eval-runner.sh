@@ -252,7 +252,7 @@ for t in s['tasks']:
 
     # Execute tasks
     local task_results_dir
-    task_results_dir="$(mktemp -d "${TMPDIR:-/tmp}/forge-eval.XXXXXX")"
+    task_results_dir="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/forge-eval.XXXXXX")"
 
     "${FORGE_PYTHON:-python3}" -c "
 import json, subprocess, sys, os, time, shutil
