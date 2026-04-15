@@ -2,6 +2,7 @@
 name: forge-resume
 description: "Resume a previously aborted or failed pipeline run from its last checkpoint. Use when a pipeline was interrupted, aborted with /forge-abort, or failed due to a transient error. Repairs state if needed, then continues from the last successful stage."
 allowed-tools: ['Read', 'Write', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']
+ui: { ask: true }
 ---
 
 ## Prerequisites

@@ -2,6 +2,7 @@
 name: forge-repair-state
 description: "Fix corrupted pipeline state — repair counters, stale locks, invalid stages, and WAL recovery in state.json. Use when /forge-diagnose reports problems, pipeline fails with state errors, or counters seem wrong. Confirms changes before writing. Trigger: /forge-repair-state, fix state, repair pipeline, state corrupted"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'AskUserQuestion']
+ui: { ask: true }
 ---
 
 # /forge-repair-state — State Repair Tool

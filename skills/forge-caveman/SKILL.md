@@ -1,6 +1,6 @@
 ---
 name: forge-caveman
-description: "Toggle caveman-style terse output for Forge pipeline messages. Use when you want to reduce user-facing output tokens by 40-70% while preserving technical substance. Trigger: /forge-caveman [mode], caveman mode, less tokens, be brief"
+description: "Toggle terse output for Forge pipeline messages. Reduces prose by 40-70% per message (4-10% total session token savings). Use when you want briefer output. Trigger: /forge-caveman [mode], caveman mode, less tokens, be brief"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash']
 disable-model-invocation: true
 ---
@@ -47,9 +47,9 @@ These phrases help the LLM understand intent. They do not trigger deterministic 
    - If `.forge/` does not exist, create it
 4. Confirm to user with savings estimate:
    - `off`: "Caveman mode off. Normal output."
-   - `lite`: "Caveman lite active. Drop filler, keep grammar. (~20% output reduction)"
-   - `full`: "Caveman on. [thing] [action] [reason]. [next step]. (~45% output reduction)"
-   - `ultra`: "CAVEMAN ULTRA. Max compress. Abbrev all. (~65% output reduction)"
+   - `lite`: "Caveman lite active. Drop filler, keep grammar. (~20% prose reduction, ~2-4% session savings)"
+   - `full`: "Caveman on. [thing] [action] [reason]. [next step]. (~45% prose reduction, ~4-7% session savings)"
+   - `ultra`: "CAVEMAN ULTRA. Max compress. Abbrev all. (~65% prose reduction, ~7-10% session savings)"
 5. **Benchmark mode** (if argument is "benchmark" or "bench"):
    - Run `bash "${CLAUDE_PLUGIN_ROOT}/shared/caveman-benchmark.sh" [file]`
    - If user provided a file argument after "benchmark" (e.g., `/forge-caveman benchmark agents/fg-100-orchestrator.md`), pass it to the script

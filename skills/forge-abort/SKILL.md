@@ -2,6 +2,7 @@
 name: forge-abort
 description: "Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
+ui: { ask: true }
 ---
 
 ## Prerequisites

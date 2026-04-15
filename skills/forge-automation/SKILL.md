@@ -2,6 +2,7 @@
 name: forge-automation
 description: "Manage event-driven pipeline automations. Use when you want to set up automatic pipeline triggers — run Forge on CI failures, PR events, cron schedules, or file changes. List, add, remove, and test automations. Trigger: /forge-automation, automate pipeline, run on schedule, trigger on CI failure, auto-run on push"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
+ui: { ask: true }
 disable-model-invocation: false
 ---
 
