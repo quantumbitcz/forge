@@ -306,6 +306,39 @@ Write structured run data to `.forge/run-history.db` for cross-run queryability.
 
 ---
 
+### Output 2.6: Playbook Refinement Analysis
+
+When `state.json.playbook_id` is set, analyze run outcomes against playbook expectations and generate refinement proposals. Schema: `shared/schemas/playbook-refinement-schema.json`.
+
+**Per-run analysis:**
+1. Load playbook definition (project `.claude/forge-playbooks/` first, fall back to `shared/playbooks/`)
+2. Compute refinement suggestions across 4 categories:
+   - **Scoring gap:** If score < pass_threshold, identify top finding categories causing deductions. For each unaddressed category, propose an acceptance criterion that prevents recurrence. NEVER propose lowering thresholds.
+   - **Stage focus:** Compare stage timing distribution vs `stages_focus`. If a non-focused stage takes >25% wall time, propose adding it. If a focused stage takes <2% across 3+ runs, propose removing (never VERIFYING/REVIEWING/SHIPPING).
+   - **Acceptance gaps:** Cross-reference finding categories with acceptance criteria text. Unmatched categories with 2+ occurrences → propose new criterion. Criteria with 0 relevant findings across 3+ runs → flag as potential noise.
+   - **Parameter defaults:** Compare parameter values used vs defaults. Same value in >=80% of runs → propose as new default.
+3. Write suggestions to `playbook_runs.refinement_suggestions` in run-history.db (JSON array)
+
+**Aggregation (3+ runs of same playbook):**
+4. Query all `refinement_suggestions` for this playbook from `playbook_runs` table
+5. Group by (type, target). Count agreement across runs.
+6. Proposals with agreement >= `playbooks.refine_agreement` (default 0.66):
+   - Set confidence: HIGH if agreement >= 0.90, MEDIUM if >= 0.66
+   - Mark status: `ready`
+7. Write ready proposals to `.forge/playbook-refinements/{playbook_id}.json`
+8. Log to forge-log.md: `[REFINE] {playbook_id}: {N} proposals ready ({types})`
+9. Skip aggregation if <3 runs exist — log: `"Insufficient data for {playbook_id} refinement ({N}/3 runs)."`
+
+**Guard rails:**
+- Never propose lowering `pass_threshold` or `concerns_threshold`
+- Never propose `scoring.category_overrides` to suppress findings
+- Never propose removing VERIFYING, REVIEWING, or SHIPPING stages
+- Proposals with `rollback_count >= max_rollbacks_before_reject` are permanently marked `rejected`
+
+**Config:** `playbooks.refine_min_runs` (default 3), `playbooks.refine_agreement` (default 0.66).
+
+---
+
 ### Output 3: Improvement Proposals
 
 #### 3a. CLAUDE.md Proposals
