@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Playbook Refinement Proposals",
+  "description": "Evidence-backed proposals for improving a playbook based on pipeline run outcomes.",
+  "type": "object",
+  "required": ["playbook_id", "playbook_version", "generated_at", "based_on_runs", "run_ids", "proposals"],
+  "properties": {
+    "playbook_id": {
+      "type": "string",
+      "description": "Playbook identifier (matches filename sans .md)"
+    },
+    "playbook_version": {
+      "type": "string",
+      "description": "Playbook version at time of analysis"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of generation"
+    },
+    "based_on_runs": {
+      "type": "integer",
+      "minimum": 3,
+      "description": "Number of runs analyzed"
+    },
+    "run_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Run IDs that contributed to this analysis"
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "description", "target", "evidence", "confidence", "agreement"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^.+-REF-\\d{3}$",
+            "description": "Unique proposal ID: {playbook_id}-REF-NNN"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["scoring_gap", "stage_focus", "acceptance_gap", "parameter_default"],
+            "description": "Refinement category"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable proposal summary"
+          },
+          "target": {
+            "type": "string",
+            "description": "Playbook field being modified (e.g., acceptance_criteria, stages_focus)"
+          },
+          "current_value": {
+            "description": "Current value of the target field (null if new)"
+          },
+          "proposed_value": {
+            "description": "Proposed new value"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Data backing the proposal (run counts, finding categories, scores)"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM"],
+            "description": "HIGH if agreement >= 90%, MEDIUM if >= 66%"
+          },
+          "agreement": {
+            "type": "string",
+            "pattern": "^\\d+/\\d+$",
+            "description": "Fraction of runs supporting this proposal (e.g., 4/5)"
+          },
+          "impact_estimate": {
+            "type": "string",
+            "description": "Expected score impact description"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ready", "applied", "rejected", "deferred", "rolled_back"],
+            "default": "ready"
+          },
+          "rollback_count": {
+            "type": "integer",
+            "default": 0,
+            "description": "Times this proposal was rolled back. 2+ = permanently rejected."
+          }
+        }
+      }
+    }
+  }
+}
