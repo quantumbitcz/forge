@@ -63,12 +63,21 @@ CLAUDE_DIR = PROJECT_ROOT / ".claude"
 # Data Access Helpers
 # ---------------------------------------------------------------------------
 
+class CorruptFileError(Exception):
+    """Raised when a JSON file exists but is malformed."""
+    def __init__(self, filename: str):
+        self.filename = filename
+        super().__init__(f"Corrupt file: {filename}. Re-run the pipeline.")
+
+
 def read_json_file(path: Path) -> dict | None:
-    """Read a JSON file, returning None if missing or corrupt."""
+    """Read a JSON file. Returns None if missing, raises CorruptFileError if malformed."""
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
+    except FileNotFoundError:
         return None
+    except (json.JSONDecodeError, OSError):
+        raise CorruptFileError(path.name)
 
 
 def query_db(sql: str, params: tuple = (), db_name: str = "run-history.db") -> list[dict]:
@@ -77,11 +86,15 @@ def query_db(sql: str, params: tuple = (), db_name: str = "run-history.db") -> l
     if not db_path.is_file():
         return []
     try:
-        conn = sqlite3.connect(str(db_path), timeout=5)
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute(sql, params).fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+        with sqlite3.connect(str(db_path), timeout=5) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(sql, params).fetchall()
+            return [dict(row) for row in rows]
+    except sqlite3.OperationalError as e:
+        if "locked" in str(e).lower() or "busy" in str(e).lower():
+            raise RuntimeError("Database busy. Try again.")
+        return []
     except sqlite3.Error:
         return []
 
@@ -92,16 +105,20 @@ def query_fts(query: str, limit: int = 10) -> list[dict]:
     if not db_path.is_file():
         return []
     try:
-        conn = sqlite3.connect(str(db_path), timeout=5)
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute(
-            "SELECT run_id, requirement, verdict, score, "
-            "snippet(run_search, 2, '**', '**', '...', 20) as snippet "
-            "FROM run_search WHERE run_search MATCH ? LIMIT ?",
-            (query, limit)
-        ).fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+        with sqlite3.connect(str(db_path), timeout=5) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT run_id, requirement, verdict, score, "
+                "snippet(run_search, 2, '**', '**', '...', 20) as snippet "
+                "FROM run_search WHERE run_search MATCH ? LIMIT ?",
+                (query, limit)
+            ).fetchall()
+            return [dict(row) for row in rows]
+    except sqlite3.OperationalError as e:
+        if "locked" in str(e).lower() or "busy" in str(e).lower():
+            raise RuntimeError("Database busy. Try again.")
+        return []
     except sqlite3.Error:
         return []
 
@@ -132,12 +149,14 @@ def read_forge_log(query: str, limit: int = 20) -> list[dict]:
 
 def get_plugin_version() -> str:
     """Read Forge plugin version from plugin.json."""
-    # Walk up from this script to find plugin.json
     script_dir = Path(__file__).resolve().parent
     for parent in [script_dir, *script_dir.parents]:
         pj = parent / "plugin.json"
         if pj.is_file():
-            data = read_json_file(pj)
+            try:
+                data = read_json_file(pj)
+            except CorruptFileError:
+                continue
             if data and "version" in data:
                 return data["version"]
     return "unknown"
@@ -157,7 +176,10 @@ server = Server("forge-mcp-server", version=get_plugin_version())
 @server.tool()
 async def forge_pipeline_status() -> str:
     """Current pipeline state — stage, score, verdict, convergence info."""
-    state = read_json_file(FORGE_DIR / "state.json")
+    try:
+        state = read_json_file(FORGE_DIR / "state.json")
+    except CorruptFileError as e:
+        return json.dumps({"error": str(e)})
     if state is None:
         return json.dumps({"status": "no_active_run"})
     return json.dumps({
@@ -176,7 +198,10 @@ async def forge_pipeline_status() -> str:
 @server.tool()
 async def forge_pipeline_evidence() -> str:
     """Pre-ship verification results from the last completed run."""
-    evidence = read_json_file(FORGE_DIR / "evidence.json")
+    try:
+        evidence = read_json_file(FORGE_DIR / "evidence.json")
+    except CorruptFileError as e:
+        return json.dumps({"error": str(e)})
     if evidence is None:
         return json.dumps({"status": "no_evidence"})
     return json.dumps(evidence)
@@ -185,7 +210,10 @@ async def forge_pipeline_evidence() -> str:
 @server.tool()
 async def forge_agent_card() -> str:
     """Project capabilities and available Forge skills."""
-    card = read_json_file(FORGE_DIR / "agent-card.json")
+    try:
+        card = read_json_file(FORGE_DIR / "agent-card.json")
+    except CorruptFileError as e:
+        return json.dumps({"error": str(e)})
     if card is None:
         return json.dumps({"status": "not_initialized", "hint": "Run /forge-init first"})
     return json.dumps(card)
@@ -317,7 +345,7 @@ async def forge_findings_recurring(
         "GROUP_CONCAT(DISTINCT severity) as severities, "
         "MIN(r.started_at) as first_seen, MAX(r.started_at) as last_seen, "
         "MAX(f.message) as sample_message, "
-        "ROUND(AVG(f.resolved) * 100, 1) as resolved_rate_pct "
+        "ROUND(AVG(f.resolved) * 100, 1) as resolved_rate "
         "FROM findings f JOIN runs r ON f.run_id = r.id "
         f"{sev_filter}"
         "GROUP BY category, file_path "
@@ -357,11 +385,11 @@ async def forge_learnings_active(
 
     sql = (
         "SELECT l.type, l.content, l.domain, l.confidence, l.source_agent, "
-        "SUM(l.applied_count) as total_applied, "
+        "SUM(l.applied_count) as applied_count, "
         "MIN(r.started_at) as first_seen, MAX(r.started_at) as last_seen "
         f"FROM learnings l JOIN runs r ON l.run_id = r.id{where} "
         "GROUP BY l.type, l.content "
-        "ORDER BY total_applied DESC LIMIT ?"
+        "ORDER BY applied_count DESC LIMIT ?"
     )
     return json.dumps(query_db(sql, tuple(params)))
 
@@ -448,6 +476,14 @@ async def forge_playbook_effectiveness(playbook_id: str) -> str:
     refinement_path = FORGE_DIR / "playbook-refinements" / f"{playbook_id}.json"
     proposals = read_json_file(refinement_path)
     result["refinement_proposals"] = proposals.get("proposals", []) if proposals else []
+
+    # Version history from playbook analytics
+    analytics = read_json_file(FORGE_DIR / "playbook-analytics.json")
+    if analytics and isinstance(analytics, dict):
+        pb_analytics = analytics.get(playbook_id, {})
+        result["version_history"] = pb_analytics.get("version_history", [])
+    else:
+        result["version_history"] = []
 
     return json.dumps(result)
 
