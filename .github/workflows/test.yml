@@ -49,11 +49,15 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install bash 4+ (MacOS)
+      - name: Install bash 4+ and GNU parallel (MacOS)
         if: runner.os == 'MacOS'
         run: |
-          brew install bash
+          brew install bash parallel
           echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Install GNU parallel (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y parallel
 
       - name: Install python3
         uses: actions/setup-python@v6

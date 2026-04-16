@@ -5,6 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BATS="$SCRIPT_DIR/lib/bats-core/bin/bats"
 TIER="${1:-all}"
 
+# Enable parallel test execution when GNU parallel is available
+BATS_JOBS=()
+if command -v parallel &>/dev/null; then
+  NCPU=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+  BATS_JOBS=(--jobs "$NCPU" --no-parallelize-within-files)
+fi
+
 # Verify bats is available (except for structural-only runs which don't need it)
 if [[ "$TIER" != "structural" ]] && [[ ! -x "$BATS" ]]; then
   echo "ERROR: bats not found at $BATS" >&2
@@ -69,11 +76,11 @@ print_summary() {
 case "$TIER" in
   all)
     run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
-    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
-    run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
-    run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
-    run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
-    run_tier "Eval Suite" "$BATS" "$SCRIPT_DIR"/evals/agents/*/eval.bats
+    run_tier "Unit Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
+    run_tier "Hooks" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/hooks/*.bats
+    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Scenario Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/scenario/*.bats
+    run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
     print_summary
     ;;
   structural)
@@ -81,23 +88,23 @@ case "$TIER" in
     print_summary
     ;;
   unit)
-    run_tier "Unit Tests" "$BATS" "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
+    run_tier "Unit Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
     print_summary
     ;;
   contract)
-    run_tier "Contract Tests" "$BATS" "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
     print_summary
     ;;
   scenario)
-    run_tier "Scenario Tests" "$BATS" "$SCRIPT_DIR"/scenario/*.bats
+    run_tier "Scenario Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/scenario/*.bats
     print_summary
     ;;
   hooks)
-    run_tier "Hooks" "$BATS" "$SCRIPT_DIR"/hooks/*.bats
+    run_tier "Hooks" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/hooks/*.bats
     print_summary
     ;;
   eval|evals)
-    run_tier "Eval Suite" "$BATS" "$SCRIPT_DIR"/evals/agents/*/eval.bats
+    run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
     print_summary
     ;;
   *)
