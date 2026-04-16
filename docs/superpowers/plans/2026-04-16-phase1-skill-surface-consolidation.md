@@ -196,7 +196,7 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | Ship | fg-590, fg-600, fg-610, fg-620, fg-650 |
 | Learn | fg-700, fg-710 |
 
-## 3. Full 43-agent color map
+## 3. Full 42-agent color map
 
 (Copy the complete table from spec §4.6 here — 43 rows with Agent | Cluster | New color.)
 
@@ -207,7 +207,7 @@ New agents must pick an unused color within their target cluster. If no hue is f
 
 - [ ] **Step 2: Copy the full 43-row color map from spec §4.6**
 
-Open `docs/superpowers/specs/2026-04-16-phase1-skill-surface-consolidation-design.md` §4.6. Copy the table rows under "Full 43-agent color map" verbatim into §3 of the new file. Ensure `fg-205-planning-critic` receives `crimson`.
+Open `docs/superpowers/specs/2026-04-16-phase1-skill-surface-consolidation-design.md` §4.6. Copy the table rows under "Full 42-agent color map" verbatim into §3 of the new file. Ensure `fg-205-planning-critic` receives `crimson`.
 
 - [ ] **Step 3: Held for commit in Task 7**
 
@@ -502,7 +502,9 @@ teardown() {
 }
 ```
 
-Note: This file is a DOCUMENTATION test — it verifies the SKILL.md exposes the contract. True runtime `--dry-run` (invoking the orchestrator and snapshot-diffing `.forge/`) requires integration fixtures beyond Phase 1 scope. Phase 1 ships the docs-level test; runtime test extension is tracked for Phase 2.
+**Scope clarification:** This is a SURFACE test that verifies the SKILL.md exposes the contract (all 5 subcommands documented; `--dry-run` advertised on mutating; `--json` advertised on diagnose). True runtime `--dry-run` behavior verification (invoking the orchestrator and snapshot-diffing `.forge/`) requires integration fixtures and a live orchestrator mock — **deferred to Phase 2**. Spec AC #23 is updated accordingly to reflect this reduced scope.
+
+**Implication for spec AC #23:** When the Task 37 commit pass applies, AC #23 should read: `tests/unit/skill-execution/forge-recover-integration.bats` created; verifies SKILL.md advertises 5 subcommands + `--dry-run` on mutating subcommands + `--json` on diagnose.
 
 - [ ] **Step 2: Static parse check**
 
@@ -534,7 +536,7 @@ git commit -m "feat(phase1): foundations — new contract docs, recover skill, b
 
 Adds:
 - shared/skill-contract.md — authoritative SKILL.md shape
-- shared/agent-colors.md — cluster-scoped color map (43 agents)
+- shared/agent-colors.md — cluster-scoped color map (42 agents)
 - shared/ask-user-question-patterns.md — canonical UX patterns
 - skills/forge-recover/SKILL.md — unified recovery entry point
 - tests/contract/skill-contract.bats — contract assertions
@@ -687,15 +689,17 @@ ui:
 
 - [ ] **Step 2: Extend `tools:` with `TaskCreate`, `TaskUpdate`, `AskUserQuestion`**
 
-Current `tools:` line (illustrative — confirm the actual value before editing):
+**Verified current value** in `agents/fg-210-validator.md`:
 ```yaml
-tools: [Read, Grep, Glob, Bash, neo4j-mcp]
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp']
 ```
 
-Change to:
+Change to (preserving single-quote YAML style):
 ```yaml
-tools: [Read, Grep, Glob, Bash, neo4j-mcp, TaskCreate, TaskUpdate, AskUserQuestion]
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion']
 ```
+
+If the actual value differs from the above (YAML style drift), preserve the existing quoting style and only append the three new tool names.
 
 - [ ] **Step 3: Add preparatory note in the `.md` body**
 
@@ -730,7 +734,7 @@ color: crimson
 
 **Files modified (agent `.md` with color change):**
 
-Per the 43-agent map in spec §4.6, these agents need a color change:
+Per the 42-agent map in spec §4.6, these agents need a color change:
 
 - `fg-015-scope-decomposer.md` — magenta → pink
 - `fg-050-project-bootstrapper.md` — magenta → orange
@@ -762,7 +766,9 @@ For each file above, edit the YAML frontmatter line `color: <old>` → `color: <
 - [ ] **Step 2: Verify against spec §4.6 map**
 
 ```bash
-# Sanity check: count distinct colors in each cluster per shared/agent-colors.md
+# Sanity check: fail loudly on any cluster-scoped collision
+set -e
+had_collision=0
 for cluster_members in \
   "fg-010 fg-015 fg-020 fg-050 fg-090" \
   "fg-100 fg-101 fg-102 fg-103" \
@@ -775,17 +781,21 @@ for cluster_members in \
   "fg-700 fg-710"; do
   colors=""
   for m in $cluster_members; do
-    c=$(grep -h "^color:" agents/${m}*.md | head -1 | awk '{print $2}')
+    c=$(grep -h "^color:" agents/${m}*.md 2>/dev/null | head -1 | awk '{print $2}')
     colors="$colors $c"
   done
-  distinct=$(echo "$colors" | tr ' ' '\n' | sort -u | wc -l | tr -d ' ')
+  distinct=$(echo "$colors" | tr ' ' '\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')
   total=$(echo "$colors" | wc -w | tr -d ' ')
-  echo "Cluster: $cluster_members → $total members, $distinct distinct colors"
-  [ "$distinct" = "$total" ] || echo "   COLLISION!"
+  if [ "$distinct" != "$total" ]; then
+    echo "COLLISION in cluster [$cluster_members]: colors=[$colors], distinct=$distinct, total=$total"
+    had_collision=1
+  fi
 done
+[ "$had_collision" = "0" ] || { echo "Task 13 verify: FAIL — fix color assignments before commit"; exit 1; }
+echo "Task 13 verify: all clusters clean"
 ```
 
-Expected: every cluster shows `N members, N distinct colors` — no `COLLISION!` lines.
+Expected: prints `Task 13 verify: all clusters clean`. Any COLLISION line fails the script and blocks commit.
 
 - [ ] **Step 3: Held for commit in Task 18**
 
@@ -878,53 +888,30 @@ Mapping (each agent gets one tailored example drawn from its actual use case):
 | fg-600-pr-builder | Pattern 1 (single-choice w/ preview) | Commit grouping |
 | fg-710-post-run | Pattern 2 (multi-select) | Which corrections to record |
 
-- [ ] **Step 2: Add the section to each agent `.md`**
+- [ ] **Step 2: Append the `## User-interaction examples` section to each of the 14 agent `.md` files**
 
-At the end of each of the 14 agent `.md` files, append:
+For each agent, copy the literal JSON payload from **Appendix A** (at the end of this plan) into the agent's `.md` body. Append a `## User-interaction examples` heading followed by a `### Example — <scenario>` subheading and the JSON block inside a ```` ```json ```` fence.
 
-```markdown
+Per-agent file + Appendix A section mapping:
 
-## User-interaction examples
+| Agent file | Appendix A section |
+|---|---|
+| `agents/fg-010-shaper.md` | A.1 |
+| `agents/fg-015-scope-decomposer.md` | A.2 |
+| `agents/fg-020-bug-investigator.md` | A.3 |
+| `agents/fg-050-project-bootstrapper.md` | A.4 |
+| `agents/fg-090-sprint-orchestrator.md` | A.5 |
+| `agents/fg-100-orchestrator.md` | A.6 |
+| `agents/fg-103-cross-repo-coordinator.md` | A.7 |
+| `agents/fg-160-migration-planner.md` | A.8 |
+| `agents/fg-200-planner.md` | A.9 |
+| `agents/fg-210-validator.md` | A.10 |
+| `agents/fg-400-quality-gate.md` | A.11 |
+| `agents/fg-500-test-gate.md` | A.12 |
+| `agents/fg-600-pr-builder.md` | A.13 |
+| `agents/fg-710-post-run.md` | A.14 |
 
-### Example — <scenario>
-
-```json
-{
-  "question": "<tailored question>",
-  "header": "<≤12-char chip>",
-  "multiSelect": <true|false>,
-  "options": [
-    {"label": "<label 1>", "description": "<description 1>"},
-    {"label": "<label 2>", "description": "<description 2>"},
-    {"label": "<label 3>", "description": "<description 3>"}
-  ]
-}
-```
-```
-
-Concrete filled-in example for `fg-020-bug-investigator.md`:
-
-```markdown
-
-## User-interaction examples
-
-### Example — Reproduction strategy when initial traces are ambiguous
-
-```json
-{
-  "question": "The reported trace doesn't uniquely identify the failing code path. How should we proceed?",
-  "header": "Repro path",
-  "multiSelect": false,
-  "options": [
-    {"label": "Write a failing test targeting the most likely path (Recommended)", "description": "Start with the top candidate and iterate if it doesn't reproduce."},
-    {"label": "Request a fresh trace with more detail", "description": "Ask user for DEBUG-level logs or a minimal reproduction."},
-    {"label": "Investigate manually without a failing test", "description": "Skip bug-investigator TDD step; risk missing the root cause."}
-  ]
-}
-```
-```
-
-(The agent author fills in per-agent tailored JSON; use the pattern map above for shape.)
+No creative work required at execution time — Appendix A contains all 14 literal payloads.
 
 - [ ] **Step 3: Held for commit in Task 18**
 
@@ -1340,10 +1327,29 @@ Note: `forge-run` already documents `--dry-run` in its description; keep the men
 - Rewrite: `skills/forge-compress/SKILL.md`, `skills/forge-help/SKILL.md`
 - Update: 32 in-place SKILL.md files
 
-- [ ] **Step 1: Stage and commit**
+- [ ] **Step 1: Stage and commit (explicit paths — no `git add -A` or `git add skills/`)**
 
 ```bash
-git add skills/
+# 32 in-place updates
+git add skills/forge-abort/SKILL.md skills/forge-ask/SKILL.md \
+  skills/forge-automation/SKILL.md skills/forge-bootstrap/SKILL.md \
+  skills/forge-codebase-health/SKILL.md skills/forge-commit/SKILL.md \
+  skills/forge-config/SKILL.md skills/forge-config-validate/SKILL.md \
+  skills/forge-deep-health/SKILL.md skills/forge-deploy/SKILL.md \
+  skills/forge-docs-generate/SKILL.md skills/forge-fix/SKILL.md \
+  skills/forge-graph-debug/SKILL.md skills/forge-graph-init/SKILL.md \
+  skills/forge-graph-query/SKILL.md skills/forge-graph-rebuild/SKILL.md \
+  skills/forge-graph-status/SKILL.md skills/forge-history/SKILL.md \
+  skills/forge-init/SKILL.md skills/forge-insights/SKILL.md \
+  skills/forge-migration/SKILL.md skills/forge-playbook-refine/SKILL.md \
+  skills/forge-playbooks/SKILL.md skills/forge-profile/SKILL.md \
+  skills/forge-review/SKILL.md skills/forge-run/SKILL.md \
+  skills/forge-security-audit/SKILL.md skills/forge-shape/SKILL.md \
+  skills/forge-sprint/SKILL.md skills/forge-status/SKILL.md \
+  skills/forge-tour/SKILL.md skills/forge-verify/SKILL.md
+# 2 rewrites
+git add skills/forge-compress/SKILL.md skills/forge-help/SKILL.md
+
 git commit -m "feat(phase1): apply skill contract to 34 SKILL.md files
 
 - Rewrite skills/forge-compress/SKILL.md (4-subcommand surface)
@@ -1422,9 +1428,27 @@ git rm tests/unit/skill-execution/forge-compression-help.bats
 
 ---
 
-## Task 26: Update 24 `shared/*.md` files — mechanical name-swap
+## Task 26: Mechanical name-swap across all referencing files
 
-**Files modified (24):** Exactly the list in spec §4.9.
+**Files modified (47 files total — the authoritative list below):**
+
+Scope widened from v1 per spec §4.9 and code-reviewer feedback. The dangling-reference sweep that activates in Task 28 scans `README.md`, `CLAUDE.md`, `shared/`, `skills/`, `tests/`, `hooks/` — every ref must be scrubbed before that sweep passes. Scrubbed files:
+
+**27 shared files (24 md + 1 SQL + 2 JSON):**
+
+Markdown (24): `shared/security-audit-trail.md`, `shared/next-task-prediction.md`, `shared/run-history/run-history.md`, `shared/confidence-scoring.md`, `shared/input-compression.md`, `shared/event-log.md`, `shared/automations.md`, `shared/agent-communication.md`, `shared/explore-cache.md`, `shared/recovery/recovery-engine.md`, `shared/flaky-test-management.md`, `shared/plan-cache.md`, `shared/graph/schema.md`, `shared/performance-regression.md`, `shared/playbooks.md`, `shared/background-execution.md`, `shared/learnings/README.md`, `shared/learnings/rule-promotion.md`, `shared/data-classification.md`, `shared/dx-metrics.md`, `shared/visual-verification.md`, `shared/knowledge-base.md`, `shared/state-schema.md`, `shared/output-compression.md`.
+
+SQL (1): `shared/run-history/migrations/001-initial.sql` — per-file careful edit (refs are in SQL comments only; preserve schema).
+
+JSON (2): `shared/schemas/dx-metrics-schema.json`, `shared/schemas/benchmarks-schema.json` — per-file careful edit (refs are inside `description` string fields only; preserve JSON structure).
+
+**17 skill cross-reference files:**
+
+`skills/forge-abort/SKILL.md`, `skills/forge-automation/SKILL.md`, `skills/forge-bootstrap/SKILL.md`, `skills/forge-commit/SKILL.md`, `skills/forge-config-validate/SKILL.md`, `skills/forge-deploy/SKILL.md`, `skills/forge-fix/SKILL.md`, `skills/forge-help/SKILL.md`, `skills/forge-history/SKILL.md`, `skills/forge-init/SKILL.md`, `skills/forge-insights/SKILL.md`, `skills/forge-migration/SKILL.md`, `skills/forge-profile/SKILL.md`, `skills/forge-run/SKILL.md`, `skills/forge-sprint/SKILL.md`, `skills/forge-status/SKILL.md`, `skills/forge-tour/SKILL.md`.
+
+**3 top-level files (name-swap pass only; content rewrites land in Commit 7):**
+
+`README.md`, `CLAUDE.md`, `CHANGELOG.md`.
 
 - [ ] **Step 1: Define the substitution table**
 
@@ -1457,7 +1481,17 @@ for f in \
   shared/learnings/rule-promotion.md shared/data-classification.md \
   shared/dx-metrics.md shared/visual-verification.md \
   shared/knowledge-base.md shared/state-schema.md \
-  shared/output-compression.md; do
+  shared/output-compression.md \
+  skills/forge-abort/SKILL.md skills/forge-automation/SKILL.md \
+  skills/forge-bootstrap/SKILL.md skills/forge-commit/SKILL.md \
+  skills/forge-config-validate/SKILL.md skills/forge-deploy/SKILL.md \
+  skills/forge-fix/SKILL.md skills/forge-help/SKILL.md \
+  skills/forge-history/SKILL.md skills/forge-init/SKILL.md \
+  skills/forge-insights/SKILL.md skills/forge-migration/SKILL.md \
+  skills/forge-profile/SKILL.md skills/forge-run/SKILL.md \
+  skills/forge-sprint/SKILL.md skills/forge-status/SKILL.md \
+  skills/forge-tour/SKILL.md \
+  README.md CLAUDE.md CHANGELOG.md; do
   sed -i.bak \
     -e 's|/forge-diagnose|/forge-recover diagnose|g' \
     -e 's|/forge-repair-state|/forge-recover repair|g' \
@@ -1471,38 +1505,80 @@ for f in \
 done
 ```
 
-Note: `sed -i` syntax differs between GNU and BSD. The `-i.bak` form works on both — it creates a backup which we then delete.
+Note: `sed -i` syntax differs between GNU and BSD. The `-i.bak` form works on both — creates a backup which we then delete.
 
-- [ ] **Step 3: Grep-verify zero references remain in shared/**
+- [ ] **Step 3: Per-file careful edits for SQL and JSON (3 files — no sed)**
+
+For `shared/run-history/migrations/001-initial.sql`: open the file; references are inside `-- comment` lines only. Manually replace with new command names. Do NOT sed — SQL comment syntax is context-sensitive.
+
+For `shared/schemas/dx-metrics-schema.json` and `shared/schemas/benchmarks-schema.json`: open each file; references are inside `"description"` string fields. Manually replace. Validate each file parses as JSON after editing:
 
 ```bash
-grep -rn "forge-diagnose\|forge-repair-state\|forge-reset\|forge-resume\|forge-rollback\|forge-caveman\|forge-compression-help" shared/ | grep -v "forge-recover\|forge-compress"
+python3 -m json.tool shared/schemas/dx-metrics-schema.json > /dev/null
+python3 -m json.tool shared/schemas/benchmarks-schema.json > /dev/null
 ```
 
-Expected: empty output.
+Expected: no output (JSON valid).
 
-- [ ] **Step 4: Held for commit in Task 28**
+- [ ] **Step 4: Grep-verify zero references remain in the sweep scope**
+
+```bash
+grep -rn "forge-diagnose\|forge-repair-state\|forge-reset\|forge-resume\|forge-rollback\|forge-caveman\|forge-compression-help" \
+  README.md CLAUDE.md CHANGELOG.md shared/ skills/ 2>/dev/null \
+  | grep -v "forge-recover\|forge-compress"
+```
+
+Expected: empty output. Fix any hits individually before proceeding.
+
+- [ ] **Step 5: Held for commit in Task 28**
 
 ---
 
-## Task 27: Update 11 test files + `validate-plugin.sh`
+## Task 27: Update 8 test files + `validate-plugin.sh`
 
-**Files modified:**
-- `tests/contract/ui-frontmatter-consistency.bats` (already touched in Task 18 — skip here unless residual refs remain)
-- `tests/contract/skill-frontmatter.bats`
-- `tests/contract/explore-cache.bats`
-- `tests/contract/state-schema.bats`
-- `tests/contract/plan-cache.bats`
+**Files modified (9 total):**
 - `tests/contract/compression-insights-contract.bats`
+- `tests/contract/explore-cache.bats`
+- `tests/contract/plan-cache.bats`
+- `tests/contract/skill-frontmatter.bats`
+- `tests/contract/state-schema.bats`
 - `tests/unit/skill-execution/decision-tree-refs.bats`
 - `tests/unit/skill-execution/skill-completeness.bats`
 - `tests/unit/skill-execution/skill-prerequisites.bats`
-- `tests/unit/skill-execution/forge-compress-integration.bats`
 - `tests/validate-plugin.sh`
 
-- [ ] **Step 1: Apply the same name-swap to tests**
+**Note on excluded files:**
+- `tests/contract/ui-frontmatter-consistency.bats` — extended in Task 18; grep confirms zero deleted-skill refs.
+- `tests/unit/caveman-modes.bats` — renamed + content-rewritten in Task 24, so excluded from this task.
+- `tests/unit/skill-execution/forge-compression-help.bats` — deleted in Task 25.
+- `tests/unit/skill-execution/forge-compress-integration.bats` — tested separately; has no deleted-skill refs but may need new subcommand-surface updates. If it doesn't yet reference the old `/forge-caveman` pattern, skip for Phase 1.
 
-Same sed script as Task 26, applied to the 10 test files above. Use the same GNU/BSD-safe `-i.bak` pattern.
+- [ ] **Step 1: Apply the name-swap to 8 test files**
+
+```bash
+for f in \
+  tests/contract/compression-insights-contract.bats \
+  tests/contract/explore-cache.bats \
+  tests/contract/plan-cache.bats \
+  tests/contract/skill-frontmatter.bats \
+  tests/contract/state-schema.bats \
+  tests/unit/skill-execution/decision-tree-refs.bats \
+  tests/unit/skill-execution/skill-completeness.bats \
+  tests/unit/skill-execution/skill-prerequisites.bats; do
+  sed -i.bak \
+    -e 's|forge-diagnose|forge-recover|g' \
+    -e 's|forge-repair-state|forge-recover|g' \
+    -e 's|forge-reset|forge-recover|g' \
+    -e 's|forge-resume|forge-recover|g' \
+    -e 's|forge-rollback|forge-recover|g' \
+    -e 's|forge-caveman|forge-compress|g' \
+    -e 's|forge-compression-help|forge-compress|g' \
+    "$f"
+  rm -f "${f}.bak"
+done
+```
+
+Test files commonly reference skill NAMES (not full invocations), so the sed above uses unslashed forms. Review each file manually after the sed pass — some assertions may need semantic adjustment beyond name-swap (e.g., an assertion checking "all 41 skills" must become "all 35 skills").
 
 - [ ] **Step 2: Extend `tests/validate-plugin.sh`**
 
@@ -1533,10 +1609,52 @@ done
 - Create: 1 renamed file (to-side)
 - Modify: 24 shared/*.md + 11 test files + validate-plugin.sh
 
-- [ ] **Step 1: Stage and commit**
+- [ ] **Step 1: Stage and commit (explicit paths; no `git add -A`)**
 
 ```bash
-git add -A skills/ shared/ tests/ tests/validate-plugin.sh
+# Deletions (handled by git rm in earlier tasks — ensure staged)
+git add skills/ tests/structural/ tests/unit/skill-execution/forge-compression-help.bats
+
+# 27 shared file sweeps
+git add shared/security-audit-trail.md shared/next-task-prediction.md \
+  shared/run-history/run-history.md shared/confidence-scoring.md \
+  shared/input-compression.md shared/event-log.md shared/automations.md \
+  shared/agent-communication.md shared/explore-cache.md \
+  shared/recovery/recovery-engine.md shared/flaky-test-management.md \
+  shared/plan-cache.md shared/graph/schema.md \
+  shared/performance-regression.md shared/playbooks.md \
+  shared/background-execution.md shared/learnings/README.md \
+  shared/learnings/rule-promotion.md shared/data-classification.md \
+  shared/dx-metrics.md shared/visual-verification.md \
+  shared/knowledge-base.md shared/state-schema.md \
+  shared/output-compression.md
+git add shared/run-history/migrations/001-initial.sql
+git add shared/schemas/dx-metrics-schema.json shared/schemas/benchmarks-schema.json
+
+# 17 skill cross-ref sweeps (subset of the 32 from Task 22 — same files, second pass)
+git add skills/forge-abort/SKILL.md skills/forge-automation/SKILL.md \
+  skills/forge-bootstrap/SKILL.md skills/forge-commit/SKILL.md \
+  skills/forge-config-validate/SKILL.md skills/forge-deploy/SKILL.md \
+  skills/forge-fix/SKILL.md skills/forge-help/SKILL.md \
+  skills/forge-history/SKILL.md skills/forge-init/SKILL.md \
+  skills/forge-insights/SKILL.md skills/forge-migration/SKILL.md \
+  skills/forge-profile/SKILL.md skills/forge-run/SKILL.md \
+  skills/forge-sprint/SKILL.md skills/forge-status/SKILL.md \
+  skills/forge-tour/SKILL.md
+
+# 8 test file updates + bats rename + validate-plugin.sh
+git add tests/contract/compression-insights-contract.bats \
+  tests/contract/explore-cache.bats tests/contract/plan-cache.bats \
+  tests/contract/skill-frontmatter.bats tests/contract/state-schema.bats \
+  tests/unit/skill-execution/decision-tree-refs.bats \
+  tests/unit/skill-execution/skill-completeness.bats \
+  tests/unit/skill-execution/skill-prerequisites.bats \
+  tests/unit/compress-output-modes.bats \
+  tests/validate-plugin.sh
+
+# Top-level scrub pass (name-swaps only; content adds happen in Commit 7)
+git add README.md CLAUDE.md CHANGELOG.md
+
 git commit -m "refactor(phase1): delete 7 deprecated skills + sweep references
 
 Deletes:
@@ -1736,9 +1854,16 @@ The following skills were removed in 3.0.0. No aliases. Update invocations direc
 | `/forge-caveman` | `/forge-compress output <mode>` | Compression consolidation |
 | `/forge-compression-help` | `/forge-compress help` | Compression consolidation |
 
-### Migration examples
+### Migration examples (all 7 removals)
 
+- `/forge-diagnose` → `/forge-recover diagnose`
+- `/forge-diagnose --json` → `/forge-recover diagnose --json`
+- `/forge-repair-state` → `/forge-recover repair`
 - `/forge-reset` → `/forge-recover reset`
+- `/forge-resume` → `/forge-recover resume`
+- `/forge-rollback` → `/forge-recover rollback`
+- `/forge-rollback --target main` → `/forge-recover rollback --target main`
+- `/forge-caveman` → `/forge-compress output off` (reset to uncompressed)
 - `/forge-caveman ultra` → `/forge-compress output ultra`
 - `/forge-compression-help` → `/forge-compress help`
 
@@ -1753,6 +1878,8 @@ See `shared/skill-contract.md` §4 for the complete 35-skill catalog after conso
 
 **Files modified:**
 - Modify: `CHANGELOG.md`
+
+**Note:** `CHANGELOG.md` already had its legacy 2.8.0-era deleted-skill references scrubbed via Task 26's sed sweep (Commit 5). This task is the *content addition* pass — adding the new 3.0.0 section. Two-pass editing across two distinct commits; no conflict.
 
 - [ ] **Step 1: Add entry at top (under `# Changelog` heading)**
 
@@ -1775,7 +1902,7 @@ See `shared/skill-contract.md` §4 for the complete 35-skill catalog after conso
 
 - `/forge-recover` skill with 5 subcommands.
 - `shared/skill-contract.md` — authoritative skill-surface contract.
-- `shared/agent-colors.md` — cluster-scoped color map (43 agents).
+- `shared/agent-colors.md` — cluster-scoped color map (42 agents).
 - `shared/ask-user-question-patterns.md` — canonical UX patterns.
 - 14 Tier 1/2 agents now carry concrete `AskUserQuestion` JSON examples.
 - `--help` on every skill; `--dry-run` on every mutating skill; `--json` on every read-only skill.
@@ -1982,3 +2109,322 @@ Plan is complete and internally consistent. Proceed to user review + code-review
 **Plan complete and saved to `docs/superpowers/plans/2026-04-16-phase1-skill-surface-consolidation.md`.**
 
 Per the superpowers workflow, this plan will be committed after user approval and then reviewed by `superpowers:code-reviewer`.
+
+---
+
+## Appendix A — 14 literal `AskUserQuestion` payloads for Task 15
+
+Copy the JSON block below the matching section heading into the corresponding agent's `.md` file under a new `## User-interaction examples` section.
+
+### A.1 — `agents/fg-010-shaper.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Which shaping dimensions to refine first
+
+```json
+{
+  "question": "This requirement is vague. Which dimensions should I explore with you first?",
+  "header": "Shape axes",
+  "multiSelect": true,
+  "options": [
+    {"label": "Actors and user roles", "description": "Who performs each action; who is affected."},
+    {"label": "Success criteria", "description": "What observable state defines 'done'."},
+    {"label": "Failure modes and edge cases", "description": "What can go wrong; what to do when it does."},
+    {"label": "Scope boundaries", "description": "What is explicitly out of scope."}
+  ]
+}
+```
+```
+
+### A.2 — `agents/fg-015-scope-decomposer.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Execution strategy for a multi-feature spec
+
+```json
+{
+  "question": "Detected 4 independent features. How should they execute?",
+  "header": "Exec strategy",
+  "multiSelect": false,
+  "options": [
+    {"label": "Parallel (Recommended)", "description": "Dispatch 4 pipelines in parallel worktrees; ~4x wall-clock win if no shared files.", "preview": "worktree-a/ ──┐\nworktree-b/ ──┼─ parallel\nworktree-c/ ──┤\nworktree-d/ ──┘"},
+    {"label": "Serial", "description": "Run one at a time; safer if features share files.", "preview": "A → B → C → D"},
+    {"label": "Hybrid", "description": "Group non-conflicting in parallel; serialize conflicts.", "preview": "(A, C) ║ (B, D)"}
+  ]
+}
+```
+```
+
+### A.3 — `agents/fg-020-bug-investigator.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Reproduction strategy when initial traces are ambiguous
+
+```json
+{
+  "question": "The reported trace doesn't uniquely identify the failing code path. How should we proceed?",
+  "header": "Repro path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Write a failing test targeting the most likely path (Recommended)", "description": "Start with the top candidate; iterate if it doesn't reproduce."},
+    {"label": "Request a fresh trace with more detail", "description": "Ask user for DEBUG-level logs or a minimal reproduction."},
+    {"label": "Investigate manually without a failing test", "description": "Skip TDD step; risk missing the root cause."}
+  ]
+}
+```
+```
+
+### A.4 — `agents/fg-050-project-bootstrapper.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Stack selection for a new REST service
+
+```json
+{
+  "question": "Which stack should I scaffold?",
+  "header": "Stack",
+  "multiSelect": false,
+  "options": [
+    {"label": "Kotlin + Spring Boot + Postgres (Recommended)", "description": "Hexagonal architecture; Gradle composite builds; Flyway migrations.", "preview": "build.gradle.kts\nsrc/main/kotlin/\n├─ domain/\n├─ application/\n└─ infrastructure/"},
+    {"label": "TypeScript + NestJS + Postgres", "description": "Modular NestJS with TypeORM.", "preview": "package.json\nsrc/\n├─ domain/\n├─ modules/\n└─ shared/"},
+    {"label": "Go + Gin + Postgres", "description": "Minimal Gin; stdlib-first; sqlx.", "preview": "go.mod\ninternal/\n├─ domain/\n├─ handler/\n└─ store/"}
+  ]
+}
+```
+```
+
+### A.5 — `agents/fg-090-sprint-orchestrator.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Which features to run in parallel
+
+```json
+{
+  "question": "6 features detected in this cycle. Which should run concurrently?",
+  "header": "Parallel set",
+  "multiSelect": true,
+  "options": [
+    {"label": "AUTH-101: Add MFA", "description": "Touches auth/ only — safe for parallel."},
+    {"label": "BILL-220: Invoice retry", "description": "Touches billing/ only — safe for parallel."},
+    {"label": "NOTIF-45: Push notifications", "description": "Touches notifications/ only — safe for parallel."},
+    {"label": "ORDERS-88: Cancellation flow", "description": "Shares order-service.ts with BILL-220 — serialize."}
+  ]
+}
+```
+```
+
+### A.6 — `agents/fg-100-orchestrator.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Escalation after recovery budget exhausted
+
+```json
+{
+  "question": "Pipeline has retried 10 times without progress. State is PLATEAUED. How should I proceed?",
+  "header": "Escalation",
+  "multiSelect": false,
+  "options": [
+    {"label": "Invoke /forge-recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
+    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-recover resume later."},
+    {"label": "Force-continue with current state", "description": "Mark plateau as non-blocking; may produce lower-quality output."}
+  ]
+}
+```
+```
+
+### A.7 — `agents/fg-103-cross-repo-coordinator.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Cross-repo PR merge strategy
+
+```json
+{
+  "question": "This change spans 3 repos. How should the PRs be merged?",
+  "header": "Merge order",
+  "multiSelect": false,
+  "options": [
+    {"label": "Producer-first (Recommended)", "description": "Merge shared-lib, then consumers. Safest when consumers pin a version.", "preview": "shared-lib ──▶ api-service ──▶ web-app"},
+    {"label": "All-at-once", "description": "Merge-train with CODEOWNERS approval on all three simultaneously.", "preview": "shared-lib ═╗\napi-service═╬═▶ atomic merge\nweb-app    ═╝"},
+    {"label": "Backward-compatible first", "description": "Producer adds new API without removing old; deprecate in a follow-up PR."}
+  ]
+}
+```
+```
+
+### A.8 — `agents/fg-160-migration-planner.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Migration phasing
+
+```json
+{
+  "question": "Spring Boot 2.7 → 3.2 migration has 3 viable phasings. Pick one:",
+  "header": "Migration",
+  "multiSelect": false,
+  "options": [
+    {"label": "Big-bang (Recommended for small surface)", "description": "Upgrade Spring + javax→jakarta + tests in one commit.", "preview": "Commit 1: full migration\n─ tests may fail\n─ fix forward"},
+    {"label": "Phased: jakarta first, then Spring", "description": "Namespace migration first; stays on 2.7 during transition.", "preview": "Phase 1: javax→jakarta\nPhase 2: 2.7→3.2"},
+    {"label": "Feature-flag shim", "description": "Temporary bridge layer; most complex; best for large codebases."}
+  ]
+}
+```
+```
+
+### A.9 — `agents/fg-200-planner.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Risk-aware parallelization decision
+
+```json
+{
+  "question": "3 tasks are candidates for parallel execution but share `src/shared/config.ts`. How to proceed?",
+  "header": "Paralleliz'n",
+  "multiSelect": false,
+  "options": [
+    {"label": "Serialize all three (Recommended)", "description": "Safest; each task sees the previous's config changes."},
+    {"label": "Extract config changes into a prep task", "description": "Prep commits config; 3 tasks then run parallel on stable config."},
+    {"label": "Run parallel and auto-merge conflicts", "description": "Fastest wall-clock but risks semantic merge bugs."}
+  ]
+}
+```
+```
+
+### A.10 — `agents/fg-210-validator.md`
+
+```markdown
+## User-interaction examples
+
+### Example — REVISE verdict escalation (Phase 4 will own the dispatch)
+
+```json
+{
+  "question": "Plan validation returned REVISE. Two perspectives flagged risk gaps. How should we proceed?",
+  "header": "Revise path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Send plan back to planner with my notes (Recommended)", "description": "Planner re-drafts; validator re-checks. Adds 5-10 min."},
+    {"label": "Approve as-is; accept the risk", "description": "User overrides validator; pipeline proceeds. Logged as user-override."},
+    {"label": "Abort pipeline; escalate to human review", "description": "Pause for manual plan revision outside Forge."}
+  ]
+}
+```
+
+> **Note (3.0.0):** This example documents the shape. The REVISE dispatch is still emitted by `fg-100-orchestrator` in 3.0.0; this agent carries the tool declarations (TaskCreate/AskUserQuestion) in preparation for Phase 4 migration.
+```
+
+### A.11 — `agents/fg-400-quality-gate.md`
+
+```markdown
+## User-interaction examples
+
+### Example — FAIL verdict after 3 cycles
+
+```json
+{
+  "question": "Quality gate reports FAIL with 2 CRITICAL findings after 3 review cycles. How should we proceed?",
+  "header": "FAIL path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Fix CRITICAL findings, retry gate (Recommended)", "description": "Dispatch implementer to fix; re-run quality gate."},
+    {"label": "Abort pipeline; surface findings to user", "description": "Halt and escalate CRITICAL findings as plan-level issues."},
+    {"label": "Override and proceed (user accepts risk)", "description": "Record override in state; ship anyway; audit-logged."}
+  ]
+}
+```
+```
+
+### A.12 — `agents/fg-500-test-gate.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Flaky test detected mid-run
+
+```json
+{
+  "question": "Test `checkout.spec.ts::'should charge card'` failed once, passed once. Flaky?",
+  "header": "Flaky?",
+  "multiSelect": false,
+  "options": [
+    {"label": "Quarantine and continue (Recommended)", "description": "Move to flaky quarantine; exclude from gating; alert in retrospective."},
+    {"label": "Run 10x more to confirm", "description": "~30s extra; deterministic result."},
+    {"label": "Fail the pipeline now", "description": "Strict mode; blocks ship on any non-deterministic test."}
+  ]
+}
+```
+```
+
+### A.13 — `agents/fg-600-pr-builder.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Commit grouping strategy
+
+```json
+{
+  "question": "How should the 37 changed files be grouped into commits on the feature branch?",
+  "header": "Commits",
+  "multiSelect": false,
+  "options": [
+    {"label": "By logical layer (Recommended)", "description": "Separate commits: schema, domain, API, tests, docs.", "preview": "1. schema/\n2. domain/\n3. api/\n4. tests/\n5. docs/"},
+    {"label": "By story", "description": "One commit per story from the plan.", "preview": "1. Story 1 (all files)\n2. Story 2 (all files)\n..."},
+    {"label": "One squash commit", "description": "Single commit per PR; easiest to revert.", "preview": "1. Feature X: all changes"}
+  ]
+}
+```
+```
+
+### A.14 — `agents/fg-710-post-run.md`
+
+```markdown
+## User-interaction examples
+
+### Example — Which retrospective corrections to record
+
+```json
+{
+  "question": "You made 7 corrections during the run. Which should become persistent learnings?",
+  "header": "Learnings",
+  "multiSelect": true,
+  "options": [
+    {"label": "Framework detected incorrectly (detected React, actually Preact)", "description": "Add to shared/learnings/frontend.md; promote after 3 successful applications."},
+    {"label": "Agent chose wrong test pattern (unit test for e2e behavior)", "description": "Add to shared/learnings/testing.md; applies to future similar plans."},
+    {"label": "Retry loop took 2 extra cycles", "description": "Performance observation only — not a behavior change."},
+    {"label": "User reworded 2 commit messages", "description": "Commit-message style preference; add to git conventions."}
+  ]
+}
+```
+```
+
+---
+
+## Appendix B — Verification checklist (before pushing in Task 37)
+
+Run through this before `git push` in Task 37 Step 2:
+
+- [ ] `git log --oneline origin/master..HEAD` shows 7 commits (Tasks 1, 8, 18, 22, 28, 31, 37)
+- [ ] No `.bak` files left behind from sed: `find . -name "*.bak" | head`
+- [ ] `grep -rln "forge-diagnose\|forge-repair-state\|forge-reset\|forge-resume\|forge-rollback\|forge-caveman\|forge-compression-help" README.md CLAUDE.md shared/ skills/ tests/ 2>/dev/null | grep -v forge-recover | grep -v forge-compress` returns empty
+- [ ] `find skills -mindepth 1 -maxdepth 1 -type d | wc -l` returns `35`
+- [ ] `grep -c '"version"' .claude-plugin/plugin.json .claude-plugin/marketplace.json` shows both at `3.0.0`
+- [ ] `bash -n` on all touched shell/bats scripts returns silent
+- [ ] `python3 -m json.tool` on both updated JSON schemas returns silent

@@ -140,7 +140,7 @@ Reconciliation: 15 + 20 = 35. ✅
 
 4. **`color:` field required on every agent.** `fg-205-planning-critic` has no `color:` today; it receives one per §4.6.
 
-5. **`color:` uniqueness is cluster-scoped**, not globally unique. Two agents may share a color if and only if they do not appear in the same dispatch cluster (see §4.6 for cluster definitions and the full 43-agent color map). The bats test checks cluster-scoped uniqueness, driven by the cluster table in `shared/agent-colors.md`.
+5. **`color:` uniqueness is cluster-scoped**, not globally unique. Two agents may share a color if and only if they do not appear in the same dispatch cluster (see §4.6 for cluster definitions and the full 42-agent color map). The bats test checks cluster-scoped uniqueness, driven by the cluster table in `shared/agent-colors.md`.
 
 6. **Description length per tier:**
 
@@ -177,7 +177,7 @@ Reconciliation: 15 + 20 = 35. ✅
 
 **Palette (18 hues):** `magenta`, `pink`, `purple`, `orange`, `coral`, `cyan`, `navy`, `teal`, `olive`, `blue`, `crimson`, `yellow`, `green`, `lime`, `red`, `amber`, `brown`, `white`, `gray` — canonical terminal hues with ≥3:1 contrast against common backgrounds. `shared/agent-colors.md` lists hex equivalents.
 
-**Full 43-agent color map** (includes `fg-205` which currently has no color):
+**Full 42-agent color map** (`fg-205` currently has no color — assigned `crimson` below):
 
 | Agent | Cluster | Old color | New color |
 |---|---|---|---|
@@ -342,8 +342,9 @@ Learn more: /forge-tour | /forge-init | /forge-help --json
 - `shared/agent-role-hierarchy.md` — add `fg-205-planning-critic` to the appropriate tier table (currently absent); update `fg-210-validator` row from Tier 4 → Tier 2.
 - `shared/state-schema.md` — add `recovery_op` field (string, one of `diagnose|repair|reset|resume|rollback`) to the orchestrator input payload schema.
 - `agents/fg-100-orchestrator.md` — add a §N "Recovery op dispatch" section describing the subcommand → existing-agent-flow mapping. No behavioral change; just documents the new input field.
-- **24 `shared/*.md` files** containing references to deleted skills (full list enumerated in §5.4): `security-audit-trail.md`, `next-task-prediction.md`, `run-history/run-history.md`, `confidence-scoring.md`, `input-compression.md`, `event-log.md`, `automations.md`, `agent-communication.md`, `explore-cache.md`, `recovery/recovery-engine.md`, `flaky-test-management.md`, `plan-cache.md`, `graph/schema.md`, `performance-regression.md`, `playbooks.md`, `background-execution.md`, `learnings/README.md`, `learnings/rule-promotion.md`, `data-classification.md`, `dx-metrics.md`, `visual-verification.md`, `knowledge-base.md`, `state-schema.md`, `output-compression.md`. Each is mechanically updated to reference the new command names.
-- **24 `skills/*/SKILL.md` files** cross-reference deleted skills and must update (enumerated during plan-writing via grep; examples: `forge-init`, `forge-status`, `forge-history`, `forge-profile`, `forge-deploy`, `forge-insights`, `forge-commit`, `forge-bootstrap`, `forge-sprint`, `forge-fix`, `forge-migration`, `forge-abort`, `forge-tour`, `forge-config-validate`).
+- **27 `shared/` files** containing references to deleted skills: 24 markdown files (`security-audit-trail.md`, `next-task-prediction.md`, `run-history/run-history.md`, `confidence-scoring.md`, `input-compression.md`, `event-log.md`, `automations.md`, `agent-communication.md`, `explore-cache.md`, `recovery/recovery-engine.md`, `flaky-test-management.md`, `plan-cache.md`, `graph/schema.md`, `performance-regression.md`, `playbooks.md`, `background-execution.md`, `learnings/README.md`, `learnings/rule-promotion.md`, `data-classification.md`, `dx-metrics.md`, `visual-verification.md`, `knowledge-base.md`, `state-schema.md`, `output-compression.md`) **plus** 1 SQL migration (`run-history/migrations/001-initial.sql`) **plus** 2 JSON schemas (`schemas/dx-metrics-schema.json`, `schemas/benchmarks-schema.json`). Each is mechanically updated to reference the new command names. The SQL and JSON files require careful per-file edits (not blind sed) since string replacements could affect syntax.
+- **17 `skills/*/SKILL.md` files** cross-reference deleted skills and must update: `forge-abort`, `forge-automation`, `forge-bootstrap`, `forge-commit`, `forge-config-validate`, `forge-deploy`, `forge-fix`, `forge-help`, `forge-history`, `forge-init`, `forge-insights`, `forge-migration`, `forge-profile`, `forge-run`, `forge-sprint`, `forge-status`, `forge-tour`.
+- **3 top-level documents** contain references to deleted skills: `README.md`, `CLAUDE.md`, `CHANGELOG.md` (the historical 2.8.0 entry references them). These are scrubbed in the same commit as the shared/skills sweep to keep the dangling-reference bats assertion passing from the moment it activates.
 - `DEPRECATIONS.md` — append a new `## Removed in 3.0.0` section. Format:
 
   ```markdown
@@ -395,7 +396,7 @@ Confirmed by grep of `hooks/`: no hook script references any of the 7 deleted sk
 - **`tests/contract/skill-frontmatter.bats`**, **`explore-cache.bats`**, **`state-schema.bats`**, **`plan-cache.bats`**, **`compression-insights-contract.bats`**: update references.
 - **`tests/validate-plugin.sh`**: extend with `[read-only]`/`[writes]` prefix regex; cluster-scoped unique-color sweep.
 
-**Runtime-behavior verification.** The bats suite enforces *declaration* of `--dry-run`/`--help`/`--json` flags. Actual runtime behavior (e.g., `--dry-run` actually prevents writes) is verified by the integration test tier in `tests/unit/skill-execution/`, specifically by extending the existing `forge-run-integration.bats` pattern to new integration tests `forge-recover-integration.bats` and the updated `forge-compress-integration.bats`. Each invokes the skill with `--dry-run` and asserts no files in `.forge/` are modified.
+**Runtime-behavior verification — partial in this phase.** The bats suite enforces *declaration* of `--dry-run`/`--help`/`--json` flags. `forge-recover-integration.bats` verifies that the new SKILL.md advertises all 5 subcommands and the correct per-subcommand flag coverage — a **surface** test, not a live runtime test. True runtime verification (invoking the orchestrator and snapshot-diffing `.forge/`) requires integration fixtures and a live orchestrator mock; that work is **deferred to Phase 2**, which covers observability + hook visibility and is a natural fit for adding live-invocation test fixtures.
 
 **Link-checker.** No existing link-checker in repo. The dangling-reference sweep in `skill-contract.bats` substitutes for one within this phase's scope.
 
@@ -451,13 +452,25 @@ Each is updated for: skill-contract compliance (description badge, Flags section
 
 All 42 agents listed in §4.6 color table get the frontmatter pass. The 14 Tier 1/2 additionally get the examples section (subset, same files — counted once).
 
-**Shared doc updates** (24 files with deleted-skill refs):
+**Shared file updates — deleted-skill references (27 files):**
 
-`shared/security-audit-trail.md`, `shared/next-task-prediction.md`, `shared/run-history/run-history.md`, `shared/confidence-scoring.md`, `shared/input-compression.md`, `shared/event-log.md`, `shared/automations.md`, `shared/agent-communication.md`, `shared/explore-cache.md`, `shared/recovery/recovery-engine.md`, `shared/flaky-test-management.md`, `shared/plan-cache.md`, `shared/graph/schema.md`, `shared/performance-regression.md`, `shared/playbooks.md`, `shared/background-execution.md`, `shared/learnings/README.md`, `shared/learnings/rule-promotion.md`, `shared/data-classification.md`, `shared/dx-metrics.md`, `shared/visual-verification.md`, `shared/knowledge-base.md`, `shared/state-schema.md`, `shared/output-compression.md`.
+24 markdown: `shared/security-audit-trail.md`, `shared/next-task-prediction.md`, `shared/run-history/run-history.md`, `shared/confidence-scoring.md`, `shared/input-compression.md`, `shared/event-log.md`, `shared/automations.md`, `shared/agent-communication.md`, `shared/explore-cache.md`, `shared/recovery/recovery-engine.md`, `shared/flaky-test-management.md`, `shared/plan-cache.md`, `shared/graph/schema.md`, `shared/performance-regression.md`, `shared/playbooks.md`, `shared/background-execution.md`, `shared/learnings/README.md`, `shared/learnings/rule-promotion.md`, `shared/data-classification.md`, `shared/dx-metrics.md`, `shared/visual-verification.md`, `shared/knowledge-base.md`, `shared/state-schema.md`, `shared/output-compression.md`.
 
-**Shared doc updates** (3 additional files needing new-content updates):
+1 SQL: `shared/run-history/migrations/001-initial.sql` (careful edit — string replacements inside SQL comments only; no schema change).
 
-`shared/agent-ui.md` (remove implicit-omission language), `shared/agent-role-hierarchy.md` (add fg-205, promote fg-210), `shared/state-schema.md` (already in 24 above — the `recovery_op` addition folds into its update pass).
+2 JSON: `shared/schemas/dx-metrics-schema.json`, `shared/schemas/benchmarks-schema.json` (careful edit — replacements inside `description` fields only; no schema structure change).
+
+**Shared file updates — new content (2 additional files, non-overlapping with the 27 above):**
+
+`shared/agent-ui.md` (remove implicit-omission language), `shared/agent-role-hierarchy.md` (add fg-205, promote fg-210). Note: `shared/state-schema.md` is counted once in the 27 above; its `recovery_op` addition folds into its update pass.
+
+**Skill cross-reference updates (17 SKILL.md files, overlap with the 32 in-place contract updates — done in the same sed pass):**
+
+`forge-abort`, `forge-automation`, `forge-bootstrap`, `forge-commit`, `forge-config-validate`, `forge-deploy`, `forge-fix`, `forge-help`, `forge-history`, `forge-init`, `forge-insights`, `forge-migration`, `forge-profile`, `forge-run`, `forge-sprint`, `forge-status`, `forge-tour`.
+
+**Top-level file scrubbing (3 files, same commit as shared sweep):**
+
+`README.md`, `CLAUDE.md`, `CHANGELOG.md` are scrubbed for deleted-skill references in the sweep commit (same commit as shared updates), so the dangling-reference bats assertion passes from the moment it activates. The separate "top-level docs" commit later in the rollout contains only the *new content* (skill table rewrites, badge convention note, version bump, new 3.0.0 CHANGELOG section) — two-pass editing on the same file across different commits.
 
 **Agent doc update** (1 file):
 
@@ -485,11 +498,17 @@ Overlaps with the 32 SKILL.md in-place contract updates — these get **both** p
 | Rewrite | 3 |
 | SKILL.md in-place updates | 32 |
 | Agent `.md` updates | 42 |
-| Shared doc updates | 24 + 3 = 27 (state-schema overlap = 26 unique) |
+| Shared file updates — deleted-skill refs | 27 (24 md + 1 SQL + 2 JSON) |
+| Shared file updates — new content | 2 (agent-ui.md, agent-role-hierarchy.md; non-overlapping) |
 | Orchestrator `.md` update | 1 |
-| Test file updates | 11 |
-| Top-level updates | 6 |
-| **Total touched or created/deleted** | **9 + 6 + 3 + 32 + 42 + 26 + 1 + 11 + 6 = 136** |
+| Test file updates | 8 |
+| Test frontmatter bats extension | 1 |
+| validate-plugin.sh extension | 1 |
+| Top-level name-swap pass (Commit 5) | 3 (README.md, CLAUDE.md, CHANGELOG.md) |
+| Top-level new-content pass (Commit 7) | 5 (README.md, CLAUDE.md, CHANGELOG.md, DEPRECATIONS.md, plugin.json, marketplace.json — two of these files are touched in both passes, counted per operation) |
+| **Total file operations across the PR** | **9 + 6 + 3 + 32 + 42 + 27 + 2 + 1 + 8 + 1 + 1 + 3 + 6 = 141 operations** |
+
+(Note: "operations" differ from "unique files" — README.md, CLAUDE.md, CHANGELOG.md are each touched in two distinct commits, so contribute 2 operations but only 1 unique file each.)
 
 ## 6. Acceptance criteria
 
@@ -517,7 +536,7 @@ All verified by CI on push; no local test runs permitted.
 20. `tests/contract/ui-frontmatter-consistency.bats` contains the 5 new assertions.
 21. `tests/contract/skill-contract.bats` created; all assertions pass.
 22. `tests/structural/ui-frontmatter-consistency.bats` deleted.
-23. `tests/unit/skill-execution/forge-recover-integration.bats` created; runs `--dry-run` against `repair` and `reset` and asserts no `.forge/` writes.
+23. `tests/unit/skill-execution/forge-recover-integration.bats` created; verifies SKILL.md advertises 5 subcommands + `--dry-run` on mutating subcommands + `--json` on `diagnose`. **Runtime `--dry-run` verification** (invoking the orchestrator and snapshot-diffing `.forge/`) requires live fixtures and is deferred to Phase 2.
 24. 24 `shared/*.md` files have zero references to deleted skill names.
 25. All 11 test files updated; dangling-reference sweep in `skill-contract.bats` returns clean.
 26. `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `DEPRECATIONS.md` updated per §4.9.
@@ -568,7 +587,7 @@ Per-commit order chosen so no intermediate commit leaves the tree in a state the
 2. **Commit 2 — New shared docs + bats + skills created.** `shared/skill-contract.md`, `shared/agent-colors.md`, `shared/ask-user-question-patterns.md`, `skills/forge-recover/SKILL.md`, new bats file, new integration test. Existing tree still references old skills; new files are additive. CI green.
 3. **Commit 3 — Frontmatter contract applied.** All 42 agent `.md` updates (explicit `ui:`, unique colors, tier-sized descriptions). `fg-210` promoted. 14 Tier 1/2 agents get examples. `shared/agent-ui.md`, `shared/agent-role-hierarchy.md` updated. Bats assertions now activate; pass. CI green.
 4. **Commit 4 — Skill contract applied.** 32 SKILL.md in-place updates (badges, Flags section, Exit codes section, flag coverage). `forge-compress` rewritten. `forge-help` augmented. Bats assertions for skill contract activate; pass. CI green.
-5. **Commit 5 — Deletions + dangling-reference sweep.** 7 skill directories deleted. 24 shared/*.md updates. 24 skill cross-reference updates (overlap with commit 4). 11 test file updates. `tests/structural/ui-frontmatter-consistency.bats` deleted. `tests/unit/caveman-modes.bats` renamed. Dangling-reference bats sweep activates; passes because all references were scrubbed in this commit. CI green.
+5. **Commit 5 — Deletions + dangling-reference sweep.** 7 skill directories deleted. 27 shared file updates (24 md + 1 SQL + 2 JSON). 17 skill cross-reference sed updates (overlap with Commit 4 contract updates — both passes land together). 8 test file updates + 1 bats extension + validate-plugin.sh extension. 3 top-level name-swap scrubs (README.md, CLAUDE.md, CHANGELOG.md — content additions deferred to Commit 7). `tests/structural/ui-frontmatter-consistency.bats` deleted. `tests/unit/caveman-modes.bats` renamed to `compress-output-modes.bats`. Dangling-reference bats sweep activates; passes because ALL references everywhere were scrubbed in this commit. CI green.
 6. **Commit 6 — State schema + orchestrator.** `shared/state-schema.md` adds `recovery_op`. `agents/fg-100-orchestrator.md` adds Recovery op dispatch section. CI green.
 7. **Commit 7 — Top-level docs.** `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `DEPRECATIONS.md`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`. Version bumped to 3.0.0. CI green.
 8. **Push → CI gate on HEAD → on green, tag `v3.0.0` → release.**
