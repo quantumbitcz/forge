@@ -147,6 +147,20 @@ def read_forge_log(query: str, limit: int = 20) -> list[dict]:
         return []
 
 
+def safe_json(func):
+    """Decorator: catch CorruptFileError and RuntimeError, return JSON error."""
+    import functools
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except CorruptFileError as e:
+            return json.dumps({"error": str(e)})
+        except RuntimeError as e:
+            return json.dumps({"error": str(e)})
+    return wrapper
+
+
 def get_plugin_version() -> str:
     """Read Forge plugin version from plugin.json."""
     script_dir = Path(__file__).resolve().parent
@@ -174,12 +188,10 @@ server = Server("forge-mcp-server", version=get_plugin_version())
 # ---------------------------------------------------------------------------
 
 @server.tool()
+@safe_json
 async def forge_pipeline_status() -> str:
     """Current pipeline state — stage, score, verdict, convergence info."""
-    try:
-        state = read_json_file(FORGE_DIR / "state.json")
-    except CorruptFileError as e:
-        return json.dumps({"error": str(e)})
+    state = read_json_file(FORGE_DIR / "state.json")
     if state is None:
         return json.dumps({"status": "no_active_run"})
     return json.dumps({
@@ -196,24 +208,20 @@ async def forge_pipeline_status() -> str:
 
 
 @server.tool()
+@safe_json
 async def forge_pipeline_evidence() -> str:
     """Pre-ship verification results from the last completed run."""
-    try:
-        evidence = read_json_file(FORGE_DIR / "evidence.json")
-    except CorruptFileError as e:
-        return json.dumps({"error": str(e)})
+    evidence = read_json_file(FORGE_DIR / "evidence.json")
     if evidence is None:
         return json.dumps({"status": "no_evidence"})
     return json.dumps(evidence)
 
 
 @server.tool()
+@safe_json
 async def forge_agent_card() -> str:
     """Project capabilities and available Forge skills."""
-    try:
-        card = read_json_file(FORGE_DIR / "agent-card.json")
-    except CorruptFileError as e:
-        return json.dumps({"error": str(e)})
+    card = read_json_file(FORGE_DIR / "agent-card.json")
     if card is None:
         return json.dumps({"status": "not_initialized", "hint": "Run /forge-init first"})
     return json.dumps(card)
@@ -224,6 +232,7 @@ async def forge_agent_card() -> str:
 # ---------------------------------------------------------------------------
 
 @server.tool()
+@safe_json
 async def forge_runs_list(
     limit: int = 10,
     verdict: str = "",
@@ -266,6 +275,7 @@ async def forge_runs_list(
 
 
 @server.tool()
+@safe_json
 async def forge_runs_search(query: str, limit: int = 10) -> str:
     """Full-text search across all pipeline runs.
 
@@ -280,6 +290,7 @@ async def forge_runs_search(query: str, limit: int = 10) -> str:
 
 
 @server.tool()
+@safe_json
 async def forge_run_detail(run_id: str) -> str:
     """Deep dive into a specific run — findings, timings, learnings.
 
@@ -319,6 +330,7 @@ async def forge_run_detail(run_id: str) -> str:
 # ---------------------------------------------------------------------------
 
 @server.tool()
+@safe_json
 async def forge_findings_recurring(
     min_occurrences: int = 3,
     severity: str = "",
@@ -356,6 +368,7 @@ async def forge_findings_recurring(
 
 
 @server.tool()
+@safe_json
 async def forge_learnings_active(
     type: str = "",
     confidence: str = "",
@@ -395,6 +408,7 @@ async def forge_learnings_active(
 
 
 @server.tool()
+@safe_json
 async def forge_log_search(query: str, limit: int = 20) -> str:
     """Search the institutional memory (forge-log.md) by keyword.
 
@@ -413,6 +427,7 @@ async def forge_log_search(query: str, limit: int = 20) -> str:
 # ---------------------------------------------------------------------------
 
 @server.tool()
+@safe_json
 async def forge_playbooks_list() -> str:
     """Available playbooks with usage statistics."""
     analytics = read_json_file(FORGE_DIR / "playbook-analytics.json")
@@ -433,6 +448,7 @@ async def forge_playbooks_list() -> str:
 
 
 @server.tool()
+@safe_json
 async def forge_playbook_effectiveness(playbook_id: str) -> str:
     """Per-playbook effectiveness analysis including refinement proposals.
 
@@ -491,7 +507,7 @@ async def forge_playbook_effectiveness(playbook_id: str) -> str:
 # ---------------------------------------------------------------------------
 # Entry Point
 # ---------------------------------------------------------------------------
-# Note: The mcp SDK auto-discovers @server.tool() decorated functions.
+# Note: The mcp SDK auto-discovers tool-decorated functions.
 # No manual @server.list_tools() handler needed.
 
 async def main():
