@@ -212,6 +212,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Codebase Q&A | `forge_ask.*` | Wiki + graph + explore cache queries |
 | Caveman I/O (S01) | `caveman.*` | Input compression + user-facing output modes (lite/full/ultra) |
 | Cross-project learnings (F28) | `cross_project.*` | Shared learnings across repos via `shared/cross-project-learnings.md` |
+| Run history store (F29) | `run_history.*` | SQLite FTS5 at `.forge/run-history.db`. Written by retrospective, queried by insights/ask/MCP. Schema in `shared/run-history/` |
 
 ### Deterministic Control Flow
 
@@ -310,7 +311,7 @@ See `shared/framework-gotchas.md` for non-obvious conventions per framework. Eac
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, and `playbook-analytics.json` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, and `playbook-refinements/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts.
