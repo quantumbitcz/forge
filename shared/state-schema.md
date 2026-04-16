@@ -37,6 +37,8 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 |   +-- architecture.md                 # Detected architecture
 |   +-- modules/                        # Per-domain module docs
 +-- trust.json                          # Per-developer adaptive trust level (survives /forge-reset)
++-- run-history.db                       # Pipeline run history — SQLite FTS5 (survives /forge-reset)
++-- playbook-refinements/                # Playbook improvement proposals (survives /forge-reset)
 +-- reports/
     +-- forge-{YYYY-MM-DD}.md       # Per-run retrospective report
     +-- recap-{YYYY-MM-DD}-{storyId}.md  # Human-readable run recap (by fg-710-post-run)
@@ -67,6 +69,8 @@ This document defines the JSON schemas and directory structure for the `.forge/`
 | `events.jsonl` | First event emission | `emit-event.sh` (all agents via orchestrator) | Yes (survives /forge-reset) | No |
 | `playbooks/` | `/forge-playbooks` or manual creation | User, orchestrator | Yes (survives /forge-reset) | No |
 | `playbook-analytics.json` | First playbook run completion | Retrospective agent (fg-700) | Yes (survives /forge-reset) | No |
+| `run-history.db` | Stage 9 (LEARN) | `fg-700-retrospective` | Yes (survives /forge-reset) | No |
+| `playbook-refinements/` | Stage 9 (LEARN) | `fg-700-retrospective` | Yes (survives /forge-reset) | No |
 
 ### Related Files (outside `.forge/`, committed to git)
 
