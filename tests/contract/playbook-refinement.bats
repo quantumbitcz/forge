@@ -43,6 +43,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   grep -q '"applied"' "$SCHEMA" || fail "Missing applied status"
   grep -q '"rejected"' "$SCHEMA" || fail "Missing rejected status"
   grep -q '"rolled_back"' "$SCHEMA" || fail "Missing rolled_back status"
+  grep -q '"deferred"' "$SCHEMA" || fail "Missing deferred status"
 }
 
 # ---------------------------------------------------------------------------
