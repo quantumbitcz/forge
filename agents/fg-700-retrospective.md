@@ -29,7 +29,7 @@ Produce three outputs: pipeline report, configuration updates (metrics + auto-tu
 
 ## 2. Context Budget
 
-Read: `.forge/state.json`, `.forge/stage_*_notes_*.md`, `.forge/checkpoint-*.json`, `.forge/reports/`, `.forge/feedback/`, `forge-log.md`, `forge-config.md`, `conventions_file`.
+Read: `.forge/state.json`, `.forge/stage_*_notes_*.md`, `.forge/checkpoint-*.json`, `.forge/reports/`, `.forge/feedback/`, `forge-log.md`, `forge-config.md`, `conventions_file`, `.forge/run-history.db`.
 
 Keep output under 2,000 tokens per section. Summarize, do not recap raw data.
 
@@ -278,6 +278,31 @@ When `observability.enabled` and spans available:
 | success_rate >= 80% | healthy |
 | success_rate 60-79% | needs attention |
 | success_rate < 60% | critical — recommend manual review |
+
+---
+
+### Output 2.5: Run History Store
+
+Write structured run data to `.forge/run-history.db` for cross-run queryability. Schema: `shared/run-history/run-history.md`.
+
+**Steps:**
+1. Open `.forge/run-history.db` (if absent, create and apply `shared/run-history/migrations/001-initial.sql`)
+2. Check `PRAGMA user_version` — if 0, apply schema; if current, proceed; if older, apply migrations
+3. BEGIN TRANSACTION
+4. INSERT INTO `runs` from `state.json` root fields
+5. INSERT INTO `findings` from quality gate structured output (`<!-- FORGE_STRUCTURED_OUTPUT -->`)
+6. INSERT INTO `stage_timings` from `state.json.tokens` per-stage breakdown
+7. INSERT INTO `learnings` from extracted PREEMPT/PATTERN/TUNING items (this run)
+8. IF `state.json.playbook_id` is set: INSERT INTO `playbook_runs`
+9. INSERT INTO `run_search` (concatenate requirement + all finding messages + all learning content)
+10. UPDATE `learnings SET applied_count = applied_count + 1` for each PREEMPT/PATTERN applied in this run
+11. COMMIT
+12. DELETE FROM `runs` WHERE `started_at < datetime('now', '-{run_history.retention_days} days')`
+13. Every 10th run: `PRAGMA optimize`
+
+**Error handling:** If `sqlite3` CLI unavailable, log WARNING and skip. If DB locked after busy_timeout, skip write and log WARNING. If schema migration fails, do not write, log CRITICAL. Pipeline continues regardless.
+
+**Config:** `run_history.enabled` (default true), `run_history.retention_days` (default 365), `run_history.optimize_interval` (default 10).
 
 ---
 
