@@ -11,7 +11,7 @@
 **Verification policy:** No local test runs per user instruction. Static parse checks (`bash -n`, `python3 -m json.tool`) are permitted. Each commit pushed, CI validates. Fix-forward on CI red.
 
 **Spec reference:** `docs/superpowers/specs/2026-04-16-phase2-observability-and-progress-design.md`
-**Depends on:** Phase 1 merged (3.0.0 released) before Phase 2 implementation starts.
+**Depends on:** Phase 1 merged (3.0.0 released and all Phase 1 files present) before Phase 2 implementation starts. **Task 0 verifies preconditions.**
 
 ---
 
@@ -51,6 +51,47 @@ Commit order (do not reorder without updating spec §9):
 
 ---
 
+## Task 0: Verify Phase 1 preconditions
+
+**Not a file change — a gate.** If any check fails, stop and merge Phase 1 first.
+
+- [ ] **Step 1: Verify plugin is at 3.0.0**
+
+```bash
+grep '"version": "3.0.0"' .claude-plugin/plugin.json \
+  || { echo "ABORT: plugin.json not at 3.0.0. Phase 1 not merged."; exit 1; }
+grep '"version": "3.0.0"' .claude-plugin/marketplace.json \
+  || { echo "ABORT: marketplace.json not at 3.0.0. Phase 1 not merged."; exit 1; }
+```
+
+- [ ] **Step 2: Verify Phase 1 files exist**
+
+```bash
+test -f skills/forge-recover/SKILL.md   || { echo "ABORT: /forge-recover missing (Phase 1 deliverable)."; exit 1; }
+test -f shared/agent-colors.md          || { echo "ABORT: agent-colors.md missing."; exit 1; }
+test -f shared/skill-contract.md        || { echo "ABORT: skill-contract.md missing."; exit 1; }
+test -f shared/ask-user-question-patterns.md || { echo "ABORT: ask-user-question-patterns.md missing."; exit 1; }
+! test -d skills/forge-diagnose || { echo "ABORT: forge-diagnose should be deleted by Phase 1."; exit 1; }
+! test -d skills/forge-caveman  || { echo "ABORT: forge-caveman should be deleted by Phase 1."; exit 1; }
+```
+
+- [ ] **Step 3: Verify agent frontmatter contract in place**
+
+```bash
+# Every agent has explicit `ui:` block (Phase 1 contract)
+for f in agents/fg-*.md; do
+  grep -q "^ui:" "$f" || { echo "ABORT: $f missing ui: (Phase 1 contract)."; exit 1; }
+done
+# Every agent has `color:` field
+for f in agents/fg-*.md; do
+  grep -q "^color:" "$f" || { echo "ABORT: $f missing color: (Phase 1 contract)."; exit 1; }
+done
+```
+
+All three checks must pass before proceeding. If any fail, Phase 1 must be merged first.
+
+---
+
 ## Task 1: Commit this plan
 
 **Files:**
@@ -75,15 +116,18 @@ git commit -m "docs(phase2): add observability and progress implementation plan"
 ```json
 {
   "version": "2026-04-16",
+  "_unit": "USD per 1,000,000 tokens (per-MTok) — matches existing forge-token-tracker.sh convention",
   "models": {
-    "claude-opus-4-7":         {"input_per_1k": 0.015,  "output_per_1k": 0.075},
-    "claude-opus-4-7-1m":      {"input_per_1k": 0.018,  "output_per_1k": 0.090},
-    "claude-sonnet-4-6":       {"input_per_1k": 0.003,  "output_per_1k": 0.015},
-    "claude-haiku-4-5-20251001": {"input_per_1k": 0.0008, "output_per_1k": 0.004}
+    "claude-opus-4-7":         {"input_per_mtok": 15.0,  "output_per_mtok": 75.0},
+    "claude-opus-4-7-1m":      {"input_per_mtok": 18.0,  "output_per_mtok": 90.0},
+    "claude-sonnet-4-6":       {"input_per_mtok": 3.0,   "output_per_mtok": 15.0},
+    "claude-haiku-4-5-20251001": {"input_per_mtok": 0.8, "output_per_mtok": 4.0}
   },
-  "unknown_model_fallback": {"input_per_1k": 0.015, "output_per_1k": 0.075}
+  "unknown_model_fallback": {"input_per_mtok": 15.0, "output_per_mtok": 75.0}
 }
 ```
+
+**Unit rationale:** Existing `shared/forge-token-tracker.sh` uses per-MTok rates (`DEFAULT_PRICING_TABLE` haiku 0.25/1.25, sonnet 3.0/15.0, opus 15.0/75.0). Using per-MTok in the JSON keeps math identical; no per-1K/per-MTok conversion needed. Field keys are `input_per_mtok` / `output_per_mtok` to be explicit.
 
 - [ ] **Step 2: Validate**
 
@@ -344,11 +388,25 @@ To make autonomous STRICT on cost, set `action_on_breach: abort` explicitly.
 
 - [ ] **Step 1: Read `shared/error-taxonomy.md` to extract the 22 error names**
 
+The taxonomy file contains multiple tables; only the first table (Error Types) has the 22 canonical entries. Narrow the grep to that table's row range.
+
 ```bash
-grep "^| [A-Z_]*" shared/error-taxonomy.md | awk -F'|' '{print $2}' | tr -d ' '
+# Extract names from the Error Types table only
+awk '/^## Error Types/,/^## Error Severity Ordering/' shared/error-taxonomy.md \
+  | grep '^| `[A-Z_]*`' \
+  | awk -F'|' '{print $2}' \
+  | tr -d '` '
 ```
 
-Expected output: 22 lines, each an error name.
+Expected output: 22 lines, one name per line (e.g., `CONFIG_INVALID`, `LINT_FAILURE`, `CONTEXT_OVERFLOW`, etc.).
+
+Validate count:
+
+```bash
+count=$(awk '/^## Error Types/,/^## Error Severity Ordering/' shared/error-taxonomy.md \
+  | grep -c '^| `[A-Z_]*`')
+[ "$count" = "22" ] || { echo "FAIL: expected 22 errors, found $count"; exit 1; }
+```
 
 - [ ] **Step 2: Write the document opening**
 
@@ -439,9 +497,35 @@ Fully-written entries for 3 common error types:
 ---
 ````
 
-- [ ] **Step 4: Write 19 remaining entries following the pattern**
+- [ ] **Step 4: Write 19 remaining entries following the pattern, plus 1 extra-taxonomy entry**
 
 Enumerate all 22 error names from Step 1. For each remaining entry (22 − 3 = 19), produce a `## {ERROR_NAME}` section with all 5 fields: Symptom, Severity, What Forge tried, What to do now, Example log line.
+
+**Plus one extra-taxonomy entry: `COST_CAP_BREACH`.** This is not in `shared/error-taxonomy.md` (it's an operational signal, not an error); still, the orchestrator's cost-cap `AskUserQuestion` references `docs/error-recovery.md#cost_cap_breach`. Add a section:
+
+````markdown
+## COST_CAP_BREACH
+
+**Symptom.** Pipeline pauses with `AskUserQuestion` header `Cost cap`. Run has spent >= `cost_cap.usd`.
+
+**Severity.** Operational (not an error; user decision point).
+
+**What Forge tried.** Nothing — the cap is a user-set budget guard, not a failure. `emit_cap_breach` event appended to events log; `state.cost.cap_breached` set to `true`; orchestrator pauses at next stage boundary.
+
+**What to do now.**
+1. Look at `/forge-insights` to see where the cost went (per-stage breakdown).
+2. If the cost was reasonable: pick "Raise cap" (default doubles: $5 → $10). Records in `state.cost_cap_decisions`.
+3. If costly due to misconfigured model routing: abort, edit `model_routing` in `forge.local.md` (downgrade to sonnet/haiku for low-risk stages), then `/forge-recover resume`.
+4. If autonomous mode: configure `cost_cap.action_on_breach: abort` to hard-stop on breach.
+
+**Example log line.**
+```
+[fg-100-orchestrator] cap.breach at_cost_usd=5.02 cap_usd=5.00
+[AUTO: cap breach raised to $10.00]
+```
+````
+
+Total entries: **23** (22 taxonomy + 1 operational).
 
 Source of truth for each field:
 - **Severity.** From `shared/error-taxonomy.md` Severity column.
@@ -453,13 +537,22 @@ Expected output: 22 total `## {NAME}` sections, alphabetized within the document
 
 - [ ] **Step 5: Auto-generate the Contents section**
 
-Replace the `## Contents` placeholder from Step 2 with an alphabetical list:
+Replace the `## Contents` placeholder from Step 2 with an alphabetical list. Uses `awk` + `tr` for cross-platform portability (macOS BSD sed lacks `\L`):
 
 ```bash
-grep '^## [A-Z_]*$' docs/error-recovery.md | sed 's/^## /- [/' | sed 's/$/](#\L&)/' | sed 's/\[## /[/'
+grep '^## [A-Z_][A-Z_]*$' docs/error-recovery.md \
+  | sort \
+  | awk '{name=$2; lower=tolower(name); printf "- [%s](#%s)\n", name, lower}'
 ```
 
-Expected: 22 Markdown links, each a `- [NAME](#lower_name)` entry.
+Expected: 22 Markdown links. Example first few lines:
+```
+- [AGENT_CRASH](#agent_crash)
+- [BUILD_FAILURE](#build_failure)
+- [CONTEXT_OVERFLOW](#context_overflow)
+```
+
+Insert the output above the first `---` divider (replacing the `(Alphabetical list of 22 entries — auto-generated during plan execution.)` placeholder from Step 2).
 
 - [ ] **Step 6: Held for commit in Task 9**
 
@@ -566,19 +659,32 @@ Expected: no output.
 - Create: `tests/contract/observability-contract.bats`
 - Create: `tests/unit/skill-execution/forge-recover-runtime.bats`
 
-- [ ] **Step 1: Write `observability-contract.bats` skeleton**
+- [ ] **Step 1: Write `observability-contract.bats` with two-phase activation**
+
+Assertions split into two groups. **Group A** checks the 7 new files that ship in Commit 2 (Task 9) — these pass immediately. **Group B** checks content in files that don't get Phase 2 edits until Commits 3-5 — these are `skip`ped in Commit 2 and un-skipped via a `FORGE_PHASE2_ACTIVE` env var that CI sets once all commits land.
+
+The CI pipeline sets `FORGE_PHASE2_ACTIVE=1` only when running against `HEAD` after Commit 5 has merged (enforced by a check that all Phase 2 files exist). Intermediate commits run with the env var unset → Group B `skip`s cleanly.
 
 ```bash
 #!/usr/bin/env bats
 
 # Observability Contract assertions — enforces shared/observability-contract.md
+# Group A: active from Commit 2 (foundations)
+# Group B: skipped until Commit 5 (full content); controlled by FORGE_PHASE2_ACTIVE env var
 
 setup() {
   PLUGIN_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
   export PLUGIN_ROOT
+  # Phase 2 is "fully active" once Commit 5 (Task 22) lands. Until then, Group B skips.
+  # Detection: check for the presence of the new Cost cap escalation section in orchestrator.
+  if grep -q "^## § Cost cap escalation\|^## Cost cap escalation" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" 2>/dev/null; then
+    export FORGE_PHASE2_ACTIVE=1
+  fi
 }
 
-@test "shared/observability-contract.md exists with 9 sections" {
+# -------- Group A (active from Commit 2) --------
+
+@test "[A] shared/observability-contract.md exists with 9 sections" {
   local f="$PLUGIN_ROOT/shared/observability-contract.md"
   [ -f "$f" ]
   for section_n in 1 2 3 4 5 6 7 8 9; do
@@ -586,7 +692,7 @@ setup() {
   done
 }
 
-@test "shared/color-to-emoji-map.json parses with 19 map entries and 19 ascii_fallback entries" {
+@test "[A] shared/color-to-emoji-map.json parses with 19 map entries and 19 ascii_fallback entries" {
   local f="$PLUGIN_ROOT/shared/color-to-emoji-map.json"
   [ -f "$f" ]
   local map_count ascii_count
@@ -596,36 +702,51 @@ setup() {
   [ "$ascii_count" = "19" ]
 }
 
-@test "shared/model-pricing.json has all 4 required models" {
+@test "[A] shared/model-pricing.json has all 4 required models and per-MTok schema" {
   local f="$PLUGIN_ROOT/shared/model-pricing.json"
   [ -f "$f" ]
   for m in claude-opus-4-7 claude-opus-4-7-1m claude-sonnet-4-6 claude-haiku-4-5-20251001; do
-    python3 -c "import json,sys;d=json.load(open('$f'));sys.exit(0 if '$m' in d['models'] else 1)" \
-      || { echo "Missing model: $m"; return 1; }
+    python3 -c "import json,sys;d=json.load(open('$f'));m=d['models'].get('$m');sys.exit(0 if m and 'input_per_mtok' in m else 1)" \
+      || { echo "Missing model or wrong schema: $m"; return 1; }
   done
 }
 
-@test "shared/event-log.md declares 16 event types in header" {
+@test "[A] docs/error-recovery.md exists and has ≥22 headings" {
+  local f="$PLUGIN_ROOT/docs/error-recovery.md"
+  [ -f "$f" ]
+  local count
+  count=$(grep -c '^## [A-Z_][A-Z_]*$' "$f")
+  [ "$count" -ge 22 ]
+}
+
+# -------- Group B (skipped until Commit 5 — Phase 2 fully landed) --------
+
+@test "[B] shared/event-log.md declares 16 event types in header" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
   grep -qE "Event Types \(16\)" "$PLUGIN_ROOT/shared/event-log.md"
 }
 
-@test "shared/event-log.md documents 4 new event types" {
+@test "[B] shared/event-log.md documents 4 new event types" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
   local f="$PLUGIN_ROOT/shared/event-log.md"
   for ev in "cost\.inc" "cap\.breach" "hook\.failure\.surfaced" "dispatch\.child"; do
     grep -qE "$ev" "$f" || { echo "Missing event type: $ev"; return 1; }
   done
 }
 
-@test "hooks/session-start.sh defines print_hook_failure_banner function" {
+@test "[B] hooks/session-start.sh defines print_hook_failure_banner function" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
   grep -q "print_hook_failure_banner" "$PLUGIN_ROOT/hooks/session-start.sh"
 }
 
-@test "hooks/session-start.sh status badge includes cost suffix marker" {
+@test "[B] hooks/session-start.sh status badge includes cost suffix marker" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
   grep -q '• \$' "$PLUGIN_ROOT/hooks/session-start.sh" \
     || grep -q '\. \$' "$PLUGIN_ROOT/hooks/session-start.sh"
 }
 
-@test "every agent with Agent in tools has Sub-agent dispatch section" {
+@test "[B] every agent with Agent in tools has Sub-agent dispatch section" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 4-5)"
   for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
     local has_agent
     has_agent=$(awk '/^tools:/,/^[a-z_]+:/' "$f" | grep -c "Agent" || true)
@@ -636,18 +757,34 @@ setup() {
   done
 }
 
-@test "escalation AskUserQuestion payloads include docs/error-recovery.md reference" {
+@test "[B] escalation AskUserQuestion payloads include docs/error-recovery.md reference" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
   local allowlist='Cost cap|Quality gate|Lint fail|Test fail|Feedback loop|Build fail|Context overflow|MCP down|Recovery|Escalation'
   local bad=0
   for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
-    # Extract ```json ... ``` blocks; check if any header matches allowlist
-    awk '
+    awk -v allow="$allowlist" '
       /^```json$/ {inj=1; blk=""; next}
-      /^```$/ {inj=0; if (match(blk, /"header": "('"$allowlist"')"/) && !index(blk, "docs/error-recovery.md#")) { print FILENAME ": block with allowlist header lacks docs/error-recovery.md ref"; exit 1 }; blk=""; next}
+      /^```$/ {
+        if (inj && match(blk, "\"header\": *\"(" allow ")\"") && index(blk, "docs/error-recovery.md#") == 0) {
+          print FILENAME ": allowlist header block lacks docs/error-recovery.md ref"
+          exit 1
+        }
+        inj=0; blk=""; next
+      }
       inj {blk = blk $0 "\n"; next}
     ' "$f" || bad=1
   done
   [ "$bad" -eq 0 ]
+}
+
+@test "[B] autonomous cap-breach auto-resolution is documented" {
+  [[ "${FORGE_PHASE2_ACTIVE:-0}" = "1" ]] || skip "Phase 2 not fully landed (activates in Commit 5)"
+  # Closes spec AC #26: autonomous + ask auto-resolves to Recommended option, logged with specific format
+  local f="$PLUGIN_ROOT/shared/cost-tracking.md"
+  grep -qE "\[AUTO: cap breach raised to \\\$" "$f" \
+    || { echo "Missing [AUTO: cap breach raised to \$N] log format in cost-tracking.md §4"; return 1; }
+  grep -q "autonomous" "$PLUGIN_ROOT/agents/fg-100-orchestrator.md" \
+    || { echo "fg-100-orchestrator missing autonomous-mode cost-cap documentation"; return 1; }
 }
 ```
 
@@ -747,64 +884,94 @@ assertions reference new files that exist in this commit."
 
 ---
 
-## Task 10: Refactor `shared/forge-token-tracker.sh` — load pricing from JSON
+## Task 10: Refactor Python heredoc in `shared/forge-token-tracker.sh` — load pricing from JSON
 
 **Files modified:**
 - Modify: `shared/forge-token-tracker.sh`
 
-- [ ] **Step 1: Find the existing hardcoded pricing table**
+**Architectural note (per review):** `shared/forge-token-tracker.sh` is a bash script whose cost/pricing logic lives inside a Python heredoc `_TOKEN_UPDATE_PY` (roughly `:75-220`). The refactor edits the **Python** inside that heredoc, not bash. Pricing-table modifications happen in Python; no bash `eval` path is introduced.
+
+- [ ] **Step 1: Locate the existing hardcoded pricing table inside the Python heredoc**
 
 ```bash
-grep -n "DEFAULT_PRICING\|input_per_1k\|haiku\|sonnet\|opus" shared/forge-token-tracker.sh
+grep -n "DEFAULT_PRICING_TABLE\|_TOKEN_UPDATE_PY" shared/forge-token-tracker.sh
 ```
 
-Expected: one or more lines around `:150` showing a pricing literal.
+Expected: `_TOKEN_UPDATE_PY='` heredoc starts around `:79` and `DEFAULT_PRICING_TABLE = {` appears around `:147` inside it.
 
-- [ ] **Step 2: Replace hardcoded pricing with JSON load**
+- [ ] **Step 2: Replace hardcoded pricing inside the Python heredoc with a JSON loader**
 
-Find the section that declares the pricing table and replace it with a JSON loader function:
+Find the `DEFAULT_PRICING_TABLE = {...}` block inside `_TOKEN_UPDATE_PY` and replace it with:
 
-```bash
-# Load pricing from shared/model-pricing.json (and optional local override).
-load_model_pricing() {
-  local canonical="${CLAUDE_PLUGIN_ROOT}/shared/model-pricing.json"
-  local local_override="${CLAUDE_PLUGIN_ROOT}/shared/model-pricing.local.json"
-  [[ -f "$canonical" ]] || { echo "forge-token-tracker: missing $canonical" >&2; return 1; }
+```python
+# Load pricing from shared/model-pricing.json (canonical) + optional .local.json (override).
+# Maintains per-MTok units matching the previous DEFAULT_PRICING_TABLE values.
+import json as _json, os as _os
+_FORGE_PLUGIN_ROOT = _os.environ.get("CLAUDE_PLUGIN_ROOT", "")
+_PRICING_CANONICAL = _os.path.join(_FORGE_PLUGIN_ROOT, "shared", "model-pricing.json")
+_PRICING_LOCAL = _os.path.join(_FORGE_PLUGIN_ROOT, "shared", "model-pricing.local.json")
 
-  # Deep-merge at `models` level; local overrides win
-  python3 - <<'PYEOF' "$canonical" "$local_override"
-import json, os, sys
-canonical_path, local_path = sys.argv[1], sys.argv[2]
-with open(canonical_path) as f:
-    data = json.load(f)
-if os.path.exists(local_path):
-    with open(local_path) as f:
-        local = json.load(f)
-    data['models'].update(local.get('models', {}))
-    if 'unknown_model_fallback' in local:
-        data['unknown_model_fallback'] = local['unknown_model_fallback']
-# Emit shell assignments (one per model)
-for name, rates in data['models'].items():
-    print(f'FORGE_PRICE_IN_{name.replace("-","_")}={rates["input_per_1k"]}')
-    print(f'FORGE_PRICE_OUT_{name.replace("-","_")}={rates["output_per_1k"]}')
-fallback = data['unknown_model_fallback']
-print(f'FORGE_PRICE_IN_UNKNOWN={fallback["input_per_1k"]}')
-print(f'FORGE_PRICE_OUT_UNKNOWN={fallback["output_per_1k"]}')
-PYEOF
-}
+DEFAULT_PRICING_TABLE = {}
+_unknown_fallback = {"input": 15.0, "output": 75.0}
+
+try:
+    with open(_PRICING_CANONICAL) as _f:
+        _raw = _json.load(_f)
+    for _name, _rates in _raw.get("models", {}).items():
+        # Map new JSON schema (input_per_mtok) to existing code's field names (input/output)
+        DEFAULT_PRICING_TABLE[_name] = {
+            "input": float(_rates["input_per_mtok"]),
+            "output": float(_rates["output_per_mtok"]),
+        }
+    if "unknown_model_fallback" in _raw:
+        _unknown_fallback = {
+            "input": float(_raw["unknown_model_fallback"]["input_per_mtok"]),
+            "output": float(_raw["unknown_model_fallback"]["output_per_mtok"]),
+        }
+    if _os.path.exists(_PRICING_LOCAL):
+        with open(_PRICING_LOCAL) as _f:
+            _local = _json.load(_f)
+        for _name, _rates in _local.get("models", {}).items():
+            DEFAULT_PRICING_TABLE[_name] = {
+                "input": float(_rates["input_per_mtok"]),
+                "output": float(_rates["output_per_mtok"]),
+            }
+except Exception as _e:
+    # Fallback to legacy hardcoded table to preserve behavior if JSON missing
+    DEFAULT_PRICING_TABLE = {
+        "haiku":   {"input": 0.25,  "output": 1.25},
+        "sonnet":  {"input": 3.0,   "output": 15.0},
+        "opus":    {"input": 15.0,  "output": 75.0},
+    }
+
+# Alias: when a model name (e.g., "claude-sonnet-4-6") resolves to a tier (haiku/sonnet/opus),
+# keep existing lookup path working. Add direct keys too.
+for _tier_key, _tier in (("haiku","haiku"),("sonnet","sonnet"),("opus","opus")):
+    if _tier not in DEFAULT_PRICING_TABLE:
+        # Derive tier rate from any model whose name contains the tier
+        for _mn, _mr in DEFAULT_PRICING_TABLE.items():
+            if _tier in _mn.lower():
+                DEFAULT_PRICING_TABLE[_tier] = _mr
+                break
 ```
 
-Wire it: at the top of the existing cost-computation function, call `eval "$(load_model_pricing)"` to set the `FORGE_PRICE_*` vars, then look up `FORGE_PRICE_IN_${model//-/_}` and `FORGE_PRICE_OUT_${model//-/_}` for computation. Fall back to `FORGE_PRICE_IN_UNKNOWN` / `FORGE_PRICE_OUT_UNKNOWN` for unknown models (and emit `cost.model_unknown` event).
+This preserves the existing `DEFAULT_PRICING_TABLE["haiku"|"sonnet"|"opus"]` lookup path while allowing full model-name lookups (e.g., `"claude-sonnet-4-6"`). Existing code downstream that references `DEFAULT_PRICING_TABLE["sonnet"]` still works.
 
 - [ ] **Step 3: Preserve external interface**
 
-The existing state fields (`state.cost.estimated_cost_usd`, `state.cost.per_stage.{N}`) and the existing `tests/contract/cost-observability.bats` assertions must continue to pass. Do not rename any state field or change any output format in this step.
+`state.cost.estimated_cost_usd` and `state.cost.per_stage.{N}` fields are unchanged. Existing `tests/contract/cost-observability.bats` assertions about cost math continue to pass because per-MTok rates are identical to the hardcoded table (e.g., sonnet 3.0/15.0).
 
 - [ ] **Step 4: Static parse check**
 
 ```bash
 bash -n shared/forge-token-tracker.sh
+# Also sanity-check the heredoc parses as Python
+awk "/^_TOKEN_UPDATE_PY='/,/^'\$/" shared/forge-token-tracker.sh \
+  | sed "s/^_TOKEN_UPDATE_PY='//; s/^'\$//" \
+  | python3 -c "import sys; compile(sys.stdin.read(), '<heredoc>', 'exec')"
 ```
+
+Expected: no output (valid bash, valid Python).
 
 - [ ] **Step 5: Held for commit in Task 12**
 
@@ -815,70 +982,81 @@ bash -n shared/forge-token-tracker.sh
 **Files modified:**
 - Modify: `shared/forge-token-tracker.sh` (continuation of Task 10's edits)
 
-- [ ] **Step 1: Add `emit_cost_inc` function**
+- [ ] **Step 1: Add `emit_cost_inc` and `emit_cap_breach` functions**
 
-Append to the file, below the pricing loader:
+Uses the existing `acquire_lock_with_retry` helper from `shared/platform.sh` (per `shared/event-log.md:374`) and Python (not `bc`) for float comparison. Guards against empty `run_id` and special chars.
+
+Append to the bash section of `shared/forge-token-tracker.sh` (outside the Python heredoc):
 
 ```bash
-# Emit a cost.inc event to the right events log (standard vs sprint).
-# Args: run_id stage agent model tokens_in tokens_out cost_usd run_cost_usd cap_usd
+# shellcheck source=./platform.sh
+# Lock helper sourced from platform.sh (existing infrastructure).
+: "${CLAUDE_PLUGIN_ROOT:?}"
+# shellcheck disable=SC1091
+source "${CLAUDE_PLUGIN_ROOT}/shared/platform.sh"
+
+# Determine correct events path: sprint-child runs write to per-run file.
+_events_log_path() {
+  local run_id="$1"
+  if [[ -n "$run_id" ]] && [[ "$run_id" =~ ^[a-zA-Z0-9_-]+$ ]] && [[ -d ".forge/runs/${run_id}" ]]; then
+    echo ".forge/runs/${run_id}/events.jsonl"
+  else
+    echo ".forge/events.jsonl"
+  fi
+}
+
+# Emit a cost.inc event. Args: run_id stage agent model tokens_in tokens_out cost_usd run_cost_usd cap_usd
 emit_cost_inc() {
   local run_id="$1" stage="$2" agent="$3" model="$4"
   local tokens_in="$5" tokens_out="$6" cost_usd="$7" run_cost_usd="$8" cap_usd="$9"
+  local events_path; events_path=$(_events_log_path "$run_id")
+  local ts; ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-  # Determine events log path: sprint-child runs write to .forge/runs/{run_id}/events.jsonl
-  local events_path=".forge/events.jsonl"
-  if [[ -d ".forge/runs/${run_id}" ]]; then
-    events_path=".forge/runs/${run_id}/events.jsonl"
-  fi
-
-  local ts
-  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-  # Lock via mkdir (matching shared/event-log.md convention)
-  local lockdir="${events_path}.lock"
-  local tries=0
-  while ! mkdir "$lockdir" 2>/dev/null; do
-    ((tries++)); [[ $tries -gt 50 ]] && return 1
-    sleep 0.02
-  done
-  trap "rmdir '$lockdir' 2>/dev/null" EXIT
+  acquire_lock_with_retry "${events_path}.lock" 50 20 \
+    || { echo "emit_cost_inc: could not acquire lock on ${events_path}.lock" >&2; return 1; }
 
   printf '{"ts":"%s","type":"cost.inc","run_id":"%s","stage":%s,"agent":"%s","model":"%s","tokens_in":%s,"tokens_out":%s,"cost_usd":%s,"run_cost_usd":%s,"cap_usd":%s}\n' \
     "$ts" "$run_id" "$stage" "$agent" "$model" "$tokens_in" "$tokens_out" "$cost_usd" "$run_cost_usd" "$cap_usd" \
     >> "$events_path"
 
-  rmdir "$lockdir" 2>/dev/null
-  trap - EXIT
+  release_lock "${events_path}.lock"
 }
 
 # Emit cap.breach event when run_cost_usd first crosses cap_usd.
 emit_cap_breach() {
   local run_id="$1" at_cost_usd="$2" cap_usd="$3"
-  local events_path=".forge/events.jsonl"
-  if [[ -d ".forge/runs/${run_id}" ]]; then
-    events_path=".forge/runs/${run_id}/events.jsonl"
-  fi
-  local ts
-  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  local events_path; events_path=$(_events_log_path "$run_id")
+  local ts; ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  acquire_lock_with_retry "${events_path}.lock" 50 20 \
+    || { echo "emit_cap_breach: could not acquire lock" >&2; return 1; }
   printf '{"ts":"%s","type":"cap.breach","run_id":"%s","at_cost_usd":%s,"cap_usd":%s}\n' \
     "$ts" "$run_id" "$at_cost_usd" "$cap_usd" >> "$events_path"
+  release_lock "${events_path}.lock"
+}
+
+# Float comparison via Python (bc not universally installed).
+_cost_gte() {
+  python3 -c "import sys;sys.exit(0 if float(sys.argv[1])>=float(sys.argv[2]) else 1)" "$1" "$2"
 }
 ```
 
+(`acquire_lock_with_retry` and `release_lock` are the existing helpers in `shared/platform.sh`; signature per that file. If the exact function name differs, plan-executor must verify via `grep -n "acquire_lock\|release_lock" shared/platform.sh` and adjust.)
+
 - [ ] **Step 2: Call `emit_cost_inc` from the existing cost-accumulation function**
 
-Find the function that currently updates `state.cost.estimated_cost_usd`. After the state write, add:
+Find the bash function in `forge-token-tracker.sh` that wraps the Python heredoc and commits cost updates. After the existing state write, add:
 
 ```bash
 emit_cost_inc "$run_id" "$stage" "$agent" "$model" "$tokens_in" "$tokens_out" "$cost_usd" "$new_run_cost_usd" "${cap_usd:-0}"
 
-# Check cap breach
+# Check cap breach (Python float comparison; no bc)
 if [[ -n "${cap_usd:-}" ]] && [[ "${cap_usd}" != "0" ]]; then
-  if (( $(echo "$new_run_cost_usd >= $cap_usd" | bc -l) )) && ! [[ "${cap_breached_already:-false}" == "true" ]]; then
+  if _cost_gte "$new_run_cost_usd" "$cap_usd" && [[ "${cap_breached_already:-false}" != "true" ]]; then
     emit_cap_breach "$run_id" "$new_run_cost_usd" "$cap_usd"
-    # Atomically set state.cost.cap_breached = true via forge-state-write.sh
-    "${CLAUDE_PLUGIN_ROOT}/shared/forge-state-write.sh" set "cost.cap_breached" true
+    # Mark state.cost.cap_breached = true. Uses existing forge-state-write.sh API;
+    # plan-executor must verify the exact subcommand (set|patch|update) via:
+    #   grep "^[a-z_]*()" "${CLAUDE_PLUGIN_ROOT}/shared/forge-state-write.sh"
+    "${CLAUDE_PLUGIN_ROOT}/shared/forge-state-write.sh" patch '{"cost":{"cap_breached":true}}'
   fi
 fi
 ```
@@ -1336,30 +1514,45 @@ Append (or add to existing structural-check section):
 
 ```bash
 # Cross-link validator: every user_guide link in shared/error-taxonomy.md
-# must resolve to a real heading in docs/error-recovery.md
+# AND every docs/error-recovery.md# reference anywhere in agents/ or shared/
+# must resolve to a real heading in docs/error-recovery.md.
+# Uses process substitution to avoid subshell-scope bug (bad=1 in a `while | read`
+# pipeline is lost when the pipeline ends).
 
 validate_error_recovery_links() {
-  local taxonomy="$PLUGIN_ROOT/shared/error-taxonomy.md"
   local guide="$PLUGIN_ROOT/docs/error-recovery.md"
-  [[ -f "$taxonomy" && -f "$guide" ]] || return 0
+  [[ -f "$guide" ]] || return 0
 
   local bad=0
-  # Extract slug references from taxonomy
-  grep -oE 'docs/error-recovery.md#[a-z_]+' "$taxonomy" | sort -u | while read -r link; do
+  # Collect all referenced anchors from taxonomy + all agent .md + all shared .md
+  # (forward validation includes orchestrator-referenced anchors like #cost_cap_breach
+  # that may not exist in the taxonomy but must still resolve).
+  local ref_sources=(
+    "$PLUGIN_ROOT/shared/error-taxonomy.md"
+    "$PLUGIN_ROOT"/agents/fg-*.md
+    "$PLUGIN_ROOT"/shared/*.md
+  )
+
+  # Gather unique slug references
+  local all_refs
+  all_refs=$(grep -hoE 'docs/error-recovery.md#[a-z_][a-z_0-9]*' "${ref_sources[@]}" 2>/dev/null | sort -u)
+
+  # Iterate via process substitution to keep $bad in the outer scope
+  while read -r link; do
+    [[ -z "$link" ]] && continue
     local slug="${link#*#}"
-    # Slug format: lowercase with underscores → check for matching # HEADING in guide
-    # Heading name is uppercase-with-underscores; convert slug back
     local expected_heading
     expected_heading=$(echo "$slug" | tr 'a-z' 'A-Z')
-    if ! grep -qE "^## $expected_heading\$" "$guide"; then
-      echo "ERROR: taxonomy links to $link but $expected_heading heading missing in error-recovery.md"
+    if ! grep -qE "^## ${expected_heading}\$" "$guide"; then
+      echo "ERROR: $link referenced but '## $expected_heading' missing in docs/error-recovery.md"
       bad=1
     fi
-  done
+  done < <(echo "$all_refs")
+
   return $bad
 }
 
-# Also verify tests/helpers/forge-fixture.sh has shebang + chmod +x
+# Verify tests/helpers/forge-fixture.sh has shebang + chmod +x.
 validate_fixture_helper() {
   local f="$PLUGIN_ROOT/tests/helpers/forge-fixture.sh"
   [[ -f "$f" ]] || return 0
