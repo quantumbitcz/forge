@@ -259,3 +259,60 @@ The plugin ships with playbooks in `shared/playbooks/`. Available when `playbook
 | `/forge-playbooks` skill | Skill | List playbooks with stats |
 | Auto-suggestion | `fg-710-post-run` | Suggest playbook usage after runs |
 | Built-in playbooks | Plugin distribution | Ship with forge in `shared/playbooks/` |
+
+## Self-Improvement
+
+Playbooks improve over time based on pipeline run outcomes. The retrospective agent (`fg-700`) analyzes each playbook run and generates refinement proposals.
+
+### How It Works
+
+1. After each run using a playbook, the retrospective computes refinement suggestions
+2. Suggestions accumulate in `run-history.db` (`playbook_runs.refinement_suggestions`)
+3. When 3+ runs of the same playbook exist, suggestions are aggregated
+4. Proposals with sufficient agreement (default 66%) become `ready`
+5. Ready proposals are written to `.forge/playbook-refinements/{playbook_id}.json`
+
+### Refinement Categories
+
+| Category | What It Detects | What It Proposes |
+|----------|----------------|------------------|
+| Scoring gap | Runs consistently below `pass_threshold` | Acceptance criteria addressing top deduction categories |
+| Stage focus | Non-focused stages consuming >25% wall time | Adding stage to `stages_focus` |
+| Acceptance gap | Finding categories not covered by criteria | New acceptance criterion |
+| Parameter default | Same parameter value in 80%+ of runs | Updated default value |
+
+### Philosophy
+
+**Make the code meet the bar, never move the bar to meet the code.**
+
+Refinements always push quality up — adding preventive criteria, fixing blind spots, improving focus. They never lower thresholds, suppress findings, or remove safety stages.
+
+### Applying Refinements
+
+**Manual (default):** Review and apply via `/forge-playbook-refine [playbook_id]`
+
+**Auto-apply (opt-in):** Set `playbooks.auto_refine: true` in `forge-config.md`. Only HIGH confidence proposals are auto-applied (max 2 per run). Changes are logged with `[AUTO-REFINE]` marker.
+
+**Rollback:** If a refined playbook's next run scores >10 points below the pre-refinement average, changes are automatically reverted and logged with `[REFINE-ROLLBACK]`.
+
+### File Locations
+
+- Proposals: `.forge/playbook-refinements/{playbook_id}.json` (survives `/forge-reset`)
+- Schema: `shared/schemas/playbook-refinement-schema.json`
+- Analytics: `.forge/playbook-analytics.json` (version history for rollback)
+
+### Configuration
+
+```yaml
+playbooks:
+  auto_refine: false              # Auto-apply HIGH confidence refinements
+  refine_min_runs: 3              # Minimum runs before proposing
+  refine_agreement: 0.66          # Agreement threshold (0.5-1.0)
+  max_auto_refines_per_run: 2     # Cap on automatic changes
+  rollback_threshold: 10          # Score regression triggering rollback
+  max_rollbacks_before_reject: 2  # Permanent rejection after N rollbacks
+```
+
+### Auto-Apply File Rules
+
+Auto-apply only modifies project-level playbooks in `.claude/forge-playbooks/`. If a built-in playbook (in `shared/playbooks/`) has refinement proposals, auto-apply first copies it to `.claude/forge-playbooks/` (creating a project override), then applies refinements to the project copy. The plugin directory is never modified.
