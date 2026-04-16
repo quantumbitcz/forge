@@ -100,7 +100,7 @@ All compression settings in `forge-config.md`:
 # User-facing output (caveman mode)
 caveman:
   enabled: true           # Auto-activate via SessionStart hook
-  default_mode: lite      # lite | full | ultra
+  default_mode: ultra     # lite | full | ultra
 
 # Inter-agent output compression
 output_compression:

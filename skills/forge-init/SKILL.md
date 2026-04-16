@@ -170,6 +170,40 @@ If the project is greenfield, **ASK via AskUserQuestion** with header "New Proje
 
 **If user chooses "Skip":** Continue with normal stack detection below.
 
+#### Monorepo Detection
+
+Before stack detection, check for monorepo tooling:
+
+1. **Scan for monorepo markers:**
+   - `nx.json` → Nx monorepo
+   - `turbo.json` → Turborepo monorepo
+   - `pnpm-workspace.yaml` → pnpm workspaces
+   - `lerna.json` → Lerna monorepo
+   - `rush.json` → Rush monorepo
+
+2. **If monorepo detected:**
+   - Parse workspace/package definitions to list all packages/apps
+   - For each package, run the Stack Detection logic below independently
+   - Present findings:
+     ```
+     Monorepo detected: {tool} ({N} packages)
+
+     | Package          | Path              | Framework  | Language   |
+     |------------------|-------------------|------------|------------|
+     | web-app          | apps/web          | react      | typescript |
+     | api-server       | apps/api          | express    | typescript |
+     | shared-utils     | packages/utils    | —          | typescript |
+     ```
+   - **ASK via AskUserQuestion** with header "Monorepo", question "Which packages should the pipeline manage?", options:
+     - "All" (description: "Configure all detected packages as pipeline components")
+     - "Select" (description: "Choose which packages to include")
+     - "Primary only" (description: "Pick one primary package, ignore the rest")
+
+   - If "All" or "Select": generate `components:` entries with `path:` per package in `forge.local.md`. Set `monorepo.tool` in `forge-config.md`.
+   - If "Primary only": proceed with single-module stack detection as normal.
+
+3. **If no monorepo detected:** proceed to Stack Detection normally.
+
 #### Stack Detection
 
 Scan the project root and immediate subdirectories for stack markers. Check for the **first match** in this priority order:
@@ -217,6 +251,122 @@ Also detect and note the presence of:
 - **Test framework**: JUnit, Jest, Vitest, pytest, go test, cargo test, XCTest, etc.
 - **OpenAPI spec**: `openapi.yaml`, `openapi.json`, `swagger.yaml`, `swagger.json` (search recursively)
 
+#### Crosscutting Module Detection
+
+Scan project files to detect which crosscutting infrastructure modules are in use. These map to `modules/{layer}/{name}.md` convention files that the composition engine loads at runtime.
+
+**Databases** — detect from config files and dependencies:
+- `application.yml`/`application.properties` with `spring.datasource` → parse driver class/URL for: `postgresql`, `mysql`, `mariadb`, `oracle`, `mssql`
+- `prisma/schema.prisma` → parse `provider` field: `postgresql`, `mysql`, `sqlite`, `mongodb`
+- `docker-compose.yml` service images: `postgres` → `postgresql`, `mysql` → `mysql`, `mongo` → `mongodb`, `redis` → `redis`
+- `knexfile.*` or `ormconfig.*` → parse dialect
+- `sqlalchemy` in `requirements.txt`/`pyproject.toml` → check `DATABASE_URL` in `.env`
+- `diesel.toml` → Rust diesel, parse backend
+
+**Persistence/ORM** — detect from dependencies:
+- `spring-boot-starter-data-jpa` or `hibernate` → `jpa-hibernate`
+- `spring-boot-starter-data-r2dbc` → `r2dbc`
+- `jooq` in build files → `jooq`
+- `exposed` in build files → `exposed`
+- `prisma` in `package.json` → `prisma`
+- `typeorm` in `package.json` → `typeorm`
+- `drizzle-orm` in `package.json` → `drizzle`
+- `sequelize` in `package.json` → `sequelize`
+- `sqlalchemy` → `sqlalchemy`
+- `diesel` → `diesel`
+- `gorm` in `go.mod` → `gorm`
+- `ent` in `go.mod` → `ent`
+
+**Migrations** — detect from dependencies/files:
+- `flyway` in build files or `db/migration/V*.sql` → `flyway`
+- `liquibase` in build files or `db/changelog` → `liquibase`
+- `prisma/migrations/` → `prisma` (already detected above)
+- `alembic/` or `alembic.ini` → `alembic`
+- `knex migrate` or `migrations/` with knex → `knex`
+
+**API protocols** — detect from files:
+- `openapi.yaml`/`openapi.json`/`swagger.*` → `openapi`
+- `*.proto` files or `buf.yaml` → `grpc`
+- `schema.graphql` or `graphql` dependency → `graphql`
+- `trpc` in `package.json` → `trpc`
+
+**Messaging** — detect from dependencies/config:
+- `spring-kafka` or `kafka` in docker-compose → `kafka`
+- `spring-amqp`/`spring-rabbit` or `rabbitmq` in docker-compose → `rabbitmq`
+- `@nestjs/bull` or `bullmq` in `package.json` → `bullmq`
+- `celery` in requirements → `celery`
+- `nats` in dependencies → `nats`
+- `pulsar-client` → `pulsar`
+
+**Caching** — detect from dependencies/config:
+- `spring-boot-starter-data-redis` or `redis` service in docker-compose → `redis`
+- `ioredis` or `redis` in `package.json` → `redis`
+- `spring-boot-starter-cache` with `caffeine` → `caffeine`
+- `memcached` → `memcached`
+
+**Search** — detect from dependencies/config:
+- `elasticsearch` or `opensearch` in dependencies/docker-compose → `elasticsearch` or `opensearch`
+- `meilisearch` in dependencies → `meilisearch`
+- `typesense` in dependencies → `typesense`
+
+**Storage** — detect from dependencies:
+- `aws-sdk`/`@aws-sdk/client-s3` or `s3` in config → `s3`
+- `@google-cloud/storage` → `gcs`
+- `@azure/storage-blob` → `azure-blob`
+- `minio` in docker-compose → `minio`
+
+**Auth** — detect from dependencies:
+- `spring-security` → `spring-security`
+- `passport` in `package.json` → `passport`
+- `next-auth` or `@auth/core` → `nextauth`
+- `keycloak` in config → `keycloak`
+- `auth0` in dependencies → `auth0`
+- `firebase-admin` auth → `firebase-auth`
+- JWT libraries (`jsonwebtoken`, `jose`) → note as JWT-based
+
+**Observability** — detect from dependencies/config:
+- `opentelemetry` or `otel` in dependencies → `opentelemetry`
+- `micrometer` in build files → `micrometer`
+- `prometheus` in docker-compose → `prometheus`
+- `datadog` in dependencies → `datadog`
+- `sentry` in dependencies → `sentry`
+- `pino` or `winston` in `package.json` → note logging library
+
+**i18n** — detect from dependencies:
+- `react-i18next` or `i18next` in `package.json` → `i18n: i18next`
+- `vue-i18n` → `i18n: vue-i18n`
+- `@ngx-translate/core` → `i18n: ngx-translate`
+- `django.utils.translation` in imports → `i18n: django`
+- `*.lproj` directories or `Localizable.strings` → `i18n: apple`
+- `values-*/strings.xml` → `i18n: android`
+
+**Feature flags** — detect from dependencies:
+- `launchdarkly-node-server-sdk` or `@launchdarkly/*` → `feature_flags: launchdarkly`
+- `unleash-client` or `@unleash/*` → `feature_flags: unleash`
+- `@growthbook/growthbook` → `feature_flags: growthbook`
+- `flagsmith` → `feature_flags: flagsmith`
+
+**ML/Ops** — detect from dependencies/files:
+- `mlflow` in requirements → `ml_ops: mlflow`
+- `dvc.yaml` or `.dvc/` → `ml_ops: dvc`
+- `wandb` in requirements → `ml_ops: wandb`
+- `sagemaker` in requirements → `ml_ops: sagemaker`
+
+**Property-based testing** — detect from dependencies:
+- `jqwik` in build files → `property_testing: jqwik`
+- `fast-check` in `package.json` → `property_testing: fast-check`
+- `hypothesis` in requirements → `property_testing: hypothesis`
+- `proptest` in `Cargo.toml` → `property_testing: proptest`
+
+**Deployment infrastructure** — detect from files:
+- `argocd`/`Application` CRD in YAML files → `deployment: argocd`
+- `Chart.yaml` → `deployment: helm`
+- `kustomization.yaml` → `deployment: kustomize`
+- `terraform/` or `*.tf` files → `deployment: terraform`
+- `pulumi/` or `Pulumi.yaml` → `deployment: pulumi`
+
+Collect all detected crosscutting modules. They will be presented in the summary table and configured in Phase 2.
+
 #### Code Quality Tool Detection
 
 Scan for configured code quality tools by checking for config files:
@@ -254,6 +404,7 @@ Present findings in a clear summary table:
 Detected stack:     react
 Module:             modules/frameworks/react
 Package manager:    pnpm
+Monorepo:           — (none detected)
 Test framework:     Vitest
 Code quality:       ESLint (lint), Prettier (format), istanbul (coverage)
 Docker:             docker-compose.yml (3 services)
@@ -261,7 +412,24 @@ CI/CD:              GitHub Actions (2 workflows)
 OpenAPI:            docs/openapi.yaml
 Documentation:      14 files (3 ADRs, 1 OpenAPI, 2 runbooks, 8 guides)
 External docs:      Confluence (2 spaces referenced)
+
+Crosscutting:
+  Database:         postgresql (via docker-compose)
+  Persistence:      prisma
+  Migrations:       prisma
+  Caching:          redis (via docker-compose)
+  Auth:             next-auth
+  Observability:    sentry
+  i18n:             react-i18next
+  Feature flags:    — (none detected)
+  ML/Ops:           — (none detected)
+  Messaging:        — (none detected)
+  Search:           — (none detected)
+  Storage:          s3 (via @aws-sdk/client-s3)
+  Deployment:       — (none detected)
 ```
+
+Only show crosscutting modules that were detected or are commonly expected for the framework. Omit categories with no detections if the list would be too long (show max 8 lines; use "— (none detected)" for commonly expected but missing ones).
 
 **ASK via AskUserQuestion** with header "Confirm", question "Does this detected stack look correct? Should I proceed with the `{module}` module?", options: "Proceed" (description: "Stack detection looks correct, continue to configuration") and "Adjust" (description: "Something is wrong — I'll provide corrections").
 
@@ -445,7 +613,230 @@ Show the user what files were created and their key settings. **ASK via AskUserQ
 
 ---
 
-### Phase 2c: CROSS-REPO DISCOVERY
+### Phase 2c — Output Compression Setup
+
+Ask the user whether to enable caveman mode (terse output compression) for pipeline sessions:
+
+**ASK via AskUserQuestion** with header "Output Compression", question "Forge can compress its output to save tokens and reduce noise. Pick a compression level:", options:
+- "Ultra" (description: "Maximum compression. Abbreviations, arrows, no conjunctions. ~65% prose reduction, ~7-10% session savings")
+- "Full" (description: "Drop articles, fragments OK, short synonyms. ~45% prose reduction, ~4-7% session savings")
+- "Lite" (description: "Drop filler/hedging, keep grammar and articles. ~20% prose reduction, ~2-4% session savings")
+- "Off" (description: "Standard verbose output, no compression")
+
+Based on the user's choice:
+
+1. **If Ultra/Full/Lite:** Add to `forge-config.md`:
+   ```yaml
+   caveman:
+     enabled: true
+     default_mode: {chosen_mode}   # ultra | full | lite
+   ```
+   Create `.forge/caveman-mode` with the chosen mode value.
+
+2. **If Off:** Do not add a `caveman:` section (omitting = disabled). If `.forge/caveman-mode` exists, delete it.
+
+Tell the user: "Output compression set to **{mode}**. Change anytime with `/forge-caveman [mode]`."
+
+---
+
+### Phase 2d — Crosscutting Module Configuration
+
+Present the crosscutting modules detected in Phase 1 and let the user confirm or adjust.
+
+**ASK via AskUserQuestion** with header "Infrastructure", question "Detected these infrastructure modules. Confirm or adjust:", options:
+- "Accept all" (description: "Use all detected modules as-is: {comma-separated list of detected modules}")
+- "Customize" (description: "Review each category and adjust selections")
+- "Skip" (description: "Don't configure crosscutting modules — I'll add them manually later")
+
+**If user chooses "Customize":** For each detected category, show detected value and allow override. Also present undetected categories that are common for the framework and ask if any should be added.
+
+**If user chooses "Accept all" or after customization:** Write to `forge.local.md` under the appropriate config keys:
+
+```yaml
+components:
+  language: typescript
+  framework: react
+  testing: vitest
+  database: postgresql
+  persistence: prisma
+  migrations: prisma
+  caching: redis
+  auth: nextauth
+  observability: sentry
+  storage: s3
+```
+
+Each entry maps to `modules/{layer}/{name}.md` which the composition engine loads as convention rules.
+
+**Feature-specific enables** — based on detections, also write to `forge-config.md`:
+- If i18n detected: `i18n: { enabled: true, framework: "{detected}" }`
+- If feature flags detected: `feature_flags: { enabled: true, provider: "{detected}" }`
+- If property testing library detected: `property_testing: { enabled: true, framework: "{detected}" }`
+- If ML/Ops detected: `ml_ops: { enabled: true, provider: "{detected}" }`
+
+---
+
+### Phase 2e — Frontend-Specific Setup
+
+**Skip this phase entirely if the detected framework is NOT a frontend framework.** Frontend frameworks: `react`, `nextjs`, `vue`, `svelte`, `sveltekit`, `angular`.
+
+#### Visual Verification
+
+1. **Auto-detect dev server:** Parse `package.json` scripts for `dev`, `start`, or `serve` commands. Infer the default URL (e.g., `http://localhost:3000` for Next.js, `http://localhost:5173` for Vite).
+
+2. **ASK via AskUserQuestion** with header "Visual Verification", question "Enable screenshot-based visual verification? Requires a dev server URL for Playwright to capture pages.", options:
+   - "Enable" (description: "Set up visual verification with dev server at {auto-detected URL}")
+   - "Custom URL" (description: "I'll provide a different dev server URL")
+   - "Skip" (description: "Don't enable visual verification")
+
+3. Write to `forge-config.md`:
+   ```yaml
+   visual_verification:
+     enabled: true
+     dev_server_url: "http://localhost:3000"
+     pages: []
+   ```
+
+#### Aesthetic Direction
+
+**ASK via AskUserQuestion** with header "Design", question "Does your project have an aesthetic direction? This guides the frontend polisher agent.", options:
+- "Professional" (description: "Clean, corporate, trustworthy — default for business apps")
+- "Playful" (description: "Rounded, colorful, animated — good for consumer apps")
+- "Brutalist" (description: "Raw, bold, high-contrast — for statement pieces")
+- "Editorial" (description: "Typography-driven, spacious, content-first")
+- "Custom" (description: "I'll describe it myself")
+- "Skip" (description: "No aesthetic preference — use defaults")
+
+Write to `forge.local.md`:
+```yaml
+frontend_polish:
+  enabled: true
+  aesthetic_direction: "{chosen or user-provided value}"
+```
+
+---
+
+### Phase 2f — Pipeline Behavior
+
+#### Autonomy Level
+
+**ASK via AskUserQuestion** with header "Autonomy", question "How much autonomy should the pipeline have?", options:
+- "Conservative" (description: "Ask for confirmation at every major decision point")
+- "Balanced" (description: "Ask for complex decisions, auto-proceed on routine ones (recommended)")
+- "Autonomous" (description: "Auto-proceed on everything except safety escalations — fastest, least interactive")
+
+Map to `forge-config.md`:
+- Conservative → `auto_proceed_risk: LOW`
+- Balanced → `auto_proceed_risk: MEDIUM`
+- Autonomous → `auto_proceed_risk: ALL`, `autonomous: true`
+
+#### Linear Integration
+
+**Only if Linear MCP was detected in Phase 1 environment health check:**
+
+**ASK via AskUserQuestion** with header "Linear", question "Linear MCP detected. Enable issue tracking integration?", options:
+- "Enable" (description: "Sync pipeline stages with Linear issues — creates epics and stories at PLAN")
+- "Skip" (description: "Don't use Linear integration")
+
+If enabled, ask follow-up: "What's your Linear team name and project identifier?"
+
+Write to `forge.local.md`:
+```yaml
+linear:
+  enabled: true
+  team: "{user-provided}"
+  project: "{user-provided}"
+```
+
+#### Deployment Strategy
+
+**Only if deployment infrastructure was detected in Phase 1 (ArgoCD, Helm, K8s, Terraform, etc.):**
+
+**ASK via AskUserQuestion** with header "Deployment", question "Detected {tool}. What's your preferred deployment strategy?", options:
+- "Rolling" (description: "Gradual replacement of old pods — lowest risk, slower rollout (default)")
+- "Canary" (description: "Route small % of traffic to new version first — requires traffic splitting")
+- "Blue-Green" (description: "Full parallel environment swap — fastest rollback, higher resource cost")
+- "Skip" (description: "Don't configure deployment strategy")
+
+Write to `forge-config.md`:
+```yaml
+deployment:
+  default_strategy: "{chosen}"
+  provider: "{detected tool}"
+```
+
+---
+
+### Phase 2g — Advanced Settings
+
+**ASK via AskUserQuestion** with header "Advanced", question "Configure advanced pipeline settings?", options:
+- "Yes" (description: "Review performance tracking, cost alerting, automation triggers, and Context7 libraries")
+- "Skip" (description: "Use defaults for all advanced settings (recommended for first-time setup)")
+
+**If user chooses "Skip":** proceed to Phase 2h. All advanced settings use sensible defaults.
+
+**If user chooses "Yes":** present each setting below.
+
+#### Performance Regression Tracking
+
+**ASK via AskUserQuestion** with header "Performance", question "Enable performance regression tracking? Tracks build time, test duration, and bundle size across pipeline runs.", options:
+- "Enable" (description: "Track performance metrics and alert on regressions")
+- "Skip" (description: "Don't track performance metrics (default)")
+
+If enabled, write to `forge-config.md`:
+```yaml
+performance_tracking:
+  enabled: true
+```
+
+#### Cost Alerting
+
+**ASK via AskUserQuestion** with header "Cost", question "Set a token budget ceiling per pipeline run?", options:
+- "2M tokens" (description: "Default ceiling — sufficient for most features (~$6-12)")
+- "1M tokens" (description: "Tighter budget — good for small changes")
+- "5M tokens" (description: "Higher ceiling — for large features or complex codebases")
+- "Custom" (description: "I'll specify a custom ceiling")
+- "No limit" (description: "Don't enforce a token budget")
+
+Write to `forge-config.md`:
+```yaml
+cost_alerting:
+  budget_ceiling_tokens: {chosen_value}
+```
+
+#### Automation Seeds
+
+**Only if CI/CD was detected in Phase 1:**
+
+**ASK via AskUserQuestion** with header "Automations", question "Set up common pipeline automations?", options:
+- "Recommended set" (description: "Auto-review on PR open + nightly health check")
+- "Customize" (description: "Choose which automations to enable")
+- "Skip" (description: "Don't set up automations — configure later with /forge-automation")
+
+If "Recommended set" or "Customize": write automation entries to `forge-config.md`:
+```yaml
+automations:
+  - trigger: pr_open
+    action: forge-review --quick
+    cooldown: 300
+  - trigger: cron
+    schedule: "0 2 * * 1-5"
+    action: forge-codebase-health
+```
+
+#### Context7 Library Customization
+
+**Only if Context7 MCP was detected:**
+
+Read the module template's `context7_libraries` list. Compare against actual project dependencies to find libraries that should be added.
+
+Show the user: "Context7 libraries for documentation lookups: {current list}. Detected additional dependencies: {new ones}. Add them?"
+
+If confirmed, update `context7_libraries` in `forge.local.md`.
+
+---
+
+### Phase 2h: CROSS-REPO DISCOVERY
 
 After generating the project config, run the discovery chain to find related projects automatically.
 
@@ -687,9 +1078,9 @@ If the user chooses to fix: address issues methodically — fix each issue, re-r
 
 ---
 
-### Phase 5: MANUAL RELATED REPOS (optional — only if Phase 2c found nothing)
+### Phase 5: MANUAL RELATED REPOS (optional — only if Phase 2h found nothing)
 
-**Skip this phase entirely if Phase 2c already configured `related_projects:` in the config.** This phase only fires as a manual fallback.
+**Skip this phase entirely if Phase 2h already configured `related_projects:` in the config.** This phase only fires as a manual fallback.
 
 Ask the user: **"Does this project work with related repositories (e.g., frontend, backend, infrastructure, API contracts)? I can configure cross-repo validation."**
 
@@ -697,7 +1088,7 @@ If the user provides related repos:
 
 1. **Verify each path** exists and is a valid git repository.
 2. **Auto-detect role** for each repo using the same stack-marker logic from Phase 1.
-3. **Store in config**: Add entries to the `related_projects:` section in `.claude/forge.local.md` (same format as Phase 2c):
+3. **Store in config**: Add entries to the `related_projects:` section in `.claude/forge.local.md` (same format as Phase 2h):
    ```yaml
    related_projects:
      frontend:
@@ -748,6 +1139,21 @@ If `graph.enabled` is `true` in the generated `forge.local.md` (this is the defa
 4. Set `integrations.neo4j.available` based on the result.
 
 5. If graph initialization completes successfully, dispatch `fg-130-docs-discoverer` to populate `Doc*` nodes alongside the `Project*` nodes built by `build-project-graph.sh`. This seeds the graph with documentation structure from the first init, enabling documentation-aware queries from the first pipeline run.
+
+#### SQLite Code Graph (zero-dependency)
+
+Regardless of Neo4j availability, also build the SQLite code graph:
+
+1. **Check sqlite3:** Run `sqlite3 --version`. If unavailable, skip with note.
+2. **Check tree-sitter:** Run `tree-sitter --version`. If unavailable, the build script falls back to regex parsing.
+3. **Build graph:**
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/shared/graph/build-code-graph.sh" "$(git rev-parse --show-toplevel)"
+   ```
+4. If successful: report "SQLite code graph built at `.forge/code-graph.db` ({N} nodes, {M} edges)."
+5. If failed: warn but continue — the graph will be built at first PREFLIGHT.
+
+The SQLite graph is enabled by default (`code_graph.enabled: true`) and provides function/class/import analysis without Docker.
 
 ---
 
@@ -946,11 +1352,26 @@ Present a final summary:
 ```
 Pipeline initialized successfully!
 
-  Project:    my-awesome-app
-  Module:     spring
-  Config:     .claude/forge.local.md
-              .claude/forge-config.md
-              .claude/forge-log.md
+  Project:        my-awesome-app
+  Module:         spring
+  Monorepo:       — (single module)
+  Config:         .claude/forge.local.md
+                  .claude/forge-config.md
+                  .claude/forge-log.md
+
+  Infrastructure:
+    Database:     postgresql
+    Persistence:  jpa-hibernate
+    Migrations:   flyway
+    Caching:      redis
+    Auth:         spring-security
+    Observability: micrometer + sentry
+
+  Pipeline:
+    Autonomy:     Balanced (auto_proceed_risk: MEDIUM)
+    Compression:  Ultra
+    Code graph:   SQLite (✅) + Neo4j (✅)
+    Linear:       Disabled
 
   Available commands:
     /forge-run <description>   — Run full pipeline for a feature
@@ -962,7 +1383,7 @@ Pipeline initialized successfully!
   Health: All checks passed (build, tests, engine)
 ```
 
-If any phase was skipped or had issues, note them clearly so the user knows the state.
+Only show sections that have content. If no crosscutting modules were detected, omit the Infrastructure section. If any phase was skipped or had issues, note them clearly so the user knows the state.
 
 ## Error Handling
 
@@ -973,12 +1394,18 @@ If any phase was skipped or had issues, note them clearly so the user knows the 
 | Prerequisites check fails (bash/python3) | Show missing prerequisites and abort. User must install them |
 | Stack detection ambiguous | Present detected frameworks and ask user to choose primary module |
 | Stack detection fails entirely | Present available frameworks table for manual selection |
+| Monorepo detected but workspace parsing fails | Fall back to single-module detection with warning |
+| Crosscutting module detection finds nothing | Skip Phase 2d silently — not all projects have crosscutting infra |
 | Build command fails during validation | Report error. Ask whether to continue or fix first (hard blocker) |
 | Test command fails during validation | Report error. Note this may be OK for new projects. Ask to continue |
 | Config file already exists | Ask user: Overwrite or Keep existing |
 | Docker unavailable for graph init | Skip graph init with note. Suggest running `/forge-graph-init` later |
+| SQLite/tree-sitter unavailable for code graph | Skip code graph build. Will be attempted at first PREFLIGHT |
 | Discovery script not found | Skip cross-repo discovery silently with INFO note |
 | Convention validation fails | Show missing references, suggest corrections, ask to fix or continue |
+| Linear MCP detected but auth fails | Skip Linear setup with note. User can configure later |
+| Frontend framework but no dev server detected | Ask user for dev server URL or skip visual verification |
+| Advanced settings phase skipped | All advanced settings use sensible defaults. No action needed |
 
 ## See Also
 
