@@ -20,9 +20,9 @@ PREFLIGHT="$PLUGIN_ROOT/shared/preflight-constraints.md"
   if ! command -v sqlite3 &>/dev/null; then
     skip "sqlite3 not available"
   fi
-  # Skip FTS5 lines if module not compiled in (common on macOS CI)
+  # Skip FTS5 block if module not compiled in (common on macOS CI)
   if ! sqlite3 :memory: "CREATE VIRTUAL TABLE t USING fts5(c)" 2>/dev/null; then
-    grep -v "fts5\|run_search" "$SCHEMA_FILE" | sqlite3 :memory:
+    sed '/CREATE VIRTUAL TABLE.*fts5/,/);/d' "$SCHEMA_FILE" | sqlite3 :memory:
   else
     sqlite3 :memory: < "$SCHEMA_FILE"
   fi
