@@ -846,6 +846,31 @@ Available + configured → resolve-library-id per library → write `.forge/cont
 
 ---
 
+### Playbook Auto-Refine (PREFLIGHT)
+
+When `playbooks.auto_refine: true` AND a playbook is being used for this run:
+
+1. Check `.forge/playbook-refinements/{playbook_id}.json` for `ready` proposals
+2. Filter to `confidence: HIGH` only
+3. Apply max `playbooks.max_auto_refines_per_run` proposals:
+   a. If playbook is built-in (in `shared/playbooks/`), copy to `.claude/forge-playbooks/` first
+   b. Modify playbook frontmatter/body per proposal type
+   c. Respect `<!-- locked -->` fences — skip proposals targeting locked sections
+   d. Increment version in frontmatter
+   e. Update proposal status to `applied` in refinement file
+   f. Store pre-refinement playbook version in `state.json.playbook_pre_refine_version` (for rollback)
+4. Log `[AUTO-REFINE] {playbook_id}: applied {N} proposals ({ids})`
+
+### Playbook Rollback Detection (LEARN — in fg-700)
+
+After a run that used an auto-refined playbook:
+1. Compare score with average of last 3 pre-refinement runs (from `run-history.db`)
+2. If score dropped by > `playbooks.rollback_threshold` points:
+   a. Revert playbook to pre-refinement version (from `playbook-analytics.json.version_history`)
+   b. Increment `rollback_count` on the applied proposals
+   c. If `rollback_count >= max_rollbacks_before_reject`, set status to `rejected`
+   d. Log `[REFINE-ROLLBACK] {playbook_id}: reverted {proposal_ids}, reason: score dropped {delta} points`
+
 ## PREFLIGHT Completion
 
 ```bash

@@ -33,3 +33,16 @@ Validation rules enforced during PREFLIGHT stage. Referenced from CLAUDE.md.
 |-------|------|---------|-------------|------------|
 | `mcp_server.enabled` | boolean | `true` | true/false | — |
 | `mcp_server.python_min_version` | string | `"3.10"` | Semver string | WARN if set below 3.10 |
+
+### Playbook Self-Improvement
+
+| Field | Type | Default | Valid Range | Validation |
+|-------|------|---------|-------------|------------|
+| `playbooks.auto_refine` | boolean | `false` | true/false | — |
+| `playbooks.refine_min_runs` | integer | `3` | 2-20 | WARN if >10 (slow feedback loop) |
+| `playbooks.refine_agreement` | float | `0.66` | 0.5-1.0 | WARN if <0.5 (low evidence bar) |
+| `playbooks.max_auto_refines_per_run` | integer | `2` | 1-5 | — |
+| `playbooks.rollback_threshold` | integer | `10` | 5-30 | — |
+| `playbooks.max_rollbacks_before_reject` | integer | `2` | 1-5 | — |
+
+**Cross-field:** If `auto_refine: true`, `refine_agreement` must be >= 0.66 (prevent low-confidence auto-changes).
