@@ -142,7 +142,7 @@ Configured in `forge-config.md` under `run_history:`:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `run_history.enabled` | boolean | `true` | Enable/disable run history recording |
-| `run_history.retention_days` | integer | `365` | Delete runs older than N days (0 = keep forever) |
+| `run_history.retention_days` | integer | `365` | Delete runs older than N days (valid: 30-3650) |
 | `run_history.optimize_interval` | integer | `10` | Run `PRAGMA optimize` every N runs |
 
 Example:
