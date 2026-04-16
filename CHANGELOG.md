@@ -3,6 +3,58 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.8.0] - 2026-04-16
+
+### Added
+- **F29 Run History Store:** SQLite FTS5 database at `.forge/run-history.db` stores every pipeline run with queryable outcomes, learnings, and agent performance. Schema DDL in `shared/run-history/`, written by `fg-700-retrospective`, queried by `/forge-insights`, `/forge-ask`, and the MCP server. Config: `run_history.*` (enabled, retention_days, fts_enabled). Preflight validation rejects invalid retention ranges. Survives `/forge-reset`
+- **F30 Forge MCP Server:** Python stdio MCP server in `shared/mcp-server/` exposes pipeline intelligence to any MCP-capable AI client (Claude Desktop, other agents). 11 tools covering runs, learnings, playbooks, scoring trends, agent stats, and wiki queries. Auto-provisioned by `/forge-init` into project `.mcp.json`. WAL-mode SQLite reads, `safe_json` decorator on every tool for graceful degradation on corrupt/missing files. Optional (requires Python 3.10+). Config: `mcp_server.*`
+- **F31 Self-Improving Playbooks:** Retrospective analyzes run outcomes and proposes playbook refinements (stage reordering, agent swaps, threshold tuning). JSON schema in `shared/playbooks/refinement-proposal.schema.json`. Orchestrator auto-applies high-confidence refinements at PREFLIGHT with `playbook_pre_refine_version` snapshot for rollback. Proposals stored in `.forge/playbook-refinements/`. New skill `/forge-playbook-refine` for interactive review/apply/reject. Analytics tracked in `.forge/playbook-analytics.json`
+- Contract tests for run-history schema, MCP server structure and integration, and playbook refinement proposals (including deferred-status coverage)
+
+### Changed
+- `fg-100-orchestrator` gained a PREFLIGHT playbook-refinement step with version-snapshot rollback
+- `fg-700-retrospective` now writes a run record to the history store and analyzes outcomes for playbook refinement proposals
+- `/forge-init` detects Python 3.10+ and provisions MCP server entry in `.mcp.json` when available
+- CLAUDE.md adds F29/F30/F31 to the v2.0 features table and lists `/forge-playbook-refine` in the skill selection guide
+- `shared/state-schema.md` registers `run-history.db` and `playbook-refinements/` as survivors of `/forge-reset`
+
+### Fixed
+- MCP server corrupt-file handling: `safe_json` decorator returns structured error responses instead of crashing when `.forge/` JSON is malformed or absent
+- MCP server SQLite reads now use WAL mode to avoid locking conflicts with concurrent retrospective writes
+- Field name mismatches and `version_history` population resolved in MCP server response shapes
+- Retrospective `retention_days` preflight validator now enforces the documented 1-365 range
+- Run-history schema test on macOS: strip the entire FTS5 block (macOS-shipped SQLite lacks FTS5) instead of a partial strip that left dangling syntax
+- CI: skip-guard FTS5 tests when SQLite lacks the extension; skill-quality 'Use when' clause restored on new skills
+
+### Performance
+- CI bats test execution parallelized across CPU cores via xargs-based batching (~2-3x wall-clock reduction on GitHub-hosted runners)
+
+## [2.7.0] - 2026-04-15
+
+### Added
+- **Python Extraction:** Embedded Python in `forge-state.sh` extracted into `shared/python/state_init.py`, `guard_parser.py`, and `state_transitions.py` (full transition table). Shell scripts now call out to versioned Python modules for testability
+- **State Schema Migration Engine:** `state_migrate.py` performs the v1.5.0 → v1.6.0 migration (circuit-breaker tracking, planning-critic counter, schema-migration history). Integrated into `forge-state.sh`
+- **Planning Critic:** New `fg-205-planning-critic` agent reviews plans for feasibility, risk gaps, and scope issues before validation
+- **Circuit Breaker Flapping Detection:** Recovery engine now detects and handles circuit breakers that toggle repeatedly; dedup cap removed (unbounded dedup with size-cap safeguards)
+- **Epsilon-Aware Score Comparison:** Helpers for floating-point score equality with documented epsilon semantics; simplified unfixable-INFO formula
+- **Context-Aware PREEMPT Decay:** PREEMPT items now decay based on context-match signal strength; cross-project learnings shared via `shared/cross-project-learnings.md`
+- **Mermaid Architecture Diagrams:** Pipeline, agents, and state-machine diagrams in `docs/architecture/`
+- **Structural Tests:** ui-frontmatter consistency, architecture diagram validation, behavioral tests for 10 previously undertested agents
+- `shared/preflight-constraints.md` and `shared/framework-gotchas.md` extracted from CLAUDE.md to keep the root doc lean
+
+### Changed
+- State schema bumped to v1.6.0 with documented checkpoint persistence lifecycle and size caps on unbounded state fields
+- WAL recovery made atomic via double-check locking
+- `FORGE_PYTHON` variable replaces hardcoded `python3` across all shell scripts; exported from `platform.sh`
+- `detect_os` now returns `wsl` for WSL environments; bash version warning surfaced on session start
+- Sleep-based timeout fallback for hooks on systems without `timeout`/`gtimeout`
+- Temp dir cascade standardized (`TMPDIR:-${TMP:-${TEMP:-/tmp}}`) across all shell scripts
+- `ui:` frontmatter added to 10 skills; caveman description corrected
+- Redundant `skill-routing-guide.md` deleted (content absorbed into `/forge-help`)
+
+### Fixed
+- CI test failures from the v2.7.0 upgrade resolved across three follow-up commits
+
 ## [2.6.1] - 2026-04-15
 
 ### Fixed
