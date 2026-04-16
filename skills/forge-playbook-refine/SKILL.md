@@ -23,7 +23,7 @@ If prerequisites fail, STOP with guidance:
 
 `$ARGUMENTS` = optional playbook_id. If omitted, list playbooks with pending proposals.
 
-## Flow
+## Instructions
 
 ### No playbook_id provided
 
@@ -85,3 +85,9 @@ Options:
 - Playbook file not found → STOP: "Playbook {id} not found in project or built-in playbooks."
 - Locked section targeted → skip proposal, inform user: "Proposal {id} targets a locked section. Skipped."
 - Write fails → STOP with error, do not update refinement file status
+
+## See Also
+
+- `/forge-playbooks` — Create, list, run, and analyze pipeline playbooks
+- `/forge-insights` — Cross-run analytics including playbook effectiveness
+- `/forge-run` — Execute the pipeline (generates the run data that feeds refinements)
