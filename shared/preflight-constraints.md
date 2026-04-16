@@ -26,3 +26,10 @@ Validation rules enforced during PREFLIGHT stage. Referenced from CLAUDE.md.
 | `run_history.enabled` | boolean | `true` | true/false | — |
 | `run_history.retention_days` | integer | `365` | 30-3650 | WARN if <90 (losing trend data) |
 | `run_history.optimize_interval` | integer | `10` | 1-100 | — |
+
+### MCP Server
+
+| Field | Type | Default | Valid Range | Validation |
+|-------|------|---------|-------------|------------|
+| `mcp_server.enabled` | boolean | `true` | true/false | — |
+| `mcp_server.python_min_version` | string | `"3.10"` | Semver string | WARN if set below 3.10 |
