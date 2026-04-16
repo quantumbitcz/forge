@@ -62,6 +62,53 @@ Before any action, verify:
 
    This step is informational only — never block on missing optional tools. Continue immediately after displaying. If the script is missing or fails, skip this step silently.
 
+### MCP Server Provisioning
+
+After detecting the environment, provision the Forge MCP server for cross-platform AI client access:
+
+1. **Check config gate:** If `mcp_server.enabled: false` in `forge-config.md`, skip.
+
+2. **Check Python version:**
+   ```bash
+   python3 --version 2>/dev/null
+   ```
+   Parse the output. If Python 3.10+ is available, proceed. Otherwise log:
+   `"ℹ️ Python 3.10+ not found. Forge MCP server skipped. Forge works without it."`
+   and skip steps 3-5.
+
+3. **Check mcp package:**
+   ```bash
+   python3 -c "import mcp" 2>/dev/null
+   ```
+   If import fails, attempt install:
+   - `pip install --user mcp 2>/dev/null || pip3 install --user mcp 2>/dev/null || uv pip install mcp 2>/dev/null`
+   If all fail, log INFO and skip.
+
+4. **Write .mcp.json entry:**
+   Read existing `.mcp.json` at project root (create `{}` if absent). Merge the `forge` server entry:
+   ```json
+   {
+     "mcpServers": {
+       "forge": {
+         "command": "python3",
+         "args": ["{CLAUDE_PLUGIN_ROOT}/shared/mcp-server/forge-mcp-server.py"],
+         "env": {
+           "FORGE_PROJECT_ROOT": "{project_root}"
+         }
+       }
+     }
+   }
+   ```
+   If `forge` entry already exists, update the `args` path (idempotent).
+
+5. **Display result:**
+   ```
+   ✅ Forge MCP server provisioned in .mcp.json
+      Any MCP-capable AI client can now query pipeline state, run history, and findings.
+   ```
+
+**Idempotency:** Running `/forge-init` again does not duplicate the entry. It updates the `args` path if the plugin location changed.
+
 ## Instructions
 
 Work through these phases in order. Do NOT skip ahead -- each phase builds on the previous one.
