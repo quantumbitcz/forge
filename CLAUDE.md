@@ -21,6 +21,7 @@ Layered, resolution top-down:
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Algorithm in `shared/composition.md`.
 3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 42 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+4. **MCP interface** (`shared/mcp-server/`) — Python MCP server exposing `.forge/` data to any MCP-capable AI client. Read-only. Optional (requires Python 3.10+).
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
 
@@ -213,6 +214,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Caveman I/O (S01) | `caveman.*` | Input compression + user-facing output modes (lite/full/ultra) |
 | Cross-project learnings (F28) | `cross_project.*` | Shared learnings across repos via `shared/cross-project-learnings.md` |
 | Run history store (F29) | `run_history.*` | SQLite FTS5 at `.forge/run-history.db`. Written by retrospective, queried by insights/ask/MCP. Schema in `shared/run-history/` |
+| MCP server (F30) | `mcp_server.*` | Python stdio MCP server exposing pipeline intelligence to any AI client. 11 tools. Auto-provisioned by `/forge-init` into `.mcp.json` |
 
 ### Deterministic Control Flow
 
