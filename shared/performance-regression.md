@@ -15,7 +15,7 @@ Performance regressions -- changes that silently degrade build time, test durati
 **Lifecycle:**
 - Created on first pipeline run with `performance_tracking.enabled: true`
 - Appended after each run (rolling window of last N runs, default 10)
-- Survives `/forge-reset` (like explore-cache and plan-cache)
+- Survives `/forge-recover reset` (like explore-cache and plan-cache)
 - Only manual `rm -rf .forge/` removes it
 - Trimmed to `rolling_window * 2` entries when file exceeds 1MB
 

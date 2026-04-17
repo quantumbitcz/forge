@@ -41,7 +41,7 @@ Pipeline telemetry (tokens, findings, iterations) is available in `state.json` b
 - Created on first pipeline run with `dx_metrics.enabled: true`
 - Appended after each run by `fg-710-post-run`
 - Aggregates recomputed on each append
-- Survives `/forge-reset` (alongside benchmarks, explore-cache, plan-cache)
+- Survives `/forge-recover reset` (alongside benchmarks, explore-cache, plan-cache)
 - Maximum `retention_runs` entries retained (default: 100, oldest trimmed)
 
 **Schema:** See `shared/schemas/dx-metrics-schema.json`.

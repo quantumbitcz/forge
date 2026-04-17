@@ -334,6 +334,31 @@ for skill_dir in "$ROOT/skills/"/*/; do
 done
 check "All skills/*/SKILL.md have name: and description: frontmatter" "$check19_fail"
 
+# Check 19b: Every SKILL.md description has [read-only] or [writes] prefix (Phase 1 skill contract)
+check19b_fail=0
+for skill_md in "$ROOT"/skills/*/SKILL.md; do
+  [ -f "$skill_md" ] || continue
+  desc=$(awk '/^description:/{sub(/^description: *"?/, ""); sub(/"?$/, ""); print; exit}' "$skill_md")
+  if [[ ! "$desc" =~ ^\[read-only\] ]] && [[ ! "$desc" =~ ^\[writes\] ]]; then
+    echo "    DETAIL: $skill_md missing [read-only]/[writes] badge"
+    check19b_fail=1
+  fi
+done
+check "All SKILL.md descriptions have [read-only] or [writes] badge prefix" "$check19b_fail"
+
+# Check 19c: No deleted-skill names remain referenced in sweep scope (DEPRECATIONS.md exempt)
+check19c_fail=0
+stray=$(grep -rn "forge-diagnose\|forge-repair-state\|forge-reset\|forge-resume\|forge-rollback\|forge-caveman\|forge-compression-help" \
+  "$ROOT/README.md" "$ROOT/CLAUDE.md" "$ROOT/CHANGELOG.md" "$ROOT/shared/" "$ROOT/skills/" 2>/dev/null \
+  | grep -v "forge-recover\|forge-compress" \
+  | grep -v "DEPRECATIONS.md" || true)
+if [[ -n "$stray" ]]; then
+  check19c_fail=1
+  echo "    DETAIL: found stray references to deleted skill names:"
+  echo "$stray" | sed 's/^/      /'
+fi
+check "No deleted-skill names remain in README/CLAUDE/CHANGELOG/shared/skills (Phase 1 sweep)" "$check19c_fail"
+
 echo ""
 echo "--- PATTERNS ---"
 

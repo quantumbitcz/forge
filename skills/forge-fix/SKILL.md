@@ -116,12 +116,12 @@ When the orchestrator completes, relay its final output (PR URL, escalation, or 
 | Kanban ticket not found | Warn user and ask for bug description directly |
 | Linear issue fetch fails | Fall back to description-based mode. Log WARNING about Linear unavailability |
 | Orchestrator dispatch fails | Report "Bugfix orchestrator failed to start. Check plugin installation." and STOP |
-| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption | Suggest `/forge-repair-state` to fix state, then retry |
+| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-recover diagnose` for state issues |
+| State corruption | Suggest `/forge-recover repair` to fix state, then retry |
 
 ## See Also
 
 - `/forge-run` -- Full pipeline entry point (use `bugfix:` prefix for quick bugfix routing)
-- `/forge-diagnose` -- Diagnose pipeline health if the bugfix run fails
+- `/forge-recover diagnose` -- Diagnose pipeline health if the bugfix run fails
 - `/forge-shape` -- Shape a complex bug investigation into a structured spec first
-- `/forge-resume` -- Resume an aborted bugfix run from its last checkpoint
+- `/forge-recover resume` -- Resume an aborted bugfix run from its last checkpoint

@@ -24,8 +24,8 @@ setup() {
   assert_success
 }
 
-@test "decision-tree: references forge-caveman" {
-  run grep -q 'forge-caveman' "$SKILLS_DIR/forge-help/SKILL.md"
+@test "decision-tree: references forge-compress" {
+  run grep -q 'forge-compress' "$SKILLS_DIR/forge-help/SKILL.md"
   assert_success
 }
 

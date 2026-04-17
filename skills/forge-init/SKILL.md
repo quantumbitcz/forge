@@ -644,7 +644,7 @@ Based on the user's choice:
 
 2. **If Off:** Do not add a `caveman:` section (omitting = disabled). If `.forge/caveman-mode` exists, delete it.
 
-Tell the user: "Output compression set to **{mode}**. Change anytime with `/forge-caveman [mode]`."
+Tell the user: "Output compression set to **{mode}**. Change anytime with `/forge-compress output [mode]`."
 
 ---
 

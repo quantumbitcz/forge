@@ -136,7 +136,7 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 ## What's Next?
 
 - **All skills:** `/forge-help`
-- **Reduce token usage:** `/forge-caveman`
+- **Reduce token usage:** `/forge-compress output`
 - **Pipeline analytics:** `/forge-insights`
 - **Multiple features:** `/forge-sprint`
 

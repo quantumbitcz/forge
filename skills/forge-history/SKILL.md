@@ -119,4 +119,4 @@ Synthesize the data into actionable observations:
 - `/forge-status` -- Check the current (active) pipeline run state
 - `/forge-insights` -- Deeper cross-run analytics with cost analysis, convergence patterns, and memory health
 - `/forge-profile` -- Detailed performance profiling of a single pipeline run
-- `/forge-diagnose` -- Diagnose pipeline health issues when something looks wrong
+- `/forge-recover diagnose` -- Diagnose pipeline health issues when something looks wrong

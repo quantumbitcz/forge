@@ -189,7 +189,7 @@ Replace these placeholders in commands before execution:
 
 ## See Also
 
-- `/forge-rollback` -- Rollback a deployment or pipeline changes
+- `/forge-recover rollback` -- Rollback a deployment or pipeline changes
 - `/forge-run` -- Full pipeline that may include deployment at the SHIPPING stage
 - `/forge-verify` -- Quick build + lint + test check before deploying
 - `/forge-docs-generate` -- Generate documentation before or alongside deployment

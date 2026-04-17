@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2.8.0] - 2026-04-16
 
 ### Added
-- **F29 Run History Store:** SQLite FTS5 database at `.forge/run-history.db` stores every pipeline run with queryable outcomes, learnings, and agent performance. Schema DDL in `shared/run-history/`, written by `fg-700-retrospective`, queried by `/forge-insights`, `/forge-ask`, and the MCP server. Config: `run_history.*` (enabled, retention_days, fts_enabled). Preflight validation rejects invalid retention ranges. Survives `/forge-reset`
+- **F29 Run History Store:** SQLite FTS5 database at `.forge/run-history.db` stores every pipeline run with queryable outcomes, learnings, and agent performance. Schema DDL in `shared/run-history/`, written by `fg-700-retrospective`, queried by `/forge-insights`, `/forge-ask`, and the MCP server. Config: `run_history.*` (enabled, retention_days, fts_enabled). Preflight validation rejects invalid retention ranges. Survives `/forge-recover reset`
 - **F30 Forge MCP Server:** Python stdio MCP server in `shared/mcp-server/` exposes pipeline intelligence to any MCP-capable AI client (Claude Desktop, other agents). 11 tools covering runs, learnings, playbooks, scoring trends, agent stats, and wiki queries. Auto-provisioned by `/forge-init` into project `.mcp.json`. WAL-mode SQLite reads, `safe_json` decorator on every tool for graceful degradation on corrupt/missing files. Optional (requires Python 3.10+). Config: `mcp_server.*`
 - **F31 Self-Improving Playbooks:** Retrospective analyzes run outcomes and proposes playbook refinements (stage reordering, agent swaps, threshold tuning). JSON schema in `shared/playbooks/refinement-proposal.schema.json`. Orchestrator auto-applies high-confidence refinements at PREFLIGHT with `playbook_pre_refine_version` snapshot for rollback. Proposals stored in `.forge/playbook-refinements/`. New skill `/forge-playbook-refine` for interactive review/apply/reject. Analytics tracked in `.forge/playbook-analytics.json`
 - Contract tests for run-history schema, MCP server structure and integration, and playbook refinement proposals (including deferred-status coverage)
@@ -16,7 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `fg-700-retrospective` now writes a run record to the history store and analyzes outcomes for playbook refinement proposals
 - `/forge-init` detects Python 3.10+ and provisions MCP server entry in `.mcp.json` when available
 - CLAUDE.md adds F29/F30/F31 to the v2.0 features table and lists `/forge-playbook-refine` in the skill selection guide
-- `shared/state-schema.md` registers `run-history.db` and `playbook-refinements/` as survivors of `/forge-reset`
+- `shared/state-schema.md` registers `run-history.db` and `playbook-refinements/` as survivors of `/forge-recover reset`
 
 ### Fixed
 - MCP server corrupt-file handling: `safe_json` decorator returns structured error responses instead of crashing when `.forge/` JSON is malformed or absent
@@ -64,7 +64,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **Environment Health Check:** New `shared/check-environment.sh` script probes for optional CLI tools (jq, docker, tree-sitter, gh, sqlite3) and outputs structured JSON via Python. `/forge-init` now displays a categorized dashboard (required/recommended/optional tools + MCP integrations) with platform-specific install suggestions during Phase 1.1
-- **Caveman Benchmark:** New `shared/caveman-benchmark.sh` measures estimated token savings across lite/full/ultra modes. `/forge-caveman benchmark [file]` subcommand for on-demand measurement
+- **Caveman Benchmark:** New `shared/caveman-benchmark.sh` measures estimated token savings across lite/full/ultra modes. `/forge-compress output benchmark [file]` subcommand for on-demand measurement
 - **Dynamic Reviewer Scaling:** Quality gate (`fg-400`) now scales reviewer count by change scope: <50 lines dispatches batch 1 only, 50-500 dispatches all batches, >500 emits `APPROACH-SCOPE | INFO` splitting suggestion. Override with `quality_gate.force_full_review: true`
 - **Forge-Help 3-Tier Structure:** Reorganized from flat A-G categories into Essential (7 skills) / Power User (12) / Advanced (20) tiers with "Similar Skills" disambiguation table
 - **Platform Troubleshooting:** `/forge-tour` now includes platform-specific setup instructions for WSL2, Git Bash, macOS, and Linux
@@ -75,7 +75,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Regression Tests:** `deprecated-python-api.bats` (3 tests), `automation-cooldown.bats` (4 tests), `caveman-benchmark.bats` (5 tests), `check-environment.bats` (10 tests)
 
 ### Changed
-- Caveman auto-activation default changed from `full` to `lite` (safer compression — keeps grammar and articles). Manual `/forge-caveman` invocation still defaults to `full`. Updated `session-start.sh`, `config-schema.json`, skill docs
+- Caveman auto-activation default changed from `full` to `lite` (safer compression — keeps grammar and articles). Manual `/forge-compress output` invocation still defaults to `full`. Updated `session-start.sh`, `config-schema.json`, skill docs
 - 11 skill descriptions rewritten for better trigger accuracy: forge-fix, forge-shape, forge-diagnose, forge-config, forge-config-validate, forge-compress, forge-automation, forge-bootstrap, forge-graph-init, forge-repair-state, forge-rollback
 - Module documentation examples updated to use non-deprecated `datetime.now(timezone.utc)`: cassandra.md, pulsar.md, oauth2.md
 - Documented PowerShell incompatibility and platform requirements in CLAUDE.md structural gotchas
@@ -101,7 +101,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `allowed-tools:` frontmatter on all 40 skills
 
 ### Changed
-- 15 skills renamed to `forge-*` prefix: bootstrap-project→forge-bootstrap, codebase-health→forge-codebase-health, config-validate→forge-config-validate, deep-health→forge-deep-health, deploy→forge-deploy, docs-generate→forge-docs-generate, graph-debug→forge-graph-debug, graph-init→forge-graph-init, graph-query→forge-graph-query, graph-rebuild→forge-graph-rebuild, graph-status→forge-graph-status, migration→forge-migration, repair-state→forge-repair-state, security-audit→forge-security-audit, verify→forge-verify
+- 15 skills renamed to `forge-*` prefix: bootstrap-project→forge-bootstrap, codebase-health→forge-codebase-health, config-validate→forge-config-validate, deep-health→forge-deep-health, deploy→forge-deploy, docs-generate→forge-docs-generate, graph-debug→forge-graph-debug, graph-init→forge-graph-init, graph-query→forge-graph-query, graph-rebuild→forge-graph-rebuild, graph-status→forge-graph-status, migration→forge-migration, repair-state→forge-recover repair (consolidated in 3.0.0), security-audit→forge-security-audit, verify→forge-verify
 - All cross-references updated across 90+ files (skills, agents, CLAUDE.md, README.md, CONTRIBUTING.md, shared docs, tests)
 - Category registry expanded from 83 to 87 entries (23→27 wildcard prefixes)
 - `/forge-deep-health` now documents fg-413 reviewer modes (full/conventions-only/a11y-only/performance-only)
@@ -120,7 +120,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - SessionStart hook — auto-activates caveman mode, displays forge status and unacknowledged alerts at session start
 - `/forge-commit` skill — terse conventional commit message generator (<=50 char subject, why over what)
-- `/forge-compression-help` skill — quick reference card for all compression features
+- `/forge-compress help` skill — quick reference card for all compression features
 - Next.js App Router variant (`modules/frameworks/nextjs/variants/app-router.md`)
 - Agent eval suite (`tests/evals/`) — 41 canonical input/expected pairs for all 8 review agents with convention-coverage checks
 - Compression benchmarks (`benchmarks/`) — input compression measurement via programmatic rules, output compression 3-arm eval harness
@@ -194,7 +194,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Skill routing guide (`shared/skill-routing-guide.md`) for canonical intent→skill mapping
-- 3 new skills: `/forge-abort`, `/forge-resume`, `/forge-profile`
+- 3 new skills: `/forge-abort`, `/forge-recover resume`, `/forge-profile`
 - Prerequisite checks for 7 skills (forge-run, forge-fix, forge-review, codebase-health, deep-health, graph-status, graph-query)
 - `autonomous` field in state schema for fully autonomous pipeline runs
 - Transition lock (`FD 201`) in `forge-state.sh` for concurrent transition safety

@@ -11,21 +11,9 @@ setup() {
   [[ "$body_lines" -ge 20 ]]
 }
 
-@test "skill-completeness: forge-resume has >=20 lines of content" {
+@test "skill-completeness: forge-recover has >=20 lines of content" {
   local body_lines
-  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-resume/SKILL.md" | grep -c '[^[:space:]]')
-  [[ "$body_lines" -ge 20 ]]
-}
-
-@test "skill-completeness: forge-diagnose has >=20 lines of content" {
-  local body_lines
-  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-diagnose/SKILL.md" | grep -c '[^[:space:]]')
-  [[ "$body_lines" -ge 20 ]]
-}
-
-@test "skill-completeness: forge-reset has >=20 lines of content" {
-  local body_lines
-  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-reset/SKILL.md" | grep -c '[^[:space:]]')
+  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-recover/SKILL.md" | grep -c '[^[:space:]]')
   [[ "$body_lines" -ge 20 ]]
 }
 
@@ -35,8 +23,8 @@ setup() {
   [[ "$body_lines" -ge 10 ]]
 }
 
-@test "skill-completeness: forge-caveman skill has content" {
+@test "skill-completeness: forge-compress skill has content" {
   local body_lines
-  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-caveman/SKILL.md" | grep -c '[^[:space:]]')
+  body_lines=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$SKILLS_DIR/forge-compress/SKILL.md" | grep -c '[^[:space:]]')
   [[ "$body_lines" -ge 20 ]]
 }

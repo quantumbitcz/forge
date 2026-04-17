@@ -92,11 +92,11 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 9. v1.0.0 clean break documented: forge-reset required
+# 9. v1.0.0 clean break documented: forge-recover required
 # ---------------------------------------------------------------------------
-@test "state-schema: v1.0.0 clean break and forge-reset documented" {
-  grep -q "clean break\|forge-reset\|incompatible" "$STATE_SCHEMA" \
-    || fail "v1.0.0 clean break / forge-reset guidance not documented"
+@test "state-schema: v1.0.0 clean break and forge-recover documented" {
+  grep -q "clean break\|forge-recover\|incompatible" "$STATE_SCHEMA" \
+    || fail "v1.0.0 clean break / forge-recover guidance not documented"
 }
 
 # ---------------------------------------------------------------------------

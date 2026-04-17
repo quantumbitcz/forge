@@ -32,9 +32,9 @@ load '../helpers/test-helpers'
 }
 
 @test "caveman SKILL.md references arXiv:2604.00025" {
-  grep -q "2604.00025" "$PLUGIN_ROOT/skills/forge-caveman/SKILL.md"
+  grep -q "2604.00025" "$PLUGIN_ROOT/skills/forge-compress/SKILL.md"
 }
 
 @test "caveman SKILL.md has Research Backing section" {
-  grep -q "Research Backing" "$PLUGIN_ROOT/skills/forge-caveman/SKILL.md"
+  grep -q "Research Backing" "$PLUGIN_ROOT/skills/forge-compress/SKILL.md"
 }

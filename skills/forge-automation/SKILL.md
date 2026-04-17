@@ -85,7 +85,7 @@ Options (list the most common, allow free text):
 - `codebase-health` — Full codebase analysis (read-only)
 - `security-audit` — Run security scanners
 - `forge-run` — Full pipeline
-- `forge-diagnose` — Read-only diagnostic
+- `forge-recover diagnose` — Read-only diagnostic
 - Other (type skill name)
 
 **Step 3 — Filter:**

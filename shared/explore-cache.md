@@ -85,6 +85,6 @@ In `forge-config.md`:
 | `cache_enabled` | boolean | `true` | Enable/disable explore caching |
 | `max_cache_age_runs` | 1-50 | 10 | Runs before forced full re-explore |
 
-## /forge-reset Behavior
+## /forge-recover reset Behavior
 
-`/forge-reset` preserves `explore-cache.json` (same as `docs-index.json` and `feedback/`). Only `/forge-reset --hard` or manual deletion removes it.
+`/forge-recover reset` preserves `explore-cache.json` (same as `docs-index.json` and `feedback/`). Only `/forge-recover reset --hard` or manual deletion removes it.

@@ -9,7 +9,7 @@ Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can rea
 - Written by: the agent completing a stage
 - Read by: the orchestrator (always), downstream agents (when orchestrator includes relevant context in dispatch)
 - Format: markdown with structured sections (findings, decisions, metrics)
-- Lifetime: per-run (cleared on `/forge-reset`)
+- Lifetime: per-run (cleared on `/forge-recover reset`)
 
 ### What goes in stage notes
 - Decisions made and reasoning (for downstream agents and recap)

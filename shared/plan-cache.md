@@ -113,6 +113,6 @@ In `forge-config.md`:
       max_entries: 20
       max_age_days: 30
 
-## /forge-reset Behavior
+## /forge-recover reset Behavior
 
-`/forge-reset` preserves `.forge/plan-cache/` (same as explore cache). Only `/forge-reset --hard` or manual deletion removes it.
+`/forge-recover reset` preserves `.forge/plan-cache/` (same as explore cache). Only `/forge-recover reset --hard` or manual deletion removes it.

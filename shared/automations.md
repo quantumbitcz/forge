@@ -77,7 +77,7 @@ automations:
 
 1. **Cooldown per automation** — Each automation has a per-name cooldown timer. A trigger arriving during an active cooldown is silently dropped and logged as `skipped_cooldown`.
 2. **Max 3 concurrent automations** — At most 3 automation-triggered skill invocations may run simultaneously. Additional triggers queue and execute when a slot opens. Queue depth is unbounded but logged.
-3. **Destructive actions require human approval** — Any automation whose `action` would modify code (`forge-run`, `forge-fix`, `deep-health`, `migration`) pauses for user confirmation via `AskUserQuestion` before proceeding. Read-only actions (`codebase-health`, `forge-review`, `forge-status`, `security-audit`, `forge-diagnose`) execute without confirmation.
+3. **Destructive actions require human approval** — Any automation whose `action` would modify code (`forge-run`, `forge-fix`, `deep-health`, `migration`) pauses for user confirmation via `AskUserQuestion` before proceeding. Read-only actions (`codebase-health`, `forge-review`, `forge-status`, `security-audit`, `forge-recover diagnose`) execute without confirmation.
 4. **No automation chaining** — An automation-triggered skill cannot itself fire another automation. The `triggered_by` field in the log prevents re-entrant loops.
 5. **Graceful degradation** — If the skill invocation fails, the error is logged and the cooldown timer still resets. Repeated failures (3 consecutive for the same automation) disable the automation for the remainder of the session and log a WARNING.
 

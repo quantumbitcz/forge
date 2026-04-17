@@ -217,4 +217,4 @@ Two fields added to `state.json.tokens`:
 ## Related
 
 - **Input compression** (`input-compression.md`): Compresses files loaded as system prompt context (agent `.md`, convention stacks). Independent from output compression. Applied offline via `/forge-compress`.
-- **Caveman mode** (`skills/forge-caveman/SKILL.md`): User-configurable terseness for Forge's own user-facing messages.
+- **Caveman mode** (`skills/forge-compress output/SKILL.md`): User-configurable terseness for Forge's own user-facing messages.

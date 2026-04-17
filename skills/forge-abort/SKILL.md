@@ -1,6 +1,6 @@
 ---
 name: forge-abort
-description: "[writes] Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
+description: "[writes] Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-recover resume. Safer than /forge-recover reset which clears all state."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ui: { ask: true }
 ---
@@ -24,22 +24,22 @@ See `shared/skill-contract.md` for the standard exit-code table.
 2. **Confirm with user via AskUserQuestion:**
    "Pipeline is at stage {story_state}, iteration {total_iterations}. How would you like to proceed?"
    - Option 1: "Abort and preserve state for resume"
-   - Option 2: "Abort and reset (equivalent to /forge-reset)"
+   - Option 2: "Abort and reset (equivalent to /forge-recover reset)"
    - Option 3: "Cancel — keep running"
 3. **If option 1 (preserve):**
    a. Transition to ABORTED via the state machine:
       `bash shared/forge-state.sh transition user_abort_direct --forge-dir .forge`
    b. Release `.forge/.lock` if held: `rm -f .forge/.lock`
    c. Do NOT delete worktree (preserves work for resume)
-   d. Report: "Pipeline aborted at {stage}. State preserved. Run /forge-resume to continue."
-4. **If option 2 (reset):** Delegate to `/forge-reset`
+   d. Report: "Pipeline aborted at {stage}. State preserved. Run /forge-recover resume to continue."
+4. **If option 2 (reset):** Delegate to `/forge-recover reset`
 5. **If option 3 (cancel):** "Abort cancelled. Pipeline continues."
 
 **Important:** Never write directly to state.json. Always use `forge-state.sh transition` to maintain state machine integrity.
 
 ## Post-Abort State
 - `story_state: ABORTED`
-- `previous_state`: preserved for /forge-resume
+- `previous_state`: preserved for /forge-recover resume
 - All counters preserved
 - Worktree preserved
 - Lock released
@@ -51,14 +51,14 @@ See `shared/skill-contract.md` for the standard exit-code table.
 | Prerequisites fail | Report specific error message and STOP |
 | state.json missing | Report "No active pipeline to abort." and STOP |
 | Pipeline already finished | Report "Pipeline already finished (state: {story_state})." and STOP |
-| State transition fails | Report "Could not transition to ABORTED state. State machine error: {error}." Suggest `/forge-repair-state` |
+| State transition fails | Report "Could not transition to ABORTED state. State machine error: {error}." Suggest `/forge-recover repair` |
 | Lock file removal fails | Log WARNING. Lock file will be detected as stale on next run |
-| state.json write fails | Report error. State may be partially updated. Suggest `/forge-repair-state` |
-| State corruption | Attempt abort anyway via state machine. If that fails, suggest `/forge-reset` |
+| state.json write fails | Report error. State may be partially updated. Suggest `/forge-recover repair` |
+| State corruption | Attempt abort anyway via state machine. If that fails, suggest `/forge-recover reset` |
 
 ## See Also
 
-- `/forge-resume` -- Resume the aborted pipeline from where it stopped
-- `/forge-reset` -- Clear all state (more destructive -- use when resume is not needed)
+- `/forge-recover resume` -- Resume the aborted pipeline from where it stopped
+- `/forge-recover reset` -- Clear all state (more destructive -- use when resume is not needed)
 - `/forge-status` -- Check pipeline state before deciding to abort
-- `/forge-rollback` -- Rollback code changes made before the abort
+- `/forge-recover rollback` -- Rollback code changes made before the abort

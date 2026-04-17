@@ -157,8 +157,8 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 | Intent classification ambiguous | Present classification result to user for confirmation (unless autonomous mode) |
 | Ticket ID not found in tracking store | Warn user and ask for requirement description directly |
 | Agent dispatch fails | Report "Pipeline orchestrator failed to start. Check plugin installation." and STOP |
-| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-diagnose` for state issues |
-| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/forge-repair-state` or `/forge-reset` |
+| Orchestrator returns error | Relay the error unchanged. Suggest `/forge-recover diagnose` for state issues |
+| State corruption mid-run | Orchestrator handles recovery. If it escalates, suggest `/forge-recover repair` or `/forge-recover reset` |
 
 ## See Also
 
@@ -166,5 +166,5 @@ You are the universal entry point for the forge pipeline. Your job is to classif
 - `/forge-shape` -- Shape a vague idea into a structured spec before running the pipeline
 - `/forge-sprint` -- Execute multiple features in parallel (preferred over `--sprint` flag)
 - `/forge-status` -- Check pipeline progress during or after a run
-- `/forge-diagnose` -- Diagnose pipeline health issues if a run fails
-- `/forge-resume` -- Resume an aborted or failed run from its last checkpoint
+- `/forge-recover diagnose` -- Diagnose pipeline health issues if a run fails
+- `/forge-recover resume` -- Resume an aborted or failed run from its last checkpoint

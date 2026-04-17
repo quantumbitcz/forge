@@ -351,7 +351,7 @@ In `forge-config.md`:
 ```yaml
 events:
   enabled: true                   # Master toggle (default: true)
-  retention_days: 90              # Events older than this pruned on /forge-reset (default: 90)
+  retention_days: 90              # Events older than this pruned on /forge-recover reset (default: 90)
   max_file_size_mb: 50            # Prune oldest events when file exceeds this (default: 50)
   replay_enabled: true            # Enable /forge-replay skill (default: true)
   emit_state_writes: true         # Emit STATE_WRITE events (verbose, default: true)
@@ -364,7 +364,7 @@ Constraints enforced at PREFLIGHT:
 
 ## Retention
 
-- `events.jsonl` **survives `/forge-reset`** (same as `explore-cache.json`, `plan-cache/`, `wiki/`, `trust.json`).
+- `events.jsonl` **survives `/forge-recover reset`** (same as `explore-cache.json`, `plan-cache/`, `wiki/`, `trust.json`).
 - Events older than `events.retention_days` are pruned at PREFLIGHT.
 - When file exceeds `events.max_file_size_mb`, oldest events are pruned until under the limit (oldest 25% per pass).
 - Only manual `rm -rf .forge/` removes all events.

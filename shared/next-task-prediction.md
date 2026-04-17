@@ -105,7 +105,7 @@ Each prediction includes:
 **Lifecycle:**
 - Created on first run with predictions enabled
 - Appended after each run by `fg-710-post-run`
-- Survives `/forge-reset`
+- Survives `/forge-recover reset`
 
 **Accuracy tracking:** When a subsequent `/forge-run` requirement semantically matches a prediction (compared at PREFLIGHT), the prediction is marked as `acted_on: true` with the matching run ID. Retrospective includes prediction accuracy stats.
 

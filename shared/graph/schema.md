@@ -64,7 +64,7 @@ Created by `build-project-graph.sh` and `enrich-symbols.sh` from the consuming p
 **Enrichment persistence rules:**
 - **Incremental updates** (`/graph-update`): Preserve all enrichment properties on existing `ProjectFile` nodes. `fg-700-retrospective` increments `bug_fix_count` atomically via `SET n.bug_fix_count = COALESCE(n.bug_fix_count, 0) + 1`.
 - **Project rebuild** (`/forge-graph-rebuild`): Preserve enrichment properties by default. The rebuild script merges (upserts) rather than deletes+recreates `ProjectFile` nodes, retaining `bug_fix_count` and `last_bug_fix_date`. To clear enrichment, use `/forge-graph-rebuild --clear-enrichment`.
-- **Full reset** (`/forge-reset`): All data is destroyed, including enrichment.
+- **Full reset** (`/forge-recover reset`): All data is destroyed, including enrichment.
 
 **Cross-repo DocFile scoping:** All project docs (primary and cross-repo) are stored in the same Neo4j instance, scoped by `project_id`. `DocFile` nodes with `cross_repo = true` reference files from related projects. Queries include `project_id` filter by default; exclude cross-repo docs unless explicitly requested (e.g., for cross-repo consistency analysis).
 
@@ -138,7 +138,7 @@ Created by `build-project-graph.sh` for efficient project-scoped queries.
 | Incremental update | `/graph-update` via orchestrator | Upserts changed files (scoped by `project_id`/`component`) |
 | Query | `/forge-graph-query` | Execute arbitrary Cypher |
 | Status | `/forge-graph-status` | Container health, node counts, staleness |
-| Reset | `/forge-reset` | Stops container, removes all data |
+| Reset | `/forge-recover reset` | Stops container, removes all data |
 
 See `query-patterns.md` for pre-built Cypher templates used by the orchestrator.
 

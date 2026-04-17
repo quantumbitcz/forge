@@ -118,7 +118,7 @@ Trust is stored in `.forge/trust.json` (local, NOT committed to git). This is de
 }
 ```
 
-The file survives `/forge-reset` (alongside `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `wiki/`).
+The file survives `/forge-recover reset` (alongside `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `wiki/`).
 
 ### Trust Initialization
 

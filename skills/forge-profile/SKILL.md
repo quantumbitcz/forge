@@ -106,11 +106,11 @@ If multiple run reports exist in `.forge/reports/`, compare performance across r
 | events.jsonl missing | Generate partial report from state.json only, note limited data |
 | events.jsonl has malformed lines | Skip malformed lines, log WARNING, continue with valid entries |
 | No token data available | Report "No token usage data recorded." and skip token analysis sections |
-| State corruption | Suggest `/forge-repair-state` to fix state, then re-run profiler |
+| State corruption | Suggest `/forge-recover repair` to fix state, then re-run profiler |
 
 ## See Also
 
 - `/forge-insights` -- Cross-run analytics including quality trends, cost analysis, and memory health
 - `/forge-history` -- View run history with scores and verdicts
 - `/forge-status` -- Check current pipeline run state
-- `/forge-diagnose` -- Diagnose pipeline health issues (state integrity, stalled stages)
+- `/forge-recover diagnose` -- Diagnose pipeline health issues (state integrity, stalled stages)

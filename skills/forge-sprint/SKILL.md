@@ -84,7 +84,7 @@ The sprint orchestrator reads `.forge/sprint-state.json` and resumes from where 
 | Sprint orchestrator dispatch fails | Report "Sprint orchestrator failed to start. Check plugin installation." and STOP |
 | Active sprint conflict | Offer resume, fresh start, or abort via AskUserQuestion |
 | Individual feature pipeline fails | Sprint orchestrator handles per-feature failure. Failed features do not block others |
-| State corruption | Suggest `/forge-repair-state` for state.json issues, or `/forge-reset` to start fresh |
+| State corruption | Suggest `/forge-recover repair` for state.json issues, or `/forge-recover reset` to start fresh |
 
 ## See Also
 

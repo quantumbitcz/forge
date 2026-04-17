@@ -77,9 +77,9 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Fix all codebase issues | `/forge-deep-health` | Iterative fix loop until clean |
 | Quick build+lint+test | `/forge-verify` | No pipeline, just check commands |
 | Security scan | `/forge-security-audit` | Module-appropriate vulnerability scanners |
-| Pipeline broken? | `/forge-diagnose` | Read-only diagnostic, then `/forge-repair-state` to fix |
-| Resume aborted run | `/forge-resume` | Continues from last checkpoint |
-| Start fresh | `/forge-reset` | Clears state, preserves learnings |
+| Pipeline broken? | `/forge-recover diagnose` | Read-only diagnostic, then `/forge-recover repair` to fix |
+| Resume aborted run | `/forge-recover resume` | Continues from last checkpoint |
+| Start fresh | `/forge-recover reset` | Clears state, preserves learnings |
 | Multiple features | `/forge-sprint` | Parallel orchestration |
 | Generate docs | `/forge-docs-generate` | README, ADRs, API specs, changelogs |
 | Deploy | `/forge-deploy` | Staging, production, preview, rollback |
@@ -89,9 +89,9 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Reusable recipes | `/forge-playbooks` | Create, list, run, analyze pipeline playbooks |
 | Review playbook refinements | `/forge-playbook-refine` | Interactive review/apply of improvement proposals |
 | Compress agents | `/forge-compress` | Reduce agent .md token cost via terse rewriting |
-| Toggle terse output | `/forge-caveman` | User-facing output compression (lite/full/ultra/off) |
+| Toggle terse output | `/forge-compress output` | User-facing output compression (lite/full/ultra/off) |
 | Quick commit | `/forge-commit` | Terse conventional commit from staged changes |
-| Compression reference | `/forge-compression-help` | Quick reference card for all compression features |
+| Compression reference | `/forge-compress help` | Quick reference card for all compression features |
 | Find the right skill | `/forge-help` | Interactive decision tree |
 | New user onboarding | `/forge-tour` | 5-stop guided introduction |
 | Edit config settings | `/forge-config` | Interactive config editor |
@@ -105,7 +105,7 @@ Existing project:  /forge-init → /forge-codebase-health → /forge-deep-health
 Bug fix:           /forge-fix <description or ticket ID>
 Code quality:      /forge-review --full  (changed files) or /forge-codebase-health (all files)
 Before shipping:   /forge-verify → /forge-review --full
-Pipeline trouble:  /forge-diagnose → /forge-repair-state (if needed) → /forge-resume
+Pipeline trouble:  /forge-recover diagnose → /forge-recover repair (if needed) → /forge-recover resume
 Multiple features: /forge-sprint (reads from Linear or manual list)
 Quick decision:    /forge-help (interactive skill picker)
 ```
@@ -253,7 +253,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 
 Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. Docker-managed, disable with `graph.enabled: false`. Scoped by `project_id` + optional `component`. 8 agents with `neo4j-mcp`: fg-010/020/090/100/102/200/210/400. Pipeline works without Neo4j.
 
-**SQLite code graph** (zero-dependency alternative): Tree-sitter + SQLite at `.forge/code-graph.db`. Built by `shared/graph/build-code-graph.sh`. 15 node types, 17 edge types, all 15 languages. Config: `code_graph.enabled` (default true), `code_graph.backend` (auto/sqlite/neo4j), `code_graph.exclude_patterns`. Survives `/forge-reset`.
+**SQLite code graph** (zero-dependency alternative): Tree-sitter + SQLite at `.forge/code-graph.db`. Built by `shared/graph/build-code-graph.sh`. 15 node types, 17 edge types, all 15 languages. Config: `code_graph.enabled` (default true), `code_graph.backend` (auto/sqlite/neo4j), `code_graph.exclude_patterns`. Survives `/forge-recover reset`.
 
 ## Check engine (`shared/checks/`)
 
@@ -314,13 +314,13 @@ See `shared/framework-gotchas.md` for non-obvious conventions per framework. Eac
 - `shared/` files are contracts — changes affect all agents/modules. Verify downstream impact.
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
-- `.forge/` deletion mid-run = unrecoverable. Use `/forge-reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, and `playbook-refinements/` survive `/forge-reset`. Only manual `rm -rf .forge/` removes them.
+- `.forge/` deletion mid-run = unrecoverable. Use `/forge-recover reset`.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, and `playbook-refinements/` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts.
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
-- `.forge/wiki/` survives `/forge-reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
+- `.forge/wiki/` survives `/forge-recover reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
 - Auto-discovered PREEMPT items (`source: auto-discovered`) decay 2x faster than normal items. They start at MEDIUM confidence, not HIGH. After 3 successful applications they promote to HIGH.
 - **Platform requirements:** Forge requires bash 4.0+ (macOS needs `brew install bash`). PowerShell and CMD are not supported — on Windows, use WSL2 (recommended) or Git Bash (limited). All scripts use `#!/usr/bin/env bash`. Git Bash has known MSYS path translation issues (commit `0ac4874`). Docker features require Docker Desktop with WSL2 backend on Windows.
 

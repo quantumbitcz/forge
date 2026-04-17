@@ -18,8 +18,8 @@ setup() {
   assert_success
 }
 
-@test "skill-prerequisites: forge-resume checks for state.json" {
-  run grep -qi 'state\.json\|checkpoint\|aborted' "$SKILLS_DIR/forge-resume/SKILL.md"
+@test "skill-prerequisites: forge-recover checks for state.json" {
+  run grep -qi 'state\.json\|checkpoint\|aborted' "$SKILLS_DIR/forge-recover/SKILL.md"
   assert_success
 }
 

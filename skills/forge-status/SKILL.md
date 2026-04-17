@@ -92,7 +92,7 @@ If `.forge/.hook-failures.log` exists and is non-empty:
 1. Count total failure entries: `wc -l < .forge/.hook-failures.log`
 2. Count unique failure types: `awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}' .forge/.hook-failures.log | sort -u | wc -l`
 3. Show last 3 failures with timestamps
-4. If count > 10: show warning "High hook failure rate. Run /forge-diagnose for details."
+4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
 
 If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy (no failures logged)"
 
@@ -101,7 +101,7 @@ If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy 
 | Condition | Action |
 |-----------|--------|
 | Prerequisites fail | Report specific error message and STOP |
-| state.json unparseable | Report "state.json is corrupted. Run `/forge-repair-state` to fix or `/forge-reset` to start fresh." and STOP |
+| state.json unparseable | Report "state.json is corrupted. Run `/forge-recover repair` to fix or `/forge-recover reset` to start fresh." and STOP |
 | state.json missing fields | Show what is available, note missing fields as "unknown" |
 | progress/status.json malformed | Report "Background progress data is corrupt." and fall back to state.json only |
 | Stage notes file missing | Skip stage notes section, continue with other data |
@@ -109,7 +109,7 @@ If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy 
 ## See Also
 
 - `/forge-history` -- View trends across multiple past pipeline runs
-- `/forge-diagnose` -- Deep diagnostic of pipeline health (state integrity, counter overflows, stalled stages)
-- `/forge-resume` -- Resume an aborted pipeline run
+- `/forge-recover diagnose` -- Deep diagnostic of pipeline health (state integrity, counter overflows, stalled stages)
+- `/forge-recover resume` -- Resume an aborted pipeline run
 - `/forge-abort` -- Stop an active pipeline run gracefully
 - `/forge-insights` -- Cross-run analytics and trend analysis

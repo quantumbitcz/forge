@@ -297,7 +297,7 @@ Refinements always push quality up — adding preventive criteria, fixing blind 
 
 ### File Locations
 
-- Proposals: `.forge/playbook-refinements/{playbook_id}.json` (survives `/forge-reset`)
+- Proposals: `.forge/playbook-refinements/{playbook_id}.json` (survives `/forge-recover reset`)
 - Schema: `shared/schemas/playbook-refinement-schema.json`
 - Analytics: `.forge/playbook-analytics.json` (version history for rollback)
 

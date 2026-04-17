@@ -14,7 +14,7 @@ Background mode is incompatible with `--dry-run` (dry-run requires no worktree o
 
 ## Progress Artifacts
 
-All progress files live under `.forge/progress/`. The directory is created at PREFLIGHT when `background: true`. Files are ephemeral — they do not survive `/forge-reset` and are not committed to git.
+All progress files live under `.forge/progress/`. The directory is created at PREFLIGHT when `background: true`. Files are ephemeral — they do not survive `/forge-recover reset` and are not committed to git.
 
 ```
 .forge/progress/
@@ -190,7 +190,7 @@ When paused on an alert:
 If an alert remains unresolved for 60 minutes (configurable via `background.alert_timeout_minutes`), the orchestrator aborts the run gracefully:
 1. Writes `pipeline_end` event to timeline with `detail: "Alert timeout"`
 2. Sets `state.json.complete: true` with `story_state: "ABORTED"`
-3. Preserves all artifacts for `/forge-resume`
+3. Preserves all artifacts for `/forge-recover resume`
 
 ## User Interaction
 
@@ -270,4 +270,4 @@ The `background` field in `state.json`:
 
 - **Sprint mode** (`--sprint --background`): Each feature run gets its own `progress/` directory under `.forge/runs/{id}/progress/`. The sprint orchestrator aggregates status across all runs.
 - **Dry-run** (`--dry-run`): Overrides `--background`. No progress artifacts are created.
-- **Resume** (`/forge-resume`): Works normally. If the previous run was background, resume also runs in background mode unless `--interactive` is passed.
+- **Resume** (`/forge-recover resume`): Works normally. If the previous run was background, resume also runs in background mode unless `--interactive` is passed.

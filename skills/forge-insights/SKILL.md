@@ -295,4 +295,4 @@ Write the full report to `.forge/reports/insights-{date}.md` where `{date}` is t
 - `/forge-history` -- View run history with scores and verdicts (simpler than insights)
 - `/forge-profile` -- Detailed performance profiling of a single pipeline run
 - `/forge-status` -- Check current pipeline run state
-- `/forge-diagnose` -- Diagnose pipeline health issues for the current run
+- `/forge-recover diagnose` -- Diagnose pipeline health issues for the current run

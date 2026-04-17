@@ -61,8 +61,8 @@ Total time: 3-10 minutes. You'll be asked to confirm stack choices before scaffo
 | Prerequisites fail | Report specific error message and STOP |
 | Empty input | Ask user for project description before dispatching |
 | Bootstrapper agent dispatch fails | Report "Project bootstrapper failed to start. Check plugin installation and try again." and STOP |
-| Bootstrapper returns error | Relay the error unchanged. Suggest `/forge-diagnose` if state was partially created |
-| State corruption after partial bootstrap | Run `/forge-repair-state` to fix state, then retry or use `/forge-reset` to start fresh |
+| Bootstrapper returns error | Relay the error unchanged. Suggest `/forge-recover diagnose` if state was partially created |
+| State corruption after partial bootstrap | Run `/forge-recover repair` to fix state, then retry or use `/forge-recover reset` to start fresh |
 
 ## See Also
 

@@ -6,7 +6,7 @@ Persistent test result history with algorithmic flaky detection, automatic quara
 
 ## 1. Test History
 
-Persistent file: `.forge/test-history.json` (survives `/forge-reset`, same lifecycle as `explore-cache.json`). Schema: `shared/schemas/test-history-schema.json`.
+Persistent file: `.forge/test-history.json` (survives `/forge-recover reset`, same lifecycle as `explore-cache.json`). Schema: `shared/schemas/test-history-schema.json`.
 
 The test gate reads the history at the start of every VERIFY pass and writes it at the end. First run with no history file creates an empty one; all features degrade gracefully to existing behavior.
 

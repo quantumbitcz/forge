@@ -72,7 +72,7 @@ Then add to `.claude/settings.json`:
 - **Monorepo support** -- Nx and Turborepo modules with affected detection, scoped testing/building.
 - **Environment health check** -- `/forge-init` probes for optional tools (jq, docker, tree-sitter, gh, sqlite3) and MCP integrations, displays a dashboard with platform-specific install suggestions.
 - **Dynamic reviewer scaling** -- Quality gate scales review agents by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting recommendation.
-- **Caveman benchmark** -- `/forge-caveman benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
+- **Caveman benchmark** -- `/forge-compress output benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
 
 ### The 10 stages
 
@@ -110,11 +110,11 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 | `/forge-sprint` | Parallel multi-feature orchestration |
 | `/forge-review` | Review changed files (quick: 3 agents, full: 8 agents) |
 | `/forge-status` | Show pipeline state, score, budgets |
-| `/forge-diagnose` | Read-only pipeline health diagnostic |
-| `/forge-resume` | Resume from last checkpoint |
+| `/forge-recover diagnose` | Read-only pipeline health diagnostic |
+| `/forge-recover resume` | Resume from last checkpoint |
 | `/forge-abort` | Graceful pipeline stop |
-| `/forge-reset` | Clear state, preserve learnings |
-| `/forge-rollback` | Rollback pipeline changes (4 modes) |
+| `/forge-recover reset` | Clear state, preserve learnings |
+| `/forge-recover rollback` | Rollback pipeline changes (4 modes) |
 | `/forge-history` | Quality trends across runs |
 | `/forge-profile` | Pipeline performance analysis |
 | `/forge-insights` | Quality, cost, convergence analytics |
@@ -130,16 +130,16 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 | `/forge-migration` | Framework/library version migrations |
 | `/forge-bootstrap` | Scaffold new project from template |
 | `/forge-config-validate` | Pre-pipeline config validation |
-| `/forge-repair-state` | Targeted state.json fixes |
+| `/forge-recover repair` | Targeted state.json fixes |
 | `/forge-automation` | Event-driven automation management |
 | `/forge-graph-init` | Initialize Neo4j knowledge graph |
 | `/forge-graph-status` | Graph connection and node counts |
 | `/forge-graph-query` | Run Cypher queries |
 | `/forge-graph-rebuild` | Rebuild graph from codebase |
 | `/forge-graph-debug` | Targeted Neo4j diagnostics |
-| `/forge-caveman` | Toggle terse output mode (40-70% fewer tokens) |
+| `/forge-compress output` | Toggle terse output mode (40-70% fewer tokens) |
 | `/forge-commit` | Terse conventional commit from staged changes |
-| `/forge-compression-help` | Quick reference card for all compression features |
+| `/forge-compress help` | Quick reference card for all compression features |
 | `/forge-help` | Interactive decision tree to find the right skill |
 | `/forge-tour` | Guided 5-stop introduction to Forge |
 | `/forge-config` | Interactive configuration editor |
@@ -263,8 +263,8 @@ After [Quick start](#quick-start):
 | Problem | Fix |
 |---------|-----|
 | "No active pipeline" | Run `/forge-init` then `/forge-run` |
-| Pipeline stuck | `/forge-diagnose` (read-only), then `/forge-repair-state` |
-| Lock file blocks run | `/forge-reset` or remove `.forge/.lock` |
+| Pipeline stuck | `/forge-recover diagnose` (read-only), then `/forge-recover repair` |
+| Lock file blocks run | `/forge-recover reset` or remove `.forge/.lock` |
 | Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
 | Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |
 | Budget exhausted | Check `total_retries_max` (default 10, range 5-30) |

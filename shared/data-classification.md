@@ -115,6 +115,6 @@ In `forge-config.md`:
 | `pii_detection` | boolean | `true` | Enable SEC-PII detection for email addresses |
 | `block_restricted` | boolean | `true` | Block RESTRICTED-tier values from all artifacts |
 
-## /forge-reset Behavior
+## /forge-recover reset Behavior
 
-`/forge-reset` clears `data_classification.redaction_counter` in `state.json`. Redaction history is not preserved across runs. `/forge-reset --hard` removes all artifacts including those containing `[REDACTED:...]` placeholders.
+`/forge-recover reset` clears `data_classification.redaction_counter` in `state.json`. Redaction history is not preserved across runs. `/forge-recover reset --hard` removes all artifacts including those containing `[REDACTED:...]` placeholders.

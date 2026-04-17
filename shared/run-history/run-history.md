@@ -6,7 +6,7 @@ Structured, searchable pipeline run history for trend analysis, playbook refinem
 
 - **Location:** `.forge/run-history.db` (SQLite)
 - **Written by:** `fg-700-retrospective` (Stage 9 LEARN)
-- **Lifecycle:** Survives `/forge-reset` (same as `explore-cache.json`). Only `rm -rf .forge/` removes it.
+- **Lifecycle:** Survives `/forge-recover reset` (same as `explore-cache.json`). Only `rm -rf .forge/` removes it.
 - **Schema version:** 1 (`PRAGMA user_version=1`)
 - **FTS5 engine:** `run_search` virtual table with `unicode61` tokenizer
 
