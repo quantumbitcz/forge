@@ -2,10 +2,10 @@
 
 **Status:** Draft for review
 **Date:** 2026-04-17
-**Target version:** Forge 4.2.0 (SemVer minor — additive; no breaking changes)
+**Target version:** Forge 4.2.0 (SemVer minor — additive; no breaking changes). Version is **conditional on Phases 1-5 merging first**; if the baseline when Phase 6 executes is not 4.1.0, the plan's Task 0 aborts with a version-mismatch error. This spec + plan are written as a deliverable pair in advance; execution is sequenced behind prior phases.
 **Author:** Denis Šajnar (authored with Claude Opus 4.7)
 **Phase sequence:** 6 of 7
-**Depends on:** Phase 5 merged (4.1.0).
+**Depends on:** Phases 1-5 merged (4.1.0 tag present).
 
 ---
 
@@ -21,7 +21,7 @@ The FE research (conducted during Phase 1 audit) surfaced 10 structural gaps in 
 2. **No Figma MCP at PLAN** — `fg-413-frontend-reviewer` calls `get_design_context` in REVIEW (reactive); by then the implementer has written generic markup.
 3. **No Code Connect consumption** — Figma's `Button` → `@/components/ui/button` mapping is ignored; Forge generates generic imports.
 4. **No production-grade defaults pack** — 40 rules exist in the research (semantic HTML, tokens, a11y, motion, responsive, state, testing) but aren't codified or enforced.
-5. **`@axe-core/playwright` not a required dev dep** — `shared/accessibility-automation.md` mentions axe but doesn't install it.
+5. **`@axe-core/playwright` not integrated** — `shared/accessibility-automation.md` describes Playwright MCP-driven tab-order/focus/ARIA checks but does not mention or install `@axe-core/*` packages. Phase 6 **introduces** axe-core as a new dependency (not "extends an existing mention"): current flow uses MCP-side checks; Phase 6 adds a Node-side axe scan as a complementary layer.
 6. **No VRT baseline** — `shared/visual-verification.md` captures screenshots but doesn't diff against a baseline.
 7-10. (Deferred to future phases per brainstorming scope selection.)
 
@@ -46,14 +46,17 @@ Phase 6 intentionally scoped down per brainstorming. The spec explicitly enumera
 
 ### 4.1 `modules/frameworks/react/variants/shadcn.md` (new variant)
 
-**Opt-in variant.** Projects using shadcn declare it in `forge.local.md`:
+**Opt-in variant.** Projects using shadcn declare it in `forge.local.md` using the existing **flat** `components.variant` key (v1 review C2 — schema is flat, not `components.frontend.variant`):
 
 ```yaml
 components:
-  frontend:
-    framework: react
-    variant: shadcn       # was absent → hand-rolled; now "shadcn" enables variant
+  language: typescript
+  framework: react
+  variant: shadcn         # was `typescript` or similar; `shadcn` is a new valid value when framework=react
+  testing: vitest
 ```
+
+**Validation:** `fg-100-orchestrator` PREFLIGHT asserts that `variant: shadcn` requires `framework: react`; else emit E2 with a clear error.
 
 Variant document structure (~150 lines):
 
@@ -123,13 +126,17 @@ Variant document structure (~150 lines):
 
 ### 4.4 `@axe-core/playwright` required dev dep + VRT baseline
 
-#### 4.4.1 Required dev dep
+#### 4.4.1 Required dev dep + execution model (v1 review C4 resolved)
 
-`shared/accessibility-automation.md` extension:
+`shared/accessibility-automation.md` extended with a new `## Axe-core Node integration` section (introduces axe as a new layer — not a mention-extension):
 
-- Add explicit install step: `pnpm add -D @axe-core/playwright @axe-core/react` (or npm/yarn equivalents per project's package manager detected at PREFLIGHT).
-- `fg-650-preview-validator.md` extended — dispatches `@axe-core/playwright` against every new user-facing route via Playwright MCP. CRITICAL violations block PR.
-- `@axe-core/react` added to dev deps — enables runtime console warnings during local dev.
+**Install:** at `/forge-init` (when `frontend.axe_core_required: true`), orchestrator appends to the project's dev-dep install list: `@axe-core/playwright` + `@axe-core/react`. Package manager detected at PREFLIGHT (pnpm/npm/yarn/bun); install command emitted accordingly.
+
+**Execution model (Node-side, not MCP):**
+- New test file auto-scaffolded at `tests/a11y/axe.spec.ts` (if not present) that iterates over the app's routes and runs `new AxeBuilder({ page }).analyze()` per route + viewport.
+- `fg-650-preview-validator` extended: after deploying preview, runs `npx playwright test tests/a11y/` via `Bash` tool (not MCP). Parses axe's JSON output; CRITICAL axe violations → CRITICAL `A11Y-AXE-*` findings in quality gate; block PR.
+- Complements existing MCP-side checks (tab-order, focus-visible, reduced-motion) — they stay; axe adds contrast + ARIA role/value coverage + landmark checks that MCP doesn't do as thoroughly.
+- `@axe-core/react` goes into dev deps so developers see axe warnings in browser console during local dev.
 
 #### 4.4.2 Visual regression baseline — `shared/visual-regression-baseline.md` (new)
 
@@ -139,7 +146,7 @@ Chromatic-equivalent baseline model without the SaaS:
 - `fg-650-preview-validator.md` captures fresh screenshots at the same set; diffs against baseline via pixelmatch-like comparison (Python Pillow diff or `odiff`-like npm dep).
 - Threshold: 1% pixel diff default; configurable per-route in `.forge/vrt/config.yaml`.
 - Diff > threshold → WARNING finding with diff image saved to `.forge/vrt/diffs/`; user reviews + regenerates baseline via new `/forge-vrt-update` skill (adds 41st skill; skill count 40 → 41).
-- Baselines gitignored by default (too large); project can opt in to committing them via `vrt.commit_baselines: true` config.
+- **Baseline storage strategy (v1 review I1 resolved):** baselines are **committed to git by default** (`vrt.commit_baselines: true` is the default in 4.2.0), so CI has a baseline to diff against on every PR. Projects that find this too large can opt out with `vrt.commit_baselines: false` AND configure either (a) Git LFS (user-side setup, documented in `docs/frontend-guide.md`), (b) external blob storage via `vrt.baseline_url: <url>`, or (c) generate-in-CI + cache strategy. Default-on-commit gets the feature working out of the box for small projects (<20 routes × 3 viewports ≈ 60 screenshots, typically <5MB).
 
 #### 4.4.3 `/forge-vrt-update` (new skill)
 
@@ -151,9 +158,10 @@ Flags: `--help`, `--dry-run`, per skill-contract.
 
 **`fg-200-planner.md`:**
 - New `## § Figma MCP consumption` section — detect URL, call MCP, inject into plan. Details in `shared/figma-integration.md §2-3`.
+- **Frontmatter `tools:` additions — explicit allowlist (v1 review C5):** add ONLY `mcp__plugin_figma_figma__get_variable_defs` and `mcp__plugin_figma_figma__get_code_connect_map`. Explicitly forbid in the agent body: "Do NOT invoke `add_code_connect_map`, `send_code_connect_mappings`, `create_new_file`, or any write-class Figma tool — planner is read-only against Figma." Bats assertion in `tests/contract/frontend-defaults.bats` verifies the planner's `tools:` list does not include those write tools.
 
 **`fg-300-implementer.md`:**
-- New `## § shadcn component preference` section — when `components.frontend.variant: shadcn` is configured, check `@/components/ui/` before hand-rolling. Reference the variant doc.
+- New `## § shadcn component preference` section — when `components.variant: shadcn` is configured, check `@/components/ui/` before hand-rolling. Reference the variant doc.
 - New `## § Plan token consumption` section — read plan's `## Design tokens` + `## Component imports` sections; treat as first-class inputs.
 
 **`fg-320-frontend-polisher.md`:**
@@ -245,7 +253,7 @@ tests/contract/frontend-defaults.bats
 - **Shared (4):** `frontend-design-theory.md`, `visual-verification.md`, `accessibility-automation.md`, `config-schema.json`.
 - **Framework module (1):** `modules/frameworks/react/conventions.md` — cross-ref shadcn variant.
 - **Top-level (6):** `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `tests/validate-plugin.sh` (skill-count assertion 40 → 41).
-- **Skill count bump (1):** Phase 5's skill count assertion in `live-observation.bats` needs to note 40 baseline; Phase 6 adds 1 skill → 41. Update `tests/contract/live-observation.bats` Group B skill-count assertion to handle either value based on detection, OR make the Phase 5 assertion exactly 40 and add a new Phase 6 assertion for 41. Cleanest: Phase 6 adds a new assertion in `tests/contract/frontend-defaults.bats` for count=41; Phase 5's existing assertion stays at 40 but gated on `FORGE_PHASE5_ACTIVE && ! FORGE_PHASE6_ACTIVE`.
+- **Skill count handoff (Phase 5 → Phase 6, resolves v1 review C3):** Phase 5's `live-observation.bats` has `[B] skill count is 40` (exact equality, gated on `FORGE_PHASE5_ACTIVE`). Phase 6 replaces this assertion in place — Commit 6 edits the Phase 5 bats: changes `[ "$count" -eq 40 ]` to `[ "$count" -eq 41 ]` AND changes the gate from `FORGE_PHASE5_ACTIVE` to `FORGE_PHASE6_ACTIVE` (Phase 5 sentinel dead-ends after Phase 6 merges). One assertion, one place, no Boolean gymnastics.
 
 ### 5.4 File-count arithmetic
 
@@ -272,7 +280,7 @@ All verified by CI on push.
 8. `agents/fg-320-frontend-polisher.md` has `## § Defaults pack enforcement` section.
 9. `agents/fg-413-frontend-reviewer.md` has `## § 40-rule defaults review` section + extended Figma MCP calls (now includes `get_code_connect_map`).
 10. `agents/fg-650-preview-validator.md` has `## § axe-core Playwright validation` + `## § Visual regression diff` sections.
-11. `shared/config-schema.json` validates `components.frontend.variant: shadcn`, `frontend.*`, `vrt.*`, `figma.*` keys.
+11. `shared/config-schema.json` validates `components.variant: shadcn`, `frontend.*`, `vrt.*`, `figma.*` keys.
 12. `tests/contract/frontend-defaults.bats` passes: 40-rule count assertion; rule-format assertion; cross-references resolve.
 13. `tests/validate-plugin.sh` skill-count assertion bumped to accept 41 post-Phase-6.
 14. `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `docs/frontend-guide.md` (new) all present and updated.
