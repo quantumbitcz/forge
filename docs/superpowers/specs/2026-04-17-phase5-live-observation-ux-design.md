@@ -178,19 +178,56 @@ Sections: (1) directory layout, (2) orchestrator branch-context switching, (3) `
 
 #### 4.4.1 `/forge-run --best-of N [--profiles opus,sonnet,haiku] 'requirement'`
 
-- N = 2..5 (hard cap).
-- `--profiles` optional; defaults to `opus,sonnet,haiku` truncated to N. (If N=2: opus,sonnet. If N=3: opus,sonnet,haiku. If N=4/5: custom list required.)
+- N ∈ [2, 5] hard cap (N=1 errors with "use /forge-run without --best-of").
+- `--profiles <csv>` optional:
+  - N ≤ 3 and absent → first-N of `[opus, sonnet, haiku]`.
+  - N > 3 → `--profiles` REQUIRED (no meaningful default).
+  - At PREFLIGHT, orchestrator validates every profile resolves to a model in `model_routing`; unresolvable profile → exit 1 with "profile X not in model_routing".
+
 - Orchestrator spawns N sub-pipelines under `.forge/runs/bestof-<i>-<profile>/`, each with:
   - Independent `state.json`, `events.jsonl`, `pending/`, `plans/current.md`
   - Independent worktree via existing Phase 1 worktree-manager (`.forge/worktrees/bestof-<i>/`)
-  - Overridden `model_routing.default: <profile>` for the run
-- Reuses `fg-090-sprint-orchestrator` with a new `best_of` mode flag — the sprint orchestrator's parallelization + worktree isolation is exactly what best-of needs, just with 1 requirement × N model profiles instead of N requirements × 1 model each.
+  - Per-run `forge.local.md` override under `.forge/runs/bestof-<i>-<profile>/forge.local.md` with `model_routing.default: <profile>` (fg-100-orchestrator reads this file first, then falls back to project-level config). No env-var injection; pure filesystem override.
+
+**New dedicated agent — `agents/fg-095-bestof-orchestrator.md` (v1 review I1):**
+
+The sprint orchestrator's invariants don't cleanly invert ("N requirements × 1 model" ≠ "1 requirement × N models" — ANALYZE/GROUP/conflict-resolver are meaningless for best-of). Rather than contorting fg-090 with conditional skips, Phase 5 introduces a **new** dedicated orchestrator that reuses only the primitives (worktree-manager, per-run directories, cross-repo coordinator) but has its own phase flow:
+
+| Phase (fg-095) | Purpose |
+|---|---|
+| INPUT | Parse `--best-of N`, `--profiles`, requirement; validate per §4.4.1 |
+| PREFLIGHT | Validate profiles against `model_routing`; estimate aggregate cost |
+| DISPATCH | Create N per-run directories + worktrees; write per-run `forge.local.md`; invoke fg-100 for each in parallel |
+| MONITOR | Aggregate events across N runs; expose to TUI via `/forge-watch --bestof` |
+| SELECT | After all N complete: render summary (score, cost, time, diff size); user picks (or `--auto-winner`) |
+| PROMOTE | Winner's worktree → user's project worktree via Phase 1 worktree-manager merge; losers stashed to `.forge/bestof/<timestamp>/` |
+| CLEANUP | Optional prune of loser worktrees after N days (config: `bestof.loser_retention_days`, default 7) |
+
+Compare fg-090 (sprint): `ANALYZE`/`GROUP`/`APPROVE` phases present, `conflict-resolver` dispatched; these are skipped in fg-095 since parallelism is trivially independent.
+
+Aggregate cost estimation (PREFLIGHT): orchestrator computes `sum(profile_cost_estimate)` from Phase 2's per-model pricing + historical run length. Compares against `bestof.aggregate_cap_usd` (see §4.4.4).
 
 #### 4.4.2 Winner selection
 
 - **Default (manual):** After all N complete, orchestrator prints a summary table (score, cost, time, pending-diff size per run) and waits via `AskUserQuestion` — user picks winner number. Winner's worktree is promoted to the user's project worktree.
 - **`--auto-winner`:** highest quality-gate score wins; ties broken by cost (lower wins). Winner recorded in `state.bestof.winner`.
 - Non-winners: stashed under `.forge/bestof/<timestamp>/` for review. User can promote later manually.
+
+#### 4.4.4 Aggregate cost cap (`bestof.aggregate_cap_usd`)
+
+Per-run `cost_cap.usd` (Phase 2) applies to each of the N runs independently. Best-of-N adds an **aggregate** cap that sums across all N runs — a single budget for the bake-off.
+
+Config:
+
+```yaml
+bestof:
+  aggregate_cap_usd: 20.00      # 0 disables; any positive sets aggregate cap
+  action_on_aggregate_breach: ask   # ask | abort_remaining | warn_continue
+```
+
+Enforcement: fg-095 monitors `sum(cost.inc events)` across all N runs. On breach, action mirrors Phase 2's `cost_cap.action_on_breach` semantics but applied to the bake-off as a whole. `abort_remaining` cancels un-finished runs (ABORTED) while preserving completed-run state for winner selection.
+
+At PREFLIGHT, fg-095 estimates aggregate cost; if estimate exceeds `aggregate_cap_usd`, emit E2 `AskUserQuestion` with options: increase cap / proceed anyway / abort bake-off.
 
 #### 4.4.3 `shared/best-of-n.md` (contract doc)
 
@@ -211,8 +248,8 @@ Sections: (1) invocation + flag parsing, (2) sprint-orchestrator reuse, (3) mode
   ```
   [forge <stage>/10 <stage-name-short>] <agent-id> +$<delta> (run $<total>) • <tokens-K>
   ```
-- Suppressed when `caveman_mode: ultra` or `output_compression.level: ultra`.
-- Suppressed when running under TUI (TUI sets `FORGE_TUI_ACTIVE=1` env var; tracker detects and skips stderr line).
+- Suppressed when `caveman.output_mode: ultra` (per `shared/caveman.md` — independent from output_compression) OR `output_compression.default_level: minimal` (per `shared/output-compression.md`).
+- Suppressed when TUI is active. Single source of truth: orchestrator reads `state.json.tui.active` (set by `/forge-watch` on attach, cleared on exit). No separate `state.tui.active` env var (v1 review I3: two-mechanism suppression guarantees drift).
 
 ### 4.6 `shared/forge-watch-contract.md` (new)
 
@@ -224,7 +261,7 @@ Authoritative contract for the TUI's data consumption:
 - §4 Terminal size fallback rules
 - §5 Inline per-turn cost stderr format (§4.5)
 - §6 JSON snapshot schema for `--json` flag
-- §7 `FORGE_TUI_ACTIVE` env var semantics
+- §7 `state.tui.active` env var semantics
 - §8 Enforcement map (which bats file checks what)
 
 ### 4.7 State schema additions (`shared/state-schema.md` + `.json`)
@@ -266,9 +303,12 @@ observation:
   watch_auto_launch: false        # auto-launch TUI on /forge-run (opt-in)
 
 bestof:
-  max_n: 5                        # hard cap on --best-of N
+  max_n: 5                              # hard cap on --best-of N
   default_profiles: [opus, sonnet, haiku]
-  auto_winner: false              # default: manual pick
+  auto_winner: false                    # default: manual pick
+  aggregate_cap_usd: 20.00              # total spend ceiling across all N runs
+  action_on_aggregate_breach: ask       # ask | abort_remaining | warn_continue
+  loser_retention_days: 7               # auto-prune loser worktrees after N days
 ```
 
 ### 4.9 Documentation updates
@@ -285,7 +325,7 @@ bestof:
 
 None.
 
-### 5.2 Create (8 files)
+### 5.2 Create (9 files)
 
 ```
 shared/forge-watch.py                          # ~400 LOC curses TUI
@@ -293,16 +333,19 @@ shared/forge-watch-contract.md                 # contract doc
 shared/plan-branches.md                        # contract doc
 shared/best-of-n.md                            # contract doc
 skills/forge-watch/SKILL.md                    # dispatcher
+agents/fg-095-bestof-orchestrator.md           # NEW agent — dedicated best-of dispatcher
 tests/contract/live-observation.bats           # contract-level asserts
 tests/unit/forge-watch-renderer.bats           # non-TUI render unit test
 tests/fixtures/events/sample-run.jsonl         # renderer fixture
 ```
 
+`tests/fixtures/events/` directory does not exist yet — plan must `mkdir -p`.
+
 ### 5.3 Update in place
 
-**Agents (2):**
-- `agents/fg-100-orchestrator.md` — add `## § Plan branch dispatch`, `## § Best-of-N dispatch`, `## § TUI detection` sections; stderr ticker emission on cost.inc
-- `agents/fg-090-sprint-orchestrator.md` — add `best_of` mode branch in dispatcher
+**Agents (1, not 2 — fg-090 unchanged per v1 review I1):**
+- `agents/fg-100-orchestrator.md` — add `## § Plan branch dispatch`, `## § Best-of-N dispatch routing` (dispatches to fg-095), `## § TUI detection` sections; stderr ticker emission on cost.inc
+- ~~`agents/fg-090-sprint-orchestrator.md`~~ — **not modified**. Best-of has its own agent (fg-095) per v1 review I1.
 
 **Shared docs (3):**
 - `shared/state-schema.md` — bump 1.8.0 → 1.9.0; add `branch`, `bestof`, `tui` fields
@@ -323,13 +366,13 @@ tests/fixtures/events/sample-run.jsonl         # renderer fixture
 
 | Category | Count |
 |---|---|
-| Creations | 8 |
-| Agent updates | 2 |
+| Creations | 9 (+fg-095-bestof-orchestrator) |
+| Agent updates | 1 (fg-100 only; fg-090 unchanged) |
 | Shared doc updates | 3 |
 | Skill updates | 2 |
 | Config | 1 |
 | Top-level | 6 |
-| **Unique file operations** | **22** |
+| **Unique file operations** | **22** (9+1+3+2+1+6) |
 
 ## 6. Acceptance criteria
 
@@ -358,7 +401,13 @@ All verified by CI on push.
 
 **Static (bats + Python compile):**
 - `live-observation.bats` Group A: file existence, contract doc section counts, Python compile, SKILL.md contract compliance.
-- `live-observation.bats` Group B (gated on `FORGE_PHASE5_ACTIVE=1`): cross-file assertion that orchestrator's `## § TUI detection` references the same env var name (`FORGE_TUI_ACTIVE`) that the TUI sets, plus skill-count=40 check.
+- `live-observation.bats` Group B (gated on `FORGE_PHASE5_ACTIVE=1` sentinel):
+  - Cross-file: `shared/forge-watch.py` writes `state.tui.active = true` on startup + clears on exit; orchestrator's `## § TUI detection` reads `state.tui.active`. Grep both files for symmetrical pattern.
+  - `skill-count = 40` check.
+  - **Stderr ticker (C4 fix):** grep `agents/fg-100-orchestrator.md` for the exact ticker format string from `shared/forge-watch-contract.md §5` (`[forge <stage>/10 <stage-name-short>] <agent-id> +$<delta> (run $<total>) • <tokens-K>`).
+  - Grep orchestrator for suppression logic: must reference `state.tui.active` AND one of `caveman.output_mode` / `output_compression.default_level`.
+  - `/forge-watch` key-binding table (§4.1) → assert all 9 keys documented in `shared/forge-watch-contract.md §3`.
+  - `/forge-run --best-of N` dispatches `fg-095-bestof-orchestrator` (grep fg-100-orchestrator routing).
 
 **Runtime (bats — non-interactive):**
 - `tests/unit/forge-watch-renderer.bats`: invoke `forge-watch.py --json --fixture tests/fixtures/events/sample-run.jsonl` and assert JSON snapshot schema (stage, cost_usd, agents[], events_tail[]).
@@ -375,7 +424,7 @@ All verified by CI on push.
 | TUI redraw racing with orchestrator writes to events.jsonl | Low | Low | Phase 2 mkdir-lock already serializes writes; reader is non-locking (tail -f pattern with seek) — eventual consistency is fine |
 | Best-of-N cost cap confusion (per-run vs aggregate) | Medium | Medium | `shared/best-of-n.md §7` documents that `cost_cap` applies per-run; aggregate-cap is a future opt-in. User can set `bestof.aggregate_cap_usd` (new, optional) |
 | Plan branches + best-of-N combination explodes state tree | Low | High | Orchestrator rejects `--branch` + `--best-of N>1` with explicit error (spec §4.3.4) |
-| TUI sub-pane invocations of `/forge-apply` from key bindings bypass Phase 4 confirmation flow | Low | Medium | Key `a` sets `FORGE_TUI_BYPASS_CONFIRM=1`; orchestrator rejects unless TUI also sets a one-time token. Documented contract: `a` IS confirmation (TUI's pane diff already shown) |
+| TUI key `a` during active APPLY_GATE races the orchestrator's AskUserQuestion | Low | Low | Key `a` is enabled **only in APPLY_GATE_WAIT** (not APPLY_GATE) per §4.1 key-binding table. In APPLY_GATE the orchestrator's AskUserQuestion is modal — TUI doesn't offer `a`. No bypass token needed. |
 | Terminal resize mid-run corrupts pane layout | Medium | Low | `curses.KEY_RESIZE` handler recomputes layout; fallback to single-column on <80 cols |
 | `$EDITOR` launch from `e` key doesn't restore curses state cleanly | Medium | Medium | Wrap in `curses.endwin()` / restore pattern; test on vim, nano, VS Code `code --wait` |
 | Python 3 unavailable at runtime | Low | Medium | Phase 3 prereq check covers bash+python3 as required deps; failure at `/forge-init` catches it |
@@ -391,7 +440,7 @@ All verified by CI on push.
 3. **Commit 3 — TUI + skill.** Full curses TUI in `forge-watch.py`; `skills/forge-watch/SKILL.md` dispatcher; `tests/contract/live-observation.bats` + `tests/unit/forge-watch-renderer.bats`. Group A active; Group B gated. CI green.
 4. **Commit 4 — Orchestrator branch-dispatch + flag parsing.** `fg-100-orchestrator` gets `--branch` handling; `/forge-run` SKILL.md gains flags. CI green.
 5. **Commit 5 — Orchestrator best-of + sprint reuse.** `fg-100-orchestrator` + `fg-090-sprint-orchestrator` get `best_of` mode + winner selection. CI green.
-6. **Commit 6 — Inline cost ticker.** Orchestrator stderr emission on `cost.inc`; respects `FORGE_TUI_ACTIVE` env. CI green.
+6. **Commit 6 — Inline cost ticker.** Orchestrator stderr emission on `cost.inc`; respects `state.tui.active` env. CI green.
 7. **Commit 7 — Schema bump + config + observability-contract cross-ref.** `state-schema.md/json` → 1.9.0; `config-schema.json` new fields; `observability-contract.md §11`. CI green.
 8. **Commit 8 — Top-level docs + version bump + sentinel.** README, CLAUDE, CHANGELOG, docs/control-safety.md, plugin.json, marketplace.json → 4.1.0. `FORGE_PHASE5_ACTIVE=1` sentinel activates Group B. CI green.
 9. **Push → CI → tag `v4.1.0` → release.**
