@@ -11,7 +11,7 @@
 
 ## 1. Goal
 
-Give the user a **steering wheel during a long autonomous run**. Today's control points are start (user invokes `/forge-run`) and end (user approves the PR). Phase 4 adds four continuous control mechanisms: (1) preview-before-apply via a `.forge/pending/` staging overlay; (2) an editable plan file the user can tweak before implementation begins; (3) tiered auto-approve scopes (`read_test`, `write`, `apply`, `deploy`) so autonomous mode is configurable rather than all-or-nothing; (4) a formal 4-level escalation taxonomy so error-escalation flows are auditable and consistent.
+Give the user a **steering wheel during a long autonomous run**. Today's control points are start (user invokes `/forge-run`) and end (user approves the PR). Phase 4 adds four continuous control mechanisms: (1) preview-before-apply via a `.forge/pending/` staging overlay; (2) an editable plan file the user can tweak before implementation begins; (3) tiered auto-approve scopes (`test_exec`, `write`, `apply`, `deploy`) so autonomous mode is configurable rather than all-or-nothing; (4) a formal 4-level escalation taxonomy so error-escalation flows are auditable and consistent.
 
 ## 2. Context and motivation
 
@@ -73,16 +73,42 @@ Subcommands:
   read <relative-path>       Print file contents (prefers pending over worktree).
                              Exits 2 if neither exists.
   exists <relative-path>     Returns 0 if file exists in pending or worktree.
-  overlay-view <out-dir>     Copies worktree into out-dir, then overlays pending.
-                             Used by inner-loop test/lint execution.
-  diff                        Emit unified diff of pending vs worktree (used by
-                             /forge-preview).
+  overlay-view                Returns the path to the overlay scratch dir,
+                             incrementally-updated since last call. Used by
+                             inner-loop test/lint execution.
+  diff                        Emit unified diff of pending vs worktree
+                             (used by /forge-preview).
+  containment-check <path>   Validates `path` canonicalizes to within
+                             `.forge/pending/` (uses platform.sh safe_realpath).
+                             Exits 1 if outside. Used by fg-300-implementer
+                             write-path guard.
 ```
 
-Behavior:
-- `read`: `[[ -f .forge/pending/$path ]] && cat .forge/pending/$path || cat .forge/worktree/$path`
-- `overlay-view`: `rsync -a .forge/worktree/ $out/` then `rsync -a .forge/pending/ $out/`
-- `diff`: `diff -Nur .forge/worktree .forge/pending` with `-x .git`
+**Behavior:**
+
+- `read`: `[[ -f .forge/pending/$path ]] && cat .forge/pending/$path || cat .forge/worktree/$path`.
+
+- `overlay-view` (incremental-rsync strategy, per review C4): Uses a persistent scratch dir `.forge/overlay/` that mirrors worktree+pending:
+  ```
+  _scratch=".forge/overlay"
+  if [[ ! -d "$_scratch" ]]; then
+    # First call: full mirror of worktree (one-time cost, ~15s on 10K-file project)
+    mkdir -p "$_scratch"
+    rsync -a --delete-excluded \
+      --exclude='.git/' --exclude='node_modules/' \
+      .forge/worktree/ "$_scratch/"
+  fi
+  # Every call: sync only pending (O(pending-files), typically <1s)
+  rsync -a .forge/pending/ "$_scratch/"
+  printf '%s' "$_scratch"
+  ```
+  The worktree layer is refreshed only on PREFLIGHT (pipeline start) or on `state.last_commit_sha` change — detected by comparing the sha against a marker file `.forge/overlay/.sha`. Inner loop (10+ cycles per task) pays O(pending-files) per cycle, not O(worktree).
+
+  `acquire_lock_with_retry ".forge/overlay/.lock"` wraps the pending rsync so concurrent dispatches (sprint mode) serialize overlay mutations; `release_lock` on return.
+
+- `diff`: `diff -Nur -x .git -x node_modules .forge/worktree .forge/pending`.
+
+- `containment-check <path>`: uses `platform.sh::safe_realpath` to canonicalize and compare against `$(safe_realpath .forge/pending)` — rejects symlink escapes. Called by implementer write-path guard.
 
 #### 4.1.4 New skills — `/forge-preview`, `/forge-apply`, `/forge-reject`
 
@@ -92,19 +118,33 @@ Behavior:
 - Exit codes per `shared/skill-contract.md`
 
 **`/forge-apply`** — `[writes]`:
-- Promotes `.forge/pending/` → `.forge/worktree/` via:
+- Promotes `.forge/pending/` → `.forge/worktree/` under an exclusive lock:
   ```bash
+  source "${CLAUDE_PLUGIN_ROOT}/shared/platform.sh"
+  acquire_lock_with_retry ".forge/apply.lock" 50 20 \
+    || { echo "ERROR: could not acquire apply lock" >&2; exit 1; }
+  trap 'release_lock ".forge/apply.lock"' EXIT
+
   rsync -a .forge/pending/ .forge/worktree/
   rm -rf .forge/pending
+  # Also invalidate overlay cache marker so next overlay-view rebuilds
+  rm -f .forge/overlay/.sha
   ```
 - `--dry-run` lists files that would be promoted, does not write
 - Emits `apply.committed` event to `.forge/events.jsonl`
 - State transition: APPLY_GATE → IMPLEMENTING (next task) OR → VERIFYING (last task)
 
 **`/forge-reject`** — `[writes]`:
-- Discards `.forge/pending/` via `rm -rf`
+- Discards `.forge/pending/` via `rm -rf` under the same lock as apply (prevents rsync-during-rm race):
+  ```bash
+  source "${CLAUDE_PLUGIN_ROOT}/shared/platform.sh"
+  acquire_lock_with_retry ".forge/apply.lock" 50 20 || exit 1
+  trap 'release_lock ".forge/apply.lock"' EXIT
+  rm -rf .forge/pending
+  rm -f .forge/overlay/.sha
+  ```
 - `--dry-run` lists files that would be discarded
-- Requires confirmation via `AskUserQuestion` unless `FORGE_DRY_RUN=1` or autonomous mode with `scopes: [... reject]` (not a default scope)
+- Requires confirmation via `AskUserQuestion` **always** — not scoped under autonomous (reject is user-driven recovery)
 - Emits `apply.rejected` event
 - State transition: APPLY_GATE → IMPLEMENTING (task retried with user's REVISE notes) OR → ESCALATED if `feedback_loop_count >= 2`
 
@@ -170,7 +210,7 @@ At the end of PLAN stage, planner writes the full plan markdown to `.forge/plans
 1. Write plan to `.forge/plans/current.md`.
 2. Copy to `.forge/plans/archive/<ISO-timestamp>.md` (pre-validate snapshot).
 3. Compute SHA256 of current.md; write to `state.json.plan.sha256`.
-4. Emit `state.story_state: PLAN_EDIT_WAIT` (non-autonomous) or transition directly to VALIDATING (autonomous, scope `read_test` only).
+4. Emit `state.story_state: PLAN_EDIT_WAIT` (non-autonomous) or transition directly to VALIDATING (autonomous, scope `test_exec` only).
 5. `EnterPlanMode` invoked with `<content of .forge/plans/current.md>` — user still sees the plan in the existing approval UI, but the source is the file.
 
 #### 4.2.3 `fg-210-validator.md` contract change
@@ -196,7 +236,7 @@ Spec AC asserts this two-path behavior.
 
 `[writes]` — signals plan editing is complete. Transitions `PLAN_EDIT_WAIT` → `VALIDATING`. Minimal body: read state, update, emit transition event.
 
-No `--dry-run` (it's a state flip; no file writes beyond state.json).
+**`--dry-run` behavior (Phase 1 skill-contract compliance):** with `--dry-run`, prints the pending transition (`PLAN_EDIT_WAIT → VALIDATING`) + current plan SHA256, does NOT flip state.json. Required by `shared/skill-contract.md §2` rule 5 (all mutating skills must expose `--dry-run`).
 
 ### 4.3 Tiered auto-approve scopes
 
@@ -208,7 +248,7 @@ No `--dry-run` (it's a state flip; no file writes beyond state.json).
 autonomous:
   enabled: true             # unchanged from Phase 2
   scopes:                   # NEW: list of auto-approved action classes
-    - read_test
+    - test_exec
     - write
   # absent or empty → no auto-approval even if enabled: true
 ```
@@ -221,22 +261,36 @@ Scope definitions:
 
 | Scope | Action classes covered | Examples |
 |---|---|---|
-| `read_test` | Reads, static analysis, test execution, lint, build (no source mutation) | `cat file.ts`, `pnpm test`, `ruff check`, `bash -n script.sh` |
+| `test_exec` | Reads, static analysis, test execution, lint, build (no source mutation) | `cat file.ts`, `pnpm test`, `ruff check`, `bash -n script.sh` |
 | `write` | Writes to `.forge/pending/` only | `fg-300-implementer` writes |
 | `apply` | Promotes pending → worktree | `/forge-apply`, orchestrator APPLY_GATE auto-advance |
 | `deploy` | External side-effects | `git push`, `gh pr create`, `gh release create`, PR comments |
 
 **Default scope sets:**
-- `autonomous: { enabled: true, scopes: [read_test] }` — conservative default; pipeline runs read-only tests but pauses at every write/apply/deploy
-- `autonomous: { enabled: true, scopes: [read_test, write] }` — **recommended default** for automation-friendly users; implementer runs but APPLY_GATE pauses for review
-- `autonomous: { enabled: true, scopes: [read_test, write, apply] }` — trust-based; only `deploy` still gates
-- `autonomous: { enabled: true, scopes: [read_test, write, apply, deploy] }` — full autonomous (equivalent to current `autonomous: true`)
+- `autonomous: { enabled: true, scopes: [test_exec] }` — conservative default; pipeline runs read-only tests but pauses at every write/apply/deploy
+- `autonomous: { enabled: true, scopes: [test_exec, write] }` — **recommended default** for automation-friendly users; implementer runs but APPLY_GATE pauses for review
+- `autonomous: { enabled: true, scopes: [test_exec, write, apply] }` — trust-based; only `deploy` still gates
+- `autonomous: { enabled: true, scopes: [test_exec, write, apply, deploy] }` — full autonomous (equivalent to current `autonomous: true`)
 - `autonomous: { enabled: false }` — all scopes gate (equivalent to current default)
 
-Migration from 3.x config:
-- `autonomous: true` (old) → `autonomous: { enabled: true, scopes: [read_test, write, apply, deploy] }` (new)
+**PREFLIGHT in-memory normalization (explicit — resolves C2):**
+
+Orchestrator at PREFLIGHT reads `autonomous` config. If the value is a scalar boolean:
+
+```
+if autonomous == true:
+    autonomous := { enabled: true, scopes: ["test_exec", "write", "apply", "deploy"] }
+elif autonomous == false:
+    autonomous := { enabled: false, scopes: [] }
+```
+
+This rewrite happens **in-memory only** — the user's `forge-config.md` / `forge.local.md` stays as-is. An advisory `config.autonomous_legacy_scalar` event is emitted so the user can migrate the file at their leisure. All subsequent scope-gate code (§4.3.3) operates on the normalized object form.
+
+**Empty-scopes case (resolves I7):** `{ enabled: true, scopes: [] }` is permitted and behaves identically to `{ enabled: false }` — orchestrator emits `config.autonomous_enabled_but_empty_scopes` advisory at PREFLIGHT so the user catches the misconfiguration.
+
+Migration cheat sheet (documented in `DEPRECATIONS.md ## Changed in 4.0.0`):
+- `autonomous: true` (old) → `autonomous: { enabled: true, scopes: [test_exec, write, apply, deploy] }` (recommended explicit form)
 - `autonomous: false` (old) → `autonomous: { enabled: false }`
-- Orchestrator on startup detects old scalar form, logs a warning event `config.autonomous_legacy_scalar`, interprets as above. No BC shim in code beyond detection (per user's no-BC rule — document in `DEPRECATIONS.md ## Changed in 4.0.0`).
 
 #### 4.3.3 Orchestrator scope check
 
@@ -259,8 +313,29 @@ If `false`, orchestrator emits E2 `AskUserQuestion` (per §4.4). If `true`, proc
 |---|---|---|---|---|---|
 | **E1 advisory** | Non-blocking info (recovered transient error, scope auto-approved, plan edit detected) | Event `escalation.e1` on `.forge/events.jsonl` with `{level, source_agent, message, stage}`. Shown in `/forge-status`. | None | N/A | No transition |
 | **E2 decision** | Recoverable decision point (scope gate, FAIL verdict, LINT_FAILURE after retries) | Event `escalation.e2` + `AskUserQuestion` using Pattern 3 (safe-default). Must reference `docs/error-recovery.md#<anchor>`. | User picks option; orchestrator acts | User choice directs flow | Stays in current stage |
-| **E3 data-risk** | Potential data loss or destructive operation mid-run (>100 lines deleted, bulk rm, force-push candidate) | Event `escalation.e3` + alert in `.forge/alerts.json` + `AskUserQuestion` with options `[roll back, continue, abort]` | User choice; orchestrator can invoke `git reset --hard $prev_sha` for rollback | `git reset` to pre-stage SHA OR discard pending | Pauses until user responds |
-| **E4 abort** | Unrecoverable (E3 rollback failed, recovery budget exhausted, user `/forge-abort`) | Event `escalation.e4` + alert; NO `AskUserQuestion` (user already committed) | None | None; use `/forge-run` to start over | `state.story_state → ABORTED`; `state.abort_reason` populated |
+| **E3 data-risk** | Potential data loss or destructive operation mid-run (>100 lines deleted, bulk rm, force-push candidate) | Event `escalation.e3` + alert in `.forge/alerts.json` + `AskUserQuestion` with 4 explicit options (see below) | User picks one of three rollback modes + "continue anyway" + "abort" | See E3 rollback modes below | Pauses until user responds |
+
+**E3 rollback modes (resolves C3).** The `AskUserQuestion` emits these four options, labeled explicitly — the orchestrator NEVER picks on behalf of the user:
+
+1. **`rollback-pending`** (safest) — `rm -rf .forge/pending`. No git state touched. Recovers from destructive pending work before it's been applied. Used when the destructive op is in the yet-unapplied overlay.
+2. **`rollback-commits-soft`** — `git revert --no-commit $pipeline_shas && git commit` to create an inverse commit. Preserves user's uncommitted worktree edits. Used when destructive commits are already in place and user has unrelated WIP.
+3. **`rollback-commits-hard`** — `git reset --hard $state.last_commit_sha`. **Destroys uncommitted worktree changes.** Guard: orchestrator checks `git rev-parse HEAD == state.last_commit_sha`; if not (user committed over pipeline SHA), this option is labeled `(disabled — user commits present)` and cannot be selected. Otherwise, proceeds and emits `rollback.hard_reset` event.
+4. **`continue-anyway`** — proceed with the destructive operation. Recorded in `state.e3_overrides[]` for retrospective review.
+5. **`abort`** — transition to E4 ABORTED.
+
+No option "just discards pending OR resets, orchestrator chooses." Ambiguity removed.
+| **E4 abort** | Unrecoverable (E3 rollback failed, recovery budget exhausted, user `/forge-abort`) | Event `escalation.e4` + alert; NO `AskUserQuestion` (user already committed) | None | None; use `/forge-run` to start over | `state.story_state → ABORTED`; `state.abort_reason` populated with enum value |
+
+**`state.abort_reason` enum** (new in 1.8.0 schema):
+
+| Value | Set by |
+|---|---|
+| `"e4"` | Agent-emitted E4; `state.abort_context = {agent_id, reason}` populated |
+| `"user_abort"` | User invoked `/forge-abort` via skill |
+| `"wait_state_abort"` | User invoked `/forge-abort` from PLAN_EDIT_WAIT or APPLY_GATE_WAIT (subset of `user_abort`) |
+| `"budget_exhausted"` | Recovery budget / cost cap hit without user override |
+| `"pr_rejected_design"` | Existing value (post-run retrospective path) |
+| `"e3_rollback_failed"` | E3 rollback attempt failed and user declined `continue-anyway` |
 
 #### 4.4.2 Emission contract
 
@@ -305,21 +380,35 @@ Agents in forbidden stages that emit `stage_note.ask_user` trigger orchestrator 
 
 ### 4.6 State machine updates (`shared/state-transitions.md`)
 
-New transitions:
+**New transitions (9):**
 
 ```
-PLANNING      →  PLAN_EDIT_WAIT    # non-autonomous, plan written
-PLAN_EDIT_WAIT → VALIDATING        # /forge-plan-done OR /forge-run --resume OR autonomous + read_test scope
-IMPLEMENTING  →  APPLY_GATE        # task complete
-APPLY_GATE    →  IMPLEMENTING      # "reject" chosen, task retries
-APPLY_GATE    →  APPLY_GATE_WAIT   # "keep staged" chosen
-APPLY_GATE    →  VERIFYING         # "apply" chosen OR autonomous + apply scope
-APPLY_GATE_WAIT → APPLY_GATE       # /forge-apply OR /forge-reject invoked
-PLAN_EDIT_WAIT → ABORTED           # /forge-abort
-APPLY_GATE_WAIT → ABORTED          # /forge-abort
+PLANNING         → PLAN_EDIT_WAIT    # non-autonomous, plan written
+PLAN_EDIT_WAIT   → VALIDATING        # /forge-plan-done OR /forge-run --resume OR autonomous + test_exec scope
+PLAN_EDIT_WAIT   → ESCALATED         # plan file deleted mid-wait OR sha256 corruption (E3 data-risk)
+IMPLEMENTING     → APPLY_GATE        # task complete
+APPLY_GATE       → IMPLEMENTING      # "reject" chosen, task retries
+APPLY_GATE       → APPLY_GATE_WAIT   # "keep staged" chosen
+APPLY_GATE       → VERIFYING         # "apply" chosen OR autonomous + apply scope
+APPLY_GATE       → ESCALATED         # E3 emitted during gate (pending exceeds destructive threshold)
+APPLY_GATE_WAIT  → VERIFYING         # /forge-apply invoked directly from wait (single atomic transition; no APPLY_GATE re-render)
 ```
 
-Plus existing transitions to ABORTED/ESCALATED from new states.
+**ABORTED coverage via existing E9:** `/forge-abort` from `PLAN_EDIT_WAIT` and `APPLY_GATE_WAIT` is covered by existing `shared/state-transitions.md:87` E9 transition (`ANY (not COMPLETE, not ABORTED) → ABORTED on user_abort_direct`). When user aborts from a wait state, orchestrator sets `state.abort_reason = "wait_state_abort"` and discards pending (`rm -rf .forge/pending`) as a side effect. No new transition rows needed.
+
+**`APPLY_GATE_WAIT → IMPLEMENTING`** (user invokes `/forge-reject` from wait): atomic — orchestrator processes `/forge-reject` as if the user had chosen "reject" at the live gate; no observable APPLY_GATE render.
+
+### 4.6.1 Mid-stage `ask_user` idempotency contract (resolves C6)
+
+Any agent that emits `stage_note.ask_user` MUST persist a resume cursor to `state.json.components[].mid_stage_cursor` BEFORE emitting. Cursor schema:
+
+```json
+{"agent_id": "fg-300-implementer", "task_id": "task-2-of-3", "step": 4, "payload": {...agent-specific...}}
+```
+
+Orchestrator injects BOTH `ask_user_answer` AND the preserved `mid_stage_cursor` back into the re-dispatch input. If the cursor is absent (agent hasn't implemented the contract), orchestrator re-dispatches from scratch — safe fallback.
+
+Agents declare support via frontmatter `ui: { mid_stage_ask: true }`. Phase 1's `tests/contract/ui-frontmatter-consistency.bats` (extended here) asserts that any agent with `mid_stage_ask: true` also has `TaskCreate` / `TaskUpdate` / `AskUserQuestion` in `tools:`.
 
 ### 4.7 Documentation updates
 
@@ -336,7 +425,7 @@ Plus existing transitions to ABORTED/ESCALATED from new states.
 
 None.
 
-### 5.2 Create (11)
+### 5.2 Create (12)
 
 ```
 shared/staging-overlay.md                  # contract doc
