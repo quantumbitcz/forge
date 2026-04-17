@@ -91,7 +91,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
@@ -1174,6 +1174,16 @@ If Linear is available, a summarized version (max 2,000 chars) is posted as a co
 
 ---
 
+## Orchestrator Input Payload
+
+When `fg-100-orchestrator` is dispatched as a subagent (by a `/forge-*` skill or nested invocation), the skill passes an input payload describing the requested operation. The orchestrator parses this payload at entry and routes accordingly.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. |
+
+---
+
 ## Checkpoint Persistence
 
 Checkpoints enable mid-pipeline resume after interruption.
@@ -1217,3 +1227,10 @@ Checkpoints enable mid-pipeline resume after interruption.
 - Checkpoints survive `/forge-recover resume` (that's their purpose)
 - Checkpoints are cleared by `/forge-recover reset` and pipeline completion
 - Checkpoints do NOT survive `rm -rf .forge/`
+
+---
+
+## Changelog
+
+### 1.7.0 (Forge 3.0.0)
+- Add `recovery_op` field to orchestrator input payload (Phase 1 skill surface consolidation).
