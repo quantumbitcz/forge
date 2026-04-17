@@ -6,6 +6,8 @@
 
 **Architecture:** 9 logical commits in one PR. Group A/B sentinel pattern: `FORGE_PHASE5_ACTIVE=1` activates at Commit 8 when 9 new files + orchestrator TUI section + schema 1.9.0 all present.
 
+**Known design gap (v1 plan review I3, inherited from spec):** TUI key bindings `a`, `P`, `R`, `e` invoke Claude Code skills from a Python process — but Claude Code skills are dispatched by the agent protocol, not as shell commands. Phase 5 ships the TUI with these keys implemented as **trigger-file writes**: pressing `a` writes `.forge/tui-request.json` with `{"action": "apply", "timestamp": "..."}`; the orchestrator's next turn reads + consumes it. User-perceived latency: up to one orchestrator poll cycle (typically &lt;2s at APPLY_GATE_WAIT since the state is idle). Documented in `shared/forge-watch-contract.md §3` as "async key bindings; requires orchestrator attention to action". Full integration deferred to a future phase (likely Phase 7's Go binary, which can subprocess-invoke shell). In 4.1.0 the feature is usable but asynchronous.
+
 **Tech Stack:** Python 3 (stdlib `curses`), Bash, Bats. No pip dependencies.
 
 **Verification:** No local runs. Static parse only (`python3 -m py_compile`, `bash -n`). CI validates on push.
@@ -17,19 +19,31 @@
 
 ## Task 0: Verify Phase 4 preconditions
 
-- [ ] **Step 1: Verify plugin at 4.0.0 and Phase 4 deliverables present**
+- [ ] **Step 1: Verify plugin at 4.0.0 and all prior-phase deliverables present**
 
 ```bash
+# Phase 4 (implies 1-3)
 grep '"version": "4.0.0"' .claude-plugin/plugin.json || { echo "ABORT: Phase 4 not merged"; exit 1; }
-test -f shared/staging-overlay.md                    || { echo "ABORT: Phase 4 missing staging-overlay"; exit 1; }
-test -f shared/escalation-taxonomy.md                || { echo "ABORT: Phase 4 missing escalation-taxonomy"; exit 1; }
-test -f shared/forge-resolve-file.sh                 || { echo "ABORT: Phase 4 missing resolve-file"; exit 1; }
-test -f docs/control-safety.md                       || { echo "ABORT: Phase 4 missing control-safety doc"; exit 1; }
+test -f shared/staging-overlay.md                    || { echo "ABORT: Phase 4 staging-overlay missing"; exit 1; }
+test -f shared/escalation-taxonomy.md                || { echo "ABORT: Phase 4 escalation-taxonomy missing"; exit 1; }
+test -f shared/forge-resolve-file.sh                 || { echo "ABORT: Phase 4 resolve-file missing"; exit 1; }
+test -f docs/control-safety.md                       || { echo "ABORT: Phase 4 control-safety doc missing"; exit 1; }
 grep -q '"version": "1.8.0"' shared/state-schema.md  || { echo "ABORT: Phase 4 schema bump missing"; exit 1; }
 test -d skills/forge-apply                           || { echo "ABORT: Phase 4 forge-apply skill missing"; exit 1; }
 
-# Phase 3 Python 3 required-prereq check
-python3 -c "import curses" 2>/dev/null               || { echo "WARN: curses import failed — TUI only in WSL/macOS/Linux"; }
+# Phase 1 (explicit checks — our new SKILL.md references skill-contract)
+test -f shared/skill-contract.md                     || { echo "ABORT: Phase 1 skill-contract.md missing"; exit 1; }
+test -f shared/agent-colors.md                       || { echo "ABORT: Phase 1 agent-colors.md missing"; exit 1; }
+
+# Skill count check — after Phase 4, should be 39 (was 35 after Phase 1 + 4 new from Phase 4)
+count=$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+[ "$count" = "39" ] || { echo "ABORT: expected 39 skills after Phase 4, got $count"; exit 1; }
+
+# Phase 1 forge-run must already have ## Flags section (Phase 1 skill-contract requirement)
+grep -q '^## Flags' skills/forge-run/SKILL.md        || { echo "ABORT: forge-run/SKILL.md missing ## Flags section (Phase 1 contract not applied)"; exit 1; }
+
+# Python 3 + curses
+python3 -c "import curses" 2>/dev/null               || { echo "WARN: curses import failed — TUI requires WSL/macOS/Linux"; }
 ```
 
 All fatal checks must pass.
@@ -171,7 +185,9 @@ Include §2 per-run forge.local.md override mechanism; §7 cost-cap interaction 
 
 - [ ] **Step 1: Write the TUI skeleton** (~400 LOC target)
 
-Key structure (pseudocode — full implementation in commit 3):
+**Important (v1 review C1):** Commit 2 ships a *functional minimal skeleton* — the `--help` and `--json` paths MUST produce valid output so Group A bats tests pass at Commit 2. Full curses TUI lands in Commit 3.
+
+Working minimal skeleton:
 
 ```python
 #!/usr/bin/env python3
@@ -180,7 +196,7 @@ Key structure (pseudocode — full implementation in commit 3):
 Reads .forge/events.jsonl and .forge/state.json; renders 3-pane layout.
 See shared/forge-watch-contract.md for the authoritative contract.
 """
-import curses
+import argparse
 import json
 import os
 import sys
@@ -192,8 +208,12 @@ FORGE_DIR = Path(".forge")
 REFRESH_MS = 500
 
 def parse_args(argv):
-    """Parse --help, --json, --run <id>, --bestof flags."""
-    ...
+    """Parse CLI flags."""
+    p = argparse.ArgumentParser(prog="forge-watch", description=__doc__)
+    p.add_argument("--json", action="store_true", help="Emit one JSON snapshot and exit")
+    p.add_argument("--run", metavar="ID", help="Attach to specific sprint/best-of run")
+    p.add_argument("--bestof", action="store_true", help="Summary view of all best-of runs")
+    return p.parse_args(argv)
 
 def load_state():
     """Read .forge/state.json; return dict or None."""
@@ -240,27 +260,46 @@ def mark_tui_active(active: bool):
     """Atomically update state.json.tui.active."""
     ...
 
-def main():
-    args = parse_args(sys.argv[1:])
-    if args.help:
-        print(__doc__)
-        return 0
+def main(argv=None):
+    args = parse_args(sys.argv[1:] if argv is None else argv)
     if args.json:
-        state = load_state()
-        events = list(tail_events(...))[-20:]
-        render_json_snapshot(state, events)
+        state = load_state() or {}
+        events_path = FORGE_DIR / "events.jsonl"
+        if args.run:
+            events_path = FORGE_DIR / "runs" / args.run / "events.jsonl"
+        events = []
+        if events_path.exists():
+            with open(events_path) as f:
+                events = [json.loads(line) for line in f if line.strip()][-20:]
+        snapshot = {
+            "run_id": state.get("run_id"),
+            "stage": {
+                "n": state.get("stage_n"),
+                "name": state.get("story_state"),
+                "elapsed_s": state.get("stage_elapsed_s"),
+            },
+            "cost": state.get("cost", {}),
+            "tokens": state.get("tokens", {}),
+            "agents": state.get("agents", []),
+            "events_tail": events,
+            "pending": state.get("pending", {}),
+        }
+        print(json.dumps(snapshot, indent=2))
         return 0
-    # Check curses availability (Windows-native fails here)
     try:
-        import _curses
+        import curses  # noqa: F401
+        import _curses  # noqa: F401
     except ImportError:
         print("TUI requires WSL2 or Linux/macOS. Use --json mode on Windows.", file=sys.stderr)
         return 2
+    import curses
     return curses.wrapper(render_tui)
 
 if __name__ == "__main__":
     sys.exit(main())
 ```
+
+`argparse` automatically handles `--help` with a proper help message derived from the docstring + argument definitions. No manual help-handling needed. `--json` works on Commit 2 (reads state.json + events.jsonl, produces schema-compliant output). Full curses body lands in Commit 3.
 
 - [ ] **Step 2: Make executable + compile-check**
 
@@ -320,10 +359,23 @@ Dispatches `python3 ${CLAUDE_PLUGIN_ROOT}/shared/forge-watch.py "$@"`. Terminal 
 
 - [ ] **Step 1: Write the new agent**
 
+**Color assignment (v1 review C2 — pink collides with fg-015 in Pre-pipeline cluster):**
+
+fg-095 joins the **Pre-pipeline cluster** (same family as fg-010/fg-015/fg-020/fg-050/fg-090). Pre-pipeline colors in use per Phase 1 §4.6: `magenta`, `pink`, `purple`, `orange`, `coral`. **Assign `navy`** to fg-095 (unused in this cluster).
+
+Task 5 ALSO updates `shared/agent-colors.md` (Phase 1 deliverable) — add fg-095 row to cluster table:
+
+```markdown
+| fg-095-bestof-orchestrator | Pre-pipeline | navy |
+```
+
 Full `.md` with:
-- Frontmatter: `name: fg-095-bestof-orchestrator`, `color: pink` (or unused Phase 1 palette color — verify), `ui: { tasks: true, ask: true, plan_mode: true }`, tools include TaskCreate/TaskUpdate/AskUserQuestion/Agent
+- Frontmatter: `name: fg-095-bestof-orchestrator`, `color: navy`, `ui: { tasks: true, ask: true, plan_mode: true }`, tools: `[Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, TaskCreate, TaskUpdate, EnterPlanMode, ExitPlanMode]`
+- **Description: 50-80 prose words** (Tier 1 contract per Phase 1 §4.5) with embedded `<example>` block. Model the shape after `fg-090-sprint-orchestrator.md`'s description.
 - Body with 7 phase sections matching spec §4.4.1 table: INPUT, PREFLIGHT, DISPATCH, MONITOR, SELECT, PROMOTE, CLEANUP
-- `## User-interaction examples` section (Phase 1 Tier 1 requirement — it has ui.ask:true) with the SELECT-phase AskUserQuestion payload for winner selection
+- `## User-interaction examples` section (Phase 1 Tier 1 requirement) with the SELECT-phase `AskUserQuestion` payload for winner selection (single-choice with preview; 3-5 winner options + abort)
+
+Verify the updated `shared/agent-colors.md` cluster table still satisfies cluster-scoped uniqueness (the Phase 1 bats assertion).
 
 - [ ] **Step 2: Held for commit in Task 8**
 
@@ -528,15 +580,20 @@ On invocation with `--branch <name>`:
 Documented in `shared/plan-branches.md`.
 ```
 
-- [ ] **Step 2: Update `skills/forge-run/SKILL.md` — add --branch, --best-of, --profiles, --auto-winner flags**
+- [ ] **Step 2: Update `skills/forge-run/SKILL.md` — add 4 new flags**
 
-Add to existing `## Flags`:
-```
+Task 0 already verified the `## Flags` section exists (Phase 1 contract). Locate it and append:
+
+```markdown
 - **--branch <name>**: create/continue a plan branch at .forge/plans/branches/<name>/
 - **--best-of <N>**: dispatch fg-095-bestof-orchestrator for N model profiles (2 ≤ N ≤ 5)
 - **--profiles <csv>**: model profiles for --best-of (required if N > 3)
 - **--auto-winner**: auto-select winner by quality-gate score (requires --best-of)
 ```
+
+Also update the `## Instructions` / routing table (§Step 4 intent classification in the existing SKILL.md body) to add a new routing branch:
+- `--best-of N` → dispatch `fg-100-orchestrator` with payload `{mode: "best_of", n: N, profiles: [...], auto_winner: bool}`; fg-100 then dispatches fg-095 (per Task 10 Step 1 Best-of-N dispatch routing section).
+- `--branch <name>` → dispatch `fg-100-orchestrator` with payload `{mode: "branch", branch_name: "<name>"}`.
 
 - [ ] **Step 3: Commit**
 
