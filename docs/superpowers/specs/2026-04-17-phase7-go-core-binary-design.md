@@ -142,6 +142,27 @@ Bash wrapper becomes:
 exec "${PLUGIN_ROOT}/shared/bin/forge-core-${os}-${arch}${ext}" cost record "$@"
 ```
 
+### 4.4a `cost-alerting.sh` interaction (v1 review C3 resolved)
+
+`shared/cost-alerting.sh` (431 lines — Phase 2) is the alert emitter for cost-cap breaches + token-budget thresholds. Phase 7's `forge-core cost record` invokes it as a subprocess after every cost update:
+
+```go
+// core/internal/cost/record.go (excerpt)
+func (r *Recorder) Record(...) error {
+    // ... compute new cost + append cost.inc event ...
+
+    // Delegate alerting to bash script (unchanged — stays bash in Phase 7 scope)
+    cmd := exec.Command("bash", filepath.Join(PluginRoot, "shared/cost-alerting.sh"),
+        "--agent", agent, "--run-cost-usd", fmt.Sprintf("%.4f", runCostUsd),
+        "--cap-usd", fmt.Sprintf("%.4f", capUsd))
+    return cmd.Run()
+}
+```
+
+Preserves Phase 2's alert flow exactly. `cost-alerting.sh` remains in bash; Phase 7 does NOT port it (per §3 non-goals — only 4 hot-path scripts). Alerts continue to fire identically.
+
+AC addition: `tests/contract/forge-core.bats` asserts that a cost-cap breach in a Go-tracker-recorded run still produces the same `.forge/alerts.json` entry as pre-Phase-7 runs.
+
 ### 4.5 Distribution — GitHub releases
 
 **Per-OS/arch matrix (5 binaries per release):**
@@ -179,13 +200,40 @@ fi
 
 New flag: `/forge-init --update-core` re-downloads the binary (bypasses existence check).
 
+**SHA trust anchor (v1 review C1 resolved):** expected checksums ship **inside the plugin itself** (not downloaded from the same release as the binary). New file `shared/bin/checksums.json` is committed to the plugin repo as part of the release PR (written by `release-core.yml` during build, committed back to master via a final commit). At install time, `/forge-init` reads `shared/bin/checksums.json` → `actual_sha = sha256(downloaded_binary)` → compare. An attacker who compromises the release must ALSO compromise the plugin repo (separate attack surface). The checksums file is the trust anchor; the release binary is the verified payload.
+
+```json
+{
+  "version": "5.0.0",
+  "binaries": {
+    "darwin-amd64":  "a1b2c3...",
+    "darwin-arm64":  "b2c3d4...",
+    "linux-amd64":   "c3d4e5...",
+    "linux-arm64":   "d4e5f6...",
+    "windows-amd64": "e5f6a7..."
+  }
+}
+```
+
 SHA verification non-negotiable (supply-chain defense).
 
-### 4.7 State schema — version read compatibility
+### 4.7 State schema — version read compatibility (v1 review C2 resolved)
 
-Go binary must handle state files at 1.6.0 through 1.9.0 (all versions shipped by Phases 2-5). Migration logic mirrors the existing bash-plus-python migrations; codified in `core/internal/state/migrate.go` as a version-ordered list of transforms.
+Go binary handles state files at 1.6.0 through 1.9.0.
 
-Schema file `shared/state-schema.json` is the source of truth; Go binary reads it at startup (not compiled in) to stay in sync with doc changes without requiring a rebuild.
+**Explicit per-version migrations** in `core/internal/state/migrate.go`:
+
+| From | To | Transform |
+|---|---|---|
+| 1.6.0 | 1.7.0 | Add `cost_cap_decisions: []`, `cost.cap_breached: false` (Phase 2) |
+| 1.7.0 | 1.8.0 | Add `pending: null`, `plan.sha256: ""`, `abort_context: null`, `e3_overrides: []`, `components[].mid_stage_cursor: null`; add `APPLY_GATE`, `APPLY_GATE_WAIT`, `PLAN_EDIT_WAIT` to story_state enum (Phase 4) |
+| 1.8.0 | 1.9.0 | Add `branch: null`, `bestof: null`, `tui: null` (Phase 5) |
+
+Each transform is idempotent (running twice produces same output). All transforms run in sequence; version < 1.6.0 is rejected as "too old; reinitialize via /forge-recover reset".
+
+**Equivalence testing (AC addition):** `tests/fixtures/state/v1.6.0-valid.json`, `v1.7.0-valid.json`, `v1.8.0-valid.json`, `v1.9.0-valid.json` fixtures exist. Go migration of each older fixture produces byte-identical output (after `jq -S` canonicalization) to the existing bash-plus-python migration pipeline run against the same fixture. `tests/contract/forge-core.bats` enforces this.
+
+Schema file `shared/state-schema.json` is the source of truth for the *target* (1.9.0) shape; Go binary reads it at startup to stay in sync without a rebuild.
 
 ### 4.8 Performance targets
 
@@ -326,7 +374,7 @@ Per user: no local test runs. All verification via CI.
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | Binary size (Go ~7MB vs bash 4KB) inflates repo | Low | Low | Binaries gitignored; downloaded via release, not source |
-| Cross-compile for Windows breaks due to CGO (tree-sitter) | High | Medium | Use `github.com/smacker/go-tree-sitter` which is pure-Go (no CGO) OR use WASM tree-sitter for cross-platform; documented in `core/Makefile` |
+| Cross-compile for Windows breaks due to CGO (tree-sitter) | High | High | **WASM tree-sitter is the path (v1 review I1 correction).** `smacker/go-tree-sitter` actually uses CGO despite prior claims. Phase 7 uses WASM tree-sitter via `wasmtime-go` or pure-Go implementations like `forest/tree-sitter` (WASM-embedded grammars via `//go:embed`). Build-matrix runs `CGO_ENABLED=0 go build` across all 5 targets — single Linux runner cross-compiles everything. Locked at plan-stage Commit 2 before any tree-sitter code is written. |
 | State-schema version migration logic has bugs for older v1.6 files | Medium | High | Extensive fixture-based tests per version; golden-file regression tests against pre-5.0.0 bash output |
 | Supply-chain attack on binary download | Low | High | SHA256 checksum verification mandatory; GitHub releases served over HTTPS; checksums in release notes |
 | User has custom bash scripts that source the shims | Low | Low | Audit during Phase 7 plan execution; document in DEPRECATIONS.md that scripts must be invoked, not sourced |
