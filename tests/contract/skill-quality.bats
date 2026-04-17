@@ -210,14 +210,16 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 # ---------------------------------------------------------------------------
 # 11. Minimum skill count guard
+#     Phase 1 (v3.0.0) consolidated 42 → 35 skills (deleted 7, added 1, rewrote
+#     forge-compress). Threshold bumped down from 40 to 35.
 # ---------------------------------------------------------------------------
 @test "skill-quality: minimum skill count is met" {
   local count=0
   for skill_dir in "$SKILLS_DIR"/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
-  if (( count < 40 )); then
-    fail "Expected at least 40 skills, found $count"
+  if (( count < 35 )); then
+    fail "Expected at least 35 skills, found $count"
   fi
 }
 

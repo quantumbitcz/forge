@@ -135,38 +135,12 @@ has_tool() {
 }
 
 # ---------------------------------------------------------------------------
-# Merged from tests/structural/ui-frontmatter-consistency.bats (skill checks)
+# Phase 1 note: the previous skill-level "ui: frontmatter on skills using
+# AskUserQuestion / TaskCreate" assertions were removed. `ui:` is an agent
+# frontmatter concept (see shared/agent-ui.md); skills do not uniformly carry
+# ui: blocks — they can declare UI capabilities via the skill contract
+# (shared/skill-contract.md). Agent-side assertions below remain authoritative.
 # ---------------------------------------------------------------------------
-
-@test "skills using AskUserQuestion have ui: frontmatter" {
-  local failures=0
-  for skill_dir in "${PLUGIN_ROOT}"/skills/*/; do
-    local skill_file="${skill_dir}SKILL.md"
-    [[ -f "$skill_file" ]] || continue
-    if grep -q 'AskUserQuestion' "$skill_file"; then
-      if ! get_frontmatter "$skill_file" | grep -q '^ui:'; then
-        echo "MISSING ui: in $(basename "$skill_dir")" >&2
-        failures=$((failures + 1))
-      fi
-    fi
-  done
-  assert [ "$failures" -eq 0 ]
-}
-
-@test "skills using TaskCreate have ui: with tasks" {
-  local failures=0
-  for skill_dir in "${PLUGIN_ROOT}"/skills/*/; do
-    local skill_file="${skill_dir}SKILL.md"
-    [[ -f "$skill_file" ]] || continue
-    if grep -q 'TaskCreate' "$skill_file"; then
-      if ! get_frontmatter "$skill_file" | grep -q 'tasks.*true'; then
-        echo "MISSING ui.tasks in $(basename "$skill_dir")" >&2
-        failures=$((failures + 1))
-      fi
-    fi
-  done
-  assert [ "$failures" -eq 0 ]
-}
 
 # ---------------------------------------------------------------------------
 # 5 new Phase 1 assertions (plan Task 18 Step 2)

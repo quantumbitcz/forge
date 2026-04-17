@@ -1,6 +1,7 @@
 ---
 name: forge-compress
-description: "[writes] Unified compression — `agents` compresses agent .md files for 30-50% system-prompt reduction; `output <mode>` sets runtime output compression (off|lite|full|ultra) writing .forge/caveman-mode; `status` shows current settings (default, read-only); `help` prints reference card. Use to save tokens on prompts or session output. Trigger: /forge-compress, compress agents, compress output, caveman mode, reduce tokens"
+description: "[writes] Unified compression — `agents` compresses agent .md files for 30-50% system-prompt reduction; `output <mode>` sets runtime output compression (off|lite|full|ultra) writing .forge/caveman-mode; `status` shows current settings (default, read-only); `help` prints reference card. Use when you want to save tokens on prompts or session output. Trigger: /forge-compress, compress agents, compress output, caveman mode, reduce tokens"
+allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # Forge Compress
@@ -25,6 +26,41 @@ Single entry point for compression. Replaces `/forge-compress` (previous agent-o
 ## Exit codes
 
 See `shared/skill-contract.md` for the standard exit-code table.
+
+## Prerequisites
+
+- Forge plugin installed and `agents/` directory present (for `agents` subcommand)
+- `.forge/` directory writable (for `output` subcommand, which persists `.forge/caveman-mode`)
+
+## Instructions
+
+Dispatch the compression op to the orchestrator or the underlying compression pipeline:
+
+- `agents`: compress all `agents/fg-*.md` files via terse rewriting; preserves code blocks, YAML frontmatter, and all technical rules. See `shared/output-compression.md` and `shared/agent-ui.md`.
+- `output <mode>`: write the mode string (`off|lite|full|ultra`) to `.forge/caveman-mode`. The runtime reads this at agent dispatch time to select the per-stage compression level.
+- `status` (default): read current agent file sizes and `.forge/caveman-mode`, report ratios.
+- `help`: emit the reference card inline.
+
+## Error Handling
+
+Exit codes per `shared/skill-contract.md`:
+
+- 0: success
+- 1: bad args (e.g., unknown mode passed to `output`)
+- 2: validation failure
+- 4: aborted by user
+
+## See Also
+
+- `/forge-insights` -- View compression-effectiveness analytics across runs
+- `/forge-config` -- Toggle compression defaults in forge-config.md
+- `/forge-status` -- Check current compression mode at runtime
+
+## References
+
+- `shared/skill-contract.md` — standard exit codes and flag conventions
+- `shared/output-compression.md` — per-stage output compression level model
+- `shared/input-compression.md` — agent prompt compression pipeline
 
 ## Examples
 

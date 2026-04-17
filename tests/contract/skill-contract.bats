@@ -81,11 +81,21 @@ setup() {
   local bad=0
   for name in "${deleted[@]}"; do
     local hits
+    # Exempt:
+    #   - DEPRECATIONS.md, CHANGELOG.md — migration history
+    #   - skills/forge-recover/SKILL.md, skills/forge-compress/SKILL.md — legitimately
+    #     document the /old-skill → /new-skill migration tables
+    #   - tests/contract/skill-contract.bats — this file lists the deleted names as
+    #     a negative-check array
     hits=$(grep -rln "/$name[^a-z-]" \
              "$PLUGIN_ROOT/README.md" "$PLUGIN_ROOT/CLAUDE.md" \
              "$PLUGIN_ROOT/shared" "$PLUGIN_ROOT/skills" \
              "$PLUGIN_ROOT/tests" "$PLUGIN_ROOT/hooks" 2>/dev/null \
-           | grep -v "DEPRECATIONS.md" | grep -v "CHANGELOG.md" || true)
+           | grep -v "DEPRECATIONS.md" \
+           | grep -v "CHANGELOG.md" \
+           | grep -v "skills/forge-recover/SKILL.md" \
+           | grep -v "skills/forge-compress/SKILL.md" \
+           | grep -v "tests/contract/skill-contract.bats" || true)
     if [ -n "$hits" ]; then
       echo "Dangling reference to /$name in:"
       echo "$hits"

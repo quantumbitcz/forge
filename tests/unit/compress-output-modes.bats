@@ -17,10 +17,9 @@ setup() {
   done
 }
 
-@test "compress-output-modes: skill defines auto-clarity exceptions" {
-  run grep -i 'auto-clarity\|exception\|suspend' "$SKILLS_DIR/forge-compress/SKILL.md"
-  assert_success
-}
+# Phase 1 (v3.0.0): auto-clarity exceptions moved out of the top-level
+# forge-compress SKILL.md and into the underlying compression pipeline. The
+# new skill is a concise 4-subcommand surface (agents|output|status|help).
 
 @test "compress-output-modes: skill has valid frontmatter" {
   run head -1 "$SKILLS_DIR/forge-compress/SKILL.md"

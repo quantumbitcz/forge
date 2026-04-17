@@ -31,10 +31,7 @@ load '../helpers/test-helpers'
   grep -q -i 'compression drift\|drifting' "$PLUGIN_ROOT/skills/forge-insights/SKILL.md"
 }
 
-@test "caveman SKILL.md references arXiv:2604.00025" {
-  grep -q "2604.00025" "$PLUGIN_ROOT/skills/forge-compress/SKILL.md"
-}
-
-@test "caveman SKILL.md has Research Backing section" {
-  grep -q "Research Backing" "$PLUGIN_ROOT/skills/forge-compress/SKILL.md"
-}
+# Phase 1 (v3.0.0): caveman skill was removed and forge-compress was rewritten as
+# a 4-subcommand entry point (agents|output|status|help). Research-backing and
+# arXiv citation assertions no longer apply — the new skill is a concise surface
+# over existing compression primitives. See shared/skill-contract.md.

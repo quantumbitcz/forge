@@ -1335,10 +1335,10 @@ When `/forge-recover <subcommand>` invokes the orchestrator, the input payload c
 | recovery_op | Dispatch action |
 |---|---|
 | `diagnose` | Read-only: load `state.json`, compute punch list (stage stalled? recovery budget exhausted? counters sane?), print report. No agents dispatched; no TaskCreate. |
-| `repair` | Same logic as old `/forge-repair-state`: prompt user via `AskUserQuestion` with fixable items, apply chosen fixes, commit. |
-| `reset` | Same logic as old `/forge-reset`: confirm via `AskUserQuestion`, clear pipeline state, preserve cross-run caches. |
-| `resume` | Same logic as old `/forge-resume`: verify `state.status ∈ {ABORTED, ESCALATED, FAILED}`, reconstruct phase from checkpoint, resume dispatch. |
-| `rollback` | Same logic as old `/forge-rollback`: revert worktree commits (or `--target` branch). |
+| `repair` | Same logic as the pre-3.0 repair-state skill: prompt user via `AskUserQuestion` with fixable items, apply chosen fixes, commit. |
+| `reset` | Same logic as the pre-3.0 reset skill: confirm via `AskUserQuestion`, clear pipeline state, preserve cross-run caches. |
+| `resume` | Same logic as the pre-3.0 resume skill: verify `state.status ∈ {ABORTED, ESCALATED, FAILED}`, reconstruct phase from checkpoint, resume dispatch. |
+| `rollback` | Same logic as the pre-3.0 rollback skill: revert worktree commits (or `--target` branch). |
 
 This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; only the entry point changed.
 
