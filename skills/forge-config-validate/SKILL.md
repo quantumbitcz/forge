@@ -1,12 +1,21 @@
 ---
 name: forge-config-validate
-description: "Pre-pipeline configuration validator. Use when you want to check if your Forge configuration is valid before running the pipeline — after editing config files, when PREFLIGHT fails with config errors, or to verify your setup is correct. Catches misconfigured thresholds, missing commands, and schema violations. Trigger: /forge-config-validate, check my config, validate setup, config broken"
+description: "[read-only] Pre-pipeline configuration validator. Use when you want to check if your Forge configuration is valid before running the pipeline — after editing config files, when PREFLIGHT fails with config errors, or to verify your setup is correct. Catches misconfigured thresholds, missing commands, and schema violations. Trigger: /forge-config-validate, check my config, validate setup, config broken"
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
 # /forge-config-validate — Configuration Validator
 
 You validate the project's forge configuration files before a pipeline run. Catches misconfigurations that would fail at PREFLIGHT or cause runtime errors deep in the pipeline.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

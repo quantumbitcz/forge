@@ -1,10 +1,19 @@
 ---
 name: forge-fix
-description: "Fix a bug using root cause investigation and targeted repair. Use when you have a bug report, failing test, error message, ticket ID, or Linear issue to resolve. Trigger: /forge-fix, fix this bug, investigate failure, debug this error, resolve ticket"
+description: "[writes] Fix a bug using root cause investigation and targeted repair. Use when you have a bug report, failing test, error message, ticket ID, or Linear issue to resolve. Trigger: /forge-fix, fix this bug, investigate failure, debug this error, resolve ticket"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-fix — Bugfix Workflow Entry Point
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

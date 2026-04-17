@@ -1,10 +1,19 @@
 ---
 name: forge-run
-description: "Universal pipeline entry point. Auto-classifies intent and routes to the correct pipeline mode. Use when you want to build a feature, implement a requirement, or run the full development pipeline. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel."
+description: "[writes] Universal pipeline entry point. Auto-classifies intent and routes to the correct pipeline mode. Use when you want to build a feature, implement a requirement, or run the full development pipeline. Accepts --from=<stage>, --dry-run, --spec <path>, --sprint, --parallel."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-run — Universal Pipeline Entry Point
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

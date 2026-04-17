@@ -1,12 +1,21 @@
 ---
 name: forge-ask
-description: "Answer questions about the codebase using wiki, graph, explore cache, and docs index. Use when you want to understand how something works, find where something is implemented, trace dependencies, or get answers about the codebase architecture."
+description: "[read-only] Answer questions about the codebase using wiki, graph, explore cache, and docs index. Use when you want to understand how something works, find where something is implemented, trace dependencies, or get answers about the codebase architecture."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-ask — Codebase Knowledge Query
 
 Answer questions about the codebase by aggregating knowledge from all available data sources. Provide authoritative, evidence-based answers with file path references (clickable in IDE).
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

@@ -1,12 +1,21 @@
 ---
 name: forge-config
-description: "Edit Forge pipeline settings interactively. Use when changing framework, test runner, scoring thresholds, reviewer selection, convergence limits, or toggling features like caveman mode. Validates changes. Trigger: /forge-config, change settings, edit config, adjust thresholds, update scoring"
+description: "[writes] Edit Forge pipeline settings interactively. Use when changing framework, test runner, scoring thresholds, reviewer selection, convergence limits, or toggling features like caveman mode. Validates changes. Trigger: /forge-config, change settings, edit config, adjust thresholds, update scoring"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ui: { ask: true }
 disable-model-invocation: false
 ---
 
 # Forge Config — Interactive Configuration Editor
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Operations
 

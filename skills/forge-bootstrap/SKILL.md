@@ -1,10 +1,19 @@
 ---
 name: forge-bootstrap
-description: "Scaffold a new project from scratch with production-grade architecture, build system, CI/CD, tests, and tooling. Use when creating a greenfield application, starting a new microservice, or scaffolding a new service in a monorepo. Trigger: /forge-bootstrap, new project, scaffold project, create app from scratch"
+description: "[writes] Scaffold a new project from scratch with production-grade architecture, build system, CI/CD, tests, and tooling. Use when creating a greenfield application, starting a new microservice, or scaffolding a new service in a monorepo. Trigger: /forge-bootstrap, new project, scaffold project, create app from scratch"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-bootstrap -- Project Scaffolding Entry Point
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

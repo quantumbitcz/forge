@@ -1,12 +1,21 @@
 ---
 name: forge-playbooks
-description: "List available playbooks with usage stats and parameter details. Use when you want to see what playbooks are available, check playbook analytics, or find the right playbook for a task."
+description: "[read-only] List available playbooks with usage stats and parameter details. Use when you want to see what playbooks are available, check playbook analytics, or find the right playbook for a task."
 allowed-tools: ['Read', 'Bash', 'Glob']
 ---
 
 # /forge-playbooks -- List Available Playbooks
 
 List all available playbooks (project-specific and built-in) with their descriptions, parameter details, and usage analytics.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

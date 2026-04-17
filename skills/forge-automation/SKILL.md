@@ -1,6 +1,6 @@
 ---
 name: forge-automation
-description: "Manage event-driven pipeline automations. Use when you want to set up automatic pipeline triggers — run Forge on CI failures, PR events, cron schedules, or file changes. List, add, remove, and test automations. Trigger: /forge-automation, automate pipeline, run on schedule, trigger on CI failure, auto-run on push"
+description: "[writes] Manage event-driven pipeline automations. Use when you want to set up automatic pipeline triggers — run Forge on CI failures, PR events, cron schedules, or file changes. List, add, remove, and test automations. Trigger: /forge-automation, automate pipeline, run on schedule, trigger on CI failure, auto-run on push"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ui: { ask: true }
 disable-model-invocation: false
@@ -9,6 +9,15 @@ disable-model-invocation: false
 # /forge-automation — Automation Manager
 
 Manage event-driven pipeline automations configured in `forge-config.md`. Full contract: `shared/automations.md`.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

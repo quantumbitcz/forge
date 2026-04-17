@@ -1,6 +1,6 @@
 ---
 name: forge-status
-description: "Show current pipeline run state -- stage, score, convergence phase, integrations, and background run progress. Use when you want to check what stage the pipeline is at, monitor a background run, or see the outcome of the last completed run."
+description: "[read-only] Show current pipeline run state -- stage, score, convergence phase, integrations, and background run progress. Use when you want to check what stage the pipeline is at, monitor a background run, or see the outcome of the last completed run."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
@@ -8,6 +8,15 @@ disable-model-invocation: false
 # /forge-status -- Pipeline Status
 
 Show the current state of the development pipeline for this project.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

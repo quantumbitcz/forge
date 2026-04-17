@@ -1,11 +1,20 @@
 ---
 name: forge-review
-description: "Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
+description: "[writes] Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 
 # /forge-review — Review + Fix with Forge Agents
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

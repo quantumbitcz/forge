@@ -1,6 +1,6 @@
 ---
 name: forge-verify
-description: "Quick build + lint + test check for the current module without running the full pipeline. Use when you want to confirm nothing is broken after manual code changes, before starting a pipeline run to check baseline health, or as a pre-commit sanity check."
+description: "[read-only] Quick build + lint + test check for the current module without running the full pipeline. Use when you want to confirm nothing is broken after manual code changes, before starting a pipeline run to check baseline health, or as a pre-commit sanity check."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
@@ -8,6 +8,15 @@ disable-model-invocation: false
 # /forge-verify -- Quick Verify
 
 Run build, lint, and test commands for the current module without a full pipeline run.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

@@ -1,12 +1,21 @@
 ---
 name: forge-graph-debug
-description: "Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /forge-graph-status shows anomalies, graph queries return unexpected results, or after a failed /forge-graph-rebuild."
+description: "[read-only] Diagnose Neo4j knowledge graph issues — orphaned nodes, stale data, missing enrichments, relationship integrity. Use when /forge-graph-status shows anomalies, graph queries return unexpected results, or after a failed /forge-graph-rebuild."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
 # /forge-graph-debug -- Graph Debug
 
 Targeted diagnostic skill for the Neo4j knowledge graph. Provides structured diagnostic recipes without requiring raw Cypher knowledge.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

@@ -1,12 +1,21 @@
 ---
 name: forge-commit
-description: "Generate terse conventional commit messages from staged changes. Use when you have staged files and want a well-structured commit message that follows Conventional Commits format. Analyzes diffs, infers type and scope, presents options."
+description: "[writes] Generate terse conventional commit messages from staged changes. Use when you have staged files and want a well-structured commit message that follows Conventional Commits format. Analyzes diffs, infers type and scope, presents options."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-commit -- Terse Conventional Commit Generator
 
 Analyzes staged changes and generates a Conventional Commits message. Subject line <=50 chars, body explains why (not what). Never includes AI attribution.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

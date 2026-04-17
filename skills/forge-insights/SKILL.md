@@ -1,12 +1,21 @@
 ---
 name: forge-insights
-description: "Analyze trends across pipeline runs -- quality trajectory, agent effectiveness, cost analysis, convergence patterns, memory health. Use when you want to understand how pipeline quality has evolved, identify cost optimization opportunities, or review agent and memory effectiveness across runs."
+description: "[read-only] Analyze trends across pipeline runs -- quality trajectory, agent effectiveness, cost analysis, convergence patterns, memory health. Use when you want to understand how pipeline quality has evolved, identify cost optimization opportunities, or review agent and memory effectiveness across runs."
 allowed-tools: ['Read', 'Bash', 'Glob']
 ---
 
 # /forge-insights — Pipeline Run Analytics
 
 Analyze trends across pipeline runs to surface actionable insights about quality, cost, agent behavior, and pipeline health.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

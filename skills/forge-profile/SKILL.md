@@ -1,10 +1,19 @@
 ---
 name: forge-profile
-description: "Analyze pipeline performance -- time spent per stage, per agent, and per iteration. Use when a pipeline run felt slow, when you want to identify bottlenecks, or when optimizing pipeline configuration for faster runs."
+description: "[read-only] Analyze pipeline performance -- time spent per stage, per agent, and per iteration. Use when a pipeline run felt slow, when you want to identify bottlenecks, or when optimizing pipeline configuration for faster runs."
 allowed-tools: ['Read', 'Bash', 'Glob']
 ---
 
 # /forge-profile -- Pipeline Performance Profiler
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

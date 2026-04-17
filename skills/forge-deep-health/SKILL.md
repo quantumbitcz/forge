@@ -1,11 +1,20 @@
 ---
 name: forge-deep-health
-description: "Fix all codebase quality issues iteratively. Use when you want to clean up technical debt, polish a codebase before release, or fix all convention violations. Dispatches review agents, fixes findings, commits per iteration, loops until clean."
+description: "[writes] Fix all codebase quality issues iteratively. Use when you want to clean up technical debt, polish a codebase before release, or fix all convention violations. Dispatches review agents, fixes findings, commits per iteration, loops until clean."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 
 # /forge-deep-health — Deep Iterative Codebase Health Fix
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

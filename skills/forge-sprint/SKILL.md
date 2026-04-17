@@ -1,6 +1,6 @@
 ---
 name: forge-sprint
-description: "Execute multiple features in parallel via sprint orchestration. Use when you have multiple independent features to build, a Linear sprint cycle to execute, or when you want parallel pipeline runs for faster delivery."
+description: "[writes] Execute multiple features in parallel via sprint orchestration. Use when you have multiple independent features to build, a Linear sprint cycle to execute, or when you want parallel pipeline runs for faster delivery."
 allowed-tools:
   - Read
   - Grep
@@ -19,6 +19,15 @@ ui: { ask: true, tasks: true }
 # /forge-sprint -- Sprint Execution
 
 Dispatch the sprint orchestrator to analyze and execute multiple features in parallel.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

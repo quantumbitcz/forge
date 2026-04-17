@@ -1,6 +1,6 @@
 ---
 name: forge-migration
-description: "Plan and execute a library or framework migration using the migration planner agent (fg-160). Use when upgrading major framework versions (e.g., Spring Boot 2→3, Angular 16→17), migrating between libraries (e.g., Enzyme→Testing Library), or checking for breaking changes before upgrading."
+description: "[writes] Plan and execute a library or framework migration using the migration planner agent (fg-160). Use when upgrading major framework versions (e.g., Spring Boot 2→3, Angular 16→17), migrating between libraries (e.g., Enzyme→Testing Library), or checking for breaking changes before upgrading."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
@@ -10,6 +10,15 @@ disable-model-invocation: false
 Plan and execute a library or framework migration.
 
 Dispatches `fg-160-migration-planner` to handle the migration in phases.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Instructions
 

@@ -1,6 +1,6 @@
 ---
 name: forge-init
-description: "Auto-configures a project for the forge pipeline. Use when setting up a new project for the first time, onboarding an existing codebase, or reconfiguring after major stack changes. Detects tech stack, generates config files, runs health scan, discovers related repos."
+description: "[writes] Auto-configures a project for the forge pipeline. Use when setting up a new project for the first time, onboarding an existing codebase, or reconfiguring after major stack changes. Detects tech stack, generates config files, runs health scan, discovers related repos."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ui: { ask: true }
 ---
@@ -8,6 +8,15 @@ ui: { ask: true }
 # /forge-init — Zero-Config Project Setup
 
 You are the pipeline initializer. Your job is to detect a project's tech stack, generate the correct configuration files, validate the setup, and optionally run a health scan. Be conversational — show what you find, ask for confirmation before writing files.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

@@ -1,9 +1,18 @@
 ---
 name: forge-abort
-description: "Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
+description: "[writes] Stop an active pipeline run gracefully. Use when you want to pause work, need to change approach mid-pipeline, or want to interrupt a long-running run. Preserves state for /forge-resume. Safer than /forge-reset which clears all state."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ui: { ask: true }
 ---
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 1. Check `.forge/state.json` exists. If not: "No active pipeline to abort." STOP.

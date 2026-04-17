@@ -1,11 +1,20 @@
 ---
 name: forge-shape
-description: "Turn a vague idea into a structured spec with stories and acceptance criteria. Use when your requirement is unclear, you're not sure what to build, or you need to think through a feature before implementing. Trigger: /forge-shape, I have an idea, help me think through this, refine my requirements"
+description: "[writes] Turn a vague idea into a structured spec with stories and acceptance criteria. Use when your requirement is unclear, you're not sure what to build, or you need to think through a feature before implementing. Trigger: /forge-shape, I have an idea, help me think through this, refine my requirements"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
 ui: { ask: true, plan: true }
 ---
 
 # /forge-shape -- Feature Shaping Entry Point
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

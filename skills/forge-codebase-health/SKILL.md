@@ -1,11 +1,20 @@
 ---
 name: forge-codebase-health
-description: "Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. Use when you want a quality baseline before starting work, after merging multiple PRs, or to audit convention compliance without making changes."
+description: "[read-only] Analyze full codebase against quality rules (read-only, no fixes). Runs check engine on all source files. Use when you want a quality baseline before starting work, after merging multiple PRs, or to audit convention compliance without making changes."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 
 # /forge-codebase-health -- Codebase Health Check
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

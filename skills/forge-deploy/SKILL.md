@@ -1,6 +1,6 @@
 ---
 name: forge-deploy
-description: "Trigger deployment to staging, production, or preview environments. Use when a PR is merged and ready to deploy, when you need to check deployment status, or when rolling back a broken deployment. Supports ArgoCD, Helm, kubectl, docker-compose."
+description: "[writes] Trigger deployment to staging, production, or preview environments. Use when a PR is merged and ready to deploy, when you need to check deployment status, or when rolling back a broken deployment. Supports ArgoCD, Helm, kubectl, docker-compose."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ui: { ask: true }
 ---
@@ -8,6 +8,15 @@ ui: { ask: true }
 # /forge-deploy -- Environment Deployment
 
 You manage deployments to staging, production, and preview environments. You read deployment configuration from the project's `forge.local.md` and execute the appropriate deployment method.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

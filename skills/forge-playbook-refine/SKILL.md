@@ -1,6 +1,6 @@
 ---
 name: forge-playbook-refine
-description: "Review and apply playbook refinement proposals. Use when playbooks have accumulated run data and proposals are ready for review. Trigger: /forge-playbook-refine [playbook_id]"
+description: "[writes] Review and apply playbook refinement proposals. Use when playbooks have accumulated run data and proposals are ready for review. Trigger: /forge-playbook-refine [playbook_id]"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'AskUserQuestion']
 ui: { ask: true }
 ---
@@ -8,6 +8,15 @@ ui: { ask: true }
 # /forge-playbook-refine — Interactive Playbook Refinement
 
 Review and apply improvement proposals generated from pipeline run data. Proposals are evidence-backed suggestions for making playbooks produce better code.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

@@ -1,11 +1,20 @@
 ---
 name: forge-history
-description: "View trends across multiple pipeline runs -- score oscillations, agent effectiveness, common findings, and PREEMPT health. Use when you want to see how quality has changed over time, identify recurring issues, or review past pipeline run outcomes."
+description: "[read-only] View trends across multiple pipeline runs -- score oscillations, agent effectiveness, common findings, and PREEMPT health. Use when you want to see how quality has changed over time, identify recurring issues, or review past pipeline run outcomes."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
 
 # /forge-history -- Pipeline Run History
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

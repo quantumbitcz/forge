@@ -1,12 +1,21 @@
 ---
 name: forge-graph-init
-description: "Initialize Neo4j knowledge graph for codebase analysis. Use when setting up graph features for the first time, after Docker restarts, or when the graph is unavailable. Launches Docker container, imports plugin seed, builds project graph. Requires Docker. Trigger: /forge-graph-init, start knowledge graph, enable graph, set up Neo4j"
+description: "[writes] Initialize Neo4j knowledge graph for codebase analysis. Use when setting up graph features for the first time, after Docker restarts, or when the graph is unavailable. Launches Docker container, imports plugin seed, builds project graph. Requires Docker. Trigger: /forge-graph-init, start knowledge graph, enable graph, set up Neo4j"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-graph-init — Neo4j Knowledge Graph Initialization
 
 You are the graph initializer. Your job is to start the Neo4j container, import the plugin seed data, and build the project codebase graph. Be idempotent — detect what is already done and skip those steps.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

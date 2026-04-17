@@ -1,12 +1,21 @@
 ---
 name: forge-docs-generate
-description: "Generate or update project documentation on demand. Use when starting a new project without docs, after adding major features that need documentation, or to audit documentation coverage gaps. Supports README, architecture, ADRs, API docs, onboarding, runbooks, changelogs, diagrams, domain docs, user guides, migration guides."
+description: "[writes] Generate or update project documentation on demand. Use when starting a new project without docs, after adding major features that need documentation, or to audit documentation coverage gaps. Supports README, architecture, ADRs, API docs, onboarding, runbooks, changelogs, diagrams, domain docs, user guides, migration guides."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
 # /forge-docs-generate — On-Demand Documentation Generation
 
 Generates project documentation independently of the pipeline. Run this skill at any time to bootstrap a full documentation suite for an undocumented codebase, update specific document types, or audit coverage gaps — without triggering a pipeline run or touching `.forge/` state.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--dry-run**: preview actions without writing
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

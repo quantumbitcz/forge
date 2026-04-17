@@ -1,6 +1,6 @@
 ---
 name: forge-security-audit
-description: "Run module-appropriate security scanners and aggregate vulnerability results. Use when preparing for a release, after dependency updates, when reviewing third-party package security, or when onboarding to a new codebase to assess its security posture."
+description: "[read-only] Run module-appropriate security scanners and aggregate vulnerability results. Use when preparing for a release, after dependency updates, when reviewing third-party package security, or when onboarding to a new codebase to assess its security posture."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
@@ -8,6 +8,15 @@ disable-model-invocation: false
 # /forge-security-audit -- Security Audit
 
 Run security vulnerability scanners appropriate for the current module.
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 

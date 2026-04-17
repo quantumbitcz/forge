@@ -1,10 +1,19 @@
 ---
 name: forge-graph-status
-description: "Show Neo4j knowledge graph status -- node counts, container health, last build SHA, enrichment coverage. Use when you want to check if the graph is healthy, see what data is indexed, or verify the graph is up to date with the latest code changes."
+description: "[read-only] Show Neo4j knowledge graph status -- node counts, container health, last build SHA, enrichment coverage. Use when you want to check if the graph is healthy, see what data is indexed, or verify the graph is up to date with the latest code changes."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 ---
 
 # /forge-graph-status — Knowledge Graph Status
+
+## Flags
+
+- **--help**: print usage and exit 0
+- **--json**: structured JSON output
+
+## Exit codes
+
+See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Prerequisites
 
