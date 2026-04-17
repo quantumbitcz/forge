@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "version": "2.8.0",
+  "version": "3.0.0",
   "description": "Autonomous 10-stage development pipeline with multi-language support, self-healing recovery, and generalized code quality checks",
   "author": {
     "name": "QuantumBit s.r.o.",

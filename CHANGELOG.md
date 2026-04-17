@@ -3,6 +3,56 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] — 2026-04-16
+
+### Breaking changes
+
+- **Removed 7 skills** (no aliases). See `DEPRECATIONS.md` for the migration table.
+  - `/forge-diagnose`, `/forge-repair-state`, `/forge-reset`, `/forge-resume`, `/forge-rollback` → `/forge-recover <subcommand>`
+  - `/forge-caveman`, `/forge-compression-help` → `/forge-compress <subcommand>`
+- Skill count: 41 → 35.
+- Every SKILL.md description now prefixed with `[read-only]` or `[writes]` badge.
+- Every agent frontmatter now requires explicit `ui: { tasks, ask, plan_mode }` block — implicit Tier-4-by-omission no longer accepted.
+- `ui: { tier: N }` shortcut removed in `fg-135`, `fg-510`, `fg-515`.
+- `fg-210-validator` promoted Tier 4 → Tier 2 (frontmatter + tools only; behavior unchanged in this release).
+- 22 agents received a new `color:` assignment to satisfy cluster-scoped uniqueness.
+
+### Added
+
+- `/forge-recover` skill with 5 subcommands.
+- `shared/skill-contract.md` — authoritative skill-surface contract.
+- `shared/agent-colors.md` — cluster-scoped color map (42 agents).
+- `shared/ask-user-question-patterns.md` — canonical UX patterns.
+- 14 Tier 1/2 agents now carry concrete `AskUserQuestion` JSON examples.
+- `--help` on every skill; `--dry-run` on every mutating skill; `--json` on every read-only skill.
+- Standard exit codes 0–4 documented in `shared/skill-contract.md`.
+- `/forge-help --json` output mode.
+- `shared/state-schema.md`: `recovery_op` field on orchestrator input payload (schema 1.6.0 → 1.7.0).
+- `agents/fg-100-orchestrator.md`: §Recovery op dispatch section.
+- `tests/contract/skill-contract.bats`: 8 new assertions.
+- `tests/contract/ui-frontmatter-consistency.bats`: 5 new assertions.
+- `tests/unit/skill-execution/forge-recover-integration.bats`: SKILL.md surface check.
+
+### Changed
+
+- `/forge-compress` rewritten from single-verb → 4-subcommand (`agents|output <mode>|status|help`).
+- `/forge-help` augmented: existing 3-tier taxonomy preserved; added `[read-only]`/`[writes]` badges and `--json` output.
+- `tests/unit/caveman-modes.bats` renamed and rewritten → `tests/unit/compress-output-modes.bats`.
+- 24 `shared/*.md` references swept from old skill names to new.
+- `shared/agent-ui.md`: "Omitting ui: means Tier 4" language removed.
+- `shared/agent-role-hierarchy.md`: `fg-205` added; `fg-210` promoted.
+
+### Removed
+
+- `tests/structural/ui-frontmatter-consistency.bats` (duplicate of contract/ copy).
+- `tests/unit/skill-execution/forge-compression-help.bats` (skill deleted).
+
+### Migration notes
+
+- All removed skills have direct replacements in the Breaking Changes list.
+- No config changes required.
+- Agents with new colors render differently in kanban — expected cosmetic change only.
+
 ## [2.8.0] - 2026-04-16
 
 ### Added

@@ -89,3 +89,32 @@ sprint:
 - `<!-- locked -->` fences in `forge-config.md` are never auto-modified
 - Framework module deprecations follow `known-deprecations.json` v2 schema
 - PREEMPT decay: 10 unused cycles → HIGH→MEDIUM→LOW→ARCHIVED
+
+## Removed in 3.0.0
+
+The following skills were removed in 3.0.0. No aliases. Update invocations directly.
+
+| Removed | Replacement | Reason |
+|---|---|---|
+| `/forge-diagnose` | `/forge-recover diagnose` | Recovery consolidation |
+| `/forge-repair-state` | `/forge-recover repair` | Recovery consolidation |
+| `/forge-reset` | `/forge-recover reset` | Recovery consolidation |
+| `/forge-resume` | `/forge-recover resume` | Recovery consolidation |
+| `/forge-rollback` | `/forge-recover rollback` | Recovery consolidation |
+| `/forge-caveman` | `/forge-compress output <mode>` | Compression consolidation |
+| `/forge-compression-help` | `/forge-compress help` | Compression consolidation |
+
+### Migration examples (all 7 removals)
+
+- `/forge-diagnose` → `/forge-recover diagnose`
+- `/forge-diagnose --json` → `/forge-recover diagnose --json`
+- `/forge-repair-state` → `/forge-recover repair`
+- `/forge-reset` → `/forge-recover reset`
+- `/forge-resume` → `/forge-recover resume`
+- `/forge-rollback` → `/forge-recover rollback`
+- `/forge-rollback --target main` → `/forge-recover rollback --target main`
+- `/forge-caveman` → `/forge-compress output off` (reset to uncompressed)
+- `/forge-caveman ultra` → `/forge-compress output ultra`
+- `/forge-compression-help` → `/forge-compress help`
+
+See `shared/skill-contract.md` §4 for the complete 35-skill catalog after consolidation.

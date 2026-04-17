@@ -3,7 +3,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-42-green?style=flat-square)](#agents)
-[![Skills](https://img.shields.io/badge/skills-40-green?style=flat-square)](#available-skills)
+[![Skills](https://img.shields.io/badge/skills-35-green?style=flat-square)](#available-skills)
 [![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
 [![Finding Categories](https://img.shields.io/badge/finding_categories-87+-purple?style=flat-square)](#quality-scoring)
@@ -99,50 +99,47 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 
 ## Available skills
 
-40 skills provide the user-facing interface.
+35 skills provide the user-facing interface.
 
-| Skill | Description |
-|-------|-------------|
-| `/forge-run` | Main entry -- full 10-stage pipeline |
-| `/forge-init` | Initialize project config (auto-detects framework) |
-| `/forge-fix` | Bugfix workflow -- root cause investigation + targeted fix |
-| `/forge-shape` | Collaboratively shape features into structured specs |
-| `/forge-sprint` | Parallel multi-feature orchestration |
-| `/forge-review` | Review changed files (quick: 3 agents, full: 8 agents) |
-| `/forge-status` | Show pipeline state, score, budgets |
-| `/forge-recover diagnose` | Read-only pipeline health diagnostic |
-| `/forge-recover resume` | Resume from last checkpoint |
-| `/forge-abort` | Graceful pipeline stop |
-| `/forge-recover reset` | Clear state, preserve learnings |
-| `/forge-recover rollback` | Rollback pipeline changes (4 modes) |
-| `/forge-history` | Quality trends across runs |
-| `/forge-profile` | Pipeline performance analysis |
-| `/forge-insights` | Quality, cost, convergence analytics |
-| `/forge-ask` | Codebase Q&A via wiki, graph, docs |
-| `/forge-playbooks` | Manage reusable task templates |
-| `/forge-compress` | Compress agent .md files for token savings |
-| `/forge-verify` | Quick build + lint + test check |
-| `/forge-security-audit` | Module-appropriate security scanners |
-| `/forge-codebase-health` | Full check engine health report |
-| `/forge-deep-health` | Iterative fix loop until clean |
-| `/forge-docs-generate` | Generate project documentation |
-| `/forge-deploy` | Deployment (staging, production, preview, rollback) |
-| `/forge-migration` | Framework/library version migrations |
-| `/forge-bootstrap` | Scaffold new project from template |
-| `/forge-config-validate` | Pre-pipeline config validation |
-| `/forge-recover repair` | Targeted state.json fixes |
-| `/forge-automation` | Event-driven automation management |
-| `/forge-graph-init` | Initialize Neo4j knowledge graph |
-| `/forge-graph-status` | Graph connection and node counts |
-| `/forge-graph-query` | Run Cypher queries |
-| `/forge-graph-rebuild` | Rebuild graph from codebase |
-| `/forge-graph-debug` | Targeted Neo4j diagnostics |
-| `/forge-compress output` | Toggle terse output mode (40-70% fewer tokens) |
-| `/forge-commit` | Terse conventional commit from staged changes |
-| `/forge-compress help` | Quick reference card for all compression features |
-| `/forge-help` | Interactive decision tree to find the right skill |
-| `/forge-tour` | Guided 5-stop introduction to Forge |
-| `/forge-config` | Interactive configuration editor |
+Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in its description. Read-only skills expose `--json`; writing skills expose `--dry-run`. All skills expose `--help`. See `shared/skill-contract.md` for the full contract.
+
+| Skill | Badge | Description |
+|-------|-------|-------------|
+| `/forge-run` | [writes] | Main entry -- full 10-stage pipeline |
+| `/forge-init` | [writes] | Initialize project config (auto-detects framework) |
+| `/forge-fix` | [writes] | Bugfix workflow -- root cause investigation + targeted fix |
+| `/forge-shape` | [writes] | Collaboratively shape features into structured specs |
+| `/forge-sprint` | [writes] | Parallel multi-feature orchestration |
+| `/forge-review` | [writes] | Review changed files (quick: 3 agents, full: 8 agents) |
+| `/forge-status` | [read-only] | Show pipeline state, score, budgets |
+| `/forge-recover` | [writes] | Diagnose/repair/reset/resume/rollback pipeline state (`<subcommand>` dispatch). Replaces 5 old recovery skills. |
+| `/forge-abort` | [writes] | Graceful pipeline stop |
+| `/forge-history` | [read-only] | Quality trends across runs |
+| `/forge-profile` | [read-only] | Pipeline performance analysis |
+| `/forge-insights` | [read-only] | Quality, cost, convergence analytics |
+| `/forge-ask` | [read-only] | Codebase Q&A via wiki, graph, docs |
+| `/forge-playbooks` | [writes] | Manage reusable task templates |
+| `/forge-playbook-refine` | [writes] | Interactive review/apply of playbook refinements |
+| `/forge-compress` | [writes] | Compress agents/output/status/help. Replaces `forge-caveman` and `forge-compression-help`. |
+| `/forge-verify` | [read-only] | Quick build + lint + test check |
+| `/forge-security-audit` | [read-only] | Module-appropriate security scanners |
+| `/forge-codebase-health` | [read-only] | Full check engine health report |
+| `/forge-deep-health` | [writes] | Iterative fix loop until clean |
+| `/forge-docs-generate` | [writes] | Generate project documentation |
+| `/forge-deploy` | [writes] | Deployment (staging, production, preview, rollback) |
+| `/forge-migration` | [writes] | Framework/library version migrations |
+| `/forge-bootstrap` | [writes] | Scaffold new project from template |
+| `/forge-config-validate` | [read-only] | Pre-pipeline config validation |
+| `/forge-automation` | [writes] | Event-driven automation management |
+| `/forge-graph-init` | [writes] | Initialize Neo4j knowledge graph |
+| `/forge-graph-status` | [read-only] | Graph connection and node counts |
+| `/forge-graph-query` | [read-only] | Run Cypher queries |
+| `/forge-graph-rebuild` | [writes] | Rebuild graph from codebase |
+| `/forge-graph-debug` | [read-only] | Targeted Neo4j diagnostics |
+| `/forge-commit` | [writes] | Terse conventional commit from staged changes |
+| `/forge-help` | [read-only] | Interactive decision tree to find the right skill |
+| `/forge-tour` | [read-only] | Guided 5-stop introduction to Forge |
+| `/forge-config` | [writes] | Interactive configuration editor |
 
 ## Available modules
 
