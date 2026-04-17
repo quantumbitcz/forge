@@ -459,6 +459,68 @@ Replace with:
 
 Find the skill-count assertion (likely `[ "$count" = "N" ]` or similar). Change to `41`.
 
+- [ ] **Step 2.5: Create `docs/frontend-guide.md` — user-facing walkthrough (AC 14)**
+
+```markdown
+# Forge Frontend Guide (4.2.0+)
+
+A walkthrough of the four Phase 6 features for project maintainers.
+
+## Enabling shadcn/ui
+
+In `.claude/forge.local.md`:
+
+```yaml
+components:
+  language: typescript
+  framework: react
+  variant: shadcn
+  testing: vitest
+```
+
+Commit; next `/forge-run` uses shadcn primitives from `@/components/ui/` by default.
+
+## Using Figma URLs
+
+Paste a Figma URL in your requirement — planner calls Figma MCP at PLAN stage and injects design tokens + Code Connect mappings into the plan. Implementer consumes them automatically.
+
+Cache lives at `.forge/figma-cache/` with 1-hour TTL; reset with `/forge-reset` or explicit `--figma-refresh` flag on `/forge-run`.
+
+## Understanding defaults-pack findings
+
+`shared/frontend-defaults-pack.md` codifies 40 rules. Reviewer flags violations as `FE-<CAT>-<NNN>` findings. Severity: CRITICAL blocks PR, WARNING advises. Exempt with inline marker:
+
+```ts
+// forge-allow: FE-TOKENS-002 reason: one-off marketing accent color
+const accent = "#FF6B6B";
+```
+
+Files with >5 exemptions trigger WARNING `FE-EXEMPTION-OVERUSE` (architectural smell).
+
+## Visual regression — updating baselines
+
+After intentional UI changes:
+
+```
+/forge-preview                    # review via Phase 4 preview flow
+/forge-vrt-update --dry-run       # see which baselines would be promoted
+/forge-vrt-update                 # promote
+```
+
+Baselines live at `.forge/vrt/baselines/<os>/<route>-<viewport>.png`. Committed by default (`vrt.commit_baselines: true`); see `shared/visual-regression-baseline.md` for LFS / external-blob opt-outs.
+
+## axe-core in local dev
+
+`@axe-core/react` is a dev-dep (installed at `/forge-init` when `frontend.axe_core_required: true`). Developers see axe warnings in browser console during local dev. CI runs `@axe-core/playwright` on every PR; CRITICAL violations block merge.
+
+## Further reading
+
+- `shared/figma-integration.md` — Figma MCP contract
+- `shared/frontend-defaults-pack.md` — 40-rule catalog with detection + exemption
+- `shared/visual-regression-baseline.md` — VRT workflow
+- `modules/frameworks/react/variants/shadcn.md` — shadcn primitives + conventions
+```
+
 - [ ] **Step 3: README.md — "Frontend development UX (4.2.0+)" section**
 
 ```markdown
@@ -491,9 +553,10 @@ rm -f .claude-plugin/*.bak
 
 ```bash
 git add tests/contract/live-observation.bats tests/validate-plugin.sh
+git add docs/frontend-guide.md
 git add README.md CLAUDE.md CHANGELOG.md
 git add .claude-plugin/plugin.json .claude-plugin/marketplace.json
-git commit -m "docs(phase6): top-level + skill count 40 → 41 + bump 4.1.0 → 4.2.0
+git commit -m "docs(phase6): frontend-guide + top-level + skill count 40 → 41 + bump 4.1.0 → 4.2.0
 
 - live-observation.bats skill count assertion: 40 → 41; gate Phase 5 → Phase 6
 - validate-plugin.sh: skill count 41
