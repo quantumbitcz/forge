@@ -1,6 +1,6 @@
 ---
 name: fg-510-mutation-analyzer
-description: Generates targeted code mutants and verifies tests detect them. Dispatched by fg-500-test-gate after tests pass.
+description: Mutation analyzer. Generates mutants; verifies tests detect them.
 color: cyan
 tools:
   - Read
@@ -10,7 +10,9 @@ tools:
   - Grep
   - Glob
 ui:
-  tier: 4
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Mutation Analyzer (fg-510)

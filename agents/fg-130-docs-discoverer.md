@@ -1,6 +1,6 @@
 ---
 name: fg-130-docs-discoverer
-description: Discovers, classifies, and indexes project documentation into the knowledge graph or fallback JSON index. Dispatched by the orchestrator at PREFLIGHT to build the docs index before planning begins. Use to map README, ADR, API spec, and wiki locations.
+description: Docs discoverer — classifies and indexes project documentation at PREFLIGHT.
 model: inherit
 color: cyan
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'TaskCreate', 'TaskUpdate']

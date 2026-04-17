@@ -2,8 +2,12 @@
 name: fg-102-conflict-resolver
 description: Analyzes file and symbol-level conflicts between tasks or features. Produces parallel groups and serial chains.
 model: inherit
-color: gray
+color: olive
 tools: ['Read', 'Grep', 'Glob', 'neo4j-mcp']
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Conflict Resolver (fg-102)

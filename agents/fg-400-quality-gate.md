@@ -1,6 +1,6 @@
 ---
 name: fg-400-quality-gate
-description: Multi-batch quality coordinator — dispatches reviewers, deduplicates findings, scores, determines GO/CONCERNS/FAIL verdict.
+description: Quality gate — multi-batch coordinator that dispatches reviewers in parallel, deduplicates findings across batches, scores the run, and determines GO/CONCERNS/FAIL verdict. Dispatched at Stage 6 after verification.
 model: inherit
 color: red
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'Skill', 'neo4j-mcp', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']
@@ -512,3 +512,20 @@ After Markdown report, MUST append structured JSON block in HTML comment for mac
 - DO NOT truncate findings without noting total count
 - DO NOT skip deduplication
 - DO NOT delete/disable findings without checking intent
+
+## User-interaction examples
+
+### Example — FAIL verdict after 3 cycles
+
+```json
+{
+  "question": "Quality gate reports FAIL with 2 CRITICAL findings after 3 review cycles. How should we proceed?",
+  "header": "FAIL path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Fix CRITICAL findings, retry gate (Recommended)", "description": "Dispatch implementer to fix; re-run quality gate."},
+    {"label": "Abort pipeline; surface findings to user", "description": "Halt and escalate CRITICAL findings as plan-level issues."},
+    {"label": "Override and proceed (user accepts risk)", "description": "Record override in state; ship anyway; audit-logged."}
+  ]
+}
+```

@@ -10,7 +10,7 @@ This contract defines the interactive UI patterns available to forge agents. Age
 | User questions | `ui.ask: true` | `AskUserQuestion` | Structured decision points |
 | Plan mode | `ui.plan_mode: true` | `EnterPlanMode`, `ExitPlanMode` | Design presentation before execution |
 
-Omitting the `ui:` section entirely means all capabilities are `false` (Tier 4 — no UI).
+Every agent MUST declare an explicit `ui:` block with three boolean keys: `tasks`, `ask`, `plan_mode`. Implicit omission is invalid and rejected by `tests/contract/ui-frontmatter-consistency.bats`. Tier 4 agents declare `ui: { tasks: false, ask: false, plan_mode: false }`.
 
 ## AskUserQuestion Format
 
@@ -110,6 +110,10 @@ autonomous: false  # Default. Set to true for fully autonomous pipeline.
 | Tier | UI Capabilities | Agents |
 |------|----------------|--------|
 | 1 | tasks + ask + plan_mode | fg-010-shaper, fg-015-scope-decomposer, fg-200-planner, fg-160-migration-planner, fg-050-project-bootstrapper, fg-090-sprint-orchestrator |
-| 2 | tasks + ask | fg-100-orchestrator, fg-020-bug-investigator, fg-400-quality-gate, fg-500-test-gate, fg-600-pr-builder, fg-103-cross-repo-coordinator, fg-710-post-run |
+| 2 | tasks + ask | fg-100-orchestrator, fg-020-bug-investigator, fg-210-validator, fg-400-quality-gate, fg-500-test-gate, fg-600-pr-builder, fg-103-cross-repo-coordinator, fg-710-post-run |
 | 3 | tasks only | fg-300-implementer, fg-320-frontend-polisher, fg-700-retrospective, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-650-preview-validator, fg-590-pre-ship-verifier, fg-610-infra-deploy-verifier, fg-310-scaffolder, fg-350-docs-generator, fg-250-contract-validator, fg-150-test-bootstrapper, fg-505-build-verifier, fg-515-property-test-generator, fg-620-deploy-verifier |
-| 4 | none | All 8 reviewers (fg-410 through fg-419), fg-210-validator, fg-510-mutation-analyzer, fg-101-worktree-manager, fg-102-conflict-resolver |
+| 4 | none | All 8 reviewers (fg-410 through fg-419), fg-205-planning-critic, fg-510-mutation-analyzer, fg-101-worktree-manager, fg-102-conflict-resolver |
+
+## Enforcement
+
+Contract compliance is enforced by `tests/contract/ui-frontmatter-consistency.bats`. See `shared/agent-colors.md` for the cluster-scoped color uniqueness assertion.

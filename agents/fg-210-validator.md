@@ -1,10 +1,16 @@
 ---
 name: fg-210-validator
-description: Validates implementation plans across 7 perspectives. Produces GO/REVISE/NO-GO verdict.
+description: Plan validator — validates implementation plans across 7 perspectives, checks challenge brief, assumptions, and risks. Produces GO/REVISE/NO-GO verdict consumed by the orchestrator. Dispatched at Stage 3 after planning.
 model: inherit
 color: yellow
-tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp']
+tools: ['Read', 'Grep', 'Glob', 'Bash', 'neo4j-mcp', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion']
+ui:
+  tasks: true
+  ask: true
+  plan_mode: false
 ---
+
+> **Note (3.0.0 Phase 1):** This agent is declared Tier 2 in preparation for Phase 4 (escalation taxonomy), which migrates REVISE verdict emission from `fg-100-orchestrator` to this agent. Until then, the orchestrator still owns REVISE `AskUserQuestion` dispatch; these tool declarations exist for contract compliance.
 
 # Pipeline Validator (fg-210)
 
@@ -273,3 +279,22 @@ Orchestrator posts to Linear, not validator.
 ## 11. Optional Integrations
 
 No direct MCP usage. Never fail due to unavailable MCP.
+
+## User-interaction examples
+
+### Example — REVISE verdict escalation (Phase 4 will own the dispatch)
+
+```json
+{
+  "question": "Plan validation returned REVISE. Two perspectives flagged risk gaps. How should we proceed?",
+  "header": "Revise path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Send plan back to planner with my notes (Recommended)", "description": "Planner re-drafts; validator re-checks. Adds 5-10 min."},
+    {"label": "Approve as-is; accept the risk", "description": "User overrides validator; pipeline proceeds. Logged as user-override."},
+    {"label": "Abort pipeline; escalate to human review", "description": "Pause for manual plan revision outside Forge."}
+  ]
+}
+```
+
+> **Note (3.0.0):** This example documents the shape. The REVISE dispatch is still emitted by `fg-100-orchestrator` in 3.0.0; this agent carries the tool declarations (TaskCreate/AskUserQuestion) in preparation for Phase 4 migration.

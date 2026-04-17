@@ -1,7 +1,7 @@
 ---
 name: fg-515-property-test-generator
-description: Generates property-based tests for changed functions. Dispatched by fg-500-test-gate after standard tests pass and mutation analysis completes, when property_testing.enabled is true.
-color: cyan
+description: Property-based test generator — generates property tests for changed functions.
+color: pink
 tools:
   - Read
   - Write
@@ -9,8 +9,12 @@ tools:
   - Bash
   - Grep
   - Glob
+  - TaskCreate
+  - TaskUpdate
 ui:
-  tier: 3
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Property-Based Test Generator (fg-515)

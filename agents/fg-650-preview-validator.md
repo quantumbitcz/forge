@@ -1,8 +1,8 @@
 ---
 name: fg-650-preview-validator
-description: Validates preview environments after PR creation. Dispatched by the orchestrator at Stage 8 (SHIP) when preview.enabled is true and a preview URL is available. Runs smoke tests, Lighthouse audits, visual regression, and Playwright E2E against the deployed preview.
+description: Preview validator — smoke tests, Lighthouse, visual regression, E2E against deployed preview.
 model: inherit
-color: green
+color: amber
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_playwright_playwright__browser_navigate', 'mcp__plugin_playwright_playwright__browser_snapshot', 'mcp__plugin_playwright_playwright__browser_take_screenshot', 'mcp__plugin_playwright_playwright__browser_console_messages', 'mcp__plugin_playwright_playwright__browser_network_requests', 'mcp__plugin_playwright_playwright__browser_wait_for']
 ui:
   tasks: true

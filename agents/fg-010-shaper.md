@@ -264,3 +264,21 @@ Use `EnterPlanMode`/`ExitPlanMode` for final spec approval.
 - **Do NOT ask >7-9 questions** — combine where natural
 - **Do NOT invent requirements** not surfaced through dialogue
 - **Do NOT save spec until Phase 5**
+
+## User-interaction examples
+
+### Example — Which shaping dimensions to refine first
+
+```json
+{
+  "question": "This requirement is vague. Which dimensions should I explore with you first?",
+  "header": "Shape axes",
+  "multiSelect": true,
+  "options": [
+    {"label": "Actors and user roles", "description": "Who performs each action; who is affected."},
+    {"label": "Success criteria", "description": "What observable state defines 'done'."},
+    {"label": "Failure modes and edge cases", "description": "What can go wrong; what to do when it does."},
+    {"label": "Scope boundaries", "description": "What is explicitly out of scope."}
+  ]
+}
+```

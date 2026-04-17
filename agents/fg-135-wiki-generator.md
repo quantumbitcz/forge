@@ -1,15 +1,19 @@
 ---
 name: fg-135-wiki-generator
 description: Auto-generates codebase wiki from code analysis. Dispatched at PREFLIGHT (full) and LEARN (incremental).
-color: cyan
+color: navy
 tools:
   - Read
   - Glob
   - Grep
   - Write
   - LSP
+  - TaskCreate
+  - TaskUpdate
 ui:
-  tier: 3
+  tasks: true
+  ask: false
+  plan_mode: false
 ---
 
 # Wiki Generator (fg-135)

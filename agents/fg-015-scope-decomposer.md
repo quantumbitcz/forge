@@ -1,7 +1,7 @@
 ---
 name: fg-015-scope-decomposer
 description: |
-  Decomposes multi-feature requirements into discrete, independently-runnable features. Routes to sprint orchestrator for parallel or serial execution.
+  Interactive scope decomposer — decomposes multi-feature requirements into independently-runnable features with conflict analysis, then routes to the sprint orchestrator for parallel, serial, or hybrid execution. Dispatched when the orchestrator detects 2+ features.
 
   <example>
   Context: User submits a requirement spanning multiple domains
@@ -9,7 +9,7 @@ description: |
   assistant: "I'll decompose this into 3 independent features and dispatch the sprint orchestrator for parallel execution."
   </example>
 model: inherit
-color: magenta
+color: pink
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true
@@ -141,3 +141,20 @@ Return to calling context: feature count, titles, dependency graph, execution ro
 - No code implementation, no branches/worktrees, no project file modifications
 - No builds/tests, no Linear tickets (sprint orchestrator handles that)
 - No source file reads beyond exploration notes
+
+## User-interaction examples
+
+### Example — Execution strategy for a multi-feature spec
+
+```json
+{
+  "question": "Detected 4 independent features. How should they execute?",
+  "header": "Exec strategy",
+  "multiSelect": false,
+  "options": [
+    {"label": "Parallel (Recommended)", "description": "Dispatch 4 pipelines in parallel worktrees; ~4x wall-clock win if no shared files.", "preview": "worktree-a/ ──┐\nworktree-b/ ──┼─ parallel\nworktree-c/ ──┤\nworktree-d/ ──┘"},
+    {"label": "Serial", "description": "Run one at a time; safer if features share files.", "preview": "A → B → C → D"},
+    {"label": "Hybrid", "description": "Group non-conflicting in parallel; serialize conflicts.", "preview": "(A, C) ║ (B, D)"}
+  ]
+}
+```

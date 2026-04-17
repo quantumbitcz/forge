@@ -1,8 +1,8 @@
 ---
 name: fg-505-build-verifier
-description: Verifies build and lint pass after implementation changes. Dispatched by fg-500-test-gate or the orchestrator at Stage 5 (VERIFY) when build or lint commands fail. Analyzes errors, applies targeted fixes, re-runs. Returns PASS verdict or escalation context with structured error details.
+description: Build verifier — verifies build and lint pass; analyzes errors and applies targeted fixes.
 model: inherit
-color: yellow
+color: brown
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true

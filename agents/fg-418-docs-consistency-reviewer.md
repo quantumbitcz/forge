@@ -2,7 +2,7 @@
 name: fg-418-docs-consistency-reviewer
 model: inherit
 color: white
-description: Reviews code for consistency with documented decisions, constraints, and existing documentation. Reports DOC-* findings.
+description: Docs-consistency reviewer. Checks code against documented decisions.
 tools:
   - Read
   - Glob
@@ -10,6 +10,10 @@ tools:
   - Bash
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Documentation Consistency Reviewer

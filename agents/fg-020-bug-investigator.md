@@ -1,13 +1,6 @@
 ---
 name: fg-020-bug-investigator
-description: |
-  Bug investigation and reproduction agent — pulls context from ticket sources, explores fault area, attempts automated reproduction via failing test. Dispatched at Stage 1-2 in bugfix mode.
-
-  <example>
-  Context: User reports a bug
-  user: "/forge-fix Users get 404 on group endpoint"
-  assistant: "I'll dispatch the bug investigator to trace the error and write a failing test."
-  </example>
+description: Bug investigator — pulls context from ticket sources, explores fault area, attempts automated reproduction via failing test. Dispatched at Stage 1-2 in bugfix mode.
 model: inherit
 color: purple
 tools: ['Read', 'Write', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'neo4j-mcp']
@@ -263,3 +256,20 @@ Use `AskUserQuestion` for: confirming reproduction after 3 failed attempts, ambi
 - **Do NOT exceed 3 reproduction attempts**
 - **Do NOT skip Phase 1**
 - **Do NOT invent bugs** — if unconfirmable, say so explicitly
+
+## User-interaction examples
+
+### Example — Reproduction strategy when initial traces are ambiguous
+
+```json
+{
+  "question": "The reported trace doesn't uniquely identify the failing code path. How should we proceed?",
+  "header": "Repro path",
+  "multiSelect": false,
+  "options": [
+    {"label": "Write a failing test targeting the most likely path (Recommended)", "description": "Start with the top candidate; iterate if it doesn't reproduce."},
+    {"label": "Request a fresh trace with more detail", "description": "Ask user for DEBUG-level logs or a minimal reproduction."},
+    {"label": "Investigate manually without a failing test", "description": "Skip TDD step; risk missing the root cause."}
+  ]
+}
+```

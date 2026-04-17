@@ -133,3 +133,106 @@ has_tool() {
     fail "UI frontmatter drift: ${#failures[@]} agents"
   fi
 }
+
+# ---------------------------------------------------------------------------
+# Merged from tests/structural/ui-frontmatter-consistency.bats (skill checks)
+# ---------------------------------------------------------------------------
+
+@test "skills using AskUserQuestion have ui: frontmatter" {
+  local failures=0
+  for skill_dir in "${PLUGIN_ROOT}"/skills/*/; do
+    local skill_file="${skill_dir}SKILL.md"
+    [[ -f "$skill_file" ]] || continue
+    if grep -q 'AskUserQuestion' "$skill_file"; then
+      if ! get_frontmatter "$skill_file" | grep -q '^ui:'; then
+        echo "MISSING ui: in $(basename "$skill_dir")" >&2
+        failures=$((failures + 1))
+      fi
+    fi
+  done
+  assert [ "$failures" -eq 0 ]
+}
+
+@test "skills using TaskCreate have ui: with tasks" {
+  local failures=0
+  for skill_dir in "${PLUGIN_ROOT}"/skills/*/; do
+    local skill_file="${skill_dir}SKILL.md"
+    [[ -f "$skill_file" ]] || continue
+    if grep -q 'TaskCreate' "$skill_file"; then
+      if ! get_frontmatter "$skill_file" | grep -q 'tasks.*true'; then
+        echo "MISSING ui.tasks in $(basename "$skill_dir")" >&2
+        failures=$((failures + 1))
+      fi
+    fi
+  done
+  assert [ "$failures" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# 5 new Phase 1 assertions (plan Task 18 Step 2)
+# ---------------------------------------------------------------------------
+
+@test "every agent has an explicit ui: block" {
+  for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
+    grep -q "^ui:" "$f" || { echo "Missing ui: $f"; return 1; }
+  done
+}
+
+@test "no agent uses ui.tier shortcut" {
+  for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
+    if awk '/^ui:/{flag=1; next} flag && /^[a-z]/{flag=0} flag' "$f" | grep -q "^ *tier:"; then
+      echo "ui.tier shortcut found in $f"; return 1
+    fi
+  done
+}
+
+@test "every agent has a color: field" {
+  for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
+    grep -q "^color:" "$f" || { echo "Missing color: $f"; return 1; }
+  done
+}
+
+@test "cluster-scoped color uniqueness holds" {
+  # Cluster → members mapping sourced from shared/agent-colors.md §2
+  declare -A clusters
+  clusters["pre-pipeline"]="fg-010 fg-015 fg-020 fg-050 fg-090"
+  clusters["orch"]="fg-100 fg-101 fg-102 fg-103"
+  clusters["preflight"]="fg-130 fg-135 fg-140 fg-150"
+  clusters["plan"]="fg-160 fg-200 fg-205 fg-210 fg-250"
+  clusters["impl"]="fg-300 fg-310 fg-320 fg-350"
+  clusters["review"]="fg-400 fg-410 fg-411 fg-412 fg-413 fg-416 fg-417 fg-418 fg-419"
+  clusters["verify"]="fg-500 fg-505 fg-510 fg-515"
+  clusters["ship"]="fg-590 fg-600 fg-610 fg-620 fg-650"
+  clusters["learn"]="fg-700 fg-710"
+
+  local bad=0
+  for cluster in "${!clusters[@]}"; do
+    local colors=""
+    for member in ${clusters[$cluster]}; do
+      local c
+      c=$(grep -h "^color:" "$PLUGIN_ROOT"/agents/${member}*.md 2>/dev/null | head -1 | awk '{print $2}')
+      colors="$colors $c"
+    done
+    local distinct total
+    distinct=$(echo "$colors" | tr ' ' '\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')
+    total=$(echo "$colors" | wc -w | tr -d ' ')
+    if [ "$distinct" != "$total" ]; then
+      echo "Cluster $cluster has collision: $colors"
+      bad=1
+    fi
+  done
+  [ "$bad" -eq 0 ]
+}
+
+@test "Tier 1/2 agents contain User-interaction examples section" {
+  local tier12=(fg-010 fg-015 fg-020 fg-050 fg-090 fg-100 fg-103 fg-160 fg-200 fg-210 fg-400 fg-500 fg-600 fg-710)
+  for agent in "${tier12[@]}"; do
+    local f
+    f=$(ls "$PLUGIN_ROOT"/agents/${agent}*.md 2>/dev/null | head -1)
+    [ -n "$f" ] || { echo "Missing agent: $agent"; return 1; }
+    grep -q "^## User-interaction examples" "$f" \
+      || { echo "Missing User-interaction examples section: $f"; return 1; }
+    grep -q '"question":' "$f" \
+      || { echo "No AskUserQuestion JSON payload found in: $f"; return 1; }
+  done
+}

@@ -1,6 +1,6 @@
 ---
 name: fg-410-code-reviewer
-description: Reviews code for general quality — error handling, DRY/KISS, defensive programming, plan alignment, test quality, naming, complexity. Uses QUAL-*/TEST-*/APPROACH-*/SCOUT-*/CONV-* categories.
+description: Code reviewer. Quality, error handling, DRY/KISS, naming, complexity.
 model: inherit
 color: cyan
 tools:
@@ -11,6 +11,10 @@ tools:
   - LSP
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Code Quality Reviewer

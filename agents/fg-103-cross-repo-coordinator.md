@@ -1,8 +1,8 @@
 ---
 name: fg-103-cross-repo-coordinator
-description: Coordinates cross-repo operations — worktree creation, lock ordering, PR linking, and timeout management.
+description: Cross-repo coordinator — orchestrates multi-repo work including worktree creation, alphabetical lock ordering, producer/consumer sequencing, PR linking, and timeout management. Dispatched when changes span multiple repositories.
 model: inherit
-color: gray
+color: brown
 tools: ['Bash', 'Read', 'Grep', 'Glob', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true
@@ -123,3 +123,20 @@ Extract completed task artifacts (PR URL, test results) → `features[].repos[]`
 ## Forbidden Actions
 
 No out-of-order locks. No blocking primary PR on related failures. No source file writes. No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
+
+## User-interaction examples
+
+### Example — Cross-repo PR merge strategy
+
+```json
+{
+  "question": "This change spans 3 repos. How should the PRs be merged?",
+  "header": "Merge order",
+  "multiSelect": false,
+  "options": [
+    {"label": "Producer-first (Recommended)", "description": "Merge shared-lib, then consumers. Safest when consumers pin a version.", "preview": "shared-lib ──▶ api-service ──▶ web-app"},
+    {"label": "All-at-once", "description": "Merge-train with CODEOWNERS approval on all three simultaneously.", "preview": "shared-lib ═╗\napi-service═╬═▶ atomic merge\nweb-app    ═╝"},
+    {"label": "Backward-compatible first", "description": "Producer adds new API without removing old; deprecate in a follow-up PR."}
+  ]
+}
+```

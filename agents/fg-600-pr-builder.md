@@ -1,6 +1,6 @@
 ---
 name: fg-600-pr-builder
-description: Creates feature branch, stages logical commits, opens PR with quality gate results. No AI attribution.
+description: PR builder — creates feature branch, stages commits grouped by logical layer, opens pull request with quality gate results and links to related artifacts. Enforces conventional commits and skips AI attribution.
 model: inherit
 color: blue
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']
@@ -322,3 +322,21 @@ Use `AskUserQuestion` for: PR strategy decisions, feedback clarification on reje
 ## 18. Optional Integrations
 
 Slack MCP: post PR notification. GitHub MCP: prefer for PR creation over `gh` CLI. Unavailable: use `gh`. Never fail due to MCP.
+
+## User-interaction examples
+
+### Example — Commit grouping strategy
+
+```json
+{
+  "question": "How should the 37 changed files be grouped into commits on the feature branch?",
+  "header": "Commits",
+  "multiSelect": false,
+  "options": [
+    {"label": "By logical layer (Recommended)", "description": "Separate commits: schema, domain, API, tests, docs.", "preview": "1. schema/\n2. domain/\n3. api/\n4. tests/\n5. docs/"},
+    {"label": "By story", "description": "One commit per story from the plan.", "preview": "1. Story 1 (all files)\n2. Story 2 (all files)\n..."},
+    {"label": "One squash commit", "description": "Single commit per PR; easiest to revert.", "preview": "1. Feature X: all changes"}
+  ]
+}
+```
+

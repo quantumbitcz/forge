@@ -1,6 +1,6 @@
 ---
 name: fg-413-frontend-reviewer
-description: Reviews frontend code for conventions, accessibility (WCAG 2.2 AA static + dynamic), performance (bundle size, rendering, lazy loading), framework-specific patterns, design system compliance, visual coherence, responsive behavior, dark mode, and cross-browser compatibility.
+description: Frontend reviewer. Conventions, accessibility, performance, design system, responsive behavior.
 model: inherit
 color: teal
 tools:
@@ -16,6 +16,10 @@ tools:
   - mcp__plugin_playwright_playwright__browser_press_key
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Frontend Reviewer

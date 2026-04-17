@@ -26,6 +26,7 @@ Task tracking and user questions (no plan mode).
 | `fg-020-bug-investigator` | Bug reproduction and analysis |
 | `fg-100-orchestrator` | Pipeline coordinator (never writes code) |
 | `fg-103-cross-repo-coordinator` | Multi-repo orchestration |
+| `fg-210-validator` | Plan validator (GO/REVISE/NO-GO across 7 perspectives; REVISE AskUserQuestion owned by orchestrator in 3.0.0, migrates here in Phase 4) |
 | `fg-400-quality-gate` | Review dispatch and scoring |
 | `fg-500-test-gate` | Test verification |
 | `fg-600-pr-builder` | PR creation |
@@ -60,9 +61,9 @@ No UI capabilities. Produce findings only.
 
 | Agent | Role |
 |---|---|
-| `fg-210-validator` | Plan validation |
 | `fg-101-worktree-manager` | Worktree lifecycle |
 | `fg-102-conflict-resolver` | Merge conflict resolution |
+| `fg-205-planning-critic` | Silent adversarial plan reviewer; emits CRITIC findings consumed by fg-210-validator |
 | `fg-410-code-reviewer` | Code quality review |
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |

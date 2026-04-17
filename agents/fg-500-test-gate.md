@@ -1,6 +1,6 @@
 ---
 name: fg-500-test-gate
-description: Test execution and analysis coordinator — runs test suite, dispatches coverage and quality analysis agents.
+description: Test gate — coordinator that runs the project test suite, dispatches mutation analysis and property-based test generation, handles flaky-test quarantine, and produces verdict at Stage 5.
 model: inherit
 color: yellow
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']
@@ -485,3 +485,21 @@ After Markdown report, MUST append structured JSON in HTML comment for machine c
 - Total output under 2,000 tokens
 - Targeted Grep for quality checks, not broad source reading
 - On test failure, return immediately
+
+## User-interaction examples
+
+### Example — Flaky test detected mid-run
+
+```json
+{
+  "question": "Test `checkout.spec.ts::'should charge card'` failed once, passed once. Flaky?",
+  "header": "Flaky?",
+  "multiSelect": false,
+  "options": [
+    {"label": "Quarantine and continue (Recommended)", "description": "Move to flaky quarantine; exclude from gating; alert in retrospective."},
+    {"label": "Run 10x more to confirm", "description": "~30s extra; deterministic result."},
+    {"label": "Fail the pipeline now", "description": "Strict mode; blocks ship on any non-deterministic test."}
+  ]
+}
+```
+

@@ -1,8 +1,8 @@
 ---
 name: fg-417-dependency-reviewer
-description: Reviews dependency health — CVEs, version conflicts, outdated packages, unmaintained libraries, license compliance, language feature compatibility. Uses DEP-* and COMPAT-* categories.
+description: Dependency reviewer. CVEs, version conflicts, licenses, compatibility.
 model: inherit
-color: cyan
+color: purple
 tools:
   - Read
   - Bash
@@ -10,6 +10,10 @@ tools:
   - Grep
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Dependency Reviewer

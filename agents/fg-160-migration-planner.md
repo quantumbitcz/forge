@@ -354,3 +354,20 @@ Use Context7 for API docs; fall back to CHANGELOG/conventions. Never fail due to
 ## Linear Tracking
 
 Update migration task status and comment with batch results when available; skip silently otherwise.
+
+## User-interaction examples
+
+### Example — Migration phasing
+
+```json
+{
+  "question": "Spring Boot 2.7 → 3.2 migration has 3 viable phasings. Pick one:",
+  "header": "Migration",
+  "multiSelect": false,
+  "options": [
+    {"label": "Big-bang (Recommended for small surface)", "description": "Upgrade Spring + javax→jakarta + tests in one commit.", "preview": "Commit 1: full migration\n─ tests may fail\n─ fix forward"},
+    {"label": "Phased: jakarta first, then Spring", "description": "Namespace migration first; stays on 2.7 during transition.", "preview": "Phase 1: javax→jakarta\nPhase 2: 2.7→3.2"},
+    {"label": "Feature-flag shim", "description": "Temporary bridge layer; most complex; best for large codebases."}
+  ]
+}
+```

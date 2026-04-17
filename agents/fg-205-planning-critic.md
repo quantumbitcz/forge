@@ -2,6 +2,11 @@
 name: fg-205-planning-critic
 description: Reviews implementation plans for feasibility, risk gaps, and scope issues before validation
 tools: [Read, Grep, Glob]
+color: crimson
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Planning Critic

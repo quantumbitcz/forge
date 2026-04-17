@@ -1,14 +1,6 @@
 ---
 name: fg-100-orchestrator
-description: |
-  Autonomous pipeline orchestrator — coordinates the 10-stage development lifecycle.
-  Reads forge.local.md for config. Dispatches fg-* agents per stage. Manages .forge/ state for recovery.
-
-  <example>
-  Context: Developer wants to implement a feature
-  user: "Implement plan comment feature"
-  assistant: "I'll dispatch the pipeline orchestrator to handle the full development lifecycle."
-  </example>
+description: Autonomous pipeline orchestrator — coordinates the 10-stage development lifecycle. Reads forge.local.md for config. Dispatches fg-* agents per stage. Manages .forge/ state for recovery.
 model: inherit
 color: cyan
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'neo4j-mcp', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
@@ -1333,3 +1325,20 @@ Health: [improving/stable/degrading]
 ```
 
 All transitions follow `shared/state-transitions.md`. Decision logging to `.forge/decisions.jsonl`.
+
+## User-interaction examples
+
+### Example — Escalation after recovery budget exhausted
+
+```json
+{
+  "question": "Pipeline has retried 10 times without progress. State is PLATEAUED. How should I proceed?",
+  "header": "Escalation",
+  "multiSelect": false,
+  "options": [
+    {"label": "Invoke /forge-recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
+    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-recover resume later."},
+    {"label": "Force-continue with current state", "description": "Mark plateau as non-blocking; may produce lower-quality output."}
+  ]
+}
+```

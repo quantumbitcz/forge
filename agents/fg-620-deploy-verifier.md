@@ -2,7 +2,7 @@
 name: fg-620-deploy-verifier
 description: Monitors deployment health during strategy execution. Dispatched when /forge-deploy uses canary, blue-green, or rolling strategy.
 model: inherit
-color: green
+color: olive
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true

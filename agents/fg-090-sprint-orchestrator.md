@@ -9,7 +9,7 @@ description: |
   assistant: "I'll dispatch the sprint orchestrator to analyze these 3 features for independence and execute them in parallel where safe."
   </example>
 model: inherit
-color: magenta
+color: coral
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'neo4j-mcp']
 ui:
   tasks: true
@@ -542,3 +542,21 @@ References (never modifies):
 - `shared/sprint-state-schema.md`, `shared/stage-contract.md`, `shared/agent-communication.md`
 - `shared/agent-philosophy.md`, `shared/agent-ui.md`, `shared/agent-defaults.md`
 - `shared/git-conventions.md`, `shared/graph/query-patterns.md`
+
+## User-interaction examples
+
+### Example — Which features to run in parallel
+
+```json
+{
+  "question": "6 features detected in this cycle. Which should run concurrently?",
+  "header": "Parallel set",
+  "multiSelect": true,
+  "options": [
+    {"label": "AUTH-101: Add MFA", "description": "Touches auth/ only — safe for parallel."},
+    {"label": "BILL-220: Invoice retry", "description": "Touches billing/ only — safe for parallel."},
+    {"label": "NOTIF-45: Push notifications", "description": "Touches notifications/ only — safe for parallel."},
+    {"label": "ORDERS-88: Cancellation flow", "description": "Shares order-service.ts with BILL-220 — serialize."}
+  ]
+}
+```

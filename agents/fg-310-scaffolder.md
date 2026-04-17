@@ -2,7 +2,7 @@
 name: fg-310-scaffolder
 description: Generates boilerplate files with correct structure, types, imports, and TODO markers. Never implements business logic.
 model: inherit
-color: green
+color: lime
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'Agent', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true

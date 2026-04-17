@@ -1,8 +1,8 @@
 ---
 name: fg-416-performance-reviewer
-description: Reviews code for performance issues — N+1 queries, missing indexes, connection pools, caching strategy, caching library choice, concurrency. Uses PERF-* categories.
+description: Performance reviewer. N+1 queries, indexes, pools, caching, concurrency.
 model: inherit
-color: yellow
+color: amber
 tools:
   - Read
   - Glob
@@ -11,6 +11,10 @@ tools:
   - LSP
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Performance Reviewer

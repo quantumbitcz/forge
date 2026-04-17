@@ -1,8 +1,8 @@
 ---
 name: fg-411-security-reviewer
-description: Reviews code for security vulnerabilities — OWASP Top 10, auth gaps, injection, secrets exposure, dependency CVEs.
+description: Security reviewer. OWASP Top 10, injection, secrets, CVEs.
 model: inherit
-color: red
+color: crimson
 tools:
   - Read
   - Glob
@@ -10,6 +10,10 @@ tools:
   - Bash
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Security Reviewer

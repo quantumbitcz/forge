@@ -1,7 +1,7 @@
 ---
 name: fg-200-planner
 description: |
-  Decomposes a requirement into a risk-assessed implementation plan with stories, tasks, and parallel groups.
+  Interactive implementation planner — decomposes a requirement into a risk-assessed plan with stories, tasks, acceptance criteria, and parallel groups. Grounds conventions via knowledge graph and Context7, produces a challenge brief, presents via plan mode for explicit approval.
 
   <example>
   Context: Developer wants to implement a new feature
@@ -371,3 +371,20 @@ Cached plan in dispatch: use as starting point (not template). Adapt, verify, up
 No cached plan: create from scratch.
 
 Use Context7 MCP for current API docs when available; fall back to conventions + grep. Never fail due to MCP unavailability.
+
+## User-interaction examples
+
+### Example — Risk-aware parallelization decision
+
+```json
+{
+  "question": "3 tasks are candidates for parallel execution but share `src/shared/config.ts`. How to proceed?",
+  "header": "Paralleliz'n",
+  "multiSelect": false,
+  "options": [
+    {"label": "Serialize all three (Recommended)", "description": "Safest; each task sees the previous's config changes."},
+    {"label": "Extract config changes into a prep task", "description": "Prep commits config; 3 tasks then run parallel on stable config."},
+    {"label": "Run parallel and auto-merge conflicts", "description": "Fastest wall-clock but risks semantic merge bugs."}
+  ]
+}
+```

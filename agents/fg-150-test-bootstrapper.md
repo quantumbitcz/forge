@@ -1,8 +1,8 @@
 ---
 name: fg-150-test-bootstrapper
-description: Generates baseline test suites for undertested codebases. Dispatched by the orchestrator at PREFLIGHT when test coverage is below the configured threshold. Prioritizes by risk (recently changed, high-complexity, public API surface), generates in batches.
+description: Test bootstrapper — generates baseline test suites for undertested codebases at PREFLIGHT.
 model: inherit
-color: cyan
+color: olive
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true

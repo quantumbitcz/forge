@@ -1,8 +1,8 @@
 ---
 name: fg-710-post-run
-description: Records user corrections as structured feedback and creates human-readable pipeline run recap.
+description: Post-run — records user corrections as structured feedback, prompts user on which corrections to promote to persistent learnings, and creates a human-readable pipeline run recap at Stage 10.
 model: inherit
-color: magenta
+color: pink
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'AskUserQuestion']
 ui:
   ask: true
@@ -533,3 +533,21 @@ No direct MCP usage except Linear (for recap posting). Never fail due to MCP una
 ## Linear Tracking
 
 Not applicable — runs on session exit, outside pipeline stages.
+
+## User-interaction examples
+
+### Example — Which retrospective corrections to record
+
+```json
+{
+  "question": "You made 7 corrections during the run. Which should become persistent learnings?",
+  "header": "Learnings",
+  "multiSelect": true,
+  "options": [
+    {"label": "Framework detected incorrectly (detected React, actually Preact)", "description": "Add to shared/learnings/frontend.md; promote after 3 successful applications."},
+    {"label": "Agent chose wrong test pattern (unit test for e2e behavior)", "description": "Add to shared/learnings/testing.md; applies to future similar plans."},
+    {"label": "Retry loop took 2 extra cycles", "description": "Performance observation only — not a behavior change."},
+    {"label": "User reworded 2 commit messages", "description": "Commit-message style preference; add to git conventions."}
+  ]
+}
+```

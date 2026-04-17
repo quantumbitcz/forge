@@ -1,8 +1,8 @@
 ---
 name: fg-140-deprecation-refresh
-description: Refreshes known-deprecations JSON files by querying Context7 and package registries for newly deprecated APIs. Dispatched by the orchestrator at PREFLIGHT when Context7 MCP is available. Skipped gracefully when Context7 is unavailable.
+description: Deprecation refresh — refreshes known-deprecations JSON via Context7 at PREFLIGHT.
 model: inherit
-color: cyan
+color: teal
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true

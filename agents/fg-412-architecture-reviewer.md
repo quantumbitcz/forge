@@ -1,8 +1,8 @@
 ---
 name: fg-412-architecture-reviewer
-description: Reviews code for architecture pattern compliance — layer boundaries, dependency rules, module boundaries, and structural violations. Uses ARCH-* and STRUCT-* categories.
+description: Architecture reviewer. Layer boundaries, dependency rules, structural violations.
 model: inherit
-color: cyan
+color: navy
 tools:
   - Read
   - Glob
@@ -11,6 +11,10 @@ tools:
   - LSP
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Architecture Reviewer

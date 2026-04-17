@@ -1,8 +1,8 @@
 ---
 name: fg-350-docs-generator
-description: Generates and updates project documentation — README, architecture, ADRs, API specs, onboarding, changelogs, diagrams. Dispatched by the orchestrator at Stage 7 (DOCUMENTING) after implementation and review are complete. Also invoked by /forge-docs-generate skill for on-demand generation.
+description: Docs generator — README, architecture, ADRs, API specs, changelogs at Stage 7.
 model: inherit
-color: green
+color: teal
 tools: ['Read', 'Glob', 'Grep', 'Bash', 'Write', 'Edit', 'Skill', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true

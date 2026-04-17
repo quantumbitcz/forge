@@ -9,7 +9,7 @@ description: |
   assistant: "I'll scaffold a Kotlin Spring Boot project with hexagonal architecture, Gradle composite builds, Flyway migrations, and Docker support."
   </example>
 model: inherit
-color: magenta
+color: orange
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: true
@@ -666,3 +666,20 @@ Use `EnterPlanMode`/`ExitPlanMode` for bootstrap plan approval.
 Context7 MCP available → primary version resolution.
 Unavailable → fall back to conventions file versions.
 Never fail because optional MCP is down.
+
+## User-interaction examples
+
+### Example — Stack selection for a new REST service
+
+```json
+{
+  "question": "Which stack should I scaffold?",
+  "header": "Stack",
+  "multiSelect": false,
+  "options": [
+    {"label": "Kotlin + Spring Boot + Postgres (Recommended)", "description": "Hexagonal architecture; Gradle composite builds; Flyway migrations.", "preview": "build.gradle.kts\nsrc/main/kotlin/\n├─ domain/\n├─ application/\n└─ infrastructure/"},
+    {"label": "TypeScript + NestJS + Postgres", "description": "Modular NestJS with TypeORM.", "preview": "package.json\nsrc/\n├─ domain/\n├─ modules/\n└─ shared/"},
+    {"label": "Go + Gin + Postgres", "description": "Minimal Gin; stdlib-first; sqlx.", "preview": "go.mod\ninternal/\n├─ domain/\n├─ handler/\n└─ store/"}
+  ]
+}
+```

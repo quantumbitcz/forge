@@ -2,7 +2,7 @@
 name: fg-320-frontend-polisher
 description: Creative visual polish agent — animations, micro-interactions, spatial composition, depth, responsive polish, dark mode.
 model: inherit
-color: magenta
+color: coral
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true
