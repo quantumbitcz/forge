@@ -63,9 +63,12 @@ mkdir -p core/cmd/forge-core
 mkdir -p core/internal/{state,cost,graph,platform}
 cd core
 go mod init github.com/quantumbitcz/forge/core
-# Add pinned dependencies — wasmtime for tree-sitter WASM
+
+# Pure-Go deps ONLY — CGO_ENABLED=0 must hold for cross-compile
+# wasmtime-go for tree-sitter WASM grammars
 go get github.com/bytecodealliance/wasmtime-go@latest
-go get github.com/mattn/go-sqlite3@latest
+# modernc.org/sqlite is pure-Go (NOT github.com/mattn/go-sqlite3, which is CGO)
+go get modernc.org/sqlite@latest
 cd ..
 ```
 
@@ -121,9 +124,12 @@ SUBCOMMANDS:
 - [ ] **Step 3: Write `core/Makefile`**
 
 ```makefile
+# Force bash so `[[ ]]` and `${var%...}` work regardless of /bin/sh (dash on Ubuntu breaks both).
+SHELL := /bin/bash
+
 .PHONY: build build-all test clean
 
-VERSION := $(shell cat .claude-plugin/plugin.json | python3 -c 'import json,sys;print(json.load(sys.stdin)["version"])')
+VERSION := $(shell cat ../.claude-plugin/plugin.json | python3 -c 'import json,sys;print(json.load(sys.stdin)["version"])')
 
 build:
 	CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o ../shared/bin/forge-core-$(shell go env GOOS)-$(shell go env GOARCH)$(shell [[ "$$(go env GOOS)" == "windows" ]] && echo ".exe") ./cmd/forge-core
@@ -252,7 +258,7 @@ Download pre-compiled WASM grammars for the 15 supported languages (Kotlin, Type
 
 - [ ] **Step 3: Implement `graph build --incremental`** — compare file mtimes against last build's marker; rebuild only changed files; preserve unchanged nodes.
 
-- [ ] **Step 4: Implement `graph query <sql>`** — passthrough to `sqlite3` driver (github.com/mattn/go-sqlite3 — uses CGO; for SQLite specifically, CGO is acceptable OR swap to `modernc.org/sqlite` pure-Go).
+- [ ] **Step 4: Implement `graph query <sql>`** — passthrough to pure-Go SQLite driver `modernc.org/sqlite` (registered via `database/sql`). **Must not use `github.com/mattn/go-sqlite3`** — it's CGO-based and breaks the `CGO_ENABLED=0` cross-compile invariant established in Commit 2.
 
 - [ ] **Step 5: Test** — fixture project with 10 TypeScript files + 5 Python; assert node/edge counts match expected; assert `--incremental` only re-parses changed files.
 
