@@ -38,15 +38,46 @@ Extended: 4 agents + 5 shared + 4 skills + config + 6 top-level = **32 unique fi
 
 ## Task 0: Verify Phase 3 preconditions
 
-- [ ] **Step 1: Verify plugin at 3.2.0 and Phase 3 deliverables present**
+- [ ] **Step 1: Verify all prior phases (1-3) merged**
 
 ```bash
+# Phase 3 deliverables (implies Phases 1 + 2 also merged)
 grep '"version": "3.2.0"' .claude-plugin/plugin.json      || { echo "ABORT: Phase 3 not merged"; exit 1; }
 test -f shared/cross-platform-contract.md                 || { echo "ABORT: Phase 3 missing"; exit 1; }
 test -f shared/graph/query-translator.sh                  || { echo "ABORT: Phase 3 missing"; exit 1; }
 grep -q "^release_lock()" shared/platform.sh              || { echo "ABORT: release_lock not in platform.sh"; exit 1; }
 grep -q "^safe_realpath()" shared/platform.sh             || { echo "ABORT: safe_realpath not in platform.sh"; exit 1; }
+
+# Phase 2 deliverables
+test -f shared/observability-contract.md                  || { echo "ABORT: Phase 2 missing observability-contract"; exit 1; }
+test -f shared/model-pricing.json                         || { echo "ABORT: Phase 2 missing model-pricing"; exit 1; }
+grep -q '"version": "1.7.0"' shared/state-schema.md       || { echo "ABORT: Phase 2 schema bump missing"; exit 1; }
+
+# Phase 1 deliverables (critical — our new skills reference these)
+test -f shared/skill-contract.md                          || { echo "ABORT: Phase 1 missing skill-contract.md"; exit 1; }
+test -f shared/agent-colors.md                            || { echo "ABORT: Phase 1 missing agent-colors"; exit 1; }
+test -d skills/forge-recover                              || { echo "ABORT: Phase 1 missing /forge-recover"; exit 1; }
 ```
+
+- [ ] **Step 2: Verify `safe_realpath` handles missing path components (C7 guard)**
+
+```bash
+# safe_realpath on a non-existent path must return something (not error)
+# Our containment-check calls it on .forge/pending/<file> before the file exists
+tmp=$(mktemp -d)
+test_path="$tmp/doesnotexist/nested"
+source shared/platform.sh
+result=$(safe_realpath "$test_path" 2>/dev/null || echo "FAILED")
+if [[ "$result" == "FAILED" ]]; then
+  echo "ABORT: safe_realpath does not handle missing paths; Phase 4 containment-check will fail at runtime" >&2
+  echo "Fix in Phase 3: update safe_realpath to support missing tail components" >&2
+  rm -rf "$tmp"
+  exit 1
+fi
+rm -rf "$tmp"
+```
+
+If this fails, open a Phase 3 hotfix before Phase 4 can execute.
 
 All checks must pass.
 
@@ -121,7 +152,7 @@ set -euo pipefail
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=./platform.sh
-source "${PLUGIN_ROOT}/platform.sh"
+source "${PLUGIN_ROOT}/shared/platform.sh"
 
 cmd_read() {
   local p=$1
@@ -350,10 +381,16 @@ bash -n tests/contract/escalation-taxonomy.bats tests/contract/staging-overlay.b
 - [ ] **Step 1: Commit**
 
 ```bash
-git add shared/staging-overlay.md shared/autonomous-scopes.md shared/escalation-taxonomy.md
-git add shared/forge-resolve-file.sh
+# chmod BEFORE git add so the execute bit is captured in the index
 chmod +x shared/forge-resolve-file.sh
+git add shared/forge-resolve-file.sh
+git add shared/staging-overlay.md shared/autonomous-scopes.md shared/escalation-taxonomy.md
 git add tests/contract/escalation-taxonomy.bats tests/contract/staging-overlay.bats
+
+# Verify mode 100755 is in the index
+git ls-files --stage shared/forge-resolve-file.sh | grep -q "^100755 " \
+  || { echo "ABORT: shared/forge-resolve-file.sh not marked executable in git index"; exit 1; }
+
 git commit -m "feat(phase4): foundations — contract docs + resolve helper + skeleton bats
 
 Group A assertions active from this commit; Group B gated on
@@ -540,13 +577,24 @@ At the end of the planner's PLAN-stage instructions, add:
 At end of PLAN stage:
 1. Write the full plan markdown to `.forge/plans/current.md`.
 2. Copy to `.forge/plans/archive/<ISO-timestamp>.md`.
-3. Compute SHA256 of current.md: `shasum -a 256 .forge/plans/current.md > .forge/plans/current.md.sha` (portable on both GNU+BSD).
+3. Compute SHA256 of current.md via portable helper (covers Alpine CI, macOS default, Linux distros):
+   ```bash
+   if command -v sha256sum >/dev/null 2>&1; then
+     sha256sum .forge/plans/current.md | awk '{print $1}'
+   elif command -v shasum >/dev/null 2>&1; then
+     shasum -a 256 .forge/plans/current.md | awk '{print $1}'
+   else
+     python3 -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" .forge/plans/current.md
+   fi
+   ```
 4. Write SHA256 to `state.json.plan.sha256` via `forge-state-write.sh patch`.
 5. If non-autonomous OR autonomous+scope test_exec only: set `state.story_state: PLAN_EDIT_WAIT`.
 6. Otherwise: transition to VALIDATING.
 
 The `EnterPlanMode` body is now `<content of .forge/plans/current.md>` — user still sees plan in the approval UI.
 ```
+
+**Consider adding `compute_sha256` helper to `shared/platform.sh`** as a follow-up in a separate commit if this pattern recurs (it does — validator also uses it). Plan includes this helper addition as part of Task 8 Step 5.
 
 - [ ] **Step 2: Update `fg-210-validator.md`** — add SHA watch:
 
@@ -656,9 +704,48 @@ On receipt of `stage_note.ask_user` from a child agent:
 4. Re-dispatch child agent with `ask_user_answer` + preserved cursor as inputs.
 ```
 
-- [ ] **Step 2: `shared/state-schema.md` — bump 1.7.0 → 1.8.0**
+- [ ] **Step 2: Bump BOTH `shared/state-schema.md` AND `shared/state-schema.json` (v1 review C1)**
 
-Find `"version": "1.7.0"`; change to `"version": "1.8.0"`.
+The .md file is the prose documentation; the .json file is the machine-validated schema consumed by `tests/contract/state-schema-validation.bats` and `tests/contract/state-schema.bats`. They MUST be updated together or CI goes red.
+
+Find in `shared/state-schema.md`: `"version": "1.7.0"` → `"version": "1.8.0"`.
+
+Find in `shared/state-schema.json`: top-level `version` → `"1.8.0"`. Also extend `properties.story_state.enum` with `"APPLY_GATE"`, `"APPLY_GATE_WAIT"`, `"PLAN_EDIT_WAIT"`.
+
+Add field definitions to `shared/state-schema.json`:
+
+```json
+"pending": {
+  "type": "object",
+  "properties": {
+    "files": {"type": "array", "items": {"type": "string"}},
+    "additions": {"type": "integer"},
+    "deletions": {"type": "integer"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+},
+"plan": {
+  "type": "object",
+  "properties": {
+    "sha256": {"type": "string"}
+  }
+},
+"abort_context": {
+  "type": "object",
+  "properties": {
+    "agent_id": {"type": "string"},
+    "reason": {"type": "string"}
+  }
+},
+"e3_overrides": {
+  "type": "array",
+  "items": {"type": "object"}
+}
+```
+
+**Update `tests/contract/state-schema.bats`:** find the assertion that checks `"version": "1.6.0"` OR `"version": "1.7.0"` (whichever Phase 2 left); change the literal string to `"1.8.0"`.
+
+Add a new fixture `tests/fixtures/state/v1.8.0-valid.json` modeled on `v1.5.0-valid.json` with the new fields populated.
 
 Add 3 new values to `story_state` enum: `APPLY_GATE`, `APPLY_GATE_WAIT`, `PLAN_EDIT_WAIT`.
 
@@ -768,11 +855,13 @@ Find the `autonomous` field. Replace scalar bool with:
 
 - [ ] **Step 2: Update existing skills for new wait states**
 
+**Note:** `/forge-recover` is a Phase 1 deliverable (replaces `forge-diagnose`, `forge-repair-state`, `forge-reset`, `forge-resume`, `forge-rollback` as subcommands). At Phase 4 execution time, `skills/forge-recover/SKILL.md` exists and `skills/forge-resume/` does NOT. Task 0 verifies this.
+
 Each of the 4 existing SKILL.md gets a brief section noting Phase 4 awareness:
 
 `skills/forge-run/SKILL.md`: `--resume` handles PLAN_EDIT_WAIT, APPLY_GATE_WAIT.
 `skills/forge-recover/SKILL.md`: `resume` subcommand handles the two new wait states.
-`skills/forge-abort/SKILL.md`: abort from PLAN_EDIT_WAIT or APPLY_GATE_WAIT sets `abort_reason: "wait_state_abort"`, discards pending.
+`skills/forge-abort/SKILL.md`: abort from PLAN_EDIT_WAIT or APPLY_GATE_WAIT writes `abort_reason: "wait_state_abort"` prefix (per taxonomy §4.4.1) and discards pending.
 `skills/forge-status/SKILL.md`: displays `state.pending` info + wait-state context when in APPLY_GATE_WAIT or PLAN_EDIT_WAIT.
 
 - [ ] **Step 3: Commit**

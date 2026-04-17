@@ -326,16 +326,19 @@ If `false`, orchestrator emits E2 `AskUserQuestion` (per §4.4). If `true`, proc
 No option "just discards pending OR resets, orchestrator chooses." Ambiguity removed.
 | **E4 abort** | Unrecoverable (E3 rollback failed, recovery budget exhausted, user `/forge-abort`) | Event `escalation.e4` + alert; NO `AskUserQuestion` (user already committed) | None | None; use `/forge-run` to start over | `state.story_state → ABORTED`; `state.abort_reason` populated with enum value |
 
-**`state.abort_reason` enum** (new in 1.8.0 schema):
+**`state.abort_reason` — new canonical prefixes (preserves existing prefix-match contract from `shared/state-schema.md`):**
 
-| Value | Set by |
-|---|---|
-| `"e4"` | Agent-emitted E4; `state.abort_context = {agent_id, reason}` populated |
-| `"user_abort"` | User invoked `/forge-abort` via skill |
-| `"wait_state_abort"` | User invoked `/forge-abort` from PLAN_EDIT_WAIT or APPLY_GATE_WAIT (subset of `user_abort`) |
-| `"budget_exhausted"` | Recovery budget / cost cap hit without user override |
-| `"pr_rejected_design"` | Existing value (post-run retrospective path) |
-| `"e3_rollback_failed"` | E3 rollback attempt failed and user declined `continue-anyway` |
+`shared/state-schema.md:460` declares `abort_reason` as a **prefix-matched string** (orchestrator may append contextual details). Phase 4 preserves this contract — does NOT introduce a strict enum — but adds 4 new canonical prefix values alongside the existing ones (`"NO-GO timeout"`, `"budget exhausted"`, `"Bug unreproducible"`, `"convergence regression"`, `"user abort (direct)"`, `"user_cancelled"` per existing call sites).
+
+| New prefix | Set by | Coexists with |
+|---|---|---|
+| `"e4: <reason>"` | Agent-emitted E4 escalation; details in `state.abort_context = {agent_id, reason}` | Existing `"user abort (direct)"` — they're distinct |
+| `"wait_state_abort"` | User invoked `/forge-abort` from PLAN_EDIT_WAIT or APPLY_GATE_WAIT | Specialization of existing `"user abort (direct)"` — distinct prefix for analytics |
+| `"e3_rollback_failed: <details>"` | E3 rollback attempt failed and user declined `continue-anyway` | New; no existing analog |
+
+Existing prefixes (preserved, unchanged): `"NO-GO timeout"`, `"budget exhausted"`, `"Bug unreproducible"`, `"convergence regression"`, `"user abort (direct)"`, `"user_cancelled"`, `"pr_rejected_design"`.
+
+No strict enum. No breaking change to existing call sites. Plan does NOT edit `stage-contract.md:190,629`, `fg-090-sprint-orchestrator.md:272`, or `python/state_transitions.py:527`.
 
 #### 4.4.2 Emission contract
 
@@ -350,7 +353,13 @@ Any agent can emit any level. Contract rules:
 
 Every `E1|E2|E3|E4` mention in agent `.md` files is audited to reference the taxonomy by level name with a description matching the level's semantics. The implementation plan enumerates the files.
 
-### 4.5 Mid-stage `ask_user` (default behavior — from brainstorming)
+### 4.5 Mid-stage `ask_user` — CONTRACT ONLY IN PHASE 4
+
+**Scope note (v1 review C4):** Phase 4 defines the contract but does NOT opt any agent into mid-stage `ask_user` emission. The feature is "dark code" until a future phase (likely Phase 5 or a targeted phase) upgrades specific agents (`fg-200-planner`, `fg-300-implementer`, some reviewers) to declare `ui: { mid_stage_ask: true }` and emit `stage_note.ask_user` in their workflows. This matches Phase 4's pattern of "land the infrastructure; enablement is incremental."
+
+Acceptance criterion is that the contract is documented + enforced (any agent that later opts in MUST carry the flag and the required tools), not that it's actively used in this release.
+
+### 4.5.0 Defaults from brainstorming
 
 #### 4.5.1 Allowed stages
 
