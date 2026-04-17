@@ -1006,6 +1006,11 @@ _events_log_path() {
 }
 
 # Emit a cost.inc event. Args: run_id stage agent model tokens_in tokens_out cost_usd run_cost_usd cap_usd
+#
+# NOTE: Uses inline `rmdir` for lock release pending Phase 3's `release_lock`
+# helper (see docs/superpowers/specs/2026-04-17-phase3-cross-platform-hardening-design.md §4.2).
+# Phase 3 Commit 6 Task 11 Step 4 swaps these rmdir calls to release_lock once
+# the helper lands. The inline version here is functionally equivalent.
 emit_cost_inc() {
   local run_id="$1" stage="$2" agent="$3" model="$4"
   local tokens_in="$5" tokens_out="$6" cost_usd="$7" run_cost_usd="$8" cap_usd="$9"
@@ -1019,7 +1024,8 @@ emit_cost_inc() {
     "$ts" "$run_id" "$stage" "$agent" "$model" "$tokens_in" "$tokens_out" "$cost_usd" "$run_cost_usd" "$cap_usd" \
     >> "$events_path"
 
-  release_lock "${events_path}.lock"
+  # Phase-2-local inline release (Phase 3 Commit 6 replaces with `release_lock "${events_path}.lock"`)
+  rmdir "${events_path}.lock" 2>/dev/null || true
 }
 
 # Emit cap.breach event when run_cost_usd first crosses cap_usd.
@@ -1031,7 +1037,8 @@ emit_cap_breach() {
     || { echo "emit_cap_breach: could not acquire lock" >&2; return 1; }
   printf '{"ts":"%s","type":"cap.breach","run_id":"%s","at_cost_usd":%s,"cap_usd":%s}\n' \
     "$ts" "$run_id" "$at_cost_usd" "$cap_usd" >> "$events_path"
-  release_lock "${events_path}.lock"
+  # Phase-2-local inline release (Phase 3 Commit 6 replaces with `release_lock "${events_path}.lock"`)
+  rmdir "${events_path}.lock" 2>/dev/null || true
 }
 
 # Float comparison via Python (bc not universally installed).

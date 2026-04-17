@@ -336,7 +336,7 @@ All verified by CI on push.
 4. `shared/graph/query-translator.sh` exists, executable, supports auto/neo4j/sqlite backend selection; advertises Cypher and SQL passthrough via `--help`.
 5. `tests/contract/portability.bats` exists with Group A assertions active from Commit 2 and Group B assertions activating at Commit 8 via `FORGE_PHASE3_ACTIVE` detection.
 6. `tests/ci/bash32-smoke-list.txt` enumerates the curated opt-in bash 3.2 compat set.
-7. `tests/ci/phase3-shellcheck-scope.txt` enumerates the 21 Phase-3-touched files.
+7. `tests/ci/phase3-shellcheck-scope.txt` enumerates Phase-3-touched files (25 entries: 20 bashism-fix targets + `shared/platform.sh` extension + `shared/check-prerequisites.sh` extension + `shared/graph/query-translator.sh` new + 2 renamed hook scripts).
 8. Group B portability assertion: zero banned-pattern occurrences across `shared/**/*.sh` and `hooks/**/*.sh` (excluding `shared/platform.sh`) at HEAD.
 9. 20 bashism-fix files pass `shellcheck --severity=warning` (scoped via `phase3-shellcheck-scope.txt`).
 10. `state-integrity.sh` bashisms (`stat -c %Y` at L151, L153) replaced with `portable_file_date` calls.

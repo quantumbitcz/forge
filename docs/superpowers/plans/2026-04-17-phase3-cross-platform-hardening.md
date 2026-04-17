@@ -25,7 +25,7 @@
 | `shared/check-prerequisites.sh` (extended) | `--json` flag |
 | `tests/contract/portability.bats` | Group A active Commit 2; Group B active Commit 8 |
 | `tests/ci/bash32-smoke-list.txt` | Curated files expected to parse on bash 3.2 |
-| `tests/ci/phase3-shellcheck-scope.txt` | 21 files for scoped shellcheck |
+| `tests/ci/phase3-shellcheck-scope.txt` | 25 files for scoped shellcheck (20 bashism targets + platform.sh + check-prerequisites.sh + query-translator.sh + 2 renamed hooks) |
 | `.forge/prereqs.json` | Runtime state — combined prereq snapshot (created by /forge-init) |
 | `.github/workflows/ci.yml` | Add bash 3.2 smoke + scoped shellcheck steps |
 
@@ -505,11 +505,13 @@ setup() {
 
 @test "[B] no banned patterns in shared/**/*.sh or hooks/**/*.sh (except platform.sh)" {
   [[ "${FORGE_PHASE3_ACTIVE:-0}" = "1" ]] || skip "Group B activates in Commit 8"
+  # Scope to *.sh only — the contract doc intentionally contains banned patterns
+  # as negative examples; excluding it via --include shellcheck.
   local hits
-  hits=$(grep -rnE "\\\$'\\\\n'|<<<|declare -A|date \+%s%N|stat -c %Y|stat -c %s" \
+  hits=$(grep -rnE --include='*.sh' "\\\$'\\\\n'|<<<|declare -A|date \+%s%N|stat -c %Y|stat -c %s" \
     "$PLUGIN_ROOT/shared" "$PLUGIN_ROOT/hooks" 2>/dev/null \
-    | grep -v "shared/platform.sh" \
-    | grep -v "^Binary file" || true)
+    | grep -v "shared/platform.sh:" \
+    || true)
   if [[ -n "$hits" ]]; then
     echo "Banned-pattern hits:"
     echo "$hits"
@@ -802,24 +804,61 @@ for f in CHANGELOG.md CLAUDE.md shared/platform.sh shared/hook-design.md \
 done
 ```
 
-- [ ] **Step 4: Swap Phase 2's `emit_cost_inc` `rmdir` to `release_lock`**
+- [ ] **Step 4: Swap Phase 2's inline `rmdir` calls in `forge-token-tracker.sh` to `release_lock`**
 
-Open `shared/forge-token-tracker.sh`; find `rmdir "$lockdir"` lines in `emit_cost_inc` / `emit_cap_breach`; replace with `release_lock "$lockdir"`.
+Per Phase 2's plan (Task 11 Step 1) and its `emit_cost_inc` / `emit_cap_breach` functions, the inline form is:
 
 ```bash
-# Verify the swap
-grep -n "release_lock\|rmdir.*lockdir" shared/forge-token-tracker.sh | head
+# Phase-2-local inline release (Phase 3 Commit 6 replaces with `release_lock "${events_path}.lock"`)
+rmdir "${events_path}.lock" 2>/dev/null || true
+```
+
+**Precondition assertion (fails loudly if Phase 2 didn't actually ship the inline form):**
+
+```bash
+# Expect at least 2 `rmdir "${events_path}.lock"` occurrences (one per emit_*)
+count=$(grep -c 'rmdir "\${events_path}.lock"' shared/forge-token-tracker.sh)
+[ "$count" -ge 2 ] || { echo "ABORT: Phase 2 didn't ship inline rmdir; nothing to swap"; exit 1; }
+```
+
+**Apply swap:**
+
+```bash
+sed -i.bak 's|rmdir "${events_path}.lock" 2>/dev/null || true|release_lock "${events_path}.lock"|g' shared/forge-token-tracker.sh
+rm -f shared/forge-token-tracker.sh.bak
+```
+
+**Postcondition assertion (fails loudly if swap was incomplete):**
+
+```bash
+# Expect 0 rmdir-of-lock occurrences, >=2 release_lock occurrences
+post_rmdir=$(grep -c 'rmdir "\${events_path}.lock"' shared/forge-token-tracker.sh || echo 0)
+post_release=$(grep -c 'release_lock "\${events_path}.lock"' shared/forge-token-tracker.sh || echo 0)
+[ "$post_rmdir" = "0" ] || { echo "FAIL: $post_rmdir rmdir still present"; exit 1; }
+[ "$post_release" -ge 2 ] || { echo "FAIL: only $post_release release_lock calls; expected >=2"; exit 1; }
+echo "Swap complete: rmdir=0 release_lock=$post_release"
+```
+
+Also remove the two "Phase-2-local inline release" comments (they no longer apply):
+
+```bash
+sed -i.bak '/# Phase-2-local inline release/d' shared/forge-token-tracker.sh
+rm -f shared/forge-token-tracker.sh.bak
 ```
 
 - [ ] **Step 5: Verify no stale refs**
 
 ```bash
 grep -rn "automation-trigger-hook\.sh\|automation-trigger\.sh" \
-  --include="*.md" --include="*.sh" --include="*.bats" --include="*.json" . 2>/dev/null \
-  | grep -v "\.git/\|node_modules\|/.forge/"
+  --include="*.md" --include="*.sh" --include="*.bats" --include="*.json" \
+  --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.forge \
+  --exclude-dir=docs \
+  . 2>/dev/null \
+  | grep -v "^CHANGELOG.md:" \
+  | grep -v "^./CHANGELOG.md:"
 ```
 
-Expected: empty output.
+Expected: empty output. CHANGELOG.md is excluded because historical release notes intentionally mention the old names. The `docs/` exclusion skips `docs/superpowers/specs/` + `plans/` which document the rename.
 
 - [ ] **Step 6: Commit**
 
@@ -854,39 +893,50 @@ Also swaps Phase 2's forge-token-tracker.sh inline rmdir to release_lock
 - Modify: `skills/forge-graph-query/SKILL.md` (backend selector + Cypher/SQL passthrough)
 - Create: `tests/unit/query-translator-dispatch.bats`, `tests/unit/check-prerequisites-json.bats`
 
-- [ ] **Step 1: Add `--json` flag to `check-prerequisites.sh`**
+- [ ] **Step 1: Add `--json` flag to `check-prerequisites.sh` (minimal, non-breaking)**
 
-Edit `shared/check-prerequisites.sh`. Near argument parsing, add:
+Edit `shared/check-prerequisites.sh`. At the top (just after shebang + `set -uo pipefail`), add minimal flag detection WITHOUT introducing new flags like `--strict` and WITHOUT referencing undefined functions like `iso_timestamp` or `usage`:
 
 ```bash
+# Phase 3: optional --json output mode; preserves existing exit semantics.
 JSON_OUTPUT=0
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --json) JSON_OUTPUT=1; shift ;;
-    --strict) STRICT=1; shift ;;
-    --help|-h) usage; exit 0 ;;
-    *) shift ;;
-  esac
+for arg in "$@"; do
+  [[ "$arg" == "--json" ]] && JSON_OUTPUT=1
 done
 ```
 
-At the end, if `JSON_OUTPUT=1`, emit a structured summary:
+Locate the end of the script (just before `exit "$errors"` or equivalent). Immediately BEFORE the exit statement, add:
 
 ```bash
 if [[ "$JSON_OUTPUT" -eq 1 ]]; then
-  python3 -c "
-import json
+  # Export to avoid nested-quote interpolation into Python
+  export _TS _BV _PV _ERRORS
+  _TS=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+  _BV="${BASH_VERSION:-unknown}"
+  _PV=$(python3 --version 2>&1 | awk '{print $2}')
+  _ERRORS="${errors:-0}"
+  python3 -c '
+import json, os
 print(json.dumps({
-  'timestamp': '$(iso_timestamp)',
-  'required': {'bash': '${BASH_VERSION}', 'python3': '$(python3 --version 2>&1 | awk \"{print \\$2}\")'},
-  'failures': $errors,
-  'abort_reasons': []
+    "timestamp": os.environ["_TS"],
+    "forge_version": "3.2.0",
+    "required": {
+        "bash": os.environ["_BV"],
+        "python3": os.environ["_PV"],
+    },
+    "failures": int(os.environ["_ERRORS"]),
+    "abort_reasons": [],
 }))
-"
+'
 fi
 ```
 
-Exit semantics unchanged.
+Rationale for this form:
+- No dependency on `iso_timestamp` (not sourced in this script by design — it's the prereq check).
+- No nested `awk "...\\$2..."` quote gymnastics; `awk '{print $2}'` is bash-interpolation-safe.
+- Environment variables passed explicitly into Python; no shell interpolation into Python source.
+- `--strict` is NOT introduced (v1 plan fabricated it; spec does not require it).
+- Exit semantics unchanged: `exit "$errors"` still runs after the JSON emit; JSON is informational.
 
 - [ ] **Step 2: Update `/forge-init` — write `.forge/prereqs.json`**
 
@@ -1012,10 +1062,25 @@ setup() {
   [[ "$output" =~ "cypher" ]] || [[ "$output" =~ "neo4j" ]]
 }
 
-@test "query-translator detects SQL queries" {
+@test "query-translator detects SQL queries — status 2 with informative error if no db" {
+  # Guard: this test assumes no .forge/code-graph.db in the test workspace.
+  # If present (e.g., some workspaces ship a fixture), skip to avoid false pass.
+  [[ ! -f "$PLUGIN_ROOT/.forge/code-graph.db" ]] || skip "Fixture DB present; skipping"
   run "$PLUGIN_ROOT/shared/graph/query-translator.sh" --backend=sqlite "SELECT 1"
-  # Without .forge/code-graph.db, exits 2; with db, runs the query
-  [[ "$status" = "0" ]] || [[ "$status" = "2" ]]
+  [ "$status" = "2" ]
+  [[ "$output" =~ "sqlite" ]] || [[ "$output" =~ "code-graph.db" ]]
+}
+
+@test "query-translator runs SQL when db present (fixture)" {
+  # Build a minimal fixture DB at a temp path and inject via env
+  local tmp; tmp=$(mktemp -d)
+  mkdir -p "$tmp/.forge"
+  sqlite3 "$tmp/.forge/code-graph.db" "CREATE TABLE t(x); INSERT INTO t VALUES (1);"
+  cd "$tmp"
+  run "$PLUGIN_ROOT/shared/graph/query-translator.sh" --backend=sqlite "SELECT x FROM t"
+  [ "$status" = "0" ]
+  [[ "$output" =~ "1" ]]
+  rm -rf "$tmp"
 }
 
 @test "query-translator rejects unknown query type" {
@@ -1063,45 +1128,61 @@ git commit -m "feat(phase3): prereq persistence + SQLite backend selector in ski
 
 ---
 
-## Task 13: Commit 8 — CI workflow + top-level docs + version bump
+## Task 13: Commit 8 — Extend existing test.yml + top-level docs + version bump
 
 **Files:**
-- Modify: `.github/workflows/ci.yml` (or create if missing)
+- Modify: `.github/workflows/test.yml` (existing — **extend, do not duplicate**)
 - Modify: `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`
 - Modify: `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
 
-- [ ] **Step 1: Inspect or create CI workflow**
+- [ ] **Step 1: Extend `.github/workflows/test.yml` with 3 new steps**
 
-```bash
-ls .github/workflows/ 2>/dev/null
-```
-
-If `ci.yml` exists, add two steps near existing test-run steps. If no workflow exists, create a minimal one:
+Existing `test.yml` has `structural` and `test` jobs on `ubuntu-latest`/`macos-latest`/`windows-latest` matrix with `actions/checkout@v6`. DO NOT create a parallel `ci.yml`. Add a new `portability` job to `test.yml` that runs the Phase 3 CI steps on Ubuntu only (shellcheck is Linux-convenient; bash 3.2 Docker is Linux-only):
 
 ```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
+  portability:
+    needs: structural
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - name: bash -n parse
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: bash -n parse (shared + hooks)
         run: |
-          for f in $(find shared hooks -name '*.sh'); do bash -n "$f"; done
-      - name: Scoped shellcheck
+          find shared hooks -name '*.sh' -print0 | xargs -0 -n1 bash -n
+
+      - name: Scoped shellcheck (Phase 3)
         run: |
-          for f in $(cat tests/ci/phase3-shellcheck-scope.txt | grep -v '^#'); do
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          grep -v '^#' tests/ci/phase3-shellcheck-scope.txt | grep -v '^$' | while read -r f; do
             shellcheck --severity=warning "$f" || exit 1
           done
-      - name: bash 3.2 smoke
+
+      - name: bash 3.2 smoke (pinned image)
         run: |
-          for f in $(cat tests/ci/bash32-smoke-list.txt | grep -v '^#'); do
-            docker run --rm -v "$PWD:/work" -w /work bash:3.2 bash -n "$f" || exit 1
+          # Pin digest is resolved to a stable bash:3.2 build before merge; placeholder below.
+          # To refresh: docker pull bash:3.2 && docker inspect --format='{{index .RepoDigests 0}}' bash:3.2
+          BASH32_IMAGE="bash:3.2@sha256:REPLACE_WITH_PINNED_DIGEST"
+          grep -v '^#' tests/ci/bash32-smoke-list.txt | grep -v '^$' | while read -r f; do
+            docker run --rm -v "$PWD:/work" -w /work "$BASH32_IMAGE" bash -n "$f" || exit 1
           done
-      - name: Run bats suite
-        run: ./tests/run-all.sh
 ```
+
+**Important:** Before committing, resolve the bash 3.2 digest:
+
+```bash
+docker pull bash:3.2
+digest=$(docker inspect --format='{{index .RepoDigests 0}}' bash:3.2 | awk -F'@' '{print $2}')
+# Edit test.yml, replace REPLACE_WITH_PINNED_DIGEST with $digest
+```
+
+If Docker is unavailable at plan-execution time, leave the placeholder and note in the commit message that the maintainer must resolve it.
+
+No `Run bats suite` step — existing `test` job already runs the bats suite on Ubuntu+macOS via `./tests/run-all.sh unit|contract|scenario`.
 
 - [ ] **Step 2: Update README.md**
 
