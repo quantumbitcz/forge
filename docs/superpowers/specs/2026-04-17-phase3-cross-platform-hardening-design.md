@@ -1,6 +1,6 @@
 # Phase 3 — Cross-Platform Hardening (Design)
 
-**Status:** Draft for review
+**Status:** Draft v2 for review (v1 review applied)
 **Date:** 2026-04-17
 **Target version:** Forge 3.2.0 (minor — additive; no breaking user-facing changes)
 **Author:** Denis Šajnar (authored with Claude Opus 4.7)
@@ -11,404 +11,416 @@
 
 ## 1. Goal
 
-Eliminate known bashisms from the shell-script surface so Forge runs reliably on macOS/Linux/WSL2/Git Bash; add a cross-platform helper library; introduce a prereq check at `/forge-init` that separates required from optional dependencies with install hints; consolidate the two existing prereq scripts; add functional parity in the SQLite graph backend so `/forge-graph-query` works without Neo4j. This phase is the substrate that makes Phase 7 (Go core binary port) tractable.
+Eliminate known bashisms from the shell-script surface so Forge runs reliably on macOS/Linux/WSL2/Git Bash; extend `shared/platform.sh` with the helpers missing for that cleanup; persist prereq-check results so `/forge-status` can surface them; ship a backend selector for `/forge-graph-query` so Docker-free users can query their SQLite graph. This phase is the substrate that makes Phase 7 (Go core binary port) tractable.
 
 ## 2. Context and motivation
 
-April 2026 UX audit graded cross-platform support **C+**. Three structural gaps:
+April 2026 UX audit graded cross-platform support **C+**. Actual repo state (verified via grep):
 
-1. **Bashisms scattered across 20 shell scripts.** Grep confirms `$'\n'`, `<<<`, `declare -A`, `date +%s%N` in:
-   - `shared/checks/engine.sh`, `shared/checks/l0-syntax/validate-syntax.sh`, `shared/checks/layer-1-fast/run-patterns.sh`, `shared/checks/layer-2-linter/run-linter.sh`
-   - `shared/config-validator.sh`, `shared/context-guard.sh`, `shared/convergence-engine-sim.sh`, `shared/cost-alerting.sh`
-   - `shared/generate-conventions-index.sh`
-   - `shared/graph/build-code-graph.sh`, `build-project-graph.sh`, `code-graph-query.sh`, `enrich-symbols.sh`, `generate-seed.sh`, `incremental-code-graph.sh`, `incremental-update.sh`, `update-project-graph.sh`
-   - `shared/recovery/health-checks/pre-stage-health.sh`
-   - `shared/validate-finding.sh`
-   - `shared/platform.sh` itself (acceptable — it implements the wrappers).
-2. **Two redundant prereq scripts.** `shared/check-prerequisites.sh` and `shared/check-environment.sh` both exist. No single entry point; `/forge-init` does not invoke either; users on fresh macOS hit cryptic errors instead of `brew install bash`.
-3. **SQLite graph backend is not functional-parity with Neo4j for `/forge-graph-query`.** Low-level SQLite primitives exist (`shared/graph/code-graph-query.sh` — 7 subcommands like `search_class`, `search_method`). The user-facing `/forge-graph-query` skill is currently Neo4j/Cypher-only. Users without Docker cannot query their code graph.
+1. **Bashisms scattered across 21 shell scripts.** Banned patterns (`$'\n'`, `<<<`, `declare -A`, `date +%s%N`, GNU-only `stat -c` / `sed -i` forms) appear in:
+   - Check engine: `shared/checks/engine.sh`, `l0-syntax/validate-syntax.sh`, `layer-1-fast/run-patterns.sh`, `layer-2-linter/run-linter.sh` (4)
+   - Top-level shared: `shared/config-validator.sh`, `context-guard.sh`, `convergence-engine-sim.sh`, `cost-alerting.sh`, `generate-conventions-index.sh`, `state-integrity.sh`, `validate-finding.sh` (7)
+   - Graph: `shared/graph/build-code-graph.sh`, `build-project-graph.sh`, `code-graph-query.sh`, `enrich-symbols.sh`, `generate-seed.sh`, `incremental-code-graph.sh`, `incremental-update.sh`, `update-project-graph.sh` (8)
+   - Recovery: `shared/recovery/health-checks/pre-stage-health.sh` (1)
+   - Platform helper itself: `shared/platform.sh` — **exempt** (it implements the wrappers; intentional conditionals).
+   Total: **21 files** (20 fixable + 1 exempt).
+2. **Two prereq scripts with different purposes, no persistence.** `shared/check-prerequisites.sh` (blocking: bash+python3; exit N = failure count) and `shared/check-environment.sh` (informational JSON tool inventory: 11 tools across Required/Recommended/Optional tiers; always exit 0). Both are **already invoked** by `/forge-init` step 2+3. Neither writes durable state; `/forge-status` cannot surface prereq status between sessions.
+3. **`/forge-graph-query` is Neo4j/Cypher-exclusive.** SQLite primitives exist (`shared/graph/code-graph-query.sh` — 7 subcommands), but the user-facing skill does not offer a SQLite path. Users without Docker hit "Neo4j not running. Run /forge-graph-init first." and stop.
+4. **Hook script naming ambiguity.** `hooks/automation-trigger-hook.sh` (PostToolUse wrapper) vs `hooks/automation-trigger.sh` (dispatcher) — reviewers routinely confuse which is which.
 
-The Phase 1 user constraint stands: **no backwards compatibility**. Phase 3 changes are additive to the user — no commands removed — but the internal shell-script API surface is refactored liberally where bashisms are entrenched.
+v1 review corrections applied:
+
+- **DSL intent catalog dropped.** Phase 3 does NOT define 6 Cypher/SQL recipes (the v1 draft's recipes referenced non-existent graph-schema labels; correctness would require a dedicated design pass). Phase 3 ships only the **backend selector + Cypher/SQL passthrough**. A future dedicated phase can add a DSL on top.
+- **Helper list reconciled against real `platform.sh`.** v1 duplicated existing `portable_sed`/`portable_file_date` under new names. v2 lists only genuine additions.
+- **`check-environment.sh` preserved.** v1 folded it into prereqs; that would have lost the tiered 11-tool inventory and non-blocking informational mode. v2 keeps both scripts with distinct purposes; adds `.forge/prereqs.json` persistence that combines their output.
+- **`state-integrity.sh` added to bashism-fix list** (v1 missed it — has `stat -c %Y` twice).
+- **Explicit commit gating mechanism.** v2 makes each commit independently CI-green by scoping `tests/contract/portability.bats` assertions to **Phase-3-touched files only** in early commits; the repo-wide assertion activates in the final Commit 8.
+
+No backwards compatibility required (single-user plugin, explicit user instruction).
 
 ## 3. Non-goals
 
-- **No native Windows PowerShell support.** That's Phase 7's Go binary port territory. Phase 3 targets macOS/Linux/WSL2/Git Bash (where bash is available).
-- **No strict POSIX sh everywhere.** `#!/usr/bin/env bash` stays; bash 4+ features remain usable *selectively*. The goal is to **eliminate bashisms that break on BSD `sed`/`stat`, dash, and Git Bash MSYS**, not to purge bash itself.
-- **No Neo4j removal.** Neo4j remains supported; SQLite becomes a viable alternative for users without Docker.
-- **No changes to L0/L1/L2 check-engine rules.** Only the scripts that implement them are edited to remove bashisms.
-- **No rewrite of `shared/forge-token-tracker.sh` Python heredoc** (Phase 2 territory; Phase 3 only touches the bash-around-Python, not the Python itself).
-- **Deferred to later phases:**
-  - Go core binary → Phase 7
-  - Live observation UX (TUI) → Phase 5
-  - Preview-before-apply → Phase 4
+- **No native Windows PowerShell support.** Deferred to Phase 7 (Go binary).
+- **No POSIX sh everywhere.** `#!/usr/bin/env bash` stays; goal is removing patterns that break on BSD `sed`/`stat`, dash, and Git Bash MSYS — not purging bash entirely.
+- **No Neo4j removal.** Neo4j remains supported; SQLite gains backend-parity for passthrough queries only.
+- **No DSL for `/forge-graph-query`** (v1 removed). Future phase.
+- **No changes to L0/L1/L2 check-engine rules.** Only scripts are edited.
+- **No rewrite of `shared/forge-token-tracker.sh` Python heredoc** (Phase 2 handled it; Phase 3 only touches bash around Python).
+- **No changes to existing `check-prerequisites.sh` exit semantics.** Current "exit 0 pass, exit N where N=failures" is preserved to avoid caller regressions. New features are opt-in flags.
 
 ## 4. Design
 
 ### 4.1 Bashism fixes — exact surface
 
-**Banned patterns** (enforced by new `tests/contract/portability.bats`):
+**Banned patterns** (enforced by new `tests/contract/portability.bats` once fully activated in Commit 8):
 
 | Pattern | Why it breaks | Replacement |
 |---|---|---|
-| `$'\n'` | Not POSIX; fails on dash; renders wrong in Git Bash MSYS | `printf '\n'` into a variable, OR literal newline inside double quotes |
-| `<<<"string"` (here-string) | Bash-only; fails on dash | `printf '%s' "string" \| cmd`, or `echo "string" \| cmd` |
-| `declare -A` | Bash 4+ only; fails on macOS default bash 3.2 | File-per-key pattern: `mkdir -p "$tmpdir/keys"; echo "$value" > "$tmpdir/keys/$key"` OR Python hash when complex lookups needed |
-| `date +%s%N` | GNU-only; macOS `date` doesn't support `%N` | `platform.sh::epoch_ms` helper (Python-based where nanoseconds needed) |
-| `stat -c %Y` or `stat -c %s` | GNU-only syntax; BSD uses `-f %m` / `-f %z` | `platform.sh::file_mtime` / `platform.sh::file_size` |
-| `sed -i 's/x/y/'` | GNU accepts no arg; BSD requires `-i ''` | `platform.sh::portable_sed_i` OR `sed -i.bak ... && rm -f *.bak` |
-| `realpath` (plain) | Not on macOS without coreutils | `platform.sh::safe_realpath` |
-| `find -printf` | GNU-only | Substitute with `-print` + `xargs` or Python |
-| `readarray` / `mapfile` | Bash 4+ only | `while IFS= read -r line; do ...; done < file` |
+| `$'\n'` | Not POSIX; fails on dash; renders wrong in Git Bash MSYS | `printf '\n'` into a variable OR literal newline inside double quotes |
+| `<<<"string"` | Bash-only; fails on dash | `printf '%s' "string" \| cmd` OR `echo "string" \| cmd` |
+| `declare -A` | Bash 4+; fails on macOS default bash 3.2 | File-per-key pattern (`$tmpdir/keys/$k`) OR Python hash for complex lookups |
+| `date +%s%N` | GNU-only; macOS lacks `%N` | `platform.sh::epoch_ms` helper (new) |
+| `stat -c %Y` / `stat -c %s` | GNU-only | Use existing `portable_file_date` (already in platform.sh); add `portable_file_size` (new) |
+| `sed -i 's/...'` (no arg) | GNU accepts; BSD requires `-i ''` | Use existing `portable_sed` (already in platform.sh) |
+| `realpath` (plain) | Not on macOS without coreutils | New `platform.sh::safe_realpath` (falls back to Python) |
+| `find -printf` | GNU-only | `find -print0 | xargs -0` OR Python |
+| `readarray`/`mapfile` | Bash 4+ | `while IFS= read -r line; do ...; done < file` inline (no helper needed) |
 
-**Exempt location:** `shared/platform.sh` itself — it implements the wrappers and necessarily contains the OS-detection conditionals.
+**Exempt location:** `shared/platform.sh` itself.
 
-**Exact file-by-file fix plan** (20 files with bashisms detected by grep):
-
-Each file is audited in the plan stage; bashisms are replaced in-place with either the platform.sh wrapper call (if the wrapper exists) or the POSIX alternative. The `tests/contract/portability.bats` asserts zero matches across all `shared/**/*.sh` and `hooks/**/*.sh` (except `platform.sh`).
+**21 files enumerated in §2**; each audited during plan-writing and edited in place.
 
 ### 4.2 Extend `shared/platform.sh`
 
-Existing `shared/platform.sh` has OS detection. Phase 3 adds:
+**Existing helpers (preserved, not renamed):** `detect_os`, `is_wsl`, `suggest_install`, `suggest_docker_start`, `_glob_exists`, `pipeline_tmpdir`, `pipeline_mktemp`, `pipeline_mktempdir`, `detect_python`, `portable_normalize_path`, `portable_file_date`, `portable_sed`, `portable_timeout`, `derive_project_id`, `read_components`, `extract_file_path_from_tool_input`, `acquire_lock_with_retry`, `atomic_increment`, `atomic_json_update`, `require_bash4`, plus a handful of internal helpers.
 
-| Function | Returns / side-effect |
-|---|---|
-| `iso_timestamp` | Portable `date -u +%Y-%m-%dT%H:%M:%SZ` — already correct on all platforms |
-| `epoch_s` | `date +%s` — seconds since epoch |
-| `epoch_ms` | Milliseconds since epoch. `date +%s` × 1000 + Python microsecond fraction when Python present; else just seconds × 1000 |
-| `file_mtime <path>` | GNU `stat -c %Y` ↔ BSD `stat -f %m` via `$FORGE_OS` switch |
-| `file_size <path>` | GNU `stat -c %s` ↔ BSD `stat -f %z` via `$FORGE_OS` switch |
-| `portable_sed_i <file> <expr>` | `sed -i` on GNU, `sed -i ''` on BSD (detected via `FORGE_OS`) |
-| `safe_realpath <path>` | `realpath` if available; `python3 -c "import os;print(os.path.realpath(...))"` fallback |
-| `has_bash_4` | `[[ ${BASH_VERSINFO[0]} -ge 4 ]]` wrapped in a function for dependency checks |
-| `portable_find_mtime <dir> <minutes>` | `find <dir> -mmin -<minutes>` — identical on GNU/BSD for this flag; wrapped for consistency |
-| `acquire_lock_with_retry <lockdir> <max-tries> <sleep-ms>` | Already exists in platform.sh per §Phase 2; unchanged |
-| `release_lock <lockdir>` | Already exists; unchanged |
+**New helpers added by Phase 3 (5 functions):**
 
-`shared/platform.sh` is source-once-per-script; all consumers `source "${PLUGIN_ROOT}/shared/platform.sh"` at top. `FORGE_OS` is cached in the environment to avoid repeated detection.
+| Function | Purpose | Why not existing helper |
+|---|---|---|
+| `epoch_ms` | Milliseconds since epoch | `date +%s%N` is GNU-only; combines seconds + microseconds (Python where available) |
+| `portable_file_size <path>` | Bytes in a file | No existing wrapper; `stat -c %s` ≠ `stat -f %z` |
+| `safe_realpath <path>` | Canonical absolute path | `realpath` not on macOS; Python fallback |
+| `portable_find_printf <dir> <format>` | Substitute for `find -printf` | GNU extension; composed from `-print0` + awk |
+| `release_lock <lockdir>` | Counterpart to existing `acquire_lock_with_retry` | Current contract says "caller releases via `rmdir`"; helper adds trap-safe cleanup + retry-on-EBUSY |
+
+Callers of `release_lock`: Phase 2 already planned to use it (spec §4.2.2). The v1 review correctly noted this helper does not exist today — this phase is where it lands. Phase 2's implementation defers to this helper (Phase 2 and Phase 3 merge into a single PR-per-phase cycle; plan order accounts for the dependency — Phase 2 will edit against the helper after Phase 3 merges, OR Phase 2's `emit_cost_inc` uses inline `rmdir` until Phase 3 lands and is swapped during Phase 3 Commit 2).
+
+Note: **Phase 3 implements `release_lock` before Phase 2 is implemented** if the user executes phases in-order. If Phase 2 is implemented first (as planned), its `emit_cost_inc` temporarily uses inline `rmdir` and is refactored to use `release_lock` as part of Phase 3 Commit 6 (prereq consolidation also touches that file). The implementation plan will spell this out.
 
 ### 4.3 `shared/cross-platform-contract.md` (new)
 
 Authoritative doc. Contents:
 
-- §1 Banned patterns (Table from §4.1 above)
-- §2 `platform.sh` helper catalog (Table from §4.2 above)
-- §3 When to use helpers vs POSIX alternatives (decision guide)
-- §4 Testing — bash 3.2 smoke, BSD sed compat, Git Bash caveats
-- §5 Adding new scripts — checklist (must `source platform.sh`, must `bash -n` pass, must `shellcheck --severity=warning` pass, must not introduce banned patterns)
-- §6 Known limitations — Windows native (deferred to Phase 7), busybox sh, zsh-only environments
+- §1 Banned patterns (table from §4.1)
+- §2 `platform.sh` helper catalog (full table: existing + 5 new — see §4.2)
+- §3 Decision guide — when to use a helper vs inline POSIX
+- §4 Testing matrix — macOS bash 3.2 / 5.x, Linux bash 4.x / 5.x, WSL, Git Bash
+- §5 Contributing — new-script checklist (source platform.sh, pass bash -n, pass targeted shellcheck, no banned patterns)
+- §6 Known limitations — Windows native → Phase 7; busybox sh NOT targeted
 
-Cross-referenced from `README.md`, `CLAUDE.md`, and `CONTRIBUTING.md`.
+Cross-referenced from `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`.
 
-### 4.4 Consolidated prereq check — `shared/check-prerequisites.sh`
+### 4.4 Prereq persistence — NOT a consolidation
 
-**Existing state:** two scripts (`check-prerequisites.sh`, `check-environment.sh`). Phase 3 keeps `check-prerequisites.sh` as the canonical entry point, folds `check-environment.sh`'s content into it, and deletes the latter.
+v1 review correction: `check-prerequisites.sh` and `check-environment.sh` serve different purposes. Phase 3 keeps BOTH.
 
-**API:**
+**Changes:**
 
-```bash
-./shared/check-prerequisites.sh [--json] [--strict]
-```
+1. **`shared/check-prerequisites.sh`** gains a `--json` flag emitting the same JSON shape as `check-environment.sh` for its required deps. Exit semantics unchanged (exit N = N failures, 0 = pass). No breaking change for existing callers.
+2. **`shared/check-environment.sh`** unchanged in content; stays the tool-inventory source.
+3. **New: `.forge/prereqs.json`** — combined snapshot of both scripts' outputs, written by `/forge-init` after running both. Gitignored (all `.forge/` is). Schema:
+   ```json
+   {
+     "timestamp": "2026-04-17T12:00:00Z",
+     "forge_version": "3.2.0",
+     "required": {"bash": "5.2.26", "python3": "3.12.4"},
+     "environment": {
+       "tier_required": {"bash": "5.2.26", "python3": "3.12.4", "git": "2.45.1"},
+       "tier_recommended": {"jq": "1.7.1", "docker": null},
+       "tier_optional": {"tree-sitter": null, "gh": "2.55.0"}
+     },
+     "abort_reasons": []
+   }
+   ```
+4. **`/forge-init` updated** (step 2 stays invoking `check-prerequisites.sh`; step 3 stays invoking `check-environment.sh`; new step 3.5 writes `.forge/prereqs.json` from both outputs).
+5. **`/forge-status` updated** — reads `.forge/prereqs.json` if present; adds `## Prerequisites` section showing the snapshot + age (`stale if >7 days`). Suggests `/forge-init` to refresh if stale.
 
-- Default: human-readable report + exit code (0 = all required present, 1 = required missing, 2 = required present but optional missing).
-- `--json`: structured output `{required: {...}, optional: {...}, abort_reason: null|string}`.
-- `--strict`: treat optional-missing as exit 1 instead of 2.
+**No deletions in this area.** `check-environment.sh` stays. `check-prerequisites.sh` only gains `--json`. AC wording updated accordingly.
 
-**Required dependencies (abort if missing):**
+### 4.5 `/forge-graph-query` — backend selector + passthrough (no DSL)
 
-| Tool | Check | Install hint (per platform) |
-|---|---|---|
-| `bash` ≥4.0 | `has_bash_4` | macOS: `brew install bash`. Linux: already present. WSL: already present. |
-| `python3` | `command -v python3` | macOS: pre-installed. Linux: `apt/dnf install python3`. |
-| `jq` | `command -v jq` | macOS: `brew install jq`. Linux: `apt/dnf install jq`. |
+v1 review correction: the 6 DSL intents used wrong Cypher schema. Phase 3 ships only the dispatcher; dedicated DSL design deferred.
 
-**Optional dependencies (warn + record):**
+**Changes to `skills/forge-graph-query/SKILL.md`:**
 
-| Tool | Used for | Install hint |
-|---|---|---|
-| `docker` | Neo4j graph backend | macOS: Docker Desktop. Linux: `docker-ce` or Podman. |
-| `gh` | GitHub CLI for PR creation, release | `brew install gh` or `apt install gh` |
-| `tree-sitter` | L0 syntax checks in PreToolUse hook | `npm install -g tree-sitter-cli` |
-| `sqlite3` | Ad-hoc `.forge/code-graph.db` queries | pre-installed on macOS and most Linux |
-| `shellcheck` | Dev-time shell linting | `brew install shellcheck` |
+1. Description changes from "Cypher query against Neo4j" to "Query the code graph; backend is Neo4j (Cypher) or SQLite (SQL) based on `code_graph.backend` config (auto-detects)."
+2. New section `## Backend selection`:
+   ```
+   code_graph.backend = "auto"  → Neo4j if container healthy, else SQLite
+   code_graph.backend = "neo4j" → Neo4j required; error if absent
+   code_graph.backend = "sqlite" → SQLite required
+   ```
+3. New section `## Query forms`:
+   - Cypher → Neo4j backend. Example: `MATCH (f:ProjectFile) WHERE f.bug_fix_count > 3 RETURN f`.
+   - SQL → SQLite backend. Example: `SELECT path, bug_fix_count FROM project_files WHERE bug_fix_count > 3`.
+   - Auto-detect: query starts with `MATCH|CREATE|MERGE|CALL` → Cypher; starts with `SELECT|WITH|WITH RECURSIVE` → SQL. Ambiguous → error with suggestion.
+4. Prerequisites updated: "Either Docker+Neo4j OR `.forge/code-graph.db` (SQLite)" — not strict Docker requirement anymore.
 
-**Integration with `/forge-init`:**
+**New: `shared/graph/query-translator.sh`** — thin dispatcher (no translation logic). Responsibilities:
 
-New Stage 0 in `skills/forge-init/SKILL.md` runs `./shared/check-prerequisites.sh`. If exit code 1: print abort-reason + install hints + exit. If exit code 2: print warnings + proceed. On success: record `{required, optional}` map in `.forge/prereqs.json` (new file; gitignored under `.forge/`).
+1. Read `code_graph.backend` config.
+2. Detect query type (Cypher vs SQL vs unknown).
+3. If auto: prefer Neo4j when healthy.
+4. Dispatch to existing `shared/graph/neo4j-health.sh` + Cypher runner, OR to `sqlite3 .forge/code-graph.db "<query>"`.
+5. Emit header: `── backend: {neo4j|sqlite} (source: {container|.forge/code-graph.db})` followed by query output.
+6. `--json` flag → structured output.
 
-**Integration with `/forge-status`:**
+No schema translation. No DSL. Cypher and SQL are written directly by the user (or LLM). When Phase 6+ adds a DSL, this dispatcher is the integration point.
 
-Read `.forge/prereqs.json` if present; include a "Prerequisites" section in the status output showing what's installed / missing.
-
-### 4.5 SQLite graph functional parity for `/forge-graph-query`
-
-**Current state:**
-- `shared/graph/code-graph-query.sh` provides 7 low-level SQLite subcommands (`search_class`, `search_method`, `search_method_in_class`, `search_references`, `search_implementations`, `search_callers`, `stats`)
-- `skills/forge-graph-query/SKILL.md` accepts only **Cypher** strings and requires Neo4j
-
-**Phase 3 addition: DSL + backend selector.**
-
-New file: `shared/graph/query-translator.sh` — thin dispatcher that accepts either:
-- A Cypher query (if backend is Neo4j) — passthrough to existing Cypher executor
-- A DSL intent (6 pre-built) — resolves to Cypher OR a composition of `code-graph-query.sh` subcommands
-- A raw SQL query (if backend is SQLite) — passthrough to `sqlite3`
-
-**DSL intents (6 pre-built):**
-
-| Intent | Description | Cypher recipe | SQLite recipe (via code-graph-query.sh) |
-|---|---|---|---|
-| `bug_hotspots [limit]` | Files with most recent bugfix commits | `MATCH (f:File)-[:FIXED_IN]->(c:Commit) WHERE c.type = 'fix' ...` | `search_references` on `BUG_FIX` tags; aggregate |
-| `module_dependencies <module>` | What a module depends on | `MATCH (m:Module {name: $n})-[:DEPENDS_ON*]->(d) ...` | SQL join on `module_deps` table |
-| `test_coverage_gaps` | Public functions without test references | `MATCH (f:Function {visibility: 'public'}) WHERE NOT (f)<-[:CALLS]-(:Function {test: true}) ...` | SQL `LEFT JOIN ... WHERE test_fn IS NULL` |
-| `orphan_functions` | Functions with no callers | `MATCH (f:Function) WHERE NOT (f)<-[:CALLS]-(:Function) AND f.exported = false ...` | `search_callers` + negation |
-| `circular_imports` | Cycles in import graph | `MATCH p=(m:Module)-[:IMPORTS*]->(m) ...` | SQL recursive CTE on `imports` |
-| `dead_code` | Symbols not referenced anywhere | `MATCH (s:Symbol) WHERE NOT (s)<-[:REFERENCES]-() ...` | `search_references` with zero results |
-
-**Custom query passthrough:**
-- If query looks like Cypher (`MATCH`, `CREATE`, `MERGE`) → require Neo4j; fail fast if SQLite backend
-- If query starts with `sql:` or `SELECT` → force SQLite backend
-- Otherwise → parse as DSL intent; fail with "unknown intent" if no match
-
-**Backend selection rule:**
-
-Reads `code_graph.backend` config (per existing `CLAUDE.md`):
-- `neo4j` → require Docker + Neo4j container running
-- `sqlite` → require `.forge/code-graph.db` present
-- `auto` (default) → prefer Neo4j if container healthy; fall back to SQLite
-
-Reports chosen backend in every invocation's output:
-```
-── backend: sqlite (.forge/code-graph.db)
-── query: bug_hotspots 10
-── results: 3 files
-```
-
-**Update `skills/forge-graph-query/SKILL.md`:**
-- Description changes from "Cypher query against Neo4j" to "query the code graph via DSL, Cypher, or SQL; backend auto-selects"
-- New `## DSL intents` section enumerating the 6 pre-built
-- `## Backend selection` section
-- `--json` flag preserves existing behavior but now works against both backends
-
-### 4.6 Script renames
-
-Two hook scripts renamed for clarity:
+### 4.6 Hook script renames
 
 ```
 hooks/automation-trigger-hook.sh  →  hooks/file-changed-hook.sh
 hooks/automation-trigger.sh       →  hooks/automation-dispatcher.sh
 ```
 
-`hooks/hooks.json` updated to reference the new paths. `git mv` preserves history.
+**External references to update (8 files — v1 missed these):**
 
-**No alias for the old paths** (per user's "no BC" rule). Anyone referencing the old names in external tooling updates their references.
+- `CHANGELOG.md` — historical entries preserved; add 3.2.0 rename note
+- `CLAUDE.md` — Hook entry table
+- `shared/platform.sh` — L356 comment reference
+- `shared/hook-design.md` — narrative reference
+- `skills/forge-automation/SKILL.md` — mentions script paths
+- `tests/unit/automation-cooldown.bats` — sources the script
+- `tests/hooks/automation-trigger-behavior.bats` — invokes directly
+- `tests/hooks/automation-trigger.bats` — invokes directly
+- `hooks/hooks.json` — config entries
 
-### 4.7 Portability bats test — new `tests/contract/portability.bats`
+All 8 updated in the same commit as the rename (plus `git mv` for the scripts themselves).
+
+**Bats test files may need rename too** to match new script names:
+- `tests/hooks/automation-trigger.bats` → `tests/hooks/automation-dispatcher.bats`
+- `tests/hooks/automation-trigger-behavior.bats` → `tests/hooks/file-changed-hook.bats`
+
+Decided during plan-writing; bats renames preserve content, only names change.
+
+### 4.7 Portability bats test — `tests/contract/portability.bats` (new)
+
+**Phased activation (Group A vs Group B, analogous to Phase 2 v2):**
+
+- **Group A (active from Commit 2):** existence of platform.sh helpers, shebang checks on the 4 new or extended scripts, `--help`-parse checks on new scripts.
+- **Group B (active from Commit 8 via `FORGE_PHASE3_ACTIVE=1` env var set by CI at HEAD):** repo-wide banned-pattern sweep across `shared/**/*.sh` and `hooks/**/*.sh` excluding `platform.sh`.
+
+Gate detection: `setup()` checks for presence of `shared/cross-platform-contract.md` file AND the final commit's renamed hook files. If all present → set `FORGE_PHASE3_ACTIVE=1` locally. Intermediate commits lack one of these → Group B `skip`s cleanly.
 
 Assertions:
 
-1. Zero banned-pattern occurrences across `shared/**/*.sh` and `hooks/**/*.sh`, excluding `shared/platform.sh`:
-   ```bash
-   grep -rnE "\\$'\\\\n'|<<<|declare -A|date \+%s%N|stat -c %Y|stat -c %s" \
-     shared/ hooks/ \
-     | grep -v "shared/platform.sh"
-   ```
-   Expected: empty output. Each match fails the test.
-2. Every shell script in `shared/` and `hooks/` sources `platform.sh` if it uses any helper (detected by grep for helper names).
-3. Every shell script has `#!/usr/bin/env bash` shebang (not `#!/bin/bash`).
-4. Every shell script `bash -n`-parses without error.
-5. Every shell script passes `shellcheck --severity=warning` (if shellcheck is available in CI; skip otherwise).
-6. `shared/check-prerequisites.sh` exists, executable, returns non-zero when `python3` missing (simulated via `PATH=/nonexistent`).
-7. `shared/graph/query-translator.sh` exists, executable, advertises all 6 DSL intents (`--help` output).
+1. Group A: `shared/platform.sh` exports `epoch_ms`, `portable_file_size`, `safe_realpath`, `portable_find_printf`, `release_lock` (5 new).
+2. Group A: `shared/cross-platform-contract.md` has 6 sections per §4.3.
+3. Group A: `shared/graph/query-translator.sh` exists, executable, accepts `--help`.
+4. Group A: `hooks/file-changed-hook.sh` + `hooks/automation-dispatcher.sh` exist post-rename commit; old paths absent.
+5. Group B: repo-wide banned-pattern grep returns empty (excluding `shared/platform.sh`).
+6. Group B: every shell script in `shared/` and `hooks/` has `#!/usr/bin/env bash`; `bash -n` parses clean.
+7. Group B: `shellcheck --severity=warning` passes on the 21 Phase-3-touched files (scoped, not repo-wide — avoids pre-existing warning noise per v1 I7).
 
-### 4.8 CI additions — bash 3.2 smoke
+### 4.8 CI addition — scoped shellcheck + bash 3.2 smoke
 
-New CI step (GitHub Actions matrix): run a subset of scripts through `bash-3.2` Docker image on Linux runner.
-
+**Shellcheck (scoped):** `.github/workflows/ci.yml` (verify existence during plan; create if missing) gets a new step:
 ```yaml
-- name: bash 3.2 smoke test
+- name: shellcheck (Phase-3-touched files)
   run: |
-    docker run --rm -v $PWD:/work -w /work bash:3.2 \
-      bash -c 'for f in shared/platform.sh shared/check-prerequisites.sh shared/forge-state.sh; do
-                bash -n "$f" || exit 1
-              done'
+    shellcheck --severity=warning \
+      shared/platform.sh \
+      shared/check-prerequisites.sh shared/check-environment.sh \
+      shared/graph/query-translator.sh \
+      hooks/file-changed-hook.sh hooks/automation-dispatcher.sh \
+      $(cat tests/ci/phase3-shellcheck-scope.txt)
 ```
 
-Scoped to files expected to run on macOS default bash 3.2 (not every script). Gate defined in `tests/ci/bash32-smoke-list.txt`.
+The scope file lists exactly the 21 bashism-fix target files. Pre-existing warnings outside this scope are untouched.
+
+**bash 3.2 smoke:** GitHub Actions Linux runner step:
+```yaml
+- name: bash 3.2 smoke
+  run: |
+    docker run --rm -v "$PWD:/work" -w /work bash:3.2@sha256:<pinned-digest> \
+      bash -c 'for f in $(cat tests/ci/bash32-smoke-list.txt); do
+                 bash -n "$f" || exit 1
+               done'
+```
+
+Digest pinning avoids v1 risk-row-6 (image-pull flake).
+
+`tests/ci/bash32-smoke-list.txt` is a **curated opt-in list** — files that MUST work on bash 3.2 (small set: `shared/platform.sh`, `shared/check-prerequisites.sh`, `shared/forge-state.sh`, `hooks/session-start.sh`). New scripts decide-in via the cross-platform contract doc's checklist.
 
 ### 4.9 Documentation updates
 
-- `README.md` — new "Cross-platform support" section; link to `shared/cross-platform-contract.md`.
-- `CLAUDE.md` — add 2 Key Entry Points (`cross-platform-contract.md`, `query-translator.sh`); note bash 3.2 smoke CI step.
-- `CHANGELOG.md` — 3.2.0 entry.
-- `skills/forge-init/SKILL.md` — new Stage 0 prereq check.
-- `skills/forge-graph-query/SKILL.md` — rewrite description + new DSL/backend sections.
-- `skills/forge-status/SKILL.md` — read `.forge/prereqs.json` and surface prereq state.
+- `README.md` — new "Cross-platform support" section; mentions bash 3.2 support via fallbacks; mentions SQLite backend for graph.
+- `CLAUDE.md` — add 3 Key Entry Points (`cross-platform-contract.md`, `query-translator.sh`, `.forge/prereqs.json` schema reference); update rename references.
+- `CONTRIBUTING.md` — point new-script contributors at `cross-platform-contract.md`.
+- `CHANGELOG.md` — 3.2.0 entry listing all changes (bashism removal, helpers added, prereq persistence, SQLite backend, 2 script renames).
+- `DEPRECATIONS.md` — **no entries** (v1 suggested one; v1-v2 change: no deletions this phase, so no deprecations).
 - `.claude-plugin/plugin.json` — `"3.1.0"` → `"3.2.0"`.
 - `.claude-plugin/marketplace.json` — `"3.1.0"` → `"3.2.0"`.
-- `CONTRIBUTING.md` — cross-reference `cross-platform-contract.md` for new-script contributors.
+- `skills/forge-init/SKILL.md` — add `.forge/prereqs.json` write step (post-existing prereq invocations).
+- `skills/forge-status/SKILL.md` — add Prerequisites section reading `.forge/prereqs.json`.
+- `skills/forge-graph-query/SKILL.md` — rewrite per §4.5.
 
 ## 5. File manifest (authoritative)
 
-### 5.1 Delete (1 file)
+### 5.1 Delete
 
-```
-shared/check-environment.sh   # folded into check-prerequisites.sh
-```
+**None.** v1 proposed deleting `check-environment.sh`; v2 preserves it. Zero deletions this phase.
 
-### 5.2 Create (4 files)
+### 5.2 Create (5 files)
 
 ```
 shared/cross-platform-contract.md
 shared/graph/query-translator.sh
 tests/contract/portability.bats
 tests/ci/bash32-smoke-list.txt
+tests/ci/phase3-shellcheck-scope.txt
 ```
 
-Note: `shared/check-prerequisites.sh` already exists — it is **extended**, not created.
-
-### 5.3 Rename (2 files)
+### 5.3 Rename (4 files — 2 hook scripts + 2 bats tests)
 
 ```
-hooks/automation-trigger-hook.sh  →  hooks/file-changed-hook.sh
-hooks/automation-trigger.sh       →  hooks/automation-dispatcher.sh
+hooks/automation-trigger-hook.sh          → hooks/file-changed-hook.sh
+hooks/automation-trigger.sh               → hooks/automation-dispatcher.sh
+tests/hooks/automation-trigger.bats       → tests/hooks/automation-dispatcher.bats
+tests/hooks/automation-trigger-behavior.bats → tests/hooks/file-changed-hook.bats
 ```
 
 ### 5.4 Update in place
 
-**Shell scripts — bashism fixes (19 files; 20th `platform.sh` is exempt but extended):**
+**Shell scripts — bashism fixes (20 files; `platform.sh` exempt from bashism fixes but is extended separately):**
 
-`shared/checks/engine.sh`, `shared/checks/l0-syntax/validate-syntax.sh`, `shared/checks/layer-1-fast/run-patterns.sh`, `shared/checks/layer-2-linter/run-linter.sh`, `shared/config-validator.sh`, `shared/context-guard.sh`, `shared/convergence-engine-sim.sh`, `shared/cost-alerting.sh`, `shared/generate-conventions-index.sh`, `shared/graph/build-code-graph.sh`, `shared/graph/build-project-graph.sh`, `shared/graph/code-graph-query.sh`, `shared/graph/enrich-symbols.sh`, `shared/graph/generate-seed.sh`, `shared/graph/incremental-code-graph.sh`, `shared/graph/incremental-update.sh`, `shared/graph/update-project-graph.sh`, `shared/recovery/health-checks/pre-stage-health.sh`, `shared/validate-finding.sh`.
+`shared/checks/engine.sh`, `shared/checks/l0-syntax/validate-syntax.sh`, `shared/checks/layer-1-fast/run-patterns.sh`, `shared/checks/layer-2-linter/run-linter.sh`, `shared/config-validator.sh`, `shared/context-guard.sh`, `shared/convergence-engine-sim.sh`, `shared/cost-alerting.sh`, `shared/generate-conventions-index.sh`, `shared/state-integrity.sh`, `shared/validate-finding.sh`, `shared/graph/build-code-graph.sh`, `shared/graph/build-project-graph.sh`, `shared/graph/code-graph-query.sh`, `shared/graph/enrich-symbols.sh`, `shared/graph/generate-seed.sh`, `shared/graph/incremental-code-graph.sh`, `shared/graph/incremental-update.sh`, `shared/graph/update-project-graph.sh`, `shared/recovery/health-checks/pre-stage-health.sh`.
 
-**Platform helpers (1 file):**
+**`shared/platform.sh`** — add 5 new helper functions per §4.2.
 
-`shared/platform.sh` — add 9 new helper functions per §4.2.
+**`shared/check-prerequisites.sh`** — add `--json` flag; no exit-code change.
 
-**Prereq consolidation (1 file):**
+**`hooks/hooks.json`** — update 2 script paths.
 
-`shared/check-prerequisites.sh` — extend with `--json`, `--strict`, required/optional split per §4.4.
+**Content references to renamed hooks (8 files):**
 
-**Hook config (1 file):**
+`CHANGELOG.md`, `CLAUDE.md`, `shared/platform.sh` (L356 comment), `shared/hook-design.md`, `skills/forge-automation/SKILL.md`, `tests/unit/automation-cooldown.bats`, plus 2 renamed bats files (content updated to match new script names).
 
-`hooks/hooks.json` — update 2 script paths.
+Note: `shared/platform.sh` is touched in both the helper-extension pass AND the rename-reference pass — same file, two content-distinct edits in different commits.
 
 **Skills (3 files):**
 
-`skills/forge-init/SKILL.md` (new Stage 0), `skills/forge-graph-query/SKILL.md` (rewrite description + new sections), `skills/forge-status/SKILL.md` (prereq section).
+`skills/forge-init/SKILL.md` (write `.forge/prereqs.json`), `skills/forge-status/SKILL.md` (read it), `skills/forge-graph-query/SKILL.md` (backend selector + passthrough).
 
 **Top-level (5 files):**
 
 `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`.
 
-**Contributing docs (1 file):**
+**CONTRIBUTING (1 file):**
 
 `CONTRIBUTING.md`.
 
 **CI (1 file):**
 
-`.github/workflows/*.yml` — add bash 3.2 smoke step (path determined during plan-writing; if no existing workflow, create `.github/workflows/ci.yml`).
+`.github/workflows/ci.yml` (verify existence; create if missing).
 
 ### 5.5 File-count arithmetic
 
 | Category | Count |
 |---|---|
-| Deletions | 1 |
-| Creations | 4 |
-| Renames | 2 |
-| Shell-script bashism fixes | 19 |
-| platform.sh extension | 1 |
-| check-prerequisites.sh extension | 1 |
-| hooks.json update | 1 |
+| Deletions | 0 |
+| Creations | 5 |
+| Renames | 4 |
+| Bashism fixes | 20 |
+| `shared/platform.sh` extension | 1 |
+| `shared/check-prerequisites.sh` extension | 1 |
+| `hooks/hooks.json` | 1 |
+| Rename-ref updates (excluding already-counted renamed bats) | 6 (CHANGELOG, CLAUDE.md, platform.sh — rename pass only, hook-design, skills/forge-automation, tests/unit/automation-cooldown) |
 | Skill updates | 3 |
-| Top-level doc + version updates | 5 |
-| CONTRIBUTING update | 1 |
-| CI workflow update | 1 |
-| **Unique file operations** | **39** |
+| Top-level doc + version | 5 |
+| CONTRIBUTING | 1 |
+| CI workflow | 1 |
+| **Unique file operations** | **48** |
+
+(Note: `shared/platform.sh` contributes 2 operations — extension + rename-ref — but is counted once in "unique files touched". Spec uses "operations" not "unique files" to match Phase-2 style.)
 
 ## 6. Acceptance criteria
 
 All verified by CI on push.
 
-1. `tests/contract/portability.bats` exists and passes: zero banned-pattern occurrences across `shared/**/*.sh` and `hooks/**/*.sh` (excluding `shared/platform.sh`).
-2. `shared/platform.sh` exports functions: `iso_timestamp`, `epoch_s`, `epoch_ms`, `file_mtime`, `file_size`, `portable_sed_i`, `safe_realpath`, `has_bash_4`, `portable_find_mtime`, `acquire_lock_with_retry`, `release_lock`.
-3. `shared/cross-platform-contract.md` exists with 6 sections per §4.3.
-4. `shared/check-prerequisites.sh` extended: `--json` and `--strict` flags honored; required/optional dep split matches §4.4 table.
-5. `shared/check-environment.sh` removed; all references in other scripts updated to `check-prerequisites.sh`.
-6. `shared/graph/query-translator.sh` exists, executable, advertises 6 DSL intents via `--help`.
-7. `/forge-graph-query` (skill description + body) documents DSL intents + backend selection rule.
-8. `hooks/file-changed-hook.sh` exists (renamed); `hooks/automation-dispatcher.sh` exists (renamed); old paths no longer present.
-9. `hooks/hooks.json` references new script paths.
-10. `/forge-init` Stage 0 invokes `check-prerequisites.sh`; records `.forge/prereqs.json` on success; aborts with install hints on missing required.
-11. `/forge-status` reads `.forge/prereqs.json` when present and includes a Prerequisites section.
-12. `tests/ci/bash32-smoke-list.txt` exists and enumerates files expected to pass bash 3.2 parse check.
-13. `.github/workflows/*.yml` contains a bash 3.2 smoke step that sources files from `bash32-smoke-list.txt`.
-14. All 19 bashism-fix targets under `shared/**/*.sh` pass `bash -n` parse check and `shellcheck --severity=warning` on GitHub Actions Linux runner.
-15. `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `CONTRIBUTING.md` updated per §4.9.
-16. `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` versions set to `3.2.0`.
-17. CI green on push; no local test runs permitted.
+1. `shared/cross-platform-contract.md` exists with 6 sections (§4.3).
+2. `shared/platform.sh` exports 5 new functions: `epoch_ms`, `portable_file_size`, `safe_realpath`, `portable_find_printf`, `release_lock`.
+3. `shared/check-prerequisites.sh` accepts `--json` flag; exit semantics unchanged (exit N = N failures).
+4. `shared/graph/query-translator.sh` exists, executable, supports auto/neo4j/sqlite backend selection; advertises Cypher and SQL passthrough via `--help`.
+5. `tests/contract/portability.bats` exists with Group A assertions active from Commit 2 and Group B assertions activating at Commit 8 via `FORGE_PHASE3_ACTIVE` detection.
+6. `tests/ci/bash32-smoke-list.txt` enumerates the curated opt-in bash 3.2 compat set.
+7. `tests/ci/phase3-shellcheck-scope.txt` enumerates the 21 Phase-3-touched files.
+8. Group B portability assertion: zero banned-pattern occurrences across `shared/**/*.sh` and `hooks/**/*.sh` (excluding `shared/platform.sh`) at HEAD.
+9. 20 bashism-fix files pass `shellcheck --severity=warning` (scoped via `phase3-shellcheck-scope.txt`).
+10. `state-integrity.sh` bashisms (`stat -c %Y` at L151, L153) replaced with `portable_file_date` calls.
+11. `hooks/file-changed-hook.sh` exists post-rename; `hooks/automation-trigger-hook.sh` does not.
+12. `hooks/automation-dispatcher.sh` exists post-rename; `hooks/automation-trigger.sh` does not.
+13. `hooks/hooks.json` references new paths.
+14. All 8 rename-reference files updated to new script names.
+15. `tests/hooks/` bats files renamed + content updated.
+16. `.forge/prereqs.json` written by `/forge-init` after both prereq scripts run.
+17. `/forge-status` includes a `## Prerequisites` section when `.forge/prereqs.json` is present.
+18. `/forge-graph-query` SKILL.md documents backend selector + Cypher/SQL passthrough; Neo4j is no longer a hard requirement.
+19. CI workflow contains bash 3.2 smoke step (pinned image digest) and scoped shellcheck step.
+20. `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `CONTRIBUTING.md` updated per §4.9.
+21. `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` set to `3.2.0`.
+22. CI green on push; no local test runs permitted.
 
 ## 7. Test strategy
 
 **Static validation (bats, CI-only):**
 
-- New `tests/contract/portability.bats` — covers AC #1, #2.
-- `tests/validate-plugin.sh` — extend to assert `shared/check-prerequisites.sh` is executable (already does for hooks/; extend to shared/check-*).
+- New `tests/contract/portability.bats` — AC #1, #2, #5, #8.
+- `tests/validate-plugin.sh` extended to cover new helper function presence checks.
 
 **Runtime validation (bats):**
 
-- `tests/unit/` gains a small script that invokes `shared/check-prerequisites.sh --json` against a sandboxed `PATH` where `jq` is missing; expects exit 1 and a `jq` entry in `abort_reason`.
-- `tests/unit/graph-query-translator.bats` — invokes `query-translator.sh` against a seed SQLite `.forge/code-graph.db` fixture (built from `shared/graph/code-graph-schema.sql`) for each of 6 DSL intents; expects exit 0 and at least one result row OR explicit empty-result marker.
+- `tests/unit/query-translator-dispatch.bats` (new) — invokes `query-translator.sh` with auto/neo4j/sqlite backends against a seed SQLite fixture; asserts correct dispatch decision + `── backend:` header.
+- `tests/unit/check-prerequisites-json.bats` (new) — invokes `check-prerequisites.sh --json` against sandboxed PATH; expects structured JSON output with missing-tool entries.
 
 **CI runtime:**
 
-- `bash -n` parse check for all shell scripts (already present; extend to new files).
-- `shellcheck --severity=warning` (new step; fail on warnings in Phase-3-touched files).
-- bash 3.2 smoke matrix step (GitHub Actions) runs the smoke-list through `bash:3.2` Docker image.
+- Existing `bash -n` parse check extended to new files.
+- New scoped `shellcheck --severity=warning` step (21 files).
+- New bash 3.2 smoke step (curated list).
 
-Per user instruction: no local test runs. Static parse checks (`bash -n`, `python3 -m json.tool`, `shellcheck` on-path availability check) are permitted.
+Per user instruction: no local test runs.
 
 ## 8. Risks and mitigations
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Bashism refactor introduces regression in check-engine (skipped check or wrong exit code) | Medium | High | Per-file bats smoke test BEFORE refactor (snapshot current behavior); compare after. New tests/contract/engine-regression.bats compares skipped-check count on a fixture repo |
-| `declare -A` fix via file-per-key pattern is slow in tight loops | Low | Medium | Profile `layer-2-linter/run-linter.sh` against 100-file project; if regression > 2×, switch that file to Python instead of bash |
-| Neo4j→SQLite query translator DSL has poor coverage for non-enumerated intents | Medium | Medium | Documented 6 intents cover ~80% of observed `/forge-graph-query` usage in `.forge/run-history.db`. Custom Cypher passthrough preserved for power users; SQL passthrough added for SQLite experts |
-| `check-environment.sh` deletion breaks external tooling that sourced it | Low | Low | No BC per user; update all internal references; document removal in `DEPRECATIONS.md` (new `## Removed in 3.2.0` section mirroring Phase 1 pattern) |
-| `/forge-init` Stage 0 fails for users with non-`command -v`-locatable installs (e.g., tools in `~/.local/bin` missing from PATH) | Medium | Medium | `check-prerequisites.sh` also tries `type`, `which`, and a small search in common install roots (`~/.local/bin`, `~/bin`, `/opt/homebrew/bin`); diagnostic output includes `PATH` on failure |
-| bash 3.2 smoke CI step flakes due to Docker image pull | Low | Low | Pin image digest; cache on GitHub Actions; retry once on network error |
-| `portable_sed_i` wrapper hides platform behavior differences that matter (e.g., sed `\n` handling differs GNU vs BSD) | Medium | Medium | Document in contract doc; advise Python substitution for non-trivial regex; bats case-test for one known-divergent pattern |
-| Query translator's 6 DSL intents drift from the underlying schema as `shared/graph/code-graph-schema.sql` evolves | Low | Medium | Bats assertion runs each intent against seed fixture built from live schema; schema change without intent update fails CI |
-| `FORGE_OS` caching misfires on WSL where `OSTYPE` may be `linux-gnu` but `/proc/version` contains `microsoft` | Low | Low | Existing `detect_os` in platform.sh already handles WSL via `/proc/version` grep; verified |
-| CONTRIBUTING.md changes discourage new contributors from ad-hoc scripts | Low | Low | Framing: "use these helpers so your script works everywhere"; not punitive |
+| Bashism refactor regresses check-engine behavior | Medium | High | Per-commit bats smoke on touched files BEFORE refactor (snapshot current L0/L1/L2 behavior), compare after |
+| `declare -A` → file-per-key pattern is slow in `layer-2-linter/run-linter.sh` | Low | Medium | Profile against 100-file fixture; if regression > 2×, Python port for that file |
+| Backend selector in `query-translator.sh` misroutes ambiguous queries | Medium | Low | `--backend=neo4j|sqlite` explicit flag overrides auto; `--help` documents detection heuristic |
+| `release_lock` helper introduced in Phase 3 but Phase 2 code expects it | Medium | Medium | Phase 2 implementation plan uses inline `rmdir` until Phase 3 lands; Phase 3 Commit 6 swaps the callsite |
+| `check-environment.sh` and `check-prerequisites.sh` diverge in dep coverage | Low | Low | `.forge/prereqs.json` schema combines both; `/forge-init` runs both so drift surfaces in the combined snapshot |
+| bash 3.2 smoke CI step flakes due to Docker image pull | Low | Low | Pinned digest (v1 risk-row mitigation carried over) |
+| Scoped shellcheck misses regressions in untouched files | Medium | Low | Accepted trade-off: avoids CI red on pre-existing warnings; repo-wide shellcheck is a separate, later workstream |
+| Hook-script rename breaks external documentation links | Low | Low | Grep-verified all 8 references updated; `CHANGELOG.md` 3.2.0 entry documents the rename |
+| `/forge-status` Prerequisites section is stale when user updates tools but doesn't re-init | Low | Low | Section reports snapshot age; >7 days emits "stale; re-run /forge-init" |
+| Group B portability assertion activates prematurely (detects transient banned patterns between batches) | Medium | High | `FORGE_PHASE3_ACTIVE` detection requires ALL Phase 3 sentinel files + the rename to be present; intermediate commits fail the check and skip Group B. Verified during plan-writing. |
+| `portable_find_printf` has subtly different output format than GNU `-printf` | Medium | Low | Document exact format contract in helper comment + contract doc §2; bats unit test on one known format |
+| Phase 2's `emit_cost_inc` uses inline `rmdir` pending Phase 3's `release_lock` | Low | Low | Documented in Phase 2 plan + Phase 3 Commit 6 task (swap callsite to new helper) |
 
 ## 9. Rollout (one PR, multi-commit; CI gates on HEAD)
 
 1. **Commit 1 — Specs land.** This spec + plan.
-2. **Commit 2 — Foundations.** `shared/platform.sh` extended with 9 helpers. `shared/cross-platform-contract.md` created. `tests/contract/portability.bats` skeleton (assertions inactive until `FORGE_PHASE3_ACTIVE=1` — same pattern as Phase 2 Group-A/B split). `tests/ci/bash32-smoke-list.txt` created. CI green.
-3. **Commit 3 — Bashism refactor (batch 1: checks).** 4 files in `shared/checks/**/*.sh`. `bash -n` + `shellcheck` pass. CI green.
-4. **Commit 4 — Bashism refactor (batch 2: graph).** 8 files in `shared/graph/*.sh`. CI green.
-5. **Commit 5 — Bashism refactor (batch 3: misc).** 7 remaining files in `shared/*.sh` and `shared/recovery/`. CI green.
-6. **Commit 6 — Prereq consolidation + hook renames.** Delete `check-environment.sh`; extend `check-prerequisites.sh`; rename 2 hook scripts; update `hooks/hooks.json`; update `/forge-init`, `/forge-status` SKILL.md. CI green.
-7. **Commit 7 — SQLite graph parity.** `shared/graph/query-translator.sh` created; `/forge-graph-query` SKILL.md rewritten; `tests/unit/graph-query-translator.bats` created. CI green.
-8. **Commit 8 — CI workflow + top-level docs + version bump.** bash 3.2 smoke step; README, CLAUDE, CHANGELOG, CONTRIBUTING, plugin.json, marketplace.json. Activate `FORGE_PHASE3_ACTIVE=1` in portability.bats setup. CI green.
+2. **Commit 2 — Foundations.** `shared/platform.sh` extended with 5 helpers. `shared/cross-platform-contract.md` created. `shared/graph/query-translator.sh` created. `tests/contract/portability.bats` skeleton with Group A active, Group B skipping (gated on `FORGE_PHASE3_ACTIVE` which requires Commit 8 sentinels). `tests/ci/bash32-smoke-list.txt`, `phase3-shellcheck-scope.txt`. CI green.
+3. **Commit 3 — Bashism refactor batch 1 (checks).** 4 files in `shared/checks/**/*.sh`. bash -n + scoped shellcheck pass. CI green.
+4. **Commit 4 — Bashism refactor batch 2 (graph).** 8 files in `shared/graph/*.sh`. CI green.
+5. **Commit 5 — Bashism refactor batch 3 (misc).** 7 remaining files in `shared/*.sh` and `shared/recovery/`. Includes `state-integrity.sh`. CI green.
+6. **Commit 6 — Hook script renames + ref updates.** `git mv` both scripts; rename 2 bats files; update `hooks/hooks.json`; update 6 content-ref files (CHANGELOG, CLAUDE.md, platform.sh comment, hook-design.md, skills/forge-automation, tests/unit/automation-cooldown). Also: swap Phase 2's `emit_cost_inc` inline `rmdir` to new `release_lock` helper. CI green.
+7. **Commit 7 — Prereq persistence + SQLite backend + skill updates.** `check-prerequisites.sh` gains `--json`; `/forge-init` writes `.forge/prereqs.json`; `/forge-status` reads it; `/forge-graph-query` SKILL.md rewritten for backend selector. New bats files for dispatch + prereq-json. CI green.
+8. **Commit 8 — CI workflow + top-level docs + activation sentinel.** `.github/workflows/ci.yml` adds bash 3.2 smoke + scoped shellcheck. README, CLAUDE.md, CHANGELOG, CONTRIBUTING, plugin.json, marketplace.json, 3.2.0 version. `FORGE_PHASE3_ACTIVE=1` sentinel in `portability.bats setup()` activates Group B (now passes because all refactor work landed in Commits 3–7). CI green.
 9. **Push → CI → tag `v3.2.0` → release.**
 
 ## 10. Versioning rationale
 
-All changes are additive to the user (no command removed; no config field removed; no default changed that would alter behavior without opt-in). `check-environment.sh` removal is internal API (not user-facing). SemVer minor: `3.1.0 → 3.2.0`.
+All changes are additive to users. Internal API changes (helper additions, prereq JSON persistence, backend selector) don't alter user-facing commands or configuration defaults. `3.1.0 → 3.2.0`.
 
 ## 11. Open questions
 
-None. All decisions locked in brainstorming.
+None. v1 review corrections applied.
 
 ## 12. References
 
-- Phase 1 spec (§2 of this doc assumes 3.0.0 artifacts present)
-- Phase 2 spec (§2 of this doc assumes 3.1.0 artifacts present)
-- `shared/platform.sh` (existing — extended)
-- `shared/check-prerequisites.sh` (existing — extended)
-- `shared/check-environment.sh` (existing — deleted, folded in)
-- `shared/graph/code-graph-query.sh` (existing — underlying SQLite primitives)
-- `shared/graph/code-graph-schema.sql` (existing — SQLite schema)
+- Phase 1 + 2 specs (same directory)
+- `shared/platform.sh` (existing — extended with 5 new helpers)
+- `shared/check-prerequisites.sh` + `check-environment.sh` (both preserved)
+- `shared/graph/code-graph-query.sh` (existing SQLite primitives — unchanged)
+- `shared/graph/code-graph-schema.sql` (existing schema — referenced by passthrough)
+- `shared/graph/schema.md` (Neo4j schema — referenced by passthrough)
 - `skills/forge-graph-query/SKILL.md` (rewritten)
+- `skills/forge-init/SKILL.md` (prereq persistence step)
+- `skills/forge-status/SKILL.md` (prereq section)
 - April 2026 UX audit (conversation memory)
 - User instructions: "I want it all except the backwards compatibility"; "Do not run tests locally"
+- v1 code-review (this conversation) — 6 critical + 8 important findings applied
