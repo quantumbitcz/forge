@@ -9,10 +9,10 @@ setup() {
 }
 
 @test "scenario 10: disabled-config — PREFLIGHT emits SEC-INJECTION-DISABLED and halts" {
-  if [ ! -f "$CHECK" ]; then
-    skip "requires shared/preflight-injection-check.sh from Task 20"
-  fi
-  run bash "$CHECK" "$BATS_TEST_DIRNAME/fixture-forge-config.md"
+  [ -f "$CHECK" ]
+  TMP="$(mktemp -d)"
+  run bash "$CHECK" "$BATS_TEST_DIRNAME/fixture-forge-config.md" "$TMP/.forge"
+  rm -rf "$TMP"
   [ "$status" -ne 0 ]
-  [[ "$output" == *"SEC-INJECTION-DISABLED"* ]]
+  [[ "$output" == *"SEC-INJECTION-DISABLED"* ]] || [[ "$stderr" == *"SEC-INJECTION-DISABLED"* ]]
 }
