@@ -68,7 +68,7 @@ findings:
 
 Max total output: 600 tokens. `findings: []` when verdict == PASS.
 
-## 5. Forbidden
+## 5. Forbidden Actions
 
 - Do NOT use `Read` to explore the repo. The tool is present only for cross-file context inside the diff scope (e.g., reading an imported type referenced by the diff).
 - Do NOT suggest refactors or style fixes. Intent satisfaction only.
