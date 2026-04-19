@@ -5,7 +5,6 @@ load '../helpers/test-helpers'
 
 STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
 TOKEN_TRACKER="$PLUGIN_ROOT/shared/forge-token-tracker.sh"
-COMPACT_CHECK="$PLUGIN_ROOT/hooks/post_tool_use_agent.py"
 
 # R1: State recovery with lock
 @test "concurrency-fixes: recovery acquires lock and produces valid state" {
@@ -41,17 +40,10 @@ COMPACT_CHECK="$PLUGIN_ROOT/hooks/post_tool_use_agent.py"
   assert_success
 }
 
-# R4: Compact counter accurate after sequential increments
-@test "concurrency-fixes: compact counter increments correctly" {
-  local forge_dir="$TEST_TEMP/project/.forge"
-  mkdir -p "$forge_dir"
-  for i in 1 2 3 4 5; do
-    FORGE_DIR="$forge_dir" python3 "$COMPACT_CHECK" --forge-dir "$forge_dir" </dev/null
-  done
-  local count
-  count=$(cat "$forge_dir/.token-estimate" 2>/dev/null)
-  [[ "$count" -eq 5 ]]
-}
+# R4 deleted: the Python port of post_tool_use_agent.py no longer maintains a
+# .token-estimate / .compact-dispatches counter. It reads state.json.tokens.total
+# and emits a stderr /compact hint above SUGGEST_THRESHOLD_TOKENS. Counter-based
+# behavior is gone by design; see hooks/_py/check_engine/compact_check.py.
 
 # R6: Timestamps include Z suffix
 @test "concurrency-fixes: WAL entries have Z suffix on timestamp" {

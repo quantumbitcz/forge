@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
-# Scenario tests: hooks/post_tool_use_skill.py state management
+# Scenario tests: hooks/post_tool_use_skill.py (Python checkpoint hook).
+#
+# The Python port writes JSONL entries to .forge/checkpoints.jsonl instead of
+# mutating state.json.lastCheckpoint. These tests cover the observable
+# persistence behavior.
 
 load '../helpers/test-helpers'
 
@@ -10,97 +14,96 @@ setup() {
   MOCK_BIN="$TEST_TEMP/mock-bin"
   mkdir -p "$MOCK_BIN"
   export PATH="$MOCK_BIN:$PATH"
-  # Checkpoint hook reads .forge/state.json from CWD
   mkdir -p "$TEST_TEMP/project/.forge"
 }
 
 teardown() { rm -rf "$TEST_TEMP"; }
 
 # ---------------------------------------------------------------------------
-# 1. Valid state.json → lastCheckpoint updated
+# 1. .forge exists → checkpoints.jsonl is created and appended to
 # ---------------------------------------------------------------------------
-@test "checkpoint: valid state.json gets lastCheckpoint field set" {
+@test "checkpoint: creates checkpoints.jsonl with expected fields" {
   local proj="$TEST_TEMP/project"
-  local state="$proj/.forge/state.json"
-  printf '{"schema_version":"1.3","story_state":"IMPLEMENTING"}\n' > "$state"
+  local log="$proj/.forge/checkpoints.jsonl"
 
-  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
-
+  run bash -c "cd '$proj' && echo '{\"tool_name\":\"Skill\",\"tool_input\":{\"skill_name\":\"forge-run\"}}' | python3 '$CHECKPOINT_HOOK'"
   assert_success
-  # lastCheckpoint key should now be present
-  assert python3 -c "
-import json
-with open('$state') as f:
-    d = json.load(f)
-assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
-"
-}
-
-# ---------------------------------------------------------------------------
-# 2. Existing lastCheckpoint overwritten with a newer timestamp
-# ---------------------------------------------------------------------------
-@test "checkpoint: existing lastCheckpoint is overwritten" {
-  local proj="$TEST_TEMP/project"
-  local state="$proj/.forge/state.json"
-  printf '{"schema_version":"1.3","story_state":"VERIFYING","lastCheckpoint":"2000-01-01T00:00:00Z"}\n' > "$state"
-
-  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
-
-  assert_success
-  local new_ts
-  new_ts="$(python3 -c "import json; d=json.load(open('$state')); print(d['lastCheckpoint'])")"
-  # New timestamp must be different (later) than the old one
-  assert [ "$new_ts" != "2000-01-01T00:00:00Z" ]
-}
-
-# ---------------------------------------------------------------------------
-# 3. Missing state.json → no-op (exit 0)
-# ---------------------------------------------------------------------------
-@test "checkpoint: missing state.json causes script to exit 0 cleanly" {
-  local proj="$TEST_TEMP/project"
-  rm -f "$proj/.forge/state.json"
-
-  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
-
-  assert_success
-}
-
-# ---------------------------------------------------------------------------
-# 4. Malformed JSON → not corrupted (exit 0, file unchanged or graceful)
-# ---------------------------------------------------------------------------
-@test "checkpoint: malformed JSON causes exit 0 without corrupting disk" {
-  local proj="$TEST_TEMP/project"
-  local state="$proj/.forge/state.json"
-  printf 'NOT VALID JSON { broken\n' > "$state"
-
-  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
-
-  # Script always exits 0 (best-effort semantics)
-  assert_success
-}
-
-# ---------------------------------------------------------------------------
-# 5. Timestamp ISO 8601 UTC format check
-# ---------------------------------------------------------------------------
-@test "checkpoint: lastCheckpoint is written in ISO 8601 UTC format (YYYY-MM-DDTHH:MM:SSZ)" {
-  local proj="$TEST_TEMP/project"
-  local state="$proj/.forge/state.json"
-  printf '{"schema_version":"1.3","story_state":"SHIPPING"}\n' > "$state"
-
-  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
-
-  assert_success
-  local ts
-  ts="$(python3 -c "import json; d=json.load(open('$state')); print(d.get('lastCheckpoint',''))")"
-  # Must match YYYY-MM-DDTHH:MM:SSZ
+  assert [ -f "$log" ]
+  # Verify fields
   run python3 -c "
-import re, sys
-ts = sys.argv[1]
-pat = r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$'
+import json
+with open('$log') as f:
+    line = f.readline().strip()
+entry = json.loads(line)
+for key in ('timestamp', 'skill', 'tool'):
+    assert key in entry, f'missing {key}'
+assert entry['skill'] == 'forge-run'
+assert entry['tool'] == 'Skill'
+"
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# 2. Successive invocations append (do not overwrite)
+# ---------------------------------------------------------------------------
+@test "checkpoint: successive invocations append new lines" {
+  local proj="$TEST_TEMP/project"
+  local log="$proj/.forge/checkpoints.jsonl"
+
+  run bash -c "cd '$proj' && echo '{\"tool_input\":{\"skill_name\":\"one\"}}' | python3 '$CHECKPOINT_HOOK'"
+  assert_success
+  run bash -c "cd '$proj' && echo '{\"tool_input\":{\"skill_name\":\"two\"}}' | python3 '$CHECKPOINT_HOOK'"
+  assert_success
+
+  local count
+  count=$(wc -l < "$log" | tr -d ' ')
+  [[ "$count" = "2" ]] || fail "expected 2 lines, got $count"
+}
+
+# ---------------------------------------------------------------------------
+# 3. Missing .forge → no-op (exit 0)
+# ---------------------------------------------------------------------------
+@test "checkpoint: missing .forge causes script to exit 0 cleanly" {
+  local proj="$TEST_TEMP/project"
+  rm -rf "$proj/.forge"
+
+  run bash -c "cd '$proj' && echo '{}' | python3 '$CHECKPOINT_HOOK'"
+  assert_success
+  assert [ ! -d "$proj/.forge" ]
+}
+
+# ---------------------------------------------------------------------------
+# 4. Malformed stdin JSON → exit 0, no file created
+# ---------------------------------------------------------------------------
+@test "checkpoint: malformed stdin JSON causes exit 0 without writing" {
+  local proj="$TEST_TEMP/project"
+  local log="$proj/.forge/checkpoints.jsonl"
+
+  run bash -c "cd '$proj' && echo 'NOT VALID JSON {' | python3 '$CHECKPOINT_HOOK'"
+  assert_success
+  assert [ ! -f "$log" ]
+}
+
+# ---------------------------------------------------------------------------
+# 5. Timestamp is ISO 8601 UTC (RFC 3339 with timezone offset)
+# ---------------------------------------------------------------------------
+@test "checkpoint: timestamp is ISO 8601 UTC" {
+  local proj="$TEST_TEMP/project"
+  local log="$proj/.forge/checkpoints.jsonl"
+
+  run bash -c "cd '$proj' && echo '{\"tool_input\":{\"skill_name\":\"x\"}}' | python3 '$CHECKPOINT_HOOK'"
+  assert_success
+
+  run python3 -c "
+import json, re, sys
+with open('$log') as f:
+    entry = json.loads(f.readline())
+ts = entry.get('timestamp', '')
+# Accept RFC 3339 / ISO-8601 with timezone offset (e.g. 2026-04-19T12:34:56.789+00:00 or Z)
+pat = r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$'
 if not re.match(pat, ts):
-    print('FAIL: timestamp %r does not match ISO 8601 UTC format' % ts, file=sys.stderr)
+    print(f'FAIL: timestamp {ts!r} does not match ISO 8601 UTC', file=sys.stderr)
     sys.exit(1)
-sys.exit(0)
-" "$ts"
+"
   assert_success
 }

@@ -4,6 +4,14 @@ setup() {
   load '../helpers/test-helpers'
   HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/post_tool_use.py"
   TRIGGER_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/automation_trigger.py"
+  TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-automation-behavior.XXXXXX")"
+  mkdir -p "$TEST_TEMP/project"
+}
+
+teardown() {
+  if [[ -n "${TEST_TEMP:-}" && -d "${TEST_TEMP}" ]]; then
+    rm -rf "$TEST_TEMP"
+  fi
 }
 
 @test "automation-trigger: hook script exists and is executable" {

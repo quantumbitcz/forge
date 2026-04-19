@@ -1,72 +1,75 @@
 #!/usr/bin/env bats
+# Behavioral tests for hooks/stop.py — Python feedback-capture hook.
+#
+# Semantic change from the old bash hook: instead of writing a markdown log to
+# .forge/feedback/auto-captured.md (with 100 KB rotation), the Python port
+# appends a structured JSON line to .forge/events.jsonl with
+#   {"kind": "session_stop", "timestamp", "transcript_path", "stop_hook_active"}.
 
 setup() {
   load '../helpers/test-helpers'
-  load './helpers/mock-forge-state'
   HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/stop.py"
+  TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-feedback-behavior.XXXXXX")"
+  mkdir -p "$TEST_TEMP/project"
 }
 
 teardown() {
-  teardown_mock_forge
   if [[ -n "${TEST_TEMP:-}" && -d "${TEST_TEMP}" ]]; then
-    rm -rf "${TEST_TEMP}"
+    rm -rf "$TEST_TEMP"
   fi
 }
 
-@test "feedback-capture: writes session context to auto-captured.md" {
-  setup_mock_forge
-  # Ensure state.json has story_state (not pipeline_state)
-  cat > "$FORGE_DIR/state.json" <<'EOF'
-{
-  "version": "1.5.0",
-  "story_state": "REVIEWING",
-  "mode": "standard",
-  "score_history": [85],
-  "convergence": {
-    "phase": "perfection",
-    "total_iterations": 3
-  },
-  "total_retries": 1,
-  "cost": { "wall_time_seconds": 120 }
-}
-EOF
+@test "feedback-capture: appends session_stop entry to events.jsonl" {
+  local proj="${TEST_TEMP}/project"
+  local forge_dir="${proj}/.forge"
+  mkdir -p "$forge_dir"
 
-  run python3 "$HOOK_SCRIPT" </dev/null
+  run bash -c "cd '$proj' && echo '{\"transcript_path\":\"/tmp/t.jsonl\",\"stop_hook_active\":true}' | python3 '$HOOK_SCRIPT'"
   assert_success
-  assert [ -f "$FORGE_DIR/feedback/auto-captured.md" ]
-  run grep -q 'Session ended' "$FORGE_DIR/feedback/auto-captured.md"
+  assert [ -f "$forge_dir/events.jsonl" ]
+
+  run python3 -c "
+import json
+with open('$forge_dir/events.jsonl') as f:
+    entry = json.loads(f.readline())
+assert entry['kind'] == 'session_stop'
+assert entry['transcript_path'] == '/tmp/t.jsonl'
+assert entry['stop_hook_active'] is True
+assert 'timestamp' in entry
+"
   assert_success
 }
 
-@test "feedback-capture: rotates auto-captured.md at 100KB" {
-  setup_mock_forge
-  # Create auto-captured.md slightly over 100KB (102401 bytes)
-  dd if=/dev/zero bs=1024 count=101 2>/dev/null | tr '\0' 'x' \
-    > "$FORGE_DIR/feedback/auto-captured.md"
+@test "feedback-capture: successive invocations append (do not rotate)" {
+  local proj="${TEST_TEMP}/project"
+  local forge_dir="${proj}/.forge"
+  mkdir -p "$forge_dir"
 
-  run python3 "$HOOK_SCRIPT" </dev/null
+  run bash -c "cd '$proj' && echo '{}' | python3 '$HOOK_SCRIPT'"
   assert_success
-  # After rotation, an archived copy should exist
-  local archived
-  archived=$(ls "$FORGE_DIR/feedback/auto-captured-"*.md 2>/dev/null | head -1)
-  assert [ -n "$archived" ]
+  run bash -c "cd '$proj' && echo '{}' | python3 '$HOOK_SCRIPT'"
+  assert_success
+
+  local count
+  count=$(wc -l < "$forge_dir/events.jsonl" | tr -d ' ')
+  [[ "$count" = "2" ]] || fail "expected 2 event lines, got $count"
 }
 
-@test "feedback-capture: handles missing .forge directory" {
-  cd "${TEST_TEMP}/project"
-  # Ensure no .forge directory
-  rm -rf .forge 2>/dev/null || true
-
-  run python3 "$HOOK_SCRIPT" </dev/null
+@test "feedback-capture: handles missing .forge directory (exit 0)" {
+  local proj="${TEST_TEMP}/project"
+  # No .forge dir present
+  run bash -c "cd '$proj' && echo '{}' | python3 '$HOOK_SCRIPT'"
   assert_success
+  assert [ ! -f "$proj/.forge/events.jsonl" ]
 }
 
-@test "feedback-capture: handles malformed state.json" {
-  setup_mock_forge
-  echo "this is not valid json" > "$FORGE_DIR/state.json"
+@test "feedback-capture: handles malformed stdin gracefully (exit 0)" {
+  local proj="${TEST_TEMP}/project"
+  local forge_dir="${proj}/.forge"
+  mkdir -p "$forge_dir"
 
-  run python3 "$HOOK_SCRIPT" </dev/null
+  run bash -c "cd '$proj' && echo 'this is not valid json' | python3 '$HOOK_SCRIPT'"
   assert_success
-  # Should still write something to auto-captured.md (graceful degradation)
-  assert [ -f "$FORGE_DIR/feedback/auto-captured.md" ]
+  # Malformed payload → hook exits early, no events line appended.
+  assert [ ! -f "$forge_dir/events.jsonl" ]
 }

@@ -1,5 +1,10 @@
 #!/usr/bin/env bats
-# Unit tests: hooks/post_tool_use_agent.py — compaction suggestion after Agent dispatches.
+# Unit tests for hooks/post_tool_use_agent.py — compaction suggestion hook.
+#
+# Old bash hook counted agent dispatches via .compact-dispatches/.token-estimate
+# and wrote .compact-suggestion every 5. The Python port reads
+# state.json.tokens.total and emits a stderr warning once usage passes
+# SUGGEST_THRESHOLD_TOKENS (180 000).
 
 load '../helpers/test-helpers'
 
@@ -21,57 +26,36 @@ SCRIPT="$PLUGIN_ROOT/hooks/post_tool_use_agent.py"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Counter increments
-# ---------------------------------------------------------------------------
-
-@test "forge-compact-check: increments dispatch counter" {
-  local forge_dir="$TEST_TEMP/project/.forge"
-  mkdir -p "$forge_dir"
-
-  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
-  assert_success
-  assert [ -f "$forge_dir/.token-estimate" ]
-
-  local count
-  count=$(cat "$forge_dir/.token-estimate")
-  assert_equal "$count" "1"
-
-  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
-  assert_success
-  count=$(cat "$forge_dir/.token-estimate")
-  assert_equal "$count" "2"
-}
-
-# ---------------------------------------------------------------------------
-# 3. Suggestion written every 5 dispatches
-# ---------------------------------------------------------------------------
-
-@test "forge-compact-check: writes suggestion every 5 dispatches" {
-  local forge_dir="$TEST_TEMP/project/.forge"
-  mkdir -p "$forge_dir"
-
-  # Run 4 times — no suggestion yet
-  for i in 1 2 3 4; do
-    FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
-    assert_success
-  done
-  assert [ ! -f "$forge_dir/.compact-suggestion" ]
-
-  # 5th dispatch triggers suggestion
-  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
-  assert_success
-  assert [ -f "$forge_dir/.compact-suggestion" ]
-
-  local suggestion
-  suggestion=$(cat "$forge_dir/.compact-suggestion")
-  assert_equal "$suggestion" "Consider running /compact to free context space (5 agent dispatches since last compact)"
-}
-
-# ---------------------------------------------------------------------------
-# 4. Exits 0 when .forge dir does not exist
+# 2. Token-threshold behavior
 # ---------------------------------------------------------------------------
 
 @test "forge-compact-check: exits 0 when forge dir missing" {
-  FORGE_DIR="$TEST_TEMP/nonexistent/.forge" run python3 "$SCRIPT"
+  local proj="$TEST_TEMP/no-forge"
+  mkdir -p "$proj"
+  run bash -c "cd '$proj' && python3 '$SCRIPT' </dev/null"
   assert_success
+}
+
+@test "forge-compact-check: silent when token usage is below threshold" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  cat > "$forge_dir/state.json" <<'EOF'
+{ "tokens": { "total": { "prompt": 10000, "completion": 2000 } } }
+EOF
+
+  run bash -c "cd '$TEST_TEMP/project' && python3 '$SCRIPT' </dev/null 2>&1"
+  assert_success
+  [[ -z "$output" ]] || fail "expected no output below threshold, got: $output"
+}
+
+@test "forge-compact-check: emits /compact hint when above threshold" {
+  local forge_dir="$TEST_TEMP/project/.forge"
+  mkdir -p "$forge_dir"
+  cat > "$forge_dir/state.json" <<'EOF'
+{ "tokens": { "total": { "prompt": 170000, "completion": 20000 } } }
+EOF
+
+  run bash -c "cd '$TEST_TEMP/project' && python3 '$SCRIPT' </dev/null 2>&1"
+  assert_success
+  [[ "$output" == *"/compact"* ]] || fail "expected /compact hint, got: $output"
 }
