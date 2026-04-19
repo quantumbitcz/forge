@@ -29,7 +29,7 @@ ENGINE_PY="$PLUGIN_ROOT/hooks/_py/check_engine/engine.py"
 
 @test "engine.py: detects kotlin from .kt extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('src/main/kotlin/App.kt') == 'kotlin', 'Expected kotlin'
 print('OK')
@@ -40,7 +40,7 @@ print('OK')
 
 @test "engine.py: detects typescript from .ts extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('src/index.ts') == 'typescript', 'Expected typescript'
 print('OK')
@@ -51,7 +51,7 @@ print('OK')
 
 @test "engine.py: detects python from .py extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('app/main.py') == 'python', 'Expected python'
 print('OK')
@@ -62,7 +62,7 @@ print('OK')
 
 @test "engine.py: returns None for unknown extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('README.md') is None, 'Expected None'
 print('OK')
@@ -77,7 +77,7 @@ print('OK')
 
 @test "engine.py: parses --hook mode" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args(['--hook', '--files-changed', 'test.kt'])
 assert args['mode'] == 'hook', f'Expected hook, got {args[\"mode\"]}'
@@ -90,7 +90,7 @@ print('OK')
 
 @test "engine.py: parses --verify mode with multiple files" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args(['--verify', '--files-changed', 'a.ts', '--files-changed', 'b.py'])
 assert args['mode'] == 'verify', f'Expected verify, got {args[\"mode\"]}'
@@ -103,7 +103,7 @@ print('OK')
 
 @test "engine.py: parses --project-root" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args(['--project-root', '/tmp/myproject', '--hook'])
 assert args['project_root'] == '/tmp/myproject', f'Got {args[\"project_root\"]}'
@@ -137,7 +137,7 @@ print('OK')
   echo "services/user=spring" > "$forge_dir/.component-cache"
 
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_module
 result = detect_module('services/user/src/Main.kt', '$forge_dir')
 assert result == 'spring', f'Expected spring, got {result}'
@@ -152,7 +152,7 @@ print('OK')
   mkdir -p "$forge_dir"
 
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_module
 result = detect_module('src/Main.kt', '$forge_dir')
 assert result is None, f'Expected None, got {result}'
@@ -168,7 +168,7 @@ print('OK')
   echo "malformed-no-equals" > "$forge_dir/.component-cache"
 
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_module
 result = detect_module('src/Main.kt', '$forge_dir')
 assert result is None, f'Expected None, got {result}'
@@ -184,7 +184,7 @@ print('OK')
 
 @test "engine.py: load_overrides returns empty dict when no module" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import load_overrides
 result = load_overrides(None, '${TEST_TEMP}/.forge')
 assert result == {}, f'Expected empty dict, got {result}'
@@ -197,7 +197,7 @@ print('OK')
 @test "engine.py: load_overrides loads framework rules-override.json" {
   # Use spring which has a real rules-override.json
   run python3 -c "
-import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 os.environ['CLAUDE_PLUGIN_ROOT'] = '$PLUGIN_ROOT'
 from engine import load_overrides
 result = load_overrides('spring', '${TEST_TEMP}/.forge')
@@ -211,7 +211,7 @@ print('OK')
 
 @test "engine.py: load_overrides returns empty dict for unknown framework" {
   run python3 -c "
-import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 os.environ['CLAUDE_PLUGIN_ROOT'] = '$PLUGIN_ROOT'
 from engine import load_overrides
 result = load_overrides('nonexistent-framework', '${TEST_TEMP}/.forge')
@@ -270,7 +270,7 @@ print('OK')
 
 @test "engine.py: detects vue from .vue extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('App.vue') == 'vue', 'Expected vue'
 print('OK')
@@ -281,7 +281,7 @@ print('OK')
 
 @test "engine.py: detects svelte from .svelte extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('App.svelte') == 'svelte', 'Expected svelte'
 print('OK')
@@ -292,7 +292,7 @@ print('OK')
 
 @test "engine.py: detects go from .go extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('main.go') == 'go', 'Expected go'
 print('OK')
@@ -303,7 +303,7 @@ print('OK')
 
 @test "engine.py: detects rust from .rs extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('lib.rs') == 'rust', 'Expected rust'
 print('OK')
@@ -314,7 +314,7 @@ print('OK')
 
 @test "engine.py: detects java from .java extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('App.java') == 'java', 'Expected java'
 print('OK')
@@ -325,7 +325,7 @@ print('OK')
 
 @test "engine.py: detects swift from .swift extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('ViewController.swift') == 'swift', 'Expected swift'
 print('OK')
@@ -336,7 +336,7 @@ print('OK')
 
 @test "engine.py: detects csharp from .cs extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('Program.cs') == 'csharp', 'Expected csharp'
 print('OK')
@@ -347,7 +347,7 @@ print('OK')
 
 @test "engine.py: detects elixir from .ex extension" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('app.ex') == 'elixir', 'Expected elixir'
 print('OK')
@@ -358,7 +358,7 @@ print('OK')
 
 @test "engine.py: case insensitive extension matching" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import detect_language
 assert detect_language('Main.KT') == 'kotlin', f'Expected kotlin, got {detect_language(\"Main.KT\")}'
 print('OK')
@@ -373,7 +373,7 @@ print('OK')
 
 @test "engine.py: parses --review mode" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args(['--review', '--project-root', '/tmp/p', '--files-changed', 'a.ts', 'b.py'])
 assert args['mode'] == 'review', f'Expected review, got {args[\"mode\"]}'
@@ -387,7 +387,7 @@ print('OK')
 
 @test "engine.py: defaults to hook mode with no args" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args([])
 assert args['mode'] == 'hook', f'Expected hook, got {args[\"mode\"]}'
@@ -401,7 +401,7 @@ print('OK')
 
 @test "engine.py: --files-changed stops at next flag" {
   run python3 -c "
-import sys; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 from engine import parse_args
 args = parse_args(['--files-changed', 'a.ts', 'b.py', '--project-root', '/tmp'])
 assert args['files_changed'] == ['a.ts', 'b.py'], f'Got {args[\"files_changed\"]}'
@@ -462,7 +462,7 @@ print('OK')
   project_dir="$(create_temp_project spring)"
 
   run python3 -c "
-import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 os.environ['CLAUDE_PLUGIN_ROOT'] = '$PLUGIN_ROOT'
 from engine import _find_override
 # Create module cache pointing to spring
@@ -481,7 +481,7 @@ print('OK')
   mkdir -p "$project_dir/.forge"
 
   run python3 -c "
-import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 os.environ['CLAUDE_PLUGIN_ROOT'] = '$PLUGIN_ROOT'
 from engine import _find_override
 result = _find_override('$project_dir/src/app.ts', '$project_dir')
@@ -501,7 +501,7 @@ print('OK')
   echo "spring" > "$project_dir/.forge/.module-cache"
 
   run python3 -c "
-import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/shared/checks')
+import sys, os; sys.path.insert(0, '$PLUGIN_ROOT/hooks/_py/check_engine')
 os.environ['CLAUDE_PLUGIN_ROOT'] = '$PLUGIN_ROOT'
 from engine import _find_override
 result = _find_override('$project_dir/src/App.tsx', '$project_dir')
