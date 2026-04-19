@@ -821,7 +821,7 @@ check "shared/check_prerequisites.py exists and is executable" "$py_script_fail"
 echo ""
 echo "P1+P2: New scripts and files..."
 
-for script in forge-token-tracker.sh forge-linear-sync.sh forge-sim.sh forge-timeout.sh forge-compact-check.sh; do
+for script in forge-token-tracker.sh forge-linear-sync.sh forge-sim.sh forge-timeout.sh; do
   script_fail=0
   if [[ ! -f "$ROOT/shared/$script" ]] || [[ ! -x "$ROOT/shared/$script" ]]; then
     script_fail=1

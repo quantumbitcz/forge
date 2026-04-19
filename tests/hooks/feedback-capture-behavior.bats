@@ -3,7 +3,7 @@
 setup() {
   load '../helpers/test-helpers'
   load './helpers/mock-forge-state'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/feedback-capture.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/stop.py"
 }
 
 teardown() {
@@ -31,7 +31,7 @@ teardown() {
 }
 EOF
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
   assert [ -f "$FORGE_DIR/feedback/auto-captured.md" ]
   run grep -q 'Session ended' "$FORGE_DIR/feedback/auto-captured.md"
@@ -44,7 +44,7 @@ EOF
   dd if=/dev/zero bs=1024 count=101 2>/dev/null | tr '\0' 'x' \
     > "$FORGE_DIR/feedback/auto-captured.md"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
   # After rotation, an archived copy should exist
   local archived
@@ -57,7 +57,7 @@ EOF
   # Ensure no .forge directory
   rm -rf .forge 2>/dev/null || true
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -65,7 +65,7 @@ EOF
   setup_mock_forge
   echo "this is not valid json" > "$FORGE_DIR/state.json"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
   # Should still write something to auto-captured.md (graceful degradation)
   assert [ -f "$FORGE_DIR/feedback/auto-captured.md" ]

@@ -1,15 +1,15 @@
 #!/usr/bin/env bats
-# Unit tests for hooks/session-start.sh — SessionStart event hook.
+# Unit tests for hooks/session_start.py — SessionStart event hook.
 # Tests: forge detection, caveman auto-activation, pipeline status, alerts, exit behavior.
 
 load '../helpers/test-helpers'
 
-HOOK_SCRIPT="$PLUGIN_ROOT/hooks/session-start.sh"
+HOOK_SCRIPT="$PLUGIN_ROOT/hooks/session_start.py"
 
 # Helper: run the hook with CWD set to the given project dir
 run_hook_in() {
   local project_dir="$1"
-  run bash -c "cd '$project_dir' && bash '$HOOK_SCRIPT'"
+  run bash -c "cd '$project_dir' && python3 '$HOOK_SCRIPT'"
 }
 
 # ---------------------------------------------------------------------------

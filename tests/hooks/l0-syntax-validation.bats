@@ -3,7 +3,7 @@
 setup() {
   load '../helpers/test-helpers'
   load './helpers/mock-tool-input'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../shared/checks/l0-syntax/validate-syntax.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/pre_tool_use.py"
 }
 
 @test "l0-syntax: script exists and is executable" {
@@ -11,26 +11,19 @@ setup() {
   assert [ -x "$HOOK_SCRIPT" ]
 }
 
-@test "l0-syntax: has bash shebang" {
+@test "l0-syntax: has python3 shebang" {
   run head -1 "$HOOK_SCRIPT"
-  assert_output --partial "bash"
+  assert_output --partial "python3"
 }
 
 @test "l0-syntax: exits 0 when FORGE_L0_ENABLED is false" {
-  FORGE_L0_ENABLED=false TOOL_INPUT='{"file_path":"/tmp/test.ts"}' \
-    run "$HOOK_SCRIPT"
+  run bash -c "echo '{\"tool_input\":{\"file_path\":\"/tmp/test.ts\"}}' | FORGE_L0_ENABLED=false python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: handles missing TOOL_INPUT gracefully" {
-  unset TOOL_INPUT
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: handles empty stdin gracefully" {
+  run bash -c "echo '' | python3 '$HOOK_SCRIPT'"
   assert_success  # graceful degradation
-}
-
-@test "l0-syntax: logs failures to hook-failures.log format" {
-  run grep -q '_log_failure' "$HOOK_SCRIPT"
-  assert_success
 }
 
 # ---------------------------------------------------------------------------
@@ -73,7 +66,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "return 1;" "return 1")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_failure
   assert_output --partial "SYNTAX ERROR"
 }
@@ -109,7 +102,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -143,7 +136,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_write_input "/tmp/test.py" "def foo(:")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_failure
   assert_output --partial "SYNTAX ERROR"
 }
@@ -178,7 +171,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_write_input "/tmp/test.py" "def foo(): pass")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -189,7 +182,7 @@ PYEOF
   for ext in md json yaml; do
     export TOOL_INPUT
     TOOL_INPUT=$(make_edit_input "/tmp/test.${ext}" "old" "new")
-    run "$HOOK_SCRIPT"
+    run python3 "$HOOK_SCRIPT" </dev/null
     assert_success
   done
 }
@@ -212,7 +205,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 
   # Verify log entry was written
@@ -230,7 +223,7 @@ PYEOF
   # .go is not in the allowed list — should be skipped
   TOOL_INPUT=$(make_edit_input "/tmp/test.go" "old" "new")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -242,7 +235,7 @@ PYEOF
   export FORGE_DIR="${TEST_TEMP}/.forge"
   mkdir -p "$FORGE_DIR"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -251,7 +244,7 @@ PYEOF
   export TOOL_NAME=Edit
   export TOOL_INPUT='{"file_path":""}'
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -267,7 +260,7 @@ PYEOF
   export TOOL_NAME=Edit
   export TOOL_INPUT='{"file_path":"/tmp/test.ts","old_string":"a","new_string":"b"}'
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -301,7 +294,7 @@ PYEOF
   export TOOL_INPUT
   TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 
   # Verify counter was incremented
@@ -343,7 +336,7 @@ PYEOF
   # .tsx maps to typescript — should NOT be filtered out
   TOOL_INPUT=$(make_edit_input "/tmp/component.tsx" "old" "new")
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 
   # Verify it actually ran (counter incremented) rather than being skipped

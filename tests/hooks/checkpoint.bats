@@ -2,7 +2,7 @@
 
 setup() {
   load '../helpers/test-helpers'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/forge-checkpoint.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/post_tool_use_skill.py"
 }
 
 @test "checkpoint: script exists and is executable" {
@@ -12,16 +12,6 @@ setup() {
 
 @test "checkpoint: exits 0 without state.json" {
   cd "$BATS_TEST_TMPDIR"
-  run "$HOOK_SCRIPT"
-  assert_success
-}
-
-@test "checkpoint: sources platform.sh" {
-  run grep -q 'platform.sh' "$HOOK_SCRIPT"
-  assert_success
-}
-
-@test "checkpoint: uses atomic_json_update" {
-  run grep -q 'atomic_json_update' "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }

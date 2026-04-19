@@ -53,7 +53,7 @@ teardown() {
   # Create a dummy source file
   echo "fun main() {}" > "$TMPWORK/test.kt"
 
-  TOOL_INPUT='{"file_path":"'"$TMPWORK/test.kt"'"}' run "$PLUGIN_ROOT/shared/checks/engine.sh" --hook
+  run bash -c "echo '{\"tool_input\":{\"file_path\":\"$TMPWORK/test.kt\"}}' | python3 '$PLUGIN_ROOT/hooks/post_tool_use.py'"
   [ "$status" -eq 0 ]
 }
 
@@ -67,7 +67,7 @@ teardown() {
   mkdir -p "$TMPWORK/valid"
   echo "fun main() {}" > "$TMPWORK/valid/test.kt"
 
-  TOOL_INPUT='{"file_path":"'"$TMPWORK/valid/test.kt"'"}' run "$PLUGIN_ROOT/shared/checks/engine.sh" --hook
+  run bash -c "echo '{\"tool_input\":{\"file_path\":\"$TMPWORK/valid/test.kt\"}}' | python3 '$PLUGIN_ROOT/hooks/post_tool_use.py'"
   [ "$status" -eq 0 ]
 }
 

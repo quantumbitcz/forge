@@ -5,7 +5,7 @@ load '../helpers/test-helpers'
 
 STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
 TOKEN_TRACKER="$PLUGIN_ROOT/shared/forge-token-tracker.sh"
-COMPACT_CHECK="$PLUGIN_ROOT/shared/forge-compact-check.sh"
+COMPACT_CHECK="$PLUGIN_ROOT/hooks/post_tool_use_agent.py"
 
 # R1: State recovery with lock
 @test "concurrency-fixes: recovery acquires lock and produces valid state" {
@@ -46,7 +46,7 @@ COMPACT_CHECK="$PLUGIN_ROOT/shared/forge-compact-check.sh"
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   for i in 1 2 3 4 5; do
-    FORGE_DIR="$forge_dir" bash "$COMPACT_CHECK" --forge-dir "$forge_dir"
+    FORGE_DIR="$forge_dir" python3 "$COMPACT_CHECK" --forge-dir "$forge_dir" </dev/null
   done
   local count
   count=$(cat "$forge_dir/.token-estimate" 2>/dev/null)

@@ -2,7 +2,7 @@
 
 setup() {
   load '../helpers/test-helpers'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/forge-checkpoint.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/post_tool_use_skill.py"
 }
 
 @test "checkpoint: updates lastCheckpoint in state.json" {
@@ -22,7 +22,7 @@ EOF
   # Source it from the plugin root.
   cd "${TEST_TEMP}/project"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 
   # Verify lastCheckpoint was updated (non-empty timestamp)
@@ -41,7 +41,7 @@ EOF
   # No state.json present
   cd "${TEST_TEMP}/project"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }
 
@@ -51,7 +51,7 @@ EOF
   echo "not json" > "$forge_dir/state.json"
   cd "${TEST_TEMP}/project"
 
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 
   # Verify failure was logged

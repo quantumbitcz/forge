@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
-# Scenario tests: forge-checkpoint.sh state management
+# Scenario tests: hooks/post_tool_use_skill.py state management
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
 
 setup() {
   TEST_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/bats-checkpoint.XXXXXX")"
@@ -24,7 +24,7 @@ teardown() { rm -rf "$TEST_TEMP"; }
   local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"IMPLEMENTING"}\n' > "$state"
 
-  run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
 
   assert_success
   # lastCheckpoint key should now be present
@@ -44,7 +44,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
   local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"VERIFYING","lastCheckpoint":"2000-01-01T00:00:00Z"}\n' > "$state"
 
-  run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
 
   assert_success
   local new_ts
@@ -60,7 +60,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
   local proj="$TEST_TEMP/project"
   rm -f "$proj/.forge/state.json"
 
-  run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
 
   assert_success
 }
@@ -73,7 +73,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
   local state="$proj/.forge/state.json"
   printf 'NOT VALID JSON { broken\n' > "$state"
 
-  run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
 
   # Script always exits 0 (best-effort semantics)
   assert_success
@@ -87,7 +87,7 @@ assert 'lastCheckpoint' in d, 'lastCheckpoint missing'
   local state="$proj/.forge/state.json"
   printf '{"schema_version":"1.3","story_state":"SHIPPING"}\n' > "$state"
 
-  run bash -c "cd '$proj' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$proj' && python3 '$CHECKPOINT_HOOK'"
 
   assert_success
   local ts

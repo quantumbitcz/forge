@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
-# Unit tests: forge-compact-check.sh — compaction suggestion after Agent dispatches.
+# Unit tests: hooks/post_tool_use_agent.py — compaction suggestion after Agent dispatches.
 
 load '../helpers/test-helpers'
 
-SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
+SCRIPT="$PLUGIN_ROOT/hooks/post_tool_use_agent.py"
 
 # ---------------------------------------------------------------------------
 # 1. Script existence and structure
@@ -14,10 +14,10 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
   assert [ -x "$SCRIPT" ]
 }
 
-@test "forge-compact-check: has bash shebang" {
+@test "forge-compact-check: has python shebang" {
   local first_line
   first_line=$(head -1 "$SCRIPT")
-  assert_equal "$first_line" "#!/usr/bin/env bash"
+  assert_equal "$first_line" "#!/usr/bin/env python3"
 }
 
 # ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
 
-  FORGE_DIR="$forge_dir" run bash "$SCRIPT"
+  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
   assert_success
   assert [ -f "$forge_dir/.token-estimate" ]
 
@@ -36,7 +36,7 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
   count=$(cat "$forge_dir/.token-estimate")
   assert_equal "$count" "1"
 
-  FORGE_DIR="$forge_dir" run bash "$SCRIPT"
+  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
   assert_success
   count=$(cat "$forge_dir/.token-estimate")
   assert_equal "$count" "2"
@@ -52,13 +52,13 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
 
   # Run 4 times — no suggestion yet
   for i in 1 2 3 4; do
-    FORGE_DIR="$forge_dir" run bash "$SCRIPT"
+    FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
     assert_success
   done
   assert [ ! -f "$forge_dir/.compact-suggestion" ]
 
   # 5th dispatch triggers suggestion
-  FORGE_DIR="$forge_dir" run bash "$SCRIPT"
+  FORGE_DIR="$forge_dir" run python3 "$SCRIPT"
   assert_success
   assert [ -f "$forge_dir/.compact-suggestion" ]
 
@@ -72,6 +72,6 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-compact-check.sh"
 # ---------------------------------------------------------------------------
 
 @test "forge-compact-check: exits 0 when forge dir missing" {
-  FORGE_DIR="$TEST_TEMP/nonexistent/.forge" run bash "$SCRIPT"
+  FORGE_DIR="$TEST_TEMP/nonexistent/.forge" run python3 "$SCRIPT"
   assert_success
 }

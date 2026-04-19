@@ -78,14 +78,14 @@ print('OK')
   assert_output "OK"
 }
 
-@test "session-start.sh emits STATUS badge for caveman mode" {
-  grep -q '\[STATUS:' "$PLUGIN_ROOT/hooks/session-start.sh"
+@test "session_start.py emits STATUS badge for caveman mode" {
+  grep -q '\[STATUS:' "$PLUGIN_ROOT/hooks/_py/check_engine/session_start.py"
 }
 
-@test "session-start.sh contains full compression rule blocks" {
-  grep -q "OUTPUT COMPRESSION -- LITE MODE" "$PLUGIN_ROOT/hooks/session-start.sh"
-  grep -q "OUTPUT COMPRESSION -- FULL" "$PLUGIN_ROOT/hooks/session-start.sh"
-  grep -q "OUTPUT COMPRESSION -- ULTRA" "$PLUGIN_ROOT/hooks/session-start.sh"
+@test "session_start.py contains full compression rule blocks" {
+  grep -q "OUTPUT COMPRESSION -- LITE MODE" "$PLUGIN_ROOT/hooks/_py/check_engine/session_start.py"
+  grep -q "OUTPUT COMPRESSION -- FULL" "$PLUGIN_ROOT/hooks/_py/check_engine/session_start.py"
+  grep -q "OUTPUT COMPRESSION -- ULTRA" "$PLUGIN_ROOT/hooks/_py/check_engine/session_start.py"
 }
 
 @test "output-compression.md references arXiv:2604.00025" {

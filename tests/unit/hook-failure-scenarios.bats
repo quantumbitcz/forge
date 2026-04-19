@@ -5,15 +5,15 @@
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
-FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/feedback-capture.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
+FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/stop.py"
 PLATFORM_SH="$PLUGIN_ROOT/shared/platform.sh"
 
 # Helper: run a hook with CWD set to the given project dir
 run_hook_in() {
   local hook="$1"
   local project_dir="$2"
-  run bash -c "cd '$project_dir' && bash '$hook'"
+  run bash -c "cd '$project_dir' && python3 '$hook'"
 }
 
 # ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ with open('$hooks_json') as f:
 for group in d['hooks'].get('PostToolUse', []):
     if group.get('matcher') == 'Skill':
         for h in group.get('hooks', []):
-            if 'forge-checkpoint' in h.get('command', ''):
+            if 'post_tool_use_skill' in h.get('command', ''):
                 assert 'timeout' in h, 'No timeout defined for checkpoint hook'
                 assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
                 print(f'timeout={h[\"timeout\"]}')
@@ -132,7 +132,7 @@ with open('$hooks_json') as f:
     d = json.load(f)
 for group in d['hooks'].get('Stop', []):
     for h in group.get('hooks', []):
-        if 'feedback-capture' in h.get('command', ''):
+        if 'stop.py' in h.get('command', ''):
             assert 'timeout' in h, 'No timeout defined for feedback hook'
             assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
             print(f'timeout={h[\"timeout\"]}')
@@ -267,7 +267,7 @@ print('OK')
 
   # Launch 5 concurrent checkpoint hooks
   for i in 1 2 3 4 5; do
-    bash -c "cd '$project_dir' && bash '$CHECKPOINT_HOOK'" &
+    bash -c "cd '$project_dir' && python3 '$CHECKPOINT_HOOK'" &
   done
   wait
 
@@ -291,8 +291,8 @@ print('OK')
     > "$project_dir/.forge/state.json"
 
   # Run checkpoint and feedback hooks concurrently
-  bash -c "cd '$project_dir' && bash '$CHECKPOINT_HOOK'" &
-  bash -c "cd '$project_dir' && bash '$FEEDBACK_HOOK'" &
+  bash -c "cd '$project_dir' && python3 '$CHECKPOINT_HOOK'" &
+  bash -c "cd '$project_dir' && python3 '$FEEDBACK_HOOK'" &
   wait
 
   # state.json should remain valid
@@ -312,47 +312,7 @@ print('OK')
 }
 
 # ---------------------------------------------------------------------------
-# 7. Hook with missing platform.sh dependency (should exit 0)
+# 7. Bash-specific guards removed in Python port (platform.sh sourcing,
+# atomic_json_update existence, final `exit 0` line). Python hooks exit via
+# sys.exit() and have no equivalent shell dependencies to test for.
 # ---------------------------------------------------------------------------
-
-@test "hook-failure: checkpoint exits 0 when platform.sh cannot be sourced" {
-  # The checkpoint hook has: source platform.sh 2>/dev/null || exit 0
-  # Verify this behavior by checking the script source
-  grep -q 'source.*platform\.sh.*exit 0\||| exit 0' "$CHECKPOINT_HOOK" \
-    || fail "Checkpoint hook does not gracefully handle missing platform.sh"
-
-  # Simulate by running from a directory with no platform.sh reachable
-  # (the hook resolves PLUGIN_ROOT from its own location, so it will find it,
-  # but we verify the guard clause exists)
-  local project_dir="${TEST_TEMP}/hook-no-platform"
-  mkdir -p "$project_dir/.forge"
-  printf '{"story_state":"PREFLIGHT"}\n' > "$project_dir/.forge/state.json"
-
-  # Create a modified checkpoint hook that cannot source platform.sh
-  local modified_hook="${TEST_TEMP}/modified-checkpoint.sh"
-  # Replace the platform.sh path with a non-existent one
-  sed 's|shared/platform.sh|shared/nonexistent-platform.sh|' "$CHECKPOINT_HOOK" > "$modified_hook"
-
-  run bash -c "cd '$project_dir' && bash '$modified_hook'"
-  assert_success
-}
-
-@test "hook-failure: checkpoint exits 0 when atomic_json_update function is missing" {
-  # The checkpoint hook has: type atomic_json_update &>/dev/null || exit 0
-  grep -q 'type atomic_json_update.*exit 0\||| exit 0' "$CHECKPOINT_HOOK" \
-    || fail "Checkpoint hook does not guard against missing atomic_json_update"
-}
-
-@test "hook-failure: all hooks have exit 0 as final line" {
-  # Both hooks must always exit 0 to avoid blocking the pipeline
-  local last_line_checkpoint
-  last_line_checkpoint=$(tail -1 "$CHECKPOINT_HOOK" | tr -d '[:space:]')
-  [[ "$last_line_checkpoint" == "exit0" ]] \
-    || fail "Checkpoint hook does not end with 'exit 0': got '$last_line_checkpoint'"
-
-  # Feedback hook wraps in a subshell but still ends with exit 0
-  local last_line_feedback
-  last_line_feedback=$(tail -1 "$FEEDBACK_HOOK" | tr -d '[:space:]')
-  [[ "$last_line_feedback" == "exit0" ]] \
-    || fail "Feedback hook does not end with 'exit 0': got '$last_line_feedback'"
-}

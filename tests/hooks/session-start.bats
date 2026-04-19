@@ -1,10 +1,11 @@
 #!/usr/bin/env bats
-# Hook integration tests for hooks/session-start.sh — SessionStart event hook.
-# Tests: registration in hooks.json, timeout configuration, subshell guard, shebang.
+# Hook integration tests for hooks/session_start.py — SessionStart event hook.
+# Tests: registration in hooks.json, shebang. Bash-specific timeout/subshell
+# guards removed with the Python port.
 
 load '../helpers/test-helpers'
 
-HOOK_SCRIPT="$PLUGIN_ROOT/hooks/session-start.sh"
+HOOK_SCRIPT="$PLUGIN_ROOT/hooks/session_start.py"
 HOOKS_JSON="$PLUGIN_ROOT/hooks/hooks.json"
 
 # ---------------------------------------------------------------------------
@@ -23,9 +24,9 @@ print('ok')
 }
 
 # ---------------------------------------------------------------------------
-# 2. hooks.json SessionStart entry references session-start.sh
+# 2. hooks.json SessionStart entry references session_start.py
 # ---------------------------------------------------------------------------
-@test "session-start-hook: hooks.json entry references session-start.sh" {
+@test "session-start-hook: hooks.json entry references session_start.py" {
   run python3 -c "
 import json
 with open('$HOOKS_JSON') as f:
@@ -34,9 +35,9 @@ hooks = data['hooks']['SessionStart']
 found = False
 for entry in hooks:
     for h in entry.get('hooks', []):
-        if 'session-start.sh' in h.get('command', ''):
+        if 'session_start.py' in h.get('command', ''):
             found = True
-assert found, 'session-start.sh not found in SessionStart hooks'
+assert found, 'session_start.py not found in SessionStart hooks'
 print('ok')
 "
   assert_success
@@ -44,25 +45,9 @@ print('ok')
 }
 
 # ---------------------------------------------------------------------------
-# 3. Hook has correct shebang and self-enforcing timeout
+# 3. Hook has correct Python shebang
 # ---------------------------------------------------------------------------
-@test "session-start-hook: has correct shebang and timeout wrapper" {
+@test "session-start-hook: has python3 shebang" {
   run head -1 "$HOOK_SCRIPT"
-  assert_output "#!/usr/bin/env bash"
-
-  run grep -c '_HOOK_TIMEOUT' "$HOOK_SCRIPT"
-  # Should have multiple references to timeout (declaration + usage)
-  [[ "${output}" -ge 2 ]] || fail "Expected at least 2 _HOOK_TIMEOUT references, got: $output"
-}
-
-# ---------------------------------------------------------------------------
-# 4. Hook body is wrapped in ( ... ) || true subshell
-# ---------------------------------------------------------------------------
-@test "session-start-hook: body wrapped in subshell with || true guard" {
-  # Verify the pattern: line starting with ( and a line with ) || true
-  run grep -c '^(' "$HOOK_SCRIPT"
-  [[ "${output}" -ge 1 ]] || fail "Expected subshell open '(' at start of line"
-
-  run grep -c ') || true' "$HOOK_SCRIPT"
-  [[ "${output}" -ge 1 ]] || fail "Expected ') || true' subshell guard"
+  assert_output "#!/usr/bin/env python3"
 }

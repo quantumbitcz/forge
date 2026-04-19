@@ -1,18 +1,18 @@
 #!/usr/bin/env bats
 # Unit tests for hook scripts:
-#   hooks/forge-checkpoint.sh — PostToolUse hook that updates lastCheckpoint in state.json
-#   hooks/feedback-capture.sh   — Stop hook that appends timestamped line to auto-captured.md
+#   hooks/post_tool_use_skill.py — PostToolUse hook that updates lastCheckpoint in state.json
+#   hooks/stop.py                — Stop hook that appends timestamped line to auto-captured.md
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
-FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/feedback-capture.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
+FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/stop.py"
 
 # Helper: run a hook with CWD set to the given project dir
 run_hook_in() {
   local hook="$1"
   local project_dir="$2"
-  run bash -c "cd '$project_dir' && bash '$hook'"
+  run bash -c "cd '$project_dir' && python3 '$hook'"
 }
 
 # ---------------------------------------------------------------------------
@@ -136,10 +136,10 @@ run_hook_in() {
   local project_dir="${TEST_TEMP}/bare-project"
   mkdir -p "$project_dir"
 
-  run bash -c "cd '$project_dir' && bash '$CHECKPOINT_HOOK'"
+  run bash -c "cd '$project_dir' && python3 '$CHECKPOINT_HOOK'"
   assert_success
 
-  run bash -c "cd '$project_dir' && bash '$FEEDBACK_HOOK'"
+  run bash -c "cd '$project_dir' && python3 '$FEEDBACK_HOOK'"
   assert_success
 }
 
