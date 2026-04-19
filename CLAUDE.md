@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v3.1.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v3.2.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+
+**Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 42 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
 **A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (merged to master). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
 
