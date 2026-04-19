@@ -41,7 +41,7 @@ jobs:
         run: python -m tests.evals.pipeline.runner --collect-only
 
   dry-run:
-    name: Dry-run smoke (scenario 08)
+    name: Dry-run smoke (scenarios[:1])
     needs: collect
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -68,7 +68,13 @@ jobs:
     #   SC1 target       = 30 min p90
     # Workflow cap is 50 min (45-min total_budget + 5-min overhead for setup/teardown/baseline).
     timeout-minutes: 50
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    # GATED OFF: the runner invokes the `claude` CLI via executor.py to drive
+    # /forge-init + /forge-run --eval-mode, but GitHub-hosted runners do not
+    # ship Claude Code. Follow-up task: install claude-code + wire
+    # CLAUDE_CODE_OAUTH_TOKEN secret, then flip this condition back to the
+    # live one below. Until then, full-suite cannot execute.
+    #   Live condition: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ false }}
     env:
       FORGE_EVAL: '1'
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +117,13 @@ jobs:
     needs: [collect, dry-run]
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    if: ${{ github.event_name == 'pull_request' }}
+    # GATED OFF: same reason as full-suite — needs `claude` CLI on the runner.
+    # Until Claude Code is installed in CI, the regression gate cannot run and
+    # this job would always fail with FileNotFoundError: 'claude'. The
+    # collect + dry-run jobs above are sufficient to validate the harness
+    # plumbing on every PR. See follow-up: wire CLAUDE_CODE_OAUTH_TOKEN.
+    #   Live condition: ${{ github.event_name == 'pull_request' }}
+    if: ${{ false }}
     env:
       FORGE_EVAL: '1'
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -65,6 +65,17 @@ On every PR run the runner compares the mean composite score to the latest `mast
 - Delta < `-regression_tolerance` → `EVAL-REGRESSION` CRITICAL, exit 1.
 - Baseline unavailable (first master run, retention expiry, fetch failure) → `EVAL-BASELINE-UNAVAILABLE` WARNING, gate skipped, exit 0.
 
+### CI status: gate is gated off
+
+The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge-init` + `/forge-run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
+
+Follow-up work before these gates can be flipped back on:
+- Install Claude Code in the runner (custom runner image or setup step).
+- Provision `CLAUDE_CODE_OAUTH_TOKEN` or equivalent secret for non-interactive login.
+- Confirm rate/budget limits are acceptable for 10-scenario runs on every PR.
+
+Until then, `collect` + `dry-run` are sufficient on PRs — they validate scenario YAML and the runner's scoring/report/baseline plumbing without requiring the LLM backend.
+
 ## Sanity check
 
 Introduce a broken `expected.yaml` (e.g. set `mode: bogus`) in a throwaway branch. `python -m tests.evals.pipeline.runner --collect-only` must fail with a clear error naming the broken scenario. CI re-runs this on every push via the `collect` job.
