@@ -1,0 +1,161 @@
+{
+  "_version": 1,
+  "_updated": "2026-04-19T00:00:00Z",
+  "extends": "python",
+  "framework": "flask",
+  "additional_rules": [
+    {
+      "id": "FL-SEC-001",
+      "name": "debug-mode-in-production",
+      "pattern": "app\\.run\\([^)]*debug\\s*=\\s*True",
+      "scope_pattern": "wsgi\\.py$|app\\.py$|main\\.py$|run\\.py$",
+      "severity": "CRITICAL",
+      "category": "SEC-MISCONFIG",
+      "message": "Never ship debug=True — leaks the Werkzeug debugger and arbitrary code execution to production.",
+      "fix_hint": "Set debug from an environment variable: app.run(debug=os.environ.get('FLASK_DEBUG') == '1'). Production deployments should use gunicorn/uWSGI, not app.run().",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-SEC-002",
+      "name": "hardcoded-secret-key",
+      "pattern": "SECRET_KEY\\s*=\\s*['\"][A-Za-z0-9_\\-+/=]{1,32}['\"]",
+      "scope_pattern": "config\\.py$|settings\\.py$|app/__init__\\.py$",
+      "severity": "CRITICAL",
+      "category": "SEC-SECRET",
+      "message": "SECRET_KEY hardcoded — load from os.environ or a secret manager.",
+      "fix_hint": "SECRET_KEY = os.environ['SECRET_KEY']  # raises KeyError early if missing. Generate with secrets.token_urlsafe(64).",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-SEC-003",
+      "name": "raw-sql-string-concat",
+      "pattern": "db\\.session\\.execute\\([^)]*['\"]\\s*\\+|db\\.engine\\.execute\\([^)]*['\"]\\s*\\+|text\\([^)]*['\"]\\s*\\+",
+      "scope_pattern": "app/|src/",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "Raw SQL with string concatenation — SQL injection risk. Use bound parameters with sqlalchemy.text(...).",
+      "fix_hint": "db.session.execute(text('SELECT * FROM users WHERE id = :id'), {'id': user_id}). Never concatenate user input into the query string.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-SEC-004",
+      "name": "session-cookie-secure-disabled",
+      "pattern": "SESSION_COOKIE_SECURE\\s*=\\s*False",
+      "scope_pattern": "config\\.py$|settings\\.py$|app/__init__\\.py$",
+      "severity": "WARNING",
+      "category": "SEC-CONFIG",
+      "message": "SESSION_COOKIE_SECURE=False — session cookie may be sent over HTTP and intercepted.",
+      "fix_hint": "Set SESSION_COOKIE_SECURE=True in production config classes; only ProdConfig should ever set it False (e.g. for local development).",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-SEC-005",
+      "name": "csrf-exempt-on-form-route",
+      "pattern": "@csrf\\.exempt\\s*\\n\\s*@(?:bp|app)\\.route\\([^)]*methods\\s*=\\s*\\[[^\\]]*['\"]POST['\"]",
+      "scope_pattern": "app/|src/",
+      "severity": "WARNING",
+      "category": "SEC-CSRF",
+      "message": "csrf.exempt on a POST route — verify this endpoint uses token auth, not session cookies, before exempting CSRF.",
+      "fix_hint": "If the route uses Flask-Login session auth, do not exempt CSRF — keep the form's csrf_token. Only exempt routes that authenticate via Authorization header / token.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-DEP-001",
+      "name": "before-first-request-removed",
+      "pattern": "@(?:app|bp)\\.before_first_request",
+      "scope_pattern": "app/|src/",
+      "severity": "CRITICAL",
+      "category": "DEP-API",
+      "message": "before_first_request was removed in Flask 2.3 — runtime error on Flask 2.3+.",
+      "fix_hint": "Move the startup logic into create_app() so it runs at app construction, or wrap it in `with app.app_context(): ...` and call from a CLI entry point.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-DEP-002",
+      "name": "flask-markup-import",
+      "pattern": "from flask import [^\\n]*\\bMarkup\\b|from flask import Markup",
+      "scope_pattern": "app/|src/",
+      "severity": "WARNING",
+      "category": "DEP-IMPORT",
+      "message": "flask.Markup was deprecated in Flask 2.3 and removed in Flask 3.0.",
+      "fix_hint": "Import Markup from markupsafe instead: `from markupsafe import Markup`. Flask re-exports it via that package.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-ARCH-001",
+      "name": "module-level-flask-app",
+      "pattern": "^app\\s*=\\s*Flask\\(__name__\\)\\s*$",
+      "scope_pattern": "app/__init__\\.py$|app\\.py$|main\\.py$",
+      "severity": "WARNING",
+      "category": "ARCH-FACTORY",
+      "message": "Module-level Flask(__name__) prevents per-test app construction and conditional extension wiring.",
+      "fix_hint": "Wrap construction in a create_app(config_name) factory. Initialize extensions with init_app(app) inside the factory.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-ARCH-002",
+      "name": "business-logic-in-route",
+      "pattern": "def\\s+(create|update|delete|process|calculate|generate|send|validate|charge|refund)_\\w+\\s*\\(",
+      "scope_pattern": "/routes\\.py$|/views\\.py$",
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY",
+      "message": "Business logic helper defined in routes/views — move to a service module.",
+      "fix_hint": "Create app/{feature}/services.py and move the logic there. The route should validate input, delegate to the service, and return a response.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-PERF-001",
+      "name": "missing-eager-load",
+      "pattern": "for\\s+\\w+\\s+in\\s+\\w+\\.(?:scalars\\(\\)|all\\(\\)|paginate\\([^)]*\\)\\.items)\\s*:",
+      "scope_pattern": "app/|src/",
+      "severity": "INFO",
+      "category": "PERF-DB",
+      "message": "Loop over a query result — verify relationships are eager-loaded with selectinload()/joinedload() to prevent N+1.",
+      "fix_hint": "db.session.execute(db.select(Model).options(selectinload(Model.relation))).scalars().all()",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-CONV-001",
+      "name": "print-in-app-code",
+      "pattern": "\\bprint\\s*\\(",
+      "scope_pattern": "app/|src/",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "print() in application code — use app.logger or logging.getLogger(__name__) instead.",
+      "fix_hint": "logger = logging.getLogger(__name__); logger.info(...). Configure structured JSON output in production.",
+      "example_ref": ""
+    },
+    {
+      "id": "FL-CONV-002",
+      "name": "hardcoded-url",
+      "pattern": "redirect\\(\\s*['\"]/[a-zA-Z0-9_/-]+['\"]\\s*\\)|href=['\"]/[a-zA-Z0-9_/-]+['\"]",
+      "scope_pattern": "app/|src/|templates/",
+      "severity": "INFO",
+      "category": "CONV-URL",
+      "message": "Hardcoded URL — use url_for('blueprint.endpoint', **params) instead so URL changes do not break callers.",
+      "fix_hint": "redirect(url_for('users.show', user_id=u.id)) or <a href=\"{{ url_for('users.show', user_id=u.id) }}\">",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Routes must not import models from other features directly",
+      "scope_pattern": "/routes\\.py$|/views\\.py$",
+      "forbidden_imports": [
+        "from\\s+app\\.\\w+\\.models\\s+import",
+        "import\\s+app\\.\\w+\\.models"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "routes.py": 300,
+      "models.py": 400,
+      "services.py": 350
+    }
+  }
+}
