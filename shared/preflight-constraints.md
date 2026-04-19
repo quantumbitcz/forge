@@ -46,3 +46,24 @@ Validation rules enforced during PREFLIGHT stage. Referenced from CLAUDE.md.
 | `playbooks.max_rollbacks_before_reject` | integer | `2` | 1-5 | — |
 
 **Cross-field:** If `auto_refine: true`, `refine_agreement` must be >= 0.66 (prevent low-confidence auto-changes).
+
+## evals
+
+Pipeline-level evaluation harness configuration. Validated at PREFLIGHT.
+
+- `evals.enabled` must be `bool` (default `true`)
+- `evals.composite_weights.pipeline_score` must be `float` in `[0, 1]`
+- `evals.composite_weights.token_adherence` must be `float` in `[0, 1]`
+- `evals.composite_weights.elapsed_adherence` must be `float` in `[0, 1]`
+- sum of `evals.composite_weights.*` must equal `1.0` (tolerance ±0.01)
+- `evals.regression_tolerance` must be `float` in `[0.0, 20.0]` (default `3.0`)
+- `evals.baseline_branch` must be non-empty `str` (default `"master"`)
+- `evals.scenario_timeout_seconds` must be `int` in `[60, 1800]` (default `900`)
+- `evals.total_budget_seconds` must be `int` in `[60, 7200]` (default `2700`)
+- `evals.total_budget_seconds` must be `>= evals.scenario_timeout_seconds`
+- `evals.emit_overlap_metric` must be `bool` (default `true`)
+
+Wall-clock contract (single source of truth — do not redefine elsewhere):
+- Per-scenario hard cap: 900 s (15 min)
+- Full-suite hard cap: 2700 s (45 min, with 50% headroom over target)
+- Success-criterion target: ≤30 min p90 across 10 consecutive master runs (SC1)

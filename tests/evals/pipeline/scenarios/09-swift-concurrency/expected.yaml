@@ -1,0 +1,14 @@
+id: 09-swift-concurrency
+mode: bugfix
+token_budget: 80000
+elapsed_budget_seconds: 360
+min_pipeline_score: 75
+required_verdict: CONCERNS
+touched_files_expected:
+  - Sources/Counter/Counter.swift
+  - Tests/CounterTests/CounterTests.swift
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+  - Package.swift
+notes: "STUB — replace before Phase 03 with a richer actor-reentrancy scenario."

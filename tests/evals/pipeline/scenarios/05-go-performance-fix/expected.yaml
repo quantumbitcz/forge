@@ -1,0 +1,13 @@
+id: 05-go-performance-fix
+mode: bugfix
+token_budget: 100000
+elapsed_budget_seconds: 480
+min_pipeline_score: 82
+required_verdict: PASS
+touched_files_expected:
+  - main.go
+  - main_test.go
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+notes: "Remove N+1 HTTP fetch inside loop; replace with single batched call."

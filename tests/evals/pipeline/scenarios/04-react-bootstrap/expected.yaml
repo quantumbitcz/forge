@@ -1,0 +1,17 @@
+id: 04-react-bootstrap
+mode: bootstrap
+token_budget: 120000
+elapsed_budget_seconds: 540
+min_pipeline_score: 80
+required_verdict: PASS
+touched_files_expected:
+  - src/App.tsx
+  - src/App.test.tsx
+  - src/main.tsx
+  - vite.config.ts
+  - package.json
+  - README.md
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+notes: "Bootstrap mode; reduced review set per shared/modes/bootstrap.md."

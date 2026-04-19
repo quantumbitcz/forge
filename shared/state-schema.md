@@ -329,7 +329,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.6.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.7.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
@@ -1234,3 +1234,23 @@ Checkpoints enable mid-pipeline resume after interruption.
 
 ### 1.7.0 (Forge 3.0.0)
 - Add `recovery_op` field to orchestrator input payload (Phase 1 skill surface consolidation).
+
+## `eval_run` (added in 1.7.0)
+
+Present only when the orchestrator was invoked with `--eval-mode <scenario_id>` (pipeline evaluation harness). Absent on normal runs.
+
+```json
+{
+  "eval_run": {
+    "scenario_id": "01-ts-microservice-greenfield",
+    "started_at": "2026-04-19T12:00:00Z",
+    "ended_at": "2026-04-19T12:10:00Z",
+    "mode": "standard",
+    "expected_token_budget": 150000,
+    "expected_elapsed_seconds": 600,
+    "touched_files_expected": ["src/server.ts", "src/routes/users.ts"]
+  }
+}
+```
+
+Field-name contract (review C2): `touched_files_expected` is the single canonical name used in both `state.json` and scenario `expected.yaml`. Do not introduce aliases.

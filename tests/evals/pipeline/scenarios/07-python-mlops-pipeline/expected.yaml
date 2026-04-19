@@ -1,0 +1,14 @@
+id: 07-python-mlops-pipeline
+mode: standard
+token_budget: 80000
+elapsed_budget_seconds: 360
+min_pipeline_score: 75
+required_verdict: CONCERNS
+touched_files_expected:
+  - train.py
+  - tests/test_train.py
+  - requirements.txt
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+notes: "STUB — replace before Phase 03 with real DVC + MLflow reproducibility scenario."
