@@ -284,6 +284,16 @@ def cmd_apply_downgrade(forge_dir: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     import os
 
+    # Match the bash original: missing command prints "Usage: ..." (capital U)
+    # to stderr and exits 11. argparse's default would be lowercase "usage:" + 2.
+    args = sys.argv[1:] if argv is None else argv
+    if not args:
+        print(
+            "Usage: cost-alerting.sh {init|check|stage-report|summary|apply-downgrade} ...",
+            file=sys.stderr,
+        )
+        return 11
+
     ap = argparse.ArgumentParser(prog="cost-alerting", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 

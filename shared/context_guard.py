@@ -144,6 +144,12 @@ def cmd_metrics(forge_dir: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     import os
 
+    # Match the bash original: missing command prints "Usage: ..." + exits 11.
+    args = sys.argv[1:] if argv is None else argv
+    if not args:
+        print("Usage: context-guard.sh {check|metrics} ...", file=sys.stderr)
+        return 11
+
     ap = argparse.ArgumentParser(prog="context-guard", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
