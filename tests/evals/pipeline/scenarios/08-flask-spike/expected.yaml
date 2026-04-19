@@ -1,0 +1,14 @@
+id: 08-flask-spike
+mode: standard
+token_budget: 80000
+elapsed_budget_seconds: 360
+min_pipeline_score: 80
+required_verdict: PASS
+touched_files_expected:
+  - app.py
+  - test_app.py
+  - requirements.txt
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+notes: "Cheapest scenario; used for --dry-run smoke."
