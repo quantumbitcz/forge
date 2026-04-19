@@ -56,8 +56,8 @@ For users who run Forge regularly:
 |----------|-------|-------------|
 | **Plan** | `/forge-shape` [writes] | Turn a vague idea into a structured spec |
 | **Plan** | `/forge-sprint` [writes] | Execute multiple features in parallel |
-| **Quality** | `/forge-codebase-health` [read-only] | Full codebase audit (read-only, no fixes) |
-| **Quality** | `/forge-deep-health` [writes] | Fix all issues iteratively until clean |
+| **Quality** | `/forge-review` [read-only] | Full codebase audit (read-only, no fixes) |
+| **Quality** | `/forge-review` [writes] | Fix all issues iteratively until clean |
 | **Quality** | `/forge-security-audit` [read-only] | Security vulnerability scan |
 | **Ship** | `/forge-deploy` [writes] | Deploy to staging/production/preview |
 | **Ship** | `/forge-commit` [writes] | Generate conventional commit messages |
@@ -115,8 +115,8 @@ Pipeline management, analytics, graph, and compression:
 
 | Confused between... | Use this one | Why |
 |---|---|---|
-| `/forge-review` vs `/forge-codebase-health` | `review` for recent changes, `health` for full codebase | Review targets staged/unstaged changes only |
-| `/forge-codebase-health` vs `/forge-deep-health` | `codebase-health` to read, `deep-health` to fix | Health is read-only; deep-health fixes iteratively |
+| `/forge-review` vs `/forge-review` | `review` for recent changes, `health` for full codebase | Review targets staged/unstaged changes only |
+| `/forge-review` vs `/forge-review` | `codebase-health` to read, `deep-health` to fix | Health is read-only; deep-health fixes iteratively |
 | `/forge-recover repair` vs `/forge-recover reset` | `repair` to fix corruption, `reset` to start fresh | Repair preserves more state than reset |
 | `/forge-abort` vs `/forge-recover reset` | `abort` to pause for later, `reset` to clear everything | Abort + resume continues; reset starts over |
 | `/forge-history` vs `/forge-insights` | `history` for trends, `insights` for deeper analytics | Insights adds cost analysis and memory health |
@@ -127,7 +127,7 @@ Pipeline management, analytics, graph, and compression:
 
 ```
 Build → /forge-run    Fix → /forge-fix    Review → /forge-review
-Health → /forge-codebase-health    Pipeline broken → /forge-recover diagnose
+Health → /forge-review    Pipeline broken → /forge-recover diagnose
 New here → /forge-tour    This help → /forge-help
 ```
 

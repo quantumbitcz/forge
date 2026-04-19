@@ -83,13 +83,14 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 # 5. At least 35 skills exist (Phase 1 consolidation: 42 → 35 after deleting
 #    7 deprecated skills and consolidating into /forge-recover, /forge-compress)
 # ---------------------------------------------------------------------------
-@test "skill-frontmatter: at least 35 skills exist" {
+@test "skill-frontmatter: at least 28 skills exist" {
   local count=0
   for d in "$SKILLS_DIR"/*/; do
     [ -d "$d" ] && count=$(( count + 1 ))
   done
-  if (( count < 35 )); then
-    fail "Expected >= 35 skills, found $count"
+  # Phase 05 reduced 35 → 33; final target after Tasks 4-12 is 28.
+  if (( count < 28 )); then
+    fail "Expected >= 28 skills, found $count"
   fi
 }
 

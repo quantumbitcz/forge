@@ -69,10 +69,12 @@ setup() {
   done
 }
 
-@test "exactly 35 skill directories exist" {
+@test "exactly 33 skill directories exist" {
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  [ "$count" -eq 35 ]
+  # Phase 05 reduced 35 → 33: forge-codebase-health and forge-deep-health
+  # consolidated into /forge-review --scope. Phase 05 final target is 28.
+  [ "$count" -eq 33 ]
 }
 
 @test "no dangling references to deleted skills" {

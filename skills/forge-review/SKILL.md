@@ -194,7 +194,7 @@ When `.forge/caveman-mode` exists and is not `off`, compress the final report us
 
 ### Subcommand: all
 
-Read-only full-codebase audit via the check engine. Does not fix. Replaces the old `/forge-codebase-health`.
+Read-only full-codebase audit via the check engine. Does not fix. Replaces the old `/forge-review`.
 
 #### 1. Discover source files
 
@@ -278,7 +278,7 @@ After the loop ends, dispatch all reviewers one final time against the full diff
 
 #### 5. Report
 
-Save to `.forge/forge-deep-health-report.md` (preserved path). Format:
+Save to `.forge/forge-review-report.md` (preserved path). Format:
 
 ```
 ## Deep Health Complete
