@@ -398,3 +398,16 @@ output_compression:
   enabled: true
   default_level: terse
   auto_clarity: true
+
+security:
+  untrusted_envelope:
+    enabled: true                # FORCED. Setting false emits SEC-INJECTION-DISABLED CRITICAL at PREFLIGHT.
+    sources: {}                  # Per-source tier override. Only tightening permitted.
+    max_envelope_bytes: 65536    # 64 KiB
+    max_aggregate_bytes: 262144  # 256 KiB
+  injection_detection:
+    enabled: true                # FORCED (same PREFLIGHT rule).
+    patterns_file: shared/prompt-injection-patterns.json
+    custom_patterns: []
+  injection_events:
+    retention_runs: 50
