@@ -51,6 +51,6 @@ setup() {
 }
 
 @test "learned-rules: engine.py loads learned-rules-override" {
-  run grep -qi 'learned.rules.override\|learned_rules\|LEARNED_RULES' "$SHARED_DIR/checks/engine.py"
+  run grep -qi 'learned.rules.override\|learned_rules\|LEARNED_RULES' "$PLUGIN_ROOT/hooks/_py/check_engine/engine.py"
   assert_success
 }
