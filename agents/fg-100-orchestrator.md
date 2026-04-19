@@ -1358,3 +1358,36 @@ This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; onl
   ]
 }
 ```
+
+## --eval-mode (pipeline eval harness)
+
+Flag used by `tests/evals/pipeline/runner` to invoke the pipeline in a reproducible, non-interactive way.
+
+**Invocation:** `/forge-run --eval-mode <scenario_id> [--dry-run] <prompt>`
+
+**Env guard (required):** the flag is rejected unless env var `FORGE_EVAL=1` is set. Standalone CLI use without the env var must error out. This prevents accidental Linear/Slack/AskUserQuestion suppression in production invocations.
+
+**Behavior when active:**
+- Force `autonomous: true` (no `AskUserQuestion` prompts).
+- Disable Linear sync, Slack notifications, and kanban writes.
+- Write a root-level `eval_run` object in `.forge/state.json`:
+  ```json
+  {
+    "eval_run": {
+      "scenario_id": "<id>",
+      "started_at": "<ISO-8601>",
+      "ended_at": "<ISO-8601>",
+      "mode": "<standard|bugfix|migration|bootstrap>",
+      "expected_token_budget": <int>,
+      "expected_elapsed_seconds": <int>,
+      "touched_files_expected": ["<path>", ...]
+    }
+  }
+  ```
+  Field name is `touched_files_expected` (single source of truth; do not alias).
+
+**Composition with `--dry-run`:** `--eval-mode <id> --dry-run` exits after PREFLIGHT, writes an `eval-results.jsonl` record with `status: "dry_run"` and `verdict: "DRY_RUN"`, and does not invoke implement/verify/review stages. This powers the runner smoke test.
+
+**Error cases:**
+- Missing `FORGE_EVAL=1` → exit 2 with message `--eval-mode requires FORGE_EVAL=1`.
+- Unknown `<scenario_id>` (no matching scenario directory) → exit 2 with message `unknown scenario`.
