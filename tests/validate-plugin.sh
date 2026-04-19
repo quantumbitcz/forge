@@ -298,7 +298,16 @@ if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* || "${OSTYPE:-}" == min
 else
   while IFS= read -r cmd; do
     [[ -z "$cmd" ]] && continue
-    script_path="${cmd%% *}"
+    # Commands can be either bare paths (legacy) or "python3 <path>" (Phase 02+).
+    # Extract the last whitespace-separated token that mentions ${CLAUDE_PLUGIN_ROOT}
+    # or a relative path ending in .sh/.py.
+    script_path=""
+    for tok in $cmd; do
+      if [[ "$tok" == *'${CLAUDE_PLUGIN_ROOT}'* ]] || [[ "$tok" == *.sh ]] || [[ "$tok" == *.py ]]; then
+        script_path="$tok"
+      fi
+    done
+    [[ -z "$script_path" ]] && script_path="${cmd%% *}"
     script_path="${script_path/\$\{CLAUDE_PLUGIN_ROOT\}/$ROOT}"
     if [[ ! -f "$script_path" ]]; then
       echo "    DETAIL: Hook script not found: $script_path" >&2
@@ -802,7 +811,7 @@ for frag in fg-100-orchestrator-core.md fg-100-orchestrator-boot.md fg-100-orche
 done
 check "Orchestrator phase fragment files removed" "$phase_fragment_fail"
 
-for script in forge-state.sh forge-state-write.sh check-prerequisites.sh; do
+for script in forge-state.sh forge-state-write.sh; do
   script_fail=0
   if [[ ! -f "$ROOT/shared/$script" ]] || [[ ! -x "$ROOT/shared/$script" ]]; then
     script_fail=1
@@ -810,11 +819,18 @@ for script in forge-state.sh forge-state-write.sh check-prerequisites.sh; do
   check "shared/$script exists and is executable" "$script_fail"
 done
 
+# Python-based prerequisite gate (replaces shared/check-prerequisites.sh)
+py_script_fail=0
+if [[ ! -f "$ROOT/shared/check_prerequisites.py" ]] || [[ ! -x "$ROOT/shared/check_prerequisites.py" ]]; then
+  py_script_fail=1
+fi
+check "shared/check_prerequisites.py exists and is executable" "$py_script_fail"
+
 # --- P1+P2: New scripts and files ---
 echo ""
 echo "P1+P2: New scripts and files..."
 
-for script in forge-token-tracker.sh forge-linear-sync.sh forge-sim.sh forge-timeout.sh forge-compact-check.sh; do
+for script in forge-token-tracker.sh forge-linear-sync.sh forge-sim.sh forge-timeout.sh; do
   script_fail=0
   if [[ ! -f "$ROOT/shared/$script" ]] || [[ ! -x "$ROOT/shared/$script" ]]; then
     script_fail=1

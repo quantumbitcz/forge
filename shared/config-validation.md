@@ -218,6 +218,6 @@ Next run: config-diff.sh detects retrospective changes
 
 ## Dependencies
 
-- Python 3 (already a prerequisite per `check-prerequisites.sh`)
+- Python 3.10+ (already a prerequisite per `check_prerequisites.py`)
 - No external Python packages (uses inline YAML parser, not PyYAML)
 - `shared/platform.sh` for cross-platform helpers

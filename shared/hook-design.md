@@ -4,7 +4,7 @@ Defines the hook execution model, event types, ordering guarantees, and script c
 
 ## Hook Types
 
-Hooks are prompt-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge-init`.
+Hooks are event-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge-init`. As of Phase 02, all hooks are **Python 3.10+** entry scripts; bash is no longer required.
 
 ## Event Types and Execution Order
 
@@ -73,16 +73,19 @@ Fires once when a new session begins.
 
 ## Script Contract
 
-Hook scripts (`.sh` files referenced from `hooks.json`) must follow these 8 rules:
+Hook entry scripts (`.py` files referenced from `hooks.json`) must follow these 8 rules:
 
-1. **Shebang**: `#!/usr/bin/env bash`
-2. **Executable**: `chmod +x` is required.
-3. **Bash 4+**: Scripts may use associative arrays and other bash 4+ features. MacOS users need `brew install bash`.
-4. **No interactive input**: Scripts must not use `read` or any interactive prompt. They receive context via environment variables and arguments.
-5. **Exit codes**: `0` = success/allow. Non-zero = block (PreToolUse) or log failure (PostToolUse).
-6. **Stdout**: Hook output is captured and may be displayed to the user. Keep it concise.
-7. **Stderr**: Logged to `.forge/.hook-failures.log`. Use for diagnostics.
-8. **Idempotent**: Hooks may be called multiple times for the same logical operation. Must be safe to re-run.
+1. **Shebang**: `#!/usr/bin/env python3`. Python 3.10+ is guaranteed by `shared/check_prerequisites.py`.
+2. **Thin entry shims**: Each entry script is ≤10 LOC. All real logic lives under `hooks/_py/` (e.g., `hooks._py.check_engine.engine`, `hooks._py.check_engine.automation_trigger`, `hooks._py.io_utils`). The entry script imports the module and calls a single `main()` function.
+3. **Stdin carries the payload**: The tool input (or event payload) arrives on stdin as a JSON object. Parse it via `hooks._py.io_utils.parse_tool_input`. Do not rely on environment variables or `argv` for the payload — Claude Code's hook contract is stdin-based.
+4. **Exit codes follow Claude Code's hook contract**:
+   - `0` = allow / no-op (all event kinds).
+   - `2` = block the tool invocation (PreToolUse only; stderr is surfaced to the user as the block reason).
+   - Any other non-zero = warning/error per event kind (PostToolUse, Stop, SessionStart, Agent log it; none of them can block).
+5. **Never crash**: Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a diagnostic line to `.forge/.hook-failures.log` and exits `0`. A crashing hook must not break the user's session. The only intentional non-zero exit is a deliberate PreToolUse block (exit 2).
+6. **No interactive input**: Do not call `input()` or any TTY prompt. All context comes from the stdin payload, `.forge/` state files, and environment variables set by the Claude Code runtime.
+7. **Stdout is user-visible**: Keep it short and actionable. Machine-readable diagnostics go to stderr or the hook failure log.
+8. **Idempotent and fast**: Hooks may fire many times per session. They must be safe to re-run and should return in under a second for L0/L1 paths; long-running work must be offloaded (async, background, deferred).
 
 ## Failure Behavior
 
@@ -97,17 +100,20 @@ Hook scripts (`.sh` files referenced from `hooks.json`) must follow these 8 rule
 
 ## Adding New Hooks
 
-1. Create the hook script in `hooks/` following the script contract.
-2. Add the hook entry to `hooks/hooks.json` with:
+1. Add the real logic as a module under `hooks/_py/` (e.g., `hooks/_py/my_feature.py` with a `main()` entrypoint).
+2. Create a thin entry shim in `hooks/` (e.g., `hooks/my_feature.py`, ≤10 LOC) that imports and calls the module — this is the file referenced from `hooks.json`.
+3. Add the hook entry to `hooks/hooks.json` with:
    - `event`: The event type (`PreToolUse`, `PostToolUse`, `Stop`, `Skill`, `Agent`, `SessionStart`)
    - `pattern`: Tool name pattern to match (regex, e.g., `Edit|Write`)
-   - `script`: Path to the hook script (use `${CLAUDE_PLUGIN_ROOT}` prefix)
-3. Run `/forge-init` in consuming projects to install the new hook.
-4. Test the hook with `./tests/validate-plugin.sh` to verify structural integrity.
+   - `command`: Invocation string, typically `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/<entry>.py`
+4. Run `/forge-init` in consuming projects to install the new hook.
+5. Test the hook with `./tests/validate-plugin.sh` (structural) and add unit coverage under `tests/unit/hooks/`.
 
 ## Related
 
 - `hooks/hooks.json` -- Hook declarations
+- `hooks/_py/` -- Hook implementation modules (Python)
+- `hooks/_py/io_utils.py` -- Stdin parsing (`parse_tool_input`), atomic JSON writes, path normalization
 - `shared/checks/` -- Check engine implementation (L0-L3)
 - `shared/automations.md` -- Automation trigger system
-- `hooks/automation-trigger.sh` -- Automation dispatch script
+- `hooks/_py/check_engine/automation_trigger.py` -- Automation dispatch module (invoked from `post_tool_use.py`)

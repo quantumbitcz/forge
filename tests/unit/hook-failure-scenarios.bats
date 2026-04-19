@@ -1,108 +1,91 @@
 #!/usr/bin/env bats
-# Unit tests: hook failure scenarios — validates that hook scripts handle
-# failure conditions gracefully: non-zero exits, invalid JSON, timeouts,
-# missing dependencies, and concurrent invocations.
+# Unit tests: hook failure scenarios — validates that Python hooks handle
+# failure conditions gracefully: invalid JSON on stdin, missing state, and
+# concurrent invocations.
+#
+# Behavior change vs. the old bash hooks: checkpoint no longer mutates
+# state.json.lastCheckpoint (it appends to .forge/checkpoints.jsonl), and
+# feedback-capture no longer writes auto-captured.md (it appends
+# session_stop entries to .forge/events.jsonl). The old .hook-failures.log
+# and platform.sh atomic_json_update plumbing is gone.
 
 load '../helpers/test-helpers'
 
-CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/forge-checkpoint.sh"
-FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/feedback-capture.sh"
-PLATFORM_SH="$PLUGIN_ROOT/shared/platform.sh"
+CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
+FEEDBACK_HOOK="$PLUGIN_ROOT/hooks/stop.py"
 
 # Helper: run a hook with CWD set to the given project dir
 run_hook_in() {
   local hook="$1"
   local project_dir="$2"
-  run bash -c "cd '$project_dir' && bash '$hook'"
+  run bash -c "cd '$project_dir' && python3 '$hook' </dev/null"
 }
 
 # ---------------------------------------------------------------------------
-# 1. Hook script that exits non-zero should not crash pipeline (exit 0)
+# 1. Hook scripts exit 0 on invalid stdin or unexpected input
 # ---------------------------------------------------------------------------
 
-@test "hook-failure: checkpoint hook exits 0 even when atomic_json_update fails" {
-  local project_dir="${TEST_TEMP}/hook-fail-project"
+@test "hook-failure: checkpoint exits 0 on malformed stdin" {
+  local project_dir="${TEST_TEMP}/hook-bad-stdin"
   mkdir -p "$project_dir/.forge"
-  # Create valid JSON that will cause atomic_json_update to fail
-  # by making the file read-only after creation
-  printf '{"story_state":"IMPLEMENTING"}\n' > "$project_dir/.forge/state.json"
-  chmod a-w "$project_dir/.forge/state.json"
 
-  run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
+  run bash -c "cd '$project_dir' && echo 'not json' | python3 '$CHECKPOINT_HOOK'"
   assert_success
-
-  # Restore write permission for cleanup
-  chmod u+w "$project_dir/.forge/state.json"
 }
 
-@test "hook-failure: feedback hook exits 0 when feedback directory is not writable" {
-  local project_dir="${TEST_TEMP}/hook-feedback-fail"
-  mkdir -p "$project_dir/.forge/feedback"
-  printf '{"story_state":"SHIPPING"}\n' > "$project_dir/.forge/state.json"
-  # Make feedback directory read-only to cause write failure
-  chmod a-w "$project_dir/.forge/feedback"
-
-  run_hook_in "$FEEDBACK_HOOK" "$project_dir"
-  assert_success
-
-  # Restore for cleanup
-  chmod u+w "$project_dir/.forge/feedback"
-}
-
-# ---------------------------------------------------------------------------
-# 2. Hook script that produces invalid JSON — state should remain valid
-# ---------------------------------------------------------------------------
-
-@test "hook-failure: state.json remains valid JSON after checkpoint hook on malformed input" {
-  local project_dir="${TEST_TEMP}/hook-invalid-json"
+@test "hook-failure: feedback exits 0 on malformed stdin" {
+  local project_dir="${TEST_TEMP}/feedback-bad-stdin"
   mkdir -p "$project_dir/.forge"
-  printf 'this is { not valid json ]]]\n' > "$project_dir/.forge/state.json"
-  local original_content
-  original_content="$(cat "$project_dir/.forge/state.json")"
 
-  run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
+  run bash -c "cd '$project_dir' && echo 'not json' | python3 '$FEEDBACK_HOOK'"
   assert_success
-
-  # Original content should be unchanged (hook should not corrupt it further)
-  local after_content
-  after_content="$(cat "$project_dir/.forge/state.json")"
-  [[ "$after_content" == "$original_content" ]] \
-    || fail "State file was modified despite malformed JSON. Before: '$original_content', After: '$after_content'"
 }
 
-@test "hook-failure: valid state.json keys preserved after checkpoint hook" {
-  local project_dir="${TEST_TEMP}/hook-preserve-keys"
+# ---------------------------------------------------------------------------
+# 2. state.json is not touched by either Python hook — file stays byte-identical
+# ---------------------------------------------------------------------------
+
+@test "hook-failure: checkpoint does not modify state.json (Python port writes checkpoints.jsonl)" {
+  local project_dir="${TEST_TEMP}/hook-preserve-state"
   mkdir -p "$project_dir/.forge"
   printf '{"story_state":"VERIFYING","mode":"bugfix","score_history":[60,75]}\n' \
     > "$project_dir/.forge/state.json"
+  local before
+  before="$(cat "$project_dir/.forge/state.json")"
 
   run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
   assert_success
 
-  # Verify all original keys are still present
-  run python3 -c "
-import json
-with open('$project_dir/.forge/state.json') as f:
-    d = json.load(f)
-assert d['story_state'] == 'VERIFYING', f'story_state changed: {d[\"story_state\"]}'
-assert d['mode'] == 'bugfix', f'mode changed: {d[\"mode\"]}'
-assert d['score_history'] == [60, 75], f'score_history changed: {d[\"score_history\"]}'
-assert 'lastCheckpoint' in d, 'lastCheckpoint not added'
-print('OK')
-"
+  local after
+  after="$(cat "$project_dir/.forge/state.json")"
+  [[ "$before" == "$after" ]] \
+    || fail "checkpoint hook modified state.json. Before: '$before' After: '$after'"
+}
+
+@test "hook-failure: checkpoint exits 0 on malformed state.json without corrupting it" {
+  local project_dir="${TEST_TEMP}/hook-malformed"
+  mkdir -p "$project_dir/.forge"
+  printf 'this is { not valid json ]]]\n' > "$project_dir/.forge/state.json"
+  local before
+  before="$(cat "$project_dir/.forge/state.json")"
+
+  run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
   assert_success
-  assert_output "OK"
+
+  local after
+  after="$(cat "$project_dir/.forge/state.json")"
+  [[ "$before" == "$after" ]] \
+    || fail "state.json was modified: before='$before' after='$after'"
 }
 
 # ---------------------------------------------------------------------------
-# 3. Hook script timeout — should gracefully continue
+# 3. hooks.json declares timeouts
 # ---------------------------------------------------------------------------
 
 @test "hook-failure: hooks.json defines timeout for checkpoint hook" {
   local hooks_json="$PLUGIN_ROOT/hooks/hooks.json"
   [[ -f "$hooks_json" ]] || fail "hooks.json not found"
 
-  # Verify checkpoint hook has a timeout defined
   run python3 -c "
 import json
 with open('$hooks_json') as f:
@@ -110,7 +93,7 @@ with open('$hooks_json') as f:
 for group in d['hooks'].get('PostToolUse', []):
     if group.get('matcher') == 'Skill':
         for h in group.get('hooks', []):
-            if 'forge-checkpoint' in h.get('command', ''):
+            if 'post_tool_use_skill' in h.get('command', ''):
                 assert 'timeout' in h, 'No timeout defined for checkpoint hook'
                 assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
                 print(f'timeout={h[\"timeout\"]}')
@@ -132,7 +115,7 @@ with open('$hooks_json') as f:
     d = json.load(f)
 for group in d['hooks'].get('Stop', []):
     for h in group.get('hooks', []):
-        if 'feedback-capture' in h.get('command', ''):
+        if 'stop.py' in h.get('command', ''):
             assert 'timeout' in h, 'No timeout defined for feedback hook'
             assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
             print(f'timeout={h[\"timeout\"]}')
@@ -145,56 +128,8 @@ exit(1)
 }
 
 # ---------------------------------------------------------------------------
-# 4. State.json not corrupted after hook failure
+# 4. Empty / missing state files don't crash the hooks
 # ---------------------------------------------------------------------------
-
-@test "hook-failure: state.json parseable as valid JSON after checkpoint on large state" {
-  local project_dir="${TEST_TEMP}/hook-large-state"
-  mkdir -p "$project_dir/.forge"
-
-  # Create a large-ish state.json with many fields
-  python3 -c "
-import json
-state = {
-    'version': '1.5.0',
-    'story_state': 'IMPLEMENTING',
-    'mode': 'standard',
-    'score_history': list(range(50)),
-    'convergence': {
-        'phase': 'correctness',
-        'total_iterations': 10,
-        'plateau_count': 0
-    },
-    'recovery_budget': {
-        'total_weight': 2.5,
-        'max_weight': 5.5,
-        'applications': []
-    },
-    'modules': ['spring', 'kotlin', 'kotest'],
-    '_seq': 42
-}
-with open('$project_dir/.forge/state.json', 'w') as f:
-    json.dump(state, f, indent=2)
-"
-
-  run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
-  assert_success
-
-  # Verify state.json is still valid JSON with all fields intact
-  run python3 -c "
-import json
-with open('$project_dir/.forge/state.json') as f:
-    d = json.load(f)
-assert d['version'] == '1.5.0'
-assert d['story_state'] == 'IMPLEMENTING'
-assert len(d['score_history']) == 50
-assert d['recovery_budget']['total_weight'] == 2.5
-assert 'lastCheckpoint' in d
-print('OK')
-"
-  assert_success
-  assert_output "OK"
-}
 
 @test "hook-failure: empty state.json does not crash checkpoint hook" {
   local project_dir="${TEST_TEMP}/hook-empty-state"
@@ -205,154 +140,53 @@ print('OK')
   assert_success
 }
 
-# ---------------------------------------------------------------------------
-# 5. Hook failure logged to .forge/.hook-failures.log
-# ---------------------------------------------------------------------------
-
-@test "hook-failure: checkpoint logs failure to .hook-failures.log on update error" {
-  local project_dir="${TEST_TEMP}/hook-log-failure"
+@test "hook-failure: empty state.json does not crash feedback hook" {
+  local project_dir="${TEST_TEMP}/feedback-empty-state"
   mkdir -p "$project_dir/.forge"
-  # Create state.json that will cause atomic_json_update to fail (empty file)
   touch "$project_dir/.forge/state.json"
-
-  run_hook_in "$CHECKPOINT_HOOK" "$project_dir"
-  assert_success
-
-  # Check if .hook-failures.log was created with a failure entry
-  local log_file="$project_dir/.forge/.hook-failures.log"
-  if [[ -f "$log_file" ]]; then
-    # Verify log entry format: timestamp | hook-name | reason | file
-    local content
-    content="$(cat "$log_file")"
-    [[ "$content" == *"forge-checkpoint"* ]] \
-      || fail "Log entry does not reference forge-checkpoint: $content"
-    # The hook may log "update_failed" or "invalid_json" depending on the failure path
-    [[ "$content" == *"update_failed"* || "$content" == *"invalid_json"* || "$content" == *"state.json"* ]] \
-      || fail "Log entry does not contain expected failure indicator: $content"
-  fi
-  # If no log file, the update may have succeeded on empty file — either
-  # outcome (success or logged failure) is acceptable behavior
-}
-
-@test "hook-failure: feedback hook reports hook failure count in auto-captured.md" {
-  local project_dir="${TEST_TEMP}/hook-failure-count"
-  mkdir -p "$project_dir/.forge/feedback"
-  printf '{"story_state":"SHIPPING","mode":"standard"}\n' > "$project_dir/.forge/state.json"
-
-  # Pre-populate hook failures log
-  printf '2026-01-01T00:00:00Z | forge-checkpoint | update_failed | state.json\n' \
-    > "$project_dir/.forge/.hook-failures.log"
-  printf '2026-01-01T00:01:00Z | forge-checkpoint | update_failed | state.json\n' \
-    >> "$project_dir/.forge/.hook-failures.log"
 
   run_hook_in "$FEEDBACK_HOOK" "$project_dir"
   assert_success
-
-  local content
-  content="$(cat "$project_dir/.forge/feedback/auto-captured.md")"
-  [[ "$content" == *"Hook failures"* ]] \
-    || fail "Feedback hook did not report hook failure count: $content"
-  [[ "$content" == *"2"* ]] \
-    || fail "Expected failure count of 2 in output: $content"
 }
 
 # ---------------------------------------------------------------------------
-# 6. Multiple concurrent hook invocations don't corrupt state
+# 5. Concurrent invocations: checkpoints.jsonl and events.jsonl remain
+#    well-formed (each line parses as JSON) even under contention.
 # ---------------------------------------------------------------------------
 
-@test "hook-failure: 5 concurrent checkpoint invocations produce valid state.json" {
+@test "hook-failure: 5 concurrent checkpoint invocations produce well-formed checkpoints.jsonl" {
   local project_dir="${TEST_TEMP}/hook-concurrent"
   mkdir -p "$project_dir/.forge"
-  printf '{"story_state":"IMPLEMENTING","_seq":0}\n' > "$project_dir/.forge/state.json"
 
-  # Launch 5 concurrent checkpoint hooks
   for i in 1 2 3 4 5; do
-    bash -c "cd '$project_dir' && bash '$CHECKPOINT_HOOK'" &
+    bash -c "cd '$project_dir' && echo '{\"tool_input\":{\"skill_name\":\"s$i\"}}' | python3 '$CHECKPOINT_HOOK'" &
   done
   wait
 
-  # State file must be valid JSON
+  local log="$project_dir/.forge/checkpoints.jsonl"
+  assert [ -f "$log" ]
+  # Every line must be valid JSON with a timestamp key.
   run python3 -c "
 import json
-with open('$project_dir/.forge/state.json') as f:
-    d = json.load(f)
-assert 'lastCheckpoint' in d, 'lastCheckpoint missing after concurrent writes'
-assert d['story_state'] == 'IMPLEMENTING', f'story_state corrupted: {d[\"story_state\"]}'
+with open('$log') as f:
+    for line in f:
+        line = line.strip()
+        if not line: continue
+        entry = json.loads(line)
+        assert 'timestamp' in entry
 print('OK')
 "
   assert_success
-  assert_output "OK"
 }
 
-@test "hook-failure: concurrent checkpoint and feedback hooks don't interfere" {
+@test "hook-failure: concurrent checkpoint and feedback hooks write independent logs" {
   local project_dir="${TEST_TEMP}/hook-mixed-concurrent"
   mkdir -p "$project_dir/.forge"
-  printf '{"story_state":"SHIPPING","mode":"standard","score_history":[85]}\n' \
-    > "$project_dir/.forge/state.json"
 
-  # Run checkpoint and feedback hooks concurrently
-  bash -c "cd '$project_dir' && bash '$CHECKPOINT_HOOK'" &
-  bash -c "cd '$project_dir' && bash '$FEEDBACK_HOOK'" &
+  bash -c "cd '$project_dir' && echo '{}' | python3 '$CHECKPOINT_HOOK'" &
+  bash -c "cd '$project_dir' && echo '{}' | python3 '$FEEDBACK_HOOK'" &
   wait
 
-  # state.json should remain valid
-  run python3 -c "
-import json
-with open('$project_dir/.forge/state.json') as f:
-    d = json.load(f)
-assert d['story_state'] == 'SHIPPING'
-print('OK')
-"
-  assert_success
-  assert_output "OK"
-
-  # Feedback file should exist
-  [[ -f "$project_dir/.forge/feedback/auto-captured.md" ]] \
-    || fail "auto-captured.md not created by feedback hook"
-}
-
-# ---------------------------------------------------------------------------
-# 7. Hook with missing platform.sh dependency (should exit 0)
-# ---------------------------------------------------------------------------
-
-@test "hook-failure: checkpoint exits 0 when platform.sh cannot be sourced" {
-  # The checkpoint hook has: source platform.sh 2>/dev/null || exit 0
-  # Verify this behavior by checking the script source
-  grep -q 'source.*platform\.sh.*exit 0\||| exit 0' "$CHECKPOINT_HOOK" \
-    || fail "Checkpoint hook does not gracefully handle missing platform.sh"
-
-  # Simulate by running from a directory with no platform.sh reachable
-  # (the hook resolves PLUGIN_ROOT from its own location, so it will find it,
-  # but we verify the guard clause exists)
-  local project_dir="${TEST_TEMP}/hook-no-platform"
-  mkdir -p "$project_dir/.forge"
-  printf '{"story_state":"PREFLIGHT"}\n' > "$project_dir/.forge/state.json"
-
-  # Create a modified checkpoint hook that cannot source platform.sh
-  local modified_hook="${TEST_TEMP}/modified-checkpoint.sh"
-  # Replace the platform.sh path with a non-existent one
-  sed 's|shared/platform.sh|shared/nonexistent-platform.sh|' "$CHECKPOINT_HOOK" > "$modified_hook"
-
-  run bash -c "cd '$project_dir' && bash '$modified_hook'"
-  assert_success
-}
-
-@test "hook-failure: checkpoint exits 0 when atomic_json_update function is missing" {
-  # The checkpoint hook has: type atomic_json_update &>/dev/null || exit 0
-  grep -q 'type atomic_json_update.*exit 0\||| exit 0' "$CHECKPOINT_HOOK" \
-    || fail "Checkpoint hook does not guard against missing atomic_json_update"
-}
-
-@test "hook-failure: all hooks have exit 0 as final line" {
-  # Both hooks must always exit 0 to avoid blocking the pipeline
-  local last_line_checkpoint
-  last_line_checkpoint=$(tail -1 "$CHECKPOINT_HOOK" | tr -d '[:space:]')
-  [[ "$last_line_checkpoint" == "exit0" ]] \
-    || fail "Checkpoint hook does not end with 'exit 0': got '$last_line_checkpoint'"
-
-  # Feedback hook wraps in a subshell but still ends with exit 0
-  local last_line_feedback
-  last_line_feedback=$(tail -1 "$FEEDBACK_HOOK" | tr -d '[:space:]')
-  [[ "$last_line_feedback" == "exit0" ]] \
-    || fail "Feedback hook does not end with 'exit 0': got '$last_line_feedback'"
+  assert [ -f "$project_dir/.forge/checkpoints.jsonl" ]
+  assert [ -f "$project_dir/.forge/events.jsonl" ]
 }

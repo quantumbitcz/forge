@@ -2,7 +2,7 @@
 
 setup() {
   load '../helpers/test-helpers'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/automation-trigger-hook.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/post_tool_use.py"
 }
 
 @test "automation-trigger: script exists and is executable" {
@@ -13,18 +13,12 @@ setup() {
 @test "automation-trigger: always exits 0" {
   # Without .forge dir, should exit 0 immediately
   cd "$BATS_TEST_TMPDIR"
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
-}
-
-@test "automation-trigger: has dual JSON/regex file_path extraction" {
-  run grep -c 'file_path' "$HOOK_SCRIPT"
-  assert_success
-  [[ "$output" -ge 2 ]]  # At least 2 references (JSON + regex)
 }
 
 @test "automation-trigger: exits early without .forge directory" {
   cd "$BATS_TEST_TMPDIR"
-  run "$HOOK_SCRIPT"
+  run python3 "$HOOK_SCRIPT" </dev/null
   assert_success
 }

@@ -1,9 +1,16 @@
 #!/usr/bin/env bats
+# Tests for hooks/pre_tool_use.py — Python L0 syntax validator.
+#
+# Semantic change from the old bash hook:
+# - Reads JSON payload from stdin (no TOOL_INPUT env var).
+# - Validates in-process via Python's ast / json stdlib — no tree-sitter.
+# - Supported file extensions are .py and .json; unknown extensions pass.
+# - On invalid content: exits 2 and prints "L0 blocked <path>: <reason>" to stderr.
+# - On missing/invalid stdin payload: exits 0.
 
 setup() {
   load '../helpers/test-helpers'
-  load './helpers/mock-tool-input'
-  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../shared/checks/l0-syntax/validate-syntax.sh"
+  HOOK_SCRIPT="$BATS_TEST_DIRNAME/../../hooks/pre_tool_use.py"
 }
 
 @test "l0-syntax: script exists and is executable" {
@@ -11,344 +18,89 @@ setup() {
   assert [ -x "$HOOK_SCRIPT" ]
 }
 
-@test "l0-syntax: has bash shebang" {
+@test "l0-syntax: has python3 shebang" {
   run head -1 "$HOOK_SCRIPT"
-  assert_output --partial "bash"
+  assert_output --partial "python3"
 }
 
-@test "l0-syntax: exits 0 when FORGE_L0_ENABLED is false" {
-  FORGE_L0_ENABLED=false TOOL_INPUT='{"file_path":"/tmp/test.ts"}' \
-    run "$HOOK_SCRIPT"
+@test "l0-syntax: exits 0 on empty stdin" {
+  run bash -c "echo '' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: handles missing TOOL_INPUT gracefully" {
-  unset TOOL_INPUT
-  run "$HOOK_SCRIPT"
-  assert_success  # graceful degradation
-}
-
-@test "l0-syntax: logs failures to hook-failures.log format" {
-  run grep -q '_log_failure' "$HOOK_SCRIPT"
+@test "l0-syntax: exits 0 on malformed stdin JSON" {
+  run bash -c "echo 'not valid json at all' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
 # ---------------------------------------------------------------------------
-# Behavioral tests (SPEC-05): 12 new tests verifying runtime behavior
+# Python content validation (.py files)
 # ---------------------------------------------------------------------------
 
-@test "l0-syntax: blocks Edit that introduces syntax error (mocked tree-sitter)" {
-  # Mock tree-sitter to return an ERROR node
-  mock_command "tree-sitter" 'echo "(program (ERROR [1, 0] - [1, 5]))"; exit 0'
-
-  # Mock python3: handle both inline -c JSON parse and apply-edit-preview.py
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  # Create a mock that delegates to real python but fakes the preview output
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-# If called with apply-edit-preview.py, create a dummy file at --output
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  # Find the --output arg
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "function foo() { return 1" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-# Otherwise delegate to real python for JSON parsing
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "return 1;" "return 1")
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: blocks Write with invalid Python content" {
+  local payload='{"tool_name":"Write","tool_input":{"file_path":"/tmp/bad.py","content":"def foo(:"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_failure
-  assert_output --partial "SYNTAX ERROR"
+  [[ "$status" -eq 2 ]] || fail "expected exit 2, got $status"
+  [[ "$output" == *"L0 blocked"* ]] || fail "expected L0 blocked message, got: $output"
 }
 
-@test "l0-syntax: allows Edit that produces valid TypeScript (mocked tree-sitter)" {
-  # Mock tree-sitter to return clean parse (no ERROR)
-  mock_command "tree-sitter" 'echo "(program (function_declaration))"; exit 0'
-
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "function foo() { return 1; }" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: allows Write with valid Python content" {
+  local payload='{"tool_name":"Write","tool_input":{"file_path":"/tmp/good.py","content":"def foo():\n    return 1\n"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: blocks Write that creates invalid Python (mocked tree-sitter)" {
-  mock_command "tree-sitter" 'echo "(module (ERROR [1, 0] - [1, 10]))"; exit 0'
-
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "def foo(:" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Write
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_write_input "/tmp/test.py" "def foo(:")
-
-  run "$HOOK_SCRIPT"
-  assert_failure
-  assert_output --partial "SYNTAX ERROR"
-}
-
-@test "l0-syntax: allows Write that creates valid Python (mocked tree-sitter)" {
-  mock_command "tree-sitter" 'echo "(module (function_definition))"; exit 0'
-
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "def foo(): pass" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Write
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_write_input "/tmp/test.py" "def foo(): pass")
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: allows Edit with valid Python content" {
+  local payload='{"tool_name":"Edit","tool_input":{"file_path":"/tmp/ok.py","content":"x = 1\n"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: skips unsupported file extensions (.md, .json, .yaml)" {
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
+# ---------------------------------------------------------------------------
+# JSON content validation (.json files)
+# ---------------------------------------------------------------------------
 
-  for ext in md json yaml; do
-    export TOOL_INPUT
-    TOOL_INPUT=$(make_edit_input "/tmp/test.${ext}" "old" "new")
-    run "$HOOK_SCRIPT"
+@test "l0-syntax: blocks Write with invalid JSON content" {
+  local payload='{"tool_name":"Write","tool_input":{"file_path":"/tmp/bad.json","content":"{not valid"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
+  [[ "$status" -eq 2 ]] || fail "expected exit 2, got $status"
+  [[ "$output" == *"L0 blocked"* ]] || fail "expected L0 blocked message, got: $output"
+}
+
+@test "l0-syntax: allows Write with valid JSON content" {
+  local payload='{"tool_name":"Write","tool_input":{"file_path":"/tmp/good.json","content":"{\"a\":1}"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# Unsupported / no-op cases
+# ---------------------------------------------------------------------------
+
+@test "l0-syntax: allows unsupported extensions (.md, .yaml, .ts)" {
+  for ext in md yaml ts; do
+    local payload
+    payload=$(printf '{"tool_name":"Edit","tool_input":{"file_path":"/tmp/x.%s","content":"anything"}}' "$ext")
+    run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
     assert_success
   done
 }
 
-@test "l0-syntax: skips when tree-sitter not installed" {
-  # Ensure tree-sitter is NOT in PATH by using only MOCK_BIN (which is empty)
-  export PATH="${MOCK_BIN}"
-  # Need python3 for JSON parsing
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -n "$real_python" ]]; then
-    cp "$real_python" "${MOCK_BIN}/python3" 2>/dev/null || ln -sf "$real_python" "${MOCK_BIN}/python3"
-    chmod +x "${MOCK_BIN}/python3"
-  fi
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
-
-  run "$HOOK_SCRIPT"
-  assert_success
-
-  # Verify log entry was written
-  if [[ -f "$FORGE_DIR/.hook-failures.log" ]]; then
-    run grep -q 'tree-sitter_not_installed' "$FORGE_DIR/.hook-failures.log"
-    assert_success
-  fi
-}
-
-@test "l0-syntax: respects FORGE_L0_LANGUAGES filter" {
-  export FORGE_L0_ENABLED=true
-  export FORGE_L0_LANGUAGES="typescript python"
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  # .go is not in the allowed list — should be skipped
-  TOOL_INPUT=$(make_edit_input "/tmp/test.go" "old" "new")
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: skips when tool_name is not Edit/Write/MultiEdit" {
+  local payload='{"tool_name":"Read","tool_input":{"file_path":"/tmp/x.py","content":"def foo(:"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: handles malformed TOOL_INPUT gracefully" {
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT="not valid json at all"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: skips when file_path is empty" {
+  local payload='{"tool_name":"Edit","tool_input":{"file_path":"","content":"def foo(:"}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_success
 }
 
-@test "l0-syntax: handles empty file_path gracefully" {
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT='{"file_path":""}'
-
-  run "$HOOK_SCRIPT"
+@test "l0-syntax: skips when content is empty" {
+  local payload='{"tool_name":"Edit","tool_input":{"file_path":"/tmp/x.py","content":""}}'
+  run bash -c "printf %s '$payload' | python3 '$HOOK_SCRIPT'"
   assert_success
-}
-
-@test "l0-syntax: handles missing python gracefully" {
-  # PATH with only a mock tree-sitter but no python3/python
-  export PATH="${MOCK_BIN}"
-  mock_command "tree-sitter" 'echo "(program)"; exit 0'
-  # Explicitly do NOT create python3 or python in MOCK_BIN
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT='{"file_path":"/tmp/test.ts","old_string":"a","new_string":"b"}'
-
-  run "$HOOK_SCRIPT"
-  assert_success
-}
-
-@test "l0-syntax: increments .l0-total-checks counter on valid run" {
-  mock_command "tree-sitter" 'echo "(program (function_declaration))"; exit 0'
-
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "function foo() {}" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  TOOL_INPUT=$(make_edit_input "/tmp/test.ts" "old" "new")
-
-  run "$HOOK_SCRIPT"
-  assert_success
-
-  # Verify counter was incremented
-  assert [ -f "$FORGE_DIR/.l0-total-checks" ]
-  local count
-  count=$(cat "$FORGE_DIR/.l0-total-checks")
-  assert [ "$count" -ge 1 ]
-}
-
-@test "l0-syntax: maps tsx/jsx to typescript/javascript for language filter" {
-  mock_command "tree-sitter" 'echo "(program (jsx_element))"; exit 0'
-
-  local real_python
-  real_python="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
-  if [[ -z "$real_python" ]]; then
-    skip "python3 not available"
-  fi
-  cat > "${MOCK_BIN}/python3" <<PYEOF
-#!/usr/bin/env bash
-if echo "\$*" | grep -q 'apply-edit-preview'; then
-  while [[ \$# -gt 0 ]]; do
-    case "\$1" in
-      --output) echo "const x = <div/>;" > "\$2"; exit 0 ;;
-      *) shift ;;
-    esac
-  done
-  exit 0
-fi
-exec "$real_python" "\$@"
-PYEOF
-  chmod +x "${MOCK_BIN}/python3"
-
-  export FORGE_DIR="${TEST_TEMP}/.forge"
-  mkdir -p "$FORGE_DIR"
-  export FORGE_L0_ENABLED=true
-  export FORGE_L0_LANGUAGES="typescript"
-  export TOOL_NAME=Edit
-  export TOOL_INPUT
-  # .tsx maps to typescript — should NOT be filtered out
-  TOOL_INPUT=$(make_edit_input "/tmp/component.tsx" "old" "new")
-
-  run "$HOOK_SCRIPT"
-  assert_success
-
-  # Verify it actually ran (counter incremented) rather than being skipped
-  assert [ -f "$FORGE_DIR/.l0-total-checks" ]
-  local count
-  count=$(cat "$FORGE_DIR/.l0-total-checks")
-  assert [ "$count" -ge 1 ]
 }

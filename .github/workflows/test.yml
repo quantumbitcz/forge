@@ -2,9 +2,11 @@ name: Tests
 
 on:
   push:
-    branches: [master]
+    # feat/phase-02-python-hooks listed temporarily so stacked PRs (e.g. #7)
+    # get CI feedback before #5 merges. Remove after #5 merges to master.
+    branches: [master, feat/phase-02-python-hooks]
   pull_request:
-    branches: [master]
+    branches: [master, feat/phase-02-python-hooks]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         tier: [unit, contract, scenario]
     steps:
       - uses: actions/checkout@v6

@@ -5,7 +5,7 @@
 # Does NOT detect MCP servers (that requires LLM-runtime probing, done in the skill).
 set -uo pipefail
 
-# ── Inline OS detection (same as check-prerequisites.sh) ────────────────────
+# ── Inline OS detection (same style previously used by check-prerequisites.sh) ─
 _os="unknown"
 case "${OSTYPE:-}" in
   darwin*)  _os="darwin" ;;
@@ -32,7 +32,7 @@ case "${OSTYPE:-}" in
     ;;
 esac
 
-# ── Python command (required — already validated by check-prerequisites.sh) ──
+# ── Python command (required — already validated by check_prerequisites.py) ──
 _py=""
 command -v python3 >/dev/null 2>&1 && _py="python3"
 [ -z "$_py" ] && command -v python >/dev/null 2>&1 && _py="python"
