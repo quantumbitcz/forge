@@ -10,10 +10,6 @@ tools:
   - Grep
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
-ui:
-  tasks: false
-  ask: false
-  plan_mode: false
 ---
 
 # Dependency Reviewer

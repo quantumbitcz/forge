@@ -9,10 +9,6 @@ tools:
   - Bash
   - Grep
   - Glob
-ui:
-  tasks: false
-  ask: false
-  plan_mode: false
 ---
 
 # Mutation Analyzer (fg-510)
