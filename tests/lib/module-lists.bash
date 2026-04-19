@@ -71,7 +71,7 @@ REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md forge-config-template
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)
 # ---------------------------------------------------------------------------
-MIN_FRAMEWORKS=21
+MIN_FRAMEWORKS=22
 MIN_LANGUAGES=15
 MIN_TESTING_FILES=19
 MIN_BUILD_SYSTEMS=9
