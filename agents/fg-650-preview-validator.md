@@ -4,6 +4,7 @@ description: Preview validator — smoke tests, Lighthouse, visual regression, E
 model: inherit
 color: amber
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_playwright_playwright__browser_navigate', 'mcp__plugin_playwright_playwright__browser_snapshot', 'mcp__plugin_playwright_playwright__browser_take_screenshot', 'mcp__plugin_playwright_playwright__browser_console_messages', 'mcp__plugin_playwright_playwright__browser_network_requests', 'mcp__plugin_playwright_playwright__browser_wait_for']
+trigger: state.preview.url_available == true
 ui:
   tasks: true
   ask: false

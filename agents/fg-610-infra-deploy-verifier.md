@@ -4,6 +4,7 @@ description: Verifies infrastructure deployments — static validation, containe
 model: inherit
 color: green
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+trigger: state.infra_files_present == true
 ui:
   tasks: true
   ask: false

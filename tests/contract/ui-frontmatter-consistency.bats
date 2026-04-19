@@ -146,10 +146,52 @@ has_tool() {
 # 5 new Phase 1 assertions (plan Task 18 Step 2)
 # ---------------------------------------------------------------------------
 
-@test "every agent has an explicit ui: block" {
+@test "every non-Tier-4 agent has explicit ui: block; every Tier-4 agent omits ui:" {
+  # Phase 07 contract tightening: Tier-4 (silent) agents MUST omit ui: entirely.
+  # Tier-4 list is sourced from shared/agent-role-hierarchy.md §"Tier 4 — None (Silent)".
+  local tier4=(
+    fg-101-worktree-manager
+    fg-102-conflict-resolver
+    fg-205-planning-critic
+    fg-410-code-reviewer
+    fg-411-security-reviewer
+    fg-412-architecture-reviewer
+    fg-413-frontend-reviewer
+    fg-416-performance-reviewer
+    fg-417-dependency-reviewer
+    fg-418-docs-consistency-reviewer
+    fg-419-infra-deploy-reviewer
+    fg-510-mutation-analyzer
+  )
+
+  # Build a lookup
+  declare -A is_tier4
+  for a in "${tier4[@]}"; do is_tier4[$a]=1; done
+
+  local failures=()
   for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
-    grep -q "^ui:" "$f" || { echo "Missing ui: $f"; return 1; }
+    local base
+    base="$(basename "$f" .md)"
+    local has_ui
+    if grep -q "^ui:" "$f"; then has_ui=1; else has_ui=0; fi
+
+    if [[ -n "${is_tier4[$base]:-}" ]]; then
+      # Tier-4 MUST omit ui:
+      if (( has_ui == 1 )); then
+        failures+=("$base: Tier-4 agent must omit ui: block (found ui:)")
+      fi
+    else
+      # Non-Tier-4 MUST have ui:
+      if (( has_ui == 0 )); then
+        failures+=("$base: non-Tier-4 agent must have explicit ui: block (missing)")
+      fi
+    fi
   done
+
+  if (( ${#failures[@]} > 0 )); then
+    printf '%s\n' "${failures[@]}"
+    fail "ui: block contract violations: ${#failures[@]}"
+  fi
 }
 
 @test "no agent uses ui.tier shortcut" {

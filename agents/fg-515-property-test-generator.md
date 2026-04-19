@@ -3,6 +3,7 @@ name: fg-515-property-test-generator
 description: Property-based test generator — generates property tests for changed functions.
 color: pink
 tools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob', 'TaskCreate', 'TaskUpdate']
+trigger: config.property_testing.enabled == true
 ui:
   tasks: true
   ask: false

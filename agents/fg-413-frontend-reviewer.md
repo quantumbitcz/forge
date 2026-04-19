@@ -16,10 +16,6 @@ tools:
   - mcp__plugin_playwright_playwright__browser_press_key
   - mcp__plugin_context7_context7__resolve-library-id
   - mcp__plugin_context7_context7__query-docs
-ui:
-  tasks: false
-  ask: false
-  plan_mode: false
 ---
 
 # Frontend Reviewer

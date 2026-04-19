@@ -4,10 +4,6 @@ description: Infra reviewer. Helm, K8s, Terraform, Dockerfiles.
 model: inherit
 color: olive
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
-ui:
-  tasks: false
-  ask: false
-  plan_mode: false
 ---
 
 Infrastructure reviewer for K8s deployments. Reviews Helm, K8s manifests, Terraform, Dockerfiles for security, reliability, scalability, observability.

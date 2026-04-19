@@ -4,6 +4,7 @@ description: Monitors deployment health during strategy execution. Dispatched wh
 model: inherit
 color: olive
 tools: ['Read', 'Bash', 'Glob', 'Grep', 'TaskCreate', 'TaskUpdate']
+trigger: config.deployment.strategy != "none"
 ui:
   tasks: true
   ask: false
