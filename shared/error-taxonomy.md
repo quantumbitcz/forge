@@ -38,6 +38,7 @@ When reporting errors, agents should structure them as:
 | DEPRECATION_WARNING | Use of EOL, deprecated, or unsafe dependency version detected by `fg-140-deprecation-refresh` | N/A | none (inline handling: log WARNING in stage notes, do not block pipeline, do not invoke recovery engine). Retrospective tracks accumulation. |
 | WORKTREE_FAILURE | Worktree creation, branch collision, or stale worktree cleanup failed | Yes | resource-cleanup |
 | BUDGET_EXHAUSTED | Recovery budget `total_weight >= max_weight` (default: 5.5) — pipeline cannot recover from further failures. Raised by the recovery engine itself, not by pipeline agents. | No | none (recovery engine escalates directly) |
+| INJECTION_BLOCKED | A BLOCK-tier prompt-injection pattern matched external input at the filter layer (`hooks/_py/mcp_response_filter.py`). Content is quarantined and never reaches an agent. Stage halts. Not recoverable by retry — requires fixing the source (credential leak, hostile ticket). See `shared/untrusted-envelope.md`. Added in 3.1.0. | No | none (emit `SEC-INJECTION-BLOCKED` CRITICAL, halt stage, surface to user) |
 
 ## Usage by Agents
 

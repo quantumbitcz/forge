@@ -67,3 +67,11 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 - Per-scenario hard cap: 900 s (15 min)
 - Full-suite hard cap: 2700 s (45 min, with 50% headroom over target)
 - Success-criterion target: ≤30 min p90 across 10 consecutive master runs (SC1)
+
+## Prompt Injection Hardening (forge 3.1.0+)
+
+**SEC-INJECTION-DISABLED halt.** If `forge-config.md` contains `security.untrusted_envelope.enabled: false` OR `security.injection_detection.enabled: false`, PREFLIGHT emits a `SEC-INJECTION-DISABLED` CRITICAL finding and halts the pipeline before any stage transition. These keys may only be set to `true`. Per-source tier overrides are permitted only if they *tighten* the tier (`silent → logged`, `logged → confirmed`, `confirmed → confirmed`); attempting to loosen a tier emits the same finding.
+
+**Historical retro-scan.** On the first PREFLIGHT after upgrade to 3.1.0, if `.forge/wiki/` or `.forge/explore-cache.json` exists, the orchestrator runs them through `hooks/_py/mcp_response_filter.py` once. Any non-BLOCK findings are re-emitted as `SEC-INJECTION-HISTORICAL` INFO (informational only, does not halt). A sentinel file `.forge/security/.historical-scan-done` is written so the scan runs at most once per install.
+
+**Filter availability.** PREFLIGHT MUST succeed importing `hooks/_py/mcp_response_filter.py`. A `ModuleNotFoundError` halts the pipeline with `SEC-INJECTION-DISABLED` because every external-data ingress depends on the filter.
