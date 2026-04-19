@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `forge` is a Claude Code plugin (v3.0.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
+**A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (branch `docs/a-plus-roadmap-specs`). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
+
 ## Architecture
 
 Layered, resolution top-down:
@@ -43,6 +45,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 
 | Topic | File |
 |---|---|
+| A+ Roadmap index | `docs/superpowers/INDEX.md` |
 | Pipeline flow | `shared/stage-contract.md` |
 | Orchestrator | `agents/fg-100-orchestrator.md` |
 | Scoring | `shared/scoring.md` |
