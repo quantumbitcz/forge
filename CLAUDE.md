@@ -239,7 +239,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-sim.sh` | Pipeline simulation harness |
 | `forge-timeout.sh` | Pipeline timeout enforcement |
 | `forge-compact-check.sh` | Compaction suggestion hook |
-| `check-prerequisites.sh` | bash 4+ and python3 validation |
+| `check_prerequisites.py` | Python 3.10+ validation (Phase 02) |
 | `check-environment.sh` | Optional tool + integration detection for forge-init |
 | `forge-otel-export.sh` | OpenTelemetry trace and metric export |
 | `caveman-benchmark.sh` | Token savings measurement for caveman modes |

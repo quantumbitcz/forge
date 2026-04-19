@@ -117,7 +117,7 @@ python3 --version  # or python --version
 
 ### MacOS
 
-1. **Default bash is 3.2.** Must install bash 4+ via Homebrew. Forge's `check-prerequisites.sh` detects and advises.
+1. **Default bash is 3.2.** Must install bash 4+ via Homebrew. Forge's `check_prerequisites.py` detects Python 3.10+; bash version is validated by individual scripts that need it.
 2. **BSD `stat` and `date`.** Forge handles BSD/GNU differences via cascading fallbacks in `portable_file_date()` and `state-integrity.sh`.
 
 ## Configuration

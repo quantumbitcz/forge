@@ -802,13 +802,20 @@ for frag in fg-100-orchestrator-core.md fg-100-orchestrator-boot.md fg-100-orche
 done
 check "Orchestrator phase fragment files removed" "$phase_fragment_fail"
 
-for script in forge-state.sh forge-state-write.sh check-prerequisites.sh; do
+for script in forge-state.sh forge-state-write.sh; do
   script_fail=0
   if [[ ! -f "$ROOT/shared/$script" ]] || [[ ! -x "$ROOT/shared/$script" ]]; then
     script_fail=1
   fi
   check "shared/$script exists and is executable" "$script_fail"
 done
+
+# Python-based prerequisite gate (replaces shared/check-prerequisites.sh)
+py_script_fail=0
+if [[ ! -f "$ROOT/shared/check_prerequisites.py" ]] || [[ ! -x "$ROOT/shared/check_prerequisites.py" ]]; then
+  py_script_fail=1
+fi
+check "shared/check_prerequisites.py exists and is executable" "$py_script_fail"
 
 # --- P1+P2: New scripts and files ---
 echo ""

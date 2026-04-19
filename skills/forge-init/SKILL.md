@@ -23,7 +23,7 @@ See `shared/skill-contract.md` for the standard exit-code table.
 Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel`. If fails: report "Not a git repository. Initialize with `git init` first." and STOP.
-2. **System prerequisites:** Run `bash shared/check-prerequisites.sh`. If fails: show the error messages and STOP. The user must install the missing prerequisites before the forge can operate.
+2. **System prerequisites:** Run `python3 shared/check_prerequisites.py`. If fails: show the error messages and STOP. The user must install the missing prerequisites (Python 3.10+) before the forge can operate.
 3. **Environment health check (informational):** Run `bash "${CLAUDE_PLUGIN_ROOT}/shared/check-environment.sh"`. Parse the JSON output and display a categorized dashboard:
 
    ```
