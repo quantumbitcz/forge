@@ -308,6 +308,8 @@ See `shared/framework-gotchas.md` for non-obvious conventions per framework. Eac
 ./tests/lib/bats-core/bin/bats tests/unit/scoring.bats  # Single file
 ```
 
+For pipeline-level evals see `tests/evals/pipeline/README.md` (CI-only; local dry-run: `FORGE_EVAL=1 python -m tests.evals.pipeline.runner --dry-run --no-baseline`).
+
 ## Gotchas
 
 ### Structural

@@ -107,8 +107,14 @@ case "$TIER" in
     run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
     print_summary
     ;;
+  pipeline-eval)
+    echo "pipeline-eval tier runs only in CI (.github/workflows/evals.yml)."
+    echo "Local invocation (smoke only): FORGE_EVAL=1 python -m tests.evals.pipeline.runner --dry-run --no-baseline"
+    echo "To validate scenario YAML shape without running forge: python -m tests.evals.pipeline.runner --collect-only"
+    exit 0
+    ;;
   *)
-    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks|eval]"
+    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks|eval|pipeline-eval]"
     exit 1
     ;;
 esac
