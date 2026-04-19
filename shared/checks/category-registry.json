@@ -87,6 +87,14 @@
     "AI-LOGIC": { "description": "AI-generated logic bug (null handling, boundary, condition, type coercion, return, state, async, edge case)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
     "AI-PERF": { "description": "AI-generated performance bug (N+1, excessive I/O, memory leak, quadratic, redundant render, blocking, bundle)", "agents": ["fg-416-performance-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
     "AI-CONCURRENCY": { "description": "AI-generated concurrency bug (race condition, deadlock, atomicity, starvation, lost update)", "agents": ["fg-410-code-reviewer", "fg-416-performance-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-410-code-reviewer", "fg-416-performance-reviewer"] },
-    "AI-SEC": { "description": "AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] }
+    "AI-SEC": { "description": "AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
+    "EVAL": { "description": "Pipeline evaluation harness (emitted by tests/evals/pipeline runner, not pipeline agents)", "agents": [], "wildcard": true, "priority": 4, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-REGRESSION": { "description": "Composite score dropped more than regression_tolerance vs baseline", "agents": [], "wildcard": false, "priority": 1, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-TIMEOUT": { "description": "Scenario exceeded scenario_timeout_seconds", "agents": [], "wildcard": false, "priority": 1, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-MUST-NOT-TOUCH": { "description": "Pipeline modified a path listed in scenario must_not_touch", "agents": [], "wildcard": false, "priority": 1, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-VERDICT-MISMATCH": { "description": "Actual verdict worse than scenario required_verdict", "agents": [], "wildcard": false, "priority": 2, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-BUDGET-OVER": { "description": "Tokens or elapsed over scenario budget (adherence may still be > 0)", "agents": [], "wildcard": false, "priority": 2, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-OVERLAP-LOW": { "description": "Jaccard(touched_files_expected, touched_files_actual) < 0.5", "agents": [], "wildcard": false, "priority": 3, "affinity": ["tests/evals/pipeline"] },
+    "EVAL-BASELINE-UNAVAILABLE": { "description": "master baseline artifact missing; regression gate skipped with warning", "agents": [], "wildcard": false, "priority": 3, "affinity": ["tests/evals/pipeline"] }
   }
 }
