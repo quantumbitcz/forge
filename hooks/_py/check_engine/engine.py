@@ -314,6 +314,15 @@ if __name__ == '__main__':
 # --- Appended: hook dispatcher (ported from engine.sh --hook, 689 LOC -> ~90 LOC) ---
 from typing import IO  # noqa: E402
 
+# Self-bootstrap sys.path so `from hooks._py...` resolves when engine.py is
+# invoked directly as `python3 hooks/_py/check_engine/engine.py` (scenario
+# tests + engine.sh wrapper). Path hop: engine.py -> check_engine -> _py ->
+# hooks -> project_root. Inserting project_root makes `hooks._py...` importable.
+_SELF_DIR = Path(__file__).resolve().parent  # noqa: E402
+_PROJECT_ROOT = _SELF_DIR.parent.parent.parent  # noqa: E402
+if str(_PROJECT_ROOT) not in sys.path:  # noqa: E402
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from hooks._py.io_utils import parse_tool_input  # noqa: E402
 from hooks._py.platform_support import forge_dir  # noqa: E402
 
