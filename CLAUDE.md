@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v3.0.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v3.1.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
-**A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (branch `docs/a-plus-roadmap-specs`). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
+**A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (merged to master). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
 
 ## Architecture
 
@@ -278,7 +278,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 **Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `forge-verify`, `forge-security-audit`, `forge-codebase-health`, `forge-deep-health`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph-init`, `forge-graph-status`, `forge-graph-query`, `forge-graph-rebuild`, `forge-graph-debug` (targeted Neo4j diagnostics), `forge-docs-generate`, `forge-config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review).
 
-**Hooks** (7): L0 syntax validation on `Edit|Write` (PreToolUse), check engine on `Edit|Write` (PostToolUse), automation-trigger on `Edit|Write` (PostToolUse), checkpoint on `Skill`, feedback capture on `Stop`, compaction check on `Agent`, session-start on `SessionStart`. See `shared/hook-design.md` for execution model and script contract.
+**Hooks** (7 command entries across 6 Python entry scripts, `hooks.json`): L0 syntax validation on `Edit|Write` (PreToolUse → `pre_tool_use.py`); check engine + automation trigger on `Edit|Write` (PostToolUse → `post_tool_use.py`, which invokes both `_py.check_engine.engine` and `_py.check_engine.automation_trigger`); checkpoint on `Skill` (PostToolUse → `post_tool_use_skill.py`); compaction check on `Agent` (PostToolUse → `post_tool_use_agent.py`); feedback capture on `Stop` (Stop → `stop.py`); session priming on `SessionStart` (SessionStart → `session_start.py`). See `shared/hook-design.md` for the Python execution model and script contract.
 
 **Kanban** (`.forge/tracking/`): File-based board (`backlog/`, `in-progress/`, `review/`, `done/`). Prefix configurable (default `FG`). IDs never reused. Silently skips if uninitialized.
 
@@ -330,7 +330,7 @@ For pipeline-level evals see `tests/evals/pipeline/README.md` (CI-only; local dr
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
 - `.forge/wiki/` survives `/forge-recover reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
 - Auto-discovered PREEMPT items (`source: auto-discovered`) decay 2x faster than normal items. They start at MEDIUM confidence, not HIGH. After 3 successful applications they promote to HIGH.
-- **Platform requirements:** Forge requires bash 4.0+ (macOS needs `brew install bash`). PowerShell and CMD are not supported — on Windows, use WSL2 (recommended) or Git Bash (limited). All scripts use `#!/usr/bin/env bash`. Git Bash has known MSYS path translation issues (commit `0ac4874`). Docker features require Docker Desktop with WSL2 backend on Windows.
+- **Platform requirements:** Forge requires Python 3.10+. bash is no longer required by hooks or user-facing scripts. Windows, macOS, and Linux are all first-class targets: PowerShell, CMD, Git Bash, WSL2, and native bash all work uniformly. A handful of developer-only simulation harnesses under `shared/` remain in bash (e.g., `shared/convergence-engine-sim.sh`) — these are bash-3.2 compatible and do not run in hook execution paths.
 
 ### Check engine
 
