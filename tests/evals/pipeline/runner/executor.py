@@ -115,7 +115,7 @@ def _parse_state(target: Path, scenario: Scenario) -> dict:
             "pipeline_score": 0.0,
             "verdict": "ERROR",
             "actual_tokens": 0,
-            "touched_files": [],
+            "touched_files_actual": [],
         }
     return json.loads(state_path.read_text(encoding="utf-8"))
 
@@ -190,7 +190,7 @@ def execute_scenario(
             scenario_timeout_seconds=scenario_timeout_seconds,
         )
         state = _parse_state(target, scenario)
-        touched = list(state.get("touched_files", []))
+        touched = list(state.get("touched_files_actual", []))
         violations = _detect_must_not_touch(
             target, scenario.expected.must_not_touch
         )
