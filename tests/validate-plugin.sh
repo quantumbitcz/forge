@@ -298,7 +298,16 @@ if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* || "${OSTYPE:-}" == min
 else
   while IFS= read -r cmd; do
     [[ -z "$cmd" ]] && continue
-    script_path="${cmd%% *}"
+    # Commands can be either bare paths (legacy) or "python3 <path>" (Phase 02+).
+    # Extract the last whitespace-separated token that mentions ${CLAUDE_PLUGIN_ROOT}
+    # or a relative path ending in .sh/.py.
+    script_path=""
+    for tok in $cmd; do
+      if [[ "$tok" == *'${CLAUDE_PLUGIN_ROOT}'* ]] || [[ "$tok" == *.sh ]] || [[ "$tok" == *.py ]]; then
+        script_path="$tok"
+      fi
+    done
+    [[ -z "$script_path" ]] && script_path="${cmd%% *}"
     script_path="${script_path/\$\{CLAUDE_PLUGIN_ROOT\}/$ROOT}"
     if [[ ! -f "$script_path" ]]; then
       echo "    DETAIL: Hook script not found: $script_path" >&2
