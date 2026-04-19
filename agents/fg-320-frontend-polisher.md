@@ -4,6 +4,7 @@ description: Creative visual polish agent — animations, micro-interactions, sp
 model: inherit
 color: coral
 tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash', 'TaskCreate', 'TaskUpdate']
+trigger: config.frontend_polish.enabled == true && state.frontend_files_present == true
 ui:
   tasks: true
   ask: false
