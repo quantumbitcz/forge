@@ -1,0 +1,140 @@
+name: Evals
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - collect
+          - dry-run
+          - full
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  actions: read  # list artifacts for baseline fetch
+
+jobs:
+  collect:
+    name: Collect + validate scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Collect scenarios
+        run: python -m tests.evals.pipeline.runner --collect-only
+
+  dry-run:
+    name: Dry-run smoke (scenario 08)
+    needs: collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Dry-run first scenario
+        env:
+          FORGE_EVAL: '1'
+        run: python -m tests.evals.pipeline.runner --dry-run --no-baseline
+
+  full-suite:
+    name: Full eval suite
+    needs: [collect, dry-run]
+    runs-on: ubuntu-latest
+    # Wall-clock contract (per plan §Review C1):
+    #   scenario_timeout = 900 s (15 min) per scenario
+    #   total_budget     = 2700 s (45 min) hard ceiling
+    #   SC1 target       = 30 min p90
+    # Workflow cap is 50 min (45-min total_budget + 5-min overhead for setup/teardown/baseline).
+    timeout-minutes: 50
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    env:
+      FORGE_EVAL: '1'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Run full suite
+        run: |
+          python -m tests.evals.pipeline.runner \
+            --scenario-timeout-seconds 900 \
+            --total-budget-seconds 2700 \
+            --regression-tolerance 3.0 \
+            --baseline-repo "${{ github.repository }}" \
+            --baseline-branch master \
+            --commit-sha "${{ github.sha }}"
+      - name: Upload baseline artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-baseline-master-${{ github.sha }}
+          path: .forge/eval-results.jsonl
+          retention-days: 90
+      - name: Commit leaderboard
+        if: success()
+        run: |
+          if ! git diff --quiet tests/evals/pipeline/leaderboard.md; then
+            git config user.name 'forge-bot'
+            git config user.email 'forge-bot@users.noreply.github.com'
+            git add tests/evals/pipeline/leaderboard.md
+            git commit -m "chore(evals): update leaderboard for ${GITHUB_SHA::7}"
+            git push origin master
+          fi
+
+  pr-suite:
+    name: PR eval suite (regression gate)
+    needs: [collect, dry-run]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    if: ${{ github.event_name == 'pull_request' }}
+    env:
+      FORGE_EVAL: '1'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Run full suite (gate active)
+        run: |
+          python -m tests.evals.pipeline.runner \
+            --scenario-timeout-seconds 900 \
+            --total-budget-seconds 2700 \
+            --regression-tolerance 3.0 \
+            --baseline-repo "${{ github.repository }}" \
+            --baseline-branch master \
+            --commit-sha "${{ github.event.pull_request.head.sha }}"
+      - name: Upload PR results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-pr-${{ github.event.pull_request.number }}
+          path: .forge/eval-results.jsonl
+          retention-days: 30
