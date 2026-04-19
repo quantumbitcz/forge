@@ -6,7 +6,7 @@
 load '../helpers/test-helpers'
 
 ENGINE_SH="$PLUGIN_ROOT/shared/checks/engine.sh"
-ENGINE_PY="$PLUGIN_ROOT/shared/checks/engine.py"
+ENGINE_PY="$PLUGIN_ROOT/hooks/_py/check_engine/engine.py"
 
 setup() {
   TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-forge.XXXXXX")"

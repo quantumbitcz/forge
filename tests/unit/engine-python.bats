@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
-# Unit tests: shared/checks/engine.py — Python check engine entry point.
+# Unit tests: hooks/_py/check_engine/engine.py — Python check engine entry point.
 
 load '../helpers/test-helpers'
 
-ENGINE_PY="$PLUGIN_ROOT/shared/checks/engine.py"
+ENGINE_PY="$PLUGIN_ROOT/hooks/_py/check_engine/engine.py"
 
 # ---------------------------------------------------------------------------
 # 1. File exists and has shebang

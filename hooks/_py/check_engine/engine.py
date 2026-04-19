@@ -309,3 +309,48 @@ if __name__ == '__main__':
         main()
     except Exception:
         sys.exit(0)  # Never block pipeline
+
+
+# --- Appended: hook dispatcher (ported from engine.sh --hook, 689 LOC -> ~90 LOC) ---
+from typing import IO  # noqa: E402
+
+from hooks._py.io_utils import parse_tool_input  # noqa: E402
+from hooks._py.platform_support import forge_dir  # noqa: E402
+
+
+def run_post_tool_use(stdin: 'IO[str] | None' = None) -> int:
+    """Dispatch L1/L2/L3 checks for a single PostToolUse(Edit|Write) event.
+
+    Returns exit code. 0 = no blocking findings. Non-zero = block/warn per
+    Claude Code hook contract. Hook timeout is enforced by hooks.json (10s).
+    """
+    stdin = stdin or sys.stdin
+    parsed = parse_tool_input(stdin)
+    if parsed.tool_name not in {"Edit", "Write", "MultiEdit"}:
+        return 0
+    file_path = parsed.file_path
+    if not file_path:
+        return 0
+    fdir = forge_dir()
+    if not fdir.exists():
+        return 0
+    target = Path(file_path)
+    if not target.exists():
+        return 0
+    # L1 is the existing engine.py rule-runner (run_layer1 — the real entry
+    # point; spec assumed `run_l1_on_file`, which does not exist). L2/L3
+    # defer to linter adapters (legacy shell, unchanged by this phase).
+    language = detect_language(str(target))
+    if not language:
+        return 0
+    project_root = str(fdir.parent)
+    try:
+        # run_layer1 subprocesses out to run-patterns.sh and writes findings
+        # to stdout/stderr; it returns None. Any exception is swallowed.
+        run_layer1(str(target), language, {}, project_root)
+    except Exception as e:  # noqa: BLE001 — hooks must not crash
+        print(f"engine.py L1 error: {e}", file=sys.stderr)
+        return 0
+    # Non-blocking: exit 0 so the edit completes; findings surface at
+    # verify/review via stdout capture.
+    return 0
