@@ -1,0 +1,114 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-04-19",
+  "deprecations": [
+    {
+      "pattern": "from flask import [^\\n]*\\bMarkup\\b",
+      "replacement": "Import Markup from markupsafe instead: `from markupsafe import Markup`. flask.Markup was deprecated in Flask 2.3 and removed in Flask 3.0.",
+      "package": "flask",
+      "since": "2.3.0",
+      "removed_in": "3.0.0",
+      "applies_from": "2.3.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "from flask\\.json import JSONEncoder",
+      "replacement": "Subclass flask.json.provider.DefaultJSONProvider and assign it to app.json instead of subclassing JSONEncoder. JSONEncoder was removed in Flask 2.3.",
+      "package": "flask",
+      "since": "2.2.0",
+      "removed_in": "2.3.0",
+      "applies_from": "2.2.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "@(?:app|bp)\\.before_first_request",
+      "replacement": "before_first_request was removed in Flask 2.3. Run startup code inside create_app() or via `with app.app_context(): ...` from a CLI entry point.",
+      "package": "flask",
+      "since": "2.2.0",
+      "removed_in": "2.3.0",
+      "applies_from": "2.2.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "flask\\.signals_available",
+      "replacement": "signals_available was removed in Flask 2.3 — blinker is now a hard dependency. Drop the guard and import signals unconditionally.",
+      "package": "flask",
+      "since": "2.3.0",
+      "removed_in": "2.3.0",
+      "applies_from": "2.3.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "session\\.permanent_session_lifetime\\s*=",
+      "replacement": "Set PERMANENT_SESSION_LIFETIME on app.config (a timedelta), not on the session object. The session attribute was never the supported assignment site.",
+      "package": "flask",
+      "since": "2.0.0",
+      "removed_in": null,
+      "applies_from": "2.0.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "werkzeug\\.urls\\.url_(?:quote|unquote|encode|decode|fix)",
+      "replacement": "Use urllib.parse equivalents (quote, unquote, urlencode). werkzeug.urls helpers were deprecated in Werkzeug 2.3 and removed in Werkzeug 3.0.",
+      "package": "werkzeug",
+      "since": "2.3.0",
+      "removed_in": "3.0.0",
+      "applies_from": "2.3.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "\\bModel\\.query\\b|\\.query\\.(?:get|filter|filter_by|order_by|first|all)\\(",
+      "replacement": "Model.query is the legacy Flask-SQLAlchemy 2.x API. Use SQLAlchemy 2.0 style: db.session.execute(db.select(Model).where(...)).scalars().all() — or db.session.get(Model, id) for primary-key lookups.",
+      "package": "flask-sqlalchemy",
+      "since": "3.0.0",
+      "removed_in": null,
+      "applies_from": "3.0.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "app\\.json_encoder\\s*=|app\\.json_decoder\\s*=",
+      "replacement": "app.json_encoder / app.json_decoder were deprecated in Flask 2.2. Subclass DefaultJSONProvider and assign: app.json = CustomJSONProvider(app).",
+      "package": "flask",
+      "since": "2.2.0",
+      "removed_in": null,
+      "applies_from": "2.2.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "from werkzeug\\.contrib\\.",
+      "replacement": "werkzeug.contrib was removed in Werkzeug 1.0. Replacements live in dedicated packages (e.g. werkzeug.middleware.proxy_fix.ProxyFix replaced werkzeug.contrib.fixers.ProxyFix).",
+      "package": "werkzeug",
+      "since": "0.15.0",
+      "removed_in": "1.0.0",
+      "applies_from": "0.15.0",
+      "applies_to": "*",
+      "language": "python",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    }
+  ]
+}

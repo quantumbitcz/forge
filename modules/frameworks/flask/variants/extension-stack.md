@@ -1,0 +1,207 @@
+# Flask + Extension Stack Variant
+
+> Flask-Login + Flask-SQLAlchemy + Flask-Migrate + Flask-WTF composition. Extends
+> `modules/frameworks/flask/conventions.md` and `modules/frameworks/flask/variants/factory.md`.
+> Use this variant when the app needs the canonical "Flask web app" baseline: session-cookie auth,
+> SQLAlchemy persistence, Alembic migrations, CSRF-protected forms.
+
+## The Standard Stack
+
+| Extension | Role | Init order |
+|---|---|---|
+| Flask-SQLAlchemy (`db`) | ORM session + connection pooling | 1 |
+| Flask-Migrate (`migrate`) | Alembic wrapper for schema migrations | 2 (after db) |
+| Flask-Login (`login_manager`) | Session-cookie auth + `current_user` | 3 |
+| Flask-WTF (`csrf`, FlaskForm) | CSRF protection + form classes | 4 |
+| Flask-Caching (`cache`) | Optional view + memoize cache (Redis backend in prod) | 5 |
+
+All extensions are declared as module-level singletons in `app/extensions.py` and wired with
+`init_app(app)` inside `create_app`.
+
+## Module-Level Singletons
+
+```python
+# app/extensions.py
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+from flask_caching import Cache
+
+db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
+csrf = CSRFProtect()
+cache = Cache()
+
+# Configure login_manager defaults at import time (not app-bound)
+login_manager.login_view = "auth.login"
+login_manager.login_message_category = "info"
+login_manager.session_protection = "strong"
+```
+
+## Wiring Order in the Factory
+
+Order matters: `Flask-Migrate` needs `db`; `Flask-Login` registers a `before_request` handler that
+expects sessions; `CSRFProtect` should register early so all subsequent blueprints inherit it.
+
+```python
+def _init_extensions(app: Flask) -> None:
+    db.init_app(app)
+    migrate.init_app(app, db)            # must come after db.init_app
+    login_manager.init_app(app)
+    csrf.init_app(app)                   # before any blueprint registration
+    cache.init_app(app)
+```
+
+## Flask-Login User Loader
+
+```python
+# app/auth/loaders.py
+from app.extensions import login_manager
+from app.features.users.models import User
+from app.extensions import db
+
+@login_manager.user_loader
+def load_user(user_id: str) -> User | None:
+    return db.session.get(User, int(user_id))
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    from flask import request, redirect, url_for, flash
+    flash("Please sign in to continue.", "warning")
+    return redirect(url_for("auth.login", next=request.url))
+```
+
+`load_user` runs on every authenticated request — keep it to a single primary-key lookup. Never
+fetch related objects here; let services do that lazily.
+
+## SQLAlchemy 2.0-Style Models
+
+```python
+# app/features/users/models.py
+from datetime import datetime
+from flask_login import UserMixin
+from app.extensions import db
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+
+    id: int = db.Column(db.Integer, primary_key=True)
+    email: str = db.Column(db.String(254), unique=True, nullable=False, index=True)
+    password_hash: str = db.Column(db.String(255), nullable=False)
+    is_active: bool = db.Column(db.Boolean, default=True, nullable=False)
+    created_at: datetime = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<User {self.email}>"
+```
+
+Query via the SQLAlchemy 2.0 API:
+
+```python
+# Read by primary key
+user = db.session.get(User, user_id)
+
+# Filter + scalar list
+active_users = db.session.execute(
+    db.select(User).where(User.is_active.is_(True)).order_by(User.created_at.desc())
+).scalars().all()
+
+# Pagination (Flask-SQLAlchemy 3.x helper)
+page = db.paginate(db.select(User).order_by(User.id), page=1, per_page=20)
+```
+
+## CSRF on Forms
+
+`CSRFProtect` is global by default. Every browser-submitted form must include the token:
+
+```html
+<form method="post" action="{{ url_for('users.update', user_id=user.id) }}">
+  {{ form.csrf_token }}
+  {{ form.email.label }} {{ form.email() }}
+  <button type="submit">Save</button>
+</form>
+```
+
+For raw HTML forms (no `FlaskForm` instance):
+
+```html
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  ...
+</form>
+```
+
+Exempt JSON-only routes that authenticate via Authorization header, never browser session cookies:
+
+```python
+@csrf.exempt
+@bp.route("/api/v1/webhooks/stripe", methods=["POST"])
+@require_api_token
+def stripe_webhook():
+    ...
+```
+
+## Migrations Workflow
+
+```bash
+flask db init                           # one-time, creates migrations/
+flask db migrate -m "create users table"
+# Review migrations/versions/<hash>_create_users_table.py manually.
+# Alembic misses: indexes, server defaults, enum changes, check constraints.
+flask db upgrade                        # apply
+flask db downgrade -1                   # roll back one revision
+```
+
+Every autogenerated migration **must be reviewed and edited** before commit. Common manual fixes:
+
+- Add `op.create_index(...)` for FKs Alembic missed
+- Replace `op.execute("ALTER TABLE ... USING ...")` with reversible logic
+- Set `server_default=` explicitly on new non-nullable columns to avoid backfill failures
+- Provide a real `downgrade()` body — never leave it as `pass`
+
+## Cache + Memoize
+
+```python
+# Cache an expensive view fragment
+@cache.cached(timeout=300, key_prefix="dashboard_stats")
+def dashboard_stats():
+    return compute_dashboard_stats()
+
+# Memoize a function with parameter-aware key
+@cache.memoize(timeout=60)
+def user_post_count(user_id: int) -> int:
+    return db.session.scalar(
+        db.select(db.func.count()).select_from(Post).where(Post.user_id == user_id)
+    )
+```
+
+Invalidate on writes:
+
+```python
+def create_post(user: User, ...) -> Post:
+    post = Post(user_id=user.id, ...)
+    db.session.add(post)
+    db.session.commit()
+    cache.delete_memoized(user_post_count, user.id)
+    return post
+```
+
+## Dos
+
+- Declare extensions at module scope in `app/extensions.py`; wire with `init_app(app)` in the factory
+- Configure `login_manager.session_protection = "strong"` to bind sessions to IP+User-Agent
+- Keep the `user_loader` to a single PK lookup — no eager loading of related objects
+- Use SQLAlchemy 2.0 style (`db.select(...)`, `db.session.execute(...).scalars()`)
+- Always invoke `db.session.commit()` exactly once per request via service-layer or `after_request`
+- Review every Alembic-generated migration manually before committing
+- Add CSRF tokens to every browser form via `{{ form.csrf_token }}` or `{{ csrf_token() }}`
+
+## Don'ts
+
+- Don't construct extensions with the app inline (`db = SQLAlchemy(app)`) — defeats per-test isolation
+- Don't fetch related objects inside `user_loader` — runs on every request, kills latency
+- Don't use the legacy `Model.query.get(id)` — use `db.session.get(Model, id)`
+- Don't autogenerate and commit a migration without reviewing — Alembic misses indexes and constraints
+- Don't `csrf.exempt` a route that uses Flask-Login session auth — token auth only is the rule for exemptions
