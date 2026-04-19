@@ -1,0 +1,1 @@
+Usage example: export AWS_SECRET=AKIAABCDEFGHIJKLMNOP
