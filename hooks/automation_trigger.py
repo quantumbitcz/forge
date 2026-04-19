@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Automation trigger entry (delegates to _py stub until Task 10)."""
+"""Standalone CLI entry shim — invoked by /forge-automation skill directly."""
 from __future__ import annotations
+
 import sys
 from pathlib import Path
+
+# Put project root on sys.path so `hooks._py...` absolute imports resolve.
 _HOOKS = Path(__file__).resolve().parent
-sys.path.insert(0, str(_HOOKS.parent))  # project root for 'hooks.*' imports
-sys.path.insert(0, str(_HOOKS))          # hooks dir for '_py.*' imports
-from _py.check_engine.automation_trigger import main  # noqa: E402
+sys.path.insert(0, str(_HOOKS.parent))
+sys.path.insert(0, str(_HOOKS))
+
+from _py.automation_trigger_cli import main  # noqa: E402
+
 if __name__ == "__main__":
     sys.exit(main())

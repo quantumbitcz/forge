@@ -110,4 +110,4 @@ Hook scripts (`.sh` files referenced from `hooks.json`) must follow these 8 rule
 - `hooks/hooks.json` -- Hook declarations
 - `shared/checks/` -- Check engine implementation (L0-L3)
 - `shared/automations.md` -- Automation trigger system
-- `hooks/automation-trigger.sh` -- Automation dispatch script
+- `hooks/automation_trigger.py` -- Automation dispatch script

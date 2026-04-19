@@ -209,7 +209,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |
 | Memory discovery | `memory_discovery.*` | Auto-discovered items decay 2x faster, start MEDIUM |
 | Background execution | — | `--background`, `.forge/alerts.json` for escalations |
-| Automations | `automations.*` | Cron/CI/MCP triggers via `automation-trigger.sh` |
+| Automations | `automations.*` | Cron/CI/MCP triggers via `hooks/automation_trigger.py` |
 | Visual verification | `visual_verification.*` | Screenshot-based via Playwright MCP |
 | LSP integration | `lsp.*` | Compiler-level code analysis |
 | Observability | `observability.*` | OTel traces via `forge-otel-export.sh` |
@@ -243,7 +243,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `check-environment.sh` | Optional tool + integration detection for forge-init |
 | `forge-otel-export.sh` | OpenTelemetry trace and metric export |
 | `caveman-benchmark.sh` | Token savings measurement for caveman modes |
-| `hooks/automation-trigger.sh` | Event-driven automation dispatch (cron, CI, MCP) |
+| `hooks/automation_trigger.py` | Event-driven automation dispatch (cron, CI, MCP) |
 
 ### Mode overlays (`shared/modes/`)
 

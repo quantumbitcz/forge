@@ -21,6 +21,6 @@ setup() {
 
 @test "automation-trigger: trigger script respects cooldown" {
   # Verify the Python automation trigger entry exists; cooldown logic lives in
-  # hooks/_py/check_engine/automation_trigger.py (filled in by Task 10).
+  # hooks/_py/automation_trigger_cli.py (ported in Task 10).
   assert [ -f "$TRIGGER_SCRIPT" ]
 }

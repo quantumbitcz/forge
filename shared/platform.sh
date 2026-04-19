@@ -353,7 +353,7 @@ read_components() {
 # ── TOOL_INPUT File Path Extraction ─────────────────────────────────────────
 #
 # Extracts file_path from Claude Code TOOL_INPUT environment variable.
-# Used by hooks that need the edited file path (engine.sh, automation-trigger-hook.sh).
+# Used by shell-based hooks that need the edited file path (e.g. engine.sh).
 # Tries JSON parse first (jq), falls back to regex.
 # Returns: file path on stdout, or empty string if extraction fails.
 # Sets FORGE_PARSE_METHOD to "json", "regex", or "none" for callers to inspect.
