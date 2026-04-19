@@ -1,0 +1,14 @@
+id: 02-python-bugfix
+mode: bugfix
+token_budget: 90000
+elapsed_budget_seconds: 420
+min_pipeline_score: 80
+required_verdict: PASS
+touched_files_expected:
+  - app/main.py
+  - tests/test_items.py
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+  - requirements.txt
+notes: "Classic slice-arithmetic bug."

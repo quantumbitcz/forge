@@ -1,0 +1,15 @@
+id: 03-kotlin-spring-migration
+mode: migration
+token_budget: 200000
+elapsed_budget_seconds: 840
+min_pipeline_score: 78
+required_verdict: CONCERNS
+touched_files_expected:
+  - build.gradle.kts
+  - src/main/kotlin/com/example/App.kt
+  - src/main/kotlin/com/example/Config.kt
+  - src/test/kotlin/com/example/AppTest.kt
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+notes: "CONCERNS acceptable — migration risk warrants non-PASS verdict."

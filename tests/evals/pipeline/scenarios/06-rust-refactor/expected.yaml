@@ -1,0 +1,15 @@
+id: 06-rust-refactor
+mode: standard
+token_budget: 120000
+elapsed_budget_seconds: 540
+min_pipeline_score: 80
+required_verdict: PASS
+touched_files_expected:
+  - src/lib.rs
+  - src/format.rs
+  - tests/format.rs
+must_not_touch:
+  - .claude/**
+  - tests/evals/**
+  - Cargo.toml
+notes: "Extract trait `Formatter` from three concrete impls; existing tests must still pass."
