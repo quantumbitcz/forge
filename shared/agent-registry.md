@@ -25,6 +25,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-210-validator | 4 | No | Validate | Validation |
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
+| fg-301-implementer-critic | 4 | No | Implement | Reflection (CoVe) |
 | fg-310-scaffolder | 3 | Yes | Implement | Scaffolding |
 | fg-320-frontend-polisher | 3 | No | Implement | Frontend |
 | fg-350-docs-generator | 3 | Yes | Document | Documentation |
