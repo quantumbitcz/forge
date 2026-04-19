@@ -33,7 +33,7 @@ stages:
         steps:
           - task: UsePythonVersion@0
             inputs:
-              versionSpec: '3.12'
+              versionSpec: '3.x'
 
           - script: pip install uv && uv sync
             displayName: Install dependencies

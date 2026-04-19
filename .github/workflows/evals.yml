@@ -32,9 +32,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Collect scenarios
@@ -48,9 +48,9 @@ jobs:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Dry-run first scenario
@@ -80,9 +80,9 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Run full suite
@@ -129,9 +129,9 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Run full suite (gate active)
