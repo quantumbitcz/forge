@@ -1,100 +1,1111 @@
 {
   "_note": "Canonical registry of finding category codes. Source of truth for scoring.md, output-format.md, and all review agents. When adding a new category, update this registry first.",
   "categories": {
-    "ARCH": { "description": "Architectural violation (SRP, DIP, layer boundary)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-412-architecture-reviewer"] },
-    "SEC": { "description": "Security concern (auth, injection, exposure)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-SECRET": { "description": "Secret or credential detected in source code or pipeline artifact", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-PII": { "description": "Potential PII detected (email, phone — verify manually)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-REDACT": { "description": "Value auto-redacted from pipeline artifact", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-AGENT-INPUT": { "description": "Agent input handling vulnerability (injection, parameter abuse)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-AGENT-EXEC": { "description": "Agent unexpected code execution risk", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-AGENT-CASCADE": { "description": "Agent cascading failure risk (missing isolation, unbounded propagation)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "PERF": { "description": "Backend performance issue (N+1, O(n^2), blocking I/O)", "agents": ["fg-416-performance-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
-    "FE-PERF": { "description": "Frontend performance issue (re-renders, bundle size, DOM)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-413-frontend-reviewer"] },
-    "TEST": { "description": "Test quality issue (coverage, mocks, assertions, isolation)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "TEST-MUTATION-SURVIVE": { "description": "Mutant survived — test gap for this code path", "agents": ["fg-510-mutation-analyzer"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-510-mutation-analyzer"] },
-    "TEST-MUTATION-TIMEOUT": { "description": "Mutant caused test timeout (likely meaningful mutation)", "agents": ["fg-510-mutation-analyzer"], "wildcard": false, "priority": 3, "affinity": ["fg-510-mutation-analyzer"] },
-    "TEST-MUTATION-EQUIVALENT": { "description": "Mutant is functionally equivalent (no behavior change)", "agents": ["fg-510-mutation-analyzer"], "wildcard": false, "priority": 3, "affinity": ["fg-510-mutation-analyzer"] },
-    "CONV": { "description": "Convention violation (naming, style, patterns)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 5, "affinity": ["fg-410-code-reviewer", "fg-413-frontend-reviewer"] },
-    "DOC": { "description": "Documentation gap (missing docs, stale sections, cross-ref conflicts)", "agents": ["fg-418-docs-consistency-reviewer"], "wildcard": true, "priority": 5, "affinity": ["fg-418-docs-consistency-reviewer"] },
-    "QUAL": { "description": "Code quality (complexity, duplication, dead code, error handling)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "QUAL-ERR": { "description": "Error handling quality (swallowed exceptions, missing error paths)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-411-security-reviewer"] },
-    "QUAL-COMPLEX": { "description": "Code complexity (deep nesting, large functions, high cyclomatic)", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-412-architecture-reviewer"] },
-    "APPROACH": { "description": "Solution quality (suboptimal pattern, unnecessary complexity)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "INFO_ONLY", "accumulation_rule": "3+ recurrences escalate to convention", "priority": 6, "affinity": [] },
-    "SCOUT": { "description": "Boy Scout improvement (tracked, no point deduction)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "score_impact": "NONE", "priority": 6, "affinity": [] },
-    "A11Y": { "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)", "agents": ["fg-413-frontend-reviewer"], "wildcard": true, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "DEP": { "description": "Dependency health (vulnerable, unmaintained, outdated, conflicts, license)", "agents": ["fg-417-dependency-reviewer"], "wildcard": true, "priority": 5, "affinity": ["fg-417-dependency-reviewer"] },
-    "COMPAT": { "description": "Compatibility issue (browser, platform, API version)", "agents": [], "wildcard": true, "status": "reserved", "priority": 5, "affinity": [] },
-    "CONTRACT": { "description": "Contract validation (breaking changes, schema violations)", "agents": ["fg-250-contract-validator"], "wildcard": true, "priority": 3, "affinity": [] },
-    "STRUCT": { "description": "Project structure violation (file placement, naming, boundaries)", "agents": ["fg-412-architecture-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-412-architecture-reviewer"] },
-    "INFRA": { "description": "Infrastructure/deployment issue (health, smoke, contract, image)", "agents": ["fg-419-infra-deploy-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-419-infra-deploy-reviewer"] },
-    "REVIEW-GAP": { "description": "Coverage gap from timed-out or failed review agent", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 5, "affinity": [] },
-    "DESIGN-TOKEN": { "description": "Frontend design token violation (hardcoded hex/rgb instead of theme tokens)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "DESIGN-MOTION": { "description": "Frontend animation performance issue (non-GPU properties, missing will-change)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-VISUAL-REGRESSION": { "description": "Unexpected visual change detected (layout shift, element missing)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-VISUAL-RESPONSIVE": { "description": "Layout breaks at specific viewport breakpoint", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-VISUAL-CONTRAST": { "description": "Text contrast ratio below WCAG AA threshold", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-VISUAL-FIDELITY": { "description": "Visual output deviates from design specification", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "TEST-FLAKY": { "description": "Quarantined flaky test failed (non-blocking)", "agents": ["fg-500-test-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-500-test-gate", "fg-410-code-reviewer"] },
-    "TEST-QUARANTINE": { "description": "Test quarantine status changed (quarantined or unquarantined)", "agents": ["fg-500-test-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-500-test-gate"] },
-    "SEC-MCP-UNAUTHORIZED": { "description": "Unapproved MCP server detected — blocked by governance allowlist", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-SUPPLY-NEW-DEP": { "description": "New dependency added — provenance unverified", "agents": ["fg-417-dependency-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-417-dependency-reviewer", "fg-411-security-reviewer"] },
-    "SEC-SUPPLY-LOWPOP": { "description": "Dependency has very low download count (potential low-trust package)", "agents": ["fg-417-dependency-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-417-dependency-reviewer"] },
-    "SEC-ENTROPY": { "description": "High-entropy string detected — potential obfuscated secret", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-CLOUD-CRED": { "description": "Cloud provider credential detected (AWS, GCP, Azure, GitHub, Slack, Stripe)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "SEC-CACHE-TAMPER": { "description": "Cached artifact integrity check failed (SHA256 mismatch)", "agents": ["fg-411-security-reviewer"], "wildcard": false, "priority": 2, "affinity": ["fg-411-security-reviewer"] },
-    "SPEC-DRIFT": { "description": "Specification drift detected (implementation deviates from spec)", "agents": ["fg-400-quality-gate"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
-    "SPEC-DRIFT-COVERAGE-GAP": { "description": "Acceptance criterion exists but no test covers it", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
-    "SPEC-DRIFT-VIOLATION": { "description": "Test exists for acceptance criterion but fails", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 1, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
-    "SPEC-DRIFT-UNDOCUMENTED": { "description": "Implementation adds behavior not captured in any acceptance criterion", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
-    "SPEC-DRIFT-UNIMPLEMENTED": { "description": "Acceptance criterion has no corresponding implementation", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 1, "affinity": ["fg-410-code-reviewer", "fg-418-docs-consistency-reviewer"] },
-    "A11Y-KEYBOARD": { "description": "Keyboard navigation issue (tab order, focus trap, keyboard-only interaction)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "A11Y-FOCUS": { "description": "Focus visibility issue (missing or insufficient focus indicator)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "A11Y-ARIA": { "description": "ARIA attribute completeness issue (missing or incorrect ARIA)", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-413-frontend-reviewer"] },
-    "FE-BROWSER-COMPAT": { "description": "Cross-browser visual discrepancy exceeding threshold", "agents": ["fg-413-frontend-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-413-frontend-reviewer"] },
-    "I18N-HARDCODED": { "description": "Hard-coded user-facing string not using i18n framework", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer", "fg-413-frontend-reviewer"] },
-    "I18N-MISSING-KEY": { "description": "Translation key present in source locale but missing in target locale", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer"] },
-    "I18N-RTL": { "description": "Hardcoded left/right in CSS instead of logical start/end properties", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer", "fg-413-frontend-reviewer"] },
-    "I18N-FORMAT": { "description": "Hardcoded date/number format instead of locale-aware Intl API", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer"] },
-    "PERF-REGRESSION": { "description": "Performance regression detected across pipeline runs", "agents": ["fg-400-quality-gate"], "wildcard": true, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
-    "PERF-REGRESSION-BUILD": { "description": "Build time regression exceeding configured threshold", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
-    "PERF-REGRESSION-TEST": { "description": "Test suite duration regression exceeding configured threshold", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 4, "affinity": ["fg-410-code-reviewer"] },
-    "PERF-REGRESSION-BUNDLE": { "description": "Bundle/artifact size regression exceeding configured threshold", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 4, "affinity": ["fg-413-frontend-reviewer"] },
-    "PERF-REGRESSION-CUSTOM": { "description": "Custom performance metric regression exceeding configured threshold", "agents": ["fg-400-quality-gate"], "wildcard": false, "priority": 4, "affinity": [] },
-    "SPEC-INFERENCE-LOW": { "description": "Low-confidence specification inferred — may be inaccurate", "agents": ["fg-020-bug-investigator"], "wildcard": false, "priority": 5, "affinity": ["fg-020-bug-investigator"] },
-    "SPEC-INFERENCE-CONFLICT": { "description": "Specification evidence sources contradict each other", "agents": ["fg-020-bug-investigator"], "wildcard": false, "priority": 3, "affinity": ["fg-020-bug-investigator"] },
-    "TEST-PROPERTY-INVARIANT": { "description": "Invariant property failed — postcondition violation for all valid inputs", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 3, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "TEST-PROPERTY-ROUNDTRIP": { "description": "Round-trip property failed — encode/decode asymmetry", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 3, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "TEST-PROPERTY-IDEMPOTENT": { "description": "Idempotence property failed — repeated application changes result", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 5, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "TEST-PROPERTY-METAMORPHIC": { "description": "Metamorphic relation violated — input-output relationship broken", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 3, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "TEST-PROPERTY-COMMUTATIVE": { "description": "Commutativity property failed — operation order affects result", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 5, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "TEST-PROPERTY-MONOTONIC": { "description": "Monotonicity property failed — ordering not preserved", "agents": ["fg-515-property-test-generator"], "wildcard": false, "priority": 5, "affinity": ["fg-515-property-test-generator", "fg-410-code-reviewer"] },
-    "DEPLOY-HEALTH": { "description": "Deployment health degradation detected (error rate spike, latency increase, pod crash)", "agents": ["fg-620-deploy-verifier"], "wildcard": false, "priority": 1, "affinity": ["fg-419-infra-deploy-reviewer", "fg-620-deploy-verifier"] },
-    "DEPLOY-CANARY": { "description": "Canary deployment progress or metric report", "agents": ["fg-620-deploy-verifier"], "wildcard": false, "priority": 5, "affinity": ["fg-620-deploy-verifier"] },
-    "DEPLOY-ROLLBACK": { "description": "Deployment rollback triggered or recommended", "agents": ["fg-620-deploy-verifier"], "wildcard": false, "priority": 2, "affinity": ["fg-620-deploy-verifier"] },
-    "DEPLOY-STRATEGY": { "description": "Deployment strategy configuration issue (missing metric endpoint, invalid step definition)", "agents": ["fg-610-infra-deploy-verifier"], "wildcard": false, "priority": 3, "affinity": ["fg-610-infra-deploy-verifier", "fg-419-infra-deploy-reviewer"] },
-    "CONTRACT-PACT-FAIL": { "description": "Pact provider verification failed — consumer expectation not met", "agents": ["fg-250-contract-validator"], "wildcard": false, "priority": 1, "affinity": ["fg-250-contract-validator"] },
-    "CONTRACT-PACT-PENDING": { "description": "Pending pact verification — consumer has published new expectations not yet verified", "agents": ["fg-250-contract-validator"], "wildcard": false, "priority": 3, "affinity": ["fg-250-contract-validator"] },
-    "CONTRACT-PACT-MISSING": { "description": "Expected pact file or broker entry not found for a configured consumer", "agents": ["fg-250-contract-validator"], "wildcard": false, "priority": 3, "affinity": ["fg-250-contract-validator"] },
-    "ML-VERSION": { "description": "Model versioning issue (unversioned model, missing metadata, LFS-absent binary)", "agents": ["fg-410-code-reviewer", "fg-412-architecture-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "ML-REPRO": { "description": "Experiment reproducibility issue (unfixed seed, missing hyperparameters, unpinned deps)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "ML-DATA": { "description": "Data quality or governance issue (unvalidated schema, missing data tests, PII in dataset)", "agents": ["fg-410-code-reviewer", "fg-411-security-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "ML-PIPELINE": { "description": "ML/data pipeline issue (untested DAG, non-idempotent task, missing retry config)", "agents": ["fg-410-code-reviewer", "fg-412-architecture-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-410-code-reviewer"] },
-    "FLAG-STALE": { "description": "Stale feature flag — flag fully rolled out but code branches still present", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 5, "affinity": ["fg-410-code-reviewer"] },
-    "FLAG-UNTESTED": { "description": "Feature-flagged code path without tests for both flag states", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "FLAG-HARDCODED": { "description": "Hardcoded boolean toggle that should be a feature flag", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 6, "affinity": ["fg-410-code-reviewer"] },
-    "FLAG-CLEANUP": { "description": "Feature flag eligible for cleanup (fully rolled out, no rollback risk)", "agents": ["fg-410-code-reviewer"], "wildcard": false, "priority": 6, "affinity": ["fg-410-code-reviewer"] },
-    "AI-LOGIC": { "description": "AI-generated logic bug (null handling, boundary, condition, type coercion, return, state, async, edge case)", "agents": ["fg-410-code-reviewer"], "wildcard": true, "priority": 3, "affinity": ["fg-410-code-reviewer"] },
-    "AI-PERF": { "description": "AI-generated performance bug (N+1, excessive I/O, memory leak, quadratic, redundant render, blocking, bundle)", "agents": ["fg-416-performance-reviewer"], "wildcard": true, "priority": 4, "affinity": ["fg-416-performance-reviewer"] },
-    "AI-CONCURRENCY": { "description": "AI-generated concurrency bug (race condition, deadlock, atomicity, starvation, lost update)", "agents": ["fg-410-code-reviewer", "fg-416-performance-reviewer"], "wildcard": true, "priority": 2, "affinity": ["fg-410-code-reviewer", "fg-416-performance-reviewer"] },
-    "AI-SEC": { "description": "AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization)", "agents": ["fg-411-security-reviewer"], "wildcard": true, "priority": 1, "affinity": ["fg-411-security-reviewer"] },
-    "EVAL": { "description": "Pipeline evaluation harness (emitted by tests/evals/pipeline runner, not pipeline agents)", "agents": [], "wildcard": true, "priority": 4, "affinity": [] },
-    "EVAL-REGRESSION": { "description": "Composite score dropped more than regression_tolerance vs baseline", "agents": [], "wildcard": false, "priority": 1, "affinity": [] },
-    "EVAL-TIMEOUT": { "description": "Scenario exceeded scenario_timeout_seconds", "agents": [], "wildcard": false, "priority": 1, "affinity": [] },
-    "EVAL-MUST-NOT-TOUCH": { "description": "Pipeline modified a path listed in scenario must_not_touch", "agents": [], "wildcard": false, "priority": 1, "affinity": [] },
-    "EVAL-VERDICT-MISMATCH": { "description": "Actual verdict worse than scenario required_verdict", "agents": [], "wildcard": false, "priority": 2, "affinity": [] },
-    "EVAL-BUDGET-OVER": { "description": "Tokens or elapsed over scenario budget (adherence may still be > 0)", "agents": [], "wildcard": false, "priority": 2, "affinity": [] },
-    "EVAL-OVERLAP-LOW": { "description": "Jaccard(touched_files_expected, touched_files_actual) < 0.5", "agents": [], "wildcard": false, "priority": 3, "affinity": [] },
-    "EVAL-BASELINE-UNAVAILABLE": { "description": "master baseline artifact missing; regression gate skipped with warning", "agents": [], "wildcard": false, "priority": 3, "affinity": [] }
+    "ARCH": {
+      "description": "Architectural violation (SRP, DIP, layer boundary)",
+      "agents": [
+        "fg-412-architecture-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-412-architecture-reviewer"
+      ]
+    },
+    "SEC": {
+      "description": "Security concern (auth, injection, exposure)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-SECRET": {
+      "description": "Secret or credential detected in source code or pipeline artifact",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-PII": {
+      "description": "Potential PII detected (email, phone \u2014 verify manually)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-REDACT": {
+      "description": "Value auto-redacted from pipeline artifact",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-AGENT-INPUT": {
+      "description": "Agent input handling vulnerability (injection, parameter abuse)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-AGENT-EXEC": {
+      "description": "Agent unexpected code execution risk",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-AGENT-CASCADE": {
+      "description": "Agent cascading failure risk (missing isolation, unbounded propagation)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "PERF": {
+      "description": "Backend performance issue (N+1, O(n^2), blocking I/O)",
+      "agents": [
+        "fg-416-performance-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-416-performance-reviewer"
+      ]
+    },
+    "FE-PERF": {
+      "description": "Frontend performance issue (re-renders, bundle size, DOM)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "TEST": {
+      "description": "Test quality issue (coverage, mocks, assertions, isolation)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-MUTATION-SURVIVE": {
+      "description": "Mutant survived \u2014 test gap for this code path",
+      "agents": [
+        "fg-510-mutation-analyzer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-510-mutation-analyzer"
+      ]
+    },
+    "TEST-MUTATION-TIMEOUT": {
+      "description": "Mutant caused test timeout (likely meaningful mutation)",
+      "agents": [
+        "fg-510-mutation-analyzer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-510-mutation-analyzer"
+      ]
+    },
+    "TEST-MUTATION-EQUIVALENT": {
+      "description": "Mutant is functionally equivalent (no behavior change)",
+      "agents": [
+        "fg-510-mutation-analyzer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-510-mutation-analyzer"
+      ]
+    },
+    "CONV": {
+      "description": "Convention violation (naming, style, patterns)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "DOC": {
+      "description": "Documentation gap (missing docs, stale sections, cross-ref conflicts)",
+      "agents": [
+        "fg-418-docs-consistency-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 5,
+      "affinity": [
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "QUAL": {
+      "description": "Code quality (complexity, duplication, dead code, error handling)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "QUAL-ERR": {
+      "description": "Error handling quality (swallowed exceptions, missing error paths)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-411-security-reviewer"
+      ]
+    },
+    "QUAL-COMPLEX": {
+      "description": "Code complexity (deep nesting, large functions, high cyclomatic)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-412-architecture-reviewer"
+      ]
+    },
+    "APPROACH": {
+      "description": "Solution quality (suboptimal pattern, unnecessary complexity)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "score_impact": "INFO_ONLY",
+      "accumulation_rule": "3+ recurrences escalate to convention",
+      "priority": 6,
+      "affinity": []
+    },
+    "SCOUT": {
+      "description": "Boy Scout improvement (tracked, no point deduction)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "score_impact": "NONE",
+      "priority": 6,
+      "affinity": []
+    },
+    "A11Y": {
+      "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "DEP": {
+      "description": "Dependency health (vulnerable, unmaintained, outdated, conflicts, license)",
+      "agents": [
+        "fg-417-dependency-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 5,
+      "affinity": [
+        "fg-417-dependency-reviewer"
+      ]
+    },
+    "COMPAT": {
+      "description": "Compatibility issue (browser, platform, API version)",
+      "agents": [],
+      "wildcard": true,
+      "status": "reserved",
+      "priority": 5,
+      "affinity": []
+    },
+    "CONTRACT": {
+      "description": "Contract validation (breaking changes, schema violations)",
+      "agents": [
+        "fg-250-contract-validator"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": []
+    },
+    "STRUCT": {
+      "description": "Project structure violation (file placement, naming, boundaries)",
+      "agents": [
+        "fg-412-architecture-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-412-architecture-reviewer"
+      ]
+    },
+    "INFRA": {
+      "description": "Infrastructure/deployment issue (health, smoke, contract, image)",
+      "agents": [
+        "fg-419-infra-deploy-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-419-infra-deploy-reviewer"
+      ]
+    },
+    "REVIEW-GAP": {
+      "description": "Coverage gap from timed-out or failed review agent",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": []
+    },
+    "DESIGN-TOKEN": {
+      "description": "Frontend design token violation (hardcoded hex/rgb instead of theme tokens)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "DESIGN-MOTION": {
+      "description": "Frontend animation performance issue (non-GPU properties, missing will-change)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "FE-VISUAL-REGRESSION": {
+      "description": "Unexpected visual change detected (layout shift, element missing)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "FE-VISUAL-RESPONSIVE": {
+      "description": "Layout breaks at specific viewport breakpoint",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "FE-VISUAL-CONTRAST": {
+      "description": "Text contrast ratio below WCAG AA threshold",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "FE-VISUAL-FIDELITY": {
+      "description": "Visual output deviates from design specification",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "TEST-FLAKY": {
+      "description": "Quarantined flaky test failed (non-blocking)",
+      "agents": [
+        "fg-500-test-gate"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-500-test-gate",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-QUARANTINE": {
+      "description": "Test quarantine status changed (quarantined or unquarantined)",
+      "agents": [
+        "fg-500-test-gate"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-500-test-gate"
+      ]
+    },
+    "SEC-MCP-UNAUTHORIZED": {
+      "description": "Unapproved MCP server detected \u2014 blocked by governance allowlist",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-SUPPLY-NEW-DEP": {
+      "description": "New dependency added \u2014 provenance unverified",
+      "agents": [
+        "fg-417-dependency-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-417-dependency-reviewer",
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-SUPPLY-LOWPOP": {
+      "description": "Dependency has very low download count (potential low-trust package)",
+      "agents": [
+        "fg-417-dependency-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-417-dependency-reviewer"
+      ]
+    },
+    "SEC-ENTROPY": {
+      "description": "High-entropy string detected \u2014 potential obfuscated secret",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-CLOUD-CRED": {
+      "description": "Cloud provider credential detected (AWS, GCP, Azure, GitHub, Slack, Stripe)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-CACHE-TAMPER": {
+      "description": "Cached artifact integrity check failed (SHA256 mismatch)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-OVERRIDE": {
+      "description": "Envelope contained instruction-override attempt (OVERRIDE/ROLE_HIJACK/SYSTEM_SPOOF/PROMPT_LEAK). WARNING. See shared/untrusted-envelope.md.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-EXFIL": {
+      "description": "Envelope attempted to coax the agent into sending prompt or secret material outside the pipeline. CRITICAL.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-TOOL-MISUSE": {
+      "description": "Envelope contained shell/destructive-fs coercion aimed at a Bash/Write/Edit-capable agent. CRITICAL.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-BLOCKED": {
+      "description": "BLOCK-tier match quarantined content. Halts the stage. See error-taxonomy INJECTION_BLOCKED. CRITICAL.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-TRUNCATED": {
+      "description": "Envelope exceeded size budget and was truncated at MAX_ENVELOPE_BYTES=65536 (64 KiB). INFO.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-DISABLED": {
+      "description": "Configuration attempted to disable untrusted_envelope or injection_detection. PREFLIGHT halt. CRITICAL.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SEC-INJECTION-HISTORICAL": {
+      "description": "One-time PREFLIGHT retro-scan of pre-3.1.0 wiki/explore-cache found an injection pattern. INFO.",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "SPEC-DRIFT": {
+      "description": "Specification drift detected (implementation deviates from spec)",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "SPEC-DRIFT-COVERAGE-GAP": {
+      "description": "Acceptance criterion exists but no test covers it",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "SPEC-DRIFT-VIOLATION": {
+      "description": "Test exists for acceptance criterion but fails",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "SPEC-DRIFT-UNDOCUMENTED": {
+      "description": "Implementation adds behavior not captured in any acceptance criterion",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "SPEC-DRIFT-UNIMPLEMENTED": {
+      "description": "Acceptance criterion has no corresponding implementation",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-418-docs-consistency-reviewer"
+      ]
+    },
+    "A11Y-KEYBOARD": {
+      "description": "Keyboard navigation issue (tab order, focus trap, keyboard-only interaction)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "A11Y-FOCUS": {
+      "description": "Focus visibility issue (missing or insufficient focus indicator)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "A11Y-ARIA": {
+      "description": "ARIA attribute completeness issue (missing or incorrect ARIA)",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "FE-BROWSER-COMPAT": {
+      "description": "Cross-browser visual discrepancy exceeding threshold",
+      "agents": [
+        "fg-413-frontend-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "I18N-HARDCODED": {
+      "description": "Hard-coded user-facing string not using i18n framework",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "I18N-MISSING-KEY": {
+      "description": "Translation key present in source locale but missing in target locale",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "I18N-RTL": {
+      "description": "Hardcoded left/right in CSS instead of logical start/end properties",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "I18N-FORMAT": {
+      "description": "Hardcoded date/number format instead of locale-aware Intl API",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "PERF-REGRESSION": {
+      "description": "Performance regression detected across pipeline runs",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-416-performance-reviewer"
+      ]
+    },
+    "PERF-REGRESSION-BUILD": {
+      "description": "Build time regression exceeding configured threshold",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-416-performance-reviewer"
+      ]
+    },
+    "PERF-REGRESSION-TEST": {
+      "description": "Test suite duration regression exceeding configured threshold",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "PERF-REGRESSION-BUNDLE": {
+      "description": "Bundle/artifact size regression exceeding configured threshold",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-413-frontend-reviewer"
+      ]
+    },
+    "PERF-REGRESSION-CUSTOM": {
+      "description": "Custom performance metric regression exceeding configured threshold",
+      "agents": [
+        "fg-400-quality-gate"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": []
+    },
+    "SPEC-INFERENCE-LOW": {
+      "description": "Low-confidence specification inferred \u2014 may be inaccurate",
+      "agents": [
+        "fg-020-bug-investigator"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-020-bug-investigator"
+      ]
+    },
+    "SPEC-INFERENCE-CONFLICT": {
+      "description": "Specification evidence sources contradict each other",
+      "agents": [
+        "fg-020-bug-investigator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-020-bug-investigator"
+      ]
+    },
+    "TEST-PROPERTY-INVARIANT": {
+      "description": "Invariant property failed \u2014 postcondition violation for all valid inputs",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-PROPERTY-ROUNDTRIP": {
+      "description": "Round-trip property failed \u2014 encode/decode asymmetry",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-PROPERTY-IDEMPOTENT": {
+      "description": "Idempotence property failed \u2014 repeated application changes result",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-PROPERTY-METAMORPHIC": {
+      "description": "Metamorphic relation violated \u2014 input-output relationship broken",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-PROPERTY-COMMUTATIVE": {
+      "description": "Commutativity property failed \u2014 operation order affects result",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "TEST-PROPERTY-MONOTONIC": {
+      "description": "Monotonicity property failed \u2014 ordering not preserved",
+      "agents": [
+        "fg-515-property-test-generator"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-515-property-test-generator",
+        "fg-410-code-reviewer"
+      ]
+    },
+    "DEPLOY-HEALTH": {
+      "description": "Deployment health degradation detected (error rate spike, latency increase, pod crash)",
+      "agents": [
+        "fg-620-deploy-verifier"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-419-infra-deploy-reviewer",
+        "fg-620-deploy-verifier"
+      ]
+    },
+    "DEPLOY-CANARY": {
+      "description": "Canary deployment progress or metric report",
+      "agents": [
+        "fg-620-deploy-verifier"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-620-deploy-verifier"
+      ]
+    },
+    "DEPLOY-ROLLBACK": {
+      "description": "Deployment rollback triggered or recommended",
+      "agents": [
+        "fg-620-deploy-verifier"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-620-deploy-verifier"
+      ]
+    },
+    "DEPLOY-STRATEGY": {
+      "description": "Deployment strategy configuration issue (missing metric endpoint, invalid step definition)",
+      "agents": [
+        "fg-610-infra-deploy-verifier"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-610-infra-deploy-verifier",
+        "fg-419-infra-deploy-reviewer"
+      ]
+    },
+    "CONTRACT-PACT-FAIL": {
+      "description": "Pact provider verification failed \u2014 consumer expectation not met",
+      "agents": [
+        "fg-250-contract-validator"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-250-contract-validator"
+      ]
+    },
+    "CONTRACT-PACT-PENDING": {
+      "description": "Pending pact verification \u2014 consumer has published new expectations not yet verified",
+      "agents": [
+        "fg-250-contract-validator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-250-contract-validator"
+      ]
+    },
+    "CONTRACT-PACT-MISSING": {
+      "description": "Expected pact file or broker entry not found for a configured consumer",
+      "agents": [
+        "fg-250-contract-validator"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-250-contract-validator"
+      ]
+    },
+    "ML-VERSION": {
+      "description": "Model versioning issue (unversioned model, missing metadata, LFS-absent binary)",
+      "agents": [
+        "fg-410-code-reviewer",
+        "fg-412-architecture-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "ML-REPRO": {
+      "description": "Experiment reproducibility issue (unfixed seed, missing hyperparameters, unpinned deps)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "ML-DATA": {
+      "description": "Data quality or governance issue (unvalidated schema, missing data tests, PII in dataset)",
+      "agents": [
+        "fg-410-code-reviewer",
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "ML-PIPELINE": {
+      "description": "ML/data pipeline issue (untested DAG, non-idempotent task, missing retry config)",
+      "agents": [
+        "fg-410-code-reviewer",
+        "fg-412-architecture-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "FLAG-STALE": {
+      "description": "Stale feature flag \u2014 flag fully rolled out but code branches still present",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "FLAG-UNTESTED": {
+      "description": "Feature-flagged code path without tests for both flag states",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "FLAG-HARDCODED": {
+      "description": "Hardcoded boolean toggle that should be a feature flag",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 6,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "FLAG-CLEANUP": {
+      "description": "Feature flag eligible for cleanup (fully rolled out, no rollback risk)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 6,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "AI-LOGIC": {
+      "description": "AI-generated logic bug (null handling, boundary, condition, type coercion, return, state, async, edge case)",
+      "agents": [
+        "fg-410-code-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-410-code-reviewer"
+      ]
+    },
+    "AI-PERF": {
+      "description": "AI-generated performance bug (N+1, excessive I/O, memory leak, quadratic, redundant render, blocking, bundle)",
+      "agents": [
+        "fg-416-performance-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-416-performance-reviewer"
+      ]
+    },
+    "AI-CONCURRENCY": {
+      "description": "AI-generated concurrency bug (race condition, deadlock, atomicity, starvation, lost update)",
+      "agents": [
+        "fg-410-code-reviewer",
+        "fg-416-performance-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-410-code-reviewer",
+        "fg-416-performance-reviewer"
+      ]
+    },
+    "AI-SEC": {
+      "description": "AI-generated security bug (injection, hardcoded secret, insecure default, missing auth, verbose error, deserialization)",
+      "agents": [
+        "fg-411-security-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 1,
+      "affinity": [
+        "fg-411-security-reviewer"
+      ]
+    },
+    "EVAL": {
+      "description": "Pipeline evaluation harness (emitted by tests/evals/pipeline runner, not pipeline agents)",
+      "agents": [],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": []
+    },
+    "EVAL-REGRESSION": {
+      "description": "Composite score dropped more than regression_tolerance vs baseline",
+      "agents": [],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": []
+    },
+    "EVAL-TIMEOUT": {
+      "description": "Scenario exceeded scenario_timeout_seconds",
+      "agents": [],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": []
+    },
+    "EVAL-MUST-NOT-TOUCH": {
+      "description": "Pipeline modified a path listed in scenario must_not_touch",
+      "agents": [],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": []
+    },
+    "EVAL-VERDICT-MISMATCH": {
+      "description": "Actual verdict worse than scenario required_verdict",
+      "agents": [],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": []
+    },
+    "EVAL-BUDGET-OVER": {
+      "description": "Tokens or elapsed over scenario budget (adherence may still be > 0)",
+      "agents": [],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": []
+    },
+    "EVAL-OVERLAP-LOW": {
+      "description": "Jaccard(touched_files_expected, touched_files_actual) < 0.5",
+      "agents": [],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": []
+    },
+    "EVAL-BASELINE-UNAVAILABLE": {
+      "description": "master baseline artifact missing; regression gate skipped with warning",
+      "agents": [],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": []
+    }
   }
 }
