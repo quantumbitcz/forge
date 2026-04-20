@@ -71,7 +71,7 @@ REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md forge-config-template
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)
 # ---------------------------------------------------------------------------
-MIN_FRAMEWORKS=22
+MIN_FRAMEWORKS=24
 MIN_LANGUAGES=15
 MIN_TESTING_FILES=19
 MIN_BUILD_SYSTEMS=9
@@ -101,7 +101,7 @@ MIN_DOCUMENTATION_BINDINGS=21
 # ---------------------------------------------------------------------------
 # Test file count guards (update when adding new test files)
 # ---------------------------------------------------------------------------
-MIN_UNIT_TESTS=104        # Current: 106 files (added 10 agent behavior + 1 planning critic test)
+MIN_UNIT_TESTS=108        # Current: 132 files (added 4 phase-08 structural tests)
 MIN_CONTRACT_TESTS=83     # Current: 85 files
 MIN_SCENARIO_TESTS=40     # Current: 41 files
 
