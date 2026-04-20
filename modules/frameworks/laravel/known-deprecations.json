@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-04-19",
+  "deprecations": [
+    {
+      "pattern": "use\\s+Illuminate\\\\Support\\\\Facades\\\\Input|\\bInput::(?:get|all|only|except|has)\\(",
+      "replacement": "Input facade was removed in Laravel 6. Inject Illuminate\\Http\\Request and use $request->input(...) / $request->all() / $request->only([...]).",
+      "package": "laravel/framework",
+      "since": "5.2.0",
+      "removed_in": "6.0.0",
+      "applies_from": "5.2.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "->dispatchNow\\(|\\bdispatch_now\\(",
+      "replacement": "dispatchNow() was deprecated in Laravel 8 and removed in Laravel 9. Use dispatchSync(): MyJob::dispatchSync($payload).",
+      "package": "laravel/framework",
+      "since": "8.0.0",
+      "removed_in": "9.0.0",
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Mail::send\\(\\s*\\[",
+      "replacement": "Closure-based Mail::send([...], $data, $closure) is legacy and not queueable. Generate a Mailable: php artisan make:mail InvoicePaid, then Mail::to($user)->queue(new InvoicePaid($invoice)).",
+      "package": "laravel/framework",
+      "since": "5.4.0",
+      "removed_in": null,
+      "applies_from": "5.4.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Eloquent::unguard\\(\\s*\\)|Model::unguard\\(\\s*\\)",
+      "replacement": "Global unguard() disables mass-assignment protection for the entire request. Set per-model $fillable allowlists and pass $request->validated() to Model::create().",
+      "package": "laravel/framework",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Bus::chain\\(\\[\\s*function\\s*\\(",
+      "replacement": "Closure-based Bus::chain([fn() => ...]) is deprecated. Use invokable Job classes: Bus::chain([new ProcessOrder($order), new SendInvoice($order)])->dispatch().",
+      "package": "laravel/framework",
+      "since": "8.0.0",
+      "removed_in": null,
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "->getData\\(\\s*\\)\\s*->|JsonResponse[^;]*->getData\\(true\\)",
+      "replacement": "Avoid the JsonResponse->getData(true) anti-pattern in production code — it serializes then immediately deserializes the response. Build the JsonResource / array directly and return it once.",
+      "package": "laravel/framework",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Str::random\\(\\s*\\d+\\s*\\)\\s*[;)].*(?:token|secret|password|key)",
+      "replacement": "Str::random() is non-cryptographic. For secrets / passwords / tokens use Str::password() (Laravel 10.20+) or random_bytes(32) + bin2hex().",
+      "package": "laravel/framework",
+      "since": "10.20.0",
+      "removed_in": null,
+      "applies_from": "10.20.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Password::min\\(\\d+\\)\\s*->\\s*requireUppercase\\(",
+      "replacement": "Password::min(N)->requireUppercase()/->requireNumeric()/->requireSymbols() were renamed in Laravel 10 to ->mixedCase(), ->numbers(), ->symbols(), ->letters(). Use the new fluent names.",
+      "package": "laravel/framework",
+      "since": "10.0.0",
+      "removed_in": null,
+      "applies_from": "10.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "->only\\(\\[?['\"](?:show|update|destroy|index|store|create|edit)['\"][^\\]]*\\]?\\)",
+      "replacement": "Verify Route::resource(...)->only([...]) / ->except([...]) action names match Laravel's current resource map. Custom resource verbs that worked pre-Laravel 8 may need ->parameters([...]) or ->shallow() updates in Laravel 10+.",
+      "package": "laravel/framework",
+      "since": "8.0.0",
+      "removed_in": null,
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "artisan serve --dev|php\\s+artisan\\s+serve\\s+--dev",
+      "replacement": "The --dev flag for `artisan serve` was removed. The dev server now picks up .env automatically; use APP_ENV=local php artisan serve if needed.",
+      "package": "laravel/framework",
+      "since": "9.0.0",
+      "removed_in": "9.0.0",
+      "applies_from": "9.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Queue::after\\(\\s*function",
+      "replacement": "Closure-based Queue::after(fn() => ...) registration was removed in Laravel 11. Create an event listener class for Illuminate\\Queue\\Events\\JobProcessed and register it in EventServiceProvider.",
+      "package": "laravel/framework",
+      "since": "11.0.0",
+      "removed_in": "11.0.0",
+      "applies_from": "11.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "App\\\\Http\\\\Kernel|App\\\\Console\\\\Kernel|App\\\\Exceptions\\\\Handler",
+      "replacement": "Laravel 11 removed App\\Http\\Kernel, App\\Console\\Kernel, and App\\Exceptions\\Handler. Configure middleware, scheduling, and exception handling fluently in bootstrap/app.php (->withMiddleware, ->withExceptions, ->withRouting). Schedule lives in routes/console.php.",
+      "package": "laravel/framework",
+      "since": "11.0.0",
+      "removed_in": null,
+      "applies_from": "11.0.0",
+      "applies_to": "*",
+      "language": "php",
+      "added": "2026-04-19",
+      "addedBy": "phase-08"
+    }
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "_version": 1,
+  "_updated": "2026-04-19T00:00:00Z",
+  "extends": "php",
+  "framework": "laravel",
+  "additional_rules": [
+    {
+      "id": "LV-SEC-001",
+      "name": "raw-sql-string-interpolation",
+      "pattern": "DB::raw\\(\\s*['\"][^'\"]*\\$",
+      "scope_pattern": "app/|database/",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "Variable interpolated into DB::raw() — SQL injection risk. Use bound parameters via whereRaw('col = ?', [$value]).",
+      "fix_hint": "DB::raw('CAST(col AS INTEGER)') is fine; never interpolate user input. For dynamic clauses use whereRaw, selectRaw, havingRaw with bindings as the second argument.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-SEC-002",
+      "name": "env-outside-config",
+      "pattern": "\\benv\\(['\"]",
+      "scope_pattern": "app/|routes/|database/|tests/|resources/views/",
+      "severity": "CRITICAL",
+      "category": "SEC-CONFIG",
+      "message": "env() called outside config/ — returns null once `php artisan config:cache` runs.",
+      "fix_hint": "Read configuration via config('services.foo'). Move the env() call into config/services.php and reference the config key in app/. config:cache is mandatory for production performance.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-SEC-003",
+      "name": "global-unguard",
+      "pattern": "Eloquent::unguard\\(\\s*\\)|Model::unguard\\(\\s*\\)",
+      "scope_pattern": "app/|database/seeders/|bootstrap/",
+      "severity": "CRITICAL",
+      "category": "SEC-MASS-ASSIGNMENT",
+      "message": "Global unguard() disables mass-assignment protection for the entire request lifecycle.",
+      "fix_hint": "Remove unguard(). Set per-model $fillable allowlists. For bulk seeding use ::factory() or pass explicit attribute arrays — never rely on unguard().",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-SEC-004",
+      "name": "facade-input-removed",
+      "pattern": "use\\s+Illuminate\\\\Support\\\\Facades\\\\Input|Input::(?:get|all|only|except|has)",
+      "scope_pattern": "app/|routes/",
+      "severity": "CRITICAL",
+      "category": "DEP-API",
+      "message": "Input facade was removed in Laravel 6 — runtime error on Laravel 6+.",
+      "fix_hint": "Inject Illuminate\\Http\\Request and use $request->input(...), $request->all(), $request->only([...]). Or, in controllers, pull values from a FormRequest.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-SEC-005",
+      "name": "csrf-exempt-on-session-route",
+      "pattern": "protected\\s+\\$except\\s*=\\s*\\[[^\\]]+\\]",
+      "scope_pattern": "app/Http/Middleware/VerifyCsrfToken\\.php$",
+      "severity": "WARNING",
+      "category": "SEC-CSRF",
+      "message": "CSRF exemption list — verify each exempted route authenticates via token (Sanctum/Passport bearer), not session cookies.",
+      "fix_hint": "Routes that use Auth::user() via session cookies must keep CSRF protection. Only exempt routes that authenticate via Authorization: Bearer ... or are public webhooks (validate signature instead).",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-DEP-001",
+      "name": "dispatch-now-removed",
+      "pattern": "->dispatchNow\\(|dispatch_now\\(|\\bdispatchNow\\(",
+      "scope_pattern": "app/|routes/|tests/",
+      "severity": "CRITICAL",
+      "category": "DEP-API",
+      "message": "dispatchNow() was removed in Laravel 9 — runtime error.",
+      "fix_hint": "Replace with dispatchSync() for synchronous in-process execution: ProcessOrder::dispatchSync($order). Same semantics, supported name.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-DEP-002",
+      "name": "mail-send-closure",
+      "pattern": "Mail::send\\(\\s*\\[",
+      "scope_pattern": "app/|routes/",
+      "severity": "WARNING",
+      "category": "DEP-API",
+      "message": "Mail::send([...], $data, $closure) closure-based API is legacy and not queueable.",
+      "fix_hint": "Create a Mailable class: php artisan make:mail InvoicePaid. Implement build() and use Mail::to($user)->queue(new InvoicePaid($invoice)) for queued sends.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-ARCH-001",
+      "name": "ad-hoc-request-validate-in-controller",
+      "pattern": "\\$request->validate\\(\\s*\\[",
+      "scope_pattern": "app/Http/Controllers/",
+      "severity": "INFO",
+      "category": "ARCH-VALIDATION",
+      "message": "Ad-hoc $request->validate() in controller — promote to a FormRequest class for reusability and authorize() integration.",
+      "fix_hint": "php artisan make:request StorePostRequest. Move the rules array into rules() and add authorize() that delegates to a Policy. Type-hint StorePostRequest in the controller method signature.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-ARCH-002",
+      "name": "model-without-fillable",
+      "pattern": "class\\s+\\w+\\s+extends\\s+(?:Authenticatable|Model)\\b",
+      "scope_pattern": "app/Models/",
+      "severity": "INFO",
+      "category": "ARCH-MASS-ASSIGNMENT",
+      "message": "Eloquent model — verify $fillable (allowlist) is declared. $guarded = [] without discipline opens mass-assignment vulnerabilities.",
+      "fix_hint": "Add `protected $fillable = ['name', 'email', ...];` listing only the columns safe for mass assignment via Model::create($request->validated()).",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-ARCH-003",
+      "name": "resource-route-without-policy",
+      "pattern": "Route::(?:resource|apiResource)\\(",
+      "scope_pattern": "routes/",
+      "severity": "INFO",
+      "category": "SEC-AUTHORIZATION",
+      "message": "Resource route — verify the controller's actions call $this->authorize(...) or the route group includes the can: middleware.",
+      "fix_hint": "In the controller __construct: $this->authorizeResource(Post::class, 'post'). Or wrap the route: Route::apiResource(...)->middleware('can:viewAny,App\\Models\\Post')",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-PERF-001",
+      "name": "missing-eager-load",
+      "pattern": "foreach\\s*\\(\\s*\\$\\w+\\s+as\\s+\\$\\w+\\)\\s*\\{[^}]*\\$\\w+->\\w+(?:->|\\.)",
+      "scope_pattern": "app/|resources/views/",
+      "severity": "INFO",
+      "category": "PERF-DB-N-PLUS-ONE",
+      "message": "Loop accesses a relationship — verify it's eager-loaded with ->with([...]) at the query site to prevent N+1.",
+      "fix_hint": "Post::query()->with(['author:id,name', 'tags'])->get(). Enable Model::preventLazyLoading() in AppServiceProvider::boot() during local/staging to throw on missed eager loads.",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-PERF-002",
+      "name": "lazy-loading-not-prevented",
+      "pattern": "class\\s+AppServiceProvider\\s+extends\\s+ServiceProvider",
+      "scope_pattern": "app/Providers/AppServiceProvider\\.php$",
+      "severity": "INFO",
+      "category": "PERF-DB-N-PLUS-ONE",
+      "message": "Verify Model::preventLazyLoading(! app()->isProduction()) is called in boot() so missed eager loads throw in non-prod.",
+      "fix_hint": "In AppServiceProvider::boot(): Model::preventLazyLoading(! app()->isProduction()); Model::preventSilentlyDiscardingAttributes(! app()->isProduction());",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-CONV-001",
+      "name": "dump-or-dd-in-app",
+      "pattern": "\\b(?:dd|dump|var_dump|print_r)\\s*\\(",
+      "scope_pattern": "app/|routes/|resources/views/",
+      "severity": "WARNING",
+      "category": "CONV-DEBUG",
+      "message": "dd()/dump()/var_dump()/print_r() in committed code — remove or replace with logging.",
+      "fix_hint": "Use Log::info(...)/Log::debug(...) with structured context. For local debugging use Telescope or Laravel Debugbar — never commit dd() / dump().",
+      "example_ref": ""
+    },
+    {
+      "id": "LV-CONV-002",
+      "name": "hardcoded-route-url",
+      "pattern": "redirect\\(\\s*['\"]/[a-zA-Z0-9_/-]+['\"]\\s*\\)|action\\(\\s*['\"][\\\\\\w]+@",
+      "scope_pattern": "app/|resources/views/",
+      "severity": "INFO",
+      "category": "CONV-URL",
+      "message": "Hardcoded URL or action() string — use route('users.show', $user) so URL changes do not break callers.",
+      "fix_hint": "Name your routes: Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show'); then redirect()->route('users.show', $user) and {{ route('users.show', $user) }} in Blade.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Controllers must not contain Eloquent query chains beyond $this->method()",
+      "scope_pattern": "app/Http/Controllers/",
+      "forbidden_imports": [
+        "use\\s+Illuminate\\\\Support\\\\Facades\\\\DB"
+      ],
+      "severity": "INFO",
+      "category": "ARCH-BOUNDARY",
+      "message": "DB facade usage in controllers — move query logic to a service, action, or repository."
+    },
+    {
+      "name": "Models must not import HTTP request types",
+      "scope_pattern": "app/Models/",
+      "forbidden_imports": [
+        "use\\s+Illuminate\\\\Http\\\\Request",
+        "use\\s+Illuminate\\\\Http\\\\JsonResponse"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "Controller.php": 250,
+      "Service.php": 350,
+      "Model.php": 400
+    }
+  }
+}
