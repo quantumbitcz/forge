@@ -142,6 +142,28 @@ def migrate_item(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
     return out
 
 
+def count_recent_false_positives(
+    items: "list[Dict[str, Any]]", now: datetime, window_days: int = 7
+) -> int:
+    """Count items whose last_false_positive_at is within the last `window_days`.
+
+    Review Issue 2: this is the designated reader for last_false_positive_at so
+    the field is not write-only. fg-700-retrospective calls this to emit the
+    'last FP in last 7d: K' summary line.
+    """
+    count = 0
+    for item in items:
+        fp = item.get("last_false_positive_at")
+        if not fp:
+            continue
+        ts = _parse_iso(fp)
+        delta_days = (now - ts).total_seconds() / 86400.0
+        # Future timestamps (clock skew) → delta_days < 0 → not counted.
+        if 0 <= delta_days <= window_days:
+            count += 1
+    return count
+
+
 def _cli_dry_run_recompute(directory: str, now: datetime) -> int:
     """Read every *.json in `directory`, recompute tier, print 'id\\ttier\\tconfidence'."""
     import os

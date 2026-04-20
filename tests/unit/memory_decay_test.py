@@ -290,3 +290,22 @@ def test_cli_dry_run_recompute_prints_tier_per_item(tmp_path: Path):
     )
     lines = [line for line in result.stdout.splitlines() if line.strip()]
     assert any("a" in line and "HIGH" in line for line in lines)
+
+
+def test_count_recent_false_positives_counts_within_window():
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    items = [
+        {"id": "1", "last_false_positive_at": _iso(now - timedelta(days=1))},   # in window
+        {"id": "2", "last_false_positive_at": _iso(now - timedelta(days=6))},   # in window
+        {"id": "3", "last_false_positive_at": _iso(now - timedelta(days=8))},   # out
+        {"id": "4", "last_false_positive_at": None},                            # out
+        {"id": "5"},                                                             # out (missing)
+    ]
+    assert md.count_recent_false_positives(items, now, window_days=7) == 2
+
+
+def test_count_recent_false_positives_handles_clock_skew():
+    """A timestamp in the future counts as zero, not as 'in window'."""
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    items = [{"id": "x", "last_false_positive_at": _iso(now + timedelta(days=3))}]
+    assert md.count_recent_false_positives(items, now, window_days=7) == 0
