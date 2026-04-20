@@ -1,0 +1,93 @@
+name: phase09-otel
+
+on:
+  pull_request:
+    paths:
+      - 'hooks/_py/otel*.py'
+      - 'hooks/_py/event_to_span.py'
+      - 'shared/schemas/otel-genai-v1.json'
+      - 'tests/unit/**'
+      - '.github/workflows/phase09-otel.yml'
+
+jobs:
+  otel-semconv-validation:
+    runs-on: ubuntu-latest        # pinned: DinD flakes on macOS runners.
+    services:
+      otel-collector:
+        image: otel/opentelemetry-collector-contrib:0.105.0
+        ports:
+          - 4317:4317
+          - 4318:4318
+        volumes:
+          - ${{ github.workspace }}/.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+        options: >-
+          --health-cmd "wget -qO- http://localhost:13133/ || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install deps
+        run: |
+          pip install opentelemetry-api==1.30.0 \
+                      opentelemetry-sdk==1.30.0 \
+                      opentelemetry-exporter-otlp==1.30.0 \
+                      jsonschema pytest
+      - name: Run Phase 01 eval with OTel enabled
+        env:
+          FORGE_OTEL_ENABLED: "true"
+          FORGE_OTEL_EXPORTER: "grpc"
+          FORGE_OTEL_ENDPOINT: "http://localhost:4317"
+        run: |
+          # Drive a canonical eval scenario that exercises every span kind.
+          python -m tests.eval.run_phase01_scenario \
+            --otel-enabled --collector-url http://localhost:4317
+      - name: Validate emitted spans against pinned schema
+        run: |
+          python -m pytest tests/unit/test_otel_schema.py -v
+          python tests/unit/otel_semconv_validator.py --spans /tmp/otel-out.jsonl
+
+  otel-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install deps
+        run: |
+          pip install opentelemetry-api==1.30.0 \
+                      opentelemetry-sdk==1.30.0 \
+                      opentelemetry-exporter-otlp==1.30.0 \
+                      jsonschema pytest
+      - name: Replay parity test
+        run: pytest tests/unit/test_otel_replay.py -v
+
+  otel-disabled-overhead:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install deps
+        run: pip install pytest
+      - name: Verify no OTel imports and <1ms overhead when disabled
+        run: |
+          python -c "
+          import time, hooks._py.otel as o
+          o.init({'enabled': False})
+          t0 = time.perf_counter_ns()
+          for _ in range(1000):
+              with o.stage_span('EXPLORING'):
+                  pass
+          elapsed_ms = (time.perf_counter_ns() - t0) / 1e6 / 1000
+          assert elapsed_ms < 1.0, f'overhead {elapsed_ms}ms/stage exceeds 1ms budget'
+          import sys
+          for mod in list(sys.modules):
+              assert not mod.startswith('opentelemetry'), f'imported {mod} when disabled'
+          print(f'OK: {elapsed_ms:.4f}ms/stage, no OTel imports')
+          "
