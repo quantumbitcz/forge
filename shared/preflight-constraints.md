@@ -91,3 +91,15 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 3. Preserve run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
 
 **Initialization:** At PREFLIGHT, for every task created at PLAN, set `implementer_reflection_cycles: 0` and `reflection_verdicts: []`. Set run-level `implementer_reflection_cycles_total: 0` and `reflection_divergence_count: 0`.
+
+## Speculation (Phase 12)
+
+PREFLIGHT validates the `speculation:` block:
+
+- `candidates_max in [2,5]` — invalid raises `CONFIG-SPECULATION-CANDIDATES` CRITICAL.
+- `auto_pick_threshold_delta in [1,20]` — invalid raises `CONFIG-SPECULATION-DELTA` CRITICAL.
+- `token_ceiling_multiplier in [1.5, 4.0]` — invalid raises `CONFIG-SPECULATION-CEILING` CRITICAL.
+- `min_diversity_score in [0.05, 0.50]` — invalid raises `CONFIG-SPECULATION-DIVERSITY` CRITICAL.
+- `emphasis_axes length >= candidates_max` — invalid raises `CONFIG-SPECULATION-AXES` CRITICAL.
+
+Any CRITICAL fails PREFLIGHT with `preflight_failed = true`.
