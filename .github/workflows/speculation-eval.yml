@@ -16,12 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
-      - name: Install bats
-        run: |
-          git submodule update --init --recursive
       - name: Run eval gate
         run: |
           chmod +x evals/speculation/runner.sh
