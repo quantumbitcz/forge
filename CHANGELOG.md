@@ -3,6 +3,38 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Phase 05: Skill Consolidation
+
+### Breaking changes (Phase 05 — skill consolidation)
+
+Seven top-level skills have been removed and their capabilities folded into three unified skills. The skill count is now 28 (down from 35).
+
+| Removed                 | Use instead                              |
+|-------------------------|------------------------------------------|
+| /forge-codebase-health  | /forge-review --scope=all                |
+| /forge-deep-health      | /forge-review --scope=all --fix          |
+| /forge-graph-status     | /forge-graph status                      |
+| /forge-graph-query      | /forge-graph query <cypher>              |
+| /forge-graph-rebuild    | /forge-graph rebuild                     |
+| /forge-graph-debug      | /forge-graph debug                       |
+| /forge-config-validate  | /forge-verify --config                   |
+
+New: `/forge-review --scope=all --fix` presents an `AskUserQuestion` safety gate before the first commit, unless `autonomous: true` in config or `--yes` is passed. This preserves the safety posture that the standalone `/forge-deep-health` had by virtue of requiring deliberate invocation.
+
+Subcommand dispatch pattern documented in `shared/skill-subcommand-pattern.md`.
+
+### Changed
+
+- `CLAUDE.md` Skills paragraph rewritten for the 28-skill baseline; getting-started flows updated.
+- `skills/forge-help/SKILL.md` rewritten — ASCII decision tree replaces tier tables; `--json` envelope bumps to `schema_version: "2"`; new Migration (Phase 05) table.
+- `shared/skill-contract.md` §4 Skill categorization rebased to the Phase 05 baseline (10 read-only + 18 writes = 28).
+- `README.md`, `shared/graph/{schema,schema-versioning}.md`, `shared/graph/enrich-symbols.sh`, `shared/recovery/health-checks/dependency-check.sh`, `skills/forge-init/SKILL.md` — every `/forge-graph-*` and `/forge-config-validate` reference rewritten to the new `<sub>` form.
+
+### Added
+
+- `tests/structural/skill-consolidation.bats` — 16 assertions locking in skill count, expected names, removed names, subcommand-dispatch sections, `--json` schema_version, CLAUDE.md "(28 total)" header, and a `validate-config.sh` read-only regression guard.
+- `tests/lib/module-lists.bash` — `DISCOVERED_SKILLS`, `MIN_SKILLS=28`, and `EXPECTED_SKILL_NAMES` fixture (28 entries).
+
 ## [Unreleased] — Phase 14: Time-Travel Checkpoints
 
 ### Breaking changes

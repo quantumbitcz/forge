@@ -17,7 +17,7 @@ At PREFLIGHT, the orchestrator (fg-100-orchestrator) checks the graph schema ver
 2. Compare against expected version in `shared/graph/schema.md` header
 3. If version mismatch:
    - Minor version (1.0 to 1.1): Run incremental migration
-   - Major version (1.x to 2.0): Recommend `/forge-graph-rebuild`
+   - Major version (1.x to 2.0): Recommend `/forge-graph rebuild`
    - No version found: Assume 1.0 (backward compatible)
 
 ## Migration Scripts
@@ -40,7 +40,7 @@ Each migration file:
 1. Create `shared/graph/migrations/NNN-description.cypher`
 2. Update expected version in `shared/graph/schema.md` header
 3. Add migration to `shared/graph/migrations/README.md`
-4. Test: `/forge-graph-rebuild` should produce same result as fresh build + migrations
+4. Test: `/forge-graph rebuild` should produce same result as fresh build + migrations
 
 ## SQLite Code Graph Versioning
 

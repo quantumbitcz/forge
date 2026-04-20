@@ -125,19 +125,15 @@ Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in i
 | `/forge-compress` | [writes] | Compress agents/output/status/help. Replaces `forge-caveman` and `forge-compression-help`. |
 | `/forge-verify` | [read-only] | Quick build + lint + test check |
 | `/forge-security-audit` | [read-only] | Module-appropriate security scanners |
-| `/forge-codebase-health` | [read-only] | Full check engine health report |
-| `/forge-deep-health` | [writes] | Iterative fix loop until clean |
+| `/forge-review --scope=all` | [read-only] | Full check engine health report (codebase audit) |
+| `/forge-review --scope=all --fix` | [writes] | Iterative fix loop until clean (AskUserQuestion safety gate) |
 | `/forge-docs-generate` | [writes] | Generate project documentation |
 | `/forge-deploy` | [writes] | Deployment (staging, production, preview, rollback) |
 | `/forge-migration` | [writes] | Framework/library version migrations |
 | `/forge-bootstrap` | [writes] | Scaffold new project from template |
-| `/forge-config-validate` | [read-only] | Pre-pipeline config validation |
+| `/forge-verify --config` | [read-only] | Pre-pipeline config validation |
 | `/forge-automation` | [writes] | Event-driven automation management |
-| `/forge-graph-init` | [writes] | Initialize Neo4j knowledge graph |
-| `/forge-graph-status` | [read-only] | Graph connection and node counts |
-| `/forge-graph-query` | [read-only] | Run Cypher queries |
-| `/forge-graph-rebuild` | [writes] | Rebuild graph from codebase |
-| `/forge-graph-debug` | [read-only] | Targeted Neo4j diagnostics |
+| `/forge-graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
 | `/forge-commit` | [writes] | Terse conventional commit from staged changes |
 | `/forge-help` | [read-only] | Interactive decision tree to find the right skill |
 | `/forge-tour` | [read-only] | Guided 5-stop introduction to Forge |

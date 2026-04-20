@@ -41,11 +41,13 @@ Either inline list OR a single line: `See shared/skill-contract.md for the stand
 | 3 | Recovery needed (state corruption, locked, or escalated) |
 | 4 | Aborted by user (`/forge-abort`, Ctrl+C, or "Abort" chosen in `AskUserQuestion`) |
 
-## 4. Skill categorization (Phase 1 baseline — 35 skills)
+## 4. Skill categorization (Phase 5 baseline — 28 skills)
 
-**Read-only (15):** forge-ask, forge-codebase-health, forge-config-validate, forge-graph-debug, forge-graph-query, forge-graph-status, forge-help, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify.
+**Read-only (10):** forge-ask, forge-help, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify (plus any subcommand of `/forge-graph` marked read-only — but the parent skill is classified by maximum impact per §1).
 
-**Writes (20):** forge-abort, forge-automation, forge-bootstrap, forge-commit, forge-compress, forge-config, forge-deep-health, forge-deploy, forge-docs-generate, forge-fix, forge-graph-init, forge-graph-rebuild, forge-init, forge-migration, forge-playbook-refine, forge-recover, forge-review, forge-run, forge-shape, forge-sprint.
+**Writes (18):** forge-abort, forge-automation, forge-bootstrap, forge-commit, forge-compress, forge-config, forge-deploy, forge-docs-generate, forge-fix, forge-graph, forge-init, forge-migration, forge-playbook-refine, forge-recover, forge-review, forge-run, forge-shape, forge-sprint.
+
+**Total: 28.** `/forge-graph` is `[writes]` (its `init` and `rebuild` subcommands write) even though `status`, `query`, and `debug` are read-only — the badge reflects maximum impact per §1.
 
 ## 5. Amendment process
 
