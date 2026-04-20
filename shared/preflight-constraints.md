@@ -118,3 +118,19 @@ PREFLIGHT validates the `consistency:` block:
 | `consistency.min_consensus_confidence` | float in `[0.0, 1.0]` | PREFLIGHT fails with CRITICAL on out-of-range |
 
 See `shared/consistency/voting.md` for the dispatch contract, aggregation algorithm, and cost delta table.
+
+## `observability.otel.*` (Phase 09, forge 3.4.0+)
+
+| Parameter                                       | Type / Range          | Default           |
+|-------------------------------------------------|-----------------------|-------------------|
+| `observability.otel.enabled`                    | bool                  | `false`           |
+| `observability.otel.endpoint`                   | non-empty when enabled| `""`              |
+| `observability.otel.exporter`                   | `grpc`\|`http`\|`console` | `grpc`        |
+| `observability.otel.service_name`               | non-empty string      | `forge-pipeline`  |
+| `observability.otel.sample_rate`                | float in `[0.0, 1.0]` | `1.0`             |
+| `observability.otel.openinference_compat`       | bool                  | `false`           |
+| `observability.otel.include_tool_spans`         | bool                  | `false`           |
+| `observability.otel.batch_size`                 | int in `[1, 1024]`    | `32`              |
+| `observability.otel.flush_interval_seconds`     | int in `[1, 60]`      | `2`               |
+
+Violations log WARNING and fall back to defaults. When `enabled=true` but `opentelemetry-api` is not importable, WARNING + disable OTel for the run (pipeline continues — emission is best-effort; `otel.replay()` remains authoritative via `.forge/events.jsonl`). See `shared/observability.md` for the durability contract and sampler semantics.
