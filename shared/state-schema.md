@@ -1365,3 +1365,43 @@ Present only when the orchestrator was invoked with `--eval-mode <scenario_id>` 
 ```
 
 Field-name contract (review C2): `touched_files_expected` is the single canonical name used in both `state.json` and scenario `expected.yaml`. Do not introduce aliases.
+
+## prompt_compaction (Phase 10)
+
+Added as an additive top-level `state.json` field in schema 1.9.0. Written by the
+orchestrator when `code_graph.prompt_compaction.enabled: true`. Purely
+observational; absence implies the feature is off. Because the block is
+conditional and additive, no schema-version bump is required — consumers that
+are unaware of `prompt_compaction` continue to work unchanged.
+
+```json
+{
+  "prompt_compaction": {
+    "enabled": true,
+    "stages": {
+      "orchestrator_preflight": {"budget": 8000, "pack_tokens": 6420, "files": 25, "ratio": 0.38},
+      "planner_explore":        {"budget": 10000, "pack_tokens": 8930, "files": 25, "ratio": 0.42},
+      "implementer_task_3":     {"budget": 4000, "pack_tokens": 3210, "files": 12, "ratio": 0.51}
+    },
+    "baseline_tokens_estimate": 22500,
+    "baseline_source": "estimated",
+    "compacted_tokens_total": 18560,
+    "overall_ratio": 0.18,
+    "bypass_events": {
+      "sparse_graph": 0,
+      "missing_graph": 0,
+      "solve_diverged": 0,
+      "corrupt_cache": 0
+    }
+  }
+}
+```
+
+**Field semantics:**
+
+- `ratio` per stage = `(baseline_tokens_estimate_for_stage - pack_tokens) / baseline_tokens_estimate_for_stage`.
+- `baseline_source`:
+  - `"estimated"` — computed analytically from `sum(size_bytes)/3.5` (default, always available; spec-review Issue #2 resolution).
+  - `"measured"` — sourced from `.forge/run-history.db` averages once the run count ≥ 5.
+- `overall_ratio` = `(baseline_tokens_estimate - compacted_tokens_total) / baseline_tokens_estimate`; `0` if baseline is `0`.
+- `bypass_events` counts per run; SC-4's `repomap.bypass.failure` = sum of `missing_graph + solve_diverged + corrupt_cache` (excludes the legitimate `sparse_graph` path).
