@@ -40,6 +40,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-419-infra-deploy-reviewer | 4 | No | Review | Infrastructure |
 | fg-500-test-gate | 2 | Yes | Verify | Coordination |
 | fg-505-build-verifier | 3 | No | Verify | Build |
+| fg-506-migration-verifier | 3 | No | Verify | Migration |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-515-property-test-generator | 3 | No | Verify | Testing |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
