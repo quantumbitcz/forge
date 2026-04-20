@@ -214,6 +214,61 @@
         "fg-412-architecture-reviewer"
       ]
     },
+    "REFLECT": {
+      "description": "Implementer-critic (fg-301) reflection findings \u2014 the implementation diff does not satisfy the intent of the tests. Wildcard parent.",
+      "agents": [
+        "fg-301-implementer-critic"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
+    },
+    "REFLECT-DIVERGENCE": {
+      "description": "Implementation diverges from requirement without justification.",
+      "agents": [
+        "fg-301-implementer-critic"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
+    },
+    "REFLECT-HARDCODED-RETURN": {
+      "description": "Implementation returns a hardcoded value that makes the test pass without solving the general case.",
+      "agents": [
+        "fg-301-implementer-critic"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
+    },
+    "REFLECT-OVER-NARROW": {
+      "description": "Implementation only handles the single case the test asserts; other valid inputs break.",
+      "agents": [
+        "fg-301-implementer-critic"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
+    },
+    "REFLECT-MISSING-BRANCH": {
+      "description": "Implementation missed a branch or guard that the requirement implies.",
+      "agents": [
+        "fg-301-implementer-critic"
+      ],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
+    },
     "APPROACH": {
       "description": "Solution quality (suboptimal pattern, unnecessary complexity)",
       "agents": [
