@@ -74,7 +74,7 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
       - run: dotnet ef migrations bundle --self-contained -r linux-x64 -o efbundle
       - run: ./efbundle

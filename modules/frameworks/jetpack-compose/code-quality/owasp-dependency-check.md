@@ -87,7 +87,7 @@ on:
 jobs:
   dependency-check:
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v4
         with: { java-version: "17", distribution: temurin }
       - name: Cache NVD database

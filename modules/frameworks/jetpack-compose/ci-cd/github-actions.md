@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -78,7 +78,7 @@ Use both `actions/setup-java` (caches Gradle wrapper) and `gradle/actions/setup-
 instrumented-tests:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v4
       with:
         distribution: temurin
@@ -110,7 +110,7 @@ publish:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v4
       with:
         distribution: temurin

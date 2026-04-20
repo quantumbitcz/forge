@@ -18,7 +18,7 @@ jobs:
   build-jvm-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -34,7 +34,7 @@ jobs:
   build-ios:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -67,7 +67,7 @@ jobs:
             task: ":shared:iosSimulatorArm64Test"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -96,7 +96,7 @@ publish-ios:
   if: github.ref == 'refs/heads/main'
   runs-on: macos-15
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v4
       with:
         distribution: temurin
@@ -116,7 +116,7 @@ publish-ios:
 lint:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v4
       with:
         distribution: temurin

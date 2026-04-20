@@ -30,7 +30,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Resolve dependencies
         run: swift package resolve
@@ -76,7 +76,7 @@ publish:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: docker/build-push-action@v6
       with:
         context: .

@@ -85,7 +85,7 @@ jobs:
   dep-check-jvm:
     name: Dependency Check (JVM/Android)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v4
         with: { java-version: "17", distribution: temurin }
       - name: Cache NVD database
@@ -102,7 +102,7 @@ jobs:
     name: Dependency Check (JS/npm)
     if: "contains(github.event.head_commit.message, 'js')"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - run: npm audit --audit-level=high

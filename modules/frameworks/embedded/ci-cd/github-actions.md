@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install ARM toolchain
         run: |
@@ -61,7 +61,7 @@ build:
           cmake_toolchain: cmake/toolchains/riscv32-unknown-elf.cmake
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - run: sudo apt-get update && sudo apt-get install -y ${{ matrix.packages }}
     - run: |
         cmake -B build -DCMAKE_TOOLCHAIN_FILE=${{ matrix.cmake_toolchain }}
@@ -75,7 +75,7 @@ build:
 test:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Build and run host tests
       run: |
@@ -92,7 +92,7 @@ Host-side tests use the native GCC compiler. They validate platform-independent 
 qemu-test:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install tools
       run: |

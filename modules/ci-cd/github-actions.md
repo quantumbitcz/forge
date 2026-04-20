@@ -50,7 +50,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -159,7 +159,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup project
         uses: ./.github/actions/setup-project
@@ -196,7 +196,7 @@ jobs:
             java-version: '21'
             coverage: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
@@ -261,7 +261,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
@@ -289,7 +289,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -336,7 +336,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run linter
         uses: super-linter/super-linter@v7
@@ -348,7 +348,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -396,7 +396,7 @@ jobs:
     outputs:
       image-digest: ${{ steps.build-image.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -425,7 +425,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -451,7 +451,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -583,14 +583,14 @@ The `::add-mask::` workflow command tells the runner to redact the value from al
 # DANGEROUS — checks out attacker-controlled code with secrets access
 on: pull_request_target
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
     with:
       ref: ${{ github.event.pull_request.head.sha }}  # PR code with base secrets!
 
 # SAFE — checks out base branch code only
 on: pull_request_target
 steps:
-  - uses: actions/checkout@v4  # defaults to base branch
+  - uses: actions/checkout@v6  # defaults to base branch
 ```
 
 The safe pattern for labeling or commenting on external PRs uses `pull_request_target` without checking out PR code. For builds that need PR code with secrets (e.g., Sonar analysis), use a two-job pattern: job 1 runs on `pull_request` (no secrets, builds the PR), job 2 runs on `workflow_run` (has secrets, processes artifacts from job 1).
@@ -709,7 +709,7 @@ jobs:
         java-version: ['17', '21']
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Test setup action
         id: setup

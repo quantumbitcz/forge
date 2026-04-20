@@ -22,7 +22,7 @@ jobs:
         image: docker:dind
         options: --privileged
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-java@v4
         with:
@@ -87,7 +87,7 @@ Use `gradle/actions/setup-gradle` for fine-grained Gradle cache control. Set `ca
 native-build:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: graalvm/setup-graalvm@v1
       with:
         java-version: 21
@@ -108,7 +108,7 @@ publish:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v4
       with:
         distribution: temurin

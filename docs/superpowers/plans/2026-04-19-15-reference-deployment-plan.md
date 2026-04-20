@@ -1095,7 +1095,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Verify referenced files exist
         run: |
           set -euo pipefail
@@ -1182,7 +1182,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: v<UPSTREAM_TAG>-original
           fetch-depth: 0

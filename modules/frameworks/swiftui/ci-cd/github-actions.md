@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
@@ -93,7 +93,7 @@ distribute:
   if: github.ref == 'refs/heads/main'
   runs-on: macos-15
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Import certificates
       uses: apple-actions/import-codesign-certs@v3
@@ -143,7 +143,7 @@ test:
         - "platform=iOS Simulator,name=iPad Pro 13-inch (M4)"
   runs-on: macos-15
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - run: |
         xcodebuild test \
           -scheme MyApp \

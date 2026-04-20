@@ -140,7 +140,7 @@ spotless {
 jobs:
   quality:
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:

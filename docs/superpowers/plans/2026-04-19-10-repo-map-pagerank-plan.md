@@ -2103,7 +2103,7 @@ env:
   FORGE_COMPACTION: ${{ matrix.compaction }}
 
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
   - name: Install Python deps (Phase 02)
     run: |
       python3 -m pip install -r hooks/_py/requirements.txt

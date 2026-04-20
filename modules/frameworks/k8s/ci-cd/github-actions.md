@@ -26,7 +26,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Helm lint
         run: |
@@ -124,7 +124,7 @@ build-image:
   runs-on: ubuntu-latest
   if: github.ref == 'refs/heads/main'
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: docker/login-action@v3
       with:
         registry: ghcr.io
