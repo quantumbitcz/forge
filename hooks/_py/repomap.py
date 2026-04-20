@@ -15,8 +15,10 @@ SC-4's `repomap.bypass.failure` = {missing_graph, solve_diverged, corrupt_cache}
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
-from dataclasses import dataclass, field
+from collections import OrderedDict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 
@@ -282,3 +284,96 @@ def assemble_pack(
         budget_tokens=cfg.budget_tokens,
         pack_tokens=cfg.budget_tokens - remaining,
     )
+
+
+# ---------------------------------------------------------------------------
+# Task 6: write-through pack cache with 4-tuple key + LRU eviction
+# ---------------------------------------------------------------------------
+
+CACHE_SCHEMA_VERSION = "1.0.0"
+
+
+@dataclass
+class CachedPack:
+    graph_sha: str
+    keywords_hash: str
+    budget: int
+    top_k: int
+    computed_at: str
+    ranked: list[dict]
+    baseline_tokens_estimate: int = 0
+    baseline_source: str = "estimated"  # "estimated" | "measured"
+
+
+class PackCache:
+    """Write-through JSON cache keyed on the 4-tuple
+    ``(graph_sha, keywords_hash, budget, top_k)`` with LRU eviction at
+    ``max_entries``.
+
+    On-disk format (JSON)::
+
+        {"schema_version": "1.0.0", "entries": [ {...CachedPack...}, ... ]}
+
+    Corrupt JSON yields an empty in-memory cache (callers interpret the miss
+    as ``repomap.bypass.corrupt_cache``). Writes are atomic (``tmp + replace``).
+    """
+
+    def __init__(self, path: Path | str, max_entries: int = 16):
+        self.path = Path(path)
+        self.max_entries = max_entries
+        self._entries: OrderedDict[tuple, CachedPack] = OrderedDict()
+        self._load()
+
+    @staticmethod
+    def _key(graph_sha, keywords_hash, budget, top_k) -> tuple:
+        return (graph_sha, keywords_hash, int(budget), int(top_k))
+
+    def _load(self) -> None:
+        if not self.path.exists():
+            return
+        try:
+            data = json.loads(self.path.read_text())
+            if not isinstance(data, dict):
+                return
+            if data.get("schema_version") != CACHE_SCHEMA_VERSION:
+                return
+            for raw in data.get("entries", []):
+                cp = CachedPack(**raw)
+                self._entries[
+                    self._key(
+                        cp.graph_sha, cp.keywords_hash, cp.budget, cp.top_k
+                    )
+                ] = cp
+        except (json.JSONDecodeError, TypeError, KeyError, ValueError):
+            self._entries.clear()
+
+    def get(self, graph_sha, keywords_hash, budget, top_k) -> CachedPack | None:
+        k = self._key(graph_sha, keywords_hash, budget, top_k)
+        if k not in self._entries:
+            return None
+        self._entries.move_to_end(k)
+        return self._entries[k]
+
+    def put(self, entry: CachedPack) -> None:
+        k = self._key(
+            entry.graph_sha, entry.keywords_hash, entry.budget, entry.top_k
+        )
+        self._entries[k] = entry
+        self._entries.move_to_end(k)
+        while len(self._entries) > self.max_entries:
+            self._entries.popitem(last=False)
+
+    def flush(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema_version": CACHE_SCHEMA_VERSION,
+            "entries": [asdict(e) for e in self._entries.values()],
+        }
+        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=2))
+        tmp.replace(self.path)
+
+    def clear(self) -> None:
+        self._entries.clear()
+        if self.path.exists():
+            self.path.unlink()

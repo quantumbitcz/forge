@@ -214,3 +214,76 @@ def test_pack_summary_header_counts():
     header = pack.render().splitlines()[0]
     assert "Repo-map" in header
     assert "4 of 4" in header or "4 of" in header
+
+
+# ---------------------------------------------------------------------------
+# Task 6: write-through pack cache tests
+# ---------------------------------------------------------------------------
+
+from hooks._py.repomap import CachedPack, PackCache
+
+
+def test_cache_hit_roundtrip(tmp_path):
+    cache_path = tmp_path / "ranked-files-cache.json"
+    cache = PackCache(cache_path, max_entries=16)
+    entry = CachedPack(
+        graph_sha="g" * 64,
+        keywords_hash="k" * 64,
+        budget=8000,
+        top_k=25,
+        computed_at="2026-04-19T10:00:00Z",
+        ranked=[{"file": "a.py", "score": 0.1, "slice": None}],
+    )
+    cache.put(entry)
+    cache.flush()
+    # Fresh instance to ensure disk roundtrip.
+    cache2 = PackCache(cache_path, max_entries=16)
+    hit = cache2.get("g" * 64, "k" * 64, 8000, 25)
+    assert hit is not None
+    assert hit.ranked[0]["file"] == "a.py"
+
+
+def test_cache_miss_on_any_tuple_component_change(tmp_path):
+    cache = PackCache(tmp_path / "c.json", max_entries=16)
+    cache.put(
+        CachedPack(
+            graph_sha="g" * 64,
+            keywords_hash="k" * 64,
+            budget=8000,
+            top_k=25,
+            computed_at="t",
+            ranked=[],
+        )
+    )
+    assert cache.get("x" * 64, "k" * 64, 8000, 25) is None
+    assert cache.get("g" * 64, "y" * 64, 8000, 25) is None
+    assert cache.get("g" * 64, "k" * 64, 4000, 25) is None
+    assert cache.get("g" * 64, "k" * 64, 8000, 12) is None
+
+
+def test_cache_lru_eviction_keeps_max_entries(tmp_path):
+    cache = PackCache(tmp_path / "c.json", max_entries=3)
+    for i in range(5):
+        cache.put(
+            CachedPack(
+                graph_sha=str(i) * 64,
+                keywords_hash="k" * 64,
+                budget=8000,
+                top_k=25,
+                computed_at="t",
+                ranked=[],
+            )
+        )
+    cache.flush()
+    assert cache.get("0" * 64, "k" * 64, 8000, 25) is None
+    assert cache.get("1" * 64, "k" * 64, 8000, 25) is None
+    assert cache.get("4" * 64, "k" * 64, 8000, 25) is not None
+
+
+def test_cache_corrupt_returns_empty_and_logs(tmp_path):
+    p = tmp_path / "c.json"
+    p.write_text("{{{ not json")
+    cache = PackCache(p, max_entries=16)
+    assert cache.get("g" * 64, "k" * 64, 8000, 25) is None
+    # Must not raise; caller interprets the miss as
+    # `repomap.bypass.corrupt_cache`.
