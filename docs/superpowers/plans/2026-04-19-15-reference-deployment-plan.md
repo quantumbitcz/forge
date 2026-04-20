@@ -178,7 +178,7 @@ Write `examples/reference-deployments/README.md`:
 ```markdown
 # forge Reference Deployments
 
-This directory indexes public, open-source libraries that have been rewritten end-to-end by `/forge-run`, with full PR history and evidence bundles published in dedicated forks under [github.com/forge-reference-deployments](https://github.com/forge-reference-deployments).
+This directory indexes public, open-source libraries that have been rewritten end-to-end by `/forge-run`, with full PR history and evidence bundles published in dedicated forks under the forthcoming `forge-reference-deployments` GitHub org (created by Phase 15).
 
 ## Purpose
 

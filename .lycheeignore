@@ -1,0 +1,9 @@
+# Template URLs — not meant to resolve until the referenced infra is created.
+# Each regex is matched against the full URL; one per line.
+# Remove entries as the underlying targets are created.
+
+# Phase 15 will create the `forge-reference-deployments` GitHub org. Until
+# then, URLs like `https://github.com/forge-reference-deployments/<lib-name>`
+# (lychee strips the `<lib-name>` placeholder and tries to resolve the org
+# root, which 404s) are template placeholders in plan docs, not real links.
+^https://github\.com/forge-reference-deployments/.*$

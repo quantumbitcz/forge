@@ -35,7 +35,7 @@
 5. **Evidence-based acceptance.** §8 ties the ≥5pp accuracy lift and <30% latency targets directly to the CI eval harness (Phase 01 dep). No "ship and see" — §11 success criteria are all mechanically measurable.
 6. **Correct schema bump.** §6.3 bumps `_seq` version 1.6.0 → 1.7.0 per `state-schema.md` discipline, with in-place upgrade semantics.
 7. **Respects `shared/` contract discipline.** §5.1 (`shared/consistency/voting.md`) follows the pattern: agents reference the contract, they don't inline the protocol. This keeps agent `.md` token cost flat when the dispatch semantics evolve.
-8. **No backwards-compat shims.** §3 Out-of-scope 4 and §7.3 hold the line per the phase preamble — single `consistency.enabled` kill switch, no per-decision bypass. This matches the user's [Implementation workflow](feedback_implementation_workflow.md) preference for clean breaks.
+8. **No backwards-compat shims.** §3 Out-of-scope 4 and §7.3 hold the line per the phase preamble — single `consistency.enabled` kill switch, no per-decision bypass. This matches the repo convention of clean breaks over backwards-compat shims.
 
 ---
 
