@@ -27,3 +27,23 @@
 @test "shared/speculation.md documents OR semantics for ambiguity signals" {
   grep -q "triggered = (confidence == MEDIUM) AND" "$BATS_TEST_DIRNAME/../../shared/speculation.md"
 }
+
+@test "confidence-scoring references speculation MEDIUM trigger" {
+  grep -q "speculation" "$BATS_TEST_DIRNAME/../../shared/confidence-scoring.md"
+}
+
+@test "agent-role-hierarchy notes N-way parallel PLAN dispatch" {
+  grep -q "speculat" "$BATS_TEST_DIRNAME/../../shared/agent-role-hierarchy.md"
+}
+
+@test "CLAUDE.md has Phase 12 feature-table entry" {
+  grep -q "Speculative.*plan branches" "$BATS_TEST_DIRNAME/../../CLAUDE.md"
+}
+
+@test "plugin.json version 3.5.0" {
+  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/plugin.json"
+}
+
+@test "marketplace.json version 3.5.0" {
+  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/marketplace.json"
+}
