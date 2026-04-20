@@ -1405,3 +1405,57 @@ are unaware of `prompt_compaction` continue to work unchanged.
   - `"measured"` — sourced from `.forge/run-history.db` averages once the run count ≥ 5.
 - `overall_ratio` = `(baseline_tokens_estimate - compacted_tokens_total) / baseline_tokens_estimate`; `0` if baseline is `0`.
 - `bypass_events` counts per run; SC-4's `repomap.bypass.failure` = sum of `missing_graph + solve_diverged + corrupt_cache` (excludes the legitimate `sparse_graph` path).
+
+## Phase 12: Speculation fields
+
+Phase 12 (Speculative Plan Branches, `shared/speculation.md`) adds two top-level
+`state.json` fields. These are **additive** — no schema version bump — and
+default to no-op values so unaware consumers ignore them.
+
+```json
+{
+  "plan_candidates": [
+    {
+      "id": "cand-1",
+      "emphasis_axis": "simplicity",
+      "validator_verdict": "GO",
+      "validator_score": 87,
+      "selection_score": 87.3,
+      "tokens": { "planner": 4120, "validator": 2080 },
+      "selected": true
+    }
+  ],
+  "speculation": {
+    "triggered": true,
+    "reasons": ["shaper_alternatives>=2", "confidence=MEDIUM"],
+    "candidates_count": 3,
+    "winner_id": "cand-1",
+    "user_confirmed": false,
+    "degraded": null
+  }
+}
+```
+
+**Defaults when speculation did not run:** `plan_candidates: []`, `speculation: null`.
+
+`speculation.degraded` ∈ {`null`, `"low_diversity"`, `"cost_ceiling"`} — records fallback path reason.
+
+**Field reference:**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `plan_candidates[].id` | string | Candidate identifier, format `cand-{N}` (1-indexed). |
+| `plan_candidates[].emphasis_axis` | string | Diversity axis steering the candidate (e.g. `simplicity`, `performance`, `safety`). |
+| `plan_candidates[].validator_verdict` | string | `"GO"`, `"REVISE"`, or `"NO-GO"` from `fg-210-validator`. |
+| `plan_candidates[].validator_score` | integer | Validator score (0-100). |
+| `plan_candidates[].selection_score` | number | Tie-break-adjusted composite score used to pick the winner. |
+| `plan_candidates[].tokens` | object | Token spend for this candidate, keyed by stage agent (`planner`, `validator`). |
+| `plan_candidates[].selected` | boolean | `true` for the winner; exactly one candidate per run is `selected` when `speculation.triggered` is `true`. |
+| `speculation.triggered` | boolean | `true` when branch mode ran for this run. |
+| `speculation.reasons` | string[] | Trigger signals (e.g. `"shaper_alternatives>=2"`, `"confidence=MEDIUM"`). |
+| `speculation.candidates_count` | integer | Number of candidates actually spawned (2 or 3). |
+| `speculation.winner_id` | string | `id` of the selected candidate, or `""` if none selected. |
+| `speculation.user_confirmed` | boolean | `true` if the user was asked and approved the winner (via AskUserQuestion). |
+| `speculation.degraded` | string \| null | `null` (healthy), `"low_diversity"` (candidates too similar, fell back to single plan), or `"cost_ceiling"` (aborted due to token/cost budget). |
+
+Candidate artifacts live under `.forge/plans/candidates/{run_id}/cand-{N}.json` and survive `/forge-recover reset`. See `shared/speculation.md` for the full workflow.
