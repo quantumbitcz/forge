@@ -2746,6 +2746,7 @@ CREATE (:Learnings {name: 'kotlin-multiplatform', file_path: 'shared/learnings/k
 CREATE (:Learnings {name: 'kotlin', file_path: 'shared/learnings/kotlin.md'});
 CREATE (:Learnings {name: 'ktlint', file_path: 'shared/learnings/ktlint.md'});
 CREATE (:Learnings {name: 'laravel', file_path: 'shared/learnings/laravel.md'});
+CREATE (:Learnings {name: 'license-compliance', file_path: 'shared/learnings/license-compliance.md'});
 CREATE (:Learnings {name: 'liquibase', file_path: 'shared/learnings/liquibase.md'});
 CREATE (:Learnings {name: 'llvm-cov', file_path: 'shared/learnings/llvm-cov.md'});
 CREATE (:Learnings {name: 'loki', file_path: 'shared/learnings/loki.md'});
@@ -3485,6 +3486,10 @@ MATCH (l:Learnings {name: 'laravel'}), (m:LayerModule {name: 'laravel'}) CREATE 
 MATCH (l:Learnings {name: 'laravel'}), (t:TestingFramework {name: 'laravel'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'laravel'}), (la:Language {name: 'laravel'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'laravel'}), (f:Framework {name: 'laravel'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'license-compliance'}), (m:LayerModule {name: 'license-compliance'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'license-compliance'}), (t:TestingFramework {name: 'license-compliance'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'license-compliance'}), (la:Language {name: 'license-compliance'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'license-compliance'}), (f:Framework {name: 'license-compliance'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'liquibase'}), (m:LayerModule {name: 'liquibase'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'liquibase'}), (t:TestingFramework {name: 'liquibase'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'liquibase'}), (la:Language {name: 'liquibase'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
