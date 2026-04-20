@@ -80,6 +80,50 @@ jobs:
             echo "BATS not available, skipping structural tests"
           fi
 
+  consistency-eval:
+    name: Consistency Voting Eval
+    needs: eval-structural
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install pytest
+        run: python3 -m pip install pytest
+
+      - name: Unit tests
+        run: python3 -m pytest hooks/_py/tests/test_consistency.py -v
+
+      - name: Run consistency eval (offline)
+        run: ./evals/pipeline/consistency-eval.sh --offline
+
+      - name: CI gates (accuracy + latency)
+        run: |
+          if [ -f tests/lib/bats-core/bin/bats ]; then
+            tests/lib/bats-core/bin/bats tests/contract/consistency-eval.bats
+            tests/lib/bats-core/bin/bats tests/structural/consistency-wiring.bats
+          else
+            echo "::error::BATS not available"
+            exit 1
+          fi
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: consistency-eval-results
+          path: evals/pipeline/results/consistency-*.json
+          retention-days: 90
+          if-no-files-found: error
+
   eval-live:
     name: Live Eval
     needs: eval-structural
