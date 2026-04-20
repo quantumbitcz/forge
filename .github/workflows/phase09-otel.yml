@@ -12,6 +12,9 @@ on:
       - '.github/otel-collector-config.yaml'
       - 'pyproject.toml'
 
+permissions:
+  contents: read
+
 jobs:
   otel-semconv-validation:
     runs-on: ubuntu-latest  # pinned: DinD flakes on macOS runners.
