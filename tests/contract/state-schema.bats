@@ -15,9 +15,23 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # 2. Schema version is "1.8.0" (bumped from 1.7.0 in Phase 04 / CoVe)
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.8.0 documented" {
-  grep -q '"version": "1.8.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.8.0" not found in state-schema.md'
+@test "state-schema: schema version 1.9.0 documented" {
+  grep -q '"version": "1.9.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.9.0" not found in state-schema.md'
+}
+
+# ---------------------------------------------------------------------------
+# 2b. Self-consistency voting counters (Phase 11, schema 1.9.0)
+# ---------------------------------------------------------------------------
+@test "state-schema 1.9.0 declares consistency_cache_hits and consistency_votes" {
+  grep -Eq '"consistency_cache_hits"[[:space:]]*:[[:space:]]*0' "$STATE_SCHEMA" \
+    || fail "consistency_cache_hits field not found in state-schema.md"
+
+  grep -Eq '"consistency_votes"[[:space:]]*:' "$STATE_SCHEMA" \
+    || fail "consistency_votes object not found in state-schema.md"
+
+  grep -Eq '1\.8\.0[[:space:]]*\|[[:space:]]*1\.9\.0' "$STATE_SCHEMA" \
+    || fail "1.8.0 -> 1.9.0 migration row not found in state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
