@@ -69,3 +69,7 @@ jobs:
 
       - name: Run ${{ matrix.tier }} tests
         run: ./tests/run-all.sh ${{ matrix.tier }}
+
+      - name: Run memory decay eval harness
+        if: matrix.tier == 'unit' && runner.os != 'Windows'
+        run: ./tests/evals/memory_decay_eval.sh
