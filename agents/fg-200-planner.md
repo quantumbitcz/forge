@@ -62,6 +62,15 @@ If spec content present:
 5. Spec conflicts with conventions/exploration: flag in Challenge Brief, propose resolution
 6. No spec: derive stories from requirement normally
 
+### Repo-map pack (Phase 10, opt-in)
+
+When `code_graph.prompt_compaction.enabled: true`, replace the explore-cache
+`file_index` dump with `{{REPO_MAP_PACK:BUDGET=10000:TOPK=25}}` — a larger
+budget than the orchestrator because the planner needs broader architectural
+visibility. Resolution is identical to fg-100; see the orchestrator's
+repo-map pack section. The explore cache itself is still written and read;
+only the prompt-blob is compacted.
+
 ---
 
 ## 3. Planning Process

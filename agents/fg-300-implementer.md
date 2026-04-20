@@ -85,6 +85,23 @@ Before writing code:
 3. Mismatch → WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old}, now: {new})`. Re-read conventions.
 4. Optionally compare per-section hashes — WARNING only if relevant sections changed
 
+### Repo-map pack (Phase 10, opt-in — per-task)
+
+When `code_graph.prompt_compaction.enabled: true`, each task dispatch embeds
+its own `{{REPO_MAP_PACK:BUDGET=4000:TOPK=25}}`. Per-task (not shared) packs
+are emitted because ranking relevance collapses when a single pack must serve
+disjoint task contexts in parallel dispatch; the per-task cost is the right
+trade for quality (see spec §4.4, review Issue #5).
+
+Resolution invokes:
+
+    python3 ${CLAUDE_PLUGIN_ROOT}/hooks/_py/repomap.py build-pack \
+      --budget 4000 --top-k 25
+
+Keywords are taken from the task description (`.forge/current-task-keywords.txt`
+rather than the run-level keywords file). If the file is missing, falls back
+to run-level keywords.
+
 ---
 
 ## 4. Documentation-First
