@@ -111,3 +111,31 @@ def apply_false_positive(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
 
 def _format_iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+_LEGACY_TIER_TO_BASE: Dict[str, float] = {
+    "HIGH": MAX_BASE_CONFIDENCE,  # 0.95 — clamped so migration respects the ceiling.
+    "MEDIUM": 0.75,
+    "LOW": 0.50,
+    "ARCHIVED": 0.30,
+}
+
+
+def migrate_item(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """One-time migrator. Idempotent: already-migrated items pass through unchanged.
+
+    Warm-start: every pre-existing item receives `last_success_at = now` so the
+    first post-migration PREFLIGHT does not mass-archive. §7 of the spec.
+    """
+    if "last_success_at" in item and "base_confidence" in item:
+        return dict(item)  # already migrated — copy and return.
+
+    out = dict(item)
+    legacy_tier = str(out.pop("confidence", "MEDIUM")).upper()
+    out["base_confidence"] = _LEGACY_TIER_TO_BASE.get(legacy_tier, DEFAULT_BASE_CONFIDENCE)
+    out["last_success_at"] = _format_iso(now)
+    out["last_false_positive_at"] = None
+    out["type"] = _resolve_type(out)
+    out.pop("runs_since_last_hit", None)
+    out.pop("decay_multiplier", None)
+    return out

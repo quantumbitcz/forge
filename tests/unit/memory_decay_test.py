@@ -163,3 +163,79 @@ def test_apply_false_positive_on_maxed_item_drops_to_0_76():
     }
     out = md.apply_false_positive(item, now)
     assert out["base_confidence"] == pytest.approx(0.76, abs=1e-9)  # 0.95 * 0.80
+
+
+def test_migrate_legacy_high_item():
+    """Legacy HIGH tier maps to base 0.95 (clamped to ceiling)."""
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    legacy = {
+        "id": "legacy-1",
+        "pattern": "...",
+        "confidence": "HIGH",
+        "source": "auto-discovered",
+        "runs_since_last_hit": 4,
+        "decay_multiplier": 2,
+    }
+    out = md.migrate_item(legacy, now)
+    assert out["base_confidence"] == pytest.approx(0.95, abs=1e-9)
+    assert out["last_success_at"] == _iso(now)
+    assert out["last_false_positive_at"] is None
+    assert out["type"] == "auto-discovered"
+    # Legacy fields deleted.
+    assert "runs_since_last_hit" not in out
+    assert "decay_multiplier" not in out
+    assert "confidence" not in out  # legacy string tier removed
+
+
+def test_migrate_legacy_medium_low_archived_tiers():
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    for legacy_tier, expected_base in [
+        ("MEDIUM", 0.75),
+        ("LOW", 0.50),
+        ("ARCHIVED", 0.30),
+    ]:
+        item = {"id": "x", "confidence": legacy_tier, "source": "user-confirmed"}
+        out = md.migrate_item(item, now)
+        assert out["base_confidence"] == pytest.approx(expected_base, abs=1e-9)
+        assert out["type"] == "canonical"
+
+
+def test_migrate_is_idempotent():
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    item = {
+        "id": "x",
+        "confidence": "MEDIUM",
+        "source": "auto-discovered",
+    }
+    once = md.migrate_item(item, now)
+    twice = md.migrate_item(once, now)
+    assert once == twice
+
+
+def test_migrate_skips_already_migrated_items():
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    already = {
+        "id": "x",
+        "type": "canonical",
+        "base_confidence": 0.80,
+        "last_success_at": _iso(now - timedelta(days=5)),
+        "last_false_positive_at": None,
+    }
+    out = md.migrate_item(already, now)
+    assert out == already  # no mutation
+
+
+@pytest.mark.parametrize("item,expected_type", [
+    ({"type": "auto-discovered"}, "auto-discovered"),
+    ({"source": "auto-discovered"}, "auto-discovered"),
+    ({"source": "user-confirmed"}, "canonical"),
+    ({"state": "ACTIVE"}, "canonical"),
+    ({"source_path": "shared/learnings/spring.md"}, "cross-project"),
+    ({}, "cross-project"),
+])
+def test_type_inference(item, expected_type):
+    # Exercise the type resolver via the migrator (sets item["type"]).
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    item.setdefault("confidence", "MEDIUM")
+    out = md.migrate_item(item, now)
+    assert out["type"] == expected_type
