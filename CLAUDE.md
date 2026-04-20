@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`forge` is a Claude Code plugin (v3.3.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v3.4.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 **Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 43 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
@@ -217,7 +217,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Automations | `automations.*` | Cron/CI/MCP triggers via `hooks/automation_trigger.py` |
 | Visual verification | `visual_verification.*` | Screenshot-based via Playwright MCP |
 | LSP integration | `lsp.*` | Compiler-level code analysis |
-| Observability | `observability.*` | OTel traces via `forge-otel-export.sh` |
+| Observability | `observability.otel.*` | OTel GenAI semconv emitter in `hooks/_py/otel.py`; `otel.replay()` authoritative. See `shared/observability.md`. |
 | Data classification | `data_classification.*` | Secret detection and redaction |
 | Security posture | — | OWASP ASI01-ASI10 compliance |
 | A2A protocol | — | Local filesystem coordination (`.forge/agent-card.json`) |
@@ -247,7 +247,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-compact-check.sh` | Compaction suggestion hook |
 | `check_prerequisites.py` | Python 3.10+ validation (Phase 02) |
 | `check-environment.sh` | Optional tool + integration detection for forge-init |
-| `forge-otel-export.sh` | OpenTelemetry trace and metric export |
+| `hooks/_py/otel.py` | OpenTelemetry GenAI semconv emitter (live + `replay`) |
 | `caveman-benchmark.sh` | Token savings measurement for caveman modes |
 | `hooks/automation_trigger.py` | Event-driven automation dispatch (cron, CI, MCP) |
 
@@ -378,7 +378,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 
 ## Distribution
 
-`plugin.json` (v3.0.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v3.4.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
