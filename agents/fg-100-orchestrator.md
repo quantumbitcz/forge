@@ -488,6 +488,25 @@ Read forge-log.md. Not found → INFO, empty baseline, skip trends, continue (re
 
 Exists → collect PREEMPT/PREEMPT_CRITICAL items. Filter by domain (per `shared/domain-detection.md`). Note last 3 results.
 
+**Decay-aware loading** (per `shared/learnings/decay.md`):
+
+```
+At PREFLIGHT, when loading PREEMPT items from forge-log.md / .forge/memory/:
+
+1. For each record lacking `last_success_at`, call
+   memory_decay.migrate_item(record, now) and persist back (one-time warm
+   start — idempotent, so safe to call on every PREFLIGHT).
+2. For each record, call
+     c = memory_decay.effective_confidence(record, now)
+     t = memory_decay.tier(c)
+   Read-only — do NOT write `c` or `t` back (they are recomputed every time).
+3. Filter out records whose tier == "ARCHIVED".
+4. Rank the remaining records: HIGH first, MEDIUM second, LOW last (tie-break
+   among LOW uses decayed `c` descending).
+
+Reference: shared/learnings/decay.md
+```
+
 ---
 
 ### §0.6a Detect Project Dependency Versions
