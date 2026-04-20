@@ -1,0 +1,197 @@
+{
+  "_version": 1,
+  "_updated": "2026-04-20T00:00:00Z",
+  "extends": "ruby",
+  "framework": "rails",
+  "additional_rules": [
+    {
+      "id": "RA-SEC-001",
+      "name": "mass-assignment-without-strong-params",
+      "pattern": "\\.(?:create|update|new|build)\\(\\s*params\\[:\\w+\\](?:\\s*\\.\\s*to_h)?\\s*\\)",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "Raw params hash passed to create/update/new/build — mass-assignment vulnerability. Use strong parameters.",
+      "fix_hint": "Define a private method `def post_params; params.require(:post).permit(:title, :body); end` and call `Post.create(post_params)`. Never pass `params[:post]` directly.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-SEC-002",
+      "name": "params-permit-bang",
+      "pattern": "params\\.permit!|params\\.to_unsafe_h|params\\.to_unsafe_hash",
+      "scope_pattern": "app/(controllers|services|forms)/.*\\.rb$",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "params.permit!/to_unsafe_h disables strong-parameters whitelist — mass-assignment vulnerability.",
+      "fix_hint": "Replace with `params.require(:resource).permit(:attr1, :attr2)`. If you genuinely need every key (rare), document the security review and pin the controller in CODEOWNERS.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-SEC-003",
+      "name": "raw-sql-string-interpolation",
+      "pattern": "\\.where\\(\\s*[\"'][^\"']*#\\{|\\.find_by_sql\\(\\s*[\"'][^\"']*#\\{|\\.exec_query\\(\\s*[\"'][^\"']*#\\{",
+      "scope_pattern": "app/|lib/",
+      "severity": "CRITICAL",
+      "category": "SEC-INJECTION",
+      "message": "String interpolation inside where/find_by_sql/exec_query — SQL injection risk.",
+      "fix_hint": "Use hash conditions `where(name: name)` or parameterized strings `where('name = ?', name)`. For find_by_sql use `sanitize_sql_array(['... ?', value])`.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-SEC-004",
+      "name": "skip-csrf-without-token-auth",
+      "pattern": "skip_before_action\\s+:verify_authenticity_token(?![^\\n]{0,200}(?:if:|unless:|only:|except:))",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "severity": "WARNING",
+      "category": "SEC-CSRF",
+      "message": "Unscoped skip_before_action :verify_authenticity_token — CSRF disabled for the entire controller.",
+      "fix_hint": "Scope with `only: %i[create update destroy]` and confirm those actions authenticate via Authorization header (token), not session cookies. API-only controllers should inherit from ActionController::API instead.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-SEC-005",
+      "name": "html-safe-on-user-input",
+      "pattern": "\\.html_safe\\b",
+      "scope_pattern": "app/(views|helpers|components)/",
+      "severity": "WARNING",
+      "category": "SEC-XSS",
+      "message": "html_safe on view-layer string — XSS risk when the source is user-controlled.",
+      "fix_hint": "Use `sanitize(string, tags: %w[a strong em], attributes: %w[href])` with an explicit allowlist. html_safe is appropriate only for trusted constants.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-PERF-001",
+      "name": "update-all-without-scope-confirmation",
+      "pattern": "\\b\\w+\\.update_all\\(|\\b\\w+\\.delete_all\\b",
+      "scope_pattern": "app/|lib/",
+      "severity": "WARNING",
+      "category": "PERF-DB",
+      "message": "update_all/delete_all skips callbacks AND validations — confirm scope and absence of required side effects before use.",
+      "fix_hint": "If callbacks are required: iterate with `find_each(&:save)` or extract to a job. If skipping is intentional, add a comment explaining why and confirm the relation is scoped (`Post.where(active: false).update_all(...)`).",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-PERF-002",
+      "name": "deliver-now-in-controller",
+      "pattern": "\\w+Mailer\\.\\w+\\([^)]*\\)\\.deliver_now\\b",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "severity": "WARNING",
+      "category": "PERF-LATENCY",
+      "message": "Mailer.deliver_now blocks the request thread on SMTP — use deliver_later (ActiveJob).",
+      "fix_hint": "Replace `WelcomeMailer.with(user: u).welcome_email.deliver_now` with `.deliver_later`. ActiveJob (solid_queue on Rails 8) handles retries and async delivery.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-PERF-003",
+      "name": "loop-over-relation-without-includes",
+      "pattern": "\\b\\w+\\.(?:all|where\\([^)]*\\))\\.each\\s+do",
+      "scope_pattern": "app/(controllers|views|helpers|components)/",
+      "severity": "INFO",
+      "category": "PERF-DB",
+      "message": "Iterating over a Relation without explicit eager-loading — verify includes()/preload() to prevent N+1.",
+      "fix_hint": "Add `.includes(:author, :tags)` to the query before iterating. Consider `find_each` for batched iteration over large collections.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-DEP-001",
+      "name": "before-filter-removed",
+      "pattern": "\\bbefore_filter\\s+|\\bafter_filter\\s+|\\baround_filter\\s+|\\bskip_before_filter\\s+",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "severity": "CRITICAL",
+      "category": "DEP-API",
+      "message": "before_filter/after_filter/around_filter were removed in Rails 5.1 — runtime error on Rails 5.1+.",
+      "fix_hint": "Replace with before_action/after_action/around_action/skip_before_action. Same arguments and semantics.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-DEP-002",
+      "name": "update-attributes-removed",
+      "pattern": "\\.update_attributes\\(|\\.update_attributes!\\(",
+      "scope_pattern": "app/|lib/|spec/|test/",
+      "severity": "WARNING",
+      "category": "DEP-API",
+      "message": "update_attributes/update_attributes! were deprecated in Rails 6.1 and removed in Rails 7.",
+      "fix_hint": "Replace with .update / .update! (identical signature). The bang variant raises on validation failure.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-ARCH-001",
+      "name": "fat-controller-action",
+      "pattern": "def\\s+(?:create|update|destroy|index|show|new|edit)[\\s\\S]{0,2400}\\bend\\b",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "severity": "INFO",
+      "category": "ARCH-BOUNDARY",
+      "message": "Controller action exceeds ~40 lines — extract business logic to a service object or form object.",
+      "fix_hint": "Move workflow into `app/services/{resource}/{action}.rb`. Controllers should: parse strong params, call the service, render or redirect.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-ARCH-002",
+      "name": "default-scope-discouraged",
+      "pattern": "^\\s*default_scope\\s+",
+      "scope_pattern": "app/models/.*\\.rb$",
+      "severity": "WARNING",
+      "category": "ARCH-CONVENTION",
+      "message": "default_scope hides filtering at every call site and breaks unscoped/count semantics.",
+      "fix_hint": "Replace with explicit scopes (`scope :published, -> { where.not(published_at: nil) }`) and call them at use sites. Use `Post.unscoped` only as a last resort.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-ARCH-003",
+      "name": "missing-foreign-key-index",
+      "pattern": "t\\.references\\s+:\\w+(?![^,)\\n]*\\bindex:\\s*true)(?![^,)\\n]*\\bforeign_key:)",
+      "scope_pattern": "db/migrate/.*\\.rb$",
+      "severity": "WARNING",
+      "category": "PERF-DB",
+      "message": "t.references without explicit index — Rails 5+ adds an index by default but legacy migrations may miss it.",
+      "fix_hint": "Use `t.references :user, index: true, foreign_key: true` (or `add_reference :posts, :user, index: true, foreign_key: true` for stand-alone migrations). foreign_key enforces referential integrity at the DB level.",
+      "example_ref": ""
+    },
+    {
+      "id": "RA-CONV-001",
+      "name": "puts-or-print-in-app-code",
+      "pattern": "^\\s*(?:puts|print|pp|p)\\s+",
+      "scope_pattern": "app/|lib/",
+      "severity": "INFO",
+      "category": "CONV-LOG",
+      "message": "puts/print/pp/p in application code — use Rails.logger.{debug,info,warn,error} instead.",
+      "fix_hint": "Rails.logger.info(\"event\", user_id: user.id). Configure structured logging (lograge or rails-semantic_logger) for JSON output in production.",
+      "example_ref": ""
+    }
+  ],
+  "additional_boundaries": [
+    {
+      "name": "Controllers must not query models with ad-hoc where/joins (push to query objects)",
+      "scope_pattern": "app/controllers/.*\\.rb$",
+      "forbidden_imports": [
+        "\\.joins\\(\\s*:\\w+",
+        "\\.where\\([^)]*\\)\\.where\\([^)]*\\)\\.where\\("
+      ],
+      "severity": "INFO",
+      "category": "ARCH-BOUNDARY"
+    },
+    {
+      "name": "Models must not reference controllers, request, params, or session",
+      "scope_pattern": "app/models/.*\\.rb$",
+      "forbidden_imports": [
+        "\\bparams\\b",
+        "\\bsession\\b",
+        "\\brequest\\b",
+        "\\bcurrent_user\\b"
+      ],
+      "severity": "WARNING",
+      "category": "ARCH-BOUNDARY"
+    }
+  ],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "threshold_overrides": {
+    "file_size": {
+      "controllers": 250,
+      "models": 400,
+      "services": 200,
+      "forms": 200,
+      "queries": 250
+    }
+  }
+}

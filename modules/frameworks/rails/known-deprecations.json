@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "last_refreshed": "2026-04-20",
+  "deprecations": [
+    {
+      "pattern": "\\bbefore_filter\\s+|\\bafter_filter\\s+|\\baround_filter\\s+|\\bskip_before_filter\\s+",
+      "replacement": "before_filter/after_filter/around_filter were deprecated in Rails 4.0 and removed in Rails 5.1. Replace with before_action/after_action/around_action — same arguments and semantics.",
+      "package": "rails",
+      "since": "4.0.0",
+      "removed_in": "5.1.0",
+      "applies_from": "4.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "\\.update_attributes\\(|\\.update_attributes!\\(",
+      "replacement": "update_attributes/update_attributes! were deprecated in Rails 6.1 and removed in Rails 7.0. Use .update / .update! — identical signature, bang variant raises on validation failure.",
+      "package": "rails",
+      "since": "6.1.0",
+      "removed_in": "7.0.0",
+      "applies_from": "6.1.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "\\.uniq\\b(?=[^\\(]*$)",
+      "replacement": "ActiveRecord::Relation#uniq was deprecated in Rails 5.0 and removed in Rails 5.1. Use .distinct on relations. (Array#uniq is unchanged.)",
+      "package": "activerecord",
+      "since": "5.0.0",
+      "removed_in": "5.1.0",
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "render\\s+text:\\s*",
+      "replacement": "render text: was deprecated in Rails 4.1 and removed in Rails 5.1. Use render plain: for plain-text bodies (sets Content-Type: text/plain). Use render html: for trusted HTML strings.",
+      "package": "actioncontroller",
+      "since": "4.1.0",
+      "removed_in": "5.1.0",
+      "applies_from": "4.1.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "render\\s+nothing:\\s*true",
+      "replacement": "render nothing: true was deprecated in Rails 5.1 and removed in Rails 5.2. Use head :ok (or head :no_content) for empty responses — same status, no body, correct Content-Length.",
+      "package": "actioncontroller",
+      "since": "5.1.0",
+      "removed_in": "5.2.0",
+      "applies_from": "5.1.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "redirect_to\\s+:back\\b",
+      "replacement": "redirect_to :back was deprecated in Rails 5.0 and removed in Rails 5.1. Use redirect_back(fallback_location: root_path) — identical when Referer is present, falls back to the given location otherwise (avoids ActionController::RedirectBackError).",
+      "package": "actioncontroller",
+      "since": "5.0.0",
+      "removed_in": "5.1.0",
+      "applies_from": "5.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "Rails\\.application\\.secrets\\b",
+      "replacement": "Rails.application.secrets was deprecated in Rails 7.2 (planned removal in 8.1). Use Rails.application.credentials.dig(:section, :key) — encrypted at rest via config/credentials.yml.enc + config/master.key (or RAILS_MASTER_KEY env var). Edit with bin/rails credentials:edit.",
+      "package": "rails",
+      "since": "7.2.0",
+      "removed_in": null,
+      "applies_from": "7.2.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "require\\s+['\"]sprockets/railtie['\"]|gem\\s+['\"]sprockets-rails['\"]",
+      "replacement": "Sprockets was replaced by Propshaft as the default asset pipeline in Rails 7+. Propshaft skips compilation/preprocessing — JS/CSS bundling delegated to Importmap (default), jsbundling-rails, or cssbundling-rails. Migrate by removing sprockets-rails from Gemfile, deleting app/assets/config/manifest.js, and configuring config.assets.paths via Propshaft.",
+      "package": "sprockets-rails",
+      "since": "7.0.0",
+      "removed_in": null,
+      "applies_from": "7.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "config\\.active_job\\.queue_adapter\\s*=\\s*:async\\b",
+      "replacement": "ActiveJob :async adapter is for development/test only — runs jobs in-process and loses them on restart. Rails 8 default for production is solid_queue (DB-backed, no Redis required). Set config.active_job.queue_adapter = :solid_queue in config/environments/production.rb.",
+      "package": "activejob",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "config\\.cache_store\\s*=\\s*:memory_store\\b",
+      "replacement": "MemoryStore is per-process and not shared across workers — unsafe for production. Rails 8 default is :solid_cache_store (DB-backed, replaces Memcached/Redis for most apps). For higher throughput swap to :mem_cache_store or :redis_cache_store.",
+      "package": "activesupport",
+      "since": "1.0.0",
+      "removed_in": null,
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "config\\.action_cable\\.adapter\\s*=\\s*:async\\b|cable\\.yml.*adapter:\\s*async",
+      "replacement": "ActionCable :async adapter is for development/test only. Rails 8 default for production is solid_cable (DB-polling, no Redis required). For >100 concurrent subscribers swap to redis. Configure in config/cable.yml.",
+      "package": "actioncable",
+      "since": "5.0.0",
+      "removed_in": null,
+      "applies_from": "8.0.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    },
+    {
+      "pattern": "ActionView::Helpers::TextHelper#reset_cycle|reset_cycle\\s*\\(",
+      "replacement": "TextHelper#reset_cycle (and #cycle) were deprecated in Rails 6.1 and removed in Rails 7.0. Track cycle state explicitly in the view (e.g. with index_with or each_with_index) instead.",
+      "package": "actionview",
+      "since": "6.1.0",
+      "removed_in": "7.0.0",
+      "applies_from": "6.1.0",
+      "applies_to": "*",
+      "language": "ruby",
+      "added": "2026-04-20",
+      "addedBy": "phase-08"
+    }
+  ]
+}
