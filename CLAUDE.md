@@ -184,6 +184,8 @@ Core systems: version detection (PREFLIGHT → `state.json.detected_versions`), 
 
 Confidence scoring: two-level — (1) finding confidence (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x weight multipliers); (2) pipeline confidence (4-dimension: clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks, LOW (<0.4) → `/forge-shape`. Adaptive trust in `.forge/trust.json`. Config: `confidence.*`.
 
+Repo-map PageRank (Phase 10): `hooks/_py/repomap.py` ranks files in the code graph by structural centrality × recency × keyword overlap; the orchestrator, planner, and implementer substitute a `{{REPO_MAP_PACK}}` placeholder for full directory listings, saving 30–50 % tokens per stage. Cache: `.forge/ranked-files-cache.json` (survives `/forge-recover reset`). Reference: `shared/graph/pagerank-sql.md`.
+
 v2.0 features (each has dedicated doc in `shared/`):
 
 | Feature | Config | Key details |
@@ -228,6 +230,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Run history store (F29) | `run_history.*` | SQLite FTS5 at `.forge/run-history.db`. Written by retrospective, queried by insights/ask/MCP. Schema in `shared/run-history/` |
 | MCP server (F30) | `mcp_server.*` | Python stdio MCP server exposing pipeline intelligence to any AI client. 11 tools. Auto-provisioned by `/forge-init` into `.mcp.json` |
 | Self-improving playbooks (F31) | `playbooks.*` | Refinement proposals from run data. Auto-apply, rollback. `.forge/playbook-refinements/`. Skill: `/forge-playbook-refine` |
+| Repo-map PageRank (Phase 10) | `code_graph.prompt_compaction.*` | `hooks/_py/repomap.py` — biased PageRank + token-budgeted pack assembly. Replaces full-directory listings in `fg-100`, `fg-200`, `fg-300` prompts. Opt-in default OFF. Categories: `REPOMAP-BYPASS-*` |
 | Self-consistency voting (F33, Phase 11) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
 | Speculative plan branches (F31+1 / Phase 12) | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
 
