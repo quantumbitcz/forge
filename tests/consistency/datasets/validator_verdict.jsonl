@@ -1,0 +1,60 @@
+{"id":"vv-001","findings":[],"label":"GO","difficulty":"easy"}
+{"id":"vv-002","findings":[{"category":"DOC-1","severity":"INFO","summary":"missing changelog entry"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-003","findings":[{"category":"CONV-1","severity":"INFO","summary":"non-canonical import order"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-004","findings":[{"category":"QUAL-1","severity":"INFO","summary":"variable name could be more descriptive"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-005","findings":[{"category":"DOC-2","severity":"INFO","summary":"public function lacks docstring"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-006","findings":[{"category":"APPROACH-1","severity":"INFO","summary":"alternate approach considered"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-007","findings":[{"category":"SCOUT-1","severity":"INFO","summary":"observation only, not actionable"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-008","findings":[{"category":"DOC-3","severity":"INFO","summary":"README example slightly outdated"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-009","findings":[{"category":"CONV-2","severity":"INFO","summary":"trailing whitespace in two files"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-010","findings":[{"category":"QUAL-2","severity":"INFO","summary":"could split function into smaller pieces"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-011","findings":[{"category":"DOC-4","severity":"INFO","summary":"minor wording in comment"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-012","findings":[{"category":"CONV-3","severity":"INFO","summary":"prefer let over const here"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-013","findings":[],"label":"GO","difficulty":"easy"}
+{"id":"vv-014","findings":[{"category":"INFO-1","severity":"INFO","summary":"informational note from reviewer"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-015","findings":[{"category":"DOC-5","severity":"INFO","summary":"missing optional ADR"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-016","findings":[{"category":"QUAL-3","severity":"INFO","summary":"micro-optimisation opportunity"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-017","findings":[{"category":"CONV-4","severity":"INFO","summary":"prefer trailing comma"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-018","findings":[{"category":"SCOUT-2","severity":"INFO","summary":"future-work suggestion"}],"label":"GO","difficulty":"easy"}
+{"id":"vv-019","findings":[{"category":"APPROACH-2","severity":"INFO","summary":"could use builder pattern instead"}],"label":"GO","difficulty":"adversarial"}
+{"id":"vv-020","findings":[{"category":"DOC-6","severity":"INFO","summary":"docstring style mismatch"},{"category":"INFO-2","severity":"INFO","summary":"reviewer note"}],"label":"GO","difficulty":"adversarial"}
+{"id":"vv-021","findings":[{"category":"TEST-1","severity":"WARNING","summary":"missing negative-path test for null input"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-022","findings":[{"category":"PERF-1","severity":"WARNING","summary":"O(n^2) loop in hot path"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-023","findings":[{"category":"ARCH-1","severity":"WARNING","summary":"controller doing data access directly"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-024","findings":[{"category":"CONV-5","severity":"WARNING","summary":"violates layered architecture rule"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-025","findings":[{"category":"TEST-2","severity":"WARNING","summary":"new module lacks any tests"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-026","findings":[{"category":"DEP-1","severity":"WARNING","summary":"transitive dep at outdated version"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-027","findings":[{"category":"ARCH-2","severity":"WARNING","summary":"two services duplicating same calculation"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-028","findings":[{"category":"PERF-2","severity":"WARNING","summary":"unbounded list growth in cache"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-029","findings":[{"category":"TEST-3","severity":"WARNING","summary":"flaky test detected, not quarantined"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-030","findings":[{"category":"CONV-6","severity":"WARNING","summary":"public API name violates style guide"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-031","findings":[{"category":"ARCH-3","severity":"WARNING","summary":"missing abstraction at module boundary"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-032","findings":[{"category":"PERF-3","severity":"WARNING","summary":"synchronous IO in request thread"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-033","findings":[{"category":"DEP-2","severity":"WARNING","summary":"new dependency not approved by license policy"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-034","findings":[{"category":"TEST-4","severity":"WARNING","summary":"branch coverage dropped below 70%"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-035","findings":[{"category":"ARCH-4","severity":"WARNING","summary":"introduces cyclic dependency"}],"label":"REVISE","difficulty":"easy"}
+{"id":"vv-036","findings":[{"category":"A11Y-1","severity":"WARNING","summary":"missing aria-label on form input"},{"category":"INFO-4","severity":"INFO","summary":"reviewer disagrees on severity"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-037","findings":[{"category":"INFRA-1","severity":"WARNING","summary":"helm chart lacks readiness probe"},{"category":"INFO-5","severity":"INFO","summary":"could be follow-up work"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-038","findings":[{"category":"TEST-5","severity":"WARNING","summary":"no integration test for the new endpoint"},{"category":"INFO-6","severity":"INFO","summary":"unit tests already cover happy path"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-039","findings":[{"category":"PERF-4","severity":"WARNING","summary":"missing index for new query"},{"category":"INFO-7","severity":"INFO","summary":"low traffic table currently"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-040","findings":[{"category":"CONV-7","severity":"WARNING","summary":"naming convention violation"},{"category":"INFO-8","severity":"INFO","summary":"existing code has same pattern"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-041","findings":[{"category":"EDGE-1","severity":"WARNING","summary":"null in middle of stream"},{"category":"EDGE-2","severity":"WARNING","summary":"empty input not covered"},{"category":"TEST-6","severity":"WARNING","summary":"missing negative test"},{"category":"ARCH-1-SOFT","severity":"INFO","summary":"service split preference"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-042","findings":[{"category":"DOC-7","severity":"INFO","summary":"missing ADR"},{"category":"DOC-8","severity":"INFO","summary":"changelog absent"},{"category":"DOC-9","severity":"INFO","summary":"README outdated"},{"category":"DOC-10","severity":"INFO","summary":"missing migration notes"},{"category":"DOC-11","severity":"INFO","summary":"public API undocumented"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-043","findings":[{"category":"ARCH-5","severity":"WARNING","summary":"questionable boundary"},{"category":"INFO-3","severity":"INFO","summary":"opinion on naming"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-044","findings":[{"category":"PERF-5","severity":"WARNING","summary":"slightly slower than baseline"},{"category":"TEST-7","severity":"WARNING","summary":"benchmark missing"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-045","findings":[{"category":"CONV-8","severity":"WARNING","summary":"three style nits aggregated"}],"label":"REVISE","difficulty":"adversarial"}
+{"id":"vv-046","findings":[{"category":"SEC-1","severity":"CRITICAL","summary":"auth bypass on /admin endpoint"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-047","findings":[{"category":"SEC-2","severity":"CRITICAL","summary":"SQL injection in search handler"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-048","findings":[{"category":"SEC-3","severity":"CRITICAL","summary":"hardcoded API token committed"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-049","findings":[{"category":"BUILD-1","severity":"CRITICAL","summary":"compile failure in main module"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-050","findings":[{"category":"TEST-8","severity":"CRITICAL","summary":"test suite fails on master after merge"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-051","findings":[{"category":"SEC-4","severity":"CRITICAL","summary":"plaintext password storage detected"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-052","findings":[{"category":"ARCH-6","severity":"CRITICAL","summary":"breaks public API contract"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-053","findings":[{"category":"DEP-3","severity":"CRITICAL","summary":"known CVE in newly added dependency"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-054","findings":[{"category":"SEC-5","severity":"CRITICAL","summary":"missing CSRF protection on POST endpoint"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-055","findings":[{"category":"INFRA-2","severity":"CRITICAL","summary":"k8s manifest references non-existent secret"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-056","findings":[{"category":"SEC-6","severity":"CRITICAL","summary":"SSRF allowed in webhook validator"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-057","findings":[{"category":"ARCH-7","severity":"CRITICAL","summary":"data loss on rollback path"}],"label":"NO-GO","difficulty":"easy"}
+{"id":"vv-058","findings":[{"category":"SEC-7","severity":"WARNING","summary":"weak hash function"},{"category":"SEC-8","severity":"WARNING","summary":"insecure random"},{"category":"DEP-4","severity":"WARNING","summary":"deprecated crypto lib"}],"label":"NO-GO","difficulty":"adversarial"}
+{"id":"vv-059","findings":[{"category":"BUILD-2","severity":"WARNING","summary":"build flaky on Windows"},{"category":"TEST-9","severity":"CRITICAL","summary":"test suite hung after timeout"}],"label":"NO-GO","difficulty":"adversarial"}
+{"id":"vv-060","findings":[{"category":"PERF-6","severity":"CRITICAL","summary":"latency regressed by 8x in p99"}],"label":"NO-GO","difficulty":"adversarial"}
