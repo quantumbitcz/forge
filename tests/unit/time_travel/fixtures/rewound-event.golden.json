@@ -1,0 +1,12 @@
+{
+  "type": "REWOUND",
+  "schema_version": 1,
+  "timestamp": "2026-04-19T12:00:00Z",
+  "run_id": "run-abc123",
+  "from_sha": "a1b2c3d4e5f60718293a4b5c6d7e8f901122334455667788aabbccddeeff0011",
+  "to_sha": "deadbeefcafe0102030405060708090a0b0c0d0e0f1011121314151617181920",
+  "to_human_id": "PLAN.-.003",
+  "triggered_by": "user",
+  "forced": false,
+  "dirty_paths": []
+}

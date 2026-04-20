@@ -2,7 +2,7 @@
 -- code-graph-schema.sql — SQLite schema for the AST-based code graph
 --
 -- Used by build-code-graph.sh to create .forge/code-graph.db
--- Schema version: 1.0.0
+-- Schema version: 1.1.0
 -- ============================================================================
 
 -- Schema version tracking
@@ -77,3 +77,25 @@ CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id);
 CREATE INDEX IF NOT EXISTS idx_edges_type_source ON edges(edge_type, source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_type_target ON edges(edge_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_file_hashes_hash ON file_hashes(content_hash);
+
+-- === Phase 10: Repo-Map PageRank Cache (schema 1.1.0) ===
+-- Durable mirror of .forge/ranked-files-cache.json. 4-tuple PK matches the
+-- JSON cache key. The JSON file is primary; this table is an optional audit
+-- mirror populated by repomap.py when PACK_CACHE_DB_MIRROR=1.
+CREATE TABLE IF NOT EXISTS ranked_files_cache (
+    graph_sha TEXT NOT NULL,
+    keywords_hash TEXT NOT NULL,
+    budget INTEGER NOT NULL,
+    top_k INTEGER NOT NULL,
+    ranked_json TEXT NOT NULL,
+    computed_at TEXT NOT NULL,
+    PRIMARY KEY (graph_sha, keywords_hash, budget, top_k)
+);
+
+-- Index powers the recency_multiplier lookup in score_files().
+CREATE INDEX IF NOT EXISTS idx_nodes_last_modified
+    ON nodes (json_extract(properties, '$.last_modified_ts'));
+
+-- Bump schema version row. Uses existing schema_meta table (existing convention).
+INSERT OR REPLACE INTO schema_meta(key, value)
+VALUES ('schema_version', '1.1.0');
