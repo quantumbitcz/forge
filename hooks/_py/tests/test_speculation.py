@@ -1,4 +1,5 @@
 from hooks._py.speculation import (
+    check_diversity,
     derive_seed,
     detect_ambiguity,
     estimate_cost,
@@ -91,3 +92,46 @@ def test_estimate_cost_with_history_uses_mean():
     # mean is 3100 (sum=31000, //10 = 3100); estimated = 4000 + 3100*3 = 13300
     assert r["per_candidate_mean"] == 3100
     assert r["estimated"] == 13300
+
+
+def test_diversity_identical_plans():
+    r = check_diversity(["alpha beta gamma delta"] * 2, min_diversity_score=0.15)
+    assert r["degraded"] is True
+    assert r["diversity"] == 0.0
+
+
+def test_diversity_distinct_plans():
+    r = check_diversity(
+        ["alpha beta gamma delta", "epsilon zeta eta theta"],
+        min_diversity_score=0.15,
+    )
+    assert r["degraded"] is False
+
+
+def test_diversity_three_plans_max_overlap_dominates():
+    r = check_diversity(
+        [
+            "alpha beta gamma delta",
+            "alpha beta gamma delta",
+            "entirely different plan corpus",
+        ],
+        min_diversity_score=0.15,
+    )
+    # identical pair drives max overlap to 1.0 -> diversity 0.0 -> degraded
+    assert r["degraded"] is True
+    assert r["diversity"] == 0.0
+
+
+def test_diversity_threshold_configurable():
+    # Share one token ("shared") so diversity is strictly < 1.0, then 0.99 threshold rejects.
+    r = check_diversity(
+        ["alpha beta gamma shared", "epsilon zeta eta shared"],
+        min_diversity_score=0.99,
+    )
+    assert r["degraded"] is True
+
+
+def test_diversity_single_plan_returns_ok():
+    r = check_diversity(["alpha beta gamma"], min_diversity_score=0.15)
+    assert r["degraded"] is False
+    assert r["diversity"] == 1.0

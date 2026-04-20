@@ -134,6 +134,51 @@ def _cmd_estimate_cost(args: argparse.Namespace) -> None:
     sys.stdout.write("\n")
 
 
+def _tokens(text: str) -> set[str]:
+    """Tokenize to a stopword-filtered set of lowercase alphabetic words (>=2 chars)."""
+    return {w.lower() for w in re.findall(r"[A-Za-z]{2,}", text)} - STOPWORDS
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    if not a and not b:
+        return 1.0
+    union = a | b
+    if not union:
+        return 1.0
+    return len(a & b) / len(union)
+
+
+def check_diversity(plan_texts: list[str], min_diversity_score: float) -> dict[str, Any]:
+    """diversity = 1 - max_pairwise_jaccard; degraded = diversity < threshold."""
+    token_sets = [_tokens(p) for p in plan_texts]
+    if len(token_sets) < 2:
+        return {
+            "diversity": 1.0,
+            "max_pairwise_overlap": 0.0,
+            "degraded": False,
+            "threshold": min_diversity_score,
+        }
+
+    max_overlap = max(_jaccard(a, b) for a, b in combinations(token_sets, 2))
+    diversity = round(1.0 - max_overlap, 4)
+    return {
+        "diversity": diversity,
+        "max_pairwise_overlap": round(max_overlap, 4),
+        "degraded": diversity < min_diversity_score,
+        "threshold": min_diversity_score,
+    }
+
+
+def _cmd_check_diversity(args: argparse.Namespace) -> None:
+    texts: list[str] = []
+    for path in args.plan:
+        with open(path, encoding="utf-8") as f:
+            texts.append(f.read())
+    result = check_diversity(texts, args.min_diversity_score)
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
 def _cmd_detect_ambiguity(args: argparse.Namespace) -> None:
     result = detect_ambiguity(
         requirement=args.requirement,
@@ -173,6 +218,11 @@ def main() -> int:
     p_cost.add_argument("--ceiling", type=float, required=True)
     p_cost.add_argument("--recent-tokens", type=str, default="")
     p_cost.set_defaults(func=_cmd_estimate_cost)
+
+    p_div = subparsers.add_parser("check-diversity")
+    p_div.add_argument("--plan", action="append", required=True)
+    p_div.add_argument("--min-diversity-score", type=float, required=True)
+    p_div.set_defaults(func=_cmd_check_diversity)
 
     args = parser.parse_args()
     args.func(args)
