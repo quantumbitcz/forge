@@ -2,21 +2,23 @@
 set -euo pipefail
 
 # Self-enforcing timeout — mirrors hooks.json value.
-# Skipped for --verify mode: that path is operator/CLI-invoked (not a hook),
-# may legitimately take longer than the hook budget under parallel test load,
-# and silent truncation here is the cause of intermittent macOS test flakes
-# where engine.sh exits 0 with no output and assertions on `assert_output
-# --partial "<file>"` fail. Verify-mode callers expect to wait for results.
-_engine_is_verify_mode=0
+# Skipped for operator-invoked modes (--verify, --review, --flush-queue): those
+# paths are CLI-invoked (not a PostToolUse hook), may legitimately take longer
+# than the hook budget under parallel test load (e.g. macOS GitHub runners with
+# many concurrent bats files), and silent truncation here causes intermittent
+# test flakes where engine.sh exits 0 with no output and assertions on
+# `assert_output --partial "<file>"` fail. Operator-invoked callers expect to
+# wait for results — only PostToolUse hooks need the strict budget.
+_engine_is_operator_mode=0
 for _arg in "$@"; do
-  if [[ "$_arg" == "--verify" ]]; then
-    _engine_is_verify_mode=1
+  if [[ "$_arg" == "--verify" || "$_arg" == "--review" || "$_arg" == "--flush-queue" ]]; then
+    _engine_is_operator_mode=1
     break
   fi
 done
 
 _HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-10}"
-if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]] && [[ "$_engine_is_verify_mode" != "1" ]]; then
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]] && [[ "$_engine_is_operator_mode" != "1" ]]; then
   export _HOOK_TIMEOUT_ACTIVE=1
   if command -v timeout &>/dev/null; then
     timeout "$_HOOK_TIMEOUT" "$0" "$@" || true
@@ -602,13 +604,18 @@ run_layer2() {
 mode_verify() {
   shift  # consume --verify
   parse_batch_args "$@"
+  # Operator-invoked: disable the ERR trap so a failure in one file (e.g. a
+  # transient python startup hiccup on macOS GitHub runners under heavy parallel
+  # load) does not abort the entire batch with empty output. Each file's checks
+  # are wrapped in `|| true` so partial output is preserved.
+  trap - ERR
   # Files are processed sequentially; grouping by language is available in --flush-queue mode.
   # In verify/review, sequential per-file processing ensures correct component resolution.
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
     _CURRENT_FILE="$f"
-    run_layer1 "$f" "$PROJECT_ROOT"
-    run_layer2 "$f" "$PROJECT_ROOT"
+    run_layer1 "$f" "$PROJECT_ROOT" || handle_failure "verify_layer1_failed" "$f"
+    run_layer2 "$f" "$PROJECT_ROOT" || handle_failure "verify_layer2_failed" "$f"
   done
 }
 
@@ -616,13 +623,15 @@ mode_verify() {
 mode_review() {
   shift  # consume --review
   parse_batch_args "$@"
+  # Operator-invoked: disable ERR trap (see mode_verify for rationale).
+  trap - ERR
   # Files are processed sequentially; grouping by language is available in --flush-queue mode.
   # In verify/review, sequential per-file processing ensures correct component resolution.
   for f in "${FILES_CHANGED[@]+"${FILES_CHANGED[@]}"}"; do
     [[ -f "$f" ]] || continue
     _CURRENT_FILE="$f"
-    run_layer1 "$f" "$PROJECT_ROOT"
-    run_layer2 "$f" "$PROJECT_ROOT"
+    run_layer1 "$f" "$PROJECT_ROOT" || handle_failure "review_layer1_failed" "$f"
+    run_layer2 "$f" "$PROJECT_ROOT" || handle_failure "review_layer2_failed" "$f"
   done
   # Layer 3 (agent intelligence) is handled by dedicated agent dispatch, not shell execution.
   # - fg-140-deprecation-refresh: dispatched during PREFLIGHT by the orchestrator
@@ -633,6 +642,13 @@ mode_review() {
 # --- Mode: --flush-queue (process deferred hook queue) ---
 mode_flush_queue() {
   shift  # consume --flush-queue
+  # Operator/orphan-detection invoked: disable ERR trap so a failure in one
+  # queued file does not abort the rest of the queue and (critically) does not
+  # skip the queue-clear at the end. The previous behavior caused `not ok
+  # engine-batching: --flush-queue processes queued files` flakes on macOS
+  # parallel CI where the test asserted the queue was cleared but engine.sh
+  # had silent-exited mid-queue, leaving the queue file non-empty.
+  trap - ERR
   local queue_file="" project_root=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -670,11 +686,11 @@ mode_flush_queue() {
     while IFS= read -r f; do
       [[ -z "$f" ]] && continue
       _CURRENT_FILE="$f"
-      run_layer1 "$f" "$project_root"
+      run_layer1 "$f" "$project_root" || handle_failure "flush_queue_layer1_failed" "$f"
     done <<< "${file_groups[$lang]}"
   done
 
-  # Clear the queue
+  # Clear the queue (always, even if some files errored above)
   : > "$queue_file"
 }
 
@@ -684,8 +700,14 @@ mode_flush_queue() {
 # Uses atomic file lock instead of env var (which has a TOCTOU race between
 # concurrent hook invocations in the same shell session).
 # The lock dir must exist; if it doesn't, skip locking (no forge project context).
+#
+# Skipped for operator-invoked modes (--verify, --review, --flush-queue):
+# those are CLI-invoked, callers expect to wait for results, and silent
+# exit-on-contention here is a known cause of intermittent macOS test flakes
+# where the test sees `assert_success` (exit 0) but empty stdout. Only
+# PostToolUse hooks need the strict single-instance behavior.
 _LOCK_DIR="${FORGE_DIR:-.forge}"
-if [[ -d "$_LOCK_DIR" ]]; then
+if [[ -d "$_LOCK_DIR" ]] && [[ "${_engine_is_operator_mode:-0}" != "1" ]]; then
   LOCK_FILE="${_LOCK_DIR}/.engine.lock"
   if command -v flock &>/dev/null; then
     exec 200>"$LOCK_FILE"
