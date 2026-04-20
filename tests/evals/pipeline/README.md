@@ -1,8 +1,11 @@
 # Pipeline evaluation harness
 
-End-to-end eval harness that runs forge against 10 frozen scenarios on every
-PR and every push to `master`. Complements `tests/evals/agents/` (reviewer I/O
-tests) — this tree measures the full pipeline.
+End-to-end eval harness that runs forge against 10 frozen regression scenarios
+on every PR and every push to `master`, plus a separate A/B scenario
+(`11-repo-map-ab`) driven by `.github/workflows/evals-compaction-ab.yml` for
+measuring the `code_graph.prompt_compaction` feature. Complements
+`tests/evals/agents/` (reviewer I/O tests) — this tree measures the full
+pipeline.
 
 ## Quick start
 
