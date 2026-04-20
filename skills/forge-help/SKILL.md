@@ -10,7 +10,7 @@ disable-model-invocation: true
 ## Flags
 
 - **--help**: print usage and exit 0
-- **--json**: structured JSON output
+- **--json**: structured JSON output (see `## --json output` below; envelope carries `schema_version`)
 
 ## Exit codes
 
@@ -22,7 +22,7 @@ None. This skill is a reference guide.
 
 ## Instructions
 
-Display the decision tree below. If the user asks a specific question, navigate to the relevant category.
+Display the decision tree below. If the user asks a specific question, navigate to the relevant category. With `--json`, emit the structured envelope documented under `## --json output`.
 
 ## Error Handling
 
@@ -30,106 +30,71 @@ None. This skill displays static content.
 
 ## What do you want to do?
 
-### Tier 1 — Essential Skills (start here)
-
-The 7 skills that cover 80% of usage:
-
-| Skill | What it does | When to use |
-|-------|-------------|-------------|
-| `/forge-init` [writes] | First-time project setup | Setting up Forge on a new or existing project |
-| `/forge-run` [writes] | Build a feature (full 10-stage pipeline) | You have a clear requirement to implement |
-| `/forge-fix` [writes] | Fix a bug with root cause investigation | Bug report, failing test, ticket ID |
-| `/forge-review` [writes] | Review your recent code changes | Before committing, after finishing a feature |
-| `/forge-verify` [read-only] | Quick build + lint + test check | Sanity check, pre-commit, baseline health |
-| `/forge-status` [read-only] | Check pipeline state and progress | See what stage the pipeline is at |
-| `/forge-help` [read-only] | This decision tree | Not sure which skill to use |
-
-**New to Forge?** Start with `/forge-tour` [read-only] for a guided 5-stop introduction.
-
----
-
-### Tier 2 — Power User Skills
-
-For users who run Forge regularly:
-
-| Category | Skill | What it does |
-|----------|-------|-------------|
-| **Plan** | `/forge-shape` [writes] | Turn a vague idea into a structured spec |
-| **Plan** | `/forge-sprint` [writes] | Execute multiple features in parallel |
-| **Quality** | `/forge-review` [read-only] | Full codebase audit (read-only, no fixes) |
-| **Quality** | `/forge-review` [writes] | Fix all issues iteratively until clean |
-| **Quality** | `/forge-security-audit` [read-only] | Security vulnerability scan |
-| **Ship** | `/forge-deploy` [writes] | Deploy to staging/production/preview |
-| **Ship** | `/forge-commit` [writes] | Generate conventional commit messages |
-| **Docs** | `/forge-docs-generate` [writes] | Generate README, ADRs, API specs |
-| **Migrate** | `/forge-migration` [writes] | Framework/library version upgrade |
-| **Know** | `/forge-ask` [read-only] | Ask questions about the codebase |
-| **Config** | `/forge-config` [writes] | Edit pipeline settings interactively |
-| **Output** | `/forge-compress output <mode>` [writes] | Toggle terse output (save tokens) |
-
----
-
-### Tier 3 — Advanced Skills
-
-Pipeline management, analytics, graph, and compression:
-
-#### Pipeline Management
-| Skill | What it does |
-|-------|-------------|
-| `/forge-recover` [writes] | Unified recovery — `diagnose` (read-only), `repair`, `reset`, `resume`, `rollback` subcommands |
-| `/forge-abort` [writes] | Stop active run, preserve for resume |
-| `/forge-config-validate` [read-only] | Check config before running |
-
-#### Analytics
-| Skill | What it does |
-|-------|-------------|
-| `/forge-history` [read-only] | Score trends across runs |
-| `/forge-insights` [read-only] | Cross-run quality + cost analytics |
-| `/forge-profile` [read-only] | Per-stage/agent timing analysis |
-
-#### Knowledge Graph (requires Docker)
-| Skill | What it does |
-|-------|-------------|
-| `/forge-graph-init` [writes] | Start Neo4j, build codebase graph |
-| `/forge-graph-status` [read-only] | Check graph health |
-| `/forge-graph-query` [read-only] | Run Cypher queries |
-| `/forge-graph-rebuild` [writes] | Rebuild graph from scratch |
-| `/forge-graph-debug` [read-only] | Diagnose graph issues |
-
-#### Token Optimization
-| Skill | What it does |
-|-------|-------------|
-| `/forge-compress` [writes] | Unified compression — `agents` (compress prompts), `output <mode>` (runtime), `status`, `help` |
-
-#### Automation & Recipes
-| Skill | What it does |
-|-------|-------------|
-| `/forge-automation` [writes] | Set up automatic pipeline triggers |
-| `/forge-playbooks` [read-only] | Manage reusable pipeline recipes |
-| `/forge-playbook-refine` [writes] | Review/apply playbook refinement proposals |
-| `/forge-bootstrap` [writes] | Scaffold a new project from scratch |
-
----
-
-### Similar Skills — When to Use Which
-
-| Confused between... | Use this one | Why |
-|---|---|---|
-| `/forge-review` vs `/forge-review` | `review` for recent changes, `health` for full codebase | Review targets staged/unstaged changes only |
-| `/forge-review` vs `/forge-review` | `codebase-health` to read, `deep-health` to fix | Health is read-only; deep-health fixes iteratively |
-| `/forge-recover repair` vs `/forge-recover reset` | `repair` to fix corruption, `reset` to start fresh | Repair preserves more state than reset |
-| `/forge-abort` vs `/forge-recover reset` | `abort` to pause for later, `reset` to clear everything | Abort + resume continues; reset starts over |
-| `/forge-history` vs `/forge-insights` | `history` for trends, `insights` for deeper analytics | Insights adds cost analysis and memory health |
-| `/forge-compress agents` vs `/forge-compress output` | `agents` for input tokens, `output` for session tokens | Agents rewrites files; output changes session style |
-| `/forge-run bugfix:` vs `/forge-fix` | `/forge-fix` for bugs | Fix has richer source resolution and root cause investigation |
-
-## Quick Reference
-
 ```
-Build → /forge-run    Fix → /forge-fix    Review → /forge-review
-Health → /forge-review    Pipeline broken → /forge-recover diagnose
-New here → /forge-tour    This help → /forge-help
+What do you want to do?
+
+├── Build something
+│   ├── New feature ................. /forge-run
+│   ├── Fix a bug ................... /forge-fix
+│   ├── Refine a vague idea ......... /forge-shape
+│   └── Scaffold a new project ...... /forge-bootstrap
+│
+├── Check quality
+│   ├── Just my recent changes ...... /forge-review             (default: --scope=changed --fix)
+│   ├── The whole codebase (read) ... /forge-review --scope=all
+│   ├── The whole codebase (fix) .... /forge-review --scope=all --fix
+│   ├── Build + lint + test ......... /forge-verify             (default: --build)
+│   ├── Config is correct ........... /forge-verify --config
+│   └── Security scan ............... /forge-security-audit
+│
+├── Work with the knowledge graph
+│   └── /forge-graph <init|status|query|rebuild|debug>
+│
+├── Ship / deploy / commit
+│   ├── Deploy ...................... /forge-deploy
+│   └── Conventional commit ......... /forge-commit
+│
+├── Pipeline control
+│   ├── Status ...................... /forge-status
+│   ├── Abort ....................... /forge-abort
+│   ├── Recover ..................... /forge-recover <diagnose|repair|reset|resume|rollback>
+│   └── Profile a run ............... /forge-profile
+│
+├── Know the codebase / history
+│   ├── Ask a question .............. /forge-ask
+│   ├── Run history ................. /forge-history
+│   └── Insights .................... /forge-insights
+│
+└── Configure / automate / compress
+    ├── Edit config ................. /forge-config
+    ├── Automations ................. /forge-automation
+    ├── Playbooks (list) ............ /forge-playbooks
+    ├── Playbooks (refine) .......... /forge-playbook-refine
+    ├── Compress .................... /forge-compress <agents|output|status|help>
+    ├── Docs generate ............... /forge-docs-generate
+    └── Migration ................... /forge-migration
+
+New to forge? → /forge-tour
+First setup?  → /forge-init
 ```
+
+**Tree depth:** maximum 3 levels (root → category → item). Subcommands live inside the skill, not as a 4th tree branch.
+
+## Migration (Phase 05)
+
+The following skill names were removed in Phase 05. Use the replacement on the right:
+
+| Removed                 | Use instead                              |
+|-------------------------|------------------------------------------|
+| /forge-codebase-health  | /forge-review --scope=all                |
+| /forge-deep-health      | /forge-review --scope=all --fix          |
+| /forge-graph-status     | /forge-graph status                      |
+| /forge-graph-query      | /forge-graph query <cypher>              |
+| /forge-graph-rebuild    | /forge-graph rebuild                     |
+| /forge-graph-debug      | /forge-graph debug                       |
+| /forge-config-validate  | /forge-verify --config                   |
+
+This section is slated for removal in the release after the next minor bump.
 
 ## See Also
 
@@ -139,22 +104,117 @@ New here → /forge-tour    This help → /forge-help
 
 ## --json output
 
-When invoked with `--json`, `/forge-help` emits the decision tree as structured JSON:
+When invoked with `--json`, `/forge-help` emits the decision tree as structured JSON. The envelope carries an explicit `schema_version` so downstream consumers (MCP server F30, `/forge-insights`) can detect the shape:
 
 ```json
 {
-  "total_skills": 35,
-  "tiers": {
-    "essential": [
+  "schema_version": "2",
+  "total_skills": 28,
+  "categories": {
+    "build": [
       {"name": "forge-run", "mode": "writes", "summary": "Full 10-stage pipeline"},
-      ...
+      {"name": "forge-fix", "mode": "writes", "summary": "Root cause bug fix"},
+      {"name": "forge-shape", "mode": "writes", "summary": "Refine a vague idea"},
+      {"name": "forge-bootstrap", "mode": "writes", "summary": "Scaffold a new project"}
     ],
-    "power_user": [...],
-    "advanced": [...]
+    "quality": [
+      {
+        "name": "forge-review",
+        "mode": "writes",
+        "summary": "Quality review for changed files or whole codebase",
+        "subcommands": [
+          {"name": "changed", "mode": "writes", "default": true},
+          {"name": "all", "mode": "read-only"},
+          {"name": "all --fix", "mode": "writes"}
+        ]
+      },
+      {
+        "name": "forge-verify",
+        "mode": "read-only",
+        "summary": "Pre-pipeline checks",
+        "subcommands": [
+          {"name": "build", "mode": "read-only", "default": true},
+          {"name": "config", "mode": "read-only"},
+          {"name": "all", "mode": "read-only"}
+        ]
+      },
+      {"name": "forge-security-audit", "mode": "read-only", "summary": "Security scan"}
+    ],
+    "knowledge_graph": [
+      {
+        "name": "forge-graph",
+        "mode": "writes",
+        "summary": "Neo4j knowledge graph (Docker)",
+        "subcommands": [
+          {"name": "init", "mode": "writes"},
+          {"name": "status", "mode": "read-only"},
+          {"name": "query", "mode": "read-only"},
+          {"name": "rebuild", "mode": "writes"},
+          {"name": "debug", "mode": "read-only"}
+        ]
+      }
+    ],
+    "ship": [
+      {"name": "forge-deploy", "mode": "writes", "summary": "Deploy to staging/production/preview"},
+      {"name": "forge-commit", "mode": "writes", "summary": "Generate conventional commit messages"}
+    ],
+    "pipeline_control": [
+      {"name": "forge-status", "mode": "read-only", "summary": "Check pipeline state and progress"},
+      {"name": "forge-abort", "mode": "writes", "summary": "Stop active run, preserve for resume"},
+      {
+        "name": "forge-recover",
+        "mode": "writes",
+        "summary": "Unified recovery dispatcher",
+        "subcommands": [
+          {"name": "diagnose", "mode": "read-only"},
+          {"name": "repair", "mode": "writes"},
+          {"name": "reset", "mode": "writes"},
+          {"name": "resume", "mode": "writes"},
+          {"name": "rollback", "mode": "writes"}
+        ]
+      },
+      {"name": "forge-profile", "mode": "read-only", "summary": "Per-stage / agent timing"}
+    ],
+    "know": [
+      {"name": "forge-ask", "mode": "read-only", "summary": "Ask questions about the codebase"},
+      {"name": "forge-history", "mode": "read-only", "summary": "Score trends across runs"},
+      {"name": "forge-insights", "mode": "read-only", "summary": "Cross-run quality + cost analytics"}
+    ],
+    "configure": [
+      {"name": "forge-config", "mode": "writes", "summary": "Edit pipeline settings interactively"},
+      {"name": "forge-automation", "mode": "writes", "summary": "Set up automatic pipeline triggers"},
+      {"name": "forge-playbooks", "mode": "read-only", "summary": "List/manage reusable pipeline recipes"},
+      {"name": "forge-playbook-refine", "mode": "writes", "summary": "Review/apply playbook refinement proposals"},
+      {
+        "name": "forge-compress",
+        "mode": "writes",
+        "summary": "Token compression dispatcher",
+        "subcommands": [
+          {"name": "agents", "mode": "writes"},
+          {"name": "output", "mode": "writes"},
+          {"name": "status", "mode": "read-only"},
+          {"name": "help", "mode": "read-only"}
+        ]
+      },
+      {"name": "forge-docs-generate", "mode": "writes", "summary": "Generate README, ADRs, API specs"},
+      {"name": "forge-migration", "mode": "writes", "summary": "Framework / library version upgrade"}
+    ]
   },
-  "similar_skills": [
-    {"category": "health-audit", "read": "forge-codebase-health", "fix": "forge-deep-health"},
-    ...
+  "removed_in_phase_05": [
+    {"name": "forge-codebase-health", "replacement": "/forge-review --scope=all"},
+    {"name": "forge-deep-health", "replacement": "/forge-review --scope=all --fix"},
+    {"name": "forge-config-validate", "replacement": "/forge-verify --config"},
+    {"name": "forge-graph-status", "replacement": "/forge-graph status"},
+    {"name": "forge-graph-query", "replacement": "/forge-graph query <cypher>"},
+    {"name": "forge-graph-rebuild", "replacement": "/forge-graph rebuild"},
+    {"name": "forge-graph-debug", "replacement": "/forge-graph debug"}
   ]
 }
 ```
+
+**Schema version history:**
+
+- **1** (Phase 1 baseline): `{ total_skills: 35, tiers: { essential, power_user, advanced }, similar_skills: [...] }` — flat tier tables.
+- **2** (Phase 5, this release): `{ schema_version, total_skills: 28, categories: {...}, removed_in_phase_05: [...] }` — categorized with cluster entries carrying `subcommands` arrays.
+
+Consumers SHOULD switch on `schema_version` rather than sniffing for the presence of `subcommands`.
