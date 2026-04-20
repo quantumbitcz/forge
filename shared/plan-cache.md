@@ -9,36 +9,50 @@ Caches PLAN stage outputs in `.forge/plan-cache/` for reuse when similar require
     +-- plan-2026-04-10-add-comments.json
     +-- plan-2026-04-08-auth-middleware.json
 
-## Cache Entry Schema
+## Schema (v2.0)
 
-Each `plan-{date}-{slug}.json`:
+Breaking change from v1.0 (Phase 12). Previous cache entries are invalidated on upgrade — `/forge-init` clears `.forge/plan-cache/` on schema mismatch; user is notified.
 
 ```json
 {
-  "schema_version": "1.0.0",
-  "requirement": "Add plan comment feature with threading",
-  "requirement_keywords": ["plan", "comment", "threading", "feature"],
-  "domain_area": "plan",
-  "plan_hash": "sha256:abc123",
-  "stories_count": 4,
-  "final_score": 94,
-  "created_at": "2026-04-10T10:00:00Z",
-  "source_sha": "def456",
-  "plan_content": "... full plan markdown ..."
+  "schema_version": "2.0.0",
+  "primary_plan": {
+    "content": "...full plan markdown...",
+    "hash": "sha256:...",
+    "final_score": 94
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-1",
+      "emphasis_axis": "simplicity",
+      "validator_score": 91,
+      "plan_hash": "sha256:..."
+    }
+  ],
+  "speculation_used": true,
+  "requirement": "...",
+  "requirement_keywords": ["..."],
+  "domain_area": "...",
+  "created_at": "2026-04-19T14:30:42Z",
+  "source_sha": "abc123..."
 }
 ```
 
+Non-speculative runs: `speculation_used: false`, `candidates` array omitted. Readers reject entries without `schema_version: "2.0.0"`.
+
 | Field | Type | Description |
 |-------|------|-------------|
+| `schema_version` | string | Must equal `"2.0.0"`. Entries with any other value are rejected as schema mismatch and evicted. |
+| `primary_plan.content` | string | Full plan markdown content (winning candidate when speculation ran) |
+| `primary_plan.hash` | string | SHA256 of `primary_plan.content` |
+| `primary_plan.final_score` | integer | Quality score the plan achieved (0 if run didn't complete) |
+| `candidates` | array | Speculative candidates with metadata. Omitted when `speculation_used: false`. |
+| `speculation_used` | boolean | `true` if Phase 12 speculative dispatch produced this entry; `false` for single-plan runs |
 | `requirement` | string | Original requirement text |
 | `requirement_keywords` | string[] | Extracted keywords (nouns, verbs, domain terms — lowercase, deduplicated) |
 | `domain_area` | string | Detected domain from `shared/domain-detection.md` |
-| `plan_hash` | string | SHA256 of `plan_content` |
-| `stories_count` | integer | Number of stories in the plan |
-| `final_score` | integer | Quality score the plan achieved (0 if run didn't complete) |
 | `created_at` | string | ISO 8601 creation timestamp |
 | `source_sha` | string | Git commit SHA when plan was created |
-| `plan_content` | string | Full plan markdown content |
 
 ## Index Schema
 
