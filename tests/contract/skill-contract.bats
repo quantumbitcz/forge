@@ -41,9 +41,10 @@ setup() {
 }
 
 @test "writes skills list --dry-run in Flags" {
-  # Writes skills per shared/skill-contract.md §4
+  # Writes skills per shared/skill-contract.md §4.
+  # Phase 05 removed forge-deep-health (consolidated into /forge-review --scope all --fix).
   local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
-                forge-compress forge-config forge-deep-health forge-deploy \
+                forge-compress forge-config forge-deploy \
                 forge-docs-generate forge-fix forge-graph-init forge-graph-rebuild \
                 forge-init forge-migration forge-playbook-refine forge-recover \
                 forge-review forge-run forge-shape forge-sprint)
@@ -56,7 +57,8 @@ setup() {
 }
 
 @test "read-only skills list --json in Flags" {
-  local readonly_skills=(forge-ask forge-codebase-health forge-config-validate \
+  # Phase 05 removed forge-codebase-health (consolidated into /forge-review --scope all).
+  local readonly_skills=(forge-ask forge-config-validate \
                          forge-graph-debug forge-graph-query forge-graph-status \
                          forge-help forge-history forge-insights forge-playbooks \
                          forge-profile forge-security-audit forge-status \
@@ -69,10 +71,12 @@ setup() {
   done
 }
 
-@test "exactly 35 skill directories exist" {
+@test "exactly 33 skill directories exist" {
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  [ "$count" -eq 35 ]
+  # Phase 05 reduced 35 → 33: forge-codebase-health and forge-deep-health
+  # consolidated into /forge-review --scope. Phase 05 final target is 28.
+  [ "$count" -eq 33 ]
 }
 
 @test "no dangling references to deleted skills" {

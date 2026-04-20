@@ -84,6 +84,6 @@ Before any action, verify:
 ## See Also
 
 - `/forge-review` -- Review code for quality and security findings using forge review agents
-- `/forge-codebase-health` -- Full codebase scan against convention rules including security patterns
-- `/forge-deep-health` -- Iteratively fix all codebase issues including security findings
+- `/forge-review` -- Full codebase scan against convention rules including security patterns
+- `/forge-review` -- Iteratively fix all codebase issues including security findings
 - `/forge-verify` -- Quick build + lint + test check (does not include security scanning)

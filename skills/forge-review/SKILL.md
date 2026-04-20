@@ -1,91 +1,110 @@
 ---
 name: forge-review
-description: "[writes] Review and fix recently changed files only. Use when you want to review your latest changes before committing, after finishing a feature, or before creating a PR. Dispatches review agents (quick: 3, full: up to 9), fixes findings in loop. No commits."
+description: "[writes] Quality review for changed files or the whole codebase. Subcommands via flags: --scope=changed|all, --fix, --dry-run. Use when reviewing staged work before commit (--scope=changed), auditing the codebase (--scope=all), or iteratively fixing all quality issues (--scope=all --fix)."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
 
-# /forge-review — Review + Fix with Forge Agents
+# /forge-review — Quality Review (changed | all | all --fix)
+
+This skill unifies what Phase 1 shipped as three separate skills. One dispatch, three behavioral modes.
+
+## Subcommand dispatch
+
+Follow `shared/skill-subcommand-pattern.md`. This skill uses flags (not positional subcommands) because the distinction between "review changed files" and "audit whole codebase" is semantically a scope selection.
+
+**Dispatch rules:**
+
+1. Read `$ARGUMENTS`.
+2. Parse flags: `--scope=<changed|all>`, `--fix`, `--dry-run`, `--full`, `--files <pattern>`, `--range <base>..<head>`, `--max-iterations <N>`, `--yes`, `--help`.
+3. If `--help` is present: print the usage block below and exit 0.
+4. Default values (applied before dispatch):
+   - `--scope`: `changed`
+   - `--fix`: ON when `--scope=changed`; OFF when `--scope=all` (see exception in Mode C).
+5. Dispatch by `(scope, fix)` pair:
+   - `(changed, true)` → `### Subcommand: changed --fix` (the default)
+   - `(changed, false)` → `### Subcommand: changed` (same as above, fix phase skipped)
+   - `(all, false)` → `### Subcommand: all`
+   - `(all, true)` → `### Subcommand: all --fix` (**destructive**, gated — see Mode C)
+6. Unknown flag or malformed `--scope=<bad>` value: print `Unknown --scope. Valid: changed | all.` and exit 2.
 
 ## Flags
 
 - **--help**: print usage and exit 0
-- **--dry-run**: preview actions without writing
+- **--dry-run**: preview actions without writing files or committing
+- **--scope=changed|all**: required explicit value when not default. `changed` = last commit + uncommitted + staged. `all` = every tracked source file.
+- **--fix**: run the fix loop after collecting findings. Default ON for `changed`, OFF for `all`.
+- **--yes**: bypass the safety-confirm gate for `--scope=all --fix` (autonomous CI/cron usage)
+- **--full**: in `--scope=changed`, dispatch the full reviewer roster (up to 8 agents) instead of the quick 2
+- **--range <base>..<head>**: in `--scope=changed`, override the git range (default `HEAD~1..HEAD` + uncommitted)
+- **--files <pattern>**: in `--scope=changed`, glob-filter the file set
+- **--max-iterations <N>**: override the review-fix-verify inner loop cap (default 3 for `changed`, 5 for `all --fix`)
 
 ## Exit codes
 
-See `shared/skill-contract.md` for the standard exit-code table.
+See `shared/skill-contract.md` §3 for the standard exit-code table.
 
-## Prerequisites
+## Shared prerequisites
 
-Before any action, verify:
+Before any subcommand, verify:
 
-1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
-2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
-3. **Changed files exist:** Run `git diff --name-only HEAD`. If empty: report "No changed files to review." and STOP.
+1. **Git repository:** `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
+2. **Forge initialized:** `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
 
-You review changed files using forge's own specialized review agents, fix all findings, and re-verify until the score reaches 100 or max iterations. You are a self-contained review-fix-verify loop.
+## Configuration respected
 
-**Philosophy:** Apply principles from `shared/agent-philosophy.md` — challenge every design decision before fixing. Search documentation (Context7, WebSearch) when uncertain about best practices.
+Reads from `.claude/forge-config.md` (if present):
+- `max_iterations` — iteration cap (default: 3 for `changed`, 5 for `all --fix`)
+- `pass_threshold` — minimum quality score (default: 80)
+- `autonomous` — if true, skip user confirmation between iterations AND skip the Mode C safety gate
+- `convergence.oscillation_tolerance` — score delta considered "no progress"
+- `quality_gate.*` — reviewer selection overrides
 
-## Arguments
+No new config keys are introduced by this phase.
 
-Parse `$ARGUMENTS` for flags:
+---
 
-- `--full`: Dispatch all applicable agents (default: core 3 only)
-- `--range <base>..<head>`: Custom commit range (default: `HEAD~1..HEAD` + uncommitted)
-- `--files <pattern>`: Specific files only (glob pattern)
-- `--max-iterations <N>`: Override inner loop cap (default: 3)
+### Subcommand: changed
 
-Flags are combinable.
+Default when `$ARGUMENTS` is empty or starts with a flag. Review **recently-changed source files** and (when `--fix` is ON, the default) fix findings in a loop.
 
-## Instructions
+**Additional prerequisite:** `git diff --name-only HEAD` returns at least one file. If empty: report "No changed files to review." and STOP.
 
-### 1. Determine Scope
+#### 1. Determine scope
 
-Compute the file list based on flags:
+Compute the file list:
 
-**Default (no --range, no --files):**
+**Default (no `--range`, no `--files`):**
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
-# Last commit + uncommitted changes
 COMMITTED=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || echo "")
 UNCOMMITTED=$(git diff --name-only 2>/dev/null)
 STAGED=$(git diff --name-only --cached 2>/dev/null)
 FILES=$(echo -e "$COMMITTED\n$UNCOMMITTED\n$STAGED" | sort -u | grep -v '^$')
 ```
 
-**With --range:**
-```bash
-FILES=$(git diff --name-only {base}..{head})
-```
+**With `--range`:** `FILES=$(git diff --name-only {base}..{head})`
 
-**With --files:**
-Glob expansion against project root.
+**With `--files`:** glob against project root.
 
-**Filter** to source files (same extensions as `/forge-codebase-health`):
+Filter to source extensions:
 ```bash
 echo "$FILES" | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala|vue|svelte|html|css|scss)$'
 ```
 
-Also include `.md` files if `--full` is set (for fg-418-docs-consistency-reviewer).
+Also include `.md` files if `--full` is set (for `fg-418-docs-consistency-reviewer`).
 
-If zero files remain: report "No changed source files to review. PERFECT." and stop.
+If zero files remain: report "No changed source files to review. PERFECT." and STOP.
 
 Report: "Reviewing {count} files in {mode} mode."
 
-### 2. Select Agents
+#### 2. Select agents
 
 **Quick mode (default):** Always dispatch these 2:
 - `forge:fg-410-code-reviewer`
 - `forge:fg-411-security-reviewer`
 
-**Full mode (`--full`):** Core 2 + always-on + conditional agents based on file types present:
-
-Always-on in full mode:
-- `forge:fg-412-architecture-reviewer`
-
-Conditional:
+**Full mode (`--full`):** Quick 2 + `forge:fg-412-architecture-reviewer` + conditional agents based on file types present:
 
 | Agent | Dispatch condition |
 |---|---|
@@ -97,7 +116,7 @@ Conditional:
 
 Report: "Dispatching {count} review agents: {agent_names}"
 
-### 3. Review-Fix-Verify Loop
+#### 3. Review-Fix-Verify Loop
 
 ```
 ITERATION = 0
@@ -119,137 +138,183 @@ LOOP:
       Do not fix anything — report only."
 
   --- Step B: COLLECT & SCORE ---
-  Compile findings from all agents.
   Deduplicate by (file, line, category) — keep highest severity.
   Score: max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)
   Report: "Iteration {ITERATION}: {count} findings, score {score}/100"
 
   --- Step C: CHECK ---
-  If score == 100:
-    Mark task completed
-    BREAK → report PERFECT
-  If ITERATION >= MAX_ITERATIONS:
-    Mark task completed
-    BREAK → report final verdict with remaining findings
+  If score == 100: BREAK → report PERFECT
+  If ITERATION >= MAX_ITERATIONS: BREAK → report final verdict with remaining findings
+  If --fix is OFF (user passed --scope=changed without --fix): BREAK after first iteration
 
-  --- Step D: FIX ---
+  --- Step D: FIX (only if --fix is ON) ---
   For each finding (CRITICAL first, then WARNING, then INFO):
-    1. Read the affected file and surrounding context (±20 lines)
+    1. Read affected file + context (±20 lines).
     2. Challenge: is there a better solution? Consider project conventions.
     3. Fix using Edit tool. Follow existing patterns.
-    4. Track: add to FIXED list with original finding details
-    TOTAL_FIXED += 1
+    4. Track: add to FIXED list. TOTAL_FIXED += 1
 
-  After all fixes applied:
-    Read .claude/forge.local.md for commands section.
-    If commands.build exists: run it. On failure → revert last fix, mark as unfixable.
-    If commands.test exists: run it. On failure → revert last fix, mark as unfixable.
-    If commands.lint exists: run it. On failure → revert last fix, mark as unfixable.
+  After fixes: run commands.build, commands.test, commands.lint from forge.local.md.
+  If any fail: revert last fix (`git checkout -- <file>`), mark as unfixable.
 
   --- Step E: NARROW SCOPE ---
-  SCOPE_FILES = files touched by fixes (git diff --name-only)
-  Mark task completed
+  SCOPE_FILES = files touched by fixes.
   GOTO LOOP
 ```
 
-### 4. Report
+#### 4. Report
 
-After loop exits, produce the final report:
+Final report (verdict table, terse caveman-mode format, severity markers):
 
 ```
 ## Forge Review -- {PERFECT|PASS|CONCERNS|FAIL} (Score: {score}/100)
-
-**Mode:** {quick|full} | **Files reviewed:** {count} | **Agents dispatched:** {count}
-**Iterations:** {ITERATION}/{MAX_ITERATIONS} | **Findings fixed:** {TOTAL_FIXED} | **Remaining:** {remaining}
+Mode: changed{--fix}  |  Files: {count}  |  Agents: {count}
+Iterations: {ITERATION}/{MAX_ITERATIONS}  |  Fixed: {TOTAL_FIXED}  |  Remaining: {remaining}
 
 ### Fixed ({TOTAL_FIXED})
 - `file:line` | CATEGORY | SEVERITY | what was fixed
 
-### Remaining ({remaining})  [omit section if PERFECT]
+### Remaining ({remaining})  [omit if PERFECT]
 - `file:line` | CATEGORY | SEVERITY | message | reason unfixable
 
 ### Verdict
-{PERFECT: Clean — score 100, no findings.}
+{PERFECT: Clean — score 100.}
 {PASS: Score {N}/100. {remaining} findings could not be resolved in {MAX_ITERATIONS} iterations.}
-{CONCERNS: Score {N}/100. Review findings above — manual intervention recommended.}
-{FAIL: Score {N}/100. Critical issues remain — do not proceed.}
+{CONCERNS: Score {N}/100. Manual intervention recommended.}
+{FAIL: Score {N}/100. Critical issues remain.}
 ```
 
-Verdict thresholds:
-- **PERFECT**: score == 100
-- **PASS**: score >= 80 AND 0 CRITICALs
-- **CONCERNS**: score 60-79 AND 0 CRITICALs
-- **FAIL**: score < 60 OR any CRITICAL remaining
+Verdict thresholds: PERFECT = 100; PASS ≥ 80 and 0 CRITICALs; CONCERNS 60-79 and 0 CRITICALs; FAIL < 60 OR any CRITICAL remaining.
 
-### 5. Terse Review Mode
+When `.forge/caveman-mode` exists and is not `off`, compress the final report using text markers (`[CRIT]`, `[WARN]`, `[INFO]`, `[PASS]`). The finding data is unchanged — only the presentation format is compressed.
 
-When `.forge/caveman-mode` exists and is not `off`, compress the final report using text markers instead of full severity names. The finding data is unchanged -- only the presentation format is compressed.
+**Do NOT** create PRs, tickets, commits, or state files. This subcommand does not commit.
 
-**Text markers:**
+---
 
-| Severity | Marker |
-|----------|--------|
-| CRITICAL | `[CRIT]` |
-| WARNING | `[WARN]` |
-| INFO | `[INFO]` |
-| PERFECT (score 100) | `[PASS]` |
+### Subcommand: all
 
-**Terse report format (caveman full/ultra):**
+Read-only full-codebase audit via the check engine. Does not fix. Replaces the old `/forge-review`.
 
-```
-## Review -- [PASS] 100/100
-Mode: quick | Files: 12 | Agents: 3 | Iter: 1/3 | Fixed: 0
+#### 1. Discover source files
 
-No findings.
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+SOURCE_FILES=$(git -C "$PROJECT_ROOT" ls-files --cached --others --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|csx|cpp|cc|cxx|hpp|swift|rb|php|dart|ex|exs|scala|sc)$')
 ```
 
-```
-## Review -- CONCERNS 72/100
-Mode: full | Files: 8 | Agents: 5 | Iter: 3/3 | Fixed: 4 | Remaining: 3
+Count and report: "Found {count} source files to scan."
 
-Fixed (4):
-- `auth/jwt.ts:45` | SEC-TOKEN | [CRIT] | added expiry check
-- `api/handler.ts:12` | QUAL-ERR | [WARN] | added error boundary
-- `api/handler.ts:30` | QUAL-LOG | [INFO] | added structured logging
-- `db/pool.ts:8` | PERF-CONN | [WARN] | added connection pooling
+#### 2. Run the check engine (L1 + L2)
 
-Remaining (3):
-- `auth/oauth.ts:90` | SEC-CSRF | [CRIT] | needs CSRF token -- manual review required
-- `api/routes.ts:5` | ARCH-LAYER | [WARN] | handler imports repository directly
-- `config/app.ts:22` | CONV-NAME | [INFO] | non-standard export name
+```bash
+echo "$SOURCE_FILES" | while read -r f; do
+  "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh" --review --project-root "$PROJECT_ROOT" --files-changed "$PROJECT_ROOT/$f"
+done
 ```
 
-**Lite mode:** Use full severity names but drop filler from messages.
+If the engine is not executable or not found: "Check engine not available. Verify the forge plugin is installed." and STOP.
 
-**Standard mode (caveman off):** Use the default report format from section 4.
+#### 3. Parse, score, present
 
-### 6. Important Rules
+Parse pipe-delimited findings: `file:line | CATEGORY | SEVERITY | message | fix_hint`. Count by severity and category prefix. Score with `max(0, 100 - 20*CRITICAL - 5*WARNING - 2*INFO)`. Verdict: PASS (≥80, no CRITICAL), CONCERNS (60-79, no CRITICAL), FAIL (<60 or any CRITICAL).
 
-- **Target is always 100.** Fix ALL severities — CRITICAL, WARNING, and INFO. Do not stop at "good enough."
-- **Challenge before fixing.** For each finding, ask: is there a fundamentally better approach? Search docs if needed.
-- **Follow project conventions.** Read `.claude/forge.local.md` for patterns. Match existing code style.
-- **Revert on regression.** If a fix breaks build/test/lint, revert it and mark as unfixable rather than cascading.
-- **Do NOT create PRs, tickets, or state files.** This skill is a pure review+fix loop.
-- **Do NOT run the check engine.** That is `/forge-codebase-health`. This skill dispatches review agents only.
-- **Do NOT commit.** The caller decides when to commit. You only fix files.
+Produce a `## Codebase Health Report` block (categories table, top 10 issues, etc.) replacing the old `/forge-review --scope=all` body.
+
+#### 4. Save the report
+
+Write the full report to `.forge/health-report.md` (preserved path for tooling that greps it). This is the ONLY file this subcommand writes.
+
+**Do NOT fix issues.** If the user wants fixes, they must re-run with `--scope=all --fix`.
+
+---
+
+### Subcommand: all --fix
+
+Iterative fix loop across the whole codebase with per-iteration commits. Replaces the old `/forge-review --scope=all --fix`. **Destructive** — commits are real; a bad fix is on `HEAD`.
+
+#### 1. Safety-confirm gate (NEW in Phase 05)
+
+**Before any file modification or commit**, this subcommand MUST present an `AskUserQuestion` gate unless ONE of the following is true:
+
+- `--yes` flag is present on the command line, OR
+- `.claude/forge-config.md` sets `autonomous: true`, OR
+- `--dry-run` flag is present (preview only, never commits)
+
+Gate prompt:
+- Header: "Codebase fix loop — confirm"
+- Question: "This will run the review-fix-verify loop over the whole codebase and commit after every iteration (up to {max_iterations}). Up to ~{estimated_commits} commits may land on the current branch. Continue?"
+- Options: "Proceed — run the fix loop" / "Abort — exit without changes"
+
+If the user picks "Abort": report "Aborted — no changes made." and exit 4 (user-aborted; see skill-contract §3).
+
+Under `autonomous: true` or `--yes`, log a one-line `[AUTO-CONFIRM] Safety gate bypassed by <reason>` and proceed.
+
+#### 2. Baseline — run the check engine
+
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+FILES=$(git diff --name-only $(git merge-base origin/master HEAD 2>/dev/null || echo HEAD~10)..HEAD 2>/dev/null)
+[ -z "$FILES" ] && FILES=$(git ls-files --cached --exclude-standard | grep -E '\.(kt|kts|java|ts|tsx|js|jsx|py|go|rs|c|h|cs|cpp|swift|rb|php|dart|ex|scala|vue|svelte|html|css|scss)$')
+
+echo "$FILES" | while read -r f; do
+  "${CLAUDE_PLUGIN_ROOT}/shared/checks/engine.sh" --review --project-root "$PROJECT_ROOT" --files-changed "$PROJECT_ROOT/$f" 2>/dev/null
+done
+```
+
+Record baseline score. `ITERATION_BASE_SHA=$(git rev-parse HEAD)`.
+
+#### 3. Investigation, triage, fix, verify, commit (per iteration)
+
+Same loop as the old `/forge-review --scope=all --fix`. Dispatch reviewer roster (selected by file types), collect findings, triage by severity, fix with project conventions, run `build`/`test`/`lint`, revert regressions, re-dispatch to verify, and commit with a conventional-commit message once the iteration is clean.
+
+Inner verification loop hard cap: 3 passes per iteration.
+
+Iteration cap: `--max-iterations` override or config `max_iterations` (default 5).
+
+#### 4. Final full review
+
+After the loop ends, dispatch all reviewers one final time against the full diff `FULL_BASE..HEAD` to catch cross-iteration inconsistencies.
+
+#### 5. Report
+
+Save to `.forge/forge-review-report.md` (preserved path). Format:
+
+```
+## Deep Health Complete
+Iterations: {N}
+Issues fixed: {M} ({critical} critical, {warning} warnings, {info} info)
+Final score: {S}/100
+Commits: {list of SHAs + messages}
+
+### Remaining (if any)
+- {issue}: {reason — out of scope / intentional / accepted trade-off}
+```
+
+#### Important rules
+
+- **Target is 100.** Fix all severities.
+- **Challenge before fixing.** Search docs (Context7, WebSearch) when uncertain.
+- **One commit per iteration.** Never batch unrelated fixes.
+- **Revert on regression.** If a fix breaks build/test/lint, revert and mark unfixable.
+- **Do NOT create PRs or tickets.** Only commits.
 
 ## Error Handling
 
 | Condition | Action |
-|-----------|--------|
-| Prerequisites fail | Report specific error message and STOP |
-| No changed files | Report "No changed files to review." and STOP |
-| Agent dispatch failure | Skip failed agent, continue with remaining. Log WARNING. If all agents fail, report ERROR and STOP |
-| Fix introduces regression (tests fail) | Revert the specific fix (`git checkout -- <file>`), mark as "unfixable: fix caused regression", continue |
-| No conventions file | Agents run without conventions context. Log INFO |
-| Build/test/lint command unknown | Skip verification step. Log WARNING |
-| Score stagnation (no improvement across iterations) | Report remaining findings and exit loop |
-| State corruption | This skill does not depend on state.json -- it runs independently |
+|---|---|
+| Shared prerequisites fail | Report specific error message and STOP |
+| No changed files (scope=changed) | Report "No changed files to review." and STOP |
+| No source files (scope=all) | Report "No source files found in the repository." and STOP |
+| Check engine not available (scope=all) | Report "Check engine not available. Verify the forge plugin is installed." and STOP |
+| Agent dispatch failure | Skip failed agent, continue. If ALL fail, report ERROR and STOP |
+| Fix introduces regression | Revert the fix (`git checkout -- <file>`), mark as "unfixable: fix caused regression", continue |
+| Safety gate declined (scope=all --fix) | Report "Aborted — no changes made." and exit 4 |
+| Score stagnation | Report remaining findings, exit loop |
+| State corruption | This skill does not depend on state.json — it runs independently |
 
 ## See Also
 
-- `/forge-codebase-health` -- Read-only analysis of the full codebase (no fixes)
-- `/forge-deep-health` -- Iteratively fix all codebase quality issues with commits per iteration
-- `/forge-verify` -- Quick build + lint + test check without review agents
-- `/forge-security-audit` -- Focused security vulnerability scanning
-- `/forge-run` -- Full pipeline including review as part of the workflow
+- `/forge-verify --build` — Quick build + lint + test check (no review agents)
+- `/forge-security-audit` — Focused security vulnerability scanning
+- `/forge-run` — Full pipeline including review as part of the workflow

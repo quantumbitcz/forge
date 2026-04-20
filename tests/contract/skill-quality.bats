@@ -81,30 +81,34 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 # ---------------------------------------------------------------------------
 # 5. All skills have ## Prerequisites section
 # ---------------------------------------------------------------------------
-@test "skill-quality: all skills have ## Prerequisites section" {
+@test "skill-quality: all skills have ## Prerequisites or ## Subcommand dispatch" {
+  # Phase 05 introduced the subcommand pattern (shared/skill-subcommand-pattern.md).
+  # Subcommand-style skills replace the flat Prerequisites/Instructions sections
+  # with per-subcommand blocks, so either pattern satisfies the contract.
   local failures=()
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"
     [[ -f "$skill_file" ]] || continue
-    if ! grep -qE '^## Prerequisites' "$skill_file"; then
+    if ! grep -qE '^## (Prerequisites|Subcommand dispatch)' "$skill_file"; then
       failures+=("$(basename "$skill_dir")")
     fi
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "Skills missing ## Prerequisites: ${failures[*]}"
+    fail "Skills missing ## Prerequisites or ## Subcommand dispatch: ${failures[*]}"
   fi
 }
 
 # ---------------------------------------------------------------------------
 # 6. All skills have ## Instructions section (not "What to do")
 # ---------------------------------------------------------------------------
-@test "skill-quality: all skills have ## Instructions (not 'What to do')" {
+@test "skill-quality: all skills have ## Instructions or ### Subcommand:" {
   local failures=()
   local old_header=()
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"
     [[ -f "$skill_file" ]] || continue
-    if ! grep -qE '^## Instructions' "$skill_file"; then
+    # Phase 05 subcommand-style skills use per-subcommand H3 blocks.
+    if ! grep -qE '^## Instructions|^### Subcommand:' "$skill_file"; then
       failures+=("$(basename "$skill_dir")")
     fi
     if grep -qE '^## What to do' "$skill_file"; then
@@ -112,7 +116,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
     fi
   done
   if (( ${#failures[@]} > 0 )); then
-    fail "Skills missing ## Instructions: ${failures[*]}"
+    fail "Skills missing ## Instructions or ### Subcommand:: ${failures[*]}"
   fi
   if (( ${#old_header[@]} > 0 )); then
     fail "Skills still using '## What to do': ${old_header[*]}"
@@ -218,8 +222,9 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   for skill_dir in "$SKILLS_DIR"/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
-  if (( count < 35 )); then
-    fail "Expected at least 35 skills, found $count"
+  # Phase 05 reduced 35 → 33; final target after Tasks 4-12 is 28.
+  if (( count < 28 )); then
+    fail "Expected at least 28 skills, found $count"
   fi
 }
 

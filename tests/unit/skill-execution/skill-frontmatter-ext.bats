@@ -12,7 +12,7 @@ setup() {
     [ -f "${dir}SKILL.md" ] || fail "Missing SKILL.md in $dir"
     count=$((count + 1))
   done
-  [[ "$count" -ge 35 ]]
+  [[ "$count" -ge 28 ]]
 }
 
 @test "skill-frontmatter: all skills have name field" {
@@ -51,5 +51,5 @@ setup() {
   # Phase 1 (v3.0.0) consolidated 42 → 35 skills. Threshold bumped 40 → 35.
   local count
   count=$(find "$SKILLS_DIR" -name "SKILL.md" | wc -l)
-  [[ "$count" -ge 35 ]]
+  [[ "$count" -ge 28 ]]
 }
