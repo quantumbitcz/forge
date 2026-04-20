@@ -91,7 +91,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.8.0",
+  "version": "1.9.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
@@ -162,6 +162,12 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "feedback_classification": "",
   "previous_feedback_classification": "",
   "feedback_loop_count": 0,
+  "consistency_cache_hits": 0,
+  "consistency_votes": {
+    "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 },
+    "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 },
+    "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }
+  },
   "score_history": [],
   "convergence": {
     "phase": "correctness",
@@ -331,7 +337,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.8.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Phase 04 CoVe. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.9.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.9.0 adds self-consistency voting counters (`consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`) for Phase 11. v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Phase 04 CoVe. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
@@ -453,6 +459,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300, "flapping_count": <int>, "locked": <bool> }`. `flapping_count` (default 0): incremented when HALF_OPEN → OPEN (probe failed), reset to 0 on HALF_OPEN → CLOSED (probe succeeded). `locked` (default false): set to `true` when `flapping_count >= 3` — locked circuits remain OPEN indefinitely with no HALF_OPEN probes. Cleared by `/forge-recover repair`, `/forge-recover reset`, or new pipeline run; NOT cleared by `/forge-recover resume`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine, flapping detection, and category-to-error-type mapping. Default: `{}`. Added in v1.6.0. |
 | `critic_revisions` | integer | No | Number of planning critic revision cycles applied during VALIDATE stage. Starts at 0, incremented each time the planning critic triggers a plan revision. Added in v1.6.0. Default: `0`. |
 | `schema_version_history` | array | No | Append-only log of schema migrations applied to this state file. Each entry: `{ "from": "<version>", "to": "<version>", "timestamp": "<ISO8601>" }`. Capped at 20 entries (oldest trimmed). Added in v1.6.0. Default: `[]`. |
+| `consistency_cache_hits` | integer | Yes | Count of self-consistency voting dispatch calls served from `.forge/consistency-cache.jsonl`. Incremented by `hooks/_py/consistency.py` on cache hit. Added in v1.9.0. Default: `0`. See `shared/consistency/voting.md`. |
+| `consistency_votes` | object | Yes | Per-decision-point self-consistency voting counters. Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value is `{ "invocations": <int>, "cache_hits": <int>, "low_consensus": <int> }`. `invocations` increments on every dispatch (skipped on validator hard-verdict rule pass). `cache_hits` increments when a dispatch is served from cache. `low_consensus` increments when the winning label's mean confidence falls below `consistency.min_consensus_confidence` or when a `ConsistencyError` fires (too few samples survived parsing). Added in v1.9.0. Default: all counters `0`. See `shared/consistency/voting.md` §5 for fallback rules. |
 | `linear_sync` | object | Yes | Tracks Linear API operation success/failure for desync detection. `in_sync`: boolean, true when all Linear operations succeeded. `failed_operations[]`: list of `{ "op": "<operation>", "error": "<message>", "timestamp": "<ISO8601>" }`. Read by retrospective to report desync. **Sync guarantees:** Linear operations are fire-and-forget with single retry — the pipeline does not block on Linear success. If `epic_id` is set but subsequent story/task creation fails, the orphaned epic remains in Linear (logged in `failed_operations` for manual cleanup). Checked at SHIP and LEARN stages; `in_sync: false` triggers a WARNING in the retrospective report. |
 | `scout_improvements` | integer | Yes | Count of Boy Scout improvements made during implementation — small cleanup changes (unused imports, variable renames, helper extractions) applied opportunistically while modifying files. Tracked as `SCOUT-*` findings in the quality gate (no point deduction). Reported in the retrospective. |
 | `conventions_hash` | string | Yes | SHA256 first 8 chars of full conventions_file content at PREFLIGHT. Agents should prefer `conventions_section_hashes` for granular drift detection. Empty if conventions file was unavailable. |
@@ -994,6 +1002,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.5.0 | 1.6.0 | (v2.7.0) Added circuit breaker tracking, planning critic counter, schema migration history | `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history` | `{}`, `0`, `[]` |
 | 1.6.0 | 1.7.0 | (v2.0) Added confidence scoring, adaptive trust, context condensation, knowledge references | `confidence`, `convergence.condensation`, `tokens.condensation_savings`, `tokens.condensation_count`, `tokens.condensation_cost`, `tokens.effective_token_ratio` | `null` (computed at PLAN), see condensation defaults above, `0`, `0`, `0`, `1.0` |
 | 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
+| 1.8.0 | 1.9.0 | (Forge 3.1.0 / Phase 11) Added self-consistency voting counters | `consistency_cache_hits`, `consistency_votes` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }` |
 
 ### Version Detection and Upgrade Protocol
 
@@ -1281,6 +1290,11 @@ Each task object under `tasks[*]` carries:
 ---
 
 ## Changelog
+
+### 1.9.0 (Forge 3.1.0 / Phase 11)
+- Add run-level `consistency_cache_hits` (integer, required). Incremented by `hooks/_py/consistency.py` on every cache hit.
+- Add run-level `consistency_votes` (object, required). Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value: `{ "invocations": int, "cache_hits": int, "low_consensus": int }`. Incremented by the three callers (`fg-010-shaper`, `fg-210-validator`, `fg-710-post-run`). `validator_verdict.invocations` is NOT incremented on hard rule-pass verdicts (see `shared/consistency/voting.md` §6).
+- New fields initialized to `0` / the per-decision skeleton object at PREFLIGHT. Pre-1.9.0 state.json files receive defaults via the standard migration ladder.
 
 ### 1.8.0 (Forge 3.1.0)
 - Add `tasks[*].implementer_reflection_cycles` (integer, required) for per-task Chain-of-Verification (CoVe) counter. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, `quality_cycles`, or `implementer_fix_cycles`.

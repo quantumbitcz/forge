@@ -172,21 +172,44 @@ Meta-checks beyond 7 perspectives:
 
 ## 5. Verdict Rules
 
-After running all seven perspectives, produce a verdict:
+After running all seven perspectives, produce a verdict in two sub-steps.
 
-| Condition | Verdict |
-|-----------|---------|
-| Any `SEC-*` finding | **NO-GO** |
-| Any `ARCH-*` HARD violation | **NO-GO** |
-| 3+ `EDGE-*` findings | **REVISE** |
-| 3+ `TEST-*` findings | **REVISE** |
-| Unjustified complexity (meta-check) | **REVISE** |
-| Only `CONV-*` or minor `ARCH-*` SOFT findings | **GO** (with noted improvements) |
-| No findings | **GO** |
+### 5.1 Deterministic rule pass (always runs, single-sample)
 
-**REVISE:** Specific issues for planner. Orchestrator re-dispatches fg-200 (max retries: `validation.max_validation_retries`).
-**NO-GO:** Fundamental issues. Orchestrator escalates to user.
-**GO:** Orchestrator checks risk vs `risk.auto_proceed`. Exceeds threshold → user approval.
+Evaluate the findings against this rule table:
+
+| Condition | Rule result |
+|-----------|-------------|
+| Any `SEC-*` finding | **NO-GO (hard)** |
+| Any `ARCH-*` HARD violation | **NO-GO (hard)** |
+| 3+ `EDGE-*` findings | **REVISE (hard)** |
+| 3+ `TEST-*` findings | **REVISE (hard)** |
+| Unjustified complexity (meta-check) | **REVISE (hard)** |
+| None of the above AND no WARNING-level findings | **GO (hard)** |
+| None of the above AND at least one WARNING-level finding present | **INCONCLUSIVE** |
+
+A `hard` result is the final verdict. Voting is SKIPPED. `consistency_votes.validator_verdict.invocations` is NOT incremented. Per-perspective findings (ARCH-N, SEC-N, EDGE-N, TEST-N, CONV-N, APPROACH-N, DOC-N) are emitted single-sample in all cases — voting never applies to them.
+
+### 5.2 Voting synthesis (only on INCONCLUSIVE)
+
+When the rule pass returns `INCONCLUSIVE`, dispatch self-consistency voting for the final GO/REVISE/NO-GO label via `hooks/_py/consistency.py` (dispatch contract: `shared/consistency/dispatch-bridge.md`):
+
+- `decision_point = "validator_verdict"`
+- `labels = ["GO", "REVISE", "NO-GO"]`
+- `state_mode = state.mode`
+- `prompt` = the structured findings summary (7 perspectives + summary table), rendered as the caller would render it today
+- `n = config.consistency.n_samples`
+- `tier = config.consistency.model_tier`
+
+Increment `state.consistency_votes.validator_verdict.invocations` by 1 (and `cache_hits` / `low_consensus` as appropriate).
+
+On `low_consensus` or `ConsistencyError`, force `REVISE`. Orchestrator re-dispatches `fg-200-planner` (max retries: `validation.max_validation_retries`).
+
+If `consistency.enabled: false` or `validator_verdict` is not in `consistency.decisions`, fall back to legacy single-sample verdict synthesis (the pre-Phase-11 behaviour) for the INCONCLUSIVE case.
+
+**REVISE:** specific issues for planner. **NO-GO:** orchestrator escalates to user. **GO:** orchestrator checks risk vs `risk.auto_proceed`.
+
+Contract: `shared/consistency/voting.md` §6 (scope fence).
 
 ---
 

@@ -119,20 +119,38 @@ severity: { high | medium | low }
 
 ### Feedback Classification
 
-Classify into one of two types:
+Classify PR-rejection feedback into one of three labels via `hooks/_py/consistency.py` (dispatch contract: `shared/consistency/dispatch-bridge.md`):
+
+- `decision_point = "pr_rejection_classification"`
+- `labels = ["design", "implementation", "other"]`
+- `state_mode = state.mode`
+- `prompt` = the PR reviewer comment verbatim, plus a terse rendering of the classification heuristic table below
+- `n = config.consistency.n_samples`
+- `tier = config.consistency.model_tier`
+
+Heuristic table (fed into the prompt for each sample):
 
 | Type | Heuristic | Examples |
 |------|-----------|---------|
 | `implementation` | References specific files, code behavior, test cases, UI details | "The auth check should use role-based access" |
 | `design` | References wrong approach, decomposition, architectural direction | "This should be implemented as a separate service" |
+| `other` | Style, typos, doc-only notes, requests for clarification with no action | "nit: rename this var" |
 
-Write to stage notes: `FEEDBACK_CLASSIFICATION: implementation` or `FEEDBACK_CLASSIFICATION: design`
+**Architectural placement feedback** (e.g., "validation belongs in use case not controller") is `implementation` — can be fixed by moving code without replanning. Classify as `design` only if decomposition itself is wrong.
 
-Default to `implementation` if ambiguous. Classify as `design` if feedback explicitly mentions scope changes ("add new endpoint", "split into two features", "different approach entirely").
+Increment `state.consistency_votes.pr_rejection_classification.invocations` by 1 (and `cache_hits` / `low_consensus` as appropriate).
 
-**Architectural placement feedback** (e.g., "validation belongs in use case not controller"): `implementation` — can fix by moving code without replanning. Only `design` if decomposition itself is wrong.
+On `low_consensus` or `ConsistencyError`, force `design` (routes back further; the safer rewind). Write the result to stage notes:
 
-Orchestrator reads this marker, sets `state.json.feedback_classification`, determines re-entry to Stage 4 (IMPLEMENT) or Stage 2 (PLAN). If classification wrong (same rejection 2+ consecutive times), orchestrator escalates via AskUserQuestion.
+```
+FEEDBACK_CLASSIFICATION: <design|implementation|other>
+```
+
+If `consistency.enabled: false` or `pr_rejection_classification` is not in `consistency.decisions`, fall back to the legacy single-sample heuristic: default to `implementation` if ambiguous; classify as `design` only when feedback explicitly names scope changes ("add new endpoint", "split into two features", "different approach entirely"). The legacy path does NOT emit the `other` label — `other` is voting-only.
+
+Orchestrator reads this marker, sets `state.json.feedback_classification`, determines re-entry to Stage 4 (IMPLEMENT) or Stage 2 (PLAN). If the same rejection appears 2+ consecutive times, the orchestrator escalates via `AskUserQuestion` regardless of classification.
+
+Contract: `shared/consistency/voting.md`.
 
 ### Step 4: Check for Recurring Patterns
 

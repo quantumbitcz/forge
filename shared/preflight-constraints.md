@@ -103,3 +103,18 @@ PREFLIGHT validates the `speculation:` block:
 - `emphasis_axes length >= candidates_max` — invalid raises `CONFIG-SPECULATION-AXES` CRITICAL.
 
 Any CRITICAL fails PREFLIGHT with `preflight_failed = true`.
+
+## Consistency voting (Phase 11, forge 3.1.0+)
+
+PREFLIGHT validates the `consistency:` block:
+
+| Field | Rule | Violation handling |
+|---|---|---|
+| `consistency.enabled` | must be boolean | PREFLIGHT fails with CRITICAL |
+| `consistency.n_samples` | must be odd integer in `[1, 9]` | PREFLIGHT fails with CRITICAL; `n_samples=1` logged as WARNING (voting effectively disabled) |
+| `consistency.decisions` | must be a subset of `{shaper_intent, validator_verdict, pr_rejection_classification}` in 3.1.0 | PREFLIGHT fails with CRITICAL on unknown entry |
+| `consistency.model_tier` | must be one of the tiers declared in `model_routing.tiers` | PREFLIGHT fails with CRITICAL |
+| `consistency.cache_enabled` | must be boolean | PREFLIGHT fails with CRITICAL |
+| `consistency.min_consensus_confidence` | float in `[0.0, 1.0]` | PREFLIGHT fails with CRITICAL on out-of-range |
+
+See `shared/consistency/voting.md` for the dispatch contract, aggregation algorithm, and cost delta table.
