@@ -68,10 +68,51 @@ done
 # Required files per framework directory
 REQUIRED_FRAMEWORK_FILES=(conventions.md local-template.md forge-config-template.md rules-override.json known-deprecations.json)
 
+# Skills: directories under skills/ containing SKILL.md
+DISCOVERED_SKILLS=()
+for d in "$PLUGIN_ROOT"/skills/*/; do
+  [[ -d "$d" && -f "$d/SKILL.md" ]] && DISCOVERED_SKILLS+=("$(basename "$d")")
+done
+
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)
 # ---------------------------------------------------------------------------
 MIN_FRAMEWORKS=24
+MIN_SKILLS=28
+
+# Canonical post-Phase-05 skill names. Tasks are written to ensure the skills
+# directory contains exactly this set. `DISCOVERED_SKILLS` is compared to
+# `EXPECTED_SKILL_NAMES` by `tests/structural/skill-consolidation.bats`.
+EXPECTED_SKILL_NAMES=(
+  forge-abort
+  forge-ask
+  forge-automation
+  forge-bootstrap
+  forge-commit
+  forge-compress
+  forge-config
+  forge-deploy
+  forge-docs-generate
+  forge-fix
+  forge-graph
+  forge-help
+  forge-history
+  forge-init
+  forge-insights
+  forge-migration
+  forge-playbook-refine
+  forge-playbooks
+  forge-profile
+  forge-recover
+  forge-review
+  forge-run
+  forge-security-audit
+  forge-shape
+  forge-sprint
+  forge-status
+  forge-tour
+  forge-verify
+)
 MIN_LANGUAGES=15
 MIN_TESTING_FILES=19
 MIN_BUILD_SYSTEMS=9
