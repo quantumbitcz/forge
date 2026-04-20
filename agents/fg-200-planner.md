@@ -209,6 +209,21 @@ When requirement involves frontend UI AND visual companion available:
 
 ---
 
+## Branch Mode (Speculative)
+
+When the orchestrator passes `speculative: true` + `candidate_id: cand-{N}` + `emphasis_axis: {simplicity|robustness|velocity}`:
+
+1. Plan as usual, but bias approach selection toward `emphasis_axis` when alternatives are of comparable quality.
+2. Challenge Brief length cap: 200 words (vs ~400 normal). Focus on why this approach, not a full alternatives survey.
+3. Use `exploration_seed` from orchestrator in any non-deterministic sampling decisions (temperature hints, candidate ordering).
+4. Skip Plan Mode: do not call `EnterPlanMode`/`ExitPlanMode`. The orchestrator aggregates N candidates and presents the winner to the user/validator.
+5. Output the same plan format as non-speculative planning — the validator (`fg-210-validator`) does not distinguish between speculative and normal plans.
+6. The winning candidate will later be re-asked for a full Challenge Brief if the abbreviated one is insufficient for downstream stages.
+
+See `shared/speculation.md` for the dispatch contract, diversity threshold, and selection formula.
+
+---
+
 ## 4. Replanning After REVISE
 
 Read every rejection reason. Address each gap explicitly. Restructure plan if needed. Explain how each rejected finding is covered.
