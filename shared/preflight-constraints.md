@@ -76,7 +76,23 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 
 **Filter availability.** PREFLIGHT MUST succeed importing `hooks/_py/mcp_response_filter.py`. A `ModuleNotFoundError` halts the pipeline with `SEC-INJECTION-DISABLED` because every external-data ingress depends on the filter.
 
-### Speculation (Phase 12)
+## Implementer Reflection (Phase 04)
+
+| Key | Type | Default | Range | Violation behavior |
+|---|---|---|---|---|
+| `implementer.reflection.enabled` | boolean | `true` | — | Non-boolean → log WARNING and default to `true`. |
+| `implementer.reflection.max_cycles` | integer | `2` | `[1, 3]` | Out of range → log WARNING and clamp to default `2`. |
+| `implementer.reflection.fresh_context` | boolean | `true` | — | Non-boolean → log WARNING and default to `true`. Setting to `false` opts into same-context critic (matches rejected Alt-A in spec §4.6 — discouraged). |
+| `implementer.reflection.timeout_seconds` | integer | `90` | `[30, 180]` | Out of range → log WARNING and clamp to default `90`. On timeout per-dispatch: log INFO in stage notes, skip reflection for that task, continue to REFACTOR. Never blocks pipeline. |
+
+**Resume rules:** On `/forge-recover resume`, PREFLIGHT must:
+1. Reset `tasks[*].reflection_verdicts` to `[]` (stale mid-dispatch verdicts are not trustworthy).
+2. Preserve `tasks[*].implementer_reflection_cycles` (budget is not refunded mid-task — prevents runaway retries after OS kill).
+3. Preserve run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
+
+**Initialization:** At PREFLIGHT, for every task created at PLAN, set `implementer_reflection_cycles: 0` and `reflection_verdicts: []`. Set run-level `implementer_reflection_cycles_total: 0` and `reflection_divergence_count: 0`.
+
+## Speculation (Phase 12)
 
 PREFLIGHT validates the `speculation:` block:
 

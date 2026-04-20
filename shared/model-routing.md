@@ -14,9 +14,9 @@ The `model` parameter on the Agent tool accepts exactly: `haiku`, `sonnet`, `opu
 
 ## Default Tier Assignments
 
-All 41 agents have explicit tier assignments (9 fast, 18 standard, 14 premium). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
+All 43 agents have explicit tier assignments (10 fast, 18 standard, 14 premium, plus fg-301). Agents not listed in `tier_1_fast` or `tier_3_premium` overrides use `default_tier` (standard).
 
-### Fast (haiku) — 9 agents
+### Fast (haiku) — 10 agents
 
 | Agent | Rationale |
 |---|---|
@@ -25,6 +25,7 @@ All 41 agents have explicit tier assignments (9 fast, 18 standard, 14 premium). 
 | `fg-130-docs-discoverer` | File listing and metadata extraction |
 | `fg-135-wiki-generator` | Templated wiki generation from structured data |
 | `fg-140-deprecation-refresh` | Pattern matching against deprecation registries |
+| `fg-301-implementer-critic` | Per-task, clean slate, ≤4k input, ≤600 output. Fast tier keeps per-task latency under 10s and per-run reflection cost under 5% of pipeline budget. |
 | `fg-310-scaffolder` | File structure creation from templates |
 | `fg-350-docs-generator` | Documentation generation from structured inputs |
 | `fg-505-build-verifier` | Runs build/lint commands and reads output — deterministic |
@@ -92,8 +93,10 @@ In `forge-config.md`:
           - fg-130-docs-discoverer
           - fg-135-wiki-generator
           - fg-140-deprecation-refresh
+          - fg-301-implementer-critic
           - fg-310-scaffolder
           - fg-350-docs-generator
+          - fg-505-build-verifier
           - fg-710-post-run
         tier_3_premium:
           - fg-010-shaper
