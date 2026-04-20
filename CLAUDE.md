@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Start Here (5-minute path)
+
+New to forge? Three steps:
+
+1. **Install:** `ln -s $(pwd) /path/to/your-project/.claude/plugins/forge`,
+   then in that project run `/forge-init`. See `shared/mcp-provisioning.md` for
+   MCP auto-setup.
+2. **First run:** `/forge-run --dry-run "add a health endpoint"`. Dry-run only
+   exercises PREFLIGHT → VALIDATE; no worktree, no commits. Confirm the plan
+   looks right, then drop `--dry-run`.
+3. **Pick the right skill:** unsure what to run? `/forge-help`. Bug? `/forge-fix`.
+   Quality check? `/forge-review --full`. Multiple features? `/forge-sprint`.
+   Full skill table is in §Skill selection guide below.
+
+Already familiar? Skip to §Architecture.
+
+---
+
 ## What this is
 
 `forge` is a Claude Code plugin (v3.5.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
