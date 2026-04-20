@@ -9,6 +9,7 @@ on:
       - "scripts/gen-learnings-index.py"
       - "modules/frameworks/**"
       - ".github/workflows/docs-integrity.yml"
+      - ".lycheeignore"
   push:
     branches: [master]
     paths:
@@ -17,6 +18,7 @@ on:
       - "docs/**"
       - "scripts/gen-learnings-index.py"
       - "modules/frameworks/**"
+      - ".lycheeignore"
 
 permissions:
   contents: read
