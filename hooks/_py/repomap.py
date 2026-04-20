@@ -14,9 +14,12 @@ SC-4's `repomap.bypass.failure` = {missing_graph, solve_diverged, corrupt_cache}
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sqlite3
+import sys
+import time as _time
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -377,3 +380,363 @@ class PackCache:
         self._entries.clear()
         if self.path.exists():
             self.path.unlink()
+
+
+# ---------------------------------------------------------------------------
+# Task 7: CLI subcommands + sparse-graph bypass + named failure events
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RecencyConfig:
+    """Configuration for the recency multiplier in :func:`score_files`."""
+
+    window_days: int = 30
+    boost_max: float = 1.5
+
+
+def _load_file_rows(
+    db_path: Path | str,
+) -> list[tuple[int, str, int, int]]:
+    """Return ``[(node_id, path, size_bytes, last_modified_ts), ...]``.
+
+    Tolerant of both the production schema (``file_path`` column, ``properties``
+    JSON carrying ``size_bytes`` / ``last_modified_ts``) and the simplified
+    fixture schema used by unit tests (``path`` column, no property blob).
+    Missing fields default to ``0`` so the recency multiplier stays neutral.
+    """
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(nodes)")}
+        path_col = "file_path" if "file_path" in cols else "path"
+        has_props = "properties" in cols
+        select = f"SELECT id, {path_col}"
+        select += ", COALESCE(properties, '{}')" if has_props else ", '{}'"
+        select += " FROM nodes"
+        if "kind" in cols:
+            select += " WHERE kind='File' OR kind IS NULL"
+        rows: list[tuple[int, str, int, int]] = []
+        for nid, path, props in conn.execute(select):
+            try:
+                p = json.loads(props or "{}") if props else {}
+            except (json.JSONDecodeError, TypeError):
+                p = {}
+            size = int(p.get("size_bytes") or 0)
+            lmt = int(p.get("last_modified_ts") or 0)
+            rows.append((int(nid), str(path), size, lmt))
+        return rows
+    finally:
+        conn.close()
+
+
+def score_files(
+    db_path: Path | str,
+    keywords: list[str],
+    edge_weights: dict[str, float],
+    recency_cfg: RecencyConfig,
+    *,
+    keyword_overlap_cap: int = 5,
+) -> dict[int, FileScore]:
+    """Aggregate PageRank × recency × (1 + overlap/cap) into per-file scores.
+
+    Any ``RuntimeError`` from :func:`run_pagerank` propagates so callers can
+    emit ``repomap.bypass.solve_diverged``.
+    """
+    ranks = run_pagerank(db_path, edge_weights)
+    rows = _load_file_rows(db_path)
+    now = int(_time.time())
+    window_secs = max(1, recency_cfg.window_days * 86400)
+    kw_lc = [k.lower() for k in keywords]
+    scored: dict[int, FileScore] = {}
+    for nid, path, size, lmt in rows:
+        pr = float(ranks.get(nid, 0.0))
+        if lmt > 0:
+            age = max(0, now - lmt)
+            decay = max(0.0, 1.0 - (age / window_secs))
+            recency = 1.0 + decay * (recency_cfg.boost_max - 1.0)
+        else:
+            recency = 1.0
+        overlap = 0
+        path_lc = path.lower()
+        for k in kw_lc:
+            if k and k in path_lc:
+                overlap += 1
+                if overlap >= keyword_overlap_cap:
+                    break
+        overlap_mult = 1.0 + (overlap / max(1, keyword_overlap_cap))
+        scored[nid] = FileScore(
+            node_id=nid,
+            path=path,
+            pagerank=pr,
+            recency=recency,
+            keyword_overlap=overlap,
+            score=pr * recency * overlap_mult,
+            size_bytes=size,
+            last_modified_ts=lmt,
+        )
+    return scored
+
+
+def _log_bypass(event: str) -> None:
+    print(event, file=sys.stderr)
+
+
+def _degraded_pack(db_path: Path, budget: int, top_k: int) -> Pack:
+    """Empty pack used when PageRank cannot run (missing/sparse/diverged)."""
+    return Pack(
+        entries=[],
+        total_files_in_graph=0,
+        budget_tokens=budget,
+        pack_tokens=0,
+    )
+
+
+def _estimate_baseline_tokens(db_path: Path) -> int:
+    """Analytical baseline: sum of File-node ``size_bytes`` / bytes-per-token."""
+    if not Path(db_path).exists():
+        return 0
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(nodes)")}
+            if "properties" not in cols:
+                return 0
+            total = 0
+            query = "SELECT COALESCE(properties,'{}') FROM nodes"
+            if "kind" in cols:
+                query += " WHERE kind='File'"
+            for (props,) in conn.execute(query):
+                try:
+                    total += int((json.loads(props) or {}).get("size_bytes") or 0)
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    pass
+            return int(total / _BYTES_PER_TOKEN)
+        finally:
+            conn.close()
+    except sqlite3.DatabaseError:
+        return 0
+
+
+def _node_count(db_path: Path) -> int:
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        (n,) = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()
+        return int(n)
+    finally:
+        conn.close()
+
+
+def _read_keywords(path: str | None) -> list[str]:
+    if not path:
+        return []
+    p = Path(path)
+    if not p.exists():
+        return []
+    try:
+        text = p.read_text()
+    except OSError:
+        return []
+    try:
+        from hooks._py.keyword_extract import extract_keywords
+
+        return extract_keywords(text)
+    except ImportError:
+        return [tok for tok in text.split() if tok]
+
+
+def _cmd_build_pack(args) -> int:
+    db = Path(args.db)
+
+    if not db.exists():
+        _log_bypass("repomap.bypass.missing_graph")
+        print(_degraded_pack(db, args.budget, args.top_k).render())
+        return 0
+
+    try:
+        graph_sha = compute_graph_sha(db)
+    except sqlite3.DatabaseError:
+        _log_bypass("repomap.bypass.missing_graph")
+        print(_degraded_pack(db, args.budget, args.top_k).render())
+        return 0
+
+    # Detect a corrupt cache before handing the file to PackCache so we can
+    # emit the named bypass event. PackCache itself recovers to an empty map.
+    cache_path = Path(args.cache)
+    if cache_path.exists():
+        try:
+            json.loads(cache_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            _log_bypass("repomap.bypass.corrupt_cache")
+    cache = PackCache(cache_path, max_entries=args.cache_max_entries)
+
+    keywords = _read_keywords(args.keywords_file)
+    kh = compute_keywords_hash(keywords)
+
+    cached = cache.get(graph_sha, kh, args.budget, args.top_k)
+    if cached is not None:
+        entries = [
+            PackEntry(
+                path=r["file"],
+                mode=r.get("mode", "full"),
+                tokens=int(r.get("tokens", 0)),
+                score=float(r.get("score", 0.0)),
+                recency=float(r.get("recency", 1.0)),
+                slice_ranges=[tuple(x) for x in r.get("slice_ranges", [])],
+            )
+            for r in cached.ranked
+        ]
+        pack_tokens = sum(e.tokens for e in entries)
+        pack = Pack(
+            entries=entries,
+            total_files_in_graph=len(cached.ranked),
+            budget_tokens=args.budget,
+            pack_tokens=pack_tokens,
+        )
+        print(pack.render())
+        return 0
+
+    try:
+        nodes = _node_count(db)
+    except sqlite3.DatabaseError:
+        _log_bypass("repomap.bypass.missing_graph")
+        print(_degraded_pack(db, args.budget, args.top_k).render())
+        return 0
+    if nodes < args.min_nodes_for_rank:
+        _log_bypass("repomap.bypass.sparse_graph")
+        print(_degraded_pack(db, args.budget, args.top_k).render())
+        return 0
+
+    try:
+        scored = score_files(
+            db,
+            keywords,
+            DEFAULT_EDGE_WEIGHTS,
+            RecencyConfig(
+                window_days=args.recency_window_days,
+                boost_max=args.recency_boost_max,
+            ),
+            keyword_overlap_cap=args.keyword_overlap_cap,
+        )
+    except RuntimeError as e:
+        if "solve_diverged" in str(e):
+            _log_bypass("repomap.bypass.solve_diverged")
+            print(_degraded_pack(db, args.budget, args.top_k).render())
+            return 0
+        raise
+
+    pack = assemble_pack(
+        scored,
+        PackConfig(
+            budget_tokens=args.budget,
+            top_k=args.top_k,
+            min_slice_tokens=args.min_slice_tokens,
+        ),
+    )
+    baseline = _estimate_baseline_tokens(db)
+    cache.put(
+        CachedPack(
+            graph_sha=graph_sha,
+            keywords_hash=kh,
+            budget=args.budget,
+            top_k=args.top_k,
+            computed_at=_time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
+            ranked=[
+                {
+                    "file": e.path,
+                    "score": e.score,
+                    "recency": e.recency,
+                    "mode": e.mode,
+                    "tokens": e.tokens,
+                    "slice_ranges": list(e.slice_ranges),
+                }
+                for e in pack.entries
+            ],
+            baseline_tokens_estimate=baseline,
+            baseline_source="estimated",
+        )
+    )
+    cache.flush()
+    print(pack.render())
+    return 0
+
+
+def _cmd_pagerank(args) -> int:
+    try:
+        ranks = run_pagerank(args.db, DEFAULT_EDGE_WEIGHTS)
+    except sqlite3.DatabaseError:
+        _log_bypass("repomap.bypass.missing_graph")
+        return 0
+    except RuntimeError as e:
+        if "solve_diverged" in str(e):
+            _log_bypass("repomap.bypass.solve_diverged")
+            return 0
+        raise
+    for nid, r in sorted(ranks.items(), key=lambda kv: -kv[1]):
+        print(f"{nid}\t{r:.6f}")
+    return 0
+
+
+def _cmd_cache_clear(args) -> int:
+    PackCache(args.cache, max_entries=1).clear()
+    return 0
+
+
+def _cmd_explain(args) -> int:
+    db = Path(args.db)
+    if not db.exists():
+        _log_bypass("repomap.bypass.missing_graph")
+        return 0
+    keywords = _read_keywords(args.keywords_file)
+    try:
+        scored = score_files(
+            db,
+            keywords,
+            DEFAULT_EDGE_WEIGHTS,
+            RecencyConfig(),
+            keyword_overlap_cap=args.keyword_overlap_cap,
+        )
+    except RuntimeError as e:
+        if "solve_diverged" in str(e):
+            _log_bypass("repomap.bypass.solve_diverged")
+            return 0
+        raise
+    except sqlite3.DatabaseError:
+        _log_bypass("repomap.bypass.missing_graph")
+        return 0
+    print(f"{'path':<60}\tpagerank\trecency\toverlap\tscore")
+    for s in sorted(scored.values(), key=lambda x: -x.score)[:50]:
+        print(
+            f"{s.path:<60}\t{s.pagerank:.4f}\t{s.recency:.2f}"
+            f"\t{s.keyword_overlap}\t{s.score:.4f}"
+        )
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(prog="repomap")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    for name, fn in [
+        ("build-pack", _cmd_build_pack),
+        ("pagerank", _cmd_pagerank),
+        ("cache-clear", _cmd_cache_clear),
+        ("explain", _cmd_explain),
+    ]:
+        sp = sub.add_parser(name)
+        sp.add_argument("--db", default=".forge/code-graph.db")
+        sp.add_argument("--cache", default=".forge/ranked-files-cache.json")
+        sp.add_argument("--keywords-file", default=".forge/current-keywords.txt")
+        sp.add_argument("--budget", type=int, default=8000)
+        sp.add_argument("--top-k", type=int, default=25)
+        sp.add_argument("--min-slice-tokens", type=int, default=400)
+        sp.add_argument("--min-nodes-for-rank", type=int, default=50)
+        sp.add_argument("--recency-window-days", type=int, default=30)
+        sp.add_argument("--recency-boost-max", type=float, default=1.5)
+        sp.add_argument("--keyword-overlap-cap", type=int, default=5)
+        sp.add_argument("--cache-max-entries", type=int, default=16)
+        sp.set_defaults(func=fn)
+    ns = p.parse_args(argv)
+    return ns.func(ns)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

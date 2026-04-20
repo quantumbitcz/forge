@@ -287,3 +287,74 @@ def test_cache_corrupt_returns_empty_and_logs(tmp_path):
     assert cache.get("g" * 64, "k" * 64, 8000, 25) is None
     # Must not raise; caller interprets the miss as
     # `repomap.bypass.corrupt_cache`.
+
+
+# ---------------------------------------------------------------------------
+# Task 7: CLI subcommands + sparse-graph bypass + named failure events
+# ---------------------------------------------------------------------------
+
+import subprocess
+import sys as _sys_for_cli
+
+
+def _run_cli(*args, cwd=None):
+    return subprocess.run(
+        [_sys_for_cli.executable, "-m", "hooks._py.repomap", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_sparse_graph_bypass(tmp_path, three_node_graph):
+    # 3 nodes < min_nodes_for_rank (50) -> bypass emits degraded pack.
+    keywords = tmp_path / "k.txt"
+    keywords.write_text("plan service")
+    cache_dir = tmp_path / ".forge"
+    cache_dir.mkdir()
+    res = _run_cli(
+        "build-pack",
+        "--db", str(three_node_graph),
+        "--keywords-file", str(keywords),
+        "--cache", str(cache_dir / "ranked-files-cache.json"),
+        "--budget", "8000",
+        "--top-k", "25",
+        "--min-nodes-for-rank", "50",
+    )
+    assert res.returncode == 0, res.stderr
+    assert "Repo-map" in res.stdout
+    assert "repomap.bypass.sparse_graph" in res.stderr
+
+
+def test_missing_graph_degrades(tmp_path):
+    res = _run_cli(
+        "build-pack",
+        "--db", str(tmp_path / "does-not-exist.db"),
+        "--keywords-file", "/dev/null",
+        "--cache", str(tmp_path / "c.json"),
+        "--budget", "8000",
+        "--top-k", "25",
+    )
+    assert res.returncode == 0
+    assert "repomap.bypass.missing_graph" in res.stderr
+
+
+def test_explain_subcommand(three_node_graph, tmp_path):
+    keywords = tmp_path / "k.txt"
+    keywords.write_text("")
+    res = _run_cli(
+        "explain",
+        "--db", str(three_node_graph),
+        "--keywords-file", str(keywords),
+    )
+    assert res.returncode == 0
+    assert "pagerank" in res.stdout.lower() or "rank" in res.stdout.lower()
+
+
+def test_cache_clear_subcommand(tmp_path):
+    cache = tmp_path / "c.json"
+    cache.write_text('{"schema_version":"1.0.0","entries":[]}')
+    res = _run_cli("cache-clear", "--cache", str(cache))
+    assert res.returncode == 0
+    assert not cache.exists()
