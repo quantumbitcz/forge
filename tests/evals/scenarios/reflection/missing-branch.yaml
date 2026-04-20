@@ -1,0 +1,38 @@
+id: reflection-missing-branch
+phase: 04
+kind: planted-defect
+agent_under_test: fg-301-implementer-critic
+description: |
+  Test covers the unique-email happy path. AC describes TWO branches: unique
+  and duplicate. Implementation silently ignores duplicates and always returns
+  a new UserId. Critic must flag REFLECT-MISSING-BRANCH.
+
+task:
+  id: EVAL-03
+  description: "Implement CreateUserUseCase.execute() — handle unique and duplicate emails."
+  acceptance_criteria:
+    - "Given a unique email, then persist and return UserId."
+    - "Given a duplicate email, then raise DuplicateEmailError."
+
+test_code: |
+  @Test
+  fun `returns userId for unique email`() {
+    val result = sut.execute(CreateUser("alice@example.com"))
+    assertThat(result.userId).isNotNull()
+  }
+
+implementation_diff: |
+  +++ b/src/domain/CreateUserUseCase.kt
+  @@
+  +class CreateUserUseCase(private val repo: UserRepository) {
+  +  fun execute(cmd: CreateUser): CreateUserResult {
+  +    val id = repo.nextId()
+  +    repo.save(User(id, cmd.email))
+  +    return CreateUserResult(userId = id)
+  +  }
+  +}
+
+expected:
+  verdict: REVISE
+  finding_category: REFLECT-MISSING-BRANCH
+  min_confidence: MEDIUM

@@ -1,0 +1,37 @@
+id: reflection-legit-minimal
+phase: 04
+kind: false-positive-guard
+agent_under_test: fg-301-implementer-critic
+description: |
+  Test covers unique-email happy path; AC only describes this one branch.
+  Implementation is minimal and correct — persists and returns a generated id.
+  Critic must return PASS.
+
+task:
+  id: EVAL-04
+  description: "Implement CreateUserUseCase.execute() — persist and return a new UserId for any email."
+  acceptance_criteria:
+    - "Given any email, then persist a User and return UserId."
+
+test_code: |
+  @Test
+  fun `persists and returns userId`() {
+    val result = sut.execute(CreateUser("alice@example.com"))
+    assertThat(result.userId).isNotNull()
+    assertThat(repo.saved).hasSize(1)
+  }
+
+implementation_diff: |
+  +++ b/src/domain/CreateUserUseCase.kt
+  @@
+  +class CreateUserUseCase(private val repo: UserRepository) {
+  +  fun execute(cmd: CreateUser): CreateUserResult {
+  +    val id = repo.nextId()
+  +    repo.save(User(id, cmd.email))
+  +    return CreateUserResult(userId = id)
+  +  }
+  +}
+
+expected:
+  verdict: PASS
+  finding_category: null
