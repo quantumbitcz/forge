@@ -131,3 +131,86 @@ def test_pagerank_convergence_bounded():
         conn.close()
         ranks = run_pagerank(db, DEFAULT_EDGE_WEIGHTS)
         assert len(ranks) == 100
+
+
+# ---------------------------------------------------------------------------
+# Task 5: pack assembly tests
+# ---------------------------------------------------------------------------
+
+from hooks._py.repomap import FileScore, PackConfig, PackEntry, assemble_pack
+
+
+def _mk_score(i, size_bytes, score):
+    return FileScore(
+        node_id=i,
+        path=f"src/f{i}.py",
+        pagerank=score,
+        recency=1.0,
+        keyword_overlap=0,
+        score=score,
+        size_bytes=size_bytes,
+        last_modified_ts=1713600000,
+    )
+
+
+def test_budget_honored_whole_files():
+    scored = {i: _mk_score(i, 1000, 1.0 / i) for i in range(1, 10)}
+    # 1000 bytes ≈ 286 tokens each; budget 1000 tokens fits ~3 files whole.
+    pack = assemble_pack(
+        scored,
+        PackConfig(budget_tokens=1000, top_k=25, min_slice_tokens=400),
+    )
+    total_tokens = sum(e.tokens for e in pack.entries)
+    assert total_tokens <= 1000
+    assert all(e.mode == "full" for e in pack.entries)
+
+
+def test_topk_hard_cap():
+    scored = {i: _mk_score(i, 10, 1.0 / i) for i in range(1, 100)}
+    pack = assemble_pack(
+        scored,
+        PackConfig(budget_tokens=100000, top_k=25, min_slice_tokens=400),
+    )
+    assert len(pack.entries) == 25
+
+
+def test_partial_slice_when_file_too_big():
+    scored = {
+        1: _mk_score(1, 100, 10.0),
+        2: _mk_score(2, 100000, 5.0),
+    }
+    pack = assemble_pack(
+        scored,
+        PackConfig(budget_tokens=2000, top_k=25, min_slice_tokens=400),
+    )
+    paths = [e.path for e in pack.entries]
+    assert "src/f1.py" in paths
+    for e in pack.entries:
+        if e.path == "src/f2.py":
+            assert e.mode == "slice"
+            assert e.tokens <= 2000
+
+
+def test_pack_sorted_by_score_desc():
+    scored = {
+        1: _mk_score(1, 100, 0.1),
+        2: _mk_score(2, 100, 0.9),
+        3: _mk_score(3, 100, 0.5),
+    }
+    pack = assemble_pack(
+        scored,
+        PackConfig(budget_tokens=10000, top_k=25, min_slice_tokens=400),
+    )
+    scores = [e.score for e in pack.entries]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_pack_summary_header_counts():
+    scored = {i: _mk_score(i, 100, 1.0 / i) for i in range(1, 5)}
+    pack = assemble_pack(
+        scored,
+        PackConfig(budget_tokens=10000, top_k=25, min_slice_tokens=400),
+    )
+    header = pack.render().splitlines()[0]
+    assert "Repo-map" in header
+    assert "4 of 4" in header or "4 of" in header

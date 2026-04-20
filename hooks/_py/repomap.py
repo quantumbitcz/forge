@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -128,3 +129,156 @@ def run_pagerank(
     # Final normalization guard against numerical drift.
     pr = pr / pr.sum()
     return {nid: float(pr[idx[nid]]) for nid in node_ids}
+
+
+# ---------------------------------------------------------------------------
+# Task 5: pack assembly (FileScore, PackConfig, PackEntry, Pack, assemble_pack)
+# ---------------------------------------------------------------------------
+
+_BYTES_PER_TOKEN = 3.5
+
+
+@dataclass
+class FileScore:
+    """Per-file score aggregated from PageRank, recency, and keyword overlap.
+
+    Consumed by :func:`assemble_pack` which orders by ``score`` descending.
+    """
+
+    node_id: int
+    path: str
+    pagerank: float
+    recency: float
+    keyword_overlap: int
+    score: float
+    size_bytes: int
+    last_modified_ts: int = 0
+
+
+@dataclass(frozen=True)
+class PackConfig:
+    """Pack assembly configuration.
+
+    ``budget_tokens`` bounds the sum of per-entry token costs.
+    ``top_k`` hard-caps entries.
+    ``min_slice_tokens`` is the minimum remaining budget for which a partial
+    slice is still worth emitting (else the file is skipped).
+    """
+
+    budget_tokens: int = 8000
+    top_k: int = 25
+    min_slice_tokens: int = 400
+
+
+@dataclass
+class PackEntry:
+    path: str
+    mode: str  # "full" | "slice"
+    tokens: int
+    score: float
+    recency: float
+    slice_ranges: list[tuple[int, int]] = field(default_factory=list)
+
+    def render(self) -> str:
+        recent_flag = "yes" if self.recency > 1.0 else "no"
+        if self.mode == "full":
+            return (
+                f"{self.path:<52} [full]   rank={self.score:.4f} "
+                f"recent={recent_flag}"
+            )
+        lines = ",".join(f"{a}-{b}" for a, b in self.slice_ranges) or "none"
+        return (
+            f"{self.path:<52} [slice]  rank={self.score:.4f} "
+            f"recent={recent_flag} lines={lines}"
+        )
+
+
+@dataclass
+class Pack:
+    entries: list[PackEntry]
+    total_files_in_graph: int
+    budget_tokens: int
+    pack_tokens: int
+
+    def render(self) -> str:
+        header = (
+            f"## Repo-map (top {len(self.entries)} of "
+            f"{self.total_files_in_graph} files, "
+            f"budget {self.pack_tokens}/{self.budget_tokens} tokens)"
+        )
+        return "\n".join([header, *(e.render() for e in self.entries)])
+
+
+def _estimate_tokens(size_bytes: int) -> int:
+    """Approximate token count for a byte payload (ceil division)."""
+    if size_bytes <= 0:
+        return 0
+    return max(1, int(-(-size_bytes // 1) / _BYTES_PER_TOKEN))
+
+
+def assemble_pack(
+    scored: dict[int, FileScore],
+    cfg: PackConfig,
+    *,
+    slice_fetcher=None,
+) -> Pack:
+    """Walk files in score-descending order.
+
+    For each file: include whole if it fits the remaining budget; else include
+    a partial slice if at least ``min_slice_tokens`` remain; else skip. Always
+    caps at ``cfg.top_k`` entries.
+
+    ``slice_fetcher(node_id, remaining_tokens)`` may return ``(ranges, cost)``
+    where ``ranges`` is a list of ``(start_line, end_line)`` tuples and
+    ``cost`` is the estimated token cost. When ``None``, a conservative stub
+    emits a single window proportional to the remaining budget.
+    """
+    total_files = len(scored)
+    ordered = sorted(scored.values(), key=lambda s: s.score, reverse=True)
+    entries: list[PackEntry] = []
+    remaining = cfg.budget_tokens
+
+    for s in ordered:
+        if len(entries) >= cfg.top_k:
+            break
+        full_cost = _estimate_tokens(s.size_bytes)
+        if full_cost > 0 and remaining >= full_cost:
+            entries.append(
+                PackEntry(
+                    path=s.path,
+                    mode="full",
+                    tokens=full_cost,
+                    score=s.score,
+                    recency=s.recency,
+                )
+            )
+            remaining -= full_cost
+            continue
+        if remaining >= cfg.min_slice_tokens:
+            if slice_fetcher:
+                ranges, cost = slice_fetcher(s.node_id, remaining)
+            else:
+                window_lines = min(80, max(10, remaining // 4))
+                ranges = [(1, window_lines)]
+                cost = min(remaining, cfg.min_slice_tokens)
+            if cost > remaining or cost < cfg.min_slice_tokens:
+                continue
+            entries.append(
+                PackEntry(
+                    path=s.path,
+                    mode="slice",
+                    tokens=cost,
+                    score=s.score,
+                    recency=s.recency,
+                    slice_ranges=ranges,
+                )
+            )
+            remaining -= cost
+        # else skip.
+
+    return Pack(
+        entries=entries,
+        total_files_in_graph=total_files,
+        budget_tokens=cfg.budget_tokens,
+        pack_tokens=cfg.budget_tokens - remaining,
+    )
