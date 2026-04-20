@@ -239,3 +239,29 @@ def test_type_inference(item, expected_type):
     item.setdefault("confidence", "MEDIUM")
     out = md.migrate_item(item, now)
     assert out["type"] == expected_type
+
+
+def test_type_half_life_selection_differs_for_same_age():
+    """Three items, same age (14 days), three types → three distinct confidences."""
+    now = datetime(2026, 4, 19, 12, 0, 0, tzinfo=timezone.utc)
+    fourteen_days_ago = _iso(now - timedelta(days=14))
+    base = 0.75
+    auto = {"id": "a", "type": "auto-discovered", "base_confidence": base,
+            "last_success_at": fourteen_days_ago, "last_false_positive_at": None}
+    cross = {"id": "c", "type": "cross-project", "base_confidence": base,
+             "last_success_at": fourteen_days_ago, "last_false_positive_at": None}
+    canon = {"id": "k", "type": "canonical", "base_confidence": base,
+             "last_success_at": fourteen_days_ago, "last_false_positive_at": None}
+
+    # Auto: exactly one half-life → 0.375.
+    assert md.effective_confidence(auto, now) == pytest.approx(0.375, abs=1e-9)
+    # Cross: 14/30 half-lives → 0.75 * 2^(-14/30).
+    assert md.effective_confidence(cross, now) == pytest.approx(0.75 * (2 ** (-14 / 30)), abs=1e-9)
+    # Canon: 14/90 half-lives → 0.75 * 2^(-14/90).
+    assert md.effective_confidence(canon, now) == pytest.approx(0.75 * (2 ** (-14 / 90)), abs=1e-9)
+
+    # And they must be strictly ordered.
+    auto_c = md.effective_confidence(auto, now)
+    cross_c = md.effective_confidence(cross, now)
+    canon_c = md.effective_confidence(canon, now)
+    assert auto_c < cross_c < canon_c
