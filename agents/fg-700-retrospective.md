@@ -271,7 +271,7 @@ When `observability.enabled` and spans available:
 2. Identify slowest stage/agent
 3. Compare with previous
 4. Log: "Telemetry: {total}s, slowest stage: {stage} ({dur}s), slowest agent: {agent}"
-5. If `export == "otel"` → trigger `shared/forge-otel-export.sh export`
+5. If `export == "otel"` → trigger `python -m hooks._py.otel_cli replay --from-events .forge/events.jsonl --exporter grpc --endpoint <collector>` (see `shared/observability.md`)
 
 #### 2i. Health Assessment
 

@@ -7,7 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Breaking
 
-- **OTel exporter rewritten in Python.** `shared/forge-otel-export.sh` is **removed** (Task 18, upcoming version bump). Use `python -m hooks._py.otel_cli replay ...` for post-hoc export from the event log. Live emission happens automatically via `hooks/_py/otel.py` when `observability.otel.enabled=true`.
+- **OTel exporter rewritten in Python.** `shared/forge-otel-export.sh` is **removed** in forge 3.4.0. Use `python -m hooks._py.otel_cli replay ...` for post-hoc export from the event log. Live emission happens automatically via `hooks/_py/otel.py` when `observability.otel.enabled=true`.
 - **Attribute rename** — legacy custom names removed; semconv replacements:
   - `tokens_in` → `gen_ai.tokens.input`
   - `tokens_out` → `gen_ai.tokens.output`

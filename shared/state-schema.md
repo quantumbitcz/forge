@@ -445,10 +445,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `cost.per_stage` | object | Yes | Per-stage cost breakdown. Keys are stage names. Values: `{ "tokens": <int>, "cost_usd": <float>, "score_delta": <int\|null> }`. Stages without score impact have `score_delta: null`. Default: `{}`. |
 | `cost.budget_remaining_tokens` | integer | Yes | Remaining token budget (`budget_ceiling - estimated_total`). 0 when no ceiling set. |
 | `cost.efficiency_score` | float | Yes | Quality points gained per 100K tokens spent. Computed as `quality_delta / (tokens_spent / 100000)`. Default: 0.0. |
-| `telemetry` | object | No | OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` via orchestrator calls at stage boundaries. |
-| `telemetry.spans` | array | — | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. Default: `[]`. |
-| `telemetry.metrics` | object | — | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`, `"findings.critical_count"`). Values are numbers. Updated at stage boundaries. Default: `{}`. |
-| `telemetry.export_status` | string | — | Export pipeline state. Valid values: `"pending"` (not yet exported), `"exported"` (successfully sent to collector), `"failed"` (export attempted but failed). Default: `"pending"`. |
+| `telemetry` | object | No | OpenTelemetry GenAI semconv observability state. Populated in-process by `hooks/_py/otel.py` (live) and reconstructible via `otel.replay()` from `.forge/events.jsonl` (authoritative). See `shared/observability.md` for the durability contract. |
+| `telemetry.spans` | array | — | Append-only mirror of emitted spans for in-state audit (not the primary source of truth — spans live in OTLP/events.jsonl). Span attribute shape follows `shared/schemas/otel-genai-v1.json`. Capped at 500 entries per run. Default: `[]`. |
 | `decision_quality` | object | No | Decision quality metrics for the current run. Populated by the quality gate and orchestrator. |
 | `decision_quality.reviewer_agreement_rate` | float | — | Percentage of findings where multiple reviewers agreed on severity for the same `(file, line)`. 0.0 when no overlapping findings exist. Updated by `fg-400-quality-gate`. |
 | `decision_quality.findings_with_low_confidence` | integer | — | Count of findings tagged with `confidence:LOW` or `confidence:MEDIUM`. Updated by `fg-400-quality-gate`. Default: 0. |
@@ -538,20 +536,18 @@ Array of fallback events. Each entry: `{ "agent": "fg-200-planner", "requested":
 
 ### telemetry (object, optional)
 
-OpenTelemetry-compatible observability state. Populated by `forge-otel-export.sh` at stage boundaries.
+OpenTelemetry GenAI semconv observability state. Spans are emitted in-process by `hooks/_py/otel.py` to a collector when `observability.otel.enabled=true`; authoritative recovery is `otel.replay()` over `.forge/events.jsonl`. See `shared/observability.md` for the durability contract and attribute table.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `spans` | array | Append-only array of span objects. Span schema defined in `shared/observability.md` §Span Schema. Capped at 500 entries per run. |
-| `metrics` | object | Aggregated gauge/counter values. Keys are metric names (e.g., `"pipeline.duration_seconds"`, `"agent.dispatch_count"`). Values are numbers. Updated at stage boundaries. |
-| `export_status` | string | Export pipeline state: `"pending"` (not yet exported), `"exported"` (sent to collector), `"failed"` (export attempted but failed). Default: `"pending"`. |
+| `spans` | array | Append-only mirror of emitted spans (in-state audit only — not the source of truth). Attribute shape follows `shared/schemas/otel-genai-v1.json`. Capped at 500 entries per run. |
 
 **Lifecycle:**
-- Initialized at PREFLIGHT with `{ "spans": [], "metrics": {}, "export_status": "pending" }`
-- Spans appended by `forge-otel-export.sh` at stage entry and exit
-- Metrics updated at each stage boundary
-- `export_status` set to `"exported"` or `"failed"` at LEARN when telemetry is flushed to the configured collector
+- Initialized at PREFLIGHT with `{ "spans": [] }`
+- Spans mirrored by `hooks/_py/otel.py` at close time
 - Reset at PREFLIGHT for each new run
+
+Removed in Phase 09 (forge 3.4.0): `telemetry.metrics` aggregation, `telemetry.export_status`. Metrics are derived from span attributes at the collector; export status is implicit (live stream best-effort, replay authoritative).
 
 ### Tracking Fields
 
