@@ -1,0 +1,40 @@
+{"id":"pr-001","comment":"the auth check should use role-based access","label":"implementation","difficulty":"easy"}
+{"id":"pr-002","comment":"this validation is in the wrong layer, move it to the use case","label":"implementation","difficulty":"easy"}
+{"id":"pr-003","comment":"please use the existing UserRepository instead of new SQL","label":"implementation","difficulty":"easy"}
+{"id":"pr-004","comment":"this should use async/await rather than blocking IO","label":"implementation","difficulty":"easy"}
+{"id":"pr-005","comment":"the error mapping is incorrect — return 404 not 500 here","label":"implementation","difficulty":"easy"}
+{"id":"pr-006","comment":"add a null-check before dereferencing the optional","label":"implementation","difficulty":"easy"}
+{"id":"pr-007","comment":"please reuse the shared HttpClient instead of constructing a new one","label":"implementation","difficulty":"easy"}
+{"id":"pr-008","comment":"the index should be on (customer_id, status), not just customer_id","label":"implementation","difficulty":"easy"}
+{"id":"pr-009","comment":"swap the for-loop for a stream + reduce","label":"implementation","difficulty":"easy"}
+{"id":"pr-010","comment":"validate input length before persisting","label":"implementation","difficulty":"easy"}
+{"id":"pr-011","comment":"call .close() in a finally block, not at the end of the try","label":"implementation","difficulty":"easy"}
+{"id":"pr-012","comment":"replace the magic number with the existing constant","label":"implementation","difficulty":"easy"}
+{"id":"pr-013","comment":"the cache key collides — include the tenant_id","label":"implementation","difficulty":"adversarial"}
+{"id":"pr-014","comment":"handle the BadRequestException explicitly here","label":"implementation","difficulty":"adversarial"}
+{"id":"pr-015","comment":"validation belongs in the use case, not the controller","label":"implementation","difficulty":"adversarial"}
+{"id":"pr-016","comment":"this should be implemented as a separate microservice with its own DB","label":"design","difficulty":"easy"}
+{"id":"pr-017","comment":"this responsibility belongs in the billing bounded context, not order","label":"design","difficulty":"easy"}
+{"id":"pr-018","comment":"we should publish a domain event instead of synchronous coupling","label":"design","difficulty":"easy"}
+{"id":"pr-019","comment":"the API contract is wrong — this should be a PATCH not a PUT","label":"design","difficulty":"easy"}
+{"id":"pr-020","comment":"introduce a use-case layer instead of fat controllers","label":"design","difficulty":"easy"}
+{"id":"pr-021","comment":"prefer event-sourcing over CRUD for the audit log domain","label":"design","difficulty":"easy"}
+{"id":"pr-022","comment":"this module is doing too much — split it into reader and writer","label":"design","difficulty":"easy"}
+{"id":"pr-023","comment":"we already have a Notification aggregate, do not introduce a new one","label":"design","difficulty":"easy"}
+{"id":"pr-024","comment":"the schema should be normalized into three tables, not one wide row","label":"design","difficulty":"easy"}
+{"id":"pr-025","comment":"this introduces a cyclic dependency between auth and billing","label":"design","difficulty":"easy"}
+{"id":"pr-026","comment":"the architecture should expose a port + adapter, not leak SQL upward","label":"design","difficulty":"easy"}
+{"id":"pr-027","comment":"this couples our public API to an internal model — introduce a DTO","label":"design","difficulty":"easy"}
+{"id":"pr-028","comment":"reject the new endpoint design — should be a CQRS command, not a REST POST","label":"design","difficulty":"adversarial"}
+{"id":"pr-029","comment":"the bounded context boundary is wrong here — move this to ordering","label":"design","difficulty":"adversarial"}
+{"id":"pr-030","comment":"the abstraction is wrong — this should be a strategy pattern not inheritance","label":"design","difficulty":"adversarial"}
+{"id":"pr-031","comment":"nit: rename this var","label":"other","difficulty":"easy"}
+{"id":"pr-032","comment":"missing docstring","label":"other","difficulty":"easy"}
+{"id":"pr-033","comment":"please rebase on main before merge","label":"other","difficulty":"easy"}
+{"id":"pr-034","comment":"the PR description is missing a link to the ticket","label":"other","difficulty":"easy"}
+{"id":"pr-035","comment":"trailing whitespace on line 42","label":"other","difficulty":"easy"}
+{"id":"pr-036","comment":"please squash these commits before merging","label":"other","difficulty":"easy"}
+{"id":"pr-037","comment":"include a screenshot of the new dialog","label":"other","difficulty":"adversarial"}
+{"id":"pr-038","comment":"can you add a blank line above this section","label":"other","difficulty":"adversarial"}
+{"id":"pr-039","comment":"this should be in the implementation discussion not on the PR","label":"other","difficulty":"adversarial"}
+{"id":"pr-040","comment":"the changelog entry is wrong — please follow the template","label":"other","difficulty":"adversarial"}

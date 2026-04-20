@@ -1,0 +1,100 @@
+{"id":"si-001","prompt":"fix: crash on null user in /api/orders","label":"bugfix","difficulty":"easy"}
+{"id":"si-002","prompt":"fix the 500 error returned when posting empty payload to /signup","label":"bugfix","difficulty":"easy"}
+{"id":"si-003","prompt":"bug: regression in checkout total calculation after coupon merge","label":"bugfix","difficulty":"easy"}
+{"id":"si-004","prompt":"NullPointerException at OrderService.kt:142 when shipping_address is missing","label":"bugfix","difficulty":"easy"}
+{"id":"si-005","prompt":"fix broken pagination on the customer dashboard list","label":"bugfix","difficulty":"easy"}
+{"id":"si-006","prompt":"crash on Android 14 when opening notifications screen, see ticket BUG-9182","label":"bugfix","difficulty":"easy"}
+{"id":"si-007","prompt":"fix the failing test test_user_login_returns_token after the auth refactor","label":"bugfix","difficulty":"easy"}
+{"id":"si-008","prompt":"webhook handler returns HTTP 500 when payload exceeds 1MB, repro attached","label":"bugfix","difficulty":"easy"}
+{"id":"si-009","prompt":"resolve incorrect tax calculation for EU VAT-exempt customers","label":"bugfix","difficulty":"easy"}
+{"id":"si-010","prompt":"fix race condition in InventoryReservation that causes negative stock","label":"bugfix","difficulty":"easy"}
+{"id":"si-011","prompt":"the migrate the new endpoint is broken somehow please look","label":"bugfix","difficulty":"adversarial"}
+{"id":"si-012","prompt":"refactor: this thing keeps crashing in prod","label":"bugfix","difficulty":"adversarial"}
+{"id":"si-013","prompt":"upgrade Spring Boot from 2.7 to 3.2 across all microservices","label":"migration","difficulty":"easy"}
+{"id":"si-014","prompt":"migrate from Enzyme to React Testing Library","label":"migration","difficulty":"easy"}
+{"id":"si-015","prompt":"replace axios with native fetch in the web client","label":"migration","difficulty":"easy"}
+{"id":"si-016","prompt":"upgrade Angular 16 to 17 and switch to standalone components","label":"migration","difficulty":"easy"}
+{"id":"si-017","prompt":"move from PostgreSQL 13 to 16 with logical replication cutover","label":"migration","difficulty":"easy"}
+{"id":"si-018","prompt":"transition the build system from Gradle Groovy to Kotlin DSL","label":"migration","difficulty":"easy"}
+{"id":"si-019","prompt":"update Node.js from 18 to 22 LTS across all services","label":"migration","difficulty":"easy"}
+{"id":"si-020","prompt":"switch our HTTP client from RestTemplate to WebClient","label":"migration","difficulty":"easy"}
+{"id":"si-021","prompt":"migrate our auth to fix the crash","label":"migration","difficulty":"adversarial"}
+{"id":"si-022","prompt":"upgrade and add new endpoint to billing","label":"migration","difficulty":"adversarial"}
+{"id":"si-023","prompt":"bootstrap: new checkout service with spring-boot 3.2","label":"bootstrap","difficulty":"easy"}
+{"id":"si-024","prompt":"scaffold a new TypeScript monorepo with Nx and React","label":"bootstrap","difficulty":"easy"}
+{"id":"si-025","prompt":"create new Go microservice for the loyalty domain from scratch","label":"bootstrap","difficulty":"easy"}
+{"id":"si-026","prompt":"initialize a new FastAPI project with SQLAlchemy 2.0","label":"bootstrap","difficulty":"easy"}
+{"id":"si-027","prompt":"start from scratch: Vue 3 + Vite admin dashboard","label":"bootstrap","difficulty":"easy"}
+{"id":"si-028","prompt":"new project: Rust axum service for image resizing","label":"bootstrap","difficulty":"easy"}
+{"id":"si-029","prompt":"set up a new project for the analytics worker","label":"bootstrap","difficulty":"adversarial"}
+{"id":"si-030","prompt":"create a new login screen for the mobile app","label":"bootstrap","difficulty":"adversarial"}
+{"id":"si-031","prompt":"add auth, billing, and notification subsystems to the platform","label":"multi-feature","difficulty":"easy"}
+{"id":"si-032","prompt":"1. add user profile editing 2. integrate Stripe 3. send email digests","label":"multi-feature","difficulty":"easy"}
+{"id":"si-033","prompt":"build search, recommendations, and user reviews for the catalog","label":"multi-feature","difficulty":"easy"}
+{"id":"si-034","prompt":"add OAuth login plus password reset and account deletion flows","label":"multi-feature","difficulty":"easy"}
+{"id":"si-035","prompt":"implement webhooks, audit log, and rate limiting on top of the API","label":"multi-feature","difficulty":"easy"}
+{"id":"si-036","prompt":"build dark mode, i18n, and accessibility support for the dashboard","label":"multi-feature","difficulty":"easy"}
+{"id":"si-037","prompt":"add user profile, billing history, and password reset","label":"multi-feature","difficulty":"adversarial"}
+{"id":"si-038","prompt":"refactor billing and also fix the broken invoice generator","label":"multi-feature","difficulty":"adversarial"}
+{"id":"si-039","prompt":"do something with notifications maybe","label":"vague","difficulty":"easy"}
+{"id":"si-040","prompt":"could we make the app feel snappier","label":"vague","difficulty":"easy"}
+{"id":"si-041","prompt":"something like a dashboard","label":"vague","difficulty":"easy"}
+{"id":"si-042","prompt":"what if users could share","label":"vague","difficulty":"easy"}
+{"id":"si-043","prompt":"explore options for analytics","label":"vague","difficulty":"easy"}
+{"id":"si-044","prompt":"think about onboarding ideas","label":"vague","difficulty":"easy"}
+{"id":"si-045","prompt":"add a settings page maybe with some options","label":"vague","difficulty":"adversarial"}
+{"id":"si-046","prompt":"the user thing should probably do more","label":"vague","difficulty":"adversarial"}
+{"id":"si-047","prompt":"add unit tests for OrderService covering edge cases","label":"testing","difficulty":"easy"}
+{"id":"si-048","prompt":"increase test coverage to 80% for the payments module","label":"testing","difficulty":"easy"}
+{"id":"si-049","prompt":"add e2e tests for the checkout flow with Playwright","label":"testing","difficulty":"easy"}
+{"id":"si-050","prompt":"write integration tests for the Kafka consumer","label":"testing","difficulty":"easy"}
+{"id":"si-051","prompt":"add property-based tests for the pricing calculator","label":"testing","difficulty":"easy"}
+{"id":"si-052","prompt":"add jest tests for the new React components in /components/cart","label":"testing","difficulty":"easy"}
+{"id":"si-053","prompt":"improve coverage and also add a new endpoint","label":"testing","difficulty":"adversarial"}
+{"id":"si-054","prompt":"add more test coverage to make sure the bug doesn't come back","label":"testing","difficulty":"adversarial"}
+{"id":"si-055","prompt":"write an ADR for the new event-sourcing architecture","label":"documentation","difficulty":"easy"}
+{"id":"si-056","prompt":"generate OpenAPI docs for the public REST API","label":"documentation","difficulty":"easy"}
+{"id":"si-057","prompt":"document the deployment runbook for the staging environment","label":"documentation","difficulty":"easy"}
+{"id":"si-058","prompt":"write architecture docs for the notifications subsystem","label":"documentation","difficulty":"easy"}
+{"id":"si-059","prompt":"update README with new local development setup instructions","label":"documentation","difficulty":"easy"}
+{"id":"si-060","prompt":"generate a changelog for the v3.4.0 release","label":"documentation","difficulty":"easy"}
+{"id":"si-061","prompt":"write docs for the new auth flow we are about to build","label":"documentation","difficulty":"adversarial"}
+{"id":"si-062","prompt":"add docs and improve the onboarding experience","label":"documentation","difficulty":"adversarial"}
+{"id":"si-063","prompt":"refactor: extract OrderValidator from OrderService","label":"refactor","difficulty":"easy"}
+{"id":"si-064","prompt":"reduce duplication between PaymentGateway and RefundGateway","label":"refactor","difficulty":"easy"}
+{"id":"si-065","prompt":"consolidate the three CSV parsers into a single shared utility","label":"refactor","difficulty":"easy"}
+{"id":"si-066","prompt":"clean up technical debt in the legacy session manager","label":"refactor","difficulty":"easy"}
+{"id":"si-067","prompt":"restructure the React folder layout to feature-first","label":"refactor","difficulty":"easy"}
+{"id":"si-068","prompt":"extract the validation logic out of the controllers","label":"refactor","difficulty":"easy"}
+{"id":"si-069","prompt":"clean up auth and add MFA","label":"refactor","difficulty":"adversarial"}
+{"id":"si-070","prompt":"refactor billing to fix the wrong totals","label":"refactor","difficulty":"adversarial"}
+{"id":"si-071","prompt":"optimize the product listing page to load under 200ms p95","label":"performance","difficulty":"easy"}
+{"id":"si-072","prompt":"reduce bundle size of the marketing site below 250KB gzip","label":"performance","difficulty":"easy"}
+{"id":"si-073","prompt":"eliminate the N+1 query in OrderRepository.findByCustomer","label":"performance","difficulty":"easy"}
+{"id":"si-074","prompt":"improve search latency from 800ms to under 100ms","label":"performance","difficulty":"easy"}
+{"id":"si-075","prompt":"cache the product catalog to reduce DB load","label":"performance","difficulty":"easy"}
+{"id":"si-076","prompt":"reduce memory footprint of the worker pool from 2GB to 800MB","label":"performance","difficulty":"easy"}
+{"id":"si-077","prompt":"make checkout faster somehow","label":"performance","difficulty":"adversarial"}
+{"id":"si-078","prompt":"performance: fix the slow query that causes timeouts","label":"performance","difficulty":"adversarial"}
+{"id":"si-079","prompt":"add ability for admins to suspend customer accounts from the dashboard","label":"single-feature","difficulty":"easy"}
+{"id":"si-080","prompt":"add CSV export to the orders report page","label":"single-feature","difficulty":"easy"}
+{"id":"si-081","prompt":"implement gift card redemption at checkout","label":"single-feature","difficulty":"easy"}
+{"id":"si-082","prompt":"add SSO via Google Workspace for internal users","label":"single-feature","difficulty":"easy"}
+{"id":"si-083","prompt":"build a notification preferences screen for end users","label":"single-feature","difficulty":"easy"}
+{"id":"si-084","prompt":"add a coupon code field on the cart page","label":"single-feature","difficulty":"easy"}
+{"id":"si-085","prompt":"add audit logging for sensitive admin actions","label":"single-feature","difficulty":"easy"}
+{"id":"si-086","prompt":"implement signed URL generation for private S3 attachments","label":"single-feature","difficulty":"easy"}
+{"id":"si-087","prompt":"add a search bar to the user list view with debounced typeahead","label":"single-feature","difficulty":"easy"}
+{"id":"si-088","prompt":"add password complexity requirements to the registration form","label":"single-feature","difficulty":"easy"}
+{"id":"si-089","prompt":"add support for marking newsletters as favorite per user","label":"single-feature","difficulty":"easy"}
+{"id":"si-090","prompt":"add the ability for users to export their data as JSON","label":"single-feature","difficulty":"easy"}
+{"id":"si-091","prompt":"implement two-factor authentication via TOTP for staff accounts","label":"single-feature","difficulty":"easy"}
+{"id":"si-092","prompt":"add a feature flag UI to toggle experimental flows in staging","label":"single-feature","difficulty":"easy"}
+{"id":"si-093","prompt":"add the ability for users to attach receipts to expense reports","label":"single-feature","difficulty":"easy"}
+{"id":"si-094","prompt":"add a webhook subscription endpoint for partner integrations","label":"single-feature","difficulty":"easy"}
+{"id":"si-095","prompt":"add some kind of dashboard widget for recent activity","label":"single-feature","difficulty":"adversarial"}
+{"id":"si-096","prompt":"add a print-friendly invoice view for finance team","label":"single-feature","difficulty":"adversarial"}
+{"id":"si-097","prompt":"add scheduled reminder emails for overdue invoices","label":"single-feature","difficulty":"easy"}
+{"id":"si-098","prompt":"implement bulk delete with confirmation dialog for the contacts table","label":"single-feature","difficulty":"easy"}
+{"id":"si-099","prompt":"add a copy-to-clipboard button on the API key management page","label":"single-feature","difficulty":"easy"}
+{"id":"si-100","prompt":"add toggle to enable/disable email notifications per topic","label":"single-feature","difficulty":"easy"}
