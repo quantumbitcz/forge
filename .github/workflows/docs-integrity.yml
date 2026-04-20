@@ -18,6 +18,9 @@ on:
       - "scripts/gen-learnings-index.py"
       - "modules/frameworks/**"
 
+permissions:
+  contents: read
+
 jobs:
   docs-integrity:
     runs-on: ubuntu-latest
