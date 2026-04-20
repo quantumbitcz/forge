@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "corpus": [
+    {"id": "auth-1", "domain": "auth", "requirement": "we need authentication for admin users — either session-based or JWT would work for our use case", "labeled_best": "session", "ambiguity": "HIGH"},
+    {"id": "auth-2", "domain": "auth", "requirement": "add SSO to the admin panel; consider OIDC or SAML depending on integration effort", "labeled_best": "oidc", "ambiguity": "HIGH"},
+    {"id": "mig-1", "domain": "migrations", "requirement": "migrate from Flyway to Liquibase or consider keeping Flyway and moving to v10 instead", "labeled_best": "flyway-v10", "ambiguity": "HIGH"},
+    {"id": "mig-2", "domain": "migrations", "requirement": "we want to introduce event sourcing for orders — could use EventStore or append-only Postgres", "labeled_best": "postgres", "ambiguity": "HIGH"},
+    {"id": "api-1", "domain": "api", "requirement": "expose the reporting module: REST/GraphQL both have team support, optimize for speed-to-ship", "labeled_best": "rest", "ambiguity": "HIGH"},
+    {"id": "api-2", "domain": "api", "requirement": "build a public feed API — consider WebSockets or SSE for realtime updates and polling fallback", "labeled_best": "sse", "ambiguity": "HIGH"},
+    {"id": "state-1", "domain": "state", "requirement": "front-end state is scattered — either Redux or Zustand could unify it, pick one that keeps bundle small", "labeled_best": "zustand", "ambiguity": "HIGH"},
+    {"id": "state-2", "domain": "state", "requirement": "server-state hydration needs alignment: React Query or SWR with optimistic updates for the dashboard", "labeled_best": "react-query", "ambiguity": "HIGH"},
+    {"id": "ui-1", "domain": "ui", "requirement": "design the checkout flow — could do a modal or a full-page wizard for mobile-first users", "labeled_best": "wizard", "ambiguity": "HIGH"},
+    {"id": "ui-2", "domain": "ui", "requirement": "either server-render the landing page for SEO or ship an SPA with hydration — pick simplest to maintain", "labeled_best": "ssr", "ambiguity": "HIGH"},
+    {"id": "ctl-1", "domain": "control", "requirement": "add user search to settings page", "labeled_best": "single", "ambiguity": "LOW"},
+    {"id": "ctl-2", "domain": "control", "requirement": "fix bug where avatar upload fails on Safari", "labeled_best": "single", "ambiguity": "LOW"}
+  ]
+}

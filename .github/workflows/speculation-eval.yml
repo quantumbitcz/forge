@@ -1,0 +1,33 @@
+name: Speculation Eval Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hooks/_py/speculation.py'
+      - 'evals/speculation/**'
+      - 'agents/fg-200-planner.md'
+      - 'agents/fg-100-orchestrator.md'
+      - 'shared/speculation.md'
+  push:
+    branches: [master]
+
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Run eval gate
+        run: |
+          chmod +x evals/speculation/runner.sh
+          ./tests/lib/bats-core/bin/bats tests/ci/speculation-eval-gate.bats
+      - name: Upload metrics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: speculation-eval-metrics
+          path: /tmp/spec-results.json
