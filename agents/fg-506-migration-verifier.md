@@ -54,3 +54,7 @@ Follow `shared/checks/output-format.md`. For each finding include the migration 
 
 - `trigger:` gates at-dispatch. If triggered outside migration mode, emit one INFO `MIGRATION-SKIPPED` and exit OK.
 - No writes. Read + grep + shell for `diff` only.
+
+## Forbidden Actions
+
+Read-only: no migration file edits, no schema modifications, no source/state writes. No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
