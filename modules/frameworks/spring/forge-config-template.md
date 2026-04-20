@@ -305,6 +305,24 @@ implementer:
       incremental: true
       max_file_size_kb: 512
       exclude_patterns: [node_modules, .git, vendor, build, dist, __pycache__]
+      prompt_compaction:
+        enabled: false              # Phase 10: opt-in; flips to true after 20-run gate
+        top_k: 25
+        token_budget: 8000
+        recency_window_days: 30
+        min_slice_tokens: 400
+        recency_boost_max: 1.5
+        keyword_overlap_cap: 5
+        cache_max_entries: 16
+        min_nodes_for_rank: 50
+        edge_weights:
+          CALLS: 1.0
+          REFERENCES: 1.0
+          IMPORTS: 0.7
+          INHERITS: 0.8
+          IMPLEMENTS: 0.8
+          TESTS: 0.4
+          CONTAINS: 0.3
 
   reflection:
     enabled: true          # Phase 04 CoVe. Set false to disable per-task fresh-context critic.
