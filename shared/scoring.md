@@ -304,6 +304,21 @@ Findings at different lines in the same file with the same category are NOT dedu
 - If an agent reports both a `SCOUT-IMPORT-UNUSED` and a regular `QUAL-IMPORT-UNUSED` for the same location, **both are kept**: the SCOUT version for the recap, the non-SCOUT version for scoring.
 - SCOUT findings are passed through to `fg-710-post-run` and `fg-700-retrospective` for reporting but are **filtered out** before dispatch to `fg-300-implementer` (no action required — the improvement was already made).
 
+### REFLECT-* Finding Handling
+
+`REFLECT-*` findings are emitted by `fg-301-implementer-critic` during the per-task
+reflection loop inside fg-300 (§5.3a). They are NOT SCOUT-class — they count
+toward the score.
+
+Normally, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, and `REFLECT-MISSING-BRANCH`
+are resolved in-loop (implementer re-enters GREEN) and never reach Stage 6.
+They surface to Stage 6 only when the reflection budget is exhausted — at that
+point `REFLECT-DIVERGENCE` (WARNING, -5) is emitted on the task and the per-cycle
+subtype findings are NOT re-surfaced (no double-counting). Reviewers at Stage 6
+independently re-examine the code; they do not read `REFLECT-*` findings as prior art.
+
+Dedup: standard `(component, file, line, category)` key.
+
 ### Cross-Category Deduplication for AI-* Overlap
 
 Several AI-* categories detect the same bugs as existing categories (e.g., `AI-SEC-INJECTION` vs `SEC-INJECTION`, `AI-SEC-HARDCODED-SECRET` vs `SEC-SECRET`). Without special handling, both findings would survive standard deduplication (different categories at the same file:line) and double-penalize the score.
