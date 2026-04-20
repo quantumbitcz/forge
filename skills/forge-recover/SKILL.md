@@ -29,7 +29,7 @@ Single entry point for pipeline state recovery. Replaces `/forge-diagnose`, `/fo
 - **--to <id>**: (rewind only) target checkpoint human id (e.g. `PLAN.-.003`) or sha256. Required.
 - **--force**: (rewind only) proceed even if worktree is dirty. Destructive — loses uncommitted changes.
 
-## Exit Codes
+## Exit codes
 
 | Code | Meaning |
 |---|---|
