@@ -165,7 +165,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### State, recovery & errors
 
-- **State** (`state-schema.md`): v1.9.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`, Phase 14). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
+- **State** (`state-schema.md`): v1.9.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`, Phase 14). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Voting counters (Phase 11): `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
 - **Recovery** (`recovery/`): 7 strategies, budget ceiling 5.5. Highest-severity first. Global retry budget: `total_retries` (default max 10, configurable).
 - **Errors** (`error-taxonomy.md`): 22 types, 16-level severity. MCP failures → inline skip + INFO. 3 consecutive transients in 60s → non-recoverable. `BUILD`/`TEST`/`LINT_FAILURE` → orchestrator fix loop.
 - **Communication:** Inter-stage via orchestrator stage notes. Quality gate includes previous batch findings (top 20). PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED`.
@@ -226,6 +226,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Run history store (F29) | `run_history.*` | SQLite FTS5 at `.forge/run-history.db`. Written by retrospective, queried by insights/ask/MCP. Schema in `shared/run-history/` |
 | MCP server (F30) | `mcp_server.*` | Python stdio MCP server exposing pipeline intelligence to any AI client. 11 tools. Auto-provisioned by `/forge-init` into `.mcp.json` |
 | Self-improving playbooks (F31) | `playbooks.*` | Refinement proposals from run data. Auto-apply, rollback. `.forge/playbook-refinements/`. Skill: `/forge-playbook-refine` |
+| Self-consistency voting (F33, Phase 11) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
 
 ### Deterministic Control Flow
 
@@ -326,7 +327,7 @@ For pipeline-level evals see `tests/evals/pipeline/README.md` (CI-only; local dr
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-recover reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, and `playbook-refinements/` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, and `consistency-cache.jsonl` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts.
