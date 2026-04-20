@@ -8,7 +8,7 @@ receivers:
 
 exporters:
   file:
-    path: /tmp/otel-out.jsonl
+    path: /tmp/otel/otel-out.jsonl
     rotation:
       max_megabytes: 100
 

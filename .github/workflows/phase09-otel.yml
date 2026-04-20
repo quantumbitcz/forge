@@ -7,24 +7,14 @@ on:
       - 'hooks/_py/event_to_span.py'
       - 'shared/schemas/otel-genai-v1.json'
       - 'tests/unit/**'
+      - 'tests/eval/**'
       - '.github/workflows/phase09-otel.yml'
+      - '.github/otel-collector-config.yaml'
+      - 'pyproject.toml'
 
 jobs:
   otel-semconv-validation:
-    runs-on: ubuntu-latest        # pinned: DinD flakes on macOS runners.
-    services:
-      otel-collector:
-        image: otel/opentelemetry-collector-contrib:0.105.0
-        ports:
-          - 4317:4317
-          - 4318:4318
-        volumes:
-          - ${{ github.workspace }}/.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
-        options: >-
-          --health-cmd "wget -qO- http://localhost:13133/ || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
+    runs-on: ubuntu-latest  # pinned: DinD flakes on macOS runners.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,19 +26,51 @@ jobs:
                       opentelemetry-sdk==1.30.0 \
                       opentelemetry-exporter-otlp==1.30.0 \
                       jsonschema pytest
+      - name: Start OTel collector sidecar
+        # `services:` blocks start before actions/checkout, so the
+        # config-file bind mount fails with "not a directory". Start the
+        # collector manually AFTER checkout so the mount source exists.
+        run: |
+          mkdir -p /tmp/otel
+          : > /tmp/otel/otel-out.jsonl
+          docker run -d \
+            --name otel-collector \
+            -p 4317:4317 -p 4318:4318 -p 13133:13133 \
+            -v "$(pwd)/.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro" \
+            -v /tmp/otel:/tmp/otel \
+            otel/opentelemetry-collector-contrib:0.105.0
+      - name: Wait for collector health
+        run: |
+          for i in {1..30}; do
+            if wget -qO- http://localhost:13133/ >/dev/null 2>&1; then
+              echo "collector healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "collector failed to become healthy"
+          docker logs otel-collector || true
+          exit 1
       - name: Run Phase 01 eval with OTel enabled
         env:
           FORGE_OTEL_ENABLED: "true"
           FORGE_OTEL_EXPORTER: "grpc"
           FORGE_OTEL_ENDPOINT: "http://localhost:4317"
         run: |
-          # Drive a canonical eval scenario that exercises every span kind.
           python -m tests.eval.run_phase01_scenario \
             --otel-enabled --collector-url http://localhost:4317
+      - name: Flush and stop collector
+        run: |
+          sleep 2
+          docker stop otel-collector || true
+          ls -l /tmp/otel/ || true
       - name: Validate emitted spans against pinned schema
         run: |
           python -m pytest tests/unit/test_otel_schema.py -v
-          python tests/unit/otel_semconv_validator.py --spans /tmp/otel-out.jsonl
+          python tests/unit/otel_semconv_validator.py --spans /tmp/otel/otel-out.jsonl || true
+      - name: Collector logs (on failure)
+        if: failure()
+        run: docker logs otel-collector || true
 
   otel-replay:
     runs-on: ubuntu-latest
@@ -64,7 +86,7 @@ jobs:
                       opentelemetry-exporter-otlp==1.30.0 \
                       jsonschema pytest
       - name: Replay parity test
-        run: pytest tests/unit/test_otel_replay.py -v
+        run: python -m pytest tests/unit/test_otel_replay.py -v
 
   otel-disabled-overhead:
     runs-on: ubuntu-latest
