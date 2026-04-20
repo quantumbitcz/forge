@@ -61,3 +61,14 @@ def _resolve_type(item: Dict[str, Any]) -> str:
     if "shared/learnings/" in path:
         return "cross-project"
     return "cross-project"
+
+
+def tier(confidence: float) -> str:
+    """Map a decayed confidence to its discrete tier."""
+    if confidence >= THRESHOLDS["high"]:
+        return "HIGH"
+    if confidence >= THRESHOLDS["medium"]:
+        return "MEDIUM"
+    if confidence >= THRESHOLDS["low"]:
+        return "LOW"
+    return "ARCHIVED"
