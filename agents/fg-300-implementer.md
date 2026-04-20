@@ -142,6 +142,65 @@ When applicable (see 5.7 for exceptions):
 3. Follow conventions for naming, annotations, framework usage
 4. Run test to verify GREEN
 
+### 5.3a Reflect (Chain-of-Verification)
+
+After GREEN verifies the test passes, dispatch `fg-301-implementer-critic` as a
+sub-subagent via the Task tool. The critic runs in a fresh Claude context (no
+inherited reasoning from this implementer instance).
+
+**Skip this step when any of the following hold:**
+- `implementer.reflection.enabled` is `false` (PREFLIGHT-validated).
+- Task falls under §5.7 exemptions (domain models, migrations, mappers, configs — no test was written; nothing to reflect on).
+- Current invocation is a targeted re-implementation from a VERIFY or REVIEW fix loop. The orchestrator passes a `dispatch_mode: fix_loop` flag; if present, skip REFLECT.
+
+**Dispatch payload (exactly three fields, no more, no less):**
+
+```yaml
+task:
+  id: {task.id}
+  description: {task.description}
+  acceptance_criteria: {task.acceptance_criteria}
+test_code: |
+  {verbatim contents of test file written in RED}
+implementation_diff: |
+  {git diff HEAD -- <production files modified in GREEN>}
+```
+
+The critic MUST NOT receive: prior reasoning, PREEMPT items, conventions stack,
+scaffolder output, context7 docs, other tasks, or prior reflection iterations
+of this same task.
+
+**Handle verdict:**
+
+- `PASS` → proceed to §5.4 REFACTOR. Append verdict to `tasks[task.id].reflection_verdicts`.
+- `REVISE` AND `tasks[task.id].implementer_reflection_cycles < implementer.reflection.max_cycles`:
+  1. Append verdict to `tasks[task.id].reflection_verdicts` (trim to last 5).
+  2. Increment `tasks[task.id].implementer_reflection_cycles` by 1.
+  3. Increment `state.implementer_reflection_cycles_total` by 1.
+  4. Re-enter §5.3 GREEN with the critic's findings appended to this implementer's context.
+  5. Re-run `commands.test_single`. On green, re-dispatch critic (NEW sub-subagent, fresh context).
+- `REVISE` AND budget exhausted (`implementer_reflection_cycles == max_cycles`):
+  1. Emit `REFLECT-DIVERGENCE` finding (WARNING, file/line/explanation/suggestion copied from the critic's last output).
+  2. Increment `state.reflection_divergence_count` by 1.
+  3. Log stage note: `REFLECT_EXHAUSTED: {task.id} — critic rejected {max_cycles} consecutive implementations.`
+  4. Proceed to §5.4 REFACTOR. Stage-6 reviewer panel will make the final call on the diff.
+
+**Budget semantics (off-by-one guard):** the check `count < max_cycles` is
+evaluated BEFORE increment. With `max_cycles == 2`, the flow is:
+
+| Dispatch | Counter before check | Verdict | Counter after action |
+|---|---|---|---|
+| 1st | 0 | PASS | 0 (proceed to REFACTOR) |
+| 1st | 0 | REVISE | 1 (re-enter GREEN, re-dispatch) |
+| 2nd | 1 | PASS | 1 (proceed to REFACTOR) |
+| 2nd | 1 | REVISE | 2 (budget exhausted, emit REFLECT-DIVERGENCE, proceed) |
+
+**Timeout:** Per-dispatch 90s (configurable via `implementer.reflection.timeout_seconds`). On timeout, log INFO `REFLECT_TIMEOUT: {task.id}` and proceed to REFACTOR without incrementing the counter or emitting a finding. Never block the pipeline on a critic failure.
+
+**Counter isolation:** `implementer_reflection_cycles` is strictly separate from
+`implementer_fix_cycles`. It does NOT feed into `total_retries`, `total_iterations`,
+`verify_fix_count`, `test_cycles`, or `quality_cycles`.
+
 ### 5.4 Refactor
 
 1. Review implementation with fresh eyes
@@ -397,17 +456,20 @@ Default: PRESERVE. Cost of keeping dead code = low. Cost of removing intentional
 4. **Track** `fix_attempts`
 5. **Max:** `max_fix_loops` (default 3). Report: error, root cause, attempts, suggested next steps.
 
-### Inner Loop vs Fix Loop
+### Inner Loop vs Fix Loop vs Reflection Loop
 
-| Aspect | Inner Loop (5.4.1) | Fix Loop (13) |
-|---|---|---|
-| When | After TDD cycle, before next task | When step fails during implementation |
-| What | Lint + affected tests | Build + test for specific step |
-| Budget | `implementer_fix_cycles` (default 3/task) | `max_fix_loops` (default 3/step) |
-| Scope | Changed files + dependents | Specific failing step |
-| Counter | `state.json.inner_loop` | `state.json.verify_fix_count` |
+| Aspect | Inner Loop (5.4.1) | Fix Loop (13) | Reflection Loop (5.3a) |
+|---|---|---|---|
+| When | After TDD cycle, before next task | When step fails during implementation | After GREEN, before REFACTOR |
+| What | Lint + affected tests | Build + test for specific step | Critic dispatch (PASS/REVISE on diff vs intent) |
+| Budget | `implementer_fix_cycles` (default 3/task) | `max_fix_loops` (default 3/step) | `implementer.reflection.max_cycles` (default 2/task) |
+| Scope | Changed files + dependents | Specific failing step | Per-task, fresh-context critic |
+| Counter | `state.json.inner_loop` | `state.json.verify_fix_count` | `tasks[*].implementer_reflection_cycles` |
+| Feeds convergence? | No | Yes (`total_iterations`) | No |
+| Fires on | Always after TDD (when enabled) | Step failure | Critic REVISE verdict within budget |
+| Exit | Lint+tests green OR budget exhausted | Step succeeds OR budget exhausted | PASS verdict OR budget exhausted (emit REFLECT-DIVERGENCE) |
 
-Both budgets independent.
+All three budgets independent.
 
 ### Time Budget Per Fix Attempt
 
@@ -482,6 +544,12 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Total inner-loop fix cycles: [N] across [M] tasks
 - Tasks with inner-loop fixes: [list]
 - Remaining inner-loop issues: [list or "none"]
+
+### Reflection Summary
+- Total reflections dispatched: {state.implementer_reflection_cycles_total}
+- Tasks that triggered at least one reflection: {count of tasks where implementer_reflection_cycles > 0}
+- REFLECT-DIVERGENCE count: {state.reflection_divergence_count}
+- Per-task breakdown: {table of task_id → cycles → final verdict}
 
 ### Notes for Retrospective
 - [Any observations about patterns, recurring issues, or suggestions for PREEMPT items]
