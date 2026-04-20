@@ -128,6 +128,47 @@ When `lsp.enabled` and LSP is available for the project language:
 
 ---
 
+## Frontend Performance (absorbed from fg-413 Part D — Phase 07)
+
+Applies when the reviewer receives frontend files (`.ts{x}`, `.jsx?`, `.vue`, `.svelte`, `.css`).
+
+### FE-PERF-BUNDLE — Bundle size regression
+
+**Detect:** `import * as X` from large libs (lodash, moment), unused imports surviving tree-shake, missing dynamic `import()` on route-level components, third-party deps not in `optimizeDeps` / `external`.
+
+**Severity:** WARNING if delta > 10% of baseline; CRITICAL if > 30% or exceeds `performance_tracking.bundle_budget_kb`.
+
+### FE-PERF-RENDER — Rendering efficiency
+
+**Detect:** unkeyed lists, inline object/array creation in props, `useMemo`/`useCallback` missing on expensive derivations, `useEffect` running every render without deps array, `React.memo` boundary violations, Svelte `{#each}` without `(key)` expression, Vue `v-for` without `:key`, Angular `*ngFor` without `trackBy`.
+
+**Severity:** WARNING (INFO if hot-path evidence is weak).
+
+### FE-PERF-LOAD — Resource loading
+
+**Detect:** `<img>` without `loading="lazy"` below the fold, missing `preconnect`/`dns-prefetch` for third-party origins, blocking `<script>` without `async`/`defer`, `<link rel="stylesheet">` > critical fold, fonts without `font-display: swap`.
+
+**Severity:** WARNING.
+
+### FE-PERF-NETWORK — Network and data
+
+**Detect:** waterfall cascades (serial fetch in `useEffect`), missing HTTP cache headers, over-fetching (GraphQL ask-for-everything), no stale-while-revalidate on paginated reads, absent debounce/throttle on search handlers.
+
+**Severity:** WARNING.
+
+### Finding categories (mapped)
+
+| Code | Severity cap | Owner |
+|---|---|---|
+| `FE-PERF-BUNDLE` | CRITICAL | fg-416-performance-reviewer |
+| `FE-PERF-RENDER` | WARNING | fg-416-performance-reviewer |
+| `FE-PERF-LOAD` | WARNING | fg-416-performance-reviewer |
+| `FE-PERF-NETWORK` | WARNING | fg-416-performance-reviewer |
+
+Owner change (Phase 07): previously these were emitted by `fg-413-frontend-reviewer`. `fg-413` now delegates performance findings to `fg-416` and focuses on conventions, design system, a11y, and visual regression.
+
+---
+
 ## Failure Modes
 
 | Condition | Severity | Response |
