@@ -1,0 +1,150 @@
+name: docs-integrity
+
+on:
+  pull_request:
+    paths:
+      - "CLAUDE.md"
+      - "shared/**"
+      - "docs/**"
+      - "scripts/gen-learnings-index.py"
+      - "modules/frameworks/**"
+      - ".github/workflows/docs-integrity.yml"
+  push:
+    branches: [master]
+    paths:
+      - "CLAUDE.md"
+      - "shared/**"
+      - "docs/**"
+      - "scripts/gen-learnings-index.py"
+      - "modules/frameworks/**"
+
+jobs:
+  docs-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Learnings-index freshness
+        run: python scripts/gen-learnings-index.py --check
+
+      - name: ADR format validator
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          required = ["## Context", "## Decision", "## Consequences",
+                      "## Alternatives Considered", "## References"]
+          valid_status = {"Proposed", "Accepted", "Deprecated"}
+          ok = True
+          files = sorted(Path("docs/adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
+          # dense numbering check
+          nums = [int(p.name.split("-", 1)[0]) for p in files]
+          if nums and nums != list(range(1, len(nums) + 1)):
+              print(f"::error::ADR numbering not dense: {nums}")
+              ok = False
+          for p in files:
+              text = p.read_text()
+              for h in required:
+                  if h not in text:
+                      print(f"::error file={p}::missing section: {h}")
+                      ok = False
+              m = re.search(r"^-\s+\*\*Status:\*\*\s+(.+?)\s*$", text, re.M)
+              if not m:
+                  print(f"::error file={p}::missing Status field")
+                  ok = False
+              else:
+                  status = m.group(1).strip()
+                  if status not in valid_status and not status.startswith("Superseded by ADR-"):
+                      print(f"::error file={p}::invalid status: {status}")
+                      ok = False
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Framework-count guard
+        run: |
+          # Count only framework directories (not stray files like VARIANTS.md, base-template.md).
+          actual=$(find modules/frameworks -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+          claimed=$(grep -oE '`frameworks/` \([0-9]+' CLAUDE.md | grep -oE '[0-9]+' | head -1)
+          if [ "$claimed" != "$actual" ]; then
+            echo "::error::CLAUDE.md claims frameworks/($claimed) but actual count is $actual"
+            exit 1
+          fi
+
+      - name: 600-line ceiling
+        run: |
+          # Files currently over 600L are grandfathered; ceiling applies to NEW files.
+          # Shrink the exempt list as files are split per Phase 06 docs architecture.
+          exempt="shared/state-schema.md shared/state-schema-fields.md shared/stage-contract.md shared/checks/ai-code-patterns.md shared/learnings-index.md"
+          fail=0
+          while IFS= read -r f; do
+            skip=0
+            for e in $exempt; do [ "$f" = "$e" ] && skip=1; done
+            [ $skip -eq 1 ] && continue
+            n=$(wc -l < "$f" | tr -d ' ')
+            if [ "$n" -gt 600 ]; then
+              echo "::error file=$f::line count $n exceeds 600 (exempt list: $exempt)"
+              fail=1
+            fi
+          done < <(find shared CLAUDE.md -type f -name '*.md')
+          exit $fail
+
+      - name: Anchor-existence check
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          link_re = re.compile(r"\[[^\]]+\]\((?P<path>[^)#\s]+)#(?P<anchor>[^)\s]+)\)")
+          heading_re = re.compile(r"^#+\s+(.+?)\s*$", re.M)
+          explicit_anchor_re = re.compile(r'<a id="([^"]+)"></a>')
+
+          def slugify(s: str) -> str:
+              s = s.lower()
+              s = re.sub(r"[^\w\s-]", "", s)
+              s = re.sub(r"\s+", "-", s).strip("-")
+              return s
+
+          def anchors_in(p: Path) -> set:
+              text = p.read_text(encoding="utf-8")
+              anchors = {slugify(m.group(1)) for m in heading_re.finditer(text)}
+              anchors |= set(explicit_anchor_re.findall(text))
+              return anchors
+
+          roots = [Path("CLAUDE.md")] + list(Path("shared").rglob("*.md")) + list(Path("docs").rglob("*.md"))
+          ok = True
+          for f in roots:
+              text = f.read_text(encoding="utf-8")
+              for m in link_re.finditer(text):
+                  target_rel = m.group("path")
+                  anchor = m.group("anchor")
+                  target = (f.parent / target_rel).resolve()
+                  if not target.exists():
+                      continue  # file-existence handled by lychee
+                  if anchor not in anchors_in(target):
+                      print(f"::error file={f}::dead anchor: {target_rel}#{anchor}")
+                      ok = False
+          sys.exit(0 if ok else 1)
+          PY
+
+      # Soft-fail lychee until the pre-existing dead links are cleaned up in
+      # Phase 06 Tasks 10-13 (which create `shared/agents.md` and rewrite
+      # cross-refs). External 404s and internal dangling paths are surfaced
+      # as warnings in the job summary but do not block the workflow.
+      # TODO(phase06-follow-up): flip `continue-on-error` to false once
+      # `shared/agents.md` exists and reviewer-doc `feedback_*.md` leaks are
+      # excised.
+      - name: Lychee link-check
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --accept 200,204,301,302 --verbose CLAUDE.md 'shared/**/*.md' 'docs/**/*.md'
+          fail: true
