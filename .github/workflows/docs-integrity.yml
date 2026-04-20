@@ -138,5 +138,5 @@ jobs:
       - name: Lychee link-check
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --no-progress --exclude-mail --accept 200,204,301,302 --verbose CLAUDE.md 'shared/**/*.md' 'docs/**/*.md'
+          args: --no-progress --accept 200,204,301,302 --verbose CLAUDE.md 'shared/**/*.md' 'docs/**/*.md'
           fail: true
