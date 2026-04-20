@@ -306,36 +306,52 @@
       "agents": [
         "fg-301-implementer-critic"
       ],
+      "wildcard": false,
       "severity": "WARNING",
       "score_impact": "-5",
-      "priority": 3
+      "priority": 3,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
     },
     "REFLECT-HARDCODED-RETURN": {
       "description": "Implementation returns a literal matching the test assertion without real computation",
       "agents": [
         "fg-301-implementer-critic"
       ],
+      "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
-      "priority": 3
+      "priority": 3,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
     },
     "REFLECT-OVER-NARROW": {
       "description": "Implementation narrows input domain more tightly than AC allows",
       "agents": [
         "fg-301-implementer-critic"
       ],
+      "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
-      "priority": 3
+      "priority": 3,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
     },
     "REFLECT-MISSING-BRANCH": {
       "description": "Implementation's control flow handles fewer branches than AC describes",
       "agents": [
         "fg-301-implementer-critic"
       ],
+      "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
-      "priority": 3
+      "priority": 3,
+      "affinity": [
+        "fg-301-implementer-critic"
+      ]
     },
     "A11Y": {
       "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)",
