@@ -78,6 +78,24 @@ Ask: What problem? For whom? Current workaround? What does success look like?
 
 Do not accept "users want X" without understanding why. Surface solutions-in-disguise.
 
+#### Intent classification (self-consistency voting)
+
+Before entering the dialogue, perform a one-shot classification of the raw `$ARGUMENTS` against the intent table in `shared/intent-classification.md`. Dispatch via `hooks/_py/consistency.py` (see `shared/consistency/dispatch-bridge.md` for the agent→Python invocation contract):
+
+- `decision_point = "shaper_intent"`
+- `labels = ["bugfix", "migration", "bootstrap", "multi-feature", "vague", "testing", "documentation", "refactor", "performance", "single-feature"]`
+- `state_mode = state.mode` (from `.forge/state.json`)
+- `n = config.consistency.n_samples`
+- `tier = config.consistency.model_tier`
+
+Increment `state.consistency_votes.shaper_intent.invocations` by 1. On `cache_hit`, also increment `state.consistency_votes.shaper_intent.cache_hits`. On `low_consensus`, increment `state.consistency_votes.shaper_intent.low_consensus` and fall through to the existing dialogue below — the shaping questions are already the correct recovery path when routing is ambiguous.
+
+The rest of this Phase (problem / users / workaround / success) still runs. Voting only seeds the initial route.
+
+If `consistency.enabled: false` or `shaper_intent` is not in `consistency.decisions`, skip the dispatch and proceed with the legacy single-sample classification. On `ConsistencyError`, treat as `low_consensus: true` and fall through.
+
+Contract: `shared/consistency/voting.md`.
+
 ### Phase 2 — Explore Scope
 
 Identify boundaries and affected components.
