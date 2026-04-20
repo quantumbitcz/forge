@@ -80,10 +80,12 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Build a feature | `/forge-run` | Full 10-stage pipeline |
 | Fix a bug | `/forge-fix` | Root cause investigation + targeted fix |
 | Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
-| Review changed files | `/forge-review` | Quick (3 agents) or full (8 agents) |
-| Review entire codebase | `/forge-codebase-health` | Read-only analysis, no fixes |
-| Fix all codebase issues | `/forge-deep-health` | Iterative fix loop until clean |
-| Quick build+lint+test | `/forge-verify` | No pipeline, just check commands |
+| Review changed files | `/forge-review` | Default `--scope=changed`. Quick (2 agents) or full (8 agents) with `--full` |
+| Review entire codebase | `/forge-review --scope=all` | Read-only analysis, no fixes |
+| Fix all codebase issues | `/forge-review --scope=all --fix` | Iterative fix loop; AskUserQuestion gate unless `autonomous: true` or `--yes` |
+| Quick build+lint+test | `/forge-verify` | Default `--build`. No pipeline |
+| Validate config | `/forge-verify --config` | Pre-pipeline config check (read-only) |
+| Graph init/status/query/rebuild/debug | `/forge-graph <sub>` | `init` starts Neo4j; `status` reports health; `query <cypher>` runs read-only Cypher; `rebuild` regenerates project graph; `debug` runs diagnostic recipes |
 | Security scan | `/forge-security-audit` | Module-appropriate vulnerability scanners |
 | Pipeline broken? | `/forge-recover diagnose` | Read-only diagnostic, then `/forge-recover repair` to fix |
 | Resume aborted run | `/forge-recover resume` | Continues from last checkpoint |
@@ -108,10 +110,10 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 
 ```
 First time?        /forge-tour (5-stop guided introduction)
-New project:       /forge-init → /forge-config-validate → /forge-verify → /forge-run <requirement>
-Existing project:  /forge-init → /forge-codebase-health → /forge-deep-health → /forge-run <requirement>
+New project:       /forge-init → /forge-verify --config → /forge-verify → /forge-run <requirement>
+Existing project:  /forge-init → /forge-review --scope=all → /forge-review --scope=all --fix → /forge-run <requirement>
 Bug fix:           /forge-fix <description or ticket ID>
-Code quality:      /forge-review --full  (changed files) or /forge-codebase-health (all files)
+Code quality:      /forge-review --full  (changed files) or /forge-review --scope=all (all files)
 Before shipping:   /forge-verify → /forge-review --full
 Pipeline trouble:  /forge-recover diagnose → /forge-recover repair (if needed) → /forge-recover resume
 Multiple features: /forge-sprint (reads from Linear or manual list)
@@ -277,9 +279,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (35 total), hooks, kanban, git
+## Skills (28 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (quick: 3 agents, full: up to 9; loops to score 100), `forge-verify`, `forge-security-audit`, `forge-codebase-health`, `forge-deep-health`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph-init`, `forge-graph-status`, `forge-graph-query`, `forge-graph-rebuild`, `forge-graph-debug` (targeted Neo4j diagnostics), `forge-docs-generate`, `forge-config-validate` (pre-pipeline config check), `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review).
 
 **Hooks** (7 command entries across 6 Python entry scripts, `hooks.json`): L0 syntax validation on `Edit|Write` (PreToolUse → `pre_tool_use.py`); check engine + automation trigger on `Edit|Write` (PostToolUse → `post_tool_use.py`, which invokes both `_py.check_engine.engine` and `_py.check_engine.automation_trigger`); checkpoint on `Skill` (PostToolUse → `post_tool_use_skill.py`); compaction check on `Agent` (PostToolUse → `post_tool_use_agent.py`); feedback capture on `Stop` (Stop → `stop.py`); session priming on `SessionStart` (SessionStart → `session_start.py`). See `shared/hook-design.md` for the Python execution model and script contract.
 
