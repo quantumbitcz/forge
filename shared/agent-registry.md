@@ -34,6 +34,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-411-security-reviewer | 4 | No | Review | Security |
 | fg-412-architecture-reviewer | 4 | No | Review | Architecture |
 | fg-413-frontend-reviewer | 4 | No | Review | Frontend |
+| fg-414-license-reviewer | 4 | No | Review | License |
 | fg-416-performance-reviewer | 4 | No | Review | Performance |
 | fg-417-dependency-reviewer | 4 | No | Review | Dependencies |
 | fg-418-docs-consistency-reviewer | 4 | No | Review | Documentation |

@@ -1,0 +1,6 @@
+# Unknown SPDX triggers WARNING under fail-open default
+PATTERN: requirements.txt:* | LICENSE-UNKNOWN | WARNING | *obscure-pkg* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: LICENSE-UNKNOWN
+VERDICT: CONCERNS
