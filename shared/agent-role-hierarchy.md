@@ -41,14 +41,18 @@ Task tracking only (no user interaction).
 | `fg-130-docs-discoverer` | Documentation discovery |
 | `fg-135-wiki-generator` | Wiki generation |
 | `fg-140-deprecation-refresh` | Deprecation registry updates |
+| `fg-143-observability-bootstrap` | Observability bootstrap (conditional) |
 | `fg-150-test-bootstrapper` | Test infrastructure setup |
+| `fg-155-i18n-validator` | i18n static validation (conditional) |
 | `fg-250-contract-validator` | Consumer-driven contract validation |
 | `fg-300-implementer` | TDD implementation (inner loop) |
 | `fg-310-scaffolder` | Code scaffolding |
 | `fg-320-frontend-polisher` | Frontend quality (conditional) |
 | `fg-350-docs-generator` | Documentation generation |
 | `fg-505-build-verifier` | Build verification |
+| `fg-506-migration-verifier` | Migration verification (migration mode) |
 | `fg-515-property-test-generator` | Property-based test generation (conditional) |
+| `fg-555-resilience-tester` | Resilience testing (conditional) |
 | `fg-590-pre-ship-verifier` | Evidence-based ship gate |
 | `fg-610-infra-deploy-verifier` | Infrastructure verification (conditional) |
 | `fg-620-deploy-verifier` | Deployment health monitoring (conditional) |
@@ -68,6 +72,7 @@ No UI capabilities. Produce findings only.
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |
 | `fg-413-frontend-reviewer` | Frontend review (4 modes) |
+| `fg-414-license-reviewer` | License compliance review (SPDX policy + change detection) |
 | `fg-416-performance-reviewer` | Performance review |
 | `fg-417-dependency-reviewer` | Dependency review |
 | `fg-418-docs-consistency-reviewer` | Documentation consistency |
@@ -85,7 +90,9 @@ fg-100-orchestrator
   │   ├── fg-130-docs-discoverer
   │   ├── fg-135-wiki-generator
   │   ├── fg-140-deprecation-refresh
+  │   ├── fg-143-observability-bootstrap   (conditional: observability_bootstrap.enabled)
   │   ├── fg-150-test-bootstrapper
+  │   ├── fg-155-i18n-validator            (conditional: i18n_validator.enabled, default true)
   │   └── fg-160-migration-planner (migration mode)
   ├── EXPLORING
   │   └── (orchestrator performs directly)
@@ -100,7 +107,9 @@ fg-100-orchestrator
   │   └── fg-320-frontend-polisher (conditional)
   ├── VERIFYING
   │   ├── fg-505-build-verifier
-  │   └── fg-500-test-gate
+  │   ├── fg-506-migration-verifier        (conditional: mode == "migration")
+  │   ├── fg-500-test-gate
+  │   └── fg-555-resilience-tester         (conditional: resilience_testing.enabled)
   ├── REVIEWING
   │   ├── fg-400-quality-gate (dispatches reviewers)
   │   └── fg-510-mutation-analyzer
@@ -125,6 +134,7 @@ fg-400-quality-gate
   ├── fg-411-security-reviewer (always)
   ├── fg-412-architecture-reviewer (always)
   ├── fg-413-frontend-reviewer (if frontend files)
+  ├── fg-414-license-reviewer (always)
   ├── fg-416-performance-reviewer (always)
   ├── fg-417-dependency-reviewer (always)
   ├── fg-418-docs-consistency-reviewer (always)
