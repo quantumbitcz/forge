@@ -28,7 +28,7 @@ REGISTRY="$PLUGIN_ROOT/shared/agent-registry.md"
   # Extract agent IDs from registry table (lines matching fg-NNN-name pattern)
   while IFS= read -r agent_id; do
     [[ -f "${AGENTS_DIR}/${agent_id}.md" ]] || failures+=("${agent_id}: in registry but no agent file")
-  done < <(grep -oE 'fg-[0-9]+-[a-z-]+' "$REGISTRY" | sort -u)
+  done < <(grep -oE 'fg-[0-9]+-[a-z0-9-]+' "$REGISTRY" | sort -u)
 
   if (( ${#failures[@]} > 0 )); then
     printf '%s\n' "${failures[@]}"

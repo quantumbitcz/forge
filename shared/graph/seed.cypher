@@ -1904,6 +1904,7 @@ CREATE (:Agent {name: 'fg-135-wiki-generator', role: 'other', file_path: 'agents
 CREATE (:Agent {name: 'fg-140-deprecation-refresh', role: 'other', file_path: 'agents/fg-140-deprecation-refresh.md'});
 CREATE (:Agent {name: 'fg-143-observability-bootstrap', role: 'other', file_path: 'agents/fg-143-observability-bootstrap.md'});
 CREATE (:Agent {name: 'fg-150-test-bootstrapper', role: 'other', file_path: 'agents/fg-150-test-bootstrapper.md'});
+CREATE (:Agent {name: 'fg-155-i18n-validator', role: 'other', file_path: 'agents/fg-155-i18n-validator.md'});
 CREATE (:Agent {name: 'fg-160-migration-planner', role: 'other', file_path: 'agents/fg-160-migration-planner.md'});
 CREATE (:Agent {name: 'fg-200-planner', role: 'other', file_path: 'agents/fg-200-planner.md'});
 CREATE (:Agent {name: 'fg-205-planning-critic', role: 'other', file_path: 'agents/fg-205-planning-critic.md'});
@@ -2113,6 +2114,9 @@ MATCH (a:Agent {name: 'fg-143-observability-bootstrap'}), (c:SharedContract {nam
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-155-i18n-validator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-155-i18n-validator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-155-i18n-validator'}), (c:SharedContract {name: 'i18n-validation'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-160-migration-planner'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
@@ -2728,6 +2732,7 @@ CREATE (:Learnings {name: 'hazelcast', file_path: 'shared/learnings/hazelcast.md
 CREATE (:Learnings {name: 'health-checks', file_path: 'shared/learnings/health-checks.md'});
 CREATE (:Learnings {name: 'helm', file_path: 'shared/learnings/helm.md'});
 CREATE (:Learnings {name: 'hibernate', file_path: 'shared/learnings/hibernate.md'});
+CREATE (:Learnings {name: 'i18n', file_path: 'shared/learnings/i18n.md'});
 CREATE (:Learnings {name: 'in-memory', file_path: 'shared/learnings/in-memory.md'});
 CREATE (:Learnings {name: 'influxdb', file_path: 'shared/learnings/influxdb.md'});
 CREATE (:Learnings {name: 'istanbul', file_path: 'shared/learnings/istanbul.md'});
@@ -3394,6 +3399,10 @@ MATCH (l:Learnings {name: 'hibernate'}), (m:LayerModule {name: 'hibernate'}) CRE
 MATCH (l:Learnings {name: 'hibernate'}), (t:TestingFramework {name: 'hibernate'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'hibernate'}), (la:Language {name: 'hibernate'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'hibernate'}), (f:Framework {name: 'hibernate'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'i18n'}), (m:LayerModule {name: 'i18n'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'i18n'}), (t:TestingFramework {name: 'i18n'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'i18n'}), (la:Language {name: 'i18n'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'i18n'}), (f:Framework {name: 'i18n'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'in-memory'}), (m:LayerModule {name: 'in-memory'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'in-memory'}), (t:TestingFramework {name: 'in-memory'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'in-memory'}), (la:Language {name: 'in-memory'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
