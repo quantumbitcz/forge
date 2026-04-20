@@ -36,15 +36,15 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 |---|---|
 | Pre-pipeline | fg-010, fg-015, fg-020, fg-050, fg-090 |
 | Orchestrator + helpers | fg-100, fg-101, fg-102, fg-103 |
-| PREFLIGHT | fg-130, fg-135, fg-140, fg-150 |
+| PREFLIGHT | fg-130, fg-135, fg-140, fg-143, fg-150, fg-155 |
 | Migration / Planning | fg-160, fg-200, fg-205, fg-210, fg-250 |
 | Implement | fg-300, fg-310, fg-320, fg-350 |
-| Review | fg-400, fg-410, fg-411, fg-412, fg-413, fg-416, fg-417, fg-418, fg-419 |
-| Verify / Test | fg-500, fg-505, fg-510, fg-515 |
+| Review | fg-400, fg-410, fg-411, fg-412, fg-413, fg-414, fg-416, fg-417, fg-418, fg-419 |
+| Verify / Test | fg-500, fg-505, fg-506, fg-510, fg-515, fg-555 |
 | Ship | fg-590, fg-600, fg-610, fg-620, fg-650 |
 | Learn | fg-700, fg-710 |
 
-## 3. Full 42-agent color map
+## 3. Full 48-agent color map
 
 | Agent | Cluster | Old color | New color |
 |---|---|---|---|
@@ -60,7 +60,9 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | `fg-130-docs-discoverer` | PREFLIGHT | cyan | cyan |
 | `fg-135-wiki-generator` | PREFLIGHT | cyan | navy |
 | `fg-140-deprecation-refresh` | PREFLIGHT | cyan | teal |
+| `fg-143-observability-bootstrap` | PREFLIGHT | *(new)* | magenta |
 | `fg-150-test-bootstrapper` | PREFLIGHT | cyan | olive |
+| `fg-155-i18n-validator` | PREFLIGHT | *(new)* | crimson |
 | `fg-160-migration-planner` | Migration/Plan | orange | orange |
 | `fg-200-planner` | Migration/Plan | blue | blue |
 | `fg-205-planning-critic` | Migration/Plan | *(none)* | crimson |
@@ -75,14 +77,17 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | `fg-411-security-reviewer` | Review | red | crimson |
 | `fg-412-architecture-reviewer` | Review | cyan | navy |
 | `fg-413-frontend-reviewer` | Review | teal | teal |
+| `fg-414-license-reviewer` | Review | *(new)* | lime |
 | `fg-416-performance-reviewer` | Review | yellow | amber |
 | `fg-417-dependency-reviewer` | Review | cyan | purple |
 | `fg-418-docs-consistency-reviewer` | Review | white | white |
 | `fg-419-infra-deploy-reviewer` | Review | green | olive |
 | `fg-500-test-gate` | Verify/Test | yellow | yellow |
 | `fg-505-build-verifier` | Verify/Test | yellow | brown |
+| `fg-506-migration-verifier` | Verify/Test | *(new)* | coral |
 | `fg-510-mutation-analyzer` | Verify/Test | cyan | cyan |
 | `fg-515-property-test-generator` | Verify/Test | cyan | pink |
+| `fg-555-resilience-tester` | Verify/Test | *(new)* | navy |
 | `fg-590-pre-ship-verifier` | Ship | red | red |
 | `fg-600-pr-builder` | Ship | blue | blue |
 | `fg-610-infra-deploy-verifier` | Ship | green | green |

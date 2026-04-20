@@ -2049,6 +2049,7 @@ CREATE (:SharedContract {name: 'state-schema', file_path: 'shared/state-schema.m
 CREATE (:SharedContract {name: 'state-transitions', file_path: 'shared/state-transitions.md'});
 CREATE (:SharedContract {name: 'tdd-enforcement', file_path: 'shared/tdd-enforcement.md'});
 CREATE (:SharedContract {name: 'testing-anti-patterns', file_path: 'shared/testing-anti-patterns.md'});
+CREATE (:SharedContract {name: 'trigger-grammar', file_path: 'shared/trigger-grammar.md'});
 CREATE (:SharedContract {name: 'untrusted-envelope', file_path: 'shared/untrusted-envelope.md'});
 CREATE (:SharedContract {name: 'verification-evidence', file_path: 'shared/verification-evidence.md'});
 CREATE (:SharedContract {name: 'version-resolution', file_path: 'shared/version-resolution.md'});

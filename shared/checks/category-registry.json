@@ -763,47 +763,190 @@
     "I18N-HARDCODED": {
       "description": "Hard-coded user-facing string not using i18n framework",
       "agents": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
       ],
       "wildcard": false,
       "priority": 5,
       "affinity": [
-        "fg-410-code-reviewer",
+        "fg-155-i18n-validator",
         "fg-413-frontend-reviewer"
       ]
     },
     "I18N-MISSING-KEY": {
       "description": "Translation key present in source locale but missing in target locale",
       "agents": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
       ],
       "wildcard": false,
       "priority": 5,
       "affinity": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
       ]
     },
     "I18N-RTL": {
-      "description": "Hardcoded left/right in CSS instead of logical start/end properties",
+      "description": "LTR-unsafe CSS (missing logical properties)",
       "agents": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
       ],
       "wildcard": false,
       "priority": 5,
       "affinity": [
-        "fg-410-code-reviewer",
+        "fg-155-i18n-validator",
         "fg-413-frontend-reviewer"
+      ]
+    },
+    "I18N-LOCALE": {
+      "description": "Locale-unaware date/number formatting",
+      "agents": [
+        "fg-155-i18n-validator"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-155-i18n-validator"
       ]
     },
     "I18N-FORMAT": {
       "description": "Hardcoded date/number format instead of locale-aware Intl API",
       "agents": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
       ],
       "wildcard": false,
       "priority": 5,
       "affinity": [
-        "fg-410-code-reviewer"
+        "fg-155-i18n-validator"
+      ]
+    },
+    "MIGRATION-ROLLBACK-MISSING": {
+      "description": "Forward migration lacks rollback pair",
+      "agents": [
+        "fg-506-migration-verifier"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-506-migration-verifier"
+      ]
+    },
+    "MIGRATION-NOT-IDEMPOTENT": {
+      "description": "Migration is not idempotent (missing IF NOT EXISTS / ON CONFLICT)",
+      "agents": [
+        "fg-506-migration-verifier"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-506-migration-verifier"
+      ]
+    },
+    "MIGRATION-DATA-LOSS": {
+      "description": "Migration risks data loss (DROP/TRUNCATE without snapshot)",
+      "agents": [
+        "fg-506-migration-verifier"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-506-migration-verifier"
+      ]
+    },
+    "RESILIENCE-CIRCUIT-MISSING": {
+      "description": "Outbound call lacks circuit-breaker wrapper",
+      "agents": [
+        "fg-555-resilience-tester"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-555-resilience-tester"
+      ]
+    },
+    "RESILIENCE-TIMEOUT-UNBOUNDED": {
+      "description": "Outbound call has no timeout configured",
+      "agents": [
+        "fg-555-resilience-tester"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-555-resilience-tester"
+      ]
+    },
+    "RESILIENCE-RETRY-UNBOUNDED": {
+      "description": "Retry loop without bound or backoff",
+      "agents": [
+        "fg-555-resilience-tester"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-555-resilience-tester"
+      ]
+    },
+    "LICENSE-POLICY-VIOLATION": {
+      "description": "Dependency license violates configured policy",
+      "agents": [
+        "fg-414-license-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": [
+        "fg-414-license-reviewer"
+      ]
+    },
+    "LICENSE-UNKNOWN": {
+      "description": "Dependency SPDX identifier unknown or extractor missing",
+      "agents": [
+        "fg-414-license-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-414-license-reviewer"
+      ]
+    },
+    "LICENSE-CHANGE": {
+      "description": "Dependency license changed between PR base and HEAD",
+      "agents": [
+        "fg-414-license-reviewer"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": [
+        "fg-414-license-reviewer"
+      ]
+    },
+    "OBS-MISSING": {
+      "description": "Observability wiring absent (no OTel / /metrics / structured logger)",
+      "agents": [
+        "fg-143-observability-bootstrap"
+      ],
+      "wildcard": false,
+      "priority": 4,
+      "affinity": [
+        "fg-143-observability-bootstrap"
+      ]
+    },
+    "OBS-TRACE-INCOMPLETE": {
+      "description": "OTel deps present but TracerProvider/MeterProvider wiring absent",
+      "agents": [
+        "fg-143-observability-bootstrap"
+      ],
+      "wildcard": false,
+      "priority": 6,
+      "affinity": [
+        "fg-143-observability-bootstrap"
+      ]
+    },
+    "OBS-BOOTSTRAP-APPLIED": {
+      "description": "Observability stub generated (INFO)",
+      "agents": [
+        "fg-143-observability-bootstrap"
+      ],
+      "wildcard": false,
+      "priority": 6,
+      "affinity": [
+        "fg-143-observability-bootstrap"
       ]
     },
     "PERF-REGRESSION": {

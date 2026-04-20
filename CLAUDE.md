@@ -24,7 +24,7 @@ Already familiar? Skip to §Architecture.
 
 `forge` is a Claude Code plugin (v3.5.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
-**Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 43 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
+**Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 48 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
 **A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (merged to master). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
 
@@ -42,7 +42,7 @@ Layered, resolution top-down:
    - `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11) — tooling patterns
    - `documentation/` — doc conventions. `code-quality/` — ~70 tool files (linters, formatters, coverage, doc generators, security scanners, mutation testing)
    - **Composition order** (most specific wins): variant > framework-binding > framework > language > code-quality > generic-layer > testing. Algorithm in `shared/composition.md`.
-3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 43 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
+3. **Shared core** (`agents/`, `shared/`, `hooks/`, `skills/`) — 48 agents, check engine, recovery, scoring, discovery, knowledge graph, frontend design theory.
 4. **MCP interface** (`shared/mcp-server/`) — Python MCP server exposing `.forge/` data to any MCP-capable AI client. Read-only. Optional (requires Python 3.10+).
 
 **Resolution:** `forge-config.md` > `forge.local.md` > plugin defaults. Orchestrator loads agent `.md` as subagent system prompt — size = token cost.
@@ -138,21 +138,21 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 Quick decision:    /forge-help (interactive skill picker)
 ```
 
-## Agents (43 total, `agents/*.md`)
+## Agents (48 total, `agents/*.md`)
 
 **Pipeline** (`fg-{NNN}-{role}`):
 - Pre-pipeline: `fg-010-shaper`, `fg-015-scope-decomposer`, `fg-020-bug-investigator`, `fg-050-project-bootstrapper`
 - Sprint: `fg-090-sprint-orchestrator`
 - Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
-- Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper`, `fg-160-migration-planner`
+- Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-143-observability-bootstrap` (conditional on `observability_bootstrap.enabled`), `fg-150-test-bootstrapper`, `fg-155-i18n-validator` (conditional on `i18n_validator.enabled`, default true), `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-205-planning-critic`, `fg-210-validator`, `fg-250-contract-validator`
 - Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-301-implementer-critic` (Chain-of-Verification critic between GREEN and REFACTOR, fresh-context sub-subagent, fast tier), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
-- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`)
+- Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-506-migration-verifier` (migration mode only), `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`), `fg-555-resilience-tester` (conditional on `resilience_testing.enabled`)
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-620-deploy-verifier` (conditional on deployment strategy), `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (8, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only/performance-only), `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`. Quality gate scales reviewer count by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting note.
+**Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only; FE perf delegated to fg-416 in Phase 07), `fg-414-license-reviewer`, `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`. Quality gate scales reviewer count by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting note.
 
 ### Agent rules
 
