@@ -482,8 +482,8 @@ written by POSIX runs may confuse Python's `pathlib.PureWindowsPath`.
   (`docs/superpowers/reviews/` once filed)
 - **Azure azd polyglot hooks (April 2026):**
   <https://blog.jongallant.com/2026/04/azd-hooks-languages>
-- **Claude Code plugin hook contract:**
-  <https://docs.claude.com/en/docs/claude-code/plugins/hooks>
+- **Claude Code hook contract:**
+  <https://code.claude.com/docs/en/hooks>
 - **Python 3.10 availability on GitHub runners:**
   <https://github.com/actions/runner-images> (all three images ship ≥3.10 since
   2023)
