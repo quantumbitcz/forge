@@ -10,6 +10,14 @@ Control flow (which state comes next, when to retry, when to escalate) is fully 
 
 ---
 
+## Pipeline States
+
+The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response.
+
+- **REWINDING** *(pseudo-state, non-persistent, added in state-schema v1.9.0 / Phase 14)* — in effect only during the atomic rewind transaction. `state.story_state` is NOT written as `REWINDING`; this name appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket the rewind op.
+
+---
+
 ## Pipeline State Transitions (Normal Flow)
 
 Every row is a unique `(current_state, event, guard)` triple. The orchestrator looks up the matching row and executes the action.
@@ -85,6 +93,9 @@ These transitions can fire from any current_state. They take priority over norma
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
 | E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user. **Note:** The orchestrator's `cost-alerting.sh` system warns the user at configurable thresholds (default 50%/75%/90%) BEFORE E8 fires. E8 serves as an absolute safety net at the hard ceiling (default 2,000,000 tokens). The orchestrator calls `cost-alerting.sh check` before each agent dispatch; if exit 3 (CRITICAL) or 4 (EXCEEDED), it surfaces options to the user before E8's hard ESCALATED transition fires. |
 | E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-abort skill. Set abort_reason, release lock, preserve worktree. |
+| R1 | ANY | `recovery_op_rewind` | `/forge-recover rewind --to=<id>` dispatched by orchestrator | `REWINDING` | Entered transiently at the start of rewind. `StateTransitionEvent { from: <current>, to: "REWINDING" }` logged. `state.story_state` is NOT written. |
+| R2 | `REWINDING` | `rewind_commit_success` | CAS atomic restore succeeded (python3 -m hooks._py.time_travel exit 0) | `<checkpoint.story_state>` | Whichever story_state the target checkpoint captured. `state.story_state` set to the target's captured story_state; `StateTransitionEvent { from: "REWINDING", to: <target> }` logged. |
+| R3 | `REWINDING` | `rewind_abort` | CAS restore failed (exit 5 dirty / 6 unknown / 7 tx-collision) | `<prior story_state>` | Zero side effects; pipeline returns to state before rewind. `StateTransitionEvent { from: "REWINDING", to: <prior> }` logged. Abort code surfaced via `AskUserQuestion`. |
 
 ---
 
@@ -95,6 +106,20 @@ Dry-run mode executes only stages 0-3 with no side effects (no worktree, no lock
 | # | current_state | event | guard | next_state | action |
 |---|---------------|-------|-------|------------|--------|
 | D1 | `VALIDATING` | `validate_complete` | `dry_run == true` | `COMPLETE` | Output dry-run report: plan + validation verdict + risk assessment |
+
+---
+
+## § Rewind transitions
+
+Rewind is the only transition type that can originate from ANY pipeline state. It is also the only one with a pseudo-state (`REWINDING`) that never persists to `state.story_state`. The sequence is:
+
+1. Orchestrator receives `recovery_op: rewind` with `--to=<id>` (see `agents/fg-100-orchestrator.md` §Recovery op dispatch).
+2. `StateTransitionEvent { from: <current>, to: "REWINDING" }` appended to `events.jsonl` (row R1 above).
+3. `python3 -m hooks._py.time_travel rewind` runs (atomic 5-step protocol, see `shared/recovery/time-travel.md`).
+4a. On success (exit 0): `StateTransitionEvent { from: "REWINDING", to: <checkpoint.story_state> }` logged; `state.story_state` is set to the target's story_state (row R2).
+4b. On abort (exit 5/6/7): `StateTransitionEvent { from: "REWINDING", to: <prior story_state> }` logged; `state.story_state` reverts (row R3). Abort code surfaced via `AskUserQuestion`.
+
+Subsequent forward progress is normal. The next `/forge-recover resume` continues from the rewound head.
 
 ---
 

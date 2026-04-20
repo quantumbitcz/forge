@@ -1364,7 +1364,7 @@ All transitions follow `shared/state-transitions.md`. Decision logging to `.forg
 
 ## § Recovery op dispatch
 
-When `/forge-recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback`. See `shared/state-schema.md` for the schema.
+When `/forge-recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback|rewind|list-checkpoints`. See `shared/state-schema.md` for the schema.
 
 **Routing:**
 
@@ -1375,8 +1375,12 @@ When `/forge-recover <subcommand>` invokes the orchestrator, the input payload c
 | `reset` | Same logic as the pre-3.0 reset skill: confirm via `AskUserQuestion`, clear pipeline state, preserve cross-run caches. |
 | `resume` | Same logic as the pre-3.0 resume skill: verify `state.status ∈ {ABORTED, ESCALATED, FAILED}`, reconstruct phase from checkpoint, resume dispatch. |
 | `rollback` | Same logic as the pre-3.0 rollback skill: revert worktree commits (or `--target` branch). |
+| `rewind` | Resolve `--to=<id>` via `hooks/_py/time_travel` (human-id → sha lookup in `index.json`), then invoke `python3 -m hooks._py.time_travel rewind --run-dir <run_dir> --worktree <worktree> --to <sha> --run-id <run_id> [--force]`. On success: set `state.status = REWINDING` briefly, then restore to the checkpoint's `story_state` (pseudo-state; never persists). Emit `StateTransitionEvent` + consume `RewoundEvent` already appended by the Python tool. On abort codes 5/6/7: surface to user via `AskUserQuestion` with remediation options. |
+| `list-checkpoints` | Read-only: invoke `python3 -m hooks._py.time_travel list-checkpoints --run-dir <run_dir> --worktree <worktree> [--json]`. Stream stdout to user. No TaskCreate; no state write. |
 
-This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; only the entry point changed.
+This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; only the entry point changed. Rewind and list-checkpoints are new in Phase 14 and delegate the storage protocol to `hooks/_py/time_travel/` (see `shared/recovery/time-travel.md`).
+
+**Crash recovery:** On every orchestrator start for an active run, invoke `python3 -m hooks._py.time_travel repair --run-dir <run_dir> --worktree <worktree> --run-id <run_id>`. This is a no-op when `.forge/runs/<run_id>/.rewind-tx/` does not exist and a safe replay-or-rollback when it does (see `shared/recovery/time-travel.md` §Crash Recovery).
 
 ## User-interaction examples
 

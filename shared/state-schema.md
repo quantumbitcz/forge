@@ -1002,7 +1002,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.5.0 | 1.6.0 | (v2.7.0) Added circuit breaker tracking, planning critic counter, schema migration history | `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history` | `{}`, `0`, `[]` |
 | 1.6.0 | 1.7.0 | (v2.0) Added confidence scoring, adaptive trust, context condensation, knowledge references | `confidence`, `convergence.condensation`, `tokens.condensation_savings`, `tokens.condensation_count`, `tokens.condensation_cost`, `tokens.effective_token_ratio` | `null` (computed at PLAN), see condensation defaults above, `0`, `0`, `0`, `1.0` |
 | 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
-| 1.8.0 | 1.9.0 | (Forge 3.1.0 / Phase 11) Added self-consistency voting counters | `consistency_cache_hits`, `consistency_votes` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }` |
+| 1.8.0 | 1.9.0 | (Forge 3.1.0) Phase 11 self-consistency voting counters + Phase 14 time-travel CAS checkpoints. Breaking (Phase 14): CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
 
 ### Version Detection and Upgrade Protocol
 
@@ -1070,6 +1070,8 @@ All retry loops also increment `total_retries`. When `total_retries >= total_ret
 ---
 
 ## checkpoint-{storyId}.json
+
+> **DEPRECATED in v1.9.0 (Phase 14).** This linear per-story file format is replaced by the content-addressable DAG documented in §Checkpoints above. New runs write to `.forge/runs/<run_id>/checkpoints/` via `hooks/_py/time_travel`. The schema below is retained for reference only — orchestrators on v1.9.0+ never read or write these files, and `/forge-recover reset` is required to migrate pre-1.9.0 state.
 
 Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) after each task completes. Enables resuming implementation at the exact task where a conversation was interrupted.
 
@@ -1215,53 +1217,86 @@ When `fg-100-orchestrator` is dispatched as a subagent (by a `/forge-*` skill or
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. |
+| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`, `rewind`, `list-checkpoints`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. `rewind` and `list-checkpoints` added in v1.9.0 (Phase 14). |
 
 ---
 
-## Checkpoint Persistence
+## § Checkpoints
 
-Checkpoints enable mid-pipeline resume after interruption.
+**Breaking change in v1.9.0 (Phase 14):** the pre-Phase-14 `.forge/checkpoint-{storyId}.json` linear file layout is **removed**. Checkpoints now live under `.forge/runs/<run_id>/checkpoints/` in a content-addressable DAG:
 
-### Lifecycle
+```
+.forge/runs/<run_id>/checkpoints/
+├── by-hash/<aa>/<sha256-tail>/
+│   ├── manifest.json            # {state_hash, worktree_sha, events_hash, memory_hash, parent_ids[], compression}
+│   ├── state.json               # canonical JSON snapshot
+│   ├── events.slice.jsonl       # events since parent
+│   └── memory.tar.<gz|zst>      # stage_notes + PREEMPT + forge-log excerpt
+├── index.json                   # {"<human-id>": "<sha256>", ...}
+├── tree.json                    # {"<sha>": {parents, children, created_at, stage, task, human_id}}
+└── HEAD                         # active checkpoint sha
+```
 
-1. **Create:** The orchestrator creates a checkpoint after each task completes:
-   - Location: `.forge/checkpoints/checkpoint-{storyId}-{taskId}.json`
-   - Content: Current state.json snapshot + task-specific context (plan fragment, files changed)
-   
-2. **Read:** On resume (`/forge-recover resume`), the orchestrator:
-   - Reads `.forge/state.json` to determine last stage
-   - Loads the most recent checkpoint for context
-   - Resumes from the checkpoint's task, not the beginning of the stage
+See `shared/recovery/time-travel.md` for the full protocol, atomic restore semantics, and GC policy.
 
-3. **Clean up:** Checkpoints are deleted when:
-   - Pipeline reaches COMPLETE state (all checkpoints for this story_id)
-   - Pipeline reaches ABORTED state (all checkpoints for this story_id)
-   - `/forge-recover reset` clears all `.forge/checkpoints/`
-   - Note: both COMPLETE and ABORTED are terminal states that trigger cleanup
-
-### Schema
+### state.json additions
 
 ```json
 {
-  "story_id": "FG-042",
-  "task_id": "FG-042-3",
-  "timestamp": "2026-04-15T10:30:00Z",
-  "stage": "IMPLEMENTING",
-  "state_snapshot": {},
-  "context": {
-    "plan_task_index": 2,
-    "files_changed": ["src/auth/middleware.ts"],
-    "test_status": "GREEN"
-  }
+  "checkpoints": [
+    {
+      "id": "IMPLEMENT.T1.004",
+      "hash": "a3f9c1...",
+      "stage": "IMPLEMENTING",
+      "task": "T1",
+      "created_at": "2026-04-19T10:14:22Z",
+      "parents": ["a1b2f0..."]
+    }
+  ],
+  "head_checkpoint": "a3f9c1..."
 }
 ```
+
+- `checkpoints` is append-only within a run. Pre-rewind entries are retained for audit.
+- `head_checkpoint` mirrors `.forge/runs/<run_id>/checkpoints/HEAD`.
+
+### Refusal behavior
+
+Orchestrator at startup reads `state.json.version`. If < `1.9.0`, refuses to proceed with error:
+`state.json v<detected> detected; v1.9.0 required (Phase 14). Run /forge-recover reset to start fresh.`
+
+No automatic migration — the checkpoint format is incompatible. Legacy `.forge/checkpoint-*.json` files are deleted by `python3 -m hooks._py.time_travel` at first Phase-14 write unless `recovery.time_travel.preserve_legacy: true` (moves to `.forge/runs/<run_id>/checkpoints/legacy-trash/`).
+
+### Lifecycle
+
+1. **Create:** `hooks/_py/time_travel` writes a checkpoint after each task completion (or at any point the orchestrator requests a save). Content-addressable: identical bundles across rewind-and-retry iterations dedup to a single on-disk directory; only `tree.json` grows an edge.
+
+2. **Read:** On resume (`/forge-recover resume`), the orchestrator reads `HEAD` to find the active checkpoint and loads the four-tuple (state, worktree sha, events slice, memory) from `by-hash/`.
+
+3. **Clean up:** Handled by `python3 -m hooks._py.time_travel gc`:
+   - TTL-protected: any non-lineage node older than `retention_days`
+   - Cap-enforced: oldest non-HEAD nodes evicted when `max_per_run` exceeded
+   - Never deletes current HEAD itself, and skips entirely if the run is `RUNNING`/`PAUSED`/`ESCALATED`
+   - `/forge-recover reset` clears the entire `.forge/runs/<run_id>/checkpoints/` tree for this run
 
 ### Survival Rules
 
 - Checkpoints survive `/forge-recover resume` (that's their purpose)
 - Checkpoints are cleared by `/forge-recover reset` and pipeline completion
 - Checkpoints do NOT survive `rm -rf .forge/`
+
+### recovery.time_travel (new in 1.9.0)
+
+```yaml
+recovery:
+  time_travel:
+    enabled: true                # master switch
+    retention_days: 7            # GC TTL post-SHIP
+    max_checkpoints_per_run: 100 # hard cap; oldest non-critical GC'd when exceeded
+    require_clean_worktree: true # abort rewind if worktree dirty (safety)
+    compression: zstd            # zstd | gzip | none (zstd falls back to gzip if stdlib-only)
+    preserve_legacy: false       # archive pre-1.9.0 checkpoints to legacy-trash/ instead of deleting
+```
 
 ---
 
@@ -1291,10 +1326,19 @@ Each task object under `tasks[*]` carries:
 
 ## Changelog
 
-### 1.9.0 (Forge 3.1.0 / Phase 11)
+### 1.9.0 (Forge 3.1.0 — Phase 11 Self-Consistency + Phase 14 Time-Travel Checkpoints)
+
+**Phase 11 — Self-consistency voting counters:**
 - Add run-level `consistency_cache_hits` (integer, required). Incremented by `hooks/_py/consistency.py` on every cache hit.
 - Add run-level `consistency_votes` (object, required). Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value: `{ "invocations": int, "cache_hits": int, "low_consensus": int }`. Incremented by the three callers (`fg-010-shaper`, `fg-210-validator`, `fg-710-post-run`). `validator_verdict.invocations` is NOT incremented on hard rule-pass verdicts (see `shared/consistency/voting.md` §6).
 - New fields initialized to `0` / the per-decision skeleton object at PREFLIGHT. Pre-1.9.0 state.json files receive defaults via the standard migration ladder.
+
+**Phase 14 — Time-travel checkpoints (breaking):**
+- **Breaking:** replace linear `.forge/checkpoint-{storyId}.json` files with a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrator refuses to proceed when `state.json.version` < `1.9.0`; no automatic migration (run `/forge-recover reset`).
+- Add `state.json.checkpoints` (array, append-only, pre-rewind entries retained for audit) and `state.json.head_checkpoint` (mirrors `.forge/runs/<run_id>/checkpoints/HEAD`).
+- Add `recovery.time_travel.*` config block (`enabled`, `retention_days`, `max_checkpoints_per_run`, `require_clean_worktree`, `compression`, `preserve_legacy`).
+- Extend `recovery_op` payload values with `rewind` and `list-checkpoints`, backed by `hooks/_py/time_travel/` (CLI: `python3 -m hooks._py.time_travel`).
+- Pseudo-state `REWINDING` appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket a rewind op — never written to `state.story_state`.
 
 ### 1.8.0 (Forge 3.1.0)
 - Add `tasks[*].implementer_reflection_cycles` (integer, required) for per-task Chain-of-Verification (CoVe) counter. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, `quality_cycles`, or `implementer_fix_cycles`.

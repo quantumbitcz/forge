@@ -3,6 +3,31 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Phase 14: Time-Travel Checkpoints
+
+### Breaking changes
+
+- **State schema 1.8.0 → 1.9.0.** The linear `.forge/checkpoint-{storyId}.json` checkpoint format is replaced by a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrators on v1.9.0+ refuse to proceed on pre-1.9.0 state; run `/forge-recover reset` to migrate (no automatic upgrade — the on-disk format is not compatible).
+
+### Added
+
+- `hooks/_py/time_travel/` Python package — CAS checkpoint store (`cas.py`), atomic rewind protocol with per-run `.rewind-tx/` (`restore.py`), GC policy with HEAD-path protection (`gc.py`), and `RewoundEvent` schema (`events.py`).
+- `hooks/_py/time_travel/__main__.py` CLI — invoked as `python3 -m hooks._py.time_travel <op>`; supports `list-checkpoints`, `rewind`, `repair`, `gc`. Exit codes 5/6/7 distinguish dirty-worktree, unknown-id, and tx-collision aborts.
+- `/forge-recover rewind --to=<id> [--force]` — time-travel to any prior checkpoint with an atomic four-tuple restore (state, worktree, events, memory).
+- `/forge-recover list-checkpoints [--json]` — render the checkpoint DAG with HEAD marked.
+- Orchestrator `recovery_op: rewind|list-checkpoints` routing (`agents/fg-100-orchestrator.md` §Recovery op dispatch).
+- Orchestrator-start crash repair contract: every active run invokes `python3 -m hooks._py.time_travel repair` to roll forward or discard a half-finished rewind tx.
+- Pseudo-state `REWINDING` in `shared/state-transitions.md` — appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket a rewind op; never persists to `state.story_state`.
+- `recovery.time_travel.*` config block (`enabled`, `retention_days`, `max_checkpoints_per_run`, `require_clean_worktree`, `compression`, `preserve_legacy`).
+- `state.json.checkpoints` (append-only audit array) and `state.json.head_checkpoint` (mirrors on-disk `HEAD`).
+
+### Changed
+
+- `shared/state-schema.md` — `## § Checkpoints` section replaced with CAS DAG layout; deprecated `## checkpoint-{storyId}.json` section retained for reference only.
+- `shared/state-transitions.md` — added `REWINDING` pseudo-state rows and a `§ Rewind transitions` section.
+- `skills/forge-recover/SKILL.md` — subcommand table, flags, exit-codes block, examples, and dispatch prose extended for rewind + list-checkpoints.
+- `CLAUDE.md` — state-schema version bumped from v1.6.0 → v1.9.0 in the key-entry-points table and state overview.
+
 ## [3.0.0] — 2026-04-16
 
 ### Breaking changes
