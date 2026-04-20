@@ -12,8 +12,8 @@
         },
         {
           "id": "exp-02",
-          "text": "Explain the PREEMPT decay mechanism: how items move from HIGH to ARCHIVED and what triggers demotion.",
-          "required_facts": ["10 unused", "HIGH", "MEDIUM", "LOW", "ARCHIVED", "false positive"]
+          "text": "Explain the PREEMPT decay mechanism: the Ebbinghaus half-life per item type, the tier thresholds, and what triggers demotion.",
+          "required_facts": ["half-life", "HIGH", "MEDIUM", "LOW", "ARCHIVED", "false positive", "14", "30", "90"]
         },
         {
           "id": "exp-03",

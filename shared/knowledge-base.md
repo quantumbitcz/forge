@@ -53,7 +53,7 @@ CANDIDATE  ──(validation)──>  VALIDATED  ──(2+ runs, no false positi
 - VALIDATED to ACTIVE: applied in 2+ runs without false positives.
 - ACTIVE to HIGH confidence: 3+ applications and stable effectiveness score.
 - ACTIVE to ARCHIVED: `effectiveness_score < 0.5` or `false_positive_count > 3 * application_count`.
-- Any to ARCHIVED: 10 unused runs (standard PREEMPT decay; learned rules follow standard decay rates).
+- Any to ARCHIVED: `confidence < 0.3` per `shared/learnings/decay.md` (Ebbinghaus half-life-driven demotion; learned rules use the same decay contract).
 
 ### Effectiveness scoring
 
