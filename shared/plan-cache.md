@@ -9,7 +9,9 @@ Caches PLAN stage outputs in `.forge/plan-cache/` for reuse when similar require
     +-- plan-2026-04-10-add-comments.json
     +-- plan-2026-04-08-auth-middleware.json
 
-## Schema (v2.0)
+## Cache Entry Schema
+
+**Schema version 2.0 (Phase 12) — breaking change.**
 
 Breaking change from v1.0 (Phase 12). Previous cache entries are invalidated on upgrade — `/forge-init` clears `.forge/plan-cache/` on schema mismatch; user is notified.
 
