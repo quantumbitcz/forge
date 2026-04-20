@@ -47,7 +47,7 @@ fg-100 (orchestrator, PREFLIGHT of next run)
 | `candidate` | Observed but below promotion threshold |
 | `ready_for_promotion` | Threshold met, awaiting PREFLIGHT promotion |
 | `promoted` | Active in learned-rules-override.json |
-| `demoted` | Removed after 5 inactive runs (decay) |
+| `demoted` | Confidence fell below the MEDIUM threshold per `shared/learnings/decay.md` |
 
 ## Promotion Rules
 
@@ -59,10 +59,19 @@ fg-100 (orchestrator, PREFLIGHT of next run)
 
 ## Decay Rules
 
-1. After each pipeline run, increment `inactive_runs` counter for promoted rules that produced 0 matches
-2. If `inactive_runs >= 5`: demote rule (remove from `learned-rules-override.json`, update status in candidates)
-3. Log demotion in `forge-log.md`: "Demoted LEARNED-NNN: 5 consecutive inactive runs"
-4. Demoted rules can be re-promoted if they re-appear in future reviews
+A rule is demoted when its PREEMPT representation falls below the tier
+threshold specified in `shared/learnings/decay.md`:
+
+- `c < 0.30` → ARCHIVED (demoted out of active use).
+- Below MEDIUM cutoff after N successful applications → re-evaluated per
+  `decay.md` §4 reinforcement/penalty rules.
+
+The legacy "5 inactive runs → demote" rule is removed. Demotion is now
+time-aware: a rule that hasn't fired in N days decays by `2^(-N / half_life)`.
+When a promoted rule hits ARCHIVED, remove from `learned-rules-override.json`,
+update status in candidates, and log in `forge-log.md`: "Demoted LEARNED-NNN:
+confidence below 0.30 per shared/learnings/decay.md". Demoted rules can be
+re-promoted if they re-appear in future reviews.
 
 ## Promoted Rule Format
 
