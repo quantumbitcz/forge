@@ -228,7 +228,7 @@ When `model_routing.enabled`:
 When `memory_discovery.enabled`:
 1. Read EXPLORE/REVIEW stage notes for structural patterns
 2. Compare with previous runs' patterns
-3. Patterns in 2+ consecutive runs with 3+ matching files → generate candidate PREEMPT: `source: auto-discovered`, `confidence: MEDIUM`, `decay_multiplier: 2`. Validate evidence.
+3. Patterns in 2+ consecutive runs with 3+ matching files → generate candidate PREEMPT: `source: auto-discovered`, `type: auto-discovered`, `base_confidence: 0.75`, `last_success_at: <now>`. Validate evidence. (Per-type half-life = 14 days; see `shared/learnings/decay.md`.)
 4. Auto-discovered items applied 3+ consecutive runs → promote to HIGH
 5. Max 5 discoveries per run
 6. Log: "Memory discovery: {N} new, {M} promoted, {K} decayed"
@@ -401,46 +401,67 @@ Detect: read all reports, extract recurring themes, compare rework reasons, trac
 
 ## 7. PREEMPT Lifecycle
 
-### Hit Count Updates
+Contract: `shared/learnings/decay.md` (Ebbinghaus exponential decay, per-type half-life). All reinforcement, penalty, and tier mapping goes through `hooks/_py/memory_decay.py`.
 
-Read `state.json.preempt_items_status`:
-- `applied: true, false_positive: false` → increment `hit_count`
-- `false_positive: true` → 1 FP = 3 unused runs toward decay
-- Log: "PREEMPT effectiveness: {applied}/{total} used, {FPs} false positives"
+### Reinforcement (per run)
+
+Read `state.json.preempt_items_status` / stage notes for every PREEMPT item referenced this run:
+
+```
+For each PREEMPT item referenced in this run's stage notes:
+  if PREEMPT_APPLIED(item.id):
+    item = memory_decay.apply_success(item, now)
+  elif PREEMPT_SKIPPED(item.id, reason="false_positive"):
+    item = memory_decay.apply_false_positive(item, now)
+  # Lazy records: untouched items simply skip this branch.
+
+After reinforcement, for every PREEMPT item (touched or not):
+  c = memory_decay.effective_confidence(item, now)
+  item.tier = memory_decay.tier(c)
+  if item.tier == "ARCHIVED":
+    move to forge-log.md archive block
+  else:
+    persist back to forge-log.md / .forge/memory/
+
+Reference: shared/learnings/decay.md
+```
+
+`apply_success` adds `+0.05` to `base_confidence` (capped at 0.95) and resets `last_success_at = now`. `apply_false_positive` multiplies `base_confidence × 0.80` and stamps both `last_success_at` and `last_false_positive_at = now`. Tier mapping: `c ≥ 0.75 → HIGH`, `c ≥ 0.50 → MEDIUM`, `c ≥ 0.30 → LOW`, `c < 0.30 → ARCHIVED`.
 
 Also read `linear_sync` (report if `in_sync: false`) and `score_history` (report trend).
 
-### Confidence Decay
+### Summary Line
 
-Per run:
-- Matched AND applied → increment `hit_count`, update `last_hit`, reset `runs_since_last_hit` to 0
-- NOT matched (domain didn't match) → do NOT increment `runs_since_last_hit`
-- Not hit in 10 consecutive domain-active runs → HIGH→MEDIUM→LOW→ARCHIVED
+Emit one summary line per run:
 
-### Decay Formula
+```
+decay: {N} demoted, {M} archived, {K} reinforced, {J} false-positives (last 7d: {L})
+```
 
-1. **Domain match:** domains match + applied → reset. Match + not applied → increment by 1. No match → skip.
-2. **FP acceleration:** each FP adds 3 to `runs_since_last_hit`
-3. **Demotion:** `runs_since_last_hit >= 10` → demote, reset to 0. ARCHIVED = not loaded at PREFLIGHT.
-4. **Promotion:** `hit_count >= 2` + LOW → MEDIUM. `hit_count >= 4` + 0 FPs + MEDIUM → HIGH. HIGH for 5+ consecutive → flag for permanent rule.
+Where:
+- `N` = items whose tier dropped this run (e.g., HIGH→MEDIUM).
+- `M` = items whose tier became ARCHIVED this run.
+- `K` = items reinforced via `apply_success`.
+- `J` = items penalised via `apply_false_positive` this run.
+- `L` = `memory_decay.count_recent_false_positives(all_items, now, window_days=7)`.
 
 ### Archival
 ARCHIVED → move to `## Archived PREEMPT Items` section. Keep full text. Not loaded at PREFLIGHT.
 
 ### Promotion
-Applied 3+ times at HIGH → log: "Consider permanent rule in conventions/rules-override.json."
+Reinforced 3+ times at HIGH (`base_confidence` plateaued at 0.95) → log: "Consider permanent rule in conventions/rules-override.json."
 
 ### Required PREEMPT Fields
 
     ### {MODULE}-PREEMPT-{NNN}: {title}
     - **Domain:** {area}
     - **Pattern:** {what to do/avoid}
-    - **Confidence:** HIGH | MEDIUM | LOW
-    - **Hit count:** {N}
-    - **Last hit:** {ISO date}
-    - **Runs since last hit:** {N}
+    - **Type:** auto-discovered | cross-project | canonical
+    - **base_confidence:** {0.0 - 0.95}
+    - **last_success_at:** {ISO 8601 UTC}
+    - **last_false_positive_at:** {ISO 8601 UTC | null}
 
-**Initial confidence:** Single failed run → MEDIUM. 2+ run pattern → HIGH. User feedback → HIGH. Cross-project promotion → MEDIUM.
+**Initial base_confidence:** Single failed run → 0.60 (MEDIUM). 2+ run pattern → 0.80 (HIGH). User feedback → 0.85 (HIGH). Cross-project promotion → 0.60 (MEDIUM). Auto-discovered → 0.75 (HIGH floor before first decay tick).
 
 ---
 
