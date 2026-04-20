@@ -1,0 +1,31 @@
+id: reflection-legit-trivial
+phase: 04
+kind: false-positive-guard
+agent_under_test: fg-301-implementer-critic
+description: |
+  Test asserts a constant. Task description is a config-value lookup that
+  legitimately returns a constant. Critic must return PASS — hardcoded return
+  rule 1 does NOT apply because the task does not imply real computation.
+
+task:
+  id: EVAL-05
+  description: "Implement ApiVersion.current() — return the string '1.0.0' as the stable API version."
+  acceptance_criteria:
+    - "current() returns '1.0.0'."
+
+test_code: |
+  @Test
+  fun `current returns 1_0_0`() {
+    assertThat(ApiVersion.current()).isEqualTo("1.0.0")
+  }
+
+implementation_diff: |
+  +++ b/src/api/ApiVersion.kt
+  @@
+  +object ApiVersion {
+  +  fun current(): String = "1.0.0"
+  +}
+
+expected:
+  verdict: PASS
+  finding_category: null

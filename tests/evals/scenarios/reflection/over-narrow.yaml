@@ -1,0 +1,36 @@
+id: reflection-over-narrow
+phase: 04
+kind: planted-defect
+agent_under_test: fg-301-implementer-critic
+description: |
+  Test asserts a single happy-path input maps to "ok". Implementation only
+  returns "ok" when input equals the exact test string, else throws. Critic
+  must flag as REFLECT-OVER-NARROW because AC allows any non-empty input.
+
+task:
+  id: EVAL-02
+  description: "Implement Greeter.greet(name) — return a greeting for any non-empty name."
+  acceptance_criteria:
+    - "Given any non-empty name, when greet is called, then a greeting containing the name is returned."
+    - "Given an empty name, when greet is called, then IllegalArgumentException is raised."
+
+test_code: |
+  @Test
+  fun `greets alice`() {
+    assertThat(sut.greet("alice")).isEqualTo("hello alice")
+  }
+
+implementation_diff: |
+  +++ b/src/domain/Greeter.kt
+  @@
+  +class Greeter {
+  +  fun greet(name: String): String {
+  +    if (name == "alice") return "hello alice"
+  +    throw IllegalStateException("unsupported")
+  +  }
+  +}
+
+expected:
+  verdict: REVISE
+  finding_category: REFLECT-OVER-NARROW
+  min_confidence: MEDIUM
