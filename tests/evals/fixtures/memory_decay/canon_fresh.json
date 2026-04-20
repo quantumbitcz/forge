@@ -1,0 +1,7 @@
+{
+  "id": "canon_fresh",
+  "type": "canonical",
+  "base_confidence": 0.75,
+  "last_success_at": "2026-04-19T12:00:00Z",
+  "last_false_positive_at": null
+}
