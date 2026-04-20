@@ -1,6 +1,6 @@
 ---
 name: forge-graph
-description: "[writes for init/rebuild, read-only for status/query/debug] Manage the Neo4j knowledge graph. Subcommands: init, status, query <cypher>, rebuild, debug. Requires Docker. No default — an explicit subcommand is required."
+description: "[writes] Manage the Neo4j knowledge graph. Subcommands: init, rebuild (writes); status, query <cypher>, debug (read-only). Requires Docker. No default — an explicit subcommand is required."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent']
 disable-model-invocation: false
 ---
