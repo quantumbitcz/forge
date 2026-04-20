@@ -77,13 +77,13 @@ Deferred as **Phase 01.1 — claude CLI in CI** (see `docs/superpowers/INDEX.md`
 **Concrete steps to flip the gates back on:**
 1. Add a setup step in `.github/workflows/evals.yml` that installs Claude Code on the runner. Candidates: `anthropics/claude-code-action` (if it supports non-interactive runs), a custom `apt`/`brew` step, or a pre-baked runner image.
 2. Provision `secrets.CLAUDE_CODE_OAUTH_TOKEN` (or equivalent) in the repo so the CLI can authenticate non-interactively. Pass it as env to `full-suite` and `pr-suite`.
-3. Confirm cost/latency envelope: 10 scenarios × ~100K tokens × every PR is a real Anthropic bill; per the plan's wall-clock contract, 45 min per PR.
+3. Confirm cost/latency envelope: 11 scenarios × ~100K tokens × every PR is a real Anthropic bill; per the plan's wall-clock contract, 45 min per PR.
 4. Flip `if: ${{ false }}` → the live condition preserved in the comment above each job (`github.event_name == 'push' && github.ref == 'refs/heads/master'` for full-suite; `github.event_name == 'pull_request'` for pr-suite).
 5. On first `master` push post-flip, the baseline artifact gets created; subsequent PRs gain a real regression gate.
 
 Until Phase 01.1 lands, `collect` + `dry-run` are sufficient on PRs — they validate scenario YAML and the runner's scoring/report plumbing without requiring the LLM backend. **What's NOT being validated:** baseline artifact upload/download, gate math against a real diff, leaderboard commit-back-to-master.
 
-**Anti-pattern rejected:** a mock mode that synthesizes fake results on all 10 scenarios to exercise the gate math would pass CI on noise, not on pipeline quality. That's cargo-culted rigor. Better to be honest about the gap than to ship a gate that regresses on synthetic data.
+**Anti-pattern rejected:** a mock mode that synthesizes fake results on all 11 scenarios to exercise the gate math would pass CI on noise, not on pipeline quality. That's cargo-culted rigor. Better to be honest about the gap than to ship a gate that regresses on synthetic data.
 
 ## Sanity check
 
