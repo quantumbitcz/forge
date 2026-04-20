@@ -1418,7 +1418,7 @@ Only show sections that have content. If no crosscutting modules were detected, 
 
 ## See Also
 
-- `/forge-config-validate` -- Validate configuration after init (catches misconfigurations before pipeline runs)
+- `/forge-verify --config` -- Validate configuration after init (catches misconfigurations before pipeline runs)
 - `/forge-run` -- Run the full pipeline after initialization is complete
 - `/forge-bootstrap` -- Scaffold a new project from scratch (dispatched by init for greenfield projects)
 - `/forge-review` -- Run a full codebase scan after initialization to establish a quality baseline

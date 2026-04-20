@@ -204,4 +204,4 @@ If entries have `error` field (non-null), append a section:
 - `/forge-fix` -- Common action for CI failure automations
 - `/forge-review` -- Common action for PR opened automations
 - `/forge-review` -- Common action for scheduled health check automations
-- `/forge-config-validate` -- Validate forge-config.md after modifying automations
+- `/forge-verify --config` -- Validate forge-config.md after modifying automations

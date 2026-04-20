@@ -1,6 +1,6 @@
 ---
 name: forge-verify
-description: "[read-only] Pre-pipeline checks. --build runs configured build+lint+test. --config validates forge.local.md and forge-config.md against PREFLIGHT constraints. --all runs both. Defaults to --build. Never modifies files."
+description: "[read-only] Pre-pipeline checks. --build runs configured build+lint+test. --config validates forge.local.md and forge-config.md against PREFLIGHT constraints. --all runs both. Defaults to --build. Never modifies files. Use when you want a fast sanity check before committing, opening a PR, or kicking off a full pipeline run."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep']
 disable-model-invocation: false
 ---
