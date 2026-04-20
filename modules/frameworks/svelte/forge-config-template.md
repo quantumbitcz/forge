@@ -254,6 +254,28 @@ memory_discovery:
   min_evidence_files: 3
   auto_promote_after_runs: 3
 
+# Memory decay (Phase 13, v3.3+)
+# Time-aware Ebbinghaus exponential curve. Canonical contract: shared/learnings/decay.md.
+memory:
+  decay:
+    curve: ebbinghaus          # ebbinghaus | linear | power_law (only ebbinghaus implemented in v1)
+    half_life_days:
+      auto_discovered: 14
+      cross_project: 30
+      canonical: 90
+    base_confidence_default: 0.75
+    base_confidence_max: 0.95  # Ratchet ceiling (preserves false-positive haircut effectiveness)
+    thresholds:
+      high: 0.75
+      medium: 0.5
+      low: 0.3
+      # archived = below low
+    reinforcement:
+      success_bonus: 0.05             # Additive, capped at base_confidence_max
+      false_positive_penalty: 0.20    # Multiplicative: new_base = base * (1 - penalty)
+      # WARNING: success_bonus > false_positive_penalty inverts stale-memory protection.
+      # See shared/learnings/decay.md §7 Tuning warning.
+
 # Codebase Q&A (v1.20+)
 forge_ask:
   enabled: true
