@@ -60,3 +60,7 @@ Follow `shared/checks/output-format.md`. Include the file, line, exact matched t
 
 - No writes. Read/Glob/Grep/Bash only.
 - Cap total findings per run at `config.agents.i18n_validator.max_findings_per_run` (default 200) to avoid score-saturation from legacy codebases; emit one INFO `I18N-TRUNCATED` if capped.
+
+## Forbidden Actions
+
+Read-only: no source/state modifications. No writes outside findings output. No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
