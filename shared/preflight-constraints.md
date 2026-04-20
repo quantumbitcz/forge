@@ -75,3 +75,15 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 **Historical retro-scan.** On the first PREFLIGHT after upgrade to 3.1.0, if `.forge/wiki/` or `.forge/explore-cache.json` exists, the orchestrator runs them through `hooks/_py/mcp_response_filter.py` once. Any non-BLOCK findings are re-emitted as `SEC-INJECTION-HISTORICAL` INFO (informational only, does not halt). A sentinel file `.forge/security/.historical-scan-done` is written so the scan runs at most once per install.
 
 **Filter availability.** PREFLIGHT MUST succeed importing `hooks/_py/mcp_response_filter.py`. A `ModuleNotFoundError` halts the pipeline with `SEC-INJECTION-DISABLED` because every external-data ingress depends on the filter.
+
+### Speculation (Phase 12)
+
+PREFLIGHT validates the `speculation:` block:
+
+- `candidates_max in [2,5]` — invalid raises `CONFIG-SPECULATION-CANDIDATES` CRITICAL.
+- `auto_pick_threshold_delta in [1,20]` — invalid raises `CONFIG-SPECULATION-DELTA` CRITICAL.
+- `token_ceiling_multiplier in [1.5, 4.0]` — invalid raises `CONFIG-SPECULATION-CEILING` CRITICAL.
+- `min_diversity_score in [0.05, 0.50]` — invalid raises `CONFIG-SPECULATION-DIVERSITY` CRITICAL.
+- `emphasis_axes length >= candidates_max` — invalid raises `CONFIG-SPECULATION-AXES` CRITICAL.
+
+Any CRITICAL fails PREFLIGHT with `preflight_failed = true`.

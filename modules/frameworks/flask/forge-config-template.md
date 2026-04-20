@@ -403,3 +403,14 @@ output_compression:
   enabled: true
   default_level: terse
   auto_clarity: true
+
+speculation:
+  enabled: true
+  candidates_max: 3
+  ambiguity_threshold: MEDIUM
+  auto_pick_threshold_delta: 5
+  save_candidates: true
+  token_ceiling_multiplier: 2.5
+  min_diversity_score: 0.15
+  emphasis_axes: [simplicity, robustness, velocity]
+  skip_in_modes: [bugfix, bootstrap]
