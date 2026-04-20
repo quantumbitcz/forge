@@ -19,6 +19,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-135-wiki-generator | 3 | No | Preflight | Documentation |
 | fg-140-deprecation-refresh | 3 | No | Preflight | Maintenance |
 | fg-150-test-bootstrapper | 3 | Yes | Preflight | Testing |
+| fg-155-i18n-validator | 3 | No | Preflight | i18n |
 | fg-160-migration-planner | 1 | Yes | Preflight | Migration |
 | fg-200-planner | 1 | Yes | Plan | Planning |
 | fg-205-planning-critic | 4 | No | Plan | Quality |
