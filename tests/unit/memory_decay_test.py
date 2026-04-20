@@ -1,5 +1,9 @@
+import json
 import math
+import subprocess
+import sys
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -265,3 +269,24 @@ def test_type_half_life_selection_differs_for_same_age():
     cross_c = md.effective_confidence(cross, now)
     canon_c = md.effective_confidence(canon, now)
     assert auto_c < cross_c < canon_c
+
+
+def test_cli_dry_run_recompute_prints_tier_per_item(tmp_path: Path):
+    """The --dry-run-recompute flag reads JSON from a directory and prints id,tier per line."""
+    fixture_dir = tmp_path / "memory"
+    fixture_dir.mkdir()
+    (fixture_dir / "a.json").write_text(json.dumps({
+        "id": "a",
+        "type": "auto-discovered",
+        "base_confidence": 0.75,
+        "last_success_at": "2026-04-19T12:00:00Z",
+        "last_false_positive_at": None,
+    }))
+    result = subprocess.run(
+        [sys.executable, "-m", "hooks._py.memory_decay",
+         "--dry-run-recompute", str(fixture_dir),
+         "--now", "2026-04-19T12:00:00Z"],
+        capture_output=True, text=True, check=True,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    assert any("a" in line and "HIGH" in line for line in lines)

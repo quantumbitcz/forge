@@ -4,6 +4,7 @@ All I/O-free. Callers supply records, save them. Stdlib-only.
 """
 from __future__ import annotations
 
+import json
 import math
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -139,3 +140,41 @@ def migrate_item(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
     out.pop("runs_since_last_hit", None)
     out.pop("decay_multiplier", None)
     return out
+
+
+def _cli_dry_run_recompute(directory: str, now: datetime) -> int:
+    """Read every *.json in `directory`, recompute tier, print 'id\\ttier\\tconfidence'."""
+    import os
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith(".json"):
+            continue
+        path = os.path.join(directory, name)
+        with open(path, "r", encoding="utf-8") as fh:
+            item = json.load(fh)
+        if "last_success_at" not in item:
+            item = migrate_item(item, now)
+        c = effective_confidence(item, now)
+        t = tier(c)
+        print(f"{item['id']}\t{t}\t{c:.6f}")
+    return 0
+
+
+def _main(argv: list) -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description="Memory decay recompute tool.")
+    parser.add_argument("--dry-run-recompute", metavar="DIR", help="Directory of JSON items")
+    parser.add_argument("--now", metavar="ISO", help="Override now (ISO 8601 UTC)")
+    args = parser.parse_args(argv)
+    if args.now:
+        now = _parse_iso(args.now)
+    else:
+        now = datetime.now(tz=timezone.utc)
+    if args.dry_run_recompute:
+        return _cli_dry_run_recompute(args.dry_run_recompute, now)
+    parser.print_help()
+    return 1
+
+
+if __name__ == "__main__":
+    import sys as _sys
+    _sys.exit(_main(_sys.argv[1:]))
