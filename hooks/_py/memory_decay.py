@@ -72,3 +72,42 @@ def tier(confidence: float) -> str:
     if confidence >= THRESHOLDS["low"]:
         return "LOW"
     return "ARCHIVED"
+
+
+def apply_success(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """Return a new item reflecting a successful reinforcement.
+
+    Cap is MAX_BASE_CONFIDENCE (0.95), NOT 1.0 — review Issue 1. Keeping a
+    headroom of 0.05 ensures the 20 % FP penalty still drops a maxed-out item
+    down to 0.76, which lands in the HIGH band but close to the MEDIUM cutoff.
+    """
+    out = dict(item)
+    out["base_confidence"] = min(
+        MAX_BASE_CONFIDENCE,
+        float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE)) + SUCCESS_BONUS,
+    )
+    out["last_success_at"] = _format_iso(now)
+    return out
+
+
+def apply_false_positive(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """Return a new item reflecting a confirmed false positive.
+
+    Penalty is multiplicative (base *= 0.80). We reset last_success_at = now so
+    the penalty shows as a fresh new base, not as a compounded base × decay
+    value. This is intentional (§4.2 of the spec) — it prevents over-punishment
+    combining the penalty with stale-decay on the same event.
+    """
+    out = dict(item)
+    out["base_confidence"] = (
+        float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE))
+        * (1.0 - FALSE_POSITIVE_PENALTY)
+    )
+    stamp = _format_iso(now)
+    out["last_success_at"] = stamp
+    out["last_false_positive_at"] = stamp
+    return out
+
+
+def _format_iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
