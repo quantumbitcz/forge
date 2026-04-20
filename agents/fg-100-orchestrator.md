@@ -328,7 +328,55 @@ Cross-repo: `fg-103-cross-repo-coordinator`. Dispatch: `setup-worktrees` (post-V
 
 ## §10 Reference Documents
 
-References (never modifies): `shared/scoring.md`, `shared/state-schema.md`, `shared/stage-contract.md`, `shared/error-taxonomy.md`, `shared/agent-communication.md`, `shared/state-transitions.md`, `shared/convergence-engine.md`, `shared/recovery/recovery-engine.md`, `shared/decision-log.md`, `shared/forge-state.sh`, `shared/modes/`, `shared/model-routing.md`, `shared/cost-alerting.sh`, `shared/context-guard.sh`
+References (never modifies): `shared/scoring.md`, `shared/state-schema.md`, `shared/stage-contract.md`, `shared/error-taxonomy.md`, `shared/agent-communication.md`, `shared/state-transitions.md`, `shared/convergence-engine.md`, `shared/recovery/recovery-engine.md`, `shared/decision-log.md`, `shared/forge-state.sh`, `shared/modes/`, `shared/model-routing.md`, `shared/cost-alerting.sh`, `shared/context-guard.sh`, `shared/observability.md`
+
+---
+
+## §11 OTel Instrumentation (Phase 09)
+
+Wrap every stage transition and subagent dispatch with spans from `hooks/_py/otel`. Respects `observability.otel.enabled` — when off, every call is a no-op (no `opentelemetry.*` import, <1ms/stage overhead). Live emission is best-effort (BatchSpanProcessor); `otel.replay()` against `.forge/events.jsonl` is authoritative. See `shared/observability.md`.
+
+1. **PREFLIGHT init** — initialise once and open the root span:
+
+```
+from hooks._py import otel
+otel.init(config.observability.otel,
+            parent_traceparent=os.environ.get("TRACEPARENT"))
+with otel.pipeline_span(run_id=state.run_id, mode=state.mode):
+    # pipeline body
+```
+
+2. **Stage transition** — every `story_state` change enters a stage span:
+
+```
+with otel.stage_span(state.stage):
+    # stage body
+```
+
+3. **Agent dispatch** — MUST call `otel.dispatch_env(os.environ)` to inject `TRACEPARENT` into the subagent env, and record the result so token/cost/tool-call attributes land on the span:
+
+```
+child_env = otel.dispatch_env(os.environ)
+with otel.agent_span(name=agent.name, model=agent.model,
+                       description=agent.description):
+    result = Agent(..., env=child_env)
+    otel.record_agent_result({
+        "tokens_input": result.tokens.input,
+        "tokens_output": result.tokens.output,
+        "cost_usd": result.cost_usd,
+        "tool_calls": result.tool_calls,
+        "finish_reasons": result.finish_reasons,
+        "agent_id": result.agent_id,
+    })
+```
+
+4. **LEARNING shutdown** — flush pending batches before exit:
+
+```
+otel.shutdown()
+```
+
+Span-name safety: only bounded attributes (`gen_ai.agent.name`, `forge.stage`, `forge.mode`, `gen_ai.operation.name`) appear in span names. Unbounded values (`forge.run_id`, `gen_ai.agent.id`, `gen_ai.tool.call.id`) are attributes only.
 
 ---
 
