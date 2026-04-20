@@ -56,3 +56,7 @@ Follow `shared/checks/output-format.md`. Include the manifest, endpoint, or entr
 - Write-capable but constrained to `.forge/worktree/`.
 - Never overwrite existing observability wiring — only stub when absent.
 - No tests, no test edits; `fg-150-test-bootstrapper` owns that seam.
+
+## Forbidden Actions
+
+No writes outside `.forge/worktree/`. No overwriting existing observability wiring. No test edits (owned by `fg-150-test-bootstrapper`). No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
