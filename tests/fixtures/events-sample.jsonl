@@ -1,0 +1,6 @@
+{"ts": "2026-04-19T10:00:00Z", "type": "pipeline.open", "run_id": "r-sample", "mode": "standard"}
+{"ts": "2026-04-19T10:00:01Z", "type": "stage.open", "stage": "PLANNING"}
+{"ts": "2026-04-19T10:00:02Z", "type": "agent.open", "agent_name": "fg-200-planner", "model": "claude-sonnet-4-7", "description": "Pipeline planner"}
+{"ts": "2026-04-19T10:00:30Z", "type": "agent.close", "agent_name": "fg-200-planner", "tokens_input": 1200, "tokens_output": 800, "cost_usd": 0.018, "tool_calls": 5, "finish_reasons": ["stop"]}
+{"ts": "2026-04-19T10:00:31Z", "type": "stage.close", "stage": "PLANNING"}
+{"ts": "2026-04-19T10:00:32Z", "type": "pipeline.close", "run_id": "r-sample"}
