@@ -81,6 +81,9 @@ case "$TIER" in
     run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
     run_tier "Scenario Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/scenario/*.bats
     run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
+    if [[ -d "$SCRIPT_DIR/evals/time-travel" ]]; then
+      run_tier "Time-Travel Evals" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/time-travel/*.bats
+    fi
     print_summary
     ;;
   structural)
@@ -105,6 +108,13 @@ case "$TIER" in
     ;;
   eval|evals)
     run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
+    if [[ -d "$SCRIPT_DIR/evals/time-travel" ]]; then
+      run_tier "Time-Travel Evals" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/time-travel/*.bats
+    fi
+    print_summary
+    ;;
+  time-travel)
+    run_tier "Time-Travel Evals" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/time-travel/*.bats
     print_summary
     ;;
   pipeline-eval)
@@ -114,7 +124,7 @@ case "$TIER" in
     exit 0
     ;;
   *)
-    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks|eval|pipeline-eval]"
+    echo "Usage: $0 [all|structural|unit|contract|scenario|hooks|eval|time-travel|pipeline-eval]"
     exit 1
     ;;
 esac
