@@ -1902,6 +1902,7 @@ CREATE (:Agent {name: 'fg-103-cross-repo-coordinator', role: 'other', file_path:
 CREATE (:Agent {name: 'fg-130-docs-discoverer', role: 'other', file_path: 'agents/fg-130-docs-discoverer.md'});
 CREATE (:Agent {name: 'fg-135-wiki-generator', role: 'other', file_path: 'agents/fg-135-wiki-generator.md'});
 CREATE (:Agent {name: 'fg-140-deprecation-refresh', role: 'other', file_path: 'agents/fg-140-deprecation-refresh.md'});
+CREATE (:Agent {name: 'fg-143-observability-bootstrap', role: 'other', file_path: 'agents/fg-143-observability-bootstrap.md'});
 CREATE (:Agent {name: 'fg-150-test-bootstrapper', role: 'other', file_path: 'agents/fg-150-test-bootstrapper.md'});
 CREATE (:Agent {name: 'fg-160-migration-planner', role: 'other', file_path: 'agents/fg-160-migration-planner.md'});
 CREATE (:Agent {name: 'fg-200-planner', role: 'other', file_path: 'agents/fg-200-planner.md'});
@@ -2105,6 +2106,9 @@ MATCH (a:Agent {name: 'fg-130-docs-discoverer'}), (c:SharedContract {name: 'agen
 MATCH (a:Agent {name: 'fg-135-wiki-generator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-140-deprecation-refresh'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-140-deprecation-refresh'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-143-observability-bootstrap'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-143-observability-bootstrap'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-143-observability-bootstrap'}), (c:SharedContract {name: 'observability'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-150-test-bootstrapper'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
