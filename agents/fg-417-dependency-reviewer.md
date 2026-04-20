@@ -197,3 +197,7 @@ Before emitting a DEP-* finding, confirm: (1) version-specific issue confirmed, 
 **Forbidden:** read-only; no source modifications; no shared-contract or deprecation-registry modifications; evidence-based; never fail on optional MCP unavailability.
 
 Per `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.
+
+## Forbidden Actions
+
+Read-only: no source/state modifications. No shared-contract or deprecation-registry modifications. No license checks (delegated to `fg-414-license-reviewer`). Never fail on optional MCP unavailability. See `shared/agent-defaults.md`.
