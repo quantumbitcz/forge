@@ -2,7 +2,7 @@
 
 ## Why This Matters
 
-Every downstream learning subsystem — PREEMPT decay, auto-tuning, bug hotspot tracking — keys on `state.json.domain_area`. If domain detection is wrong or missing, PREEMPT items decay against the wrong domain, auto-tuning adjusts the wrong weights, and bug hotspots accumulate under a meaningless label. The drift is silent: no error, no warning, just a learning system that gradually becomes less useful.
+Every downstream learning subsystem — PREEMPT decay (time-aware Ebbinghaus, see `shared/learnings/decay.md`), auto-tuning, bug hotspot tracking — keys on `state.json.domain_area`. If domain detection is wrong or missing, PREEMPT items decay against the wrong domain, auto-tuning adjusts the wrong weights, and bug hotspots accumulate under a meaningless label. The drift is silent: no error, no warning, just a learning system that gradually becomes less useful.
 
 Making domain detection a first-class operation with a formal algorithm, validation rules, and logging requirements prevents this drift.
 
@@ -67,6 +67,6 @@ The following are the recognized domain values for `state.json.domain_area`:
 
 ## Impact on Learning System
 
-- **PREEMPT decay**: Items decay per-domain. Wrong domain = items decay against unrelated changes, inflating false-positive counts.
+- **PREEMPT decay** (time-aware Ebbinghaus, see `shared/learnings/decay.md`): items decay per-domain. Wrong domain = items decay against unrelated changes, inflating false-positive counts.
 - **Auto-tuning**: Retrospective adjusts scoring weights per domain. Wrong domain = weight adjustments applied to the wrong category.
 - **Bug hotspots**: Hotspot frequency is tracked per domain. Wrong domain = hotspot signals scattered across irrelevant domains, reducing pattern detection accuracy.

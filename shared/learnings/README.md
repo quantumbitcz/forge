@@ -79,35 +79,14 @@ Agent performance is tracked per `agent-effectiveness-template.md` (operational 
 
 ### PREEMPT Lifecycle
 
-PREEMPT items follow a confidence decay lifecycle managed by the retrospective:
-- Active items: HIGH, MEDIUM, or LOW confidence — loaded during PREFLIGHT
-- Archived items: moved to bottom of forge-log.md — NOT loaded during PREFLIGHT
+Every PREEMPT item has a confidence in `[0, 1]` that decays on an Ebbinghaus
+exponential curve with per-type half-lives. See `shared/learnings/decay.md` for
+the canonical contract, formula, thresholds, reinforcement/penalty rules, and
+tuning warnings.
 
-**Confidence decay formula:**
-
-| Current level | Condition | Action |
-|---|---|---|
-| HIGH | 10 consecutive unused runs | Demote to MEDIUM |
-| MEDIUM | 10 consecutive unused runs | Demote to LOW |
-| LOW | 10 consecutive unused runs | Archive (stop loading at PREFLIGHT) |
-| Any | 1 false positive confirmed | Count as 3 unused runs toward demotion |
-| Any | Framework/library major version supersedes the pattern | Archive immediately |
-| LOW | Hit count = 0 AND age > 20 runs | Archive |
-
-**Confidence promotion:**
-
-| Current level | Condition | Action |
-|---|---|---|
-| LOW | 2+ hits across different runs | Promote to MEDIUM |
-| MEDIUM | 4+ hits AND 0 false positives | Promote to HIGH |
-| HIGH | 3+ applications AND stable across 5+ runs | Candidate for permanent convention rule |
-
-**Tracking fields per PREEMPT item:**
-- `runs_since_last_hit`: integer, resets to 0 on any hit (only incremented when item's domain is active in a run)
-- `false_positives`: integer, incremented by retrospective when agent reports PREEMPT_SKIPPED with reason
-- `last_hit`: ISO 8601 date of last use
-
-This supersedes the simple "Pruning" rules previously defined. The confidence decay model provides gradual deprecation instead of abrupt removal.
+~~**Legacy (superseded 2026-04-19 by Phase 13):** counter-based decay — HIGH → MEDIUM
+after 10 unused runs, 1 false positive counted as 3 unused. Replaced by the
+Ebbinghaus exponential curve.~~
 
 ## Auto-Discovered PREEMPT Items (v1.20+)
 
@@ -116,7 +95,7 @@ Starting in v1.20, the retrospective (fg-700) autonomously discovers codebase pa
 Key properties:
 - **Initial confidence:** MEDIUM (not HIGH — human hasn't confirmed)
 - **Promotion:** After 3 successful applications → promoted to HIGH
-- **Decay:** 2x faster than normal items (`decay_multiplier: 2`)
+- **Decay:** 14-day half-life (`type: auto-discovered`), roughly 2× faster than the 30-day cross-project half-life. See `shared/learnings/decay.md`.
 - **Labeling:** Clearly marked with `source: auto-discovered` in `forge-log.md`
 - **User control:** Can be promoted to HIGH (`source: user-confirmed`) or dismissed entirely
 

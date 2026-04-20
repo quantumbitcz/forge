@@ -270,7 +270,7 @@ The orchestrator reads these markers from stage notes and populates `state.json.
 
 The retrospective agent reads `preempt_items_status` and:
 1. Increments `hit_count` in `forge-log.md` for applied items
-2. Records false positives for confidence decay acceleration (false positive = 3 unused runs toward decay)
+2. Records false positives for confidence decay acceleration (each false positive applies `base_confidence *= 0.80` and resets the elapsed-time clock per `shared/learnings/decay.md`).
 3. Logs: "PREEMPT effectiveness: {applied}/{total} items used, {false_positives} false positives"
 
 ### Retry Handling
@@ -299,7 +299,7 @@ Items decay toward archival based on usage patterns. Decay is tracked per item i
 
 Where:
 - `unused_runs` — consecutive runs where the item was loaded but neither APPLIED nor SKIPPED (item was in scope but the domain area didn't trigger it)
-- `false_positives` — times the item was marked `PREEMPT_SKIPPED` with reason indicating inapplicability (each false positive counts as 3 unused runs toward decay)
+- `false_positives` — times the item was marked `PREEMPT_SKIPPED` with reason indicating inapplicability (each false positive applies `base_confidence *= 0.80` per `shared/learnings/decay.md`).
 
 **Confidence tiers:** HIGH (decay_score 0-3) → MEDIUM (4-6) → LOW (7-9) → ARCHIVED (10+)
 

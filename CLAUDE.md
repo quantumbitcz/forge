@@ -356,7 +356,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 
 ### Convergence & review
 
-- PREEMPT decay: 10 unused → HIGH→MEDIUM→LOW→ARCHIVED. 1 false positive = 3 unused.
+- PREEMPT decay: time-aware Ebbinghaus curve per `shared/learnings/decay.md` (half-lives: auto-discovered 14d, cross-project 30d, canonical 90d; 0.95 ceiling; false positive drops base by 20 %).
 - Safety gate restart: resets phase state, NOT `total_iterations`/`score_history`. First cycle exempt from plateau.
 - PLATEAUED: ≥pass_threshold → safety gate. CONCERNS → escalate to user. FAIL → recommend abort.
 - Preview gating: FAIL blocks Stage 8. Fix loop (max `preview.max_fix_loops`). Exhaustion → user choice.

@@ -4,6 +4,7 @@ All I/O-free. Callers supply records, save them. Stdlib-only.
 """
 from __future__ import annotations
 
+import json
 import math
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -111,3 +112,91 @@ def apply_false_positive(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
 
 def _format_iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+_LEGACY_TIER_TO_BASE: Dict[str, float] = {
+    "HIGH": MAX_BASE_CONFIDENCE,  # 0.95 — clamped so migration respects the ceiling.
+    "MEDIUM": 0.75,
+    "LOW": 0.50,
+    "ARCHIVED": 0.30,
+}
+
+
+def migrate_item(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """One-time migrator. Idempotent: already-migrated items pass through unchanged.
+
+    Warm-start: every pre-existing item receives `last_success_at = now` so the
+    first post-migration PREFLIGHT does not mass-archive. §7 of the spec.
+    """
+    if "last_success_at" in item and "base_confidence" in item:
+        return dict(item)  # already migrated — copy and return.
+
+    out = dict(item)
+    legacy_tier = str(out.pop("confidence", "MEDIUM")).upper()
+    out["base_confidence"] = _LEGACY_TIER_TO_BASE.get(legacy_tier, DEFAULT_BASE_CONFIDENCE)
+    out["last_success_at"] = _format_iso(now)
+    out["last_false_positive_at"] = None
+    out["type"] = _resolve_type(out)
+    out.pop("runs_since_last_hit", None)
+    out.pop("decay_multiplier", None)
+    return out
+
+
+def count_recent_false_positives(
+    items: "list[Dict[str, Any]]", now: datetime, window_days: int = 7
+) -> int:
+    """Count items whose last_false_positive_at is within the last `window_days`.
+
+    Review Issue 2: this is the designated reader for last_false_positive_at so
+    the field is not write-only. fg-700-retrospective calls this to emit the
+    'last FP in last 7d: K' summary line.
+    """
+    count = 0
+    for item in items:
+        fp = item.get("last_false_positive_at")
+        if not fp:
+            continue
+        ts = _parse_iso(fp)
+        delta_days = (now - ts).total_seconds() / 86400.0
+        # Future timestamps (clock skew) → delta_days < 0 → not counted.
+        if 0 <= delta_days <= window_days:
+            count += 1
+    return count
+
+
+def _cli_dry_run_recompute(directory: str, now: datetime) -> int:
+    """Read every *.json in `directory`, recompute tier, print 'id\\ttier\\tconfidence'."""
+    import os
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith(".json"):
+            continue
+        path = os.path.join(directory, name)
+        with open(path, "r", encoding="utf-8") as fh:
+            item = json.load(fh)
+        if "last_success_at" not in item:
+            item = migrate_item(item, now)
+        c = effective_confidence(item, now)
+        t = tier(c)
+        print(f"{item['id']}\t{t}\t{c:.6f}")
+    return 0
+
+
+def _main(argv: list) -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description="Memory decay recompute tool.")
+    parser.add_argument("--dry-run-recompute", metavar="DIR", help="Directory of JSON items")
+    parser.add_argument("--now", metavar="ISO", help="Override now (ISO 8601 UTC)")
+    args = parser.parse_args(argv)
+    if args.now:
+        now = _parse_iso(args.now)
+    else:
+        now = datetime.now(tz=timezone.utc)
+    if args.dry_run_recompute:
+        return _cli_dry_run_recompute(args.dry_run_recompute, now)
+    parser.print_help()
+    return 1
+
+
+if __name__ == "__main__":
+    import sys as _sys
+    _sys.exit(_main(_sys.argv[1:]))

@@ -36,16 +36,17 @@ Discovered patterns are stored as PREEMPT items with the following fields:
 ```markdown
 ### auto-{repo}-{pattern}-{NNN}: {short title}
 - **Source:** auto-discovered
-- **Confidence:** MEDIUM
+- **Type:** auto-discovered
+- **base_confidence:** 0.75
+- **last_success_at:** {ISO 8601 UTC, set to discovery time}
+- **last_false_positive_at:** null
 - **Evidence:**
   - files_matching: [{list of files confirming the pattern}]
   - files_violating: [{list of files breaking the pattern, if any}]
   - pattern: "{regex or description of the structural pattern}"
-- **Decay multiplier:** 2
 - **Discovered run:** {run_id}
 - **Domain:** {area — e.g., naming, architecture, testing, configuration}
 - **Pattern:** {what to do or avoid}
-- **Hit count:** 0
 ```
 
 ### Field reference
@@ -54,35 +55,29 @@ Discovered patterns are stored as PREEMPT items with the following fields:
 |---|---|---|
 | `id` | `auto-{repo}-{pattern}-{NNN}` | Unique identifier. `repo` = short repo name, `pattern` = category slug, `NNN` = sequential |
 | `source` | `auto-discovered` | Distinguishes from manually authored PREEMPT items |
-| `confidence` | `MEDIUM` (initial) | Starting confidence for all discoveries |
+| `type` | `auto-discovered` | Selects the 14-day half-life for decay (see `shared/learnings/decay.md`) |
+| `base_confidence` | `0.75` (initial) | Starting base confidence. Discovery decays on the Ebbinghaus curve from here |
+| `last_success_at` | ISO 8601 UTC | Timestamp of last successful application; reset by `memory_decay.apply_success` |
+| `last_false_positive_at` | ISO 8601 UTC or `null` | Timestamp of most recent confirmed false positive (reader: `count_recent_false_positives`) |
 | `evidence.files_matching` | list of file paths | Files that conform to the discovered pattern (min 3) |
 | `evidence.files_violating` | list of file paths | Files that break the pattern (may be empty) |
 | `evidence.pattern` | string | Regex or natural-language description of the pattern |
-| `decay_multiplier` | `2` | Auto-discovered items decay 2x faster than manually authored ones |
 | `discovered_run` | run ID string | The pipeline run that first confirmed the pattern |
 
 ## Promotion and Decay
 
-### Promotion
+**Decay** — all auto-discovered items carry `type: auto-discovered` and decay
+on a 14-day half-life per `shared/learnings/decay.md`. The legacy
+`decay_multiplier: 2` and "5 unused runs → demote" rules are removed; the
+14-day half-life is the replacement (roughly 2× faster than the 30-day
+cross-project half-life, matching the original intent).
 
-| Current confidence | Condition | Action |
-|---|---|---|
-| MEDIUM | Applied successfully in 3 consecutive runs | Promote to HIGH |
-| HIGH | 5+ applications AND stable across 10+ runs | Candidate for permanent convention rule |
+**Promotion** — unchanged from prior behaviour: after 3 successful applications,
+an auto-discovered item may be promoted to MEDIUM via `rule-promotion.md`'s
+flow. Each successful application calls `memory_decay.apply_success` (which
+adds +0.05 to `base_confidence`, capped at 0.95).
 
-Users can manually promote any discovery to HIGH via forge-log.md annotation or dismiss it entirely.
-
-### Decay
-
-Auto-discovered items use `decay_multiplier: 2`, meaning they decay twice as fast as standard PREEMPT items:
-
-| Current confidence | Standard decay | Auto-discovered decay (2x) |
-|---|---|---|
-| HIGH → MEDIUM | 10 unused runs | 5 unused runs |
-| MEDIUM → LOW | 10 unused runs | 5 unused runs |
-| LOW → ARCHIVED | 10 unused runs | 5 unused runs |
-
-False positive confirmed by retrospective: counts as `3 × decay_multiplier = 6` unused runs toward demotion (standard is 3).
+Users can manually promote any discovery via forge-log.md annotation or dismiss it entirely.
 
 ## Configuration
 
@@ -155,7 +150,7 @@ L1 Check Engine (shared/checks/learned-rules-override.json)
 - **Direct contribution:** Agents (reviewers, implementer, bug investigator) write knowledge items to the inbox during execution. These are one-shot observations from the current run.
 - **Memory discovery promotion:** Patterns accumulate evidence across multiple runs in `forge-log.md` before being promoted to knowledge rules. This path provides stronger validation because the pattern has been observed repeatedly.
 
-Auto-discovered rules that are promoted to the knowledge base retain `source: auto-discovered` and follow the standard 2x decay multiplier until they reach ACTIVE state. Once ACTIVE, they follow standard decay rates.
+Auto-discovered rules that are promoted to the knowledge base retain `source: auto-discovered` and decay on the 14-day half-life per `shared/learnings/decay.md` until they reach ACTIVE state. Once ACTIVE, their `type` flips to `canonical` and they decay on the 90-day half-life.
 
 ### Configuration
 
