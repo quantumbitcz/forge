@@ -140,4 +140,4 @@ You are a thin launcher. Your ONLY job is to dispatch the migration planner agen
 - `/forge-run` -- Full pipeline entry point (use `migrate:` prefix for migration routing)
 - `/forge-recover rollback` -- Rollback migration changes if something goes wrong
 - `/forge-recover diagnose` -- Diagnose pipeline health if the migration stalls
-- `/forge-config-validate` -- Validate configuration before starting a migration
+- `/forge-verify --config` -- Validate configuration before starting a migration

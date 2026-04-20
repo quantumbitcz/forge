@@ -13,12 +13,10 @@ setup() {
   done
 }
 
-@test "skill-error-handling: graph skills handle missing Neo4j" {
-  local graph_skills=(forge-graph-init forge-graph-status forge-graph-query forge-graph-rebuild forge-graph-debug)
-  for s in "${graph_skills[@]}"; do
-    run grep -qi 'docker\|container\|unavailable\|not running' "$SKILLS_DIR/$s/SKILL.md"
-    assert_success
-  done
+@test "skill-error-handling: graph skill handles missing Neo4j" {
+  # Phase 05 Task 4: 5 skills consolidated into /forge-graph with positional subcommands.
+  run grep -qi 'docker\|container\|unavailable\|not running' "$SKILLS_DIR/forge-graph/SKILL.md"
+  assert_success
 }
 
 @test "skill-error-handling: deploy skill has rollback guidance" {
