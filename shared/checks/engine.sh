@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Self-enforcing timeout — mirrors hooks.json value
+# Self-enforcing timeout — mirrors hooks.json value.
+# Skipped for --verify mode: that path is operator/CLI-invoked (not a hook),
+# may legitimately take longer than the hook budget under parallel test load,
+# and silent truncation here is the cause of intermittent macOS test flakes
+# where engine.sh exits 0 with no output and assertions on `assert_output
+# --partial "<file>"` fail. Verify-mode callers expect to wait for results.
+_engine_is_verify_mode=0
+for _arg in "$@"; do
+  if [[ "$_arg" == "--verify" ]]; then
+    _engine_is_verify_mode=1
+    break
+  fi
+done
+
 _HOOK_TIMEOUT="${FORGE_HOOK_TIMEOUT:-10}"
-if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]]; then
+if [[ "${_HOOK_TIMEOUT_ACTIVE:-}" != "1" ]] && [[ "$_engine_is_verify_mode" != "1" ]]; then
   export _HOOK_TIMEOUT_ACTIVE=1
   if command -v timeout &>/dev/null; then
     timeout "$_HOOK_TIMEOUT" "$0" "$@" || true

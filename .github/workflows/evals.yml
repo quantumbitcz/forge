@@ -2,11 +2,9 @@ name: Evals
 
 on:
   push:
-    # feat/phase-02-python-hooks listed temporarily so stacked PRs (e.g. #7)
-    # get CI feedback before #5 merges. Remove after #5 merges to master.
-    branches: [master, feat/phase-02-python-hooks]
+    branches: [master]
   pull_request:
-    branches: [master, feat/phase-02-python-hooks]
+    branches: [master]
   workflow_dispatch:
     inputs:
       mode:
