@@ -91,7 +91,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.7.0",
+  "version": "1.8.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
@@ -128,6 +128,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "total_retries": 0,
   "total_retries_max": 10,
   "implementer_fix_cycles": 0,
+  "implementer_reflection_cycles_total": 0,
+  "reflection_divergence_count": 0,
   "inner_loop": {
     "enabled": true,
     "fix_cycles_used": 0,
@@ -329,7 +331,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.7.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.8.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Phase 04 CoVe. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
@@ -348,6 +350,8 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 | `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `forge-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
 | `playbook_pre_refine_version` | string | No | Playbook version before auto-refinement was applied at PREFLIGHT. Set by orchestrator when `playbooks.auto_refine: true` triggers. Used by retrospective (fg-700) to detect rollback-worthy regressions. Null if no auto-refinement occurred. |
 | `implementer_fix_cycles` | integer | Yes | Total inner-loop fix cycles across all tasks in this run. Tracked separately from convergence engine counters (`verify_fix_count`, `test_cycles`, `quality_cycles`, `total_iterations`, `total_retries`). Does NOT feed into `total_retries`. Starts at 0, incremented by the implementer's inner-loop validation (section 5.4.1 of fg-300). |
+| `implementer_reflection_cycles_total` | integer | Yes | Sum of `tasks[*].implementer_reflection_cycles` across the run. Reported by retrospective (§5.2 output). Initialized to 0 at PREFLIGHT. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, or `quality_cycles`. |
+| `reflection_divergence_count` | integer | Yes | Tasks that exhausted reflection budget (REVISE verdict at cycle == `implementer.reflection.max_cycles`). Starts at 0. Emits `REFLECT-DIVERGENCE` WARNING per increment. |
 | `inner_loop` | object | Yes | Inner-loop validation state for the implementer. Tracks per-run metrics for lint and affected test execution within Stage 4. Initialized at PREFLIGHT with all counters at 0. |
 | `inner_loop.enabled` | boolean | Yes | Whether inner-loop validation is active for this run. Mirrors `implementer.inner_loop.enabled` from config. Default: `true`. |
 | `inner_loop.fix_cycles_used` | integer | Yes | Total inner-loop fix cycles consumed across all tasks. Mirrors top-level `implementer_fix_cycles` (canonical counter). Kept for convenience when reading the `inner_loop` object in isolation. |
@@ -1252,7 +1256,38 @@ Checkpoints enable mid-pipeline resume after interruption.
 
 ---
 
+### Task-level reflection fields
+
+Each task object under `tasks[*]` carries:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `tasks[*].implementer_reflection_cycles` | integer | Yes | Per-task reflection cycle count. Starts at 0. Incremented each time `fg-301-implementer-critic` returns REVISE and budget permits re-entry. Budget check is `count < implementer.reflection.max_cycles` evaluated BEFORE increment. Capped by `implementer.reflection.max_cycles` (default 2). Does NOT feed into `total_retries`, `total_iterations`, `implementer_fix_cycles`, or any convergence counter. |
+| `tasks[*].reflection_verdicts` | array of object | No | Audit trail of reflection dispatches for this task. Each entry: `{cycle: int, verdict: "PASS"\|"REVISE", confidence: "HIGH"\|"MEDIUM"\|"LOW", finding_count: int, duration_ms: int}`. Trimmed to last 5 entries. On `/forge-recover resume` this array is reset to `[]` while `implementer_reflection_cycles` is preserved (budget not refunded mid-task). |
+
+**Cycle counter semantics (off-by-one guard):**
+
+- `count == 0` means "no reflection dispatched yet." The FIRST critic dispatch happens at `count == 0`.
+- On REVISE verdict within budget: increment count, re-enter GREEN, re-dispatch critic.
+- With `max_cycles == 2`: up to 2 REVISEs → count reaches 2 → on next REVISE, budget exhausted, emit REFLECT-DIVERGENCE.
+
+| Reflection # | Counter (before → after) | Verdict | Action |
+|---|---|---|---|
+| 1st dispatch | 0 → 0 | PASS | Proceed to REFACTOR. |
+| 1st dispatch | 0 → 1 | REVISE | Re-enter GREEN; re-dispatch. |
+| 2nd dispatch | 1 → 1 | PASS | Proceed to REFACTOR. |
+| 2nd dispatch | 1 → 2 | REVISE | Budget exhausted. Emit REFLECT-DIVERGENCE WARNING. Proceed to REFACTOR. Reviewer panel decides at Stage 6. |
+
+---
+
 ## Changelog
+
+### 1.8.0 (Forge 3.1.0)
+- Add `tasks[*].implementer_reflection_cycles` (integer, required) for per-task Chain-of-Verification (CoVe) counter. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, `quality_cycles`, or `implementer_fix_cycles`.
+- Add `tasks[*].reflection_verdicts` (array, optional) audit trail, last 5 entries.
+- Add run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
+- On `/forge-recover resume`: `reflection_verdicts` reset to `[]`; `implementer_reflection_cycles` preserved (budget not refunded mid-task).
+- **Breaking (no backcompat per Phase 04 brief):** new required fields initialized to 0 / [] at PREFLIGHT. Pre-Phase-04 state.json files are not readable by Phase-04 orchestrator without PREFLIGHT re-init.
 
 ### 1.7.0 (Forge 3.0.0)
 - Add `recovery_op` field to orchestrator input payload (Phase 1 skill surface consolidation).

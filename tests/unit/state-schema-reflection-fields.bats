@@ -24,7 +24,7 @@ SCHEMA="${ROOT}/shared/state-schema.md"
 }
 
 @test "state-schema: explicit isolation from convergence counters" {
-  run grep -F 'does NOT feed into' "$SCHEMA"
+  run grep -iF 'does NOT feed into' "$SCHEMA"
   [ "$status" -eq 0 ]
   [[ "$output" == *"reflection"* ]] || [[ "$output" == *"implementer_reflection_cycles"* ]]
 }
