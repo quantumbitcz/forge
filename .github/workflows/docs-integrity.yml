@@ -135,15 +135,8 @@ jobs:
           sys.exit(0 if ok else 1)
           PY
 
-      # Soft-fail lychee until the pre-existing dead links are cleaned up in
-      # Phase 06 Tasks 10-13 (which create `shared/agents.md` and rewrite
-      # cross-refs). External 404s and internal dangling paths are surfaced
-      # as warnings in the job summary but do not block the workflow.
-      # TODO(phase06-follow-up): flip `continue-on-error` to false once
-      # `shared/agents.md` exists and reviewer-doc `feedback_*.md` leaks are
-      # excised.
+      # Lychee link-check — strict (dead links block PR).
       - name: Lychee link-check
-        continue-on-error: true
         uses: lycheeverse/lychee-action@v2
         with:
           args: --no-progress --accept 200,204,301,302 --verbose CLAUDE.md 'shared/**/*.md' 'docs/**/*.md'

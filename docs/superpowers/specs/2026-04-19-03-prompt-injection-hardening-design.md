@@ -405,7 +405,7 @@ Post-merge: enable the adversarial eval suite in the default `./tests/run-all.sh
 - SQMagazine 2026 prompt-injection statistics — https://sqmagazine.co.uk/prompt-injection-statistics/
 - Anthropic 2026 constitutional-envelope guidance — https://arxiv.org/html/2601.17548v1
 - Cogent Infoworks multi-agent orchestration failure playbook 2026 — https://cogentinfo.com/resources/when-ai-agents-collide-multi-agent-orchestration-failure-playbook-for-2026
-- OWASP Agentic AI Security Initiative Top 10 v2026 — https://owasp.org/www-project-agentic-security-initiative/
+- OWASP Top 10 for Agentic Applications 2026 — https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
 - Existing forge docs: `shared/security-posture.md`, `shared/data-classification.md`, `shared/mcp-governance.md`, `shared/cache-integrity.md`, `shared/error-taxonomy.md`, `shared/scoring.md`, `shared/ask-user-question-patterns.md`, `shared/agent-communication.md`, `shared/output-compression.md`
 - Phase 01 eval harness spec (sibling document, same roadmap)
 - Phase 02 spec (sibling document, same roadmap) — prerequisite context for the shared eval harness

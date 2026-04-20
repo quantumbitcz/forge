@@ -403,13 +403,13 @@ Results logged in the release PR description. Not a CI gate.
   <https://opentelemetry.io/docs/specs/semconv/attributes-registry/gen-ai/>
 - W3C Trace Context: <https://www.w3.org/TR/trace-context/>
 - Datadog GenAI Monitoring (OTLP ingestion):
-  <https://docs.datadoghq.com/llm_observability/setup/otel/>
+  <https://docs.datadoghq.com/llm_observability/instrumentation/otel_instrumentation/>
 - Arize Phoenix OTLP tracing:
   <https://docs.arize.com/phoenix/tracing/how-to-tracing/setup-tracing>
 - LangSmith OTLP bridge:
   <https://docs.smith.langchain.com/observability/how_to_guides/monitoring/opentelemetry>
 - Grafana Tempo OTLP:
-  <https://grafana.com/docs/tempo/latest/send-data/>
+  <https://grafana.com/docs/tempo/latest/api_docs/pushing-spans-with-http/>
 - Honeycomb OTLP:
   <https://docs.honeycomb.io/send-data/opentelemetry/>
 - OpenInference semconv (alternative schema, deferred):

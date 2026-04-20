@@ -6,7 +6,6 @@ machine-validated; do not hand-edit.
 
 ## Agents & dispatch
 
-- [`agents.md`](agents.md) — agent model, UI tiers, dispatch graph, registry
 - [`agent-communication.md`](agent-communication.md) — stage notes, findings dedup, PREEMPT, structured output
 - [`agent-philosophy.md`](agent-philosophy.md) — how to design an agent
 - [`agent-defaults.md`](agent-defaults.md) — shared constraints language

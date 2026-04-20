@@ -22,7 +22,7 @@ At PLAN stage for ambiguous requirements, spawn 2-3 candidate plans in parallel,
 
 - **Codex parallel agents (Feb 2026)** — https://docs.kanaries.net/topics/AICoding/parallel-code-agents — reports ~30% speedup from dispatching parallel candidate agents at decision points, choosing best via structured evaluation.
 - **Verdent 2026 analysis** — https://www.verdent.ai/guides/codex-app-first-impressions-2026 — confirms parallel speculation improves plan quality and reduces user rework on ambiguous tasks; quality lift dominates wall-clock gain.
-- **GPT Pro parallel reasoning** — https://openai.com/index/introducing-gpt-pro/ — established the "best-of-N sampling at decision points" pattern for complex planning tasks.
+- **GPT Pro parallel reasoning** (announced Dec 2024 via openai.com) — established the "best-of-N sampling at decision points" pattern for complex planning tasks.
 
 Forge's PLAN stage is exactly such a decision point: validator `REVISE` implicitly acknowledges that the first plan attempt was suboptimal. Paying ~2.5x plan tokens up-front (once) is cheaper than a REVISE loop (plus downstream rework when a mediocre plan ships).
 
@@ -499,7 +499,7 @@ PR scope:
 
 - Codex parallel agents overview — https://docs.kanaries.net/topics/AICoding/parallel-code-agents
 - Verdent 2026 Codex App Analysis — https://www.verdent.ai/guides/codex-app-first-impressions-2026
-- GPT Pro parallel reasoning — https://openai.com/index/introducing-gpt-pro/
+- GPT Pro parallel reasoning (announced Dec 2024 via openai.com)
 - Best-of-N sampling in LLM decision-making — https://arxiv.org/abs/2407.21787
 
 **Internal:**

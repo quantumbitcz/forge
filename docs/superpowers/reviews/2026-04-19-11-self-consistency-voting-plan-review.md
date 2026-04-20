@@ -42,7 +42,7 @@
 4. **Validator scope fence is over-specified.** Task 7 §5.1 adds an explicit `INCONCLUSIVE` row to the rule table AND says "Voting is SKIPPED. `consistency_votes.validator_verdict.invocations` is NOT incremented." This removes all ambiguity about when voting fires and makes the cost analysis tight (most runs skip voting at the validator).
 5. **Offline eval determinism.** Task 10's `offline_sampler` uses `hashlib.sha256(f"{prompt}|{seed}")` as the RNG seed, so CI results are byte-identical across runs. Task 11 bats can assert exact accuracy numbers without flakiness. The `rng.random() < 0.35` adversarial-disagreement threshold is called out as the only tuning knob.
 6. **Cache correctness has a real contract test.** Task 11 @test "cache correctness" runs the dispatch twice end-to-end with a random sampler and asserts second-pass `cache_hit=True` AND identical labels. This catches both misses (new sampler rolls) and stale reads (key collision).
-7. **Conventional Commits with no AI attribution.** Every commit message is Conventional-Commits-formatted, no `Co-Authored-By`, no `--no-verify`. Matches CLAUDE.md §Git rules and user's [Implementation workflow](feedback_implementation_workflow.md) preference.
+7. **Conventional Commits with no AI attribution.** Every commit message is Conventional-Commits-formatted, no `Co-Authored-By`, no `--no-verify`. Matches CLAUDE.md §Git rules and the repo convention of clean, terse commit messages without AI attribution.
 8. **Self-Review section is honest about the one gap.** The `/forge-insights` display-update deferral is flagged in Self-Review §"Spec coverage" as "GAP spotted in self-review ... explicit deviation recorded here for the reviewer" rather than buried or omitted. This is exactly the discipline the review criterion asked for.
 
 ---
@@ -59,7 +59,7 @@
 - State the target phase or date.
 - Add a `@test "TODO /forge-insights consistency section"` stub or pending-skip in the bats file to guarantee the gap is picked up.
 
-Without one of these, the deferral will be forgotten until a user runs `/forge-insights` in production and sees the counters are being written but not surfaced. The user's [Forge review quality](feedback_forge_review_quality.md) memory calls this exact failure mode ("forge pipeline must match/exceed external reviewers; no source: builtin delegation").
+Without one of these, the deferral will be forgotten until a user runs `/forge-insights` in production and sees the counters are being written but not surfaced. This matches the project's standing rule that the forge pipeline must match or exceed external reviewers — no `source: builtin` delegation.
 
 **Recommendation:** Add to the Self-Review a single bullet:
 
@@ -153,8 +153,8 @@ Same kind of rounding is present in `validator_verdict` (20 GO + 25 REVISE + 15 
 - **Matches PREFLIGHT constraints pattern:** Task 5 appends to `shared/preflight-constraints.md`, agents/callers don't duplicate validation. Correct per CLAUDE.md Gotchas.
 - **Matches "survives reset" discipline:** Task 12 adds `.forge/consistency-cache.jsonl` to the CLAUDE.md list alongside `explore-cache.json`, `plan-cache/`, etc.
 - **Matches TDD philosophy:** Task 2 writes failing tests, Task 3 makes them pass; Task 4 writes failing bats assertions, then edits schema. Pair of red-green cycles in the first five tasks.
-- **Matches user's "no local tests" memory:** Task 14 smoke-runs locally but does not gate on a full test suite — the gates are in `.github/workflows/eval.yml` via Task 13. Matches [No local tests](feedback_no_local_tests.md).
-- **Matches user's "implementation workflow" memory:** Code review after each phase, version bump + tag + push + release — the plan's 14-task structure naturally enables this (commit per task → review → next task).
+- **Matches the repo's testing discipline:** Task 14 smoke-runs locally but does not gate on a full test suite — the gates are in `.github/workflows/eval.yml` via Task 13. Matches the repo convention of running full test suites in CI, not locally.
+- **Matches the repo's implementation workflow:** Code review after each phase, version bump + tag + push + release — the plan's 14-task structure naturally enables this (commit per task → review → next task).
 - **Matches Conventional Commits:** Every commit message uses `type(scope):` form, no `Co-Authored-By`, no AI attribution, no `--no-verify`.
 
 No deviations from established patterns.
