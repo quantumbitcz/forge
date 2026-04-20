@@ -1,0 +1,203 @@
+# Measures the A/B effect of `code_graph.prompt_compaction` on scenario
+# 11-repo-map-ab. Gated off until (a) `claude` CLI lands on GH runners
+# (same blocker as evals.yml full-suite) AND (b) Phase 10 Task 10 wires
+# the {{REPO_MAP_PACK}} substitution into fg-100/200/300. Live gate will
+# be `github.event_name == 'pull_request'` once both prereqs are met.
+#
+# NOTE: the pipeline runner (`python -m tests.evals.pipeline.runner`) does
+# not currently accept a `--filter` flag to select a single scenario. The
+# compaction-off / compaction-on jobs therefore run the full suite when
+# activated; the `compare` job filters to `scenario_id == "11-repo-map-ab"`
+# when comparing the two JSONL artifacts. Adding a `--filter` flag to the
+# runner is out of scope for Phase 10 Task 14.
+
+name: Evals — compaction A/B
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'hooks/_py/repomap.py'
+      - 'agents/fg-100-orchestrator.md'
+      - 'agents/fg-200-planner.md'
+      - 'agents/fg-300-implementer.md'
+      - 'tests/evals/pipeline/scenarios/11-repo-map-ab/**'
+      - '.github/workflows/evals-compaction-ab.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compaction-off:
+    name: Compaction OFF (control)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    # GATED OFF: same reason as evals.yml full-suite — needs `claude` CLI on
+    # the runner, and {{REPO_MAP_PACK}} wiring (P10 T10) must land first.
+    # Until both prereqs ship, this job cannot execute. Flip to the live
+    # condition below when ready.
+    #   Live condition: ${{ github.event_name == 'pull_request' }}
+    if: ${{ false }}
+    env:
+      FORGE_EVAL: '1'
+      FORGE_CONFIG_OVERRIDE_CODE_GRAPH_PROMPT_COMPACTION_ENABLED: 'false'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Run eval suite with compaction disabled
+        run: |
+          python -m tests.evals.pipeline.runner \
+            --scenario-timeout-seconds 900 \
+            --total-budget-seconds 2700 \
+            --regression-tolerance 3.0 \
+            --no-baseline \
+            --commit-sha "$COMMIT_SHA"
+      - name: Upload OFF results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ab-off-${{ github.run_id }}
+          path: .forge/eval-results.jsonl
+          retention-days: 30
+
+  compaction-on:
+    name: Compaction ON (treatment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    # GATED OFF: same blockers as compaction-off above.
+    #   Live condition: ${{ github.event_name == 'pull_request' }}
+    if: ${{ false }}
+    env:
+      FORGE_EVAL: '1'
+      FORGE_CONFIG_OVERRIDE_CODE_GRAPH_PROMPT_COMPACTION_ENABLED: 'true'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install runner deps
+        run: pip install -r tests/evals/pipeline/runner/requirements.txt
+      - name: Run eval suite with compaction enabled
+        run: |
+          python -m tests.evals.pipeline.runner \
+            --scenario-timeout-seconds 900 \
+            --total-budget-seconds 2700 \
+            --regression-tolerance 3.0 \
+            --no-baseline \
+            --commit-sha "$COMMIT_SHA"
+      - name: Upload ON results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ab-on-${{ github.run_id }}
+          path: .forge/eval-results.jsonl
+          retention-days: 30
+
+  compare:
+    name: Compare A/B deltas
+    needs: [compaction-off, compaction-on]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # GATED OFF: depends on compaction-off + compaction-on which are themselves
+    # gated until `claude` CLI + P10 T10 land. No value in running the diff on
+    # empty artifacts.
+    #   Live condition: ${{ github.event_name == 'pull_request' }}
+    if: ${{ false }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Download OFF artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ab-off-${{ github.run_id }}
+          path: ab-off
+      - name: Download ON artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ab-on-${{ github.run_id }}
+          path: ab-on
+      - name: Compute A/B deltas for 11-repo-map-ab
+        id: deltas
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          SCENARIO_ID = "11-repo-map-ab"
+
+          def find_record(jsonl_path: Path, scenario_id: str) -> dict | None:
+              if not jsonl_path.exists():
+                  return None
+              for line in jsonl_path.read_text().splitlines():
+                  line = line.strip()
+                  if not line:
+                      continue
+                  rec = json.loads(line)
+                  if rec.get("scenario_id") == scenario_id:
+                      return rec
+              return None
+
+          off = find_record(Path("ab-off/eval-results.jsonl"), SCENARIO_ID)
+          on = find_record(Path("ab-on/eval-results.jsonl"), SCENARIO_ID)
+
+          if off is None or on is None:
+              print(f"::error::Could not find scenario {SCENARIO_ID} in one or both artifacts")
+              print(f"OFF present: {off is not None}, ON present: {on is not None}")
+              sys.exit(1)
+
+          off_tokens = int(off.get("actual_tokens", 0))
+          on_tokens = int(on.get("actual_tokens", 0))
+          off_score = float(off.get("pipeline_score", 0.0))
+          on_score = float(on.get("pipeline_score", 0.0))
+
+          delta_tokens = on_tokens - off_tokens
+          delta_pipeline_score = on_score - off_score
+          pct_tokens = (delta_tokens / off_tokens * 100.0) if off_tokens else 0.0
+
+          print(f"::notice::scenario={SCENARIO_ID} tokens off={off_tokens} on={on_tokens} "
+                f"delta={delta_tokens} ({pct_tokens:+.1f} %)")
+          print(f"::notice::scenario={SCENARIO_ID} pipeline_score off={off_score:.2f} "
+                f"on={on_score:.2f} delta={delta_pipeline_score:+.2f}")
+
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              with open(summary_path, "a") as fh:
+                  fh.write(f"## Compaction A/B — {SCENARIO_ID}\n\n")
+                  fh.write("| Metric | OFF | ON | Delta |\n")
+                  fh.write("|---|---:|---:|---:|\n")
+                  fh.write(f"| actual_tokens | {off_tokens} | {on_tokens} | "
+                           f"{delta_tokens:+d} ({pct_tokens:+.1f} %) |\n")
+                  fh.write(f"| pipeline_score | {off_score:.2f} | {on_score:.2f} | "
+                           f"{delta_pipeline_score:+.2f} |\n\n")
+                  fh.write("_Negative delta_tokens = win. `delta_pipeline_score < -3.0` "
+                           "fails this job (quality regression guard)._\n")
+
+          # Quality guard: fail only on a meaningful score regression. Token
+          # deltas (positive or negative) are reporting-only at this stage.
+          if delta_pipeline_score < -3.0:
+              print(f"::error::pipeline_score regressed by {delta_pipeline_score:+.2f} "
+                    f"(threshold -3.0)")
+              sys.exit(1)
+          PY
