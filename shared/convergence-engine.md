@@ -1,5 +1,7 @@
 # Convergence Engine
 
+> **Worked examples:** see [`convergence-examples.md`](convergence-examples.md).
+
 This document defines the convergence-driven iteration engine that replaces hard-capped fix cycle loops with plateau detection. The orchestrator (`fg-100-orchestrator`) calls the convergence engine after every VERIFY or REVIEW dispatch to decide: **iterate again, or declare convergence?**
 
 The engine coordinates Stages 4-6 (IMPLEMENT, VERIFY, REVIEW) as a three-phase convergence loop (correctness, perfection, evidence) targeting a score of `target_score` (default 90) with verified shipping evidence, stopping when the target is reached and evidence passes or the score plateaus.
@@ -460,10 +462,6 @@ Condensation state is tracked under `state.json.convergence.condensation`:
 ```
 
 See `shared/context-condensation.md` for the full condensation algorithm, tag-based retention rules, configuration, and error handling.
-
-## Worked Examples
-
-See `convergence-examples.md` for 3 annotated walkthrough scenarios (happy path, fix loop, plateau escalation).
 
 ## Executable Specification
 
