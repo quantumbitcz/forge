@@ -36,7 +36,7 @@ Forge already has every input Aider needs (tree-sitter, SQLite graph, file hashe
 - A top-K selector honoring a token budget (default 8 000), with partial-file slices (top-ranked symbol windows) for files too large to fit whole.
 - Assembly of a compact "context pack" (ranked file list + per-file symbol windows + summary stats) that replaces the current full-listing blocks in stage dispatch prompts.
 - Integration via a pre-dispatch Python helper (`hooks/_py/repomap.py`) invoked from the orchestrator when `code_graph.prompt_compaction.enabled: true`.
-- Write-through cache `.forge/ranked-files-cache.json` keyed on `(graph_sha, keywords_hash)` so the PageRank solve runs at most once per pipeline run per query.
+- Write-through cache `.forge/ranked-files-cache.json` keyed on `(graph_sha, keywords_hash, budget, top_k)` — the 4-tuple matches the durable mirror table in §5.2 and prevents cache collisions across per-agent budgets (orchestrator 8 000 vs implementer 4 000). The PageRank solve runs at most once per pipeline run per query per budget.
 - Eval integration: Phase 01 harness runs each scenario twice (compaction OFF vs ON) and asserts the composite score does not drop by more than 2 points.
 - New `forge-config.md` section `code_graph.prompt_compaction.*`.
 - New `state.json` field `prompt_compaction.stages[*].ratio` for observability.
@@ -126,6 +126,8 @@ Three call sites, each invoking `hooks/_py/repomap.py build-pack` with stage-spe
 | `fg-200-planner` | EXPLORE phase entry | Full `file_index` from explore-cache | 10 000 (planner needs broader view) |
 | `fg-300-implementer` | Each task dispatch | Convention stack (12 files/component) + touched-files list | 4 000 per task |
 
+**Parallel implementer dispatch:** Each implementer task receives its **own** pack (per-task, not shared across parallel tasks at the same IMPLEMENT stage). Per-task packs are chosen because a shared pack must serve disjoint task contexts — its ranking relevance collapses in the common case where parallel tasks touch unrelated subsystems. The total-token cost of N parallel tasks is therefore `N × 4 000` pack tokens rather than `4 000` shared; SC-1's ≥30 % reduction target is framed against this per-task cost in runs where `implementer.parallel_tasks > 1`.
+
 Each call resolves through the write-through cache `.forge/ranked-files-cache.json`:
 
     {
@@ -186,7 +188,14 @@ Cache entries are LRU-evicted past 16 rows; the cache survives `/forge-recover r
 4. Orchestrator substitutes the pack into the template, logs `prompt_compaction.stages[<stage>] = { budget, pack_tokens, files, ratio }` into `state.json`.
 5. Pack is passed to the subagent as part of its system prompt.
 
-On any failure (missing graph, corrupt cache, NumPy solve diverges): log INFO, emit a degraded pack consisting of the current full listing truncated to the budget, continue. Never block the pipeline on repo-map failure.
+On any failure, the pre-dispatch hook logs INFO to stderr using one of the following named bypass events, emits a degraded pack (empty entries; upstream caller supplies the prior full listing), and the pipeline proceeds:
+
+- `repomap.bypass.missing_graph` — `code-graph.db` absent, unreadable, or malformed.
+- `repomap.bypass.solve_diverged` — power iteration did not converge in 100 iters.
+- `repomap.bypass.corrupt_cache` — `.forge/ranked-files-cache.json` invalid.
+- `repomap.bypass.sparse_graph` — `node_count < min_nodes_for_rank` (expected; tracked separately).
+
+SC-4's `repomap.bypass.failure` aggregates `{missing_graph, solve_diverged, corrupt_cache}`. `sparse_graph` is excluded (it is a legitimate pre-populated-graph state, not a fault).
 
 ---
 
@@ -231,7 +240,12 @@ On any failure (missing graph, corrupt cache, NumPy solve diverges): log INFO, e
       "overall_ratio":            0.18
     }
 
-`ratio` is defined as `(baseline_tokens − pack_tokens) / baseline_tokens` for that stage. `baseline_tokens_estimate` is computed on the *first* run by temporarily disabling compaction for a dry pass — or, after rollout, pulled from `.forge/run-history.db` averages.
+`ratio` is defined as `(baseline_tokens − pack_tokens) / baseline_tokens` for that stage. `baseline_tokens_estimate` is computed **analytically** as `sum(size_bytes for every File node) / 3.5` each time the pack is rendered. This is deterministic, requires no extra pipeline run, and makes `ratio` defined from the first compacted run. State-level field `baseline_source` records the origin:
+
+- `"estimated"` — analytical formula above (the default, always available).
+- `"measured"` — averaged from `.forge/run-history.db` once `run_count ≥ 5` for the project.
+
+The earlier "dry pass" option is removed.
 
 ### 6.3 `.forge/` artifacts
 
@@ -311,7 +325,7 @@ At any stage, a single eval regression > 2 points on `master` reverts the defaul
 1. **PageRank on sparse graphs degenerates to uniform.** A fresh or tiny project (< 50 nodes) has little edge structure, making the rank nearly uniform and the pack a random top-K. *Mitigation:* when `node_count < 50`, bypass PageRank and emit the current full listing (logged as `repomap.bypass.sparse_graph`). The cutoff is a config knob (`min_nodes_for_rank`, default 50, undocumented expert tuning).
 2. **Keyword extraction too coarse for code-heavy requirements.** Queries like "fix null-pointer in `PlanService.validate`" already carry exact symbol names; the stopwords/frequency approach keeps them. Queries like "make it faster" strip to nothing useful. *Mitigation:* when `len(keywords) < 2`, skip the keyword factor (`keyword_overlap = 0`) and rely on PageRank × recency alone. Emit INFO note in `stage_0_notes`.
 3. **Partial-slice assembly produces stitched code the model miscounts.** If the elided-lines marker is taken literally the model may hallucinate line numbers. *Mitigation:* use a marker that is valid in all 15 supported languages' comment syntaxes (`# ... elided N lines ...` for script-style, `/* ... elided N lines ... */` for C-family); include absolute line numbers for each retained window (`lines=87-112`) in the header so the model has grounding.
-4. **Cache staleness between incremental graph updates and compaction call.** Phase 02's incremental graph updater races the compaction call. *Mitigation:* `graph_sha` is computed as `sha256(file(code-graph.db))`, which changes on any write; the cache auto-invalidates. Eventual consistency is acceptable (one stale dispatch per update).
+4. **Cache staleness between incremental graph updates and compaction call.** Phase 02's incremental graph updater races the compaction call. *Mitigation:* `graph_sha` is **not** `sha256(file(code-graph.db))` (which would change on every SQLite write even for no-op updates). Instead, it is a content-derived SHA-256 over `id || '|' || updated_at` for all rows in `nodes` followed by all rows in `edges`, ordered by `id`. This is stable under no-op or metadata-only writes and invalidates the cache only when row contents actually change. Incremental graph updates that touch a single file re-SHA that file's rows but leave the other 999 files' contributions unchanged — so cross-cache-entry invalidation is eliminated except where the user's dispatch keywords intersect the updated rows.
 5. **Determinism across platforms.** NumPy BLAS differs between macOS Accelerate and Linux OpenBLAS. *Mitigation:* unit tests assert ranked *order* (not absolute values), and the power-iteration tolerance (`1e-6`) is well above BLAS noise. Tie-breaking falls back to `node.id` ascending.
 
 ### Open questions
