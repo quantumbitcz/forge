@@ -26,4 +26,5 @@ ignore = ["E501"]  # line length handled elsewhere
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 python_files = ["test_*.py"]
+pythonpath = ["."]
 addopts = "-ra"

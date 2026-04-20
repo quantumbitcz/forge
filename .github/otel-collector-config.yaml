@@ -1,0 +1,24 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  file:
+    path: /tmp/otel/otel-out.jsonl
+    rotation:
+      max_megabytes: 100
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [file]
+  extensions: [health_check]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133

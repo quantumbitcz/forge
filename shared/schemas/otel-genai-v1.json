@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantumbit.cz/forge/schemas/otel-genai-v1.json",
+  "title": "OTel GenAI Semantic Conventions — forge pinned subset (2026-04)",
+  "type": "object",
+  "properties": {
+    "agent_span": {
+      "type": "object",
+      "required": [
+        "gen_ai.agent.name",
+        "gen_ai.operation.name",
+        "gen_ai.request.model"
+      ],
+      "properties": {
+        "gen_ai.agent.name":       {"type": "string"},
+        "gen_ai.agent.description":{"type": "string"},
+        "gen_ai.agent.id":         {"type": "string"},
+        "gen_ai.operation.name":   {"type": "string", "enum": ["invoke_agent", "execute_tool", "create_agent"]},
+        "gen_ai.request.model":    {"type": "string"},
+        "gen_ai.tokens.input":     {"type": "integer", "minimum": 0},
+        "gen_ai.tokens.output":    {"type": "integer", "minimum": 0},
+        "gen_ai.tokens.total":     {"type": "integer", "minimum": 0},
+        "gen_ai.cost.usd":         {"type": "number",  "minimum": 0},
+        "gen_ai.tool.calls":       {"type": "integer", "minimum": 0},
+        "gen_ai.response.finish_reasons": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "tool_span": {
+      "type": "object",
+      "required": ["gen_ai.operation.name", "gen_ai.tool.name"],
+      "properties": {
+        "gen_ai.operation.name": {"const": "execute_tool"},
+        "gen_ai.tool.name":      {"type": "string"},
+        "gen_ai.tool.call.id":   {"type": "string"}
+      }
+    }
+  }
+}

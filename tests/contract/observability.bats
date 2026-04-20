@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
-# Contract tests: observability.md existence, required sections, metrics, and span schema.
+# Contract tests: observability.md existence, required sections, semconv
+# attributes, and span-name cardinality budget. Rewritten in Phase 09 for
+# the OTel GenAI Semantic Conventions (2026) migration.
 
 load '../helpers/test-helpers'
 
@@ -13,16 +15,31 @@ OBSERVABILITY="$PLUGIN_ROOT/shared/observability.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Required sections
+# 2. Required sections (Phase 09 structure)
 # ---------------------------------------------------------------------------
-@test "observability: contains ## Trace Hierarchy" {
-  grep -q "^## Trace Hierarchy" "$OBSERVABILITY" \
-    || fail "Missing required section: ## Trace Hierarchy"
+@test "observability: contains ## Durability contract" {
+  grep -q "^## Durability contract" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Durability contract"
 }
 
-@test "observability: contains ## Metrics" {
-  grep -q "^## Metrics" "$OBSERVABILITY" \
-    || fail "Missing required section: ## Metrics"
+@test "observability: contains ## Sampler" {
+  grep -q "^## Sampler" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Sampler"
+}
+
+@test "observability: contains ## Trace-context propagation" {
+  grep -q "^## Trace-context propagation" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Trace-context propagation"
+}
+
+@test "observability: contains ## Attributes" {
+  grep -q "^## Attributes" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Attributes"
+}
+
+@test "observability: contains ## Cardinality budget" {
+  grep -q "^## Cardinality budget" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Cardinality budget"
 }
 
 @test "observability: contains ## Configuration" {
@@ -30,150 +47,140 @@ OBSERVABILITY="$PLUGIN_ROOT/shared/observability.md"
     || fail "Missing required section: ## Configuration"
 }
 
-@test "observability: contains ## Export Modes" {
-  grep -q "^## Export Modes" "$OBSERVABILITY" \
-    || fail "Missing required section: ## Export Modes"
+@test "observability: contains ## OpenInference compatibility" {
+  grep -q "^## OpenInference compatibility" "$OBSERVABILITY" \
+    || fail "Missing required section: ## OpenInference compatibility"
 }
 
-@test "observability: contains ## Span Schema" {
-  grep -q "^## Span Schema" "$OBSERVABILITY" \
-    || fail "Missing required section: ## Span Schema"
-}
-
-@test "observability: contains ## State Schema" {
-  grep -q "^## State Schema" "$OBSERVABILITY" \
-    || fail "Missing required section: ## State Schema"
-}
-
-@test "observability: contains ## PREFLIGHT Constraints" {
-  grep -q "^## PREFLIGHT Constraints" "$OBSERVABILITY" \
-    || fail "Missing required section: ## PREFLIGHT Constraints"
+@test "observability: contains ## Migration from forge-otel-export.sh" {
+  grep -q "^## Migration from \`forge-otel-export.sh\`" "$OBSERVABILITY" \
+    || fail "Missing required section: ## Migration from forge-otel-export.sh"
 }
 
 # ---------------------------------------------------------------------------
-# 3. All 9 metrics defined
+# 3. Semconv agent-span attributes
 # ---------------------------------------------------------------------------
-@test "observability: defines forge.stage.duration_seconds metric" {
-  grep -q "forge\.stage\.duration_seconds" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.stage.duration_seconds"
+@test "observability: documents gen_ai.agent.name attribute" {
+  grep -q "gen_ai\.agent\.name" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.agent.name"
 }
 
-@test "observability: defines forge.agent.duration_seconds metric" {
-  grep -q "forge\.agent\.duration_seconds" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.agent.duration_seconds"
+@test "observability: documents gen_ai.request.model attribute" {
+  grep -q "gen_ai\.request\.model" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.request.model"
 }
 
-@test "observability: defines forge.agent.tokens.input metric" {
-  grep -q "forge\.agent\.tokens\.input" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.agent.tokens.input"
+@test "observability: documents gen_ai.tokens.input attribute" {
+  grep -q "gen_ai\.tokens\.input" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.tokens.input"
 }
 
-@test "observability: defines forge.agent.tokens.output metric" {
-  grep -q "forge\.agent\.tokens\.output" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.agent.tokens.output"
+@test "observability: documents gen_ai.tokens.output attribute" {
+  grep -q "gen_ai\.tokens\.output" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.tokens.output"
 }
 
-@test "observability: defines forge.convergence.iterations metric" {
-  grep -q "forge\.convergence\.iterations" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.convergence.iterations"
+@test "observability: documents gen_ai.tokens.total attribute" {
+  grep -q "gen_ai\.tokens\.total" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.tokens.total"
 }
 
-@test "observability: defines forge.score metric" {
-  grep -q "forge\.score" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.score"
+@test "observability: documents gen_ai.cost.usd attribute" {
+  grep -q "gen_ai\.cost\.usd" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.cost.usd"
 }
 
-@test "observability: defines forge.findings.count metric" {
+@test "observability: documents gen_ai.tool.calls attribute" {
+  grep -q "gen_ai\.tool\.calls" "$OBSERVABILITY" \
+    || fail "Missing semconv attribute: gen_ai.tool.calls"
+}
+
+# ---------------------------------------------------------------------------
+# 4. Forge-specific pipeline/stage attributes
+# ---------------------------------------------------------------------------
+@test "observability: documents forge.run_id attribute" {
+  grep -q "forge\.run_id" "$OBSERVABILITY" \
+    || fail "Missing forge attribute: forge.run_id"
+}
+
+@test "observability: documents forge.stage attribute" {
+  grep -q "forge\.stage" "$OBSERVABILITY" \
+    || fail "Missing forge attribute: forge.stage"
+}
+
+@test "observability: documents forge.findings.count attribute" {
   grep -q "forge\.findings\.count" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.findings.count"
-}
-
-@test "observability: defines forge.recovery.budget_used metric" {
-  grep -q "forge\.recovery\.budget_used" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.recovery.budget_used"
-}
-
-@test "observability: defines forge.model.distribution metric" {
-  grep -q "forge\.model\.distribution" "$OBSERVABILITY" \
-    || fail "Missing metric: forge.model.distribution"
+    || fail "Missing forge attribute: forge.findings.count"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Span schema fields
+# 5. Cardinality-safe span name patterns
 # ---------------------------------------------------------------------------
-@test "observability: span schema includes name field" {
-  grep -q '| `name`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'name' field"
+@test "observability: lists pipeline span-name pattern" {
+  grep -q "pipeline" "$OBSERVABILITY" \
+    || fail "Cardinality budget missing 'pipeline' span name"
 }
 
-@test "observability: span schema includes type field" {
-  grep -q '| `type`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'type' field"
+@test "observability: lists stage span-name pattern" {
+  grep -qE "stage\.<STAGE>|stage\." "$OBSERVABILITY" \
+    || fail "Cardinality budget missing 'stage.<STAGE>' span name"
 }
 
-@test "observability: span schema includes start field" {
-  grep -q '| `start`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'start' field"
+@test "observability: lists agent span-name pattern" {
+  grep -qE "agent\.<agent_name>|agent\." "$OBSERVABILITY" \
+    || fail "Cardinality budget missing 'agent.<agent_name>' span name"
 }
 
-@test "observability: span schema includes end field" {
-  grep -q '| `end`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'end' field"
+@test "observability: lists tool span-name pattern" {
+  grep -qE "tool\.<tool_name>|tool\." "$OBSERVABILITY" \
+    || fail "Cardinality budget missing 'tool.<tool_name>' span name"
 }
 
-@test "observability: span schema includes agent field" {
-  grep -q '| `agent`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'agent' field"
-}
-
-@test "observability: span schema includes model field" {
-  grep -q '| `model`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'model' field"
-}
-
-@test "observability: span schema includes tokens_in field" {
-  grep -q '| `tokens_in`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'tokens_in' field"
-}
-
-@test "observability: span schema includes tokens_out field" {
-  grep -q '| `tokens_out`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'tokens_out' field"
-}
-
-@test "observability: span schema includes findings_count field" {
-  grep -q '| `findings_count`' "$OBSERVABILITY" \
-    || fail "Span schema missing 'findings_count' field"
+@test "observability: lists batch span-name pattern" {
+  grep -q "batch\.review-round" "$OBSERVABILITY" \
+    || fail "Cardinality budget missing 'batch.review-round-<N>' span name"
 }
 
 # ---------------------------------------------------------------------------
-# 5. Span types documented
+# 6. Exporter options
 # ---------------------------------------------------------------------------
-@test "observability: documents all four span types" {
-  grep -q "pipeline" "$OBSERVABILITY" || fail "Span type 'pipeline' not documented"
-  grep -q "stage" "$OBSERVABILITY" || fail "Span type 'stage' not documented"
-  grep -q "agent" "$OBSERVABILITY" || fail "Span type 'agent' not documented"
-  grep -q "batch" "$OBSERVABILITY" || fail "Span type 'batch' not documented"
+@test "observability: documents grpc exporter option" {
+  grep -qE "\bgrpc\b" "$OBSERVABILITY" \
+    || fail "grpc exporter not documented"
+}
+
+@test "observability: documents http exporter option" {
+  grep -qE "\bhttp\b" "$OBSERVABILITY" \
+    || fail "http exporter not documented"
+}
+
+@test "observability: documents console exporter option" {
+  grep -qE "\bconsole\b" "$OBSERVABILITY" \
+    || fail "console exporter not documented"
 }
 
 # ---------------------------------------------------------------------------
-# 6. Export modes documented
+# 7. Replay / durability contract
 # ---------------------------------------------------------------------------
-@test "observability: documents local export mode" {
-  grep -q "### Local" "$OBSERVABILITY" \
-    || fail "Local export mode not documented"
+@test "observability: documents otel.replay() as authoritative" {
+  grep -q "replay" "$OBSERVABILITY" \
+    || fail "otel.replay() not documented"
 }
 
-@test "observability: documents otel export mode" {
-  grep -q "### OTel" "$OBSERVABILITY" \
-    || fail "OTel export mode not documented"
+@test "observability: documents events.jsonl source of truth" {
+  grep -q "events\.jsonl" "$OBSERVABILITY" \
+    || fail "events.jsonl durability source not documented"
 }
 
 # ---------------------------------------------------------------------------
-# 7. Export status enum values
+# 8. Attribute rename migration table
 # ---------------------------------------------------------------------------
-@test "observability: defines export_status enum values" {
-  grep -q "pending" "$OBSERVABILITY" || fail "export_status value 'pending' not defined"
-  grep -q "exported" "$OBSERVABILITY" || fail "export_status value 'exported' not defined"
-  grep -q "failed" "$OBSERVABILITY" || fail "export_status value 'failed' not defined"
+@test "observability: documents tokens_in → gen_ai.tokens.input rename" {
+  grep -q "tokens_in" "$OBSERVABILITY" \
+    || fail "Migration table missing tokens_in → gen_ai.tokens.input"
+}
+
+@test "observability: documents tokens_out → gen_ai.tokens.output rename" {
+  grep -q "tokens_out" "$OBSERVABILITY" \
+    || fail "Migration table missing tokens_out → gen_ai.tokens.output"
 }
