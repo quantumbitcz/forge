@@ -8,6 +8,7 @@ import json
 import re
 import sys
 from itertools import combinations
+from pathlib import Path
 from typing import Any
 
 KEYWORD_PATTERN = re.compile(
@@ -22,6 +23,8 @@ PLAN_CACHE_MARGINAL_LOW = 0.40
 PLAN_CACHE_MARGINAL_HIGH = 0.59
 SHAPER_DELTA_MAX = 10
 DOMAIN_DELTA_MAX = 0.15
+RETENTION_RUNS = 20
+SCHEMA_VERSION = "1.0.0"
 
 COLD_START_DEFAULT = 4500
 WINDOW = 10
@@ -299,6 +302,77 @@ def _cmd_pick_winner(args: argparse.Namespace) -> None:
     sys.stdout.write("\n")
 
 
+def persist_candidate(forge_dir: str, run_id: str, candidate: dict[str, Any]) -> str:
+    """Write candidate JSON under .forge/plans/candidates/{run_id}/cand-{N}.json.
+
+    Maintains .forge/plans/candidates/index.json as an ordered list of
+    {run_id, candidate_count, created_at, updated_at} entries. FIFO evicts the
+    oldest run directory when more than RETENTION_RUNS runs are indexed.
+
+    Returns the absolute path of the written candidate JSON file.
+    """
+    base = Path(forge_dir) / "plans" / "candidates"
+    run_dir = base / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    candidate.setdefault("schema_version", SCHEMA_VERSION)
+    cand_path = run_dir / f"{candidate['candidate_id']}.json"
+    cand_path.write_text(json.dumps(candidate, indent=2))
+
+    index_path = base / "index.json"
+    index: dict[str, Any] = {"runs": []}
+    if index_path.exists():
+        try:
+            index = json.loads(index_path.read_text())
+        except json.JSONDecodeError:
+            index = {"runs": []}
+
+    runs: list[dict[str, Any]] = index.get("runs", [])
+    existing = next((r for r in runs if r["run_id"] == run_id), None)
+    if existing:
+        existing["candidate_count"] = existing.get("candidate_count", 0) + 1
+        existing["updated_at"] = candidate["created_at"]
+    else:
+        runs.append(
+            {
+                "run_id": run_id,
+                "candidate_count": 1,
+                "created_at": candidate["created_at"],
+                "updated_at": candidate["created_at"],
+            }
+        )
+
+    # FIFO is insertion-order; created_at is informational only. Do not sort,
+    # because timestamps may not be zero-padded and lexicographic sort would
+    # misorder (e.g. "...:10Z" < "...:1Z"). Append order reflects real FIFO.
+
+    while len(runs) > RETENTION_RUNS:
+        evicted = runs.pop(0)
+        evicted_dir = base / evicted["run_id"]
+        if evicted_dir.exists():
+            for f in evicted_dir.iterdir():
+                f.unlink()
+            evicted_dir.rmdir()
+
+    index["runs"] = runs
+    index_path.write_text(json.dumps(index, indent=2))
+    return str(cand_path)
+
+
+def _read_candidate_json(raw: str) -> dict[str, Any]:
+    """Accept either a literal JSON string or `@path` to a JSON file."""
+    if raw.startswith("@"):
+        return json.loads(Path(raw[1:]).read_text())
+    return json.loads(raw)
+
+
+def _cmd_persist_candidate(args: argparse.Namespace) -> None:
+    candidate = _read_candidate_json(args.candidate_json)
+    path = persist_candidate(args.forge_dir, args.run_id, candidate)
+    json.dump({"written": path}, sys.stdout)
+    sys.stdout.write("\n")
+
+
 def _cmd_detect_ambiguity(args: argparse.Namespace) -> None:
     result = detect_ambiguity(
         requirement=args.requirement,
@@ -361,6 +435,16 @@ def main() -> int:
         help="'id:verdict:validator_score:tokens'",
     )
     p_pick.set_defaults(func=_cmd_pick_winner)
+
+    p_persist = subparsers.add_parser("persist-candidate")
+    p_persist.add_argument("--forge-dir", required=True)
+    p_persist.add_argument("--run-id", required=True)
+    p_persist.add_argument(
+        "--candidate-json",
+        required=True,
+        help="JSON literal, or @path for file-based input",
+    )
+    p_persist.set_defaults(func=_cmd_persist_candidate)
 
     args = parser.parse_args()
     args.func(args)

@@ -47,6 +47,31 @@ Rules (see §4.4 of design spec for full table): auto-pick when delta > `auto_pi
 
 Path: `.forge/plans/candidates/{run_id}/cand-{N}.json`. Schema: v1.0.0 (fields per design spec §5.4). Index: `.forge/plans/candidates/index.json`. FIFO eviction: keep last 20 runs. Survives `/forge-recover reset`.
 
+### Candidate payload
+
+Each `cand-{N}.json` is written by `persist_candidate` in `hooks/_py/speculation.py` and contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `schema_version` | str | Stamped `"1.0.0"` (set by writer if missing). |
+| `run_id` | str | Pipeline run identifier. |
+| `candidate_id` | str | `cand-{N}` where N ∈ [1, N_candidates]. |
+| `emphasis_axis` | str | One of `simplicity`, `robustness`, `velocity` (round-robin). |
+| `exploration_seed` | int | `hash(run_id + candidate_id) % 2**31`. |
+| `plan_hash` | str | Hash of the rendered plan markdown. |
+| `plan_content` | str | Plan markdown body (trimmed). |
+| `validator_verdict` | str | `GO`, `REVISE`, or `NO-GO`. |
+| `validator_score` | int | 0-100 validator score. |
+| `selection_score` | float | Combined score (see Selection formula). |
+| `selected` | bool | `true` if this candidate was the chosen winner. |
+| `tokens.planner` | int | Planner tokens attributed to this candidate. |
+| `tokens.validator` | int | Validator tokens attributed to this candidate. |
+| `created_at` | str | ISO-8601 UTC timestamp. |
+
+### Index file
+
+`.forge/plans/candidates/index.json` is a JSON object `{"runs": [...]}` where each entry is `{run_id, candidate_count, created_at, updated_at}`, sorted by `created_at`. FIFO eviction removes the oldest run directory and its index entry once `len(runs) > 20`. Writer: `hooks/_py/speculation.py::persist_candidate`.
+
 ## Eval Methodology
 
 Corpus: `evals/speculation/corpus.json`, 12 curated ambiguous requirements across auth/migrations/API/state/UI. Metrics: quality lift >= +5 (floor 0), token ratio <= 2.5x (hard ceiling), selection precision >= 60% (target 75%), trigger rate in 20-50%. Baseline: `speculation.enabled: false` captured on identical seeds.
