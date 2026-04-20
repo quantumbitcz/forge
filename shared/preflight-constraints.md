@@ -134,3 +134,26 @@ See `shared/consistency/voting.md` for the dispatch contract, aggregation algori
 | `observability.otel.flush_interval_seconds`     | int in `[1, 60]`      | `2`               |
 
 Violations log WARNING and fall back to defaults. When `enabled=true` but `opentelemetry-api` is not importable, WARNING + disable OTel for the run (pipeline continues — emission is best-effort; `otel.replay()` remains authoritative via `.forge/events.jsonl`). See `shared/observability.md` for the durability contract and sampler semantics.
+
+## Repo-map prompt compaction (Phase 10)
+
+**Rule:** `code_graph.prompt_compaction.enabled: true` requires `code_graph.enabled: true`. If `code_graph.prompt_compaction.enabled: true`, then `code_graph.enabled: true` MUST also hold.
+
+**Rationale:** The repo-map ranker reads `.forge/code-graph.db`; disabling the graph while enabling compaction yields permanent degraded packs and hides graph-build misconfiguration.
+
+**PREFLIGHT action when violated:** Emit CRITICAL `CONFIG-PROMPT-COMPACTION-REQUIRES-GRAPH`, halt with message:
+
+> "code_graph.prompt_compaction.enabled is true but code_graph.enabled is false. Enable the graph or set prompt_compaction.enabled: false."
+
+**Defaults snapshot (Phase 10 landing):**
+
+- `prompt_compaction.enabled: false` (opt-in)
+- `top_k: 25`
+- `token_budget: 8000`
+- `recency_window_days: 30`
+- `min_slice_tokens: 400`
+- `recency_boost_max: 1.5`
+- `keyword_overlap_cap: 5`
+- `cache_max_entries: 16`
+- `min_nodes_for_rank: 50`
+- `edge_weights: {CALLS:1.0, REFERENCES:1.0, IMPORTS:0.7, INHERITS:0.8, IMPLEMENTS:0.8, TESTS:0.4, CONTAINS:0.3}`
