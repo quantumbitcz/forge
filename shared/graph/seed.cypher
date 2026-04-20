@@ -1928,6 +1928,7 @@ CREATE (:Agent {name: 'fg-505-build-verifier', role: 'other', file_path: 'agents
 CREATE (:Agent {name: 'fg-506-migration-verifier', role: 'other', file_path: 'agents/fg-506-migration-verifier.md'});
 CREATE (:Agent {name: 'fg-510-mutation-analyzer', role: 'other', file_path: 'agents/fg-510-mutation-analyzer.md'});
 CREATE (:Agent {name: 'fg-515-property-test-generator', role: 'other', file_path: 'agents/fg-515-property-test-generator.md'});
+CREATE (:Agent {name: 'fg-555-resilience-tester', role: 'other', file_path: 'agents/fg-555-resilience-tester.md'});
 CREATE (:Agent {name: 'fg-590-pre-ship-verifier', role: 'other', file_path: 'agents/fg-590-pre-ship-verifier.md'});
 CREATE (:Agent {name: 'fg-600-pr-builder', role: 'other', file_path: 'agents/fg-600-pr-builder.md'});
 CREATE (:Agent {name: 'fg-610-infra-deploy-verifier', role: 'other', file_path: 'agents/fg-610-infra-deploy-verifier.md'});
@@ -2185,6 +2186,8 @@ MATCH (a:Agent {name: 'fg-510-mutation-analyzer'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'fg-510-mutation-analyzer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-515-property-test-generator'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-515-property-test-generator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-555-resilience-tester'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-555-resilience-tester'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-590-pre-ship-verifier'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-590-pre-ship-verifier'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-590-pre-ship-verifier'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
@@ -2816,6 +2819,7 @@ CREATE (:Learnings {name: 'rancher', file_path: 'shared/learnings/rancher.md'});
 CREATE (:Learnings {name: 'react', file_path: 'shared/learnings/react.md'});
 CREATE (:Learnings {name: 'redis-streams', file_path: 'shared/learnings/redis-streams.md'});
 CREATE (:Learnings {name: 'redis', file_path: 'shared/learnings/redis.md'});
+CREATE (:Learnings {name: 'resilience', file_path: 'shared/learnings/resilience.md'});
 CREATE (:Learnings {name: 'rest', file_path: 'shared/learnings/rest.md'});
 CREATE (:Learnings {name: 'room-cache', file_path: 'shared/learnings/room-cache.md'});
 CREATE (:Learnings {name: 'room-migrations', file_path: 'shared/learnings/room-migrations.md'});
@@ -3754,6 +3758,10 @@ MATCH (l:Learnings {name: 'redis'}), (m:LayerModule {name: 'redis'}) CREATE (m)-
 MATCH (l:Learnings {name: 'redis'}), (t:TestingFramework {name: 'redis'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'redis'}), (la:Language {name: 'redis'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'redis'}), (f:Framework {name: 'redis'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'resilience'}), (m:LayerModule {name: 'resilience'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'resilience'}), (t:TestingFramework {name: 'resilience'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'resilience'}), (la:Language {name: 'resilience'}) CREATE (la)-[:HAS_LEARNINGS]->(l);
+MATCH (l:Learnings {name: 'resilience'}), (f:Framework {name: 'resilience'}) CREATE (f)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rest'}), (m:LayerModule {name: 'rest'}) CREATE (m)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rest'}), (t:TestingFramework {name: 'rest'}) CREATE (t)-[:HAS_LEARNINGS]->(l);
 MATCH (l:Learnings {name: 'rest'}), (la:Language {name: 'rest'}) CREATE (la)-[:HAS_LEARNINGS]->(l);

@@ -44,6 +44,7 @@ Single source of truth for all forge agents. When referencing an agent in skills
 | fg-506-migration-verifier | 3 | No | Verify | Migration |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-515-property-test-generator | 3 | No | Verify | Testing |
+| fg-555-resilience-tester | 3 | No | Verify | Resilience |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |
 | fg-610-infra-deploy-verifier | 3 | No | Ship | Infrastructure |
