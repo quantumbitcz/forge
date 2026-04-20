@@ -52,6 +52,9 @@ Subcommand dispatch pattern documented in `shared/skill-subcommand-pattern.md`.
 - Pseudo-state `REWINDING` in `shared/state-transitions.md` — appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket a rewind op; never persists to `state.story_state`.
 - `recovery.time_travel.*` config block (`enabled`, `retention_days`, `max_checkpoints_per_run`, `require_clean_worktree`, `compression`, `preserve_legacy`).
 - `state.json.checkpoints` (append-only audit array) and `state.json.head_checkpoint` (mirrors on-disk `HEAD`).
+- `shared/recovery/time-travel.md` — full protocol spec (CAS layout, atomic 5-step restore, crash repair, DAG semantics, GC policy, failure modes).
+- `tests/evals/time-travel/` — bats eval harness covering round-trip, dedup, dirty-worktree abort, crash-mid-rewind repair (rollback + roll-forward), tree-DAG golden output, and rewind-then-replay convergence.
+- `tests/run-all.sh` — new `time-travel` tier; the `all` and `eval` tiers now also pick up `tests/evals/time-travel/*.bats` when present.
 
 ### Changed
 
