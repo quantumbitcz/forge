@@ -917,6 +917,28 @@ Example:
 }
 ```
 
+## security.injection_* (added in 3.1.0)
+
+Counters incremented by `hooks/_py/mcp_response_filter.py` (via orchestrator callback) for `events_count` and `blocks_count`; incremented by the orchestrator confirmation gate for `confirmations_requested`. Read by `fg-700-retrospective` and `/forge-insights`. All fields are optional and default to 0 / null.
+
+```json
+{
+  "security": {
+    "injection_events_count": 0,
+    "injection_blocks_count": 0,
+    "injection_confirmations_requested": 0,
+    "last_event_ts": null
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `security.injection_events_count` | integer | Total invocations of the MCP response filter for this run, regardless of outcome. |
+| `security.injection_blocks_count` | integer | Subset of `injection_events_count` that resulted in a `quarantine` action (BLOCK-tier match). |
+| `security.injection_confirmations_requested` | integer | T-C-tier ingresses to a `Bash`-capable agent that fired the `AskUserQuestion` confirmation gate (see `shared/ask-user-question-patterns.md`). |
+| `security.last_event_ts` | string \| null | RFC 3339 UTC timestamp of the most recent filter invocation, or `null` if none. |
+
 ## events.jsonl
 
 Unified append-only event log capturing all pipeline events. See `shared/event-log.md` for full documentation, event types, and causal chain structure. See `shared/schemas/event-schema.json` for the JSON Schema.

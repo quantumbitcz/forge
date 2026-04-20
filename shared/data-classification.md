@@ -118,3 +118,18 @@ In `forge-config.md`:
 ## /forge-recover reset Behavior
 
 `/forge-recover reset` clears `data_classification.redaction_counter` in `state.json`. Redaction history is not preserved across runs. `/forge-recover reset --hard` removes all artifacts including those containing `[REDACTED:...]` placeholders.
+
+## 12. Input Classification (cross-reference)
+
+This document governs *outbound* classification — what the pipeline writes (logs, PRs, artifacts) and how secrets are redacted on write. For *inbound* classification — how agents consume external data from MCP tools, wikis, caches, and cross-project learnings — see `shared/untrusted-envelope.md`. The two documents are complementary:
+
+- Outbound (here): prevent secrets from leaving the pipeline.
+- Inbound (envelope): prevent adversarial prompts from entering the pipeline.
+
+All external data sources are tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. Credential-shaped content is quarantined at the filter layer and never reaches the envelope stage.
+
+### Finding Categories addendum
+
+| Category | Description |
+|----------|-------------|
+| `SEC-INJECTION-*` | Prompt-injection findings emitted by the inbound filter. See `shared/untrusted-envelope.md` and `shared/checks/category-registry.json` for the authoritative list and semantics. |
