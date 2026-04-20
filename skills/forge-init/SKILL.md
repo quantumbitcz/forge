@@ -1138,12 +1138,12 @@ If nothing to clean up, skip this phase silently.
 If `graph.enabled` is `true` in the generated `forge.local.md` (this is the default — enabled by default per CLAUDE.md):
 
 1. **Check Docker availability**: Run `docker info` to verify Docker is running.
-   - If Docker is NOT available: skip graph init with a note — "Docker is not running. Graph features will be disabled. Start Docker and run `/forge-graph-init` later to enable."
+   - If Docker is NOT available: skip graph init with a note — "Docker is not running. Graph features will be disabled. Start Docker and run `/forge-graph init` later to enable."
    - If Docker IS available: **always proceed** — the Neo4j image will be pulled automatically if not already present. Do NOT skip just because the image is missing.
 
-2. **Invoke `/forge-graph-init`** to start the Neo4j container (pulling the image if needed), import the plugin seed, and build the project codebase graph.
+2. **Invoke `/forge-graph init`** to start the Neo4j container (pulling the image if needed), import the plugin seed, and build the project codebase graph.
 
-3. If graph-init fails due to a **non-Docker issue** (port conflict, disk space, timeout, etc.), warn the user but continue — graph is optional. Suggest: "Run `/forge-graph-init` later to retry."
+3. If graph-init fails due to a **non-Docker issue** (port conflict, disk space, timeout, etc.), warn the user but continue — graph is optional. Suggest: "Run `/forge-graph init` later to retry."
 
 4. Set `integrations.neo4j.available` based on the result.
 
@@ -1408,7 +1408,7 @@ Only show sections that have content. If no crosscutting modules were detected, 
 | Build command fails during validation | Report error. Ask whether to continue or fix first (hard blocker) |
 | Test command fails during validation | Report error. Note this may be OK for new projects. Ask to continue |
 | Config file already exists | Ask user: Overwrite or Keep existing |
-| Docker unavailable for graph init | Skip graph init with note. Suggest running `/forge-graph-init` later |
+| Docker unavailable for graph init | Skip graph init with note. Suggest running `/forge-graph init` later |
 | SQLite/tree-sitter unavailable for code graph | Skip code graph build. Will be attempted at first PREFLIGHT |
 | Discovery script not found | Skip cross-repo discovery silently with INFO note |
 | Convention validation fails | Show missing references, suggest corrections, ask to fix or continue |
