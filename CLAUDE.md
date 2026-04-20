@@ -233,6 +233,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Repo-map PageRank (Phase 10) | `code_graph.prompt_compaction.*` | `hooks/_py/repomap.py` — biased PageRank + token-budgeted pack assembly. Replaces full-directory listings in `fg-100`, `fg-200`, `fg-300` prompts. Opt-in default OFF. Categories: `REPOMAP-BYPASS-*` |
 | Self-consistency voting (F33, Phase 11) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
 | Speculative plan branches (F31+1 / Phase 12) | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
+| Docs integrity (Phase 06) | `docs.learnings_index.auto_update` | When `true`, retrospective regenerates `shared/learnings-index.md` on any new learning. CI workflow `docs-integrity` enforces freshness regardless of this setting. Default: `true`. |
 
 ### Deterministic Control Flow
 
