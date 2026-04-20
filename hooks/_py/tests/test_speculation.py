@@ -1,9 +1,13 @@
+import tempfile
+from pathlib import Path
+
 from hooks._py.speculation import (
     check_diversity,
     compute_selection_score,
     derive_seed,
     detect_ambiguity,
     estimate_cost,
+    persist_candidate,
     pick_winner,
 )
 
@@ -204,3 +208,38 @@ def test_pick_winner_all_below_60():
     r = pick_winner(cands, 5, "autonomous")
     assert r["winner_id"] is None
     assert r["escalate"] == "all_below_60"
+
+
+def _cand(run_id: str, cand_id: str = "cand-1") -> dict:
+    seq = int(run_id.split("-")[-1])
+    return {
+        "run_id": run_id,
+        "candidate_id": cand_id,
+        "emphasis_axis": "a",
+        "exploration_seed": 1,
+        "plan_hash": "h",
+        "plan_content": "x",
+        "validator_verdict": "GO",
+        "validator_score": 80,
+        "selection_score": 80.0,
+        "selected": False,
+        "tokens": {"planner": 100, "validator": 50},
+        "created_at": f"2026-04-19T12:00:{seq:02d}Z",
+    }
+
+
+def test_persist_writes_file_and_index():
+    with tempfile.TemporaryDirectory() as d:
+        persist_candidate(d, "run-1", _cand("run-1"))
+        assert (Path(d) / "plans/candidates/run-1/cand-1.json").exists()
+        assert (Path(d) / "plans/candidates/index.json").exists()
+
+
+def test_fifo_eviction_at_21st_run():
+    with tempfile.TemporaryDirectory() as d:
+        for i in range(1, 23):
+            persist_candidate(d, f"run-{i}", _cand(f"run-{i}"))
+        assert not (Path(d) / "plans/candidates/run-1").exists()
+        assert not (Path(d) / "plans/candidates/run-2").exists()
+        assert (Path(d) / "plans/candidates/run-3").exists()
+        assert (Path(d) / "plans/candidates/run-22").exists()
