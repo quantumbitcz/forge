@@ -13,7 +13,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.8.0" (bumped from 1.7.0 in Phase 04 / CoVe)
+# 2. Schema version is "1.9.0" (bumped from 1.8.0 in Phase 11 / self-consistency voting)
 # ---------------------------------------------------------------------------
 @test "state-schema: schema version 1.9.0 documented" {
   grep -q '"version": "1.9.0"' "$STATE_SCHEMA" \
