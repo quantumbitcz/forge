@@ -1078,6 +1078,62 @@ Track `critic_revisions` in stage notes. Reset to 0 at start of each PLAN stage.
 
 **Linear:** `forge-linear-sync.sh emit plan_complete`
 
+### Speculative Dispatch (PLAN)
+
+When `speculation.enabled == true` AND mode not in `skip_in_modes`:
+
+1. **Detect ambiguity.** Shell out:
+   ```
+   python3 hooks/_py/speculation.py detect-ambiguity \
+     --requirement "$REQ" --confidence "$CONF" \
+     --shaper-alternatives "$SA" --shaper-delta "$SD" \
+     --plan-cache-sim "$SIM" --domain-count "$DC" --domain-delta "$DD"
+   ```
+   If `triggered == false`, proceed single-plan.
+
+2. **Estimate cost.** Shell out:
+   ```
+   python3 hooks/_py/speculation.py estimate-cost \
+     --baseline "$BASELINE" --n "$N" --ceiling "$CEIL" \
+     --recent-tokens "$TOKEN_HISTORY"
+   ```
+   If `abort == true`, log WARNING `speculation.aborted=token_ceiling`, record event `speculation.skipped`, proceed single-plan. Honors `token_ceiling_multiplier` from config.
+
+3. **Assign emphasis axes round-robin** from `speculation.emphasis_axes` over `candidates_max`.
+
+4. **Dispatch N `fg-200-planner` instances in parallel** (Agent-tool calls back-to-back). Each receives `speculative: true`, `candidate_id: cand-{i}`, `emphasis_axis`, and `exploration_seed` derived via `python3 hooks/_py/speculation.py derive-seed --run-id "$RID" --candidate-id "cand-$i"`. Each candidate dispatch creates its own substage task (blue color dot) under the PLAN stage.
+
+5. **Diversity check.** After all plans return, shell out:
+   ```
+   python3 hooks/_py/speculation.py check-diversity \
+     --plan cand-1.md --plan cand-2.md --plan cand-3.md \
+     --min-diversity-score "$MIN_DIV"
+   ```
+   If `degraded == true`, log `speculation.degraded = "low_diversity"`, pick top-1 plan, run a single validator, skip the N-way validator step.
+
+6. **Parallel validation.** Dispatch N parallel `fg-210-validator` calls (one per candidate). Each returns GO/REVISE/NO-GO and a score.
+
+7. **Pick winner.** Shell out:
+   ```
+   python3 hooks/_py/speculation.py pick-winner \
+     --auto-pick-threshold-delta "$DELTA" --mode "$MODE" \
+     --candidate "cand-1:GO:87:4120" --candidate "cand-2:GO:82:4200" ...
+   ```
+   If `escalate in {all_no_go, all_below_60}`, surface to user; do not auto-proceed.
+   If `needs_confirmation == true` (interactive mode): fire `AskUserQuestion` with top-2 summary.
+
+8. **Persist losers.** For each non-selected candidate:
+   ```
+   python3 hooks/_py/speculation.py persist-candidate \
+     --forge-dir .forge --run-id "$RID" --candidate-json "$JSON"
+   ```
+
+9. **Update state.** Populate `state.plan_candidates[]` and `state.speculation` per schema v1.7.0. Emit events `speculation.started` and `speculation.resolved` to `.forge/events.jsonl`.
+
+10. **Proceed to winner plan** for downstream stages.
+
+If step 1 returns `triggered == false` OR step 2 aborts, the single-plan path is unchanged. See `shared/speculation.md` for full contract.
+
 ---
 
 ## Stage 3: VALIDATE
