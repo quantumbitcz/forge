@@ -225,6 +225,26 @@ ALL transitions follow `shared/state-transitions.md` table. Look up (state, even
 - `/compact` after IMPLEMENT, VERIFY, REVIEW. Before compacting, write brief state summary.
 - Max 3-5 files (state, checkpoint, config, story brief). Never read source.
 
+### Repo-map pack (Phase 10, opt-in)
+
+If `code_graph.prompt_compaction.enabled: true`, the orchestrator emits the
+placeholder `{{REPO_MAP_PACK:BUDGET=8000:TOPK=25}}` wherever it previously
+pasted a full directory listing or PREFLIGHT docs-index dump. The pre-dispatch
+hook resolves the placeholder by invoking:
+
+    python3 ${CLAUDE_PLUGIN_ROOT}/hooks/_py/repomap.py build-pack \
+      --db .forge/code-graph.db \
+      --cache .forge/ranked-files-cache.json \
+      --keywords-file .forge/current-keywords.txt \
+      --budget 8000 --top-k 25
+
+and substituting stdout into the template. If the hook exits non-zero or emits
+`repomap.bypass.*` on stderr, the orchestrator logs INFO and falls back to the
+prior full listing (graceful degradation).
+
+When `prompt_compaction.enabled: false`, the placeholder is ignored and the
+orchestrator retains its current full-listing behavior.
+
 ### Dispatched Agents
 - Structured output only. Don't re-read conventions if path provided. Max 3-4 pattern files. Sub-agents: ONE task each.
 
