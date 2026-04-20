@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
+from itertools import combinations
 from typing import Any
 
 KEYWORD_PATTERN = re.compile(
@@ -20,6 +22,16 @@ PLAN_CACHE_MARGINAL_LOW = 0.40
 PLAN_CACHE_MARGINAL_HIGH = 0.59
 SHAPER_DELTA_MAX = 10
 DOMAIN_DELTA_MAX = 0.15
+
+COLD_START_DEFAULT = 4500
+WINDOW = 10
+
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with",
+    "is", "are", "be", "as", "by", "at", "this", "that", "it", "from",
+}
+
+VERDICT_BONUSES = {"GO": 0, "REVISE": -15}
 
 
 def detect_ambiguity(
@@ -71,6 +83,222 @@ def detect_ambiguity(
     }
 
 
+def derive_seed(run_id: str, candidate_id: str) -> int:
+    """Deterministic seed: sha256(run_id + candidate_id) mod 2^31."""
+    h = hashlib.sha256(f"{run_id}{candidate_id}".encode()).digest()
+    return int.from_bytes(h[:4], "big") % (2 ** 31)
+
+
+def estimate_cost(
+    baseline: int,
+    n: int,
+    ceiling: float,
+    recent_tokens: list[int] | None = None,
+    cold_start_default: int = COLD_START_DEFAULT,
+) -> dict[str, Any]:
+    """estimated = baseline + (mean(recent_tokens[-10:]) or cold_start_default) * n.
+
+    abort = estimated > baseline * ceiling.
+    """
+    recent_tokens = recent_tokens or []
+    window = recent_tokens[-WINDOW:]
+    per_candidate = (sum(window) // len(window)) if window else cold_start_default
+    estimated = baseline + per_candidate * n
+    abort = estimated > int(baseline * ceiling)
+    return {
+        "estimated": estimated,
+        "per_candidate_mean": per_candidate,
+        "window_used": len(window),
+        "abort": abort,
+        "ceiling_tokens": int(baseline * ceiling),
+    }
+
+
+def _cmd_derive_seed(args: argparse.Namespace) -> None:
+    sys.stdout.write(str(derive_seed(args.run_id, args.candidate_id)) + "\n")
+
+
+def _cmd_estimate_cost(args: argparse.Namespace) -> None:
+    tokens = (
+        [int(x) for x in args.recent_tokens.split(",") if x]
+        if args.recent_tokens
+        else []
+    )
+    result = estimate_cost(
+        baseline=args.baseline,
+        n=args.n,
+        ceiling=args.ceiling,
+        recent_tokens=tokens,
+    )
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
+def _tokens(text: str) -> set[str]:
+    """Tokenize to a stopword-filtered set of lowercase alphabetic words (>=2 chars)."""
+    return {w.lower() for w in re.findall(r"[A-Za-z]{2,}", text)} - STOPWORDS
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    if not a and not b:
+        return 1.0
+    union = a | b
+    if not union:
+        return 1.0
+    return len(a & b) / len(union)
+
+
+def check_diversity(plan_texts: list[str], min_diversity_score: float) -> dict[str, Any]:
+    """diversity = 1 - max_pairwise_jaccard; degraded = diversity < threshold."""
+    token_sets = [_tokens(p) for p in plan_texts]
+    if len(token_sets) < 2:
+        return {
+            "diversity": 1.0,
+            "max_pairwise_overlap": 0.0,
+            "degraded": False,
+            "threshold": min_diversity_score,
+        }
+
+    max_overlap = max(_jaccard(a, b) for a, b in combinations(token_sets, 2))
+    diversity = round(1.0 - max_overlap, 4)
+    return {
+        "diversity": diversity,
+        "max_pairwise_overlap": round(max_overlap, 4),
+        "degraded": diversity < min_diversity_score,
+        "threshold": min_diversity_score,
+    }
+
+
+def _cmd_check_diversity(args: argparse.Namespace) -> None:
+    texts: list[str] = []
+    for path in args.plan:
+        with open(path, encoding="utf-8") as f:
+            texts.append(f.read())
+    result = check_diversity(texts, args.min_diversity_score)
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
+def compute_selection_score(
+    validator_score: int,
+    verdict: str,
+    tokens: int,
+    batch_max_tokens: int,
+) -> dict[str, Any]:
+    """Selection score = validator_score + verdict_bonus + 0.1 * token_efficiency.
+
+    NO-GO candidates are eliminated (selection_score = None).
+    """
+    if verdict == "NO-GO":
+        return {"selection_score": None, "eliminated": True, "verdict": verdict}
+    bonus = VERDICT_BONUSES.get(verdict, 0)
+    efficiency = 0.0
+    if batch_max_tokens > 0:
+        efficiency = (batch_max_tokens - tokens) / batch_max_tokens * 100
+    score = validator_score + bonus + 0.1 * efficiency
+    return {
+        "selection_score": round(score, 4),
+        "eliminated": False,
+        "verdict": verdict,
+        "token_efficiency_bonus": round(efficiency, 4),
+    }
+
+
+def pick_winner(
+    candidates: list[dict[str, Any]],
+    auto_pick_threshold_delta: int,
+    mode: str,
+) -> dict[str, Any]:
+    """Rank scored candidates and pick a winner.
+
+    candidates: [{id, validator_score, verdict, tokens}, ...].
+    - All NO-GO -> escalate "all_no_go".
+    - Top selection_score < 60 -> escalate "all_below_60".
+    - Delta <= threshold and interactive -> needs_confirmation=True.
+    - Delta <= threshold and autonomous -> auto-pick top.
+    - Otherwise decisive top.
+    """
+    batch_max = max((c["tokens"] for c in candidates), default=0)
+
+    scored = []
+    for c in candidates:
+        s = compute_selection_score(
+            c["validator_score"], c["verdict"], c["tokens"], batch_max
+        )
+        scored.append({**c, **s})
+
+    eligible = [c for c in scored if not c["eliminated"]]
+
+    if not eligible:
+        return {
+            "winner_id": None,
+            "needs_confirmation": False,
+            "escalate": "all_no_go",
+            "runners_up": [c["id"] for c in scored],
+            "mode": mode,
+        }
+
+    eligible.sort(key=lambda c: c["selection_score"], reverse=True)
+    top = eligible[0]
+
+    if top["selection_score"] < 60:
+        return {
+            "winner_id": None,
+            "needs_confirmation": False,
+            "escalate": "all_below_60",
+            "runners_up": [c["id"] for c in eligible],
+            "mode": mode,
+        }
+
+    delta = (
+        top["selection_score"] - eligible[1]["selection_score"]
+        if len(eligible) > 1
+        else float("inf")
+    )
+    tied = delta <= auto_pick_threshold_delta and len(eligible) > 1
+    needs_confirmation = tied and mode == "interactive"
+
+    return {
+        "winner_id": top["id"],
+        "needs_confirmation": needs_confirmation,
+        "runners_up": [c["id"] for c in eligible[1:]],
+        "top_score": top["selection_score"],
+        "delta_to_next": None if delta == float("inf") else round(delta, 4),
+        "mode": mode,
+        "reasoning": (
+            "tie_autonomous_auto_pick"
+            if tied and mode == "autonomous"
+            else ("tie_interactive_ask_user" if tied else "decisive_top_score")
+        ),
+    }
+
+
+def _parse_candidate(spec: str) -> dict[str, Any]:
+    """Parse 'id:verdict:validator_score:tokens' into a candidate dict."""
+    parts = spec.split(":")
+    return {
+        "id": parts[0],
+        "verdict": parts[1],
+        "validator_score": int(parts[2]),
+        "tokens": int(parts[3]),
+    }
+
+
+def _cmd_compute_selection(args: argparse.Namespace) -> None:
+    result = compute_selection_score(
+        args.validator_score, args.verdict, args.tokens, args.batch_max_tokens
+    )
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
+def _cmd_pick_winner(args: argparse.Namespace) -> None:
+    candidates = [_parse_candidate(c) for c in args.candidate]
+    result = pick_winner(candidates, args.auto_pick_threshold_delta, args.mode)
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
 def _cmd_detect_ambiguity(args: argparse.Namespace) -> None:
     result = detect_ambiguity(
         requirement=args.requirement,
@@ -98,6 +326,41 @@ def main() -> int:
     p_detect.add_argument("--domain-count", type=int, default=0)
     p_detect.add_argument("--domain-delta", type=float, default=1.0)
     p_detect.set_defaults(func=_cmd_detect_ambiguity)
+
+    p_seed = subparsers.add_parser("derive-seed")
+    p_seed.add_argument("--run-id", required=True)
+    p_seed.add_argument("--candidate-id", required=True)
+    p_seed.set_defaults(func=_cmd_derive_seed)
+
+    p_cost = subparsers.add_parser("estimate-cost")
+    p_cost.add_argument("--baseline", type=int, required=True)
+    p_cost.add_argument("--n", type=int, required=True)
+    p_cost.add_argument("--ceiling", type=float, required=True)
+    p_cost.add_argument("--recent-tokens", type=str, default="")
+    p_cost.set_defaults(func=_cmd_estimate_cost)
+
+    p_div = subparsers.add_parser("check-diversity")
+    p_div.add_argument("--plan", action="append", required=True)
+    p_div.add_argument("--min-diversity-score", type=float, required=True)
+    p_div.set_defaults(func=_cmd_check_diversity)
+
+    p_sel = subparsers.add_parser("compute-selection")
+    p_sel.add_argument("--validator-score", type=int, required=True)
+    p_sel.add_argument("--verdict", required=True, choices=["GO", "REVISE", "NO-GO"])
+    p_sel.add_argument("--tokens", type=int, required=True)
+    p_sel.add_argument("--batch-max-tokens", type=int, required=True)
+    p_sel.set_defaults(func=_cmd_compute_selection)
+
+    p_pick = subparsers.add_parser("pick-winner")
+    p_pick.add_argument("--auto-pick-threshold-delta", type=int, required=True)
+    p_pick.add_argument("--mode", required=True, choices=["interactive", "autonomous"])
+    p_pick.add_argument(
+        "--candidate",
+        action="append",
+        required=True,
+        help="'id:verdict:validator_score:tokens'",
+    )
+    p_pick.set_defaults(func=_cmd_pick_winner)
 
     args = parser.parse_args()
     args.func(args)
