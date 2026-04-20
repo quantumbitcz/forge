@@ -1,0 +1,6 @@
+# AGPL dependency triggers policy violation CRITICAL
+PATTERN: package.json:* | LICENSE-POLICY-VIOLATION | CRITICAL | *strict-copyleft-lib* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: LICENSE-POLICY-VIOLATION
+VERDICT: FAIL

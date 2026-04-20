@@ -1920,6 +1920,7 @@ CREATE (:Agent:Reviewer {name: 'fg-410-code-reviewer', role: 'reviewer', file_pa
 CREATE (:Agent:Reviewer {name: 'fg-411-security-reviewer', role: 'reviewer', file_path: 'agents/fg-411-security-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-412-architecture-reviewer', role: 'reviewer', file_path: 'agents/fg-412-architecture-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-413-frontend-reviewer', role: 'reviewer', file_path: 'agents/fg-413-frontend-reviewer.md'});
+CREATE (:Agent:Reviewer {name: 'fg-414-license-reviewer', role: 'reviewer', file_path: 'agents/fg-414-license-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-416-performance-reviewer', role: 'reviewer', file_path: 'agents/fg-416-performance-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-417-dependency-reviewer', role: 'reviewer', file_path: 'agents/fg-417-dependency-reviewer.md'});
 CREATE (:Agent:Reviewer {name: 'fg-418-docs-consistency-reviewer', role: 'reviewer', file_path: 'agents/fg-418-docs-consistency-reviewer.md'});
@@ -2165,6 +2166,9 @@ MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'ag
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'frontend-design-theory'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-413-frontend-reviewer'}), (c:SharedContract {name: 'visual-verification'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-414-license-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-414-license-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-414-license-reviewer'}), (c:SharedContract {name: 'reviewer-boundaries'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-416-performance-reviewer'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-416-performance-reviewer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-416-performance-reviewer'}), (c:SharedContract {name: 'lsp-integration'}) CREATE (a)-[:READS]->(c);

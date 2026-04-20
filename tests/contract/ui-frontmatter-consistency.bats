@@ -157,6 +157,7 @@ has_tool() {
     fg-411-security-reviewer
     fg-412-architecture-reviewer
     fg-413-frontend-reviewer
+    fg-414-license-reviewer
     fg-416-performance-reviewer
     fg-417-dependency-reviewer
     fg-418-docs-consistency-reviewer

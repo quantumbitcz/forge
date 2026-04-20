@@ -1,0 +1,6 @@
+# License change triggers WARNING independent of new-license bucket
+PATTERN: node_modules/lodash-fork/package.json:* | LICENSE-CHANGE | WARNING | *MIT* | *
+MIN_FINDINGS: 1
+MAX_FINDINGS: 2
+HAS_CATEGORY: LICENSE-CHANGE
+VERDICT: CONCERNS
