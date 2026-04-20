@@ -3,6 +3,37 @@
 All notable changes to the Forge plugin are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Phase 09: OTel GenAI Semantic Conventions
+
+### Breaking
+
+- **OTel exporter rewritten in Python.** `shared/forge-otel-export.sh` is **removed** (Task 18, upcoming version bump). Use `python -m hooks._py.otel_cli replay ...` for post-hoc export from the event log. Live emission happens automatically via `hooks/_py/otel.py` when `observability.otel.enabled=true`.
+- **Attribute rename** — legacy custom names removed; semconv replacements:
+  - `tokens_in` → `gen_ai.tokens.input`
+  - `tokens_out` → `gen_ai.tokens.output`
+  - `agent` → `gen_ai.agent.name`
+  - `model` → `gen_ai.request.model`
+  - `findings_count` → `forge.findings.count`
+
+  Rebuild dashboards keyed on the old names.
+- **Config keys removed.** Replace `observability.export` and `observability.otel_endpoint` with the nested `observability.otel.*` form documented in `shared/observability.md`. `telemetry.export_status` is no longer written to `state.json`.
+
+### Added
+
+- OTel GenAI Semantic Conventions (2026) span emission per pipeline, stage, and agent dispatch (`hooks/_py/otel.py`).
+- W3C Trace Context propagation to subagent dispatches via `TRACEPARENT` (`otel.dispatch_env`).
+- `ParentBased(TraceIdRatioBased)` sampler — subagent decisions inherit the root. Inbound `sampled=0` is respected (child emits nothing).
+- `otel.replay()` — authoritative recovery path from `.forge/events.jsonl`. Live streaming via `BatchSpanProcessor` is best-effort; replay is the source of truth.
+- Optional OpenInference compatibility mirror (`observability.otel.openinference_compat: true`) — emits `openinference.span.kind=AGENT`, `llm.token_count.{prompt,completion,total}`, `llm.model_name`, `agent.name` alongside `gen_ai.*` for Arize-heavy backends.
+- Pinned semconv schema (`shared/schemas/otel-genai-v1.json`) + CI validator (`tests/unit/otel_semconv_validator.py`).
+- CI workflow `.github/workflows/phase09-otel.yml` — Docker collector sidecar, semconv conformance test, replay parity job, and disabled-overhead guard (<1ms/stage when `enabled=false`, no `opentelemetry.*` imports).
+- `observability.otel.*` PREFLIGHT constraints (`shared/preflight-constraints.md`).
+- `[otel]` optional dependency group in `pyproject.toml` — `pip install forge-plugin[otel]` pulls `opentelemetry-api>=1.30.0`, `opentelemetry-sdk>=1.30.0`, `opentelemetry-exporter-otlp>=1.30.0`, `jsonschema>=4.0.0`.
+
+### Cardinality budget
+
+Span names use only bounded attributes (`gen_ai.agent.name`, `gen_ai.request.model`, `gen_ai.operation.name`, `forge.stage`, `forge.mode`). Unbounded values (`forge.run_id`, `gen_ai.agent.id`, `gen_ai.tool.call.id`) appear as attributes only, never in span names. See `shared/observability.md` for the full table.
+
 ## [Unreleased] — Phase 05: Skill Consolidation
 
 ### Breaking changes (Phase 05 — skill consolidation)
