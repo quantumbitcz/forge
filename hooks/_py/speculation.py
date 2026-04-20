@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
+from itertools import combinations
 from typing import Any
 
 KEYWORD_PATTERN = re.compile(
@@ -20,6 +22,16 @@ PLAN_CACHE_MARGINAL_LOW = 0.40
 PLAN_CACHE_MARGINAL_HIGH = 0.59
 SHAPER_DELTA_MAX = 10
 DOMAIN_DELTA_MAX = 0.15
+
+COLD_START_DEFAULT = 4500
+WINDOW = 10
+
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with",
+    "is", "are", "be", "as", "by", "at", "this", "that", "it", "from",
+}
+
+VERDICT_BONUSES = {"GO": 0, "REVISE": -15}
 
 
 def detect_ambiguity(
@@ -71,6 +83,57 @@ def detect_ambiguity(
     }
 
 
+def derive_seed(run_id: str, candidate_id: str) -> int:
+    """Deterministic seed: sha256(run_id + candidate_id) mod 2^31."""
+    h = hashlib.sha256(f"{run_id}{candidate_id}".encode()).digest()
+    return int.from_bytes(h[:4], "big") % (2 ** 31)
+
+
+def estimate_cost(
+    baseline: int,
+    n: int,
+    ceiling: float,
+    recent_tokens: list[int] | None = None,
+    cold_start_default: int = COLD_START_DEFAULT,
+) -> dict[str, Any]:
+    """estimated = baseline + (mean(recent_tokens[-10:]) or cold_start_default) * n.
+
+    abort = estimated > baseline * ceiling.
+    """
+    recent_tokens = recent_tokens or []
+    window = recent_tokens[-WINDOW:]
+    per_candidate = (sum(window) // len(window)) if window else cold_start_default
+    estimated = baseline + per_candidate * n
+    abort = estimated > int(baseline * ceiling)
+    return {
+        "estimated": estimated,
+        "per_candidate_mean": per_candidate,
+        "window_used": len(window),
+        "abort": abort,
+        "ceiling_tokens": int(baseline * ceiling),
+    }
+
+
+def _cmd_derive_seed(args: argparse.Namespace) -> None:
+    sys.stdout.write(str(derive_seed(args.run_id, args.candidate_id)) + "\n")
+
+
+def _cmd_estimate_cost(args: argparse.Namespace) -> None:
+    tokens = (
+        [int(x) for x in args.recent_tokens.split(",") if x]
+        if args.recent_tokens
+        else []
+    )
+    result = estimate_cost(
+        baseline=args.baseline,
+        n=args.n,
+        ceiling=args.ceiling,
+        recent_tokens=tokens,
+    )
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
+
+
 def _cmd_detect_ambiguity(args: argparse.Namespace) -> None:
     result = detect_ambiguity(
         requirement=args.requirement,
@@ -98,6 +161,18 @@ def main() -> int:
     p_detect.add_argument("--domain-count", type=int, default=0)
     p_detect.add_argument("--domain-delta", type=float, default=1.0)
     p_detect.set_defaults(func=_cmd_detect_ambiguity)
+
+    p_seed = subparsers.add_parser("derive-seed")
+    p_seed.add_argument("--run-id", required=True)
+    p_seed.add_argument("--candidate-id", required=True)
+    p_seed.set_defaults(func=_cmd_derive_seed)
+
+    p_cost = subparsers.add_parser("estimate-cost")
+    p_cost.add_argument("--baseline", type=int, required=True)
+    p_cost.add_argument("--n", type=int, required=True)
+    p_cost.add_argument("--ceiling", type=float, required=True)
+    p_cost.add_argument("--recent-tokens", type=str, default="")
+    p_cost.set_defaults(func=_cmd_estimate_cost)
 
     args = parser.parse_args()
     args.func(args)
