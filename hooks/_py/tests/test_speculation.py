@@ -1,8 +1,10 @@
 from hooks._py.speculation import (
     check_diversity,
+    compute_selection_score,
     derive_seed,
     detect_ambiguity,
     estimate_cost,
+    pick_winner,
 )
 
 
@@ -135,3 +137,70 @@ def test_diversity_single_plan_returns_ok():
     r = check_diversity(["alpha beta gamma"], min_diversity_score=0.15)
     assert r["degraded"] is False
     assert r["diversity"] == 1.0
+
+
+def test_no_go_is_eliminated():
+    r = compute_selection_score(80, "NO-GO", 1000, 1000)
+    assert r["eliminated"] is True
+    assert r["selection_score"] is None
+
+
+def test_revise_penalty():
+    r = compute_selection_score(80, "REVISE", 1000, 1000)
+    assert r["selection_score"] == 65.0
+
+
+def test_efficiency_tiebreaker():
+    r = compute_selection_score(80, "GO", 500, 1000)
+    assert r["selection_score"] == 85.0
+
+
+def test_no_efficiency_advantage_matches_validator():
+    r = compute_selection_score(80, "GO", 1000, 1000)
+    assert r["selection_score"] == 80.0
+
+
+def test_pick_winner_decisive():
+    cands = [
+        {"id": "cand-1", "validator_score": 85, "verdict": "GO", "tokens": 4000},
+        {"id": "cand-2", "validator_score": 75, "verdict": "GO", "tokens": 4000},
+    ]
+    r = pick_winner(cands, auto_pick_threshold_delta=5, mode="interactive")
+    assert r["winner_id"] == "cand-1"
+    assert r["needs_confirmation"] is False
+
+
+def test_pick_winner_tie_interactive():
+    cands = [
+        {"id": "cand-1", "validator_score": 85, "verdict": "GO", "tokens": 4000},
+        {"id": "cand-2", "validator_score": 82, "verdict": "GO", "tokens": 4000},
+    ]
+    r = pick_winner(cands, auto_pick_threshold_delta=5, mode="interactive")
+    assert r["needs_confirmation"] is True
+
+
+def test_pick_winner_tie_autonomous():
+    cands = [
+        {"id": "cand-1", "validator_score": 85, "verdict": "GO", "tokens": 4000},
+        {"id": "cand-2", "validator_score": 82, "verdict": "GO", "tokens": 4000},
+    ]
+    r = pick_winner(cands, auto_pick_threshold_delta=5, mode="autonomous")
+    assert r["needs_confirmation"] is False
+    assert r["winner_id"] == "cand-1"
+
+
+def test_pick_winner_all_no_go():
+    cands = [{"id": "c", "validator_score": 40, "verdict": "NO-GO", "tokens": 100}]
+    r = pick_winner(cands, 5, "autonomous")
+    assert r["winner_id"] is None
+    assert r["escalate"] == "all_no_go"
+
+
+def test_pick_winner_all_below_60():
+    cands = [
+        {"id": "cand-1", "validator_score": 55, "verdict": "GO", "tokens": 4000},
+        {"id": "cand-2", "validator_score": 50, "verdict": "GO", "tokens": 4000},
+    ]
+    r = pick_winner(cands, 5, "autonomous")
+    assert r["winner_id"] is None
+    assert r["escalate"] == "all_below_60"
