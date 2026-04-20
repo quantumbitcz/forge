@@ -57,3 +57,7 @@ Follow `shared/checks/output-format.md`. For static rules include file:line. For
 - Default-OFF. `trigger:` gates dispatch entirely.
 - No writes. Read + grep + shell only.
 - Dynamic probes gated behind a second opt-in (`chaos_enabled`), default `false`.
+
+## Forbidden Actions
+
+Read-only: no source/state modifications. No chaos probes without explicit opt-in (`chaos_enabled: true`). No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
