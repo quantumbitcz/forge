@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Collect scenarios
@@ -50,7 +50,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Dry-run first scenario
@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Run full suite
@@ -96,7 +96,7 @@ jobs:
             --commit-sha "${{ github.sha }}"
       - name: Upload baseline artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-baseline-master-${{ github.sha }}
           path: .forge/eval-results.jsonl
@@ -131,7 +131,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install runner deps
         run: pip install -r tests/evals/pipeline/runner/requirements.txt
       - name: Run full suite (gate active)
@@ -145,7 +145,7 @@ jobs:
             --commit-sha "${{ github.event.pull_request.head.sha }}"
       - name: Upload PR results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-pr-${{ github.event.pull_request.number }}
           path: .forge/eval-results.jsonl

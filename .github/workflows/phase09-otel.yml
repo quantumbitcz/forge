@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest  # pinned: DinD flakes on macOS runners.
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.x"
       - name: Install deps
         run: |
-          pip install opentelemetry-api==1.30.0 \
-                      opentelemetry-sdk==1.30.0 \
-                      opentelemetry-exporter-otlp==1.30.0 \
+          pip install 'opentelemetry-api>=1.41.0' \
+                      'opentelemetry-sdk>=1.41.0' \
+                      'opentelemetry-exporter-otlp>=1.41.0' \
                       jsonschema pytest
       - name: Start OTel collector sidecar
         # `services:` blocks start before actions/checkout, so the
@@ -38,7 +38,7 @@ jobs:
             -p 4317:4317 -p 4318:4318 -p 13133:13133 \
             -v "$(pwd)/.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro" \
             -v /tmp/otel:/tmp/otel \
-            otel/opentelemetry-collector-contrib:0.105.0
+            otel/opentelemetry-collector-contrib:0.150.1
       - name: Wait for collector health
         run: |
           for i in {1..30}; do
@@ -76,14 +76,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.x"
       - name: Install deps
         run: |
-          pip install opentelemetry-api==1.30.0 \
-                      opentelemetry-sdk==1.30.0 \
-                      opentelemetry-exporter-otlp==1.30.0 \
+          pip install 'opentelemetry-api>=1.41.0' \
+                      'opentelemetry-sdk>=1.41.0' \
+                      'opentelemetry-exporter-otlp>=1.41.0' \
                       jsonschema pytest
       - name: Replay parity test
         run: python -m pytest tests/unit/test_otel_replay.py -v
@@ -92,9 +92,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.x"
       - name: Install deps
         run: pip install pytest
       - name: Verify no OTel imports and <1ms overhead when disabled
