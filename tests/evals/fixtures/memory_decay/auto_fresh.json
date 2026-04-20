@@ -1,0 +1,7 @@
+{
+  "id": "auto_fresh",
+  "type": "auto-discovered",
+  "base_confidence": 0.75,
+  "last_success_at": "2026-04-19T12:00:00Z",
+  "last_false_positive_at": null
+}

@@ -1,0 +1,8 @@
+{
+  "id": "legacy_high",
+  "pattern": "old-style record",
+  "confidence": "HIGH",
+  "source": "auto-discovered",
+  "runs_since_last_hit": 4,
+  "decay_multiplier": 2
+}

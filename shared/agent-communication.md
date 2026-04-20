@@ -293,65 +293,84 @@ PREEMPT_SKIPPED: check-openapi-before-controller — not applicable (controller 
 
 ### PREEMPT Confidence Decay
 
-Items decay toward archival based on usage patterns. Decay is tracked per item in `forge-log.md`:
+Items decay toward archival on a time-aware Ebbinghaus exponential curve. The
+canonical contract — formula, per-type half-lives, thresholds, reinforcement,
+and false-positive penalty — lives in `shared/learnings/decay.md`. Quick
+summary:
 
-**Decay score formula:** `decay_score = unused_runs + (false_positives * 3)`
+- `confidence(t) = base_confidence × 2^(-Δt_days / half_life_days)` where
+  `Δt_days = (now - last_success_at) / 86 400` clamped to `[0, 365]`.
+- Half-lives: auto-discovered 14d, cross-project 30d, canonical 90d.
+- Thresholds: `c ≥ 0.75` HIGH, `0.50 ≤ c < 0.75` MEDIUM, `0.30 ≤ c < 0.50`
+  LOW, `c < 0.30` ARCHIVED.
+- Success: `base_confidence = min(0.95, base + 0.05)`, `last_success_at = now`.
+- False positive (`PREEMPT_SKIPPED` with reason marking inapplicability):
+  `base_confidence *= 0.80`, `last_success_at = now`,
+  `last_false_positive_at = now`.
 
-Where:
-- `unused_runs` — consecutive runs where the item was loaded but neither APPLIED nor SKIPPED (item was in scope but the domain area didn't trigger it)
-- `false_positives` — times the item was marked `PREEMPT_SKIPPED` with reason indicating inapplicability (each false positive applies `base_confidence *= 0.80` per `shared/learnings/decay.md`).
+There is no `decay_score` counter and no "N unused runs" rule — time elapses
+"for free" between runs and the loader recomputes the effective confidence on
+read. PREFLIGHT performs lazy reads (`memory_decay.effective_confidence`);
+LEARN (`fg-700-retrospective`) is the authoritative writer that applies the
+success/false-positive transforms and archives items whose computed tier is
+ARCHIVED.
 
-**Confidence tiers:** HIGH (decay_score 0-3) → MEDIUM (4-6) → LOW (7-9) → ARCHIVED (10+)
+### PREEMPT Outcome States
 
-### PREEMPT Decay Counting Rules
+Three observable states per pipeline run:
 
-Three states a PREEMPT item can be in during a pipeline run:
+| State | Effect on `base_confidence` / timestamps |
+|-------|------------------------------------------|
+| Loaded + checked + finding reported (`PREEMPT_APPLIED`) | `base += 0.05` (capped at 0.95), `last_success_at = now` |
+| Loaded + checked + no match in changeset | No state change (time-based decay handles staleness) |
+| Loaded + `PREEMPT_SKIPPED` with inapplicability reason | `base *= 0.80`, `last_false_positive_at = now`, `last_success_at = now` |
+| Not loaded (agent context too small) | No state change |
 
-| State | Counts as | Decay effect |
-|-------|-----------|-------------|
-| Loaded + checked + finding reported | "Used" | Resets decay counter to 0 |
-| Loaded + checked + no match in changeset | "Loaded but not reported" | +1 decay unit |
-| Not loaded (agent context too small) | Not counted | No decay change |
+**Example 1: Applied (success reinforcement)**
 
-**Example 1: Item loaded, checked, finding reported (resets decay)**
+PREEMPT item: "Always use `@Transactional(readOnly = true)` for query-only
+service methods." Implementer writes a query method without it; reviewer
+emits `CONV-TX-READONLY | WARNING`. Retrospective bumps `base_confidence` by
+0.05 (capped at 0.95) and stamps `last_success_at`.
 
-PREEMPT item: "Always use `@Transactional(readOnly = true)` for query-only service methods."
+**Example 2: Loaded but no match (no state change)**
 
-Run N: The implementer writes a new service method with `@Transactional`. The code reviewer loads this PREEMPT item, checks the new method, and finds it has `@Transactional` without `readOnly = true` on a query method. Finding reported: `CONV-TX-READONLY | WARNING`. Decay counter resets to 0.
+PREEMPT item: "Never use `Thread.sleep()` in production code." Reviewer
+loads the item, scans the changeset, finds no `Thread.sleep()` calls. No
+write happens — relevance is unproven, but staleness is already encoded in
+the elapsed time since `last_success_at`. Eventually the Ebbinghaus curve
+will demote this item if it is never APPLIED again.
 
-**Example 2: Item loaded, checked, no match found (+1 decay unit)**
+**Example 3: Not loaded (no state change)**
 
-PREEMPT item: "Never use `Thread.sleep()` in production code."
+In bugfix mode the reviewer drops some PREEMPT items to fit context. The
+unloaded items are unchanged — they were not given a chance to prove
+relevance.
 
-Run N: The implementer writes a new REST controller. The code reviewer loads this PREEMPT item and checks all new/modified files. No `Thread.sleep()` calls found in the changeset. The item was loaded and checked but produced no finding. Decay counter increments by 1.
+**Detection mechanism:** The orchestrator tracks which PREEMPT items were
+included in each agent dispatch via `preempt_items_loaded[]` in stage notes.
+Items in `preempt_items_loaded` but missing from `preempt_items_status` are
+"loaded but not reported" and trigger no write.
 
-After 10 such runs (loaded but never triggered), the item decays: HIGH -> MEDIUM -> LOW -> ARCHIVED.
+**Source-derived defaults** (see `shared/learnings/decay.md` §2 for full type
+resolution):
+- `source: auto-discovered` → 14-day half-life and starts at
+  `base_confidence = 0.75` (MEDIUM tier on day 0).
+- `source: user-confirmed` or `state: ACTIVE` → canonical, 90-day half-life.
+- Path under `shared/learnings/` → cross-project, 30-day half-life.
+- Otherwise → cross-project (default).
 
-**Example 3: Item not loaded, agent context too small (no decay change)**
+ARCHIVED items are excluded from PREEMPT loading at PREFLIGHT but remain in
+`forge-log.md` for historical reference.
 
-PREEMPT item: "Prefer `kotlinx.serialization` over `Jackson` for Kotlin multiplatform modules."
-
-Run N: The pipeline runs in bugfix mode with reduced review (3 agents). The code reviewer's context is filled with bugfix-specific findings and the PREEMPT item list exceeds the agent's context window. This item is not included in the dispatch prompt. The decay counter is unchanged -- the item was not given a chance to prove relevance.
-
-**Detection mechanism:** The orchestrator tracks which PREEMPT items were included in each agent dispatch prompt via `preempt_items_loaded[]` in stage notes. Items not in `preempt_items_loaded` for any agent in the run are classified as "not loaded." Items in `preempt_items_loaded` but not in any agent's `findings[]` are classified as "loaded but not reported."
-
-**Auto-discovered items:** Items with `source: auto-discovered` follow the same rules with these modifications:
-- Auto-discovered items start at MEDIUM confidence (not HIGH)
-- Auto-discovered items decay 2x faster — each unused run increments `decay_score` by 2 instead of 1
-- Auto-discovered items archive at `decay_score >= 5` (faster than the standard threshold of 10)
-- Auto-discovered items promote to HIGH after 3 successful applications (3 runs where the item was APPLIED)
-
-**Tier transitions:**
-- Items start at HIGH when first recorded in `forge-log.md`
-- Tier decreases when `decay_score` crosses thresholds
-- A single APPLIED resets `decay_score` to 0 and restores HIGH confidence
-- ARCHIVED items are excluded from PREEMPT loading at PREFLIGHT (but remain in `forge-log.md` for historical reference)
-
-**Retrospective update logic:**
-1. For each PREEMPT item in `preempt_items_status`:
-   - If `applied: true` → reset `decay_score = 0`, set tier = HIGH
-   - If `applied: false, false_positive: true` → increment `decay_score += 3`
-2. For items in `preempt_items_applied` but NOT in `preempt_items_status` (loaded but not reported) → increment `decay_score += 1`
+**Retrospective update logic** (executed by `fg-700-retrospective` per item
+in `preempt_items_status`):
+1. `applied: true` → `apply_success(item, now)` (additive 0.05, capped 0.95).
+2. `applied: false, false_positive: true` → `apply_false_positive(item, now)`
+   (`base *= 0.80`, stamp both `last_success_at` and
+   `last_false_positive_at`).
+3. After the per-item updates, `effective_confidence` + `tier` are recomputed
+   and the item is archived if tier = ARCHIVED.
 
 ## 8. Plan Mode Integration
 

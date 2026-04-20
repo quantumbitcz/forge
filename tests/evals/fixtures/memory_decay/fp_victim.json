@@ -1,0 +1,7 @@
+{
+  "id": "fp_victim",
+  "type": "auto-discovered",
+  "base_confidence": 0.60,
+  "last_success_at": "2026-04-17T12:00:00Z",
+  "last_false_positive_at": "2026-04-17T12:00:00Z"
+}

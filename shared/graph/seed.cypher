@@ -1987,7 +1987,6 @@ CREATE (:SharedContract {name: 'config-validation', file_path: 'shared/config-va
 CREATE (:SharedContract {name: 'consumer-driven-contracts', file_path: 'shared/consumer-driven-contracts.md'});
 CREATE (:SharedContract {name: 'context-condensation', file_path: 'shared/context-condensation.md'});
 CREATE (:SharedContract {name: 'context7-query-templates', file_path: 'shared/context7-query-templates.md'});
-CREATE (:SharedContract {name: 'conventions-index', file_path: 'shared/conventions-index.md'});
 CREATE (:SharedContract {name: 'convergence-engine', file_path: 'shared/convergence-engine.md'});
 CREATE (:SharedContract {name: 'convergence-examples', file_path: 'shared/convergence-examples.md'});
 CREATE (:SharedContract {name: 'cross-project-learnings', file_path: 'shared/cross-project-learnings.md'});
@@ -2049,6 +2048,7 @@ CREATE (:SharedContract {name: 'visual-verification', file_path: 'shared/visual-
 // --- Agent READS SharedContract edges ---
 MATCH (a:Agent {name: 'fg-010-shaper'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-010-shaper'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-010-shaper'}), (c:SharedContract {name: 'intent-classification'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-015-scope-decomposer'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-020-bug-investigator'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
