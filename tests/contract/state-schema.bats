@@ -4,6 +4,7 @@
 load '../helpers/test-helpers'
 
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists
@@ -30,8 +31,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   grep -Eq '"consistency_votes"[[:space:]]*:' "$STATE_SCHEMA" \
     || fail "consistency_votes object not found in state-schema.md"
 
-  grep -Eq '1\.9\.0[[:space:]]*\|[[:space:]]*1\.10\.0' "$STATE_SCHEMA" \
-    || fail "1.9.0 -> 1.10.0 migration row not found in state-schema.md"
+  grep -Eq '1\.9\.0[[:space:]]*\|[[:space:]]*1\.10\.0' "$STATE_SCHEMA_FIELDS" \
+    || fail "1.9.0 -> 1.10.0 migration row not found in state-schema-fields.md (migration table lives there per state-schema.md §Atomic writes)"
 }
 
 # ---------------------------------------------------------------------------
