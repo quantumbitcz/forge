@@ -30,7 +30,7 @@ Chosen for terminal rendering with ≥3:1 contrast against common backgrounds.
 
 ## 2. Dispatch clusters
 
-Agents that can appear in the same TaskCreate cluster must have distinct colors. Cluster definitions mirror the dispatch-layer tables in `shared/agent-role-hierarchy.md`.
+Agents that can appear in the same TaskCreate cluster must have distinct colors. Cluster definitions mirror the dispatch-layer tables in `shared/agents.md#dispatch`.
 
 | Cluster | Members |
 |---|---|

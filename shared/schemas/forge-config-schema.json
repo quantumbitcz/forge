@@ -197,7 +197,7 @@
         },
         "overrides": {
           "type": "object",
-          "description": "Per-agent tier overrides. Keys are agent IDs from agent-registry.md.",
+          "description": "Per-agent tier overrides. Keys are agent IDs from agents.md#registry.",
           "additionalProperties": {
             "type": "string",
             "enum": ["fast", "standard", "premium"]

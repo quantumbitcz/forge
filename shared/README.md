@@ -11,8 +11,7 @@ machine-validated; do not hand-edit.
 - [`agent-defaults.md`](agent-defaults.md) — shared constraints language
 - [`agent-ui.md`](agent-ui.md) — UI tools (AskUserQuestion, TaskCreate, plan mode)
 - [`agent-colors.md`](agent-colors.md) — cluster palette
-- [`agent-registry.md`](agent-registry.md) — canonical agent list
-- [`agent-role-hierarchy.md`](agent-role-hierarchy.md) — dispatch graph + tier definitions
+- [`agents.md`](agents.md) — agent model, UI tiers, dispatch graph, and full registry
 - [`ask-user-question-patterns.md`](ask-user-question-patterns.md) — UX patterns
 
 ## State, transitions, recovery
@@ -155,7 +154,6 @@ machine-validated; do not hand-edit.
 - [`config-validation.md`](config-validation.md) — config validation rules
 - [`pricing.json`](pricing.json) — model pricing data
 - [`speculation.md`](speculation.md) — speculation candidate policy
-- [`agent-consolidation-analysis.md`](agent-consolidation-analysis.md) — agent consolidation notes
 
 ## Generated / auto-updated
 

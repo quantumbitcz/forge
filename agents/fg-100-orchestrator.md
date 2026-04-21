@@ -492,7 +492,7 @@ Read `forge-config.md`. Extract: `max_fix_loops`, `max_review_loops`, `auto_proc
 
 `model_routing.enabled` false/absent → skip.
 
-Enabled: build model map (`agent_id → model`): tier_1_fast → haiku, tier_3_premium → opus, rest → default_tier. Validate IDs against `shared/agent-registry.md`. Store in context (ephemeral). Record in stage notes.
+Enabled: build model map (`agent_id → model`): tier_1_fast → haiku, tier_3_premium → opus, rest → default_tier. Validate IDs against `shared/agents.md#registry`. Store in context (ephemeral). Record in stage notes.
 
 ---
 

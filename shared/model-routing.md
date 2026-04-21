@@ -158,10 +158,10 @@ Validated at PREFLIGHT. If violated, log WARNING and use plugin defaults:
 |-----------|-------------|---------|
 | `model_routing.enabled` | `true`, `false` | `true` |
 | `model_routing.default_tier` | `fast`, `standard`, `premium` | `standard` |
-| `model_routing.overrides.tier_1_fast[]` | valid agent IDs from agent-registry.md | 8 agents (see Default Tier Assignments) |
-| `model_routing.overrides.tier_3_premium[]` | valid agent IDs from agent-registry.md | 14 agents (see Default Tier Assignments) |
+| `model_routing.overrides.tier_1_fast[]` | valid agent IDs from agents.md#registry | 8 agents (see Default Tier Assignments) |
+| `model_routing.overrides.tier_3_premium[]` | valid agent IDs from agents.md#registry | 14 agents (see Default Tier Assignments) |
 
-Agent IDs in overrides are validated against `shared/agent-registry.md`. Unknown agent IDs produce WARNING (typo protection) but do not fail PREFLIGHT.
+Agent IDs in overrides are validated against `shared/agents.md#registry`. Unknown agent IDs produce WARNING (typo protection) but do not fail PREFLIGHT.
 
 ## Retrospective Auto-Tuning
 
