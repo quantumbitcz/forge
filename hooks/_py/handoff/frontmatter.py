@@ -1,7 +1,7 @@
 """Frontmatter builder + parser. Pure, deterministic, no I/O."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Literal
 
@@ -11,6 +11,47 @@ SCHEMA_VERSION = "1.0"
 HANDOFF_VERSION = "1.0"
 
 TriggerLevel = Literal["soft", "hard", "milestone", "terminal", "manual"]
+
+# Characters that, when they begin a scalar, force YAML to interpret the value
+# specially (list marker, mapping, flow collection, comment, anchor, alias,
+# tag, literal/folded block, verbatim, reserved). We conservatively quote if
+# any of these appears as the first non-space character.
+_YAML_INDICATOR_PREFIXES = ("-", ":", "[", "{", "}", "]", "#", "&", "*", "!", "|", ">", "@", "`")
+
+
+def _safe_yaml_scalar(v: str) -> str:
+    """Return a YAML-safe rendering of a string scalar.
+
+    Bare (unquoted) for ordinary values; double-quoted (with escapes) whenever
+    the value contains characters that could break the frontmatter framing or
+    be misinterpreted by the parser. This prevents newline-based injection of
+    phantom keys or premature `---` terminators.
+    """
+    needs_quote = False
+    if v == "" or v == "null":
+        needs_quote = True
+    elif any(c in v for c in ("\n", "\r", '"')):
+        needs_quote = True
+    else:
+        stripped = v.lstrip()
+        if stripped.startswith("---") or (stripped and stripped[0] in _YAML_INDICATOR_PREFIXES):
+            needs_quote = True
+    if not needs_quote:
+        return v
+    escaped = (
+        v.replace("\\", "\\\\")
+         .replace('"', '\\"')
+         .replace("\n", "\\n")
+         .replace("\r", "\\r")
+    )
+    return f'"{escaped}"'
+
+
+def _opt_scalar(v: str | None) -> str:
+    """Render an optional string field: literal ``null`` when None, else a safe scalar."""
+    if v is None:
+        return "null"
+    return _safe_yaml_scalar(v)
 
 
 @dataclass
@@ -72,11 +113,11 @@ def build_frontmatter(inp: FrontmatterInput) -> str:
     lines: list[str] = ["---"]
     lines.append(f"schema_version: {SCHEMA_VERSION}")
     lines.append(f"handoff_version: {HANDOFF_VERSION}")
-    lines.append(f"run_id: {inp.run_id}")
-    lines.append(f"parent_run_id: {inp.parent_run_id or 'null'}")
-    lines.append(f"stage: {inp.stage}")
-    lines.append(f"substage: {inp.substage or 'null'}")
-    lines.append(f"mode: {inp.mode}")
+    lines.append(f"run_id: {_safe_yaml_scalar(inp.run_id)}")
+    lines.append(f"parent_run_id: {_opt_scalar(inp.parent_run_id)}")
+    lines.append(f"stage: {_safe_yaml_scalar(inp.stage)}")
+    lines.append(f"substage: {_opt_scalar(inp.substage)}")
+    lines.append(f"mode: {_safe_yaml_scalar(inp.mode)}")
     lines.append(f"autonomous: {str(inp.autonomous).lower()}")
     lines.append(f"background: {str(inp.background).lower()}")
     lines.append(f"score: {inp.score}")
@@ -85,17 +126,17 @@ def build_frontmatter(inp: FrontmatterInput) -> str:
     lines.append("convergence_counters:")
     for k in sorted(inp.convergence_counters):
         lines.append(f"  {k}: {inp.convergence_counters[k]}")
-    lines.append(f"checkpoint_sha: {inp.checkpoint_sha or 'null'}")
-    lines.append(f"checkpoint_path: {inp.checkpoint_path or 'null'}")
-    lines.append(f"branch_name: {inp.branch_name or 'null'}")
-    lines.append(f"worktree_path: {inp.worktree_path or 'null'}")
-    lines.append(f"git_head: {inp.git_head or 'null'}")
+    lines.append(f"checkpoint_sha: {_opt_scalar(inp.checkpoint_sha)}")
+    lines.append(f"checkpoint_path: {_opt_scalar(inp.checkpoint_path)}")
+    lines.append(f"branch_name: {_opt_scalar(inp.branch_name)}")
+    lines.append(f"worktree_path: {_opt_scalar(inp.worktree_path)}")
+    lines.append(f"git_head: {_opt_scalar(inp.git_head)}")
     lines.append(f"commits_since_base: {inp.commits_since_base}")
-    lines.append(f"open_askuserquestion: {inp.open_askuserquestion or 'null'}")
-    lines.append(f"previous_handoff: {inp.previous_handoff or 'null'}")
+    lines.append(f"open_askuserquestion: {_opt_scalar(inp.open_askuserquestion)}")
+    lines.append(f"previous_handoff: {_opt_scalar(inp.previous_handoff)}")
     lines.append("trigger:")
-    lines.append(f"  level: {inp.trigger_level}")
-    lines.append(f"  reason: {inp.trigger_reason}")
+    lines.append(f"  level: {_safe_yaml_scalar(inp.trigger_level)}")
+    lines.append(f"  reason: {_safe_yaml_scalar(inp.trigger_reason)}")
     lines.append(f"  threshold_pct: {inp.trigger_threshold_pct if inp.trigger_threshold_pct is not None else 'null'}")
     lines.append(f"  tokens: {inp.trigger_tokens if inp.trigger_tokens is not None else 'null'}")
     lines.append(f"created_at: {_iso8601(inp.created_at)}")
@@ -107,9 +148,11 @@ def parse_frontmatter(text: str) -> ParsedFrontmatter:
     """Parse a frontmatter block. Raises ValueError on unknown schema_version."""
     if not text.startswith("---\n"):
         raise ValueError("frontmatter must start with '---\\n'")
-    end = text.find("\n---\n", 4)
+    # Start search at the newline that terminates the opening '---' so an
+    # empty body (``"---\n---\n"``) still matches the closing marker.
+    end = text.find("\n---\n", 3)
     if end == -1:
-        end = text.find("\n---", 4)
+        end = text.find("\n---", 3)
     if end == -1:
         raise ValueError("frontmatter missing closing '---'")
     body = text[4:end]
