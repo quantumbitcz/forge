@@ -240,3 +240,45 @@ def test_writer_skips_when_state_absent(tmp_path):
     result = write_handoff(req, forge_dir=forge_dir)
     assert result.suppressed is True
     assert result.reason == "no_state_json"
+
+
+def test_rotation_archives_past_chain_limit(tmp_path, monkeypatch):
+    """Archive oldest handoffs once chain exceeds chain_limit."""
+    from datetime import datetime, timezone, timedelta
+
+    forge_dir = tmp_path / ".forge"
+    forge_dir.mkdir()
+    monkeypatch.setenv("FORGE_HANDOFF_CHAIN_LIMIT", "3")
+
+    (forge_dir / "state.json").write_text(json.dumps({
+        "run_id": "r",
+        "story_state": "X",
+        "requirement": "t",
+        "handoff": {
+            "chain": [],
+            "soft_triggers_this_run": 0,
+            "hard_triggers_this_run": 0,
+            "milestone_triggers_this_run": 0,
+            "suppressed_by_rate_limit": 0,
+        },
+    }))
+    (forge_dir / "runs" / "r" / "handoffs").mkdir(parents=True)
+
+    base = datetime(2026, 4, 21, tzinfo=timezone.utc)
+    for i in range(5):
+        req = WriteRequest(
+            run_id="r",
+            level="manual",
+            reason=f"t{i}",
+            variant="light",
+            now=base + timedelta(minutes=30 * i),
+        )
+        write_handoff(req, forge_dir=forge_dir)
+
+    handoff_dir = forge_dir / "runs" / "r" / "handoffs"
+    archive = handoff_dir / "archive"
+    active_md = [f for f in handoff_dir.glob("*.md") if f.parent == handoff_dir]
+    assert len(active_md) == 3  # chain_limit
+    assert archive.exists()
+    archived_md = list(archive.glob("*.md"))
+    assert len(archived_md) == 2  # 5 written - 3 kept

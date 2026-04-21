@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from dataclasses import dataclass, field
@@ -98,6 +99,9 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
 
     # State chain update
     _update_state_chain(forge_dir, req, target)
+
+    chain_limit = int(os.environ.get("FORGE_HANDOFF_CHAIN_LIMIT", "50"))
+    _rotate_if_needed(forge_dir, req.run_id, chain_limit)
 
     # Build a signal-dense preview from state (not the resume-block header)
     preview = (
@@ -307,6 +311,17 @@ def _bump_suppressed(forge_dir: Path) -> None:
         return current
 
     atomic_json_update(forge_dir / "state.json", mutate, default={})
+
+
+def _rotate_if_needed(forge_dir: Path, run_id: str, chain_limit: int) -> None:
+    handoff_dir = forge_dir / "runs" / run_id / "handoffs"
+    archive = handoff_dir / "archive"
+    files = sorted([f for f in handoff_dir.glob("*.md") if f.parent == handoff_dir])
+    if len(files) <= chain_limit:
+        return
+    archive.mkdir(exist_ok=True)
+    for stale in files[:-chain_limit]:
+        stale.rename(archive / stale.name)
 
 
 def _git_head() -> str | None:
