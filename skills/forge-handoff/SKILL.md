@@ -1,6 +1,6 @@
 ---
 name: forge-handoff
-description: Create, list, show, resume, or search forge session handoffs. Use when context is getting heavy and you want to transfer a forge run or conversation into a fresh Claude Code session, or to resume from a prior handoff artefact. Subcommands - no args (write), list, show, resume, search.
+description: "[writes] Create, list, show, resume, or search forge session handoffs. Use when context is getting heavy and you want to transfer a forge run or conversation into a fresh Claude Code session, or to resume from a prior handoff artefact. Subcommands - no args (write), list, show, resume, search."
 allowed-tools: ['Read', 'Bash', 'AskUserQuestion']
 ui: { ask: true }
 ---

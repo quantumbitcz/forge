@@ -41,6 +41,36 @@ Consolidates post-3.5.0 polish across docs architecture, agent layer refactor, r
 - `opentelemetry.io/docs/specs/semconv/*` flake — ignored in `.lycheeignore` (GitHub runners surface intermittent 403s).
 - bats-core submodule refreshed to latest tag.
 
+## [3.6.0] — 2026-04-21 — Session Handoff (F34)
+
+Structured, portable session handoff system preserving forge run state across Claude Code session boundaries. Deterministic Python writer (no LLM call), thin projection over existing `.forge/state.json` and F08 retention tags.
+
+### Added
+
+- **`/forge-handoff` skill** — `write`/`list`/`show`/`resume`/`search` subcommands for managing session handoffs (`skills/forge-handoff/SKILL.md`).
+- **`hooks/_py/handoff/` package** — `config`, `frontmatter`, `sections`, `redaction`, `writer`, `resumer`, `alerts`, `triggers`, `milestones`, `search`, `auto_memory`, `cli` (12 modules, all deterministic).
+- **State-handoff tracking** — `state.json.handoff.*` sub-object (`last_written_at`, `last_path`, `chain`, per-level trigger counters, `suppressed_by_rate_limit`).
+- **Trigger levels** — soft (50% default) / hard (70% default) / milestone (stage transitions) / terminal (SHIP/ABORT/FAIL) / manual. Autonomous mode: write-and-continue, never pauses.
+- **`CONTEXT_CRITICAL` safety escalation** — interactive-mode-only pause at hard threshold; documented in `shared/error-taxonomy.md`.
+- **Compact-check hook integration** — `hooks/_py/check_engine/compact_check.py` dispatches handoff writer at threshold while preserving legacy stderr hint.
+- **MCP server tools** (F30 extension) — `forge_list_handoffs(run_id)` + `forge_get_handoff(path)` expose handoff chains to any MCP client.
+- **Auto-memory promotion** — top HIGH-confidence PREEMPTs + user-decision statements auto-flow to `~/.claude/projects/<hash>/memory/` on terminal handoffs.
+- **FTS5 search** over all handoffs via `run-history.db` (`handoff_fts` virtual table), with freetext phrase-quote escaping to prevent syntax-error crashes.
+- **Chain rotation** — past `handoff.chain_limit` (default 50), oldest handoffs move to `handoffs/archive/` silently.
+- **`ADR-0012`** — session handoff as a thin state projection, not an LLM summarisation.
+- **3 scenario bats tests** in `tests/scenario/handoff-*.bats` + 78 Python unit/integration tests in `hooks/_py/tests/test_handoff_*.py`.
+
+### Changed
+
+- **State schema bumped 1.9.0 → 1.10.0** with new `handoff.*` sub-object (clean cut per no-backcompat policy).
+- **`CLAUDE.md`** — adds F34 Feature row, `/forge-handoff` skill selection row, `.forge/runs/<id>/handoffs/` added to `/forge-recover reset` survivors list.
+- **`.claude-plugin/plugin.json`** → 3.6.0.
+- **`.claude-plugin/marketplace.json`** → 3.6.0 (lockstep with plugin).
+
+### Configuration
+
+- New `handoff.*` config block (see `shared/preflight-constraints.md`): `enabled`, `soft_threshold_pct`, `hard_threshold_pct`, `min_interval_minutes`, `autonomous_mode`, `auto_on_ship`, `auto_on_escalation`, `chain_limit`, `auto_memory_promotion`, `mcp_expose`.
+
 ## [3.5.0] — 2026-04-20 — Speculative Plan Branches
 
 Branch-mode planner dispatches 2-3 candidate plans in parallel for MEDIUM-confidence ambiguous requirements, validates each, and selects the highest-scored.
