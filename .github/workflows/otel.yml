@@ -1,4 +1,4 @@
-name: phase09-otel
+name: otel
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - 'shared/schemas/otel-genai-v1.json'
       - 'tests/unit/**'
       - 'tests/eval/**'
-      - '.github/workflows/phase09-otel.yml'
+      - '.github/workflows/otel.yml'
       - '.github/otel-collector-config.yaml'
       - 'pyproject.toml'
 
@@ -54,13 +54,13 @@ jobs:
           echo "collector failed to become healthy"
           docker logs otel-collector || true
           exit 1
-      - name: Run Phase 01 eval with OTel enabled
+      - name: Run eval scenario with OTel enabled
         env:
           FORGE_OTEL_ENABLED: "true"
           FORGE_OTEL_EXPORTER: "grpc"
           FORGE_OTEL_ENDPOINT: "http://localhost:4317"
         run: |
-          python -m tests.eval.run_phase01_scenario \
+          python -m tests.eval.run_scenario \
             --otel-enabled --collector-url http://localhost:4317
       - name: Flush and stop collector
         run: |
