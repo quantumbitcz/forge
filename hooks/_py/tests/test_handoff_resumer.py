@@ -1,6 +1,7 @@
 """Resumer: parse → staleness check → seed state → delegation."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from hooks._py.handoff.resumer import (
@@ -64,6 +65,18 @@ def test_clean_resume_returns_ok(tmp_path, monkeypatch):
     assert result.status == "ok"
     assert result.run_id == "20260421-x"
 
+    # Verify state.json was actually seeded
+    state = json.loads((tmp_path / ".forge" / "state.json").read_text())
+    assert state["run_id"] == "20260421-x"
+    assert state["story_state"] == "REVIEWING"
+    assert state["mode"] == "standard"
+    assert state["head_checkpoint"] == "7af9c3d"
+    assert state["branch_name"] == "feat/test"
+    # Chain entry is the handoff path, not a stringified dict
+    assert state["handoff"]["chain"] == [str(path)]
+    assert state["handoff"]["last_resumed_from"] == str(path)
+    assert "last_resumed_at" in state["handoff"]
+
 
 def test_stale_autonomous_refuses(tmp_path, monkeypatch):
     path = tmp_path / ".forge" / "runs" / "20260421-x" / "handoffs" / "test.md"
@@ -85,6 +98,11 @@ def test_force_bypasses_staleness(tmp_path, monkeypatch):
     req = ResumeRequest(handoff_path=path, autonomous=True, force=True)
     result = resume_from_handoff(req, forge_dir=tmp_path / ".forge")
     assert result.status == "ok_forced"
+
+    # Verify force-resume also seeded state correctly
+    state = json.loads((tmp_path / ".forge" / "state.json").read_text())
+    assert state["run_id"] == "20260421-x"
+    assert state["handoff"]["chain"] == [str(path)]
 
 
 def test_missing_handoff_file_returns_parse_error(tmp_path):
@@ -126,3 +144,27 @@ def test_real_git_head_match(tmp_path, monkeypatch):
     req = ResumeRequest(handoff_path=path, autonomous=False, force=False)
     result = resume_from_handoff(req, forge_dir=tmp_path / ".forge")
     assert result.status == "ok"
+
+
+def test_malformed_frontmatter_returns_parse_error(tmp_path):
+    """Corrupt or unsupported frontmatter → parse_error, no state mutation."""
+    path = tmp_path / ".forge" / "runs" / "20260421-bad" / "handoffs" / "broken.md"
+    path.parent.mkdir(parents=True)
+    # Missing closing --- marker
+    path.write_text("---\nschema_version: 1.0\nrun_id: 20260421-bad\n")
+
+    req = ResumeRequest(handoff_path=path, autonomous=False, force=False)
+    result = resume_from_handoff(req, forge_dir=tmp_path / ".forge")
+    assert result.status == "parse_error"
+
+
+def test_unsupported_schema_version_returns_parse_error(tmp_path):
+    """Unknown schema_version → parse_error (no backcompat)."""
+    path = tmp_path / ".forge" / "runs" / "20260421-v2" / "handoffs" / "future.md"
+    path.parent.mkdir(parents=True)
+    path.write_text("---\nschema_version: 2.0\nrun_id: 20260421-v2\n---\n")
+
+    req = ResumeRequest(handoff_path=path, autonomous=False, force=False)
+    result = resume_from_handoff(req, forge_dir=tmp_path / ".forge")
+    assert result.status == "parse_error"
+    assert "schema_version" in result.reason
