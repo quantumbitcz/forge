@@ -29,3 +29,37 @@ def test_fail_closed_on_redactor_error(monkeypatch):
     monkeypatch.setattr(redaction, "_redact_impl", boom)
     with pytest.raises(RuntimeError):
         redact_handoff_text("anything")
+
+
+def test_aws_access_key_redacted():
+    src = "key = AKIAIOSFODNN7EXAMPLE here"
+    out = redact_handoff_text(src)
+    assert "AKIAIOSFODNN7EXAMPLE" not in out
+    assert "[REDACTED:aws_access_key]" in out
+
+
+def test_jwt_redacted():
+    jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    out = redact_handoff_text(f"Token: {jwt}")
+    assert jwt not in out
+    assert "[REDACTED:jwt]" in out
+
+
+def test_slack_token_redacted():
+    src = "webhook = xoxb-1234567890-abcdef"
+    out = redact_handoff_text(src)
+    assert "xoxb-1234567890-abcdef" not in out
+
+
+def test_private_key_block_redacted():
+    src = "-----BEGIN RSA PRIVATE KEY-----\nMIIEvQIBAD...fakekey...\n-----END RSA PRIVATE KEY-----"
+    out = redact_handoff_text(src)
+    assert "fakekey" not in out
+    assert "[REDACTED:private_key_block]" in out
+
+
+def test_generic_secret_env_redacted():
+    src = "DATABASE_SECRET=supersecret123 and API_KEY=sometoken"
+    out = redact_handoff_text(src)
+    assert "supersecret123" not in out
+    assert "sometoken" not in out

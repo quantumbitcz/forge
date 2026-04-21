@@ -72,7 +72,8 @@ def test_active_findings_light_top_five():
         for i in range(10)
     ]
     out = render_active_findings(inp, variant="light")
-    assert out.count("- ") == 5
+    bullet_lines = [line for line in out.splitlines() if line.startswith("- ")]
+    assert len(bullet_lines) == 5
 
 
 def test_do_not_touch_merges_preempt_and_user():
