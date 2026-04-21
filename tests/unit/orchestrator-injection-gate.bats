@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 19: orchestrator-injection-gate.sh decisions.
+# orchestrator-injection-gate.sh decisions.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

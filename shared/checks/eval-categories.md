@@ -14,7 +14,7 @@ code change).
 | `EVAL-VERDICT-MISMATCH` | WARNING | Actual verdict worse than scenario `required_verdict` |
 | `EVAL-BUDGET-OVER` | WARNING | Tokens or elapsed over scenario budget (even if adherence > 0) |
 | `EVAL-OVERLAP-LOW` | INFO | Jaccard(`touched_files_expected`, actual) < 0.5 |
-| `EVAL-BASELINE-UNAVAILABLE` | WARNING | master baseline artifact missing; regression gate skipped (see Phase 01 plan §C3) |
+| `EVAL-BASELINE-UNAVAILABLE` | WARNING | master baseline artifact missing; regression gate skipped |
 
 ## Field name contract (review C2)
 

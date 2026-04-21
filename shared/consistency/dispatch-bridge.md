@@ -1,6 +1,6 @@
 # Self-Consistency Dispatch Bridge — Minimum-Viable Contract
 
-**Status:** Active stub (Phase 11, forge 3.1.0). Complements `shared/consistency/voting.md`.
+**Status:** Active stub (forge 3.1.0). Complements `shared/consistency/voting.md`.
 
 **Problem addressed:** The helper `hooks/_py/consistency.py` exposes
 `vote(..., sampler=<callable>)` but ships no default sampler. The three
@@ -10,8 +10,8 @@ not Python processes. This document defines how those Markdown-driven agents
 reach the Python helper and how a fresh fast-tier subagent per sample is
 produced.
 
-The production sampler implementation (ADR-11-BRIDGE) lands in a later
-Phase 11 task; this document is the normative contract that implementation
+The production sampler implementation (ADR-11-BRIDGE) lands in a follow-up
+task; this document is the normative contract that implementation
 must satisfy. Until the production sampler lands, agents follow the fallback
 path in §4 ("Python unavailable") and voting silently degrades to
 single-sample classification — no pipeline failure.

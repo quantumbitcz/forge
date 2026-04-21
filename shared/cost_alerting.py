@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Budget ceiling alerting for the forge pipeline.
 
-Phase 02.1: Python port of cost-alerting.sh. Uses ``hooks._py.io_utils``
+Python port of cost-alerting.sh. Uses ``hooks._py.io_utils``
 for atomic state updates instead of shelling out to forge-state-write.sh.
 
 Commands:

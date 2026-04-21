@@ -88,7 +88,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   for d in "$SKILLS_DIR"/*/; do
     [ -d "$d" ] && count=$(( count + 1 ))
   done
-  # Phase 05 reduced 35 → 33; final target after Tasks 4-12 is 28.
+  # Skill consolidation target: 28.
   if (( count < 28 )); then
     fail "Expected >= 28 skills, found $count"
   fi

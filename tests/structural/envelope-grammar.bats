@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 2: structural validity of shared/untrusted-envelope.md.
+# Structural validity of shared/untrusted-envelope.md.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

@@ -237,7 +237,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
      a. `fg-310-scaffolder` generates boilerplate (if `scaffolder_before_impl: true`).
      b. Write tests (RED phase -- tests that define expected behavior, expected to fail).
      c. `fg-300-implementer` writes implementation to pass tests (GREEN).
-     d. **`fg-301-implementer-critic` reflects on diff vs test intent via Task-tool sub-subagent dispatch (fresh context).** [Phase 04]
+     d. **`fg-301-implementer-critic` reflects on diff vs test intent via Task-tool sub-subagent dispatch (fresh context).**
         - PASS → continue to (e).
         - REVISE within budget → re-enter (c), then re-dispatch critic.
         - REVISE beyond budget → emit `REFLECT-DIVERGENCE` (WARNING), continue.
@@ -245,7 +245,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
      e. `fg-300-implementer` refactors + runs self-review checkpoint.
      f. `fg-300-implementer` inner-loop: lint + affected tests (§5.4.1).
      g. Verify with `commands.build` or `commands.test_single`.
-   <!-- Phase 04: reflection is Stage-4-internal; no stage entry/exit changes. -->
+   <!-- Reflection is Stage-4-internal; no stage entry/exit changes. -->
 5. Write checkpoint (`checkpoint-{storyId}.json`) after each task.
 6. If a task fails after `max_fix_loops`: record as failed, continue with remaining tasks.
 

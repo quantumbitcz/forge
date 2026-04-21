@@ -42,10 +42,10 @@ setup() {
 
 @test "writes skills list --dry-run in Flags" {
   # Writes skills per shared/skill-contract.md §4.
-  # Phase 05 removed forge-deep-health (consolidated into /forge-review --scope all --fix).
-  # Phase 05 Task 4: forge-graph-init/rebuild consolidated into /forge-graph
-  # (write-capable subcommands). Task 5: /forge-verify gains writes via --all
-  # but stays listed under read-only since the default subcommand is read-only.
+  # Skill consolidation removed forge-deep-health (merged into /forge-review --scope all --fix),
+  # forge-graph-init/rebuild (merged into /forge-graph write-capable subcommands), and
+  # /forge-verify now gains writes via --all but stays listed under read-only since the
+  # default subcommand is read-only.
   local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
                 forge-compress forge-config forge-deploy \
                 forge-docs-generate forge-fix forge-graph \
@@ -60,9 +60,9 @@ setup() {
 }
 
 @test "read-only skills list --json in Flags" {
-  # Phase 05 removed forge-codebase-health (consolidated into /forge-review --scope all).
-  # Phase 05 Task 4: forge-graph-{debug,query,status} consolidated into /forge-graph.
-  # Phase 05 Task 5: forge-config-validate consolidated into /forge-verify --config.
+  # Skill consolidation removed forge-codebase-health (merged into /forge-review --scope all),
+  # forge-graph-{debug,query,status} (merged into /forge-graph), and
+  # forge-config-validate (merged into /forge-verify --config).
   local readonly_skills=(forge-ask \
                          forge-help forge-history forge-insights forge-playbooks \
                          forge-profile forge-security-audit forge-status \
@@ -78,10 +78,10 @@ setup() {
 @test "exactly 28 skill directories exist" {
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  # Phase 05 reductions:
-  #   Tasks 1-3: 35 → 33 (forge-codebase-health + forge-deep-health → /forge-review --scope)
-  #   Task 4:    33 → 29 (forge-graph-{init,status,query,rebuild,debug} → /forge-graph)
-  #   Task 5:    29 → 28 (forge-config-validate → /forge-verify --config)
+  # Skill consolidation reductions:
+  #   35 → 33 (forge-codebase-health + forge-deep-health → /forge-review --scope)
+  #   33 → 29 (forge-graph-{init,status,query,rebuild,debug} → /forge-graph)
+  #   29 → 28 (forge-config-validate → /forge-verify --config)
   [ "$count" -eq 28 ]
 }
 

@@ -1,6 +1,6 @@
-"""Phase 01 canonical eval driver -- emits one span of every kind via OTel.
+"""Canonical eval driver -- emits one span of every kind via OTel.
 
-Used by `.github/workflows/phase09-otel.yml` to validate end-to-end span
+Used by `.github/workflows/otel.yml` to validate end-to-end span
 shape against the pinned semconv schema. Kept intentionally tiny: the
 goal is to exercise pipeline/stage/agent/tool spans and flush to the
 collector so the file exporter can dump them to `/tmp/otel-out.jsonl`.

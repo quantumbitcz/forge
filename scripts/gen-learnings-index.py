@@ -62,7 +62,7 @@ def _normalise_module_name(h1: str, fallback: str) -> str:
 def _strip_yaml_frontmatter(lines: list[str]) -> list[str]:
     """Remove a leading `---` … `---` YAML frontmatter block, if present.
 
-    Phase 13 stamped decay frontmatter on every learnings file; the closing
+    The decay frontmatter stamped onto every learnings file; the closing
     fence is followed by the canonical H1. This strips the fenced block so
     downstream regexes never see the embedded `#` comment lines as H1s.
     """

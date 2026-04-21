@@ -1,15 +1,14 @@
 # Measures the A/B effect of `code_graph.prompt_compaction` on scenario
-# 11-repo-map-ab. Gated off until (a) `claude` CLI lands on GH runners
-# (same blocker as evals.yml full-suite) AND (b) Phase 10 Task 10 wires
-# the {{REPO_MAP_PACK}} substitution into fg-100/200/300. Live gate will
-# be `github.event_name == 'pull_request'` once both prereqs are met.
+# 11-repo-map-ab. Gated off until the `claude` CLI lands on GH runners
+# (same blocker as evals.yml full-suite). Live gate will be
+# `github.event_name == 'pull_request'` once the prereq is met.
 #
 # NOTE: the pipeline runner (`python -m tests.evals.pipeline.runner`) does
 # not currently accept a `--filter` flag to select a single scenario. The
 # compaction-off / compaction-on jobs therefore run the full suite when
 # activated; the `compare` job filters to `scenario_id == "11-repo-map-ab"`
 # when comparing the two JSONL artifacts. Adding a `--filter` flag to the
-# runner is out of scope for Phase 10 Task 14.
+# runner is a follow-up.
 
 name: Evals — compaction A/B
 

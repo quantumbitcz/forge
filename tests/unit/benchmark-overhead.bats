@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 21: token-overhead benchmark sanity.
+# Token-overhead benchmark sanity for injection hardening.
 
 setup() { ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"; }
 

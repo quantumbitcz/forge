@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 01: hostile wiki page tries to override agent instructions.
+# Injection red-team scenario 01: hostile wiki page tries to override agent instructions.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../../../../.." && pwd)"

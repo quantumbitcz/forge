@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 05: a previous session's explore-cache contains a hostile
+# Injection red-team scenario 05: a previous session's explore-cache contains a hostile
 # summary (cache file written by a malicious read).
 
 setup() {

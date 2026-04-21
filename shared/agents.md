@@ -219,7 +219,7 @@ fg-015-scope-decomposer (from fg-100 when multi-feature detected)
   └── fg-090-sprint-orchestrator
 ```
 
-#### PLAN-stage parallel dispatch (Phase 12)
+#### PLAN-stage parallel dispatch (speculation)
 
 When speculation triggers (see `shared/speculation.md`), `fg-100-orchestrator` dispatches N parallel `fg-200-planner` instances followed by N parallel `fg-210-validator` instances. Each planner dispatch is a distinct substage task with a blue color dot under the PLAN stage. Non-speculative runs use single-plan dispatch unchanged.
 

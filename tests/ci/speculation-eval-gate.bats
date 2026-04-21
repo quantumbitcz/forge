@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-# Speculation eval CI gate (Phase 12 Task 15).
+# Speculation eval CI gate.
 #
 # NOTE ON SYNTHETIC BANDS:
 # The runner.sh harness is deterministic-synthetic (seed 42, no live LLM). Its
@@ -12,7 +12,7 @@
 #   - token_ratio: the harness sums baseline + 3 candidates (~4x),
 #     whereas production speculation replaces the baseline plan with the
 #     winning candidate plus scoring overhead (~1.5-2.5x).
-# Bands below are widened to accept the synthetic harness; the real Phase 01
+# Bands below are widened to accept the synthetic harness; the live pipeline
 # eval harness will re-tighten them to the production thresholds documented
 # in shared/speculation.md.
 

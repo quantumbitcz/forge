@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Thin shim → shared/convergence_engine_sim.py (Phase 02.1).
+# Thin shim → shared/convergence_engine_sim.py.
 # Original used `bc` for floats which isn't available on Windows.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 04 — reflection eval scenario fixtures structural guard.
+# Reflection eval scenario fixtures structural guard.
 # Asserts every YAML under tests/evals/scenarios/reflection/ carries the schema
 # fields the future fg-301-implementer-critic eval harness will consume.
 

@@ -1,4 +1,4 @@
-"""Opt-in OpenInference compatibility attribute mirroring (Phase 09 Task 11)."""
+"""Opt-in OpenInference compatibility attribute mirroring."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# Phase 10 Graduation Gate — Repo-map PageRank
+# Graduation Gate — Repo-map PageRank
 
 Governs the rollout-stage-3 → stage-4 transition (flipping
 `code_graph.prompt_compaction.enabled` default from `false` to `true` in
@@ -22,5 +22,5 @@ A **single** master eval run with composite delta < −2.0 resets the consecutiv
 
 1. Run `python3 tests/evals/pipeline/summarize_runs.py --scenario 10-repo-map-ab --last 20` and confirm G1–G5.
 2. Flip `code_graph.prompt_compaction.enabled` to `true` in the framework `forge-config-template.md` files (not `plugin.json` — the per-framework template is the resolved default).
-3. Bump CLAUDE.md row to mark Phase 10 as "on by default."
-4. Open a PR titled `chore(phase10): graduate prompt_compaction to default ON`.
+3. Bump CLAUDE.md row to mark repo-map PageRank as "on by default."
+4. Open a PR titled `chore(repomap): graduate prompt_compaction to default ON`.

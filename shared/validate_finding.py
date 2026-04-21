@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a single finding line against shared/checks/output-format.md spec.
 
-Phase 02.1: Python port of validate-finding.sh.
+Python port of validate-finding.sh.
 
 Format:
   file:line | CATEGORY-CODE | SEVERITY | message | fix_hint [| confidence:LEVEL]

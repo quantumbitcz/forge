@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 13 — memory decay eval harness.
+# Memory decay eval harness.
 # Usage: ./tests/evals/memory_decay_eval.sh
 # Runs the dry-run-recompute CLI against the fixture grid and asserts each
 # item lands in the expected tier (fresh → HIGH, 1× HL → MEDIUM, 3× HL → ARCHIVED).

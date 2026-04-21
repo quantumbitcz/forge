@@ -11,4 +11,4 @@ touched_files_expected:
 must_not_touch:
   - .claude/**
   - tests/evals/**
-notes: "STUB — replace before Phase 03 with real DVC + MLflow reproducibility scenario."
+notes: "STUB — replace with a real DVC + MLflow reproducibility scenario."

@@ -85,7 +85,7 @@ Before writing code:
 3. Mismatch → WARNING: `CONVENTION_DRIFT: conventions changed since PREFLIGHT (was: {old}, now: {new})`. Re-read conventions.
 4. Optionally compare per-section hashes — WARNING only if relevant sections changed
 
-### Repo-map pack (Phase 10, opt-in — per-task)
+### Repo-map pack (opt-in — per-task)
 
 When `code_graph.prompt_compaction.enabled: true`, each task dispatch embeds
 its own `{{REPO_MAP_PACK:BUDGET=4000:TOPK=25}}`. Per-task (not shared) packs

@@ -147,7 +147,7 @@ has_tool() {
 # ---------------------------------------------------------------------------
 
 @test "every non-Tier-4 agent has explicit ui: block; every Tier-4 agent omits ui:" {
-  # Phase 07 contract tightening: Tier-4 (silent) agents MUST omit ui: entirely.
+  # Contract tightening: Tier-4 (silent) agents MUST omit ui: entirely.
   # Tier-4 list is sourced from shared/agent-role-hierarchy.md §"Tier 4 — None (Silent)".
   local tier4=(
     fg-101-worktree-manager

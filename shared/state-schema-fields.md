@@ -2,13 +2,13 @@
 
 > **Overview:** see [`state-schema.md`](state-schema.md) for directory layout, top-level schema shape, atomic-write guarantees, and the concurrent-run lock.
 >
-> This document is the exhaustive field-by-field reference for `.forge/state.json`, plus the schemas of all related subsystem files (`security.injection_*` counters, `events.jsonl`, `checkpoint-{storyId}.json`, stage notes, feedback, reports, orchestrator input payload, `eval_run`, `prompt_compaction`, Phase 12 speculation fields) and the schema changelog.
+> This document is the exhaustive field-by-field reference for `.forge/state.json`, plus the schemas of all related subsystem files (`security.injection_*` counters, `events.jsonl`, `checkpoint-{storyId}.json`, stage notes, feedback, reports, orchestrator input payload, `eval_run`, `prompt_compaction`, speculation fields) and the schema changelog.
 
 ## Field Reference
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.9.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.9.0 adds self-consistency voting counters (`consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`) for Phase 11. v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Phase 04 CoVe. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"1.9.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.9.0 adds self-consistency voting counters (`consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`). v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Chain-of-Verification critic. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
@@ -220,7 +220,7 @@ OpenTelemetry GenAI semconv observability state. Spans are emitted in-process by
 - Spans mirrored by `hooks/_py/otel.py` at close time
 - Reset at PREFLIGHT for each new run
 
-Removed in Phase 09 (forge 3.4.0): `telemetry.metrics` aggregation, `telemetry.export_status`. Metrics are derived from span attributes at the collector; export status is implicit (live stream best-effort, replay authoritative).
+Removed in forge 3.4.0: `telemetry.metrics` aggregation, `telemetry.export_status`. Metrics are derived from span attributes at the collector; export status is implicit (live stream best-effort, replay authoritative).
 
 ### Tracking Fields
 
@@ -671,7 +671,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.5.0 | 1.6.0 | (v2.7.0) Added circuit breaker tracking, planning critic counter, schema migration history | `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history` | `{}`, `0`, `[]` |
 | 1.6.0 | 1.7.0 | (v2.0) Added confidence scoring, adaptive trust, context condensation, knowledge references | `confidence`, `convergence.condensation`, `tokens.condensation_savings`, `tokens.condensation_count`, `tokens.condensation_cost`, `tokens.effective_token_ratio` | `null` (computed at PLAN), see condensation defaults above, `0`, `0`, `0`, `1.0` |
 | 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
-| 1.8.0 | 1.9.0 | (Forge 3.1.0) Phase 11 self-consistency voting counters + Phase 14 time-travel CAS checkpoints. Breaking (Phase 14): CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
+| 1.8.0 | 1.9.0 | (Forge 3.1.0) Self-consistency voting counters + time-travel CAS checkpoints. Breaking: CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
 
 ### Version Detection and Upgrade Protocol
 
@@ -740,7 +740,7 @@ All retry loops also increment `total_retries`. When `total_retries >= total_ret
 
 ## checkpoint-{storyId}.json
 
-> **DEPRECATED in v1.9.0 (Phase 14).** This linear per-story file format is replaced by the content-addressable DAG documented in §Checkpoints above. New runs write to `.forge/runs/<run_id>/checkpoints/` via `hooks/_py/time_travel`. The schema below is retained for reference only — orchestrators on v1.9.0+ never read or write these files, and `/forge-recover reset` is required to migrate pre-1.9.0 state.
+> **DEPRECATED in v1.9.0.** This linear per-story file format is replaced by the content-addressable DAG documented in §Checkpoints above. New runs write to `.forge/runs/<run_id>/checkpoints/` via `hooks/_py/time_travel`. The schema below is retained for reference only — orchestrators on v1.9.0+ never read or write these files, and `/forge-recover reset` is required to migrate pre-1.9.0 state.
 
 Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) after each task completes. Enables resuming implementation at the exact task where a conversation was interrupted.
 
@@ -886,13 +886,13 @@ When `fg-100-orchestrator` is dispatched as a subagent (by a `/forge-*` skill or
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`, `rewind`, `list-checkpoints`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. `rewind` and `list-checkpoints` added in v1.9.0 (Phase 14). |
+| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`, `rewind`, `list-checkpoints`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. `rewind` and `list-checkpoints` added in v1.9.0. |
 
 ---
 
 ## § Checkpoints
 
-**Breaking change in v1.9.0 (Phase 14):** the pre-Phase-14 `.forge/checkpoint-{storyId}.json` linear file layout is **removed**. Checkpoints now live under `.forge/runs/<run_id>/checkpoints/` in a content-addressable DAG:
+**Breaking change in v1.9.0:** the legacy `.forge/checkpoint-{storyId}.json` linear file layout is **removed**. Checkpoints now live under `.forge/runs/<run_id>/checkpoints/` in a content-addressable DAG:
 
 ```
 .forge/runs/<run_id>/checkpoints/
@@ -932,9 +932,9 @@ See `shared/recovery/time-travel.md` for the full protocol, atomic restore seman
 ### Refusal behavior
 
 Orchestrator at startup reads `state.json.version`. If < `1.9.0`, refuses to proceed with error:
-`state.json v<detected> detected; v1.9.0 required (Phase 14). Run /forge-recover reset to start fresh.`
+`state.json v<detected> detected; v1.9.0 required. Run /forge-recover reset to start fresh.`
 
-No automatic migration — the checkpoint format is incompatible. Legacy `.forge/checkpoint-*.json` files are deleted by `python3 -m hooks._py.time_travel` at first Phase-14 write unless `recovery.time_travel.preserve_legacy: true` (moves to `.forge/runs/<run_id>/checkpoints/legacy-trash/`).
+No automatic migration — the checkpoint format is incompatible. Legacy `.forge/checkpoint-*.json` files are deleted by `python3 -m hooks._py.time_travel` at first post-migration write unless `recovery.time_travel.preserve_legacy: true` (moves to `.forge/runs/<run_id>/checkpoints/legacy-trash/`).
 
 ### Lifecycle
 
@@ -995,14 +995,14 @@ Each task object under `tasks[*]` carries:
 
 ## Changelog
 
-### 1.9.0 (Forge 3.1.0 — Phase 11 Self-Consistency + Phase 14 Time-Travel Checkpoints)
+### 1.9.0 (Forge 3.1.0 — Self-Consistency Voting + Time-Travel Checkpoints)
 
-**Phase 11 — Self-consistency voting counters:**
+**Self-consistency voting counters:**
 - Add run-level `consistency_cache_hits` (integer, required). Incremented by `hooks/_py/consistency.py` on every cache hit.
 - Add run-level `consistency_votes` (object, required). Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value: `{ "invocations": int, "cache_hits": int, "low_consensus": int }`. Incremented by the three callers (`fg-010-shaper`, `fg-210-validator`, `fg-710-post-run`). `validator_verdict.invocations` is NOT incremented on hard rule-pass verdicts (see `shared/consistency/voting.md` §6).
 - New fields initialized to `0` / the per-decision skeleton object at PREFLIGHT. Pre-1.9.0 state.json files receive defaults via the standard migration ladder.
 
-**Phase 14 — Time-travel checkpoints (breaking):**
+**Time-travel checkpoints (breaking):**
 - **Breaking:** replace linear `.forge/checkpoint-{storyId}.json` files with a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrator refuses to proceed when `state.json.version` < `1.9.0`; no automatic migration (run `/forge-recover reset`).
 - Add `state.json.checkpoints` (array, append-only, pre-rewind entries retained for audit) and `state.json.head_checkpoint` (mirrors `.forge/runs/<run_id>/checkpoints/HEAD`).
 - Add `recovery.time_travel.*` config block (`enabled`, `retention_days`, `max_checkpoints_per_run`, `require_clean_worktree`, `compression`, `preserve_legacy`).
@@ -1014,10 +1014,10 @@ Each task object under `tasks[*]` carries:
 - Add `tasks[*].reflection_verdicts` (array, optional) audit trail, last 5 entries.
 - Add run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
 - On `/forge-recover resume`: `reflection_verdicts` reset to `[]`; `implementer_reflection_cycles` preserved (budget not refunded mid-task).
-- **Breaking (no backcompat per Phase 04 brief):** new required fields initialized to 0 / [] at PREFLIGHT. Pre-Phase-04 state.json files are not readable by Phase-04 orchestrator without PREFLIGHT re-init.
+- **Breaking (no backcompat):** new required fields initialized to 0 / [] at PREFLIGHT. Pre-1.8.0 state.json files are not readable by a 1.8.0+ orchestrator without PREFLIGHT re-init.
 
 ### 1.7.0 (Forge 3.0.0)
-- Add `recovery_op` field to orchestrator input payload (Phase 1 skill surface consolidation).
+- Add `recovery_op` field to orchestrator input payload (skill surface consolidation).
 
 ## `eval_run` (added in 1.7.0)
 
@@ -1039,7 +1039,7 @@ Present only when the orchestrator was invoked with `--eval-mode <scenario_id>` 
 
 Field-name contract (review C2): `touched_files_expected` is the single canonical name used in both `state.json` and scenario `expected.yaml`. Do not introduce aliases.
 
-## prompt_compaction (Phase 10)
+## prompt_compaction
 
 Added as an additive top-level `state.json` field in schema 1.9.0. Written by the
 orchestrator when `code_graph.prompt_compaction.enabled: true`. Purely
@@ -1079,9 +1079,9 @@ are unaware of `prompt_compaction` continue to work unchanged.
 - `overall_ratio` = `(baseline_tokens_estimate - compacted_tokens_total) / baseline_tokens_estimate`; `0` if baseline is `0`.
 - `bypass_events` counts per run; SC-4's `repomap.bypass.failure` = sum of `missing_graph + solve_diverged + corrupt_cache` (excludes the legitimate `sparse_graph` path).
 
-## Phase 12: Speculation fields
+## Speculation fields
 
-Phase 12 (Speculative Plan Branches, `shared/speculation.md`) adds two top-level
+Speculative plan branches (`shared/speculation.md`) add two top-level
 `state.json` fields. These are **additive** — no schema version bump — and
 default to no-op values so unaware consumers ignore them.
 

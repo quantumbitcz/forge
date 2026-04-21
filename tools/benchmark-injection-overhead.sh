@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# benchmark-injection-overhead.sh — Phase 03 Task 21.
-# Approximate token-overhead of the Phase 03 hardening.
+# benchmark-injection-overhead.sh — measures injection-hardening overhead.
+# Approximate token-overhead of the injection-hardening policy block.
 # Strategy: measure byte-size of the canonical Untrusted Data Policy block per
 # agent, multiply by typical dispatched-agent count, convert to tokens with the
 # stable 4-bytes-per-token heuristic.

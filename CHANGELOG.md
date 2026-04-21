@@ -5,35 +5,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Consolidates post-3.5.0 polish across Phases 06 (docs architecture), 07 (agent layer refactor), 10 (repo-map PageRank), and 12 (speculation) — no version bump yet.
+Consolidates post-3.5.0 polish across docs architecture, agent layer refactor, repo-map PageRank, and speculation — no version bump yet.
 
 ### Added
 
-- **Phase 07 — 5 new pipeline agents** (opt-in via `agents.*` config schema):
+- **5 new pipeline agents** (opt-in via `agents.*` config schema):
   - `fg-143-observability-bootstrap` (PREFLIGHT Tier-3) — auto-wires OTel exporter when `observability_bootstrap.enabled=true`.
   - `fg-155-i18n-validator` (PREFLIGHT Tier-3) — hardcoded-string / RTL / locale checks; default-enabled.
   - `fg-506-migration-verifier` (VERIFY, migration mode only) — cycles MIGRATING/PAUSED/CLEANUP/VERIFY.
   - `fg-555-resilience-tester` (VERIFY Tier-3, opt-in) — chaos/fault-injection on changed surface.
   - `fg-414-license-reviewer` (split from `fg-417`) — license-compliance finding surface distinct from CVE/compat.
-- **Phase 07 — `trigger:` expression grammar** and evaluator contract (`shared/agent-communication.md`) — declarative predicate for conditional dispatch.
-- **Phase 06 — `shared/agents.md`** — consolidates agent model, tier table, dispatch graph, and registry (supersedes the deleted `agent-model.md`, `agent-registry.md`, and narrow parts of `agent-communication.md`).
-- **Phase 06 — `shared/learnings-index.md`** and `docs.learnings_index.auto_update` config key — retrospective auto-regenerates the index when `true` (default); CI `docs-integrity` workflow enforces freshness regardless.
-- **Phase 06 — Start Here (5-minute path)** block at the top of `CLAUDE.md` — install / first-run / skill-selection on-ramp.
-- **Phase 06 — `docs-integrity` CI workflow** (`.github/workflows/docs-integrity.yml`) — strict lychee, anchor check, ADR validator, 600-line ceiling, framework-count guard.
-- **Phase 10 — `{{REPO_MAP_PACK}}` placeholder** injected into `fg-100-orchestrator`, `fg-200-planner`, and `fg-300-implementer` prompts — replaces full directory listings with PageRank-ranked file packs (30-50% token saving when `code_graph.prompt_compaction.enabled=true`, default OFF).
-- **Phase 10 — A/B eval scenario** and compaction workflow — 20-run graduation gate before default-on consideration.
-- **Phase 12 — speculative dispatch section** in `fg-100-orchestrator` — full behavioral contract for when Branch Mode fires.
-- **Phase 12 — eval corpus + CI gates** — quality, token, and precision regression guards on speculation.
-- **Phase 12 — `state.json.plan_candidates` + `speculation.*` fields** — candidate persistence and selection audit.
+- **`trigger:` expression grammar** and evaluator contract (`shared/agent-communication.md`) — declarative predicate for conditional dispatch.
+- **`shared/agents.md`** — consolidates agent model, tier table, dispatch graph, and registry (supersedes the deleted `agent-model.md`, `agent-registry.md`, and narrow parts of `agent-communication.md`).
+- **`shared/learnings-index.md`** and `docs.learnings_index.auto_update` config key — retrospective auto-regenerates the index when `true` (default); CI `docs-integrity` workflow enforces freshness regardless.
+- **Start Here (5-minute path)** block at the top of `CLAUDE.md` — install / first-run / skill-selection on-ramp.
+- **`docs-integrity` CI workflow** (`.github/workflows/docs-integrity.yml`) — strict lychee, anchor check, ADR validator, 600-line ceiling, framework-count guard.
+- **`{{REPO_MAP_PACK}}` placeholder** injected into `fg-100-orchestrator`, `fg-200-planner`, and `fg-300-implementer` prompts — replaces full directory listings with PageRank-ranked file packs (30-50% token saving when `code_graph.prompt_compaction.enabled=true`, default OFF).
+- **Repo-map A/B eval scenario** and compaction workflow — 20-run graduation gate before default-on consideration.
+- **Speculative dispatch section** in `fg-100-orchestrator` — full behavioral contract for when Branch Mode fires.
+- **Speculation eval corpus + CI gates** — quality, token, and precision regression guards on speculation.
+- **`state.json.plan_candidates` + `speculation.*` fields** — candidate persistence and selection audit.
 
 ### Changed
 
-- **Phase 06 — `shared/state-schema.md` split** into overview (355L) + `state-schema-fields.md` (1133L, exempt from 600L ceiling). No content change; the two files supersede the former 1461L monolith.
-- **Phase 06 — agent docs consolidation** — `shared/agent-communication.md` narrowed to inter-agent messaging; `agent-model.md`, `agent-registry.md`, and `agent-tiers.md` deleted (content merged into `shared/agents.md`).
-- **Phase 06 — dead-link sweep** — pre-existing broken links fixed; lychee switched to strict mode.
-- **Phase 07 — `fg-413-frontend-reviewer` slimmed** to ≤400 lines; frontend-performance findings delegated to `fg-416-performance-reviewer`.
-- **Phase 07 — `fg-417-dependency-reviewer` split**: license-compliance moved to `fg-414`; `fg-417` now scoped to CVEs / version conflicts / transitive compatibility.
-- **INDEX.md Status column** added to roadmap — Done / Partial / Blocked at-a-glance per phase.
+- **`shared/state-schema.md` split** into overview (355L) + `state-schema-fields.md` (1133L, exempt from 600L ceiling). No content change; the two files supersede the former 1461L monolith.
+- **Agent docs consolidation** — `shared/agent-communication.md` narrowed to inter-agent messaging; `agent-model.md`, `agent-registry.md`, and `agent-tiers.md` deleted (content merged into `shared/agents.md`).
+- **Dead-link sweep** — pre-existing broken links fixed; lychee switched to strict mode.
+- **`fg-413-frontend-reviewer` slimmed** to ≤400 lines; frontend-performance findings delegated to `fg-416-performance-reviewer`.
+- **`fg-417-dependency-reviewer` split**: license-compliance moved to `fg-414`; `fg-417` now scoped to CVEs / version conflicts / transitive compatibility.
 - CLAUDE.md hook count corrected (7 → 6); Agent model row added to Key entry points.
 
 ### Fixed
@@ -42,7 +41,7 @@ Consolidates post-3.5.0 polish across Phases 06 (docs architecture), 07 (agent l
 - `opentelemetry.io/docs/specs/semconv/*` flake — ignored in `.lycheeignore` (GitHub runners surface intermittent 403s).
 - bats-core submodule refreshed to latest tag.
 
-## [3.5.0] — 2026-04-20 — Phase 12: Speculative Plan Branches
+## [3.5.0] — 2026-04-20 — Speculative Plan Branches
 
 Branch-mode planner dispatches 2-3 candidate plans in parallel for MEDIUM-confidence ambiguous requirements, validates each, and selects the highest-scored.
 
@@ -51,20 +50,20 @@ Branch-mode planner dispatches 2-3 candidate plans in parallel for MEDIUM-confid
 - **`fg-200-planner` Branch Mode** — N=2-5 parallel candidate invocations with distinct exploration seeds when `speculation.enabled=true` and confidence gate fires MEDIUM (`plans/candidates/` per-run persistence with FIFO eviction).
 - **Speculation CLI** (`hooks/_py/speculation/`) — `derive-seed`, `estimate-cost`, `diversity`, `selection`, `winner` subcommands drive candidate generation, cost-aware gating, and tie-break.
 - **`plan-cache` schema v2.0** — candidate set + winner tracking; survives `/forge-recover reset`.
-- **Phase 10 — Repo-map PageRank** (`hooks/_py/repomap.py`) — biased PageRank with recency + keyword-overlap re-ranking, token-budgeted pack assembly, LRU cache (`.forge/ranked-files-cache.json`). `code_graph.prompt_compaction.*` config block. CLI subcommands: `rank`, `pack`, `stats`.
+- **Repo-map PageRank** (`hooks/_py/repomap.py`) — biased PageRank with recency + keyword-overlap re-ranking, token-budgeted pack assembly, LRU cache (`.forge/ranked-files-cache.json`). `code_graph.prompt_compaction.*` config block. CLI subcommands: `rank`, `pack`, `stats`.
 - **`state.json.prompt_compaction`** block records ranked-file hit rate and token savings per stage.
 - **`shared/graph/pagerank-sql.md`** — PageRank algorithm reference with SQLite DDL and worked example.
-- **`shared/` grouped index** (Phase 06) — logical groupings for 80+ shared docs.
+- **`shared/` grouped index** — logical groupings for 80+ shared docs.
 
 ### Changed
 
 - `.claude-plugin/plugin.json` → 3.5.0.
 
-## [3.4.0] — 2026-04-20 — Phase 09: OTel GenAI Semconv + Phase 05: Skill Consolidation + Phase 14: Time-Travel Checkpoints
+## [3.4.0] — 2026-04-20 — OTel GenAI Semconv + Skill Consolidation + Time-Travel Checkpoints
 
 Three major feature streams converged in a single version bump: OpenTelemetry GenAI Semantic Conventions for observability, skill consolidation (35 → 28), and the content-addressable checkpoint DAG.
 
-### Breaking — Phase 09 OTel
+### Breaking — OTel
 
 - **OTel exporter rewritten in Python.** `shared/forge-otel-export.sh` is **removed**. Use `python -m hooks._py.otel_cli replay ...` for post-hoc export from the event log. Live emission happens automatically via `hooks/_py/otel.py` when `observability.otel.enabled=true`.
 - **Attribute rename** — legacy custom names removed; semconv replacements:
@@ -77,7 +76,7 @@ Three major feature streams converged in a single version bump: OpenTelemetry Ge
   Rebuild dashboards keyed on the old names.
 - **Config keys removed.** Replace `observability.export` and `observability.otel_endpoint` with the nested `observability.otel.*` form documented in `shared/observability.md`. `telemetry.export_status` is no longer written to `state.json`.
 
-### Breaking — Phase 05 Skill Consolidation
+### Breaking — Skill Consolidation
 
 Seven top-level skills have been removed and their capabilities folded into three unified skills. Skill count: 35 → 28.
 
@@ -93,11 +92,11 @@ Seven top-level skills have been removed and their capabilities folded into thre
 
 `/forge-review --scope=all --fix` presents an `AskUserQuestion` safety gate before the first commit unless `autonomous: true` or `--yes`. Subcommand dispatch pattern documented in `shared/skill-subcommand-pattern.md`.
 
-### Breaking — Phase 14 Time-Travel
+### Breaking — Time-Travel
 
 - **State schema 1.8.0 → 1.9.0.** The linear `.forge/checkpoint-{storyId}.json` format is replaced by a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrators on v1.9.0+ refuse to proceed on pre-1.9.0 state; run `/forge-recover reset` to migrate (no automatic upgrade — formats are not compatible).
 
-### Added — Phase 09 OTel
+### Added — OTel
 
 - OTel GenAI Semantic Conventions (2026) span emission per pipeline, stage, and agent dispatch (`hooks/_py/otel.py`).
 - W3C Trace Context propagation to subagent dispatches via `TRACEPARENT` (`otel.dispatch_env`).
@@ -105,12 +104,12 @@ Seven top-level skills have been removed and their capabilities folded into thre
 - `otel.replay()` — authoritative recovery path from `.forge/events.jsonl`. Live streaming via `BatchSpanProcessor` is best-effort; replay is the source of truth.
 - Optional OpenInference compatibility mirror (`observability.otel.openinference_compat: true`) — emits `openinference.span.kind=AGENT`, `llm.token_count.{prompt,completion,total}`, `llm.model_name`, `agent.name` alongside `gen_ai.*` for Arize-heavy backends.
 - Pinned semconv schema (`shared/schemas/otel-genai-v1.json`) + CI validator (`tests/unit/otel_semconv_validator.py`).
-- CI workflow `.github/workflows/phase09-otel.yml` — Docker collector sidecar, semconv conformance test, replay parity job, and disabled-overhead guard (<1ms/stage when `enabled=false`, no `opentelemetry.*` imports).
+- CI workflow `.github/workflows/otel.yml` — Docker collector sidecar, semconv conformance test, replay parity job, and disabled-overhead guard (<1ms/stage when `enabled=false`, no `opentelemetry.*` imports).
 - `observability.otel.*` PREFLIGHT constraints (`shared/preflight-constraints.md`).
 - `[otel]` optional dependency group in `pyproject.toml` — `pip install forge-plugin[otel]` pulls `opentelemetry-api>=1.30.0`, `opentelemetry-sdk>=1.30.0`, `opentelemetry-exporter-otlp>=1.30.0`, `jsonschema>=4.0.0`.
 - Orchestrator OTel instrumentation contract documented in `agents/fg-100-orchestrator.md`.
 
-### Added — Phase 14 Time-Travel
+### Added — Time-Travel
 
 - `hooks/_py/time_travel/` Python package — CAS checkpoint store (`cas.py`), atomic rewind protocol with per-run `.rewind-tx/` (`restore.py`), GC policy with HEAD-path protection (`gc.py`), and `RewoundEvent` schema (`events.py`).
 - `hooks/_py/time_travel/__main__.py` CLI — invoked as `python3 -m hooks._py.time_travel <op>`; supports `list-checkpoints`, `rewind`, `repair`, `gc`. Exit codes 5/6/7 distinguish dirty-worktree, unknown-id, and tx-collision aborts.
@@ -125,26 +124,26 @@ Seven top-level skills have been removed and their capabilities folded into thre
 - `tests/evals/time-travel/` — bats eval harness covering round-trip, dedup, dirty-worktree abort, crash-mid-rewind repair (rollback + roll-forward), tree-DAG golden output, and rewind-then-replay convergence.
 - `tests/run-all.sh` — new `time-travel` tier; the `all` and `eval` tiers now also pick up `tests/evals/time-travel/*.bats` when present.
 
-### Added — Phase 05 Skill Consolidation tests
+### Added — Skill Consolidation tests
 
 - `tests/structural/skill-consolidation.bats` — 16 assertions locking in skill count, expected names, removed names, subcommand-dispatch sections, `--json` schema_version, CLAUDE.md "(28 total)" header, and a `validate-config.sh` read-only regression guard.
 - `tests/lib/module-lists.bash` — `DISCOVERED_SKILLS`, `MIN_SKILLS=28`, and `EXPECTED_SKILL_NAMES` fixture (28 entries).
 
-### Added — Phase 11/04/13/06 eval harnesses
+### Added — eval harnesses
 
-- Phase 11 self-consistency voting — eval datasets + harness + CI gates.
-- Phase 04 — 5 reflection eval scenarios + structural validator.
-- Phase 13 Ebbinghaus decay — docs sweep + frontmatter stamping + eval harness.
-- Phase 06 — learnings-index generator + initial index; convergence-engine cleanup + anchor-map CSV.
+- Self-consistency voting — eval datasets + harness + CI gates.
+- 5 reflection eval scenarios + structural validator.
+- Ebbinghaus decay — docs sweep + frontmatter stamping + eval harness.
+- Learnings-index generator + initial index; convergence-engine cleanup + anchor-map CSV.
 
-### Changed — Phase 05 Skill Consolidation
+### Changed — Skill Consolidation
 
 - `CLAUDE.md` Skills paragraph rewritten for the 28-skill baseline; getting-started flows updated.
-- `skills/forge-help/SKILL.md` rewritten — ASCII decision tree replaces tier tables; `--json` envelope bumps to `schema_version: "2"`; new Migration (Phase 05) table.
-- `shared/skill-contract.md` §4 Skill categorization rebased to the Phase 05 baseline (10 read-only + 18 writes = 28).
+- `skills/forge-help/SKILL.md` rewritten — ASCII decision tree replaces tier tables; `--json` envelope bumps to `schema_version: "2"`; new Migration table.
+- `shared/skill-contract.md` §4 Skill categorization rebased to the consolidated baseline (10 read-only + 18 writes = 28).
 - `README.md`, `shared/graph/{schema,schema-versioning}.md`, `shared/graph/enrich-symbols.sh`, `shared/recovery/health-checks/dependency-check.sh`, `skills/forge-init/SKILL.md` — every `/forge-graph-*` and `/forge-config-validate` reference rewritten to the new `<sub>` form.
 
-### Changed — Phase 14 Time-Travel
+### Changed — Time-Travel
 
 - `shared/state-schema.md` — `## § Checkpoints` section replaced with CAS DAG layout; deprecated `## checkpoint-{storyId}.json` section retained for reference only.
 - `shared/state-transitions.md` — added `REWINDING` pseudo-state rows and a `§ Rewind transitions` section.
@@ -157,13 +156,13 @@ Seven top-level skills have been removed and their capabilities folded into thre
 
 ### Fixed
 
-- Untrusted Data Policy header injected into `fg-301-implementer-critic` (missed in the Phase 03 sweep).
+- Untrusted Data Policy header injected into `fg-301-implementer-critic` (missed in the original injection-hardening sweep).
 
-### Cardinality budget (Phase 09)
+### Cardinality budget
 
 Span names use only bounded attributes (`gen_ai.agent.name`, `gen_ai.request.model`, `gen_ai.operation.name`, `forge.stage`, `forge.mode`). Unbounded values (`forge.run_id`, `gen_ai.agent.id`, `gen_ai.tool.call.id`) appear as attributes only, never in span names. See `shared/observability.md` for the full table.
 
-## [3.3.0] — 2026-04-20 — Phase 04: Implementer Reflection (Chain-of-Verification)
+## [3.3.0] — 2026-04-20 — Implementer Reflection (Chain-of-Verification)
 
 Fresh-context critic (`fg-301-implementer-critic`) inserted between GREEN and REFACTOR in `fg-300`'s TDD loop catches diffs that pass tests but fail to satisfy test intent (hardcoded returns, over-narrow conditionals, swallowed branches).
 
@@ -174,12 +173,12 @@ Fresh-context critic (`fg-301-implementer-critic`) inserted between GREEN and RE
 - **Per-task `implementer_reflection_cycles` counter** in `state.json` — parallel to `implementer_fix_cycles`; does NOT feed into convergence counters, `total_retries`, or `total_iterations`.
 - **New scoring categories** — `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. After 2 REVISE verdicts on the same task the critic escalates to `REFLECT-DIVERGENCE` (WARNING) and continues to REFACTOR so the reviewer panel gets a chance.
 - **Model routing** — critic uses `fast` tier.
-- **Phase 11 foundation** — self-consistency voting dispatch bridge + state schema bump.
-- **Phase 13 foundation** — Ebbinghaus memory decay agent edits + legacy-field removal.
-- **Phase 14 foundation** — time-travel checkpoints foundation (Tasks 1-4).
-- **Phase 12 foundation** — speculative plan branches foundation (Tasks 1-3).
-- **Phase 10 foundation** — repo-map PageRank foundation (Tasks 1-4).
-- **Phase 08 modules** — Rails, Swift structured concurrency, and Laravel framework modules. `MIN_FRAMEWORKS` raised from 22 to 24 with structural guards.
+- **Self-consistency voting foundation** — dispatch bridge + state schema bump.
+- **Ebbinghaus memory decay foundation** — agent edits + legacy-field removal.
+- **Time-travel checkpoints foundation** (Tasks 1-4).
+- **Speculative plan branches foundation** (Tasks 1-3).
+- **Repo-map PageRank foundation** (Tasks 1-4).
+- **New framework modules** — Rails, Swift structured concurrency, and Laravel. `MIN_FRAMEWORKS` raised from 22 to 24 with structural guards.
 
 ### Fixed
 
@@ -189,7 +188,7 @@ Fresh-context critic (`fg-301-implementer-critic`) inserted between GREEN and RE
 
 - `.claude-plugin/plugin.json` → 3.3.0.
 
-## [3.2.0] — 2026-04-20 — Phase 03: Prompt Injection Hardening
+## [3.2.0] — 2026-04-20 — Prompt Injection Hardening
 
 Four-tier trust model (Silent / Logged / Confirmed / Blocked) wraps every piece of external data consumed by the 48 forge agents inside `<untrusted source="..." ...>` XML envelopes. A mandatory system-level Untrusted Data Policy header is injected into every agent, treating envelope contents as **data, never instructions**. Regex detection layer flags and quarantines likely-injection payloads before reaching any agent.
 
@@ -205,18 +204,18 @@ Four-tier trust model (Silent / Logged / Confirmed / Blocked) wraps every piece 
 - **`SEC-INJECTION-*` scoring categories** — findings distinguish Silent / Logged / Confirmed / Blocked severity.
 - **`hooks/_py/mcp_response_filter.py`** — every external data source tiered and envelope-wrapped at the hook boundary.
 - **`./tools/apply-untrusted-header.sh`** — SHA-pinned header application tool (hand-editing breaks the pin).
-- **Phase 05 foundation** — skill consolidation foundation (Tasks 1-3).
-- **Phase 06 foundation** — documentation architecture — ADR scaffolding + 11 seed records.
-- **Phase 07 foundation** — agent layer — `ui:` frontmatter trim + `trigger:` scaffolding.
-- **Phase 08** — Flask framework module (first of four new frameworks).
-- **Phase 09 foundation** — OTel GenAI semconv foundation (Tasks 1-4).
-- **Phase 02.1** — residual bash audit scripts ported to Python.
+- **Skill consolidation foundation** (Tasks 1-3).
+- **Documentation architecture foundation** — ADR scaffolding + 11 seed records.
+- **Agent layer foundation** — `ui:` frontmatter trim + `trigger:` scaffolding.
+- **Flask framework module** (first of four new frameworks).
+- **OTel GenAI semconv foundation** (Tasks 1-4).
+- **Residual bash audit scripts** ported to Python.
 
 ### Changed
 
 - `.claude-plugin/plugin.json` → 3.2.0.
 
-## [3.1.0] — 2026-04-19 — Phase 02: Cross-Platform Python Hooks
+## [3.1.0] — 2026-04-19 — Cross-Platform Python Hooks
 
 All 7 forge hooks, the check engine, and the critical `shared/*.sh` scripts ported to Python 3.10+ stdlib-only. The bash 4+ requirement is dropped; `windows-latest` is now a first-class CI target.
 
@@ -232,8 +231,7 @@ All 7 forge hooks, the check engine, and the critical `shared/*.sh` scripts port
 - **`check_prerequisites.py`** — Python 3.10+ validation for `/forge-init`.
 - **`windows-latest` CI matrix** — full `unit | contract | scenario` jobs now run on Windows Git Bash (previously `structural`-only).
 - **`shared/platform-support.md`** — cross-platform guidance (macOS / Linux / Windows Git Bash / WSL2 / PowerShell).
-- **Phase 01 — pipeline evaluation harness** (`tests/evals/pipeline/`) — CI-only evals with 5 suite definitions (lite/25, convergence/10, cost/5, compression/5, smoke/5), 30 fixture stubs across 5 languages, baseline save/compare with regression detection.
-- **`docs/superpowers/`** — A+ roadmap: 15 phase specs, plans, and code reviews (~36,700 lines total).
+- **Pipeline evaluation harness** (`tests/evals/pipeline/`) — CI-only evals with 5 suite definitions (lite/25, convergence/10, cost/5, compression/5, smoke/5), 30 fixture stubs across 5 languages, baseline save/compare with regression detection.
 
 ### Changed
 

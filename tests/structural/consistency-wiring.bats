@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
-# Structural checks on plugin wiring for Phase 11 self-consistency voting.
-# Phase 11 Task 11. Verifies the Phase 11 cross-cutting touchpoints are present
+# Structural checks on plugin wiring for self-consistency voting.
+# Verifies the consistency cross-cutting touchpoints are present
 # in the documented locations.
 
 setup() {
@@ -22,7 +22,7 @@ setup() {
 }
 
 @test "forge-config schema declares the consistency block with n_samples default 3" {
-  # Phase 11 deviation: configuration defaults live in shared/schemas/forge-config-schema.json
+  # Configuration defaults live in shared/schemas/forge-config-schema.json
   # rather than a top-level forge-config.md. The schema is the canonical source.
   run grep -E '"consistency"' "${REPO_ROOT}/shared/schemas/forge-config-schema.json"
   [ "$status" -eq 0 ]

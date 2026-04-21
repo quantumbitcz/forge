@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# verify-untrusted-header.sh — Phase 03 Task 6.
+# verify-untrusted-header.sh — injection-hardening header verifier.
 # Fails if any agents/fg-*.md is missing the canonical Untrusted Data Policy
 # block, identified by exact SHA256 of the block text.
 set -euo pipefail

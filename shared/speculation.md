@@ -1,4 +1,4 @@
-# Speculation (Phase 12) — Authoritative Contract
+# Speculation — Authoritative Contract
 
 ## Trigger Logic
 

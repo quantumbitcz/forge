@@ -32,7 +32,7 @@ with deterministic thresholds.
 ## Alternatives Considered
 
 - **Option A — LLM decides transitions with structured output:** Rejected because even with JSON schemas, LLMs occasionally skip stages or loop; tests failed to pin behavior.
-- **Option B — Python-backed state machine:** Deferred. Python tooling is arriving in Phase 02 and future phases may migrate `forge-state.sh` there, but that is a refactor, not a new decision.
+- **Option B — Python-backed state machine:** Deferred. Python tooling has since arrived and future sweeps may migrate `forge-state.sh` there, but that is a refactor, not a new decision.
 
 ## References
 

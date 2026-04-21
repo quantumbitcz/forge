@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
-# Phase 10 Task 14 — contract assertions for the repo-map A/B eval infra.
+# Contract assertions for the repo-map A/B eval infra.
 # Guards the scenario dir + workflow wiring so future refactors don't
-# silently drop the infrastructure before P10 T10 activates it.
+# silently drop the infrastructure.
 
 setup() {
   REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

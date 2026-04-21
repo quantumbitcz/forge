@@ -1,6 +1,6 @@
 # Memory Decay — Ebbinghaus Exponential Curve
 
-**Status:** Active (Phase 13, 2026-04-19).
+**Status:** Active (2026-04-19).
 **Supersedes:** Counter-based decay in `shared/learnings/README.md` §PREEMPT Lifecycle.
 
 ## 1. Formula
@@ -81,6 +81,5 @@ and *always* read by this summary.
 
 ## 9. References
 
-- Spec: `docs/superpowers/specs/2026-04-19-13-memory-decay-ebbinghaus-design.md`
 - Module: `hooks/_py/memory_decay.py`
 - Tests: `tests/unit/memory_decay_test.py`, `tests/evals/memory_decay_eval.sh`

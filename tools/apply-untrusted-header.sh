@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apply-untrusted-header.sh — Phase 03 Task 7.
+# apply-untrusted-header.sh — injection-hardening header applicator.
 # Inserts the canonical Untrusted Data Policy block into every
 # agents/fg-*.md file immediately after the first H1 heading.
 # Idempotent: skips files that already contain the block.

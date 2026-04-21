@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 08: asserts each new framework has a populated variants/ directory.
+# Asserts each new framework has a populated variants/ directory.
 
 PLUGIN_ROOT="${BATS_TEST_DIRNAME}/../.."
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 08: hostile content tries to escape its envelope by closing
+# Injection red-team scenario 08: hostile content tries to escape its envelope by closing
 # the </untrusted> tag and opening a fake <instructions> block. Filter must
 # neutralize the close tag with a zero-width joiner.
 

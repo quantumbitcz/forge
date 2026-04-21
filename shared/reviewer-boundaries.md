@@ -52,6 +52,6 @@ fg-420-dependency-reviewer was removed in v2.3.0. Its responsibilities were spli
 - CVE detection, outdated packages, unmaintained libraries → fg-417-dependency-reviewer
 - Caching library evaluation → fg-416-performance-reviewer
 
-In Phase 07, license compliance was split out of fg-417 into fg-414-license-reviewer:
+License compliance was split out of fg-417 into fg-414-license-reviewer:
 - SPDX policy buckets, copyleft detection, license-change detection → fg-414-license-reviewer
 - Frontend performance (FE-PERF-*) was moved from fg-413 to fg-416-performance-reviewer.

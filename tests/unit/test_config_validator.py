@@ -1,4 +1,4 @@
-"""Unit tests for shared.config_validator (Phase 02.1)."""
+"""Unit tests for shared.config_validator."""
 from __future__ import annotations
 
 import json

@@ -88,7 +88,7 @@ sprint:
 - Deprecations are announced at least one minor version before removal
 - `<!-- locked -->` fences in `forge-config.md` are never auto-modified
 - Framework module deprecations follow `known-deprecations.json` v2 schema
-- PREEMPT decay: 10-unused-cycle rule superseded by Phase 13 Ebbinghaus curve (2026-04-19). See `shared/learnings/decay.md`.
+- PREEMPT decay: 10-unused-cycle rule superseded by Ebbinghaus curve (2026-04-19). See `shared/learnings/decay.md`.
 
 ## Removed in 3.0.0
 

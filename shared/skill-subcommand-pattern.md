@@ -1,7 +1,7 @@
 # Skill Subcommand Dispatch Pattern
 
 Standard pattern for skills that expose multiple modes via subcommands (git-style).
-Adopted in Phase 05 for `/forge-review`, `/forge-graph`, `/forge-verify`.
+Adopted for `/forge-review`, `/forge-graph`, `/forge-verify`.
 
 ## 1. Dispatch algorithm
 
@@ -27,7 +27,7 @@ or starts with a flag. Skills that touch destructive state (e.g. `/forge-graph`
 whose `rebuild` subcommand deletes nodes) MUST NOT declare a default; a bare
 invocation prints help and exits 2.
 
-Current defaults (Phase 05):
+Current defaults:
 
 | Skill | Default | Rationale |
 |---|---|---|
@@ -73,7 +73,7 @@ A SKILL.md that adopts this pattern MUST contain:
 Following the standard exit-code table in `shared/skill-contract.md` §3:
 - `0` — success
 - `1` — user error (bad args, missing config)
-- `2` — pipeline failure OR **unknown subcommand** (Phase 05 extends this code
+- `2` — pipeline failure OR **unknown subcommand** (this pattern extends this code
   to cover dispatch-table misses)
 - `3` — recovery needed
 - `4` — user aborted
@@ -86,5 +86,5 @@ than to a missing required flag.
 
 - NEW skill needs ≥ 3 modes whose setup/prerequisites overlap.
 - Existing skills that are obvious modes of each other (audit found: review,
-  graph, verify — Phase 05).
+  graph, verify).
 - DO NOT adopt for single-mode skills (`/forge-status`, `/forge-abort`).

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 03: Playwright snapshot of a hostile page tries to coerce shell.
+# Injection red-team scenario 03: Playwright snapshot of a hostile page tries to coerce shell.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../../../../.." && pwd)"

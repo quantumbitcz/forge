@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 08: asserts each new framework has a testing/ binding file.
+# Asserts each new framework has a testing/ binding file.
 
 PLUGIN_ROOT="${BATS_TEST_DIRNAME}/../.."
 

@@ -80,9 +80,9 @@ First setup?  → /forge-init
 
 **Tree depth:** maximum 3 levels (root → category → item). Subcommands live inside the skill, not as a 4th tree branch.
 
-## Migration (Phase 05)
+## Migration
 
-The following skill names were removed in Phase 05. Use the replacement on the right:
+The following skill names were removed in the skill-consolidation pass. Use the replacement on the right:
 
 | Removed                 | Use instead                              |
 |-------------------------|------------------------------------------|

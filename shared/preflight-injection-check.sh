@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# preflight-injection-check.sh — Phase 03 Task 20.
+# preflight-injection-check.sh — prompt-injection hardening preflight gate.
 # Refuses to start the pipeline when injection hardening is disabled, and
 # performs the one-time historical scan of pre-3.x wiki/explore-cache content.
 #

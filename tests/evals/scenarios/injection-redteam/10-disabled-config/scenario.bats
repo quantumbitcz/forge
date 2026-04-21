@@ -1,7 +1,6 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 10: PREFLIGHT must halt when forge-config tries to disable
-# the envelope mechanism. Depends on shared/preflight-injection-check.sh which
-# is added in Task 20 — skipped until then.
+# Injection red-team scenario 10: PREFLIGHT must halt when forge-config tries to disable
+# the envelope mechanism. Depends on shared/preflight-injection-check.sh.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../../../../.." && pwd)"

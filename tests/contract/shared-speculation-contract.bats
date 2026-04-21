@@ -36,7 +36,7 @@
   grep -q "speculat" "$BATS_TEST_DIRNAME/../../shared/agent-role-hierarchy.md"
 }
 
-@test "CLAUDE.md has Phase 12 feature-table entry" {
+@test "CLAUDE.md has speculative plan branches feature-table entry" {
   grep -q "Speculative.*plan branches" "$BATS_TEST_DIRNAME/../../CLAUDE.md"
 }
 

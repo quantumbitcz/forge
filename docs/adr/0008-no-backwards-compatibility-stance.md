@@ -15,16 +15,17 @@ escape hatches, and the code base grew faster than its clarity did.
 
 ## Decision
 
-We do not carry backwards compatibility across phases. Deleted files stay
+We do not carry backwards compatibility across sweeps. Deleted files stay
 deleted. Renamed flags land with the new name only. Consumers track `master` or
 pin a version; there is no long-lived deprecation window. CI is the enforcement
-mechanism for sweeps, not deprecation shims. Phase 06 is the canonical example:
-three agent docs are merged and the originals are deleted in the same PR.
+mechanism for sweeps, not deprecation shims. The docs-architecture sweep is the
+canonical example: three agent docs are merged and the originals are deleted in
+the same PR.
 
 ## Consequences
 
 - **Positive:** Refactors are cheap; no alias bloat; anchors and paths describe today, not history.
-- **Negative:** External bookmarks, forks, and copy-pasted snippets break on each phase. Users pinning a version is the mitigation.
+- **Negative:** External bookmarks, forks, and copy-pasted snippets break on each sweep. Users pinning a version is the mitigation.
 - **Neutral:** ADRs and `CHANGELOG.md` become the memory of past decisions, since files themselves don't carry transitional state.
 
 ## Alternatives Considered
@@ -35,4 +36,3 @@ three agent docs are merged and the originals are deleted in the same PR.
 ## References
 
 - `CONTRIBUTING.md`
-- Phase 06 spec `docs/superpowers/specs/2026-04-19-06-documentation-architecture-design.md`

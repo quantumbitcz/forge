@@ -5,8 +5,8 @@ Sampler: ``ParentBased(TraceIdRatioBased(sample_rate))``.
 Why ParentBased? With distributed tracing (TRACEPARENT propagation to
 subagents), each child process must honour the root decision. Otherwise
 children make independent sampling decisions and produce orphan partial
-traces, breaking Phase 09 success criterion 3 ("every subagent span shares
-the pipeline's trace_id").
+traces, breaking the OTel invariant that every subagent span shares
+the pipeline's trace_id.
 """
 
 from __future__ import annotations

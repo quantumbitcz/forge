@@ -14,8 +14,6 @@
 
 Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **42 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
-> **A+ Roadmap (April 2026):** A 15-phase roadmap targeting self-evaluation, cross-platform Python hooks, prompt-injection hardening, implementer reflection, observability semconv, and advanced patterns (PageRank repo-map, self-consistency voting, time-travel checkpoints). See [`docs/superpowers/INDEX.md`](docs/superpowers/INDEX.md) for all specs, plans, and reviews. Produced with the Anthropic Superpowers methodology.
-
 ## Quick start
 
 ```bash

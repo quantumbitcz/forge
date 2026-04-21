@@ -76,7 +76,7 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 
 **Filter availability.** PREFLIGHT MUST succeed importing `hooks/_py/mcp_response_filter.py`. A `ModuleNotFoundError` halts the pipeline with `SEC-INJECTION-DISABLED` because every external-data ingress depends on the filter.
 
-## Implementer Reflection (Phase 04)
+## Implementer Reflection
 
 | Key | Type | Default | Range | Violation behavior |
 |---|---|---|---|---|
@@ -92,7 +92,7 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 
 **Initialization:** At PREFLIGHT, for every task created at PLAN, set `implementer_reflection_cycles: 0` and `reflection_verdicts: []`. Set run-level `implementer_reflection_cycles_total: 0` and `reflection_divergence_count: 0`.
 
-## Speculation (Phase 12)
+## Speculation
 
 PREFLIGHT validates the `speculation:` block:
 
@@ -104,7 +104,7 @@ PREFLIGHT validates the `speculation:` block:
 
 Any CRITICAL fails PREFLIGHT with `preflight_failed = true`.
 
-## Consistency voting (Phase 11, forge 3.1.0+)
+## Consistency voting (forge 3.1.0+)
 
 PREFLIGHT validates the `consistency:` block:
 
@@ -119,7 +119,7 @@ PREFLIGHT validates the `consistency:` block:
 
 See `shared/consistency/voting.md` for the dispatch contract, aggregation algorithm, and cost delta table.
 
-## `observability.otel.*` (Phase 09, forge 3.4.0+)
+## `observability.otel.*` (forge 3.4.0+)
 
 | Parameter                                       | Type / Range          | Default           |
 |-------------------------------------------------|-----------------------|-------------------|
@@ -135,7 +135,7 @@ See `shared/consistency/voting.md` for the dispatch contract, aggregation algori
 
 Violations log WARNING and fall back to defaults. When `enabled=true` but `opentelemetry-api` is not importable, WARNING + disable OTel for the run (pipeline continues — emission is best-effort; `otel.replay()` remains authoritative via `.forge/events.jsonl`). See `shared/observability.md` for the durability contract and sampler semantics.
 
-## Repo-map prompt compaction (Phase 10)
+## Repo-map prompt compaction
 
 **Rule:** `code_graph.prompt_compaction.enabled: true` requires `code_graph.enabled: true`. If `code_graph.prompt_compaction.enabled: true`, then `code_graph.enabled: true` MUST also hold.
 
@@ -145,7 +145,7 @@ Violations log WARNING and fall back to defaults. When `enabled=true` but `opent
 
 > "code_graph.prompt_compaction.enabled is true but code_graph.enabled is false. Enable the graph or set prompt_compaction.enabled: false."
 
-**Defaults snapshot (Phase 10 landing):**
+**Defaults snapshot:**
 
 - `prompt_compaction.enabled: false` (opt-in)
 - `top_k: 25`

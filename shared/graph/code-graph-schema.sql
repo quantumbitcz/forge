@@ -78,7 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_edges_type_source ON edges(edge_type, source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_type_target ON edges(edge_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_file_hashes_hash ON file_hashes(content_hash);
 
--- === Phase 10: Repo-Map PageRank Cache (schema 1.1.0) ===
+-- === Repo-Map PageRank Cache (schema 1.1.0) ===
 -- Durable mirror of .forge/ranked-files-cache.json. 4-tuple PK matches the
 -- JSON cache key. The JSON file is primary; this table is an optional audit
 -- mirror populated by repomap.py when PACK_CACHE_DB_MIRROR=1.

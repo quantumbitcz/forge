@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 13: orchestrator + key consumer agents reference the filter.
+# Orchestrator + key consumer agents reference the injection filter.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

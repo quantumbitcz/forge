@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
-# Phase 05 — skill-consolidation structural guards.
-# Locks in the post-Phase-05 skill set (28 skills), forbids the old
+# Skill-consolidation structural guards.
+# Locks in the consolidated skill set (28 skills), forbids the old
 # per-cluster names, and asserts each consolidated cluster carries the
 # documented dispatch + subcommand sections.
 
@@ -92,8 +92,8 @@ setup() {
   grep -q '"total_skills":[[:space:]]*28' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
 }
 
-@test "forge-help has Migration (Phase 05) section" {
-  grep -q '^## Migration (Phase 05)' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
+@test "forge-help has Migration section" {
+  grep -q '^## Migration' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
 }
 
 @test "CLAUDE.md Skills header reads '(28 total)'" {
