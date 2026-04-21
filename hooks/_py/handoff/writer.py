@@ -115,6 +115,18 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
         created_at=req.now,
     )
 
+    # Index into FTS5 run-history.db (best-effort)
+    try:
+        from hooks._py.handoff.search import index_handoff
+        index_handoff(
+            db_path=forge_dir / "run-history.db",
+            run_id=req.run_id,
+            path=str(target),
+            content=enforced,
+        )
+    except Exception:
+        pass  # FTS failure should not fail the write
+
     return WriteResult(path=target, suppressed=False)
 
 
