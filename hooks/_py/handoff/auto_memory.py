@@ -5,13 +5,19 @@ import os
 import re
 from pathlib import Path
 
+from hooks._py.handoff.frontmatter import _safe_yaml_scalar
+
 
 def _memory_root() -> Path:
     env = os.environ.get("FORGE_AUTO_MEMORY_ROOT")
     if env:
         return Path(env)
     home = Path(os.environ.get("HOME", "."))
-    return home / ".claude" / "memory"
+    # Claude Code per-project memory convention: ~/.claude/projects/<hash>/memory/
+    # where <hash> is cwd with '/' replaced by '-'.
+    cwd = Path.cwd().resolve()
+    project_hash = str(cwd).replace("/", "-")
+    return home / ".claude" / "projects" / project_hash / "memory"
 
 
 def _slug(text: str) -> str:
@@ -36,7 +42,7 @@ def promote_from_terminal_handoff(
         path = root / f"forge_handoff_preempt_{_slug(text)}.md"
         path.write_text(
             "---\n"
-            f"name: PREEMPT — {text}\n"
+            f"name: {_safe_yaml_scalar('PREEMPT — ' + text)}\n"
             "description: Auto-promoted from forge terminal handoff\n"
             "type: project\n"
             "---\n\n"
@@ -53,7 +59,7 @@ def promote_from_terminal_handoff(
         path = root / f"forge_handoff_user_{_slug(text)}.md"
         path.write_text(
             "---\n"
-            f"name: User directive — {text[:40]}\n"
+            f"name: {_safe_yaml_scalar('User directive — ' + text[:40])}\n"
             "description: Auto-promoted user decision from forge terminal handoff\n"
             "type: project\n"
             "---\n\n"

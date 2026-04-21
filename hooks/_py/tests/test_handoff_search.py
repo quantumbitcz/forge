@@ -33,3 +33,20 @@ def test_search_no_table_ok(tmp_path):
     # Do NOT call ensure_fts_schema first — verify auto-create
     hits = search_handoffs(db, query="anything")
     assert hits == []
+
+
+def test_malformed_query_returns_empty(tmp_path):
+    """FTS5 syntax errors in user queries must not crash search."""
+    db = tmp_path / "run-history.db"
+    ensure_fts_schema(db)
+    index_handoff(db, run_id="r1", path="x.md", content="normal content")
+
+    # Unbalanced quote — would trigger FTS5 OperationalError without escaping
+    hits = search_handoffs(db, query='unterminated "quote')
+    assert isinstance(hits, list)
+    # Trailing operator — would also crash
+    hits2 = search_handoffs(db, query="foo AND ")
+    assert isinstance(hits2, list)
+    # Empty query
+    hits3 = search_handoffs(db, query="")
+    assert hits3 == []

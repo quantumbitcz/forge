@@ -46,11 +46,18 @@ def search_handoffs(db_path: Path, query: str, limit: int = 20) -> list[Hit]:
     ensure_fts_schema(db_path)
     conn = sqlite3.connect(str(db_path))
     try:
-        rows = conn.execute(
-            "SELECT run_id, path, snippet(handoff_fts, 2, '[', ']', '...', 12) "
-            "FROM handoff_fts WHERE handoff_fts MATCH ? LIMIT ?",
-            (query, limit),
-        ).fetchall()
+        # Quote the query as a single FTS5 phrase so freetext input is always syntactically
+        # valid. Users who want Boolean/column operators can escape their own quotes.
+        safe_query = '"' + query.replace('"', '""') + '"'
+        try:
+            rows = conn.execute(
+                "SELECT run_id, path, snippet(handoff_fts, 2, '[', ']', '...', 12) "
+                "FROM handoff_fts WHERE handoff_fts MATCH ? LIMIT ?",
+                (safe_query, limit),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            # Malformed queries (e.g., empty after escaping) — fail soft
+            return []
         return [Hit(path=p, run_id=r, snippet=s) for r, p, s in rows]
     finally:
         conn.close()
