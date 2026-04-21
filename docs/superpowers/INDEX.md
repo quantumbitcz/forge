@@ -27,7 +27,7 @@ This directory contains the design specs, implementation plans, and code reviews
 | P2 | 12 | Speculative Plan Branches | Done | [spec](specs/2026-04-19-12-speculative-plan-branches-design.md) (520L) | [plan](plans/2026-04-19-12-speculative-plan-branches-plan.md) (2425L, 17) | [APPROVE](reviews/2026-04-19-12-speculative-plan-branches-spec-review.md) | [APPROVE](reviews/2026-04-19-12-speculative-plan-branches-plan-review.md) |
 | P2 | 13 | Memory Decay (Ebbinghaus) | Done | [spec](specs/2026-04-19-13-memory-decay-ebbinghaus-design.md) (304L) | [plan](plans/2026-04-19-13-memory-decay-ebbinghaus-plan.md) (1571L, 18) | [APPROVE](reviews/2026-04-19-13-memory-decay-ebbinghaus-spec-review.md) | [APPROVE](reviews/2026-04-19-13-memory-decay-ebbinghaus-plan-review.md) |
 | P2 | 14 | Time-Travel Checkpoints | Done | [spec](specs/2026-04-19-14-time-travel-checkpoints-design.md) (199L) | [plan](plans/2026-04-19-14-time-travel-checkpoints-plan.md) (2121L, 15) | [APPROVE](reviews/2026-04-19-14-time-travel-checkpoints-spec-review.md) | [APPROVE](reviews/2026-04-19-14-time-travel-checkpoints-plan-review.md) |
-| P2 | 15 | Reference Deployment + Marketplace | Blocked | [spec](specs/2026-04-19-15-reference-deployment-design.md) (415L) | [plan](plans/2026-04-19-15-reference-deployment-plan.md) (1534L, 16) | [APPROVE](reviews/2026-04-19-15-reference-deployment-spec-review.md) | [APPROVE](reviews/2026-04-19-15-reference-deployment-plan-review.md) |
+| P2 | 15 | Reference Deployment + Marketplace | Partial | [spec](specs/2026-04-19-15-reference-deployment-design.md) (415L) | [plan](plans/2026-04-19-15-reference-deployment-plan.md) (1534L, 16) | [APPROVE](reviews/2026-04-19-15-reference-deployment-spec-review.md) | [APPROVE](reviews/2026-04-19-15-reference-deployment-plan-review.md) |
 
 ## Dependency graph
 
@@ -74,9 +74,9 @@ Phase 15 (Reference Deployment) depends on 01-14 shipped
 - **Partial** — majority of tasks shipped; remaining work is tracked in the relevant plan file
 - **Blocked** — prerequisite phases still in flight
 
-### Phase 06 remaining work
+### Phase 15 remaining work
 
-Phase 06 (Documentation Architecture) is the only "Partial" row. Shipped: Tasks 1–6, 8–18 (including T16 in full — Steps 2 and 4 turned out to be already satisfied by prior work). Outstanding: **T7** (state-schema split) — high-risk, reserved for a dedicated session; Phase 06 closes out once T7 lands.
+Phase 15 (Reference Deployment + Marketplace) is the only "Partial" row. The blocker ("Phases 01-14 shipped") is cleared — all 14 prior phases are Done — so the row was flipped from **Blocked** to **Partial**. Scaffolding tasks (plan Task 2, Task 13 Step 1) can land early; the heavier rollout steps (private org creation, fork, `/forge-run` rewrite, Anthropic submission PR) are sequential and mostly external to this repo. See [`plans/2026-04-19-15-reference-deployment-plan.md`](plans/2026-04-19-15-reference-deployment-plan.md) for the 16-task breakdown and `§9 Rollout (a/b/c/d)` in the spec for the four-stage sequencing.
 
 ## Review verdict legend
 
