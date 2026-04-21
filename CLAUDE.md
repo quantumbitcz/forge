@@ -24,7 +24,7 @@ Already familiar? Skip to §Architecture.
 
 `forge` is a Claude Code plugin (v3.5.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
-**Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 48 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
+**Prompt-injection hardening (forge 3.2.0):** Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 48 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
 ## Architecture
 
@@ -150,7 +150,7 @@ Quick decision:    /forge-help (interactive skill picker)
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-620-deploy-verifier` (conditional on deployment strategy), `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
 - Learn: `fg-700-retrospective`, `fg-710-post-run`
 
-**Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only; FE perf delegated to fg-416 in Phase 07), `fg-414-license-reviewer`, `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`. Quality gate scales reviewer count by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting note.
+**Review** (9, via quality gate): `fg-410-code-reviewer`, `fg-411-security-reviewer`, `fg-412-architecture-reviewer`, `fg-413-frontend-reviewer` (supports modes: full/conventions-only/a11y-only; FE perf delegated to fg-416), `fg-414-license-reviewer`, `fg-416-performance-reviewer`, `fg-417-dependency-reviewer`, `fg-418-docs-consistency-reviewer`, `fg-419-infra-deploy-reviewer`. Quality gate scales reviewer count by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting note.
 
 ### Agent rules
 
@@ -183,7 +183,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### State, recovery & errors
 
-- **State** (`state-schema.md`): v1.9.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`, Phase 14). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Voting counters (Phase 11): `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
+- **State** (`state-schema.md`): v1.9.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Voting counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
 - **Recovery** (`recovery/`): 7 strategies, budget ceiling 5.5. Highest-severity first. Global retry budget: `total_retries` (default max 10, configurable).
 - **Errors** (`error-taxonomy.md`): 22 types, 16-level severity. MCP failures → inline skip + INFO. 3 consecutive transients in 60s → non-recoverable. `BUILD`/`TEST`/`LINT_FAILURE` → orchestrator fix loop.
 - **Communication:** Inter-stage via orchestrator stage notes. Quality gate includes previous batch findings (top 20). PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED`.
@@ -200,9 +200,9 @@ Core systems: version detection (PREFLIGHT → `state.json.detected_versions`), 
 
 Confidence scoring: two-level — (1) finding confidence (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x weight multipliers); (2) pipeline confidence (4-dimension: clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks, LOW (<0.4) → `/forge-shape`. Adaptive trust in `.forge/trust.json`. Config: `confidence.*`.
 
-Repo-map PageRank (Phase 10): `hooks/_py/repomap.py` ranks files in the code graph by structural centrality × recency × keyword overlap; the orchestrator, planner, and implementer substitute a `{{REPO_MAP_PACK}}` placeholder for full directory listings, saving 30–50 % tokens per stage. Cache: `.forge/ranked-files-cache.json` (survives `/forge-recover reset`). Reference: `shared/graph/pagerank-sql.md`.
+Repo-map PageRank: `hooks/_py/repomap.py` ranks files in the code graph by structural centrality × recency × keyword overlap; the orchestrator, planner, and implementer substitute a `{{REPO_MAP_PACK}}` placeholder for full directory listings, saving 30–50 % tokens per stage. Cache: `.forge/ranked-files-cache.json` (survives `/forge-recover reset`). Reference: `shared/graph/pagerank-sql.md`.
 
-v2.0 features (each has dedicated doc in `shared/`):
+Features (each has dedicated doc in `shared/`):
 
 | Feature | Config | Key details |
 |---|---|---|
@@ -226,7 +226,7 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Feature flags (F23) | `feature_flags.*` | Categories: `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP` |
 | Deployment strategies (F24) | `deployment.*` | Canary/blue-green/rolling, `fg-620-deploy-verifier`, Argo Rollouts |
 | Consumer-driven contracts (F25) | `contract_testing.*` | Pact, can-i-deploy gate. Categories: `CONTRACT-PACT-*` |
-| Implementer reflection (F32, Phase 04) | `implementer.reflection.*` | `fg-301-implementer-critic` between GREEN/REFACTOR. Per-task `implementer_reflection_cycles` counter. Categories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH` |
+| Implementer reflection (F32) | `implementer.reflection.*` | `fg-301-implementer-critic` between GREEN/REFACTOR. Per-task `implementer_reflection_cycles` counter. Categories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH` |
 | Output compression (F26) | `output_compression.*` | 4 levels (verbose/standard/terse/minimal), 20-65% reduction |
 | AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |
@@ -246,10 +246,10 @@ v2.0 features (each has dedicated doc in `shared/`):
 | Run history store (F29) | `run_history.*` | SQLite FTS5 at `.forge/run-history.db`. Written by retrospective, queried by insights/ask/MCP. Schema in `shared/run-history/` |
 | MCP server (F30) | `mcp_server.*` | Python stdio MCP server exposing pipeline intelligence to any AI client. 11 tools. Auto-provisioned by `/forge-init` into `.mcp.json` |
 | Self-improving playbooks (F31) | `playbooks.*` | Refinement proposals from run data. Auto-apply, rollback. `.forge/playbook-refinements/`. Skill: `/forge-playbook-refine` |
-| Repo-map PageRank (Phase 10) | `code_graph.prompt_compaction.*` | `hooks/_py/repomap.py` — biased PageRank + token-budgeted pack assembly. Replaces full-directory listings in `fg-100`, `fg-200`, `fg-300` prompts. Opt-in default OFF. Categories: `REPOMAP-BYPASS-*` |
-| Self-consistency voting (F33, Phase 11) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
-| Speculative plan branches (F31+1 / Phase 12) | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
-| Docs integrity (Phase 06) | `docs.learnings_index.auto_update` | When `true`, retrospective regenerates `shared/learnings-index.md` on any new learning. CI workflow `docs-integrity` enforces freshness regardless of this setting. Default: `true`. |
+| Repo-map PageRank | `code_graph.prompt_compaction.*` | `hooks/_py/repomap.py` — biased PageRank + token-budgeted pack assembly. Replaces full-directory listings in `fg-100`, `fg-200`, `fg-300` prompts. Opt-in default OFF. Categories: `REPOMAP-BYPASS-*` |
+| Self-consistency voting (F33) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
+| Speculative plan branches | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
+| Docs integrity | `docs.learnings_index.auto_update` | When `true`, retrospective regenerates `shared/learnings-index.md` on any new learning. CI workflow `docs-integrity` enforces freshness regardless of this setting. Default: `true`. |
 
 ### Deterministic Control Flow
 
@@ -266,7 +266,7 @@ Pipeline control flow follows the formal transition table in `shared/state-trans
 | `forge-sim.sh` | Pipeline simulation harness |
 | `forge-timeout.sh` | Pipeline timeout enforcement |
 | `forge-compact-check.sh` | Compaction suggestion hook |
-| `check_prerequisites.py` | Python 3.10+ validation (Phase 02) |
+| `check_prerequisites.py` | Python 3.10+ validation |
 | `check-environment.sh` | Optional tool + integration detection for forge-init |
 | `hooks/_py/otel.py` | OpenTelemetry GenAI semconv emitter (live + `replay`) |
 | `caveman-benchmark.sh` | Token savings measurement for caveman modes |

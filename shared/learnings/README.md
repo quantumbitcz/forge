@@ -84,7 +84,7 @@ exponential curve with per-type half-lives. See `shared/learnings/decay.md` for
 the canonical contract, formula, thresholds, reinforcement/penalty rules, and
 tuning warnings.
 
-~~**Legacy (superseded 2026-04-19 by Phase 13):** counter-based decay — HIGH → MEDIUM
+~~**Legacy (superseded 2026-04-19):** counter-based decay — HIGH → MEDIUM
 after 10 unused runs, 1 false positive counted as 3 unused. Replaced by the
 Ebbinghaus exponential curve.~~
 

@@ -11,4 +11,4 @@ must_not_touch:
   - .claude/**
   - tests/evals/**
   - Package.swift
-notes: "STUB — replace before Phase 03 with a richer actor-reentrancy scenario."
+notes: "STUB — replace with a richer actor-reentrancy scenario."

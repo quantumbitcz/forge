@@ -17,9 +17,9 @@ Bash 3 vs 4, Git Bash path translation) is a recurring source of bugs.
 ## Decision
 
 New non-trivial tooling is written in Python 3.10+. Shell glue remains for hook
-entry points and trivial wrappers. A pinned `requirements.txt` (introduced in
-Phase 02) is the canonical dependency set. Existing shell scripts migrate to
-Python only when they need non-trivial changes — no wholesale rewrite.
+entry points and trivial wrappers. A pinned `requirements.txt` is the canonical
+dependency set. Existing shell scripts migrate to Python only when they need
+non-trivial changes — no wholesale rewrite.
 
 ## Consequences
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 08: asserts CLAUDE.md framework count string matches MIN_FRAMEWORKS.
+# Asserts CLAUDE.md framework count string matches MIN_FRAMEWORKS.
 
 PLUGIN_ROOT="${BATS_TEST_DIRNAME}/../.."
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"

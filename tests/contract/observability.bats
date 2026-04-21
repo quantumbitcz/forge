@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Contract tests: observability.md existence, required sections, semconv
-# attributes, and span-name cardinality budget. Rewritten in Phase 09 for
-# the OTel GenAI Semantic Conventions (2026) migration.
+# attributes, and span-name cardinality budget. Tracks the OTel GenAI
+# Semantic Conventions (2026) contract.
 
 load '../helpers/test-helpers'
 
@@ -15,7 +15,7 @@ OBSERVABILITY="$PLUGIN_ROOT/shared/observability.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Required sections (Phase 09 structure)
+# 2. Required sections
 # ---------------------------------------------------------------------------
 @test "observability: contains ## Durability contract" {
   grep -q "^## Durability contract" "$OBSERVABILITY" \

@@ -1,4 +1,4 @@
-"""Unit tests for shared.convergence_engine_sim (Phase 02.1)."""
+"""Unit tests for shared.convergence_engine_sim."""
 from __future__ import annotations
 
 import os

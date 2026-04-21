@@ -1,6 +1,6 @@
 # Self-Consistency Voting — Contract
 
-**Status:** Active. Introduced in forge 3.1.0 (Phase 11).
+**Status:** Active. Introduced in forge 3.1.0.
 **Callers:** `agents/fg-010-shaper.md`, `agents/fg-210-validator.md`, `agents/fg-710-post-run.md`.
 **Dispatch helper:** `hooks/_py/consistency.py`.
 
@@ -38,13 +38,13 @@ On unrecoverable schema failures (fewer than `ceil(N/2)` samples survive after o
 
 The helper's `vote_async(...)` accepts an injected `sampler` callable with signature
 `async (prompt, labels, tier, seed) -> {"label": str, "confidence": float}`. This callable
-is the bridge that actually invokes a fresh fast-tier subagent per sample. Tasks 1-3 of
-Phase 11 ship the helper with NO default sampler — callers MUST inject one or the helper
+is the bridge that actually invokes a fresh fast-tier subagent per sample. The initial
+helper landing ships with NO default sampler — callers MUST inject one or the helper
 raises `ValueError("sampler must be provided")`.
 
 The production sampler — which dispatches a real Claude Code subagent (most likely via a
 Bash CLI shim such as `hooks/_py/consistency_cli.py` driven from the agent `.md` file) — is
-introduced in a later Phase 11 task (see plan-review I2). Until then, only the
+introduced in a follow-up task. Until then, only the
 test sampler in `hooks/_py/tests/test_consistency.py` is wired in. This keeps the helper
 pure-Python testable without committing to the bridge mechanism (hook vs. orchestrator vs.
 Bash subcommand) before that decision is made.

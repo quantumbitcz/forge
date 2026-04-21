@@ -1,4 +1,4 @@
-"""RewoundEvent schema for Phase 14 time-travel checkpoints.
+"""RewoundEvent schema for time-travel checkpoints.
 
 Appended to .forge/runs/<run_id>/events.jsonl after every successful rewind.
 Schema is versioned (schema_version) so future migrations are explicit.

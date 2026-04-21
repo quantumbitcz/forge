@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 06: a cross-project learning import carries a hostile
+# Injection red-team scenario 06: a cross-project learning import carries a hostile
 # override directive.
 
 setup() {

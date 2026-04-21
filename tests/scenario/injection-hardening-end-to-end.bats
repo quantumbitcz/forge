@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 17: end-to-end smoke that the filter + event log + counters +
+# End-to-end smoke that the filter + event log + counters +
 # agent header all cooperate when a poisoned Linear ticket reaches the pipeline.
 
 setup() {

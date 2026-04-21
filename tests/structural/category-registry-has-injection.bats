@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 5: SEC-INJECTION-* scoring categories registered.
+# SEC-INJECTION-* scoring categories registered.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

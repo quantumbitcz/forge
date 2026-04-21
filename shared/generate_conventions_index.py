@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate shared/conventions-index.md by scanning framework conventions.
 
-Phase 02.1: Python port of generate-conventions-index.sh. Drops the bash 4+
+Python port of generate-conventions-index.sh. Drops the bash 4+
 requirement (the original used associative arrays).
 
 Usage:

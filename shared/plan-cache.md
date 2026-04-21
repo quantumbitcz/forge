@@ -11,9 +11,9 @@ Caches PLAN stage outputs in `.forge/plan-cache/` for reuse when similar require
 
 ## Cache Entry Schema
 
-**Schema version 2.0 (Phase 12) — breaking change.**
+**Schema version 2.0 — breaking change.**
 
-Breaking change from v1.0 (Phase 12). Previous cache entries are invalidated on upgrade — `/forge-init` clears `.forge/plan-cache/` on schema mismatch; user is notified.
+Breaking change from v1.0 (added alongside speculation). Previous cache entries are invalidated on upgrade — `/forge-init` clears `.forge/plan-cache/` on schema mismatch; user is notified.
 
 ```json
 {
@@ -49,7 +49,7 @@ Non-speculative runs: `speculation_used: false`, `candidates` array omitted. Rea
 | `primary_plan.hash` | string | SHA256 of `primary_plan.content` |
 | `primary_plan.final_score` | integer | Quality score the plan achieved (0 if run didn't complete) |
 | `candidates` | array | Speculative candidates with metadata. Omitted when `speculation_used: false`. |
-| `speculation_used` | boolean | `true` if Phase 12 speculative dispatch produced this entry; `false` for single-plan runs |
+| `speculation_used` | boolean | `true` if speculative dispatch produced this entry; `false` for single-plan runs |
 | `requirement` | string | Original requirement text |
 | `requirement_keywords` | string[] | Extracted keywords (nouns, verbs, domain terms — lowercase, deduplicated) |
 | `domain_area` | string | Detected domain from `shared/domain-detection.md` |

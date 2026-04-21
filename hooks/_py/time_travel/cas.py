@@ -1,4 +1,4 @@
-"""Content-addressable checkpoint store for Phase 14 time-travel.
+"""Content-addressable checkpoint store for time-travel.
 
 Layout under <run_dir>/checkpoints/:
     by-hash/<aa>/<sha256-tail>/manifest.json  -- {state_hash, worktree_sha, events_hash, memory_hash, parent_ids}

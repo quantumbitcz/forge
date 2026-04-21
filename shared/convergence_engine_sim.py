@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convergence Engine Simulator — executable specification.
 
-Phase 02.1: Python port of convergence-engine-sim.sh. The original required
+Python port of convergence-engine-sim.sh. The original required
 ``bc`` for floating-point math, which isn't available on Windows. This port
 removes that dependency and is the new canonical algorithm — convergence-engine.md
 is the prose explanation.

@@ -1,8 +1,7 @@
 #!/usr/bin/env bats
 # CI-gating assertions on the consistency eval results.
-# Phase 11 Task 11. Runs the offline eval harness (deterministic), then
-# asserts on accuracy lift, adversarial low-consensus rate, latency, and
-# cache correctness.
+# Runs the offline eval harness (deterministic), then asserts on accuracy
+# lift, adversarial low-consensus rate, latency, and cache correctness.
 
 setup() {
   REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

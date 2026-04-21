@@ -1,6 +1,6 @@
-"""CLI tests for Phase 14 time-travel checkpoint dispatch.
+"""CLI tests for time-travel checkpoint dispatch.
 
-Phase 14 Task 5 — the orchestrator invokes the time-travel module as
+The orchestrator invokes the time-travel module as
 ``python3 -m hooks._py.time_travel <op> <args...>``. Exit codes are the
 contract surfaced to ``/forge-recover`` (see SKILL.md exit-codes table).
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 04: a Context7 doc snippet contains a credential-shaped
+# Injection red-team scenario 04: a Context7 doc snippet contains a credential-shaped
 # string. The filter must quarantine it before any agent can read it.
 
 setup() {

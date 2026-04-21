@@ -1,8 +1,8 @@
 """Atomic JSON state writes with _seq versioning (replaces forge-state-write.sh).
 
-Also exposes ``append_event`` -- the fsync'd writer for the Phase F07
+Also exposes ``append_event`` -- the fsync'd writer for the F07
 event-sourced log (``.forge/events.jsonl``). Every append mirrors onto the
-active OTel span via ``hooks._py.otel.emit_event_mirror`` (Phase 09 Task 8).
+active OTel span via ``hooks._py.otel.emit_event_mirror``.
 The mirror call is best-effort and never blocks the state write.
 """
 from __future__ import annotations
@@ -55,15 +55,14 @@ def update_state(
 def append_event(path: Path, event: dict[str, Any]) -> None:
     """Append a single JSON event to ``path`` (one row, fsync'd).
 
-    Phase F07 contract: each event is a self-contained JSON object on its
+    F07 contract: each event is a self-contained JSON object on its
     own line. The append runs under an exclusive lock to serialize concurrent
     writers, and the file handle is fsync'd before close so the event is on
     disk before we return.
 
     After the append, ``hooks._py.otel.emit_event_mirror`` is called to
-    project event keys onto the active OTel span as attributes (Phase 09
-    Task 8). Mirror failures are swallowed -- OTel must never block state
-    writes.
+    project event keys onto the active OTel span as attributes. Mirror
+    failures are swallowed -- OTel must never block state writes.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

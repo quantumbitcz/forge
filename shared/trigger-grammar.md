@@ -4,7 +4,7 @@ Every agent frontmatter MAY carry a `trigger:` key. The value is a boolean expre
 
 ## 1. Absence == `always`
 
-An agent with no `trigger:` key is equivalent to `trigger: always`. Phase 08's dispatch-graph generator flags omissions on conditionally-dispatched agents as warnings, but runtime behavior preserves the current "dispatch unconditionally" default.
+An agent with no `trigger:` key is equivalent to `trigger: always`. The dispatch-graph generator flags omissions on conditionally-dispatched agents as warnings, but runtime behavior preserves the current "dispatch unconditionally" default.
 
 ## 2. Namespaces
 
@@ -49,7 +49,7 @@ No arithmetic, no function calls, no regexes, no glob globs. Keep expressions bo
 
 ## 5. Evaluator
 
-Implemented in-band by `fg-100-orchestrator`. Reference implementation will land in Phase 08 alongside the dispatch-graph generator. Until then, orchestrator prose uses human-language mirrors of the same expressions — the machine-readable `trigger:` field is the source of truth, and Phase 08 generates matching prose.
+Implemented in-band by `fg-100-orchestrator`. Reference implementation lands alongside the dispatch-graph generator. Until then, orchestrator prose uses human-language mirrors of the same expressions — the machine-readable `trigger:` field is the source of truth, and the generator produces matching prose.
 
 ## 6. Error handling
 
@@ -57,7 +57,7 @@ Implemented in-band by `fg-100-orchestrator`. Reference implementation will land
 - Reference to an unknown top-level namespace → WARNING `DISPATCH-TRIGGER-UNKNOWN-NAMESPACE`, expression evaluates `false` (skip).
 - Reference to an unknown path inside a known namespace → silent `false` (per §2).
 
-## 7. Canonical examples (used in Phase 07 agents)
+## 7. Canonical examples
 
 | Agent | Expression |
 |---|---|

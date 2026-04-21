@@ -9,7 +9,7 @@ last_false_positive_at: null
 ---
 # Observability Learnings
 
-## Agent: fg-143-observability-bootstrap (Phase 07)
+## Agent: fg-143-observability-bootstrap
 
 `fg-143` runs at PREFLIGHT when `config.agents.observability_bootstrap.enabled == true` (default `false`). Categories: `OBS-MISSING`, `OBS-TRACE-INCOMPLETE`, `OBS-BOOTSTRAP-APPLIED`, `OBS-BOOTSTRAP-UNSAFE`.
 

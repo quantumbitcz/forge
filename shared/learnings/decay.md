@@ -1,6 +1,6 @@
 # Memory Decay — Ebbinghaus Exponential Curve
 
-**Status:** Active (Phase 13, 2026-04-19).
+**Status:** Active (2026-04-19).
 **Supersedes:** Counter-based decay in `shared/learnings/README.md` §PREEMPT Lifecycle.
 
 ## 1. Formula

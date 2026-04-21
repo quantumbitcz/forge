@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 4: bats wrapper for the Python filter unit tests.
+# Bats wrapper for the Python MCP response filter unit tests.
 # Provides a bash-callable smoke that exercises the public filter API and
 # checks the forensic log + envelope shape — keeps the filter inside the
 # canonical bats matrix that runs on every PR.

@@ -13,7 +13,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.9.0" (bumped from 1.8.0 in Phase 11 self-consistency + Phase 14 time-travel)
+# 2. Schema version is "1.9.0" (bumped from 1.8.0 for self-consistency voting + time-travel checkpoints)
 # ---------------------------------------------------------------------------
 @test "state-schema: schema version 1.9.0 documented" {
   grep -q '"version": "1.9.0"' "$STATE_SCHEMA" \
@@ -21,7 +21,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2b. Self-consistency voting counters (Phase 11, schema 1.9.0)
+# 2b. Self-consistency voting counters (schema 1.9.0)
 # ---------------------------------------------------------------------------
 @test "state-schema 1.9.0 declares consistency_cache_hits and consistency_votes" {
   grep -Eq '"consistency_cache_hits"[[:space:]]*:[[:space:]]*0' "$STATE_SCHEMA" \

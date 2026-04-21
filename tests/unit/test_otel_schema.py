@@ -1,4 +1,4 @@
-"""Phase 09 Task 12: semconv schema + validator tests."""
+"""OTel semconv schema + validator tests."""
 from __future__ import annotations
 
 import json

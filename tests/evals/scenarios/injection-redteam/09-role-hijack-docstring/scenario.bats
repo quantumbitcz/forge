@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 09: a remote GitHub file's source comment tries to hijack
+# Injection red-team scenario 09: a remote GitHub file's source comment tries to hijack
 # the agent role. mcp:github:remote is T-C, so envelope is classification=confirmed.
 
 setup() {

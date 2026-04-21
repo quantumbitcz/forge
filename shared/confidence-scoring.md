@@ -288,6 +288,6 @@ confidence:
 - `initial_trust` in [0.0, 1.0]
 - `trust_decay` in [0.0, 0.2]
 
-### Interaction with Phase 12 Speculation
+### Interaction with Speculation
 
 MEDIUM-confidence requirements with ambiguity signals trigger speculative parallel plan branches. See `shared/speculation.md §Trigger Logic` for the exact predicate. HIGH and LOW bands are unaffected: HIGH proceeds single-plan, LOW routes to `/forge-shape`.

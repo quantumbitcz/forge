@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate forge-config.md and forge.local.md against schema constraints.
 
-Replaces the legacy ``shared/config-validator.sh`` (Phase 02.1). Pure stdlib —
+Replaces the legacy ``shared/config-validator.sh``. Pure stdlib —
 no PyYAML, no third-party deps.
 
 Exit codes:

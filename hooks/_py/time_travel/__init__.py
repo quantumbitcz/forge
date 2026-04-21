@@ -1,4 +1,4 @@
-"""Phase 14 — Time-Travel Checkpoints package.
+"""Time-Travel Checkpoints package.
 
 Content-addressable checkpoint storage and atomic rewind for the forge pipeline.
 """

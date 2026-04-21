@@ -1,4 +1,4 @@
-"""CLI entry point for the Phase 14 time-travel checkpoint store.
+"""CLI entry point for the time-travel checkpoint store.
 
 Invoked by the orchestrator and ``/forge-recover`` via
 ``python3 -m hooks._py.time_travel <op> <args...>``. Exit codes are the

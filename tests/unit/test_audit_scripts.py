@@ -1,4 +1,4 @@
-"""Unit tests for the 4 ported audit scripts (Phase 02.1).
+"""Unit tests for the 4 ported audit scripts.
 
 Covers:
   - shared.validate_finding

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 2: every CONSUMER_SOURCES entry in the filter has a tier-table row.
+# Every CONSUMER_SOURCES entry in the injection filter has a tier-table row.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

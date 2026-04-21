@@ -225,7 +225,7 @@ ALL transitions follow `shared/state-transitions.md` table. Look up (state, even
 - `/compact` after IMPLEMENT, VERIFY, REVIEW. Before compacting, write brief state summary.
 - Max 3-5 files (state, checkpoint, config, story brief). Never read source.
 
-### Repo-map pack (Phase 10, opt-in)
+### Repo-map pack (opt-in)
 
 If `code_graph.prompt_compaction.enabled: true`, the orchestrator emits the
 placeholder `{{REPO_MAP_PACK:BUDGET=8000:TOPK=25}}` wherever it previously
@@ -352,7 +352,7 @@ References (never modifies): `shared/scoring.md`, `shared/state-schema.md`, `sha
 
 ---
 
-## §11 OTel Instrumentation (Phase 09)
+## §11 OTel Instrumentation
 
 Wrap every stage transition and subagent dispatch with spans from `hooks/_py/otel`. Respects `observability.otel.enabled` — when off, every call is a no-op (no `opentelemetry.*` import, <1ms/stage overhead). Live emission is best-effort (BatchSpanProcessor); `otel.replay()` against `.forge/events.jsonl` is authoritative. See `shared/observability.md`.
 
@@ -1502,7 +1502,7 @@ When `/forge-recover <subcommand>` invokes the orchestrator, the input payload c
 | `rewind` | Resolve `--to=<id>` via `hooks/_py/time_travel` (human-id → sha lookup in `index.json`), then invoke `python3 -m hooks._py.time_travel rewind --run-dir <run_dir> --worktree <worktree> --to <sha> --run-id <run_id> [--force]`. On success: set `state.status = REWINDING` briefly, then restore to the checkpoint's `story_state` (pseudo-state; never persists). Emit `StateTransitionEvent` + consume `RewoundEvent` already appended by the Python tool. On abort codes 5/6/7: surface to user via `AskUserQuestion` with remediation options. |
 | `list-checkpoints` | Read-only: invoke `python3 -m hooks._py.time_travel list-checkpoints --run-dir <run_dir> --worktree <worktree> [--json]`. Stream stdout to user. No TaskCreate; no state write. |
 
-This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; only the entry point changed. Rewind and list-checkpoints are new in Phase 14 and delegate the storage protocol to `hooks/_py/time_travel/` (see `shared/recovery/time-travel.md`).
+This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; only the entry point changed. Rewind and list-checkpoints delegate the storage protocol to `hooks/_py/time_travel/` (see `shared/recovery/time-travel.md`).
 
 **Crash recovery:** On every orchestrator start for an active run, invoke `python3 -m hooks._py.time_travel repair --run-dir <run_dir> --worktree <worktree> --run-id <run_id>`. This is a no-op when `.forge/runs/<run_id>/.rewind-tx/` does not exist and a safe replay-or-rollback when it does (see `shared/recovery/time-travel.md` §Crash Recovery).
 

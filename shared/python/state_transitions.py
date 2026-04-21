@@ -420,7 +420,7 @@ def build_table(g, state, conv, conv_phase):
          lambda: int(g('estimated_total', state.get('tokens', {}).get('estimated_total', 0))) >= int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) and int(g('budget_ceiling', state.get('tokens', {}).get('budget_ceiling', 0))) > 0,
          'ESCALATED', 'E8', 'token_budget_exhausted',
          {}, {}),
-        # R1 (Phase 14): ANY + recovery_op_rewind -> REWINDING (pseudo-state)
+        # R1 (time-travel): ANY + recovery_op_rewind -> REWINDING (pseudo-state)
         # REWINDING is transient: story_state is NOT persisted as REWINDING.
         # The orchestrator brackets the CAS rewind op with StateTransitionEvent
         # pairs for audit; the actual commit/abort resolves via R2/R3 below.
@@ -428,7 +428,7 @@ def build_table(g, state, conv, conv_phase):
          lambda: True,
          'REWINDING', 'R1', 'recovery_op_rewind (enter REWINDING pseudo-state)',
          {}, {}),
-        # R2 (Phase 14): REWINDING + rewind_commit_success -> target story_state
+        # R2 (time-travel): REWINDING + rewind_commit_success -> target story_state
         # Resolved programmatically by the orchestrator (next_state depends on
         # the captured checkpoint's story_state); _PREVIOUS_ is a safe fallback
         # when the CAS-restored state.json already carries the target value.
@@ -436,7 +436,7 @@ def build_table(g, state, conv, conv_phase):
          lambda: True,
          '_PREVIOUS_', 'R2', 'rewind_commit_success (CAS restore OK, story_state set from checkpoint)',
          {}, {}),
-        # R3 (Phase 14): REWINDING + rewind_abort -> prior story_state
+        # R3 (time-travel): REWINDING + rewind_abort -> prior story_state
         # Exit 5 (dirty) / 6 (unknown id) / 7 (tx collision) surfaced via
         # AskUserQuestion by the orchestrator.
         ('REWINDING', 'rewind_abort',

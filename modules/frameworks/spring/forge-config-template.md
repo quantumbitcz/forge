@@ -252,7 +252,7 @@ memory_discovery:
   min_evidence_files: 3
   auto_promote_after_runs: 3
 
-# Memory decay (Phase 13, v3.3+)
+# Memory decay (v3.3+)
 # Time-aware Ebbinghaus exponential curve. Canonical contract: shared/learnings/decay.md.
 memory:
   decay:
@@ -306,7 +306,7 @@ implementer:
       max_file_size_kb: 512
       exclude_patterns: [node_modules, .git, vendor, build, dist, __pycache__]
       prompt_compaction:
-        enabled: false              # Phase 10: opt-in; flips to true after 20-run gate
+        enabled: false              # Opt-in; flips to true after 20-run gate
         top_k: 25
         token_budget: 8000
         recency_window_days: 30
@@ -325,7 +325,7 @@ implementer:
           CONTAINS: 0.3
 
   reflection:
-    enabled: true          # Phase 04 CoVe. Set false to disable per-task fresh-context critic.
+    enabled: true          # Chain-of-Verification critic. Set false to disable per-task fresh-context critic.
     max_cycles: 2          # Range [1, 3]. Default 2.
     fresh_context: true    # Dispatch fg-301 as sub-subagent (recommended).
     timeout_seconds: 90    # Range [30, 180]. On timeout, skip reflection for that task.

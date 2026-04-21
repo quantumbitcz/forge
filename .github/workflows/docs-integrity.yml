@@ -88,7 +88,7 @@ jobs:
       - name: 600-line ceiling
         run: |
           # Files currently over 600L are grandfathered; ceiling applies to NEW files.
-          # Shrink the exempt list as files are split per Phase 06 docs architecture.
+          # Shrink the exempt list as files are split per docs-architecture splits.
           exempt="shared/state-schema.md shared/state-schema-fields.md shared/stage-contract.md shared/checks/ai-code-patterns.md shared/learnings-index.md"
           fail=0
           while IFS= read -r f; do

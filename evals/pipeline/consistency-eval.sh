@@ -7,8 +7,8 @@
 #   - manually: ./evals/pipeline/consistency-eval.sh [--live|--offline]
 #
 # Default is --offline (uses a deterministic stub sampler). CI uses --offline as
-# well today; --live degrades to offline until a live sampler is wired (Phase 11
-# follow-up — see shared/consistency/voting.md §1.1).
+# well today; --live degrades to offline until a live sampler is wired
+# (follow-up — see shared/consistency/voting.md §1.1).
 
 set -euo pipefail
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Structural validation for the forge plugin (Python entry point).
 
-Phase 02.1: Python alternative to ``tests/validate-plugin.sh``. The shell
+Python alternative to ``tests/validate-plugin.sh``. The shell
 version remains the canonical implementation since it ships with deeper
-Phase-1-specific checks; this Python port covers the core structural
+legacy-specific checks; this Python port covers the core structural
 invariants (~40 of the most important checks) and is intended for use in
 environments where bash + jq aren't installed (and to give us a single Python
 process that can run the gating checks during Python-only test passes).
@@ -485,7 +485,7 @@ def check_recovery_engine_doc() -> list[str]:
 
 
 def check_python_modules_exist() -> list[str]:
-    """Phase 02.1 invariant: ported scripts have a .py module."""
+    """Invariant: ported scripts have a .py module."""
     expected = [
         "shared/check_prerequisites.py",
         "shared/config_validator.py",
@@ -497,7 +497,7 @@ def check_python_modules_exist() -> list[str]:
         "tests/validate_plugin.py",
     ]
     return [
-        f"{p} missing (Phase 02.1 port required)"
+        f"{p} missing (Python port required)"
         for p in expected
         if not (REPO / p).is_file()
     ]
@@ -595,7 +595,7 @@ CHECKS: list[tuple[str, str, CheckFn]] = [
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="validate_plugin",
-        description="Forge plugin structural validation (Phase 02.1 Python port).",
+        description="Forge plugin structural validation (Python port).",
     )
     ap.add_argument("--quiet", action="store_true",
                     help="Only print failures and the summary line")

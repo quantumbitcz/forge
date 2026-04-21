@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 02: Linear ticket asks the agent to exfil the system prompt.
+# Injection red-team scenario 02: Linear ticket asks the agent to exfil the system prompt.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../../../../.." && pwd)"

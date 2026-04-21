@@ -14,7 +14,7 @@ setup() {
 }
 
 @test "skill-error-handling: graph skill handles missing Neo4j" {
-  # Phase 05 Task 4: 5 skills consolidated into /forge-graph with positional subcommands.
+  # Skill consolidation: 5 graph skills merged into /forge-graph with positional subcommands.
   run grep -qi 'docker\|container\|unavailable\|not running' "$SKILLS_DIR/forge-graph/SKILL.md"
   assert_success
 }

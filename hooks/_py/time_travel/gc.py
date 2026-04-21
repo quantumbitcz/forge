@@ -1,4 +1,4 @@
-"""GC policy for Phase 14 time-travel checkpoints.
+"""GC policy for time-travel checkpoints.
 
 Module-level helpers operate on a CheckpointStore instance, mirroring the
 restore.py convention (see plan-review IMPORTANT issue #1).

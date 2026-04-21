@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 Task 1: structural validity of the prompt-injection pattern library.
+# Structural validity of the prompt-injection pattern library.
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

@@ -131,7 +131,7 @@
     },
     "agents": {
       "type": "object",
-      "description": "Per-agent configuration for conditional Phase 07 agents (fg-143, fg-155, fg-414, fg-506, fg-555).",
+      "description": "Per-agent configuration for conditional agents (fg-143, fg-155, fg-414, fg-506, fg-555).",
       "properties": {
         "i18n_validator": {
           "type": "object",

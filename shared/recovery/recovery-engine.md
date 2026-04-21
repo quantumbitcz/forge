@@ -102,7 +102,7 @@ When a pre-classified error arrives, map its `ERROR_TYPE` to a recovery category
 | DEPRECATION_WARNING | — | — | Inline handling only |
 | WORKTREE_FAILURE | RESOURCE_EXHAUSTION | resource-cleanup | |
 | BUDGET_EXHAUSTED | UNRECOVERABLE | graceful-stop | Terminal; raised by recovery engine itself |
-| INJECTION_BLOCKED | UNRECOVERABLE | graceful-stop | BLOCK-tier prompt-injection match at filter; not retryable — source must be fixed (Phase 03). See `shared/untrusted-envelope.md`. |
+| INJECTION_BLOCKED | UNRECOVERABLE | graceful-stop | BLOCK-tier prompt-injection match at filter; not retryable — source must be fixed. See `shared/untrusted-envelope.md`. |
 
 ### 3.1 TRANSIENT
 

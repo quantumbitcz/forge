@@ -233,7 +233,7 @@ Write the full report to `.forge/health-report.md` (preserved path for tooling t
 
 Iterative fix loop across the whole codebase with per-iteration commits. Replaces the old `/forge-review --scope=all --fix`. **Destructive** — commits are real; a bad fix is on `HEAD`.
 
-#### 1. Safety-confirm gate (NEW in Phase 05)
+#### 1. Safety-confirm gate
 
 **Before any file modification or commit**, this subcommand MUST present an `AskUserQuestion` gate unless ONE of the following is true:
 

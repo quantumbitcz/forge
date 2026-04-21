@@ -38,9 +38,9 @@ fi
 # Detects language + module, dispatches to the appropriate layer runner(s).
 # Always exits 0 — never blocks the pipeline.
 #
-# When bash 4.0+ is not available, delegates to the Python engine (Phase 02
-# relocated engine.py to hooks/_py/check_engine/engine.py under the plugin root)
-# if present. This removes the hard bash 4.0+ requirement for MacOS users.
+# When bash 4.0+ is not available, delegates to the Python engine at
+# hooks/_py/check_engine/engine.py under the plugin root if present.
+# This removes the hard bash 4.0+ requirement for MacOS users.
 #
 # Modes:
 #   --hook              PostToolUse hook (single file, Layer 1 only)
@@ -57,9 +57,8 @@ fi
 # MacOS ships bash 3.2 — install bash 4+ via: brew install bash
 if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
   # Try Python entry point (no bash 4.0+ requirement).
-  # Phase 02: engine.py moved from shared/checks/ to hooks/_py/check_engine/.
-  # Keep a legacy in-place fallback for older installs where the relocation
-  # hasn't happened yet.
+  # engine.py lives at hooks/_py/check_engine/engine.py.
+  # Keep a legacy in-place fallback for older installs.
   _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   _PLUGIN_ROOT="$(cd "${_SCRIPT_DIR}/../.." && pwd)"
   _PY_ENGINE="${_PLUGIN_ROOT}/hooks/_py/check_engine/engine.py"

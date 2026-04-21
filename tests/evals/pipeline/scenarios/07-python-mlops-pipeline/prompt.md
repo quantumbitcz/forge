@@ -1,6 +1,6 @@
 # Scenario 07 — Python MLOps pipeline (STUB)
 
-**STUB — replace before Phase 03.** This scenario exercises harness plumbing only; the prompt is deliberately simple.
+**STUB — replace with a real scenario.** This scenario exercises harness plumbing only; the prompt is deliberately simple.
 
 Add a `train.py` script that:
 - Loads a CSV fixture, splits 80/20, trains `sklearn.linear_model.LogisticRegression`.

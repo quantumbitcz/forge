@@ -298,7 +298,7 @@ if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* || "${OSTYPE:-}" == min
 else
   while IFS= read -r cmd; do
     [[ -z "$cmd" ]] && continue
-    # Commands can be either bare paths (legacy) or "python3 <path>" (Phase 02+).
+    # Commands can be either bare paths (legacy) or "python3 <path>".
     # Extract the last whitespace-separated token that mentions ${CLAUDE_PLUGIN_ROOT}
     # or a relative path ending in .sh/.py.
     script_path=""

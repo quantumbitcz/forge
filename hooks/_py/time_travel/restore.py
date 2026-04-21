@@ -1,4 +1,4 @@
-"""Atomic rewind protocol for Phase 14 time-travel.
+"""Atomic rewind protocol for time-travel.
 
 Module-level functions operate on a CheckpointStore instance. Per the
 plan-review IMPORTANT issue #1, this module deliberately uses functions

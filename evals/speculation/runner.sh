@@ -18,7 +18,7 @@ corpus_path = sys.argv[1]
 out_path = sys.argv[2]
 corpus = json.loads(Path(corpus_path).read_text())["corpus"]
 
-# Simulated eval: plug into Phase 01 harness in real CI. Here we
+# Simulated eval: plug into the live pipeline harness in real CI. Here we
 # deterministically synthesize planner+validator scores from seeds so the
 # gate is reproducible and cost-free. Real harness substitutes live LLM calls.
 random.seed(42)

@@ -14,7 +14,7 @@ Control flow (which state comes next, when to retry, when to escalate) is fully 
 
 The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response.
 
-- **REWINDING** *(pseudo-state, non-persistent, added in state-schema v1.9.0 / Phase 14)* — in effect only during the atomic rewind transaction. `state.story_state` is NOT written as `REWINDING`; this name appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket the rewind op.
+- **REWINDING** *(pseudo-state, non-persistent, added in state-schema v1.9.0)* — in effect only during the atomic rewind transaction. `state.story_state` is NOT written as `REWINDING`; this name appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket the rewind op.
 
 ---
 

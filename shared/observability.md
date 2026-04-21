@@ -96,7 +96,7 @@ shops. Off by default.
 
 ## Migration from `forge-otel-export.sh`
 
-The bash exporter is deleted in Phase 09. No wrapper, no compatibility
+The bash exporter has been deleted. No wrapper, no compatibility
 shim. See CHANGELOG.md for rename mapping:
 
 | Old attribute | New attribute               |

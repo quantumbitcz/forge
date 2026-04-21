@@ -21,7 +21,7 @@ setup() {
 }
 
 @test "skill-mcp-detection: graph skill checks Neo4j availability" {
-  # Phase 05 Task 4: forge-graph-init consolidated into /forge-graph.
+  # forge-graph-init consolidated into /forge-graph.
   run grep -qi 'neo4j\|docker\|health' "$SKILLS_DIR/forge-graph/SKILL.md"
   assert_success
 }

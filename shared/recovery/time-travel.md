@@ -1,4 +1,4 @@
-# Time-Travel Checkpoints (Phase 14)
+# Time-Travel Checkpoints
 
 **Status:** Active (since state-schema 1.9.0, forge 3.3.0)
 **Owner:** forge plugin maintainers

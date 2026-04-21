@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Thin shim → shared/context_guard.py (Phase 02.1).
+# Thin shim → shared/context_guard.py.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"

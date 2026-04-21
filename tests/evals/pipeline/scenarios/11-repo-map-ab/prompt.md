@@ -18,4 +18,4 @@ Constraints:
 
 Pipeline mode: `standard`.
 
-**Why this scenario exists:** it deliberately targets the `{{REPO_MAP_PACK}}` substitution path (Phase 10 Task 10) — multi-file import tracing across ~10 project files is where biased PageRank should outperform a raw directory listing. Paired with the A/B workflow in `.github/workflows/evals-compaction-ab.yml`, it measures the effect of `code_graph.prompt_compaction.enabled` on `actual_tokens` and `pipeline_score`.
+**Why this scenario exists:** it deliberately targets the `{{REPO_MAP_PACK}}` substitution path — multi-file import tracing across ~10 project files is where biased PageRank should outperform a raw directory listing. Paired with the A/B workflow in `.github/workflows/evals-compaction-ab.yml`, it measures the effect of `code_graph.prompt_compaction.enabled` on `actual_tokens` and `pipeline_score`.

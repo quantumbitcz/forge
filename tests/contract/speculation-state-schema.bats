@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Contract tests: Phase 12 speculation fields in shared/state-schema.md
+# Contract tests: speculation fields in shared/state-schema.md
 # (plan_candidates[] and speculation object).
 
 load '../helpers/test-helpers'
@@ -9,8 +9,8 @@ STATE="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # 1. Schema still carries a recognisable semver marker (1.x.0).
 #
-# Note: the current schema is at v1.9.0 (Phase 11 voting + Phase 14 CAS
-# checkpoints). Phase 12 added speculation fields additively without bumping
+# Note: the current schema is at v1.9.0 (self-consistency voting + CAS
+# checkpoints). Speculation fields were added additively without bumping
 # the version, so we just assert the version marker still exists.
 # ---------------------------------------------------------------------------
 @test "state schema declares a 1.x.0 version marker" {

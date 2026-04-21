@@ -1,4 +1,4 @@
-"""Phase 03 Task 3 — pytest suite for hooks._py.mcp_response_filter."""
+"""Pytest suite for hooks._py.mcp_response_filter."""
 from __future__ import annotations
 
 import hashlib
@@ -177,7 +177,7 @@ def test_jsonl_record_on_quarantine(tmp_path, monkeypatch):
 
 
 def test_consumer_sources_match_tier_table():
-    """Phase 03 invariant: CONSUMER_SOURCES must equal TIER_TABLE keys."""
+    """Invariant: CONSUMER_SOURCES must equal TIER_TABLE keys."""
     assert f.CONSUMER_SOURCES == set(f.TIER_TABLE.keys())
 
 

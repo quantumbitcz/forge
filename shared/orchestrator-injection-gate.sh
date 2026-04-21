@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# orchestrator-injection-gate.sh — Phase 03 Task 19.
+# orchestrator-injection-gate.sh — injection-hardening confirmation gate.
 # Decides whether a Confirmed-tier (T-C) data ingress to a Bash-capable agent
 # may proceed. In interactive runs the orchestrator itself calls
 # AskUserQuestion; this script is the non-interactive fallback for

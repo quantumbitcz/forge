@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Speculation dispatch helper (Phase 12)."""
+"""Speculation dispatch helper."""
 from __future__ import annotations
 
 import argparse

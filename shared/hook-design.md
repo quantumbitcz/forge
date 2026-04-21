@@ -4,7 +4,7 @@ Defines the hook execution model, event types, ordering guarantees, and script c
 
 ## Hook Types
 
-Hooks are event-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge-init`. As of Phase 02, all hooks are **Python 3.10+** entry scripts; bash is no longer required.
+Hooks are event-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge-init`. All hooks are **Python 3.10+** entry scripts; bash is no longer required.
 
 ## Event Types and Execution Order
 

@@ -82,9 +82,9 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 # 5. All skills have ## Prerequisites section
 # ---------------------------------------------------------------------------
 @test "skill-quality: all skills have ## Prerequisites or ## Subcommand dispatch" {
-  # Phase 05 introduced the subcommand pattern (shared/skill-subcommand-pattern.md).
-  # Subcommand-style skills replace the flat Prerequisites/Instructions sections
-  # with per-subcommand blocks, so either pattern satisfies the contract.
+  # The subcommand pattern (shared/skill-subcommand-pattern.md) replaces
+  # the flat Prerequisites/Instructions sections with per-subcommand blocks,
+  # so either pattern satisfies the contract.
   local failures=()
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"
@@ -107,7 +107,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"
     [[ -f "$skill_file" ]] || continue
-    # Phase 05 subcommand-style skills use per-subcommand H3 blocks.
+    # Subcommand-style skills use per-subcommand H3 blocks.
     if ! grep -qE '^## Instructions|^### Subcommand:' "$skill_file"; then
       failures+=("$(basename "$skill_dir")")
     fi
@@ -222,7 +222,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   for skill_dir in "$SKILLS_DIR"/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
-  # Phase 05 reduced 35 → 33; final target after Tasks 4-12 is 28.
+  # Skill-consolidation target: 28.
   if (( count < 28 )); then
     fail "Expected at least 28 skills, found $count"
   fi

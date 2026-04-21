@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Contract tests: prompt_compaction block in shared/state-schema.md.
 #
-# The live schema is at 1.9.0 (Phase 11 self-consistency + Phase 14 time-travel).
+# The live schema is at 1.9.0 (self-consistency voting + time-travel checkpoints).
 # Because prompt_compaction is a purely additive, conditional, observational field,
 # no version bump is required — the regex below accepts any of the recent versions
 # so this test stays robust across later additive bumps. The second test is the

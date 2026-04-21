@@ -1,4 +1,4 @@
-"""Forge MCP response filter (Phase 03).
+"""Forge MCP response filter (prompt-injection hardening).
 
 Stdlib-only. Invoked before external data reaches an agent prompt.
 See shared/untrusted-envelope.md for the contract.

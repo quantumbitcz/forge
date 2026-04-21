@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Structural tests: Phase 02.1 — guards against bash regression in scripts
+# Structural tests: guards against bash regression in scripts
 # that have been (or should be) ported to Python.
 #
 # Each ported script must satisfy ONE of:
@@ -99,7 +99,7 @@ assert_ported() {
 # Task 16: tests/validate-plugin Python alternative entry point
 #
 # Unlike the other ported scripts, validate-plugin.sh remains the canonical
-# implementation (it already runs cross-platform per Phase 02 CI). The Python
+# implementation (it already runs cross-platform via CI). The Python
 # version is an additional entry point covering the same checks, intended for
 # environments where bash is unavailable or undesirable.
 # ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ assert_ported() {
 # These env vars are legacy knobs for unported bash scripts (which still need
 # them to find Python and branch on OS). Python code must NEVER read them —
 # Python detects its OS via platform.system() and runs as sys.executable.
-# Phase 02.1 ports rely on this; future bash retirements will eliminate the
+# The Python ports rely on this; future bash retirements will eliminate the
 # env vars entirely.
 # ---------------------------------------------------------------------------
 
@@ -162,13 +162,13 @@ assert_ported() {
 # General: hooks/ contains no bash logic — production hooks are Python
 # ---------------------------------------------------------------------------
 
-@test "hooks/ contains no .sh files (Phase 02 invariant)" {
+@test "hooks/ contains no .sh files" {
   local sh_files
   sh_files=$(find "$PLUGIN_ROOT/hooks" -maxdepth 2 -name '*.sh' -type f 2>/dev/null || true)
 
   if [[ -n "$sh_files" ]]; then
     echo "Found unexpected .sh in hooks/:"
     echo "$sh_files"
-    fail "All hooks must be Python after Phase 02. Add new hooks as hooks/_py/<name>.py"
+    fail "All hooks must be Python. Add new hooks as hooks/_py/<name>.py"
   fi
 }

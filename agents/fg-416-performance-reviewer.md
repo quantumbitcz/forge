@@ -128,7 +128,7 @@ When `lsp.enabled` and LSP is available for the project language:
 
 ---
 
-## Frontend Performance (absorbed from fg-413 Part D — Phase 07)
+## Frontend Performance (absorbed from fg-413 Part D)
 
 Applies when the reviewer receives frontend files (`.ts{x}`, `.jsx?`, `.vue`, `.svelte`, `.css`).
 
@@ -165,7 +165,7 @@ Applies when the reviewer receives frontend files (`.ts{x}`, `.jsx?`, `.vue`, `.
 | `FE-PERF-LOAD` | WARNING | fg-416-performance-reviewer |
 | `FE-PERF-NETWORK` | WARNING | fg-416-performance-reviewer |
 
-Owner change (Phase 07): previously these were emitted by `fg-413-frontend-reviewer`. `fg-413` now delegates performance findings to `fg-416` and focuses on conventions, design system, a11y, and visual regression.
+Owner change: previously these were emitted by `fg-413-frontend-reviewer`. `fg-413` now delegates performance findings to `fg-416` and focuses on conventions, design system, a11y, and visual regression.
 
 ---
 

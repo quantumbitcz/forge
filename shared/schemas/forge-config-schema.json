@@ -472,7 +472,7 @@
     },
     "consistency": {
       "type": "object",
-      "description": "Self-consistency voting configuration (Phase 11). See shared/consistency/voting.md. Voting fires at three decision points: shaper intent classification, validator GO/REVISE/NO-GO synthesis (INCONCLUSIVE gate only), and PR-rejection classification in fg-710-post-run.",
+      "description": "Self-consistency voting configuration. See shared/consistency/voting.md. Voting fires at three decision points: shaper intent classification, validator GO/REVISE/NO-GO synthesis (INCONCLUSIVE gate only), and PR-rejection classification in fg-710-post-run.",
       "properties": {
         "enabled": {
           "type": "boolean",

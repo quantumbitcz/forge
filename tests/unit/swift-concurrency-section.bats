@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 08: asserts modules/languages/swift.md contains the 8 structured-concurrency subsections.
+# Asserts modules/languages/swift.md contains the 8 structured-concurrency subsections.
 
 PLUGIN_ROOT="${BATS_TEST_DIRNAME}/../.."
 SWIFT_FILE="$PLUGIN_ROOT/modules/languages/swift.md"

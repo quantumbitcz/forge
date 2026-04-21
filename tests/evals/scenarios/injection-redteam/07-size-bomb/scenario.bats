@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Phase 03 scenario 07: a 10 MiB Figma payload tries to overflow context.
+# Injection red-team scenario 07: a 10 MiB Figma payload tries to overflow context.
 # Fixture is generated in the test (no 10 MiB blob checked in).
 
 setup() {
