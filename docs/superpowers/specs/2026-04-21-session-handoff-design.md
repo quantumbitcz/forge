@@ -367,10 +367,12 @@ None. All key decisions resolved:
 
 ## Rollout
 
-1. Ship behind `handoff.enabled: false` default for first release (opt-in).
-2. One forge release cycle as opt-in; collect feedback via auto-memory + `.forge/alerts.json` inspection.
-3. Flip default to `true` in next minor release.
-4. MCP tools gated by `handoff.mcp_expose: true` from day one.
+forge is a personal tool — no backcompat, no gradual-enable. Ship fully enabled from day one:
+
+1. `handoff.enabled: true` default — feature active on all runs from v3.6.0.
+2. `handoff.mcp_expose: true` default — MCP tools exposed from day one.
+3. State schema bumped cleanly from 1.9.0 to 1.10.0 with no translation layer — pre-existing runs without the `handoff` sub-object will have it added lazily at next state write via `atomic_json_update` default semantics.
+4. Old handoff-free state files continue to work because the `handoff` sub-object is additive; they just won't have a chain until the first write.
 
 ## References
 
