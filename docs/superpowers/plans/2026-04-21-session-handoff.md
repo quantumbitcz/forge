@@ -2684,15 +2684,30 @@ def search_handoffs(db_path: Path, query: str, limit: int = 20) -> list[Hit]:
     ensure_fts_schema(db_path)
     conn = sqlite3.connect(str(db_path))
     try:
-        rows = conn.execute(
-            "SELECT run_id, path, snippet(handoff_fts, 2, '[', ']', '...', 12) "
-            "FROM handoff_fts WHERE handoff_fts MATCH ? LIMIT ?",
-            (query, limit),
-        ).fetchall()
+        # Quote the query as a single FTS5 phrase so freetext input is always
+        # syntactically valid. Raw user input containing unbalanced quotes,
+        # trailing operators, or colons will otherwise raise
+        # sqlite3.OperationalError and crash /forge-handoff search + the MCP
+        # tool path. Users who want Boolean/column operators can escape their
+        # own quotes.
+        safe_query = '"' + query.replace('"', '""') + '"'
+        try:
+            rows = conn.execute(
+                "SELECT run_id, path, snippet(handoff_fts, 2, '[', ']', '...', 12) "
+                "FROM handoff_fts WHERE handoff_fts MATCH ? LIMIT ?",
+                (safe_query, limit),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            # Malformed queries (e.g., empty after escaping) — fail soft
+            return []
         return [Hit(path=p, run_id=r, snippet=s) for r, p, s in rows]
     finally:
         conn.close()
 ```
+
+> **Phase 7 post-mortem fix:** an earlier revision passed `query` straight into
+> `MATCH ?` and crashed uncaught on FTS5 syntax errors. Always phrase-quote and
+> wrap in try/except `sqlite3.OperationalError`.
 
 - [ ] **Step 4: Wire indexing into writer**
 
@@ -2862,25 +2877,34 @@ even without explicit resume.
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from pathlib import Path
+
+from hooks._py.handoff.frontmatter import _safe_yaml_scalar
 
 
 def _memory_root() -> Path:
     env = os.environ.get("FORGE_AUTO_MEMORY_ROOT")
     if env:
         return Path(env)
-    # Default Claude Code location — callers may override
     home = Path(os.environ.get("HOME", "."))
-    # project hash directory is normally set by the outer Claude Code runtime;
-    # we fall back to ~/.claude/memory for single-project installs
-    return home / ".claude" / "memory"
+    # Claude Code per-project memory convention: ~/.claude/projects/<hash>/memory/
+    # where <hash> is cwd with '/' replaced by '-'. Files written to the plain
+    # ~/.claude/memory/ path are NOT discovered by the auto-memory loader.
+    cwd = Path.cwd().resolve()
+    project_hash = str(cwd).replace("/", "-")
+    return home / ".claude" / "projects" / project_hash / "memory"
 
 
 def _slug(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
-    return (s[:30] or "entry").rstrip("_")
+    base = (s[:30] or "entry").rstrip("_")
+    # Short hash suffix so two PREEMPTs with the same 30-char prefix don't
+    # slug-collide and overwrite each other.
+    suffix = hashlib.sha1(text.encode("utf-8")).hexdigest()[:6]
+    return f"{base}_{suffix}"
 
 
 def promote_from_terminal_handoff(
@@ -2892,7 +2916,10 @@ def promote_from_terminal_handoff(
     root.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
 
-    # Top 3 HIGH-confidence PREEMPTs
+    # Top 3 HIGH-confidence PREEMPTs. Every user-sourced string that lands on a
+    # YAML frontmatter `name:` line MUST go through `_safe_yaml_scalar` — a
+    # PREEMPT containing `:`, `\n`, or a leading `---` would otherwise inject
+    # phantom keys or break frontmatter framing.
     top = [p for p in preempts if str(p.get("confidence", "")).upper() == "HIGH"][:3]
     for p in top:
         text = str(p.get("text", "")).strip()
@@ -2901,7 +2928,7 @@ def promote_from_terminal_handoff(
         path = root / f"forge_handoff_preempt_{_slug(text)}.md"
         path.write_text(
             "---\n"
-            f"name: PREEMPT — {text}\n"
+            f"name: {_safe_yaml_scalar('PREEMPT — ' + text)}\n"
             "description: Auto-promoted from forge terminal handoff\n"
             "type: project\n"
             "---\n\n"
@@ -2911,7 +2938,7 @@ def promote_from_terminal_handoff(
         )
         written.append(path)
 
-    # User decisions (one file per decision)
+    # User decisions (one file per decision) — same YAML-escaping rule applies.
     for decision in user_decisions:
         text = decision.strip()
         if not text:
@@ -2919,7 +2946,7 @@ def promote_from_terminal_handoff(
         path = root / f"forge_handoff_user_{_slug(text)}.md"
         path.write_text(
             "---\n"
-            f"name: User directive — {text[:40]}\n"
+            f"name: {_safe_yaml_scalar('User directive — ' + text[:40])}\n"
             "description: Auto-promoted user decision from forge terminal handoff\n"
             "type: project\n"
             "---\n\n"
@@ -2931,6 +2958,11 @@ def promote_from_terminal_handoff(
 
     return written
 ```
+
+> **Phase 7 post-mortem fixes baked into this block:**
+> - `_memory_root()` uses `~/.claude/projects/<cwd-hash>/memory/`, not plain `~/.claude/memory/` — the latter is never discovered by the loader.
+> - `_slug()` appends a 6-char sha1 suffix to avoid 30-char-prefix collisions.
+> - Both frontmatter `name:` lines go through `_safe_yaml_scalar` to prevent YAML injection via `:` / `\n` / `---` in PREEMPT text.
 
 - [ ] **Step 4: Extend `milestones.on_terminal` to call promotion**
 
@@ -3028,14 +3060,29 @@ def _rotate_if_needed(forge_dir: Path, run_id: str, chain_limit: int) -> None:
         stale.rename(archive / stale.name)
 ```
 
-Call it at the end of `write_handoff`, reading `chain_limit` from env or config:
+Call it at the end of `write_handoff`, reading `chain_limit` from config first
+(honouring the PREFLIGHT-validated `handoff.chain_limit` value), then letting
+the env var override for tests:
 
 ```python
-    chain_limit = int(os.environ.get("FORGE_HANDOFF_CHAIN_LIMIT", "50"))
+    # Read chain_limit from config, fall back to env, then default 50
+    try:
+        from hooks._py.handoff.config import load_handoff_config
+        cfg_path = forge_dir.parent / ".claude" / "forge-config.md"
+        cfg = load_handoff_config(cfg_path if cfg_path.exists() else None)
+        chain_limit = cfg.chain_limit
+    except Exception:
+        chain_limit = 50
+    # Env var overrides (useful for tests)
+    chain_limit = int(os.environ.get("FORGE_HANDOFF_CHAIN_LIMIT", str(chain_limit)))
     _rotate_if_needed(forge_dir, req.run_id, chain_limit)
 ```
 
 (Add `import os` at top of writer.)
+
+> **Phase 7 post-mortem fix:** an earlier revision of this block read env-only
+> and ignored `handoff.chain_limit` from `forge-config.md`. The config must be
+> the primary source; env is a test-seam override.
 
 - [ ] **Step 4: Run — must pass**
 
