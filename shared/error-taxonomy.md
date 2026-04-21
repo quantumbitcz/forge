@@ -124,4 +124,4 @@ Safety escalations are not ordinary errors: they do not flow through the recover
 - **Severity:** WARNING (recoverable via user resume)
 - **Trigger:** interactive mode only, `handoff.hard_threshold_pct` reached (default 70%)
 - **Recovery:** pause at next stage boundary, write `HANDOFF_WRITTEN` alert with `level=hard`, await `/forge-handoff resume` or `/forge-recover resume`
-- **Autonomous behaviour:** explicitly excluded from pause semantics — logged only, pipeline continues. Rationale: preserves the unattended-run contract per `autonomous: true`.
+- **Autonomous behavior:** explicitly excluded from pause semantics — logged only, pipeline continues. Rationale: preserves the unattended-run contract per `autonomous: true`.

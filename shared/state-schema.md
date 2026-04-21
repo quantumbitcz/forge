@@ -344,7 +344,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ### `handoff` sub-object
 
-Tracks session-handoff artefact writes for the current run. Populated when `handoff.enabled` is true (default). Survives across stages; reset at PREFLIGHT for new runs.
+Tracks session-handoff artifact writes for the current run. Populated when `handoff.enabled` is true (default). Survives across stages; reset at PREFLIGHT for new runs.
 
 - `last_written_at` — ISO8601 timestamp of the most recent handoff write, or `null` if none yet.
 - `last_path` — path to the most recently written handoff file, or `null` if none yet.
