@@ -32,6 +32,7 @@ inside the file matches the filename stem.
 | 0009 | [MCP server as read-only interface](0009-mcp-server-as-read-only-interface.md) | Accepted | 2026-04-19 |
 | 0010 | [Worktree isolation for parallel runs](0010-worktree-isolation-for-parallel-runs.md) | Accepted | 2026-04-19 |
 | 0011 | [Output compression levels](0011-output-compression-levels.md) | Accepted | 2026-04-19 |
+| 0012 | [Session handoff as a thin state projection](0012-session-handoff-as-state-projection.md) | Accepted | 2026-04-21 |
 
 ## Writing a new ADR
 
