@@ -76,7 +76,7 @@ Phase 15 (Reference Deployment) depends on 01-14 shipped
 
 ### Phase 06 remaining work
 
-Phase 06 (Documentation Architecture) is the only "Partial" row. Shipped: Tasks 1–6, 8–10, 14–18 and T16 Step 1. Outstanding: T7 (state-schema split — high-risk, reserved for a dedicated session), T11–T13 (rewrite `agent-communication.md`, delete the three merged sources, sweep cross-refs repo-wide — unblocked now that T10 has landed), and T16 Steps 2–4.
+Phase 06 (Documentation Architecture) is the only "Partial" row. Shipped: Tasks 1–6, 8–18 (including T16 in full — Steps 2 and 4 turned out to be already satisfied by prior work). Outstanding: **T7** (state-schema split) — high-risk, reserved for a dedicated session; Phase 06 closes out once T7 lands.
 
 ## Review verdict legend
 
