@@ -405,5 +405,3 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 - [`agent-colors.md`](agent-colors.md) — cluster palette
 - [`agent-ui.md`](agent-ui.md) — UI tools (AskUserQuestion, TaskCreate, plan mode)
 - [`composition.md`](composition.md) — convention composition algorithm
-- [`agent-registry.md`](agent-registry.md) — source-of-truth registry (will be consolidated into this file in T12)
-- [`agent-role-hierarchy.md`](agent-role-hierarchy.md) — source hierarchy doc (will be consolidated in T12)

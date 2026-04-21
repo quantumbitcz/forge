@@ -76,7 +76,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Graph (SQLite) | `shared/graph/code-graph-schema.sql` |
 | Convergence | `shared/convergence-engine.md` |
 | State machine | `shared/state-transitions.md` |
-| Agent registry | `shared/agent-registry.md` |
+| Agent registry | `shared/agents.md#registry` |
 | Model routing | `shared/model-routing.md` |
 | Confidence scoring | `shared/confidence-scoring.md` |
 | Output compression | `shared/output-compression.md` |
@@ -168,7 +168,7 @@ Quick decision:    /forge-help (interactive skill picker)
 - **Token management:** Agent `.md` = subagent system prompt (every line = tokens). Constraints compressed with reference to `shared/agent-defaults.md`. Output format references `shared/checks/output-format.md`. Convention stack soft cap: 12 files/component. Module overviews max 15 lines. Output compression (`shared/output-compression.md`) sets per-stage verbosity levels to reduce output tokens.
 - **Description tiering:** Tier 1 (entry, 6): description + example. Tier 2 (reviewers, 9): single-line. Tier 3 (internal, 22): minimal. Full capability in `.md` body.
 
-See `shared/agent-role-hierarchy.md` for the complete dispatch graph and tier definitions.
+See `shared/agents.md#dispatch` for the complete dispatch graph and tier definitions.
 
 ### Routing & decomposition
 

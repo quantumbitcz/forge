@@ -74,7 +74,7 @@ Implemented in-band by `fg-100-orchestrator`. Reference implementation will land
 
 ## 8. Related
 
-- `shared/agent-role-hierarchy.md` — dispatch graph (consumer)
+- `shared/agents.md#dispatch` — dispatch graph (consumer)
 - `shared/agent-ui.md` — UI-tier rules (peer contract)
 - `shared/state-schema.md` — `state.*` namespace definitions
 - `shared/config-schema.json` — `config.*` namespace definitions
