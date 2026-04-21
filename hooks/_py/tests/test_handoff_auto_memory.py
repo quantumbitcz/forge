@@ -71,3 +71,19 @@ def test_default_memory_root_uses_project_hash(tmp_path, monkeypatch):
     assert root.name == "memory"
     # The hash component should reflect the cwd path with / → -
     assert "-project-foo" in root.parts[-2]
+
+
+def test_slug_collision_produces_distinct_files(tmp_path, monkeypatch):
+    """Two PREEMPTs with the same 30-char prefix must not overwrite each other."""
+    memory_root = tmp_path / "memory"
+    memory_root.mkdir()
+    monkeypatch.setenv("FORGE_AUTO_MEMORY_ROOT", str(memory_root))
+
+    preempts = [
+        {"text": "always search for latest version of dependency X", "confidence": "HIGH"},
+        {"text": "always search for latest version of dependency Y", "confidence": "HIGH"},
+    ]
+    promote_from_terminal_handoff(run_id="r", preempts=preempts, user_decisions=[])
+
+    files = sorted(memory_root.glob("forge_handoff_preempt_*.md"))
+    assert len(files) == 2, f"slug collision, got {[f.name for f in files]}"

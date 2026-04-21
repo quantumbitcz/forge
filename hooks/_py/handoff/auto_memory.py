@@ -1,6 +1,7 @@
 """Auto-memory promotion from terminal handoffs."""
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from pathlib import Path
@@ -22,7 +23,10 @@ def _memory_root() -> Path:
 
 def _slug(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
-    return (s[:30] or "entry").rstrip("_")
+    base = (s[:30] or "entry").rstrip("_")
+    # Short hash suffix to prevent collisions on long or similar texts
+    suffix = hashlib.sha1(text.encode("utf-8")).hexdigest()[:6]
+    return f"{base}_{suffix}"
 
 
 def promote_from_terminal_handoff(

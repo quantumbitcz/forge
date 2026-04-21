@@ -100,7 +100,16 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
     # State chain update
     _update_state_chain(forge_dir, req, target)
 
-    chain_limit = int(os.environ.get("FORGE_HANDOFF_CHAIN_LIMIT", "50"))
+    # Read chain_limit from config, fall back to env, then default 50
+    try:
+        from hooks._py.handoff.config import load_handoff_config
+        cfg_path = forge_dir.parent / ".claude" / "forge-config.md"
+        cfg = load_handoff_config(cfg_path if cfg_path.exists() else None)
+        chain_limit = cfg.chain_limit
+    except Exception:
+        chain_limit = 50
+    # Env var overrides (useful for tests)
+    chain_limit = int(os.environ.get("FORGE_HANDOFF_CHAIN_LIMIT", str(chain_limit)))
     _rotate_if_needed(forge_dir, req.run_id, chain_limit)
 
     # Build a signal-dense preview from state (not the resume-block header)
