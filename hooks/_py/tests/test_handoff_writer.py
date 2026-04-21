@@ -137,3 +137,106 @@ def test_resume_prompt_block_present(tmp_path):
     content = result.path.read_text()
     assert "## RESUME PROMPT (copy everything below this line)" in content
     assert "/forge-handoff resume" in content
+
+
+def test_size_cap_triggers_truncation(tmp_path):
+    forge_dir = _seed_state(tmp_path / ".forge", "20260421-big")
+    # Inject enough content to blow past the 12KB light-variant cap. Active
+    # findings and critical_files are slice-capped by the renderer, so pad the
+    # long fields that actually flow through unmodified: requirement,
+    # next_action, open_questions, and the per-finding message on the top-5
+    # findings that survive the light-variant slice.
+    import json as _json
+    state_path = forge_dir / "state.json"
+    state = _json.loads(state_path.read_text())
+    big_msg = "Padding message to inflate handoff body size. " * 80
+    state["requirement"] = "Resume context demo — " + big_msg
+    state["next_action"] = big_msg
+    state["open_questions"] = [big_msg for _ in range(5)]
+    state["active_findings"] = [
+        {
+            "file": f"src/module_{i}.py",
+            "line": i,
+            "category": "DOC-MISSING",
+            "severity": "WARNING",
+            "message": big_msg,
+        }
+        for i in range(500)
+    ]
+    state["critical_files"] = [f"src/module_{i}.py" for i in range(500)]
+    state_path.write_text(_json.dumps(state))
+
+    req = WriteRequest(
+        run_id="20260421-big",
+        level="soft",
+        reason="x",
+        variant="light",
+        now=datetime(2026, 4, 21, 14, 30, 22, tzinfo=timezone.utc),
+    )
+    result = write_handoff(req, forge_dir=forge_dir)
+
+    assert result.path.exists()
+    size = result.path.stat().st_size
+    assert size <= 12 * 1024, f"file {size} > 12KB cap"
+    content = result.path.read_text(encoding="utf-8")  # must decode cleanly
+    assert "<!-- TRUNCATED at cap -->" in content
+
+
+def test_writer_initializes_handoff_subobject_when_missing(tmp_path):
+    forge_dir = tmp_path / ".forge"
+    (forge_dir / "runs" / "20260421-fresh" / "handoffs").mkdir(parents=True)
+    # State without the handoff sub-object — simulates first handoff of a new run
+    state = {
+        "run_id": "20260421-fresh",
+        "story_state": "PLANNING",
+        "mode": "standard",
+        "autonomous": False,
+        "requirement": "fresh run",
+        "score": 0,
+        "score_history": [],
+        "convergence": {"phase": "correctness", "total_iterations": 0},
+    }
+    (forge_dir / "state.json").write_text(json.dumps(state))
+    req = WriteRequest(
+        run_id="20260421-fresh",
+        level="manual",
+        reason="first-handoff",
+        variant="light",
+        now=datetime(2026, 4, 21, 14, 30, 22, tzinfo=timezone.utc),
+    )
+    result = write_handoff(req, forge_dir=forge_dir)
+    assert result.suppressed is False
+    state_after = json.loads((forge_dir / "state.json").read_text())
+    assert "handoff" in state_after
+    assert len(state_after["handoff"]["chain"]) == 1
+
+
+def test_writer_skips_on_malformed_state_json(tmp_path):
+    forge_dir = tmp_path / ".forge"
+    forge_dir.mkdir()
+    (forge_dir / "state.json").write_text("this is not valid json {{{")
+    req = WriteRequest(
+        run_id="20260421-bad",
+        level="manual",
+        reason="x",
+        variant="light",
+        now=datetime(2026, 4, 21, 14, 30, 22, tzinfo=timezone.utc),
+    )
+    result = write_handoff(req, forge_dir=forge_dir)
+    assert result.suppressed is True
+    assert result.reason == "no_state_json"
+
+
+def test_writer_skips_when_state_absent(tmp_path):
+    forge_dir = tmp_path / ".forge"
+    forge_dir.mkdir()
+    req = WriteRequest(
+        run_id="20260421-none",
+        level="manual",
+        reason="x",
+        variant="light",
+        now=datetime(2026, 4, 21, 14, 30, 22, tzinfo=timezone.utc),
+    )
+    result = write_handoff(req, forge_dir=forge_dir)
+    assert result.suppressed is True
+    assert result.reason == "no_state_json"
