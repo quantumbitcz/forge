@@ -122,7 +122,7 @@ def build_frontmatter(inp: FrontmatterInput) -> str:
     lines.append(f"background: {str(inp.background).lower()}")
     lines.append(f"score: {inp.score}")
     lines.append(f"score_history: [{', '.join(str(s) for s in inp.score_history)}]")
-    lines.append(f"convergence_phase: {inp.convergence_phase}")
+    lines.append(f"convergence_phase: {_safe_yaml_scalar(inp.convergence_phase)}")
     lines.append("convergence_counters:")
     for k in sorted(inp.convergence_counters):
         lines.append(f"  {k}: {inp.convergence_counters[k]}")

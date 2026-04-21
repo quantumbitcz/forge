@@ -63,3 +63,17 @@ def test_generic_secret_env_redacted():
     out = redact_handoff_text(src)
     assert "supersecret123" not in out
     assert "sometoken" not in out
+
+
+def test_lowercase_prose_not_redacted():
+    src = "The token = abc123 was fine. Next token: something."
+    out = redact_handoff_text(src)
+    # Lowercase prose should NOT be mangled
+    assert out == src
+
+
+def test_mixed_case_prose_unchanged():
+    src = "Api_key management requires careful review."
+    out = redact_handoff_text(src)
+    # Non-assignment prose should NOT be redacted
+    assert "Api_key" in out

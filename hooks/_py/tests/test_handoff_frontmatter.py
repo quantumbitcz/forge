@@ -126,3 +126,12 @@ def test_parse_handles_empty_body():
     # Missing schema_version in body → ValueError about schema, not about framing
     with pytest.raises(ValueError, match="schema_version"):
         parse_frontmatter("---\n---\n")
+
+
+def test_convergence_phase_is_safe_wrapped():
+    from hooks._py.handoff.frontmatter import parse_frontmatter
+    s = _sample()
+    object.__setattr__(s, "convergence_phase", "evil\n---\ninjected: pwned")
+    fm = build_frontmatter(s)
+    parsed = parse_frontmatter(fm)
+    assert "injected" not in parsed.raw

@@ -43,7 +43,7 @@ _PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # bare API_KEY=foo, etc.). Prefix before the base keyword is optional and must end in `_`.
     # Negative lookahead on `[REDACTED:` so this pattern does not re-redact values already
     # replaced by a more specific rule earlier in the pass (e.g. `Token: eyJ...` → JWT first).
-    (re.compile(r"(?i)\b((?:[A-Z][A-Z0-9_]*_)?(?:SECRET|TOKEN|API[_-]?KEY|PASSWD))\s*[:=]\s*(?!\[REDACTED:)\S+"), r"\1=[REDACTED:generic_secret]"),
+    (re.compile(r"\b((?:[A-Z][A-Z0-9_]*_)?(?:SECRET|TOKEN|API[_-]?KEY|PASSWD))\s*[:=]\s*(?!\[REDACTED:)\S+"), r"\1=[REDACTED:generic_secret]"),
 ]
 
 
