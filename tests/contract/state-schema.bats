@@ -13,25 +13,25 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.9.0" (bumped from 1.8.0 for self-consistency voting + time-travel checkpoints)
+# 2. Schema version is "1.10.0" (bumped from 1.9.0 for session-handoff tracking)
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.9.0 documented" {
-  grep -q '"version": "1.9.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.9.0" not found in state-schema.md'
+@test "state-schema: schema version 1.10.0 documented" {
+  grep -q '"version": "1.10.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.10.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
-# 2b. Self-consistency voting counters (schema 1.9.0)
+# 2b. Self-consistency voting counters (still present in schema 1.10.0)
 # ---------------------------------------------------------------------------
-@test "state-schema 1.9.0 declares consistency_cache_hits and consistency_votes" {
+@test "state-schema 1.10.0 declares consistency_cache_hits and consistency_votes" {
   grep -Eq '"consistency_cache_hits"[[:space:]]*:[[:space:]]*0' "$STATE_SCHEMA" \
     || fail "consistency_cache_hits field not found in state-schema.md"
 
   grep -Eq '"consistency_votes"[[:space:]]*:' "$STATE_SCHEMA" \
     || fail "consistency_votes object not found in state-schema.md"
 
-  grep -Eq '1\.8\.0[[:space:]]*\|[[:space:]]*1\.9\.0' "$STATE_SCHEMA" \
-    || fail "1.8.0 -> 1.9.0 migration row not found in state-schema.md"
+  grep -Eq '1\.9\.0[[:space:]]*\|[[:space:]]*1\.10\.0' "$STATE_SCHEMA" \
+    || fail "1.9.0 -> 1.10.0 migration row not found in state-schema.md"
 }
 
 # ---------------------------------------------------------------------------

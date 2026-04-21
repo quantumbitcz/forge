@@ -9,9 +9,9 @@ STATE="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # 1. Schema still carries a recognisable semver marker (1.x.0).
 #
-# Note: the current schema is at v1.9.0 (self-consistency voting + CAS
-# checkpoints). Speculation fields were added additively without bumping
-# the version, so we just assert the version marker still exists.
+# Note: the current schema is at v1.10.0 (session-handoff tracking).
+# Speculation fields were added additively without bumping the version,
+# so we just assert the version marker still exists.
 # ---------------------------------------------------------------------------
 @test "state schema declares a 1.x.0 version marker" {
   grep -Eq '1\.[0-9]+\.0' "$STATE"
