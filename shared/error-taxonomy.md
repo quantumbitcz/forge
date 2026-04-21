@@ -113,3 +113,15 @@ Some error types produce scoring findings in addition to (or instead of) trigger
 | BUDGET_EXHAUSTED | No direct scoring — triggers pipeline abort | — | — | — |
 
 Cross-reference: see `shared/scoring.md` section "Partial Failure Handling" for REVIEW-GAP rules.
+
+## Safety Escalations
+
+Safety escalations are not ordinary errors: they do not flow through the recovery engine's weighted budget. They are surfaced directly to the orchestrator (and, in interactive mode, to the user) at the next stage boundary.
+
+### CONTEXT_CRITICAL
+
+- **Type:** safety escalation
+- **Severity:** WARNING (recoverable via user resume)
+- **Trigger:** interactive mode only, `handoff.hard_threshold_pct` reached (default 70%)
+- **Recovery:** pause at next stage boundary, write `HANDOFF_WRITTEN` alert with `level=hard`, await `/forge-handoff resume` or `/forge-recover resume`
+- **Autonomous behaviour:** explicitly excluded from pause semantics — logged only, pipeline continues. Rationale: preserves the unattended-run contract per `autonomous: true`.
