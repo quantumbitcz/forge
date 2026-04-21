@@ -41,6 +41,21 @@ def on_terminal(
     )
     write_handoff(req, forge_dir=forge_dir)
 
+    # Auto-memory promotion: top HIGH-confidence PREEMPTs + user decisions
+    try:
+        import json as _json
+        from hooks._py.handoff.auto_memory import promote_from_terminal_handoff
+        state_path = forge_dir / "state.json"
+        if state_path.is_file():
+            state = _json.loads(state_path.read_text())
+            promote_from_terminal_handoff(
+                run_id=run_id,
+                preempts=state.get("preempt_items", []),
+                user_decisions=state.get("user_dont_statements", []),
+            )
+    except Exception:
+        pass  # Promotion failure should not break the terminal handoff
+
 
 def on_feedback_escalation(
     forge_dir: Path,
