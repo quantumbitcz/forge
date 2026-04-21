@@ -157,3 +157,18 @@ Violations log WARNING and fall back to defaults. When `enabled=true` but `opent
 - `cache_max_entries: 16`
 - `min_nodes_for_rank: 50`
 - `edge_weights: {CALLS:1.0, REFERENCES:1.0, IMPORTS:0.7, INHERITS:0.8, IMPLEMENTS:0.8, TESTS:0.4, CONTAINS:0.3}`
+
+## Handoff
+
+| Parameter | Range | Default | Rationale |
+|---|---|---|---|
+| `handoff.enabled` | bool | `true` | Master toggle |
+| `handoff.soft_threshold_pct` | 30-80 | `50` | Below 30 → noise storm; above 80 → overlaps with hard |
+| `handoff.hard_threshold_pct` | `soft + 10` to 95 | `70` | Must exceed soft by margin; max 95 leaves recovery room |
+| `handoff.min_interval_minutes` | 1-60 | `15` | Prevents handoff storm in fast pipelines |
+| `handoff.autonomous_mode` | `auto` \| `milestone_only` \| `disabled` | `auto` | Enumerated; controls autonomous write frequency |
+| `handoff.auto_on_ship` | bool | `true` | Always write terminal handoff on SHIP |
+| `handoff.auto_on_escalation` | bool | `true` | Write handoff when `feedback_loop_count >= 2` |
+| `handoff.chain_limit` | 5-500 | `50` | Rotation cap per run |
+| `handoff.auto_memory_promotion` | bool | `true` | Terminal handoffs push top PREEMPTs to user auto-memory |
+| `handoff.mcp_expose` | bool | `true` | Expose handoffs via F30 MCP server |
