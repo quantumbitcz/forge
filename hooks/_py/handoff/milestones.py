@@ -14,6 +14,7 @@ def on_stage_transition(
     to_stage: str,
     now: datetime | None = None,
 ) -> None:
+    """Dispatch a light milestone handoff on orchestrator stage transition."""
     req = WriteRequest(
         run_id=run_id,
         level="milestone",
@@ -30,6 +31,7 @@ def on_terminal(
     outcome: str,
     now: datetime | None = None,
 ) -> None:
+    """Dispatch a full terminal handoff at SHIP / ABORT / FAIL (bypasses rate limit)."""
     req = WriteRequest(
         run_id=run_id,
         level="terminal",
@@ -46,6 +48,7 @@ def on_feedback_escalation(
     count: int,
     now: datetime | None = None,
 ) -> None:
+    """Dispatch a full milestone handoff when feedback_loop_count escalates."""
     req = WriteRequest(
         run_id=run_id,
         level="milestone",

@@ -29,6 +29,7 @@ class TriggerDecision:
 
 
 def decide_trigger(ctx: TriggerContext, cfg: HandoffConfig) -> TriggerDecision:
+    """Return the trigger decision for the given context + config. Pure, no side effects."""
     if not cfg.enabled:
         return TriggerDecision(None, False, "disabled", 0.0)
     if ctx.autonomous and cfg.autonomous_mode in ("disabled", "milestone_only"):

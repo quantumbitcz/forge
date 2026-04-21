@@ -47,7 +47,7 @@ def main(stdin: IO[str] | None = None) -> int:
     if not run_id:
         return 0
 
-    cfg_path = Path(".claude/forge-config.md")
+    cfg_path = fdir.parent / ".claude" / "forge-config.md"
     cfg = load_handoff_config(cfg_path if cfg_path.exists() else None)
 
     ctx = TriggerContext(
