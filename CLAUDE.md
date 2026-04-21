@@ -401,7 +401,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 
 ## Distribution
 
-`plugin.json` (v3.5.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v3.6.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
