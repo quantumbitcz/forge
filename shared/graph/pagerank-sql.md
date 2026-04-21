@@ -1,7 +1,6 @@
 # Repo-Map PageRank — Algorithm Reference
 
-Authoritative reference for `hooks/_py/repomap.py`. Normative spec:
-`docs/superpowers/specs/2026-04-19-10-repo-map-pagerank-design.md`.
+Authoritative reference for `hooks/_py/repomap.py`.
 
 ## 1. Algorithm
 

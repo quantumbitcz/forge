@@ -1,21 +1,14 @@
-# Template URLs — not meant to resolve until the referenced infra is created.
-# Each regex is matched against the full URL; one per line.
-# Remove entries as the underlying targets are created.
-
-# Phase 15 will create the `forge-reference-deployments` GitHub org. Until
-# then, URLs like `https://github.com/forge-reference-deployments/<lib-name>`
-# (lychee strips the `<lib-name>` placeholder and tries to resolve the org
-# root, which 404s) are template placeholders in plan docs, not real links.
-^https://github\.com/forge-reference-deployments/.*$
+# Regex patterns matched against the full URL; one per line.
+# Each entry MUST have a comment explaining why.
 
 # opentelemetry.io hosts the authoritative OTel semantic-conventions spec.
 # The site's CDN intermittently rate-limits or TLS-rejects requests from
 # GitHub Actions runners, producing transient "Connection failed" /
 # "TLS handshake failed" errors on PR CI runs while returning 200/301 for
-# everyone else (verified via curl outside CI). The URLs below are
-# referenced in docs/superpowers/specs/2026-04-19-09-otel-genai-semconv-design.md
-# as normative references; removing them would lose auditability, and the
-# stable docs path is a strong guarantee they'll keep resolving. Ignoring
-# them in lychee while keeping the reference is the pragmatic trade-off.
-# Revisit: if OTel moves their specs site, drop these and re-verify.
+# everyone else (verified via curl outside CI). The URLs are referenced
+# in CHANGELOG.md as historical references; removing them would lose
+# auditability, and the stable docs path is a strong guarantee they'll
+# keep resolving. Ignoring them in lychee while keeping the reference
+# is the pragmatic trade-off.
+# Revisit: if OTel moves their specs site, drop this and re-verify.
 ^https://opentelemetry\.io/docs/specs/semconv/.*$

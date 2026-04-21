@@ -9,11 +9,9 @@ STATE="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # 1. Schema still carries a recognisable semver marker (1.x.0).
 #
-# Note: The plan (docs/superpowers/plans/2026-04-19-12-...) called for bumping
-# the schema to v1.7.0, but the current schema is already at v1.9.0 (Phase 11
-# voting + Phase 14 CAS checkpoints). Phase 12 adds speculation fields
-# additively without bumping the version, so we just assert the version
-# marker still exists.
+# Note: the current schema is at v1.9.0 (Phase 11 voting + Phase 14 CAS
+# checkpoints). Phase 12 added speculation fields additively without bumping
+# the version, so we just assert the version marker still exists.
 # ---------------------------------------------------------------------------
 @test "state schema declares a 1.x.0 version marker" {
   grep -Eq '1\.[0-9]+\.0' "$STATE"

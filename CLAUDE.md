@@ -26,8 +26,6 @@ Already familiar? Skip to §Architecture.
 
 **Phase 03 (forge 3.2.0):** Prompt-injection hardening. Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 48 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
-**A+ Roadmap:** 15-phase roadmap captured in `docs/superpowers/` (merged to master). Covers self-eval harness, Python hook migration, prompt-injection hardening, implementer CoVe, skill/docs consolidation, agent layer refactor, module additions (Flask/Laravel/Rails/Swift), OTel GenAI semconv, and advanced patterns. Start at `docs/superpowers/INDEX.md`.
-
 ## Architecture
 
 Layered, resolution top-down:
@@ -65,7 +63,6 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 
 | Topic | File |
 |---|---|
-| A+ Roadmap index | `docs/superpowers/INDEX.md` |
 | Pipeline flow | `shared/stage-contract.md` |
 | Orchestrator | `agents/fg-100-orchestrator.md` |
 | Scoring | `shared/scoring.md` |

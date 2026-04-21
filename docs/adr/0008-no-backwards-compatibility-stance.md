@@ -35,4 +35,3 @@ three agent docs are merged and the originals are deleted in the same PR.
 ## References
 
 - `CONTRIBUTING.md`
-- Phase 06 spec `docs/superpowers/specs/2026-04-19-06-documentation-architecture-design.md`

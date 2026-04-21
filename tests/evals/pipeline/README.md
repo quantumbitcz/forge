@@ -72,7 +72,7 @@ On every PR run the runner compares the mean composite score to the latest `mast
 
 The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge-init` + `/forge-run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
 
-Deferred as **Phase 01.1 — claude CLI in CI** (see `docs/superpowers/INDEX.md`).
+Deferred as **Phase 01.1 — claude CLI in CI**.
 
 **Concrete steps to flip the gates back on:**
 1. Add a setup step in `.github/workflows/evals.yml` that installs Claude Code on the runner. Candidates: `anthropics/claude-code-action` (if it supports non-interactive runs), a custom `apt`/`brew` step, or a pre-baked runner image.

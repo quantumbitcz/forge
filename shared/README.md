@@ -163,5 +163,3 @@ machine-validated; do not hand-edit.
 ---
 
 **Item count at writing:** ~130 top-level items grouped into 10 clusters.
-Strict <90 target is deferred to Phase 06b (see
-[`../docs/superpowers/specs/2026-04-19-06b-shared-sub-directory-split.md`](../docs/superpowers/specs/2026-04-19-06b-shared-sub-directory-split.md)).

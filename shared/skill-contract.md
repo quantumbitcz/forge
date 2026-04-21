@@ -52,6 +52,6 @@ Either inline list OR a single line: `See shared/skill-contract.md for the stand
 ## 5. Amendment process
 
 This contract is versioned with the plugin. Amendments require:
-1. A spec in `docs/superpowers/specs/` describing the change
+1. A rationale in the commit message describing the change
 2. A matching update to `tests/contract/skill-contract.bats`
 3. Migration of all affected SKILL.md files in the same PR
