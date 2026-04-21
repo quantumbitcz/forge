@@ -41,6 +41,22 @@ class WriteResult:
 
 
 def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
+    """Render and atomically write a handoff artefact for the given run.
+
+    Reads state from ``<forge_dir>/state.json``, renders the frontmatter + body +
+    resume-prompt block, pipes through redaction (fail-closed: any redactor
+    exception propagates and NO file is written), enforces the size cap, writes
+    atomically via ``.tmp`` + ``Path.replace()``, updates ``state.json.handoff.*``
+    via ``atomic_json_update``, and emits a ``HANDOFF_WRITTEN`` alert.
+
+    Rate limit: writes within ``RATE_LIMIT_MINUTES`` of the last one are suppressed
+    and bump ``state.json.handoff.suppressed_by_rate_limit``. ``terminal`` and
+    ``manual`` levels bypass the rate limit.
+
+    Returns ``WriteResult(path=Path(), suppressed=True, reason=<...>)`` without
+    writing a file if: state.json is missing/malformed, rate limit applies, or
+    filename collision exhaustion.
+    """
     state = _read_state(forge_dir)
     if state is None:
         return WriteResult(path=Path(), suppressed=True, reason="no_state_json")
@@ -57,6 +73,8 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
     handoffs_dir.mkdir(parents=True, exist_ok=True)
     target = handoffs_dir / filename
     target = _resolve_collision(target)
+    if target is None:
+        return WriteResult(path=Path(), suppressed=True, reason="collision_exhausted")
 
     # Render content
     fm_input = _build_frontmatter_input(req, state)
@@ -70,7 +88,10 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
     # Enforce size cap
     enforced = _enforce_size_cap(redacted, SIZE_CAP_BYTES[req.variant])
 
-    # Atomic write
+    # Atomic write — file first, state update after.
+    # Rationale: a handoff file without a chain entry is recoverable (the resumer
+    # can scan the handoffs/ directory); a chain entry without a file is not.
+    # If _update_state_chain fails, the orphaned file can still be resumed from.
     tmp = target.with_suffix(target.suffix + ".tmp")
     tmp.write_text(enforced, encoding="utf-8")
     tmp.replace(target)
@@ -78,14 +99,19 @@ def write_handoff(req: WriteRequest, forge_dir: Path) -> WriteResult:
     # State chain update
     _update_state_chain(forge_dir, req, target)
 
-    # Emit alert
+    # Build a signal-dense preview from state (not the resume-block header)
+    preview = (
+        f"{state.get('story_state', 'unknown')} "
+        f"score={state.get('score', 0)}: "
+        f"{str(state.get('requirement', ''))[:80]}"
+    )
     alerts.emit_handoff_written(
         forge_dir=forge_dir,
         run_id=req.run_id,
         level=req.level,
         path=str(target),
         reason=req.reason,
-        resume_prompt_preview=resume_block.split("\n", 3)[0] if resume_block else "",
+        resume_prompt_preview=preview,
         created_at=req.now,
     )
 
@@ -109,6 +135,9 @@ def _rate_limited(state: dict[str, Any], now: datetime) -> bool:
     try:
         last_dt = datetime.strptime(last, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     except ValueError:
+        # Fail-open: a malformed timestamp should not prevent a handoff. Better
+        # to write an extra handoff than silently skip one when state.json has
+        # been manually edited or migrated from an older schema.
         return False
     return (now - last_dt) < timedelta(minutes=RATE_LIMIT_MINUTES)
 
@@ -119,14 +148,14 @@ def _default_slug(state: dict[str, Any]) -> str:
     return (slug[:40] or "run").rstrip("-")
 
 
-def _resolve_collision(path: Path) -> Path:
+def _resolve_collision(path: Path) -> Path | None:
     if not path.exists():
         return path
     for i in range(2, 11):
         candidate = path.with_stem(f"{path.stem}-{i}")
         if not candidate.exists():
             return candidate
-    raise RuntimeError(f"handoff collision: 10 attempts for {path}")
+    return None
 
 
 def _build_frontmatter_input(req: WriteRequest, state: dict[str, Any]) -> FrontmatterInput:
@@ -272,16 +301,18 @@ def _git_head() -> str | None:
     try:
         out = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL)
         return out.decode().strip()
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, ValueError):
         return None
 
 
 def _commits_since_base() -> int:
-    try:
-        out = subprocess.check_output(
-            ["git", "rev-list", "--count", "HEAD", "^main"],
-            stderr=subprocess.DEVNULL,
-        )
-        return int(out.decode().strip())
-    except Exception:
-        return 0
+    for base in ("main", "master", "develop"):
+        try:
+            out = subprocess.check_output(
+                ["git", "rev-list", "--count", "HEAD", f"^{base}"],
+                stderr=subprocess.DEVNULL,
+            )
+            return int(out.decode().strip())
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError, ValueError):
+            continue
+    return 0

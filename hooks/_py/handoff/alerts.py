@@ -22,6 +22,7 @@ def emit_handoff_written(
     resume_prompt_preview: str,
     created_at: datetime | None = None,
 ) -> None:
+    """Append a HANDOFF_WRITTEN record to ``<forge_dir>/alerts.json`` atomically."""
     alert: dict[str, Any] = {
         "type": "HANDOFF_WRITTEN",
         "level": level,
@@ -35,6 +36,7 @@ def emit_handoff_written(
 
 
 def emit_handoff_stale(forge_dir: Path, run_id: str, path: str, reason: str) -> None:
+    """Append a HANDOFF_STALE record to ``<forge_dir>/alerts.json`` atomically."""
     alert = {
         "type": "HANDOFF_STALE",
         "run_id": run_id,
