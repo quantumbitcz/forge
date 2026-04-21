@@ -74,14 +74,27 @@ def _cmd_write(fdir: Path, args) -> int:
 
 def _cmd_list(fdir: Path, args) -> int:
     state = _read_state(fdir)
-    if state is None:
+    if args.run is None:
+        # Default: current run via state.json
+        if state is None:
+            return 1
+        run_id = state.get("run_id")
+        if not run_id:
+            return 1
+        chain = (state.get("handoff") or {}).get("chain", [])
+        for entry in chain:
+            print(entry)
+        return 0
+
+    # Explicit --run: filesystem glob (state.json only tracks current run)
+    run_id = args.run
+    handoff_dir = fdir / "runs" / run_id / "handoffs"
+    if not handoff_dir.is_dir():
+        print(f"error: no handoffs directory for run {run_id}", file=sys.stderr)
         return 1
-    run_id = args.run or state.get("run_id")
-    if not run_id:
-        return 1
-    chain = (state.get("handoff") or {}).get("chain", [])
-    for entry in chain:
-        print(entry)
+    files = sorted(handoff_dir.glob("*.md"))
+    for f in files:
+        print(str(f))
     return 0
 
 
@@ -96,6 +109,7 @@ def _cmd_show(fdir: Path, args) -> int:
         handoff_dir = fdir / "runs" / run_id / "handoffs"
         files = sorted(handoff_dir.glob("*.md"))
         if not files:
+            print(f"error: no handoffs found for run {run_id}", file=sys.stderr)
             return 1
         path = files[-1]
     else:

@@ -55,3 +55,28 @@ def test_show_latest(tmp_path, monkeypatch, capsys):
     assert rc == 0
     captured = capsys.readouterr()
     assert "HANDOFF-B" in captured.out
+
+
+def test_list_with_explicit_run_reads_filesystem(tmp_path, monkeypatch, capsys):
+    """--run reads filesystem glob (not state.json), since state only tracks current run."""
+    forge = tmp_path / ".forge"
+    # Current run in state.json has empty chain
+    forge.mkdir()
+    (forge / "state.json").write_text(json.dumps({
+        "run_id": "20260421-current",
+        "handoff": {"chain": []},
+    }))
+    # Different run has two handoff files on disk
+    other_dir = forge / "runs" / "20260421-other" / "handoffs"
+    other_dir.mkdir(parents=True)
+    (other_dir / "2026-04-21-120000-manual-a.md").write_text("A")
+    (other_dir / "2026-04-21-130000-manual-b.md").write_text("B")
+    monkeypatch.chdir(tmp_path)
+
+    rc = cli_main(["list", "--run", "20260421-other"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    # Both files listed, from the other run
+    assert "2026-04-21-120000-manual-a.md" in captured.out
+    assert "2026-04-21-130000-manual-b.md" in captured.out
+    # And nothing from the current run (empty chain)

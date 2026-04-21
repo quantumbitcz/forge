@@ -25,7 +25,7 @@ hooks/_py/handoff/
 ├── alerts.py          # HANDOFF_WRITTEN / HANDOFF_STALE writers
 └── search.py          # FTS5 index updates
 
-skills/forge-handoff.md
+skills/forge-handoff/SKILL.md
 
 shared/prompts/handoff-template.md  # canonical template reference (not runtime)
 
@@ -2257,10 +2257,10 @@ Run: `/forge-review --scope=changed`. Verify: autonomous+no-force always refuses
 
 Goal: user-facing surface.
 
-### Task 6.1: Create `skills/forge-handoff.md`
+### Task 6.1: Create `skills/forge-handoff/SKILL.md`
 
 **Files:**
-- Create: `skills/forge-handoff.md`
+- Create: `skills/forge-handoff/SKILL.md`
 
 - [ ] **Step 1: Write the skill definition**
 
@@ -2337,7 +2337,7 @@ Calls: `python3 -m hooks._py.handoff.cli search "<query>"`
 - [ ] **Step 2: Commit**
 
 ```bash
-git add skills/forge-handoff.md
+git add skills/forge-handoff/SKILL.md
 git commit -m "feat(skill): add /forge-handoff subcommand surface"
 ```
 
@@ -3670,7 +3670,7 @@ Completed inline against the spec:
   - `hooks/_py/handoff/resumer.py` → Task 5.2
   - `hooks/_py/check_engine/compact_check.py` extension → Task 4.3
   - `hooks/_py/handoff/milestones.py` → Task 4.4, 7.3
-  - `skills/forge-handoff.md` → Task 6.1
+  - `skills/forge-handoff/SKILL.md` → Task 6.1
   - `shared/mcp-server/forge-mcp-server.py` extension → Task 7.2
   - `shared/error-taxonomy.md` `CONTEXT_CRITICAL` → Task 1.2
   - Auto-memory flow → Task 7.3
