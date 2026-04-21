@@ -71,12 +71,13 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Scoring | `shared/scoring.md` |
 | State | `shared/state-schema.md` (v1.9.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
+| Agent model | `shared/agents.md` (registry + dispatch + tiers) |
 | Agent design | `shared/agent-philosophy.md` + `shared/agent-communication.md` |
+| Agent registry | `shared/agents.md#registry` |
 | Graph (Neo4j) | `shared/graph/schema.md` |
 | Graph (SQLite) | `shared/graph/code-graph-schema.sql` |
 | Convergence | `shared/convergence-engine.md` |
 | State machine | `shared/state-transitions.md` |
-| Agent registry | `shared/agents.md#registry` |
 | Model routing | `shared/model-routing.md` |
 | Confidence scoring | `shared/confidence-scoring.md` |
 | Output compression | `shared/output-compression.md` |
