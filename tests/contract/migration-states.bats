@@ -4,6 +4,7 @@
 load '../helpers/test-helpers'
 
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 MIGRATION_SKILL="$PLUGIN_ROOT/skills/forge-migration/SKILL.md"
@@ -15,8 +16,8 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 @test "migration-states: all 4 migration states in state-schema" {
   local states=(MIGRATING MIGRATION_PAUSED MIGRATION_CLEANUP MIGRATION_VERIFY)
   for state in "${states[@]}"; do
-    grep -q "$state" "$STATE_SCHEMA" \
-      || fail "Migration state $state not found in state-schema.md"
+    grep -qh "$state" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+      || fail "Migration state $state not found in state-schema(-fields).md"
   done
 }
 
@@ -24,8 +25,8 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 # 2. Migration mode documented in state-schema
 # ---------------------------------------------------------------------------
 @test "migration-states: mode=migration documented in state-schema" {
-  grep -q '"migration"' "$STATE_SCHEMA" \
-    || fail "mode=migration not documented in state-schema.md"
+  grep -qh '"migration"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "mode=migration not documented in state-schema(-fields).md"
 }
 
 # ---------------------------------------------------------------------------

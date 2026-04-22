@@ -9,6 +9,7 @@ ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. All 10 pipeline stages documented in orchestrator
@@ -73,8 +74,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 @test "orchestrator-sm: state schema lists all valid story_state values" {
   for state in PREFLIGHT EXPLORING PLANNING VALIDATING IMPLEMENTING VERIFYING REVIEWING DOCUMENTING SHIPPING LEARNING; do
-    grep -q "$state" "$STATE_SCHEMA" \
-      || fail "story_state '$state' not in state schema"
+    grep -qh "$state" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+      || fail "story_state '$state' not in state schema(-fields)"
   done
 }
 
@@ -93,7 +94,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 @test "orchestrator-sm: migration mode has MIGRATING state" {
-  grep -q "MIGRATING" "$STATE_SCHEMA" || fail "MIGRATING state not in state schema"
+  grep -qh "MIGRATING" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "MIGRATING state not in state schema(-fields)"
   grep -q "MIGRATING" "$STAGE_CONTRACT" || fail "MIGRATING not in stage contract"
 }
 

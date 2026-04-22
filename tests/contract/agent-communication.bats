@@ -1,9 +1,12 @@
 #!/usr/bin/env bats
 # Contract tests: shared/agent-communication.md — validates the communication protocol.
+# (phase06 consolidation moved Conditional Agents + Convention Composition sections
+#  into shared/agents.md.)
 
 load '../helpers/test-helpers'
 
 AGENT_COMM="$PLUGIN_ROOT/shared/agent-communication.md"
+AGENTS_MD="$PLUGIN_ROOT/shared/agents.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists
@@ -70,9 +73,9 @@ AGENT_COMM="$PLUGIN_ROOT/shared/agent-communication.md"
 # 8. Conditional agents table exists
 # ---------------------------------------------------------------------------
 @test "agent-communication: conditional agents table documented" {
-  grep -q "Conditional Agents" "$AGENT_COMM" \
-    || fail "Conditional Agents section not found"
-  grep -q "fg-320-frontend-polisher" "$AGENT_COMM" \
+  grep -qh "Conditional Agents" "$AGENT_COMM" "$AGENTS_MD" \
+    || fail "Conditional Agents section not found in agent-communication.md or agents.md"
+  grep -qh "fg-320-frontend-polisher" "$AGENT_COMM" "$AGENTS_MD" \
     || fail "fg-320-frontend-polisher not listed in conditional agents"
 }
 
@@ -80,6 +83,6 @@ AGENT_COMM="$PLUGIN_ROOT/shared/agent-communication.md"
 # 9. Convention file composition documented
 # ---------------------------------------------------------------------------
 @test "agent-communication: convention file composition documented" {
-  grep -qi "convention.*composition\|convention.*stack\|convention.*layers" "$AGENT_COMM" \
-    || fail "Convention file composition not documented"
+  grep -qih "convention.*composition\|convention.*stack\|convention.*layers" "$AGENT_COMM" "$AGENTS_MD" \
+    || fail "Convention file composition not documented in agent-communication.md or agents.md"
 }

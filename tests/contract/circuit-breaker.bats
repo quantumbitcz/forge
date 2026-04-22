@@ -5,6 +5,7 @@ load '../helpers/test-helpers'
 
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Circuit Breaker section exists in recovery engine
@@ -66,8 +67,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 6. Schema in state-schema.md
 # ---------------------------------------------------------------------------
 @test "circuit-breaker-contract: circuit_breakers schema documented in state-schema.md" {
-  grep -q "circuit_breakers" "$STATE_SCHEMA" \
-    || fail "circuit_breakers not found in state-schema.md"
+  grep -qh "circuit_breakers" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "circuit_breakers not found in state-schema(-fields).md"
 }
 
 # ---------------------------------------------------------------------------

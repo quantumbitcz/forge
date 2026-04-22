@@ -49,10 +49,11 @@ STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 # ---------------------------------------------------------------------------
 @test "stage-contract: migration-specific states documented in state-schema or CLAUDE.md" {
   local STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+  local STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
   local migration_states=(MIGRATING MIGRATION_PAUSED MIGRATION_CLEANUP MIGRATION_VERIFY)
   for state in "${migration_states[@]}"; do
-    grep -q "$state" "$STATE_SCHEMA" \
-      || fail "Migration state $state not found in state-schema.md"
+    grep -qh "$state" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+      || fail "Migration state $state not found in state-schema(-fields).md"
   done
 }
 

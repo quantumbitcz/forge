@@ -5,6 +5,7 @@ load '../helpers/test-helpers'
 
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STATE_TRANSITIONS="$PLUGIN_ROOT/shared/state-transitions.md"
 ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 
@@ -60,7 +61,7 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
       || fail "Schema field '$field' missing from recovery-engine.md circuit breaker section"
   done
 
-  # state-schema.md should document the per-category schema
-  grep -q "circuit_breakers" "$STATE_SCHEMA" \
-    || fail "circuit_breakers not in state-schema.md"
+  # state-schema.md or state-schema-fields.md should document the per-category schema
+  grep -qh "circuit_breakers" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "circuit_breakers not in state-schema(-fields).md"
 }

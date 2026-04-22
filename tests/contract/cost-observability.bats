@@ -10,19 +10,27 @@ load '../helpers/test-helpers'
 }
 
 @test "state-schema.md documents context object with peak_tokens" {
-  grep -q "context.peak_tokens\|context.*peak" "$PLUGIN_ROOT/shared/state-schema.md"
+  grep -qh "context.peak_tokens\|context.*peak" \
+    "$PLUGIN_ROOT/shared/state-schema.md" \
+    "$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 @test "state-schema.md documents cost.per_stage" {
-  grep -q "per_stage" "$PLUGIN_ROOT/shared/state-schema.md"
+  grep -qh "per_stage" \
+    "$PLUGIN_ROOT/shared/state-schema.md" \
+    "$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 @test "state-schema.md documents cost.budget_remaining_tokens" {
-  grep -q "budget_remaining_tokens" "$PLUGIN_ROOT/shared/state-schema.md"
+  grep -qh "budget_remaining_tokens" \
+    "$PLUGIN_ROOT/shared/state-schema.md" \
+    "$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 @test "state-schema.md documents tokens.by_agent dispatch_count" {
-  grep -q "dispatch_count" "$PLUGIN_ROOT/shared/state-schema.md"
+  grep -qh "dispatch_count" \
+    "$PLUGIN_ROOT/shared/state-schema.md" \
+    "$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 # ── Orchestrator Integration ──────────────────────────────────────────────

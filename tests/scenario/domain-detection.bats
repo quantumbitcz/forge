@@ -7,6 +7,7 @@ DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Orchestrator validates domain_area after planner
@@ -26,8 +27,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 2. State-schema references domain-detection.md
 # ---------------------------------------------------------------------------
 @test "domain-detection scenario: state-schema references domain-detection.md" {
-  grep -q "domain-detection.md" "$STATE_SCHEMA" \
-    || fail "state-schema.md does not reference domain-detection.md"
+  grep -qh "domain-detection.md" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "state-schema(-fields).md does not reference domain-detection.md"
 }
 
 # ---------------------------------------------------------------------------
@@ -37,8 +38,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   for domain in auth billing; do
     grep -q "${domain}" "$DOMAIN_DETECTION" \
       || fail "Domain '${domain}' missing from domain-detection.md"
-    grep -q "${domain}" "$STATE_SCHEMA" \
-      || fail "Domain '${domain}' missing from state-schema.md"
+    grep -qh "${domain}" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+      || fail "Domain '${domain}' missing from state-schema(-fields).md"
   done
 }
 
@@ -48,6 +49,6 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 @test "domain-detection scenario: fallback value is general in both docs" {
   grep -q "general" "$DOMAIN_DETECTION" \
     || fail "'general' not found in domain-detection.md"
-  grep -q "general" "$STATE_SCHEMA" \
-    || fail "'general' not found in state-schema.md"
+  grep -qh "general" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "'general' not found in state-schema(-fields).md"
 }

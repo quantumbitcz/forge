@@ -195,12 +195,12 @@ if bad:
 " || fail "Some affinity values are not arrays"
 }
 
-@test "category-registry: affinity agent IDs match known agents from agent-registry.md" {
+@test "category-registry: affinity agent IDs match known agents from agents.md" {
   python3 -c "
 import json, os, sys
 
-# Parse known agent IDs from agent-registry.md
-registry_md = os.path.join('$PLUGIN_ROOT', 'shared', 'agent-registry.md')
+# Parse known agent IDs from shared/agents.md (Registry section)
+registry_md = os.path.join('$PLUGIN_ROOT', 'shared', 'agents.md')
 known_ids = set()
 with open(registry_md) as f:
     for line in f:
@@ -221,7 +221,7 @@ if unknown:
     for u in unknown:
         print(f'  {u}', file=sys.stderr)
     sys.exit(1)
-" || fail "Some affinity agent IDs not found in agent-registry.md"
+" || fail "Some affinity agent IDs not found in agents.md Registry"
 }
 
 @test "category-registry: QUAL-ERR subcategory exists" {

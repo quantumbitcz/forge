@@ -13,8 +13,10 @@
 }
 
 @test "state-schema.md documents prompt_compaction fields" {
-  grep -q "prompt_compaction" "${BATS_TEST_DIRNAME}/../../shared/state-schema.md"
-  grep -q "pack_tokens" "${BATS_TEST_DIRNAME}/../../shared/state-schema.md"
-  grep -q "baseline_source" "${BATS_TEST_DIRNAME}/../../shared/state-schema.md"
-  grep -q "overall_ratio" "${BATS_TEST_DIRNAME}/../../shared/state-schema.md"
+  local overview="${BATS_TEST_DIRNAME}/../../shared/state-schema.md"
+  local fields="${BATS_TEST_DIRNAME}/../../shared/state-schema-fields.md"
+  grep -qh "prompt_compaction" "$overview" "$fields"
+  grep -qh "pack_tokens" "$overview" "$fields"
+  grep -qh "baseline_source" "$overview" "$fields"
+  grep -qh "overall_ratio" "$overview" "$fields"
 }

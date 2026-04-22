@@ -4,6 +4,7 @@
 load '../helpers/test-helpers'
 
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
@@ -21,7 +22,7 @@ FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 # ---------------------------------------------------------------------------
 @test "cross-repo: cross_repo sub-fields documented" {
   local combined
-  combined="$(cat "$STATE_SCHEMA" "$CLAUDE_MD")"
+  combined="$(cat "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" "$CLAUDE_MD")"
   for field in path branch status files_changed pr_url; do
     printf '%s' "$combined" | grep -q "$field" \
       || fail "cross_repo sub-field '$field' not documented"

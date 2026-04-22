@@ -5,6 +5,7 @@
 load '../helpers/test-helpers'
 
 STATE="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Schema still carries a recognisable semver marker (1.x.0).
@@ -21,25 +22,25 @@ STATE="$PLUGIN_ROOT/shared/state-schema.md"
 # 2. plan_candidates[] documented with required candidate fields.
 # ---------------------------------------------------------------------------
 @test "plan_candidates field documented" {
-  grep -q "plan_candidates" "$STATE"
-  grep -q "emphasis_axis" "$STATE"
-  grep -q "validator_verdict" "$STATE"
-  grep -q "selection_score" "$STATE"
+  grep -qh "plan_candidates" "$STATE" "$STATE_FIELDS"
+  grep -qh "emphasis_axis" "$STATE" "$STATE_FIELDS"
+  grep -qh "validator_verdict" "$STATE" "$STATE_FIELDS"
+  grep -qh "selection_score" "$STATE" "$STATE_FIELDS"
 }
 
 # ---------------------------------------------------------------------------
 # 3. speculation object documented with required signal fields.
 # ---------------------------------------------------------------------------
 @test "speculation object documented" {
-  grep -q '"speculation": {' "$STATE" || grep -q "speculation:" "$STATE"
-  grep -q "triggered" "$STATE"
-  grep -q "winner_id" "$STATE"
-  grep -q "user_confirmed" "$STATE"
+  grep -qh '"speculation": {' "$STATE" "$STATE_FIELDS" || grep -qh "speculation:" "$STATE" "$STATE_FIELDS"
+  grep -qh "triggered" "$STATE" "$STATE_FIELDS"
+  grep -qh "winner_id" "$STATE" "$STATE_FIELDS"
+  grep -qh "user_confirmed" "$STATE" "$STATE_FIELDS"
 }
 
 # ---------------------------------------------------------------------------
 # 4. Defaults documented (empty array + null).
 # ---------------------------------------------------------------------------
 @test "defaults documented (empty array + null)" {
-  grep -q 'plan_candidates: \[\]' "$STATE" || grep -q '"plan_candidates": \[\]' "$STATE"
+  grep -qh 'plan_candidates: \[\]' "$STATE" "$STATE_FIELDS" || grep -qh '"plan_candidates": \[\]' "$STATE" "$STATE_FIELDS"
 }
