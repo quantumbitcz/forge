@@ -83,10 +83,10 @@ Route the user invocation to the matching subcommand via `python3 -m hooks._py.h
 
 ## See Also
 
-- `/forge-recover resume` — structured continuation from checkpoint
+- `/forge-recover` — structured continuation from a checkpoint (use `resume` subcommand)
 - `/forge-status` — current run state
-- `shared/preflight-constraints.md#handoff` — config defaults
-- `docs/adr/0012-session-handoff-as-state-projection.md` — design rationale
+
+Design references (not skills): see `preflight-constraints.md` section `handoff` for config defaults, and ADR `0012-session-handoff-as-state-projection.md` for design rationale.
 
 ## Examples
 
