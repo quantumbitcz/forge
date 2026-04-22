@@ -40,10 +40,10 @@
   grep -q "Speculative.*plan branches" "$BATS_TEST_DIRNAME/../../CLAUDE.md"
 }
 
-@test "plugin.json version 3.5.0" {
-  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/plugin.json"
+@test "plugin.json version 3.6.0" {
+  grep -q '"version": "3.6.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/plugin.json"
 }
 
-@test "marketplace.json version 3.5.0" {
-  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/marketplace.json"
+@test "marketplace.json version 3.6.0" {
+  grep -q '"version": "3.6.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/marketplace.json"
 }

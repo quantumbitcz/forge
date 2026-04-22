@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 ROOT="${BATS_TEST_DIRNAME}/../.."
-SCHEMA="${ROOT}/shared/state-schema.md"
+SCHEMA="${ROOT}/shared/state-schema-fields.md"
 
 @test "state-schema: implementer_reflection_cycles_total documented at run level" {
   run grep -E '^\|\s*`implementer_reflection_cycles_total`' "$SCHEMA"
