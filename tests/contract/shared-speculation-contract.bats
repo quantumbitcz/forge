@@ -33,17 +33,18 @@
 }
 
 @test "agent-role-hierarchy notes N-way parallel PLAN dispatch" {
-  grep -q "speculat" "$BATS_TEST_DIRNAME/../../shared/agent-role-hierarchy.md"
+  # agent-role-hierarchy.md was consolidated into agents.md (phase06); check there.
+  grep -q "speculat" "$BATS_TEST_DIRNAME/../../shared/agents.md"
 }
 
 @test "CLAUDE.md has speculative plan branches feature-table entry" {
   grep -q "Speculative.*plan branches" "$BATS_TEST_DIRNAME/../../CLAUDE.md"
 }
 
-@test "plugin.json version 3.5.0" {
-  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/plugin.json"
+@test "plugin.json version 3.6.0" {
+  grep -q '"version": "3.6.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/plugin.json"
 }
 
-@test "marketplace.json version 3.5.0" {
-  grep -q '"version": "3.5.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/marketplace.json"
+@test "marketplace.json version 3.6.0" {
+  grep -q '"version": "3.6.0"' "$BATS_TEST_DIRNAME/../../.claude-plugin/marketplace.json"
 }

@@ -8,6 +8,7 @@ setup() {
   ORCHESTRATOR_ALL="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
   STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
   STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+  STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
   BUG_INVESTIGATOR="$PLUGIN_ROOT/agents/fg-020-bug-investigator.md"
   FORGE_FIX="$PLUGIN_ROOT/skills/forge-fix/SKILL.md"
   FORGE_RUN="$PLUGIN_ROOT/skills/forge-run/SKILL.md"
@@ -114,19 +115,19 @@ setup() {
 
 # --- State Schema ---
 @test "bugfix: state schema documents bugfix.source field" {
-  grep -q "bugfix\.source\|bugfix.source" "$STATE_SCHEMA"
+  grep -qh "bugfix\.source\|bugfix.source" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"
 }
 
 @test "bugfix: state schema documents bugfix.reproduction fields" {
-  grep -q "bugfix\.reproduction\|bugfix.reproduction" "$STATE_SCHEMA"
+  grep -qh "bugfix\.reproduction\|bugfix.reproduction" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"
 }
 
 @test "bugfix: state schema documents bugfix.root_cause fields" {
-  grep -q "bugfix\.root_cause\|bugfix.root_cause" "$STATE_SCHEMA"
+  grep -qh "bugfix\.root_cause\|bugfix.root_cause" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"
 }
 
 @test "bugfix: state schema lists bugfix as valid mode" {
-  grep -q "bugfix" "$STATE_SCHEMA"
+  grep -qh "bugfix" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"
 }
 
 # --- Retrospective ---

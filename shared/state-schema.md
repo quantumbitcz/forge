@@ -1,6 +1,6 @@
 # State Schema
 
-**Version:** 1.9.0
+**Version:** 1.10.0
 **Storage:** `.forge/state.json` (gitignored)
 **Field reference:** see [`state-schema-fields.md`](state-schema-fields.md) for exhaustive field-by-field documentation, subsystem schemas (security injection, events.jsonl, checkpoints, stage notes, feedback, reports, orchestrator input, eval_run, prompt_compaction, speculation), and the full changelog.
 
@@ -91,7 +91,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.9.0",
+  "version": "1.10.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
@@ -329,9 +329,30 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
     "last_update_stage": -1,
     "last_update_files": [],
     "stale": false
+  },
+  "handoff": {
+    "last_written_at": null,
+    "last_path": null,
+    "chain": [],
+    "soft_triggers_this_run": 0,
+    "hard_triggers_this_run": 0,
+    "milestone_triggers_this_run": 0,
+    "suppressed_by_rate_limit": 0
   }
 }
 ```
+
+### `handoff` sub-object
+
+Tracks session-handoff artifact writes for the current run. Populated when `handoff.enabled` is true (default). Survives across stages; reset at PREFLIGHT for new runs.
+
+- `last_written_at` — ISO8601 timestamp of the most recent handoff write, or `null` if none yet.
+- `last_path` — path to the most recently written handoff file, or `null` if none yet.
+- `chain` — ordered list of handoff paths for this run (oldest first). Bounded by `handoff.chain_limit` (default 50); oldest entries rotated out.
+- `soft_triggers_this_run` — count of soft-threshold triggers (`handoff.soft_threshold_pct`, default 50%) that resulted in a write.
+- `hard_triggers_this_run` — count of hard-threshold triggers (`handoff.hard_threshold_pct`, default 70%) that resulted in a write. In interactive mode these escalate as `CONTEXT_CRITICAL` (see `error-taxonomy.md`).
+- `milestone_triggers_this_run` — count of milestone-based writes (SHIP, escalation with `feedback_loop_count >= 2`, etc.).
+- `suppressed_by_rate_limit` — count of trigger events that were suppressed because the minimum interval (`handoff.min_interval_minutes`, default 15) had not elapsed since `last_written_at`.
 
 ## Atomic writes
 

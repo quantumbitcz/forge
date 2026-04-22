@@ -75,14 +75,16 @@ setup() {
   done
 }
 
-@test "exactly 28 skill directories exist" {
+@test "exactly 29 skill directories exist" {
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
   # Skill consolidation reductions:
   #   35 → 33 (forge-codebase-health + forge-deep-health → /forge-review --scope)
   #   33 → 29 (forge-graph-{init,status,query,rebuild,debug} → /forge-graph)
   #   29 → 28 (forge-config-validate → /forge-verify --config)
-  [ "$count" -eq 28 ]
+  # Additions:
+  #   28 → 29 (forge-handoff added for F34 session handoff)
+  [ "$count" -eq 29 ]
 }
 
 @test "no dangling references to deleted skills" {

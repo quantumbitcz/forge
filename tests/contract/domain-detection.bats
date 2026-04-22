@@ -7,6 +7,7 @@ DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
 ORCHESTRATOR_ALL=("$PLUGIN_ROOT/agents/fg-100-orchestrator.md")
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists
@@ -93,6 +94,6 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 8. State-schema references domain-detection.md
 # ---------------------------------------------------------------------------
 @test "domain-detection: state-schema references domain-detection.md" {
-  grep -q "domain-detection.md" "$STATE_SCHEMA" \
-    || fail "State-schema does not reference domain-detection.md"
+  grep -qh "domain-detection.md" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "State-schema(-fields) does not reference domain-detection.md"
 }

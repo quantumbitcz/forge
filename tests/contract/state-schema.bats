@@ -4,6 +4,7 @@
 load '../helpers/test-helpers'
 
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
+STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists
@@ -13,25 +14,25 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.9.0" (bumped from 1.8.0 for self-consistency voting + time-travel checkpoints)
+# 2. Schema version is "1.10.0" (bumped from 1.9.0 for session-handoff tracking)
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.9.0 documented" {
-  grep -q '"version": "1.9.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.9.0" not found in state-schema.md'
+@test "state-schema: schema version 1.10.0 documented" {
+  grep -q '"version": "1.10.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "1.10.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
-# 2b. Self-consistency voting counters (schema 1.9.0)
+# 2b. Self-consistency voting counters (still present in schema 1.10.0)
 # ---------------------------------------------------------------------------
-@test "state-schema 1.9.0 declares consistency_cache_hits and consistency_votes" {
+@test "state-schema 1.10.0 declares consistency_cache_hits and consistency_votes" {
   grep -Eq '"consistency_cache_hits"[[:space:]]*:[[:space:]]*0' "$STATE_SCHEMA" \
     || fail "consistency_cache_hits field not found in state-schema.md"
 
   grep -Eq '"consistency_votes"[[:space:]]*:' "$STATE_SCHEMA" \
     || fail "consistency_votes object not found in state-schema.md"
 
-  grep -Eq '1\.8\.0[[:space:]]*\|[[:space:]]*1\.9\.0' "$STATE_SCHEMA" \
-    || fail "1.8.0 -> 1.9.0 migration row not found in state-schema.md"
+  grep -Eq '1\.9\.0[[:space:]]*\|[[:space:]]*1\.10\.0' "$STATE_SCHEMA_FIELDS" \
+    || fail "1.9.0 -> 1.10.0 migration row not found in state-schema-fields.md (migration table lives there per state-schema.md §Atomic writes)"
 }
 
 # ---------------------------------------------------------------------------
@@ -59,10 +60,10 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 4. risk_level valid values documented: LOW, MEDIUM, HIGH
 # ---------------------------------------------------------------------------
 @test "state-schema: risk_level valid values LOW MEDIUM HIGH documented" {
-  grep -q "risk_level" "$STATE_SCHEMA" || fail "risk_level field not found"
-  grep -q '"LOW"' "$STATE_SCHEMA"      || fail 'risk_level value "LOW" not found'
-  grep -q '"MEDIUM"' "$STATE_SCHEMA"   || fail 'risk_level value "MEDIUM" not found'
-  grep -q '"HIGH"' "$STATE_SCHEMA"     || fail 'risk_level value "HIGH" not found'
+  grep -qh "risk_level" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "risk_level field not found"
+  grep -qh '"LOW"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"      || fail 'risk_level value "LOW" not found'
+  grep -qh '"MEDIUM"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"   || fail 'risk_level value "MEDIUM" not found'
+  grep -qh '"HIGH"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"     || fail 'risk_level value "HIGH" not found'
 }
 
 # ---------------------------------------------------------------------------
@@ -100,9 +101,9 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # 8. total_retries_max constraint: >= 5 and <= 30
 # ---------------------------------------------------------------------------
 @test "state-schema: total_retries_max constraint >= 5 and <= 30 documented" {
-  grep -q "total_retries_max" "$STATE_SCHEMA" || fail "total_retries_max not found"
-  grep -q ">= 5" "$STATE_SCHEMA"  || fail "total_retries_max lower bound >= 5 not found"
-  grep -q "<= 30" "$STATE_SCHEMA" || fail "total_retries_max upper bound <= 30 not found"
+  grep -qh "total_retries_max" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "total_retries_max not found"
+  grep -qh ">= 5" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"  || fail "total_retries_max lower bound >= 5 not found"
+  grep -qh "<= 30" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "total_retries_max upper bound <= 30 not found"
 }
 
 # ---------------------------------------------------------------------------
@@ -149,8 +150,8 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 @test "state-schema: convergence fields documented (phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed safety_gate_failures unfixable_findings)" {
   local fields=(phase phase_iterations total_iterations plateau_count convergence_state safety_gate_passed safety_gate_failures unfixable_findings)
   for field in "${fields[@]}"; do
-    grep -q "convergence\.${field}\|convergence.*${field}" "$STATE_SCHEMA" \
-      || fail "convergence field $field not documented in state-schema.md"
+    grep -qh "convergence\.${field}\|convergence.*${field}" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+      || fail "convergence field $field not documented in state-schema(-fields).md"
   done
 }
 
@@ -158,33 +159,33 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # convergence phase valid values documented
 # ---------------------------------------------------------------------------
 @test "state-schema: convergence phase valid values correctness perfection safety_gate documented" {
-  grep -q '"correctness"' "$STATE_SCHEMA" || fail 'convergence phase "correctness" not documented'
-  grep -q '"perfection"' "$STATE_SCHEMA"  || fail 'convergence phase "perfection" not documented'
-  grep -q '"safety_gate"' "$STATE_SCHEMA" || fail 'convergence phase "safety_gate" not documented'
+  grep -qh '"correctness"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail 'convergence phase "correctness" not documented'
+  grep -qh '"perfection"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"  || fail 'convergence phase "perfection" not documented'
+  grep -qh '"safety_gate"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail 'convergence phase "safety_gate" not documented'
 }
 
 # ---------------------------------------------------------------------------
 # convergence phase_history outcome values documented
 # ---------------------------------------------------------------------------
 @test "state-schema: phase_history outcome values converged escalated restarted documented" {
-  grep -q '"converged"' "$STATE_SCHEMA"  || fail 'phase_history outcome "converged" not documented'
-  grep -q '"escalated"' "$STATE_SCHEMA"  || fail 'phase_history outcome "escalated" not documented'
-  grep -q '"restarted"' "$STATE_SCHEMA"  || fail 'phase_history outcome "restarted" not documented'
+  grep -qh '"converged"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"  || fail 'phase_history outcome "converged" not documented'
+  grep -qh '"escalated"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"  || fail 'phase_history outcome "escalated" not documented'
+  grep -qh '"restarted"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS"  || fail 'phase_history outcome "restarted" not documented'
 }
 
 # ---------------------------------------------------------------------------
 # new state fields from iteration 1 fixes documented
 # ---------------------------------------------------------------------------
 @test "state-schema: exploration_degraded field documented" {
-  grep -q "exploration_degraded" "$STATE_SCHEMA" || fail "exploration_degraded not documented in state-schema.md"
+  grep -qh "exploration_degraded" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "exploration_degraded not documented"
 }
 
 @test "state-schema: documentation.generation_error field documented" {
-  grep -q "generation_error" "$STATE_SCHEMA" || fail "documentation.generation_error not documented in state-schema.md"
+  grep -qh "generation_error" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" || fail "documentation.generation_error not documented"
 }
 
 @test "state-schema: last_score_delta typed as number not integer" {
-  grep "last_score_delta" "$STATE_SCHEMA" | grep -q "number" || fail "last_score_delta should be typed as number (not integer)"
+  grep -h "last_score_delta" "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" | grep -q "number" || fail "last_score_delta should be typed as number (not integer)"
 }
 
 # ---------------------------------------------------------------------------
@@ -228,6 +229,6 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 @test "state-schema: bootstrap mode documented" {
-  grep -q '"bootstrap"' "$PLUGIN_ROOT/shared/state-schema.md" \
-    || fail "bootstrap mode value not documented in state-schema.md"
+  grep -qh '"bootstrap"' "$STATE_SCHEMA" "$STATE_SCHEMA_FIELDS" \
+    || fail "bootstrap mode value not documented in state-schema(-fields).md"
 }

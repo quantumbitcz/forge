@@ -20,9 +20,9 @@ load '../helpers/test-helpers'
 }
 
 @test "circuit breaker schema includes flapping_count and locked fields" {
-  run grep -c 'flapping_count' "${PLUGIN_ROOT}/shared/state-schema.md"
+  run grep -c 'flapping_count' "${PLUGIN_ROOT}/shared/state-schema-fields.md"
   assert_success
   assert [ "$output" -ge 1 ]
-  run grep -c '"locked"' "${PLUGIN_ROOT}/shared/state-schema.md"
+  run grep -c '"locked"' "${PLUGIN_ROOT}/shared/state-schema-fields.md"
   assert_success
 }

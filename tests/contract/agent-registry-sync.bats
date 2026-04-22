@@ -1,10 +1,11 @@
 #!/usr/bin/env bats
-# Contract test: agent-registry.md must list every agent file and vice versa.
+# Contract test: shared/agents.md Registry section must list every agent file and vice versa.
+# (Registry was consolidated from the retired agent-registry.md into agents.md in phase06.)
 
 load '../helpers/test-helpers'
 
 AGENTS_DIR="$PLUGIN_ROOT/agents"
-REGISTRY="$PLUGIN_ROOT/shared/agent-registry.md"
+REGISTRY="$PLUGIN_ROOT/shared/agents.md"
 
 @test "agent-registry: registry file exists" {
   [[ -f "$REGISTRY" ]]

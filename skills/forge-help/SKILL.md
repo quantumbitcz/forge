@@ -109,7 +109,7 @@ When invoked with `--json`, `/forge-help` emits the decision tree as structured 
 ```json
 {
   "schema_version": "2",
-  "total_skills": 28,
+  "total_skills": 29,
   "categories": {
     "build": [
       {"name": "forge-run", "mode": "writes", "summary": "Full 10-stage pipeline"},

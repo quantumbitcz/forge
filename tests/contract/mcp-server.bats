@@ -34,12 +34,12 @@ INIT_SKILL="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 }
 
 # ---------------------------------------------------------------------------
-# 3. All 11 tools defined
+# 3. All 13 tools defined (11 core + 2 handoff)
 # ---------------------------------------------------------------------------
-@test "mcp-server: defines 11 @server.tool() functions" {
+@test "mcp-server: defines 13 @server.tool() functions" {
   local count
   count=$(grep -c "@server.tool()" "$SERVER_FILE")
-  [[ "$count" -eq 11 ]] || fail "Expected 11 tools, found $count"
+  [[ "$count" -eq 13 ]] || fail "Expected 13 tools, found $count"
 }
 
 # ---------------------------------------------------------------------------

@@ -505,6 +505,58 @@ async def forge_playbook_effectiveness(playbook_id: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Category: Handoffs (2 tools)
+# ---------------------------------------------------------------------------
+
+@server.tool()
+@safe_json
+async def forge_list_handoffs(run_id: str = "") -> str:
+    """List handoff artefacts for a run (or all runs if run_id is empty).
+
+    Returns a JSON array of metadata objects with path, run_id, stage, score,
+    level, reason, created_at.
+
+    Args:
+        run_id: Optional run ID. If empty, lists handoffs across all runs.
+    """
+    pattern = f"runs/{run_id}/handoffs/*.md" if run_id else "runs/*/handoffs/*.md"
+    results: list[dict] = []
+    for p in sorted(FORGE_DIR.glob(pattern)):
+        try:
+            # Skip archived handoffs (under handoffs/archive/)
+            if "archive" in p.parts:
+                continue
+            from hooks._py.handoff.frontmatter import parse_frontmatter
+            fm = parse_frontmatter(p.read_text(encoding="utf-8"))
+            results.append({
+                "path": str(p),
+                "run_id": fm.run_id,
+                "stage": fm.stage,
+                "score": fm.score,
+                "level": fm.trigger_level,
+                "reason": fm.trigger_reason,
+                "created_at": fm.created_at,
+            })
+        except Exception:
+            results.append({"path": str(p), "error": "parse_failed"})
+    return json.dumps(results)
+
+
+@server.tool()
+@safe_json
+async def forge_get_handoff(path: str) -> str:
+    """Return full markdown content of a handoff artefact.
+
+    Args:
+        path: Absolute or .forge/-relative path to a handoff .md file.
+    """
+    p = Path(path)
+    if not p.is_file():
+        return ""
+    return p.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Entry Point
 # ---------------------------------------------------------------------------
 # Note: The mcp SDK auto-discovers tool-decorated functions.

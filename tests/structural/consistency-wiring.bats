@@ -12,8 +12,8 @@ setup() {
   [ "$status" -eq 0 ]
 }
 
-@test "state-schema is at 1.9.0 and declares consistency counters" {
-  run grep -E '"version": "1\.9\.0"' "${REPO_ROOT}/shared/state-schema.md"
+@test "state-schema is at 1.10.0 and declares consistency counters" {
+  run grep -E '"version": "1\.10\.0"' "${REPO_ROOT}/shared/state-schema.md"
   [ "$status" -eq 0 ]
   run grep -E '"consistency_cache_hits"' "${REPO_ROOT}/shared/state-schema.md"
   [ "$status" -eq 0 ]

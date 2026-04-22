@@ -22,7 +22,7 @@ Already familiar? Skip to §Architecture.
 
 ## What this is
 
-`forge` is a Claude Code plugin (v3.5.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v3.6.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
 
 **Prompt-injection hardening (forge 3.2.0):** Every external data source is tiered (Silent / Logged / Confirmed / Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching any agent. All 48 agents carry the SHA-pinned Untrusted Data Policy header. See `shared/untrusted-envelope.md` for the contract, `shared/prompt-injection-patterns.json` for the regex library, and the `SEC-INJECTION-*` scoring categories for findings.
 
@@ -66,7 +66,7 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Pipeline flow | `shared/stage-contract.md` |
 | Orchestrator | `agents/fg-100-orchestrator.md` |
 | Scoring | `shared/scoring.md` |
-| State | `shared/state-schema.md` (v1.9.0) |
+| State | `shared/state-schema.md` (v1.10.0) |
 | Errors | `shared/error-taxonomy.md` + `shared/recovery/recovery-engine.md` |
 | Agent model | `shared/agents.md` (registry + dispatch + tiers) |
 | Agent design | `shared/agent-philosophy.md` + `shared/agent-communication.md` |
@@ -121,6 +121,7 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Find the right skill | `/forge-help` | Interactive decision tree |
 | New user onboarding | `/forge-tour` | 5-stop guided introduction |
 | Edit config settings | `/forge-config` | Interactive config editor |
+| Transfer session to new Claude Code | `/forge-handoff` | Structured handoff artefact; resume via skill or paste |
 
 ### Getting started flows
 
@@ -183,7 +184,7 @@ Formula: `max(0, 100 - 20×CRITICAL - 5×WARNING - 2×INFO)`. PASS ≥80, CONCER
 
 ### State, recovery & errors
 
-- **State** (`state-schema.md`): v1.9.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Voting counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
+- **State** (`state-schema.md`): v1.10.0. `.forge/` (gitignored). Checkpoints per task (CAS DAG under `.forge/runs/<run_id>/checkpoints/`). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `critic_revisions`, `checkpoints`, `head_checkpoint`. Voting counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. Concurrent run lock: `.forge/.lock` (PID + 24h stale timeout).
 - **Recovery** (`recovery/`): 7 strategies, budget ceiling 5.5. Highest-severity first. Global retry budget: `total_retries` (default max 10, configurable).
 - **Errors** (`error-taxonomy.md`): 22 types, 16-level severity. MCP failures → inline skip + INFO. 3 consecutive transients in 60s → non-recoverable. `BUILD`/`TEST`/`LINT_FAILURE` → orchestrator fix loop.
 - **Communication:** Inter-stage via orchestrator stage notes. Quality gate includes previous batch findings (top 20). PREEMPT tracking via `PREEMPT_APPLIED`/`PREEMPT_SKIPPED`.
@@ -250,6 +251,7 @@ Features (each has dedicated doc in `shared/`):
 | Self-consistency voting (F33) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
 | Speculative plan branches | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
 | Docs integrity | `docs.learnings_index.auto_update` | When `true`, retrospective regenerates `shared/learnings-index.md` on any new learning. CI workflow `docs-integrity` enforces freshness regardless of this setting. Default: `true`. |
+| Session handoff (F34) | `handoff.*` | Structured artefact preserving run state across Claude Code sessions. 50/70% thresholds, autonomous write-and-continue, MCP + auto-memory integration. File: `.forge/runs/<id>/handoffs/`. Skill: `/forge-handoff` |
 
 ### Deterministic Control Flow
 
@@ -301,9 +303,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (28 total), hooks, kanban, git
+## Skills (29 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review), `forge-handoff` (session handoff write/list/show/resume/search).
 
 **Hooks** (6 command entries across 6 Python entry scripts, `hooks.json`): L0 syntax validation on `Edit|Write` (PreToolUse → `pre_tool_use.py`); check engine + automation trigger on `Edit|Write` (PostToolUse → `post_tool_use.py`, which invokes both `_py.check_engine.engine` and `_py.check_engine.automation_trigger`); checkpoint on `Skill` (PostToolUse → `post_tool_use_skill.py`); compaction check on `Agent` (PostToolUse → `post_tool_use_agent.py`); feedback capture on `Stop` (Stop → `stop.py`); session priming on `SessionStart` (SessionStart → `session_start.py`). See `shared/hook-design.md` for the Python execution model and script contract.
 
@@ -350,7 +352,7 @@ For pipeline-level evals see `tests/evals/pipeline/README.md` (CI-only; local dr
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-recover reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, and `.forge/plans/candidates/` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, `.forge/plans/candidates/`, and `.forge/runs/<id>/handoffs/` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts.
@@ -399,7 +401,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 
 ## Distribution
 
-`plugin.json` (v3.5.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`plugin.json` (v3.6.0), `marketplace.json`. Hooks in `hooks/hooks.json` only. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 ## Governance
 
