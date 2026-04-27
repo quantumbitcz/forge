@@ -156,6 +156,9 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 - `stage_2_notes_{storyId}.md` -- planning decisions and rationale
 - Updated `state.json`: `risk_level`, `domain_area`
 
+**Plan judge:**
+- fg-205-plan-judge runs after fg-200-planner with **binding veto**. REVISE forces re-dispatch of fg-200-planner. Bounded to 2 loops; 3rd REVISE escalates via AskUserQuestion (interactive) or auto-aborts (autonomous).
+
 **Exit condition:** Complete plan with risk assessment, stories, tasks, parallel groups, and test strategy.
 
 ---
@@ -237,9 +240,9 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
      a. `fg-310-scaffolder` generates boilerplate (if `scaffolder_before_impl: true`).
      b. Write tests (RED phase -- tests that define expected behavior, expected to fail).
      c. `fg-300-implementer` writes implementation to pass tests (GREEN).
-     d. **`fg-301-implementer-judge` reflects on diff vs test intent via Task-tool sub-subagent dispatch (fresh context).**
+     d. **`fg-301-implementer-judge` runs as a fresh-context sub-subagent with binding veto on diff vs test intent.**
         - PASS → continue to (e).
-        - REVISE within budget → re-enter (c), then re-dispatch judge.
+        - REVISE within budget → re-dispatch fg-300-implementer for that task, then re-dispatch judge. Bounded to 2 loops per task; 3rd REVISE escalates.
         - REVISE beyond budget → emit `REFLECT-DIVERGENCE` (WARNING), continue.
         - Skipped when: `implementer.reflection.enabled == false`; task matches §5.7 exemption; invocation is a targeted fix-loop re-implementation.
      e. `fg-300-implementer` refactors + runs self-review checkpoint.
@@ -318,6 +321,10 @@ See `convergence-examples.md` for walkthrough scenarios of the VERIFY convergenc
 
 **Agent:** `fg-400-quality-gate`
 **story_state:** `REVIEWING`
+
+**Pattern:** Agent Teams. Qualifying reviewers fan out in parallel and append findings to `.forge/runs/<run_id>/findings/<reviewer>.jsonl`. Each reviewer reads peer files before writing (read-time dedup via `seen_by` annotations). fg-400-quality-gate reduces the store to a canonical list, applies conflict detection + deliberation, and computes the score.
+
+**Contract:** `shared/findings-store.md`. No dedup hints in dispatch prompts.
 
 **Entry condition:** Verification passed (Stage 5 -- build + lint + tests all green).
 

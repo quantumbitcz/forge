@@ -27,3 +27,15 @@ setup() {
   run grep -iF "tiebreaker" "$PROJECT_ROOT/shared/findings-store.md"
   [ "$status" -eq 0 ]
 }
+
+@test "stage-contract.md describes Agent Teams pattern for Stage 6" {
+  F="$PROJECT_ROOT/shared/stage-contract.md"
+  run grep -iF 'Agent Teams' "$F"
+  [ "$status" -eq 0 ]
+}
+
+@test "stage-contract.md describes judge veto in Stage 2 and Stage 4" {
+  F="$PROJECT_ROOT/shared/stage-contract.md"
+  run grep -iF 'binding veto' "$F"
+  [ "$status" -eq 0 ]
+}
