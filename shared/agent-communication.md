@@ -286,6 +286,45 @@ ARCHIVED items are excluded from PREEMPT loading at PREFLIGHT but remain in `for
 
 See `shared/learnings/decay.md` for worked examples covering applied/loaded-no-match/not-loaded scenarios.
 
+---
+
+## Learning Markers (Phase 4)
+
+Subagents may emit these markers in stage notes (free-form line prefix):
+
+| Marker                                   | Kind         | Effect on retrospective           |
+|------------------------------------------|--------------|-----------------------------------|
+| `LEARNING_APPLIED: <id>`                 | reinforcement| `apply_success(item, now)`        |
+| `PREEMPT_APPLIED: <id>`                  | reinforcement| identical to the above            |
+| `LEARNING_FP: <id> reason=<text>`        | penalty      | `apply_false_positive(item, now)` |
+| `PREEMPT_SKIPPED: <id> reason=<text>`    | penalty      | identical to the above            |
+| `LEARNING_VINDICATED: <id> reason=<text>`| restoration  | `apply_vindication(item, now)`    |
+
+A reviewer raising a CRITICAL in the same domain as a shown learning is
+**not** a false-positive signal (spec Phase 4 §3.1). The retrospective
+responds only to explicit markers.
+
+Agent-to-role mapping (authoritative in `hooks/_py/agent_role_map.py`):
+
+```
+planner               → fg-200-planner
+implementer           → fg-300-implementer
+quality_gate          → fg-400-quality-gate
+test_gate             → fg-500-test-gate
+bug_investigator      → fg-020-bug-investigator
+reviewer.code         → fg-410-code-reviewer
+reviewer.security     → fg-411-security-reviewer
+reviewer.architecture → fg-412-architecture-reviewer
+reviewer.frontend     → fg-413-frontend-reviewer
+reviewer.license      → fg-414-license-reviewer
+reviewer.performance  → fg-416-performance-reviewer
+reviewer.dependency   → fg-417-dependency-reviewer
+reviewer.docs         → fg-418-docs-consistency-reviewer
+reviewer.infra        → fg-419-infra-deploy-reviewer
+```
+
+Unknown agent → orchestrator skips injection (empty selector filter).
+
 <a id="structured-output"></a>
 ## Structured Output Standard
 
