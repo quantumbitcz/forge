@@ -417,3 +417,26 @@ Use Context7 MCP for current API docs when available; fall back to conventions +
   ]
 }
 ```
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `planner` (see `hooks/_py/agent_role_map.py`).
+
+When invoked by the orchestrator, your dispatch prompt may include a
+`## Relevant Learnings (from prior runs)` block appended after the task
+description. Items are ranked priors, not rules — verify each against the
+actual exploration results before folding into the plan.
+
+On return, emit in your stage-notes / plan structured output:
+
+- `LEARNING_APPLIED: <id>` for each learning you explicitly used while
+  shaping the plan (e.g., a persistence-layer caveat that became a story
+  constraint).
+- `LEARNING_FP: <id> reason=<short text>` if a learning is shown but does
+  not apply to this run. Stay honest — an FP marker costs the learning
+  confidence only if you mark it deliberately.
+
+Do not fabricate `LEARNING_APPLIED` markers to appear thorough — the
+retrospective cross-checks markers against your plan content.
