@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-04-27
+
+Phase 2 of the A+ roadmap (Contract Enforcement) ships. Closes 5 contract and hygiene gaps.
+
+### Added
+
+- **Phase 2: Contract Enforcement**
+  - 5 pytest contract tests under `tests/contract/test_*.py` — `ui_frontmatter_required`, `skill_grammar`, `fg100_size_budget`, `feature_matrix_freshness`, `skill_inventory`. 207+ assertions enforcing structural contracts that bats can't easily express.
+  - **Universal `ui:` frontmatter:** all 48 fg-* agents now carry explicit `ui:` blocks (13 missing agents added; Tier-4-by-omission no longer accepted).
+  - **Skill grammar contract:** `shared/skill-grammar.md` defines strict skill `ui:` block shape (`{tasks, ask, plan_mode}`); 8 skills migrated from shorthand. §4 accepts both `## Subcommands` and `## Subcommand dispatch` headings.
+  - **Feature activation matrix:** `shared/feature-matrix.md` (30-row activation table, sentinel-fenced), `shared/feature-lifecycle.md` (90/180-day deprecation policy), `shared/feature_matrix_generator.py` (idempotent regenerator), `shared/feature_deprecation_check.py` (180-day removal-PR proposer), `shared/run-history/migrations/002-feature-usage.sql`. `agents/fg-700-retrospective.md` aggregates feature_usage. `agents/fg-100-orchestrator.md` emits `feature_used` events into `.forge/events.jsonl`.
+  - **fg-100-orchestrator size budget:** `tests/contract/test_fg100_size_budget.py` enforces a 1800-line ceiling. `shared/agent-philosophy.md` adds the authoring rule.
+  - **pyproject test extras:** `pip install -e ".[test]"` brings `pydantic>=2.0`, `pyyaml>=6.0`, `pytest>=8.0`. CI installs via this group; `tests/run-all.sh` dispatches pytest after bats in `contract` and `all` tiers.
+
+### Changed
+
+- **`/forge-help` skill DELETED.** LLM routing handles skill discovery. Skills count: 29 → 28. References scrubbed across CLAUDE.md, README.md, skill-contract.md, forge-config/tour skills, tests.
+- **`/forge-verify --config` subcommand DELETED.** Folded into `/forge-status` (Config validation summary section). 10 stale references swept across CLAUDE.md (3), README.md, and 6 SKILL.md files.
+- **`/forge-status` extended:** absorbs config validation + recent hook failures sections. `/forge-recover diagnose` embeds `/forge-status --json`.
+- **`forge-sprint` skill:** drops `EnterPlanMode`/`ExitPlanMode` from `allowed-tools` (was inconsistent with `ui.plan_mode: false`).
+- **`feature_usage.run_id` column:** gains `REFERENCES runs(id) ON DELETE CASCADE` (matches rest of run-history schema).
+
+### Removed
+
+- `skills/forge-help/` (directory)
+- `tests/unit/skill-execution/decision-tree-refs.bats` (all 7 tests referenced forge-help)
+- `/forge-verify --config` subcommand
+- Phase 1 contradictory bats assertion `every Tier-4 agent omits ui:` (rewritten to `every fg-*.md agent has explicit ui: block`).
+
+### Process
+
+29 plan tasks landed across 7 implementation commits. Code review via `superpowers:requesting-code-review` found 4 critical / 6 important / 13 minor. All 23 issues fixed across 9 follow-up commits before release. Phase 1 ACs re-verified after Phase 2 fixes — no regressions. 2429 contract tests pass; 19 structural bats pass.
+
 ## [3.7.0] - 2026-04-27
 
 Phase 1 of the A+ roadmap (Truth & Observability) ships. Closes four credibility gaps: Windows is now a real first-class CI target, every hook crash gets a durable JSONL audit trail, every module is tagged with a truthful support tier, and a cat/jq/Get-Content-readable live-run surface is live. Plus the cross-verification prerequisite edits coordinating the 13-plan ship train (`SHIP_ORDER.md`).
