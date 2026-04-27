@@ -624,6 +624,73 @@ Reference: shared/learnings/decay.md
 
 ---
 
+### §0.6.1 Dispatch-Context Builder (Phase 4)
+
+Just before every `Agent(name=<fg-*>, prompt=<...>)` dispatch for the
+agents listed below, run this inline helper:
+
+```
+1. run_cache := _get(state.learnings_cache)
+   if run_cache is None:
+       run_cache := learnings_io.load_all([
+           Path("shared/learnings"),
+           Path("~/.claude/forge-learnings").expanduser(),
+       ], now=datetime.now(UTC))
+       state.learnings_cache := run_cache
+
+2. agent_role := agent_role_map.role_for_agent(agent_name)
+   if agent_role is None:
+       skip injection; continue to step 5
+
+3. selected := learnings_selector.select_for_dispatch(
+        agent=agent_name,
+        stage=current_stage,
+        domain_tags=state.current_task.domain_tags or [],
+        component=state.current_task.component,
+        candidates=run_cache,
+        now=datetime.now(UTC),
+   )
+
+4. block := learnings_format.render(selected)
+   if block:
+       dispatch_prompt := dispatch_prompt + "\n\n" + block
+       for item in selected:
+           otel.emit_event_mirror({
+             "type": "forge.learning.injected",
+             "forge.learning.id": item.id,
+             "forge.learning.confidence_now": round(item.confidence_now, 4),
+             "forge.learning.applied_count": item.applied_count,
+             "forge.learning.source_path": item.source_path,
+             "forge.agent.name": agent_name,
+             "forge.stage": current_stage,
+           })
+
+5. Dispatch the subagent via Agent(...).
+
+6. After the subagent returns, parse its stage notes via
+   learnings_markers.parse_markers(notes). For each (kind, id, reason):
+     - "applied"    → emit_event_mirror forge.learning.applied
+     - "fp"         → emit_event_mirror forge.learning.fp    (include forge.learning.reason)
+     - "vindicated" → emit_event_mirror forge.learning.vindicated
+
+Applies to these dispatch points:
+  - §SS2.2 fg-200-planner
+  - §SS4 fg-300-implementer
+  - §SS6 fg-400-quality-gate
+  - §SS6 fg-410 .. fg-419 reviewer batches
+  - §SS5 fg-500-test-gate  (injection present; markers only on explicit use)
+
+Cache invalidation:
+  - On LEARN stage completion (retrospective may have written v2 frontmatter),
+    clear state.learnings_cache so the next run reloads.
+```
+
+Reference: `hooks/_py/agent_role_map.py`, `hooks/_py/learnings_selector.py`,
+`hooks/_py/learnings_io.py`, `hooks/_py/learnings_format.py`,
+`hooks/_py/learnings_markers.py`.
+
+---
+
 ### §0.6a Detect Project Dependency Versions
 
 Extract from manifests (build.gradle.kts, package.json, go.mod, etc.): language, framework, key dependency versions.
@@ -1091,6 +1158,7 @@ Create implementation plan for: [requirement]
 
 Exploration results: [summarized paths, patterns, tests, gaps]
 PREEMPT learnings: [matched items]
+## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder
 Domain hotspots: [from config]
 Conventions file: [path]
 Scaffolder patterns: [from config]
@@ -1259,6 +1327,7 @@ Per task (concurrent up to `parallel_threshold`):
 a. Scaffolder if configured. [dispatch fg-310-scaffolder]
 b. Write tests (RED)
 c. [dispatch fg-300-implementer] <2,000 tokens: task, commands, conventions, PREEMPT, rules (TDD, no dup tests, business behavior, KDoc, <40 lines, Boy Scout).
+   ## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder
 d. Verify with build/test_single.
 
 ### SS4.4 Checkpoints and Failure Isolation
@@ -1334,6 +1403,7 @@ Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 
 ### SS6.2 Batch Dispatch
 
 Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
+## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder (per fg-410..fg-419 reviewer + fg-400-quality-gate)
 
 After batches: inline checks. Then [dispatch fg-417-dependency-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
 
