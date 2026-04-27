@@ -35,7 +35,6 @@
 - `tests/scenarios/hypothesis-branching.bats` — 3 sub-investigators + Bayes update (D9).
 - `tests/scenarios/fix-gate-thresholds.bats` — 0.49/0.74/0.76/0.95 cases (D9).
 - `tests/scenarios/pr-builder-dialog.bats` — five options + abandon confirmation (D9).
-- `tests/fixtures/phase-D/sample-plan.md` — fixture for AC-PLAN-007 structural-equality test (D9).
 - `tests/fixtures/phase-D/synthetic-broken-plans/` — directory with malformed plans for fg-210 negative tests (D9).
 - `tests/fixtures/phase-D/synthetic-findings.json` — multi-reviewer dedup-key fixture for AC-REVIEW-005 (D9).
 
@@ -1343,7 +1342,8 @@
    Create `tests/structural/fg-710-defense-check.bats`:
    ```bash
    #!/usr/bin/env bats
-   # AC-FEEDBACK-001..006: defense check sub-agent + multi-platform dispatch.
+   # AC-FEEDBACK-001..005, AC-FEEDBACK-007: defense check sub-agent +
+   # multi-platform dispatch. (AC-FEEDBACK-006 is owned by C2, PREFLIGHT.)
    load '../helpers/test-helpers'
 
    POST="$PLUGIN_ROOT/agents/fg-710-post-run.md"
@@ -2468,9 +2468,9 @@
    ### Step 3 — Autonomous mode short-circuit
 
    When `autonomous: true` or `--autonomous`, do NOT emit the AskUserQuestion.
-   Read `pr_builder.default_strategy` from config (default `open-pr-draft`,
-   per the "almost perfect code" maxim — autonomous lands as draft for
-   explicit human promotion). Apply the chosen option directly.
+   Read `pr_builder.default_strategy` from config (default `open-pr-draft` per
+   AC-BRANCH-002 — autonomous lands as draft so a human explicitly promotes,
+   the "almost perfect code" tuning). Apply the chosen option directly.
 
    `[abandon]` is interactive-only — never an autonomous default. PREFLIGHT
    validation rejects `pr_builder.default_strategy: abandon` with a clear
@@ -2604,7 +2604,7 @@
    - Abandon requires a SECOND AskUserQuestion confirmation
      (default cancel).
    - Autonomous mode reads pr_builder.default_strategy (default
-     open-pr-draft); abandon is never an autonomous default.
+     open-pr-draft per AC-BRANCH-002); abandon is never an autonomous default.
    - pr_builder.cleanup_checklist_enabled: false skips cleanup but not
      PR creation.
 
@@ -3414,7 +3414,7 @@
     | AC-PLAN-004 | structural/planner-contract.bats (D1) |
     | AC-PLAN-005 | unit/validator-tdd-rules.bats (D2) |
     | AC-PLAN-006 | structural/prompt-templates-attribution.bats (D1) |
-    | AC-PLAN-007 | (parsed plan equality — covered by structural fixture parsing) |
+    | AC-PLAN-007 | (planner re-run structural equality — runtime AC requiring live planner invocation; no static structural test, exercised via pipeline scenario tests outside Phase D) |
     | AC-PLAN-008 | (autonomous coverage — same prompts, no UI; covered by D1 contract) |
     | AC-PLAN-009 | structural/planner-risk-justification.bats |
     | AC-REVIEW-001..003 | structural/reviewer-prose-shape.bats (D3) |
@@ -3422,6 +3422,8 @@
     | AC-REVIEW-005 | scenarios/cross-reviewer-consistency.bats + structural/quality-gate-consistency-voting.bats (D4) |
     | AC-REVIEW-006 | scenarios/cross-reviewer-consistency.bats |
     | AC-FEEDBACK-001..005 | structural/fg-710-defense-check.bats (D5) + scenarios/defense-flow.bats |
+    | AC-FEEDBACK-006 | (owned by Phase C2, PREFLIGHT — out of scope for Phase D) |
+    | AC-FEEDBACK-007 | structural/fg-710-defense-check.bats (D5) — verifies adapter dispatch reads `state.platform.name` written by C2 from explicit override |
     | AC-DEBUG-001..003, AC-DEBUG-006, AC-DEBUG-007 | scenarios/hypothesis-branching.bats |
     | AC-DEBUG-004 | scenarios/fix-gate-thresholds.bats |
     | AC-DEBUG-005 | (autonomous escalation — covered by fg-020 prompt; non-runtime test) |
@@ -3452,8 +3454,9 @@
     - scenarios/pr-builder-dialog.bats — AC-BRANCH-001..005.
 
     Spec ref: §9 + AC-PLAN-001..009, AC-REVIEW-001..006,
-    AC-FEEDBACK-001..005, AC-DEBUG-001..007, AC-BRANCH-001..005,
-    AC-POLISH-001..005, AC-BEYOND-004.
+    AC-FEEDBACK-001..005, AC-FEEDBACK-007, AC-DEBUG-001..007,
+    AC-BRANCH-001..005, AC-POLISH-001..005, AC-BEYOND-004.
+    (AC-FEEDBACK-006 is owned by Phase C2, PREFLIGHT.)
     ```
 
 ---

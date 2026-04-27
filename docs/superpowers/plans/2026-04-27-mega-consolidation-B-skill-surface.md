@@ -1426,10 +1426,16 @@ Refs spec §12 commit B6, AC-S005 (tests/ subset)."
 - [ ] **Step 1: Confirm A5 has merged (intent classifier accepts 11 verbs)**
 
 ```bash
-grep -E 'run \| fix \| sprint \| review \| verify \| deploy \| commit \| migrate \| bootstrap \| docs \| audit' /Users/denissajnar/IdeaProjects/forge/shared/intent-classification.md
+# A5 added the 11-verb list to shared/intent-classification.md. Spot-check
+# that all 11 verb names appear at least once each.
+for verb in run fix sprint review verify deploy commit migrate bootstrap docs audit; do
+  if ! grep -qw "$verb" /Users/denissajnar/IdeaProjects/forge/shared/intent-classification.md; then
+    echo "MISSING VERB IN A5: $verb"
+  fi
+done
 ```
 
-Expected: at least one match. If no match, A5 has not merged. STOP.
+Expected: zero `MISSING VERB` lines. If any verb is missing, A5 has not merged (or is incomplete) — STOP.
 
 - [ ] **Step 2: Apply mapping to every agent file**
 
@@ -1597,10 +1603,17 @@ done < <(grep '^shared/' tests/structural/migration-callsites.txt)
 
 ```bash
 cd /Users/denissajnar/IdeaProjects/forge
-grep -E '\brun\b|\bfix\b|\bsprint\b|\breview\b|\bverify\b|\bdeploy\b|\bcommit\b|\bmigrate\b|\bbootstrap\b|\bdocs\b|\baudit\b' shared/intent-classification.md | head -3
+missing=0
+for verb in run fix sprint review verify deploy commit migrate bootstrap docs audit; do
+  if ! grep -qw "$verb" shared/intent-classification.md; then
+    echo "VERB CLOBBERED BY SED: $verb"
+    missing=$((missing + 1))
+  fi
+done
+[ "$missing" -eq 0 ]
 ```
 
-Expected: at least one match showing the verb list. If zero, A5's edit was clobbered by the sed pass — restore from git history (`git show <A5-commit>:shared/intent-classification.md`) and re-apply.
+Expected: zero `VERB CLOBBERED` lines. If any verb is missing, A5's edit was clobbered by the sed pass — restore from git history (`git show <A5-commit>:shared/intent-classification.md`) and re-apply.
 
 - [ ] **Step 4: Verify clean — global grep across shared/**
 
@@ -1742,6 +1755,7 @@ Refs spec §12 commit B9, AC-S005 (modules/ subset)."
   - `CHANGELOG.md` (1) — preserve historical entries verbatim if they document old skill names; only update the description text, not the entry titles. Actually — `CHANGELOG.md` is in the AC-S005 allowlist (B13), so leave its retired-skill refs in place. **Apply NO sed to CHANGELOG.md.**
   - `DEPRECATIONS.md` (1) — same rule: in the AC-S005 allowlist. **Apply NO sed to DEPRECATIONS.md.**
   - `CONTRIBUTING.md` (1) — sed pass
+  - `SECURITY.md` (1) — sed pass (per spec AC-S005 explicit enumeration)
   - `plugin.json` (1) — sed pass
   - `marketplace.json` (1) — sed pass
   - `.github/` files (1+) — sed pass
@@ -1754,7 +1768,7 @@ Refs spec §12 commit B9, AC-S005 (modules/ subset)."
 
 ### Implementer mini-prompt
 
-> Apply the mapping table sed pass to root files (README.md, CLAUDE.md, CONTRIBUTING.md, plugin.json, marketplace.json), `.github/`, `hooks/`, `evals/`. EXPLICITLY SKIP `CHANGELOG.md` and `DEPRECATIONS.md` — they are in the AC-S005 allowlist (historical references are intentional). Verify-clean grep across the whole repo, allowing only the two skipped files plus the snapshot file. Commit.
+> Apply the mapping table sed pass to root files (README.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, plugin.json, marketplace.json), `.github/`, `hooks/`, `evals/`. EXPLICITLY SKIP `CHANGELOG.md` and `DEPRECATIONS.md` — they are in the AC-S005 allowlist (historical references are intentional). Verify-clean grep across the whole repo, allowing only the two skipped files plus the snapshot file. Commit.
 
 ### Spec-reviewer mini-prompt
 
@@ -1772,7 +1786,7 @@ echo "Will rewire $(echo "$RESIDUAL" | wc -l) residual files"
 echo "$RESIDUAL"
 ```
 
-Expected output: README.md, CLAUDE.md, CONTRIBUTING.md, plugin.json, marketplace.json, plus files under `.github/`, `hooks/`, `evals/`.
+Expected output: README.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, plugin.json, marketplace.json, plus files under `.github/`, `hooks/`, `evals/`.
 
 - [ ] **Step 2: Confirm CHANGELOG.md and DEPRECATIONS.md are explicitly excluded**
 
@@ -1838,7 +1852,7 @@ CLAUDE.md has feature tables and skill listings that may have multi-line pattern
 
 ```bash
 cd /Users/denissajnar/IdeaProjects/forge
-grep -nE 'forge-(init|run|fix|shape|sprint|review|verify|deploy|commit|migration|bootstrap|docs-generate|security-audit|status|history|insights|profile|tour|help|recover|abort|config|handoff|automation|playbooks|playbook-refine|compress|graph)' CLAUDE.md README.md
+grep -nE 'forge-(init|run|fix|shape|sprint|review|verify|deploy|commit|migration|bootstrap|docs-generate|security-audit|status|history|insights|profile|tour|help|recover|abort|config|handoff|automation|playbooks|playbook-refine|compress|graph)' CLAUDE.md README.md CONTRIBUTING.md SECURITY.md
 ```
 
 Expected: zero output. Fix any remainders manually.
@@ -1869,13 +1883,13 @@ Expected: ~10-15 residual files changed.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add README.md CLAUDE.md CONTRIBUTING.md plugin.json marketplace.json .github/ hooks/ evals/
+git add README.md CLAUDE.md CONTRIBUTING.md SECURITY.md plugin.json marketplace.json .github/ hooks/ evals/
 git commit -m "refactor(root): rewire skill references in root + manifests + hooks (B10)
 
 Applied the canonical mapping to README.md, CLAUDE.md,
-CONTRIBUTING.md, plugin.json, marketplace.json, .github/, hooks/,
-evals/. CHANGELOG.md and DEPRECATIONS.md preserved (allowlisted in
-AC-S005).
+CONTRIBUTING.md, SECURITY.md, plugin.json, marketplace.json,
+.github/, hooks/, evals/. CHANGELOG.md and DEPRECATIONS.md
+preserved (allowlisted in AC-S005).
 
 Refs spec §12 commit B10, AC-S005 (final root subset)."
 ```
@@ -2460,6 +2474,13 @@ setup() {
   # And the skill must explicitly document silent fall-through:
   grep -q 'silently classify' "$SKILL_FILE"
 }
+
+@test "ambiguous-flag-positioning is documented as an error (AC-S007)" {
+  # AC-S007: third NL-fallback case — flags after the free-text arg
+  # must fail fast with usage. The skill body documents this rule.
+  grep -q 'Flags must appear BEFORE the free-text argument' "$SKILL_FILE"
+  grep -q 'fail fast with usage' "$SKILL_FILE"
+}
 BATS_EOF
 ```
 
@@ -2847,6 +2868,7 @@ After all 13 commits land:
 - [ ] `tests/structural/skill-references-allowlist.txt` has exactly 6 entries.
 - [ ] `tests/lib/module-lists.bash` has `MIN_SKILLS=3`.
 - [ ] No file under `agents/`, `shared/`, `modules/`, `docs/`, `tests/`, `hooks/`, `evals/`, `.github/` references any retired skill name.
+- [ ] No file at `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `plugin.json`, `marketplace.json` references any retired skill name.
 - [ ] CHANGELOG.md and DEPRECATIONS.md retain their historical references (intentional).
 
 If all checks pass, Phase B is done. C, D, E phases can begin. C depends on B12 (deletion) being merged; D is independent and can start in parallel.

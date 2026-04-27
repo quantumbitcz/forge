@@ -442,7 +442,7 @@ Pipeline ready to ship. Choose how to finish:
   [abandon]       — close worktree, abandon branch (with confirmation prompt)
 ```
 
-Default: `[open-pr]`. Autonomous mode: respects `pr_builder.default_strategy` config, default `open-pr`.
+Default option in interactive AskUserQuestion display: `[open-pr]` (a human at the keyboard can promote-to-non-draft confidently). Autonomous mode: respects `pr_builder.default_strategy` config, **default `open-pr-draft`** (per "almost perfect code" tuning — autonomous lands as draft so a human explicitly promotes).
 
 **Cleanup checklist** (runs after the chosen strategy completes):
 - Delete the worktree (`fg-101-worktree-manager`).
@@ -865,7 +865,7 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Branch finishing uplift (5)
 
 - **AC-BRANCH-001:** `agents/fg-600-pr-builder.md` presents `AskUserQuestion` with the five options listed in §8 (`open-pr | open-pr-draft | direct-push | stash | abandon`). Default option: `open-pr`.
-- **AC-BRANCH-002:** Autonomous mode applies `pr_builder.default_strategy` config (default `open-pr`) without prompting.
+- **AC-BRANCH-002:** Autonomous mode applies `pr_builder.default_strategy` config (default `open-pr-draft` per "almost perfect code" tuning) without prompting. Interactive mode default-highlights `[open-pr]` in the AskUserQuestion display (per AC-BRANCH-001).
 - **AC-BRANCH-003:** Cleanup checklist runs after the chosen strategy completes: worktree deletion, run-history update, Linear/GitHub issue link update (if linked), feature-flag TODO logging, schedule-follow-up suggestion.
 - **AC-BRANCH-004:** Setting `pr_builder.cleanup_checklist_enabled: false` skips the cleanup phase but does not skip core PR creation.
 - **AC-BRANCH-005:** `[abandon]` option requires a second confirmation `AskUserQuestion` before destructive cleanup.

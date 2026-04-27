@@ -1487,13 +1487,23 @@ setup() {
 @test "platform.detection enum is exactly auto|github|gitlab|bitbucket|gitea" {
     grep -E "platform.detection.*auto.*github.*gitlab.*bitbucket.*gitea" "$CONSTRAINTS"
 }
+
+@test "brainstorm.spec_dir documents the PREFLIGHT write-probe (AC-S028)" {
+    # Spec §11.1: parent directory of brainstorm.spec_dir must exist or be creatable;
+    # PREFLIGHT runs a write probe.
+    grep -E "brainstorm.spec_dir.*write probe|write probe.*PREFLIGHT" "$CONSTRAINTS"
+}
+
+@test "brainstorm.autonomous_extractor_min_confidence enum lists low|medium|high" {
+    grep -E "autonomous_extractor_min_confidence.*low.*medium.*high" "$CONSTRAINTS"
+}
 ```
 
 - [ ] **Step 4: Run the structural test**
 
 Run: `cd /Users/denissajnar/IdeaProjects/forge && ./tests/lib/bats-core/bin/bats tests/structural/preflight-new-keys.bats`
 
-Expected: PASS (9/9 tests).
+Expected: PASS (11/11 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1507,7 +1517,7 @@ Adds:    brainstorm.*, quality_gate.consistency_promotion.*,
          post_run.{defense_enabled,defense_min_evidence},
          pr_builder.{default_strategy,cleanup_checklist_enabled},
          worktree.stale_after_days, platform.{detection,remote_name}.
-Tests:   tests/structural/preflight-new-keys.bats (9 cases)
+Tests:   tests/structural/preflight-new-keys.bats (11 cases)
 Spec:    docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §11.1
 Owns:    AC-S028 (validation slot — actual PREFLIGHT enforcement
          lives in B7/orchestrator update; this commit is the contract).
@@ -1876,22 +1886,45 @@ The canonical pipeline state values `story_state` can take are enumerated in `sh
 
 - [ ] **Step 5: Update `shared/stage-contract.md` to declare BRAINSTORMING**
 
-Read `shared/stage-contract.md` to find the ordered stage list. Insert BRAINSTORMING between PREFLIGHT and EXPLORING. The exact Edit depends on the current shape of that file; use a small targeted Edit with sufficient context.
+The current `shared/stage-contract.md` uses a table indexed by stage number (column header `Stage`) plus per-stage `### Stage N: NAME` headings (Stage 0 = PREFLIGHT, Stage 1 = EXPLORE, ...). BRAINSTORMING is feature-mode-only and conditional, so we add it as a one-line declaration block between Stage 0 and Stage 1 rather than renumbering all 10 stages (renumbering is a much larger, blast-radius edit that is intentionally deferred to Phase C2).
 
-For example, if the doc lists stages as `1. PREFLIGHT ... 2. EXPLORING ...`, the Edit becomes:
+Run two Edits. The first inserts a brief declaration paragraph immediately before the `### Stage 1: EXPLORE` heading. The second adds a row in the overview table explaining that BRAINSTORMING is a conditional pseudo-stage that runs between PREFLIGHT and EXPLORE.
 
 ```
 Edit shared/stage-contract.md
 old_string:
-1. **PREFLIGHT**
+### Stage 1: EXPLORE
 new_string:
-1. **PREFLIGHT**
-2. **BRAINSTORMING** *(feature mode only; skipped for bugfix/migration/bootstrap and when `brainstorm.enabled: false`. Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §3.)*
+### Stage 0.5: BRAINSTORMING *(feature mode only)*
+
+**Agent:** `fg-010-shaper`
+**story_state:** `BRAINSTORMING`
+
+**Entry condition:** PREFLIGHT complete AND `state.mode == "feature"` AND `brainstorm.enabled == true` AND not `--dry-run`. Skipped for bugfix, migration, bootstrap modes; skipped when `brainstorm.enabled: false`.
+
+**Exit condition:** Spec written to `docs/superpowers/specs/<date>-<slug>-design.md` (or `brainstorm.spec_dir` override) and approved (interactive) or auto-approved (autonomous degradation per §3).
+
+**Spec:** `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §3. Full per-stage detail (inputs, outputs, telemetry, error handling) lands in C2 when the orchestrator wiring is added; this declaration reserves the slot.
+
+---
+
+### Stage 1: EXPLORE
 ```
 
-…and a follow-up Edit to renumber subsequent stages. If `stage-contract.md` uses a table or different layout, adapt the Edits accordingly. Anchor on the smallest unique substring that places BRAINSTORMING between PREFLIGHT and EXPLORING in the canonical ordering. After the edit, the doc must list BRAINSTORMING as a known stage (a one-line declaration is enough for this commit; full per-stage detail can land in C2).
+Then add the row in the overview table:
 
-> **Note:** if `shared/stage-contract.md` doesn't exist or doesn't enumerate stages explicitly, this step is a no-op — the canonical ordering is already declared in `shared/state-schema.md` and `shared/state-transitions.md` after Steps 3–4. In that case, skip this step and document the omission in the commit message.
+```
+Edit shared/stage-contract.md
+old_string:
+| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
+| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
+new_string:
+| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
+| 0.5 | BRAINSTORMING *(conditional)* | `fg-010-shaper` | `BRAINSTORMING` | PREFLIGHT complete AND `mode == feature` AND `brainstorm.enabled == true` | Spec written and approved (or auto-approved in autonomous degradation) |
+| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully (or BRAINSTORMING completed in feature mode) | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
+```
+
+If either Edit fails because the file has been altered since this plan was written, re-read `shared/stage-contract.md`, locate the equivalent insertion points, and adapt with sufficient unique context. The doc-end state must (a) declare BRAINSTORMING as a known stage between PREFLIGHT and EXPLORE in the overview table, AND (b) carry a one-paragraph stage block declaring the agent, story_state, and entry/exit conditions.
 
 - [ ] **Step 6: Add a structural test for the schema bump**
 
@@ -1909,6 +1942,7 @@ setup() {
     REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
     SCHEMA="$REPO_ROOT/shared/state-schema.md"
     TRANS="$REPO_ROOT/shared/state-transitions.md"
+    STAGE="$REPO_ROOT/shared/stage-contract.md"
 }
 
 @test "state-schema.md version is at least 1.11.0" {
@@ -1975,13 +2009,20 @@ setup() {
     # current=BRAINSTORMING and next also BRAINSTORMING — resume from cache.
     grep -E '\| `BRAINSTORMING` \|.*resume_with_cache.*\| `BRAINSTORMING` \|' "$TRANS"
 }
+
+@test "stage-contract.md declares BRAINSTORMING between PREFLIGHT and EXPLORE" {
+    [ -f "$STAGE" ]
+    grep -F "BRAINSTORMING" "$STAGE"
+    # The overview table must show BRAINSTORMING as a row indexed 0.5 (conditional).
+    grep -E '\| 0\.5 \| BRAINSTORMING' "$STAGE"
+}
 ```
 
 - [ ] **Step 7: Run the structural test**
 
 Run: `cd /Users/denissajnar/IdeaProjects/forge && ./tests/lib/bats-core/bin/bats tests/structural/state-schema-mega.bats`
 
-Expected: PASS (12/12 tests). If `tests/structural/state-schema-mega.bats::stage-contract` doesn't exist (because step 5 was a no-op), the test for `stage-contract.md` is intentionally absent from the suite above.
+Expected: PASS (13/13 tests).
 
 - [ ] **Step 8: Commit**
 
@@ -2004,7 +2045,7 @@ Transitions: PREFLIGHT->BRAINSTORMING, BRAINSTORMING->EXPLORING,
              BRAINSTORMING->ABORTED, BRAINSTORMING->BRAINSTORMING (resume cache)
 OTel:    forge.brainstorm.{started,question_asked,approaches_proposed,
                            spec_written,completed,aborted} registered
-Tests:   tests/structural/state-schema-mega.bats (12 cases)
+Tests:   tests/structural/state-schema-mega.bats (13 cases)
 Spec:    docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §11
 Owns:    AC-S024, AC-S025 (event-name slots — emission lands in C1/C2),
          AC-S026 (4 BRAINSTORMING transitions documented).
@@ -2030,10 +2071,10 @@ The plan author has scanned this document for the following:
   - §11 (state schema) → A6.
   - §11.1 (config validation rules) → A4.
   - §1 + AC-S007 (intent classifier verbs) → A5.
-- **AC coverage** within Phase A scope: AC-S007, AC-S008/9 (matrix-side), AC-S017/18, AC-S022 (extractor side), AC-S024, AC-S025 (event names), AC-S026, AC-S027, AC-S028, AC-FEEDBACK-006 (helper side), AC-FEEDBACK-007 — all owned. Phases B–E own the runtime/agent-side ACs.
+- **AC coverage** within Phase A scope: AC-S007, AC-S008/9 (matrix-side — A5 lists the verbs needed by B1's `--help` and zero-arg usage rendering), AC-S015/17/18 (helper side — atomic-write contract via A2; agent/skill bootstrap dispatch lives in B1/B2), AC-S022 (extractor side via A1), AC-S024, AC-S025 (event names registered in schema), AC-S026, AC-S027 (atomic-write tested under simulated interrupt in A2), AC-S028 (config keys validated by A4 incl. brainstorm.spec_dir write-probe assertion), AC-FEEDBACK-006 (helper side via A3; orchestrator wiring is C2), AC-FEEDBACK-007 (explicit override path tested in A3) — all owned. Phases B–E own the runtime/agent-side ACs.
 - **No placeholders** — every code block above is concrete; no `TODO`, no `# implement later`, no "similar to Task N." Adapter `post_comment` bodies are explicitly `NotImplementedError("D5 wires this up")` because the spec defers their implementation to D5; this is documented and intentional.
 - **Type/signature consistency** — `extract_acs(raw_text: str) -> ACResult` signature is the same in test, implementation, and consumption note (C1). `detect_stack(repo_root: Path) -> StackResult` and `write_forge_local_md(stack, target_path)` signatures are consistent across A2 and the B1/B2 consumption note. `detect_platform(repo_root, config=None) -> PlatformInfo` matches A3 implementation and the C2 consumption note.
 - **Risk justifications** — A1, A3, A6 are the medium-risk tasks and each carries a ≥30-word `Risk justification` block. A2 is medium-risk per AC-S027 (atomic write) — also has a ≥30-word justification. A4 and A5 are low-risk (pure documentation additions with structural tests) and explicitly marked low.
-- **File paths** — every path is repo-rooted: `shared/ac-extractor.py`, `shared/bootstrap-detect.py`, `shared/platform-detect.py`, `shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py`, `shared/preflight-constraints.md`, `shared/intent-classification.md`, `shared/state-schema.md`, `shared/state-transitions.md`, `shared/stage-contract.md`, `tests/unit/{ac_extractor,bootstrap_detect,platform_detect}_test.py`, `tests/structural/{preflight-new-keys,intent-classification-verbs,state-schema-mega}.bats`. No relative paths, no "the helper file."
+- **File paths** — every path is repo-rooted: `shared/ac-extractor.py`, `shared/bootstrap-detect.py`, `shared/platform-detect.py`, `shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py`, `shared/__init__.py`, `shared/preflight-constraints.md`, `shared/intent-classification.md`, `shared/state-schema.md`, `shared/state-transitions.md`, `shared/stage-contract.md`, `tests/unit/{ac_extractor,bootstrap_detect,platform_detect}_test.py`, `tests/structural/{preflight-new-keys,intent-classification-verbs,state-schema-mega}.bats`. No relative paths, no "the helper file."
 - **Cross-phase consumption notes** — every task that produces something Phase B/C/D/E will consume has a `> Consumed by:` block (A1, A2, A3, A4, A5, A6).
 - **Schema version inspection** — A6 Step 1 explicitly inspects the live schema version before deciding the bump, satisfying spec §14 open question 1 (decoupled from Phase 5).

@@ -89,6 +89,7 @@ Required:
 - `ui:` block sets `tasks: true`, `ask: true`, `plan_mode: true` (tier-1).
 - Autonomous-mode block does NOT call AskUserQuestion or EnterPlanMode; it calls `python3 shared/ac-extractor.py` and writes the spec one-shot.
 - Transcript mining block writes to `.forge/brainstorm-transcripts/<run_id>.jsonl` (one line per question/answer round) and queries F29 run-history-store FTS5 before asking questions.
+- Add a top-level `## Historical context` section between `## Explore project context` and `## Ask clarifying questions` — its body is the FTS5 query / top-K injection / max_chars cap procedure (AC-BEYOND-002). Heading must be exact case at H2 level. This is in addition to the seven canonical headings; it does not count toward the seven and does not violate "each appears exactly once".
 - Resume semantics block covers three cases: interactive-with-spec, interactive-without-spec, autonomous (any case).
 - No placeholder text in the prompt body. No TODO. No "<implementer fill in here>".
 
@@ -104,7 +105,7 @@ You are checking that the agent rewrite matches §3 of the spec (and §10 for tr
 - Autonomous block calls `shared/ac-extractor.py` (grep for `ac-extractor.py`).
 - Transcript path matches `.forge/brainstorm-transcripts/<run_id>.jsonl` exactly.
 - FTS5 query references the F29 run-history-store at `.forge/run-history.db` and uses BM25 over spec body + objective.
-- `## Historical context` section heading appears as the runtime injection point.
+- `## Historical context` section heading appears as a top-level (H2) section in `agents/fg-010-shaper.md`, positioned between `## Explore project context` and `## Ask clarifying questions`. Confirm via `grep -c '^## Historical context$' agents/fg-010-shaper.md` returning `1`. Note this is NOT one of the seven canonical dialogue headings counted by `tests/structural/fg-010-shaper-shape.bats` — that test asserts each of the seven appears exactly once; it does not forbid extra H2 sections.
 - Resume semantics covers three cases verbatim from §3: interactive-with-spec, interactive-without-spec, autonomous.
 
 Read the actual file. Do not trust the implementer's report. If any check fails, return REVISE with the specific check that failed.
@@ -191,9 +192,11 @@ Read the actual file. Do not trust the implementer's report. If any check fails,
 
   Output of this step: a one-paragraph project-context summary held in working memory. Do not show this to the user yet — it informs your questions.
 
-  ### Historical context (transcript mining)
+  ## Historical context
 
-  Before stepping into clarifying questions, query the F29 run-history-store FTS5 index for similar past features. This is the "beyond superpowers" enhancement (goal 14 — see spec §10).
+  Before stepping into clarifying questions, query the F29 run-history-store FTS5 index for similar past features. This is the "beyond superpowers" enhancement (goal 14 — see spec §10) and owns AC-BEYOND-002.
+
+  This section is bracketed between `## Explore project context` and `## Ask clarifying questions` and is normative — its `## Historical context` heading is asserted by `tests/unit/brainstorm-mining-fts5.bats` and the structural grep in the spec-reviewer pass. It is NOT one of the seven canonical dialogue headings checked by `tests/structural/fg-010-shaper-shape.bats` (which asserts each of those seven appears exactly once; it does not forbid additional H2 sections).
 
   When `brainstorm.transcript_mining.enabled: true` (default):
 
@@ -201,7 +204,7 @@ Read the actual file. Do not trust the implementer's report. If any check fails,
   2. Run BM25 query over the `specs` virtual table on the spec body + objective embedded in `$ARGUMENTS`. Limit results to top-K (default 3, configurable via `brainstorm.transcript_mining.top_k`, range 1-10).
   3. For each hit, load the matching transcript from `.forge/brainstorm-transcripts/<run_id>.jsonl`.
   4. Concatenate the loaded transcripts (oldest first) and cap at `brainstorm.transcript_mining.max_chars` (default 4000 chars, range 500-32000). Truncate at line boundaries.
-  5. Inject the concatenated text under a `## Historical context` section in your runtime prompt before proceeding to the questions step. Do not show this section to the user — it advises which questions to ask.
+  5. Inject the concatenated text inline under this section in your runtime prompt before proceeding to the questions step. Do not show this section to the user — it advises which questions to ask.
 
   When `brainstorm.transcript_mining.enabled: false`, skip this query entirely and proceed with no historical context.
 
@@ -782,7 +785,7 @@ Read the actual file. Do not trust the implementer's report. If any check fails,
 
   All four must pass. Diagnose any failure: is the skip log line wording exact? does §0.1 mode detection set `state.mode` correctly before the SS0.5.1 evaluation runs? does Stage 0.5 entry-condition order match the table?
 
-- [ ] **Step 10 — Run platform-detection unit test.** Run `bats tests/unit/platform_detect_test.py` (the unit test for the helper, added in A3). Confirm passes for GitHub, GitLab, Bitbucket, Gitea, and unknown remote fixtures.
+- [ ] **Step 10 — Run platform-detection unit test.** Run `python3 -m pytest tests/unit/platform_detect_test.py` (the Python unit test for the helper, added in A3 — note this is `.py` / pytest, not bats). Confirm passes for GitHub, GitLab, Bitbucket, Gitea, and unknown remote fixtures.
 
   Then run `bats tests/unit/orchestrator-platform-wiring.bats` (added in B13 — verifies the orchestrator invokes `platform-detect.py` at PREFLIGHT, parses the JSON, writes `state.platform`, and skips on resume when `detected_at` is set).
 

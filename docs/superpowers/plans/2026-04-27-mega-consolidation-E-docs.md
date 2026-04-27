@@ -27,7 +27,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
 
 1. `/Users/denissajnar/IdeaProjects/forge/docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` (the full spec)
 2. `/Users/denissajnar/IdeaProjects/forge/CLAUDE.md` (current state — 408 lines)
-3. `/Users/denissajnar/IdeaProjects/forge/README.md` (current state — 285 lines)
+3. `/Users/denissajnar/IdeaProjects/forge/README.md` (current state — 284 lines)
 4. `/Users/denissajnar/IdeaProjects/forge/docs/superpowers/specs/2026-04-22-phase-2-contract-enforcement-design.md` (FEATURE_MATRIX sentinel contract for E2)
 
 **Important:** AC-S005 (no retired skill names anywhere except the explicit allowlist file) is structurally enforced by `tests/structural/skill-references-allowlist.txt` already added in B13. E1 must not reintroduce any retired skill name into CLAUDE.md or README.md. The grep step on each task is a fast local sanity check — the authoritative test runs in CI.
@@ -47,6 +47,68 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
 ### TDD steps
 
 - [ ] **Step 1 — Read starting state.** Read both files in full to capture current section structure and identify every retired skill reference. Build a mental list of sections that need rewriting.
+
+  **Ground-truth state at spec date (2026-04-27):**
+  - `CLAUDE.md` is 408 lines. Header reads `## Agents (48 total, agents/*.md)` (line 140). Feature matrix runs lines 210-254 (the table opens at the `| Feature | Config | Key details |` header).
+  - `README.md` is 284 lines. Agent badge reads `agents-42` (stale by 6: actual file count is 48 before Phase D, 49 after). Skill badge reads `skills-35`.
+  - Phase D (D6) adds exactly one new agent file: `agents/fg-021-hypothesis-investigator.md`. Pre-Phase-D file count is 48; post-Phase-D is **49**. Both numbers must be reflected.
+  - Phase D, B12, and B5 do NOT modify the "Start Here" section, "What this is", "Quick start" bash, "Development workflow", or "Confidence scoring" line — those updates are owned by E1 and are listed below as Steps 1a-1e.
+
+- [ ] **Step 1a — Update `CLAUDE.md` "Start Here (5-minute path)" section (currently ~lines 5-21).** Rewrite to use the new three-skill surface. Replacement block:
+
+  ```markdown
+  ## Start Here (5-minute path)
+
+  New to forge? Three steps:
+
+  1. **Install:** `ln -s $(pwd) /path/to/your-project/.claude/plugins/forge`,
+     then in that project run `/forge "<your first feature description>"`.
+     Forge auto-bootstraps `forge.local.md` on first invocation. See
+     `shared/mcp-provisioning.md` for MCP auto-setup.
+  2. **First run:** `/forge run --dry-run "add a health endpoint"`. Dry-run only
+     exercises PREFLIGHT → VALIDATE; no worktree, no commits. Confirm the plan
+     looks right, then drop `--dry-run`.
+  3. **Pick the right skill:** unsure where to start? Run `/forge-ask tour` for
+     the 5-stop guided introduction. Bug? `/forge fix "<description>"`. Quality
+     check? `/forge review --full`. Multiple features? `/forge sprint`. Full
+     skill grammar is in §Skill selection guide below.
+
+  Already familiar? Skip to §Architecture.
+  ```
+
+- [ ] **Step 1b — Update `CLAUDE.md` "What this is" section (currently ~line 25).** Replace the line ending `Entry: /forge-run → fg-100-orchestrator.`:
+
+  ```markdown
+  `forge` is a Claude Code plugin (v3.6.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Brainstorming → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge` → `fg-100-orchestrator`.
+  ```
+
+- [ ] **Step 1c — Update `CLAUDE.md` "Quick start" bash block (currently ~lines 48-56).** Replace the local-install hint:
+
+  ```bash
+  ./tests/validate-plugin.sh          # 73+ structural checks, ~2s
+  ./tests/run-all.sh                  # Full test suite, ~30s
+  ln -s "$(pwd)" /path/to/project/.claude/plugins/forge  # Local install, then /forge "<requirement>"
+  ```
+
+  And replace the trailing prose line "First-time? Read `shared/agent-philosophy.md` first..." with:
+
+  ```markdown
+  **First-time?** Read `shared/agent-philosophy.md` first. Run `validate-plugin.sh` after every change.
+  ```
+
+  (No skill-name change in the trailing prose; only the bash comment changes. Verify with grep after the edit.)
+
+- [ ] **Step 1d — Update `CLAUDE.md` "Development workflow" section (currently ~line 60).** Replace:
+
+  ```markdown
+  Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge "<req>"` (auto-bootstraps) → `/forge run --dry-run <req>` → `/forge run <req>` → check `.forge/state.json`.
+  ```
+
+- [ ] **Step 1e — Update `CLAUDE.md` "Confidence scoring" line (currently ~line 202).** Replace the `LOW (<0.4) → /forge-shape` reference. The new line:
+
+  ```markdown
+  Confidence scoring: two-level — (1) finding confidence (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x weight multipliers); (2) pipeline confidence (4-dimension: clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks, LOW (<0.4) → BRAINSTORMING (handled by `fg-010-shaper`; previously delegated to retired `/forge-shape`). Adaptive trust in `.forge/trust.json`. Config: `confidence.*`.
+  ```
 
 - [ ] **Step 2 — Update `CLAUDE.md` section "Skill selection guide" (currently ~lines 92-124).** Replace the entire 33-row table with a three-row table:
 
@@ -111,10 +173,14 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   States: PREFLIGHT → BRAINSTORMING → EXPLORING → PLANNING → VALIDATING → IMPLEMENTING → VERIFYING → REVIEWING → DOCUMENTING → SHIPPING → LEARNING. BRAINSTORMING is feature-mode only (skipped in bugfix/migration/bootstrap modes, on `--from=<post-brainstorm>` resume, or with `--spec <well-formed-path>`); see `agents/fg-010-shaper.md` for the seven-step pattern. Migration: MIGRATING/PAUSED/CLEANUP/VERIFY. PR rejection → Stage 4 (impl) or Stage 2 (design) via `fg-710-post-run`.
   ```
 
-- [ ] **Step 6 — Update `CLAUDE.md` "Pre-pipeline" agent line (currently ~line 143).** Note the always-on shaper:
+- [ ] **Step 6 — Update `CLAUDE.md` "## Agents" section header and Pre-pipeline agent line (currently ~lines 140-143).**
+
+  First, bump the section header from `## Agents (48 total, agents/*.md)` to `## Agents (49 total, agents/*.md)` to reflect the new `fg-021-hypothesis-investigator` added by Phase D6.
+
+  Then update the Pre-pipeline bullet to note the always-on shaper and the new sub-investigator:
 
   ```markdown
-  - Pre-pipeline: `fg-010-shaper` (always-on for feature mode — adopts seven-step superpowers brainstorming pattern with one-question-at-a-time, 2-3 approach proposals, sectioned approval gates, transcript mining via F29 FTS5, autonomous degradation), `fg-015-scope-decomposer`, `fg-020-bug-investigator` (hypothesis register + Bayesian pruning + parallel sub-investigators via `fg-021-hypothesis-investigator`, fix-gate posterior ≥ 0.75), `fg-050-project-bootstrapper`
+  - Pre-pipeline: `fg-010-shaper` (always-on for feature mode — adopts seven-step superpowers brainstorming pattern with one-question-at-a-time, 2-3 approach proposals, sectioned approval gates, transcript mining via F29 FTS5, autonomous degradation), `fg-015-scope-decomposer`, `fg-020-bug-investigator` (hypothesis register + Bayesian pruning + parallel sub-investigators via `fg-021-hypothesis-investigator`, fix-gate posterior ≥ 0.75), `fg-021-hypothesis-investigator` (Tier-3 sub-investigator dispatched by `fg-020` for hypothesis branching; new in Phase D6), `fg-050-project-bootstrapper`
   ```
 
 - [ ] **Step 7 — Add new section "Pattern parity" to `CLAUDE.md` after the "Stage contracts & shipping" section.** Sourced from spec §10.1 coverage matrix:
@@ -175,7 +241,41 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   - `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, `.forge/plans/candidates/`, `.forge/runs/<id>/handoffs/`, `.forge/brainstorm-transcripts/`, and `.forge/runs/<id>/feedback-decisions.jsonl` survive `/forge-admin recover reset`. Only manual `rm -rf .forge/` removes them.
   ```
 
-  Also: replace any reference to `/forge-recover reset` with `/forge-admin recover reset` and `/forge-graph` with `/forge-admin graph`. Do this with a single text-search pass across the whole file using the §12.1 mapping table.
+  Also: do a final §12.1 sweep across `CLAUDE.md` to catch any retired skill name not already addressed by Steps 1a-1e or Steps 2-12. Apply every entry from the §12.1 mapping table:
+
+  ```
+  /forge-init                  →  (auto on /forge or /forge bootstrap or /forge-admin config wizard)
+  /forge-run                   →  /forge run
+  /forge-fix                   →  /forge fix
+  /forge-shape                 →  (absorbed into BRAINSTORMING in /forge run)
+  /forge-sprint                →  /forge sprint
+  /forge-review                →  /forge review
+  /forge-verify                →  /forge verify
+  /forge-deploy                →  /forge deploy
+  /forge-commit                →  /forge commit
+  /forge-migration             →  /forge migrate
+  /forge-bootstrap             →  /forge bootstrap
+  /forge-docs-generate         →  /forge docs
+  /forge-security-audit        →  /forge audit
+  /forge-status                →  /forge-ask status
+  /forge-history               →  /forge-ask history
+  /forge-insights              →  /forge-ask insights
+  /forge-profile               →  /forge-ask profile
+  /forge-tour                  →  /forge-ask tour
+  /forge-help                  →  (deleted; remove any remaining refs)
+  /forge-ask                   →  /forge-ask     (unchanged)
+  /forge-recover               →  /forge-admin recover
+  /forge-abort                 →  /forge-admin abort
+  /forge-config                →  /forge-admin config
+  /forge-handoff               →  /forge-admin handoff
+  /forge-automation            →  /forge-admin automation
+  /forge-playbooks             →  /forge-admin playbooks
+  /forge-playbook-refine       →  /forge-admin refine
+  /forge-compress              →  /forge-admin compress
+  /forge-graph                 →  /forge-admin graph
+  ```
+
+  Specifically known stragglers in `CLAUDE.md` that this sweep must catch (not exhaustively listed elsewhere): line 25 (`Entry: /forge-run`), line 53 (bash code in Quick start), line 60 (Development workflow), line 174 (Routing & decomposition `/forge-run` and `/forge-sprint`), line 202 (Confidence scoring `/forge-shape`), line 204 (Repo-map `/forge-recover reset`), lines 285/291/316/354/360/376/393 (Cross-repo, SQLite code graph, Init, Structural gotchas, Wiki, Greenfield, Implementation gotchas). Most are already covered by Steps 1a-1e or 12; this sweep is the safety net.
 
 - [ ] **Step 12 — Update `CLAUDE.md` "Cross-repo" line (currently ~line 285).** Replace `/forge-init` reference:
 
@@ -290,26 +390,30 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   - **Cross-reviewer consistency voting** -- When ≥3 reviewers flag the same dedup key, confidence is promoted to HIGH (1.0× weight). Reduces false positives from any single reviewer's fresh-context limitations.
   ```
 
-- [ ] **Step 20 — Update `README.md` skills/agents badges (lines 5-11).** Update the agent and skill counts:
+- [ ] **Step 20 — Update `README.md` skills/agents badges (lines 5-11).** Update the agent and skill counts to reflect ground truth:
 
   ```markdown
-  [![Agents](https://img.shields.io/badge/agents-43-green?style=flat-square)](#agents)
+  [![Agents](https://img.shields.io/badge/agents-49-green?style=flat-square)](#agents)
   [![Skills](https://img.shields.io/badge/skills-3-green?style=flat-square)](#available-skills)
   ```
 
-  (Agent count goes from 42 to 43 because Phase D adds `fg-021-hypothesis-investigator`. Skill count drops to 3.)
+  (Pre-existing drift: README badge currently reads `agents-42`, but `agents/` actually contains 48 files at spec date. Phase D adds `fg-021-hypothesis-investigator`, bringing the post-Phase-D total to **49**. The badge is corrected to ground truth in this commit, not a +1 from the stale value. Skill count drops from 35 to 3 — the consolidation is the dominant change.)
 
-- [ ] **Step 21 — Update `README.md` "Agents" section (lines 158-164).** Bump the count and add the new agent:
+  Also update the lead-paragraph prose at line 15 (`...orchestrating 42 specialized agents...`) to read `49 specialized agents`.
+
+- [ ] **Step 21 — Update `README.md` "Agents" section (lines 158-164).** Bump the count to 49 and resync the enumeration with the actual `agents/` directory (the existing list omits 6 agents added between earlier doc passes — this is pre-existing drift):
 
   ```markdown
   ## Agents
 
-  43 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
+  49 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
 
-  **Pipeline agents**: fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-021-hypothesis-investigator (Tier-3 sub-investigator for hypothesis branching), fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-150-test-bootstrapper, fg-160-migration-planner, fg-200-planner, fg-205-planning-critic, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
+  **Pipeline agents** (40): fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-021-hypothesis-investigator (Tier-3 sub-investigator for hypothesis branching, new in Phase D6), fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-143-observability-bootstrap, fg-150-test-bootstrapper, fg-155-i18n-validator, fg-160-migration-planner, fg-200-planner, fg-205-planning-critic, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-301-implementer-critic, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-506-migration-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-555-resilience-tester, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
 
-  **Review agents** (8): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-416-performance-reviewer, fg-417-dependency-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer.
+  **Review agents** (9): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-414-license-reviewer, fg-416-performance-reviewer, fg-417-dependency-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer.
   ```
+
+  Verify `(40 pipeline + 9 review = 49)` matches the `## Agents (49 total ...)` header in `CLAUDE.md` (Step 6) and the badge value in Step 20. Also update the line `## Architecture` "42 agents organized by pipeline stage" reference at README line 171 (`docs/architecture/agent-dispatch.md -- 42 agents organized by pipeline stage`) to read `49 agents`.
 
 - [ ] **Step 22 — Run AC-S005 sanity grep across both files.**
 
@@ -340,7 +444,10 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   - Add "Pattern parity" section listing 12 mirrored superpowers patterns
   - Document four beyond-superpowers extensions (consistency voting, transcript mining,
     hypothesis branching, structured PR-finishing dialog)
-  - README: bump agent badge to 43 (adds fg-021-hypothesis-investigator), skills badge to 3
+  - README: correct agent badge to 49 (was stale at 42; +1 from fg-021-hypothesis-investigator brings actual file count to 49), skills badge to 3
+  - README: resync agent enumeration to include 7 added/omitted agents
+    (fg-021 new in Phase D6; fg-143, fg-155, fg-301, fg-414, fg-506, fg-555
+    were previously omitted from the README enumeration despite existing in agents/)
   - README: add Multi-VCS support section (GitHub/GitLab/Bitbucket/Gitea)
   - Strike all retired skill names (28); replace per spec §12.1 mapping table
   ```
@@ -368,6 +475,8 @@ You are checking that the doc updates accurately reflect the new surface. Verify
    - The "Skill selection guide" section has exactly three rows: /forge, /forge-ask, /forge-admin.
    - "Getting started flows" uses the new skill names exclusively.
    - "Skills (N total)" header reads "Skills (3 total)".
+   - "## Agents (N total ...)" header reads "## Agents (49 total, agents/*.md)" — reflects fg-021 added by Phase D6.
+   - The "Start Here (5-minute path)", "What this is", "Quick start" bash, "Development workflow", and "Confidence scoring" sections all reference only the new three-skill surface.
    - The pipeline state list contains BRAINSTORMING immediately after PREFLIGHT.
    - A "Pattern parity" section is present with all 12 mapped superpowers skills (per spec §10.1) and a "Beyond-superpowers extensions" sub-list with 4 items (consistency voting, transcript mining, hypothesis branching, structured PR-finishing dialog).
    - No reference to any of the 28 retired skills survives anywhere in the file (single allowed: /forge-ask, which is not retired). Run:
@@ -376,10 +485,12 @@ You are checking that the doc updates accurately reflect the new surface. Verify
 
 2. Open /Users/denissajnar/IdeaProjects/forge/README.md and confirm:
    - Quick Start uses /forge (not /forge-init then /forge-run).
-   - Skill badge reads `skills-3` and agent badge reads `agents-43`.
+   - Skill badge reads `skills-3` and agent badge reads `agents-49` (NOT `agents-43` — README badge was already stale at 42 pre-Phase-E; the corrected value is the actual file count post-Phase-D).
+   - Lead-paragraph at line ~15 reads "49 specialized agents" (not 42 or 43).
    - "Available skills" section is the three-row table.
    - "Multi-VCS support" section is present and lists GitHub, GitLab, Bitbucket, Gitea.
-   - "Agents" section count reads 43 and lists fg-021-hypothesis-investigator.
+   - "Agents" section count reads 49 and explicitly lists fg-021-hypothesis-investigator alongside the 5 other agents that were missing from the prior README enumeration (fg-143-observability-bootstrap, fg-155-i18n-validator, fg-301-implementer-critic, fg-414-license-reviewer, fg-506-migration-verifier, fg-555-resilience-tester).
+   - The "## Architecture" sub-line referencing the agent-dispatch diagram reads "49 agents organized by pipeline stage" (not 42).
    - Same retired-skill grep as above returns empty.
 
 3. The new sections quote the spec verbatim where the spec uses verbatim language (descriptions in §1; pattern-parity table in §10.1). The implementer is not permitted to paraphrase those.
@@ -544,16 +655,21 @@ If any check fails, return REVISE with the specific failed step. If all pass, re
 ## Self-review checklist
 
 - [ ] **E1 covers all sections that mention the old skill surface, BRAINSTORMING, or uplifts?**
+  - Start Here / 5-minute path (Step 1a) — yes
+  - What this is (Step 1b) — yes
+  - Quick start bash code (Step 1c) — yes
+  - Development workflow (Step 1d) — yes
+  - Confidence scoring `/forge-shape` reference (Step 1e) — yes
   - Skill selection guide (Step 2) — yes
   - Getting started flows (Step 3) — yes
   - Skills (N total) section header + paragraph (Step 4) — yes
   - Stage contracts & shipping line (Step 5) — yes
-  - Pre-pipeline agent line (Step 6) — yes
+  - "## Agents (49 total ...)" header bump + Pre-pipeline agent line (Step 6) — yes
   - New "Pattern parity" section (Step 7) — yes
   - Routing & decomposition (Step 8) — yes
   - Pipeline modes (Step 9) — yes
   - Implementation gotchas (Step 10) — yes
-  - Structural gotchas (Step 11) — yes
+  - Structural gotchas + full §12.1 sweep (Step 11) — yes
   - Cross-repo line (Step 12) — yes
   - F30 row patch (Step 13) — yes (anticipates E2)
   - README.md Quick Start (Step 14) — yes
@@ -562,8 +678,8 @@ If any check fails, return REVISE with the specific failed step. If all pass, re
   - README.md Troubleshooting (Step 17) — yes
   - README.md Multi-VCS section (Step 18) — yes
   - README.md Key features (Step 19) — yes
-  - README.md badges (Step 20) — yes
-  - README.md Agents section (Step 21) — yes
+  - README.md badges + lead-paragraph agent count (Step 20) — yes
+  - README.md Agents section (resync to 49) + Architecture line (Step 21) — yes
   - AC-S005 grep verification (Step 22) — yes
 
 - [ ] **E2 feature matrix has 8 new entries with correct config keys?**
