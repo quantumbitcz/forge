@@ -80,6 +80,67 @@ First setup?  → /forge-init
 
 **Tree depth:** maximum 3 levels (root → category → item). Subcommands live inside the skill, not as a 4th tree branch.
 
+## Skill Tiers
+
+Skills are grouped into three tiers by usage frequency. Tier 1 covers the everyday entry points; Tier 2 covers workflow and quality gates; Tier 3 covers specialized and introspection tools.
+
+### Tier 1 — Everyday entry points
+
+Most-common starting points for any new work.
+
+- `/forge-run` — full 10-stage pipeline for a single feature
+- `/forge-fix` — root-cause bug investigation and targeted repair
+- `/forge-shape` — refine a vague idea into a structured spec
+- `/forge-help` — interactive decision tree (this skill)
+- `/forge-tour` — guided 5-stop introduction for new users
+- `/forge-init` — first-time setup for an existing project
+
+### Tier 2 — Workflow and quality
+
+Skills used regularly as part of the build/ship/recover loop.
+
+- `/forge-review` — quality audit, changed files (default) or whole codebase
+- `/forge-verify` — fast build + lint + test or config validation
+- `/forge-deploy` — staging, production, preview, or rollback
+- `/forge-sprint` — multi-feature parallel orchestration
+- `/forge-recover` — diagnose, repair, reset, resume, or rollback pipeline state
+- `/forge-migration` — library or framework version upgrade
+- `/forge-bootstrap` — scaffold a brand-new greenfield project
+
+### Tier 3 — Specialized and introspection
+
+Lower-frequency skills for analytics, automation, configuration, and codebase queries.
+
+- `/forge-graph` — Neo4j knowledge graph (init, status, query, rebuild, debug)
+- `/forge-security-audit` — module-appropriate vulnerability scanners
+- `/forge-docs-generate` — README, ADRs, API specs, runbooks, changelogs
+- `/forge-ask` — codebase Q&A across wiki, graph, and explore cache
+- `/forge-insights` — quality, cost, convergence, memory analytics
+- `/forge-history` — score trends across pipeline runs
+- `/forge-status` — current run stage and progress
+- `/forge-profile` — per-stage and per-agent timing analysis
+- `/forge-automation` — event-driven trigger management
+- `/forge-playbooks` — list and run reusable pipeline recipes
+- `/forge-playbook-refine` — review and apply playbook refinement proposals
+- `/forge-handoff` — write or resume a session handoff artefact
+- `/forge-config` — interactive config editor with validation
+- `/forge-commit` — terse conventional commit message from staged changes
+- `/forge-compress` — agent prompt and runtime output compression
+- `/forge-abort` — stop an active pipeline run gracefully
+
+## Similar Skills
+
+Pairs of skills that get confused. Pick the one whose intent matches yours.
+
+- `/forge-fix` vs `/forge-recover` — `forge-fix` investigates and patches a bug in your code; `forge-recover` repairs forge's own pipeline state when a run is stuck.
+- `/forge-review --scope=changed` vs `/forge-review --scope=all` — `changed` audits only files modified in the current diff; `all` audits the whole codebase read-only (add `--fix` for an iterative cleanup loop).
+- `/forge-verify` vs `/forge-review` — `forge-verify` is a single-shot build+lint+test sanity check; `forge-review` is a multi-agent quality audit with scoring.
+- `/forge-shape` vs `/forge-run` — `forge-shape` turns a vague idea into a spec; `forge-run` executes the pipeline against an already-clear requirement.
+- `/forge-bootstrap` vs `/forge-init` — `forge-bootstrap` scaffolds a brand-new greenfield project from nothing; `forge-init` onboards an existing project to forge.
+- `/forge-sprint` vs `/forge-run` — `forge-sprint` runs multiple independent features in parallel; `forge-run` runs a single feature end-to-end.
+- `/forge-abort` vs `/forge-recover reset` — `forge-abort` stops the current run while preserving state for resume; `forge-recover reset` clears state entirely (caches and learnings survive).
+- `/forge-history` vs `/forge-insights` — `forge-history` lists per-run score trends; `forge-insights` aggregates analytics across runs (quality, cost, memory health).
+
 ## Migration
 
 The following skill names were removed in the skill-consolidation pass. Use the replacement on the right:
