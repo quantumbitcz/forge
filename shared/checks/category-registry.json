@@ -354,7 +354,7 @@
       ]
     },
     "JUDGE-TIMEOUT": {
-      "description": "Plan or implementer judge timed out; verdict treated as PROCEED with warning.",
+      "description": "Plan or implementer judge timed out; PROCEED treated as default verdict; emits informational JUDGE-TIMEOUT marker.",
       "agents": [
         "fg-205-plan-judge",
         "fg-301-implementer-judge"
