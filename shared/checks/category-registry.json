@@ -353,6 +353,17 @@
         "fg-301-implementer-judge"
       ]
     },
+    "JUDGE-TIMEOUT": {
+      "description": "Plan or implementer judge timed out; verdict treated as PROCEED with warning.",
+      "agents": [
+        "fg-205-plan-judge",
+        "fg-301-implementer-judge"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "severity": "INFO",
+      "affinity": []
+    },
     "A11Y": {
       "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)",
       "agents": [
