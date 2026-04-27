@@ -5,6 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.1.0] — Phase 6 Cost Governance
+
+### Added
+
+- **USD cost ceiling** (`cost.ceiling_usd`, default $25). Orchestrator blocks any dispatch that would breach the ceiling; in interactive mode escalates via AskUserQuestion (pattern §8), in autonomous mode auto-decides per `cost_governance.downgrade_tier()`.
+- **`## Cost Budget` brief injection** — every dispatched subagent receives a current Spent/Remaining/Tier summary.
+- **Soft cost throttle in implementer (§5.3b)** — emits `COST-THROTTLE-IMPL` INFO at 80% / WARNING at 90% consumed; skips discretionary refactor+critic passes while keeping RED/GREEN inviolate.
+- **Dynamic tier downgrade** (`cost.aware_routing: true`) with hardcoded SAFETY_CRITICAL list: `fg-210`, `fg-250`, `fg-411`, `fg-412`, `fg-414`, `fg-419`, `fg-500`, `fg-505`, `fg-506`, `fg-590`. These agents are NEVER silently skipped.
+- **`forge.cost.*` / `forge.agent.tier_*` OTel attributes** — six new attrs on every dispatch span, round-tripped through `otel.replay()`.
+- **Cost incident log** — `.forge/cost-incidents/<timestamp>.json` per escalation, schema at `shared/schemas/cost-incident.schema.json`.
+- **Retrospective cost analytics** — per-run summary, cost-per-actionable-finding flagging (gated on peer cohort ≥1 CRITICAL/WARNING), EST-DRIFT detection, four new `run_summary` columns (migration 002).
+- **300-second default timeout** for interactive AskUserQuestion patterns §3, §7, §8.
+
+### Changed
+
+- **`shared/forge-token-tracker.sh` pricing table** refreshed to Anthropic 2026-04-22 rates: Haiku 4.5 $1/$5, Sonnet 4.6 $3/$15, Opus 4.7 $5/$25 per MTok.
+- **State schema bumps to v2.0.0** (coordinated with Phase 5 and Phase 7). Old `1.x.x` state files reset `cost` block on load per no-backcompat policy.
+- **`shared/observability.md`** codifies `forge.*` namespace contract; Phase 4's unprefixed `learning.*` attrs are renamed to `forge.learning.*` as a prerequisite.
+
+### Tests
+
+- 3 unit bats suites (cost-governance-helpers, cost-governance-downgrade, token-tracker-pricing)
+- 8 scenario bats suites (ceiling-interactive, ceiling-autonomous, soft-throttle, incident-write, otel-attrs, no-silent-safety-skip, ceiling-disabled, aware-routing, retro-per-finding)
+- 1 contract extension (framework-config-templates.bats — 24 frameworks × 3 assertions)
+
 ## [4.0.0] - 2026-04-27
 
 ### Breaking
