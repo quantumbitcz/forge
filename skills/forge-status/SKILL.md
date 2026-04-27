@@ -96,6 +96,25 @@ If `.forge/.hook-failures.jsonl` exists and is non-empty:
 
 If `.forge/.hook-failures.jsonl` does not exist or is empty: show "Hooks: healthy (no failures logged)"
 
+### Live progress
+
+After the primary status output, print a `--- live ---` separator and
+render data from `.forge/progress/status.json` and
+`.forge/run-history-trends.json` (both optional):
+
+If `.forge/progress/status.json` exists:
+1. Parse via `python3 -c "import json; print(json.load(open('.forge/progress/status.json')))"`.
+2. Print: `Stage: {stage}  Agent: {agent_active or 'idle'}`.
+3. Print elapsed vs timeout: `{elapsed_ms_in_stage}ms / {timeout_ms}ms`.
+4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-recover diagnose."
+
+If `.forge/run-history-trends.json` exists:
+1. Print last 5 runs as a table: run_id, verdict, score, duration_s.
+2. Print count of `recent_hook_failures`.
+
+If neither file exists: print "No live data (run has not completed a
+subagent dispatch yet)."
+
 ## Error Handling
 
 | Condition | Action |
