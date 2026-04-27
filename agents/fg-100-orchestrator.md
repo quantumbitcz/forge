@@ -1432,8 +1432,7 @@ Expected size: ~300 tokens slice (vs ~40-line inlined §20 that used to add ~500
 
 ### SS6.2 Batch Dispatch
 
-Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
-## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder (per fg-410..fg-419 reviewer + fg-400-quality-gate)
+Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap. Each reviewer dispatch payload (fg-410..fg-419) and fg-400-quality-gate receive a `## Relevant Learnings` block auto-appended by the §0.6.1 dispatch-context builder.
 
 After batches: inline checks. Then [dispatch fg-417-dependency-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
 
