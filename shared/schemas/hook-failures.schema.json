@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://forge.local/schemas/hook-failures.schema.json",
+  "$id": "https://forge.quantumbit.cz/schemas/hook-failures.schema.json",
   "title": "Hook failure row",
   "type": "object",
   "additionalProperties": false,

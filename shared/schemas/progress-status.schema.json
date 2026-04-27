@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://forge.local/schemas/progress-status.schema.json",
+  "$id": "https://forge.quantumbit.cz/schemas/progress-status.schema.json",
   "title": "Forge live progress status",
   "type": "object",
   "additionalProperties": false,

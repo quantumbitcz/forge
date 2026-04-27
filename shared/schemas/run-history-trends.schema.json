@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://forge.local/schemas/run-history-trends.schema.json",
+  "$id": "https://forge.quantumbit.cz/schemas/run-history-trends.schema.json",
   "title": "Forge run history rollup",
   "type": "object",
   "additionalProperties": false,
