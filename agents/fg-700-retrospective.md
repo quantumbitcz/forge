@@ -329,6 +329,101 @@ DB locked → retry once after 100ms; if still locked, append a warning to
 
 ---
 
+### Output 2.7: Cost Governance Analytics (Phase 6)
+
+**Per-run summary.** Read `.forge/cost-incidents/*.json` (empty = clean run). Emit under `## Cost Governance` in the retrospective report:
+
+```markdown
+## Cost Governance
+
+- Ceiling: ${ceiling_usd}
+- Spent:   ${spent_usd} ({pct_consumed}%)
+- Ceiling breaches: {ceiling_breaches}
+- Downgrades applied: {downgrade_count}
+- Throttle events: {len(throttle_events)} ({info_count} INFO / {warning_count} WARNING)
+```
+
+**Cost-per-actionable-finding (AC-611).**
+
+Scope: reviewers only (`fg-410` through `fg-419`). Skip all other agents.
+
+```python
+peer_cohort_findings = [f for f in all_findings if f.agent.startswith("fg-4")]
+actionable = [f for f in peer_cohort_findings if f.severity in ("CRITICAL", "WARNING")]
+
+# Gate: only emit cost-per-finding when peer cohort produced actionable findings.
+if not actionable:
+    return  # clean run — no reviewer flagged, zero-finding reviewers NOT penalized.
+
+for reviewer in reviewers:
+    unique = dedupe(reviewer.findings, keyed_by=("file", "line", "category"))
+    unique_actionable = [f for f in unique if f.severity in ("CRITICAL", "WARNING")]
+    if not unique_actionable:
+        continue  # this reviewer clean on a dirty run — still NOT flagged.
+    cpaf = reviewer.cost_usd / len(unique_actionable)
+    reviewer.cost_per_actionable_finding = cpaf
+
+median_cpaf = statistics.median(r.cost_per_actionable_finding for r in reviewers
+                                if hasattr(r, "cost_per_actionable_finding"))
+
+flagged = [r for r in reviewers
+           if getattr(r, "cost_per_actionable_finding", 0) > 3 * median_cpaf]
+```
+
+Emit each flagged reviewer as a candidate for `model_routing` downgrade suggestion. Subject to the existing "2 tier changes per run" cap from `shared/model-routing.md`.
+
+**Zero-finding-clean-code safety:** AC-611 explicitly carves out the case where every reviewer emits 0 findings — nobody is flagged. This is the reviewer working as intended on clean code. The gate above (`if not actionable: return`) is the one line enforcing that rule.
+
+**EST-DRIFT detection (AC-613).** Across the last 10 dispatches per agent, compute:
+
+```python
+actual_per_dispatch = agent.cost_usd / agent.dispatches
+estimated = cost.tier_estimates_usd[agent.tier_used_majority]
+if agent.dispatches >= 10 and abs(actual_per_dispatch - estimated) / estimated > 2.0:
+    emit_finding({
+        "category": "EST-DRIFT",
+        "severity": "WARNING",
+        "file": "forge-config.md",
+        "line": 0,
+        "message": f"Agent {agent.id} actual cost ${actual_per_dispatch:.4f} vs estimated ${estimated:.4f} (>{2.0}x drift across {agent.dispatches} dispatches)",
+        "confidence": "HIGH",
+        "suggestion": f"Update cost.tier_estimates_usd.{agent.tier_used_majority} in forge-config.md",
+    })
+```
+
+Do NOT auto-adjust `tier_estimates_usd` — user edits config. Auto-tuning estimates is too self-reinforcing.
+
+**Run-history columns (AC-612).** On INSERT INTO `runs` (existing Step 4 of Output 2.5), also populate the four new `run_summary` columns from migration 002:
+
+```sql
+INSERT INTO run_summary (
+  run_id, started_at, ...existing_columns...,
+  ceiling_usd, spent_usd, ceiling_breaches, throttle_events
+) VALUES (
+  ?, ?, ...,
+  :ceiling_usd, :spent_usd, :ceiling_breaches, :throttle_events_count
+);
+```
+
+Where `:throttle_events_count = len(state.cost.throttle_events)`.
+
+**30-day trend query (example, run on demand):**
+
+```sql
+SELECT
+  DATE(started_at) AS day,
+  AVG(spent_usd) AS avg_cost,
+  SUM(ceiling_breaches) AS total_breaches,
+  AVG(spent_usd / NULLIF(ceiling_usd, 0)) AS avg_utilization
+FROM run_summary
+WHERE started_at > datetime('now', '-30 days')
+GROUP BY day;
+```
+
+Appended to `reports/forge-{YYYY-MM-DD}.md` when the retrospective runs.
+
+---
+
 ### Output 2.6: Playbook Refinement Analysis
 
 When `state.json.playbook_id` is set, analyze run outcomes against playbook expectations and generate refinement proposals. Schema: `shared/schemas/playbook-refinement-schema.json`.
