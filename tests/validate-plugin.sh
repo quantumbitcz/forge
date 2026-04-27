@@ -952,8 +952,13 @@ for rel in tests/mutation/state_transitions.py tests/scenario/report_coverage.py
     check_phase3_scripts_fail=1
     continue
   fi
-  if ! python3 -c "import ast,sys; src=open(sys.argv[1],encoding='utf-8').read(); m=ast.parse(src); doc=ast.get_docstring(m); raise SystemExit(0 if doc else 1)" "$abs" 2>/dev/null; then
+  parse_stderr=$(python3 -c "import ast,sys; src=open(sys.argv[1],encoding='utf-8').read(); m=ast.parse(src); doc=ast.get_docstring(m); raise SystemExit(0 if doc else 1)" "$abs" 2>&1 1>/dev/null)
+  parse_status=$?
+  if [[ $parse_status -ne 0 ]]; then
     echo "    $rel: failed to parse OR missing module docstring"
+    if [[ -n "$parse_stderr" ]]; then
+      echo "$parse_stderr" | sed 's/^/      /'
+    fi
     check_phase3_scripts_fail=1
   fi
 done
