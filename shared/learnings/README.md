@@ -158,3 +158,28 @@ Before a learning is promoted from per-project to cross-project:
 4. The result is reviewed by `fg-700-retrospective` for remaining project-specific content
 
 No project-specific data ever enters the plugin repository.
+
+---
+
+## Read Path (Phase 4)
+
+The read path closes the loop that the write path opens. At every
+dispatch for the planner, implementer, quality gate, and nine reviewers,
+the orchestrator calls:
+
+```
+learnings_io.load_all(roots)        → list[LearningItem]  (per-run cache)
+learnings_selector.select_for_dispatch(
+    agent, stage, domain_tags, component, candidates, now, max_items=6)
+                                     → list[LearningItem]  (filtered + ranked)
+learnings_format.render(selected)    → "## Relevant Learnings" markdown
+```
+
+The block is appended to the dispatch prompt; subagents may return the
+markers `LEARNING_APPLIED`, `LEARNING_FP: <id> reason=<...>`, or
+`LEARNING_VINDICATED: <id> reason=<...>` (see `agent-communication.md`
+§Learning Markers). The retrospective consumes the resulting
+`forge.learning.*` events and runs `learnings_writeback.apply_events_to_file`.
+
+Reference modules: `hooks/_py/learnings_{selector,io,format,markers,writeback}.py`,
+`hooks/_py/agent_role_map.py`, `hooks/_py/memory_decay.py`.
