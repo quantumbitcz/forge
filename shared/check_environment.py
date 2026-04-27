@@ -69,7 +69,8 @@ def _probe(name: str, tier: str, purpose: str, install: str) -> dict:
     if name == "python3":
         version = (_run(["python3", "--version"]) or "").replace("Python", "").strip()
     elif name == "bash":
-        version = (_run(["bash", "--version"]) or "").splitlines()[0] if _run(["bash", "--version"]) else ""
+        raw = _run(["bash", "--version"])
+        version = raw.splitlines()[0] if raw else ""
     elif name == "git":
         raw = _run(["git", "--version"]) or ""
         version = raw.replace("git version", "").strip()
@@ -82,9 +83,11 @@ def _probe(name: str, tier: str, purpose: str, install: str) -> dict:
         version = (_run(["tree-sitter", "--version"]) or "").strip()
     elif name == "gh":
         raw = _run(["gh", "--version"]) or ""
-        version = raw.splitlines()[0].split()[2] if raw.splitlines() and len(raw.splitlines()[0].split()) >= 3 else ""
+        lines = raw.splitlines()
+        version = lines[0].split()[2] if lines and len(lines[0].split()) >= 3 else ""
     elif name == "sqlite3":
-        version = (_run(["sqlite3", "--version"]) or "").split()[0] if _run(["sqlite3", "--version"]) else ""
+        raw = _run(["sqlite3", "--version"])
+        version = raw.split()[0] if raw else ""
     elif name == "node":
         version = (_run(["node", "--version"]) or "").lstrip("v")
     elif name == "cargo":
