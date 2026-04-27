@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "run_id": "dirty-run",
+  "cost": {"ceiling_usd": 25.0, "spent_usd": 3.12, "ceiling_breaches": 0, "throttle_events": []},
+  "tokens": {
+    "by_agent": {
+      "fg-410-code-reviewer":     {"input": 8000, "output": 1500, "dispatch_count": 1, "model": "sonnet"},
+      "fg-411-security-reviewer": {"input": 50000, "output": 6000, "dispatch_count": 1, "model": "opus"},
+      "fg-412-architecture-reviewer": {"input":8000,"output":1500,"dispatch_count":1,"model":"sonnet"}
+    }
+  },
+  "findings": [
+    {"agent": "fg-410-code-reviewer", "severity": "CRITICAL", "file": "a.py", "line": 1, "category": "ARCH-COUPLING"},
+    {"agent": "fg-410-code-reviewer", "severity": "WARNING",  "file": "b.py", "line": 2, "category": "QUAL-NAMING"},
+    {"agent": "fg-412-architecture-reviewer", "severity": "WARNING", "file": "c.py", "line": 3, "category": "ARCH-LAYERING"}
+  ]
+}
