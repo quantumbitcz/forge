@@ -46,7 +46,7 @@ setup() {
   # Canonical reviewer finding (Phase 5 shape)
   FIXTURE=$(cat <<'EOF'
 {
-  "finding_id": "f-fg-411-security-reviewer-01J2BQK",
+  "finding_id": "f-fg-411-security-reviewer-01J2BQK0001",
   "dedup_key": "src/api/UserController.kt:42:SEC-AUTH-003",
   "reviewer": "fg-411-security-reviewer",
   "severity": "CRITICAL",
@@ -68,7 +68,7 @@ EOF
   SCHEMA="$PROJECT_ROOT/shared/checks/findings-schema.json"
   FIXTURE=$(cat <<'EOF'
 {
-  "finding_id": "f-fg-540-intent-verifier-01J2BQL",
+  "finding_id": "f-fg-540-intent-verifier-01J2BQM0001",
   "dedup_key": "-:-:INTENT-AC-007",
   "reviewer": "fg-540-intent-verifier",
   "severity": "WARNING",
