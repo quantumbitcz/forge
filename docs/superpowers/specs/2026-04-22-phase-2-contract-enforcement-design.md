@@ -272,7 +272,7 @@ Pipeline-level evals (`tests/evals/pipeline/`) are unaffected.
 - **AC-7.** `skills/forge-verify/SKILL.md` does NOT mention `--config` anywhere (no subcommand block, no flag in the allowed-tools hint, no example). A contract test asserts the recognized flag set is exactly `{--build, --all, --json, --help}`. (Same rationale as AC-6: no CI job invokes a skill.)
 - **AC-8.** `shared/feature-matrix.md` contains 30 rows (F05 through F34) between the sentinel comments, each with a non-empty Default cell and a Usage cell that is either an integer or the literal `unknown`. No em dashes, en dashes, or smart quotes (U+2018, U+2019, U+201C, U+201D) anywhere in the generated content. ASCII-only between sentinels.
 - **AC-9.** `shared/feature-lifecycle.md` defines the 90/180-day thresholds and the three lifecycle states exactly as in Component 5.
-- **AC-10.** `tests/run-all.sh structural` returns exit 0 and includes pytest output for all five new `tests/contract/*.py` files: `ui_frontmatter_required.py`, `skill_grammar.py`, `fg100_size_budget.py`, `feature_matrix_freshness.py`, and `skill_inventory.py`.
+- **AC-10.** `tests/run-all.sh contract` returns exit 0 and includes pytest output for all five new `tests/contract/test_*.py` files: `test_ui_frontmatter_required.py`, `test_skill_grammar.py`, `test_fg100_size_budget.py`, `test_feature_matrix_freshness.py`, and `test_skill_inventory.py`.
 
 ## Open Questions
 
