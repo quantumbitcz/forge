@@ -4,7 +4,36 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
-from typing import Iterable
+from typing import Callable, Iterable
+
+try:  # Optional dependency. When absent, schema validation is skipped silently.
+    import jsonschema as _jsonschema  # type: ignore[import-untyped]
+except ImportError:  # pragma: no cover - exercised on minimal environments
+    _jsonschema = None  # type: ignore[assignment]
+
+
+_SCHEMA_PATH = (
+    pathlib.Path(__file__).resolve().parents[1]
+    / "checks"
+    / "findings-schema.json"
+)
+
+
+def _load_validator() -> Callable[[dict], None] | None:
+    """Return a validator callable bound to findings-schema.json, or None.
+
+    The callable raises jsonschema.ValidationError on schema-invalid input.
+    Returns None when jsonschema is missing or the schema cannot be loaded;
+    callers must treat that as "validation skipped".
+    """
+    if _jsonschema is None or not _SCHEMA_PATH.exists():
+        return None
+    try:
+        schema = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):  # pragma: no cover
+        return None
+    validator = _jsonschema.Draft202012Validator(schema)
+    return validator.validate
 
 
 def _ensure_dir(root: pathlib.Path) -> None:
@@ -48,24 +77,49 @@ def read_peers(root: pathlib.Path, exclude_reviewer: str) -> Iterable[dict]:
                 )
 
 
+_SEV_ORDER = {"CRITICAL": 3, "WARNING": 2, "INFO": 1}
+_CONF_ORDER = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+
+
+def _sev_rank(finding: dict) -> int:
+    """Severity rank, defaulting to INFO for missing or unknown values."""
+    return _SEV_ORDER.get(finding.get("severity", "INFO"), _SEV_ORDER["INFO"])
+
+
+def _conf_rank(finding: dict) -> int:
+    """Confidence rank, defaulting to LOW for missing or unknown values."""
+    return _CONF_ORDER.get(finding.get("confidence", "LOW"), _CONF_ORDER["LOW"])
+
+
 def _tiebreak(a: dict, b: dict) -> dict:
-    """Winner between two findings with the same dedup_key."""
-    sev_order = {"CRITICAL": 3, "WARNING": 2, "INFO": 1}
-    conf_order = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
-    if sev_order[a["severity"]] != sev_order[b["severity"]]:
-        return a if sev_order[a["severity"]] > sev_order[b["severity"]] else b
-    if conf_order[a["confidence"]] != conf_order[b["confidence"]]:
-        return a if conf_order[a["confidence"]] > conf_order[b["confidence"]] else b
-    return a if a["reviewer"] <= b["reviewer"] else b
+    """Winner between two findings with the same dedup_key.
+
+    Tolerates missing or unknown severity/confidence values by treating them
+    as the lowest priority bucket (INFO/LOW). This keeps the reducer alive
+    on schema-loose lines that still validated as JSON; schema enforcement
+    happens in reduce_findings via jsonschema (when available).
+    """
+    a_sev, b_sev = _sev_rank(a), _sev_rank(b)
+    if a_sev != b_sev:
+        return a if a_sev > b_sev else b
+    a_conf, b_conf = _conf_rank(a), _conf_rank(b)
+    if a_conf != b_conf:
+        return a if a_conf > b_conf else b
+    return a if a.get("reviewer", "") <= b.get("reviewer", "") else b
 
 
 def reduce_findings(root: pathlib.Path, writer_glob: str = "*.jsonl") -> list[dict]:
     """Reduce all lines matching writer_glob under root into a canonical list.
 
     See shared/findings-store.md §8 for the reducer contract.
+
+    Schema-invalid lines are skipped with a stderr WARNING (per fg-400.md §5.1b)
+    when jsonschema is available. When it isn't, validation is silently skipped
+    and only structurally required fields (dedup_key, reviewer) gate inclusion.
     """
     if not root.exists():
         return []
+    validate = _load_validator()
     by_key: dict[str, dict] = {}
     seen_by: dict[str, set[str]] = {}
     for path in sorted(root.glob(writer_glob)):
@@ -78,6 +132,23 @@ def reduce_findings(root: pathlib.Path, writer_glob: str = "*.jsonl") -> list[di
                 print(
                     f"WARNING findings-store malformed line "
                     f"reviewer={path.stem} line {lineno}: {exc}",
+                    file=sys.stderr,
+                )
+                continue
+            if validate is not None:
+                try:
+                    validate(f)
+                except _jsonschema.ValidationError as exc:  # type: ignore[union-attr]
+                    print(
+                        f"WARNING findings-store schema-invalid line "
+                        f"reviewer={path.stem} line {lineno}: {exc.message}",
+                        file=sys.stderr,
+                    )
+                    continue
+            if "dedup_key" not in f or "reviewer" not in f:
+                print(
+                    f"WARNING findings-store missing required field "
+                    f"reviewer={path.stem} line {lineno}: dedup_key/reviewer absent",
                     file=sys.stderr,
                 )
                 continue

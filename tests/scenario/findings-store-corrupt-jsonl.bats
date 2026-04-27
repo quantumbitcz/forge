@@ -37,13 +37,13 @@ print('OK')
 
 @test "binary garbage line → skipped, continues" {
   printf '\x00\xff\x7f' > "$RUNS/fg-411-security-reviewer.jsonl"
-  printf '\n{"finding_id":"f-ok","dedup_key":"x.kt:1:SEC","reviewer":"fg-411-security-reviewer","severity":"CRITICAL","category":"SEC","file":"x.kt","line":1,"message":"m","confidence":"HIGH","created_at":"2026-04-22T10:00:00Z","seen_by":[]}\n' >> "$RUNS/fg-411-security-reviewer.jsonl"
+  printf '\n{"finding_id":"f-fg-411-security-reviewer-ABCDEFGHJK","dedup_key":"x.kt:1:SEC","reviewer":"fg-411-security-reviewer","severity":"CRITICAL","category":"SEC","file":"x.kt","line":1,"message":"m","confidence":"HIGH","created_at":"2026-04-22T10:00:00Z","seen_by":[]}\n' >> "$RUNS/fg-411-security-reviewer.jsonl"
   run python3 -c "
 import sys, pathlib
 sys.path.insert(0, '$PROJECT_ROOT/shared/python')
 from findings_store import reduce_findings
 out = reduce_findings(pathlib.Path('$RUNS'), writer_glob='fg-4*.jsonl')
-assert len(out) == 1 and out[0]['finding_id'] == 'f-ok'
+assert len(out) == 1 and out[0]['finding_id'] == 'f-fg-411-security-reviewer-ABCDEFGHJK'
 print('OK')
 "
   [ "$status" -eq 0 ]
