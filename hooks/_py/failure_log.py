@@ -51,9 +51,11 @@ def record_failure(
     forge = _forge_dir(cwd)
     if forge is None:
         return
+    now = datetime.now(timezone.utc)
+    ts = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
     row = {
         "schema": SCHEMA_VERSION,
-        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + f"{datetime.now(timezone.utc).microsecond // 1000:03d}Z",
+        "ts": ts,
         "hook_name": hook_name,
         "matcher": matcher,
         "exit_code": exit_code,
@@ -106,13 +108,3 @@ def rotate(now_ts: Optional[float] = None, cwd: Optional[str] = None) -> None:
                 gz.unlink(missing_ok=True)
         except OSError:
             continue
-
-
-def main() -> int:
-    """CLI entry for ad-hoc rotation; not used by hooks directly."""
-    rotate()
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

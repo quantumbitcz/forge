@@ -143,7 +143,7 @@ Every module carries a support-tier badge (CI-verified / contract-verified / com
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Frameworks | 21 | spring, react, nextjs, fastapi, django, axum, angular, nestjs, vue, svelte, sveltekit, express, gin, go-stdlib, swiftui, vapor, jetpack-compose, kotlin-multiplatform, aspnet, embedded, k8s |
+| Frameworks | 24 | spring, react, nextjs, fastapi, django, flask, axum, angular, nestjs, vue, svelte, sveltekit, express, gin, go-stdlib, swiftui, vapor, jetpack-compose, kotlin-multiplatform, aspnet, laravel, rails, embedded, k8s |
 | Languages | 15 | kotlin, java, typescript, python, go, rust, swift, c, csharp, ruby, php, dart, elixir, scala, cpp |
 | Testing | 19 | kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest, xunit-nunit, testcontainers |
 | Build Systems | 9 | gradle, maven, npm, cargo, go, cmake, bazel, nx, turborepo |
