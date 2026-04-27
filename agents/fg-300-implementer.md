@@ -641,3 +641,26 @@ Per task, create TDD cycle sub-tasks:
 - "Writing failing test for {task_name}"
 - "Implementing to pass test"
 - "Verify: run tests + lint"
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `implementer`.
+
+Your dispatch prompt includes a `## Relevant Learnings (from prior runs)`
+block between the task description and tool hints. Treat each entry as a
+prior, not a rule. Cross-check with the conventions stack before acting.
+
+Marker emission (append to your final structured output):
+
+- `PREEMPT_APPLIED: <id>` or `LEARNING_APPLIED: <id>` — interchangeable —
+  when a learning informed a decision (e.g., you chose `kotlin.uuid.Uuid`
+  over `java.util.UUID` because an item flagged the mix risk).
+- `PREEMPT_SKIPPED: <id> reason=<text>` or
+  `LEARNING_FP: <id> reason=<text>` — when a shown learning is
+  inapplicable or wrong. The retrospective will apply a 0.20 multiplicative
+  penalty, so use this marker deliberately.
+
+No marker → no reinforcement, no penalty (pure time-decay applies on the
+next PREFLIGHT).
