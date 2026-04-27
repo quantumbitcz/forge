@@ -129,7 +129,6 @@ Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in i
 | `/forge-deploy` | [writes] | Deployment (staging, production, preview, rollback) |
 | `/forge-migration` | [writes] | Framework/library version migrations |
 | `/forge-bootstrap` | [writes] | Scaffold new project from template |
-| `/forge-verify --config` | [read-only] | Pre-pipeline config validation |
 | `/forge-automation` | [writes] | Event-driven automation management |
 | `/forge-graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
 | `/forge-commit` | [writes] | Terse conventional commit from staged changes |

@@ -106,7 +106,7 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Review entire codebase | `/forge-review --scope=all` | Read-only analysis, no fixes |
 | Fix all codebase issues | `/forge-review --scope=all --fix` | Iterative fix loop; AskUserQuestion gate unless `autonomous: true` or `--yes` |
 | Quick build+lint+test | `/forge-verify` | Default `--build`. No pipeline |
-| Validate config | `/forge-verify --config` | Pre-pipeline config check (read-only) |
+| Validate config | `/forge-status` | Includes Config validation summary section |
 | Graph init/status/query/rebuild/debug | `/forge-graph <sub>` | `init` starts Neo4j; `status` reports health; `query <cypher>` runs read-only Cypher; `rebuild` regenerates project graph; `debug` runs diagnostic recipes |
 | Security scan | `/forge-security-audit` | Module-appropriate vulnerability scanners |
 | Pipeline broken? | `/forge-recover diagnose` | Read-only diagnostic, then `/forge-recover repair` to fix |
@@ -132,7 +132,7 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 
 ```
 First time?        /forge-tour (5-stop guided introduction)
-New project:       /forge-init → /forge-verify --config → /forge-verify → /forge-run <requirement>
+New project:       /forge-init → /forge-status → /forge-verify → /forge-run <requirement>
 Existing project:  /forge-init → /forge-review --scope=all → /forge-review --scope=all --fix → /forge-run <requirement>
 Bug fix:           /forge-fix <description or ticket ID>
 Code quality:      /forge-review --full  (changed files) or /forge-review --scope=all (all files)
@@ -315,7 +315,7 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 ## Skills (28 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review), `forge-handoff` (session handoff write/list/show/resume/search).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review), `forge-handoff` (session handoff write/list/show/resume/search).
 
 **Hooks** (6 command entries across 6 Python entry scripts, `hooks.json`): L0 syntax validation on `Edit|Write` (PreToolUse → `pre_tool_use.py`); check engine + automation trigger on `Edit|Write` (PostToolUse → `post_tool_use.py`, which invokes both `_py.check_engine.engine` and `_py.check_engine.automation_trigger`); checkpoint on `Skill` (PostToolUse → `post_tool_use_skill.py`); compaction check on `Agent` (PostToolUse → `post_tool_use_agent.py`); feedback capture on `Stop` (Stop → `stop.py`); session priming on `SessionStart` (SessionStart → `session_start.py`). See `shared/hook-design.md` for the Python execution model and script contract.
 

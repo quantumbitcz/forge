@@ -25,7 +25,7 @@ See `shared/skill-contract.md` for the standard exit-code table.
 | `/forge-config set <key> <value>` | Set a config value |
 | `/forge-config add <key> <value>` | Add to list field (e.g., code_quality) |
 | `/forge-config remove <key> <value>` | Remove from list field |
-| `/forge-config validate` | Run validation (delegates to /forge-verify --config) |
+| `/forge-config validate` | Run validation (delegates to /forge-status) |
 | `/forge-config show <section>` | Show specific section (components, scoring, convergence, caveman) |
 | `/forge-config diff` | Show changes since last pipeline run |
 
@@ -62,7 +62,7 @@ See `shared/skill-contract.md` for the standard exit-code table.
 
 ### Validate Operation
 
-Delegates to `/forge-verify --config` skill. Shows results inline.
+Delegates to `/forge-status` (Config validation section). Shows results inline.
 
 ### Diff Operation
 
@@ -89,5 +89,5 @@ Delegates to `/forge-verify --config` skill. Shows results inline.
 
 ## See Also
 
-- `/forge-verify --config` — validate config without editing
+- `/forge-status` — includes config validation summary
 - `/forge-init` — initial project setup

@@ -62,7 +62,7 @@ setup() {
 @test "read-only skills list --json in Flags" {
   # Skill consolidation removed forge-codebase-health (merged into /forge-review --scope all),
   # forge-graph-{debug,query,status} (merged into /forge-graph), and
-  # forge-config-validate (merged into /forge-verify --config).
+  # forge-config-validate (merged into /forge-status).
   local readonly_skills=(forge-ask forge-history forge-insights forge-playbooks \
                          forge-profile forge-security-audit forge-status \
                          forge-tour forge-verify)
