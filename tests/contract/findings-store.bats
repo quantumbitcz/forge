@@ -53,3 +53,25 @@ setup() {
   run grep -F 'Findings Store Protocol' "$F"
   [ "$status" -eq 0 ]
 }
+
+@test "fg-400-quality-gate.md does not contain forbidden strings" {
+  F="$PROJECT_ROOT/agents/fg-400-quality-gate.md"
+  for s in 'previous batch findings' 'dedup hints' 'top 20'; do
+    run grep -iF "$s" "$F"
+    [ "$status" -ne 0 ] || { echo "forbidden string found: $s"; return 1; }
+  done
+}
+
+@test "fg-400-quality-gate §20 is <= 3 lines and references shared/agents.md#review-tier" {
+  F="$PROJECT_ROOT/agents/fg-400-quality-gate.md"
+  SECTION=$(awk '/^## 20\./,/^## 21\./{print}' "$F" | grep -v '^## 21' | tail -n +2)
+  LINES=$(echo "$SECTION" | grep -cv '^[[:space:]]*$' || true)
+  [ "$LINES" -le 3 ]
+  echo "$SECTION" | grep -F 'shared/agents.md#review-tier'
+}
+
+@test "fg-400-quality-gate declares parallel fanout with max_parallel_reviewers" {
+  F="$PROJECT_ROOT/agents/fg-400-quality-gate.md"
+  run grep -F 'max_parallel_reviewers' "$F"
+  [ "$status" -eq 0 ]
+}

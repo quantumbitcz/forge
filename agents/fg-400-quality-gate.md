@@ -34,7 +34,7 @@ Coordinate comprehensive quality review. Agents read source files and report fin
 
 ## 2. Context Budget
 
-Coordinator — read ZERO source files. Read only: changed files list, agent result summaries, config files. Dispatch prompts under 2,000 tokens each.
+Coordinator — read ZERO source files. Read only: changed files list, agent result summaries, config files. Dispatch prompts under 1,500 tokens each (the inter-batch hint block has been removed; reviewers fetch their own context from the findings store).
 
 ---
 
@@ -83,52 +83,26 @@ Before dispatching batches, assess the change scope to optimize reviewer allocat
 
 **Important:** Do NOT hardcode which agents are in which batch. Batch contents are config-driven per `forge.local.md`. The scope filter only controls HOW MANY batches run, not WHICH agents are in them.
 
-### 5.1 Batch Execution
+### 5.1 Parallel-Fanout Dispatch
 
-Per `batch_N`:
-1. Read batch definition: `{ agent, focus, source?, condition? }`
-2. Evaluate conditions. Skip agents whose conditions not met.
-3. Dispatch qualifying agents **in parallel** (max 3/batch)
-4. Wait for ALL in batch before starting next. Batches sequential.
+Dispatch qualifying reviewers in parallel up to `quality_gate.max_parallel_reviewers` (config default 9). If the system cannot sustain the full fan-out, group into waves of N. Within a wave, dispatch is fully parallel. Between waves, dedup happens at the findings-store read step inside each reviewer — NOT via prompt injection.
 
-### 5.1b Pre-Dedup Finding Validation
+The scope filter (§5.0) controls WHICH reviewers qualify, not the wave structure.
 
-Before dedup, validate each finding via `shared/validate-finding.sh`. Invalid lines → WARNING + skip + replacement: `{agent}:0 | REVIEW-GAP | INFO | Malformed finding from {agent_name} — skipped`
+### 5.1b Schema Validation
 
-### 5.2 Inter-Batch Finding Deduplication
-
-See `shared/agent-communication.md`. Batch 2+ dispatch includes previous batch findings summary (top 20 by severity). Over 20 → note: "({N-20} additional omitted)."
-
-#### Timeout Awareness
-
-Batch 2+ dispatch includes:
-- Previous findings (top 20 for dedup)
-- Timed-out agents and their domains
-- Instruction: overlap with timed-out domain → prioritize checking that area
-
-**Domain-scoped filtering (v1.17+):** Before dedup hints, filter by `shared/checks/category-registry.json` `affinity`. Include only findings where reviewer's agent ID matches affinity or affinity is empty. Check subcategory overrides in `shared/agent-communication.md` §3. Cap top-20 AFTER filtering. Reduces per-reviewer tokens ~60-80%.
+Each reviewer's `<reviewer>.jsonl` is validated against `shared/checks/findings-schema.json` during reduction. Malformed lines are logged WARNING and skipped; the run does not abort.
 
 ### 5.3 Agent Dispatch Prompt
 
-```
-Review the following changed files for [focus area from config].
+Each qualifying reviewer receives:
 
-Changed files:
-[file list]
+- `changed_files` list
+- `conventions_file` path
+- `run_id` (so reviewers compute `.forge/runs/<run_id>/findings/` path)
+- `reviewer_registry_slice` — orchestrator-injected summary of REVIEW-tier agents (see `shared/agents.md#review-tier`). Replaces the inlined §20 table that used to live in this file.
 
-Conventions: [conventions_file path]
-
-Report findings in this exact format, one per line:
-file:line | category | severity (CRITICAL/WARNING/INFO) | description | suggested fix
-
-Where:
-- file: relative path from project root
-- line: line number (0 if file-level)
-- category: finding category code (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*)
-- severity: CRITICAL (architectural violation, security flaw, data loss), WARNING (convention violation, missing coverage, suboptimal pattern), INFO (style nit, minor improvement, documentation gap)
-- description: what is wrong and why it matters
-- suggested fix: concrete action to resolve
-```
+The dispatch prompt does NOT contain inter-batch finding hints or rolling summaries. Dedup is read-time in each reviewer per `shared/findings-store.md`.
 
 **Model selection:** If `model_routing.enabled`, include `model` parameter in every dispatch. Model map passed via orchestrator dispatch prompt.
 
@@ -197,19 +171,14 @@ When `false` (default): skip, use §6.1 only.
 
 ---
 
-## 7. Finding Deduplication
+## 7. Finding Deduplication (reducer over findings store)
 
-### 7.1 Key
-Group by `(file, line, category)`.
+Call `shared.python.findings_store.reduce_findings(root, writer_glob="fg-4*.jsonl")` after all reviewers complete. Output is the canonical finding list, grouped by `dedup_key`, tiebroken by (severity, confidence, ASCII reviewer), with merged `seen_by` lists. See `shared/findings-store.md` §8.
 
-### 7.2 Rules
-Same key → keep highest severity, most detailed description. Merge complementary fixes; conflicts → keep highest-severity fix.
-
-### 7.3 Cross-File
-Different lines, same file, same category → NOT deduplicated. Only exact key matches grouped.
+Subsequent steps (§6.1 conflict detection, §6.2 deliberation, §8 scoring) operate on this canonical list.
 
 ### Reviewer Agreement Tracking
-After dedup: compare findings from different reviewers on same `(file, line)`. Same severity → agreement. Different → disagreement. Record: "Reviewer agreement: {N}/{M} ({pct}%)". Update `state.json.decision_quality.reviewer_agreement_rate`. Count LOW/MEDIUM confidence findings → update `findings_with_low_confidence`.
+Compare entries with non-empty `seen_by` arrays — these represent reviewers that observed the same `dedup_key`. Record: "Reviewer agreement: {N}/{M} ({pct}%)". Update `state.json.decision_quality.reviewer_agreement_rate`. Count LOW/MEDIUM confidence findings → update `findings_with_low_confidence`.
 
 ---
 
@@ -255,11 +224,13 @@ Follow-up tickets: architectural WARNINGs → YES. Style INFOs → NO. Performan
 ## 10. Fix Cycles
 
 Managed by convergence engine, not this agent. On re-invocation:
-1. Re-run from beginning: dispatch, inline checks, dedup, score
-2. Re-dispatch ALL batch agents (fixes may introduce new problems)
-3. Return full report — convergence engine evaluates trajectory
 
-`max_review_cycles` = inner cap per convergence iteration. Convergence manages outer loop.
+1. Re-read the findings store (may have entries from prior cycle; that's OK — `seen_by` merging handles it).
+2. Dispatch the reviewer fan-out again (fresh sub-agents; they'll read and emit afresh).
+3. Reduce + score.
+4. Return full report.
+
+`max_review_cycles` is the inner cap per convergence iteration.
 
 ---
 
@@ -411,16 +382,7 @@ One task per batch + final aggregation:
 
 ## 20. Dispatchable Review Agents (Reference)
 
-Authoritative list — unlisted agents cannot be dispatched. `generate-seed.sh` reads this for DISPATCHES edges.
-
-- `fg-410-code-reviewer` — error handling, DRY/KISS, defensive programming, test quality, naming, complexity
-- `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets, dependency CVEs
-- `fg-412-architecture-reviewer` — pattern compliance, layer boundaries, dependency rules, module structure
-- `fg-413-frontend-reviewer` — conventions, a11y (WCAG 2.2 AA), performance, framework patterns, design system, visual coherence. Modes: `full`/`conventions-only`/`a11y-only`/`performance-only`.
-- `fg-416-performance-reviewer` — N+1, missing indexes, connection pools, caching strategy, caching library choice, concurrency
-- `fg-417-dependency-reviewer` — dependency health (CVEs, outdated, unmaintained, license), version conflicts, language feature compatibility
-- `fg-418-docs-consistency-reviewer` — consistency with documented decisions/constraints
-- `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
+See `shared/agents.md#review-tier`. Registry slice is orchestrator-injected at dispatch time.
 
 ---
 
