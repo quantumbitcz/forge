@@ -40,7 +40,7 @@ Five components land in the order specified under Migration / Rollout to avoid a
 **Tier assignment for the 13 missing agents.** All land as Tier 4 (`tasks: false, ask: false, plan_mode: false`) matching their registry rows in `shared/agents.md` lines 113–126 and 334–355. Explicitly:
 
 - `fg-101-worktree-manager`, `fg-102-conflict-resolver` — Tier 4.
-- `fg-205-plan-judge` — Tier 4 (silent adversarial reviewer per `agents/fg-205-plan-judge.md:4`).
+- `fg-205-plan-judge` — Tier 4 (binding-veto plan judge per `agents/fg-205-plan-judge.md:4`).[^phase5-rename]
 - `fg-410` through `fg-419` (all nine reviewers) — Tier 4.
 - `fg-510-mutation-analyzer` — Tier 4.
 
@@ -281,3 +281,5 @@ Pipeline-level evals (`tests/evals/pipeline/`) are unaffected.
 3. **Skill grammar `positional mode` exception.** `/forge-compress output full` still flows as positional-after-subcommand. The grammar tolerates this but does not love it. Should a later phase rewrite these as `--mode=`? Recommendation: leave it. The grammar permits it and the skill is not being rewritten.
 4. **Python dep surface.** Adding pydantic to CI is fine; does it belong in any runtime path? Only contract tests need it; runtime hooks remain dependency-free. No action.
 5. **What about agents not matching `fg-*.md`?** There are none currently. If a future naming convention appears, the test's glob (`agents/fg-*.md`) must be updated or broadened. Recommendation: the test glob is narrow by design; a broader glob is a follow-up if and when the roster expands.
+
+[^phase5-rename]: Renamed in Phase 5; see `docs/superpowers/specs/2026-04-22-phase-5-pattern-modernization-design.md`.
