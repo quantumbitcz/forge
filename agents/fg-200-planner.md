@@ -317,7 +317,7 @@ Group 3: [Task 1.5]            <- after Group 2
 - [ ] Code follows conventions
 ```
 
-### 5.X Judge verdict pass-through
+### 5.6 Judge verdict pass-through
 
 When the orchestrator re-dispatches you after a fg-205-plan-judge REVISE, your structured output MUST include:
 
