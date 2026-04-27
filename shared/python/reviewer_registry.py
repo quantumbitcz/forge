@@ -1,6 +1,7 @@
 """Extract REVIEW-tier registry slice from shared/agents.md for orchestrator injection."""
 from __future__ import annotations
 
+import functools
 import pathlib
 import re
 
@@ -12,11 +13,20 @@ _REGISTRY_START = re.compile(r"^##\s+Registry\s*$", re.MULTILINE)
 _REGISTRY_END = re.compile(r"^##\s+Tier Definitions\s*$", re.MULTILINE)
 
 
+@functools.lru_cache(maxsize=1)
 def extract_review_tier_slice(agents_md: pathlib.Path) -> list[dict]:
     """Return [{'name': 'fg-411-security-reviewer', 'domain': 'Security'}, ...].
 
     Scoped strictly to the §Registry section. Each row's 5th column
     (Category) becomes the domain. Returns one entry per fg-41* reviewer.
+
+    In-process cache (`@functools.lru_cache(maxsize=1)`): the orchestrator
+    builds the registry slice once per run; subsequent calls in the same
+    Python process return the cached list. Path-keyed, so different paths
+    cache independently. Callers MUST NOT mutate the returned list — it is
+    shared across all callers in the process. To force re-read (e.g., after
+    rewriting agents.md in the same process, or in tests), call
+    `extract_review_tier_slice.cache_clear()`.
     """
     text = agents_md.read_text(encoding="utf-8")
 
