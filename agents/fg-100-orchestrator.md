@@ -1556,6 +1556,11 @@ Check mode overrides. Bugfix → include bugfix context in dispatch.
 
 After: `complete → true`.
 
+**Learnings-cache invalidation (Phase 4):** After `fg-700-retrospective`
+returns successfully, clear `state.learnings_cache` in `.forge/state.json`
+so the next PREFLIGHT re-reads the (possibly rewritten) v2 frontmatter.
+Inline step — no agent dispatch. Log: `learnings: cache invalidated`.
+
 ### Wiki Incremental (v1.20+)
 
 `wiki.auto_update` true → [dispatch fg-135-wiki-generator] incremental with changed files + learnings. Update meta. Failure → INFO.
