@@ -93,6 +93,9 @@ Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge-in
 | Skill contract | `shared/skill-contract.md` |
 | Agent colors + clusters | `shared/agent-colors.md` |
 | AskUserQuestion patterns | `shared/ask-user-question-patterns.md` |
+| Learnings selector (Phase 4) | `hooks/_py/learnings_selector.py` |
+| Learnings decay math | `hooks/_py/memory_decay.py` + `shared/learnings/decay.md` |
+| Agent→role map | `hooks/_py/agent_role_map.py` |
 
 Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verification-evidence.md`, `tracking/tracking-schema.md`, `git-conventions.md`, `mcp-provisioning.md`, `version-resolution.md`, `agent-ui.md`, `sprint-state-schema.md`, `intent-classification.md`, `domain-detection.md`, `decision-log.md`, `state-integrity.sh`, `mcp-detection.md`, `learnings/README.md`, `learnings/memory-discovery.md`, `explore-cache.md`, `plan-cache.md`, `visual-verification.md`, `lsp-integration.md`, `observability.md`, `data-classification.md`, `security-posture.md`, `automations.md`, `background-execution.md`, `a2a-protocol.md`, `composition.md`, `living-specifications.md`, `spec-inference.md`, `accessibility-automation.md`, `i18n-validation.md`, `performance-regression.md`, `next-task-prediction.md`, `dx-metrics.md`, `monorepo-integration.md`, `feature-flag-management.md`, `a2a-http-transport.md`, `deployment-strategies.md`, `consumer-driven-contracts.md`.
 
@@ -237,6 +240,7 @@ Features (each has dedicated doc in `shared/`):
 | AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |
 | Memory discovery | `memory_discovery.*` | Auto-discovered items decay 2x faster, start MEDIUM |
+| Learnings read path (F-P4) | `learnings.*` | Decay-aware per-agent injection. Selector `hooks/_py/learnings_selector.py`; marker protocol `LEARNING_APPLIED` / `LEARNING_FP` / `LEARNING_VINDICATED`; retrospective write-back via `hooks/_py/learnings_writeback.py`. Telemetry: `forge.learning.*`. See `shared/learnings/decay.md`. |
 | Background execution | — | `--background`, `.forge/alerts.json` for escalations |
 | Automations | `automations.*` | Cron/CI/MCP triggers via `hooks/automation_trigger.py` |
 | Visual verification | `visual_verification.*` | Screenshot-based via Playwright MCP |
