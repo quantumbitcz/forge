@@ -306,3 +306,5 @@ With scores oscillating `[87, 82, 87, 82, 87]` and tolerance 5, every second del
 Scores `[82, 87, 82, 88, 82]`, tolerance 5.
 - Deltas: `+5, -5, +6, -6`.
 - Cycle 2: `|delta| = 5 >= 5` → REGRESSING, ESCALATE. Same outcome: the engine escalates on the first full-tolerance dip.
+
+---
