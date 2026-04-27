@@ -105,3 +105,45 @@ print('OK')
 "
   [ "$status" -eq 0 ]
 }
+
+@test "corrupted state.json (malformed JSON) reinits without crash" {
+  run python3 -c "
+import sys, pathlib
+sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+from state_init import load_or_reinit
+p = pathlib.Path('$TMPDIR/corrupt.json')
+# Write malformed JSON: truncated, unterminated string, garbage
+p.write_text('{\"version\": \"2.0.0\", \"plan_judge_loops\": 1, \"unterminated\": \"this string never')
+s = load_or_reinit(p, mode='standard')
+assert s['version'] == '2.0.0', s['version']
+assert s['plan_judge_loops'] == 0, s['plan_judge_loops']
+assert s['judge_verdicts'] == []
+# Backup of corrupt file should exist alongside the reinit
+backup = p.parent / 'state.v1.bak'
+assert backup.exists(), 'expected corrupt-file backup at state.v1.bak'
+print('OK')
+"
+  [ "$status" -eq 0 ]
+}
+
+@test "future-version state.json (3.0.0) reinits with version_mismatch (treated as unknown)" {
+  run python3 -c "
+import json, sys, pathlib
+sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+from state_init import load_or_reinit
+p = pathlib.Path('$TMPDIR/future.json')
+p.write_text(json.dumps({'version': '3.0.0', 'some_future_field': 'xyz', 'plan_judge_loops': 99}))
+s = load_or_reinit(p, mode='standard')
+assert s['version'] == '2.0.0', s['version']
+# Future field is dropped (no migration shim, treated as unknown)
+assert 'some_future_field' not in s
+assert s['plan_judge_loops'] == 0, s['plan_judge_loops']
+# Backup of the unknown-version file should exist
+backup = p.parent / 'state.v1.bak'
+assert backup.exists(), 'expected version_mismatch backup at state.v1.bak'
+backup_data = json.loads(backup.read_text())
+assert backup_data['version'] == '3.0.0', backup_data['version']
+print('OK')
+"
+  [ "$status" -eq 0 ]
+}
