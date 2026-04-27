@@ -41,6 +41,11 @@ FORGE_CONVERGENCE_ITERATIONS = "forge.convergence.iterations"
 FORGE_BATCH_SIZE = "forge.batch.size"
 FORGE_BATCH_AGENTS = "forge.batch.agents"
 FORGE_COST_UNKNOWN = "forge.cost.unknown"
+FORGE_LEARNING_ID = "forge.learning.id"
+FORGE_LEARNING_CONFIDENCE_NOW = "forge.learning.confidence_now"
+FORGE_LEARNING_APPLIED_COUNT = "forge.learning.applied_count"
+FORGE_LEARNING_SOURCE_PATH = "forge.learning.source_path"
+FORGE_LEARNING_REASON = "forge.learning.reason"
 
 # Cardinality budget.
 BOUNDED_ATTRS: tuple[str, ...] = (
@@ -64,4 +69,9 @@ UNBOUNDED_ATTRS: tuple[str, ...] = (
     GEN_AI_TOKENS_TOTAL,
     GEN_AI_COST_USD,
     GEN_AI_TOOL_CALLS,
+    FORGE_LEARNING_ID,  # per-item; bounded ~500, never safe as span name.
+    FORGE_LEARNING_CONFIDENCE_NOW,
+    FORGE_LEARNING_APPLIED_COUNT,
+    FORGE_LEARNING_SOURCE_PATH,
+    FORGE_LEARNING_REASON,
 )
