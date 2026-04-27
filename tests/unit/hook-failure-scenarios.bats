@@ -6,8 +6,8 @@
 # Behavior change vs. the old bash hooks: checkpoint no longer mutates
 # state.json.lastCheckpoint (it appends to .forge/checkpoints.jsonl), and
 # feedback-capture no longer writes auto-captured.md (it appends
-# session_stop entries to .forge/events.jsonl). The old .hook-failures.log
-# and platform.sh atomic_json_update plumbing is gone.
+# session_stop entries to .forge/events.jsonl). The old hook-failures log
+# (.log suffix) and platform.sh atomic_json_update plumbing is gone.
 
 load '../helpers/test-helpers'
 
