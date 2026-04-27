@@ -2,7 +2,7 @@
 # Scenario tests: state machine end-to-end transition flows.
 # Tests multi-step paths through forge-state.sh to verify the complete pipeline.
 
-# Covers:
+# Covers: T-01, T-02, T-05, T-09, T-10, T-19, T-26, T-27, T-30, T-38, T-40, T-41, T-42, T-43, T-44, T-45, T-49, T-50, T-52, D-01, E-01
 
 load '../helpers/test-helpers'
 

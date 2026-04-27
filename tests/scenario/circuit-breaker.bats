@@ -2,7 +2,7 @@
 # Scenario tests: circuit breaker integration with recovery subsystem
 
 # mutation_row: E-3
-# Covers: E-3, E-4
+# Covers: E-03, E-04
 
 load '../helpers/test-helpers'
 
