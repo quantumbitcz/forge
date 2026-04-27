@@ -771,3 +771,30 @@ append. The file survives `/forge-recover reset`. Consumers:
 - `/forge-status --live` reads the head for a synopsis.
 - Phase-1 observability recipes in `shared/observability.md` §Local
   inspection demonstrate `jq`/PowerShell/CMD access.
+
+---
+
+## Learnings Write-Back (Phase 4)
+
+After the standard retrospective extraction, run the following at Stage 9:
+
+```
+1. events := otel.replay(events_path=".forge/events.jsonl", config=...)
+   Filter to forge.learning.{injected,applied,fp,vindicated} for this run_id.
+
+2. For each file under shared/learnings/ and ~/.claude/forge-learnings/
+   that has at least one event targeting its items:
+       learnings_writeback.apply_events_to_file(path, events, now)
+
+3. Emit the standard decay summary line:
+       decay: N demoted, M archived, K reinforced, J false-positives
+       (last 7d: L)
+
+4. Emit one `learning-update: id=<id> Δbase=<delta> archived=<bool>` line
+   per mutated item (structured output; fg-710-post-run may aggregate).
+```
+
+Never infer false-positives from "reviewer raised CRITICAL in the same
+domain" — the retrospective responds **only** to explicit LEARNING_FP /
+inapplicable PREEMPT_SKIPPED markers (AC9). Domain overlap is too coarse
+and would punish learnings for being topical rather than wrong.
