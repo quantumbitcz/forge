@@ -11,14 +11,14 @@ Canonical sequence for the A+ roadmap (8 phases) + mega-consolidation (5 plans).
 | 3 | Phase 3 — Correctness Proofs | `docs/superpowers/plans/2026-04-22-phase-3-correctness-proofs.md` | Bumps `plugin.json` to **3.7.0** |
 | 4 | Phase 4 — Learnings Dispatch Loop | `docs/superpowers/plans/2026-04-22-phase-4-learnings-dispatch-loop.md` | |
 | 5 | Phase 5 — Pattern Modernization, Judges | `docs/superpowers/plans/2026-04-22-phase-5-pattern-modernization.md` | Renames `fg-205-planning-critic` → `fg-205-plan-judge` and `fg-301-implementer-critic` → `fg-301-implementer-judge`. Bumps `plugin.json` to **4.0.0**. Sets `state-schema` version to **2.0.0** |
-| 6 | Phase 6 — Cost Governance | `docs/superpowers/plans/2026-04-22-phase-6-cost-governance.md` | |
+| 6 | Phase 6 — Cost Governance | `docs/superpowers/plans/2026-04-22-phase-6-cost-governance.md` | Bumps `plugin.json` to **4.1.0** |
 | 7 | Phase 7 — Intent Assurance | `docs/superpowers/plans/2026-04-22-phase-7-intent-assurance.md` | Adds `fg-540-intent-verifier`. **Prereq Edit 3 applied:** fg-540 reads ACs from `state.brainstorm.spec_path` with `.forge/specs/index.json` fallback |
 | 8 | Mega A — Helpers + Schema | `docs/superpowers/plans/2026-04-27-mega-consolidation-A-helpers.md` | Auto-bumps `state-schema` from 2.0.0 → **2.1.0** in A6 |
 | 9 | Mega B — Skill Surface | `docs/superpowers/plans/2026-04-27-mega-consolidation-B-skill-surface.md` | **Prereq Edit 6 applied:** B3 absorbs `forge-status` `--- live ---` content from Phase 1 Task 24. B12 deletes 26 old skills (incl. `/forge-init`, `/forge-run`, `/forge-status`) |
 | 10 | Mega C — Brainstorming | `docs/superpowers/plans/2026-04-27-mega-consolidation-C-brainstorming.md` | Ports superpowers brainstorm pattern into `fg-010-shaper`; populates `state.brainstorm.spec_path` |
 | 11 | Mega D — Pattern Parity | `docs/superpowers/plans/2026-04-27-mega-consolidation-D-pattern-parity.md` | **Prereq Edit 1 applied:** D8 references `fg-301-implementer-judge.md` (post-P5 name) |
-| 12 | Mega E — Docs | `docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md` | **Prereq Edit 2 applied:** README enumeration uses post-P5 agent names. Bumps `plugin.json` to **4.1.0** |
-| 13 | Phase 8 — Measurement | `docs/superpowers/plans/2026-04-22-phase-8-measurement.md` | **Prereq Edit 4 applied:** benchmark runner uses `/forge run --eval-mode=...` (post-mega surface). Bumps `plugin.json` to **4.2.0** |
+| 12 | Mega E — Docs | `docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md` | **Prereq Edit 2 applied:** README enumeration uses post-P5 agent names. Bumps `plugin.json` to **5.3.0** |
+| 13 | Phase 8 — Measurement | `docs/superpowers/plans/2026-04-22-phase-8-measurement.md` | **Prereq Edit 4 applied:** benchmark runner uses `/forge run --eval-mode=...` (post-mega surface). Bumps `plugin.json` to **6.0.0** |
 
 ## Prerequisite cross-cutting edits (status checklist)
 
