@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """Scenario coverage reporter for shared/state-transitions.md.
 
+Requires Python 3.10+ (uses match/case statement).
+
 Parses:
-  - The three transition tables in state-transitions.md (normal flow, error,
-    convergence). Reads the ACTUAL row numbers present — today the normal
-    flow has a gap at row 20, so denominator = count-of-present-rows, not
-    max(id).
+  - The four canonical transition tables in state-transitions.md (PREFLIGHT
+    normal flow, error & escalation, recovery & rewind, convergence). Reads
+    the ACTUAL row numbers present — today the normal flow has a gap at row
+    20, so denominator = count-of-present-rows, not max(id).
   - `# Covers: T-01, T-37, C-09, ...` headers in tests/scenario/*.bats.
+
+Table identification: only rows that follow a recognised header (see
+`KNOWN_HEADERS`) are consumed. This prevents incidental tables (e.g. the
+"Mode Overlay Effects" table) from polluting the row count.
 
 Produces:
   tests/scenario/COVERAGE.md — row-by-row coverage table, plus a split
@@ -18,18 +24,32 @@ Produces:
 CI modes:
   default  — regenerate COVERAGE.md in-place
   --check  — regenerate and diff against committed file; exit 1 on drift
-  --gate   — also apply the 60% T-* hard gate and 80% warning gate
+  --gate   — apply the 60% T-* hard gate and 80% warning gate
+
+Order of operations when multiple modes are passed:
+  1. regenerate the report in memory (always);
+  2. --check compares the rendered report against the committed file
+     (does NOT write); failures here are reported first;
+  3. --gate enforces the T-* coverage hard/soft thresholds; failures here
+     are reported after --check.
+  When both --check and --gate are passed, both are evaluated and exit
+  codes are combined (any non-zero result → exit 1).
 
 Exit:
   0 — green (coverage >= 80% on T-*, committed file up-to-date)
   1 — hard gate violated (T-* coverage < 60% OR committed file stale)
-  2 — internal error (malformed table, etc.)
+  2 — internal error (malformed table, unsupported Python, etc.)
 """
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 10):
+    sys.stderr.write("report_coverage.py requires Python 3.10+\n")
+    sys.exit(2)
+
 import argparse
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -70,6 +90,24 @@ ROW_RE = re.compile(
 )
 COVERS_RE = re.compile(r"^\s*#\s*Covers:\s*(?P<ids>.+?)\s*$")
 
+# Canonical headers for the four transition tables in state-transitions.md.
+# `current_state`/`next_state` for the three flow tables; `current_phase`/
+# `next_phase` for the convergence table. Header detection only requires
+# the leading discriminating columns (#, current_state|current_phase,
+# event); column-renames downstream of `event` do not silently break
+# row consumption.
+KNOWN_HEADERS = (
+    re.compile(
+        r"^\|\s*#\s*\|\s*current_state\s*\|\s*event\s*\|", re.IGNORECASE
+    ),
+    re.compile(
+        r"^\|\s*#\s*\|\s*current_phase\s*\|\s*event\s*\|", re.IGNORECASE
+    ),
+)
+# Markdown table separator immediately following a header, e.g.
+# `|---|---------------|-------|-------|------------|--------|`.
+SEPARATOR_RE = re.compile(r"^\|\s*-{3,}")
+
 
 def _prefix_for(raw_id: str) -> str:
     """Map raw row ID to canonical form.
@@ -90,11 +128,33 @@ def _prefix_for(raw_id: str) -> str:
 
 
 def parse_rows(md: Path) -> list[TxRow]:
-    """Return rows from all four transition tables in file order."""
+    """Return rows from all four canonical transition tables in file order.
+
+    Only rows that follow a recognised header (see ``KNOWN_HEADERS``) are
+    consumed. Tables with unrelated schemas (e.g. "Mode Overlay Effects")
+    are ignored even if their first column starts with a digit.
+    """
     out: list[TxRow] = []
+    in_canonical_table = False
     for raw in md.read_text(encoding="utf-8").splitlines():
-        m = ROW_RE.match(raw.rstrip())
+        line = raw.rstrip()
+        if any(p.match(line) for p in KNOWN_HEADERS):
+            in_canonical_table = True
+            continue
+        if not in_canonical_table:
+            continue
+        # Skip the markdown separator row that follows the header.
+        if SEPARATOR_RE.match(line):
+            continue
+        # Table ended on a blank line or a non-table line.
+        if not line.lstrip().startswith("|"):
+            in_canonical_table = False
+            continue
+        m = ROW_RE.match(line)
         if not m:
+            # A `|`-prefixed line that is not a parseable row terminates
+            # the table (e.g. a stray comment or different schema).
+            in_canonical_table = False
             continue
         rid = _prefix_for(m["id"])
         desc = f"{m['cur'].strip(' `')} + {m['evt'].strip(' `')}"
@@ -197,9 +257,38 @@ def render(results: list[CoverageRow]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="report-coverage")
-    ap.add_argument("--check", action="store_true")
-    ap.add_argument("--gate", action="store_true")
+    ap = argparse.ArgumentParser(
+        prog="report-coverage",
+        description=(
+            "Regenerate tests/scenario/COVERAGE.md from "
+            "shared/state-transitions.md and tests/scenario/*.bats. "
+            "Order of operations when multiple modes are passed: "
+            "(1) regenerate report (default mode); "
+            "(2) --check compares the rendered report against the "
+            "committed file (does not write); "
+            "(3) --gate enforces the T-* coverage thresholds. "
+            "Failures are reported in that order. When both --check and "
+            "--gate are passed, both are evaluated and exit codes are "
+            "combined (any non-zero result -> exit 1)."
+        ),
+    )
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Compare rendered report against committed COVERAGE.md "
+            "without writing; exit 1 on drift."
+        ),
+    )
+    ap.add_argument(
+        "--gate",
+        action="store_true",
+        help=(
+            f"Enforce T-* hard gate ({HARD_GATE_PCT:.0f}%%) and emit "
+            f"warning below {SOFT_WARN_PCT:.0f}%%. Combined with --check "
+            "if both are passed."
+        ),
+    )
     args = ap.parse_args(argv)
 
     try:
@@ -212,13 +301,15 @@ def main(argv: list[str] | None = None) -> int:
     results = compute_coverage(rows, headers)
     rendered = render(results)
 
+    failures = 0
+
     if args.check:
         old = COVERAGE_MD.read_text(encoding="utf-8") if COVERAGE_MD.is_file() else ""
         if old != rendered:
             print("[ERROR] tests/scenario/COVERAGE.md is stale; "
                   "run `python tests/scenario/report_coverage.py` and commit.",
                   file=sys.stderr)
-            return 1
+            failures += 1
     else:
         COVERAGE_MD.write_text(rendered, encoding="utf-8")
 
@@ -228,10 +319,13 @@ def main(argv: list[str] | None = None) -> int:
         if t_pct < HARD_GATE_PCT:
             print(f"::error::T-* coverage {t_pct:.1f}% < {HARD_GATE_PCT}% hard gate",
                   file=sys.stderr)
-            return 1
-        if t_pct < SOFT_WARN_PCT:
+            failures += 1
+        elif t_pct < SOFT_WARN_PCT:
             print(f"::warning::T-* coverage {t_pct:.1f}% < {SOFT_WARN_PCT}% soft gate",
                   file=sys.stderr)
+
+    if failures:
+        return 1
 
     print(f"[PASS] coverage report regenerated ({len(results)} rows)")
     return 0
