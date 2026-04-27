@@ -25,6 +25,15 @@ HEADER = (
 
 
 def _sanitize(body: str) -> str:
+    """Strip control bytes so untrusted body text cannot break the block.
+
+    Newlines (``\\n``, U+000A) are preserved because the renderer joins
+    multi-line bodies. All other control bytes below ASCII 32 are
+    stripped — including tab (``\\t``, U+0009), carriage return
+    (``\\r``, U+000D), and form feed (``\\f``, U+000C). Tabs in
+    particular are NOT preserved; if a learning's prose used tabs for
+    indentation they collapse to nothing here.
+    """
     return "".join(ch for ch in body if ch == "\n" or ch >= " ")
 
 

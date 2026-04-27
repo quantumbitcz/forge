@@ -5,7 +5,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from hooks._py.learnings_selector import LearningItem, select_for_dispatch
+from hooks._py.learnings_selector import (
+    LearningItem,
+    _is_cross_project,
+    select_for_dispatch,
+)
 
 
 UTC = timezone.utc
@@ -158,3 +162,16 @@ def test_unknown_agent_returns_empty():
         candidates=items, now=NOW,
     )
     assert out == []
+
+
+def test_is_cross_project_path_components_only():
+    """Substring match is too loose: only exact path components count."""
+    # Canonical layout
+    assert _is_cross_project("/Users/x/.claude/forge-learnings/spring.md")
+    assert _is_cross_project("/home/x/.claude/forge-learnings/general.md")
+    # Sibling directory must NOT match (this is the bug M10 fixes)
+    assert not _is_cross_project("/Users/x/forge-learnings-tools/spring.md")
+    assert not _is_cross_project("/tmp/my-forge-learnings/spring.md")
+    # In-repo learnings (the common local case)
+    assert not _is_cross_project("shared/learnings/spring.md")
+    assert not _is_cross_project("/repo/shared/learnings/spring.md")

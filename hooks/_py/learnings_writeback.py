@@ -82,8 +82,13 @@ def _render_items(items: list[dict]) -> str:
             return "null"
         if isinstance(v, bool):
             return "true" if v else "false"
-        if isinstance(v, (int, float)):
-            return repr(v) if isinstance(v, float) else str(v)
+        if isinstance(v, float):
+            # 4-decimal rounding avoids float imprecision drift across
+            # repeated success/false-positive applications (e.g. 0.85
+            # accumulating to 0.8500000000000001).
+            return f"{v:.4f}"
+        if isinstance(v, int):
+            return str(v)
         if isinstance(v, list):
             return "[" + ", ".join(_q(x) for x in v) + "]"
         return f'"{v}"'
@@ -137,6 +142,18 @@ def _merge_back(it: dict, decay_out: dict) -> dict:
 def apply_events_to_file(
     path: Path, events: list[dict], now: datetime
 ) -> bool:
+    """Apply learning events to ``path`` and re-emit its frontmatter.
+
+    Side-effect note: after the per-event mutations, this function also runs
+    :func:`memory_decay.archival_floor` against **every** item in the file —
+    not just the items targeted by ``events``. That keeps low-confidence
+    items from lingering forever, but it means an unrelated item can flip
+    to ``archived: true`` during a write that was nominally about a
+    different id. The pass is idempotent and cheap, so the file is only
+    rewritten if at least one event-driven OR archival-floor change
+    actually occurred (``changed`` tracks both); a no-op call returns
+    ``False`` and leaves the file untouched.
+    """
     raw = path.read_text(encoding="utf-8")
     head, body, tail = _split(raw)
     if not head:

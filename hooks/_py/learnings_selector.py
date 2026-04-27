@@ -8,9 +8,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 
 from hooks._py.agent_role_map import role_for_agent
 from hooks._py.memory_decay import SPARSE_THRESHOLD
+
+
+def _is_cross_project(source_path: str) -> bool:
+    """True only when ``forge-learnings`` is an exact path component.
+
+    Substring matching would misclassify sibling paths like
+    ``/Users/x/forge-learnings-tools/`` as cross-project. Splitting via
+    :class:`pathlib.Path` rejects those while still recognising the canonical
+    ``~/.claude/forge-learnings/`` layout.
+    """
+    return "forge-learnings" in Path(source_path).parts
 
 
 @dataclass(frozen=True)
@@ -61,7 +73,7 @@ def _domain_match_score(
 def _cross_project_penalty(
     source_path: str, local_density: int, sparse_threshold: int
 ) -> float:
-    if "forge-learnings" in source_path and local_density > sparse_threshold:
+    if _is_cross_project(source_path) and local_density > sparse_threshold:
         return 0.85
     return 1.0
 
@@ -86,7 +98,7 @@ def select_for_dispatch(
 ) -> list[LearningItem]:
     """Return up to ``max_items`` relevant learnings for this dispatch."""
     local_density = sum(
-        1 for c in candidates if "forge-learnings" not in c.source_path
+        1 for c in candidates if not _is_cross_project(c.source_path)
     )
     filtered = [
         c for c in candidates
