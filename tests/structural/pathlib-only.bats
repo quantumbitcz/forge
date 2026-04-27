@@ -7,6 +7,9 @@ PY_FILES=(
   hooks/_py/failure_log.py
   hooks/_py/progress.py
   tests/lib/derive_support_tiers.py
+  tests/mutation/state_transitions.py
+  tests/scenario/report_coverage.py
+  tests/e2e/dry-run-smoke.py
 )
 
 @test "Phase 1 Python code uses pathlib not hardcoded separators" {
@@ -30,6 +33,7 @@ stripped = re.sub(r"(?s)'''.*?'''", "", stripped)               # triple-single 
 stripped = re.sub(r"#.*$", "", stripped, flags=re.M)            # line comments
 stripped = re.sub(r"""[rRbB]+(?:"[^"]*"|'[^']*')""", "", stripped)  # raw/byte strings
 stripped = re.sub(r"""(?:"[^"]*://[^"]*"|'[^']*://[^']*')""", "", stripped)  # URL literals
+stripped = re.sub(r'''(?:"#\s[^"]*"|'#\s[^']*')''', "", stripped)  # markdown-heading literals (report output)
 
 # Flag string literals (single OR double-quoted) that contain '/' or '\\'
 # and end in a known source/data extension — i.e. hardcoded paths that
