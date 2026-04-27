@@ -326,7 +326,7 @@ The prose report and findings JSON share dedup keys so the merge between them is
 1. For each piece of feedback, run a fresh-context defense check via Tier-3 sub-agent dispatch:
    - Input: the feedback text, the changed code, the test suite, recent commits.
    - Output: `{verdict: "actionable" | "wrong" | "preference", reasoning: str, evidence: str}`.
-2. If `verdict: wrong`, generate a defense response (`reasoning + evidence`) and post to the PR conversation thread via the GitHub MCP. Mark the feedback as "addressed: defended" in `.forge/runs/<run_id>/feedback-decisions.jsonl`.
+2. If `verdict: wrong`, generate a defense response (`reasoning + evidence`) and post to the PR conversation thread via the platform abstraction layer (§6.1). Mark the feedback as "addressed: defended" in `.forge/runs/<run_id>/feedback-decisions.jsonl`.
 3. If `verdict: preference`, post an acknowledgment without making code changes. Mark as "addressed: acknowledged".
 4. If `verdict: actionable`, route to the relevant stage as today.
 
@@ -334,7 +334,50 @@ The prose report and findings JSON share dedup keys so the merge between them is
 
 **Config:** `post_run.defense_enabled` (default true), `post_run.defense_min_evidence` (default true — require a code/test reference in the defense response).
 
-**Autonomous mode:** disabled (no MCP push without confirmation). Autonomous defaults to "actionable" for all feedback when MCP write is not available.
+**Autonomous mode:** the defense check itself runs (it's a sub-agent dispatch, no user prompt). Posting back to the PR happens automatically when the platform integration is available; if the integration is unavailable (e.g. no API token), the defense is logged to `feedback-decisions.jsonl` only and a warning is logged. No autonomous failure.
+
+#### §6.1 — Platform abstraction (multi-VCS)
+
+forge supports four PR/MR platforms. Detection runs once at PREFLIGHT (cached in `state.platform`) and selects the integration for any platform-touching agent (post-run, PR builder).
+
+**New helper:** `shared/platform-detect.py` — module added in commit A2.5.
+- **Input:** repository root path; optional `platform.detection` and `platform.remote_name` config from `forge.local.md`.
+- **Output:** `{platform: "github" | "gitlab" | "bitbucket" | "gitea" | "unknown", remote_url, api_base, auth_method}`.
+
+**Detection algorithm (when `platform.detection: auto`):**
+1. Read `git remote get-url <platform.remote_name>` (default `origin`).
+2. Match against known host patterns:
+   - `github.com` → `github`.
+   - `gitlab.com` or `gitlab.<custom-domain>` or presence of `.gitlab-ci.yml` at repo root → `gitlab`.
+   - `bitbucket.org` or `bitbucket.<custom-domain>` or presence of `bitbucket-pipelines.yml` → `bitbucket`.
+   - Self-hosted Gitea/Forgejo: detected via API probe at `<host>/api/v1/version` returning the Gitea/Forgejo signature → `gitea`.
+3. If no match, return `platform: "unknown"`.
+
+**Per-platform integration:**
+
+| Platform | Comment posting | Auth method | Notes |
+|---|---|---|---|
+| GitHub | GitHub MCP (`mcp__plugin_github_github__add_issue_comment`) or `gh api` fallback | `gh` CLI auth or `GITHUB_TOKEN` env | First-class. |
+| GitLab | `glab api` CLI (REST: `POST /projects/:id/merge_requests/:iid/notes`) | `GITLAB_TOKEN` env or `glab` CLI auth | First-class. |
+| Bitbucket | `curl` against REST API v2.0 (`POST /repositories/<workspace>/<repo>/pullrequests/<id>/comments`) | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` env | Curl-based; no MCP. |
+| Gitea/Forgejo | `curl` against REST API v1 (`POST /repos/<owner>/<repo>/issues/<id>/comments`) | `GITEA_TOKEN` env | Curl-based; no MCP. |
+| Unknown | No-op + warn | n/a | Fall back to local-only logging. |
+
+**Failure handling:** if the auth env var is missing, the integration logs a warning and writes the defense to `feedback-decisions.jsonl` with `addressed: defended_local_only`. The pipeline does not abort — defenses always have a durable local record even when the post-back fails.
+
+**`state.platform` schema (added to §11):**
+
+```jsonc
+"platform": {
+  "name": "github",
+  "remote_url": "https://github.com/quantumbitcz/forge",
+  "api_base": "https://api.github.com",
+  "auth_method": "gh-cli",
+  "detected_at": "2026-04-27T15:00:00Z"
+}
+```
+
+The orchestrator reads `state.platform.name` to dispatch to the right integration; downstream agents do not call `platform-detect.py` themselves.
 
 ### §7 — Debugging uplift (`fg-020-bug-investigator`)
 
@@ -359,16 +402,16 @@ The prose report and findings JSON share dedup keys so the merge between them is
    ```
 
    - **Priors P(H_i):** uniform — `1/n` where `n` is the count of hypotheses (typically 3 → 0.333 each).
-   - **Likelihood P(E | H_i):** derived from `passes_test` and `confidence` of the sub-investigator's verdict:
-     - `passes_test: true, confidence: high` → 0.90
-     - `passes_test: true, confidence: medium` → 0.70
-     - `passes_test: true, confidence: low` → 0.55
-     - `passes_test: false, confidence: high` → 0.10
-     - `passes_test: false, confidence: medium` → 0.30
-     - `passes_test: false, confidence: low` → 0.45
-   - Posterior is recomputed in one pass after all sub-investigators report; this is normal naive-Bayes with hand-tuned likelihood tables.
+   - **Likelihood P(E | H_i):** derived from `passes_test` and `confidence` of the sub-investigator's verdict. Tuned for high precision (avoid acting on weak evidence):
+     - `passes_test: true, confidence: high` → 0.95
+     - `passes_test: true, confidence: medium` → 0.75
+     - `passes_test: true, confidence: low` → 0.50  ← weak positive evidence does NOT strongly raise probability
+     - `passes_test: false, confidence: high` → 0.05  ← strong negative evidence is decisive
+     - `passes_test: false, confidence: medium` → 0.20
+     - `passes_test: false, confidence: low` → 0.40  ← weak failure barely lowers probability
+   - Posterior is recomputed in one pass after all sub-investigators report; this is naive-Bayes with hand-tuned likelihood tables. Likelihoods chosen for high precision: low-confidence verdicts cluster around 0.4-0.5 (uninformative) so they don't move the gate; high-confidence verdicts at 0.95/0.05 are decisive.
    - **Pruning rule:** any hypothesis with posterior < 0.10 is dropped (`status: dropped`); the surviving hypotheses' posteriors are renormalized so the remaining set still sums to 1.0.
-4. **Fix gate:** the planner (`fg-200`) refuses to plan a fix until at least one hypothesis has `passes_test: true` and posterior ≥ 0.50. If all hypotheses fail, escalate to user with the hypothesis register attached.
+4. **Fix gate (high-precision):** the planner (`fg-200`) refuses to plan a fix until at least one hypothesis has `passes_test: true` AND posterior ≥ **0.75**. If all hypotheses fail, escalate to user with the hypothesis register attached. The 0.75 threshold (not 0.50) reflects the "almost perfect code" maxim — fixes proceed only when at least one root cause is well-supported, not merely more-likely-than-not. Configurable via `bug.fix_gate_threshold` (default 0.75, range 0.50–0.95).
 
 **Falsifiability test format:** each hypothesis must include a concrete check, e.g. "if you set `X=null`, the bug should occur" or "the stack trace should show frame `Y`". The check is run by the sub-investigator before declaring `passes_test`.
 
@@ -436,6 +479,29 @@ Match against three superpowers patterns:
 Match against `superpowers:using-git-worktrees`:
 - Already isolates work in `.forge/worktree/`. Polish: add stale-worktree detection (worktrees older than 30 days flagged for cleanup).
 - Polish AC: assert smart directory selection (existing) and safety verification (existing).
+
+### §10.1 — Superpowers coverage matrix
+
+Definitive mapping of every functional superpowers skill to its forge agent uplift. **Bugfix-mode coverage is via `systematic-debugging → fg-020-bug-investigator`** (§7) — that is the agent invoked by `/forge fix`.
+
+| # | Superpowers skill | Forge agent | Spec section | Treatment |
+|---|---|---|---|---|
+| 1 | `brainstorming` | `fg-010-shaper` | §3 | Full rewrite |
+| 2 | `writing-plans` | `fg-200-planner` | §4 | Full rewrite |
+| 3 | `requesting-code-review` | `fg-400-quality-gate` + `fg-410..419` | §5 | Prose-output uplift + cross-reviewer consistency voting |
+| 4 | `receiving-code-review` | `fg-710-post-run` | §6 | Full rewrite + multi-platform support (§6.1) |
+| 5 | `systematic-debugging` | `fg-020-bug-investigator` (+ new `fg-021-hypothesis-investigator`) | §7 | Full rewrite + parallel hypothesis branching |
+| 6 | `finishing-a-development-branch` | `fg-600-pr-builder` | §8 | Full rewrite + structured AskUserQuestion dialog |
+| 7 | `test-driven-development` | `fg-300-implementer` | §9.1 | Polish: test-must-fail-first |
+| 8 | `verification-before-completion` | `fg-590-pre-ship-verifier` | §9.2 | Polish: evidence assertion structural test |
+| 9 | `subagent-driven-development` | `fg-100-orchestrator` | §9.3 | Polish: post-task checkpoint structural test |
+| 10 | `dispatching-parallel-agents` | `fg-100-orchestrator` | §9.3 | Polish: single tool-use parallel dispatch test |
+| 11 | `executing-plans` | `fg-100-orchestrator` | §9.3 | Polish: per-3-task review checkpoint |
+| 12 | `using-git-worktrees` | `fg-101-worktree-manager` | §9.4 | Polish: stale-worktree detection |
+| — | `writing-skills` | n/a | — | **Meta** — forge doesn't author skills at runtime |
+| — | `using-superpowers` | n/a | — | **Meta** — plugin entry skill, no forge runtime analogue |
+
+**Summary: 12 of 12 functional patterns covered.** Two meta-patterns explicitly out of scope with stated reason.
 
 ### §10 — Beyond-superpowers improvements (in-line)
 
@@ -536,7 +602,7 @@ The following keys are added to `forge-config.md` (plugin defaults) and validate
 brainstorm:
   enabled: true                  # default true; set false to short-circuit BRAINSTORMING (feature mode → EXPLORING)
   spec_dir: docs/superpowers/specs/   # default; where fg-010-shaper writes specs
-  autonomous_extractor_min_confidence: low   # one of: low, medium, high; below this, autonomous mode aborts instead of proceeding to EXPLORING
+  autonomous_extractor_min_confidence: medium   # default medium ("almost perfect code" — refuse weak specs); one of low|medium|high; below this, autonomous mode aborts instead of proceeding to EXPLORING
   transcript_mining:
     enabled: true                # default true; set false to skip historical-context FTS5 query
     top_k: 3                     # default 3; how many past transcripts to load (range 1-10)
@@ -550,17 +616,22 @@ quality_gate:
 bug:
   hypothesis_branching:
     enabled: true                # default true; set false to fall back to single-hypothesis serial investigation
+  fix_gate_threshold: 0.75       # default 0.75 ("almost perfect code"); minimum posterior for a hypothesis to satisfy the fix gate (range 0.50-0.95)
 
 post_run:
   defense_enabled: true          # default true; set false to disable defense-check sub-agent (all feedback treated as actionable)
   defense_min_evidence: true     # default true; require defense response to reference at least one file path or commit SHA
 
 pr_builder:
-  default_strategy: open-pr      # one of: open-pr, open-pr-draft, direct-push, stash; autonomous-mode default
+  default_strategy: open-pr-draft   # default open-pr-draft ("almost perfect code" — autonomous lands as draft for explicit human promotion); one of: open-pr, open-pr-draft, direct-push, stash
   cleanup_checklist_enabled: true   # default true; set false to skip post-strategy cleanup phase
 
 worktree:
   stale_after_days: 30           # default 30; worktrees older than this are flagged WORKTREE-STALE
+
+platform:
+  detection: auto                # default auto (detect via remote URL + repo files); one of: auto, github, gitlab, bitbucket, gitea
+  remote_name: origin            # default origin; git remote to inspect when platform.detection == auto
 ```
 
 Validation rules:
@@ -570,8 +641,11 @@ Validation rules:
 - `brainstorm.transcript_mining.top_k` must be int in [1, 10].
 - `brainstorm.transcript_mining.max_chars` must be int in [500, 32000].
 - `quality_gate.consistency_promotion.threshold` must be int in [2, 9].
+- `bug.fix_gate_threshold` must be float in [0.50, 0.95].
 - `pr_builder.default_strategy` must be one of `open-pr | open-pr-draft | direct-push | stash` (note: `abandon` is interactive-only — never an autonomous default).
 - `worktree.stale_after_days` must be int in [1, 365].
+- `platform.detection` must be one of `auto | github | gitlab | bitbucket | gitea`.
+- `platform.remote_name` must be a non-empty string matching `^[a-zA-Z0-9_./-]+$`.
 
 These keys are NOT subject to retrospective auto-tuning (they're behavior toggles or platform-specific settings). Add them to the `<!-- locked -->` section in the generated `forge-config.md`.
 
@@ -591,9 +665,10 @@ The train is split into four phases. Phases A and B are independent and can ship
 
 1. **Commit A1 — add `shared/ac-extractor.py`:** New helper for autonomous BRAINSTORMING. Contract per §3. Tests at `tests/unit/ac_extractor_test.py` covering: numbered list, given/when/then, imperative bullets, low-confidence (<2 ACs), high-confidence (≥5 ACs).
 2. **Commit A2 — extract `shared/bootstrap-detect.py`:** Lift detection logic from `skills/forge-init/SKILL.md` (still on disk) into the helper. Module exposes `detect_stack() -> dict`, `write_forge_local_md(stack, path) -> None`. **Atomic-write contract:** `write_forge_local_md` writes via temp-file-and-rename (`Path.with_suffix('.tmp')` + `Path.rename(target)`) so the target is either absent or fully written — never partial. This is required by AC-S027. Tests at `tests/unit/bootstrap_detect_test.py` covering: Kotlin/Spring, TypeScript/Next, Python/FastAPI, ambiguous-stack rejection, write-failure handling, atomic-write under simulated mid-write interrupt. Pure addition.
-3. **Commit A3 — `shared/preflight-constraints.md` updates:** Add validation rules for `brainstorm.{enabled,spec_dir,autonomous_extractor_min_confidence,transcript_mining.{enabled,top_k}}`, `quality_gate.consistency_promotion.{enabled,threshold}`, `bug.hypothesis_branching.enabled`, `post_run.{defense_enabled,defense_min_evidence}`, `pr_builder.{default_strategy,cleanup_checklist_enabled}`. Per-key validation rules per §11.1.
-4. **Commit A4 — `shared/intent-classification.md` updates:** Extend to recognize all 11 verbs (`run|fix|sprint|review|verify|deploy|commit|migrate|bootstrap|docs|audit`). Define `vague` outcome with concrete signal-count threshold (default <2). Update existing tests under `tests/unit/intent-classification/`.
-5. **Commit A5 — state schema bump:** Update `shared/state-schema.md` to add the `BRAINSTORMING` enum value, `state.brainstorm` object (per §11), `state.bug.hypotheses[]` (per §7), `state.feedback_decisions` (per §6). Bump schema version (next available minor: v1.11.0 if Phase 5 hasn't landed, else v2.1.0). Update `shared/state-transitions.md` with BRAINSTORMING transitions per §11. Update `shared/stage-contract.md` to define the new stage.
+3. **Commit A3 — add `shared/platform-detect.py`:** New helper for VCS platform detection (§6.1). Module exposes `detect_platform(repo_root: Path, config: dict) -> dict` returning `{platform, remote_url, api_base, auth_method}`. Per-platform integrations live as plug-in adapters (`shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py`). Tests at `tests/unit/platform_detect_test.py` covering: GitHub (.com), GitLab (.com + self-hosted), Bitbucket (.org), Gitea API-probe, unknown remote, missing auth (warning not error), explicit `platform.detection` override.
+4. **Commit A4 — `shared/preflight-constraints.md` updates:** Add validation rules for all new config keys per §11.1: `brainstorm.{enabled,spec_dir,autonomous_extractor_min_confidence,transcript_mining.{enabled,top_k,max_chars}}`, `quality_gate.consistency_promotion.{enabled,threshold}`, `bug.{hypothesis_branching.enabled,fix_gate_threshold}`, `post_run.{defense_enabled,defense_min_evidence}`, `pr_builder.{default_strategy,cleanup_checklist_enabled}`, `worktree.stale_after_days`, `platform.{detection,remote_name}`.
+5. **Commit A5 — `shared/intent-classification.md` updates:** Extend to recognize all 11 verbs (`run|fix|sprint|review|verify|deploy|commit|migrate|bootstrap|docs|audit`). Define `vague` outcome with concrete signal-count threshold (default <2). Update existing tests under `tests/unit/intent-classification/`.
+6. **Commit A6 — state schema bump:** Update `shared/state-schema.md` to add the `BRAINSTORMING` enum value, `state.brainstorm` (per §11), `state.bug` (per §7 — full hypotheses[] schema with all per-field types), `state.feedback_decisions[]` (per §6), `state.platform` (per §6.1). Bump schema version (next available minor: v1.11.0 if Phase 5 hasn't landed, else v2.1.0). Update `shared/state-transitions.md` with BRAINSTORMING transitions per §11. Update `shared/stage-contract.md` to define the new stage.
 
 #### Phase B — Skill surface and dispatch (depends on A2 only)
 
@@ -622,7 +697,7 @@ The train is split into four phases. Phases A and B are independent and can ship
 22. **Commit D2 — `fg-210-validator` updates:** Enforce TDD ordering, prompt presence, spec-reviewer presence. Updates AC validation matrix.
 23. **Commit D3 — reviewer pipeline uplift:** Update each `agents/fg-410..fg-419.md` to emit prose report alongside findings JSON (§5). Update `agents/fg-400-quality-gate.md` to write reports to `.forge/runs/<run_id>/reports/<reviewer>.md`.
 24. **Commit D4 — cross-reviewer consistency voting:** Add post-dedup pass to `agents/fg-400-quality-gate.md` (§5 beyond-superpowers). Logs `consistency_promoted` on findings.
-25. **Commit D5 — rewrite `agents/fg-710-post-run.md`:** Adopt receiving-code-review pattern (§6). Defense check sub-agent dispatch. Update `feedback_loop_count` semantics. New file `.forge/runs/<run_id>/feedback-decisions.jsonl`.
+25. **Commit D5 — rewrite `agents/fg-710-post-run.md`:** Adopt receiving-code-review pattern (§6). Defense check sub-agent dispatch. Update `feedback_loop_count` semantics. Reads `state.platform.name` and dispatches to the matching adapter under `shared/platform_adapters/` for posting defenses. Writes to `.forge/runs/<run_id>/feedback-decisions.jsonl`.
 26. **Commit D6 — rewrite `agents/fg-020-bug-investigator.md` + add `agents/fg-021-hypothesis-investigator.md`:** Adopt systematic-debugging pattern (§7). Hypothesis register. Bayesian pruning. Fix gate. Sub-investigator agent file is added here (Tier-3, single-purpose; see §7 for shape). Updates `state.bug.fix_gate_passed` write-side; D1 owns the read-side.
 27. **Commit D7 — rewrite `agents/fg-600-pr-builder.md`:** Adopt finishing-a-development-branch shape (§8). AskUserQuestion-driven dialog. Cleanup checklist.
 28. **Commit D8 — strong-agent polish:** Targeted updates to `fg-300-implementer` (test-must-fail-first check), `fg-590-pre-ship-verifier` (evidence assertion test), `fg-100-orchestrator` (parallel-dispatch and post-batch checkpoint structural tests), `fg-101-worktree-manager` (stale-worktree detection).
@@ -751,9 +826,10 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-PLAN-003:** Each test task includes an embedded `Spec-reviewer prompt:` section sourced from `shared/prompts/spec-reviewer-prompt.md` with the same substitution contract.
 - **AC-PLAN-004:** Each task carries explicit `Risk:` field with value `low | medium | high` (no other values accepted).
 - **AC-PLAN-005:** `agents/fg-210-validator.md` rejects plans missing any TDD ordering, prompt embedding, or risk marker. Verdict: `REVISE`. Verified by unit test running validator against synthetic broken plans.
-- **AC-PLAN-006:** Files `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` exist with the canonical superpowers shapes (verbatim or near-verbatim with attribution comment).
+- **AC-PLAN-006:** Files `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` exist with the canonical superpowers shapes. Both files MUST contain the exact attribution comment `<!-- Source: superpowers:writing-plans pattern, ported in-tree per §10 -->` at the top (after any markdown title). Verified by structural test grepping for the attribution string in both files.
 - **AC-PLAN-007:** Planner output **structure** is stable across runs on the same spec: task count, RED/GREEN/REFACTOR ordering, and ACs-per-task assignment match exactly when the planner is re-invoked. **Prose** (titles, descriptions, risk justifications) may vary because of LLM non-determinism. Verified by running the planner twice on a fixture spec and asserting structural equality (parsed AST), not text equality.
 - **AC-PLAN-008:** Autonomous mode produces planner output that satisfies AC-PLAN-001 through AC-PLAN-005 without user prompts.
+- **AC-PLAN-009:** Every task with `Risk: high` carries an explicit `Risk justification:` paragraph (minimum 30 words) documenting why the task is high-risk and what mitigation is in place. Plans missing the justification on any high-risk task are rejected by `fg-210-validator` with verdict `REVISE`. Verified by unit test running validator against synthetic plans with and without the justification block.
 
 ### Reviewer pipeline uplift (6)
 
@@ -767,7 +843,9 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Post-run / receiving-feedback uplift (5)
 
 - **AC-FEEDBACK-001:** `agents/fg-710-post-run.md` runs a defense check sub-agent dispatch for each piece of PR rejection feedback. Output schema: `{verdict: "actionable" | "wrong" | "preference", reasoning: str, evidence: str}`.
-- **AC-FEEDBACK-002:** When `verdict: wrong`, defense response (reasoning + evidence) is posted to the PR conversation thread. Platform: **GitHub only** in this spec (detected via presence of `.github/` or `gh` CLI config). For other platforms (GitLab, Bitbucket, etc.) the defense is logged to `.forge/runs/<run_id>/feedback-decisions.jsonl` with `addressed: defended_local_only` and skipped on the post-back step (logged warning, no error). Logged as `addressed: defended` in `feedback-decisions.jsonl` for the GitHub case. Verified by integration test that mocks both GitHub and non-GitHub project configs.
+- **AC-FEEDBACK-002:** When `verdict: wrong`, defense response (reasoning + evidence) is posted to the PR/MR conversation thread via the platform-appropriate integration (§6.1). Logged as `addressed: defended` in `.forge/runs/<run_id>/feedback-decisions.jsonl` on success, `addressed: defended_local_only` (with warning) when the platform integration is unavailable. Verified by integration tests covering all four detected platforms (GitHub, GitLab, Bitbucket, Gitea) plus the unknown fallback path.
+- **AC-FEEDBACK-006:** Platform detection runs at PREFLIGHT and writes `state.platform` (per §11 schema). Re-detection is skipped on subsequent stages within the same run. Verified by unit test against fixtures for each platform's remote URL plus a fixture for an unknown remote.
+- **AC-FEEDBACK-007:** When `platform.detection: <explicit>` is set in `forge.local.md`, auto-detection is skipped and the explicit value is used. The integration still verifies the auth method is configured (env var or CLI) at PREFLIGHT and warns (does not abort) if missing.
 - **AC-FEEDBACK-003:** When `verdict: preference`, acknowledgment is posted; logged as `addressed: acknowledged`. No code changes made for that comment.
 - **AC-FEEDBACK-004:** `feedback_loop_count` increments only for `actionable` feedback. Defended/acknowledged feedback does not increment.
 - **AC-FEEDBACK-005:** Autonomous mode without GitHub MCP write access defaults all verdicts to `actionable` (matches today's behavior; documented degradation).
@@ -775,9 +853,9 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Debugging uplift (7)
 
 - **AC-DEBUG-001:** `agents/fg-020-bug-investigator.md` writes `state.bug.hypotheses[]` after reproduction, with each entry containing `{id, statement, falsifiability_test, evidence_required, status}`.
-- **AC-DEBUG-002:** When `bug.hypothesis_branching.enabled: true` (default), up to 3 hypothesis sub-investigators dispatch in parallel via single tool-use block. Each emits `{hypothesis_id, evidence: list[str], passes_test: bool, confidence: "high" | "medium" | "low"}`.
+- **AC-DEBUG-002:** When `bug.hypothesis_branching.enabled: true` (default), `agents/fg-020-bug-investigator.md` documents parallel dispatch of `agents/fg-021-hypothesis-investigator.md` via a single tool-use block (matches `superpowers:dispatching-parallel-agents` pattern). Verified by structural test at `tests/structural/fg-020-parallel-dispatch.bats` greppimg the agent file for the parallel-dispatch instruction. Each sub-investigator emits `{hypothesis_id, evidence: list[str], passes_test: bool, confidence: "high" | "medium" | "low"}`. Runtime parallel-dispatch behavior is exercised by the AC-POLISH-003 / AC-POLISH-004 tests for fg-100-orchestrator (which is the umbrella behavior).
 - **AC-DEBUG-003:** Bayesian pruning step updates each hypothesis's posterior probability per the formula in §7. Hypotheses below 0.10 posterior are dropped.
-- **AC-DEBUG-004:** Fix gate: `agents/fg-200-planner.md` (in bugfix mode) refuses to plan a fix until `state.bug.fix_gate_passed: true`. Gate condition: ≥1 hypothesis with `passes_test: true` AND posterior ≥ 0.50.
+- **AC-DEBUG-004:** Fix gate: `agents/fg-200-planner.md` (in bugfix mode) refuses to plan a fix until `state.bug.fix_gate_passed: true`. Gate condition: ≥1 hypothesis with `passes_test: true` AND posterior ≥ `bug.fix_gate_threshold` (default **0.75**, range 0.50–0.95). Threshold is configurable via `forge.local.md`. Verified by unit test exercising the gate at posteriors 0.49, 0.74, 0.76, 0.95 with default threshold (only the last two pass) and again with threshold 0.50 (the 0.74 case also passes).
 - **AC-DEBUG-005:** When all hypotheses fail the gate, interactive mode escalates to user with the hypothesis register attached; autonomous mode logs `[AUTO] bug investigation inconclusive — aborting fix attempt` and exits non-zero.
 - **AC-DEBUG-006:** Each hypothesis carries a falsifiability test in `falsifiability_test` field. Sub-investigator runs the test before declaring `passes_test`.
 - **AC-DEBUG-007:** Setting `bug.hypothesis_branching.enabled: false` falls back to single-hypothesis serial investigation (legacy behavior).
@@ -832,11 +910,12 @@ All current parallel-execution patterns continue to work in the new surface:
 
 - **Created:**
   - `skills/forge/SKILL.md`, `skills/forge-admin/SKILL.md` (new skill directories — B1, B2).
-  - `shared/bootstrap-detect.py` (lifted detection helper — A2).
+  - `shared/bootstrap-detect.py` (lifted detection helper, atomic-write contract — A2).
   - `shared/ac-extractor.py` (autonomous AC extractor — A1).
+  - `shared/platform-detect.py` and `shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py` (multi-VCS support — A3).
   - `tests/structural/migration-callsites.txt` (pre-flight grep snapshot — B4).
-  - `tests/structural/skill-references-allowlist.txt` (allowlist for AC-S005 — B13).
-  - `tests/unit/skill-execution/forge-dispatch.bats`, `tests/unit/skill-execution/spec-wellformed.bats`, `tests/unit/bootstrap_detect_test.py`, `tests/unit/ac_extractor_test.py`, `tests/structural/fg-010-shaper-shape.bats`, `tests/scenarios/autonomous-cold-start.bats` (new tests — B13).
+  - `tests/structural/skill-references-allowlist.txt` (allowlist for AC-S005, pre-populated with CHANGELOG.md and DEPRECATIONS.md — B13).
+  - `tests/unit/skill-execution/forge-dispatch.bats`, `tests/unit/skill-execution/spec-wellformed.bats`, `tests/unit/bootstrap_detect_test.py`, `tests/unit/ac_extractor_test.py`, `tests/unit/platform_detect_test.py`, `tests/structural/fg-010-shaper-shape.bats`, `tests/scenarios/autonomous-cold-start.bats` (new tests — B13).
 - **Deleted:** 28 skill directories (B12 — full list in §12).
 - **Heavily edited:** `skills/forge-ask/SKILL.md` (B3), `agents/fg-010-shaper.md` (C1), `agents/fg-100-orchestrator.md` (C2 + D8), `shared/{state-schema,state-transitions,stage-contract}.md` (A5), `shared/intent-classification.md` (A4 + B8 reconciliation), `shared/preflight-constraints.md` (A3), `shared/skill-subcommand-pattern.md` (B11), `CLAUDE.md`, `README.md` (E1).
 - **Lightly edited (rewiring only):** all 8 phase specs in `docs/superpowers/specs/` (B5), all 8 phase plans (B5), all 48 agent `.md` files (B7), all 56 markdown files under `shared/` (B8), all ~49 module templates (B9), `plugin.json`, `marketplace.json`, hooks (B10).
