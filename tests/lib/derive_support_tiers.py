@@ -22,21 +22,22 @@ from pathlib import Path
 CI_VERIFIED: set[str] = set()  # Phase 2 populates this
 
 # Path-prefix rules for `community` tier — layers without explicit
-# CI/contract coverage. Matched against POSIX-style relative paths
-# under `modules/`. Prefix match (string startswith).
-COMMUNITY_PREFIXES: tuple[str, ...] = (
-    "modules/documentation/",
-    "modules/ml-ops/",
-    "modules/data-pipelines/",
-    "modules/feature-flags/",
-    "modules/build-systems/",
-    "modules/code-quality/",
-    "modules/api-protocols/",
+# CI/contract coverage. Matched against the relative path's `Path.parts`
+# under the repo root. Each entry is a prefix tuple of path components.
+COMMUNITY_PREFIX_PARTS: tuple[tuple[str, ...], ...] = (
+    ("modules", "documentation"),
+    ("modules", "ml-ops"),
+    ("modules", "data-pipelines"),
+    ("modules", "feature-flags"),
+    ("modules", "build-systems"),
+    ("modules", "code-quality"),
+    ("modules", "api-protocols"),
 )
 
 # Suffix rules: framework documentation sub-bindings have no CI of their own.
-COMMUNITY_PATH_SUFFIXES: tuple[str, ...] = (
-    "/documentation/conventions.md",
+# Each entry is a suffix tuple of path components matched against `Path.parts`.
+COMMUNITY_SUFFIX_PARTS: tuple[tuple[str, ...], ...] = (
+    ("documentation", "conventions.md"),
 )
 
 BADGE_RE = re.compile(r"^> Support tier:.*$", re.MULTILINE)
@@ -72,13 +73,14 @@ def tier_for(path: Path, root: Path) -> str:
 
     # Path-based community defaults.
     try:
-        rel = path.relative_to(root).as_posix()
+        rel_parts = path.relative_to(root).parts
     except ValueError:
-        rel = path.as_posix()
-    if rel.endswith(COMMUNITY_PATH_SUFFIXES):
-        return "community"
-    for prefix in COMMUNITY_PREFIXES:
-        if rel.startswith(prefix):
+        rel_parts = path.parts
+    for suffix in COMMUNITY_SUFFIX_PARTS:
+        if rel_parts[-len(suffix):] == suffix:
+            return "community"
+    for prefix in COMMUNITY_PREFIX_PARTS:
+        if rel_parts[: len(prefix)] == prefix:
             return "community"
 
     return "contract-verified"
