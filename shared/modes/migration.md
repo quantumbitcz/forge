@@ -10,6 +10,8 @@ stages:
     agent: fg-160-migration-planner
   implement:
     states: [MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY]
+intent_verification:
+  enabled: false           # migrations are structural, use fg-506-migration-verifier
 ---
 
 ## Migration Mode

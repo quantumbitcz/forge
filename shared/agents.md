@@ -9,7 +9,7 @@
 
 ## Model
 
-Forge currently ships 48 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
+Forge currently ships 50 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
 
 **What an agent IS.** A YAML frontmatter block declaring:
 
@@ -30,7 +30,7 @@ The body of the file is the system prompt: role, constraints, dispatch contract,
 
 Runtime wiring lives in [`agent-ui.md`](agent-ui.md) (task nesting, AskUserQuestion patterns) and in [`agent-communication.md`](agent-communication.md) (stage notes, dedup hints, PREEMPT markers, structured output).
 
-**Who the agents ARE.** 48 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
+**Who the agents ARE.** 50 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
 
 1. A row in §Registry.
 2. A tier assignment in §UI Tiers (and matching `ui:` frontmatter).
@@ -97,6 +97,7 @@ Task tracking only (no user interaction).
 | `fg-505-build-verifier` | Build verification |
 | `fg-506-migration-verifier` | Migration verification (migration mode) |
 | `fg-515-property-test-generator` | Property-based test generation (conditional) |
+| `fg-540-intent-verifier` | Intent verification probes (Phase 7 F35) |
 | `fg-555-resilience-tester` | Resilience testing (conditional) |
 | `fg-590-pre-ship-verifier` | Evidence-based ship gate |
 | `fg-610-infra-deploy-verifier` | Infrastructure verification (conditional) |
@@ -116,6 +117,7 @@ No UI capabilities. Produce findings only.
 | `fg-102-conflict-resolver` | Merge conflict resolution |
 | `fg-205-plan-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-200-planner; 2-loop bound with AskUserQuestion escalation |
 | `fg-301-implementer-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-300-implementer; 2-loop bound with AskUserQuestion escalation |
+| `fg-302-diff-judge` | Implementer-voting diff judge (Phase 7 F36) |
 | `fg-410-code-reviewer` | Code quality review |
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |
@@ -156,11 +158,14 @@ fg-100-orchestrator
   ├── IMPLEMENTING
   │   ├── fg-310-scaffolder (serial, first)
   │   ├── fg-300-implementer (parallel per task)
+  │   │     ├── fg-301-implementer-judge (inner reflection)
+  │   │     └── fg-302-diff-judge          (voting — when impl_voting gate fires)
   │   └── fg-320-frontend-polisher (conditional)
   ├── VERIFYING
   │   ├── fg-505-build-verifier
   │   ├── fg-506-migration-verifier        (conditional: mode == "migration")
   │   ├── fg-500-test-gate
+  │   ├── fg-540-intent-verifier           (Phase 7 F35: end of VERIFY, before REVIEW)
   │   └── fg-555-resilience-tester         (conditional: resilience_testing.enabled)
   ├── REVIEWING
   │   ├── fg-400-quality-gate (dispatches reviewers)
@@ -338,6 +343,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
 | fg-301-implementer-judge | 4 | No | Implement | Reflection (CoVe) |
+| fg-302-diff-judge | 4 | No | Implement | Voting |
 | fg-310-scaffolder | 3 | Yes | Implement | Scaffolding |
 | fg-320-frontend-polisher | 3 | No | Implement | Frontend |
 | fg-350-docs-generator | 3 | Yes | Document | Documentation |
@@ -356,6 +362,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-506-migration-verifier | 3 | No | Verify | Migration |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-515-property-test-generator | 3 | No | Verify | Testing |
+| fg-540-intent-verifier | 3 | No | Verify | Intent |
 | fg-555-resilience-tester | 3 | No | Verify | Resilience |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |

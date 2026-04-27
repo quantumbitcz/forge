@@ -190,3 +190,21 @@ PREFLIGHT constraints:
 - Registry size: ~1KB per spec with 5 ACs. 100 specs = ~100KB.
 - Token cost: ~500 tokens added to quality gate prompt (AC list + mapping results). ~200 tokens for undocumented behavior detection.
 - No LLM calls in the hot path. Keyword matching and grep only. LLM used only at LEARN stage for spec update proposals.
+
+## Intent Verification Integration (Phase 7)
+
+`fg-540-intent-verifier` (Phase 7 F35) consumes the AC registry at
+`.forge/specs/index.json`. Dispatched at end of Stage 5 VERIFY, before
+Stage 6 REVIEW. The verifier reads each AC's Given/When/Then, decomposes
+it into runtime probes, and emits `INTENT-*` findings. `fg-590-pre-ship-verifier` gates SHIP on:
+
+- zero open `INTENT-MISSED` CRITICAL findings, AND
+- `verified_pct >= intent_verification.strict_ac_required_pct` (default 100).
+
+`INTENT-UNVERIFIABLE` findings bubble up as spec-quality issues
+(fg-700 surfaces them in §2j Intent & Vote Analytics with a dedicated row so
+they're distinguishable from implementation-quality misses). When the
+retrospective sees 2+ `INTENT-MISSED` across 3 runs, Rule 11 proposes
+`living_specs.strict_mode: true` via `/forge-playbook-refine`.
+
+See `shared/intent-verification.md` for end-to-end architecture.

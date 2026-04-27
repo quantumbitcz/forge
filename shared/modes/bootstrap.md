@@ -17,6 +17,10 @@ stages:
     batch_override:
       batch_1: [fg-412-architecture-reviewer, fg-410-code-reviewer, fg-411-security-reviewer]
     target_score: pass_threshold
+intent_verification:
+  enabled: false           # greenfield: no ACs to verify
+impl_voting:
+  enabled: false           # greenfield: no risk baseline
 ---
 
 ## Bootstrap Mode

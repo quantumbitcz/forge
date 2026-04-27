@@ -424,6 +424,45 @@ Appended to `reports/forge-{YYYY-MM-DD}.md` when the retrospective runs.
 
 ---
 
+### §2j Intent & Vote Analytics (Phase 7)
+
+After standard retrospective sections, emit:
+
+```yaml
+intent_verification:
+  total_acs: <int>
+  verified: <int>
+  partial: <int>
+  missed: <int>
+  unverifiable: <int>
+  verified_pct: <float>              # verified / total_acs * 100
+  unverifiable_pct: <float>          # unverifiable / total_acs * 100
+
+impl_voting:
+  dispatches: <int>                   # voting fired (both samples ran)
+  diverged: <int>
+  tiebreaks: <int>
+  unresolved: <int>                   # IMPL-VOTE-UNRESOLVED count
+  cost_skipped: <int>
+  divergence_rate: <float>            # diverged / dispatches
+  per_trigger:
+    confidence: <int>
+    risk_tag: <int>
+    regression_history: <int>
+```
+
+Source: `state.intent_verification_results[]` and `state.impl_vote_history[]`.
+Render `verified_pct` and `unverifiable_pct` as **separate rows** in the
+report — low `verified_pct` + low `unverifiable_pct` = implementation quality;
+high `unverifiable_pct` = spec quality (shaper should rewrite ACs).
+
+**Auto-tuning Rule 11 (propose-only):** if `intent_missed_count >= 2` across
+last 3 runs, propose `living_specs.strict_mode: true` via the F31 rule
+promotion flow (`shared/learnings/rule-promotion.md`). Surface via
+`/forge-playbook-refine`; never auto-apply.
+
+---
+
 ### Output 2.6: Playbook Refinement Analysis
 
 When `state.json.playbook_id` is set, analyze run outcomes against playbook expectations and generate refinement proposals. Schema: `shared/schemas/playbook-refinement-schema.json`.

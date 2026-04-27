@@ -291,3 +291,14 @@ confidence:
 ### Interaction with Speculation
 
 MEDIUM-confidence requirements with ambiguity signals trigger speculative parallel plan branches. See `shared/speculation.md §Trigger Logic` for the exact predicate. HIGH and LOW bands are unaffected: HIGH proceeds single-plan, LOW routes to `/forge-shape`.
+
+## Cross-ref: Implementer Voting Gate (Phase 7 F36)
+
+`impl_voting.trigger_on_confidence_below` (default 0.4) is evaluated against
+`state.confidence.effective_confidence` defined above. The gate is subject
+to the invariant `impl_voting.trigger_on_confidence_below <=
+confidence.pause_threshold` (enforced at PREFLIGHT CRITICAL). This ensures
+voting fires only on tasks the pipeline itself would have paused on — not
+on every MEDIUM task.
+
+See `shared/intent-verification.md` § F36 Voting Gate.
