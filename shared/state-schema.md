@@ -74,6 +74,18 @@
 | `run-history.db` | Stage 9 (LEARN) | `fg-700-retrospective` | Yes (survives /forge-recover reset) | No |
 | `playbook-refinements/` | Stage 9 (LEARN) | `fg-700-retrospective` | Yes (survives /forge-recover reset) | No |
 
+The following additional paths survive `/forge-recover reset`:
+
+- `.forge/progress/` (live subagent-completion status; written by
+  `hooks/post_tool_use_agent.py`).
+- `.forge/run-history-trends.json` (30-run rollup + last 10 hook failures;
+  written by `fg-700-retrospective`).
+- `.forge/.hook-failures.jsonl` (live hook failure log; appended by every
+  hook entry) and rotated `.forge/.hook-failures-YYYYMMDD.jsonl.gz`
+  archives.
+
+Only manual `rm -rf .forge/` removes them.
+
 ### Related Files (outside `.forge/`, committed to git)
 
 | File | Location | Purpose |
