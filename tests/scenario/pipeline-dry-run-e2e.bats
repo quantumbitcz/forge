@@ -3,6 +3,8 @@
 # Validates PREFLIGHT -> EXPLORING -> PLANNING -> VALIDATING -> COMPLETE
 # using forge-state.sh transition events.
 
+# Covers: T-01, T-02, T-09, D-01
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

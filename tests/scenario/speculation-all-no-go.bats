@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
 
 @test "all NO-GO -> escalate all_no_go, no winner" {

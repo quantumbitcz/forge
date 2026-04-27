@@ -6,6 +6,8 @@
 # compression pipeline and are no longer documented at the SKILL.md surface.
 # Only --dry-run remains a user-visible contract at the skill level.
 
+# Covers:
+
 setup() {
   load '../helpers/test-helpers'
   COMPRESS_SKILL="$BATS_TEST_DIRNAME/../../skills/forge-compress/SKILL.md"

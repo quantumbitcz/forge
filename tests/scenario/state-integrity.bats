@@ -3,6 +3,8 @@
 # Verifies the orchestrator references the validator at PREFLIGHT, and that
 # the validator produces correct exit codes on valid/invalid state.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/state-integrity.sh"

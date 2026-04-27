@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: documentation subsystem behavior verification.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 @test "docs-scenario: discoverer agent has all required sections" {

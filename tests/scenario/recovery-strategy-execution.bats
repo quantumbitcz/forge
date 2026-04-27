@@ -3,6 +3,8 @@
 # budget arithmetic, fallback chains, circuit breaker, severity ordering,
 # and budget reset policies documented in recovery-engine.md.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"

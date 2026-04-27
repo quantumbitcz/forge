@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
 
 @test "cost estimation above 2.5x ceiling triggers abort" {

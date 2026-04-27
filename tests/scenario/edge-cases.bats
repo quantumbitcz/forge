@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario: Edge case handling for pipeline operations.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 setup() {

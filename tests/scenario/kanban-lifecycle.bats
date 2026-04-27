@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Covers:
+
 setup() {
   load '../lib/bats-support/load'
   load '../lib/bats-assert/load'

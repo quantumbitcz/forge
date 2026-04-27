@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: convention drift detection
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"

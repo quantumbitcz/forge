@@ -2,6 +2,8 @@
 # Scenario tests: shell concurrency — validates concurrent event emission,
 # atomic operations, state init safety, lock files, and stale lock detection.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_EVENT="$PLUGIN_ROOT/shared/forge-event.sh"

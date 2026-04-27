@@ -2,6 +2,8 @@
 # Scenario tests: state machine end-to-end transition flows.
 # Tests multi-step paths through forge-state.sh to verify the complete pipeline.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"

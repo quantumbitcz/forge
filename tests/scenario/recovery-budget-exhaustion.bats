@@ -3,6 +3,8 @@
 # Tests forge-state.sh transitions with pre-crafted state.json that has
 # budget fields already set (per REVISIONS.md: no simulated accumulation).
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

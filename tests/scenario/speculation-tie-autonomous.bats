@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
 
 @test "tie within threshold (autonomous) -> auto-pick top-1 with AUTO reasoning" {

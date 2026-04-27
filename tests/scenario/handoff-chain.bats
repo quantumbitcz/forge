@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 load '../lib/bats-support/load'
 load '../lib/bats-assert/load'
 

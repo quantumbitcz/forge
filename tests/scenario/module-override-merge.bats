@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: module-level override merging in the check engine
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 RUN_PATTERNS="$PLUGIN_ROOT/shared/checks/layer-1-fast/run-patterns.sh"

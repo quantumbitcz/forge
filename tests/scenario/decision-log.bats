@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: decision log integration across pipeline components
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 DECISION_LOG="$PLUGIN_ROOT/shared/decision-log.md"

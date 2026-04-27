@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 setup() {
   SIM="$BATS_TEST_DIRNAME/../../shared/forge-sim.sh"
   SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"

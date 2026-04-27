@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
 
 @test "enabled=false path is orchestrator-side; detect-ambiguity only reports trigger reasons" {

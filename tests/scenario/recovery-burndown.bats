@@ -4,6 +4,8 @@
 # permanence rule, and budget reset policies documented in recovery-engine.md
 # and error-taxonomy.md.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"

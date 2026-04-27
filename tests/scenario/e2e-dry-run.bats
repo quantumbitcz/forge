@@ -7,6 +7,8 @@
 # Does NOT invoke actual agents (that requires Claude Code runtime).
 # Instead, validates that the infrastructure contracts hold for a minimal project.
 
+# Covers: T-01, T-02, D-01
+
 load '../helpers/test-helpers'
 
 TRACKING_OPS="$PLUGIN_ROOT/shared/tracking/tracking-ops.sh"

@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: domain detection consistency across documentation.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 DOMAIN_DETECTION="$PLUGIN_ROOT/shared/domain-detection.md"

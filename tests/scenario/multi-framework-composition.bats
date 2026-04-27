@@ -3,6 +3,8 @@
 # Tests verify composition logic from shared/composition.md and the
 # composition matrix. These are document-property + structural tests.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 COMPOSITION_DOC="$PLUGIN_ROOT/shared/composition.md"

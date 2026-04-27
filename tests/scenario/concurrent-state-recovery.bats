@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario test: concurrent state recovery from WAL
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"

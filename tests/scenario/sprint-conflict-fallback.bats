@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: sprint conflict detection fallback
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 CONFLICT_RESOLVER="$PLUGIN_ROOT/agents/fg-102-conflict-resolver.md"

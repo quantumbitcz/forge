@@ -2,6 +2,8 @@
 # Per-row state transition tests: one test per transition table row.
 # Tests individual rows from state-transitions.md against forge-state.sh.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"

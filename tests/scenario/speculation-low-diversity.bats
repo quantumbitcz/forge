@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# Covers:
+
 setup() {
   SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
   TMP=$(mktemp -d)

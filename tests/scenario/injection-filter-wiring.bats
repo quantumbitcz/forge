@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Orchestrator + key consumer agents reference the injection filter.
 
+# Covers:
+
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
 }

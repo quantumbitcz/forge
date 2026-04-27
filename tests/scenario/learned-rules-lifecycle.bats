@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Covers:
+
 setup() {
   load '../helpers/test-helpers'
   SHARED_DIR="$BATS_TEST_DIRNAME/../../shared"

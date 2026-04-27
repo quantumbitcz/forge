@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: scope filtering (main, test, all, regex, scope_exclude)
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 RUN_PATTERNS="$PLUGIN_ROOT/shared/checks/layer-1-fast/run-patterns.sh"

@@ -2,6 +2,8 @@
 # End-to-end smoke that the filter + event log + counters +
 # agent header all cooperate when a poisoned Linear ticket reaches the pipeline.
 
+# Covers:
+
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   TMP="$(mktemp -d)"

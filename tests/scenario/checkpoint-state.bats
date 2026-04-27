@@ -5,6 +5,8 @@
 # mutating state.json.lastCheckpoint. These tests cover the observable
 # persistence behavior.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
