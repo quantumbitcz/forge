@@ -659,8 +659,9 @@ Marker emission (append to your final structured output):
   over `java.util.UUID` because an item flagged the mix risk).
 - `PREEMPT_SKIPPED: <id> reason=<text>` or
   `LEARNING_FP: <id> reason=<text>` — when a shown learning is
-  inapplicable or wrong. The retrospective will apply a 0.20 multiplicative
-  penalty, so use this marker deliberately.
+  inapplicable or wrong. The retrospective will apply a 20% reduction to
+  the learning's confidence (×0.80 multiplier), so use this marker
+  deliberately.
 
 No marker → no reinforcement, no penalty (pure time-decay applies on the
 next PREFLIGHT).
