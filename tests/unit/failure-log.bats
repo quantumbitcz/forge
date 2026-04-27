@@ -78,10 +78,15 @@ os.chdir('$TMP')
 from _py import failure_log
 failure_log.rotate(now_ts=None)
 "
-  run bash -c "ls '$TMP/.forge/'"
-  assert_success
-  refute_output --partial '.hook-failures.jsonl'
-  assert_output --regexp '\.hook-failures-[0-9]{8}\.jsonl\.gz'
+  # ls (no -A) hides dotfile-prefixed names. Use a glob existence check instead:
+  # the rotated archive matches .hook-failures-YYYYMMDD.jsonl.gz, and the live
+  # file must be gone.
+  refute [ -f "$TMP/.forge/.hook-failures.jsonl" ]
+  shopt -s nullglob dotglob
+  archives=( "$TMP/.forge/".hook-failures-*.jsonl.gz )
+  shopt -u nullglob dotglob
+  [ "${#archives[@]}" -ge 1 ] || fail "no .hook-failures-*.jsonl.gz archive produced"
+  [[ "${archives[0]}" =~ /\.hook-failures-[0-9]{8}\.jsonl\.gz$ ]] || fail "archive name did not match expected pattern: ${archives[0]}"
 }
 
 @test "rotate deletes gz older than 30 days" {
