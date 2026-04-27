@@ -14,7 +14,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - State schema bumped v1.x → v2.0.0 (coordinated with Phases 6 and 7). Fields `critic_revisions` and `implementer_reflection_cycles` removed; replaced by `plan_judge_loops` (int), `impl_judge_loops` (object keyed by task_id), `judge_verdicts[]` (array of {judge_id, verdict, dispatch_seq, timestamp}).
 - Stage 6 REVIEW migrated from batched-dispatch-with-dedup-hints to Agent Teams pattern (shared findings store at `.forge/runs/<run_id>/findings/<reviewer>.jsonl`, append-only, read-peers-before-write).
 - `shared/agent-communication.md` Shared Findings Context section deleted; replaced by Findings Store Protocol reference.
-- fg-400-quality-gate §5.2 deleted; reviewer registry §20 shrunk to a reference — orchestrator now injects the registry slice at dispatch time.
+- fg-400-quality-gate §5.2 (inter-batch dedup hints / "previous batch findings" / "top 20" prose) deleted — fg-400 still dispatches reviewers in parallel fan-out, but dedup is now read-time per the Findings Store Protocol (`shared/findings-store.md`). Reviewer registry §20 shrunk to a 3-line reference; orchestrator injects the registry slice into the Stage 6 dispatch payload (`fg-100` SS6.1a) and fg-400 forwards it verbatim into each reviewer's prompt.
 - v1.x state.json files are auto-invalidated on version mismatch (no migration shim, per `feedback_no_backcompat`).
 
 ## [3.10.0] - 2026-04-27

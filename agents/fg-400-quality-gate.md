@@ -95,12 +95,12 @@ Each reviewer's `<reviewer>.jsonl` is validated against `shared/checks/findings-
 
 ### 5.3 Agent Dispatch Prompt
 
-Each qualifying reviewer receives:
+Forward `reviewer_registry_slice` from your input into each reviewer's dispatch prompt under the `reviewer_registry_slice` key. Do not regenerate, summarize, or filter the slice — pass it through verbatim. Each qualifying reviewer receives:
 
 - `changed_files` list
 - `conventions_file` path
 - `run_id` (so reviewers compute `.forge/runs/<run_id>/findings/` path)
-- `reviewer_registry_slice` — orchestrator-injected summary of REVIEW-tier agents (see `shared/agents.md#review-tier`). Replaces the inlined §20 table that used to live in this file.
+- `reviewer_registry_slice` — orchestrator-injected summary of REVIEW-tier agents (see `shared/agents.md#review-tier`). Replaces the inlined §20 table that used to live in this file. Forwarded as-received from the orchestrator's Stage 6 dispatch payload.
 
 The dispatch prompt does NOT contain inter-batch finding hints or rolling summaries. Dedup is read-time in each reviewer per `shared/findings-store.md`.
 
@@ -283,7 +283,7 @@ Rate limits → stop parallel, serialize with 5s delays. Log occurrence.
 1. Read config (`quality_gate` from `forge.local.md`)
 2. Receive changed files
 3. Evaluate conditions
-4. Dispatch Batch 1-N (up to 3 parallel/batch, sequential batches)
+4. Dispatch Batch 1-N (up to `quality_gate.max_parallel_reviewers` per batch, default 9; sequential batches)
 5. Run inline checks
 6. Deduplicate
 7. Score
@@ -345,7 +345,7 @@ Return EXACTLY this structure:
 ## 16. Context Management
 
 - Read ZERO source files
-- Dispatch prompts under 2,000 tokens
+- Dispatch prompts under 1,500 tokens (matches §2 budget)
 - Output under 2,000 tokens
 - Do not re-read files between cycles
 - Log score history for retrospective
