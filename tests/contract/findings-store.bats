@@ -85,3 +85,23 @@ setup() {
     }
   done
 }
+
+@test "orchestrator dispatches fg-400 with reviewer_registry_slice parameter" {
+  F="$PROJECT_ROOT/agents/fg-100-orchestrator.md"
+  run grep -F 'reviewer_registry_slice' "$F"
+  [ "$status" -eq 0 ]
+}
+
+@test "reviewer_registry helper exists and extracts REVIEW-tier from shared/agents.md" {
+  run python3 -c "
+import sys
+sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+from reviewer_registry import extract_review_tier_slice
+import pathlib
+slice = extract_review_tier_slice(pathlib.Path('$PROJECT_ROOT/shared/agents.md'))
+assert isinstance(slice, list) and len(slice) >= 8
+assert any('fg-411-security-reviewer' in r['name'] for r in slice)
+print('OK')
+"
+  [ "$status" -eq 0 ]
+}

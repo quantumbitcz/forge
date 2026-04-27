@@ -1424,6 +1424,12 @@ Graph available → "Documentation Impact" + "Stale Docs Detection" queries.
 
 Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 + fg-410-code-reviewer + fg-411 (+ fg-413 if frontend files). Bugfix mode: reduced batch dispatches fg-410-code-reviewer alongside fg-411-security-reviewer.
 
+### SS6.1a Stage 6 dispatch payload for fg-400
+
+Before dispatching fg-400-quality-gate, compute `reviewer_registry_slice` by reading `shared/agents.md` §Registry once per run (cached) and extracting the REVIEW-tier rows (agent name + domain) via `shared/python/reviewer_registry.py:extract_review_tier_slice`. Inject the slice into the fg-400 dispatch payload. fg-400 reads the slice from the payload rather than from its own prompt body.
+
+Expected size: ~300 tokens slice (vs ~40-line inlined §20 that used to add ~500 tokens to every dispatch).
+
 ### SS6.2 Batch Dispatch
 
 Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
