@@ -25,7 +25,7 @@ FILES=(
 import re, sys
 p = sys.argv[1]
 text = open(p, encoding='utf-8', errors='ignore').read()
-bad = re.findall(r'[\U0001F300-\U0001FAFF☀-➿]', text)
+bad = re.findall(r'[\U0001F100-\U0001FAFF\U00002600-\U000027BF]', text)
 if bad: sys.exit(f'{p} has emoji: {bad[:5]}')
 " "$f"
     [ "$status" -eq 0 ] || fail "$output"
