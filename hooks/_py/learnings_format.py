@@ -2,6 +2,13 @@
 
 The ONLY emitter of the injection format — contract tests in
 tests/contract/learnings_injection_format.bats assert on this output byte-for-byte.
+
+``render()`` returns the bare markdown block (no envelope). The
+``<untrusted source="learnings">`` wrapper required by
+``shared/untrusted-envelope.md`` is applied by the caller (the orchestrator's
+§0.6.1 dispatch-context builder in ``agents/fg-100-orchestrator.md``). Keeping
+``render()`` pure means the contract tests can pin the inner format
+byte-for-byte, while the envelope is documented at the dispatch seam.
 """
 from __future__ import annotations
 

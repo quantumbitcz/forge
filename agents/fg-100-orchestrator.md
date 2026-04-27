@@ -653,7 +653,20 @@ agents listed below, run this inline helper:
 
 4. block := learnings_format.render(selected)
    if block:
-       dispatch_prompt := dispatch_prompt + "\n\n" + block
+       # Wrap in <untrusted source="learnings"> envelope per
+       # shared/untrusted-envelope.md. Files under shared/learnings/ and
+       # ~/.claude/forge-learnings/ are disk-mutable, so the block is data
+       # (priors), not instructions. Without the envelope, a malicious or
+       # accidentally-promoted body containing "## EVIL HEADER" would break
+       # out of section-header containment and claim peer-level structure
+       # with the host prompt. render() stays pure (returns bare markdown);
+       # the envelope is applied here, at the documented dispatch seam.
+       wrapped := (
+           "<untrusted source=\"learnings\">\n"
+           + block
+           + "\n</untrusted>"
+       )
+       dispatch_prompt := dispatch_prompt + "\n\n" + wrapped
        for item in selected:
            otel.emit_event_mirror({
              "type": "forge.learning.injected",
