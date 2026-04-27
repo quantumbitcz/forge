@@ -20,6 +20,11 @@ def append_finding(root: pathlib.Path, reviewer: str, finding: dict) -> None:
         fh.write(line + "\n")
 
 
+def _decode_text(path: pathlib.Path) -> str:
+    """Read file as UTF-8 with replacement, so non-UTF-8 bytes degrade to malformed lines."""
+    return path.read_bytes().decode("utf-8", errors="replace")
+
+
 def read_peers(root: pathlib.Path, exclude_reviewer: str) -> Iterable[dict]:
     """Yield parsed findings from every *.jsonl in root except <exclude_reviewer>.jsonl.
 
@@ -30,7 +35,7 @@ def read_peers(root: pathlib.Path, exclude_reviewer: str) -> Iterable[dict]:
     for path in sorted(root.glob("*.jsonl")):
         if path.stem == exclude_reviewer:
             continue
-        for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for lineno, raw in enumerate(_decode_text(path).splitlines(), 1):
             if not raw.strip():
                 continue
             try:
@@ -64,7 +69,7 @@ def reduce_findings(root: pathlib.Path, writer_glob: str = "*.jsonl") -> list[di
     by_key: dict[str, dict] = {}
     seen_by: dict[str, set[str]] = {}
     for path in sorted(root.glob(writer_glob)):
-        for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for lineno, raw in enumerate(_decode_text(path).splitlines(), 1):
             if not raw.strip():
                 continue
             try:
