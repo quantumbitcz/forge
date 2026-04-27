@@ -1205,6 +1205,10 @@ Read `state.plan_judge_loops` (integer, default 0). On return:
 
 **Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-recover resume` after reviewing `.forge/alerts.json`.
 
+#### Plan SHA tracking for judge-loop reset
+
+Compute `plan_sha = sha256(requirement_text + "\n" + approach_section)` at every fg-200-planner dispatch. If `state.current_plan_sha != plan_sha`, reset `state.plan_judge_loops = 0` and set `state.current_plan_sha = plan_sha`. Otherwise preserve the counter.
+
 ### SS2.3 Cross-Repo and Multi-Service
 
 **Cross-repo:** `related_projects` configured → check API contract changes → create cross-repo tasks tagged `cross_repo: true`.
