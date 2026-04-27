@@ -404,7 +404,9 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 - PREEMPT decay: time-aware Ebbinghaus curve per `shared/learnings/decay.md` (half-lives: auto-discovered 14d, cross-project 30d, canonical 90d; 0.95 ceiling; false positive drops base by 20 %).
 - Safety gate restart: resets phase state, NOT `total_iterations`/`score_history`. First cycle exempt from plateau.
 - PLATEAUED: ≥pass_threshold → safety gate. CONCERNS → escalate to user. FAIL → recommend abort.
+- REGRESSING boundary is inclusive (`abs(delta) >= tolerance`). See `shared/convergence-examples.md` §5.
 - Preview gating: FAIL blocks Stage 8. Fix loop (max `preview.max_fix_loops`). Exhaustion → user choice.
+- REGRESSING fires when `abs(delta) >= oscillation_tolerance` (inclusive boundary). A delta equal to tolerance is not noise — the parameter names the noise floor, and at the floor we escalate. Asymmetric with `scoring.md` Consecutive Dip Rule (`<= tolerance = warn-continue`) because the inner quality-gate loop can tolerate one same-tolerance dip per review cycle; the outer convergence loop cannot tolerate persistent oscillation at the boundary. Full worked scenarios in `shared/convergence-examples.md` §5–6.
 
 ### Implementation
 

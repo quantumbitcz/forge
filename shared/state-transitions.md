@@ -59,7 +59,7 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 34 | `REVIEWING` | `score_plateau` | `plateau_count >= plateau_patience AND score >= concerns_threshold AND score < pass_threshold` | ESCALATED | AskUserQuestion: Keep trying / Fix manually / Abort |
 | 35 | `REVIEWING` | `score_plateau` | `plateau_count >= plateau_patience AND score < concerns_threshold` | ESCALATED | Recommend abort, AskUserQuestion: Keep trying / Fix manually / Abort |
 | 36 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations < max_iterations` | `IMPLEMENTING` | Increment plateau_count + phase_iterations + total_iterations + total_retries, dispatch implementer with findings |
-| 37 | `REVIEWING` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate immediately |
+| 37 | `REVIEWING` | `score_regressing` | `abs(delta) >= oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate immediately |
 | 38 | `DOCUMENTING` | `docs_complete` | — | `SHIPPING` | Dispatch fg-590-pre-ship-verifier |
 | 39 | `DOCUMENTING` | `docs_failure` | — | `SHIPPING` | Log WARNING, set documentation.generation_error = true, proceed to pre-ship |
 | 40 | `SHIPPING` | `evidence_SHIP` | `evidence fresh (< evidence_max_age_minutes)` | `SHIPPING` (PR creation) | Dispatch fg-600-pr-builder |
@@ -137,7 +137,7 @@ Sub-state machine governing the IMPLEMENTING <-> VERIFYING <-> REVIEWING iterati
 | C6 | `perfection` | `score_target_reached` | `score >= target_score` | `safety_gate` | Transition to safety gate, dispatch final VERIFY |
 | C7 | `perfection` | `score_improving` | `delta > plateau_threshold AND total_iterations < max_iterations` | `perfection` | Reset plateau_count = 0, increment phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
 | C8 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) (Note: Plateau detection guarded by phase_iterations >= 2 per convergence-engine.md §Plateau Detection. First 2 cycles always classified as IMPROVING regardless of delta.) |
-| C9 | `perfection` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
+| C9 | `perfection` | `score_regressing` | `abs(delta) >= oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
 | C10 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count < plateau_patience AND total_iterations < max_iterations` | `perfection` | Increment plateau_count + phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
 | C10a | `perfection` | `score_plateau` | `phase_iterations < 2` | `perfection` | First 2 cycles exempt from plateau counting (establishing baseline). Increment phase_iterations + total_iterations + total_retries, treat as IMPROVING. |
 | C11 | `safety_gate` | `verify_pass` | `tests_pass` | CONVERGED | Set safety_gate_passed = true, proceed to DOCS |
@@ -238,3 +238,10 @@ These properties hold for the entire state machine:
 4. **Budget-bounded:** Every iteration loop is bounded by at least one of: `max_fix_loops`, `max_test_cycles`, `max_iterations`, `total_retries_max`, `recovery_budget.max_weight`. The pipeline cannot iterate indefinitely.
 
 5. **User sovereignty:** The user can always abort (`user_abort`). The pipeline never auto-ships below `shipping.min_score`. Escalations always offer user choice. Autonomous mode auto-selects "keep trying" but still respects hard caps.
+
+---
+
+## See Also
+
+- `tests/mutation/REPORT.md` — mutation-testing coverage of this table (seed rows 37, 28, E3, 47, 48).
+- `tests/scenario/COVERAGE.md` — scenario-to-row coverage report.
