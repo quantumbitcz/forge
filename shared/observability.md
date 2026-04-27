@@ -109,3 +109,19 @@ shim. See CHANGELOG.md for rename mapping:
 
 Old config keys removed: `observability.export`,
 `observability.otel_endpoint`. Replace with nested `observability.otel.*`.
+
+## Local inspection
+
+Three artefacts are designed to be readable by the shells Forge supports:
+
+| Shell | Current progress | Last 5 runs | Recent hook failures |
+|---|---|---|---|
+| bash / zsh | `jq . .forge/progress/status.json` | `jq '.runs[0:5]' .forge/run-history-trends.json` | `jq '.recent_hook_failures' .forge/run-history-trends.json` |
+| PowerShell | `Get-Content .forge/progress/status.json | ConvertFrom-Json` | `(Get-Content .forge/run-history-trends.json | ConvertFrom-Json).runs | Select-Object -First 5` | `(Get-Content .forge/run-history-trends.json | ConvertFrom-Json).recent_hook_failures` |
+| CMD | `type .forge\progress\status.json` | `type .forge\run-history-trends.json` | (CMD has no JSON parser — use PowerShell or open the file in a text editor) |
+
+The files are atomic-renamed on every update, so a reader that opens them
+while they are being rewritten either sees the old copy or the new copy,
+never a partial object. Append-only `.forge/.hook-failures.jsonl` lines are
+POSIX-atomic when under 4 KB — `stderr_excerpt` is truncated to 2 KB to
+stay under that ceiling.
