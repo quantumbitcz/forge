@@ -2,7 +2,7 @@
 name: forge-playbook-refine
 description: "[writes] Review and apply playbook refinement proposals. Use when playbooks have accumulated run data and proposals are ready for review. Trigger: /forge-playbook-refine [playbook_id]"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'AskUserQuestion']
-ui: { ask: true }
+ui: { tasks: false, ask: true, plan_mode: false }
 ---
 
 # /forge-playbook-refine — Interactive Playbook Refinement

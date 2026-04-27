@@ -2,7 +2,7 @@
 name: forge-config
 description: "[writes] Edit Forge pipeline settings interactively. Use when changing framework, test runner, scoring thresholds, reviewer selection, convergence limits, or toggling features like caveman mode. Validates changes. Trigger: /forge-config, change settings, edit config, adjust thresholds, update scoring"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
-ui: { ask: true }
+ui: { tasks: false, ask: true, plan_mode: false }
 disable-model-invocation: false
 ---
 

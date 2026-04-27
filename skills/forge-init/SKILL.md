@@ -2,7 +2,7 @@
 name: forge-init
 description: "[writes] Auto-configures a project for the forge pipeline. Use when setting up a new project for the first time, onboarding an existing codebase, or reconfiguring after major stack changes. Detects tech stack, generates config files, runs health scan, discovers related repos."
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
-ui: { ask: true }
+ui: { tasks: false, ask: true, plan_mode: false }
 ---
 
 # /forge-init — Zero-Config Project Setup

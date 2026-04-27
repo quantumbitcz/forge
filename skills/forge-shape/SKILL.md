@@ -2,7 +2,7 @@
 name: forge-shape
 description: "[writes] Turn a vague idea into a structured spec with stories and acceptance criteria. Use when your requirement is unclear, you're not sure what to build, or you need to think through a feature before implementing. Trigger: /forge-shape, I have an idea, help me think through this, refine my requirements"
 allowed-tools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion']
-ui: { ask: true, plan: true }
+ui: { tasks: false, ask: true, plan_mode: true }
 ---
 
 # /forge-shape -- Feature Shaping Entry Point
