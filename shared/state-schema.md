@@ -228,8 +228,20 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "cost": {
     "wall_time_seconds": 0,
     "stages_completed": 0,
+    "ceiling_usd": 25.00,
+    "spent_usd": 0.0,
     "estimated_cost_usd": 0.0,
+    "remaining_usd": 25.00,
+    "pct_consumed": 0.0,
     "per_stage": {},
+    "per_agent": {},
+    "tier_estimates_usd": {"fast": 0.016, "standard": 0.047, "premium": 0.078},
+    "conservatism_multiplier": {"fast": 1.0, "standard": 1.0, "premium": 1.0},
+    "tier_breakdown": {"fast": 0.0, "standard": 0.0, "premium": 0.0},
+    "downgrade_count": 0,
+    "downgrades": [],
+    "throttle_events": [],
+    "ceiling_breaches": 0,
     "budget_remaining_tokens": 2000000,
     "efficiency_score": 0.0
   },
@@ -370,6 +382,22 @@ Tracks session-handoff artifact writes for the current run. Populated when `hand
 - `hard_triggers_this_run` — count of hard-threshold triggers (`handoff.hard_threshold_pct`, default 70%) that resulted in a write. In interactive mode these escalate as `CONTEXT_CRITICAL` (see `error-taxonomy.md`).
 - `milestone_triggers_this_run` — count of milestone-based writes (SHIP, escalation with `feedback_loop_count >= 2`, etc.).
 - `suppressed_by_rate_limit` — count of trigger events that were suppressed because the minimum interval (`handoff.min_interval_minutes`, default 15) had not elapsed since `last_written_at`.
+
+## v2.0.0 cost block notes (Phase 6 portion)
+
+- `ceiling_usd` — mirrors `config.cost.ceiling_usd`. Copied at PREFLIGHT.
+- `spent_usd` — authoritative USD spent so far. `estimated_cost_usd` kept as an alias for `forge-token-tracker.sh` back-compat at read time only.
+- `remaining_usd` = `max(0, ceiling_usd - spent_usd)`.
+- `pct_consumed` = `spent_usd / ceiling_usd` (0.0 when ceiling_usd == 0).
+- `tier_breakdown` — cumulative USD per resolved tier (not per original tier).
+- `downgrade_count` — cardinality of `downgrades[]`.
+- `downgrades[]` — append-only list of `{agent, from, to, timestamp, remaining_usd}`.
+- `throttle_events[]` — append-only list of `{agent, severity, pct_consumed, action, timestamp}`.
+- `ceiling_breaches` — increment once per `.forge/cost-incidents/*.json` written.
+
+On version-mismatch load (any `1.x.x`), the orchestrator resets the cost block to defaults and logs a single INFO line. This follows the no-backcompat policy.
+
+> **Coordination note (Phase 6):** The `"version": "2.0.0"` literal is flipped in the last of {P5, P6, P7} to merge. Phase 6's contribution is the `cost` block shape above; do not bump the literal in isolation.
 
 ## Atomic writes
 
