@@ -1443,6 +1443,90 @@
       "affinity": [
         "fg-205-plan-judge"
       ]
+    },
+    "COST": {
+      "description": "Cost governance event (throttle, downgrade, escalation). Wildcard prefix for COST-* sub-categories.",
+      "agents": [
+        "fg-100-orchestrator",
+        "fg-300-implementer",
+        "fg-700-retrospective"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-THROTTLE-IMPL": {
+      "description": "Implementer skipped a discretionary refactor or judge pass due to cost pressure. Severity INFO at 80% consumed, WARNING at 90% consumed.",
+      "agents": [
+        "fg-300-implementer"
+      ],
+      "wildcard": false,
+      "severity_allowed": ["INFO", "WARNING"],
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-300-implementer"
+      ]
+    },
+    "COST-DOWNGRADE": {
+      "description": "Orchestrator downgraded an agent tier under cost.aware_routing.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-ESCALATION-AUTO": {
+      "description": "Autonomous-mode ceiling breach auto-decision logged.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-ESCALATION-TIMEOUT": {
+      "description": "Interactive ceiling-breach prompt timed out; defaulted to abort-to-ship.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "EST-DRIFT": {
+      "description": "Actual agent cost drifted >2x from tier_estimates_usd across 10+ dispatches.",
+      "agents": [
+        "fg-700-retrospective"
+      ],
+      "wildcard": false,
+      "severity_allowed": ["WARNING"],
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 3,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-700-retrospective"
+      ]
     }
   }
 }

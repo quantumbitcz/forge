@@ -241,3 +241,52 @@ with open('$REGISTRY') as f:
 assert 'QUAL-COMPLEX' in data['categories'], 'QUAL-COMPLEX not found in registry'
 " || fail "QUAL-COMPLEX subcategory missing from category registry"
 }
+
+@test "category-registry: COST-THROTTLE-IMPL declared" {
+  run python3 -c "
+import json
+r = json.load(open('$REGISTRY'))
+ids = list(r.get('categories') or {})
+assert 'COST-THROTTLE-IMPL' in ids
+print('ok')
+"
+  assert_success
+}
+
+@test "category-registry: EST-DRIFT severity restricted to WARNING" {
+  run python3 -c "
+import json
+r = json.load(open('$REGISTRY'))
+cats = r.get('categories') or {}
+c = cats.get('EST-DRIFT')
+assert c is not None, 'EST-DRIFT not found'
+assert c.get('severity_allowed') == ['WARNING'], c
+print('ok')
+"
+  assert_success
+}
+
+@test "category-registry: COST-DOWNGRADE / COST-ESCALATION-AUTO / COST-ESCALATION-TIMEOUT declared" {
+  run python3 -c "
+import json
+r = json.load(open('$REGISTRY'))
+ids = list(r.get('categories') or {})
+for cat in ('COST-DOWNGRADE', 'COST-ESCALATION-AUTO', 'COST-ESCALATION-TIMEOUT'):
+    assert cat in ids, f'{cat} missing'
+print('ok')
+"
+  assert_success
+}
+
+@test "category-registry: COST-* wildcard prefix registered" {
+  run python3 -c "
+import json
+r = json.load(open('$REGISTRY'))
+cats = r.get('categories') or {}
+cost = cats.get('COST')
+assert cost is not None, 'COST wildcard not declared'
+assert cost.get('wildcard') is True, cost
+print('ok')
+"
+  assert_success
+}
