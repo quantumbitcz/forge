@@ -1,9 +1,8 @@
 """Contract test: skill count is exactly 28; /forge-help is absent.
 
-Also greps CLAUDE.md, README.md, and shared/* for stale forge-help references.
-Excludes CHANGELOG.md (historical), docs/superpowers/ (specs + plans), and
-shared/feature-lifecycle.md (which uses forge-example placeholders, never
-forge-help).
+Also sweeps the repo for stale forge-help references in .md and .bats files.
+Excludes CHANGELOG.md (historical), docs/superpowers/{plans,specs}/ (frozen
+design docs), and the test file itself (mentions the string for documentation).
 """
 from __future__ import annotations
 
@@ -13,6 +12,50 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
+
+# Directories whose contents are excluded from the forge-help reference sweep.
+# - CHANGELOG entries are historical and immutable.
+# - docs/superpowers/{plans,specs} are frozen design artefacts.
+# - Build/cache dirs and the kanban/state areas under .forge/ never count.
+_EXCLUDED_DIRS = {
+    ".git",
+    ".forge",
+    ".venv",
+    "node_modules",
+    "__pycache__",
+    "tests/contract/__pycache__",
+}
+_EXCLUDED_PATH_PARTS = (
+    ("docs", "superpowers", "plans"),
+    ("docs", "superpowers", "specs"),
+)
+_EXCLUDED_FILES = {
+    "CHANGELOG.md",
+    # The contract test itself references the string for documentation.
+    "tests/contract/test_skill_inventory.py",
+}
+
+
+def _is_excluded(path: Path) -> bool:
+    rel = path.relative_to(REPO_ROOT)
+    parts = rel.parts
+    if any(seg in _EXCLUDED_DIRS for seg in parts):
+        return True
+    for prefix in _EXCLUDED_PATH_PARTS:
+        if len(parts) >= len(prefix) and parts[: len(prefix)] == prefix:
+            return True
+    if str(rel) in _EXCLUDED_FILES:
+        return True
+    return False
+
+
+def _sweep_targets() -> list[Path]:
+    targets: list[Path] = []
+    for ext in ("*.md", "*.bats"):
+        for path in REPO_ROOT.rglob(ext):
+            if path.is_file() and not _is_excluded(path):
+                targets.append(path)
+    return sorted(targets)
 
 
 def test_skill_count_is_28() -> None:
@@ -24,25 +67,12 @@ def test_forge_help_directory_is_gone() -> None:
     assert not (SKILLS_DIR / "forge-help").exists(), "skills/forge-help must be deleted"
 
 
-@pytest.mark.parametrize(
-    "relpath",
-    [
-        "CLAUDE.md",
-        "README.md",
-        "shared/skill-contract.md",
-        "shared/skill-grammar.md",
-        "shared/agents.md",
-        "shared/agent-philosophy.md",
-        "shared/feature-matrix.md",
-    ],
-    ids=lambda s: s,
-)
-def test_no_stale_forge_help_references(relpath: str) -> None:
-    path = REPO_ROOT / relpath
-    if not path.exists():
-        pytest.skip(f"{relpath} missing (expected for shared/skill-grammar.md before Commit 3 lands)")
+@pytest.mark.parametrize("path", _sweep_targets(), ids=lambda p: str(p.relative_to(REPO_ROOT)))
+def test_no_stale_forge_help_references(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    assert "forge-help" not in text, f"{relpath} still references forge-help"
+    assert "forge-help" not in text, (
+        f"{path.relative_to(REPO_ROOT)} still references forge-help"
+    )
 
 
 def test_skill_contract_lists_forge_handoff() -> None:

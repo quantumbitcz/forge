@@ -105,7 +105,11 @@ def test_allowed_tools_values(skill_path: Path) -> None:
                 typos.append((t, known))
                 break
         else:
-            warnings.warn(f"{skill_path.parent.name}: unknown tool '{t}' (not a typo)")
+            warnings.warn(
+                f"{skill_path.parent.name}: unknown tool '{t}' "
+                f"(not a close typo of any known tool — add to KNOWN_TOOLS in "
+                f"tests/contract/test_skill_grammar.py if legitimate)"
+            )
     assert not typos, f"{skill_path.parent.name}: likely typos: {typos}"
 
 
