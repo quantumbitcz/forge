@@ -162,3 +162,27 @@ Violations log WARNING and fall back to defaults. When `enabled=true` but `opent
 | `handoff.chain_limit` | 5-500 | `50` | Rotation cap per run |
 | `handoff.auto_memory_promotion` | bool | `true` | Terminal handoffs push top PREEMPTs to user auto-memory |
 | `handoff.mcp_expose` | bool | `true` | Expose handoffs via F30 MCP server |
+
+## Cost Governance (Phase 6)
+
+All validations run at PREFLIGHT. Any CRITICAL aborts the run; WARNING logs and proceeds.
+
+| Field | Rule | Severity on violation |
+|---|---|---|
+| `cost.ceiling_usd` | float >= 0 | CRITICAL if negative |
+| `cost.ceiling_usd` | warn if 0 < x < 1.00 (likely typo) | WARNING |
+| `cost.warn_at` | 0 < x < 1 | CRITICAL |
+| `cost.throttle_at` | 0 < x < 1 | CRITICAL |
+| `cost.abort_at` | 0 < x <= 1 | CRITICAL |
+| ordering | `warn_at < throttle_at <= abort_at` | CRITICAL |
+| `cost.aware_routing` | boolean | CRITICAL if non-bool |
+| `cost.aware_routing: true` requires `model_routing.enabled: true` | otherwise CRITICAL |
+| `cost.tier_estimates_usd.fast/standard/premium` | float > 0 | CRITICAL if <= 0 or missing |
+| tier ratio | warn if `premium / fast > 200` | WARNING |
+| `cost.conservatism_multiplier.fast/standard/premium` | float >= 1.0 | CRITICAL if < 1.0 |
+| multiplier sanity | warn if any multiplier > 10.0 | WARNING |
+| `cost.pinned_agents[]` | each must match agents.md#registry | WARNING for unknown IDs |
+| `cost.skippable_under_cost_pressure[]` | each must match agents.md#registry | WARNING for unknown IDs |
+| `cost.skippable_under_cost_pressure[]` | MUST NOT contain any SAFETY_CRITICAL agent | CRITICAL |
+
+**Implementation note:** PREFLIGHT calls `shared/config_validator.py` which reads the above rules from this section. The SAFETY_CRITICAL cross-check imports `cost_governance.SAFETY_CRITICAL` (single source of truth).
