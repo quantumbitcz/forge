@@ -210,6 +210,22 @@ has_tool() {
   [ "$bad" -eq 0 ]
 }
 
+@test "fg-205-plan-judge and fg-301-implementer-judge are Tier 4" {
+  for agent in fg-205-plan-judge fg-301-implementer-judge; do
+    local f="$PLUGIN_ROOT/agents/${agent}.md"
+    [ -f "$f" ] || { echo "Missing agent file: $f"; return 1; }
+    # Extract the ui: block (until next top-level YAML key)
+    local ui_block
+    ui_block=$(awk '/^ui:/{flag=1; next} flag && /^[a-z]/{flag=0} flag' "$f")
+    echo "$ui_block" | grep -q "tasks: false" \
+      || { echo "$agent ui.tasks must be false"; return 1; }
+    echo "$ui_block" | grep -q "ask: false" \
+      || { echo "$agent ui.ask must be false"; return 1; }
+    echo "$ui_block" | grep -q "plan_mode: false" \
+      || { echo "$agent ui.plan_mode must be false"; return 1; }
+  done
+}
+
 @test "Tier 1/2 agents contain User-interaction examples section" {
   local tier12=(fg-010 fg-015 fg-020 fg-050 fg-090 fg-100 fg-103 fg-160 fg-200 fg-210 fg-400 fg-500 fg-600 fg-710)
   for agent in "${tier12[@]}"; do
