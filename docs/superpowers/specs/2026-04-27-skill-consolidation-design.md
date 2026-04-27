@@ -71,8 +71,8 @@ ui: { tasks: true, ask: true, plan_mode: true }
 
 **Argument and flag positioning:**
 - Multi-word arguments may be quoted or unquoted. Quoting is recommended: `/forge run "add CSV export"` is unambiguous; `/forge run add CSV export` works but blurs into the NL fallback path.
-- Flags appear after the subcommand and before the free-text argument: `/forge run --dry-run "add CSV export"`. Flags after the argument also work but trigger a deprecation note.
-- For `sprint` with a Linear cycle ID, the format is `/forge sprint <linear-cycle-id-or-uuid>` — the dispatcher recognizes both Linear identifiers (e.g. `ENG-cycle-42`) and UUIDs.
+- Flags must appear before the free-text argument: `/forge run --dry-run "add CSV export"`. Flags after the argument are an error — fail fast with usage.
+- For `sprint` with a Linear cycle ID, the format is `/forge sprint <id>` where `<id>` matches the Linear API identifier shape. Exact regex deferred to plan-stage (depends on Linear MCP configuration); for this spec, the dispatcher accepts any non-empty string and lets the downstream Linear MCP call validate.
 
 #### `/forge-ask` — read-only surface
 
@@ -198,11 +198,15 @@ The threshold logic (`<50 words missing 3+ of actors/entities/surface/criteria`)
 When `autonomous: true` or `--autonomous`, `fg-010-shaper` runs a degraded one-shot:
 - No `AskUserQuestion`. No `EnterPlanMode`.
 - Reads input verbatim as the spec content.
-- Auto-extracts ACs using existing intent classifier + heuristics (presence of "given/when/then", numbered lists of requirements).
-- Writes a minimal spec to the same path: header + objective + (extracted) ACs + "**autonomous:** spec auto-generated from raw input".
+- Auto-extracts ACs using a new helper `shared/ac-extractor.py` with explicit input/output contract:
+  - **Input:** raw text string.
+  - **Output:** `{objective: str, acceptance_criteria: list[str], confidence: "high"|"medium"|"low"}`.
+  - **Implementation:** regex pass that matches (a) lines starting with `Given/When/Then`, (b) numbered list items (`^\s*\d+[.)]`), (c) bullets prefixed with imperative verbs from a known list (must, should, will, ensure, validate, return, expose, accept, reject). Returns `confidence: low` when fewer than two distinct AC matches are found, `medium` for 2-4, `high` for 5+.
+  - This is **not** the intent classifier. It's a separate, single-purpose extractor; the intent classifier remains responsible for run/fix/sprint/etc. routing only.
+- Writes a minimal spec to the same path: header + objective + extracted ACs + a frontmatter line `autonomous: true` + a body note `**Note:** spec auto-generated from raw input under `--autonomous` mode; extractor confidence: <level>`.
 - Commits the spec.
-- Logs `[AUTO] brainstorm skipped — input treated as spec`.
-- Proceeds to EXPLORING.
+- Logs `[AUTO] brainstorm skipped — input treated as spec (extractor confidence: <level>)`.
+- Proceeds to EXPLORING. (Downstream stages, especially `fg-210-validator`, see the confidence level and may flag low-confidence specs as REVISE — but that's their existing responsibility, not this spec's.)
 
 This preserves the BRAINSTORMING stage in the state machine for telemetry consistency while honoring the autonomous never-blocks invariant.
 
@@ -241,18 +245,49 @@ If the pipeline is interrupted during BRAINSTORMING:
 - `BRAINSTORMING → ABORTED` on user abort.
 - `BRAINSTORMING → BRAINSTORMING` (self-loop) on resume from cache.
 
+#### §4.1 — Config schema additions
+
+The following keys are added to `forge-config.md` (plugin defaults) and validated by `shared/preflight-constraints.md`:
+
+```yaml
+brainstorm:
+  enabled: true                  # default true; set false to short-circuit BRAINSTORMING (feature mode → EXPLORING)
+  spec_dir: docs/superpowers/specs/   # default; where fg-010-shaper writes specs
+  autonomous_extractor_min_confidence: low   # one of: low, medium, high; below this, autonomous mode aborts instead of proceeding to EXPLORING
+```
+
+Validation rules:
+- `brainstorm.enabled` must be boolean.
+- `brainstorm.spec_dir` must be a string. The parent directory must exist or be creatable (write probe at PREFLIGHT).
+- `brainstorm.autonomous_extractor_min_confidence` must be one of the three enum values.
+
+These keys are NOT subject to retrospective auto-tuning (they're behavior toggles, not numeric thresholds). Add them to the `<!-- locked -->` section in the generated `forge-config.md`.
+
 ### §5 — Migration mechanics (the breaking change)
 
 The bulk of the implementation work. The change is mechanically large because the consolidation rewrites every reference to `/forge-*` skills across the codebase.
 
+**Pre-flight (zero commits):** Run `grep -rln '/forge-' --include='*.md' --include='*.json' --include='*.py' --include='*.yml' --include='*.yaml' --include='*.bats' --include='*.sh' .` and snapshot the file list to `.forge/migration-callsites.txt`. This list is the literal input for commit 4's sed pass — eliminates "we forgot to grep $X" failure modes.
+
+**Ground truth from `ls skills/` (verified 2026-04-27):** 29 skill directories exist. After this spec lands: 1 stays (`forge-ask`, edited in place), 28 are deleted, 2 are newly created (`forge`, `forge-admin`). Net delta: 28 deleted, 2 created, 1 edited. `forge-help` is **still present** today — Phase 2's deletion claim of `/forge-help` was never executed; this spec executes it as part of the 28.
+
 **Commit ordering (atomic, no half-states):**
 
-1. **Commit 1 — new skills land:** Create `skills/forge/SKILL.md`, `skills/forge-ask/SKILL.md`, `skills/forge-admin/SKILL.md`. Each delegates to existing agents via the same dispatch patterns the old skills used. New skills must independently work before old skills are deleted (so this commit can be tested in isolation).
-2. **Commit 2 — atomic deletion:** `git rm -r` all 26 retired skill directories: `forge-init`, `forge-fix`, `forge-shape`, `forge-sprint`, `forge-review`, `forge-verify`, `forge-deploy`, `forge-commit`, `forge-migration`, `forge-bootstrap`, `forge-docs-generate`, `forge-security-audit`, `forge-status`, `forge-history`, `forge-insights`, `forge-profile`, `forge-tour`, `forge-help` (already deleted in Phase 2; idempotent), `forge-recover`, `forge-abort`, `forge-config`, `forge-handoff`, `forge-automation`, `forge-playbooks`, `forge-playbook-refine`, `forge-compress`, `forge-graph`. (Total: 27 entries; one is already gone, so net 26.)
-3. **Commit 3 — reference rewiring:** Search-and-replace all `/forge-X` references to `/forge X` or `/forge-ask X` or `/forge-admin X` based on the mapping table (§5.1). Affects `README.md`, `CLAUDE.md`, all 8 spec files in `docs/superpowers/specs/`, all 8 plan files in `docs/superpowers/plans/`, every `tests/structural/`, `tests/unit/skill-execution/`, `tests/scenarios/` reference, agent `.md` files that emit user-facing suggestions (`fg-100`, `fg-700`, `fg-710`), `plugin.json`, `marketplace.json`, hooks that emit "did you mean" hints.
-4. **Commit 4 — `fg-010-shaper` rewrite:** Replace agent prompt with the new pattern. Update `state-schema.md`, `state-transitions.md`, `stage-contract.md` to introduce BRAINSTORMING.
-5. **Commit 5 — bootstrap helper extraction:** Move detection logic from `forge-init/SKILL.md` (already deleted) into `shared/bootstrap-detect.py`. Wire `/forge` to call it on missing config.
-6. **Commit 6 — test updates:** Extend `tests/structural/skill-consolidation.bats` to enforce exactly 3 skill directories. Add scenario test for auto-bootstrap path. Add unit tests for hybrid grammar dispatch and intent classifier coverage of all 11 verbs.
+1. **Commit 1 — extract bootstrap-detect helper:** Lift the stack-detection logic out of `skills/forge-init/SKILL.md` into `shared/bootstrap-detect.py` while `forge-init/` is still on disk. Module exposes `detect_stack() -> dict` and `write_forge_local_md(stack: dict, path: Path) -> None`. Add unit tests at `tests/unit/bootstrap_detect_test.py` exercising at least: Kotlin/Spring, TypeScript/Next, Python/FastAPI, ambiguous-stack rejection, write-failure handling. This commit is a pure addition; nothing yet calls the helper.
+2. **Commit 2 — new skills land:** Create `skills/forge/SKILL.md`, `skills/forge-admin/SKILL.md`, and rewrite `skills/forge-ask/SKILL.md` in place. Each delegates to existing agents via the same dispatch patterns the old skills used. `skills/forge/SKILL.md` calls `shared/bootstrap-detect.py` when `.claude/forge.local.md` is absent. New skills must independently work before old skills are deleted (so this commit can be tested in isolation by manually invoking them with the old skills also present — both work, no collision).
+3. **Commit 3 — atomic deletion:** `git rm -r` all 28 retired skill directories: `forge-init`, `forge-run`, `forge-fix`, `forge-shape`, `forge-sprint`, `forge-review`, `forge-verify`, `forge-deploy`, `forge-commit`, `forge-migration`, `forge-bootstrap`, `forge-docs-generate`, `forge-security-audit`, `forge-status`, `forge-history`, `forge-insights`, `forge-profile`, `forge-tour`, `forge-help`, `forge-recover`, `forge-abort`, `forge-config`, `forge-handoff`, `forge-automation`, `forge-playbooks`, `forge-playbook-refine`, `forge-compress`, `forge-graph`.
+4. **Commit 4 — reference rewiring:** Run a sed pass over the file list captured in pre-flight, applying the mapping table in §5.1. Then re-run `grep` to verify zero stragglers (excluding the allowlist file). Affects, at minimum:
+   - **Docs:** `README.md`, `CLAUDE.md`, every file under `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+   - **Tests:** `tests/structural/skill-consolidation.bats`, `tests/unit/skill-execution/decision-tree-refs.bats`, every file under `tests/scenarios/` referencing skills.
+   - **Agents:** all 48 agent `.md` files (especially `fg-100-orchestrator`, `fg-700-retrospective`, `fg-710-post-run`, and any agent that emits user-facing skill suggestions or learnings markers).
+   - **Plugin manifests:** `plugin.json`, `marketplace.json`.
+   - **Hooks:** any hook under `hooks/` that emits "did you mean" hints or skill-name diagnostics.
+   - **`shared/` (~56 files):** `shared/intent-classification.md`, `shared/skill-subcommand-pattern.md` (likely needs full rewrite — see commit 6), `shared/skill-contract.md`, `shared/git-conventions.md`, `shared/preflight-constraints.md`, `shared/agent-communication.md`, `shared/agent-defaults.md`, `shared/stage-contract.md`, `shared/state-schema.md`, `shared/state-schema-fields.md`, `shared/state-transitions.md`, `shared/recovery/recovery-engine.md`, `shared/recovery/strategies/graceful-stop.md`, `shared/recovery/time-travel.md`, `shared/learnings/memory-discovery.md`, `shared/learnings/README.md`, `shared/learnings/rule-promotion.md`, `shared/cross-project-learnings.md`, `shared/next-task-prediction.md`, `shared/playbooks.md`, `shared/explore-cache.md`, `shared/plan-cache.md`, `shared/event-log.md`, `shared/automations.md`, `shared/decision-log.md`, `shared/speculation.md`, `shared/confidence-scoring.md`, `shared/input-compression.md`, `shared/output-compression.md`, `shared/ask-user-question-patterns.md`, `shared/error-taxonomy.md`, `shared/convergence-examples.md`, `shared/security-audit-trail.md`, `shared/security-posture.md`, `shared/data-classification.md`, `shared/dx-metrics.md`, `shared/visual-verification.md`, `shared/feature-flag-management.md`, `shared/deployment-strategies.md`, `shared/performance-regression.md`, `shared/flaky-test-management.md`, `shared/background-execution.md`, `shared/mcp-provisioning.md`, `shared/version-resolution.md`, `shared/config-validation.md`, `shared/a2a-protocol.md`, `shared/run-history/run-history.md`, `shared/graph/schema-versioning.md`, `shared/graph/query-patterns.md`, `shared/graph/schema.md`, `shared/consistency/voting.md`, `shared/tracking/ticket-format.md`, `shared/knowledge-base.md`, `shared/hook-design.md`, `shared/agents.md`, `shared/README.md`.
+   - **`modules/` (~49 files):** every framework's `local-template.md` and `forge-config-template.md` under `modules/frameworks/<name>/` (24 frameworks × ~2 files = ~48), plus any `modules/**/conventions.md` that mentions skill names. Verified 2026-04-27 via `grep -rln '/forge-' modules/`.
+5. **Commit 5 — `fg-010-shaper` rewrite + state machine:** Replace agent prompt with the new pattern (§3 seven steps). Update `shared/state-schema.md`, `shared/state-transitions.md`, `shared/stage-contract.md` to introduce the BRAINSTORMING stage. Add new config validations to `shared/preflight-constraints.md` for `brainstorm.spec_dir` and `brainstorm.enabled` (see §4.1).
+6. **Commit 6 — `shared/skill-subcommand-pattern.md` rewrite or removal:** That file documents the old subcommand pattern as a normative shape (e.g. `forge-graph init|status|...`); under hybrid grammar inside `/forge`, the pattern flattens. Either delete the file (preferred — pattern is internal to `/forge`/`/forge-ask`/`/forge-admin` SKILL.md bodies and no longer needs cross-cutting documentation) or rewrite to describe the three-skill dispatch model. Decision deferred to plan-stage; spec just flags the choice.
+7. **Commit 7 — intent classifier expansion:** Update `shared/intent-classification.md` to recognize all 11 verbs from §1's `/forge` table and define a `vague` output (or matching qualitative state) so AC-S007 has a concrete output to assert against.
+8. **Commit 8 — test updates:** Extend `tests/structural/skill-consolidation.bats` to enforce exactly 3 skill directories. Add scenario tests for auto-bootstrap path, chained autonomous bootstrap+brainstorm, BRAINSTORMING resume. Add `tests/unit/skill-execution/forge-dispatch.bats` covering the 11 verbs (one assertion per verb minimum) and the NL fallback.
 
 #### §5.1 — Old → new mapping table (search/replace source of truth)
 
@@ -304,10 +339,9 @@ All current parallel-execution patterns continue to work in the new surface:
 
 ### §7 — Open coordination questions
 
-1. **State schema bump ordering.** Phase 5 coordinates a v2.0.0 bump. This spec's BRAINSTORMING addition needs a schema bump too. Two options:
-   - (a) Roll into Phase 5's v2.0.0. Cheapest. Couples ship order: this spec must merge before or with Phase 5.
-   - (b) Take v1.11.0 between Phase 5 and Phase 6. Decoupled, two bumps.
-   - **Default (chosen by this spec):** (a). Phase 5 explicitly accommodates this in its v2.0.0 schema design.
+1. **State schema bump ordering.** Phase 5 coordinates a v2.0.0 bump for `plan_judge_loops`, `impl_judge_loops`, `judge_verdicts[]`, plus removals of `critic_revisions` and `implementer_reflection_cycles`. Phase 5's spec (read 2026-04-27) does **not** mention `state.brainstorm`; rolling into v2.0.0 would require an explicit edit to Phase 5's spec, which is undesirable cross-coupling between in-flight specs.
+   - **Default (chosen by this spec):** Take a fresh `v1.11.0` (if Phase 5 has not landed yet) or `v2.1.0` (if Phase 5 has landed). Decoupled — this spec ships independently of Phase 5's release cadence.
+   - Implementation note: the plan-stage will inspect `shared/state-schema.md` at the time of execution and pick whichever next-minor version is correct given the live schema version. No coordination with Phase 5 is required.
 
 2. **OTel namespace.** Phase 1 standardizes `forge.*`. New events under `forge.brainstorm.*` (started, questions_asked, approaches_proposed, spec_written, completed, aborted) fit cleanly. No conflict.
 
@@ -328,10 +362,10 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Hybrid grammar (5)
 
 - **AC-S006:** `/forge run "X"`, `/forge fix "X"`, `/forge sprint ...`, `/forge review`, `/forge verify`, `/forge deploy <env>`, `/forge commit`, `/forge migrate "X to Y"`, `/forge bootstrap <stack>`, `/forge docs`, `/forge audit` each dispatch to the correct downstream agent flow.
-- **AC-S007:** `/forge "<free-text>"` (no explicit verb) routes through `shared/intent-classification.md` and dispatches to whichever mode the classifier returns (run, fix, sprint, review, deploy, etc.). When the classifier returns LOW confidence with no winning candidate, the dispatch defaults to `run` (which then enters BRAINSTORMING and lets the shaper resolve ambiguity). Verified by unit tests covering at least one example per verb.
+- **AC-S007:** `/forge "<free-text>"` (no explicit verb) routes through `shared/intent-classification.md` and dispatches to whichever mode the classifier returns. When the classifier returns its `vague` outcome (signal-count < 2 per the contract added in commit 7), the dispatch defaults to `run` (which then enters BRAINSTORMING and lets the shaper resolve ambiguity). Verified by unit tests at `tests/unit/skill-execution/forge-dispatch.bats` containing at least 11 tests — one per verb (`run`, `fix`, `sprint`, `review`, `verify`, `deploy`, `commit`, `migrate`, `bootstrap`, `docs`, `audit`) — plus 3 tests for the NL fallback (vague-input, classifier-resolved-input, ambiguous-flag-positioning).
 - **AC-S008:** `/forge --help` prints the full subcommand list and flag matrix; exits 0.
 - **AC-S009:** `/forge` (no args) prints usage; exits 0.
-- **AC-S010:** `/forge <unknown-verb> <args>` does NOT print "did you mean"; falls through to NL classifier with the full string. Verified by unit test.
+- **AC-S010:** `/forge <unknown-verb> <args>` does NOT print "did you mean"; falls through to NL classifier with the full string. Verified by `tests/unit/skill-execution/forge-dispatch.bats::test_unknown_verb_falls_through` asserting (a) no string `"did you mean"` in stdout/stderr, (b) classifier was invoked with the full original argument string.
 
 ### Read and admin surfaces (4)
 
@@ -351,7 +385,7 @@ All current parallel-execution patterns continue to work in the new surface:
 
 - **AC-S019:** Feature-mode invocations of `/forge` (explicit `run` or NL classifier → `run`) traverse PREFLIGHT → BRAINSTORMING → EXPLORING. Verified by scenario test.
 - **AC-S020:** Bugfix, migration, bootstrap modes skip BRAINSTORMING. Verified by scenario test for each mode.
-- **AC-S021:** `fg-010-shaper`'s rewritten prompt implements all seven steps from §3 (explore, ask, propose, present, write, self-review, hand off). Verified by structural agent-prompt test that asserts presence of each phase.
+- **AC-S021:** `fg-010-shaper`'s rewritten prompt implements all seven steps from §3. Verified by a structural agent-prompt test at `tests/structural/fg-010-shaper-shape.bats` that greps `agents/fg-010-shaper.md` for the exact section headings `## Explore project context`, `## Ask clarifying questions`, `## Propose 2-3 approaches`, `## Present design sections`, `## Write spec`, `## Self-review`, `## Handoff` and asserts each appears exactly once. The headings are normative for the agent's prompt structure.
 - **AC-S022:** `--autonomous` mode runs degraded one-shot: no `AskUserQuestion`, treats input as spec, writes spec, logs `[AUTO] brainstorm skipped`. Verified by scenario test.
 - **AC-S023:** Resume during BRAINSTORMING with existing spec prompts user to resume-from-spec or restart. Verified by scenario test.
 
@@ -360,6 +394,9 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-S024:** State schema includes `state.stage = "BRAINSTORMING"` enum and `state.brainstorm` object with all fields from §4.
 - **AC-S025:** OTel events fire at brainstorm start, question, approaches proposal, spec write, completion/abort. Namespace `forge.brainstorm.*`.
 - **AC-S026:** `state-transitions.md` documents the four BRAINSTORMING transitions from §4.
+- **AC-S027:** `/forge --autonomous "<request>"` invoked on a project with no `forge.local.md` chains auto-bootstrap → BRAINSTORMING → EXPLORING in a single uninterrupted run. Both `[AUTO] bootstrapped...` and `[AUTO] brainstorm skipped...` log lines appear in `.forge/forge-log.md`. The pipeline reaches EXPLORING. If either step fails, the pipeline aborts cleanly with no partial state (`forge.local.md` is either fully written or not written; spec doc is either fully written or not written). Verified by scenario test at `tests/scenarios/autonomous-cold-start.bats`.
+- **AC-S028:** Config keys `brainstorm.spec_dir` (default `docs/superpowers/specs/`) and `brainstorm.enabled` (default `true`) are validated by `shared/preflight-constraints.md`. Setting `brainstorm.enabled: false` short-circuits BRAINSTORMING — feature mode goes straight to EXPLORING. Setting an invalid `brainstorm.spec_dir` (non-existent and non-creatable parent) fails PREFLIGHT with a clear error.
+- **AC-S029:** `/forge run --spec <path>` parses the spec file at `<path>` for the regex `^## (Objective|Goal|Goals)$`, `^## (Scope|Non-goals)$`, and `^## (Acceptance [Cc]riteria|ACs)$`. All three sections must be present (case-sensitive on the regex). If any is missing, interactive mode prompts "spec at `<path>` is incomplete (missing: <list>); run BRAINSTORMING instead?" and autonomous mode aborts the run with the same diagnostic. Verified by unit test at `tests/unit/skill-execution/spec-wellformed.bats`.
 
 ## Risks
 
@@ -375,9 +412,28 @@ All current parallel-execution patterns continue to work in the new surface:
 - **EXPLORE parallelization by aspect** — Phase 10 (not yet drafted).
 - **Backwards-compatibility shims** — explicitly rejected per personal-tool stance.
 
-## File touchpoints (preview, full list in plan)
+## File touchpoints (preview, full enumeration in plan)
 
-- **Created:** `skills/forge/SKILL.md`, `skills/forge-ask/SKILL.md`, `skills/forge-admin/SKILL.md`, `shared/bootstrap-detect.py`.
-- **Deleted:** 26 skill directories under `skills/`.
-- **Heavily edited:** `agents/fg-010-shaper.md` (full rewrite), `agents/fg-100-orchestrator.md` (BRAINSTORMING stage handling), `shared/state-schema.md`, `shared/state-transitions.md`, `shared/stage-contract.md`, `shared/intent-classification.md`, `CLAUDE.md`, `README.md`.
-- **Lightly edited (rewiring only):** all 8 phase specs in `docs/superpowers/specs/`, all 8 phase plans in `docs/superpowers/plans/`, agents that emit user-facing skill suggestions (`fg-700`, `fg-710`), `plugin.json`, `marketplace.json`.
+- **Created:**
+  - `skills/forge/SKILL.md`, `skills/forge-admin/SKILL.md` (new skill directories).
+  - `shared/bootstrap-detect.py` (lifted detection helper, commit 1).
+  - `shared/ac-extractor.py` (autonomous AC extractor for degraded BRAINSTORMING, commit 5).
+  - `tests/structural/skill-references-allowlist.txt` (allowlist for AC-S005 grep, commit 8).
+  - `tests/unit/skill-execution/forge-dispatch.bats`, `tests/unit/skill-execution/spec-wellformed.bats`, `tests/unit/bootstrap_detect_test.py`, `tests/structural/fg-010-shaper-shape.bats`, `tests/scenarios/autonomous-cold-start.bats` (new tests).
+- **Deleted:** 28 skill directories under `skills/` (full list in §5 commit 3).
+- **Heavily edited:**
+  - `skills/forge-ask/SKILL.md` (rewrite in place to absorb status/history/insights/profile/tour).
+  - `agents/fg-010-shaper.md` (full rewrite for the seven-step pattern).
+  - `agents/fg-100-orchestrator.md` (BRAINSTORMING stage handling, dispatch updates).
+  - `shared/state-schema.md`, `shared/state-transitions.md`, `shared/stage-contract.md` (BRAINSTORMING stage and `state.brainstorm` schema).
+  - `shared/intent-classification.md` (commit 7: extend to 11 verbs, define `vague` outcome).
+  - `shared/preflight-constraints.md` (validate `brainstorm.*` config keys per §4.1).
+  - `shared/skill-subcommand-pattern.md` (rewrite or delete per commit 6 decision).
+  - `CLAUDE.md`, `README.md` (skill surface section overhaul).
+- **Lightly edited (rewiring only, scope per §5 commit 4):**
+  - All 8 phase specs in `docs/superpowers/specs/` and all 8 phase plans in `docs/superpowers/plans/`.
+  - All 48 agent `.md` files (especially `fg-700-retrospective`, `fg-710-post-run`, and any agent that prints skill suggestions in reports).
+  - All 56 markdown files under `shared/` that reference `/forge-` (full list in §5 commit 4).
+  - All ~49 framework template files under `modules/frameworks/*/` that reference `/forge-` (full list in §5 commit 4).
+  - `plugin.json`, `marketplace.json`.
+  - Hooks under `hooks/` that emit skill suggestions or diagnostics.
