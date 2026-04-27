@@ -5,9 +5,12 @@ All I/O-free. Callers supply records, save them. Stdlib-only.
 from __future__ import annotations
 
 import json
+import logging
 import math
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
+log = logging.getLogger(__name__)
 
 HALF_LIFE_DAYS: Dict[str, int] = {
     "auto-discovered": 14,
@@ -27,6 +30,12 @@ SUCCESS_BONUS: float = 0.05
 FALSE_POSITIVE_PENALTY: float = 0.20  # new_base = base * (1 - penalty)
 DELTA_T_MAX_DAYS: int = 365  # clock-skew clamp
 DELTA_T_MIN_DAYS: int = 0
+
+SPARSE_THRESHOLD: int = 10  # Phase 4 selector cross-project penalty switch.
+MAX_DELTA_T_DAYS: int = DELTA_T_MAX_DAYS  # public alias (Phase 4).
+ARCHIVAL_CONFIDENCE_FLOOR: float = 0.1
+ARCHIVAL_IDLE_DAYS: int = 90
+VINDICATE_FALLBACK_FACTOR: float = 1.25  # defensive only; logs WARNING
 
 
 def _parse_iso(s: str) -> datetime:
@@ -75,12 +84,55 @@ def tier(confidence: float) -> str:
     return "ARCHIVED"
 
 
+def apply_false_positive(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """Return a new item reflecting a confirmed false positive.
+
+    Snapshots pre-penalty base into ``pre_fp_base`` so a later
+    ``apply_vindication`` can restore bit-exact (Phase 4).
+    """
+    out = dict(item)
+    base = float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE))
+    out["pre_fp_base"] = base  # snapshot BEFORE applying penalty
+    out["base_confidence"] = base * (1.0 - FALSE_POSITIVE_PENALTY)
+    stamp = _format_iso(now)
+    out["last_success_at"] = stamp
+    out["last_false_positive_at"] = stamp
+    out["false_positive_count"] = int(item.get("false_positive_count", 0)) + 1
+    return out
+
+
+def apply_vindication(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
+    """Restore ``base_confidence`` from the pre-FP snapshot.
+
+    If ``pre_fp_base`` is missing (defensive; shouldn't happen), logs a
+    WARNING and applies a fallback multiplier ``base * VINDICATE_FALLBACK_FACTOR``
+    capped at ``MAX_BASE_CONFIDENCE``.
+    """
+    out = dict(item)
+    snapshot = item.get("pre_fp_base")
+    if snapshot is None:
+        log.warning(
+            "apply_vindication: pre_fp_base missing for item id=%s — falling back",
+            item.get("id", "<unknown>"),
+        )
+        base = float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE))
+        out["base_confidence"] = min(
+            MAX_BASE_CONFIDENCE, base * VINDICATE_FALLBACK_FACTOR
+        )
+    else:
+        out["base_confidence"] = float(snapshot)  # bit-exact restore
+    out["pre_fp_base"] = None
+    current_fp = int(item.get("false_positive_count", 0))
+    out["false_positive_count"] = max(0, current_fp - 1)
+    out["last_false_positive_at"] = None
+    return out
+
+
 def apply_success(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
     """Return a new item reflecting a successful reinforcement.
 
-    Cap is MAX_BASE_CONFIDENCE (0.95), NOT 1.0 — review Issue 1. Keeping a
-    headroom of 0.05 ensures the 20 % FP penalty still drops a maxed-out item
-    down to 0.76, which lands in the HIGH band but close to the MEDIUM cutoff.
+    Clears any pending ``pre_fp_base`` snapshot (success invalidates the
+    open FP window).
     """
     out = dict(item)
     out["base_confidence"] = min(
@@ -88,26 +140,38 @@ def apply_success(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
         float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE)) + SUCCESS_BONUS,
     )
     out["last_success_at"] = _format_iso(now)
+    out["pre_fp_base"] = None
+    out["applied_count"] = int(item.get("applied_count", 0)) + 1
+    out["last_applied"] = _format_iso(now)
     return out
 
 
-def apply_false_positive(item: Dict[str, Any], now: datetime) -> Dict[str, Any]:
-    """Return a new item reflecting a confirmed false positive.
+def archival_floor(item: Dict[str, Any], now: datetime) -> tuple[bool, str]:
+    """Decide whether an item should be archived.
 
-    Penalty is multiplicative (base *= 0.80). We reset last_success_at = now so
-    the penalty shows as a fresh new base, not as a compounded base × decay
-    value. This is intentional (§4.2 of the spec) — it prevents over-punishment
-    combining the penalty with stale-decay on the same event.
+    Returns ``(archived, reason)``. Logic per Phase 4 spec §4:
+      confidence_now < ARCHIVAL_CONFIDENCE_FLOOR AND
+        (now - last_applied).days > ARCHIVAL_IDLE_DAYS
+        OR (last_applied is None AND (now - first_seen).days > ARCHIVAL_IDLE_DAYS)
     """
-    out = dict(item)
-    out["base_confidence"] = (
-        float(item.get("base_confidence", DEFAULT_BASE_CONFIDENCE))
-        * (1.0 - FALSE_POSITIVE_PENALTY)
-    )
-    stamp = _format_iso(now)
-    out["last_success_at"] = stamp
-    out["last_false_positive_at"] = stamp
-    return out
+    import logging as _log
+
+    c = effective_confidence(item, now)
+    if c >= ARCHIVAL_CONFIDENCE_FLOOR:
+        return (False, "")
+    last_applied = item.get("last_applied")
+    if last_applied:
+        age = (now - _parse_iso(last_applied)).days
+        if age > ARCHIVAL_IDLE_DAYS:
+            return (True, f"confidence={c:.4f} last_applied={age}d")
+        return (False, "")
+    first_seen = item.get("first_seen")
+    if not first_seen:
+        return (False, "")
+    age = (now - _parse_iso(first_seen)).days
+    if age > ARCHIVAL_IDLE_DAYS:
+        return (True, f"confidence={c:.4f} never_applied={age}d")
+    return (False, "")
 
 
 def _format_iso(dt: datetime) -> str:
