@@ -3,6 +3,29 @@
 Walks directories, parses frontmatter slice (hand-rolled, no PyYAML),
 computes ``confidence_now`` via ``memory_decay.effective_confidence``,
 and returns ``LearningItem`` records. Side-effecting; the selector is pure.
+
+Supported frontmatter value types
+---------------------------------
+The hand-rolled parser (``_coerce``) recognizes a deliberate subset of YAML
+scalars — sufficient for the v2 learnings schema, but **not** a general
+YAML implementation. Anything outside this list is returned as a bare
+string (when ``int``/``float`` parsing fails) or silently dropped (when a
+field doesn't match ``FIELD_RE``):
+
+- ``null``                            → ``None``
+- ``true`` / ``false``                → ``bool``
+- Inline list ``[a, b, "c"]``         → ``list[str]`` (commas split, quotes stripped)
+- Double-quoted scalar ``"text"``     → ``str``
+- Decimal numeric (contains ``.``)    → ``float``
+- Integer numeric                     → ``int``
+- Anything else                       → bare ``str`` (unquoted fallback)
+
+Explicitly **not supported**: block scalars (``|`` / ``>``), nested maps
+beyond the four-space ``  - id: …`` item shape, multi-line lists, anchors
+and aliases, type tags (``!!str`` etc.), single-quoted strings, ``yes`` /
+``no`` / ``on`` / ``off`` boolean spellings, hex/octal/scientific numerics,
+and timestamps. Files relying on these forms must be migrated; v2 fixtures
+under ``tests/fixtures/learnings/`` are the authoritative shape reference.
 """
 from __future__ import annotations
 
