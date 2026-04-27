@@ -347,8 +347,27 @@ The prose report and findings JSON share dedup keys so the merge between them is
 **Uplift:** add a hypothesis-tracking step:
 
 1. After reproduction, generate `state.bug.hypotheses[]` — up to 3 competing hypotheses about the root cause. Each entry: `{id, statement, falsifiability_test, evidence_required, status: "untested"}`.
-2. **Hypothesis branching (beyond superpowers, goal 15):** if config `bug.hypothesis_branching.enabled` (default true), dispatch up to 3 sub-investigators in parallel — each tests one hypothesis. Sub-investigators use Tier-3 model (cheap), output `{hypothesis_id, evidence: list[str], passes_test: bool, confidence: "high"|"medium"|"low"}`.
-3. **Bayesian pruning:** for each tested hypothesis, update probability via Bayes rule (priors uniform; likelihoods derived from confidence). Drop hypotheses below 0.10 posterior.
+2. **Hypothesis branching (beyond superpowers, goal 15):** if config `bug.hypothesis_branching.enabled` (default true), dispatch up to 3 sub-investigators in parallel via a single tool-use block — each tests one hypothesis.
+
+   **Sub-investigator shape:** new agent file `agents/fg-021-hypothesis-investigator.md` (added in commit D6). Tier 3 (no UI tools, just Read/Grep/Glob/Bash). Single-purpose: receives one hypothesis as input via the dispatch brief, runs the falsifiability test, returns `{hypothesis_id, evidence: list[str], passes_test: bool, confidence: "high" | "medium" | "low"}` and exits. Adding a dedicated agent file (rather than recursive `fg-020` dispatch) avoids recursive-dispatch reliability issues and gives the sub-investigator a focused prompt without the parent's branching/Bayes orchestration concerns.
+
+   `fg-020-bug-investigator` dispatches all 3 (or fewer) sub-investigators in a single tool-use block (matches `superpowers:dispatching-parallel-agents` pattern). Aggregates results when all return.
+3. **Bayesian pruning:** for each tested hypothesis, update posterior probability per the explicit formula:
+
+   ```
+   P(H_i | E) = P(E | H_i) · P(H_i) / Σ_j (P(E | H_j) · P(H_j))
+   ```
+
+   - **Priors P(H_i):** uniform — `1/n` where `n` is the count of hypotheses (typically 3 → 0.333 each).
+   - **Likelihood P(E | H_i):** derived from `passes_test` and `confidence` of the sub-investigator's verdict:
+     - `passes_test: true, confidence: high` → 0.90
+     - `passes_test: true, confidence: medium` → 0.70
+     - `passes_test: true, confidence: low` → 0.55
+     - `passes_test: false, confidence: high` → 0.10
+     - `passes_test: false, confidence: medium` → 0.30
+     - `passes_test: false, confidence: low` → 0.45
+   - Posterior is recomputed in one pass after all sub-investigators report; this is normal naive-Bayes with hand-tuned likelihood tables.
+   - **Pruning rule:** any hypothesis with posterior < 0.10 is dropped (`status: dropped`); the surviving hypotheses' posteriors are renormalized so the remaining set still sums to 1.0.
 4. **Fix gate:** the planner (`fg-200`) refuses to plan a fix until at least one hypothesis has `passes_test: true` and posterior ≥ 0.50. If all hypotheses fail, escalate to user with the hypothesis register attached.
 
 **Falsifiability test format:** each hypothesis must include a concrete check, e.g. "if you set `X=null`, the bug should occur" or "the stack trace should show frame `Y`". The check is run by the sub-investigator before declaring `passes_test`.
@@ -449,9 +468,59 @@ The four enhancements (goals 13-16) live inside the relevant uplift sections rat
     "questions_asked": 4,
     "approaches_proposed": 3,
     "section_approvals": ["architecture", "components", "data_flow", "error_handling", "testing"]
-  }
+  },
+  "bug": {
+    "ticket_id": "FG-742",
+    "reproduction_attempts": 2,
+    "reproduction_succeeded": true,
+    "branching_used": true,
+    "fix_gate_passed": true,
+    "hypotheses": [
+      {
+        "id": "H1",
+        "statement": "Concurrent writes to .forge/state.json cause race that loses the last write",
+        "falsifiability_test": "Reproduce while holding the .forge/.lock file; expect bug to NOT occur",
+        "evidence_required": "stack trace shows lock-skip OR successful concurrent reproduction without lock",
+        "status": "tested",
+        "passes_test": true,
+        "confidence": "high",
+        "posterior": 0.78
+      }
+    ]
+  },
+  "feedback_decisions": [
+    {
+      "comment_id": "github://pulls/123#issuecomment-9876",
+      "verdict": "wrong",
+      "reasoning": "Reviewer suggests we mock the database, but our memory says integration tests must hit a real DB. See feedback_no_local_tests memory.",
+      "evidence": "agents/fg-300-implementer.md:45 enforces real-DB testing per project memory",
+      "addressed": "defended",
+      "posted_at": "2026-04-27T15:02:11Z"
+    }
+  ]
 }
 ```
+
+**Per-field schema:**
+
+`state.bug.hypotheses[].id` — string, format `H<int>` (H1, H2, ...).
+`state.bug.hypotheses[].statement` — string, the hypothesis itself.
+`state.bug.hypotheses[].falsifiability_test` — string, an executable check that disproves the hypothesis if it fails.
+`state.bug.hypotheses[].evidence_required` — string, what observation confirms or denies the hypothesis.
+`state.bug.hypotheses[].status` — enum: `untested | testing | tested | dropped`.
+`state.bug.hypotheses[].passes_test` — bool, set when status transitions to `tested`.
+`state.bug.hypotheses[].confidence` — enum: `high | medium | low`.
+`state.bug.hypotheses[].posterior` — float in [0.0, 1.0]; updated per the Bayes formula (§7).
+`state.bug.fix_gate_passed` — bool. True iff at least one hypothesis has `passes_test: true` AND `posterior >= 0.50`.
+
+`state.feedback_decisions[].comment_id` — string, opaque platform-scoped ID (e.g. `github://pulls/<n>#issuecomment-<id>`).
+`state.feedback_decisions[].verdict` — enum: `actionable | wrong | preference`.
+`state.feedback_decisions[].reasoning` — string, defense or acknowledgment text (≥1 character; required for `wrong` and `preference`; optional for `actionable`).
+`state.feedback_decisions[].evidence` — string. For `wrong` verdict, must reference at least one file path or commit SHA. For other verdicts, optional.
+`state.feedback_decisions[].addressed` — enum: `actionable_routed | defended | acknowledged`. Set after the action completes.
+`state.feedback_decisions[].posted_at` — ISO-8601 timestamp; set when defense or acknowledgment is posted to the PR thread.
+
+Note: `state.feedback_decisions[]` is **also** mirrored to `.forge/runs/<run_id>/feedback-decisions.jsonl` (one line per entry, append-only). The state field is the in-memory canonical view; the JSONL is the durable record. Recovery rebuilds state from JSONL.
 
 **Recovery treatment:** BRAINSTORMING is in the `resumable_stages` set. State-transition rules added to `shared/state-transitions.md`:
 - `PREFLIGHT → BRAINSTORMING` when `mode == feature` and brainstorm is enabled.
@@ -468,14 +537,43 @@ brainstorm:
   enabled: true                  # default true; set false to short-circuit BRAINSTORMING (feature mode → EXPLORING)
   spec_dir: docs/superpowers/specs/   # default; where fg-010-shaper writes specs
   autonomous_extractor_min_confidence: low   # one of: low, medium, high; below this, autonomous mode aborts instead of proceeding to EXPLORING
+  transcript_mining:
+    enabled: true                # default true; set false to skip historical-context FTS5 query
+    top_k: 3                     # default 3; how many past transcripts to load (range 1-10)
+    max_chars: 4000              # default 4000; cap on total historical-context chars injected into the agent prompt
+
+quality_gate:
+  consistency_promotion:
+    enabled: true                # default true; set false to disable cross-reviewer consistency voting
+    threshold: 3                 # default 3; how many reviewers must flag the same dedup key (range 2-9)
+
+bug:
+  hypothesis_branching:
+    enabled: true                # default true; set false to fall back to single-hypothesis serial investigation
+
+post_run:
+  defense_enabled: true          # default true; set false to disable defense-check sub-agent (all feedback treated as actionable)
+  defense_min_evidence: true     # default true; require defense response to reference at least one file path or commit SHA
+
+pr_builder:
+  default_strategy: open-pr      # one of: open-pr, open-pr-draft, direct-push, stash; autonomous-mode default
+  cleanup_checklist_enabled: true   # default true; set false to skip post-strategy cleanup phase
+
+worktree:
+  stale_after_days: 30           # default 30; worktrees older than this are flagged WORKTREE-STALE
 ```
 
 Validation rules:
-- `brainstorm.enabled` must be boolean.
+- `brainstorm.enabled`, `brainstorm.transcript_mining.enabled`, `quality_gate.consistency_promotion.enabled`, `bug.hypothesis_branching.enabled`, `post_run.defense_enabled`, `post_run.defense_min_evidence`, `pr_builder.cleanup_checklist_enabled` must be boolean.
 - `brainstorm.spec_dir` must be a string. The parent directory must exist or be creatable (write probe at PREFLIGHT).
-- `brainstorm.autonomous_extractor_min_confidence` must be one of the three enum values.
+- `brainstorm.autonomous_extractor_min_confidence` must be one of `low | medium | high`.
+- `brainstorm.transcript_mining.top_k` must be int in [1, 10].
+- `brainstorm.transcript_mining.max_chars` must be int in [500, 32000].
+- `quality_gate.consistency_promotion.threshold` must be int in [2, 9].
+- `pr_builder.default_strategy` must be one of `open-pr | open-pr-draft | direct-push | stash` (note: `abandon` is interactive-only — never an autonomous default).
+- `worktree.stale_after_days` must be int in [1, 365].
 
-These keys are NOT subject to retrospective auto-tuning (they're behavior toggles, not numeric thresholds). Add them to the `<!-- locked -->` section in the generated `forge-config.md`.
+These keys are NOT subject to retrospective auto-tuning (they're behavior toggles or platform-specific settings). Add them to the `<!-- locked -->` section in the generated `forge-config.md`.
 
 ### §12 — Migration mechanics (the breaking change)
 
@@ -492,7 +590,7 @@ The train is split into four phases. Phases A and B are independent and can ship
 #### Phase A — Helpers and schema (independent, can ship first)
 
 1. **Commit A1 — add `shared/ac-extractor.py`:** New helper for autonomous BRAINSTORMING. Contract per §3. Tests at `tests/unit/ac_extractor_test.py` covering: numbered list, given/when/then, imperative bullets, low-confidence (<2 ACs), high-confidence (≥5 ACs).
-2. **Commit A2 — extract `shared/bootstrap-detect.py`:** Lift detection logic from `skills/forge-init/SKILL.md` (still on disk) into the helper. Module exposes `detect_stack() -> dict`, `write_forge_local_md(stack, path) -> None`. Tests at `tests/unit/bootstrap_detect_test.py` covering: Kotlin/Spring, TypeScript/Next, Python/FastAPI, ambiguous-stack rejection, write-failure handling. Pure addition.
+2. **Commit A2 — extract `shared/bootstrap-detect.py`:** Lift detection logic from `skills/forge-init/SKILL.md` (still on disk) into the helper. Module exposes `detect_stack() -> dict`, `write_forge_local_md(stack, path) -> None`. **Atomic-write contract:** `write_forge_local_md` writes via temp-file-and-rename (`Path.with_suffix('.tmp')` + `Path.rename(target)`) so the target is either absent or fully written — never partial. This is required by AC-S027. Tests at `tests/unit/bootstrap_detect_test.py` covering: Kotlin/Spring, TypeScript/Next, Python/FastAPI, ambiguous-stack rejection, write-failure handling, atomic-write under simulated mid-write interrupt. Pure addition.
 3. **Commit A3 — `shared/preflight-constraints.md` updates:** Add validation rules for `brainstorm.{enabled,spec_dir,autonomous_extractor_min_confidence,transcript_mining.{enabled,top_k}}`, `quality_gate.consistency_promotion.{enabled,threshold}`, `bug.hypothesis_branching.enabled`, `post_run.{defense_enabled,defense_min_evidence}`, `pr_builder.{default_strategy,cleanup_checklist_enabled}`. Per-key validation rules per §11.1.
 4. **Commit A4 — `shared/intent-classification.md` updates:** Extend to recognize all 11 verbs (`run|fix|sprint|review|verify|deploy|commit|migrate|bootstrap|docs|audit`). Define `vague` outcome with concrete signal-count threshold (default <2). Update existing tests under `tests/unit/intent-classification/`.
 5. **Commit A5 — state schema bump:** Update `shared/state-schema.md` to add the `BRAINSTORMING` enum value, `state.brainstorm` object (per §11), `state.bug.hypotheses[]` (per §7), `state.feedback_decisions` (per §6). Bump schema version (next available minor: v1.11.0 if Phase 5 hasn't landed, else v2.1.0). Update `shared/state-transitions.md` with BRAINSTORMING transitions per §11. Update `shared/stage-contract.md` to define the new stage.
@@ -520,12 +618,12 @@ The train is split into four phases. Phases A and B are independent and can ship
 
 #### Phase D — Pattern parity uplifts (independent of B; can ship in parallel branches)
 
-21. **Commit D1 — rewrite `agents/fg-200-planner.md`:** Adopt writing-plans pattern (§4). Per-task TDD scaffold. Embed prompt templates from `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` (new files added in this commit).
+21. **Commit D1 — rewrite `agents/fg-200-planner.md`:** Adopt writing-plans pattern (§4). Per-task TDD scaffold. Embed prompt templates from `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` (new files added in this commit). **Bugfix-mode integration:** when `state.mode == "bugfix"`, the planner reads `state.bug.fix_gate_passed` before producing any plan; if false, returns the special verdict `BLOCKED-BUG-INCONCLUSIVE` with the hypothesis register attached. The orchestrator (already updated by C2) escalates this verdict to user (interactive) or aborts non-zero (autonomous). This couples D1 to D6 — the planner reads what fg-020 writes — but the read-side wiring lives in D1, the write-side in D6.
 22. **Commit D2 — `fg-210-validator` updates:** Enforce TDD ordering, prompt presence, spec-reviewer presence. Updates AC validation matrix.
 23. **Commit D3 — reviewer pipeline uplift:** Update each `agents/fg-410..fg-419.md` to emit prose report alongside findings JSON (§5). Update `agents/fg-400-quality-gate.md` to write reports to `.forge/runs/<run_id>/reports/<reviewer>.md`.
 24. **Commit D4 — cross-reviewer consistency voting:** Add post-dedup pass to `agents/fg-400-quality-gate.md` (§5 beyond-superpowers). Logs `consistency_promoted` on findings.
 25. **Commit D5 — rewrite `agents/fg-710-post-run.md`:** Adopt receiving-code-review pattern (§6). Defense check sub-agent dispatch. Update `feedback_loop_count` semantics. New file `.forge/runs/<run_id>/feedback-decisions.jsonl`.
-26. **Commit D6 — rewrite `agents/fg-020-bug-investigator.md`:** Adopt systematic-debugging pattern (§7). Hypothesis register. Hypothesis branching sub-investigators. Bayesian pruning. Fix gate.
+26. **Commit D6 — rewrite `agents/fg-020-bug-investigator.md` + add `agents/fg-021-hypothesis-investigator.md`:** Adopt systematic-debugging pattern (§7). Hypothesis register. Bayesian pruning. Fix gate. Sub-investigator agent file is added here (Tier-3, single-purpose; see §7 for shape). Updates `state.bug.fix_gate_passed` write-side; D1 owns the read-side.
 27. **Commit D7 — rewrite `agents/fg-600-pr-builder.md`:** Adopt finishing-a-development-branch shape (§8). AskUserQuestion-driven dialog. Cleanup checklist.
 28. **Commit D8 — strong-agent polish:** Targeted updates to `fg-300-implementer` (test-must-fail-first check), `fg-590-pre-ship-verifier` (evidence assertion test), `fg-100-orchestrator` (parallel-dispatch and post-batch checkpoint structural tests), `fg-101-worktree-manager` (stale-worktree detection).
 29. **Commit D9 — pattern-parity tests:** Structural and scenario tests for D1–D8: planner output shape, reviewer prose presence, defense flow, hypothesis register, PR-finishing dialog, polish edge cases.
@@ -595,7 +693,7 @@ All current parallel-execution patterns continue to work in the new surface:
 
 3. **Phase 7 (Intent Assurance) interaction.** `fg-540-intent-verifier` checks ACs at VERIFY. With BRAINSTORMING writing the spec to a known path (`state.brainstorm.spec_path`), `fg-540` reads ACs from there. Tight integration, no conflict — but Phase 7's spec must be updated to consume `state.brainstorm.spec_path` as the AC source when present, falling back to the old behavior when absent (e.g., bugfix mode where there's no brainstorm spec).
 
-4. **Phase 9 (Superpowers Pattern Parity) — out of scope here, but tightly related.** This spec lifts the brainstorming pattern. Phase 9 lifts the writing-plans, requesting-code-review, receiving-code-review, systematic-debugging, and finishing-a-development-branch patterns into the corresponding forge agents. Phase 9 is a separate spec in this directory (date: TBD by orchestrator), sized at ~15-25 ACs covering the seven agent uplifts. It depends on this spec for the BRAINSTORMING pseudo-stage but is otherwise independent.
+4. **Phase 9 — absorbed into this spec.** Earlier drafts of this spec deferred the broader pattern-parity work to a separate Phase 9. Per user directive ("I want to have it all and working and maybe even better"), Phase 9 is folded into this spec as §4–§10. No separate Phase 9 spec is needed.
 
 ## Acceptance criteria
 
@@ -603,9 +701,9 @@ All current parallel-execution patterns continue to work in the new surface:
 
 - **AC-S001:** `skills/` contains exactly three subdirectories: `forge/`, `forge-ask/`, `forge-admin/`. No others.
 - **AC-S002:** Each of the three skills has valid frontmatter (`name`, `description` matching the patterns in §1, `allowed-tools`, `ui:`).
-- **AC-S003:** All 26 retired skill directories are absent from `skills/` (full list in §5 commit 2).
+- **AC-S003:** All 28 retired skill directories are absent from `skills/` (full list in §12 commit B12, ground-truthed against `ls skills/` on 2026-04-27).
 - **AC-S004:** `tests/structural/skill-consolidation.bats` enforces AC-S001 and AC-S003.
-- **AC-S005:** No file under `docs/`, `tests/`, `agents/`, `skills/`, `hooks/`, `shared/`, `plugin.json`, `marketplace.json`, `README.md`, or `CLAUDE.md` references any retired skill name. `grep -rn "/forge-init\|/forge-run\|/forge-fix\|...\|/forge-graph"` returns zero results except for paths listed in `tests/structural/skill-references-allowlist.txt` (which holds intentional historical references in CHANGELOG, release notes, or migration docs). The allowlist file is checked into git.
+- **AC-S005:** No file under `docs/`, `tests/`, `agents/`, `skills/`, `hooks/`, `shared/`, `modules/`, `evals/`, `.github/`, or any of `plugin.json`, `marketplace.json`, `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md` references any retired skill name. `grep -rn "/forge-init\|/forge-run\|/forge-fix\|...\|/forge-graph"` returns zero results except for paths listed in `tests/structural/skill-references-allowlist.txt`. The allowlist file is checked into git and is pre-populated by B13 with `CHANGELOG.md` and `DEPRECATIONS.md` (intentional historical references). Any other file referencing a retired skill name fails the test.
 
 ### Hybrid grammar (5)
 
@@ -654,7 +752,7 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-PLAN-004:** Each task carries explicit `Risk:` field with value `low | medium | high` (no other values accepted).
 - **AC-PLAN-005:** `agents/fg-210-validator.md` rejects plans missing any TDD ordering, prompt embedding, or risk marker. Verdict: `REVISE`. Verified by unit test running validator against synthetic broken plans.
 - **AC-PLAN-006:** Files `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` exist with the canonical superpowers shapes (verbatim or near-verbatim with attribution comment).
-- **AC-PLAN-007:** Planner output is reproducible — running the planner twice on the same spec yields plans with the same task structure (modulo task IDs which may be timestamp-based).
+- **AC-PLAN-007:** Planner output **structure** is stable across runs on the same spec: task count, RED/GREEN/REFACTOR ordering, and ACs-per-task assignment match exactly when the planner is re-invoked. **Prose** (titles, descriptions, risk justifications) may vary because of LLM non-determinism. Verified by running the planner twice on a fixture spec and asserting structural equality (parsed AST), not text equality.
 - **AC-PLAN-008:** Autonomous mode produces planner output that satisfies AC-PLAN-001 through AC-PLAN-005 without user prompts.
 
 ### Reviewer pipeline uplift (6)
@@ -669,7 +767,7 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Post-run / receiving-feedback uplift (5)
 
 - **AC-FEEDBACK-001:** `agents/fg-710-post-run.md` runs a defense check sub-agent dispatch for each piece of PR rejection feedback. Output schema: `{verdict: "actionable" | "wrong" | "preference", reasoning: str, evidence: str}`.
-- **AC-FEEDBACK-002:** When `verdict: wrong`, defense response (reasoning + evidence) is posted to the PR conversation thread via GitHub MCP. Logged as `addressed: defended` in `.forge/runs/<run_id>/feedback-decisions.jsonl`.
+- **AC-FEEDBACK-002:** When `verdict: wrong`, defense response (reasoning + evidence) is posted to the PR conversation thread. Platform: **GitHub only** in this spec (detected via presence of `.github/` or `gh` CLI config). For other platforms (GitLab, Bitbucket, etc.) the defense is logged to `.forge/runs/<run_id>/feedback-decisions.jsonl` with `addressed: defended_local_only` and skipped on the post-back step (logged warning, no error). Logged as `addressed: defended` in `feedback-decisions.jsonl` for the GitHub case. Verified by integration test that mocks both GitHub and non-GitHub project configs.
 - **AC-FEEDBACK-003:** When `verdict: preference`, acknowledgment is posted; logged as `addressed: acknowledged`. No code changes made for that comment.
 - **AC-FEEDBACK-004:** `feedback_loop_count` increments only for `actionable` feedback. Defended/acknowledged feedback does not increment.
 - **AC-FEEDBACK-005:** Autonomous mode without GitHub MCP write access defaults all verdicts to `actionable` (matches today's behavior; documented degradation).
@@ -703,7 +801,7 @@ All current parallel-execution patterns continue to work in the new surface:
 ### Beyond-superpowers (4)
 
 - **AC-BEYOND-001:** `agents/fg-010-shaper.md` writes Q&A transcripts to `.forge/brainstorm-transcripts/<run_id>.jsonl` (one entry per question/answer round).
-- **AC-BEYOND-002:** Before asking questions, fg-010-shaper queries the F29 run-history-store FTS5 index for similar features (top-K via `brainstorm.transcript_mining.top_k`, default 3). Top-K transcripts are loaded and exposed to the agent's reasoning context.
+- **AC-BEYOND-002:** Before asking questions, fg-010-shaper queries the F29 run-history-store FTS5 index (BM25 over spec body + objective) for similar features (top-K via `brainstorm.transcript_mining.top_k`, default 3). Retrieved transcripts are concatenated under a `## Historical context` section in the agent's runtime prompt, capped at `brainstorm.transcript_mining.max_chars` (default 4000). Verified by structural test that asserts the section heading appears in `agents/fg-010-shaper.md` and a unit test that exercises the FTS5 query against a fixture run-history database.
 - **AC-BEYOND-003:** Setting `brainstorm.transcript_mining.enabled: false` skips the FTS5 query and proceeds with no historical context.
 - **AC-BEYOND-004:** When `quality_gate.consistency_promotion.enabled: true` and ≥3 reviewers flag the same dedup key, the finding's confidence weight is `1.0` regardless of individual reviewer ratings (verified by AC-REVIEW-005, restated here for the beyond-superpowers thread).
 
@@ -762,7 +860,7 @@ All current parallel-execution patterns continue to work in the new surface:
   - `agents/fg-410..fg-419.md` — 9 reviewer files updated for prose output (D3).
   - `agents/fg-400-quality-gate.md` (D3 + D4) — prose report orchestration + cross-reviewer consistency promotion.
   - `agents/fg-710-post-run.md` (D5) — full rewrite for receiving-code-review pattern.
-  - `agents/fg-020-bug-investigator.md` (D6) — full rewrite for systematic-debugging pattern.
+  - `agents/fg-020-bug-investigator.md` (D6) — full rewrite for systematic-debugging pattern. Adds `agents/fg-021-hypothesis-investigator.md` (new Tier-3 agent file).
   - `agents/fg-600-pr-builder.md` (D7) — full rewrite for finishing-branch pattern.
   - `agents/fg-300-implementer.md` (D8) — test-must-fail-first check.
   - `agents/fg-590-pre-ship-verifier.md` (D8) — evidence assertion structural test.
