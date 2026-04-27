@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -114,30 +115,80 @@ def is_safety_critical(agent: str) -> bool:
     return agent in SAFETY_CRITICAL
 
 
+def _atomic_write_json(dest: Path, payload: str) -> None:
+    """Atomic JSON write: mkstemp in same dir, fdopen, then Path.replace.
+
+    Closes the fd on fdopen failure so neither the descriptor nor the temp
+    file leak. Caller is responsible for catching OSError and choosing a
+    fallback path.
+    """
+    parent = dest.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".incident-", dir=str(parent))
+    tmp_path = Path(tmp)
+    try:
+        try:
+            fh = os.fdopen(fd, "w", encoding="utf-8")
+        except OSError:
+            # fdopen failed — close the raw fd ourselves to avoid a leak.
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            raise
+        try:
+            with fh:
+                fh.write(payload)
+            tmp_path.replace(dest)
+        except OSError:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+            raise
+    except OSError:
+        # Last-ditch cleanup if the tmp file still exists.
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
+        raise
+
+
 def write_incident(incident: dict[str, Any], forge_dir: Path) -> Path:
     """Atomically write a cost-incident JSON file under .forge/cost-incidents/.
 
     File name: <ISO8601-with-colons-replaced>.json to keep it Windows-safe.
-    Returns the full path. Never raises on I/O — falls back to a temp path and
-    logs stderr so the pipeline is not blocked by a filesystem hiccup.
+    Returns the full path that was actually written. Never raises on I/O —
+    on failure the function falls back to ``tempfile.gettempdir()`` and logs
+    a warning to stderr so the pipeline is not blocked by a filesystem
+    hiccup. Programmer errors (TypeError, etc.) still propagate.
     """
-    target_dir = forge_dir / "cost-incidents"
-    target_dir.mkdir(parents=True, exist_ok=True)
     ts = incident.get("timestamp", "unknown")
     safe_ts = ts.replace(":", "-").replace(".", "-")
-    dest = target_dir / f"{safe_ts}.json"
+    filename = f"{safe_ts}.json"
     payload = json.dumps(incident, indent=2, sort_keys=True) + "\n"
 
-    # Atomic write: tmp in same dir, then os.replace.
-    fd, tmp = tempfile.mkstemp(prefix=".incident-", dir=str(target_dir))
+    target_dir = forge_dir / "cost-incidents"
+    dest = target_dir / filename
+
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(payload)
-        os.replace(tmp, dest)
-    except OSError:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
-    return dest
+        _atomic_write_json(dest, payload)
+        return dest
+    except OSError as exc:
+        sys.stderr.write(
+            "cost_governance.write_incident: primary write to "
+            f"{dest} failed ({exc!r}); falling back to system tempdir\n"
+        )
+
+    fallback = Path(tempfile.gettempdir()) / filename
+    try:
+        _atomic_write_json(fallback, payload)
+        return fallback
+    except OSError as exc:
+        sys.stderr.write(
+            "cost_governance.write_incident: fallback write to "
+            f"{fallback} also failed ({exc!r}); incident not persisted\n"
+        )
+        return fallback
