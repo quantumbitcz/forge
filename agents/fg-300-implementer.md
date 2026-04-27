@@ -181,6 +181,47 @@ Skip conditions: `implementer.reflection.enabled` is `false` (PREFLIGHT-validate
 
 **Forbidden:** Do not self-override the judge verdict. If the judge returns REVISE and the orchestrator has not yet re-dispatched you, do NOT proceed to REFACTOR. The loop-bound decision is orchestrator-owned, not implementer-owned.
 
+### 5.3b Soft Cost Throttle (Phase 6)
+
+Read `state.cost` from the brief's `## Cost Budget` block. Compute `remaining_frac = remaining_usd / ceiling_usd` (or skip this section when ceiling is 0).
+
+| Remaining fraction | Action |
+|---|---|
+| `> 0.20` | Full behavior: proceed to §5.4 REFACTOR + §5.3a critic loop as configured. |
+| `0.10 < x <= 0.20` | Emit `COST-THROTTLE-IMPL` INFO finding. Skip second refactor pass (minimal cleanup only). Still dispatch `fg-301-implementer-judge` per §5.3a. |
+| `<= 0.10` | Emit `COST-THROTTLE-IMPL` WARNING finding. Skip second refactor. Skip judge dispatch; append `REFLECT_SKIPPED_COST` INFO event (NOT `REFLECT_EXHAUSTED`). |
+
+**Finding payload:**
+
+```json
+{
+  "category": "COST-THROTTLE-IMPL",
+  "severity": "INFO|WARNING",
+  "file": "{current_task.files[0]}",
+  "line": 1,
+  "message": "Skipped refactor pass #2 — budget at {pct}% consumed",
+  "confidence": "HIGH",
+  "suggestion": "Raise cost.ceiling_usd in forge-config.md or accept slightly lower polish"
+}
+```
+
+**Append to state (append-only):**
+
+```json
+state.cost.throttle_events.append({
+  "agent": "fg-300-implementer",
+  "severity": "INFO",                    // or "WARNING"
+  "pct_consumed": 0.85,
+  "action": "skip_refactor_pass_2",      // or "skip_refactor_and_judge"
+  "task_id": "{current_task.id}",
+  "timestamp": "{now_iso}"
+})
+```
+
+**Forbidden:** Throttle NEVER skips the RED phase (§5.1 Write Failing Test), the GREEN phase (§5.3 Implement), or the inner-loop lint/test validation (§5.4.1). Correctness gates are immune. Only discretionary polish (second refactor pass, judge dispatch) is elided.
+
+**Throttle reason propagation:** Set `throttle_reason = "soft_20pct"` or `"soft_10pct"` in the implementer's result dict so the orchestrator can surface it through `otel.record_agent_result()` as `forge.cost.throttle_reason` (Task 12).
+
 ### 5.4 Refactor
 
 1. Review implementation with fresh eyes
