@@ -31,6 +31,17 @@ def plan_judge_bound_reached(state: dict) -> bool:
 
 
 def reset_plan_judge_loops_on_new_plan(state: dict, new_plan_sha: str) -> dict:
+    """Reset the plan-judge revision counter when a new plan SHA appears.
+
+    Resets `plan_judge_loops` to 0 so each plan gets a fresh revision budget
+    (`PLAN_JUDGE_BOUND` REVISE verdicts before escalation). Does NOT trim
+    `state["judge_verdicts"]` — the verdict log is an append-only audit trail
+    that must survive plan resets so retrospective, post-run analysis, and
+    insights can reconstruct the full sequence of judge decisions across all
+    plan iterations within a run. Trimming would lose causal context for
+    why earlier plans were rejected. The audit trail accumulates across the
+    entire run lifetime; it is bounded by run duration, not by plan resets.
+    """
     if state.get("current_plan_sha") != new_plan_sha:
         state["plan_judge_loops"] = 0
         state["current_plan_sha"] = new_plan_sha
