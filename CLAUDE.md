@@ -18,6 +18,8 @@ New to forge? Three steps:
 
 Already familiar? Skip to §Architecture.
 
+- **Spend predictably.** `cost.ceiling_usd` in `forge-config.md` (default $25/run). Dispatch gate in `fg-100-orchestrator.md` §Cost Governance; helpers in `shared/cost_governance.py`; retrospective analytics in `fg-700-retrospective.md` Output 2.7.
+
 ---
 
 ## What this is
@@ -235,6 +237,7 @@ Features (each has dedicated doc in `shared/`):
 | Feature flags (F23) | `feature_flags.*` | Categories: `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP` |
 | Deployment strategies (F24) | `deployment.*` | Canary/blue-green/rolling, `fg-620-deploy-verifier`, Argo Rollouts |
 | Consumer-driven contracts (F25) | `contract_testing.*` | Pact, can-i-deploy gate. Categories: `CONTRACT-PACT-*` |
+| Cost governance (F35) | `cost.*` | USD ceiling, dispatch-gate projection, soft throttle, SAFETY_CRITICAL hardcoded list, `forge.cost.*` OTel attrs. Categories: `COST-THROTTLE-IMPL`, `COST-DOWNGRADE`, `COST-ESCALATION-AUTO`, `COST-ESCALATION-TIMEOUT`, `EST-DRIFT`. State schema v2.0.0 (coordinated with P5/P7). |
 | Judge veto (F32) | `implementer.reflection.*`, `plan.judge.*` | `fg-205-plan-judge` (plan-scoped) and `fg-301-implementer-judge` (per-task). Binding REVISE; 2-loop bound; 3rd REVISE → AskUserQuestion (interactive) or auto-abort (autonomous). Counters: `state.plan_judge_loops` (int), `state.impl_judge_loops[task_id]` (object). Categories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`, `JUDGE-TIMEOUT` |
 | Output compression (F26) | `output_compression.*` | 4 levels (verbose/standard/terse/minimal), 20-65% reduction |
 | AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
@@ -400,7 +403,7 @@ See `shared/preflight-constraints.md` for all PREFLIGHT validation rules (scorin
 - **Bugfix:** `fg-020-bug-investigator` → reproduction (max 3) → 4-perspective validation → reduced reviewers. Patterns in `.forge/forge-log.md`.
 - **Migration:** All 10 stages. `fg-160-migration-planner` at Stage 2. Stage 4 cycles through MIGRATING, MIGRATION_PAUSED, MIGRATION_CLEANUP, MIGRATION_VERIFY.
 - **Dry-run:** PREFLIGHT→VALIDATE only. No worktree/Linear/lock/checkpoints.
-- **Autonomous:** `autonomous: true` → auto-selection (logged `[AUTO]`). Never pauses except safety escalations (REGRESSING, E1-E4, unrecoverable CRITICAL).
+- **Autonomous:** `autonomous: true` → auto-selection (logged `[AUTO]`). Never pauses except safety escalations (REGRESSING, E1-E4, unrecoverable CRITICAL). Under Phase 6 cost governance, autonomous mode auto-decides on ceiling breaches: first attempts downgrade via `cost_governance.downgrade_tier()`, falls back to `abort_to_ship` if downgrade would drop a SAFETY_CRITICAL agent or if already at `fast`. Every decision is logged `COST-ESCALATION-AUTO` INFO and written to `.forge/cost-incidents/<timestamp>.json`. AskUserQuestion is NEVER invoked in autonomous mode for cost decisions.
 - **Sprint:** `--sprint`/`--parallel`. Independence analysis → parallel orchestrators. Isolation: `.forge/runs/{id}/` + `.forge/worktrees/{id}/`. Serialize = complete SHIP before second starts IMPLEMENT.
 
 ### Convergence & review
