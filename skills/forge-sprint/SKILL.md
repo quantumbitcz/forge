@@ -13,7 +13,7 @@ allowed-tools:
   - EnterPlanMode
   - ExitPlanMode
   - neo4j-mcp
-ui: { ask: true, tasks: true }
+ui: { tasks: true, ask: true, plan_mode: false }
 ---
 
 # /forge-sprint -- Sprint Execution

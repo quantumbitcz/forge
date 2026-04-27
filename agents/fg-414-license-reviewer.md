@@ -9,6 +9,10 @@ tools:
   - Glob
   - Grep
 trigger: always
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # License Compliance Reviewer (fg-414)

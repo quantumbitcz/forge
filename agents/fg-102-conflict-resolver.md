@@ -4,6 +4,10 @@ description: Analyzes file and symbol-level conflicts between tasks or features.
 model: inherit
 color: olive
 tools: ['Read', 'Grep', 'Glob', 'neo4j-mcp']
+ui:
+  tasks: false
+  ask: false
+  plan_mode: false
 ---
 
 # Conflict Resolver (fg-102)
