@@ -75,3 +75,13 @@ setup() {
   run grep -F 'max_parallel_reviewers' "$F"
   [ "$status" -eq 0 ]
 }
+
+@test "every fg-41* reviewer contains 'Findings Store Protocol' in first 60 lines" {
+  for F in "$PROJECT_ROOT"/agents/fg-41*.md; do
+    HEAD=$(head -60 "$F")
+    echo "$HEAD" | grep -qF 'Findings Store Protocol' || {
+      echo "missing preamble in $F"
+      return 1
+    }
+  done
+}

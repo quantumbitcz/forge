@@ -27,8 +27,6 @@
 | `total_retries_max` | integer | Yes | Global retry ceiling. Default: 10. Configurable in `forge-config.md`. When `total_retries >= total_retries_max`, the orchestrator escalates regardless of individual loop budgets. Constraint: >= 5 and <= 30. |
 | `playbook_pre_refine_version` | string | No | Playbook version before auto-refinement was applied at PREFLIGHT. Set by orchestrator when `playbooks.auto_refine: true` triggers. Used by retrospective (fg-700) to detect rollback-worthy regressions. Null if no auto-refinement occurred. |
 | `implementer_fix_cycles` | integer | Yes | Total inner-loop fix cycles across all tasks in this run. Tracked separately from convergence engine counters (`verify_fix_count`, `test_cycles`, `quality_cycles`, `total_iterations`, `total_retries`). Does NOT feed into `total_retries`. Starts at 0, incremented by the implementer's inner-loop validation (section 5.4.1 of fg-300). |
-| `implementer_reflection_cycles_total` | integer | Yes | Sum of `tasks[*].implementer_reflection_cycles` across the run. Reported by retrospective (§5.2 output). Initialized to 0 at PREFLIGHT. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, or `quality_cycles`. |
-| `reflection_divergence_count` | integer | Yes | Tasks that exhausted reflection budget (REVISE verdict at cycle == `implementer.reflection.max_cycles`). Starts at 0. Emits `REFLECT-DIVERGENCE` WARNING per increment. |
 | `inner_loop` | object | Yes | Inner-loop validation state for the implementer. Tracks per-run metrics for lint and affected test execution within Stage 4. Initialized at PREFLIGHT with all counters at 0. |
 | `inner_loop.enabled` | boolean | Yes | Whether inner-loop validation is active for this run. Mirrors `implementer.inner_loop.enabled` from config. Default: `true`. |
 | `inner_loop.fix_cycles_used` | integer | Yes | Total inner-loop fix cycles consumed across all tasks. Mirrors top-level `implementer_fix_cycles` (canonical counter). Kept for convenience when reading the `inner_loop` object in isolation. |
@@ -127,7 +125,6 @@
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.5). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight >= 4.4` (80%), set `recovery.budget_warning_issued: true`. |
 | `recovery` | object | Yes | Recovery engine runtime state. `total_failures`: count of error occurrences that triggered recovery evaluation. `total_recoveries`: count of successful recoveries. `degraded_capabilities`: list of capability names operating in degraded mode (e.g., `"linear"`, `"neo4j"`). `failures`: list of `{ "error_type": "<type>", "stage": "<stage>", "timestamp": "<ISO8601>", "strategy": "<strategy-applied>", "outcome": "recovered\|escalated" }`. `budget_warning_issued`: boolean, `true` when `recovery_budget.total_weight >= 4.4` (80% of budget). |
 | `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300, "flapping_count": <int>, "locked": <bool> }`. `flapping_count` (default 0): incremented when HALF_OPEN → OPEN (probe failed), reset to 0 on HALF_OPEN → CLOSED (probe succeeded). `locked` (default false): set to `true` when `flapping_count >= 3` — locked circuits remain OPEN indefinitely with no HALF_OPEN probes. Cleared by `/forge-recover repair`, `/forge-recover reset`, or new pipeline run; NOT cleared by `/forge-recover resume`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine, flapping detection, and category-to-error-type mapping. Default: `{}`. Added in v1.6.0. |
-| `critic_revisions` | integer | No | Number of planning critic revision cycles applied during VALIDATE stage. Starts at 0, incremented each time the planning critic triggers a plan revision. Added in v1.6.0. Default: `0`. |
 | `schema_version_history` | array | No | Append-only log of schema migrations applied to this state file. Each entry: `{ "from": "<version>", "to": "<version>", "timestamp": "<ISO8601>" }`. Capped at 20 entries (oldest trimmed). Added in v1.6.0. Default: `[]`. |
 | `consistency_cache_hits` | integer | Yes | Count of self-consistency voting dispatch calls served from `.forge/consistency-cache.jsonl`. Incremented by `hooks/_py/consistency.py` on cache hit. Added in v1.9.0. Default: `0`. See `shared/consistency/voting.md`. |
 | `consistency_votes` | object | Yes | Per-decision-point self-consistency voting counters. Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value is `{ "invocations": <int>, "cache_hits": <int>, "low_consensus": <int> }`. `invocations` increments on every dispatch (skipped on validator hard-verdict rule pass). `cache_hits` increments when a dispatch is served from cache. `low_consensus` increments when the winning label's mean confidence falls below `consistency.min_consensus_confidence` or when a `ConsistencyError` fires (too few samples survived parsing). Added in v1.9.0. Default: all counters `0`. See `shared/consistency/voting.md` §5 for fallback rules. |
@@ -977,8 +974,6 @@ Each task object under `tasks[*]` carries:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `tasks[*].implementer_reflection_cycles` | integer | Yes | Per-task reflection cycle count. Starts at 0. Incremented each time `fg-301-implementer-critic` returns REVISE and budget permits re-entry. Budget check is `count < implementer.reflection.max_cycles` evaluated BEFORE increment. Capped by `implementer.reflection.max_cycles` (default 2). Does NOT feed into `total_retries`, `total_iterations`, `implementer_fix_cycles`, or any convergence counter. |
-| `tasks[*].reflection_verdicts` | array of object | No | Audit trail of reflection dispatches for this task. Each entry: `{cycle: int, verdict: "PASS"\|"REVISE", confidence: "HIGH"\|"MEDIUM"\|"LOW", finding_count: int, duration_ms: int}`. Trimmed to last 5 entries. On `/forge-recover resume` this array is reset to `[]` while `implementer_reflection_cycles` is preserved (budget not refunded mid-task). |
 
 **Cycle counter semantics (off-by-one guard):**
 
@@ -1133,3 +1128,28 @@ default to no-op values so unaware consumers ignore them.
 | `speculation.degraded` | string \| null | `null` (healthy), `"low_diversity"` (candidates too similar, fell back to single plan), or `"cost_ceiling"` (aborted due to token/cost budget). |
 
 Candidate artifacts live under `.forge/plans/candidates/{run_id}/cand-{N}.json` and survive `/forge-recover reset`. See `shared/speculation.md` for the full workflow.
+
+## Judge counters (Phase 5)
+
+### `plan_judge_loops`
+
+- **Type:** integer (≥ 0)
+- **Scope:** root state
+- **Default:** 0
+- **Semantics:** Count of REVISE verdicts from fg-205-plan-judge for the current plan. Resets to 0 when a new plan is drafted (SHA of `requirement + approach` changes). Validator REVISE, user-continue, and feedback loops do NOT reset it.
+- **Written by:** orchestrator (fg-100), via `shared/python/judge_plumbing.py::record_plan_judge_verdict`.
+
+### `impl_judge_loops`
+
+- **Type:** object keyed by `task_id`, values integer (≥ 0)
+- **Scope:** root state
+- **Default:** `{}`
+- **Semantics:** Per-task REVISE counter from fg-301-implementer-judge.
+- **Written by:** orchestrator, via `judge_plumbing.py::record_impl_judge_verdict`.
+
+### `judge_verdicts`
+
+- **Type:** array of `{judge_id, verdict, dispatch_seq, timestamp}`
+- **Scope:** root state
+- **Default:** `[]`
+- **Semantics:** Audit log of every judge verdict in order. Used by retrospective (fg-700) to count REFLECT-DIVERGENCE and plan-rejection trends.
