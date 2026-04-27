@@ -1,5 +1,7 @@
 # Jetpack Compose Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Jetpack Compose-specific patterns.
 
 ## Code Documentation

@@ -1,5 +1,7 @@
 # SvelteKit Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for SvelteKit projects. Language idioms are in `modules/languages/typescript.md`. Generic testing patterns are in `modules/testing/vitest.md`.
 
 ## Architecture (File-Based Routing)

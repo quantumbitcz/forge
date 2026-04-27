@@ -1,5 +1,7 @@
 # Next.js Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Next.js-specific patterns.
 
 ## Code Documentation

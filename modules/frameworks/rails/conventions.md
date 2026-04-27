@@ -1,5 +1,7 @@
 # Rails Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for Rails 8.x projects (Rails 7.2 also covered). Language idioms are in `modules/languages/ruby.md`.
 > Generic testing patterns are in `modules/testing/rspec.md`.
 > Composition stack: `variant > rails/testing/rspec.md > rails/conventions.md > ruby.md > persistence/active-record.md > testing/rspec.md`.

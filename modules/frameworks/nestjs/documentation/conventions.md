@@ -1,5 +1,7 @@
 # NestJS Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with NestJS-specific patterns.
 
 ## Code Documentation

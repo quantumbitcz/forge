@@ -1,5 +1,7 @@
 # ASP.NET Core Framework Conventions
+
 > Support tier: contract-verified
+
 > Language-agnostic ASP.NET Core patterns. Language-specific idioms (nullable reference types, records, etc.)
 > are in `modules/languages/csharp.md`. Framework-language integration is in `variants/csharp.md`.
 

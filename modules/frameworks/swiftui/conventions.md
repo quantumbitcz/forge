@@ -1,5 +1,7 @@
 # SwiftUI Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for SwiftUI iOS projects. Language idioms are in `modules/languages/swift.md`. Generic testing patterns are in `modules/testing/xctest.md`.
 
 ## Architecture (MVVM + SwiftUI)

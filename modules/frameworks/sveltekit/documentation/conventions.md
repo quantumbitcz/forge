@@ -1,5 +1,7 @@
 # SvelteKit Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with SvelteKit-specific patterns.
 
 ## Code Documentation

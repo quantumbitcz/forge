@@ -1,5 +1,7 @@
 # Gin Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Gin-specific patterns.
 
 ## Code Documentation

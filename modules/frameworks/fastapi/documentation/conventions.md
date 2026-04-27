@@ -1,5 +1,7 @@
 # FastAPI Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with FastAPI-specific patterns.
 
 ## Code Documentation

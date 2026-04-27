@@ -1,5 +1,7 @@
 # Go (stdlib) Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Go-specific patterns.
 
 ## Code Documentation

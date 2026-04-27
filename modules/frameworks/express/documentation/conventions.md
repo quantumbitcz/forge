@@ -1,5 +1,7 @@
 # Express Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Express-specific patterns.
 
 ## Code Documentation

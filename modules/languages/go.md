@@ -1,5 +1,7 @@
 # Go Language Conventions
+
 > Support tier: contract-verified
+
 ## Type System
 
 - Go uses structural typing via interfaces — a type satisfies an interface by implementing its methods, no explicit declaration required.

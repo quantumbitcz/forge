@@ -1,5 +1,7 @@
 # Svelte Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Svelte 5-specific patterns.
 > Note: Svelte (standalone SPAs) is distinct from SvelteKit (SSR/routing layer).
 

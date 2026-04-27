@@ -1,5 +1,7 @@
 # Unleash — Toggle Types & Strategies
 
+> Support tier: community
+
 ## Overview
 
 Unleash is an open-source feature flag management system. It supports multiple toggle types (release, experiment, operational, kill-switch, permission), activation strategies (gradual rollout, user IDs, IPs, custom), and variants for A/B testing. Unleash can be self-hosted or used as Unleash Cloud. The client SDK evaluates flags locally using a cached configuration fetched from the Unleash server.

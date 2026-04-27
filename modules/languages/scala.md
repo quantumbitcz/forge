@@ -1,5 +1,7 @@
 # Scala Language Conventions
+
 > Support tier: contract-verified
+
 ## Type System
 
 - Scala has a powerful, sound type system with type inference, algebraic data types, and higher-kinded types.

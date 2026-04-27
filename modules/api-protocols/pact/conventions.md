@@ -1,5 +1,7 @@
 # Pact Consumer-Driven Contract Testing Conventions
 
+> Support tier: community
+
 ## Overview
 
 Pact is a consumer-driven contract testing framework that verifies service integrations by having consumers define their expectations as contracts (pacts) and providers verify they satisfy those expectations. This inverts traditional API testing: instead of producers testing their own schemas, consumers declare exactly what they need.

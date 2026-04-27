@@ -1,5 +1,7 @@
 # Apache Airflow — DAG Conventions & Operator Patterns
 
+> Support tier: community
+
 ## Overview
 
 Airflow orchestrates data pipelines as Directed Acyclic Graphs (DAGs). Each DAG defines tasks with dependencies, schedules, and retry behavior. Use Airflow for ETL/ELT workflows, data warehouse loads, ML training pipelines, and cross-system orchestration. DAGs are Python files in the `dags/` directory — Airflow parses them periodically, so module-level code must be lightweight. Operators execute the work; sensors wait for conditions; hooks interface with external systems.

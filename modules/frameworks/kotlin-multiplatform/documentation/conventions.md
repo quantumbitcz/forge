@@ -1,5 +1,7 @@
 # Kotlin Multiplatform Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with KMP-specific patterns.
 
 ## Code Documentation

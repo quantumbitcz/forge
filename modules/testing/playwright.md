@@ -1,5 +1,7 @@
 # Playwright E2E Testing Conventions (Cross-Framework)
+
 > Support tier: contract-verified
+
 ## Test Structure
 
 Organize by user journey, not by page. One file per major flow. Use `test.describe` for grouping related scenarios within a flow. Keep E2E tests in a dedicated `e2e/` or `playwright/` directory, separate from unit tests.

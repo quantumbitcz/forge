@@ -1,5 +1,7 @@
 # ScalaTest Best Practices
+
 > Support tier: contract-verified
+
 ## Overview
 ScalaTest is the most popular testing framework for Scala, supporting multiple testing styles (FunSuite, FlatSpec, WordSpec, FreeSpec). Use it for unit and integration tests in Scala/Akka/Play applications. ScalaTest excels at flexible DSLs, matchers, and async testing. Avoid it for non-Scala JVM projects (use JUnit5/Kotest).
 

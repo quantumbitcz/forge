@@ -1,5 +1,7 @@
 # Kotlin Multiplatform Framework Conventions
+
 > Support tier: contract-verified
+
 > Language-agnostic KMP patterns. Language-specific Kotlin idioms are in `modules/languages/kotlin.md`.
 > Framework-language integration is in `variants/kotlin.md`.
 

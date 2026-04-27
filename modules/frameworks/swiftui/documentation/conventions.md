@@ -1,5 +1,7 @@
 # SwiftUI Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with SwiftUI-specific patterns.
 
 ## Code Documentation

@@ -1,5 +1,7 @@
 # Embedded Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with embedded systems-specific patterns.
 
 ## Code Documentation

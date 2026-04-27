@@ -1,5 +1,7 @@
 # i18n Validation Module
 
+> Support tier: community
+
 Internationalization code quality checks. Detects hard-coded user-facing strings, RTL layout violations, locale formatting issues, and translation key gaps.
 
 ## Overview

@@ -1,5 +1,7 @@
 # Kubernetes / Helm / Docker Framework Conventions
+
 > Support tier: contract-verified
+
 > Infrastructure conventions for K8s-based projects. No language layer -- this module covers YAML/Helm manifests, Dockerfiles, and deployment patterns.
 
 ## Infrastructure as Code Principles

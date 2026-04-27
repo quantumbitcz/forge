@@ -1,5 +1,7 @@
 # Embedded C Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for embedded C projects. Language idioms are in `modules/languages/c.md`.
 
 ## Architecture (POSIX / Bare-Metal Hybrid)

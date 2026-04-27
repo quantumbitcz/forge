@@ -1,5 +1,7 @@
 # Django Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Django-specific patterns.
 
 ## Code Documentation

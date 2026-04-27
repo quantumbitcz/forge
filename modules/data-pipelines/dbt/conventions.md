@@ -1,5 +1,7 @@
 # dbt — Data Transformation & Testing
 
+> Support tier: community
+
 ## Overview
 
 dbt (data build tool) transforms data in the warehouse using SQL SELECT statements. Models define transformations, tests validate data quality, and documentation lives alongside code. dbt compiles SQL, manages dependencies between models, and executes transformations in the target warehouse (Snowflake, BigQuery, Redshift, Postgres, Databricks). dbt Core is open-source CLI; dbt Cloud adds scheduling, CI, and IDE.

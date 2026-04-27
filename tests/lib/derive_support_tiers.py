@@ -2,9 +2,12 @@
 """Inject `> Support tier: <tier>` below the H1 of every module file.
 
 Tier resolution:
-  1. CI-verified    — module name in CI_VERIFIED set (empty today; Phase 2).
-  2. Community      — module has a marker file `.community` in its dir.
-  3. Contract-verified — default fallback for every other module.
+  1. ci-verified       — module name in CI_VERIFIED set (empty today; Phase 2).
+  2. community         — module path matches a `COMMUNITY_PREFIXES` entry,
+                         or has a marker file `.community` in its dir.
+  3. contract-verified — default fallback for every other module.
+
+Tier identifiers are lowercase-with-hyphen (machine-readable, grep-friendly).
 
 `--check` mode exits non-zero if any file would be changed.
 Idempotent: running twice on a clean tree produces no diff.
@@ -17,24 +20,67 @@ import sys
 from pathlib import Path
 
 CI_VERIFIED: set[str] = set()  # Phase 2 populates this
+
+# Path-prefix rules for `community` tier — layers without explicit
+# CI/contract coverage. Matched against POSIX-style relative paths
+# under `modules/`. Prefix match (string startswith).
+COMMUNITY_PREFIXES: tuple[str, ...] = (
+    "modules/documentation/",
+    "modules/ml-ops/",
+    "modules/data-pipelines/",
+    "modules/feature-flags/",
+    "modules/build-systems/",
+    "modules/code-quality/",
+    "modules/api-protocols/",
+)
+
+# Suffix rules: framework documentation sub-bindings have no CI of their own.
+COMMUNITY_PATH_SUFFIXES: tuple[str, ...] = (
+    "/documentation/conventions.md",
+)
+
 BADGE_RE = re.compile(r"^> Support tier:.*$", re.MULTILINE)
 H1_RE = re.compile(r"^# .+$", re.MULTILINE)
 
 
 def discover_targets(root: Path) -> list[Path]:
-    targets: list[Path] = []
-    targets.extend(sorted((root / "modules" / "languages").glob("*.md")))
-    targets.extend(sorted((root / "modules" / "frameworks").glob("*/conventions.md")))
-    targets.extend(sorted((root / "modules" / "testing").glob("*.md")))
-    return [p for p in targets if p.is_file()]
+    """All module conventions/language/testing docs that should carry a badge.
+
+    Includes:
+      - modules/languages/*.md
+      - modules/testing/*.md
+      - every modules/**/conventions.md (frameworks, ml-ops, data-pipelines,
+        feature-flags, build-systems, code-quality, documentation,
+        api-protocols, framework documentation sub-bindings, etc.)
+    """
+    targets: set[Path] = set()
+    targets.update((root / "modules" / "languages").glob("*.md"))
+    targets.update((root / "modules" / "testing").glob("*.md"))
+    targets.update((root / "modules").rglob("conventions.md"))
+    return sorted(p for p in targets if p.is_file())
 
 
-def tier_for(path: Path) -> str:
+def tier_for(path: Path, root: Path) -> str:
+    """Return the lowercase tier identifier for the given module file."""
     module_name = path.parent.name if path.name == "conventions.md" else path.stem
     if module_name in CI_VERIFIED:
-        return "CI-verified"
+        return "ci-verified"
+
+    # Marker file opt-in for community tier.
     if (path.parent / ".community").exists():
-        return "Community"
+        return "community"
+
+    # Path-based community defaults.
+    try:
+        rel = path.relative_to(root).as_posix()
+    except ValueError:
+        rel = path.as_posix()
+    if rel.endswith(COMMUNITY_PATH_SUFFIXES):
+        return "community"
+    for prefix in COMMUNITY_PREFIXES:
+        if rel.startswith(prefix):
+            return "community"
+
     return "contract-verified"
 
 
@@ -42,25 +88,48 @@ def render_badge(tier: str) -> str:
     return f"> Support tier: {tier}"
 
 
+def _trailing_newlines(text: str) -> int:
+    n = 0
+    while n < len(text) and text[len(text) - 1 - n] == "\n":
+        n += 1
+    return n
+
+
 def transform(text: str, badge: str) -> str:
+    """Insert (or refresh) the badge line directly below H1, with blank
+    lines on both sides. Preserve the file's original trailing-newline count."""
+    trailing = _trailing_newlines(text)
+    body = text.rstrip("\n")
+
     # Remove existing badge lines (any number, anywhere).
-    text = BADGE_RE.sub("", text)
-    # Re-insert directly after H1.
-    m = H1_RE.search(text)
+    body = BADGE_RE.sub("", body)
+
+    m = H1_RE.search(body)
     if not m:
-        return text  # no H1 — leave alone
+        # No H1 — leave alone (other than badge purge above).
+        return body + ("\n" * max(trailing, 1))
+
     insert_at = m.end()
-    # Skip a single trailing newline so the badge lands on its own line.
-    tail = text[insert_at:]
-    # Collapse leading blank lines in tail (prevents stacking).
-    tail = re.sub(r"^\n+", "\n", tail)
-    return text[:insert_at] + "\n" + badge + "\n" + tail.lstrip("\n").rstrip() + ("\n" if not text.endswith("\n") else "\n")
+    head = body[:insert_at]
+    tail = body[insert_at:]
+
+    # Collapse leading blank lines in tail so the badge has exactly one
+    # blank line above it (the blank line between H1 and badge), exactly
+    # one blank line below it (between badge and the next block).
+    tail = re.sub(r"^\n+", "", tail)
+
+    # Compose: H1 \n\n badge \n\n tail
+    rebuilt = f"{head}\n\n{badge}\n\n{tail}" if tail else f"{head}\n\n{badge}\n"
+
+    # Preserve original trailing-newline count (default to 1 if input had none).
+    rebuilt = rebuilt.rstrip("\n") + ("\n" * max(trailing, 1))
+    return rebuilt
 
 
 def process(root: Path, check_only: bool) -> int:
     drift = 0
     for path in discover_targets(root):
-        badge = render_badge(tier_for(path))
+        badge = render_badge(tier_for(path, root))
         original = path.read_text(encoding="utf-8")
         updated = transform(original, badge)
         if updated != original:
@@ -78,6 +147,7 @@ def process(root: Path, check_only: bool) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Inject support-tier badges in module docs.")
     ap.add_argument("--check", action="store_true", help="exit non-zero on drift")
+    ap.add_argument("--apply", action="store_true", help="apply changes (default if --check is absent)")
     ap.add_argument("--root", default=str(Path(__file__).resolve().parents[2]), help="repo root")
     args = ap.parse_args()
     return process(Path(args.root), args.check)

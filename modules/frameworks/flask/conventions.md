@@ -1,5 +1,7 @@
 # Flask Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for Flask 3.x projects. Language idioms are in `modules/languages/python.md`.
 > Generic testing patterns are in `modules/testing/pytest.md`.
 > Composition stack: `variant > flask/testing/pytest.md > flask/conventions.md > python.md > persistence/sqlalchemy.md > testing/pytest.md`.

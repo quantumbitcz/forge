@@ -1,5 +1,7 @@
 # xUnit / NUnit Testing Conventions (.NET)
+
 > Support tier: contract-verified
+
 ## Test Structure
 
 Prefer **xUnit** for new projects — it enforces test isolation by creating a fresh instance per test. NUnit is acceptable for existing test suites. One test class per production class; use nested classes for scenario grouping.

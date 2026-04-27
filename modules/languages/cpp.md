@@ -1,5 +1,7 @@
 # C++ Language Conventions
+
 > Support tier: contract-verified
+
 ## Type System
 
 - Use modern C++ (C++17 minimum, C++20/23 preferred). Enable via `-std=c++20` or `set(CMAKE_CXX_STANDARD 20)`.

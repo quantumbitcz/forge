@@ -1,5 +1,7 @@
 # MLflow — Experiment Tracking & Model Registry
 
+> Support tier: community
+
 ## Overview
 
 MLflow provides experiment tracking, model registry, and deployment for ML projects. Use the Tracking API to log parameters, metrics, and artifacts for every training run. Register models in the Model Registry for versioned deployment. MLflow Projects define reproducible runs; MLflow Models package inference artifacts with a standard interface across flavors (sklearn, pytorch, tensorflow, etc.).

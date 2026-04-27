@@ -1,5 +1,7 @@
 # Python Language Conventions
+
 > Support tier: contract-verified
+
 ## Type System
 
 - Add `from __future__ import annotations` at the top of every module — enables PEP 563 postponed evaluation, allowing forward references and cleaner type hints without circular import issues.

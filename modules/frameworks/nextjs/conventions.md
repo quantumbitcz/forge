@@ -1,5 +1,7 @@
 # Next.js Framework Conventions
+
 > Support tier: contract-verified
+
 > Framework-specific conventions for Next.js projects. Language idioms are in `modules/languages/typescript.md`. Generic testing patterns are in `modules/testing/vitest.md`.
 
 ## Architecture (App Router)

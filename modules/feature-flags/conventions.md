@@ -1,5 +1,7 @@
 # Feature Flags — General Best Practices
 
+> Support tier: community
+
 ## Overview
 
 Feature flags (feature toggles) decouple deployment from release. They enable trunk-based development, canary releases, A/B testing, and progressive rollouts. A feature flag wraps new behavior in a conditional check — when the flag is on, the new code path executes; when off, the existing behavior continues. Flags have a lifecycle: created -> active -> fully rolled out -> cleaned up. Stale flags (permanently enabled with dead code branches) are a major source of technical debt.

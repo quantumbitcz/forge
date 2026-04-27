@@ -1,5 +1,7 @@
 # C# Language Conventions
+
 > Support tier: contract-verified
+
 ## Type System
 
 - Enable `#nullable enable` (or set `<Nullable>enable</Nullable>` in the project file) — nullable reference types make `null` explicit and compiler-enforced.

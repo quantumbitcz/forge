@@ -1,5 +1,7 @@
 # LaunchDarkly — SDK Patterns & Flag Evaluation
 
+> Support tier: community
+
 ## Overview
 
 LaunchDarkly is a feature flag management platform with server-side and client-side SDKs. The server-side SDK streams flag configuration and evaluates locally (no network round-trip per evaluation). The client-side SDK evaluates against a user context. LaunchDarkly supports targeting rules, percentage rollouts, multivariate flags, and experimentation. Use the SDK's typed variation methods for type-safe flag evaluation.

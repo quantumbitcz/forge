@@ -1,5 +1,7 @@
 # Detox Best Practices
+
 > Support tier: contract-verified
+
 ## Overview
 Detox is a gray-box E2E testing framework for React Native applications. Use it for testing iOS and Android apps built with React Native where you need automated UI testing with synchronization (automatic waiting for animations, network, and async operations). Avoid it for non-React-Native apps (use XCUITest/Espresso), web-only testing (use Cypress/Playwright), or when Appium's cross-platform approach is required.
 
