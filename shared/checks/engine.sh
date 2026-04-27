@@ -85,10 +85,15 @@ if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
       echo $((_count + 1)) > "$_skip_file" 2>/dev/null || true
     fi
   fi
-  # Log failure inline (handle_failure not yet defined at this point)
+  # Log failure inline (handle_failure not yet defined at this point).
+  # Inline minimal JSONL emitter — _handle_failure is defined later, but we
+  # can't forward-reference it from this early-exit guard.
   if [ -d "$_log_dir" ]; then
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | skip:bash_version_${BASH_VERSION} | n/a" \
-      >> "${_log_dir}/.hook-failures.log" 2>/dev/null || true
+    _ts="$(date -u +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u)"
+    _cwd="${PWD//\"/\\\"}"
+    printf '{"schema":1,"ts":"%s","hook_name":"engine.sh","matcher":"Edit|Write","exit_code":0,"stderr_excerpt":"skip:bash_version_%s","duration_ms":0,"cwd":"%s"}\n' \
+      "$_ts" "${BASH_VERSION//\"/\\\"}" "$_cwd" \
+      >> "${_log_dir}/.hook-failures.jsonl" 2>/dev/null || true
   fi
   exit 0
 fi
@@ -109,33 +114,31 @@ _glob_exists() {
 # Track current file for error reporting
 _CURRENT_FILE=""
 
-# Log hook failures to .forge/.hook-failures.log for observability.
-# Called before silent exits so operators can audit skipped checks.
-# Uses flock/mkdir locking to prevent garbled lines from concurrent hooks.
+# Append a JSON row to .forge/.hook-failures.jsonl (best-effort).
+# Schema mirrors shared/schemas/hook-failures.schema.json.
+_handle_failure() {
+  # $1 hook_name, $2 matcher, $3 exit_code, $4 stderr_excerpt, $5 duration_ms
+  local log_dir="${FORGE_DIR:-.forge}"
+  mkdir -p "$log_dir" 2>/dev/null || return 0
+  local log_file="${log_dir}/.hook-failures.jsonl"
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+  local cwd="${PWD//\"/\\\"}"
+  # Truncate FIRST so escape sequences produced below are never chopped mid-character.
+  local stderr_ex="${4:0:2048}"
+  stderr_ex="${stderr_ex//$'\n'/\\n}"
+  stderr_ex="${stderr_ex//\"/\\\"}"
+  printf '{"schema":1,"ts":"%s","hook_name":"%s","matcher":"%s","exit_code":%s,"stderr_excerpt":"%s","duration_ms":%s,"cwd":"%s"}\n' \
+    "$ts" "$1" "$2" "$3" "$stderr_ex" "$5" "$cwd" \
+    >> "$log_file" 2>/dev/null || true
+}
+
+# Backwards-compatible wrapper preserving handle_failure(reason, file) call sites.
+# Routes to _handle_failure with hook metadata for engine.sh.
 handle_failure() {
   local reason="$1"
   local file="${2:-unknown}"
-  local log_dir="${FORGE_DIR:-.forge}"
-  if [[ -d "$log_dir" ]]; then
-    local log_file="${log_dir}/.hook-failures.log"
-    local entry
-    entry="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | engine.sh | ${reason} | ${file}"
-    if command -v flock &>/dev/null; then
-      (
-        flock -w 2 9 || { echo "$entry" >> "$log_file" 2>/dev/null; exit 0; }
-        echo "$entry" >> "$log_file"
-      ) 9>"${log_file}.lock"
-    else
-      local lock_dir="${log_file}.lockdir"
-      if mkdir "$lock_dir" 2>/dev/null; then
-        echo "$entry" >> "$log_file"
-        rmdir "$lock_dir" 2>/dev/null
-      else
-        # Lock contention — append without lock (best-effort)
-        echo "$entry" >> "$log_file" 2>/dev/null
-      fi
-    fi
-  fi
+  _handle_failure "engine.sh" "Edit|Write" 0 "${reason} | ${file}" 0
 }
 
 # shellcheck disable=SC2329  # invoked indirectly via hook timeout handler

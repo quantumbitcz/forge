@@ -29,16 +29,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-"$(cd "$SCRIPT_DIR/../../.." && pwd)"}"
 
 # --- Logging helper ---
-# Logs to .forge/.hook-failures.log for observability (best-effort, never fails).
-_log_failure() {
-  local reason="$1"
+# Appends a JSON row to .forge/.hook-failures.jsonl (best-effort, never fails).
+# Schema mirrors shared/schemas/hook-failures.schema.json.
+# Inlined (not sourced from engine.sh) to avoid hook startup cost.
+_handle_failure() {
+  # $1 hook_name, $2 matcher, $3 exit_code, $4 stderr_excerpt, $5 duration_ms
   local log_dir="${FORGE_DIR:-.forge}"
-  if [[ -d "$log_dir" ]]; then
-    local log_file="${log_dir}/.hook-failures.log"
-    local entry
-    entry="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u) | l0-syntax | ${reason} | ${FILE_PATH:-unknown}"
-    echo "$entry" >> "$log_file" 2>/dev/null || true
-  fi
+  mkdir -p "$log_dir" 2>/dev/null || return 0
+  local log_file="${log_dir}/.hook-failures.jsonl"
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+  local cwd="${PWD//\"/\\\"}"
+  local stderr_ex="${4:0:2048}"
+  stderr_ex="${stderr_ex//$'\n'/\\n}"
+  stderr_ex="${stderr_ex//\"/\\\"}"
+  printf '{"schema":1,"ts":"%s","hook_name":"%s","matcher":"%s","exit_code":%s,"stderr_excerpt":"%s","duration_ms":%s,"cwd":"%s"}\n' \
+    "$ts" "$1" "$2" "$3" "$stderr_ex" "$5" "$cwd" \
+    >> "$log_file" 2>/dev/null || true
 }
 
 # --- L0 stats counter ---
@@ -60,7 +67,7 @@ fi
 
 # --- Check tree-sitter availability ---
 if ! command -v tree-sitter &>/dev/null; then
-  _log_failure "skip:tree-sitter_not_installed"
+  _handle_failure "validate-syntax.sh" "PreToolUse" 0 "skip:tree-sitter_not_installed | ${FILE_PATH:-unknown}" 0
   exit 0
 fi
 
@@ -68,7 +75,7 @@ fi
 _PY="python3"
 command -v python3 &>/dev/null || _PY="python"
 if ! command -v "$_PY" &>/dev/null; then
-  _log_failure "skip:python_not_found"
+  _handle_failure "validate-syntax.sh" "PreToolUse" 0 "skip:python_not_found | ${FILE_PATH:-unknown}" 0
   exit 0
 fi
 
@@ -79,7 +86,7 @@ FILE_PATH=$("$_PY" -c "
 import json, sys
 d = json.loads(sys.stdin.read())
 print(d.get('file_path', ''))
-" <<< "${TOOL_INPUT:-}" 2>/dev/null) || { _log_failure "skip:json_parse_failed"; exit 0; }
+" <<< "${TOOL_INPUT:-}" 2>/dev/null) || { _handle_failure "validate-syntax.sh" "PreToolUse" 0 "skip:json_parse_failed | ${FILE_PATH:-unknown}" 0; exit 0; }
 
 [[ -z "$FILE_PATH" ]] && exit 0
 
@@ -129,7 +136,7 @@ TEMP_FILE="$TEMP_DIR/$(basename "$FILE_PATH")"
   --tool-name "${TOOL_NAME}" \
   --tool-input "${TOOL_INPUT}" \
   --file-path "$FILE_PATH" \
-  --output "$TEMP_FILE" 2>/dev/null || { _log_failure "skip:edit_preview_failed"; exit 0; }
+  --output "$TEMP_FILE" 2>/dev/null || { _handle_failure "validate-syntax.sh" "PreToolUse" 0 "skip:edit_preview_failed | ${FILE_PATH:-unknown}" 0; exit 0; }
 
 [[ ! -f "$TEMP_FILE" ]] && exit 0
 
@@ -155,7 +162,7 @@ fi
 
 # --- Check for grammar-not-found errors ---
 if echo "$PARSE_OUTPUT" | grep -qi "no language found\|unknown language\|could not determine"; then
-  _log_failure "skip:grammar_missing_${LANG}"
+  _handle_failure "validate-syntax.sh" "PreToolUse" 0 "skip:grammar_missing_${LANG} | ${FILE_PATH:-unknown}" 0
   exit 0
 fi
 
