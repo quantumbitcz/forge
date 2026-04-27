@@ -13,7 +13,7 @@ This spec does two coordinated things in one ship:
 
 2. **Superpowers pattern parity** — port the proven patterns from the superpowers plugin into the corresponding forge agents, so forge does not require superpowers as a runtime dependency but matches its quality. Five agent uplifts (planner, reviewer pipeline, post-run, bug investigator, PR builder), a polish pass on five already-strong agents (TDD, verification, parallel dispatch, plan execution, worktrees), and four "beyond superpowers" enhancements that exploit forge's multi-agent architecture (cross-reviewer consistency, brainstorm transcript reuse, hypothesis branching, structured PR-finishing dialog).
 
-The two halves share an implementation train because both touch the entry path (`/forge` invocation, BRAINSTORMING stage, `fg-010-shaper`), but ship in granular commits (~25 atomic commits) so each piece can be reverted or paused independently.
+The two halves share an implementation train because both touch the entry path (`/forge` invocation, BRAINSTORMING stage, `fg-010-shaper`), but ship in granular commits (32 atomic commits across 5 phases) so each piece can be reverted or paused independently.
 
 ## Goals
 
@@ -359,11 +359,13 @@ forge supports four PR/MR platforms. Detection runs once at PREFLIGHT (cached in
 |---|---|---|---|
 | GitHub | GitHub MCP (`mcp__plugin_github_github__add_issue_comment`) or `gh api` fallback | `gh` CLI auth or `GITHUB_TOKEN` env | First-class. |
 | GitLab | `glab api` CLI (REST: `POST /projects/:id/merge_requests/:iid/notes`) | `GITLAB_TOKEN` env or `glab` CLI auth | First-class. |
-| Bitbucket | `curl` against REST API v2.0 (`POST /repositories/<workspace>/<repo>/pullrequests/<id>/comments`) | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` env | Curl-based; no MCP. |
-| Gitea/Forgejo | `curl` against REST API v1 (`POST /repos/<owner>/<repo>/issues/<id>/comments`) | `GITEA_TOKEN` env | Curl-based; no MCP. |
+| Bitbucket | Python `urllib.request` (stdlib) against REST API v2.0 (`POST /repositories/<workspace>/<repo>/pullrequests/<id>/comments`) | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` env | Stdlib only; no MCP, no shell. Cross-platform (Windows/macOS/Linux). |
+| Gitea/Forgejo | Python `urllib.request` (stdlib) against REST API v1 (`POST /repos/<owner>/<repo>/issues/<id>/comments`) | `GITEA_TOKEN` env | Stdlib only; no MCP, no shell. Cross-platform. |
 | Unknown | No-op + warn | n/a | Fall back to local-only logging. |
 
 **Failure handling:** if the auth env var is missing, the integration logs a warning and writes the defense to `feedback-decisions.jsonl` with `addressed: defended_local_only`. The pipeline does not abort — defenses always have a durable local record even when the post-back fails.
+
+**Cross-platform implementation note:** All adapters MUST be pure Python — no `curl` or shell-out. GitHub uses the existing MCP (already cross-platform). GitLab uses `glab` CLI **only when present**; falls back to Python `urllib.request` against the GitLab REST API when `glab` is absent (so the integration works on Windows even without `glab` installed). Bitbucket and Gitea adapters use Python `urllib.request` exclusively. This satisfies the cross-platform first-class support stated in CLAUDE.md (Windows/macOS/Linux).
 
 **`state.platform` schema (added to §11):**
 
@@ -577,7 +579,7 @@ The four enhancements (goals 13-16) live inside the relevant uplift sections rat
 `state.bug.hypotheses[].passes_test` — bool, set when status transitions to `tested`.
 `state.bug.hypotheses[].confidence` — enum: `high | medium | low`.
 `state.bug.hypotheses[].posterior` — float in [0.0, 1.0]; updated per the Bayes formula (§7).
-`state.bug.fix_gate_passed` — bool. True iff at least one hypothesis has `passes_test: true` AND `posterior >= 0.50`.
+`state.bug.fix_gate_passed` — bool. True iff at least one hypothesis has `passes_test: true` AND `posterior >= bug.fix_gate_threshold` (default 0.75; configurable in `forge.local.md`, range 0.50–0.95). See §7 for the gate semantics and AC-DEBUG-004 for verification cases.
 
 `state.feedback_decisions[].comment_id` — string, opaque platform-scoped ID (e.g. `github://pulls/<n>#issuecomment-<id>`).
 `state.feedback_decisions[].verdict` — enum: `actionable | wrong | preference`.
@@ -657,7 +659,7 @@ The bulk of the implementation work. The change is mechanically large because th
 
 **Ground truth from `ls skills/` (verified 2026-04-27):** 29 skill directories exist. After this spec lands: 1 stays (`forge-ask`, edited in place), 28 are deleted, 2 are newly created (`forge`, `forge-admin`). Net delta: 28 deleted, 2 created, 1 edited. `forge-help` is **still present** today — Phase 2's deletion claim of `/forge-help` was never executed; this spec executes it as part of the 28.
 
-**Commit ordering (atomic, granular — ~25 commits):**
+**Commit ordering (atomic, granular — 32 commits):**
 
 The train is split into four phases. Phases A and B are independent and can ship in parallel branches; phase C depends on B; phase D can ship anytime after A. Within each phase, commits are sequential.
 
@@ -672,43 +674,43 @@ The train is split into four phases. Phases A and B are independent and can ship
 
 #### Phase B — Skill surface and dispatch (depends on A2 only)
 
-6. **Commit B1 — create `skills/forge/SKILL.md`:** Full implementation of hybrid grammar (§1). Calls `shared/bootstrap-detect.py` on missing `forge.local.md` (§2). Dispatches to existing agents.
-7. **Commit B2 — create `skills/forge-admin/SKILL.md`:** Full implementation of subcommand grammar (§1). Dispatches.
-8. **Commit B3 — rewrite `skills/forge-ask/SKILL.md` in place:** Absorb status/history/insights/profile/tour subcommands; default action is codebase Q&A.
-9. **Commit B4 — pre-flight grep capture:** Snapshot `grep -rln '/forge-' --include='*.md' --include='*.json' --include='*.py' --include='*.yml' --include='*.yaml' --include='*.bats' --include='*.sh' .` to `tests/structural/migration-callsites.txt` (checked in). Used as the literal input for B5–B10 sed passes and as the test fixture for AC-S005 stragglers.
-10. **Commit B5 — rewire `docs/`:** All files under `docs/superpowers/specs/` and `docs/superpowers/plans/`, plus `README.md`, `CLAUDE.md`. Apply mapping table (§12.1).
-11. **Commit B6 — rewire `tests/`:** All `.bats` files and any test fixture under `tests/scenarios/`.
-12. **Commit B7 — rewire `agents/`:** All 48 agent `.md` files. Especially fg-100, fg-700, fg-710, and any agent emitting user-facing skill suggestions or learnings markers.
-13. **Commit B8 — rewire `shared/` (~56 files):** Apply mapping table to every file in the §12 enumeration. Includes `shared/intent-classification.md` (already partly updated in A4 — reconciliation pass).
-14. **Commit B9 — rewire `modules/` (~49 files):** Every framework's `local-template.md` and `forge-config-template.md`. Plus any `modules/**/conventions.md` that references skills.
-15. **Commit B10 — rewire root + manifests:** `plugin.json`, `marketplace.json`, hooks under `hooks/` that emit skill-name diagnostics.
-16. **Commit B11 — `shared/skill-subcommand-pattern.md` decision:** Either delete (preferred — pattern is now internal to the three SKILL.md bodies) or rewrite to describe the three-skill dispatch model. Decision goes to plan-stage; spec flags the choice.
-17. **Commit B12 — atomic deletion of 28 retired skills:** `git rm -r` all 28 directories listed in §12 ground-truth check. Must come AFTER B5–B10 rewiring is verified clean.
-18. **Commit B13 — add new tests:** `tests/unit/skill-execution/forge-dispatch.bats` (11 verbs + 3 NL fallback), `tests/unit/skill-execution/spec-wellformed.bats`, `tests/structural/fg-010-shaper-shape.bats`, `tests/scenarios/autonomous-cold-start.bats`. Extend `tests/structural/skill-consolidation.bats` to enforce exactly 3 skill dirs. Add `tests/structural/skill-references-allowlist.txt`.
+7. **Commit B1 — create `skills/forge/SKILL.md`:** Full implementation of hybrid grammar (§1). Calls `shared/bootstrap-detect.py` on missing `forge.local.md` (§2). Dispatches to existing agents.
+8. **Commit B2 — create `skills/forge-admin/SKILL.md`:** Full implementation of subcommand grammar (§1). Dispatches.
+9. **Commit B3 — rewrite `skills/forge-ask/SKILL.md` in place:** Absorb status/history/insights/profile/tour subcommands; default action is codebase Q&A.
+10. **Commit B4 — pre-flight grep capture:** Snapshot `grep -rln '/forge-' --include='*.md' --include='*.json' --include='*.py' --include='*.yml' --include='*.yaml' --include='*.bats' --include='*.sh' .` to `tests/structural/migration-callsites.txt` (checked in). Used as the literal input for B5–B10 sed passes and as the test fixture for AC-S005 stragglers.
+11. **Commit B5 — rewire `docs/`:** All files under `docs/superpowers/specs/` and `docs/superpowers/plans/`, plus `README.md`, `CLAUDE.md`. Apply mapping table (§12.1).
+12. **Commit B6 — rewire `tests/`:** All `.bats` files and any test fixture under `tests/scenarios/`.
+13. **Commit B7 — rewire `agents/`:** All 48 agent `.md` files. Especially fg-100, fg-700, fg-710, and any agent emitting user-facing skill suggestions or learnings markers.
+14. **Commit B8 — rewire `shared/` (~56 files):** Apply mapping table to every file in the §12 enumeration. Includes `shared/intent-classification.md` (already partly updated in A4 — reconciliation pass).
+15. **Commit B9 — rewire `modules/` (~49 files):** Every framework's `local-template.md` and `forge-config-template.md`. Plus any `modules/**/conventions.md` that references skills.
+16. **Commit B10 — rewire root + manifests:** `plugin.json`, `marketplace.json`, hooks under `hooks/` that emit skill-name diagnostics.
+17. **Commit B11 — `shared/skill-subcommand-pattern.md` decision:** Either delete (preferred — pattern is now internal to the three SKILL.md bodies) or rewrite to describe the three-skill dispatch model. Decision goes to plan-stage; spec flags the choice.
+18. **Commit B12 — atomic deletion of 28 retired skills:** `git rm -r` all 28 directories listed in §12 ground-truth check. Must come AFTER B5–B10 rewiring is verified clean.
+19. **Commit B13 — add new tests:** `tests/unit/skill-execution/forge-dispatch.bats` (11 verbs + 3 NL fallback), `tests/unit/skill-execution/spec-wellformed.bats`, `tests/structural/fg-010-shaper-shape.bats`, `tests/scenarios/autonomous-cold-start.bats`. Extend `tests/structural/skill-consolidation.bats` to enforce exactly 3 skill dirs. Add `tests/structural/skill-references-allowlist.txt`.
 
 #### Phase C — Brainstorming behavior (depends on A and B)
 
-19. **Commit C1 — rewrite `agents/fg-010-shaper.md`:** Adopt the seven-step pattern (§3). Section headings exactly match `tests/structural/fg-010-shaper-shape.bats` regex. Autonomous degradation per §3. Transcript mining per §10 (writes `.forge/brainstorm-transcripts/<run_id>.jsonl`).
-20. **Commit C2 — update `agents/fg-100-orchestrator.md`:** Recognize BRAINSTORMING stage. Dispatch fg-010-shaper for feature mode; skip for bug/migrate/bootstrap. Honor `brainstorm.enabled: false` short-circuit. Resume semantics per §3.
+20. **Commit C1 — rewrite `agents/fg-010-shaper.md`:** Adopt the seven-step pattern (§3). Section headings exactly match `tests/structural/fg-010-shaper-shape.bats` regex. Autonomous degradation per §3. Transcript mining per §10 (writes `.forge/brainstorm-transcripts/<run_id>.jsonl`).
+21. **Commit C2 — update `agents/fg-100-orchestrator.md`:** Recognize BRAINSTORMING stage. Dispatch fg-010-shaper for feature mode; skip for bug/migrate/bootstrap. Honor `brainstorm.enabled: false` short-circuit. Resume semantics per §3. **Adds PREFLIGHT platform-detection wiring:** orchestrator invokes `shared/platform-detect.py` at PREFLIGHT (after config validation, before any worktree/Linear setup) and writes the result to `state.platform`. This commit owns AC-FEEDBACK-006 implementation. Detection is skipped on resume if `state.platform.detected_at` is already set within the current run.
 
 #### Phase D — Pattern parity uplifts (independent of B; can ship in parallel branches)
 
-21. **Commit D1 — rewrite `agents/fg-200-planner.md`:** Adopt writing-plans pattern (§4). Per-task TDD scaffold. Embed prompt templates from `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` (new files added in this commit). **Bugfix-mode integration:** when `state.mode == "bugfix"`, the planner reads `state.bug.fix_gate_passed` before producing any plan; if false, returns the special verdict `BLOCKED-BUG-INCONCLUSIVE` with the hypothesis register attached. The orchestrator (already updated by C2) escalates this verdict to user (interactive) or aborts non-zero (autonomous). This couples D1 to D6 — the planner reads what fg-020 writes — but the read-side wiring lives in D1, the write-side in D6.
-22. **Commit D2 — `fg-210-validator` updates:** Enforce TDD ordering, prompt presence, spec-reviewer presence. Updates AC validation matrix.
-23. **Commit D3 — reviewer pipeline uplift:** Update each `agents/fg-410..fg-419.md` to emit prose report alongside findings JSON (§5). Update `agents/fg-400-quality-gate.md` to write reports to `.forge/runs/<run_id>/reports/<reviewer>.md`.
-24. **Commit D4 — cross-reviewer consistency voting:** Add post-dedup pass to `agents/fg-400-quality-gate.md` (§5 beyond-superpowers). Logs `consistency_promoted` on findings.
-25. **Commit D5 — rewrite `agents/fg-710-post-run.md`:** Adopt receiving-code-review pattern (§6). Defense check sub-agent dispatch. Update `feedback_loop_count` semantics. Reads `state.platform.name` and dispatches to the matching adapter under `shared/platform_adapters/` for posting defenses. Writes to `.forge/runs/<run_id>/feedback-decisions.jsonl`.
-26. **Commit D6 — rewrite `agents/fg-020-bug-investigator.md` + add `agents/fg-021-hypothesis-investigator.md`:** Adopt systematic-debugging pattern (§7). Hypothesis register. Bayesian pruning. Fix gate. Sub-investigator agent file is added here (Tier-3, single-purpose; see §7 for shape). Updates `state.bug.fix_gate_passed` write-side; D1 owns the read-side.
-27. **Commit D7 — rewrite `agents/fg-600-pr-builder.md`:** Adopt finishing-a-development-branch shape (§8). AskUserQuestion-driven dialog. Cleanup checklist.
-28. **Commit D8 — strong-agent polish:** Targeted updates to `fg-300-implementer` (test-must-fail-first check), `fg-590-pre-ship-verifier` (evidence assertion test), `fg-100-orchestrator` (parallel-dispatch and post-batch checkpoint structural tests), `fg-101-worktree-manager` (stale-worktree detection).
-29. **Commit D9 — pattern-parity tests:** Structural and scenario tests for D1–D8: planner output shape, reviewer prose presence, defense flow, hypothesis register, PR-finishing dialog, polish edge cases.
+22. **Commit D1 — rewrite `agents/fg-200-planner.md`:** Adopt writing-plans pattern (§4). Per-task TDD scaffold. Embed prompt templates from `shared/prompts/implementer-prompt.md` and `shared/prompts/spec-reviewer-prompt.md` (new files added in this commit). Both prompt files MUST contain the exact attribution comment per AC-PLAN-006: `<!-- Source: superpowers:writing-plans pattern, ported in-tree per §10 -->`. **Risk justification (AC-PLAN-009):** every task with `Risk: high` carries a `Risk justification:` block of ≥30 words documenting why the task is high-risk and what mitigation is in place. **Bugfix-mode integration:** when `state.mode == "bugfix"`, the planner reads `state.bug.fix_gate_passed` before producing any plan; if false, returns the special verdict `BLOCKED-BUG-INCONCLUSIVE` with the hypothesis register attached. The orchestrator (already updated by C2) escalates this verdict to user (interactive) or aborts non-zero (autonomous). This couples D1 to D6 — the planner reads what fg-020 writes — but the read-side wiring lives in D1, the write-side in D6.
+23. **Commit D2 — `fg-210-validator` updates:** Enforce TDD ordering, prompt presence, spec-reviewer presence. Updates AC validation matrix.
+24. **Commit D3 — reviewer pipeline uplift:** Update each `agents/fg-410..fg-419.md` to emit prose report alongside findings JSON (§5). Update `agents/fg-400-quality-gate.md` to write reports to `.forge/runs/<run_id>/reports/<reviewer>.md`.
+25. **Commit D4 — cross-reviewer consistency voting:** Add post-dedup pass to `agents/fg-400-quality-gate.md` (§5 beyond-superpowers). Logs `consistency_promoted` on findings.
+26. **Commit D5 — rewrite `agents/fg-710-post-run.md`:** Adopt receiving-code-review pattern (§6). Defense check sub-agent dispatch. Update `feedback_loop_count` semantics. Reads `state.platform.name` and dispatches to the matching adapter under `shared/platform_adapters/` for posting defenses. Writes to `.forge/runs/<run_id>/feedback-decisions.jsonl`.
+27. **Commit D6 — rewrite `agents/fg-020-bug-investigator.md` + add `agents/fg-021-hypothesis-investigator.md`:** Adopt systematic-debugging pattern (§7). Hypothesis register. Bayesian pruning. Fix gate. Sub-investigator agent file is added here (Tier-3, single-purpose; see §7 for shape). Updates `state.bug.fix_gate_passed` write-side; D1 owns the read-side.
+28. **Commit D7 — rewrite `agents/fg-600-pr-builder.md`:** Adopt finishing-a-development-branch shape (§8). AskUserQuestion-driven dialog. Cleanup checklist.
+29. **Commit D8 — strong-agent polish:** Targeted updates to `fg-300-implementer` (test-must-fail-first check), `fg-590-pre-ship-verifier` (evidence assertion test), `fg-100-orchestrator` (parallel-dispatch and post-batch checkpoint structural tests), `fg-101-worktree-manager` (stale-worktree detection).
+30. **Commit D9 — pattern-parity tests:** Structural and scenario tests for D1–D8: planner output shape, reviewer prose presence, defense flow, hypothesis register, PR-finishing dialog, polish edge cases.
 
 #### Phase E — Documentation rollup (last, depends on all)
 
-30. **Commit E1 — `CLAUDE.md` and `README.md` mega update:** Reflect new skill surface, BRAINSTORMING stage, all uplifts, beyond-superpowers improvements. Add a "Pattern parity" section listing which superpowers patterns are mirrored where.
-31. **Commit E2 — feature matrix update:** Regenerate `<!-- FEATURE_MATRIX_START -->` block in CLAUDE.md (per Phase 2 spec) with new entries for transcript mining, hypothesis branching, consistency voting, defense checking.
+31. **Commit E1 — `CLAUDE.md` and `README.md` mega update:** Reflect new skill surface, BRAINSTORMING stage, all uplifts, beyond-superpowers improvements. Add a "Pattern parity" section listing which superpowers patterns are mirrored where.
+32. **Commit E2 — feature matrix update:** Regenerate `<!-- FEATURE_MATRIX_START -->` block in CLAUDE.md (per Phase 2 spec) with new entries for transcript mining, hypothesis branching, consistency voting, defense checking.
 
-**Total: 31 commits across 5 phases.** Phases A and D can run in parallel branches if sub-pipelines support it; phases B and C are serial.
+**Total: 32 commits across 5 phases (A=6, B=13, C=2, D=9, E=2).** Phases A and D can run in parallel branches if sub-pipelines support it; phases B and C are serial.
 
 #### §12.1 — Old → new mapping table (search/replace source of truth)
 
@@ -810,7 +812,7 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-S022:** `--autonomous` mode runs degraded one-shot: no `AskUserQuestion`, treats input as spec, writes spec, logs `[AUTO] brainstorm skipped`. Verified by scenario test.
 - **AC-S023:** Resume during BRAINSTORMING with existing spec prompts user to resume-from-spec or restart. Verified by scenario test.
 
-### State and telemetry (3)
+### State and telemetry (6)
 
 - **AC-S024:** State schema includes `state.stage = "BRAINSTORMING"` enum and `state.brainstorm` object with all fields from §11.
 - **AC-S025:** OTel events fire at brainstorm start, question, approaches proposal, spec write, completion/abort. Namespace `forge.brainstorm.*`.
@@ -819,7 +821,7 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-S028:** Config keys `brainstorm.spec_dir` (default `docs/superpowers/specs/`) and `brainstorm.enabled` (default `true`) are validated by `shared/preflight-constraints.md`. Setting `brainstorm.enabled: false` short-circuits BRAINSTORMING — feature mode goes straight to EXPLORING. Setting an invalid `brainstorm.spec_dir` (non-existent and non-creatable parent) fails PREFLIGHT with a clear error.
 - **AC-S029:** `/forge run --spec <path>` parses the spec file at `<path>` for the regex `^## (Objective|Goal|Goals)$`, `^## (Scope|Non-goals)$`, and `^## (Acceptance [Cc]riteria|ACs)$`. All three sections must be present (case-sensitive on the regex). If any is missing, interactive mode prompts "spec at `<path>` is incomplete (missing: <list>); run BRAINSTORMING instead?" and autonomous mode aborts the run with the same diagnostic. Verified by unit test at `tests/unit/skill-execution/spec-wellformed.bats`.
 
-### Planner uplift (8)
+### Planner uplift (9)
 
 - **AC-PLAN-001:** `agents/fg-200-planner.md` produces plans where every implementation task has a preceding test task. Verified by `tests/structural/planner-tdd-ordering.bats` parsing a sample plan output and asserting the `Type: test` task ID appears in `Depends on:` of the corresponding `Type: implementation` task.
 - **AC-PLAN-002:** Each task in planner output includes an embedded `Implementer prompt:` section sourced from `shared/prompts/implementer-prompt.md` with placeholder substitution (`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}`).
@@ -840,15 +842,15 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-REVIEW-005:** `agents/fg-400-quality-gate.md` post-deduplication promotes a finding to HIGH confidence (1.0 multiplier) when ≥3 reviewers flag the same dedup key. Logged as `consistency_promoted: true` on the finding. Threshold configurable via `quality_gate.consistency_promotion.threshold`.
 - **AC-REVIEW-006:** Setting `quality_gate.consistency_promotion.enabled: false` disables promotion (no findings carry `consistency_promoted: true`). Verified by integration test with synthetic findings.
 
-### Post-run / receiving-feedback uplift (5)
+### Post-run / receiving-feedback uplift (7)
 
 - **AC-FEEDBACK-001:** `agents/fg-710-post-run.md` runs a defense check sub-agent dispatch for each piece of PR rejection feedback. Output schema: `{verdict: "actionable" | "wrong" | "preference", reasoning: str, evidence: str}`.
 - **AC-FEEDBACK-002:** When `verdict: wrong`, defense response (reasoning + evidence) is posted to the PR/MR conversation thread via the platform-appropriate integration (§6.1). Logged as `addressed: defended` in `.forge/runs/<run_id>/feedback-decisions.jsonl` on success, `addressed: defended_local_only` (with warning) when the platform integration is unavailable. Verified by integration tests covering all four detected platforms (GitHub, GitLab, Bitbucket, Gitea) plus the unknown fallback path.
-- **AC-FEEDBACK-006:** Platform detection runs at PREFLIGHT and writes `state.platform` (per §11 schema). Re-detection is skipped on subsequent stages within the same run. Verified by unit test against fixtures for each platform's remote URL plus a fixture for an unknown remote.
-- **AC-FEEDBACK-007:** When `platform.detection: <explicit>` is set in `forge.local.md`, auto-detection is skipped and the explicit value is used. The integration still verifies the auth method is configured (env var or CLI) at PREFLIGHT and warns (does not abort) if missing.
 - **AC-FEEDBACK-003:** When `verdict: preference`, acknowledgment is posted; logged as `addressed: acknowledged`. No code changes made for that comment.
 - **AC-FEEDBACK-004:** `feedback_loop_count` increments only for `actionable` feedback. Defended/acknowledged feedback does not increment.
-- **AC-FEEDBACK-005:** Autonomous mode without GitHub MCP write access defaults all verdicts to `actionable` (matches today's behavior; documented degradation).
+- **AC-FEEDBACK-005:** Autonomous mode without platform write access defaults all verdicts to `actionable` (documented degradation; the defense check still runs but defenses post to the local JSONL only with `addressed: defended_local_only`).
+- **AC-FEEDBACK-006:** Platform detection runs at PREFLIGHT (owned by commit C2) and writes `state.platform` (per §11 schema). Re-detection is skipped on subsequent stages within the same run. Verified by unit test against fixtures for each platform's remote URL plus a fixture for an unknown remote.
+- **AC-FEEDBACK-007:** When `platform.detection: <explicit>` is set in `forge.local.md`, auto-detection is skipped and the explicit value is used. The integration still verifies the auth method is configured (env var or CLI) at PREFLIGHT and warns (does not abort) if missing.
 
 ### Debugging uplift (7)
 
