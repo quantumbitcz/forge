@@ -9,7 +9,8 @@ setup() {
   # Budget nearly exhausted; every safety-critical agent at fast tier.
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['cost']['ceiling_usd'] = 0.05
@@ -33,7 +34,8 @@ assert is_safety_critical('fg-411-security-reviewer'), 'fg-411-security-reviewer
   # In interactive mode, orchestrator must escalate (not skip).
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['autonomous'] = False
@@ -56,7 +58,8 @@ assert is_safety_critical('fg-411-security-reviewer'), 'fg-411-security-reviewer
 "
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['autonomous'] = True

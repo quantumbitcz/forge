@@ -8,7 +8,8 @@ setup() {
   cp "$PLUGIN_ROOT/tests/fixtures/state-v2-cost.json" "$FORGE_DIR/state.json"
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['cost']['ceiling_usd'] = 1.00
@@ -57,10 +58,11 @@ print(f'{t}|{r}')
   # Simulate the orchestrator state mutation performed in Task 14 Step 2.
   python3 -c "
 import json, os, sys
+from pathlib import Path
 sys.path.insert(0, '$PLUGIN_ROOT/shared')
 from cost_governance import downgrade_tier
 from datetime import datetime, timezone
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 t, r = downgrade_tier(
@@ -83,7 +85,8 @@ with open(p, 'w') as fh:
 "
   run python3 -c "
 import json, os
-st = json.load(open(os.path.join(os.environ['FORGE_DIR'], 'state.json')))
+from pathlib import Path
+st = json.load(open(Path(os.environ['FORGE_DIR']) / 'state.json'))
 d = st['cost']['downgrades'][0]
 assert d['agent'] == 'fg-412-architecture-reviewer'
 assert d['from'] == 'premium' and d['to'] == 'standard'

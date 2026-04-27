@@ -9,7 +9,8 @@ setup() {
   # Seed: spent 0.48 of 0.50 ceiling; planner tier_estimate = 0.078.
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['cost']['ceiling_usd'] = 0.50
@@ -47,7 +48,8 @@ print(len(d['payload']['header']))
   python3 "$PLUGIN_ROOT/tests/helpers/orchestrator-gate-sim.py" fg-200-planner premium >/dev/null
   run python3 -c "
 import json, os
-st = json.load(open(os.path.join(os.environ['FORGE_DIR'], 'state.json')))
+from pathlib import Path
+st = json.load(open(Path(os.environ['FORGE_DIR']) / 'state.json'))
 print(st['cost']['ceiling_breaches'])
 "
   assert_output "1"

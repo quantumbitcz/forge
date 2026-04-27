@@ -8,7 +8,8 @@ setup() {
   cp "$PLUGIN_ROOT/tests/fixtures/state-v2-cost.json" "$FORGE_DIR/state.json"
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['cost']['ceiling_usd'] = 0.50
@@ -35,7 +36,8 @@ with open(p, 'w') as fh:
   # (spent=0.48 + 0.016 = 0.496 ≤ 0.50). Bump spent so the breach branch fires.
   python3 -c "
 import json, os
-p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+from pathlib import Path
+p = Path(os.environ['FORGE_DIR']) / 'state.json'
 with open(p) as fh:
     st = json.load(fh)
 st['cost']['spent_usd'] = 0.495

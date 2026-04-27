@@ -47,7 +47,8 @@ setup() {
   implementer_harness run-task task-001
   run python3 -c "
 import json, os
-st = json.load(open(os.path.join(os.environ['FORGE_DIR'], 'state.json')))
+from pathlib import Path
+st = json.load(open(Path(os.environ['FORGE_DIR']) / 'state.json'))
 events = st['cost']['throttle_events']
 assert len(events) >= 1, events
 assert events[-1]['severity'] == 'WARNING', events[-1]

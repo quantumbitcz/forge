@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.environ["PLUGIN_ROOT"], "shared"))
+sys.path.insert(0, str(Path(os.environ["PLUGIN_ROOT"]) / "shared"))
 from cost_governance import (  # noqa: E402  (path injection above)
     SAFETY_CRITICAL,
     compute_budget_block,
