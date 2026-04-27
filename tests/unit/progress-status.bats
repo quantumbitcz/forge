@@ -60,3 +60,16 @@ write_status_from_hook(cwd='$TMP')
   assert_success
   refute [ -d "$TMP/.forge/progress" ]
 }
+
+@test "write_status is a no-op when run_id is absent (idle, not 'unknown')" {
+  printf '%s\n' '{"schema":1,"stage":"PLANNING"}' > "$TMP/.forge/state.json"
+  : > "$TMP/.forge/events.jsonl"
+  run python3 -c "
+import sys
+sys.path.insert(0,'$PLUGIN_ROOT/hooks')
+from _py.progress import write_status_from_hook
+write_status_from_hook(cwd='$TMP')
+"
+  assert_success
+  refute [ -f "$TMP/.forge/progress/status.json" ]
+}

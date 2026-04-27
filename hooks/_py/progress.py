@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -78,7 +78,6 @@ def _next_expected_at(stage_entered_at: Optional[str], timeout_ms: int) -> Optio
     dt = _parse_iso(stage_entered_at)
     if dt is None:
         return None
-    from datetime import timedelta
     return (dt + timedelta(milliseconds=timeout_ms)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -96,7 +95,11 @@ def write_status_from_hook(cwd: Optional[str] = None) -> None:
         return
     state = _load_state(forge / "state.json")
     event = _tail_event(forge / "events.jsonl") or {}
-    run_id = state.get("run_id") or event.get("run_id") or "unknown"
+    run_id = state.get("run_id") or event.get("run_id")
+    if not run_id:
+        # No active run — don't write a stale/empty status that downstream
+        # tooling could merge into trend rollups. See review #12.
+        return
     stage = state.get("stage") or event.get("stage") or "UNKNOWN"
     agent = event.get("agent") if event.get("type") == "agent_dispatch" else None
     timeout_ms = int(state.get("stage_timeout_ms") or DEFAULT_STAGE_TIMEOUT_MS)
