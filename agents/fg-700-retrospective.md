@@ -731,3 +731,25 @@ Post to Slack when MCP available; skip otherwise. Never fail due to MCP.
 - "Compute run scoring"
 - "Extract learnings"
 - "Auto-tune forge-config.md"
+
+## Trend rollup
+
+At the end of every run (regardless of verdict), generate
+`.forge/run-history-trends.json` matching
+`shared/schemas/run-history-trends.schema.json`:
+
+1. Read the 30 most recent rows from `.forge/run-history.db` (table
+   `runs`, order by `started_at DESC LIMIT 30`). For each row emit
+   `{run_id, started_at, duration_s, verdict, score, convergence_iterations, cost_usd, mode}`.
+2. Read the last 10 rows from the **live** `.forge/.hook-failures.jsonl`
+   (and the newest rotated `.gz` if live is absent) into
+   `recent_hook_failures`.
+3. Write via temp-file + `os.replace()` swap to
+   `.forge/run-history-trends.json`.
+
+`.forge/run-history-trends.json` is **regenerated every run** — never
+append. The file survives `/forge-recover reset`. Consumers:
+
+- `/forge-status --live` reads the head for a synopsis.
+- Phase-1 observability recipes in `shared/observability.md` §Local
+  inspection demonstrate `jq`/PowerShell/CMD access.
