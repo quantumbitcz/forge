@@ -158,3 +158,7 @@ while they are being rewritten either sees the old copy or the new copy,
 never a partial object. Append-only `.forge/.hook-failures.jsonl` lines are
 POSIX-atomic when under 4 KB — `stderr_excerpt` is truncated to 2 KB to
 stay under that ceiling.
+
+### OTel namespace convention
+
+All forge-emitted OTel span attributes use the `forge.*` root namespace: `forge.run_id`, `forge.stage`, `forge.agent_id`, `forge.finding.dedup_key`, `forge.judge.verdict`, etc. This convention is load-bearing for Phase 6 and Phase 7. Phase 5 adds no new spans — reviewers remain implicit in the pipeline span tree — but the convention is restated here so downstream phases can rely on it.
