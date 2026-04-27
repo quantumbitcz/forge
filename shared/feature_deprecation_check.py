@@ -24,13 +24,14 @@ DB_PATH = REPO_ROOT / ".forge" / "run-history.db"
 # explicitly so `from feature_matrix_generator import FEATURES` resolves when
 # this script is invoked as `python shared/feature_deprecation_check.py` OR
 # when imported from a test harness with a different cwd.
-SHARED_DIR = Path(__file__).resolve().parent
-if str(SHARED_DIR) not in sys.path:
-    sys.path.insert(0, str(SHARED_DIR))
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
+
+from feature_matrix_generator import FEATURES  # noqa: E402  (sys.path setup above)
 
 
 def load_feature_ids() -> list[str]:
-    from feature_matrix_generator import FEATURES  # type: ignore
     return [fid for fid, _, _ in FEATURES]
 
 
@@ -84,8 +85,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     # PR-opening left as a placeholder; Phase 2 does not schedule this job yet.
-    # When scheduled, shell out to gh CLI here. For now, just report.
-    print("NOTE: PR-opening step not wired; run manually or enable schedule.")
+    # When scheduled, shell out to gh CLI here. For now, the listed candidates
+    # above are the actionable output; the caller decides what to do with them.
     return 0
 
 

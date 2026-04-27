@@ -16,8 +16,10 @@ from __future__ import annotations
 
 import sqlite3
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Iterator
 
 # Authoritative feature list. Source of truth for the matrix. Cross-reference:
 # CLAUDE.md §Features table. Add a row here and regenerate to update the matrix.
@@ -63,34 +65,53 @@ MATRIX_PATH = REPO_ROOT / "shared" / "feature-matrix.md"
 DB_PATH = REPO_ROOT / ".forge" / "run-history.db"
 
 
-def load_usage_counts(window_days: int = 30) -> dict[str, int | None]:
-    """Return {feature_id: count}. Missing DB or table → all values None."""
-    counts: dict[str, int | None] = {fid: None for fid, _, _ in FEATURES}
-    if not DB_PATH.exists():
-        return counts
+@contextmanager
+def _with_feature_usage_table(db_path: Path) -> Iterator[sqlite3.Cursor | None]:
+    """Open run-history.db; yield a cursor if `feature_usage` exists, else None.
+
+    Centralises the missing-DB / missing-table probe so the two callers below
+    don't duplicate the boilerplate. Caller decides whether sqlite3.Error is
+    fatal (load_usage_counts) or silent (load_flagged_features).
+    """
+    if not db_path.exists():
+        yield None
+        return
+    conn = sqlite3.connect(str(db_path))
     try:
-        conn = sqlite3.connect(str(DB_PATH))
         cur = conn.cursor()
-        # Probe table existence without raising.
         cur.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='feature_usage'"
         )
         if cur.fetchone() is None:
-            conn.close()
-            return counts
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).isoformat()
-        cur.execute(
-            "SELECT feature_id, COUNT(*) FROM feature_usage "
-            "WHERE ts >= ? GROUP BY feature_id",
-            (cutoff,),
-        )
-        for fid, count in cur.fetchall():
-            counts[fid] = int(count)
-        # Features with no row in the last 30d → 0 (not None); None means DB/table missing.
-        for fid in counts:
-            if counts[fid] is None and DB_PATH.exists():
-                counts[fid] = 0
+            yield None
+        else:
+            yield cur
+    finally:
         conn.close()
+
+
+def load_usage_counts(window_days: int = 30) -> dict[str, int | None]:
+    """Return {feature_id: count}. Missing DB or table → all values None."""
+    counts: dict[str, int | None] = {fid: None for fid, _, _ in FEATURES}
+    try:
+        with _with_feature_usage_table(DB_PATH) as cur:
+            if cur is None:
+                return counts
+            cutoff = (
+                datetime.now(timezone.utc) - timedelta(days=window_days)
+            ).isoformat()
+            cur.execute(
+                "SELECT feature_id, COUNT(*) FROM feature_usage "
+                "WHERE ts >= ? GROUP BY feature_id",
+                (cutoff,),
+            )
+            for fid, count in cur.fetchall():
+                counts[fid] = int(count)
+            # Features with no row in the window → 0 (not None);
+            # None means DB/table missing.
+            for fid in counts:
+                if counts[fid] is None:
+                    counts[fid] = 0
     except sqlite3.Error as exc:
         print(f"feature_matrix_generator: sqlite error: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -99,24 +120,18 @@ def load_usage_counts(window_days: int = 30) -> dict[str, int | None]:
 
 def load_flagged_features(window_days: int = 90) -> set[str]:
     """Feature IDs with zero usage in last `window_days`."""
-    if not DB_PATH.exists():
-        return set()
     try:
-        conn = sqlite3.connect(str(DB_PATH))
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='feature_usage'"
-        )
-        if cur.fetchone() is None:
-            conn.close()
-            return set()
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).isoformat()
-        cur.execute(
-            "SELECT DISTINCT feature_id FROM feature_usage WHERE ts >= ?",
-            (cutoff,),
-        )
-        active = {row[0] for row in cur.fetchall()}
-        conn.close()
+        with _with_feature_usage_table(DB_PATH) as cur:
+            if cur is None:
+                return set()
+            cutoff = (
+                datetime.now(timezone.utc) - timedelta(days=window_days)
+            ).isoformat()
+            cur.execute(
+                "SELECT DISTINCT feature_id FROM feature_usage WHERE ts >= ?",
+                (cutoff,),
+            )
+            active = {row[0] for row in cur.fetchall()}
     except sqlite3.Error:
         return set()
     all_ids = {fid for fid, _, _ in FEATURES}
