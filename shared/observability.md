@@ -44,6 +44,12 @@ rehydrates the parent context.
   model is absent from `shared/model-routing.md` pricing table)
 - `gen_ai.tool.calls`
 - `gen_ai.response.finish_reasons`
+- `forge.run.budget_total_usd` (double) — configured ceiling
+- `forge.run.budget_remaining_usd` (double) — at span start
+- `forge.agent.tier_estimate_usd` (double) — per-iteration estimate for resolved tier
+- `forge.agent.tier_original` (string, enum: fast|standard|premium) — tier from static routing before downgrade
+- `forge.agent.tier_used` (string, enum: fast|standard|premium) — tier actually dispatched
+- `forge.cost.throttle_reason` (string, enum: none|soft_20pct|soft_10pct|ceiling_breach|dynamic_downgrade)
 
 ### Pipeline / stage / batch spans
 
@@ -78,6 +84,21 @@ Attributes (registered in `hooks/_py/otel_attributes.py`):
 | `forge.learning.reason`         | free text   | `"not applicable for this task"`    |
 
 All `forge.learning.*` attributes are UNBOUNDED — never fold into span names.
+
+## Namespace Contract (forge 3.7.0+)
+
+All forge-emitted span attributes MUST use the `forge.*` root. OpenTelemetry semconv attributes (`gen_ai.*`) remain unchanged. The contract is:
+
+| Prefix | Owned by | Examples |
+|---|---|---|
+| `gen_ai.*` | OTel GenAI semconv 2026 | `gen_ai.agent.name`, `gen_ai.tokens.input` |
+| `forge.run.*` | per-run state (bounded + unbounded) | `forge.run_id`, `forge.run.budget_total_usd` |
+| `forge.stage.*` | per-stage state | `forge.stage`, `forge.phase_iterations` |
+| `forge.agent.*` | per-dispatch agent state | `forge.agent.tier_used`, `forge.agent.tier_original` |
+| `forge.cost.*` | Phase 6 cost governance | `forge.cost.throttle_reason`, `forge.cost.unknown` |
+| `forge.batch.*` | review-batch spans | `forge.batch.size`, `forge.batch.agents` |
+
+**Phase 4 rename prerequisite:** Any attributes still emitted as `learning.*` (unprefixed) must be renamed to `forge.learning.*` before Phase 6 merges. Phase 6 will not introduce any new roots outside this table.
 
 ## Cardinality budget
 
