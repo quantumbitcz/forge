@@ -36,10 +36,15 @@ If any checkbox above is unchecked, do NOT begin Phase 1.
 
 ## plugin.json version sequence
 
+Per the working convention "minor bump per phase", every phase ships under its own version tag. Major bumps (`x.0.0`) reserved for spec-impacting milestones (P5 judges rename, Mega skill surface change, Phase 8 measurement layer).
+
 ```
-3.6.x  current → Phase 1 → Phase 2 → 3.7.0 (Phase 3 ships) → Phase 4
-       → 4.0.0 (Phase 5 ships) → Phase 6 → Phase 7 → Mega A
-       → Mega B → Mega C → Mega D → 4.1.0 (Mega E ships) → 4.2.0 (Phase 8 ships)
+3.6.0  current → 3.7.0 (Phase 1 ships) → 3.8.0 (Phase 2)
+       → 3.9.0 (Phase 3) → 3.10.0 (Phase 4) → 4.0.0 (Phase 5 — judges rename, breaking)
+       → 4.1.0 (Phase 6) → 4.2.0 (Phase 7) → 4.3.0 (Mega A — schema v2.1.0)
+       → 5.0.0 (Mega B — skill surface delete, breaking)
+       → 5.1.0 (Mega C) → 5.2.0 (Mega D) → 5.3.0 (Mega E)
+       → 6.0.0 (Phase 8 — measurement layer, possibly breaking)
 ```
 
 Each phase's final commit bumps `plugin.json` accordingly. Tag immediately after the bump (`v<version>`); push tag; create GitHub release with the phase summary.

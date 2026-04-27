@@ -5,7 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Consolidates post-3.5.0 polish across docs architecture, agent layer refactor, repo-map PageRank, and speculation — no version bump yet.
+## [3.7.0] - 2026-04-27
+
+Phase 1 of the A+ roadmap (Truth & Observability) ships. Closes four credibility gaps: Windows is now a real first-class CI target, every hook crash gets a durable JSONL audit trail, every module is tagged with a truthful support tier, and a cat/jq/Get-Content-readable live-run surface is live. Plus the cross-verification prerequisite edits coordinating the 13-plan ship train (`SHIP_ORDER.md`).
 
 ### Added
 
