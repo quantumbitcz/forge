@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Create the initial v1.6.0 forge pipeline state object.
+"""Create the initial v2.0.0 forge pipeline state object.
 
 Interface:
     state_init.py <story_id> <requirement> <mode> <dry_run>
 
-Output: JSON to stdout (complete v1.6.0 state object)
+Output: JSON to stdout (complete v2.0.0 state object)
 Exit codes: 0 = success, 1 = invalid args
 """
 import json
@@ -22,9 +22,9 @@ VALID_MODES = (
 
 
 def create_initial_state(story_id, requirement, mode, dry_run):
-    """Return the full v1.6.0 state dict."""
+    """Return the full v2.0.0 state dict."""
     return {
-        'version': '1.6.0',
+        'version': '2.0.0',
         '_seq': 0,
         'complete': False,
         'story_id': story_id,
@@ -103,9 +103,36 @@ def create_initial_state(story_id, requirement, mode, dry_run):
         'documentation': {},
         'bugfix': None,
         'graph': {'last_update_stage': -1, 'last_update_files': [], 'stale': False},
-        'critic_revisions': 0,
+        'plan_judge_loops': 0,
+        'impl_judge_loops': {},
+        'judge_verdicts': [],
+        'current_plan_sha': None,
         'schema_version_history': [],
     }
+
+
+STATE_SCHEMA_VERSION = '2.0.0'
+
+
+def load_or_reinit(path, story_id='', requirement='', mode='standard', dry_run=False):
+    """Load state.json or auto-reset if not v2.0.0 (no migration shim per feedback_no_backcompat)."""
+    import pathlib
+    p = pathlib.Path(path)
+    if not p.exists():
+        s = create_initial_state(story_id, requirement, mode, dry_run)
+        p.write_text(json.dumps(s, indent=2))
+        return s
+    try:
+        s = json.loads(p.read_text(encoding='utf-8'))
+    except Exception:
+        s = create_initial_state(story_id, requirement, mode, dry_run)
+        p.write_text(json.dumps(s, indent=2))
+        return s
+    if s.get('version') != STATE_SCHEMA_VERSION:
+        # Per feedback_no_backcompat: no migration shim; start fresh.
+        s = create_initial_state(story_id, requirement, mode, dry_run)
+        p.write_text(json.dumps(s, indent=2))
+    return s
 
 
 if __name__ == '__main__':

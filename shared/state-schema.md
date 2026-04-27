@@ -1,8 +1,11 @@
 # State Schema
 
-**Version:** 1.10.0
+**Version:** 2.0.0
 **Storage:** `.forge/state.json` (gitignored)
+**Schema pin:** `shared/checks/state-schema-v2.0.json` (authoritative JSON Schema)
 **Field reference:** see [`state-schema-fields.md`](state-schema-fields.md) for exhaustive field-by-field documentation, subsystem schemas (security injection, events.jsonl, checkpoints, stage notes, feedback, reports, orchestrator input, eval_run, prompt_compaction, speculation), and the full changelog.
+
+**Migration policy:** v1.x state.json files are auto-invalidated on load — the pipeline reinitializes state per `feedback_no_backcompat`. No migration shim exists. The `critic_revisions` and `implementer_reflection_cycles*` fields from v1.x are removed; replaced by `plan_judge_loops` (int), `impl_judge_loops` (object keyed by task_id), and `judge_verdicts[]` (array of `{judge_id, verdict, dispatch_seq, timestamp}`).
 
 ## Directory Structure
 
@@ -140,8 +143,10 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
   "total_retries": 0,
   "total_retries_max": 10,
   "implementer_fix_cycles": 0,
-  "implementer_reflection_cycles_total": 0,
-  "reflection_divergence_count": 0,
+  "plan_judge_loops": 0,
+  "impl_judge_loops": {},
+  "judge_verdicts": [],
+  "current_plan_sha": null,
   "inner_loop": {
     "enabled": true,
     "fix_cycles_used": 0,
