@@ -101,13 +101,33 @@ def _parse_frontmatter(raw: str) -> dict | None:
 
 
 def _body_slice(raw: str, anchor: str, limit: int = 400) -> str:
+    """Slice prose body following an HTML anchor in the post-frontmatter region.
+
+    ``anchor`` may be a bare id (preferred) or a legacy ``#id`` form; the
+    leading ``#`` is stripped. The search is restricted to ``raw[fm_end:]``
+    so YAML frontmatter (which contains the ``body_ref`` field itself) can
+    never satisfy the match. The anchor is matched as ``id="<X>"`` to align
+    with the ``<a id="X"></a>`` markers emitted by the migration.
+    """
     if not anchor:
         return ""
-    idx = raw.find(anchor)
+    anchor = anchor.lstrip("#")
+    if not anchor:
+        return ""
+    m = FRONTMATTER_RE.match(raw)
+    body_region = raw[m.end():] if m else raw
+    needle = f'id="{anchor}"'
+    idx = body_region.find(needle)
     if idx < 0:
         return ""
-    slice_ = raw[idx:idx + limit * 2]
-    # Trim at last whitespace before `limit`
+    # Skip past the opening anchor tag, then optional closing </a>, so the
+    # slice starts on actual prose rather than HTML scaffolding.
+    start = body_region.find(">", idx)
+    start = start + 1 if start >= 0 else idx + len(needle)
+    rest = body_region[start:].lstrip()
+    if rest.startswith("</a>"):
+        rest = rest[4:].lstrip()
+    slice_ = rest[:limit * 2]
     if len(slice_) <= limit:
         return slice_
     cut = slice_.rfind(" ", 0, limit)
