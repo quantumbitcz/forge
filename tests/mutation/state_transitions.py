@@ -146,23 +146,49 @@ def find_scenario_mutation_rows(scenario_dir: Path) -> dict[str, Path]:
     return out
 
 
-def run_mutation(row_id: str, scenario: Path) -> bool:
-    """Return True if mutation was KILLED (scenario failed under MUTATE_ROW)."""
-    env = os.environ.copy()
-    env["MUTATE_ROW"] = row_id
+def _run_bats(scenario: Path, env: dict[str, str]) -> int:
     bats = REPO / "tests" / "lib" / "bats-core" / "bin" / "bats"
     cmd = [str(bats), str(scenario)] if bats.is_file() else ["bats", str(scenario)]
     result = subprocess.run(
         cmd, cwd=str(REPO), env=env, capture_output=True, text=True,
         check=False, timeout=120,
     )
-    # Convention: bats exit 0 = all tests passed = mutation SURVIVED (scenario
-    # didn't notice the transition was wrong). Non-zero = mutation KILLED.
-    return result.returncode != 0
+    return result.returncode
 
 
-def write_report(results: list[tuple[str, str, str, str, bool]]) -> None:
-    """results = [(row_id, description, scenario, mutation, killed), ...]"""
+def run_mutation(row_id: str, scenario: Path) -> tuple[str, str]:
+    """Run the scenario twice and classify the outcome.
+
+    Returns (baseline, outcome) where:
+      - baseline is "pass" or "fail" — result of the no-env negative control.
+      - outcome is one of:
+          "killed"          — baseline pass, mutation fail (scenario sensitive)
+          "survived (gap)"  — baseline pass, mutation pass (scenario does not
+                              actually exercise the row)
+          "baseline broken" — baseline fail (scenario itself is broken; the
+                              row outcome is undefined)
+
+    Convention: bats exit 0 = all tests passed; non-zero = at least one failure.
+    """
+    # 1) Negative control — no env var. Scenario MUST pass without mutation.
+    env_clean = {k: v for k, v in os.environ.items() if k != "MUTATE_ROW"}
+    if _run_bats(scenario, env_clean) != 0:
+        return ("fail", "**baseline broken**")
+
+    # 2) Mutation run — flip the assertion via MUTATE_ROW=<id>.
+    env_mut = os.environ.copy()
+    env_mut["MUTATE_ROW"] = row_id
+    if _run_bats(scenario, env_mut) != 0:
+        return ("pass", "killed")
+    return ("pass", "**survived (gap)**")
+
+
+def write_report(results: list[tuple[str, str, str, str, str, str]]) -> None:
+    """results = [(row_id, description, scenario, mutation, baseline, outcome), ...]
+
+    `baseline` is "pass" or "fail" (negative-control run, no `MUTATE_ROW`).
+    `outcome` is one of `killed`, `**survived (gap)**`, `**baseline broken**`.
+    """
     lines = [
         "# Scenario-Sensitivity Probe Report — shared/state-transitions.md",
         "",
@@ -177,14 +203,26 @@ def write_report(results: list[tuple[str, str, str, str, bool]]) -> None:
         "for the full semantics.",
         "",
         "**Strategy:** `MUTATE_ROW` env-var — participating scenarios read the env "
-        "var and flip their expected `next_state` assertion when the row matches.",
+        "var and flip their expected `next_state` assertion when the row matches. "
+        "Each row is probed twice: first WITHOUT `MUTATE_ROW` (negative-control "
+        "baseline) and then with `MUTATE_ROW=<id>`.",
         "",
-        "| row_id | description | scenario | mutation_applied | survived |",
-        "| --- | --- | --- | --- | --- |",
+        "**Outcomes:**",
+        "- `killed` — baseline passed, mutation failed (scenario is sensitive "
+        "to this row).",
+        "- `**survived (gap)**` — baseline passed, mutation also passed "
+        "(scenario does NOT actually exercise this row; under-covered).",
+        "- `**baseline broken**` — baseline failed without mutation (scenario "
+        "is broken; outcome for this row is undefined until the scenario is "
+        "fixed).",
+        "",
+        "| row_id | description | scenario | mutation_applied | baseline | outcome |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
-    for row_id, desc, scenario, mut, killed in results:
-        survived = "NO" if killed else "**YES** (scenario does not exercise row)"
-        lines.append(f"| {row_id} | {desc} | {scenario} | {mut} | {survived} |")
+    for row_id, desc, scenario, mut, baseline, outcome in results:
+        lines.append(
+            f"| {row_id} | {desc} | {scenario} | {mut} | {baseline} | {outcome} |"
+        )
     lines.append("")
     REPORT.write_text("\n".join(lines), encoding="utf-8")
 
@@ -203,8 +241,8 @@ def main(argv: list[str] | None = None) -> int:
 
     scenario_map = find_scenario_mutation_rows(SCENARIO_DIR)
 
-    results: list[tuple[str, str, str, str, bool]] = []
-    any_survived = False
+    results: list[tuple[str, str, str, str, str, str]] = []
+    any_failed = False
     for row_id, desc, scenario_name, mut in SEED_ROWS:
         if row_id not in rows:
             print(f"[ERROR] seed row {row_id} missing from transition table",
@@ -214,10 +252,11 @@ def main(argv: list[str] | None = None) -> int:
         if not scenario.is_file():
             print(f"[ERROR] seed scenario {scenario} missing", file=sys.stderr)
             return 2
-        killed = run_mutation(row_id, scenario)
-        if not killed:
-            any_survived = True
-        results.append((row_id, desc, scenario.name, mut, killed))
+        baseline, outcome = run_mutation(row_id, scenario)
+        # Anything other than a clean "killed" is a probe failure.
+        if outcome != "killed":
+            any_failed = True
+        results.append((row_id, desc, scenario.name, mut, baseline, outcome))
 
     if args.check:
         # Regenerate into a tmp, compare to the committed file.
@@ -232,10 +271,11 @@ def main(argv: list[str] | None = None) -> int:
     else:
         write_report(results)
 
-    if any_survived:
-        print("[FAIL] at least one mutation survived", file=sys.stderr)
+    if any_failed:
+        print("[FAIL] at least one probe survived or had a broken baseline",
+              file=sys.stderr)
         return 1
-    print("[PASS] all seed mutations killed")
+    print("[PASS] all seed probes killed (baselines clean)")
     return 0
 
 
