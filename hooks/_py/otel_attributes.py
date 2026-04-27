@@ -35,6 +35,7 @@ OP_CREATE_AGENT = "create_agent"
 FORGE_RUN_ID = "forge.run_id"
 FORGE_STAGE = "forge.stage"
 FORGE_MODE = "forge.mode"
+FORGE_AGENT_NAME = "forge.agent.name"
 FORGE_SCORE = "forge.score"
 FORGE_PHASE_ITERATIONS = "forge.phase_iterations"
 FORGE_CONVERGENCE_ITERATIONS = "forge.convergence.iterations"
@@ -50,6 +51,7 @@ FORGE_LEARNING_REASON = "forge.learning.reason"
 # Cardinality budget.
 BOUNDED_ATTRS: tuple[str, ...] = (
     GEN_AI_AGENT_NAME,  # 42 agents + review-batch-<N>, bounded.
+    FORGE_AGENT_NAME,  # same set as GEN_AI_AGENT_NAME — used on forge.* event mirrors.
     GEN_AI_REQUEST_MODEL,  # pricing-table keyed, bounded.
     GEN_AI_OPERATION_NAME,  # enum: invoke_agent|execute_tool|create_agent.
     FORGE_STAGE,  # 10 pipeline stages + migration sub-states.
