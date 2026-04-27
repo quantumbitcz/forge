@@ -309,7 +309,7 @@ Write structured run data to `.forge/run-history.db` for cross-run queryability.
 
 **Config:** `run_history.enabled` (default true), `run_history.retention_days` (default 365), `run_history.optimize_interval` (default 10).
 
-## Feature usage aggregation (F34 contract)
+## Feature usage aggregation
 
 At LEARN stage, aggregate `feature_used` events from `.forge/events.jsonl` for
 the current run and write one row per unique `feature_id` into

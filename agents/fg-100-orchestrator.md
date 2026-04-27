@@ -400,6 +400,53 @@ Span-name safety: only bounded attributes (`gen_ai.agent.name`, `forge.stage`, `
 
 ---
 
+## Feature usage tracking
+
+When a feature's code path executes for the first time within a pipeline run,
+emit a `feature_used` event into `.forge/events.jsonl`:
+
+```jsonl
+{"type":"feature_used","feature_id":"F12","run_id":"<current_run_id>","ts":"<ISO-8601 UTC>"}
+```
+
+Feature IDs are defined in `shared/feature-matrix.md` (rows F05-F34) and
+`shared/feature_matrix_generator.py` (FEATURES tuple). Emit at most ONE event
+per `(feature_id, run_id)` pair (track in-memory via a per-run set).
+
+Trigger conditions per feature (subset; full mapping is in
+`shared/feature-lifecycle.md`):
+
+- F05 (Living specifications): emit when fg-200-planner reads/writes a spec slug
+- F07 (Event-sourced log): always emit at PREFLIGHT (the log itself is the host)
+- F08 (Context condensation): emit when condensation triggers
+- F09 (Active knowledge base): emit when a learning is auto-promoted
+- F10 (Enhanced security): emit when supply-chain audit runs
+- F11 (Playbooks): emit when a playbook is invoked
+- F13 (Property testing): emit when fg-515 dispatches
+- F14 (Flaky test management): emit when a quarantine decision is made
+- F15 (Dynamic accessibility): emit when fg-413 runs in a11y mode
+- F16 (i18n validation): emit when fg-155 dispatches
+- F17 (Performance regression): emit when benchmarks compare
+- F18 (Next-task prediction): emit when prediction triggers
+- F19 (DX metrics): emit at LEARN stage if metrics enabled
+- F20 (Monorepo): emit when affected detection runs
+- F21 (A2A HTTP): emit on inter-repo HTTP call
+- F22 (ML pipelines): emit when ML categories appear
+- F23 (Feature flags): emit when flag categories appear
+- F24 (Deployment strategies): emit on canary/blue-green dispatch
+- F25 (Contract testing): emit when fg-250 dispatches
+- F26 (Output compression): emit when level != verbose
+- F27 (AI quality): emit when AI-LOGIC-* findings appear
+- F32 (Implementer reflection): emit when fg-301-implementer-judge dispatches
+- F33 (Self-consistency voting): emit on consistency cache miss
+- F34 (Session handoff): emit when /forge-handoff write executes
+
+For features without a clear trigger, omit emission rather than guessing.
+The retrospective aggregates by (feature_id, run_id) into the
+feature_usage SQLite table for matrix freshness scoring.
+
+---
+
 ## Stage 0: PREFLIGHT
 
 **story_state:** `PREFLIGHT`
