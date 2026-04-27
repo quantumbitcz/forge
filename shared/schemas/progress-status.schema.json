@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://forge.local/schemas/progress-status.schema.json",
+  "title": "Forge live progress status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "stage", "agent_active", "elapsed_ms_in_stage", "timeout_ms", "last_event", "updated_at", "writer"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "stage": {"type": "string"},
+    "agent_active": {"type": ["string", "null"]},
+    "elapsed_ms_in_stage": {"type": "integer", "minimum": 0},
+    "timeout_ms": {"type": "integer", "minimum": 0},
+    "last_event": {
+      "type": "object",
+      "required": ["ts", "type", "detail"],
+      "properties": {
+        "ts": {"type": "string", "format": "date-time"},
+        "type": {"type": "string"},
+        "detail": {"type": "string"}
+      }
+    },
+    "next_expected_at": {"type": ["string", "null"], "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "writer": {"type": "string"}
+  }
+}
