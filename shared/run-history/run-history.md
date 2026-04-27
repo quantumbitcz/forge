@@ -164,7 +164,7 @@ The `PRAGMA user_version` field tracks the schema version. Migration files live 
 | `002-feature-usage.sql` | 2 | feature_usage table for feature activation tracking |
 | `003-cost-columns.sql` | 3 | Phase 6 cost governance columns on `runs`: ceiling_usd, spent_usd, ceiling_breaches, throttle_events |
 
-Migration strategy: `fg-700-retrospective` checks `PRAGMA user_version` on DB open. If version < expected, applies pending migration files in numeric order. Each migration is idempotent (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`).
+Migration strategy: `fg-700-retrospective` checks `PRAGMA user_version` on DB open. If version < expected, applies pending migration files in numeric order. Migrations are gated by `user_version` and applied at most once. Each migration's SQL is intended to be idempotent where supported (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`); migration 003 uses `ALTER TABLE … ADD COLUMN` which SQLite does not support `IF NOT EXISTS` on — idempotency for 003 is enforced by the user_version gate alone.
 
 ### Phase 6 cost columns (migration 003)
 
