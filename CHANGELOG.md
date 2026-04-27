@@ -5,6 +5,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-04-27
+
+Phase 4 of the A+ roadmap (Learnings Dispatch Loop) ships. The learning database becomes an active prompt-time input: relevant learnings inject into agent prompts at PLAN/IMPLEMENT/REVIEW, then reinforce via marker-protocol parsing at LEARN.
+
+### Added
+
+- **Phase 4: Learnings Dispatch Loop**
+  - **Foundation modules:**
+    - `hooks/_py/memory_decay.py` — `pre_fp_base` snapshot, `apply_vindication()` for bit-exact restore, `archival_floor()` returning `(bool, reason)`. New constants: SPARSE_THRESHOLD, MAX_DELTA_T_DAYS, ARCHIVAL_CONFIDENCE_FLOOR, ARCHIVAL_IDLE_DAYS, VINDICATE_FALLBACK_FACTOR.
+    - `hooks/_py/agent_role_map.py` — frozen 12-entry MappingProxyType (fg-200, fg-300, fg-400, 9 reviewers). `role_for_agent()` API.
+    - `hooks/_py/learnings_selector.py` — frozen `LearningItem` dataclass + `select_for_dispatch()` with role/domain/recency/cross-project ranking and id-ascending tiebreak.
+    - `hooks/_py/otel_attributes.py` — 5 `FORGE_LEARNING_*` constants + `FORGE_AGENT_NAME` registered in UNBOUNDED/BOUNDED_ATTRS.
+  - **Schema migration:** v1 → v2 across 292 learning files in `shared/learnings/`. Migration script removed after successful application (no shim, per "no back-compat" rule).
+  - **I/O stack:** `learnings_io.py` (parser, `_body_slice` scoped past frontmatter, matches `id="X"` HTML anchors), `learnings_format.py` (`## Relevant Learnings` block renderer + `_sanitize` strips control bytes), `learnings_markers.py` (line-anchored parser for LEARNING_APPLIED / LEARNING_FP / LEARNING_VINDICATED), `learnings_writeback.py` (applies markers + archival floor with idempotent updates).
+  - **Orchestrator dispatch seam:** `agents/fg-100-orchestrator.md` §0.6.1 builds dispatch context, wraps the rendered block in `<untrusted source="learnings">` envelope before concatenating into the agent prompt. Cache invalidation at LEARN stage.
+  - **12 agent prompts** — fg-200, fg-300, fg-400, and the nine reviewers (fg-410..414, fg-416..419) gain `## Learnings Injection` sections describing how they consume the injected block and emit reinforcement markers.
+  - **Tests:** structural decay-singleton bats; orchestrator-seam contract bats; cache-invalidation contract bats; integration test exercising the full loop; sanitization hardening tests; `_body_slice` smoke test against real spring.md (204 items render real prose, zero empty bodies).
+  - **Documentation:** `decay.md` (explicit formulas + §10 Vindication), `learnings/README.md` (§Read Path), `cross-project-learnings.md` (§Selector Interaction), `observability.md` (forge.learning.* events + attributes), `agent-communication.md` (§Learning Markers parallel to §PREEMPT), `CLAUDE.md` (Phase 4 read path summary).
+
+### Changed
+
+- `state.learnings_cache` field documented in `shared/state-schema-fields.md`.
+- `_body_slice` rewritten — was matching anchors inside YAML frontmatter, leaking schema text into rendered prompts. Now scoped past frontmatter and aligned with the `<a id="X">` migration convention.
+- `body_ref` values normalized to bare ids (no `#` prefix) across 28 learning files; legacy `#X` form still tolerated.
+- `bats` contract tests use `python3` explicitly (cross-platform).
+
+### Process
+
+30 plan tasks across 28 implementation commits. Code review via `superpowers:requesting-code-review` found 3 critical / 6 important / 8 minor. All 17 issues fixed across 10 follow-up commits before release. Critical #1+#2 (`_body_slice` broken end-to-end) caught before any agent dispatch saw malformed payloads. Phase 1-3 ACs re-verified (in scope) — no regressions.
+
 ## [3.9.0] - 2026-04-27
 
 Phase 3 of the A+ roadmap (Correctness Proofs) ships. Closes 4 correctness gaps with proof-grade infrastructure.

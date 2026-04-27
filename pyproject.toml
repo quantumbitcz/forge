@@ -1,6 +1,6 @@
 [project]
 name = "forge-plugin"
-version = "3.9.0"
+version = "3.10.0"
 description = "Claude Code plugin: 10-stage autonomous pipeline (forge)"
 requires-python = ">=3.10"
 readme = "README.md"
