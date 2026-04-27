@@ -448,7 +448,7 @@ All 7 forge hooks, the check engine, and the critical `shared/*.sh` scripts port
 - Terse review format with text markers `[CRIT]`/`[WARN]`/`[INFO]`/`[PASS]` in forge-review
 - Natural language trigger documentation for caveman mode
 - `token_pricing` config section for overridable model pricing
-- Log rotation for `.hook-failures.log` and `.forge/forge.log`
+- Log rotation for the hook failure log and `.forge/forge.log`
 
 ### Changed
 - React TypeScript variant extended with generic components, context typing, strict TypeScript patterns

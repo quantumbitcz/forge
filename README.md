@@ -258,7 +258,7 @@ After [Quick start](#quick-start):
 | "No active pipeline" | Run `/forge-init` then `/forge-run` |
 | Pipeline stuck | `/forge-recover diagnose` (read-only), then `/forge-recover repair` |
 | Lock file blocks run | `/forge-recover reset` or remove `.forge/.lock` |
-| Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
+| Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.jsonl` |
 | Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |
 | Budget exhausted | Check `total_retries_max` (default 10, range 5-30) |
 | Evidence stale | Increase `shipping.evidence_max_age_minutes` (default 30) |

@@ -88,13 +88,13 @@ Before any action, verify:
 
 ### Hook Health
 
-If `.forge/.hook-failures.log` exists and is non-empty:
-1. Count total failure entries: `wc -l < .forge/.hook-failures.log`
-2. Count unique failure types: `awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}' .forge/.hook-failures.log | sort -u | wc -l`
-3. Show last 3 failures with timestamps
+If `.forge/.hook-failures.jsonl` exists and is non-empty:
+1. Count total failure entries: `wc -l < .forge/.hook-failures.jsonl`
+2. Count unique hook names: `jq -r '.hook_name' .forge/.hook-failures.jsonl | sort -u | wc -l`
+3. Show last 3 failures with timestamps: `tail -3 .forge/.hook-failures.jsonl | jq -r '"\(.ts)  \(.hook_name) exit=\(.exit_code)"'`
 4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
 
-If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy (no failures logged)"
+If `.forge/.hook-failures.jsonl` does not exist or is empty: show "Hooks: healthy (no failures logged)"
 
 ## Error Handling
 

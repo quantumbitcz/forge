@@ -690,7 +690,7 @@ The orchestrator detects the state version at PREFLIGHT (Stage 0) and applies mi
 
 - Migrations are **additive only**: new fields with safe defaults. No field removals or renames between versions.
 - Missing fields are populated with defaults; existing fields are never overwritten by migration.
-- Migration is logged to `.forge/.hook-failures.log` with reason `state_migration:{from}->{to}`.
+- Migration is logged to `.forge/.hook-failures.jsonl` with reason `state_migration:{from}->{to}` (one JSON row per migration event).
 - The recovery engine checks the version field before parsing -- version mismatch triggers migration before any other state processing.
 
 **Manual reset:** Use `/forge-recover reset` to clear stale state if automatic migration is insufficient.

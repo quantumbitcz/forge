@@ -36,7 +36,7 @@ VERIFY Phase A: build + lint. Run commands, analyze failures, apply targeted fix
 
 ## 2. Context Budget
 
-Read only: dispatch prompt, error output, error-referenced source files (targeted), `.forge/.hook-failures.log`. Output under 1,500 tokens.
+Read only: dispatch prompt, error output, error-referenced source files (targeted), `.forge/.hook-failures.jsonl`. Output under 1,500 tokens.
 
 ---
 
@@ -52,8 +52,8 @@ From dispatch: `commands.build`, `commands.lint`, `inline_checks`, `max_fix_loop
 
 ### Step 0: Check Hook Failure Log
 
-Read `.forge/.hook-failures.log`. If it exists and is non-empty:
-- Count the entries
+Read `.forge/.hook-failures.jsonl`. Each line is a JSON object with keys `schema`, `ts`, `hook_name`, `matcher`, `exit_code`, `stderr_excerpt`, `duration_ms`, `cwd`. Parse via `jq` or `python -c`. If it exists and is non-empty:
+- Count the entries (one row per line — `wc -l` still works)
 - Include the count in your output: `"Hook failures during implementation: {N}"`
 - This is informational -- it does not block verification
 
@@ -137,7 +137,7 @@ Field definitions:
 - `verdict`: `"PASS"` or `"FAIL"` -- no other values
 - `fix_attempts`: total number of fix iterations attempted (0 if everything passed first try)
 - `errors`: array of remaining error strings (empty on PASS)
-- `hook_failures`: count from `.forge/.hook-failures.log` (0 if file absent/empty)
+- `hook_failures`: count from `.forge/.hook-failures.jsonl` (0 if file absent/empty)
 - `check_engine_skipped`: count passed from dispatch prompt (echoed back for orchestrator state tracking)
 
 ---

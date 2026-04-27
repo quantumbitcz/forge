@@ -44,7 +44,7 @@ Examples:
 | Orchestrator (fg-100) | `state.json` fields + stage notes | Persistent across runs |
 | Coordinators (fg-400, fg-500, fg-600) | Stage notes (stage_N_notes) | Per-run, read by retrospective |
 | Leaf agents (fg-300, fg-410-420) | Return value to coordinator | Coordinator summarizes in stage notes |
-| Hook scripts | `.forge/.hook-failures.log` | Persistent, surfaced by forge-status |
+| Hook scripts | `.forge/.hook-failures.jsonl` | Persistent, surfaced by forge-status |
 
 ### Token Budget for Logging
 

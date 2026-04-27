@@ -1242,7 +1242,7 @@ After scaffolders complete, BEFORE implementers: [dispatch fg-102-conflict-resol
 
 ### SS5.1 Phase A — Build & Lint
 
-Read `.forge/.hook-failures.log` and `.forge/.check-engine-skipped`.
+Read `.forge/.hook-failures.jsonl` and `.forge/.check-engine-skipped`.
 
 [dispatch fg-505-build-verifier]: build, lint, inline checks, max_fix_loops, conventions.
 

@@ -69,7 +69,7 @@ Fires once when a new session begins.
 - Each hook has an implicit timeout (configurable per hook in `hooks.json`).
 - **PreToolUse timeout**: The edit proceeds (fail-open). A skip counter is incremented in `.forge/.check-engine-skipped`.
 - **PostToolUse timeout**: The hook is skipped silently. No retry.
-- Timeout events are logged to `.forge/.hook-failures.log`.
+- Timeout events are logged to `.forge/.hook-failures.jsonl`.
 
 ## Script Contract
 
@@ -82,7 +82,7 @@ Hook entry scripts (`.py` files referenced from `hooks.json`) must follow these 
    - `0` = allow / no-op (all event kinds).
    - `2` = block the tool invocation (PreToolUse only; stderr is surfaced to the user as the block reason).
    - Any other non-zero = warning/error per event kind (PostToolUse, Stop, SessionStart, Agent log it; none of them can block).
-5. **Never crash**: Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a diagnostic line to `.forge/.hook-failures.log` and exits `0`. A crashing hook must not break the user's session. The only intentional non-zero exit is a deliberate PreToolUse block (exit 2).
+5. **Never crash**: Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a JSON line to `.forge/.hook-failures.jsonl` and exits `0`. A crashing hook must not break the user's session. The only intentional non-zero exit is a deliberate PreToolUse block (exit 2).
 6. **No interactive input**: Do not call `input()` or any TTY prompt. All context comes from the stdin payload, `.forge/` state files, and environment variables set by the Claude Code runtime.
 7. **Stdout is user-visible**: Keep it short and actionable. Machine-readable diagnostics go to stderr or the hook failure log.
 8. **Idempotent and fast**: Hooks may fire many times per session. They must be safe to re-run and should return in under a second for L0/L1 paths; long-running work must be offloaded (async, background, deferred).
@@ -93,10 +93,31 @@ Hook entry scripts (`.py` files referenced from `hooks.json`) must follow these 
 |---|---|---|
 | PreToolUse | Exit non-zero | Tool invocation is **blocked**. Error message shown to user. |
 | PreToolUse | Timeout | Tool invocation **proceeds** (fail-open). Skip counter incremented. |
-| PostToolUse | Exit non-zero | Logged to `.forge/.hook-failures.log`. No retry. |
+| PostToolUse | Exit non-zero | Logged to `.forge/.hook-failures.jsonl`. No retry. |
 | PostToolUse | Timeout | Skipped silently. No retry. |
 | Stop | Exit non-zero | Logged. Session ends normally. |
 | SessionStart | Exit non-zero | Logged. Session proceeds. |
+
+## Failure logging
+
+Every hook entry script imports `hooks/_py/failure_log.py` and calls
+`record_failure(hook_name, matcher, exit_code, stderr_excerpt, duration_ms, cwd)`
+on:
+
+- any uncaught exception in the wrapped `main()`, and
+- any non-zero exit from the wrapped `main()` other than the deliberate
+  PreToolUse block (exit 2), which is a legitimate tool-block signal.
+
+The log at `.forge/.hook-failures.jsonl` contains one JSON object per line
+matching `shared/schemas/hook-failures.schema.json`. `hooks/session_start.py`
+calls `failure_log.rotate()` once per session: files older than 7 days are
+gzipped to `.forge/.hook-failures-YYYYMMDD.jsonl.gz`; gzip archives older
+than 30 days are deleted.
+
+Claude Code's upstream hook timeouts (the `timeout` field in
+`hooks/hooks.json`) are enforced by the runtime, not the hook. A hook that
+exceeds its timeout is killed and leaves no trace in the failure log —
+it is visible only in the live Claude Code transcript.
 
 ## Adding New Hooks
 
