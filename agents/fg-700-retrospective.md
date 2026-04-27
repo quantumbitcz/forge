@@ -323,7 +323,9 @@ the current run and write one row per unique `feature_id` into
 4. Insert: `INSERT INTO feature_usage (feature_id, ts, run_id) VALUES (?, ?, ?)`.
 
 Error handling: DB missing → skip (no-op, retrospective still succeeds).
-DB locked → retry once after 100ms; if still locked, log warning and skip.
+DB locked → retry once after 100ms; if still locked, append a warning to
+`.forge/.hook-failures.jsonl` (use the `record_failure` helper from
+`hooks/_py/failure_log.py`) and skip the feature_usage write.
 
 ---
 
