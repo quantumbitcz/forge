@@ -242,9 +242,9 @@ The orchestrator records model assignments in `stage_0_notes`:
 When `cost.aware_routing: true` (default), `fg-100-orchestrator` consults `shared.cost_governance.downgrade_tier()` before every dispatch. Algorithm:
 
 1. `resolved = static_resolve(agent)` — unchanged from §Resolution Order above.
-2. `effective = tier_estimate[resolved] * conservatism_multiplier[resolved]`.
-3. If `state.cost.remaining_usd >= 5 * effective`: keep `resolved`.
-4. Else if `agent in cost.pinned_agents`: keep `resolved`, emit `COST-DOWNGRADE-PINNED` INFO.
+2. If `agent in cost.pinned_agents`: keep `resolved`, emit `COST-DOWNGRADE-PINNED` INFO.
+3. `effective = tier_estimate[resolved] * conservatism_multiplier[resolved]`.
+4. If `state.cost.remaining_usd >= 5 * effective`: keep `resolved`.
 5. Else step down one tier: `premium -> standard -> fast`.
 6. If already at `fast`:
    - `agent in SAFETY_CRITICAL` -> keep `fast` (logged as `safety_pinned`).
