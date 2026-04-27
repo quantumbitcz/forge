@@ -122,3 +122,19 @@ The pipeline is fast when it is right the first time. Critical thinking is not t
 - `agents/fg-400-quality-gate.md` — Devil's advocate pass (Principle 2) after all review batches
 - `shared/agent-communication.md` — PREEMPT system tracks "times better approach found in review"
 - `shared/stage-contract.md` — Challenge Brief required in stage notes (validated by fg-210)
+
+## fg-100-orchestrator size budget
+
+`agents/fg-100-orchestrator.md` is capped at 1800 lines, enforced by
+`tests/contract/fg100_size_budget.py`. Current size: ~1557 lines. The cap is
+growth management, not aggressive cutting — fg-100 loads once per run, so
+size is not a per-stage token cost (per user memory `Orchestrator size`).
+
+Authoring rule: before adding a section to fg-100, check whether the content
+is generic agent guidance. If yes, put it in `shared/agent-defaults.md` and
+reference from fg-100 by prose link (e.g. *"Reviewer timeout handling: see
+agent-defaults.md §Timeout → INFO-to-WARNING"*). If no (orchestrator-specific
+logic), add inline.
+
+When the budget is hit: the fix is to extract generic content, not to expand
+the budget. Proposed expansions require spec-level justification.

@@ -309,6 +309,22 @@ Write structured run data to `.forge/run-history.db` for cross-run queryability.
 
 **Config:** `run_history.enabled` (default true), `run_history.retention_days` (default 365), `run_history.optimize_interval` (default 10).
 
+## Feature usage aggregation (F34 contract)
+
+At LEARN stage, aggregate `feature_used` events from `.forge/events.jsonl` for
+the current run and write one row per unique `feature_id` into
+`feature_usage`:
+
+1. Apply migration `shared/run-history/migrations/002-feature-usage.sql` if
+   the table is absent (`CREATE TABLE IF NOT EXISTS`). Idempotent.
+2. Read `.forge/events.jsonl`; filter to `type == "feature_used"` for the
+   current `run_id`.
+3. De-duplicate on `feature_id` (one row per feature per run).
+4. Insert: `INSERT INTO feature_usage (feature_id, ts, run_id) VALUES (?, ?, ?)`.
+
+Error handling: DB missing → skip (no-op, retrospective still succeeds).
+DB locked → retry once after 100ms; if still locked, log warning and skip.
+
 ---
 
 ### Output 2.6: Playbook Refinement Analysis
