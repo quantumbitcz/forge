@@ -79,14 +79,21 @@ class Row:
     next_state: str
 
 
+_ROW_ID = r"(?:\d+|[A-Z]\d+[a-z]?)"
 ROW_RE = re.compile(
-    r"^\|\s*(?P<id>[A-Z0-9][-A-Z0-9a-z]*)\s*\|"
+    r"^\|\s*(?P<id>" + _ROW_ID + r")\s*\|"
     r"\s*(?P<cur>[^|]+?)\s*\|"
     r"\s*(?P<evt>[^|]+?)\s*\|"
     r"\s*(?P<grd>[^|]*?)\s*\|"
     r"\s*(?P<nxt>[^|]+?)\s*\|"
     r"\s*(?P<act>[^|]*?)\s*\|\s*$"
 )
+
+# Floor on parsed row count to detect catastrophic regex changes that silently
+# collapse to a few accidental matches. The transition table currently has 70+
+# rows across four sub-tables; 30 is comfortably below that and well above any
+# plausible accident.
+MIN_PARSED_ROWS = 30
 
 
 def parse_rows(md_path: Path) -> dict[str, Row]:
@@ -131,13 +138,27 @@ def parse_rows(md_path: Path) -> dict[str, Row]:
         )
     if not rows:
         raise TransitionTableError(f"no rows parsed from {md_path}")
+    if len(rows) < MIN_PARSED_ROWS:
+        raise TransitionTableError(
+            f"parsed only {len(rows)} rows from {md_path} "
+            f"(expected >= {MIN_PARSED_ROWS}); ROW_RE may be too strict or "
+            "the transition table may have lost rows"
+        )
     return rows
 
 
 def find_scenario_mutation_rows(scenario_dir: Path) -> dict[str, Path]:
-    """Return {row_id: scenario_path} from '# mutation_row: <id>' comments."""
+    """Return {row_id: scenario_path} from '# mutation_row: <id>' comments.
+
+    Accepts both the bare-digit form (e.g. `37`) and the canonical
+    letter-prefixed form (e.g. `E-3`, `C-10a`).
+    """
     out: dict[str, Path] = {}
-    pat = re.compile(r"^\s*#\s*mutation_row:\s*(?P<id>[A-Z0-9][-A-Z0-9a-z]*)\s*$")
+    pat = re.compile(
+        r"^\s*#\s*mutation_row:\s*"
+        r"(?P<id>\d+|[A-Z]-?\d+[a-z]?)"
+        r"\s*$"
+    )
     for path in sorted(scenario_dir.glob("*.bats")):
         for line in path.read_text(encoding="utf-8").splitlines():
             m = pat.match(line)
