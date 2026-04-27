@@ -3,9 +3,14 @@
   "$id": "https://forge.quantumbitcz.com/schemas/state/2.0.0.json",
   "title": "Forge pipeline state — v2.0.0",
   "type": "object",
-  "required": ["version", "plan_judge_loops", "impl_judge_loops", "judge_verdicts"],
+  "required": ["version", "_seq", "plan_judge_loops", "impl_judge_loops", "judge_verdicts"],
   "properties": {
     "version": { "const": "2.0.0" },
+    "_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic write counter incremented by every state write. Used for stale-write detection."
+    },
     "plan_judge_loops": {
       "type": "integer",
       "minimum": 0,
@@ -25,10 +30,22 @@
           "judge_id": { "enum": ["fg-205-plan-judge", "fg-301-implementer-judge"] },
           "verdict": { "enum": ["PROCEED", "REVISE", "ESCALATE"] },
           "dispatch_seq": { "type": "integer", "minimum": 1 },
-          "timestamp": { "type": "string", "format": "date-time" }
+          "timestamp": { "type": "string", "format": "date-time" },
+          "task_id": { "type": "string" }
         },
+        "allOf": [
+          {
+            "if": { "properties": { "judge_id": { "const": "fg-301-implementer-judge" } } },
+            "then": { "required": ["task_id"] }
+          }
+        ],
         "additionalProperties": false
       }
+    },
+    "current_plan_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the current plan (requirement + approach digest). Resets plan_judge_loops to 0 on change. Null until the first plan is drafted."
     }
   },
   "additionalProperties": true
