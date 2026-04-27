@@ -79,7 +79,8 @@ case "$TIER" in
     run_tier "Structural Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/structural/*.bats
     run_tier "Unit Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
     run_tier "Hooks" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/hooks/*.bats
-    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (bats)" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (pytest)" python -m pytest "$SCRIPT_DIR/contract" -q
     run_tier "Scenario Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/scenario/*.bats
     run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
     if [[ -d "$SCRIPT_DIR/evals/time-travel" ]]; then
@@ -97,7 +98,8 @@ case "$TIER" in
     print_summary
     ;;
   contract)
-    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (bats)" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (pytest)" python -m pytest "$SCRIPT_DIR/contract" -q
     print_summary
     ;;
   scenario)
