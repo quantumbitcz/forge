@@ -315,6 +315,19 @@ The orchestrator **escalates via AskUserQuestion** with header "Blocked", questi
 
 See `convergence-examples.md` for walkthrough scenarios of the VERIFY convergence loop.
 
+### 5.B Intent verification (Phase 7 F35)
+
+After Phase A (build/test/lint) passes and before Stage 6 REVIEW:
+
+1. Orchestrator calls `build_intent_verifier_context(state)` — Layer-1 allow-list.
+2. Persists filtered brief to `.forge/dispatch-contexts/fg-540-<ts>.json`.
+3. Dispatches `fg-540-intent-verifier`.
+4. Agent probes each AC via sandboxed `hooks/_py/intent_probe.py`.
+5. Findings written to `.forge/runs/<run_id>/findings/fg-540.jsonl`.
+6. Orchestrator populates `state.intent_verification_results[]`.
+
+Skipped under bootstrap/migration modes.
+
 ---
 
 ### Stage 6: REVIEW
@@ -426,6 +439,18 @@ Standard mode batches are config-driven (`forge.local.md`). Bugfix and bootstrap
 **story_state:** `SHIPPING`
 
 **Entry condition:** Documentation done (Stage 7) AND pre-ship evidence passed. The orchestrator dispatches `fg-590-pre-ship-verifier` after DOCS completes. Evidence must exist at `.forge/evidence.json` with `verdict: "SHIP"` and `timestamp` within `shipping.evidence_max_age_minutes` (default: 30). See `shared/verification-evidence.md` for the full schema.
+
+### 8.0 Entry conditions (Phase 7 F35 additions)
+
+`fg-590-pre-ship-verifier` now additionally requires:
+
+- 0 open CRITICAL `INTENT-MISSED` findings, AND
+- `verified_pct >= intent_verification.strict_ac_required_pct` (OR
+  `verified_pct is None` under `living_specs.strict_mode: false`).
+
+`BLOCK` reasons enumerated in `evidence.json.block_reasons[]`:
+`intent-missed`, `intent-threshold`, `intent-unreachable-runtime`,
+`intent-no-acs-strict`.
 
 **Inputs:**
 - All changed files

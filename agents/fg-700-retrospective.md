@@ -461,6 +461,31 @@ last 3 runs, propose `living_specs.strict_mode: true` via the F31 rule
 promotion flow (`shared/learnings/rule-promotion.md`). Surface via
 `/forge-playbook-refine`; never auto-apply.
 
+### §2j.bis Cost-of-voting analytics
+
+Compute per-run:
+
+- `vote_cost_usd` — sum of estimated cost for both samples + judge on voted tasks.
+- `vote_cost_pct_of_run` — `vote_cost_usd / state.cost.spent_usd * 100`.
+- `vote_savings_estimate_usd` — heuristic: `diverged * avg_rework_cost_usd`
+  where `avg_rework_cost_usd` comes from `.forge/run-history.db` (fallback 0 if
+  no history).
+
+Surface:
+
+```yaml
+impl_voting:
+  ...
+  cost:
+    vote_cost_usd: <float>
+    vote_cost_pct_of_run: <float>
+    vote_savings_estimate_usd: <float>
+```
+
+When `vote_cost_pct_of_run > 15%` AND `divergence_rate < 5%` across last 3 runs,
+propose lowering `impl_voting.trigger_on_confidence_below` by 0.05 or tightening
+`trigger_on_risk_tags` — propose-only, via `/forge-playbook-refine`.
+
 ---
 
 ### Output 2.6: Playbook Refinement Analysis
