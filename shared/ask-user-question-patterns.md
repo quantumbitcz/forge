@@ -87,3 +87,41 @@ Options: ["Proceed", "Abort stage"]
 **Autonomous fallback:** when no interactive user is available (background run or CI), the orchestrator writes an escalation record to `.forge/alerts.json` with severity `high` and pauses the run per `shared/background-execution.md`. The run resumes only when a user acknowledges the alert or `/forge-recover resume` is invoked.
 
 **Counter:** each invocation increments `state.json:security.injection_confirmations_requested` (see `shared/state-schema.md`).
+
+## 8. Pattern — Cost-ceiling breach (Phase 6)
+
+**Trigger:** `state.cost.spent_usd + tier_estimate_usd[resolved_tier] > config.cost.ceiling_usd` AND `autonomous: false`.
+
+**Rule:** `fg-100-orchestrator` MUST call `AskUserQuestion` with exactly this payload (values substituted) before any `Agent(...)` call.
+
+```json
+{
+  "question": "Next dispatch would breach cost ceiling (${ceiling_usd}). Projected: ${projected_usd}. How should we proceed?",
+  "header": "Cost ceiling",
+  "multiSelect": false,
+  "options": [
+    {"label": "Raise ceiling to ${ceiling_usd_raised}", "description": "Continues run. Records new ceiling in state for this run only."},
+    {"label": "Downgrade remaining agents (Recommended)", "description": "Switches premium->standard, standard->fast where safe. Excludes pinned agents and safety-critical reviewers."},
+    {"label": "Abort to ship current state", "description": "Runs pre-ship verifier on what's in the worktree, then ships or exits."},
+    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-recover resume."}
+  ]
+}
+```
+
+- Header is exactly `"Cost ceiling"` (12 chars — max).
+- `ceiling_usd_raised` = `ceiling_usd * 1.4` rounded to nearest dollar (e.g. $25 -> $35).
+- Options ordered Recommended-first, destructive-last (matches §3).
+
+**Autonomous mode:** NEVER invoke this AskUserQuestion. Follow `agents/fg-100-orchestrator.md` §Cost Governance autonomous decision tree. Every decision is logged as `COST-ESCALATION-AUTO` INFO and written to `.forge/cost-incidents/*.json`.
+
+## Default Timeouts (Phase 6)
+
+Interactive `AskUserQuestion` prompts in forge default to a **300-second** response window when no explicit timeout is declared. On timeout:
+
+| Pattern | Timeout default | Fallback action |
+|---|---|---|
+| §3 Escalation (recovery) | 300s | Default to "Abort this run" |
+| §7 Confirmed-tier injection | 300s | Pause run, write `.forge/alerts.json` severity=high |
+| §8 Cost-ceiling breach | 300s | Default to "Abort to ship current state" |
+
+Log `{PATTERN}-TIMEOUT` INFO on every fallback.
