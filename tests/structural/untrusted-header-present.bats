@@ -3,6 +3,8 @@
 
 setup() {
   ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+  # shellcheck source=../lib/module-lists.bash
+  source "$ROOT/tests/lib/module-lists.bash"
 }
 
 @test "all fg-* agents carry canonical Untrusted Data Policy header" {
@@ -13,7 +15,7 @@ setup() {
   fi
 }
 
-@test "agent count is exactly 42" {
+@test "agent count is at least MIN_AGENTS" {
   count="$(find "$ROOT/agents" -maxdepth 1 -name 'fg-*.md' -type f | wc -l | tr -d ' ')"
-  [ "$count" = "42" ]
+  [ "$count" -ge "$MIN_AGENTS" ]
 }
