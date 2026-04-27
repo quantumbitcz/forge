@@ -9,7 +9,7 @@ Forge runs eight test tiers. All but the pipeline eval run in `.github/workflows
 | Contract | `tests/contract/` | bats | `test (*, contract)` | 3 OS | Contract tests between agents and the state machine |
 | Scenario | `tests/scenario/` | bats | `test (*, scenario)` | 3 OS | Full state-machine scenarios; exercises the transition table in `shared/state-transitions.md` |
 | E2E | `tests/e2e/dry-run-smoke.py` | python | `e2e` | 3 OS | Spawns a minimal ts+vitest project, drives `/forge-init` (deterministic shim) + dry-run pipeline to VALIDATED/COMPLETE |
-| Mutation | `tests/mutation/state_transitions.py` | python | `mutation` | ubuntu | Applies 5 seed mutations to `state-transitions.md` rows; fails if any scenario fails to notice the mutation |
+| Sensitivity probe | `tests/mutation/state_transitions.py` | python | `mutation` | ubuntu | Scenario-sensitivity probe (NOT classical mutation): for 5 seed rows, sets `MUTATE_ROW=<id>` and asks the bats scenario to flip its own assertion. Fails if any scenario passes anyway (= scenario not actually exercising the row). See `tests/mutation/state_transitions.py` docstring. |
 | Coverage | `tests/scenario/report_coverage.py` | python | `coverage` | ubuntu | Regenerates `tests/scenario/COVERAGE.md`; CI fails on drift or <60% T-* coverage |
 | Pipeline eval | `tests/evals/pipeline/` | python | (CI-only, separate workflow) | ubuntu | Full pipeline replay against recorded transcripts; manual and CI-gated |
 
@@ -39,15 +39,27 @@ Each `tests/scenario/*.bats` file declares the transition-table rows it exercise
 
     # Covers: T-37, C-09
 
+For scenarios that exercise many rows, list them comma-separated. The reporter does NOT support a `..` range operator — every row id must appear individually:
+
+    # Covers: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-08, T-09, T-11, T-13, T-14, T-15, T-16, T-17, C-10a, E-1, E-2
+
 - Row IDs use canonical prefixes: `T-NN` (normal flow), `E-N` (error), `R-N` (rewind), `D-N` (dry-run), `C-N[a]` (convergence).
 - Zero-padding to two digits is optional in the header but the reporter canonicalises internally (`T-1` and `T-01` both map to `T-01`).
 - An empty `# Covers:` header means "author looked and claims no coverage" — valid and distinct from the header being absent.
 - A missing header surfaces in the "unmapped scenarios" section (if added; currently the reporter silently ignores missing headers).
 
+> **Phase 3 note.** The Phase 3 backfill added `# Covers:` headers to every scenario file in bulk — many were left empty as placeholders pending follow-up. Scenario authors should fill in coverage for rows they actually exercise; an unfilled empty header is valid (it means "looked, claims no coverage") but a deliberate non-empty list is preferred where applicable.
+
 ## Mutation `# mutation_row:` header convention
+
+> **Note on naming.** This harness lives under `tests/mutation/` for legacy reasons but it is a *scenario-sensitivity probe*, not classical mutation testing — it never edits source files. The probed scenario flips its OWN assertion based on `$MUTATE_ROW`. A kill proves the scenario reached the row; it does not prove a real source-file bug would be caught. See the `state_transitions.py` docstring.
 
 Four seed scenarios carry a `# mutation_row: <id>` declaration:
 
     # mutation_row: 37
 
-The scenario body reads `$MUTATE_ROW` and conditionally flips its expected assertion when the env var matches. See `tests/scenario/oscillation.bats` for the canonical pattern. The mutation harness scans for this header, runs the scenario twice (no env, then `MUTATE_ROW=<id>`), and reports whether the second run failed (mutation killed) or passed (mutation survived — under-covered row).
+The scenario body reads `$MUTATE_ROW` and conditionally flips its expected assertion when the env var matches. See `tests/scenario/oscillation.bats` for the canonical pattern. The probe harness scans for this header, runs the scenario twice per row (first WITHOUT `MUTATE_ROW` as a negative-control baseline, then with `MUTATE_ROW=<id>`), and reports:
+
+- baseline failed → `baseline broken` (scenario broken even without mutation, must be fixed)
+- baseline passed AND mutation failed → `killed` (scenario is sensitive to this row)
+- baseline passed AND mutation passed → `survived (gap)` (scenario does NOT actually exercise the row — under-covered)

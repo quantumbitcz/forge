@@ -1,20 +1,39 @@
 #!/usr/bin/env python3
-"""Mutation testing harness for shared/state-transitions.md seed rows.
+"""Scenario-sensitivity probe for shared/state-transitions.md seed rows.
 
-Strategy (fixed by spec): MUTATE_ROW env-var.
-  - We do NOT hot-patch production files or state-transitions.md.
-  - We set `MUTATE_ROW=<row_id>` and dispatch the targeted bats scenario.
-  - The scenario reads $MUTATE_ROW and conditionally flips its own expected
-    `next_state` assertion to the mutated value.
-  - If the scenario then FAILS, the mutation was "killed" (the scenario
-    actually exercised the transition).
-  - If the scenario PASSES under mutation, the mutation SURVIVED — the
-    scenario is not actually reaching that transition.
+This is a *scenario-sensitivity probe*, not classical mutation testing. It
+does not mutate source files. Each row's mutation flag (`MUTATE_ROW=<id>`)
+tells the bats scenario to flip its OWN expected-`next_state` assertion to
+the mutated value. A "kill" proves the scenario was reached and that the
+assertion would have caught a misconfigured row; it does NOT prove a real
+source-file bug would be caught.
+
+Why it's still useful:
+  - It catches scenarios that silently no-op (declare a `# mutation_row:`
+    header but never actually exercise the row).
+  - It surfaces scenarios whose pass/fail outcome is independent of the
+    transition under test.
+  - It enforces a per-row negative control: every probed row must pass
+    without `MUTATE_ROW` set and fail with it set.
+
+What it does NOT do:
+  - It does NOT mutate `shared/state-transitions.md` rows on disk.
+  - It does NOT exercise the production state machine implementation.
+  - A "kill" therefore is NOT evidence that a real bug in the transition
+    table or state machine would be caught — only that this assertion would
+    have caught THIS specific assertion-flip.
+
+Conventions:
+  - Each probed scenario carries a `# mutation_row: <id>` header.
+  - Each probed scenario reads `$MUTATE_ROW` and flips one expected
+    `next_state` assertion when the env var matches its declared row id.
+  - The harness runs every probed scenario twice per row: first with no env
+    var (negative control / baseline) and then with `MUTATE_ROW=<id>`.
 
 Output: tests/mutation/REPORT.md (committed, diff-checked in CI).
 Exit:
-  0 — all seed mutations killed
-  1 — at least one survivor
+  0 — all seed probes killed under mutation, baselines clean
+  1 — at least one survivor or broken baseline
   2 — internal error (malformed table, missing scenario, etc.)
 """
 from __future__ import annotations
@@ -145,10 +164,17 @@ def run_mutation(row_id: str, scenario: Path) -> bool:
 def write_report(results: list[tuple[str, str, str, str, bool]]) -> None:
     """results = [(row_id, description, scenario, mutation, killed), ...]"""
     lines = [
-        "# Mutation Testing Report — shared/state-transitions.md",
+        "# Scenario-Sensitivity Probe Report — shared/state-transitions.md",
         "",
         "Regenerated on every CI run from `tests/mutation/state_transitions.py`. "
         "Commit this file; CI fails on drift.",
+        "",
+        "> **Note.** These rows are exercised via env-var assertion-flipping, "
+        "NOT via source-file mutation. A `killed` outcome proves the scenario "
+        "reached the row and the assertion would have caught a misconfigured "
+        "row id; it does NOT prove a real bug in `state-transitions.md` or the "
+        "state machine would be caught. See `state_transitions.py` docstring "
+        "for the full semantics.",
         "",
         "**Strategy:** `MUTATE_ROW` env-var — participating scenarios read the env "
         "var and flip their expected `next_state` assertion when the row matches.",
