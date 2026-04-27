@@ -82,13 +82,8 @@ print('ok')
   assert_success
 }
 
-@test "SAFETY_CRITICAL list has exactly 10 entries (spec authoritative)" {
-  run python3 -c "
-import sys
-sys.path.insert(0, '$PLUGIN_ROOT/shared')
-from cost_governance import SAFETY_CRITICAL
-assert len(SAFETY_CRITICAL) == 10
-print('ok')
-"
-  assert_success
-}
+# NOTE: SAFETY_CRITICAL membership and count are canonically asserted in
+# tests/unit/cost-governance-helpers.bats. The scenarios above rely on
+# fg-411-security-reviewer being a member; the precondition guards in each
+# test fail fast if membership drifts, so a count assertion here would be
+# redundant.
