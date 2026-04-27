@@ -5,6 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.9.0] - 2026-04-27
+
+Phase 3 of the A+ roadmap (Correctness Proofs) ships. Closes 4 correctness gaps with proof-grade infrastructure.
+
+### Added
+
+- **Phase 3: Correctness Proofs**
+  - **Convergence engine `>=` boundary fix:** flipped strict `>` to `>=` in `shared/convergence_engine_sim.py` and `shared/python/state_transitions.py`. Off-by-one bug fix that under-counted plateau iterations. 4 new boundary tests in `tests/unit/test_convergence_engine_sim.py` (16 tests pass total). Documentation aligned in `convergence-engine.md`, `state-transitions.md` rows 37/C9, `convergence-examples.md` (Scenarios 5+6), CLAUDE.md.
+  - **End-to-end dry-run smoke harness** at `tests/e2e/dry-run-smoke.py` — symlinks plugin into a temp project (Windows junction fallback), runs forge through PREFLIGHT→VALIDATE only, verifies state.json shape. `--self-test` negative control. Exit-77 SKIP semantics for env-level failures. Cross-OS `e2e:` job in `.github/workflows/test.yml`. Fixture: `tests/e2e/fixtures/ts-vitest/`.
+  - **State-transitions sensitivity probe** at `tests/mutation/state_transitions.py` (renamed from "mutation testing" to clarify semantics — flips bats scenario assertions via MUTATE_ROW env var; not classical source mutation). Negative-control baseline run per seed row. 5 seed rows. Canary fixtures + tests. New `mutation:` CI job. Schema test pins REPORT.md columns.
+  - **Scenario coverage reporter** at `tests/scenario/report_coverage.py` — walks `# Covers:` headers, generates `tests/scenario/COVERAGE.md` matrix vs `state-transitions.md` rows. Tightened table parser (gates on canonical headers only). Python 3.10+ pinned. New `coverage:` CI job with **T-* hard gate at 60%** (current: 86.3%, well above). Backfilled `# Covers:` headers across the entire scenario suite (T-* coverage 19.6% → 86.3%).
+  - **Pathlib-only enforcement** extended to all 3 new Phase 3 harnesses.
+  - **`tests/README.md`** — 8-tier matrix + regen workflow.
+  - **`README.md`** — testing tier matrix added.
+
+### Changed
+
+- `tests/scenario/oscillation.bats` test 5 tolerance bumped 20 → 21 to reflect post-`>=` boundary semantics (delta=-20 now equals tolerance=20 → REGRESSING; tolerance=21 preserves "very permissive" intent).
+- 51 existing scenario `.bats` files gained `# Covers:` headers (4 explicitly enumerate every T-/C-/E-/D-/R- row; 47 are placeholder pending follow-up).
+- `tests/validate-plugin.sh` Phase 3 harness check now prints stderr on parse failure (was silenced).
+
+### Process
+
+29 plan tasks landed across 11 implementation commits. Code review via `superpowers:requesting-code-review` found 2 critical / 7 important / 11 minor. All 20 issues fixed across 14 follow-up commits before release. Phase 1 + Phase 2 ACs re-verified after Phase 3 fixes (in scope of mutation harness changes) — no regressions.
+
 ## [3.8.0] - 2026-04-27
 
 Phase 2 of the A+ roadmap (Contract Enforcement) ships. Closes 5 contract and hygiene gaps.
