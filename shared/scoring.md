@@ -201,6 +201,8 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-410-code-reviewer`. |
 | `REFLECT-*` | Implementer-judge (fg-301) reflection findings — implementation diff does not satisfy the intent of the tests. Subcategories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. Emitted by `fg-301-implementer-judge` during TDD GREEN→REFACTOR transition (Chain-of-Verification). |
+| `INTENT-*` | Intent verification gate findings (Phase 7 F35) from `fg-540-intent-verifier` — running system does not satisfy the acceptance criterion. Subcategories: `INTENT-MISSED` (CRITICAL: all assertion probes FAIL for the AC), `INTENT-PARTIAL` (WARNING: some probes PASS, some FAIL), `INTENT-AMBIGUOUS` (INFO: probe succeeded but assertion underspecified), `INTENT-UNVERIFIABLE` (WARNING: AC text could not be decomposed into probes, or probe timed out), `INTENT-CONTRACT-VIOLATION` (CRITICAL: verifier context contained a forbidden key OR probe hit a forbidden host), `INTENT-NO-ACS` (WARNING: active spec has zero ACs; verification skipped), `INTENT-CONTEXT-LEAK` (CRITICAL: orchestrator built a forbidden context key — Layer-1 enforcement). Findings carry `ac_id` and may have null `file`/`line` (AC-level, not line-level). Hard SHIP gate via `fg-590-pre-ship-verifier`. |
+| `IMPL-VOTE-*` | Implementer voting telemetry (Phase 7 F36) from `fg-100-orchestrator` and `fg-302-diff-judge`. Informational only (priority 3-5; zero or low score impact). Subcategories: `IMPL-VOTE-TRIGGERED` (N=2 voting dispatched), `IMPL-VOTE-DEGRADED` (AST grammar unavailable; fell back to text diff), `IMPL-VOTE-UNRESOLVED` (tiebreak diverged; smallest-diff chosen — WARNING), `IMPL-VOTE-TIMEOUT` (one sample timed out; surviving sample used — WARNING), `IMPL-VOTE-WORKTREE-FAIL` (sub-worktree creation failed — WARNING), `COST-SKIP-VOTE` (voting skipped because <30% of budget remains). |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 | `EVAL-*` | see `shared/checks/eval-categories.md` | excluded from pipeline scoring (harness-only) |
@@ -319,6 +321,23 @@ subtype findings are NOT re-surfaced (no double-counting). Reviewers at Stage 6
 independently re-examine the code; they do not read `REFLECT-*` findings as prior art.
 
 Dedup: standard `(component, file, line, category)` key.
+
+### INTENT-* Finding Handling
+
+`INTENT-*` findings are emitted by `fg-540-intent-verifier` during Stage 5
+VERIFY (Phase A+B). They attach to acceptance criteria, not source lines —
+`file` and `line` may both be null. The finding schema v2 requires `ac_id`
+(pattern `AC-[0-9]{3}`) whenever `category` starts with `INTENT-`.
+
+Dedup key for INTENT-* is `(component, ac_id, category)` rather than the
+standard `(component, file, line, category)`. Two INTENT findings for the
+same AC with the same category collapse to the highest-severity entry,
+matching the standard dedup rules.
+
+INTENT findings are NOT subject to the INFO efficiency policy — a single
+open `INTENT-MISSED` CRITICAL blocks SHIP regardless of score or cycle
+count. `fg-590-pre-ship-verifier` is the authoritative gate (see
+`shared/stage-contract.md` §9.0).
 
 ### Cross-Category Deduplication for AI-* Overlap
 

@@ -459,3 +459,31 @@ output_compression:
   enabled: true
   default_level: terse
   auto_clarity: true
+
+# Phase 7 F35 — Intent verification gate (Stage 5 VERIFY, Stage 9 SHIP)
+intent_verification:
+  enabled: true
+  strict_ac_required_pct: 100
+  max_probes_per_ac: 20
+  probe_timeout_seconds: 30
+  allow_runtime_probes: true
+  probe_tier: 2
+  forbidden_probe_hosts:
+    - "*.prod.*"
+    - "*.production.*"
+    - "*.live.*"
+    - "*.amazonaws.com"
+    - "*.googleusercontent.com"
+    - "10.*"
+    - "172.16.*-172.31.*"
+    - "192.168.*"
+
+# Phase 7 F36 — Confidence-gated implementer voting (Stage 4 IMPLEMENT)
+impl_voting:
+  enabled: true
+  trigger_on_confidence_below: 0.4
+  trigger_on_risk_tags: ["high"]
+  trigger_on_regression_history_days: 30
+  samples: 2
+  tiebreak_required: true
+  skip_if_budget_remaining_below_pct: 30

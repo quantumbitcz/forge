@@ -7,6 +7,14 @@
 
 **Migration policy:** v1.x state.json files are auto-invalidated on load — the pipeline reinitializes state per `feedback_no_backcompat`. No migration shim exists. The `critic_revisions` and `implementer_reflection_cycles*` fields from v1.x are removed; replaced by `plan_judge_loops` (int), `impl_judge_loops` (object keyed by task_id), and `judge_verdicts[]` (array of `{judge_id, verdict, dispatch_seq, timestamp}`).
 
+## v2.0.0 changelog (Phase 5 / 6 / 7 coordinated bump)
+
+- **Phase 5** (findings-store): adds `plan_judge_loops: int`, `impl_judge_loops: {<task_id>: int}`, `judge_verdicts: [...]` at state root. See `shared/checks/state-schema-v2.0.json`.
+- **Phase 6** (cost governance): reshapes `cost` block to the structure documented in §`v2.0.0 cost block notes (Phase 6 portion)`; adds `tier_estimates_usd`, `conservatism_multiplier`, `throttle_events`, `ceiling_breaches`, `downgrades`.
+- **Phase 7** (intent assurance): adds `intent_verification_results[]` and `impl_vote_history[]` at state root. See `## v2.0.0 intent + vote block notes (Phase 7 portion)`.
+
+No migration from v1.x — `/forge-recover reset` is the upgrade path.
+
 ## Directory Structure
 
 ```
@@ -397,7 +405,61 @@ Tracks session-handoff artifact writes for the current run. Populated when `hand
 
 On version-mismatch load (any `1.x.x`), the orchestrator resets the cost block to defaults and logs a single INFO line. This follows the no-backcompat policy.
 
-> **Coordination note (Phase 6):** The `"version": "2.0.0"` literal is flipped in the last of {P5, P6, P7} to merge. Phase 6's contribution is the `cost` block shape above; do not bump the literal in isolation.
+> **Historical coordination note (Phase 6):** The `"version": "2.0.0"` literal landed as part of a coordinated bump shared with Phase 5 (findings-store) and Phase 7 (intent assurance). All three sets of additions are disjoint and live under the v2.0.0 banner.
+
+## v2.0.0 intent + vote block notes (Phase 7 portion)
+
+Phase 7 adds two append-only top-level arrays to `state.json`. Both are populated by `fg-100-orchestrator` and disjoint from the Phase 5 and Phase 6 contributions.
+
+### `intent_verification_results[]`
+
+One entry per acceptance criterion verified by `fg-540-intent-verifier`. Populated at end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. Cleared at PREFLIGHT of every new run.
+
+```json
+{
+  "intent_verification_results": [
+    {
+      "ac_id": "AC-003",
+      "verdict": "VERIFIED | PARTIAL | MISSED | UNVERIFIABLE",
+      "evidence": [
+        {"probe": "curl http://localhost:8080/users",
+         "status": 200, "body_sha": "sha256:...", "duration_ms": 45}
+      ],
+      "probes_issued": 3,
+      "duration_ms": 127,
+      "reasoning": "Response body matches expected schema and contains 3 users."
+    }
+  ]
+}
+```
+
+`verdict` enum values map to scoring categories per `shared/scoring.md` §INTENT-* Finding Handling: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding emitted. The SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)` — UNVERIFIABLE counts against the denominator so spec-quality issues cannot sneak through.
+
+### `impl_vote_history[]`
+
+One entry per task where N=2 voting was evaluated (fired OR skipped with reason). Populated incrementally during Stage 4 IMPLEMENT.
+
+```json
+{
+  "impl_vote_history": [
+    {
+      "task_id": "CreateUserUseCase",
+      "trigger": "confidence | risk_tag | regression_history",
+      "samples": [
+        {"sample_id": 1, "diff_sha": "a1b2...", "ast_fingerprint": "sha256:..."},
+        {"sample_id": 2, "diff_sha": "c3d4...", "ast_fingerprint": "sha256:..."}
+      ],
+      "judge_verdict": "SAME | DIVERGES",
+      "tiebreak_dispatched": false,
+      "winner_sample_id": 1,
+      "skipped_reason": null,
+      "wall_time_ms": 12400
+    }
+  ]
+}
+```
+
+`skipped_reason` enum: `null` (vote fired), `"cost"` (budget remaining < `impl_voting.skip_if_budget_remaining_below_pct`), `"disabled"` (`impl_voting.enabled: false`), `"worktree_fail"` (sub-worktree creation failed; orchestrator fell back to single sample). When `skipped_reason` is non-null, `samples`, `judge_verdict`, `tiebreak_dispatched`, and `winner_sample_id` may be empty/null — the entry exists only as telemetry for `fg-700-retrospective`.
 
 ## Atomic writes
 

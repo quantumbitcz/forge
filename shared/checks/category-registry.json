@@ -1527,6 +1527,97 @@
       "affinity": [
         "fg-700-retrospective"
       ]
+    },
+    "INTENT-MISSED": {
+      "description": "Acceptance criterion not satisfied by running system.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-PARTIAL": {
+      "description": "AC partially satisfied; some but not all subconditions probe green.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-AMBIGUOUS": {
+      "description": "AC wording admits multiple interpretations; verifier could not decide.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-UNVERIFIABLE": {
+      "description": "AC written in a form that cannot be runtime-probed.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-CONTRACT-VIOLATION": {
+      "description": "Verifier context contained a forbidden key OR probe hit a forbidden host.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-NO-ACS": {
+      "description": "Active spec has zero ACs; intent verification skipped.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-CONTEXT-LEAK": {
+      "description": "Orchestrator built a forbidden context key (Layer-1 enforcement).",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-TRIGGERED": {
+      "description": "N=2 voting dispatched for this task.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-DEGRADED": {
+      "description": "AST grammar unavailable; diff judge fell back to textual diff.",
+      "agents": ["fg-302-diff-judge"],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": ["fg-302-diff-judge"]
+    },
+    "IMPL-VOTE-UNRESOLVED": {
+      "description": "Tiebreak sample diverged from both originals; smallest-diff chosen.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-TIMEOUT": {
+      "description": "One sample timed out; surviving sample used.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-WORKTREE-FAIL": {
+      "description": "Sub-worktree creation failed; fell back to single sample.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "COST-SKIP-VOTE": {
+      "description": "Voting skipped because <30% of budget remains.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": ["fg-100-orchestrator"]
     }
   }
 }

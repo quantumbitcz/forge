@@ -186,3 +186,32 @@ All validations run at PREFLIGHT. Any CRITICAL aborts the run; WARNING logs and 
 | `cost.skippable_under_cost_pressure[]` | MUST NOT contain any SAFETY_CRITICAL agent | CRITICAL |
 
 **Implementation note:** PREFLIGHT calls `shared/config_validator.py` which reads the above rules from this section. The SAFETY_CRITICAL cross-check imports `cost_governance.SAFETY_CRITICAL` (single source of truth).
+
+## intent_verification (Phase 7 F35)
+
+- `intent_verification.enabled` — boolean; default `true`.
+- `intent_verification.strict_ac_required_pct` — integer 50-100; default `100`.
+- `intent_verification.max_probes_per_ac` — integer 1-200; default `20`.
+- `intent_verification.probe_timeout_seconds` — integer 5-300; default `30`.
+- `intent_verification.probe_tier` — integer in {1, 2, 3}; default `2`.
+- `intent_verification.allow_runtime_probes` — boolean; default `true`.
+- `intent_verification.forbidden_probe_hosts` — list of glob patterns; default
+  `["*.prod.*", "*.production.*", "*.live.*", "*.amazonaws.com",
+    "*.googleusercontent.com", "10.*", "172.16.*-172.31.*", "192.168.*"]`.
+
+PREFLIGHT FAIL (CRITICAL) if `probe_tier == 3` and
+`infra.max_verification_tier < 3`.
+
+## impl_voting (Phase 7 F36)
+
+- `impl_voting.enabled` — boolean; default `true`.
+- `impl_voting.trigger_on_confidence_below` — float 0.0-1.0; default `0.4`;
+  **must be <= `confidence.pause_threshold`** (PREFLIGHT FAIL CRITICAL otherwise).
+- `impl_voting.trigger_on_risk_tags` — list of strings from
+  {"high","data-mutation","auth","payment","concurrency","migration","bugfix"};
+  default `["high"]`. Unknown tags -> WARNING at PREFLIGHT, not FAIL.
+- `impl_voting.trigger_on_regression_history_days` — integer 0-365; default `30`.
+- `impl_voting.samples` — **exactly 2** (future-reserved; any other value is
+  PREFLIGHT FAIL CRITICAL).
+- `impl_voting.tiebreak_required` — boolean; default `true`.
+- `impl_voting.skip_if_budget_remaining_below_pct` — integer 0-100; default `30`.
