@@ -941,6 +941,24 @@ for agent_file in "$ROOT"/agents/fg-41*.md; do
 done
 check "All review agents have eval directories with inputs/expected/eval.bats ($eval_agent_count agents)" "$check_eval_agents_fail"
 
+# Phase 3 correctness-proofs harness scripts: each must exist, parse as valid
+# Python, and carry a module docstring. Belt-and-suspenders: a missing file
+# fails structural before the dependent CI tier runs.
+check_phase3_scripts_fail=0
+for rel in tests/mutation/state_transitions.py tests/scenario/report_coverage.py tests/e2e/dry-run-smoke.py; do
+  abs="$ROOT/$rel"
+  if [[ ! -f "$abs" ]]; then
+    echo "    $rel: file is missing"
+    check_phase3_scripts_fail=1
+    continue
+  fi
+  if ! python3 -c "import ast,sys; src=open(sys.argv[1],encoding='utf-8').read(); m=ast.parse(src); doc=ast.get_docstring(m); raise SystemExit(0 if doc else 1)" "$abs" 2>/dev/null; then
+    echo "    $rel: failed to parse OR missing module docstring"
+    check_phase3_scripts_fail=1
+  fi
+done
+check "Phase 3 harness scripts parse and carry module docstrings" "$check_phase3_scripts_fail"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
