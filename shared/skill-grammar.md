@@ -1,7 +1,7 @@
 # Skill Invocation Grammar
 
 Canonical grammar for every `skills/*/SKILL.md`. Enforced by
-`tests/contract/skill_grammar.py`.
+`tests/contract/test_skill_grammar.py`.
 
 ## 1. Inspection (read-only) skills → flags only
 
@@ -48,9 +48,15 @@ form — the grammar neither rejects them nor rewrites them.
 
 ## 4. Required body structure for subcommand skills
 
-Every `[writes]` skill with subcommands MUST expose a `## Subcommands` section
-listing each subcommand with a one-line purpose and a read-only/writes label.
-Table or bullet form both accepted.
+Every `[writes]` skill that exposes verb-style subcommands MUST include a heading
+matching `^## Subcommands?( dispatch)?$` (case-sensitive). Both `## Subcommands`
+and `## Subcommand dispatch` are accepted; pick whichever reads naturally for
+the skill's prose. The section must list each subcommand with a one-line
+purpose and a read-only/writes label. Table or bullet form both accepted.
+
+Examples in current use:
+- `## Subcommands` — forge-recover, forge-compress.
+- `## Subcommand dispatch` — forge-graph, forge-handoff, forge-review.
 
 ## 5. Frontmatter allow-list
 
@@ -84,5 +90,5 @@ Context7 fully-qualified form: `mcp__plugin_context7_context7__resolve-library-i
 
 Grammar changes follow the same process as `shared/skill-contract.md` §5:
 1. Rationale in commit message.
-2. Matching update to `tests/contract/skill_grammar.py`.
+2. Matching update to `tests/contract/test_skill_grammar.py`.
 3. Migration of all affected SKILL.md files in the same PR.

@@ -10,8 +10,6 @@ allowed-tools:
   - TaskCreate
   - TaskUpdate
   - AskUserQuestion
-  - EnterPlanMode
-  - ExitPlanMode
   - neo4j-mcp
 ui: { tasks: true, ask: true, plan_mode: false }
 ---
