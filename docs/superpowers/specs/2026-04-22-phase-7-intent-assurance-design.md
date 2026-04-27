@@ -266,11 +266,11 @@ New top-level keys in `state.json`:
 
 ### Finding schema v2 (coordinated with Phase 5 findings-store)
 
-Intent findings cannot carry `file`/`line` because they attach to acceptance criteria, not source lines. Today's `shared/checks/finding-schema.json` makes both fields **required**, which silently breaks any attempt to emit an `INTENT-*` finding through the standard validator. Phase 7 ships a **schema v2** that fixes this:
+Intent findings cannot carry `file`/`line` because they attach to acceptance criteria, not source lines. Today's `shared/checks/findings-schema.json` makes both fields **required**, which silently breaks any attempt to emit an `INTENT-*` finding through the standard validator. Phase 7 ships a **schema v2** that fixes this:
 
 1. **`file` and `line` become optional** (nullable) for all findings.
 2. **`ac_id` becomes required** when `category` starts with `INTENT-`. Conditional required-ness is expressed via JSON Schema `allOf` + `if/then`.
-3. **Phase 5 findings-store JSONL validators must accept the nullable form** — this is a hard coordination point; Phase 5 owns `shared/checks/finding-schema.json` and Phase 7 contributes the v2 edits. Both phases' tests must exercise the same schema file.
+3. **Phase 5 findings-store JSONL validators must accept the nullable form** — this is a hard coordination point; Phase 5 owns `shared/checks/findings-schema.json` and Phase 7 contributes the v2 edits. Both phases' tests must exercise the same schema file.
 
 Example INTENT finding:
 
@@ -445,7 +445,7 @@ Mode overlays:
 - **AC-704:** `tests/unit/test_diff_judge_ast.py::test_python_same`: two Python files differing only in whitespace and comments return `SAME`.
 - **AC-705:** `tests/scenario/sc-impl-vote-disabled/` passes: `impl_voting.enabled: false` → zero extra dispatches regardless of task confidence/risk/history.
 - **AC-706:** Retrospective report section "intent_verification" exposes `total_acs`, `verified`, `partial`, `missed`, `unverifiable`, `verified_pct`; section "impl_voting" exposes `dispatches`, `diverged`, `tiebreaks`, `cost_skipped`, `divergence_rate`.
-- **AC-707:** `shared/checks/category-registry.json` validates against `finding-schema.json`; all 5 `INTENT-*` entries have severity, priority, affinity, wildcard fields.
+- **AC-707:** `shared/checks/category-registry.json` validates against `findings-schema.json`; all 5 `INTENT-*` entries have severity, priority, affinity, wildcard fields.
 - **AC-708:** Autonomous mode: no `AskUserQuestion` calls originate from fg-540 or fg-302 in any scenario test; tiebreak unresolved → smallest-diff tiebreak applied automatically.
 - **AC-709:** `CLAUDE.md` §Features includes F35 and F36 rows with default config values (`enabled: true`, `strict_ac_required_pct: 100`, `trigger_on_confidence_below: 0.4`, `skip_if_budget_remaining_below_pct: 30`).
 - **AC-710:** `tests/contract/test_probe_sandbox.py`: attempting a probe against `api.prod.example.com` emits `INTENT-CONTRACT-VIOLATION` CRITICAL and aborts.
@@ -457,7 +457,7 @@ Mode overlays:
 - **AC-716:** `agents/fg-590-pre-ship-verifier.md` §6 verdict logic includes the two new clauses; `tests/unit/test_ship_gate_intent.py` exercises both (open INTENT-MISSED → BLOCK; `verified_pct` below threshold → BLOCK; both clear → SHIP).
 - **AC-717:** `shared/modes/bootstrap.md` sets `intent_verification.enabled: false, impl_voting.enabled: false` (confirmed by `tests/unit/test_mode_overlays.py`).
 - **AC-718:** `shared/agents.md` registry lists `fg-302-diff-judge` (Tier 4) and `fg-540-intent-verifier` (Tier 3); total agent count updates from 48 to 50 at **every** callsite. `CLAUDE.md` references "48 agents" in at least three places (line 27 intro, line 43 `agents/` description, line 140 `Agents` heading) — all three must be updated. Grep gate: `grep -nE '\b(48 agents|48 total)\b' CLAUDE.md` must return zero matches after the change. Test: `tests/contract/test_agent_count_claude_md.py` greps post-merge.
-- **AC-719 (finding schema v2):** `shared/checks/finding-schema.json` at v2 validates all four of: (a) a sample intent finding with `file: null, line: null, category: "INTENT-MISSED", ac_id: "AC-042"` — PASS; (b) a sample reviewer finding with `file: "src/x.py", line: 42, category: "SEC-INJECTION-USER-INPUT"` — PASS; (c) a reviewer finding missing `file` — FAIL (non-INTENT categories still require file/line); (d) an INTENT finding missing `ac_id` — FAIL. Test: `tests/unit/test_finding_schema_v2.py`. Coordinated with Phase 5; Phase 5 owns the schema file.
+- **AC-719 (finding schema v2):** `shared/checks/findings-schema.json` at v2 validates all four of: (a) a sample intent finding with `file: null, line: null, category: "INTENT-MISSED", ac_id: "AC-042"` — PASS; (b) a sample reviewer finding with `file: "src/x.py", line: 42, category: "SEC-INJECTION-USER-INPUT"` — PASS; (c) a reviewer finding missing `file` — FAIL (non-INTENT categories still require file/line); (d) an INTENT finding missing `ac_id` — FAIL. Test: `tests/unit/test_finding_schema_v2.py`. Coordinated with Phase 5; Phase 5 owns the schema file.
 - **AC-720 (Layer 2 tripwire scenario):** `tests/scenario/sc-intent-layer2-tripwire/` monkey-patches `build_intent_verifier_context` to inject a forbidden key (e.g., `"plan": "..."`), dispatches fg-540, asserts fg-540 returns `INTENT-CONTRACT-VIOLATION` CRITICAL for all ACs. Documents Layer 2 as defense-in-depth only; Layer 1 contract test (`tests/contract/test_intent_context_exclusion.py`, AC-702) remains the enforcement gate.
 - **AC-721 (sub-worktree stale sweep):** `agents/fg-101-worktree-manager.md` `detect-stale` scan patterns include `.forge/votes/*`. Test: synthetic `.forge/votes/<task-id>/sample_1/` directory with mtime > `stale_hours` is listed in `detect-stale` output; cleanup removes it. `tests/unit/test_worktree_stale_votes.py`.
 - **AC-722 (features-without-ACs unchanged):** `tests/scenario/sc-intent-no-acs/` passes: running the pipeline on a requirement whose active spec has zero ACs produces `INTENT-NO-ACS` WARNING but SHIP proceeds (gate vacuously passes at `verified_pct = 0/0`). Documents explicitly: "F35 protects shipped-with-ACs features; features without ACs are unchanged from pre-F35 behavior." Gated by `living_specs.strict_mode: false` (default).
@@ -465,7 +465,7 @@ Mode overlays:
 ## Documentation Updates
 
 - `CLAUDE.md`: §Agents (48→50) at **all three callsites** (§intro, `agents/` description, §Agents heading) per AC-718, §Features (F35, F36 rows), §Pipeline Flow (Stage 5 + Stage 9 gate), §Core contracts (state v2.0.0), §Supporting systems.
-- `shared/checks/finding-schema.json`: **schema v2** — `file` and `line` become optional (nullable); conditional `required: ["ac_id"]` when `category` starts with `INTENT-`. **Phase 5 owns this file**; Phase 7 contributes the v2 edits. Phase 5 findings-store JSONL validators accept the nullable form. See AC-719.
+- `shared/checks/findings-schema.json`: **schema v2** — `file` and `line` become optional (nullable); conditional `required: ["ac_id"]` when `category` starts with `INTENT-`. **Phase 5 owns this file**; Phase 7 contributes the v2 edits. Phase 5 findings-store JSONL validators accept the nullable form. See AC-719.
 - `shared/state-integrity.sh` (or Python equivalent): extend cleanup list to include `.forge/dispatch-contexts/` at PREFLIGHT.
 - `agents/fg-101-worktree-manager.md`: extend `detect-stale` scan patterns to include `.forge/votes/*`. See AC-721.
 - `hooks/_py/intent_probe.py`: **NEW** — sandbox wrapper enforcing `forbidden_probe_hosts` allow/deny at entry. Entry point for fg-540 DB/filesystem/HTTP probes. Explicitly gatekeeps against raw `Bash` being re-introduced: if raw Bash is ever deemed necessary, it must route through this wrapper, never through the agent tool list directly.
