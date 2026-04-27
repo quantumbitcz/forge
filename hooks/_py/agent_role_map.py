@@ -12,8 +12,6 @@ _RAW = {
     "fg-200-planner": "planner",
     "fg-300-implementer": "implementer",
     "fg-400-quality-gate": "quality_gate",
-    "fg-500-test-gate": "test_gate",
-    "fg-020-bug-investigator": "bug_investigator",
     "fg-410-code-reviewer": "reviewer.code",
     "fg-411-security-reviewer": "reviewer.security",
     "fg-412-architecture-reviewer": "reviewer.architecture",

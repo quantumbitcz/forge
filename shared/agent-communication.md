@@ -310,8 +310,6 @@ Agent-to-role mapping (authoritative in `hooks/_py/agent_role_map.py`):
 planner               → fg-200-planner
 implementer           → fg-300-implementer
 quality_gate          → fg-400-quality-gate
-test_gate             → fg-500-test-gate
-bug_investigator      → fg-020-bug-investigator
 reviewer.code         → fg-410-code-reviewer
 reviewer.security     → fg-411-security-reviewer
 reviewer.architecture → fg-412-architecture-reviewer

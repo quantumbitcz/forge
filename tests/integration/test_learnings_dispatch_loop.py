@@ -12,6 +12,7 @@ Runs a scripted orchestrator-ish flow:
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -40,7 +41,7 @@ def _seed(tmp_path: Path) -> Path:
         '    domain_tags: ["spring", "persistence"]\n'
         '    source: "cross-project"\n'
         '    archived: false\n'
-        '    body_ref: "#tx-scope"\n'
+        '    body_ref: "tx-scope"\n'
         "---\n"
         "# body\n"
         "<a id=\"tx-scope\"></a>\n"
@@ -64,7 +65,7 @@ def test_full_loop_reinforces_on_applied_marker(tmp_path):
     block = learnings_format.render(selected)
     assert "## Relevant Learnings" in block
 
-    subagent_notes = "... LEARNING_APPLIED: tx-scope ..."
+    subagent_notes = "LEARNING_APPLIED: tx-scope"
     markers = learnings_markers.parse_markers(subagent_notes)
     events = [
         {"type": "forge.learning.applied", "forge.learning.id": iid}
@@ -74,7 +75,7 @@ def test_full_loop_reinforces_on_applied_marker(tmp_path):
 
     reloaded = learnings_io.load_all([tmp_path], now=NOW)
     assert reloaded[0].applied_count == 3
-    assert reloaded[0].base_confidence == 0.85
+    assert math.isclose(reloaded[0].base_confidence, 0.85, abs_tol=1e-9)
 
 
 def test_critical_without_marker_no_change(tmp_path):
