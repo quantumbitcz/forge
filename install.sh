@@ -38,6 +38,7 @@ while (( "$#" )); do
 done
 
 command -v git >/dev/null 2>&1 || error "git is required but not in PATH"
+command -v python3 >/dev/null 2>&1 || error "python3 is required but not in PATH"
 
 if (( DRY_RUN )); then
   log "dry-run: would ensure $PLUGIN_DIR exists"
@@ -61,7 +62,7 @@ fi
 SETTINGS="$HOME/.claude/settings.json"
 mkdir -p "$(dirname "$SETTINGS")"
 if [ ! -f "$SETTINGS" ]; then
-  printf '{"plugins":["%s"]}\n' "$PLUGIN_DIR" > "$SETTINGS"
+  python3 -c "import json,sys; print(json.dumps({'plugins':[sys.argv[1]]}))" "$PLUGIN_DIR" > "$SETTINGS"
   log "created $SETTINGS with plugin entry"
 else
   if grep -q "$PLUGIN_DIR" "$SETTINGS"; then
