@@ -445,6 +445,117 @@ class Validator:
                      f'embedded framework should have language: c or cpp, got "{language}"')
 
 
+# ───────────────────────────── Cost governance ──────────────────────────────
+
+
+def validate_cost_block(cfg: dict) -> list[tuple[str, str]]:
+    """Validate the ``cost:`` block from forge-config.md.
+
+    Returns a list of (severity, message) tuples. Severity is CRITICAL or WARNING.
+    Empty list = pass. Pure function (no I/O) so it is callable from PREFLIGHT
+    and from scenario tests.
+    """
+    issues: list[tuple[str, str]] = []
+    # Local import to avoid circular import at module load if cost_governance
+    # ever grows imports of its own.
+    import sys
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    from cost_governance import SAFETY_CRITICAL  # type: ignore[import-not-found]
+
+    cost = cfg.get("cost", {}) or {}
+
+    # ceiling_usd
+    ceiling = cost.get("ceiling_usd")
+    if ceiling is None or not isinstance(ceiling, (int, float)) or isinstance(ceiling, bool):
+        issues.append(("CRITICAL", "cost.ceiling_usd is required and must be numeric"))
+    elif ceiling < 0:
+        issues.append(("CRITICAL", f"cost.ceiling_usd must be >= 0 (got {ceiling})"))
+    elif 0 < ceiling < 1.0:
+        issues.append(("WARNING", f"cost.ceiling_usd={ceiling} seems low (possible typo)"))
+
+    # thresholds
+    w = cost.get("warn_at", 0.75)
+    t = cost.get("throttle_at", 0.80)
+    a = cost.get("abort_at", 1.00)
+    for name, val in (("warn_at", w), ("throttle_at", t), ("abort_at", a)):
+        if not isinstance(val, (int, float)) or isinstance(val, bool) or not (0 < val <= 1):
+            issues.append(("CRITICAL", f"cost.{name}={val} must be in (0, 1]"))
+    if (
+        isinstance(w, (int, float)) and not isinstance(w, bool)
+        and isinstance(t, (int, float)) and not isinstance(t, bool)
+        and isinstance(a, (int, float)) and not isinstance(a, bool)
+        and not (w < t <= a)
+    ):
+        issues.append((
+            "CRITICAL",
+            f"cost thresholds must satisfy warn_at < throttle_at <= abort_at "
+            f"(got {w} / {t} / {a})",
+        ))
+
+    # aware_routing
+    aware = cost.get("aware_routing", True)
+    if not isinstance(aware, bool):
+        issues.append(("CRITICAL", "cost.aware_routing must be boolean"))
+    elif aware and not (cfg.get("model_routing", {}) or {}).get("enabled", True):
+        issues.append((
+            "CRITICAL",
+            "cost.aware_routing: true requires model_routing.enabled: true",
+        ))
+
+    # tier estimates
+    te = cost.get("tier_estimates_usd", {}) or {}
+    for tier in ("fast", "standard", "premium"):
+        v = te.get(tier)
+        if v is None or not isinstance(v, (int, float)) or isinstance(v, bool) or v <= 0:
+            issues.append((
+                "CRITICAL",
+                f"cost.tier_estimates_usd.{tier} must be float > 0 (got {v!r})",
+            ))
+    if (
+        te.get("fast", 0)
+        and te.get("premium", 0)
+        and te["premium"] / te["fast"] > 200
+    ):
+        issues.append((
+            "WARNING",
+            "cost.tier_estimates_usd.premium / fast > 200 (likely wrong)",
+        ))
+
+    # conservatism
+    cm = cost.get("conservatism_multiplier", {}) or {}
+    for tier in ("fast", "standard", "premium"):
+        v = cm.get(tier, 1.0)
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            issues.append((
+                "CRITICAL",
+                f"cost.conservatism_multiplier.{tier} must be numeric (got {v!r})",
+            ))
+            continue
+        if v < 1.0:
+            issues.append((
+                "CRITICAL",
+                f"cost.conservatism_multiplier.{tier} must be >= 1.0 (got {v})",
+            ))
+        if v > 10.0:
+            issues.append((
+                "WARNING",
+                f"cost.conservatism_multiplier.{tier}={v} > 10 (effectively disables downgrade)",
+            ))
+
+    # skippable_under_cost_pressure MUST NOT intersect SAFETY_CRITICAL
+    skippable = set(cost.get("skippable_under_cost_pressure", []) or [])
+    bad = skippable & SAFETY_CRITICAL
+    if bad:
+        issues.append((
+            "CRITICAL",
+            f"cost.skippable_under_cost_pressure may not contain SAFETY_CRITICAL agents: {sorted(bad)}",
+        ))
+
+    return issues
+
+
 # ───────────────────────────── Output ──────────────────────────────────────
 
 
@@ -567,6 +678,8 @@ def main(argv: list[str] | None = None) -> int:
         v.check_ranges(config_data)
         v.check_cross_field(config_data)
         v.check_unknown_fields(config_data)
+        for sev, msg in validate_cost_block(config_data):
+            v.add(sev, "forge-config.md", "cost", msg)
     if args.check_commands:
         v.check_command_executability(project_root, commands)
     v.check_framework_compat(language, framework)
