@@ -407,7 +407,7 @@ Constraint: `oscillation_tolerance` must be >= 0 and <= 20. If violated, log WAR
 
 Each review cycle should complete within 10 minutes. If a review agent exceeds 10 minutes, treat as timeout per the partial failure handling rules.
 
-**Judge timeout semantics.** fg-205-plan-judge and fg-301-implementer-judge reuse the same 10-minute ceiling. On timeout, log INFO `JUDGE-TIMEOUT` finding (category added in Phase 5), treat verdict as PROCEED, and emit a WARNING `JUDGE-TIMEOUT` finding into the scoring set. The pipeline never blocks on judge failure.
+**Judge timeout semantics.** fg-205-plan-judge and fg-301-implementer-judge reuse the same 10-minute ceiling. On timeout, treat verdict as PROCEED and emit a single INFO `JUDGE-TIMEOUT` finding into the scoring set (category added in Phase 5). The pipeline never blocks on judge failure.
 
 ## Findings Cap
 
