@@ -117,8 +117,13 @@ Three artefacts are designed to be readable by the shells Forge supports:
 | Shell | Current progress | Last 5 runs | Recent hook failures |
 |---|---|---|---|
 | bash / zsh | `jq . .forge/progress/status.json` | `jq '.runs[0:5]' .forge/run-history-trends.json` | `jq '.recent_hook_failures' .forge/run-history-trends.json` |
-| PowerShell | `Get-Content .forge/progress/status.json | ConvertFrom-Json` | `(Get-Content .forge/run-history-trends.json | ConvertFrom-Json).runs | Select-Object -First 5` | `(Get-Content .forge/run-history-trends.json | ConvertFrom-Json).recent_hook_failures` |
+| PowerShell | `Get-Content .forge/progress/status.json \| ConvertFrom-Json` | `(Get-Content .forge/run-history-trends.json \| ConvertFrom-Json).runs \| Select-Object -First 5` | `(Get-Content .forge/run-history-trends.json \| ConvertFrom-Json).recent_hook_failures` |
 | CMD | `type .forge\progress\status.json` | `type .forge\run-history-trends.json` | (CMD has no JSON parser — use PowerShell or open the file in a text editor) |
+
+**No jq?** Substitute `python3 -m json.tool` for `jq .` (pretty-print) and
+`python3 -c "import json,sys; d=json.load(open(sys.argv[1])); ..."` for jq
+filter expressions. PowerShell users have `ConvertFrom-Json` built in; CMD
+has no JSON parser, so use PowerShell or open the file in a text editor.
 
 The files are atomic-renamed on every update, so a reader that opens them
 while they are being rewritten either sees the old copy or the new copy,
