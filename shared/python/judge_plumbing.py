@@ -4,8 +4,15 @@ from __future__ import annotations
 PLAN_JUDGE_BOUND = 2
 IMPL_JUDGE_BOUND = 2
 
+PLAN_JUDGE_VERDICTS = ("PROCEED", "REVISE", "ESCALATE")
+IMPL_JUDGE_VERDICTS = ("PROCEED", "REVISE")
+
 
 def record_plan_judge_verdict(state: dict, verdict: str, dispatch_seq: int, timestamp: str) -> dict:
+    if verdict not in PLAN_JUDGE_VERDICTS:
+        raise ValueError(
+            f"invalid plan judge verdict: {verdict!r} (expected one of {PLAN_JUDGE_VERDICTS})"
+        )
     state.setdefault("plan_judge_loops", 0)
     state.setdefault("judge_verdicts", [])
     state["judge_verdicts"].append({
@@ -31,6 +38,10 @@ def reset_plan_judge_loops_on_new_plan(state: dict, new_plan_sha: str) -> dict:
 
 
 def record_impl_judge_verdict(state: dict, task_id: str, verdict: str, dispatch_seq: int, timestamp: str) -> dict:
+    if verdict not in IMPL_JUDGE_VERDICTS:
+        raise ValueError(
+            f"invalid impl judge verdict: {verdict!r} (expected one of {IMPL_JUDGE_VERDICTS})"
+        )
     state.setdefault("impl_judge_loops", {})
     state.setdefault("judge_verdicts", [])
     state["impl_judge_loops"].setdefault(task_id, 0)
@@ -39,6 +50,7 @@ def record_impl_judge_verdict(state: dict, task_id: str, verdict: str, dispatch_
         "verdict": verdict,
         "dispatch_seq": dispatch_seq,
         "timestamp": timestamp,
+        "task_id": task_id,
     })
     if verdict == "REVISE":
         state["impl_judge_loops"][task_id] += 1

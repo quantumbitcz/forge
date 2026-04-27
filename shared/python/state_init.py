@@ -114,25 +114,145 @@ def create_initial_state(story_id, requirement, mode, dry_run):
 STATE_SCHEMA_VERSION = '2.0.0'
 
 
+def _atomic_write(path, data):
+    """Write JSON atomically: write to .tmp then os.replace.
+
+    os.replace is atomic on POSIX and on Windows (Python 3.3+). Crash between
+    the two operations leaves either the old file intact or a stray .tmp the
+    next writer overwrites.
+    """
+    import os
+    tmp = path.with_suffix(path.suffix + '.tmp')
+    tmp.write_text(json.dumps(data, indent=2), encoding='utf-8')
+    os.replace(tmp, path)
+
+
+def _acquire_lock(forge_dir):
+    """Acquire .forge/.lock under fcntl.flock (POSIX) or skip (Windows).
+
+    Returns the lock file handle (caller must close to release) or None when
+    locking is unavailable. We use a non-blocking acquire and busy-wait once,
+    matching the 24h stale-timeout policy documented in CLAUDE.md (the timeout
+    itself is enforced elsewhere; here we only serialize concurrent writers
+    in-process / across processes that respect flock).
+    """
+    import sys
+    import time
+    lock_path = forge_dir / '.lock'
+    try:
+        fh = lock_path.open('a+')
+    except OSError:
+        return None
+    if sys.platform == 'win32':
+        # No fcntl on Windows; rely on file-existence check at the caller.
+        # We still hold the handle so the file is visible.
+        return fh
+    try:
+        import fcntl
+    except ImportError:
+        return fh
+    deadline = time.monotonic() + 5.0
+    while True:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return fh
+        except OSError:
+            if time.monotonic() >= deadline:
+                fh.close()
+                return None
+            time.sleep(0.05)
+
+
+def _release_lock(fh):
+    if fh is None:
+        return
+    try:
+        import sys
+        if sys.platform != 'win32':
+            try:
+                import fcntl
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+    finally:
+        try:
+            fh.close()
+        except OSError:
+            pass
+
+
+def _record_reinit(forge_dir, reason, old_version):
+    """Best-effort failure_log entry for a state reinit. Never raises.
+
+    Locates `hooks/_py/failure_log.py` relative to this file (plugin layout)
+    so the call works from any project where state_init.py is invoked as a
+    module under shared/python/.
+    """
+    try:
+        import sys
+        import pathlib
+        plugin_root = pathlib.Path(__file__).resolve().parent.parent.parent
+        sys.path.insert(0, str(plugin_root / 'hooks' / '_py'))
+        from failure_log import record_failure  # type: ignore
+        record_failure(
+            hook_name='state_init.load_or_reinit',
+            matcher=reason,
+            exit_code=0,
+            stderr_excerpt=f'reinit from version={old_version!r} to {STATE_SCHEMA_VERSION}',
+            duration_ms=0,
+            cwd=str(forge_dir.parent),
+        )
+    except Exception:
+        pass
+
+
 def load_or_reinit(path, story_id='', requirement='', mode='standard', dry_run=False):
-    """Load state.json or auto-reset if not v2.0.0 (no migration shim per feedback_no_backcompat)."""
+    """Load state.json or auto-reset if not v2.0.0 (no migration shim per feedback_no_backcompat).
+
+    Concurrency-safe: acquires .forge/.lock (fcntl.flock on POSIX) and writes
+    via .tmp + os.replace to avoid two concurrent processes both detecting a
+    stale version and overwriting each other.
+    """
     import pathlib
     p = pathlib.Path(path)
-    if not p.exists():
-        s = create_initial_state(story_id, requirement, mode, dry_run)
-        p.write_text(json.dumps(s, indent=2))
-        return s
+    forge_dir = p.parent
     try:
-        s = json.loads(p.read_text(encoding='utf-8'))
-    except Exception:
-        s = create_initial_state(story_id, requirement, mode, dry_run)
-        p.write_text(json.dumps(s, indent=2))
+        forge_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    lock = _acquire_lock(forge_dir)
+    try:
+        if not p.exists():
+            s = create_initial_state(story_id, requirement, mode, dry_run)
+            _atomic_write(p, s)
+            return s
+        try:
+            s = json.loads(p.read_text(encoding='utf-8'))
+        except Exception:
+            old_version = None
+            try:
+                # Best-effort backup of corrupt file before overwriting.
+                backup = forge_dir / 'state.v1.bak'
+                backup.write_bytes(p.read_bytes())
+            except OSError:
+                pass
+            _record_reinit(forge_dir, 'corrupt_json', old_version)
+            s = create_initial_state(story_id, requirement, mode, dry_run)
+            _atomic_write(p, s)
+            return s
+        if s.get('version') != STATE_SCHEMA_VERSION:
+            old_version = s.get('version')
+            try:
+                backup = forge_dir / 'state.v1.bak'
+                backup.write_text(json.dumps(s, indent=2), encoding='utf-8')
+            except OSError:
+                pass
+            _record_reinit(forge_dir, 'version_mismatch', old_version)
+            s = create_initial_state(story_id, requirement, mode, dry_run)
+            _atomic_write(p, s)
         return s
-    if s.get('version') != STATE_SCHEMA_VERSION:
-        # Per feedback_no_backcompat: no migration shim; start fresh.
-        s = create_initial_state(story_id, requirement, mode, dry_run)
-        p.write_text(json.dumps(s, indent=2))
-    return s
+    finally:
+        _release_lock(lock)
 
 
 if __name__ == '__main__':
