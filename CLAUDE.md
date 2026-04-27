@@ -153,7 +153,7 @@ Multiple features: /forge-sprint (reads from Linear or manual list)
 - Core: `fg-100-orchestrator` (coordinator, never writes code), helpers: `fg-101-worktree-manager`, `fg-102-conflict-resolver`, `fg-103-cross-repo-coordinator`
 - Preflight: `fg-130-docs-discoverer`, `fg-135-wiki-generator`, `fg-140-deprecation-refresh`, `fg-143-observability-bootstrap` (conditional on `observability_bootstrap.enabled`), `fg-150-test-bootstrapper`, `fg-155-i18n-validator` (conditional on `i18n_validator.enabled`, default true), `fg-160-migration-planner`
 - Plan/Validate: `fg-200-planner`, `fg-205-plan-judge`, `fg-210-validator`, `fg-250-contract-validator`
-- Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-301-implementer-critic` (Chain-of-Verification critic between GREEN and REFACTOR, fresh-context sub-subagent, fast tier), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
+- Implement: `fg-300-implementer` (TDD + inner-loop lint/test validation per task), `fg-301-implementer-judge` (Chain-of-Verification judge between GREEN and REFACTOR, fresh-context sub-subagent, fast tier), `fg-310-scaffolder`, `fg-320-frontend-polisher` (conditional on `frontend_polish.enabled`)
 - Docs: `fg-350-docs-generator`
 - Verify/Review: `fg-400-quality-gate`, `fg-505-build-verifier`, `fg-506-migration-verifier` (migration mode only), `fg-500-test-gate`, `fg-510-mutation-analyzer`, `fg-515-property-test-generator` (conditional on `property_testing.enabled`), `fg-555-resilience-tester` (conditional on `resilience_testing.enabled`)
 - Ship: `fg-590-pre-ship-verifier`, `fg-600-pr-builder`, `fg-620-deploy-verifier` (conditional on deployment strategy), `fg-650-preview-validator`, `fg-610-infra-deploy-verifier` (conditional on k8s/infra)
@@ -235,7 +235,7 @@ Features (each has dedicated doc in `shared/`):
 | Feature flags (F23) | `feature_flags.*` | Categories: `FLAG-STALE`, `FLAG-UNTESTED`, `FLAG-HARDCODED`, `FLAG-CLEANUP` |
 | Deployment strategies (F24) | `deployment.*` | Canary/blue-green/rolling, `fg-620-deploy-verifier`, Argo Rollouts |
 | Consumer-driven contracts (F25) | `contract_testing.*` | Pact, can-i-deploy gate. Categories: `CONTRACT-PACT-*` |
-| Implementer reflection (F32) | `implementer.reflection.*` | `fg-301-implementer-critic` between GREEN/REFACTOR. Per-task `implementer_reflection_cycles` counter. Categories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH` |
+| Implementer reflection (F32) | `implementer.reflection.*` | `fg-301-implementer-judge` between GREEN/REFACTOR. Per-task `impl_judge_loops` counter. Categories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH` |
 | Output compression (F26) | `output_compression.*` | 4 levels (verbose/standard/terse/minimal), 20-65% reduction |
 | AI quality (F27) | `ai_quality.*` | L1 regex + reviewer guidance for AI-generated bug patterns. Categories: `AI-LOGIC-*`, `AI-PERF-*`, `AI-CONCURRENCY-*`, `AI-SEC-*` |
 | Wiki generator | `wiki.*` | `.forge/wiki/`, survives reset |

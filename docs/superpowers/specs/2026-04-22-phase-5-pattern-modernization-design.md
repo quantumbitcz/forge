@@ -9,7 +9,7 @@ literature:
 1. **REVIEW (Stage 6)** moves from "batched dispatch with dedup hints" to the
    **Agent Teams** pattern (shared findings store, parallel fan-out, pure
    aggregation).
-2. **Critic agents** (`fg-205-plan-judge`, `fg-301-implementer-critic`)
+2. **Critic agents** (`fg-205-plan-judge`, `fg-301-implementer-judge`)
    become **Judges with binding veto**. A REVISE verdict blocks advancement;
    the parent re-dispatches. Bounded to two veto loops per task/plan, then
    user escalation.
@@ -32,7 +32,7 @@ from prior batches in each subsequent dispatch prompt. This:
   (`fg-400-quality-gate.md:95-100`), creating per-reviewer skew.
 
 **B. Critics without veto.** `fg-205-plan-judge.md:38-56` and
-`fg-301-implementer-critic.md:59-72` emit PROCEED/REVISE/RESHAPE verdicts, but
+`fg-301-implementer-judge.md:59-72` emit PROCEED/REVISE/RESHAPE verdicts, but
 no structural commitment obligates the parent agent (orchestrator or
 implementer) to respect a REVISE. `fg-300-implementer.md:190-215` DOES honor
 `fg-301`'s REVISE — but only for `implementer.reflection.*`, not for
@@ -85,7 +85,7 @@ parent may discard findings freely.
 
 J1 is chosen because:
 
-1. The `fg-301-implementer-critic.md:51-56` decision rules are already
+1. The `fg-301-implementer-judge.md:51-56` decision rules are already
    binding-quality for the implementer (catches hardcoded-return, missing
    branches — genuine bug patterns). Demoting them to optional would reduce
    signal without reducing dispatch cost.
@@ -175,7 +175,7 @@ Conditions → "Duplicate emission race" below).
 
 **Agents renamed:**
 - `fg-205-plan-judge` → `fg-205-plan-judge`
-- `fg-301-implementer-critic` → `fg-301-implementer-judge`
+- `fg-301-implementer-judge` → `fg-301-implementer-judge`
 
 File names, frontmatter `name:` fields, and all references in
 `shared/agents.md`, `CLAUDE.md`, `shared/agent-colors.md`, and the dispatch
@@ -504,7 +504,7 @@ Orchestrator dispatches parent (fg-200 planner OR fg-300 implementer for task)
   `state.json.version == "1.11.0"`, presence of `plan_judge_loops`,
   `impl_judge_loops`, `judge_verdicts[]`, absence of `critic_revisions`.
 - **Agent registry test** `tests/structural/agent-names.bats`: verifies no
-  file named `fg-205-plan-judge.md` or `fg-301-implementer-critic.md`
+  file named `fg-205-plan-judge.md` or `fg-301-implementer-judge.md`
   exists; `fg-205-plan-judge.md` and `fg-301-implementer-judge.md` do;
   `shared/agents.md` references the new names.
 
@@ -534,10 +534,10 @@ files** (verified via `grep -rl "fg-205-plan-judge"`):
 - `docs/superpowers/specs/2026-04-22-phase-5-pattern-modernization-design.md`
   (this spec)
 
-Renaming `fg-301-implementer-critic` → `fg-301-implementer-judge` touches
-**17 files** (verified via `grep -rl "fg-301-implementer-critic"`):
+Renaming `fg-301-implementer-judge` → `fg-301-implementer-judge` touches
+**17 files** (verified via `grep -rl "fg-301-implementer-judge"`):
 
-- `agents/fg-301-implementer-critic.md` (file rename; frontmatter `name:`)
+- `agents/fg-301-implementer-judge.md` (file rename; frontmatter `name:`)
 - `agents/fg-300-implementer.md` (§5.3a dispatch + verdict handling)
 - `shared/agents.md` (registry entry)
 - `shared/stage-contract.md` (IMPLEMENT stage description)
@@ -695,6 +695,6 @@ Sources consulted during spec authoring:
 - arxiv 2601.14351 (Critic-as-Judge in multi-agent systems)
 - `shared/agent-communication.md:44-98` (protocol being replaced)
 - `agents/fg-400-quality-gate.md` (aggregator being simplified)
-- `agents/fg-205-plan-judge.md`, `agents/fg-301-implementer-critic.md`
+- `agents/fg-205-plan-judge.md`, `agents/fg-301-implementer-judge.md`
   (critics being promoted to judges)
 - `shared/scoring.md:408` (10-minute reviewer timeout ceiling)

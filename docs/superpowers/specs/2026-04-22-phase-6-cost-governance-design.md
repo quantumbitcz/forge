@@ -91,7 +91,7 @@ This is **informational only**. Agents that want to use it (fg-300-implementer, 
 | Remaining fraction | Action |
 |---|---|
 | `> 0.20` | Full behavior (refactor + reflect as today) |
-| `0.10 < x ≤ 0.20` | Emit `COST-THROTTLE-IMPL` INFO. Skip second refactor pass (do minimal cleanup only). Still dispatch `fg-301-implementer-critic`. |
+| `0.10 < x ≤ 0.20` | Emit `COST-THROTTLE-IMPL` INFO. Skip second refactor pass (do minimal cleanup only). Still dispatch `fg-301-implementer-judge`. |
 | `≤ 0.10` | Emit `COST-THROTTLE-IMPL` WARNING. Skip second refactor, skip critic (record as `REFLECT_SKIPPED_COST` INFO, not `REFLECT_EXHAUSTED`). |
 
 Finding schema:
@@ -400,7 +400,7 @@ If a specific agent's real-world dispatch profile has higher variance (notably `
 
 - `ceiling-interactive.bats`: feed a pipeline with `ceiling_usd=0.50` and a planner that will cost $0.60; assert AskUserQuestion payload matches pattern §3, assert state shows `ceiling_breaches: 1` after user chooses (D) abort.
 - `ceiling-autonomous.bats`: same setup with `autonomous: true`; assert no AskUserQuestion, assert `COST-ESCALATION-AUTO` event emitted, assert tier downgraded from premium to standard.
-- `soft-throttle.bats`: pipeline at 85% of ceiling entering implementer refactor; assert `COST-THROTTLE-IMPL` INFO finding, assert second refactor skipped, assert `fg-301-implementer-critic` still dispatched.
+- `soft-throttle.bats`: pipeline at 85% of ceiling entering implementer refactor; assert `COST-THROTTLE-IMPL` INFO finding, assert second refactor skipped, assert `fg-301-implementer-judge` still dispatched.
 - `hard-throttle.bats`: 95% of ceiling; assert `COST-THROTTLE-IMPL` WARNING, critic NOT dispatched, `REFLECT_SKIPPED_COST` event emitted.
 
 ### Integration test

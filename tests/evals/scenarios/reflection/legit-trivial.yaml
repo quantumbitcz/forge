@@ -1,7 +1,7 @@
 id: reflection-legit-trivial
 phase: 04
 kind: false-positive-guard
-agent_under_test: fg-301-implementer-critic
+agent_under_test: fg-301-implementer-judge
 description: |
   Test asserts a constant. Task description is a config-value lookup that
   legitimately returns a constant. Critic must return PASS — hardcoded return

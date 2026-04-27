@@ -1,7 +1,7 @@
 id: reflection-over-narrow
 phase: 04
 kind: planted-defect
-agent_under_test: fg-301-implementer-critic
+agent_under_test: fg-301-implementer-judge
 description: |
   Test asserts a single happy-path input maps to "ok". Implementation only
   returns "ok" when input equals the exact test string, else throws. Critic

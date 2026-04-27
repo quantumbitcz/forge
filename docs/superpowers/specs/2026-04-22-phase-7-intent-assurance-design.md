@@ -15,7 +15,7 @@ Close the "plan misread intent" gap with two coordinated interventions: (F35) a 
 Five structural gaps:
 
 1. **Implementer writes tests AND code.** `agents/fg-300-implementer.md:140-169` runs RED-GREEN-REFACTOR in a single instance. If the planner misread intent, RED encodes it, GREEN satisfies it, tests pass for the wrong behavior.
-2. **Critics scope is test↔impl, not intent↔system.** `agents/fg-301-implementer-critic.md:38-56` asks "does the diff satisfy the **intent** of the test" — and `fg-301-implementer-critic.md:81` explicitly forbids questioning the test ("Do NOT assume the test is wrong — the test is the contract"). When the test encodes the misreading, the critic is blind.
+2. **Critics scope is test↔impl, not intent↔system.** `agents/fg-301-implementer-judge.md:38-56` asks "does the diff satisfy the **intent** of the test" — and `fg-301-implementer-judge.md:81` explicitly forbids questioning the test ("Do NOT assume the test is wrong — the test is the contract"). When the test encodes the misreading, the critic is blind.
 3. **Pre-ship verifier gates signal fidelity, not intent.** `agents/fg-590-pre-ship-verifier.md:94-102` verdicts `SHIP` on build=0, lint=0, tests=0 failed, 0 critical review findings. It never replays ACs against the running system.
 4. **Living Specs is advisory.** `shared/living-specifications.md:82-108` emits `SPEC-DRIFT-*` findings but is not a hard SHIP gate; `unmapped_ac_severity` defaults to WARNING.
 5. **Confidence gate is pipeline-level, not task-level.** `shared/confidence-scoring.md:30-36` gates entry (HIGH/MEDIUM/LOW) but every IMPLEMENT task is single-sampled.

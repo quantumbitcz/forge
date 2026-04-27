@@ -215,58 +215,58 @@
       ]
     },
     "REFLECT": {
-      "description": "Implementer-critic (fg-301) reflection findings \u2014 the implementation diff does not satisfy the intent of the tests. Wildcard parent.",
+      "description": "Implementer-judge (fg-301) reflection findings \u2014 the implementation diff does not satisfy the intent of the tests. Wildcard parent.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": true,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-DIVERGENCE": {
       "description": "Implementation diverges from requirement without justification.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-HARDCODED-RETURN": {
       "description": "Implementation returns a hardcoded value that makes the test pass without solving the general case.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-OVER-NARROW": {
       "description": "Implementation only handles the single case the test asserts; other valid inputs break.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-MISSING-BRANCH": {
       "description": "Implementation missed a branch or guard that the requirement implies.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "APPROACH": {
@@ -293,64 +293,64 @@
     "REFLECT": {
       "description": "Per-task reflection finding: diff satisfies test letter but not intent",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": true,
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-DIVERGENCE": {
       "description": "Critic rejected two consecutive implementations; reviewer panel must decide",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "WARNING",
       "score_impact": "-5",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-HARDCODED-RETURN": {
       "description": "Implementation returns a literal matching the test assertion without real computation",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-OVER-NARROW": {
       "description": "Implementation narrows input domain more tightly than AC allows",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-MISSING-BRANCH": {
       "description": "Implementation's control flow handles fewer branches than AC describes",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "A11Y": {

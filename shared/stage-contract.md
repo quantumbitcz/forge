@@ -237,9 +237,9 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
      a. `fg-310-scaffolder` generates boilerplate (if `scaffolder_before_impl: true`).
      b. Write tests (RED phase -- tests that define expected behavior, expected to fail).
      c. `fg-300-implementer` writes implementation to pass tests (GREEN).
-     d. **`fg-301-implementer-critic` reflects on diff vs test intent via Task-tool sub-subagent dispatch (fresh context).**
+     d. **`fg-301-implementer-judge` reflects on diff vs test intent via Task-tool sub-subagent dispatch (fresh context).**
         - PASS → continue to (e).
-        - REVISE within budget → re-enter (c), then re-dispatch critic.
+        - REVISE within budget → re-enter (c), then re-dispatch judge.
         - REVISE beyond budget → emit `REFLECT-DIVERGENCE` (WARNING), continue.
         - Skipped when: `implementer.reflection.enabled == false`; task matches §5.7 exemption; invocation is a targeted fix-loop re-implementation.
      e. `fg-300-implementer` refactors + runs self-review checkpoint.

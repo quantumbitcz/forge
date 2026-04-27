@@ -200,7 +200,7 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-410-code-reviewer`. |
-| `REFLECT-*` | Implementer-critic (fg-301) reflection findings — implementation diff does not satisfy the intent of the tests. Subcategories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. Emitted by `fg-301-implementer-critic` during TDD GREEN→REFACTOR transition (Chain-of-Verification). |
+| `REFLECT-*` | Implementer-judge (fg-301) reflection findings — implementation diff does not satisfy the intent of the tests. Subcategories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. Emitted by `fg-301-implementer-judge` during TDD GREEN→REFACTOR transition (Chain-of-Verification). |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 | `EVAL-*` | see `shared/checks/eval-categories.md` | excluded from pipeline scoring (harness-only) |
@@ -306,7 +306,7 @@ Findings at different lines in the same file with the same category are NOT dedu
 
 ### REFLECT-* Finding Handling
 
-`REFLECT-*` findings are emitted by `fg-301-implementer-critic` during the per-task
+`REFLECT-*` findings are emitted by `fg-301-implementer-judge` during the per-task
 reflection loop inside fg-300 (§5.3a). They are NOT SCOUT-class — they count
 toward the score.
 

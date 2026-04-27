@@ -336,7 +336,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-210-validator | 4 | No | Validate | Validation |
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
-| fg-301-implementer-critic | 4 | No | Implement | Reflection (CoVe) |
+| fg-301-implementer-judge | 4 | No | Implement | Reflection (CoVe) |
 | fg-310-scaffolder | 3 | Yes | Implement | Scaffolding |
 | fg-320-frontend-polisher | 3 | No | Implement | Frontend |
 | fg-350-docs-generator | 3 | Yes | Document | Documentation |

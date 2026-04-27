@@ -1911,7 +1911,7 @@ CREATE (:Agent {name: 'fg-205-plan-judge', role: 'other', file_path: 'agents/fg-
 CREATE (:Agent {name: 'fg-210-validator', role: 'other', file_path: 'agents/fg-210-validator.md'});
 CREATE (:Agent {name: 'fg-250-contract-validator', role: 'other', file_path: 'agents/fg-250-contract-validator.md'});
 CREATE (:Agent {name: 'fg-300-implementer', role: 'other', file_path: 'agents/fg-300-implementer.md'});
-CREATE (:Agent {name: 'fg-301-implementer-critic', role: 'other', file_path: 'agents/fg-301-implementer-critic.md'});
+CREATE (:Agent {name: 'fg-301-implementer-judge', role: 'other', file_path: 'agents/fg-301-implementer-judge.md'});
 CREATE (:Agent {name: 'fg-310-scaffolder', role: 'other', file_path: 'agents/fg-310-scaffolder.md'});
 CREATE (:Agent {name: 'fg-320-frontend-polisher', role: 'other', file_path: 'agents/fg-320-frontend-polisher.md'});
 CREATE (:Agent {name: 'fg-350-docs-generator', role: 'other', file_path: 'agents/fg-350-docs-generator.md'});
@@ -2137,8 +2137,8 @@ MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'decision
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'lsp-integration'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'tdd-enforcement'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-300-implementer'}), (c:SharedContract {name: 'testing-anti-patterns'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-301-implementer-critic'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
-MATCH (a:Agent {name: 'fg-301-implementer-critic'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-301-implementer-judge'}), (c:SharedContract {name: 'agent-defaults'}) CREATE (a)-[:READS]->(c);
+MATCH (a:Agent {name: 'fg-301-implementer-judge'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-310-scaffolder'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-310-scaffolder'}), (c:SharedContract {name: 'agent-ui'}) CREATE (a)-[:READS]->(c);
 MATCH (a:Agent {name: 'fg-320-frontend-polisher'}), (c:SharedContract {name: 'agent-philosophy'}) CREATE (a)-[:READS]->(c);
