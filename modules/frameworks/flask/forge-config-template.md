@@ -14,6 +14,29 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | total_retries_max | 10 | Global retry budget across all loops (5-30) |
 | oscillation_tolerance | 3 | Score regression tolerance for quality cycles (0-20) |
 
+## Cost Governance (Phase 6)
+
+Nested YAML block. PREFLIGHT validates every field per `shared/preflight-constraints.md#cost-governance-phase-6`.
+
+```yaml
+cost:
+  ceiling_usd: 25.00            # hard per-run ceiling (0 = disabled)
+  warn_at: 0.75                 # INFO event at 75% consumed
+  throttle_at: 0.80             # implementer soft throttle activates
+  abort_at: 1.00                # hard stop
+  aware_routing: true           # dynamic tier downgrades
+  pinned_agents: []             # agents that never downgrade
+  tier_estimates_usd:
+    fast: 0.016                 # Haiku 4.5 — 8k@$1/MTok + 1.5k@$5/MTok
+    standard: 0.047             # Sonnet 4.6 — 8k@$3/MTok + 1.5k@$15/MTok
+    premium: 0.078              # Opus 4.7 — 8k@$5/MTok + 1.5k@$25/MTok
+  conservatism_multiplier:
+    fast: 1.0
+    standard: 1.0
+    premium: 1.0                # raise (e.g. 3.0) for planner with high variance
+  skippable_under_cost_pressure: []  # opt-in list for agents that CAN be skipped
+```
+
 ## Review Agents
 
 | Agent | Enabled | Weight | Notes |
