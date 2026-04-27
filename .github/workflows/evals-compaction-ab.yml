@@ -126,12 +126,12 @@ jobs:
         with:
           python-version: '3.x'
       - name: Download OFF artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ab-off-${{ github.run_id }}
           path: ab-off
       - name: Download ON artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ab-on-${{ github.run_id }}
           path: ab-on
