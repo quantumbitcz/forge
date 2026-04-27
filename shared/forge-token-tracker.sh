@@ -142,12 +142,14 @@ if grand_total > 0:
 else:
     tokens["model_distribution"] = {}
 
-# Default pricing per MTok — last verified 2026-04-14
-# Override via forge-config.md token_pricing section
+# Default pricing per MTok — last verified 2026-04-22 against
+# https://platform.claude.com/docs/en/about-claude/pricing
+# Haiku 4.5, Sonnet 4.6, Opus 4.7 — base input / output (no cache, no batch).
+# Override via forge-config.md token_pricing section.
 DEFAULT_PRICING_TABLE = {
-    "haiku":   {"input": 0.25,  "output": 1.25},
-    "sonnet":  {"input": 3.0,   "output": 15.0},
-    "opus":    {"input": 15.0,  "output": 75.0},
+    "haiku":   {"input": 1.00, "output": 5.00},   # Claude Haiku 4.5
+    "sonnet":  {"input": 3.00, "output": 15.00},  # Claude Sonnet 4.6
+    "opus":    {"input": 5.00, "output": 25.00},  # Claude Opus 4.7
 }
 
 import os, re as _re
