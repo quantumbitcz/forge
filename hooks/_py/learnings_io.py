@@ -66,7 +66,12 @@ def _parse_frontmatter(raw: str) -> dict | None:
                 continue
         if ":" in line and not line.startswith(" "):
             key, _, val = line.partition(":")
-            result[key.strip()] = _coerce(val)
+            key = key.strip()
+            if key == "items":
+                # 'items:' is a list header — actual entries are parsed via
+                # ITEM_START_RE on subsequent lines; do not stomp the list.
+                continue
+            result[key] = _coerce(val)
     if current is not None:
         result["items"].append(current)
     return result
