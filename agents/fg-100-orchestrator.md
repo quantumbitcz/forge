@@ -1504,6 +1504,86 @@ After scaffolders complete, BEFORE implementers: [dispatch fg-102-conflict-resol
 
 **Post-IMPLEMENT Graph:** If graph enabled + files changed → `update-project-graph.sh`. Failure → WARNING + stale=true. Transaction failure → rollback + INFO + disable graph for run.
 
+### Voting Gate (Phase 7 F36)
+
+At Stage 4 IMPLEMENT, before dispatching `fg-300-implementer` for a task:
+
+```python
+def should_vote(task, state, config) -> tuple[bool, str | None]:
+    """Return (should_vote, trigger_reason_or_None)."""
+    ivcfg = config.get("impl_voting", {})
+    if not ivcfg.get("enabled", False):
+        return False, None
+    # Cost-skip: budget remaining fraction computed from Phase 6 fields.
+    # state.cost.remaining_usd and state.cost.ceiling_usd are canonical.
+    ceiling = state.get("cost", {}).get("ceiling_usd", 0.0)
+    if ceiling > 0:
+        remaining = state.get("cost", {}).get("remaining_usd", ceiling)
+        pct_remaining = remaining / ceiling
+        if pct_remaining < ivcfg.get("skip_if_budget_remaining_below_pct", 30) / 100.0:
+            # Emit COST-SKIP-VOTE INFO. Append impl_vote_history entry with
+            # skipped_reason="cost". Single-sample continues.
+            return False, "cost_skip"
+    # Trigger checks.
+    if state.get("confidence", {}).get("effective_confidence", 1.0) < \
+            ivcfg.get("trigger_on_confidence_below", 0.4):
+        return True, "confidence"
+    if any(t in task.get("risk_tags", []) for t in ivcfg.get("trigger_on_risk_tags", ["high"])):
+        return True, "risk_tag"
+    if file_has_recent_regression(task.get("files", []),
+                                   ivcfg.get("trigger_on_regression_history_days", 30)):
+        return True, "regression_history"
+    return False, None
+
+
+def dispatch_with_voting(task, state, config):
+    vote, trigger = should_vote(task, state, config)
+    if not vote:
+        _emit_info_if_cost_skip(trigger)  # COST-SKIP-VOTE
+        return dispatch_single(task)
+    # N=2 parallel dispatch.
+    sub_a = fg101_create(task["id"], "sample_1",
+                         base_dir=f".forge/votes/{task['id']}/sample_1",
+                         start_point=state["parent_head"])
+    sub_b = fg101_create(task["id"], "sample_2",
+                         base_dir=f".forge/votes/{task['id']}/sample_2",
+                         start_point=state["parent_head"])
+    # 15-min per-sample timeout; on one timeout, cancel peer, emit
+    # IMPL-VOTE-TIMEOUT WARNING, use surviving sample.
+    patch_a, patch_b = Agent_parallel([
+        Agent("fg-300-implementer", {**task, "dispatch_mode": "vote_sample",
+                                     "sample_id": 1, "worktree": sub_a}),
+        Agent("fg-300-implementer", {**task, "dispatch_mode": "vote_sample",
+                                     "sample_id": 2, "worktree": sub_b}),
+    ], per_agent_timeout_minutes=15)
+    emit_finding("IMPL-VOTE-TRIGGERED", severity="INFO",
+                 description=f"trigger={trigger}")
+    judge_result = Agent("fg-302-diff-judge",
+                         {"sample_a_root": sub_a, "sample_b_root": sub_b,
+                          "touched_files": task["files"]})
+    if judge_result["verdict"] == "SAME":
+        winner = min([patch_a, patch_b], key=lambda p: p["line_count"])
+        cherry_pick(winner, main_worktree=".forge/worktree")
+    else:
+        tiebreak = Agent("fg-300-implementer",
+                         {**task, "dispatch_mode": "vote_tiebreak",
+                          "divergence_notes": judge_result["divergences"],
+                          "worktree": sub_a})  # reuse sub_a worktree
+        cherry_pick(tiebreak, main_worktree=".forge/worktree")
+        if _still_diverges(tiebreak, patch_a, patch_b) and state["autonomous"]:
+            emit_finding("IMPL-VOTE-UNRESOLVED", severity="WARNING")
+    # Always cleanup, even on failure — finally-block.
+    fg101_cleanup(sub_a, delete_branch=True)
+    fg101_cleanup(sub_b, delete_branch=True)
+    append_impl_vote_history(task, judge_result, trigger)
+```
+
+**Serialization.** Cherry-pick onto main worktree is serialized via
+`.forge/worktree/.vote-merge.lock`. Cleanup runs in a finally-block and is
+idempotent (`fg-101 cleanup` on a non-existent path is a no-op). Stale sweep
+at PREFLIGHT via `fg-101 detect-stale` (see `.forge/votes/*/sample_*` pattern
+added in Task 12).
+
 ---
 
 ## Stage 5: VERIFY

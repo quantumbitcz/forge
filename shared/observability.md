@@ -57,6 +57,13 @@ rehydrates the parent context.
   `forge.score`, `forge.phase_iterations`, `forge.convergence.iterations`,
   `forge.batch.size`, `forge.batch.agents`.
 
+### Phase 7 spans (intent verification + implementer voting)
+
+| Span name | Cardinality | Attributes |
+|---|---|---|
+| `forge.intent.verify_ac` | one per AC verified | `forge.intent.ac_id`, `forge.intent.ac_verdict`, `forge.intent.probe_tier`, `forge.intent.probes_issued`, `forge.intent.duration_ms` |
+| `forge.impl.vote` | one per voted sample | `forge.impl_vote.task_id`, `forge.impl_vote.sample_id`, `forge.impl_vote.trigger`, `forge.impl_vote.verdict`, `forge.impl_vote.ast_fingerprint`, `forge.impl_vote.degraded` |
+
 ---
 
 ### Learning events (Phase 4)

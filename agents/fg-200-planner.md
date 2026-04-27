@@ -139,6 +139,28 @@ Use context7 MCP for current API docs. Prevents planning around deprecated APIs.
 
 Overall risk = highest individual risk.
 
+### Risk Tag Emission (Phase 7 F36)
+
+For every task in the plan, assign zero or more tags from this closed vocabulary:
+
+| Tag | When to apply |
+|---|---|
+| `high` | Plan-level risk heuristic: blast radius > 5 files, touches core domain invariants, or explicitly marked high-blast by architecture reviewer. |
+| `data-mutation` | Task writes to a persistent store (DB INSERT/UPDATE/DELETE, file write to a persisted location, emission to an append-only log). Reads alone do not qualify. |
+| `auth` | Task touches authentication, authorization, session handling, token validation, or principal propagation. |
+| `payment` | Task is part of any financial flow: charge, refund, transfer, ledger entry, invoice, subscription billing. |
+| `concurrency` | Task introduces or modifies concurrent/parallel code paths, locks, async primitives, or queue consumers. |
+| `migration` | Task moves schema or data between stores/formats/versions. |
+
+Mode overlays may extend the enum; currently **bugfix** adds `bugfix` (every
+bugfix task auto-tagged). Unknown tags in plan output are WARNING at Stage 3
+VALIDATE.
+
+Emit tags on `task.risk_tags: [string, ...]` in the structured plan output.
+Empty list is valid. Tags are consumed by `fg-100-orchestrator` at Stage 4
+IMPLEMENT to gate N=2 voting (see `shared/agent-communication.md` §risk_tags
+Contract).
+
 ### 3.5 Multi-Module Requirements
 
 Spans modules → one story per module with explicit integration points. Mark cross-module dependencies. Backend group 1, frontend group 2+.

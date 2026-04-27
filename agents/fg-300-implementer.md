@@ -222,6 +222,32 @@ state.cost.throttle_events.append({
 
 **Throttle reason propagation:** Set `throttle_reason = "soft_20pct"` or `"soft_10pct"` in the implementer's result dict so the orchestrator can surface it through `otel.record_agent_result()` as `forge.cost.throttle_reason` (Task 12).
 
+### 5.3c Voting Mode (Phase 7 F36)
+
+When the orchestrator dispatches this agent with `dispatch_mode: vote_sample`
+OR `dispatch_mode: vote_tiebreak`, the behavior changes:
+
+| Dispatch mode | RED | GREEN | REFLECT | REFACTOR | Output |
+|---|---|---|---|---|---|
+| `fix_loop` | skip | run | skip | run | patch in main worktree |
+| `vote_sample` | run | run | **skip** | run | patch in sub-worktree `.forge/votes/<task_id>/sample_N/` |
+| `vote_tiebreak` | skip | run with divergence_notes | **skip** | run | patch in sub-worktree, marker `vote_tiebreak: true` |
+
+Rationale for skipping REFLECT under `vote_sample`: the vote IS the
+reflection. Running fg-301-implementer-judge twice (once per sample) would
+double the cost without improving the signal — fg-302-diff-judge surfaces
+divergence more cheaply.
+
+`vote_tiebreak` receives a `divergence_notes` field listing the files and
+subtrees where samples 1 and 2 disagreed. The tiebreak sample MUST reconcile
+every listed divergence; its output is cherry-picked onto the main worktree
+regardless of whether it matches either original.
+
+**Sample isolation.** Both `vote_sample` invocations start from the same
+parent HEAD (the orchestrator created both sub-worktrees via `fg-101
+create`). The sub-worktree IS the agent's working directory for this
+dispatch; no edits leak to the main `.forge/worktree`.
+
 ### 5.4 Refactor
 
 1. Review implementation with fresh eyes

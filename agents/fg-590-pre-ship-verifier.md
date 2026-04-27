@@ -95,11 +95,56 @@ From `state.json` convergence score_history or quality gate stage notes.
 
 ### Step 6: Produce Evidence
 
-Verdict:
-- `SHIP` if ALL: build 0, tests 0 + 0 failed, lint 0, review 0 critical + 0 important, score >= min_score
-- `BLOCK` otherwise with `block_reasons`
+Read `state.intent_verification_results[]` (populated by Stage 5 end).
+Compute:
 
-Write `.forge/evidence.json` per `shared/verification-evidence.md`.
+```python
+verified = sum(1 for r in results if r["verdict"] == "VERIFIED")
+partial  = sum(1 for r in results if r["verdict"] == "PARTIAL")
+missed   = sum(1 for r in results if r["verdict"] == "MISSED")
+unverif  = sum(1 for r in results if r["verdict"] == "UNVERIFIABLE")
+denom = verified + partial + missed + unverif
+verified_pct = (verified / denom * 100) if denom > 0 else None  # None == no ACs
+open_intent_critical = count_findings_where(category="INTENT-MISSED",
+                                             severity="CRITICAL", status="open")
+```
+
+Verdict is `SHIP` only if ALL:
+- build exit code 0
+- tests 0 failed
+- lint exit code 0
+- review 0 critical + 0 important
+- score >= min_score
+- `open_intent_critical == 0`  **(Phase 7 F35 new clause)**
+- `verified_pct is None` OR `verified_pct >= intent_verification.strict_ac_required_pct`
+  **(Phase 7 F35 new clause)**
+
+Otherwise `BLOCK`. Populate `block_reasons[]`:
+- `intent-missed: {N} open CRITICAL INTENT-MISSED findings`
+- `intent-threshold: verified {pct}% < required {threshold}%`
+- `intent-unreachable-runtime: all ACs UNVERIFIABLE (runtime not reachable)`
+
+`verified_pct is None` means **no ACs existed** (vacuous pass) —
+distinguishable from `verified_pct == 0` (all failed). When
+`living_specs.strict_mode: true`, `verified_pct is None` becomes a BLOCK
+with reason `intent-no-acs-strict`.
+
+Write `.forge/evidence.json` per `shared/verification-evidence.md` with new
+fields:
+
+```json
+{
+  "intent_verification": {
+    "total_acs": 12,
+    "verified": 11,
+    "partial": 0,
+    "missed": 1,
+    "unverifiable": 0,
+    "verified_pct": 91.67,
+    "open_critical_findings": 1
+  }
+}
+```
 
 ---
 

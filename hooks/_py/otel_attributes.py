@@ -95,3 +95,17 @@ UNBOUNDED_ATTRS: tuple[str, ...] = (
     FORGE_LEARNING_SOURCE_PATH,
     FORGE_LEARNING_REASON,
 )
+
+# Phase 7 F35 — intent verification
+INTENT_AC_ID = "forge.intent.ac_id"
+INTENT_AC_VERDICT = "forge.intent.ac_verdict"
+INTENT_PROBE_TIER = "forge.intent.probe_tier"
+INTENT_PROBES_ISSUED = "forge.intent.probes_issued"
+INTENT_DURATION_MS = "forge.intent.duration_ms"
+
+# Phase 7 F36 — implementer voting
+IMPL_VOTE_SAMPLE_ID = "forge.impl_vote.sample_id"
+IMPL_VOTE_TRIGGER = "forge.impl_vote.trigger"
+IMPL_VOTE_VERDICT = "forge.impl_vote.verdict"
+IMPL_VOTE_AST_FINGERPRINT = "forge.impl_vote.ast_fingerprint"
+IMPL_VOTE_DEGRADED = "forge.impl_vote.degraded"

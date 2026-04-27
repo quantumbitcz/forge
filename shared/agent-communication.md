@@ -339,3 +339,32 @@ If the `FORGE_STRUCTURED_OUTPUT` block is missing from a coordinator's output, c
 ### Token Budget Impact
 
 The structured block adds approximately 500-2000 tokens per coordinator invocation, within the stage notes budget (2,000 tokens/stage). If the combined Markdown + JSON exceeds the budget, the coordinator MUST compress Markdown prose (shorter descriptions, fewer examples) rather than omit the structured block — downstream consumers depend on it.
+
+## risk_tags Contract (Phase 7 F36)
+
+Producer: `fg-200-planner` emits `task.risk_tags: string[]` in the structured
+plan output during §3.4 per-task planning. Closed vocabulary:
+`{"high", "data-mutation", "auth", "payment", "concurrency", "migration"}`.
+
+Mode overlays may extend the vocabulary — the **bugfix** overlay adds
+`"bugfix"`. Extensions must be declared in the overlay's `stages.plan` block
+or this section; unknown tags in plan output emit a WARNING at Stage 3 VALIDATE.
+
+Consumer: `fg-100-orchestrator` reads `task.risk_tags` at Stage 4 IMPLEMENT
+before dispatching `fg-300-implementer`. The voting gate (see
+`shared/intent-verification.md` § Voting Gate) triggers N=2 dispatch when:
+
+1. `impl_voting.enabled == true`, AND
+2. Budget permits: `state.cost.remaining_usd / state.cost.ceiling_usd >=
+   impl_voting.skip_if_budget_remaining_below_pct / 100`, AND
+3. At least one of:
+   - `state.confidence.effective_confidence <
+     impl_voting.trigger_on_confidence_below`, OR
+   - `any(t in task.risk_tags for t in impl_voting.trigger_on_risk_tags)`, OR
+   - `file_has_recent_regression(task.files,
+     impl_voting.trigger_on_regression_history_days)` via
+     `.forge/run-history.db`.
+
+No other agent consumes `task.risk_tags`. Retrospective aggregates them via
+`fg-100-orchestrator`'s `impl_vote_history[].trigger` field, not via the raw
+tags.

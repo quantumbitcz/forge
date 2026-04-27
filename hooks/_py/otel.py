@@ -282,3 +282,51 @@ def replay(*, events_path: str, config: dict) -> int:
     from hooks._py.event_to_span import replay_events  # Task 10
 
     return replay_events(events_path=events_path, config=config)
+
+
+# Phase 7 F35/F36 span helpers
+
+
+@contextlib.contextmanager
+def intent_verify_ac_span(ac_id: str, probe_tier: int) -> Iterator[Any]:
+    """Span: forge.intent.verify_ac. One per AC."""
+    if not _STATE.enabled or _STATE.tracer is None:
+        yield None
+        return
+    with _STATE.tracer.start_as_current_span("forge.intent.verify_ac") as span:
+        span.set_attribute(A.INTENT_AC_ID, ac_id)
+        span.set_attribute(A.INTENT_PROBE_TIER, probe_tier)
+        yield span
+
+
+def record_intent_verdict(
+    span: Any, verdict: str, probes_issued: int, duration_ms: int
+) -> None:
+    if span is None:
+        return
+    span.set_attribute(A.INTENT_AC_VERDICT, verdict)
+    span.set_attribute(A.INTENT_PROBES_ISSUED, probes_issued)
+    span.set_attribute(A.INTENT_DURATION_MS, duration_ms)
+
+
+@contextlib.contextmanager
+def impl_vote_span(task_id: str, sample_id: int, trigger: str) -> Iterator[Any]:
+    """Span: forge.impl.vote. One per voted sample."""
+    if not _STATE.enabled or _STATE.tracer is None:
+        yield None
+        return
+    with _STATE.tracer.start_as_current_span("forge.impl.vote") as span:
+        span.set_attribute("forge.impl_vote.task_id", task_id)
+        span.set_attribute(A.IMPL_VOTE_SAMPLE_ID, sample_id)
+        span.set_attribute(A.IMPL_VOTE_TRIGGER, trigger)
+        yield span
+
+
+def record_vote_verdict(
+    span: Any, verdict: str, ast_fingerprint: str, degraded: bool
+) -> None:
+    if span is None:
+        return
+    span.set_attribute(A.IMPL_VOTE_VERDICT, verdict)
+    span.set_attribute(A.IMPL_VOTE_AST_FINGERPRINT, ast_fingerprint)
+    span.set_attribute(A.IMPL_VOTE_DEGRADED, degraded)
