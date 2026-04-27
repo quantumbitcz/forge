@@ -156,6 +156,28 @@ def test_budget_exhausted_at_max_iterations():
     assert _last_phase(result.stdout) == "BUDGET_EXHAUSTED"
 
 
+def test_budget_exhaustion_supersedes_regression_at_boundary():
+    """At exactly max_iterations with a regression dip, BUDGET_EXHAUSTED wins.
+
+    Pins the simulator's current decision ordering (see
+    `shared/convergence_engine_sim.py`): the budget check runs before the
+    regression check, so a cycle that would otherwise be REGRESSING is
+    classified as BUDGET_EXHAUSTED when total_iterations >= max_iterations.
+
+    Scores [90, 50] with max_iterations=2: cycle 2 hits the budget boundary
+    AND |delta|=40 >= tolerance=5 — must report BUDGET_EXHAUSTED, not
+    REGRESSING.
+    """
+    result = _run([
+        "--scores", "90,50",
+        "--max-iterations", "2",
+        "--oscillation-tolerance", "5",
+    ])
+    assert result.returncode == 0
+    assert _last_phase(result.stdout) == "BUDGET_EXHAUSTED"
+    assert _last_decision(result.stdout) == "ESCALATE"
+
+
 @pytest.mark.parametrize("scores,expected_phases", [
     # Single score: must IMPROVING
     ("50", ["IMPROVING"]),
