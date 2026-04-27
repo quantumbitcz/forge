@@ -8,10 +8,7 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from pathlib import Path
-
-import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -32,8 +29,7 @@ def test_harness_can_kill_known_covered_row(tmp_path):
         encoding="utf-8",
     )
     bats_bin = REPO / "tests" / "lib" / "bats-core" / "bin" / "bats"
-    if not bats_bin.is_file():
-        pytest.skip("bats submodule not available")
+    assert bats_bin.is_file(), f"bats binary missing at {bats_bin} — check submodule init"
     env = os.environ.copy()
     env["MUTATE_ROW"] = "1"
     result = subprocess.run(
@@ -62,8 +58,7 @@ def test_harness_does_not_fail_without_mutation(tmp_path):
         encoding="utf-8",
     )
     bats_bin = REPO / "tests" / "lib" / "bats-core" / "bin" / "bats"
-    if not bats_bin.is_file():
-        pytest.skip("bats submodule not available")
+    assert bats_bin.is_file(), f"bats binary missing at {bats_bin} — check submodule init"
     env = {k: v for k, v in os.environ.items() if k != "MUTATE_ROW"}
     result = subprocess.run(
         [str(bats_bin), str(canary_bats)],
