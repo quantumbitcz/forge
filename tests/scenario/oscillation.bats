@@ -3,6 +3,9 @@
 # Validates that score oscillation patterns are correctly classified as
 # PLATEAUED, REGRESSING, or IMPROVING by the convergence engine simulator.
 
+# mutation_row: 37
+# Covers: T-37, T-36
+
 load '../helpers/test-helpers'
 
 SIM_SCRIPT="$PLUGIN_ROOT/shared/convergence-engine-sim.sh"
@@ -35,8 +38,16 @@ teardown() {
   # The last line should show phase=PLATEAUED (small smoothed delta over many cycles)
   local last_line
   last_line="$(echo "$output" | tail -1)"
-  [[ "$last_line" == *"phase=PLATEAUED"* ]] \
-    || fail "Expected PLATEAUED in last cycle, got: $last_line"
+  # Mutation harness: under MUTATE_ROW=37 we flip the expected assertion
+  # so the mutation "next_state -> IMPLEMENTING" survives iff the scenario
+  # did not actually exercise row 37.
+  if [[ "${MUTATE_ROW:-}" == "37" ]]; then
+    [[ "$last_line" != *"phase=PLATEAUED"* ]] \
+      || fail "Under MUTATE_ROW=37 expected PLATEAUED to NOT appear; mutation survived: $last_line"
+  else
+    [[ "$last_line" == *"phase=PLATEAUED"* ]] \
+      || fail "Expected PLATEAUED in last cycle, got: $last_line"
+  fi
 }
 
 # ---------------------------------------------------------------------------

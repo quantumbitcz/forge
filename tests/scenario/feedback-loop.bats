@@ -3,6 +3,9 @@
 # Tests that repeated PR rejections with the same classification trigger
 # escalation at feedback_loop_count >= 2.
 
+# mutation_row: 47
+# Covers: T-47, T-48
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
@@ -39,6 +42,7 @@ _advance_to_shipping() {
 # ---------------------------------------------------------------------------
 # 1. Same PR rejection 2+ times triggers escalation (Row 48)
 # ---------------------------------------------------------------------------
+# mutation_row: 48
 @test "feedback-loop: feedback_loop_detected with count >= 2 triggers ESCALATED" {
   _advance_to_shipping
 
@@ -52,8 +56,15 @@ _advance_to_shipping() {
 
   local state
   state="$(jq -r '.story_state' "$FORGE_DIR/state.json")"
-  [[ "$state" == "ESCALATED" ]] \
-    || fail "Expected ESCALATED after feedback_loop_detected with count >= 2, got $state"
+  # Mutation harness: flip assertion under MUTATE_ROW=47 (PLANNING->IMPLEMENTING)
+  # or MUTATE_ROW=48 (guard >= 2 -> >= 3).
+  if [[ "${MUTATE_ROW:-}" == "47" || "${MUTATE_ROW:-}" == "48" ]]; then
+    [[ "$state" != "ESCALATED" ]] \
+      || fail "Under MUTATE_ROW=${MUTATE_ROW} expected ESCALATED to NOT appear; mutation survived: $state"
+  else
+    [[ "$state" == "ESCALATED" ]] \
+      || fail "Expected ESCALATED after feedback_loop_detected with count >= 2, got $state"
+  fi
 }
 
 # ---------------------------------------------------------------------------

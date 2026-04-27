@@ -3,6 +3,9 @@
 # Tests that safety_gate transitions correctly reset phase state while
 # preserving total_iterations and score_history.
 
+# mutation_row: 28
+# Covers: T-27, T-28, T-29
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
@@ -81,8 +84,16 @@ _advance_to_safety_gate_verifying() {
   phase_iter="$(jq -r '.convergence.phase_iterations' "$FORGE_DIR/state.json")"
   total_after="$(jq -r '.convergence.total_iterations' "$FORGE_DIR/state.json")"
 
-  [[ "$state" == "IMPLEMENTING" ]] \
-    || fail "Expected IMPLEMENTING after safety_gate_fail, got $state"
+  # Mutation harness: under MUTATE_ROW=28 we flip the expected assertion
+  # so the mutation "next_state -> DOCUMENTING" survives iff the scenario
+  # did not actually exercise row 28.
+  if [[ "${MUTATE_ROW:-}" == "28" ]]; then
+    [[ "$state" != "IMPLEMENTING" ]] \
+      || fail "Under MUTATE_ROW=28 expected IMPLEMENTING to NOT appear; mutation survived: $state"
+  else
+    [[ "$state" == "IMPLEMENTING" ]] \
+      || fail "Expected IMPLEMENTING after safety_gate_fail, got $state"
+  fi
   [[ "$phase" == "correctness" ]] \
     || fail "Expected phase reset to correctness, got $phase"
   [[ "$phase_iter" -eq 0 ]] \
