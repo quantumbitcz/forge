@@ -161,8 +161,23 @@ The `PRAGMA user_version` field tracks the schema version. Migration files live 
 | File | Version | Description |
 |------|---------|-------------|
 | `001-initial.sql` | 1 | Initial schema: runs, findings, stage_timings, learnings, playbook_runs, run_search FTS5 |
+| `002-feature-usage.sql` | 2 | feature_usage table for feature activation tracking |
+| `003-cost-columns.sql` | 3 | Phase 6 cost governance columns on `runs`: ceiling_usd, spent_usd, ceiling_breaches, throttle_events |
 
 Migration strategy: `fg-700-retrospective` checks `PRAGMA user_version` on DB open. If version < expected, applies pending migration files in numeric order. Each migration is idempotent (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`).
+
+### Phase 6 cost columns (migration 003)
+
+Plan referenced "run_summary"; actual table is `runs` (per `001-initial.sql`). Migration 003 adds the four cost-governance columns to that table.
+
+| Column | Type | Default | Meaning |
+|---|---|---|---|
+| `ceiling_usd` | REAL | 0.0 | Configured `cost.ceiling_usd` at run start |
+| `spent_usd` | REAL | 0.0 | Final `state.cost.spent_usd` |
+| `ceiling_breaches` | INTEGER | 0 | Count of `.forge/cost-incidents/*.json` written |
+| `throttle_events` | INTEGER | 0 | `len(state.cost.throttle_events)` |
+
+Indexes: `idx_runs_spent_usd`, `idx_runs_breaches` (partial, non-zero only).
 
 ## Error Handling
 
