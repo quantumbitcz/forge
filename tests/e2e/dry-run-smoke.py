@@ -51,6 +51,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE = REPO / "tests" / "e2e" / "fixtures" / "ts-vitest"
 
+# Vitest cold-start on Windows NTFS can take 20-30s before the first test
+# runs; the 60s budget that's fine on Linux/macOS leaves no margin there.
+NPM_TEST_TIMEOUT = 120 if sys.platform.startswith("win") else 60
+
 
 def _run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None,
          timeout: int = 60) -> subprocess.CompletedProcess[str]:
@@ -173,7 +177,7 @@ def smoke(*, verbose: bool = False) -> int:
         npm_test = _run(
             ["npm", "test", "--silent"],
             cwd=project,
-            timeout=60,
+            timeout=NPM_TEST_TIMEOUT,
         )
         if npm_test.returncode != 0:
             print(f"[FAIL] npm test exited {npm_test.returncode}:\n"
@@ -185,6 +189,10 @@ def smoke(*, verbose: bool = False) -> int:
         sim_script = REPO / "shared" / "forge-sim.sh"
         if not sim_script.is_file():
             print(f"[SKIP] forge-sim.sh not found at {sim_script}", file=sys.stderr)
+            return 77
+        if shutil.which("bash") is None:
+            print("[SKIP] bash not on PATH; e2e dry-run smoke requires bash 4+",
+                  file=sys.stderr)
             return 77
 
         # Use a minimal inline scenario: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → COMPLETE (dry-run).
@@ -213,8 +221,6 @@ def smoke(*, verbose: bool = False) -> int:
         # 6. Assert .forge/state.json exists and ends in VALIDATED/COMPLETE.
         state_path = project / ".forge" / "state.json"
         if not state_path.is_file():
-            # Simulator may write to a different location depending on version —
-            # accept either state.json or a final story_state indicator.
             print(f"[FAIL] no state.json at {state_path}", file=sys.stderr)
             print(f"forge-sim stdout:\n{r.stdout}", file=sys.stderr)
             print(f"forge-sim stderr:\n{r.stderr}", file=sys.stderr)
@@ -258,14 +264,20 @@ def self_test() -> int:
             json.dumps({"story_state": "COMPLETE"}), encoding="utf-8",
         )
         state = json.loads((fake_forge / "state.json").read_text())
-        assert state["story_state"] in {"VALIDATED", "COMPLETE"}
+        if state["story_state"] not in {"VALIDATED", "COMPLETE"}:
+            print(f"[FAIL] self-test positive control: "
+                  f"story_state={state['story_state']!r}", file=sys.stderr)
+            raise SystemExit(1)
 
         # Negative control.
         (fake_forge / "state.json").write_text(
             json.dumps({"story_state": "ESCALATED"}), encoding="utf-8",
         )
         state = json.loads((fake_forge / "state.json").read_text())
-        assert state["story_state"] not in {"VALIDATED", "COMPLETE"}
+        if state["story_state"] in {"VALIDATED", "COMPLETE"}:
+            print(f"[FAIL] self-test negative control: "
+                  f"story_state={state['story_state']!r}", file=sys.stderr)
+            raise SystemExit(1)
 
     print("[PASS] self-test")
     return 0
