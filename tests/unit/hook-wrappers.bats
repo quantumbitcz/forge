@@ -24,8 +24,11 @@ HOOKS=(pre_tool_use.py post_tool_use.py post_tool_use_skill.py
 @test "hook entry with injected failure writes to .hook-failures.jsonl" {
   tmp="$(mktemp -d)"
   cd "$tmp"
-  # Invoke a hook that is guaranteed to raise (empty stdin for post_tool_use triggers parse error)
-  run env CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" python3 "$PLUGIN_ROOT/hooks/post_tool_use_skill.py" </dev/null
+  # Force checkpoint.main() to raise: pre-create .forge/ (skip the "no .forge → no-op"
+  # short-circuit) and replace checkpoints.jsonl with a directory so the append-open
+  # raises IsADirectoryError, which the wrapper must catch and record.
+  mkdir -p ".forge/checkpoints.jsonl"
+  run env CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" python3 "$PLUGIN_ROOT/hooks/post_tool_use_skill.py" <<<'{}'
   # Hook contract: exit 0 on crash (never break session).
   [ "$status" -eq 0 ]
   assert [ -f ".forge/.hook-failures.jsonl" ]
@@ -40,7 +43,8 @@ HOOKS=(pre_tool_use.py post_tool_use.py post_tool_use_skill.py
 @test "produced .hook-failures.jsonl rows validate against the schema" {
   tmp="$(mktemp -d)"
   cd "$tmp"
-  run env CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" python3 "$PLUGIN_ROOT/hooks/post_tool_use_skill.py" </dev/null
+  mkdir -p ".forge/checkpoints.jsonl"
+  run env CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" python3 "$PLUGIN_ROOT/hooks/post_tool_use_skill.py" <<<'{}'
   [ "$status" -eq 0 ]
   assert [ -f ".forge/.hook-failures.jsonl" ]
   run python3 -c "
