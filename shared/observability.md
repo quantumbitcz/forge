@@ -51,6 +51,34 @@ rehydrates the parent context.
   `forge.score`, `forge.phase_iterations`, `forge.convergence.iterations`,
   `forge.batch.size`, `forge.batch.agents`.
 
+---
+
+### Learning events (Phase 4)
+
+Four event types are emitted via `emit_event_mirror` (never
+`span.add_event`) inside the active `agent_span`. Events are written first
+to `.forge/events.jsonl` (fsync'd) and mirrored onto the span as
+attributes, so `otel.replay` is authoritative.
+
+| Event type                          | Emitter                           | Purpose                                |
+|-------------------------------------|-----------------------------------|----------------------------------------|
+| `forge.learning.injected`           | orchestrator (per selected item)  | Records that a learning was shown.     |
+| `forge.learning.applied`            | orchestrator (on marker parse)    | Records reinforcement signal.          |
+| `forge.learning.fp`                 | orchestrator (on marker parse)    | Records false-positive signal.         |
+| `forge.learning.vindicated`         | user / retrospective override     | Restores base_confidence from snapshot.|
+
+Attributes (registered in `hooks/_py/otel_attributes.py`):
+
+| Attribute name                  | Cardinality | Typical value                        |
+|---------------------------------|-------------|--------------------------------------|
+| `forge.learning.id`             | ~500 items  | `"ks-preempt-001"`                   |
+| `forge.learning.confidence_now` | float       | `0.82`                               |
+| `forge.learning.applied_count`  | int         | `3`                                  |
+| `forge.learning.source_path`    | ~50 files   | `"shared/learnings/spring.md"`       |
+| `forge.learning.reason`         | free text   | `"not applicable for this task"`    |
+
+All `forge.learning.*` attributes are UNBOUNDED — never fold into span names.
+
 ## Cardinality budget
 
 Span-name safety — backends meter unique span names. Only **bounded**
