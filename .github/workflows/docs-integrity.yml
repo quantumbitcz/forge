@@ -42,6 +42,23 @@ jobs:
       - name: Learnings-index freshness
         run: python scripts/gen-learnings-index.py --check
 
+      - name: Support-tier badge drift
+        run: python3 tests/lib/derive_support_tiers.py --check --root .
+
+      - name: Support-tier badge drift negative test (tamper + assert fail)
+        run: |
+          cp modules/languages/kotlin.md /tmp/_kotlin.bak
+          sed -i '0,/Support tier:/{s/Support tier: .*$/Support tier: TAMPERED/}' modules/languages/kotlin.md
+          set +e
+          python3 tests/lib/derive_support_tiers.py --check --root .
+          rc=$?
+          set -e
+          mv /tmp/_kotlin.bak modules/languages/kotlin.md
+          if [ "$rc" -eq 0 ]; then
+            echo "Negative test failed: --check returned 0 on tampered badge"
+            exit 1
+          fi
+
       - name: ADR format validator
         run: |
           python - <<'PY'
