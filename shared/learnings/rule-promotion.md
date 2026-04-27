@@ -1,3 +1,21 @@
+---
+schema_version: 2
+items:
+  - id: "status-values"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.638280Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["rule", "promotion"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#status-values"
+---
 # Rule Promotion Algorithm
 
 Describes how recurring review findings are promoted from observations to automated L1 check engine rules.
@@ -41,6 +59,7 @@ fg-100 (orchestrator, PREFLIGHT of next run)
 ```
 
 ### Status Values
+<a id="status-values"></a>
 
 | Status | Meaning |
 |--------|---------|

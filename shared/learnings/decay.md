@@ -1,3 +1,7 @@
+---
+schema_version: 2
+items:
+---
 # Memory Decay — Ebbinghaus Exponential Curve
 
 **Status:** Active (2026-04-19).

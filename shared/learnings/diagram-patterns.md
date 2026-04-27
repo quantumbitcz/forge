@@ -1,3 +1,7 @@
+---
+schema_version: 2
+items:
+---
 # Learnings: Diagram Patterns
 
 Tracks learnings from the `modules/documentation/diagram-patterns.md` module — Mermaid/PlantUML diagram generation, C4 model patterns, and diagram sizing conventions.

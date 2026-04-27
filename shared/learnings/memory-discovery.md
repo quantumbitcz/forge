@@ -1,3 +1,105 @@
+---
+schema_version: 2
+items:
+  - id: "stage-responsibilities"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#stage-responsibilities"
+  - id: "auto-repo-pattern-nnn-short-title"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["{area", "memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#auto-repo-pattern-nnn-short-title"
+  - id: "field-reference"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#field-reference"
+  - id: "promotion-path"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#promotion-path"
+  - id: "how-it-works"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#how-it-works"
+  - id: "distinction-from-direct-knowledge-contribution"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#distinction-from-direct-knowledge-contribution"
+  - id: "configuration"
+    base_confidence: 0.75
+    half_life_days: 30
+    applied_count: 0
+    last_applied: null
+    first_seen: "2026-04-20T09:56:30.637683Z"
+    false_positive_count: 0
+    last_false_positive_at: null
+    pre_fp_base: null
+    applies_to: ["planner", "implementer", "reviewer.code"]
+    domain_tags: ["memory", "discovery"]
+    source: "cross-project"
+    archived: false
+    body_ref: "#configuration"
+---
 # Autonomous Memory Discovery
 
 The memory discovery system enables the pipeline to automatically identify recurring structural patterns, naming conventions, and configuration quirks across multiple runs — without requiring explicit user input. Discovered patterns are surfaced as PREEMPT items for downstream agents to apply proactively.
@@ -24,6 +126,7 @@ The discovery process spans multiple pipeline stages and accumulates evidence ac
 5. **Evidence confirmation** — candidate with evidence from 3+ files (matching the pattern) is promoted to a PREEMPT item with `source: auto-discovered` and `confidence: MEDIUM`
 
 ### Stage responsibilities
+<a id="stage-responsibilities"></a>
 
 - `fg-100-orchestrator`: passes relevant stage notes between stages
 - `fg-700-retrospective`: reads stage notes from EXPLORE and REVIEW, compares with previous run patterns, generates discovery candidates
@@ -35,6 +138,7 @@ Discovered patterns are stored as PREEMPT items with the following fields:
 
 ```markdown
 ### auto-{repo}-{pattern}-{NNN}: {short title}
+<a id="auto-repo-pattern-nnn-short-title"></a>
 - **Source:** auto-discovered
 - **Type:** auto-discovered
 - **base_confidence:** 0.75
@@ -50,6 +154,7 @@ Discovered patterns are stored as PREEMPT items with the following fields:
 ```
 
 ### Field reference
+<a id="field-reference"></a>
 
 | Field | Value | Description |
 |---|---|---|
@@ -112,6 +217,7 @@ memory_discovery:
 Auto-discovered PREEMPT items can be promoted to active knowledge rules in `.forge/knowledge/`. This bridges the gap between passive discovery and active enforcement.
 
 ### Promotion path
+<a id="promotion-path"></a>
 
 ```
 Auto-discovered PREEMPT (forge-log.md)
@@ -139,6 +245,7 @@ L1 Check Engine (shared/checks/learned-rules-override.json)
 ```
 
 ### How it works
+<a id="how-it-works"></a>
 
 1. When a memory-discovered PREEMPT item reaches HIGH confidence (after 3 successful applications per `auto_promote_after_runs`), the retrospective evaluates whether it can be expressed as a structured rule.
 2. If the pattern has a concrete detection signature (regex or semantic), the retrospective writes a CANDIDATE_RULE to `.forge/knowledge/inbox/` with `source: auto-discovered`.
@@ -146,6 +253,7 @@ L1 Check Engine (shared/checks/learned-rules-override.json)
 4. Auto-discovered rules that reach ACTIVE with `detection_type: regex` and HIGH confidence are promoted to the L1 check engine via `learned-rules-override.json`.
 
 ### Distinction from direct knowledge contribution
+<a id="distinction-from-direct-knowledge-contribution"></a>
 
 - **Direct contribution:** Agents (reviewers, implementer, bug investigator) write knowledge items to the inbox during execution. These are one-shot observations from the current run.
 - **Memory discovery promotion:** Patterns accumulate evidence across multiple runs in `forge-log.md` before being promoted to knowledge rules. This path provides stronger validation because the pattern has been observed repeatedly.
@@ -153,6 +261,7 @@ L1 Check Engine (shared/checks/learned-rules-override.json)
 Auto-discovered rules that are promoted to the knowledge base retain `source: auto-discovered` and decay on the 14-day half-life per `shared/learnings/decay.md` until they reach ACTIVE state. Once ACTIVE, their `type` flips to `canonical` and they decay on the 90-day half-life.
 
 ### Configuration
+<a id="configuration"></a>
 
 Promotion is controlled by two configuration sections:
 
