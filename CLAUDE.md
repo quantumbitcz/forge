@@ -50,8 +50,15 @@ Layered, resolution top-down:
 ```bash
 ./tests/validate-plugin.sh          # 73+ structural checks, ~2s
 ./tests/run-all.sh                  # Full test suite, ~30s
-ln -s "$(pwd)" /path/to/project/.claude/plugins/forge  # Local install, then /forge-init
+
+# macOS/Linux
+./install.sh
+
+# Windows (native PowerShell — not WSL)
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
+
+(WSL users follow the macOS/Linux path.)
 
 **First-time?** Read `shared/agent-philosophy.md` first. Run `validate-plugin.sh` after every change.
 
@@ -352,14 +359,21 @@ For pipeline-level evals see `tests/evals/pipeline/README.md` (CI-only; local dr
 - Plugin never touches consuming project files. Runtime state → `.forge/`.
 - `forge-config.md` auto-tuned by retrospective. Use `<!-- locked -->` fences to protect.
 - `.forge/` deletion mid-run = unrecoverable. Use `/forge-recover reset`.
-- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, `.forge/plans/candidates/`, and `.forge/runs/<id>/handoffs/` survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
+- `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, `.forge/plans/candidates/`, `.forge/runs/<id>/handoffs/`, `.forge/progress/`, `.forge/run-history-trends.json`, `.forge/.hook-failures.jsonl` (and rotated `.forge/.hook-failures-YYYYMMDD.jsonl.gz` archives) survive `/forge-recover reset`. Only manual `rm -rf .forge/` removes them.
 - `model_routing.enabled` defaults to `true`. Set `enabled: false` in `forge-config.md` to opt out.
 - Automation cooldowns prevent trigger loops (minimum interval between identical triggers). Config: `automations.cooldown_seconds` (default 300).
 - Background runs write escalations to `.forge/alerts.json` instead of interactive prompts.
 - A2A protocol uses local filesystem coordination (`.forge/agent-card.json`), not HTTP. Requires shared filesystem access between repos.
 - `.forge/wiki/` survives `/forge-recover reset`. Only manual `rm -rf .forge/` removes it. Wiki is regenerated at PREFLIGHT when `wiki.auto_update` is enabled.
 - Auto-discovered PREEMPT items (`source: auto-discovered`) decay 2x faster than normal items. They start at MEDIUM confidence, not HIGH. After 3 successful applications they promote to HIGH.
-- **Platform requirements:** Forge requires Python 3.10+. bash is no longer required by hooks or user-facing scripts. Windows, macOS, and Linux are all first-class targets: PowerShell, CMD, Git Bash, WSL2, and native bash all work uniformly. A handful of developer-only simulation harnesses under `shared/` remain in bash (e.g., `shared/convergence-engine-sim.sh`) — these are bash-3.2 compatible and do not run in hook execution paths.
+- **Platform requirements:** Forge requires Python 3.10+.
+  Full CI coverage (bash-based): macOS, Linux, Windows (Git Bash).
+  Smoke CI coverage: Windows (PowerShell 7 via `tests/run-all.ps1`), Windows
+  (CMD via `tests/run-all.cmd`, structural + unit only). Install helpers:
+  `install.sh` (macOS/Linux) or `install.ps1` (Windows native). WSL2 runs
+  as Linux. A handful of developer-only simulation harnesses under
+  `shared/` remain in bash (e.g., `shared/convergence-engine-sim.sh`) —
+  these are bash-3.2 compatible and do not run in hook execution paths.
 
 ### Check engine
 

@@ -17,14 +17,14 @@ Claude Code is powerful, but without structure it makes inconsistent decisions, 
 ## Quick start
 
 ```bash
-# 1. Install the plugin
-/plugin marketplace add quantumbitcz/forge
-/plugin install forge@quantumbitcz
+# macOS/Linux
+./install.sh
 
-# 2. Initialize your project (auto-detects framework, gitignores .forge/)
+# Windows (native PowerShell)
+powershell -ExecutionPolicy Bypass -File install.ps1
+
+# Then, in a project:
 /forge-init
-
-# 3. Run it
 /forge-run Add user dashboard with activity feed
 ```
 
@@ -138,6 +138,8 @@ Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in i
 | `/forge-config` | [writes] | Interactive configuration editor |
 
 ## Available modules
+
+Every module carries a support-tier badge (CI-verified / contract-verified / community). See docs/support-tiers.md for the taxonomy.
 
 | Category | Count | Examples |
 |----------|-------|---------|
