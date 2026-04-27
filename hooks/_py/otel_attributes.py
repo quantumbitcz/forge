@@ -48,6 +48,21 @@ FORGE_LEARNING_APPLIED_COUNT = "forge.learning.applied_count"
 FORGE_LEARNING_SOURCE_PATH = "forge.learning.source_path"
 FORGE_LEARNING_REASON = "forge.learning.reason"
 
+# forge.cost.* (Phase 6)
+FORGE_RUN_BUDGET_TOTAL_USD = "forge.run.budget_total_usd"
+FORGE_RUN_BUDGET_REMAINING_USD = "forge.run.budget_remaining_usd"
+FORGE_AGENT_TIER_ESTIMATE_USD = "forge.agent.tier_estimate_usd"
+FORGE_AGENT_TIER_ORIGINAL = "forge.agent.tier_original"
+FORGE_AGENT_TIER_USED = "forge.agent.tier_used"
+FORGE_COST_THROTTLE_REASON = "forge.cost.throttle_reason"
+
+# Enum values for FORGE_COST_THROTTLE_REASON.
+THROTTLE_NONE = "none"
+THROTTLE_SOFT_20PCT = "soft_20pct"
+THROTTLE_SOFT_10PCT = "soft_10pct"
+THROTTLE_CEILING_BREACH = "ceiling_breach"
+THROTTLE_DYNAMIC_DOWNGRADE = "dynamic_downgrade"
+
 # Cardinality budget.
 BOUNDED_ATTRS: tuple[str, ...] = (
     GEN_AI_AGENT_NAME,  # 42 agents + review-batch-<N>, bounded.
@@ -56,6 +71,9 @@ BOUNDED_ATTRS: tuple[str, ...] = (
     GEN_AI_OPERATION_NAME,  # enum: invoke_agent|execute_tool|create_agent.
     FORGE_STAGE,  # 10 pipeline stages + migration sub-states.
     FORGE_MODE,  # enum: standard|bugfix|migration|bootstrap.
+    FORGE_AGENT_TIER_ORIGINAL,  # enum: fast|standard|premium
+    FORGE_AGENT_TIER_USED,  # enum: fast|standard|premium
+    FORGE_COST_THROTTLE_REASON,  # enum (5)
 )
 
 UNBOUNDED_ATTRS: tuple[str, ...] = (
