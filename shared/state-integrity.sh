@@ -204,6 +204,31 @@ PYEOF
   fi
 fi
 
+# ── 11. Ephemeral dispatch-context lifecycle ────────────────────────────────
+# Phase 7 fg-540 dispatch briefs are persisted to .forge/dispatch-contexts/
+# for contract-test inspection (Layer-1 leak check). They are EPHEMERAL —
+# never preserved across runs. PREFLIGHT cleanup removes the directory; this
+# validator only reports on it (does not delete) so a debug session can
+# inspect the briefs after a run completes.
+DISPATCH_CTX_DIR="${FORGE_DIR}/dispatch-contexts"
+if [[ -d "$DISPATCH_CTX_DIR" ]]; then
+  ctx_age_hours=0
+  if stat -f %m "$DISPATCH_CTX_DIR" &>/dev/null; then
+    ctx_mtime=$(stat -f %m "$DISPATCH_CTX_DIR")
+  elif stat -c %Y "$DISPATCH_CTX_DIR" &>/dev/null; then
+    ctx_mtime=$(stat -c %Y "$DISPATCH_CTX_DIR")
+  else
+    ctx_mtime=""
+  fi
+  if [[ -n "$ctx_mtime" ]]; then
+    now_ts=$(date +%s)
+    ctx_age_hours=$(( (now_ts - ctx_mtime) / 3600 ))
+    if [[ $ctx_age_hours -ge 24 ]]; then
+      warn ".forge/dispatch-contexts/ is stale (${ctx_age_hours}h old); PREFLIGHT will reap it on next run"
+    fi
+  fi
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 if [[ $errors -gt 0 ]]; then

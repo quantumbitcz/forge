@@ -82,7 +82,8 @@ Orchestrator reads `shallow_clone` → `state.json.shallow_clone`. Downstream ag
 ### `detect-stale`
 
 1. `git worktree list --porcelain`
-2. For each path matching `.forge/worktree*` or `.forge/worktrees/`:
+2. For each path matching `.forge/worktree*`, `.forge/worktrees/`, or
+   `.forge/votes/*/sample_*` (Phase 7 F36 vote sub-worktrees):
    a. Check `state.json` → `complete` field. `false`/missing = incomplete
    b. Check lock file → read PID → `kill -0 <pid>`
       - PID not running + lock >1h: stale
@@ -90,6 +91,11 @@ Orchestrator reads `shallow_clone` → `state.json.shallow_clone`. Downstream ag
       - PID running: active
       - 24h absolute timeout: stale regardless of PID
    c. Stale = incomplete run AND stale/missing lock
+   d. Vote sub-worktree lifecycle: sub-worktrees are expected to live only
+      during a single orchestrator invocation. A `.forge/votes/<task_id>/sample_N/`
+      directory with mtime > `stale_hours` AND no corresponding
+      `git worktree list` entry is orphaned — mark stale, cleanup on next
+      sweep.
 
 **Output:**
 

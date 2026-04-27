@@ -1542,6 +1542,35 @@ Each iteration increments `total_iterations` + `total_retries`. Exceeded → esc
 
 **Post-VERIFY/Pre-REVIEW Graph:** Delta update if fix iterations changed files. Pre-REVIEW: full update if stale.
 
+### Intent Verification Dispatch (Stage 5 end, before Stage 6)
+
+After Stage 5 Phase A returns success AND before entering Stage 6 REVIEW:
+
+1. **Skip** if `intent_verification.enabled: false`, OR `state.mode == "bootstrap"`, OR `state.mode == "migration"`. Log one INFO if skipped.
+2. **Build the dispatch context** via `build_intent_verifier_context(state)` (`hooks/_py/handoff/intent_context.py`):
+   - ALLOWED_KEYS = {`requirement_text`, `active_spec_slug`, `ac_list`, `runtime_config`, `probe_sandbox`, `mode`}.
+   - Any other key → `IntentContextLeak`; orchestrator emits `INTENT-CONTEXT-LEAK` CRITICAL and halts. Layer-1 enforcement.
+   - `ac_list` is resolved by `_read_acs(state)` per Mega-spec §14: `state.brainstorm.spec_path` (if file exists) wins, else fallback to `.forge/specs/index.json` keyed by `active_spec_slug`.
+   - Persist the built context to `.forge/dispatch-contexts/fg-540-<ISO8601>.json` for the contract test (ephemeral; cleaned at PREFLIGHT — see `shared/state-integrity.sh`).
+3. **Dispatch** `Agent(fg-540-intent-verifier, built_context)`.
+4. **Read the findings file** at `.forge/runs/<run_id>/findings/fg-540.jsonl` and merge per-AC verdicts into `state.intent_verification_results[]`.
+5. **Emit OTel spans**: one `forge.intent.verify_ac` per AC with attributes `forge.intent.ac_id`, `forge.intent.ac_verdict`, `forge.intent.probe_tier`.
+
+Pseudocode reference (canonical implementation in `hooks/_py/handoff/intent_context.py`):
+
+```python
+ALLOWED_KEYS = {
+    "requirement_text", "active_spec_slug", "ac_list",
+    "runtime_config", "probe_sandbox", "mode",
+}
+
+def build_intent_verifier_context(state: dict) -> dict:
+    built = {k: state.get(k) for k in ALLOWED_KEYS}
+    built["ac_list"] = _read_acs(state)  # brainstorm spec wins; index.json fallback
+    _deep_leak_check(built)              # raise IntentContextLeak on smuggled markers
+    return built
+```
+
 ---
 
 ## Stage 6: REVIEW
