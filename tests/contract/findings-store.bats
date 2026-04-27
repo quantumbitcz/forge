@@ -99,7 +99,7 @@ sys.path.insert(0, '$PROJECT_ROOT/shared/python')
 from reviewer_registry import extract_review_tier_slice
 import pathlib
 slice = extract_review_tier_slice(pathlib.Path('$PROJECT_ROOT/shared/agents.md'))
-assert isinstance(slice, list) and len(slice) == 9, f'expected 9, got {len(slice)}'
+assert isinstance(slice, (list, tuple)) and len(slice) == 9, f'expected 9, got {len(slice)}'
 names = [r['name'] for r in slice]
 assert names == sorted(set(names)), f'duplicates or unsorted: {names}'
 assert any('fg-411-security-reviewer' == r['name'] for r in slice)

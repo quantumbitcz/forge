@@ -108,10 +108,16 @@ def _tiebreak(a: dict, b: dict) -> dict:
     return a if a.get("reviewer", "") <= b.get("reviewer", "") else b
 
 
-def reduce_findings(root: pathlib.Path, writer_glob: str = "*.jsonl") -> list[dict]:
+def reduce_findings(root: pathlib.Path, writer_glob: str) -> list[dict]:
     """Reduce all lines matching writer_glob under root into a canonical list.
 
     See shared/findings-store.md §8 for the reducer contract.
+
+    `writer_glob` is required (no default). The findings store §8 boundary
+    forbids cross-writer reduction — Stage 6 reduces only `fg-41*.jsonl`,
+    Phase 7 reduces only `fg-540.jsonl`. Forcing the caller to pass the
+    glob explicitly prevents accidental `*.jsonl` reductions that would
+    cross these boundaries.
 
     Schema-invalid lines are skipped with a stderr WARNING (per fg-400.md §5.1b)
     when jsonschema is available. When it isn't, validation is silently skipped
