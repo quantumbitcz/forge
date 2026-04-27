@@ -115,6 +115,7 @@ No UI capabilities. Produce findings only.
 | `fg-101-worktree-manager` | Worktree lifecycle |
 | `fg-102-conflict-resolver` | Merge conflict resolution |
 | `fg-205-plan-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-200-planner; 2-loop bound with AskUserQuestion escalation |
+| `fg-301-implementer-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-300-implementer; 2-loop bound with AskUserQuestion escalation |
 | `fg-410-code-reviewer` | Code quality review |
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |
