@@ -65,7 +65,7 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | `fg-155-i18n-validator` | PREFLIGHT | *(new)* | crimson |
 | `fg-160-migration-planner` | Migration/Plan | orange | orange |
 | `fg-200-planner` | Migration/Plan | blue | blue |
-| `fg-205-planning-critic` | Migration/Plan | *(none)* | crimson |
+| `fg-205-plan-judge` | Migration/Plan | *(none)* | crimson |
 | `fg-210-validator` | Migration/Plan | yellow | yellow |
 | `fg-250-contract-validator` | Migration/Plan | yellow | amber |
 | `fg-300-implementer` | Implement | green | green |

@@ -9,7 +9,7 @@ Close five contract and hygiene gaps that have accumulated since 3.0. Each gap i
 
 ## Problem Statement
 
-1. **Implicit Tier-4-by-omission.** `shared/agents.md:19` declares: *"ui: — the UI-capability tier (1–4), explicit per shared/agent-ui.md. Implicit Tier-4-by-omission is no longer accepted."* Reality: 13 agent files ship no `ui:` block at all. Confirmed missing (`grep -l '^ui:' agents/*.md` inverse) in `agents/fg-101-worktree-manager.md`, `fg-102-conflict-resolver.md`, `fg-205-planning-critic.md`, `fg-410-code-reviewer.md`, `fg-411-security-reviewer.md`, `fg-412-architecture-reviewer.md`, `fg-413-frontend-reviewer.md`, `fg-414-license-reviewer.md`, `fg-416-performance-reviewer.md`, `fg-417-dependency-reviewer.md`, `fg-418-docs-consistency-reviewer.md`, `fg-419-infra-deploy-reviewer.md`, `fg-510-mutation-analyzer.md`. The existing contract test `tests/contract/ui-frontmatter-consistency.bats` only checks *consistency between `ui:` and `tools:` when `ui:` is present*. It does not check presence.
+1. **Implicit Tier-4-by-omission.** `shared/agents.md:19` declares: *"ui: — the UI-capability tier (1–4), explicit per shared/agent-ui.md. Implicit Tier-4-by-omission is no longer accepted."* Reality: 13 agent files ship no `ui:` block at all. Confirmed missing (`grep -l '^ui:' agents/*.md` inverse) in `agents/fg-101-worktree-manager.md`, `fg-102-conflict-resolver.md`, `fg-205-plan-judge.md`, `fg-410-code-reviewer.md`, `fg-411-security-reviewer.md`, `fg-412-architecture-reviewer.md`, `fg-413-frontend-reviewer.md`, `fg-414-license-reviewer.md`, `fg-416-performance-reviewer.md`, `fg-417-dependency-reviewer.md`, `fg-418-docs-consistency-reviewer.md`, `fg-419-infra-deploy-reviewer.md`, `fg-510-mutation-analyzer.md`. The existing contract test `tests/contract/ui-frontmatter-consistency.bats` only checks *consistency between `ui:` and `tools:` when `ui:` is present*. It does not check presence.
 
 2. **Skill grammar drift.** 29 skills under `skills/` mix four invocation styles: flags (`/forge-verify --build`), subcommands (`/forge-graph init`), positional text (`/forge-compress output full`), and silent positional content (`/forge-graph query "MATCH (n) RETURN n"`). `skills/forge-sprint/SKILL.md:16` carries an extra malformed line after the ui block (`ui: { ask: true, tasks: true }` with no `plan_mode` key). No contract enforces which skills may use which style, and no linter rejects unknown frontmatter keys.
 
@@ -40,7 +40,7 @@ Five components land in the order specified under Migration / Rollout to avoid a
 **Tier assignment for the 13 missing agents.** All land as Tier 4 (`tasks: false, ask: false, plan_mode: false`) matching their registry rows in `shared/agents.md` lines 113–126 and 334–355. Explicitly:
 
 - `fg-101-worktree-manager`, `fg-102-conflict-resolver` — Tier 4.
-- `fg-205-planning-critic` — Tier 4 (silent adversarial reviewer per `agents/fg-205-planning-critic.md:4`).
+- `fg-205-plan-judge` — Tier 4 (silent adversarial reviewer per `agents/fg-205-plan-judge.md:4`).
 - `fg-410` through `fg-419` (all nine reviewers) — Tier 4.
 - `fg-510-mutation-analyzer` — Tier 4.
 

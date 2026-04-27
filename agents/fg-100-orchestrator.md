@@ -1184,19 +1184,26 @@ Extract: risk level, stories (1-3 with ACs), tasks (2-8 with parallel groups), t
 
 **Domain validation:** `domain_area` missing → default "general" + WARNING.
 
-### SS2.2b Planning Critic Review
+### SS2.2b Plan Judge Review (binding veto)
 
-After planner completes, dispatch the planning critic for feasibility and risk review before validation.
+After planner completes, dispatch the plan judge. REVISE is binding: advancement is blocked until the plan is re-dispatched and the judge issues PROCEED, OR the loop bound is hit.
 
-[dispatch fg-205-planning-critic] with plan output from SS2.2.
+[dispatch fg-205-plan-judge] with plan output from SS2.2.
+
+Read `state.plan_judge_loops` (integer, default 0). On return:
 
 | Verdict | Action |
-|---------|--------|
-| **PROCEED** | Continue to SS2.3 and then Stage 3 (VALIDATE) |
-| **REVISE** | Send plan back to fg-200-planner with critic findings. Increment `critic_revisions`. Max 2 critic revisions — after 2, proceed to VALIDATE regardless. |
-| **RESHAPE** | Escalate to user via AskUserQuestion: "Reshape requirement", "Try replanning", "Abort". |
+|---|---|
+| **PROCEED** | Continue to SS2.3 and then Stage 3 (VALIDATE). Append `{judge_id, verdict: PROCEED, dispatch_seq, timestamp}` to `state.judge_verdicts`. |
+| **REVISE** AND `plan_judge_loops < 2` | Increment `state.plan_judge_loops` by 1. Append to `judge_verdicts`. Re-dispatch fg-200-planner with `revision_directives` appended to its prompt. On return, re-dispatch fg-205-plan-judge. |
+| **REVISE** AND `plan_judge_loops == 2` | Increment and append. Fire `AskUserQuestion` in interactive mode, OR in autonomous mode treat as E-class safety escalation — auto-abort the run, write `revision_directives` and `findings[]` to `.forge/alerts.json`, transition to ABORTED. |
+| **ESCALATE** | Fire `AskUserQuestion` immediately: "Reshape requirement", "Continue with manual hints", "Abort". |
 
-Track `critic_revisions` in stage notes. Reset to 0 at start of each PLAN stage.
+**Reset semantics.** `plan_judge_loops` resets to 0 when a new plan is drafted. Detect by computing SHA256 of (requirement text + approach section); reset when SHA changes. Validator REVISE, user-continue, and feedback loops do NOT reset it.
+
+**Timeout.** If the judge times out (10 min ceiling per `shared/scoring.md:408`), log INFO `JUDGE-TIMEOUT fg-205-plan-judge`, treat as PROCEED with WARNING finding. Never block pipeline on judge failure.
+
+**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-recover resume` after reviewing `.forge/alerts.json`.
 
 ### SS2.3 Cross-Repo and Multi-Service
 

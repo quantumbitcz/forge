@@ -9,7 +9,7 @@ literature:
 1. **REVIEW (Stage 6)** moves from "batched dispatch with dedup hints" to the
    **Agent Teams** pattern (shared findings store, parallel fan-out, pure
    aggregation).
-2. **Critic agents** (`fg-205-planning-critic`, `fg-301-implementer-critic`)
+2. **Critic agents** (`fg-205-plan-judge`, `fg-301-implementer-critic`)
    become **Judges with binding veto**. A REVISE verdict blocks advancement;
    the parent re-dispatches. Bounded to two veto loops per task/plan, then
    user escalation.
@@ -31,7 +31,7 @@ from prior batches in each subsequent dispatch prompt. This:
 - Couples dedup accuracy to the prompt-budget engineering in every reviewer
   (`fg-400-quality-gate.md:95-100`), creating per-reviewer skew.
 
-**B. Critics without veto.** `fg-205-planning-critic.md:38-56` and
+**B. Critics without veto.** `fg-205-plan-judge.md:38-56` and
 `fg-301-implementer-critic.md:59-72` emit PROCEED/REVISE/RESHAPE verdicts, but
 no structural commitment obligates the parent agent (orchestrator or
 implementer) to respect a REVISE. `fg-300-implementer.md:190-215` DOES honor
@@ -174,7 +174,7 @@ Conditions → "Duplicate emission race" below).
 ### 3. Judge veto plumbing (state schema bump, loop bounds)
 
 **Agents renamed:**
-- `fg-205-planning-critic` → `fg-205-planning-judge`
+- `fg-205-plan-judge` → `fg-205-plan-judge`
 - `fg-301-implementer-critic` → `fg-301-implementer-judge`
 
 File names, frontmatter `name:` fields, and all references in
@@ -185,7 +185,7 @@ graph are updated.
 
 ```yaml
 judge_verdict: PROCEED | REVISE | ESCALATE
-judge_id: fg-205-planning-judge | fg-301-implementer-judge
+judge_id: fg-205-plan-judge | fg-301-implementer-judge
 confidence: HIGH | MEDIUM | LOW
 findings: [ ... ]   # same structure as §1 schema, minus seen_by
 revision_directives: |
@@ -337,7 +337,7 @@ Unix runs produce identical keys.
   "impl_judge_loops": { "<task_id>": 0 },
   "judge_verdicts": [
     {
-      "judge_id": "fg-205-planning-judge",
+      "judge_id": "fg-205-plan-judge",
       "verdict": "REVISE",
       "dispatch_seq": 12,
       "timestamp": "2026-04-22T14:11:08Z"
@@ -504,8 +504,8 @@ Orchestrator dispatches parent (fg-200 planner OR fg-300 implementer for task)
   `state.json.version == "1.11.0"`, presence of `plan_judge_loops`,
   `impl_judge_loops`, `judge_verdicts[]`, absence of `critic_revisions`.
 - **Agent registry test** `tests/structural/agent-names.bats`: verifies no
-  file named `fg-205-planning-critic.md` or `fg-301-implementer-critic.md`
-  exists; `fg-205-planning-judge.md` and `fg-301-implementer-judge.md` do;
+  file named `fg-205-plan-judge.md` or `fg-301-implementer-critic.md`
+  exists; `fg-205-plan-judge.md` and `fg-301-implementer-judge.md` do;
   `shared/agents.md` references the new names.
 
 No local test execution per `feedback_no_local_tests`; all tests run in CI
@@ -515,10 +515,10 @@ after push.
 
 ### Rename reference inventory (authoritative)
 
-Renaming `fg-205-planning-critic` → `fg-205-planning-judge` touches **13
-files** (verified via `grep -rl "fg-205-planning-critic"`):
+Renaming `fg-205-plan-judge` → `fg-205-plan-judge` touches **13
+files** (verified via `grep -rl "fg-205-plan-judge"`):
 
-- `agents/fg-205-planning-critic.md` (file rename; frontmatter `name:`)
+- `agents/fg-205-plan-judge.md` (file rename; frontmatter `name:`)
 - `agents/fg-100-orchestrator.md` (dispatch graph)
 - `shared/agents.md` (registry entry)
 - `shared/agent-colors.md` (crimson palette entry)
@@ -574,7 +574,7 @@ Tests renamed alongside their subjects
 - `shared/observability.md`: reinforce that forge-emitted OTel span
   attributes use the `forge.*` root namespace (this phase adds no new
   spans — reviewers remain implicit — but the convention is confirmed).
-- `agents/fg-205-planning-judge.md` (renamed from `fg-205-planning-critic.md`):
+- `agents/fg-205-plan-judge.md` (renamed from `fg-205-plan-judge.md`):
   verdict names REVISE → REVISE (unchanged semantics, new authority),
   RESHAPE kept, PROCEED → PROCEED. Add "veto authority" clause to §1 Identity.
 - `agents/fg-301-implementer-judge.md` (renamed): same authority clause.
@@ -601,7 +601,7 @@ Tests renamed alongside their subjects
 ## Acceptance Criteria
 
 1. `ls agents/ | grep -c "critic\.md"` returns 0.
-2. `agents/fg-205-planning-judge.md` and `agents/fg-301-implementer-judge.md`
+2. `agents/fg-205-plan-judge.md` and `agents/fg-301-implementer-judge.md`
    exist with YAML frontmatter `name:` matching filename.
 3. `shared/state-schema.md` declares `"version": "2.0.0"` and references
    the pinned JSON Schema at `shared/checks/state-schema-v2.0.json`. That
@@ -695,6 +695,6 @@ Sources consulted during spec authoring:
 - arxiv 2601.14351 (Critic-as-Judge in multi-agent systems)
 - `shared/agent-communication.md:44-98` (protocol being replaced)
 - `agents/fg-400-quality-gate.md` (aggregator being simplified)
-- `agents/fg-205-planning-critic.md`, `agents/fg-301-implementer-critic.md`
+- `agents/fg-205-plan-judge.md`, `agents/fg-301-implementer-critic.md`
   (critics being promoted to judges)
 - `shared/scoring.md:408` (10-minute reviewer timeout ceiling)

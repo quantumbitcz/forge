@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-04-22
+
+### Breaking
+
+- Renamed `fg-205-planning-critic` → `fg-205-plan-judge` with binding REVISE authority.
+- Renamed `fg-301-implementer-critic` → `fg-301-implementer-judge` with binding REVISE authority.
+- State schema bumped v1.x → v2.0.0 (coordinated with Phases 6 and 7). Fields `critic_revisions` and `implementer_reflection_cycles` removed; replaced by `plan_judge_loops` (int), `impl_judge_loops` (object keyed by task_id), `judge_verdicts[]` (array of {judge_id, verdict, dispatch_seq, timestamp}).
+- Stage 6 REVIEW migrated from batched-dispatch-with-dedup-hints to Agent Teams pattern (shared findings store at `.forge/runs/<run_id>/findings/<reviewer>.jsonl`, append-only, read-peers-before-write).
+- `shared/agent-communication.md` Shared Findings Context section deleted; replaced by Findings Store Protocol reference.
+- fg-400-quality-gate §5.2 deleted; reviewer registry §20 shrunk to a reference — orchestrator now injects the registry slice at dispatch time.
+- v1.x state.json files are auto-invalidated on version mismatch (no migration shim, per `feedback_no_backcompat`).
+
 ## [3.10.0] - 2026-04-27
 
 Phase 4 of the A+ roadmap (Learnings Dispatch Loop) ships. The learning database becomes an active prompt-time input: relevant learnings inject into agent prompts at PLAN/IMPLEMENT/REVIEW, then reinforce via marker-protocol parsing at LEARN.

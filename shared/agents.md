@@ -114,7 +114,7 @@ No UI capabilities. Produce findings only.
 |---|---|
 | `fg-101-worktree-manager` | Worktree lifecycle |
 | `fg-102-conflict-resolver` | Merge conflict resolution |
-| `fg-205-planning-critic` | Silent adversarial plan reviewer; emits CRITIC findings consumed by fg-210-validator |
+| `fg-205-plan-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-200-planner; 2-loop bound with AskUserQuestion escalation |
 | `fg-410-code-reviewer` | Code quality review |
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |
@@ -332,7 +332,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-155-i18n-validator | 3 | No | Preflight | i18n |
 | fg-160-migration-planner | 1 | Yes | Preflight | Migration |
 | fg-200-planner | 1 | Yes | Plan | Planning |
-| fg-205-planning-critic | 4 | No | Plan | Quality |
+| fg-205-plan-judge | 4 | No | Plan | Quality |
 | fg-210-validator | 4 | No | Validate | Validation |
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
