@@ -31,9 +31,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Write-Info  { param([string]$m) Write-Host "[install.ps1] $m" }
-function Write-Warn2 { param([string]$m) Write-Host "[install.ps1] WARN: $m" -ForegroundColor Yellow }
-function Write-Err2  { param([string]$m) Write-Host "[install.ps1] ERROR: $m" -ForegroundColor Red; exit 1 }
+function Write-Info { param([string]$m) Write-Host "[install.ps1] $m" }
 
 if ($Help) {
     @'
@@ -48,7 +46,7 @@ Installs the forge plugin into $env:USERPROFILE\.claude\plugins\forge.
 }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Err2 'git is required but not found in PATH'
+    throw '[install.ps1] git is required but not found in PATH'
 }
 
 $settingsDir  = Join-Path $env:USERPROFILE '.claude'
@@ -87,7 +85,7 @@ if (-not (Test-Path -LiteralPath $settingsFile)) {
     if ($raw -match [regex]::Escape($PluginDir)) {
         Write-Info "$settingsFile already references $PluginDir"
     } else {
-        Write-Warn2 "$settingsFile exists; add `"$PluginDir`" to its 'plugins' array manually"
+        Write-Warning "[install.ps1] $settingsFile exists; add `"$PluginDir`" to its 'plugins' array manually"
     }
 }
 
