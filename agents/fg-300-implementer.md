@@ -179,6 +179,8 @@ Skip conditions: `implementer.reflection.enabled` is `false` (PREFLIGHT-validate
 
 **Timeout:** 90s per dispatch (configurable via `implementer.reflection.timeout_seconds`). On timeout, log INFO `JUDGE-TIMEOUT: {task.id}` and proceed to REFACTOR. Never block pipeline on judge failure.
 
+**Forbidden:** Do not self-override the judge verdict. If the judge returns REVISE and the orchestrator has not yet re-dispatched you, do NOT proceed to REFACTOR. The loop-bound decision is orchestrator-owned, not implementer-owned.
+
 ### 5.4 Refactor
 
 1. Review implementation with fresh eyes
