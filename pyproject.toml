@@ -17,6 +17,8 @@ test = [
   "pyyaml>=6.0",
   "pytest>=8.0",
   "jsonschema>=4.0.0",
+  "tree-sitter>=0.25.2,<0.26",
+  "tree-sitter-language-pack>=1.6.3,<2.0",
 ]
 
 [tool.ruff]
