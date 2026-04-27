@@ -94,7 +94,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python dependencies
-        run: pip install pyyaml
+        run: pip install pyyaml jsonschema
 
       - name: Run ${{ matrix.tier }} tests (bash)
         if: runner.os != 'Windows'
