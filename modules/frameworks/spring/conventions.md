@@ -1,5 +1,5 @@
 # Spring Boot Framework Conventions
-
+> Support tier: contract-verified
 > Language-agnostic Spring patterns. Language-specific idioms (Kotlin null safety, Java records, etc.)
 > are in `modules/languages/{lang}.md`. Framework-language integration is in `variants/{lang}.md`.
 

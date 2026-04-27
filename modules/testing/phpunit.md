@@ -1,5 +1,5 @@
 # PHPUnit Best Practices
-
+> Support tier: contract-verified
 ## Overview
 PHPUnit is the standard testing framework for PHP. Use it for unit and integration tests in PHP applications (Laravel, Symfony, WordPress). PHPUnit excels at data providers, test doubles, and integration with CI/CD. Avoid it for browser E2E testing (use Playwright/Cypress) or load testing (use k6).
 

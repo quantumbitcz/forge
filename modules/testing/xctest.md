@@ -1,5 +1,5 @@
 # XCTest Testing Conventions
-
+> Support tier: contract-verified
 ## Test Structure
 
 Subclass `XCTestCase`. Group related tests in one class per feature or service. Use `// MARK: -` sections to separate logical groups within a class. Place unit tests in `{Target}Tests/` and UI tests in `{Target}UITests/`.

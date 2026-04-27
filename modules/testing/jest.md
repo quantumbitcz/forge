@@ -1,5 +1,5 @@
 # Jest Testing Conventions
-
+> Support tier: contract-verified
 ## Test Structure
 
 Use `describe`/`it`/`expect`. Mirror the source directory tree — one `.test.ts` (or `.test.js`) per source file. Keep unit tests co-located; put integration and E2E tests under `tests/` or `__tests__/` at the project root.

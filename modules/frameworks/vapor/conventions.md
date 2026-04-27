@@ -1,5 +1,5 @@
 # Vapor Framework Conventions
-
+> Support tier: contract-verified
 > Framework-specific conventions for Vapor projects. Language idioms are in `modules/languages/swift.md`. Generic testing patterns are in `modules/testing/xctest.md`.
 
 ## Architecture (Repository Pattern)

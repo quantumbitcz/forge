@@ -1,5 +1,5 @@
 # Go stdlib Testing Conventions
-
+> Support tier: contract-verified
 ## Test Structure
 
 Tests live in the same package as the code under test (`_test.go` suffix). Use `package foo` (white-box) or `package foo_test` (black-box) — prefer black-box for exported APIs. One `_test.go` file per source file is the common convention; split only when the file grows large.

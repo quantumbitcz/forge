@@ -1,5 +1,5 @@
 # RSpec Best Practices
-
+> Support tier: contract-verified
 ## Overview
 RSpec is the dominant BDD-style testing framework for Ruby. Use it for unit, integration, and system tests in Ruby and Rails applications. RSpec excels at readable test descriptions, powerful matchers, and composable test doubles. Avoid it for non-Ruby projects — each language has its idiomatic testing framework.
 

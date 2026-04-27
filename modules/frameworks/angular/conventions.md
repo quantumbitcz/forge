@@ -1,5 +1,5 @@
 # Angular Framework Conventions
-
+> Support tier: contract-verified
 > Framework-specific conventions for Angular 17+ projects. Language idioms are in `modules/languages/typescript.md`. Generic testing patterns are in `modules/testing/vitest.md`.
 
 ## Architecture (Feature-Based)

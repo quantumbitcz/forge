@@ -1,5 +1,5 @@
 # Elixir Language Conventions
-
+> Support tier: contract-verified
 ## Type System
 
 - Elixir is dynamically typed. Use **Dialyzer** via `@spec` and `@type` annotations for optional static analysis.

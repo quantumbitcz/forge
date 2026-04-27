@@ -1,5 +1,5 @@
 # Vue 3 / Nuxt 3 Framework Conventions
-
+> Support tier: contract-verified
 > Framework-specific conventions for Vue 3 / Nuxt 3 projects. Language idioms are in `modules/languages/typescript.md`. Generic testing patterns are in `modules/testing/vitest.md`.
 
 ## Architecture

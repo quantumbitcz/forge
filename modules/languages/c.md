@@ -1,5 +1,5 @@
 # C Language Conventions
-
+> Support tier: contract-verified
 ## Memory Management
 
 - **Static allocation by default.** All buffers must be fixed-size and declared at file scope or as `static` locals. The allocator is the programmer — know your memory at compile time.

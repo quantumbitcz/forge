@@ -1,5 +1,5 @@
 # Swift Language Conventions
-
+> Support tier: contract-verified
 ## Type System
 
 - **Value types over reference types:** Use `struct` for data models by default — value semantics eliminate a class of sharing/mutation bugs.

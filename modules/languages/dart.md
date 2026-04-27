@@ -1,5 +1,5 @@
 # Dart Language Conventions
-
+> Support tier: contract-verified
 ## Type System
 
 - Dart has sound null safety (since Dart 2.12) — all types are non-nullable by default.

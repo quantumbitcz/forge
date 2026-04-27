@@ -1,5 +1,5 @@
 # Vitest Testing Conventions
-
+> Support tier: contract-verified
 ## Test Structure
 
 Use `describe` for grouping, `it` (or `test`) for individual cases. Mirror the source file structure — one test file per module. Co-locate unit tests next to source files (`*.test.ts`); place integration tests in `tests/`.

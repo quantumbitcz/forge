@@ -1,5 +1,5 @@
 # Laravel Framework Conventions
-
+> Support tier: contract-verified
 > Framework-specific conventions for Laravel 11.x projects. Language idioms are in `modules/languages/php.md`.
 > Generic testing patterns are in `modules/testing/phpunit.md`.
 > Composition stack: `variant > laravel/testing/phpunit.md > laravel/conventions.md > php.md > persistence/eloquent-binding > testing/phpunit.md`.

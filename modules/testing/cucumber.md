@@ -1,5 +1,5 @@
 # Cucumber / BDD Best Practices
-
+> Support tier: contract-verified
 ## Overview
 Cucumber is a BDD (Behavior-Driven Development) testing framework that lets you write tests in Gherkin (human-readable Given-When-Then syntax). Available for JVM (cucumber-jvm), JavaScript (cucumber-js), Python (behave/pytest-bdd), Ruby, and .NET (SpecFlow). Use it for acceptance testing where non-technical stakeholders participate in defining behavior. Avoid it for unit tests, performance tests, or when the Gherkin layer adds ceremony without stakeholder involvement.
 
