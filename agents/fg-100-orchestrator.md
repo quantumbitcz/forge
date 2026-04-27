@@ -290,6 +290,137 @@ At stage boundaries, emit: `cost-alerting.sh stage-report <stage> --forge-dir $F
 
 Autonomous mode: INFO/WARNING/CRITICAL handled silently (logged `[AUTO]`). EXCEEDED auto-selects "Downgrade model tiers".
 
+### Cost Governance (Phase 6) — USD-denominated
+
+**Applies to every `Agent(...)` dispatch.** Runs after `cost-alerting.sh check` and before context-guard.
+
+**Step 1 — Load budget snapshot:**
+
+```python
+cost_cfg = config.cost                            # from forge-config.md
+state_cost = state["cost"]                        # from state.json v2.0.0
+ceiling = cost_cfg["ceiling_usd"]
+spent = state_cost.get("spent_usd", state_cost.get("estimated_cost_usd", 0.0))
+remaining = max(0.0, ceiling - spent) if ceiling > 0 else float("inf")
+resolved_tier = model_routing.resolve(agent_name)
+tier_est = cost_cfg["tier_estimates_usd"][resolved_tier]
+```
+
+**Step 2 — Dynamic downgrade (if `cost.aware_routing: true`):**
+
+```python
+from shared.cost_governance import downgrade_tier, is_safety_critical
+
+new_tier, reason = downgrade_tier(
+    agent=agent_name,
+    resolved_tier=resolved_tier,
+    remaining_usd=remaining,
+    tier_estimates=cost_cfg["tier_estimates_usd"],
+    conservatism_multiplier=cost_cfg["conservatism_multiplier"],
+    pinned_agents=cost_cfg["pinned_agents"],
+    aware_routing=cost_cfg["aware_routing"],
+)
+if reason == "escalate_required":
+    # Fast-tier non-safety agent would be skipped -> escalate instead.
+    escalate_ceiling_breach(agent_name, new_tier, spent + tier_est)
+elif new_tier != resolved_tier:
+    state_cost["downgrades"].append({
+        "agent": agent_name, "from": resolved_tier, "to": new_tier,
+        "timestamp": now_iso(), "remaining_usd": round(remaining, 4),
+    })
+    state_cost["downgrade_count"] = len(state_cost["downgrades"])
+    resolved_tier = new_tier
+    tier_est = cost_cfg["tier_estimates_usd"][new_tier]
+```
+
+**Step 3 — Ceiling breach check (AC-603):**
+
+```python
+projected = spent + tier_est
+if ceiling > 0 and projected > ceiling:
+    escalate_ceiling_breach(agent_name, resolved_tier, projected)
+    # escalate may return a new tier, raise ceiling, or abort — see Step 4.
+    # On return, re-read state_cost and re-project.
+```
+
+**Step 4 — `escalate_ceiling_breach(agent, tier, projected)`:**
+
+| Mode | Action |
+|---|---|
+| `state.autonomous == false` | **AskUserQuestion** payload from `shared/ask-user-question-patterns.md` §8. Map user choice: `raise_ceiling` -> update `state.cost.ceiling_usd = ceiling * 1.4` rounded; `downgrade` -> call `cost-alerting.sh apply-downgrade` + mark `state.cost_alerting.routing_override`; `abort_to_ship` -> transition to SHIPPING via `forge-state.sh transition abort-to-ship`; `abort_full` -> transition to ABORTED. |
+| `state.autonomous == true` | **NEVER AskUserQuestion.** Auto-select (1) downgrade; if `downgrade_tier()` returns `no_downgrade` or `safety_pinned`, auto-select (2) abort-to-ship. Log `COST-ESCALATION-AUTO` INFO. |
+| Interactive timeout (300s per §Default Timeouts) | Default to `abort_to_ship`. Log `COST-ESCALATION-TIMEOUT`. |
+
+**Step 5 — Write incident (every escalation, both modes):**
+
+```python
+from shared.cost_governance import write_incident
+incident = {
+    "timestamp": now_iso(),
+    "ceiling_usd": ceiling,
+    "spent_usd": round(spent, 4),
+    "projected_usd": round(projected, 4),
+    "next_agent": agent_name,
+    "resolved_tier": resolved_tier,
+    "decision": decision,                # raise_ceiling | downgrade | abort_to_ship | abort_full | timeout
+    "autonomous": bool(state.get("autonomous", False)),
+    "run_id": state["run_id"],
+}
+if decision == "raise_ceiling":
+    incident["new_ceiling_usd"] = state_cost["ceiling_usd"]
+elif decision == "downgrade":
+    incident["downgrade_from"] = resolved_tier_before
+    incident["downgrade_to"] = resolved_tier
+write_incident(incident, Path(FORGE_DIR))
+state_cost["ceiling_breaches"] += 1
+```
+
+**Step 6 — Inject `## Cost Budget` block into the brief (AC-602):**
+
+```python
+from shared.cost_governance import compute_budget_block
+brief = (
+    static_system_prompt(agent_name)
+    + "\n"
+    + compute_budget_block(
+        ceiling_usd=ceiling, spent_usd=spent,
+        tier=resolved_tier, tier_estimate=tier_est,
+    )
+    + "\n"
+    + dynamic_task_content
+)
+```
+
+The block appears AFTER the static system prompt and BEFORE per-task dynamic content so prompt caching is preserved (see `shared/model-routing.md` §Prompt Caching Strategy).
+
+**Step 7 — Dispatch and record Phase-6 result keys:**
+
+```python
+result = Agent(subagent_type=agent_name, model=resolved_tier, prompt=brief)
+# After dispatch returns:
+otel.record_agent_result({
+    **result.otel_keys,
+    "budget_total_usd": ceiling,
+    "budget_remaining_usd": max(0.0, ceiling - (spent + actual_cost(result))),
+    "tier_estimate_usd": tier_est,
+    "tier_original": original_tier_before_downgrade,
+    "tier_used": resolved_tier,
+    "throttle_reason": throttle_reason_from_steps_2_3,
+})
+events.append({"type": "dispatch_complete", **result.otel_keys,
+               "budget_total_usd": ceiling, "tier_used": resolved_tier, ...})
+```
+
+**Step 8 — Post-dispatch warn-at threshold:**
+
+After recording, if `state.cost.pct_consumed >= cost.warn_at` and not already warned: log `[COST] INFO: crossed warn_at threshold ({pct}% of ${ceiling})` and set a one-time flag in `state.cost.warn_at_fired = true`.
+
+**Disabled-ceiling behavior (`cost.ceiling_usd: 0`, AC-614):**
+- `remaining` = infinity, Step 3 never fires.
+- Budget block renders "unlimited" via `compute_budget_block()`.
+- Downgrade check never trips.
+- No incidents written.
+
 ### Context Guard Integration
 
 Before each agent dispatch, estimate context size and check against the context guard:
