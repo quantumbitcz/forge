@@ -106,7 +106,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "1.10.0",
+  "version": "2.0.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
