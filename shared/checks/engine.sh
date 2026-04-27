@@ -116,6 +116,15 @@ _CURRENT_FILE=""
 
 # Append a JSON row to .forge/.hook-failures.jsonl (best-effort).
 # Schema mirrors shared/schemas/hook-failures.schema.json.
+#
+# POSIX guarantees atomic append for writes under PIPE_BUF (typically 4096
+# bytes), which is why we use a plain `>>` redirect instead of flock + lock-dir.
+# Each emitted line stays under that ceiling because stderr_excerpt is truncated
+# to 2048 bytes (see the `${4:0:2048}` cap below) and the JSON envelope adds
+# <= 256 bytes. Do NOT enlarge the 2048 cap beyond ~3500 without revisiting
+# locking — once a single line crosses PIPE_BUF, concurrent appends from
+# parallel hook invocations may interleave and corrupt the JSONL stream.
+# See shared/observability.md for the full POSIX-atomicity contract.
 _handle_failure() {
   # $1 hook_name, $2 matcher, $3 exit_code, $4 stderr_excerpt, $5 duration_ms
   local log_dir="${FORGE_DIR:-.forge}"
@@ -125,6 +134,7 @@ _handle_failure() {
   ts="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
   local cwd="${PWD//\"/\\\"}"
   # Truncate FIRST so escape sequences produced below are never chopped mid-character.
+  # NOTE: 2048-byte cap is a POSIX-atomicity guard — see header comment above.
   local stderr_ex="${4:0:2048}"
   stderr_ex="${stderr_ex//$'\n'/\\n}"
   stderr_ex="${stderr_ex//\"/\\\"}"
