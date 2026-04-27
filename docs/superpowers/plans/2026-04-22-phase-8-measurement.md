@@ -1312,7 +1312,7 @@ def test_parse_state_computes_partial_ac_pct(tmp_path: Path) -> None:
 
 Reuses tests.evals.pipeline.runner.executor primitives (tarball extract,
 plugin symlink) but:
-  - writes .forge/specs/index.json with AC-B* namespace before /forge-run
+  - writes .forge/specs/index.json with AC-B* namespace before /forge run (auto-bootstrap handles init)
   - writes .claude/forge.local.md with model_routing.overrides
   - parses state.intent_verification_results to build ac_breakdown
 """
@@ -1431,13 +1431,11 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
         timed_out = False
         error: str | None = None
         try:
-            subprocess.run(
-                ["claude", "code", "--non-interactive", "/forge-init"],
-                cwd=target, env=env, check=True, timeout=180,
-            )
+            # Auto-bootstrap (mega B) runs init implicitly when .claude/forge.local.md is missing,
+            # so no explicit /forge-init invocation is needed here.
             subprocess.run(
                 ["claude", "code", "--non-interactive",
-                 f"/forge-run --eval-mode {entry.entry_id}", entry.requirement],
+                 "/forge", "run", f"--eval-mode={entry.entry_id}", entry.requirement],
                 cwd=target, env=env, check=True, timeout=timeout,
             )
         except subprocess.TimeoutExpired:

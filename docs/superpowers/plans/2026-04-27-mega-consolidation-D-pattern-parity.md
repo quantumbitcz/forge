@@ -62,7 +62,7 @@
 
 **Lightly modified:**
 
-- `agents/fg-301-implementer-critic.md` (D8) — small note to defer to fg-300's TEST-NOT-FAILING finding rather than re-flagging.
+- `agents/fg-301-implementer-judge.md` (D8) — small note to defer to fg-300's TEST-NOT-FAILING finding rather than re-flagging.
 
 ---
 
@@ -2621,7 +2621,7 @@
 
 **Files:**
 - Modify: `agents/fg-300-implementer.md` (test-must-fail-first check)
-- Modify: `agents/fg-301-implementer-critic.md` (defer to fg-300's TEST-NOT-FAILING finding)
+- Modify: `agents/fg-301-implementer-judge.md` (defer to fg-300's TEST-NOT-FAILING finding)
 - Modify: `agents/fg-590-pre-ship-verifier.md` (evidence assertion structural test)
 - Modify: `agents/fg-100-orchestrator.md` (parallel + checkpoint structural assertions)
 - Modify: `agents/fg-101-worktree-manager.md` (stale-worktree detection)
@@ -2846,7 +2846,7 @@
    re-flagging it.
    ```
 
-7. - [ ] **Step 7: Update `agents/fg-301-implementer-critic.md` to defer**
+7. - [ ] **Step 7: Update `agents/fg-301-implementer-judge.md` to defer**
 
    Append (one-line note):
 

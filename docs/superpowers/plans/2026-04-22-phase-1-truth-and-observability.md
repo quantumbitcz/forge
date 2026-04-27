@@ -1940,7 +1940,11 @@
 - Test: `tests/hooks/engine-failure-log.bats` (already covers engine.sh; re-verify)
 
 1. - [ ] **Step 1: Rewrite failure emission in `shared/checks/engine.sh`**
-   Replace the existing append block around lines 91–120 with an emitter that matches the JSONL schema. Use this `handle_failure` helper (place near the top of the script's function section, replacing any existing `handle_failure` and the literal `.hook-failures.log` references on lines 91, 112, 120):
+   Replace the legacy text emitter with a JSONL emitter matching the schema. `grep -n '\.hook-failures\.log' shared/checks/engine.sh` lists every locator (currently three pre-existing references — the early-exit append in the bash<4 guard, the `handle_failure` doc-comment, and the `handle_failure` body). Workflow:
+   1. Delete the entire existing `handle_failure() { ... }` definition (block runs from `# Log hook failures to .forge/.hook-failures.log for observability.` through the matching closing brace `}` before the `# shellcheck disable=SC2329` line).
+   2. Replace the bash<4 guard's inline append (`>> "${_log_dir}/.hook-failures.log" 2>/dev/null || true`) with a call to the new helper: `_handle_failure "engine.sh" "Edit|Write" 0 "skip:bash_version_${BASH_VERSION}" 0`.
+   3. Insert the helper below near the top of the script's function section.
+   4. Re-run `grep -n '\.hook-failures\.log' shared/checks/engine.sh` and confirm zero hits.
    ```bash
    # Append a JSON row to .forge/.hook-failures.jsonl (best-effort).
    # Schema mirrors shared/schemas/hook-failures.schema.json.
@@ -1961,10 +1965,10 @@
        >> "$log_file" 2>/dev/null || true
    }
    ```
-   Then update every call site inside `engine.sh` (previously `>> "${_log_dir}/.hook-failures.log"`) to call `_handle_failure "engine.sh" "Edit|Write" <exit> "<err>" <ms>`. Delete the now-unused direct append.
+   For any other call sites that emerge in `engine.sh` (e.g. additional appenders added by other plans landing earlier), grep for `\.hook-failures\.log` and rewrite each into a `_handle_failure "engine.sh" "Edit|Write" <exit> "<err>" <ms>` call. Delete the now-unused direct append.
 
 2. - [ ] **Step 2: Apply the same rewrite to `shared/checks/l0-syntax/validate-syntax.sh`**
-   Replace the two references at lines 32 and 37 with a call to `_handle_failure "validate-syntax.sh" "PreToolUse" <exit> "<err>" <ms>` using the same helper (inlined — don't try to share between scripts; bash sourcing adds risk). Keep message formatting minimal; duration can be `0` if not tracked.
+   Replace the existing `_log_failure() { ... }` helper (anchor: starts at the comment `# Logs to .forge/.hook-failures.log for observability (best-effort, never fails).` and ends at its closing `}`) with an inlined copy of `_handle_failure` that emits to `.forge/.hook-failures.jsonl`. Update every call site that previously invoked `_log_failure` to call `_handle_failure "validate-syntax.sh" "PreToolUse" <exit> "<err>" <ms>` (duration may be `0` if not tracked). Don't `source` engine.sh — keep the helper inlined to avoid hook startup cost. Re-run `grep -n '\.hook-failures\.log' shared/checks/l0-syntax/validate-syntax.sh` and confirm zero hits.
 
 3. - [ ] **Step 3: Push and verify in CI**
    Push. `Tests` → `test` `tier=hooks` green on ubuntu/macos. Windows structural leg confirms the new `.jsonl` filename parses.
@@ -1982,9 +1986,11 @@
 ### Task 17: Docs: rename `.hook-failures.log` → `.jsonl` across the tree
 
 **Files:**
-- Modify: `agents/fg-100-orchestrator.md` (L1245), `agents/fg-505-build-verifier.md` (L39, L55, L140), `shared/logging-rules.md` (L47), `shared/state-schema-fields.md` (L693), `skills/forge-status/SKILL.md` (L91–97), `shared/hook-design.md` (L72, L85, L96 + new §Failure logging), `README.md` (L261)
+- Modify: `agents/fg-100-orchestrator.md`, `agents/fg-505-build-verifier.md`, `shared/logging-rules.md`, `shared/state-schema-fields.md`, `skills/forge-status/SKILL.md`, `shared/hook-design.md` (incl. new §Failure logging), `README.md`
 - Create: `tests/structural/no-hook-failures-log.bats`
 - Test: `tests/structural/no-hook-failures-log.bats`
+
+> **Locator policy.** Use text anchors (literal "before:" snippets) instead of line numbers. Other plans in this train may shift line offsets — `grep -n '\.hook-failures\.log' <file>` is the source of truth. After every edit re-run grep on the file to confirm zero remaining hits unless explicitly preserved.
 
 1. - [ ] **Step 1: Write the grep structural test**
    `tests/structural/no-hook-failures-log.bats`:
@@ -2010,13 +2016,102 @@
    ```
 
 2. - [ ] **Step 2: Update each markdown reference**
-   - `agents/fg-100-orchestrator.md:1245` — change `.hook-failures.log` → `.hook-failures.jsonl`.
-   - `agents/fg-505-build-verifier.md:39` — same.
-   - `agents/fg-505-build-verifier.md:55` — change the parsing instructions: "Read `.forge/.hook-failures.jsonl`. Each line is a JSON object with keys `schema`, `ts`, `hook_name`, `matcher`, `exit_code`, `stderr_excerpt`, `duration_ms`, `cwd`. Parse via `jq` or `python -c`."
-   - `agents/fg-505-build-verifier.md:140` — `count from .forge/.hook-failures.jsonl` (unchanged semantics; wc -l still works).
-   - `shared/logging-rules.md:47` — filename update.
-   - `shared/state-schema-fields.md:693` — filename update; note same semantics.
-   - `skills/forge-status/SKILL.md` §Hook Health — rewrite lines 91–97:
+
+   Workflow per file: `grep -n '\.hook-failures\.log' <file>` to find current locations, apply the anchored Edits below, then re-grep to confirm zero remaining hits.
+
+   - **`agents/fg-100-orchestrator.md`** — single occurrence inside the `### SS5.1 Phase A — Build & Lint` section. Anchor:
+
+     before:
+     ```
+     Read `.forge/.hook-failures.log` and `.forge/.check-engine-skipped`.
+     ```
+     after:
+     ```
+     Read `.forge/.hook-failures.jsonl` and `.forge/.check-engine-skipped`.
+     ```
+
+   - **`agents/fg-505-build-verifier.md`** — three occurrences. Apply each anchored Edit:
+
+     (a) §`## 2. Context Budget` paragraph:
+
+     before:
+     ```
+     Read only: dispatch prompt, error output, error-referenced source files (targeted), `.forge/.hook-failures.log`. Output under 1,500 tokens.
+     ```
+     after:
+     ```
+     Read only: dispatch prompt, error output, error-referenced source files (targeted), `.forge/.hook-failures.jsonl`. Output under 1,500 tokens.
+     ```
+
+     (b) §`### Step 0: Check Hook Failure Log` block — replace the whole 5-line block (parsing semantics change, not just the filename):
+
+     before:
+     ```
+     ### Step 0: Check Hook Failure Log
+
+     Read `.forge/.hook-failures.log`. If it exists and is non-empty:
+     - Count the entries
+     - Include the count in your output: `"Hook failures during implementation: {N}"`
+     - This is informational -- it does not block verification
+     ```
+     after:
+     ```
+     ### Step 0: Check Hook Failure Log
+
+     Read `.forge/.hook-failures.jsonl`. Each line is a JSON object with keys `schema`, `ts`, `hook_name`, `matcher`, `exit_code`, `stderr_excerpt`, `duration_ms`, `cwd`. Parse via `jq` or `python -c`. If it exists and is non-empty:
+     - Count the entries (one row per line — `wc -l` still works)
+     - Include the count in your output: `"Hook failures during implementation: {N}"`
+     - This is informational -- it does not block verification
+     ```
+
+     (c) `hook_failures` field definition under §`## 6. Output Format`:
+
+     before:
+     ```
+     - `hook_failures`: count from `.forge/.hook-failures.log` (0 if file absent/empty)
+     ```
+     after:
+     ```
+     - `hook_failures`: count from `.forge/.hook-failures.jsonl` (0 if file absent/empty)
+     ```
+
+   - **`shared/logging-rules.md`** — single occurrence in the agent-tier table:
+
+     before:
+     ```
+     | Hook scripts | `.forge/.hook-failures.log` | Persistent, surfaced by forge-status |
+     ```
+     after:
+     ```
+     | Hook scripts | `.forge/.hook-failures.jsonl` | Persistent, surfaced by forge-status |
+     ```
+
+   - **`shared/state-schema-fields.md`** — single occurrence in §Migration Safety bullet:
+
+     before:
+     ```
+     - Migration is logged to `.forge/.hook-failures.log` with reason `state_migration:{from}->{to}`.
+     ```
+     after:
+     ```
+     - Migration is logged to `.forge/.hook-failures.jsonl` with reason `state_migration:{from}->{to}` (one JSON row per migration event).
+     ```
+
+   - **`skills/forge-status/SKILL.md`** §`### Hook Health` — block replacement (parsing recipes change to `jq`):
+
+     before:
+     ```
+     ### Hook Health
+
+     If `.forge/.hook-failures.log` exists and is non-empty:
+     1. Count total failure entries: `wc -l < .forge/.hook-failures.log`
+     2. Count unique failure types: `awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}' .forge/.hook-failures.log | sort -u | wc -l`
+     3. Show last 3 failures with timestamps
+     4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
+
+     If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy (no failures logged)"
+     ```
+     after:
      ```
      ### Hook Health
 
@@ -2028,13 +2123,56 @@
 
      If `.forge/.hook-failures.jsonl` does not exist or is empty: show "Hooks: healthy (no failures logged)"
      ```
-   - `README.md:261` — troubleshooting row updated to `.forge/.hook-failures.jsonl`.
+
+   - **`README.md`** — single occurrence in the troubleshooting table:
+
+     before:
+     ```
+     | Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
+     ```
+     after:
+     ```
+     | Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.jsonl` |
+     ```
 
 3. - [ ] **Step 3: Rewrite `shared/hook-design.md` §Timeout Behavior, §Script Contract 5, §Failure Behavior table, add §Failure logging**
-   - L72: `Timeout events are logged to .forge/.hook-failures.jsonl.`
-   - L85 rule 5: change to `... appends a JSON line to .forge/.hook-failures.jsonl and exits 0. ...`
-   - L96 table row: `Logged to .forge/.hook-failures.jsonl. No retry.`
-   - Append a new section above §Adding New Hooks:
+
+   Use anchored Edits (line numbers in earlier drafts of this plan are advisory only). `grep -n '\.hook-failures\.log' shared/hook-design.md` reveals all current occurrences.
+
+   (a) §Timeout Behavior trailing bullet:
+
+   before:
+   ```
+   - Timeout events are logged to `.forge/.hook-failures.log`.
+   ```
+   after:
+   ```
+   - Timeout events are logged to `.forge/.hook-failures.jsonl`.
+   ```
+
+   (b) §Script Contract rule 5:
+
+   before:
+   ```
+   5. **Never crash**: Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a diagnostic line to `.forge/.hook-failures.log` and exits `0`. A crashing hook must not break the user's session. The only intentional non-zero exit is a deliberate PreToolUse block (exit 2).
+   ```
+   after:
+   ```
+   5. **Never crash**: Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a JSON line to `.forge/.hook-failures.jsonl` and exits `0`. A crashing hook must not break the user's session. The only intentional non-zero exit is a deliberate PreToolUse block (exit 2).
+   ```
+
+   (c) §Failure Behavior table — PostToolUse non-zero row:
+
+   before:
+   ```
+   | PostToolUse | Exit non-zero | Logged to `.forge/.hook-failures.log`. No retry. |
+   ```
+   after:
+   ```
+   | PostToolUse | Exit non-zero | Logged to `.forge/.hook-failures.jsonl`. No retry. |
+   ```
+
+   (d) Append a new section immediately before the `## Adding New Hooks` heading:
      ```
      ## Failure logging
 

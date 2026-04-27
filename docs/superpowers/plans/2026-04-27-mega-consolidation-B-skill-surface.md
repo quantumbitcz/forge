@@ -871,7 +871,11 @@ Refs spec §1, AC-S001 (2/3), AC-S002, AC-S013, AC-S014."
 
 **Risk:** low — additive rewrite; the existing default-action behavior (codebase Q&A) is preserved as the bare-args path. New subcommands just route to other agents/scripts.
 
-**ACs covered:** AC-S001 (one of three, edited in place), AC-S002 (frontmatter), AC-S011 (subcommand dispatch), AC-S012 (read-only contract).
+**ACs covered:** AC-S001 (one of three, edited in place), AC-S002 (frontmatter), AC-S011 (subcommand dispatch), AC-S012 (read-only contract), AC-S011-LIVE (status subcommand reproduces the `--- live ---` separator behavior introduced by Phase 1 Task 24 — see Step 3.5 below).
+
+**Phase 1 coordination note:** Phase 1 Task 24 (plan: `docs/superpowers/plans/2026-04-22-phase-1-truth-and-observability.md`) added a `### Live progress` section to `skills/forge-status/SKILL.md`. B12 deletes that file. This task MUST absorb the Live progress section verbatim into the `status` subcommand body so the `--- live ---` separator behavior survives the deletion. See Step 3.5.
+
+**Acceptance criterion (explicit):** After this task ships, `/forge ask status` (the new B3 status subcommand surface) reproduces the `--- live ---` separator behavior introduced by Phase 1 Task 24 — same data sources (`.forge/progress/status.json`, `.forge/run-history-trends.json`), same elapsed/timeout printout, same hung-run detection, same fallback message.
 
 ### Implementer mini-prompt
 
@@ -997,7 +1001,7 @@ Codebase Q&A. (Body identical to the existing skills/forge-ask/SKILL.md before t
 
 Current pipeline run state. Read `.forge/state.json` and present stage, score, convergence phase, integrations, and background run progress.
 
-(Body identical to old skills/forge-status/SKILL.md.)
+(Body identical to old skills/forge-status/SKILL.md, INCLUDING the `### Live progress` section absorbed from Phase 1 Task 24 — see Step 3.5 below for the canonical block.)
 
 ### Subcommand: history
 
@@ -1045,13 +1049,52 @@ Per-stage timing and cost breakdown. Optional `<run-id>` (default: most recent r
 
 For each `### Subcommand:` section currently marked "(Body identical to old …)", copy the corresponding content from the source skill into this file. Sources:
 - `ask` → existing `skills/forge-ask/SKILL.md` body before this rewrite (lines 38-145 of the original)
-- `status` → `skills/forge-status/SKILL.md`
+- `status` → `skills/forge-status/SKILL.md` **including the `### Live progress` section appended by Phase 1 Task 24** (do NOT skip — see Step 3.5 for the verbatim block to confirm the absorbed content matches)
 - `history` → `skills/forge-history/SKILL.md`
 - `insights` → `skills/forge-insights/SKILL.md`
 - `profile` → `skills/forge-profile/SKILL.md`
 - `tour` → `skills/forge-tour/SKILL.md`
 
 After expansion, file will be ~800-1100 lines.
+
+- [ ] **Step 3.5: Confirm Phase 1 Task 24 `--- live ---` block is present in the `status` subcommand**
+
+Phase 1 Task 24 added a `### Live progress` section to `skills/forge-status/SKILL.md`. B12 deletes that source file. Copying only the pre-Phase-1 body would silently regress the `--- live ---` separator behavior. After Step 3, verify the absorbed `status` subcommand body contains the following block **verbatim** (modulo the `### Live progress` heading level — keep it as a `####` subheading inside `### Subcommand: status` to match the surrounding nesting):
+
+```markdown
+<!-- absorbed from Phase 1 Task 24 (skills/forge-status/SKILL.md §Live progress) -->
+#### Live progress
+
+After the primary status output, print a `--- live ---` separator and
+render data from `.forge/progress/status.json` and
+`.forge/run-history-trends.json` (both optional):
+
+If `.forge/progress/status.json` exists:
+1. Parse via `python3 -c "import json; print(json.load(open('.forge/progress/status.json')))"`.
+2. Print: `Stage: {stage}  Agent: {agent_active or 'idle'}`.
+3. Print elapsed vs timeout: `{elapsed_ms_in_stage}ms / {timeout_ms}ms`.
+4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-recover diagnose."
+
+If `.forge/run-history-trends.json` exists:
+1. Print last 5 runs as a table: run_id, verdict, score, duration_s.
+2. Print count of `recent_hook_failures`.
+
+If neither file exists: print "No live data (run has not completed a
+subagent dispatch yet)."
+```
+
+Update the `/forge-recover diagnose` reference to `/forge-admin recover diagnose` if and only if the surrounding doc has already been rewired by B5-B10 at the time this step lands. If the rewire has not happened yet, leave the original `/forge-recover diagnose` text — B5-B10 will sweep it via the canonical mapping table at the top of this plan.
+
+Verify with:
+
+```bash
+grep -c '^#### Live progress$' /Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md
+grep -c -- '--- live ---' /Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md
+grep -c '\.forge/progress/status\.json' /Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md
+grep -c '\.forge/run-history-trends\.json' /Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md
+```
+
+Each must return `>= 1`. If any return `0`, the Phase 1 Task 24 work has been dropped — fix before proceeding to Step 4.
 
 - [ ] **Step 4: Verify subcommand sections present**
 

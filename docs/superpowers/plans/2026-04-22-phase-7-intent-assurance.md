@@ -1333,6 +1333,260 @@ def test_vote_subworktree_lifecycle_documented():
 
 ---
 
+## Task 12b — `_read_acs` prefers `state.brainstorm.spec_path` (Mega-spec §14 coordination)
+
+**Why.** The mega-consolidation spec (`docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §14, item 3) commits Phase 7 to a coordination contract: when BRAINSTORMING runs, `fg-010-shaper` writes a spec to disk and stores its path in `state.brainstorm.spec_path`. `fg-540-intent-verifier` MUST read ACs from that file when present, otherwise fall back to `.forge/specs/index.json` (today's source). Without this task fg-540 would consume stale AC sets the moment Mega lands alongside Phase 7 — bugfix/migration/bootstrap modes have no brainstorm spec and must continue to read from `index.json`. This task wires the precedence into `_read_acs` (referenced from Task 9's pseudocode and Task 10's `intent_context.py`) and pins the contract in `agents/fg-540-intent-verifier.md` so the agent's prompt advertises the ordering.
+
+**Files to edit.**
+
+- `hooks/_py/handoff/intent_context.py` — add `_read_acs(state)` that resolves the AC source and parses `AC-NNN` IDs from the spec.
+- `agents/fg-540-intent-verifier.md` — extend §2 (Input) to document `ac_list` source precedence; extend §4 (Execution Steps) step 1 to note that ACs are pre-resolved by the orchestrator before dispatch.
+
+**Content — `hooks/_py/handoff/intent_context.py` (extend; do not replace the Task-10 module):**
+
+```python
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+# Already defined in Task 10:
+#   ALLOWED_KEYS, IntentContextLeak, build_intent_verifier_context, _deep_leak_check
+
+_AC_HEADING_RE = re.compile(r"^\s*[-*]?\s*\*?\*?(AC-\d{3,})\*?\*?[:\.\)\s-]+(.+?)\s*$")
+
+
+def _read_acs(state: dict[str, Any]) -> list[dict[str, Any]]:
+    """Resolve the canonical AC list for this run.
+
+    Precedence (Mega-spec §14):
+      1. ``state["brainstorm"]["spec_path"]`` — when present AND the file
+         exists, parse AC-NNN bullets from the spec and return that list.
+         This is the canonical source whenever BRAINSTORMING ran.
+      2. ``.forge/specs/index.json`` keyed by ``state["active_spec_slug"]``
+         — fallback for bugfix/migration/bootstrap modes (no brainstorm
+         spec) and for runs predating the Mega rollout.
+
+    Returns ``[]`` when neither source yields ACs (caller decides whether
+    to emit ``INTENT-NO-ACS``).
+    """
+    brainstorm = state.get("brainstorm") or {}
+    spec_path = brainstorm.get("spec_path")
+    if spec_path:
+        p = Path(spec_path)
+        if p.exists() and p.is_file():
+            acs = _parse_acs_from_spec(p.read_text())
+            if acs:
+                return acs
+
+    return _read_acs_from_index(state.get("active_spec_slug"))
+
+
+def _parse_acs_from_spec(spec_text: str) -> list[dict[str, Any]]:
+    """Extract AC-NNN bullets from a brainstorm spec markdown body.
+
+    Format: any line of the form ``- AC-NNN: text`` or ``- **AC-NNN**: text``
+    or ``* AC-NNN. text`` is treated as an acceptance criterion. AC IDs
+    follow the existing ``AC-NNN`` convention (3+ digits).
+    """
+    acs: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for line in spec_text.splitlines():
+        m = _AC_HEADING_RE.match(line)
+        if not m:
+            continue
+        ac_id, text = m.group(1), m.group(2).strip()
+        if ac_id in seen:
+            continue
+        seen.add(ac_id)
+        acs.append({"ac_id": ac_id, "text": text})
+    return acs
+
+
+def _read_acs_from_index(slug: str | None) -> list[dict[str, Any]]:
+    """Fallback: read ACs from .forge/specs/index.json by slug."""
+    if not slug:
+        return []
+    index = Path(".forge/specs/index.json")
+    if not index.exists():
+        return []
+    try:
+        data = json.loads(index.read_text())
+    except json.JSONDecodeError:
+        return []
+    spec = (data.get("specs") or {}).get(slug) or {}
+    raw = spec.get("acceptance_criteria") or []
+    out: list[dict[str, Any]] = []
+    for entry in raw:
+        if isinstance(entry, dict) and "ac_id" in entry:
+            out.append({"ac_id": entry["ac_id"], "text": entry.get("text", "")})
+    return out
+```
+
+**Update `build_intent_verifier_context` to use `_read_acs`:** the Task 9 pseudocode already calls `_read_acs(state["active_spec_slug"])`. Replace that call site with `_read_acs(state)` (pass the full state dict so the helper can inspect both `brainstorm.spec_path` and `active_spec_slug`). The Task 10 module body becomes:
+
+```python
+def build_intent_verifier_context(full_state_snapshot: dict[str, Any]) -> dict[str, Any]:
+    built = {k: full_state_snapshot.get(k) for k in ALLOWED_KEYS}
+    # Resolve the canonical AC list (brainstorm spec wins; index.json fallback).
+    built["ac_list"] = _read_acs(full_state_snapshot)
+    _deep_leak_check(built)
+    return built
+```
+
+**Content — `agents/fg-540-intent-verifier.md` (edit §2 Input, replace the `ac_list` bullet):**
+
+```markdown
+- `ac_list` — `[{ac_id, text, given_when_then?}]`. Pre-resolved by the
+  orchestrator from one of two canonical sources, in this precedence:
+  1. `state.brainstorm.spec_path` when present AND the file exists — the
+     brainstorm spec is the canonical AC source for runs that traversed
+     BRAINSTORMING (Mega-spec §3, §14).
+  2. `.forge/specs/index.json` keyed by `active_spec_slug` — fallback for
+     bugfix/migration/bootstrap modes and for legacy runs.
+  AC IDs follow the existing `AC-NNN` convention. The verifier never reads
+  either source itself; it only consumes the resolved list.
+```
+
+**Content — `agents/fg-540-intent-verifier.md` (edit §4 Execution Steps, step 1 — replace the existing line):**
+
+```markdown
+1. Parse `ac_list` (already resolved by the orchestrator per §2 precedence).
+   If empty, emit one `INTENT-NO-ACS` WARNING and exit.
+```
+
+**Test (TDD — write first).** `tests/unit/test_read_acs_precedence.py` (NEW):
+
+```python
+import json
+from pathlib import Path
+
+import pytest
+
+from hooks._py.handoff.intent_context import _read_acs, build_intent_verifier_context
+
+
+def test_brainstorm_spec_path_wins_when_present(tmp_path, monkeypatch):
+    spec = tmp_path / "spec.md"
+    spec.write_text(
+        "# Feature spec\n\n"
+        "## Acceptance criteria\n\n"
+        "- AC-001: list users returns 200\n"
+        "- **AC-002**: empty list returns []\n"
+        "- AC-003. pagination respects ?limit=\n"
+    )
+    monkeypatch.chdir(tmp_path)
+    state = {
+        "brainstorm": {"spec_path": str(spec)},
+        "active_spec_slug": "users-api",  # would normally hit index.json
+    }
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-001", "AC-002", "AC-003"]
+    assert acs[0]["text"].startswith("list users")
+
+
+def test_falls_back_to_index_when_spec_path_missing(tmp_path, monkeypatch):
+    forge = tmp_path / ".forge" / "specs"
+    forge.mkdir(parents=True)
+    (forge / "index.json").write_text(json.dumps({
+        "specs": {
+            "users-api": {
+                "acceptance_criteria": [
+                    {"ac_id": "AC-101", "text": "from index"},
+                    {"ac_id": "AC-102", "text": "also from index"},
+                ]
+            }
+        }
+    }))
+    monkeypatch.chdir(tmp_path)
+    state = {
+        "brainstorm": {"spec_path": None},  # null is safe
+        "active_spec_slug": "users-api",
+    }
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-101", "AC-102"]
+
+
+def test_falls_back_when_brainstorm_key_absent(tmp_path, monkeypatch):
+    forge = tmp_path / ".forge" / "specs"
+    forge.mkdir(parents=True)
+    (forge / "index.json").write_text(json.dumps({
+        "specs": {"slug-x": {"acceptance_criteria": [{"ac_id": "AC-500", "text": "fallback"}]}}
+    }))
+    monkeypatch.chdir(tmp_path)
+    # No "brainstorm" key at all — bugfix mode, never brainstormed.
+    state = {"active_spec_slug": "slug-x"}
+    acs = _read_acs(state)
+    assert acs == [{"ac_id": "AC-500", "text": "fallback"}]
+
+
+def test_falls_back_when_spec_path_file_missing(tmp_path, monkeypatch):
+    forge = tmp_path / ".forge" / "specs"
+    forge.mkdir(parents=True)
+    (forge / "index.json").write_text(json.dumps({
+        "specs": {"slug-y": {"acceptance_criteria": [{"ac_id": "AC-700", "text": "ok"}]}}
+    }))
+    monkeypatch.chdir(tmp_path)
+    state = {
+        "brainstorm": {"spec_path": str(tmp_path / "does-not-exist.md")},
+        "active_spec_slug": "slug-y",
+    }
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-700"]
+
+
+def test_returns_empty_when_neither_source_resolves(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # no spec, no index.json
+    assert _read_acs({}) == []
+    assert _read_acs({"brainstorm": None, "active_spec_slug": None}) == []
+
+
+def test_brainstorm_with_no_acs_in_spec_falls_back_to_index(tmp_path, monkeypatch):
+    """Spec exists but contains no AC bullets — fall back rather than empty."""
+    spec = tmp_path / "empty-spec.md"
+    spec.write_text("# Spec with no ACs yet\n\n## Goals\n- ship it\n")
+    forge = tmp_path / ".forge" / "specs"
+    forge.mkdir(parents=True)
+    (forge / "index.json").write_text(json.dumps({
+        "specs": {"slug-z": {"acceptance_criteria": [{"ac_id": "AC-900", "text": "from index"}]}}
+    }))
+    monkeypatch.chdir(tmp_path)
+    state = {"brainstorm": {"spec_path": str(spec)}, "active_spec_slug": "slug-z"}
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-900"]
+
+
+def test_build_context_uses_brainstorm_spec(tmp_path, monkeypatch):
+    """Surface test: full build_intent_verifier_context honors precedence."""
+    spec = tmp_path / "spec.md"
+    spec.write_text("- AC-001: works\n")
+    monkeypatch.chdir(tmp_path)
+    snapshot = {
+        "requirement_text": "do the thing",
+        "brainstorm": {"spec_path": str(spec)},
+        "active_spec_slug": "should-be-ignored",
+        "runtime_config": {"api_base_url": "http://localhost"},
+        "probe_sandbox": "<handle>",
+        "mode": "standard",
+    }
+    built = build_intent_verifier_context(snapshot)
+    assert [a["ac_id"] for a in built["ac_list"]] == ["AC-001"]
+```
+
+**AC mapped:** Mega-spec §14 item 3 (Phase 7 ↔ BRAINSTORMING coordination). No new Phase 7 AC; this task closes a coordination gap that would otherwise let `fg-540` read stale ACs once Mega ships.
+
+**Step: Push and verify in CI.** Push to `feat/phase-7-intent-assurance`. CI runs `pytest tests/unit/test_read_acs_precedence.py` plus the existing `tests/contract/test_intent_context_exclusion.py` (Task 10) to confirm the precedence change does not break the Layer-1 leak invariants. No local pytest run.
+
+**Step: Commit.** Conventional-commit message:
+
+```
+feat(phase-7): fg-540 reads ACs from state.brainstorm.spec_path with index.json fallback
+```
+
+Slot this commit into the existing strategy as part of commit 2 (`feat(intent): fg-540-intent-verifier agent + probe sandbox` — Tasks 5-12) since it lives in the same module (`hooks/_py/handoff/intent_context.py`) and the same agent file (`agents/fg-540-intent-verifier.md`) as Tasks 7 and 10.
+
+---
+
 ## Task 13 — Write `agents/fg-302-diff-judge.md`
 
 **Files to create.**
