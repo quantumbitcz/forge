@@ -6,7 +6,7 @@
   "required": ["finding_id", "dedup_key", "reviewer", "severity", "category", "message", "confidence", "created_at", "seen_by"],
   "properties": {
     "finding_id": { "type": "string", "pattern": "^f-[a-z0-9-]+-[0-9A-HJKMNP-TV-Z]{10,}$" },
-    "dedup_key": { "type": "string", "pattern": "^[^:]+:[^:]+:[A-Z][A-Z0-9-]*$" },
+    "dedup_key": { "type": "string", "pattern": "^([^:]+:)?[^:]+:[^:]+:[A-Z][A-Z0-9-]*$" },
     "reviewer": { "type": "string" },
     "severity": { "enum": ["CRITICAL", "WARNING", "INFO"] },
     "category": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },

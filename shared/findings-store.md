@@ -12,7 +12,14 @@ See `shared/checks/findings-schema.json`. Required fields: `finding_id`, `dedup_
 
 ## 3. Dedup key grammar
 
-`<relative-path|"-">:<line|"-">:<CATEGORY-CODE>`. Paths normalized via `pathlib.PurePosixPath` for cross-OS determinism. `file == null` → `-`. `line == null` → `-`.
+Two forms are accepted by the schema:
+
+- **3-part (single-component projects):** `<relative-path|"-">:<line|"-">:<CATEGORY-CODE>`.
+- **4-part (monorepos):** `<component>:<relative-path|"-">:<line|"-">:<CATEGORY-CODE>`.
+
+Paths normalized via `pathlib.PurePosixPath` for cross-OS determinism. `file == null` → `-`. `line == null` → `-`. The optional leading `<component>:` segment matches the `(component, file, line, category)` aggregation tuple referenced by §scoring.md and is required when a single workspace hosts multiple isolated components — without it, identical findings from different components in the same monorepo would collapse into one.
+
+Writers within a single project MUST use one form consistently. Cross-component reduction at Stage 6 keys off `dedup_key` verbatim, so mixing forms within the same `findings/` directory is undefined behaviour.
 
 ## 4. Read-then-write protocol
 
