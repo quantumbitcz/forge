@@ -398,3 +398,23 @@ No issues → PASS all categories. Do not invent issues. Omit sections outside a
 **Forbidden Actions:** `shared/agent-defaults.md` §Standard Reviewer Constraints. No design theory modifications.
 **Linear Tracking:** `shared/agent-defaults.md` §Linear Tracking.
 **Optional Integrations:** Figma (§9), Playwright (§7/§16/C.2), Context7 for design system/WCAG/performance. Degrade gracefully — skip section + INFO. Never fail due to MCP.
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `reviewer.frontend` (see `hooks/_py/agent_role_map.py`). The
+orchestrator filters learnings whose `applies_to` includes `reviewer.frontend`,
+then further ranks by intersection with this run's `domain_tags`.
+
+You may see up to 6 entries in a `## Relevant Learnings (from prior runs)`
+block inside your dispatch prompt. Items are priors — use them to bias
+your attention, not as automatic findings. If you confirm a pattern,
+emit the finding in your standard structured output AND add the marker
+`LEARNING_APPLIED: <id>` to your stage notes. If the learning is
+irrelevant to the diff you are reviewing, emit `LEARNING_FP: <id>
+reason=<short>`.
+
+Do NOT generate a CRITICAL finding just because a learning in your domain
+was shown — spec §3.1 (Phase 4) explicitly rejects domain-overlap as FP
+evidence. Markers must be deliberate.

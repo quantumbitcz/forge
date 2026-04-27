@@ -166,3 +166,23 @@ See `shared/agent-defaults.md` for full constraints. Critical constraints inline
 **Forbidden Actions, Linear Tracking, Optional Integrations:** Follow `shared/agent-defaults.md` §Standard Reviewer Constraints, §Linear Tracking, §Optional Integrations.
 
 **Context7 Cache:** If the dispatch prompt includes a Context7 cache path, read `.forge/context7-cache.json` first. Use cached library IDs for `query-docs` calls. Fall back to live `resolve-library-id` if a library is not in the cache or `resolved: false`. Never fail if the cache is missing or stale.
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `reviewer.code` (see `hooks/_py/agent_role_map.py`). The
+orchestrator filters learnings whose `applies_to` includes `reviewer.code`,
+then further ranks by intersection with this run's `domain_tags`.
+
+You may see up to 6 entries in a `## Relevant Learnings (from prior runs)`
+block inside your dispatch prompt. Items are priors — use them to bias
+your attention, not as automatic findings. If you confirm a pattern,
+emit the finding in your standard structured output AND add the marker
+`LEARNING_APPLIED: <id>` to your stage notes. If the learning is
+irrelevant to the diff you are reviewing, emit `LEARNING_FP: <id>
+reason=<short>`.
+
+Do NOT generate a CRITICAL finding just because a learning in your domain
+was shown — spec §3.1 (Phase 4) explicitly rejects domain-overlap as FP
+evidence. Markers must be deliberate.

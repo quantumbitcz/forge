@@ -155,3 +155,23 @@ Then provide a summary with PASS/FAIL per category (Security, Reliability, Scala
 See `shared/reviewer-boundaries.md` for ownership boundaries.
 
 Per `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `reviewer.infra` (see `hooks/_py/agent_role_map.py`). The
+orchestrator filters learnings whose `applies_to` includes `reviewer.infra`,
+then further ranks by intersection with this run's `domain_tags`.
+
+You may see up to 6 entries in a `## Relevant Learnings (from prior runs)`
+block inside your dispatch prompt. Items are priors — use them to bias
+your attention, not as automatic findings. If you confirm a pattern,
+emit the finding in your standard structured output AND add the marker
+`LEARNING_APPLIED: <id>` to your stage notes. If the learning is
+irrelevant to the diff you are reviewing, emit `LEARNING_FP: <id>
+reason=<short>`.
+
+Do NOT generate a CRITICAL finding just because a learning in your domain
+was shown — spec §3.1 (Phase 4) explicitly rejects domain-overlap as FP
+evidence. Markers must be deliberate.
