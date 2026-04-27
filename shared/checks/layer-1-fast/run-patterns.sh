@@ -181,7 +181,8 @@ emit() {
 # Skip binary files to avoid corrupted grep output
 is_binary_file() {
   # Check for null bytes in first 8KB — reliable binary indicator
-  # Uses Python (already a dependency) instead of grep -P (not available on MacOS)
+  # Uses Python (already a dependency) for portability across BSD/macOS grep
+  # (Perl-regex grep is not available on BSD/macOS by default)
   if "$_PY" -c "import sys; sys.exit(0 if b'\\x00' in open(sys.argv[1],'rb').read(8192) else 1)" "$1" 2>/dev/null; then
     return 0
   fi
