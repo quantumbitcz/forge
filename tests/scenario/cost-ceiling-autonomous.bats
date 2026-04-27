@@ -31,6 +31,18 @@ with open(p, 'w') as fh:
 }
 
 @test "autonomous breach at fast tier: auto-decides abort_to_ship" {
+  # Per-test override: shared setup leaves projected ≤ ceiling at fast tier
+  # (spent=0.48 + 0.016 = 0.496 ≤ 0.50). Bump spent so the breach branch fires.
+  python3 -c "
+import json, os
+p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
+with open(p) as fh:
+    st = json.load(fh)
+st['cost']['spent_usd'] = 0.495
+st['cost']['remaining_usd'] = 0.005
+with open(p, 'w') as fh:
+    json.dump(st, fh, indent=2)
+"
   run python3 "$PLUGIN_ROOT/tests/helpers/orchestrator-gate-sim.py" fg-410-code-reviewer fast
   assert_success
   assert_output -p '"decision": "abort_to_ship"'

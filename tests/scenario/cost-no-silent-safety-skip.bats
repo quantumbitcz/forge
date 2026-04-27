@@ -21,6 +21,15 @@ with open(p, 'w') as fh:
 }
 
 @test "fg-411-security-reviewer at fast: NEVER silently dropped" {
+  # Precondition: this test hardcodes fg-411-security-reviewer. If the agent
+  # name changes or it's removed from SAFETY_CRITICAL, the test would silently
+  # route through the wrong branch. Fail fast instead.
+  python3 -c "
+import sys
+sys.path.insert(0, '$PLUGIN_ROOT/shared')
+from cost_governance import is_safety_critical
+assert is_safety_critical('fg-411-security-reviewer'), 'fg-411-security-reviewer must be SAFETY_CRITICAL'
+"
   # In interactive mode, orchestrator must escalate (not skip).
   python3 -c "
 import json, os
@@ -38,6 +47,13 @@ with open(p, 'w') as fh:
 }
 
 @test "fg-411-security-reviewer at fast + autonomous: abort_to_ship, NEVER skip" {
+  # Precondition: see preceding test — guard against silent membership drift.
+  python3 -c "
+import sys
+sys.path.insert(0, '$PLUGIN_ROOT/shared')
+from cost_governance import is_safety_critical
+assert is_safety_critical('fg-411-security-reviewer'), 'fg-411-security-reviewer must be SAFETY_CRITICAL'
+"
   python3 -c "
 import json, os
 p = os.path.join(os.environ['FORGE_DIR'], 'state.json')
