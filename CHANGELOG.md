@@ -9,6 +9,20 @@ Consolidates post-3.5.0 polish across docs architecture, agent layer refactor, r
 
 ### Added
 
+- **Phase 1: Truth & Observability** — Windows install helper (`install.ps1`);
+  bash helper (`install.sh`) supersedes `ln -s`; `shared/check-environment.sh`
+  ported to `shared/check_environment.py`; `tests/run-all.ps1` + `run-all.cmd`
+  wrappers; new CI jobs `test-windows-pwsh-structural` and `test-windows-cmd`.
+  `hooks/_py/failure_log.py` + `hooks/_py/progress.py` — every hook entry
+  wraps `main()` and appends to `.forge/.hook-failures.jsonl` (renamed from
+  `.log`; no shim). `SessionStart` rotates archives (gzip at 7 d, delete at
+  30 d). `post_tool_use_agent.py` rewrites `.forge/progress/status.json`
+  atomically on every subagent completion. `fg-700-retrospective` generates
+  `.forge/run-history-trends.json` (last 30 runs + last 10 hook failures).
+  Support-tier badge system: `docs/support-tiers.md`, generator
+  `tests/lib/derive_support_tiers.py`, drift gate in `docs-integrity.yml`.
+  `/forge-status` gains a `--- live ---` section. `shared/observability.md`
+  gains `§Local inspection` recipes for bash/pwsh/cmd.
 - **5 new pipeline agents** (opt-in via `agents.*` config schema):
   - `fg-143-observability-bootstrap` (PREFLIGHT Tier-3) — auto-wires OTel exporter when `observability_bootstrap.enabled=true`.
   - `fg-155-i18n-validator` (PREFLIGHT Tier-3) — hardcoded-string / RTL / locale checks; default-enabled.
