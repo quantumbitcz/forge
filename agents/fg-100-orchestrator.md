@@ -303,6 +303,7 @@ ceiling = cost_cfg["ceiling_usd"]
 spent = state_cost.get("spent_usd", state_cost.get("estimated_cost_usd", 0.0))
 remaining = max(0.0, ceiling - spent) if ceiling > 0 else float("inf")
 resolved_tier = model_routing.resolve(agent_name)
+original_tier = resolved_tier                     # snapshot pre-downgrade tier; reused in Steps 5 & 7
 tier_est = cost_cfg["tier_estimates_usd"][resolved_tier]
 ```
 
@@ -369,7 +370,7 @@ incident = {
 if decision == "raise_ceiling":
     incident["new_ceiling_usd"] = state_cost["ceiling_usd"]
 elif decision == "downgrade":
-    incident["downgrade_from"] = resolved_tier_before
+    incident["downgrade_from"] = original_tier
     incident["downgrade_to"] = resolved_tier
 write_incident(incident, Path(FORGE_DIR))
 state_cost["ceiling_breaches"] += 1
@@ -403,7 +404,7 @@ otel.record_agent_result({
     "budget_total_usd": ceiling,
     "budget_remaining_usd": max(0.0, ceiling - (spent + actual_cost(result))),
     "tier_estimate_usd": tier_est,
-    "tier_original": original_tier_before_downgrade,
+    "tier_original": original_tier,
     "tier_used": resolved_tier,
     "throttle_reason": throttle_reason_from_steps_2_3,
 })
