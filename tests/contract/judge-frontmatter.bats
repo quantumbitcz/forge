@@ -47,3 +47,17 @@ setup() {
     }
   done
 }
+
+@test "fg-200-planner §5 output format includes judge_verdict block" {
+  F="$PROJECT_ROOT/agents/fg-200-planner.md"
+  run grep -F 'judge_verdict' "$F"
+  [ "$status" -eq 0 ]
+}
+
+@test "fg-300-implementer references impl_judge_loops and NOT implementer_reflection_cycles" {
+  F="$PROJECT_ROOT/agents/fg-300-implementer.md"
+  run grep -F 'impl_judge_loops' "$F"
+  [ "$status" -eq 0 ]
+  run grep -F 'implementer_reflection_cycles' "$F"
+  [ "$status" -ne 0 ]
+}
