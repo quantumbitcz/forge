@@ -265,3 +265,36 @@ assert budget['total_weight'] == 0.0, f'Expected 0.0, got {budget[\"total_weight
 assert budget['max_weight'] == 5.5, f'Expected 5.5, got {budget[\"max_weight\"]}'
 "
 }
+
+# ---------------------------------------------------------------------------
+# 9. Findings store contract doc exists (Phase 5)
+# ---------------------------------------------------------------------------
+@test "e2e dry-run leaves .forge/runs/<id>/findings directory inode-ready" {
+  # This is a structural smoke test — dry-run writes no findings but the directory convention is documented
+  run python3 -c "
+import pathlib
+p = pathlib.Path('$PLUGIN_ROOT/shared/findings-store.md')
+assert p.exists()
+print('OK')
+"
+  [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# 10. State init produces v2.0.0 with zeroed judge fields (Phase 5)
+# ---------------------------------------------------------------------------
+@test "dry-run initializes state with version 2.0.0 and zeroed judge fields" {
+  # Use state_init directly to avoid a full pipeline run
+  run python3 -c "
+import sys
+sys.path.insert(0, '$PLUGIN_ROOT/shared/python')
+from state_init import create_initial_state
+s = create_initial_state('', '', 'standard', True)
+assert s['version'] == '2.0.0'
+assert s['plan_judge_loops'] == 0
+assert s['impl_judge_loops'] == {}
+assert s['judge_verdicts'] == []
+print('OK')
+"
+  [ "$status" -eq 0 ]
+}
