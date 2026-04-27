@@ -51,8 +51,26 @@ KNOWN_CONFIG_FIELDS = {
     "forge_ask", "graph", "linear", "frontend_polish", "preview", "infra",
     "autonomous", "documentation", "explore", "plan_cache", "confidence",
     "test_history", "condensation", "check_engine", "code_graph",
-    "living_specs", "events", "playbooks", "mode_config",
+    "living_specs", "events", "playbooks", "mode_config", "cost",
 }
+
+
+# ───────────────────────────── Agent registry helper ──────────────────────
+
+
+def _load_agent_registry() -> set[str]:
+    """Return the set of known agent IDs by globbing ``agents/*.md``.
+
+    The plugin layout guarantees one file per agent with the filename matching
+    the agent ID (e.g. ``fg-100-orchestrator.md`` → ``fg-100-orchestrator``).
+    Returns an empty set if the directory is unreadable — callers should treat
+    that as "skip the check" rather than "everything is unknown".
+    """
+    here = Path(__file__).resolve().parent
+    agents_dir = here.parent / "agents"
+    if not agents_dir.is_dir():
+        return set()
+    return {p.stem for p in agents_dir.glob("fg-*.md")}
 
 
 # ───────────────────────────── YAML / JSON helpers ─────────────────────────
@@ -475,13 +493,17 @@ def validate_cost_block(cfg: dict) -> list[tuple[str, str]]:
     elif 0 < ceiling < 1.0:
         issues.append(("WARNING", f"cost.ceiling_usd={ceiling} seems low (possible typo)"))
 
-    # thresholds
+    # thresholds. warn_at and throttle_at must be strictly < 1 (the doc forbids
+    # warn_at = 1.0 since it would violate the strict ordering rule below).
+    # abort_at is the ceiling and may equal 1.0.
     w = cost.get("warn_at", 0.75)
     t = cost.get("throttle_at", 0.80)
     a = cost.get("abort_at", 1.00)
-    for name, val in (("warn_at", w), ("throttle_at", t), ("abort_at", a)):
-        if not isinstance(val, (int, float)) or isinstance(val, bool) or not (0 < val <= 1):
-            issues.append(("CRITICAL", f"cost.{name}={val} must be in (0, 1]"))
+    for name, val in (("warn_at", w), ("throttle_at", t)):
+        if not isinstance(val, (int, float)) or isinstance(val, bool) or not (0 < val < 1):
+            issues.append(("CRITICAL", f"cost.{name}={val} must be in (0, 1)"))
+    if not isinstance(a, (int, float)) or isinstance(a, bool) or not (0 < a <= 1):
+        issues.append(("CRITICAL", f"cost.abort_at={a} must be in (0, 1]"))
     if (
         isinstance(w, (int, float)) and not isinstance(w, bool)
         and isinstance(t, (int, float)) and not isinstance(t, bool)
@@ -552,6 +574,20 @@ def validate_cost_block(cfg: dict) -> list[tuple[str, str]]:
             "CRITICAL",
             f"cost.skippable_under_cost_pressure may not contain SAFETY_CRITICAL agents: {sorted(bad)}",
         ))
+
+    # Agent ID validation against agents.md#registry (file-based source of truth).
+    # WARNING (not CRITICAL) per shared/preflight-constraints.md#cost-governance.
+    pinned = set(cost.get("pinned_agents", []) or [])
+    registry = _load_agent_registry()
+    if registry:
+        for field, ids in (("pinned_agents", pinned),
+                           ("skippable_under_cost_pressure", skippable)):
+            unknown = sorted(aid for aid in ids if aid not in registry)
+            if unknown:
+                issues.append((
+                    "WARNING",
+                    f"cost.{field} contains unknown agent IDs (not in agents.md#registry): {unknown}",
+                ))
 
     return issues
 
