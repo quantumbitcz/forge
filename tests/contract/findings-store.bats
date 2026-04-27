@@ -39,3 +39,17 @@ setup() {
   run grep -iF 'binding veto' "$F"
   [ "$status" -eq 0 ]
 }
+
+@test "agent-communication.md does not contain 'dedup hints' or 'previous batch findings'" {
+  F="$PROJECT_ROOT/shared/agent-communication.md"
+  run grep -iF 'dedup hints' "$F"
+  [ "$status" -ne 0 ]
+  run grep -iF 'previous batch findings' "$F"
+  [ "$status" -ne 0 ]
+}
+
+@test "agent-communication.md references Findings Store Protocol" {
+  F="$PROJECT_ROOT/shared/agent-communication.md"
+  run grep -F 'Findings Store Protocol' "$F"
+  [ "$status" -eq 0 ]
+}
