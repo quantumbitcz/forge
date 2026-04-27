@@ -7,11 +7,29 @@ items:
 **Status:** Active (2026-04-19).
 **Supersedes:** Counter-based decay in `shared/learnings/README.md` §PREEMPT Lifecycle.
 
-## 1. Formula
+## 1. Formulas
 
-    confidence(t) = base_confidence × 2^(-Δt_days / half_life_days)
+```
+λ                  = ln(2) / half_life_days
+confidence_now(t)  = min(0.95, base_confidence × exp(-λ × Δt_days))
+Δt_days            = clamp((now - last_success_at).total_seconds() / 86400, 0, 365)
 
-where `Δt_days = (now - last_success_at) / 86_400` (seconds), clamped to `[0, 365]`.
+apply_success:           base := min(0.95, base + 0.05); last_applied := now;
+                          applied_count += 1; pre_fp_base := null
+apply_false_positive:    pre_fp_base := base; base := base × 0.80;
+                          last_false_positive_at := now; false_positive_count += 1
+apply_vindication:       base := pre_fp_base (bit-exact restore);
+                          pre_fp_base := null; false_positive_count -= 1
+archival_floor:          archived := true iff confidence_now < 0.1
+                          AND (now - last_applied).days > 90
+                          (or last_applied is None AND first_seen > 90d)
+```
+
+The code uses `math.pow(2.0, -Δt/h)` which is mathematically identical to
+`math.exp(-ln(2)·Δt/h)` — tests MAY assert either form.
+
+Reference module: `hooks/_py/memory_decay.py`. No other file computes the
+curve (enforced by `tests/structural/learnings_decay_singleton.bats`).
 
 ## 2. Per-type half-lives
 
@@ -87,3 +105,14 @@ and *always* read by this summary.
 
 - Module: `hooks/_py/memory_decay.py`
 - Tests: `tests/unit/memory_decay_test.py`, `tests/evals/memory_decay_eval.sh`
+
+## 10. Vindication (Phase 4)
+
+`pre_fp_base` snapshots the pre-penalty `base_confidence` immediately
+before the 0.80 multiplier fires. On `apply_vindication`, the snapshot is
+restored bit-exact and `pre_fp_base` is cleared. See
+`tests/unit/test_learnings_decay.py::test_false_positive_N_cycles_bit_exact`
+for the 100-cycle stability proof.
+
+Why snapshot, not division: `base × 0.80 / 0.80` is algebraically the
+identity but floating-point lossy. Snapshot-restore is exact.
