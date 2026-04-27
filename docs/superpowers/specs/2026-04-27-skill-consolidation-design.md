@@ -472,7 +472,7 @@ Match against `superpowers:verification-before-completion`:
 #### §9.3 — `fg-100-orchestrator` (subagent-driven-development + dispatching-parallel-agents + executing-plans)
 
 Match against three superpowers patterns:
-- **subagent-driven-development:** review checkpoint after each task. Already done via `fg-301-implementer-critic` between GREEN and REFACTOR.
+- **subagent-driven-development:** review checkpoint after each task. Already done via `fg-301-implementer-judge` between GREEN and REFACTOR.
 - **dispatching-parallel-agents:** "single message, multiple Task uses" rule. Polish AC: structural check that orchestrator dispatches use single tool-use blocks for parallel groups.
 - **executing-plans:** review after each batch. Polish AC: structural check that orchestrator emits a checkpoint after every 3 tasks.
 

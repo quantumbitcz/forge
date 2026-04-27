@@ -2186,7 +2186,7 @@ OR `dispatch_mode: vote_tiebreak`, the behavior changes:
 | `vote_tiebreak` | skip | run with divergence_notes | **skip** | run | patch in sub-worktree, marker `vote_tiebreak: true` |
 
 Rationale for skipping REFLECT under `vote_sample`: the vote IS the
-reflection. Running fg-301-implementer-critic twice (once per sample) would
+reflection. Running fg-301-implementer-judge twice (once per sample) would
 double the cost without improving the signal — fg-302-diff-judge surfaces
 divergence more cheaply.
 
@@ -3002,7 +3002,7 @@ def test_confidence_scoring_references_voting():
 
 ```
   │   ├── fg-300-implementer (parallel per task)
-  │   │     ├── fg-301-implementer-critic (inner reflection)
+  │   │     ├── fg-301-implementer-judge (inner reflection)
   │   │     └── fg-302-diff-judge (voting — when gate fires)
   │   ...
   │   ├── fg-500-test-gate

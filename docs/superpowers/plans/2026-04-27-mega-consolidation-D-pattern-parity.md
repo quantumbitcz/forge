@@ -2842,7 +2842,7 @@
 
    The orchestrator (fg-100) treats TEST-NOT-FAILING as a hard stop and
    re-routes to fg-200-planner with the failing test cited as the cause.
-   The implementer-critic (fg-301) defers to this check rather than
+   The implementer-judge (fg-301) defers to this check rather than
    re-flagging it.
    ```
 

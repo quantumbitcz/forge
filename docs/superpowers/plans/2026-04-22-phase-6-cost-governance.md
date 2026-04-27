@@ -1280,8 +1280,8 @@ Read `state.cost` from the brief's `## Cost Budget` block. Compute `remaining_fr
 | Remaining fraction | Action |
 |---|---|
 | `> 0.20` | Full behavior: proceed to §5.4 REFACTOR + §5.3a critic loop as configured. |
-| `0.10 < x <= 0.20` | Emit `COST-THROTTLE-IMPL` INFO finding. Skip second refactor pass (minimal cleanup only). Still dispatch `fg-301-implementer-critic` per §5.3a. |
-| `<= 0.10` | Emit `COST-THROTTLE-IMPL` WARNING finding. Skip second refactor. Skip critic dispatch; append `REFLECT_SKIPPED_COST` INFO event (NOT `REFLECT_EXHAUSTED`). |
+| `0.10 < x <= 0.20` | Emit `COST-THROTTLE-IMPL` INFO finding. Skip second refactor pass (minimal cleanup only). Still dispatch `fg-301-implementer-judge` per §5.3a. |
+| `<= 0.10` | Emit `COST-THROTTLE-IMPL` WARNING finding. Skip second refactor. Skip judge dispatch; append `REFLECT_SKIPPED_COST` INFO event (NOT `REFLECT_EXHAUSTED`). |
 
 **Finding payload:**
 
@@ -1304,13 +1304,13 @@ state.cost.throttle_events.append({
   "agent": "fg-300-implementer",
   "severity": "INFO",                    // or "WARNING"
   "pct_consumed": 0.85,
-  "action": "skip_refactor_pass_2",      // or "skip_refactor_and_critic"
+  "action": "skip_refactor_pass_2",      // or "skip_refactor_and_judge"
   "task_id": "{current_task.id}",
   "timestamp": "{now_iso}"
 })
 ```
 
-**Forbidden:** Throttle NEVER skips the RED phase (§5.1 Write Failing Test), the GREEN phase (§5.3 Implement), or the inner-loop lint/test validation (§5.4.1). Correctness gates are immune. Only discretionary polish (second refactor pass, critic dispatch) is elided.
+**Forbidden:** Throttle NEVER skips the RED phase (§5.1 Write Failing Test), the GREEN phase (§5.3 Implement), or the inner-loop lint/test validation (§5.4.1). Correctness gates are immune. Only discretionary polish (second refactor pass, judge dispatch) is elided.
 
 **Throttle reason propagation:** Set `throttle_reason = "soft_20pct"` or `"soft_10pct"` in the implementer's result dict so the orchestrator can surface it through `otel.record_agent_result()` as `forge.cost.throttle_reason` (Task 12).
 ```
@@ -1522,24 +1522,24 @@ setup() {
   cp "$PLUGIN_ROOT/tests/fixtures/state-v2-cost.json" "$FORGE_DIR/state.json"
 }
 
-@test "implementer at 85% consumed: emits COST-THROTTLE-IMPL INFO, skips refactor #2, dispatches critic" {
+@test "implementer at 85% consumed: emits COST-THROTTLE-IMPL INFO, skips refactor #2, dispatches judge" {
   seed_state_cost_pct 0.85
   run implementer_harness run-task task-001
   assert_success
   assert_line -p "COST-THROTTLE-IMPL"
   assert_line -p "severity: INFO"
   refute_line -p "refactor pass #2 executed"
-  assert_line -p "fg-301-implementer-critic dispatched"
+  assert_line -p "fg-301-implementer-judge dispatched"
 }
 
-@test "implementer at 95% consumed: emits COST-THROTTLE-IMPL WARNING, skips refactor, skips critic" {
+@test "implementer at 95% consumed: emits COST-THROTTLE-IMPL WARNING, skips refactor, skips judge" {
   seed_state_cost_pct 0.95
   run implementer_harness run-task task-001
   assert_success
   assert_line -p "COST-THROTTLE-IMPL"
   assert_line -p "severity: WARNING"
   refute_line -p "refactor pass #2 executed"
-  refute_line -p "fg-301-implementer-critic dispatched"
+  refute_line -p "fg-301-implementer-judge dispatched"
   assert_line -p "REFLECT_SKIPPED_COST"
   refute_line -p "REFLECT_EXHAUSTED"
 }
@@ -1561,7 +1561,7 @@ st = json.load(open('$FORGE_DIR/state.json'))
 events = st['cost']['throttle_events']
 assert len(events) >= 1, events
 assert events[-1]['severity'] == 'WARNING', events[-1]
-assert events[-1]['action'] == 'skip_refactor_and_critic', events[-1]
+assert events[-1]['action'] == 'skip_refactor_and_judge', events[-1]
 print('ok')
 "
   assert_success
@@ -1653,14 +1653,14 @@ def main() -> int:
     action = None
     if frac > 0.20:
         print("refactor pass #2 executed")
-        print("fg-301-implementer-critic dispatched")
+        print("fg-301-implementer-judge dispatched")
     elif frac > 0.10:
         severity = "INFO"; action = "skip_refactor_pass_2"
         print(f"COST-THROTTLE-IMPL severity: INFO — skipped refactor #2 @ {pct}%")
-        print("fg-301-implementer-critic dispatched")
+        print("fg-301-implementer-judge dispatched")
     else:
-        severity = "WARNING"; action = "skip_refactor_and_critic"
-        print(f"COST-THROTTLE-IMPL severity: WARNING — skipped refactor+critic @ {pct}%")
+        severity = "WARNING"; action = "skip_refactor_and_judge"
+        print(f"COST-THROTTLE-IMPL severity: WARNING — skipped refactor+judge @ {pct}%")
         print("REFLECT_SKIPPED_COST")
 
     if severity:
