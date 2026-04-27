@@ -17,7 +17,7 @@ Forge currently ships 48 agents, each declared as a self-contained Markdown file
 - `description` — short trigger description. Tier 1 entry agents may include an example; Tier 4 leaves stay one-line.
 - `tools` — the explicit tool allowlist. Dispatch agents include `Agent` in this list; every other agent is a *leaf* (can report findings but cannot dispatch further sub-agents).
 - `ui:` — the UI-capability tier (1–4), explicit per `shared/agent-ui.md`. Implicit Tier-4-by-omission is no longer accepted.
-  Enforced by `tests/contract/ui_frontmatter_required.py` (strict pydantic: `ui` must be a mapping with exactly `{tasks, ask, plan_mode}` as booleans).
+  Enforced by `tests/contract/test_ui_frontmatter_required.py` (strict pydantic: `ui` must be a mapping with exactly `{tasks, ask, plan_mode}` as booleans).
 - `color:` — cluster color for the task timeline (see [`agent-colors.md`](agent-colors.md)).
 
 The body of the file is the system prompt: role, constraints, dispatch contract, and output format. Shared constraint language lives in [`agent-defaults.md`](agent-defaults.md) so individual agents can reference it instead of duplicating text.

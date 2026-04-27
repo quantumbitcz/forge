@@ -590,7 +590,7 @@ Option 2 is the conservative path — E2 does not assume Phase 2's commit orderi
   ./tests/run-all.sh structural 2>&1 | tail -30
   ```
 
-  Expected: all checks pass. If Phase 2 has shipped before this commit, the freshness check `tests/contract/feature_matrix_freshness.py` will run and must pass.
+  Expected: all checks pass. If Phase 2 has shipped before this commit, the freshness check `tests/contract/test_feature_matrix_freshness.py` will run and must pass.
 
 - [ ] **Step 7 — Commit.**
 

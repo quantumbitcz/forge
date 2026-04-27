@@ -149,7 +149,7 @@ has_tool() {
 @test "every fg-*.md agent has explicit ui: block" {
   # Phase 2 contract: every agent — including Tier-4 reviewers and helpers —
   # carries an explicit ui: block. Tier-4 agents use ui: { tasks: false, ask: false, plan_mode: false }.
-  # The pytest sibling tests/contract/ui_frontmatter_required.py enforces shape (extra=forbid, boolean types).
+  # The pytest sibling tests/contract/test_ui_frontmatter_required.py enforces shape (extra=forbid, boolean types).
   local failures=()
   for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
     local base

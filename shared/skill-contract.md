@@ -59,7 +59,7 @@ This contract is versioned with the plugin. Amendments require:
 ## 6. Grammar contract
 
 Invocation grammar (flags vs subcommands vs positional content) is enforced by
-`tests/contract/skill_grammar.py` against the rules in `shared/skill-grammar.md`.
+`tests/contract/test_skill_grammar.py` against the rules in `shared/skill-grammar.md`.
 Every SKILL.md frontmatter is validated against a strict pydantic model: only
 the keys `name`, `description`, `allowed-tools`, `disable-model-invocation`,
 and `ui` are permitted at the top level.

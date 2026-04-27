@@ -126,7 +126,7 @@ The pipeline is fast when it is right the first time. Critical thinking is not t
 ## fg-100-orchestrator size budget
 
 `agents/fg-100-orchestrator.md` is capped at 1800 lines, enforced by
-`tests/contract/fg100_size_budget.py`. Current size: ~1557 lines. The cap is
+`tests/contract/test_fg100_size_budget.py`. Current size: ~1557 lines. The cap is
 growth management, not aggressive cutting — fg-100 loads once per run, so
 size is not a per-stage token cost (per user memory `Orchestrator size`).
 
