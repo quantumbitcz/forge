@@ -211,6 +211,7 @@ Additional category codes for specialized review domains:
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
 | `DEP-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions, license compliance). Subcategories: `DEP-CVE-*` (vulnerabilities), `DEP-OUTDATED-*` (outdated), `DEP-UNMAINTAINED` / `DEP-DEPRECATED` (maintenance), `DEP-CONFLICT-*` (version conflicts), `DEP-LICENSE-*` (license compliance). Emitted by `fg-417-dependency-reviewer`. |
+| `COST-*` | Cost governance — pipeline spend ceiling, downgrade audit, throttle events. Subcategories: `COST-CEILING-BREACH` (CRITICAL — `state.cost.spent_usd` exceeded `cost.ceiling_usd`), `COST-DOWNGRADE-PINNED` (INFO — pinned agent kept original tier under cost pressure), `COST-DOWNGRADE-APPLIED` (INFO — agent tier stepped down), `COST-THROTTLE` (INFO — orchestrator paused/serialized dispatch). Emitted by `fg-100-orchestrator` via `shared/cost_governance.py`. |
 | `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-dependency-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
 | `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
@@ -433,7 +434,7 @@ See `convergence-examples.md` for worked scoring calculations in context.
 ## See Also
 
 - `shared/convergence-engine.md` — Uses score history for IMPROVING/PLATEAUED/REGRESSING detection
-- `shared/checks/category-registry.json` — Master list of 87 scoring categories (27 wildcard + 60 discrete)
+- `shared/checks/category-registry.json` — Master list of 87 scoring categories (28 wildcard + 60 discrete)
 - `shared/agent-communication.md` — Finding format validation and deduplication rules
 - `shared/confidence-scoring.md` — Finding confidence weights (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x)
 - `shared/state-schema.md` — `score_history` and `convergence` state fields
