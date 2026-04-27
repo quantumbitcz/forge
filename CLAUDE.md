@@ -12,9 +12,8 @@ New to forge? Three steps:
 2. **First run:** `/forge-run --dry-run "add a health endpoint"`. Dry-run only
    exercises PREFLIGHT → VALIDATE; no worktree, no commits. Confirm the plan
    looks right, then drop `--dry-run`.
-3. **Pick the right skill:** unsure what to run? `/forge-help`. Bug? `/forge-fix`.
-   Quality check? `/forge-review --full`. Multiple features? `/forge-sprint`.
-   Full skill table is in §Skill selection guide below.
+3. **Pick the right skill:** bug? `/forge-fix`. Quality check? `/forge-review --full`.
+   Multiple features? `/forge-sprint`. Full skill table is in §Skill selection guide below.
 
 Already familiar? Skip to §Architecture.
 
@@ -125,7 +124,6 @@ Additional docs in `shared/`: `agent-defaults.md`, `logging-rules.md`, `verifica
 | Toggle terse output | `/forge-compress output` | User-facing output compression (lite/full/ultra/off) |
 | Quick commit | `/forge-commit` | Terse conventional commit from staged changes |
 | Compression reference | `/forge-compress help` | Quick reference card for all compression features |
-| Find the right skill | `/forge-help` | Interactive decision tree |
 | New user onboarding | `/forge-tour` | 5-stop guided introduction |
 | Edit config settings | `/forge-config` | Interactive config editor |
 | Transfer session to new Claude Code | `/forge-handoff` | Structured handoff artefact; resume via skill or paste |
@@ -141,7 +139,6 @@ Code quality:      /forge-review --full  (changed files) or /forge-review --scop
 Before shipping:   /forge-verify → /forge-review --full
 Pipeline trouble:  /forge-recover diagnose → /forge-recover repair (if needed) → /forge-recover resume
 Multiple features: /forge-sprint (reads from Linear or manual list)
-Quick decision:    /forge-help (interactive skill picker)
 ```
 
 ## Agents (48 total, `agents/*.md`)
@@ -256,9 +253,15 @@ Features (each has dedicated doc in `shared/`):
 | Self-improving playbooks (F31) | `playbooks.*` | Refinement proposals from run data. Auto-apply, rollback. `.forge/playbook-refinements/`. Skill: `/forge-playbook-refine` |
 | Repo-map PageRank | `code_graph.prompt_compaction.*` | `hooks/_py/repomap.py` — biased PageRank + token-budgeted pack assembly. Replaces full-directory listings in `fg-100`, `fg-200`, `fg-300` prompts. Opt-in default OFF. Categories: `REPOMAP-BYPASS-*` |
 | Self-consistency voting (F33) | `consistency.*` | N=3 majority + soft tiebreak on 3 seams (shaper intent, validator verdict synthesis on `INCONCLUSIVE`, PR-rejection classification). Cache key includes `state.mode`. Cache `.forge/consistency-cache.jsonl` survives reset. Counters: `consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`. |
-| Speculative plan branches | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
+| Speculative plan branches (F35) | `speculation.*` | 2-3 parallel candidate plans at PLAN stage for MEDIUM-confidence ambiguous requirements. `fg-200-planner` branch mode, candidate persistence `.forge/plans/candidates/`, plan-cache schema v2.0. Categories: none (validator-scored). |
 | Docs integrity | `docs.learnings_index.auto_update` | When `true`, retrospective regenerates `shared/learnings-index.md` on any new learning. CI workflow `docs-integrity` enforces freshness regardless of this setting. Default: `true`. |
 | Session handoff (F34) | `handoff.*` | Structured artefact preserving run state across Claude Code sessions. 50/70% thresholds, autonomous write-and-continue, MCP + auto-memory integration. File: `.forge/runs/<id>/handoffs/`. Skill: `/forge-handoff` |
+
+See `shared/feature-matrix.md` for the current activation state of each feature
+(auto-generated from `.forge/run-history.db` on every run; refreshed via
+`python shared/feature_matrix_generator.py`). Deprecation policy: 90 days
+without use flags a feature; 180 days proposes removal (see
+`shared/feature-lifecycle.md`).
 
 ### Deterministic Control Flow
 
@@ -310,9 +313,9 @@ Neo4j dual-purpose: (1) plugin module graph (seed), (2) project codebase graph. 
 
 5 tiers: T1 (<10s, static lint), T2 (<60s, container build+trivy), T3 (<5min, ephemeral cluster — **default**), T4 (<5min, contract stubs), T5 (<15min, full integration). Config: `infra.max_verification_tier` (1-5). Findings: `INFRA-HEALTH` (CRITICAL), `INFRA-SMOKE` (WARNING), `INFRA-CONTRACT`/`INFRA-E2E` (CRITICAL), `INFRA-IMAGE` (WARNING/CRITICAL).
 
-## Skills (29 total), hooks, kanban, git
+## Skills (28 total), hooks, kanban, git
 
-**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-help` (interactive skill decision tree), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review), `forge-handoff` (session handoff write/list/show/resume/search).
+**Skills:** `forge-run` (main entry), `forge-fix`, `forge-init`, `forge-status`, `forge-recover` (diagnose/repair/reset/resume/rollback dispatch), `forge-history`, `forge-shape`, `forge-sprint`, `forge-review` (subcommands: `--scope=changed` default, `--scope=all` read-only audit, `--scope=all --fix` iterative cleanup with AskUserQuestion safety gate; loops to score 100), `forge-verify` (subcommands: `--build` default, `--config`, `--all`), `forge-security-audit`, `forge-migration`, `forge-bootstrap`, `forge-deploy`, `forge-graph` (subcommands: `init`, `status`, `query <cypher>`, `rebuild`, `debug`), `forge-docs-generate`, `forge-abort` (graceful pipeline stop), `forge-profile` (pipeline performance analysis), `forge-automation` (event-driven automation management), `forge-ask` (codebase knowledge query), `forge-insights` (pipeline run analytics), `forge-playbooks` (reusable pipeline recipe management), `forge-compress` (agents/output/status/help dispatch), `forge-tour` (5-stop guided onboarding), `forge-config` (interactive config editor with validation), `forge-commit` (terse conventional commit generator), `forge-playbook-refine` (interactive playbook refinement review), `forge-handoff` (session handoff write/list/show/resume/search).
 
 **Hooks** (6 command entries across 6 Python entry scripts, `hooks.json`): L0 syntax validation on `Edit|Write` (PreToolUse → `pre_tool_use.py`); check engine + automation trigger on `Edit|Write` (PostToolUse → `post_tool_use.py`, which invokes both `_py.check_engine.engine` and `_py.check_engine.automation_trigger`); checkpoint on `Skill` (PostToolUse → `post_tool_use_skill.py`); compaction check on `Agent` (PostToolUse → `post_tool_use_agent.py`); feedback capture on `Stop` (Stop → `stop.py`); session priming on `SessionStart` (SessionStart → `session_start.py`). See `shared/hook-design.md` for the Python execution model and script contract.
 

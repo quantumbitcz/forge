@@ -79,7 +79,7 @@ done
 # ---------------------------------------------------------------------------
 MIN_AGENTS=48
 MIN_FRAMEWORKS=24
-MIN_SKILLS=29
+MIN_SKILLS=28
 
 # Canonical post-Phase-05 skill names. Tasks are written to ensure the skills
 # directory contains exactly this set. `DISCOVERED_SKILLS` is compared to
@@ -97,7 +97,6 @@ EXPECTED_SKILL_NAMES=(
   forge-fix
   forge-graph
   forge-handoff
-  forge-help
   forge-history
   forge-init
   forge-insights

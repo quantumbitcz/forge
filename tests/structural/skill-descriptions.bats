@@ -46,16 +46,3 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
   [ "$missing" -eq 0 ]
 }
 
-@test "skill-descriptions: forge-help has all 3 tiers" {
-  local help_file="$SKILLS_DIR/forge-help/SKILL.md"
-  [ -f "$help_file" ]
-  grep -q "Tier 1" "$help_file"
-  grep -q "Tier 2" "$help_file"
-  grep -q "Tier 3" "$help_file"
-}
-
-@test "skill-descriptions: forge-help disambiguation section exists" {
-  local help_file="$SKILLS_DIR/forge-help/SKILL.md"
-  [ -f "$help_file" ]
-  grep -q "Similar Skills" "$help_file"
-}

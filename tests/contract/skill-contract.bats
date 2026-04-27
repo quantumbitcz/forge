@@ -48,7 +48,7 @@ setup() {
   # default subcommand is read-only.
   local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
                 forge-compress forge-config forge-deploy \
-                forge-docs-generate forge-fix forge-graph \
+                forge-docs-generate forge-fix forge-graph forge-handoff \
                 forge-init forge-migration forge-playbook-refine forge-recover \
                 forge-review forge-run forge-shape forge-sprint)
   for s in "${writes[@]}"; do
@@ -63,8 +63,7 @@ setup() {
   # Skill consolidation removed forge-codebase-health (merged into /forge-review --scope all),
   # forge-graph-{debug,query,status} (merged into /forge-graph), and
   # forge-config-validate (merged into /forge-verify --config).
-  local readonly_skills=(forge-ask \
-                         forge-help forge-history forge-insights forge-playbooks \
+  local readonly_skills=(forge-ask forge-history forge-insights forge-playbooks \
                          forge-profile forge-security-audit forge-status \
                          forge-tour forge-verify)
   for s in "${readonly_skills[@]}"; do
@@ -75,16 +74,10 @@ setup() {
   done
 }
 
-@test "exactly 29 skill directories exist" {
+@test "exactly 28 skill directories exist" {
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  # Skill consolidation reductions:
-  #   35 → 33 (forge-codebase-health + forge-deep-health → /forge-review --scope)
-  #   33 → 29 (forge-graph-{init,status,query,rebuild,debug} → /forge-graph)
-  #   29 → 28 (forge-config-validate → /forge-verify --config)
-  # Additions:
-  #   28 → 29 (forge-handoff added for F34 session handoff)
-  [ "$count" -eq 29 ]
+  [ "$count" -eq 28 ]
 }
 
 @test "no dangling references to deleted skills" {

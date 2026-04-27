@@ -135,7 +135,7 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 
 ## What's Next?
 
-- **All skills:** `/forge-help`
+- **All skills:** See the skill table in `CLAUDE.md` §Skill selection guide.
 - **Reduce token usage:** `/forge-compress output`
 - **Pipeline analytics:** `/forge-insights`
 - **Multiple features:** `/forge-sprint`
@@ -199,6 +199,5 @@ sudo pacman -S bash python git
 
 ## See Also
 
-- `/forge-help` — full skill decision tree
 - `/forge-init` — first-time project setup
 - `/forge-run` — build a feature

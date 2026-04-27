@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # Skill-consolidation structural guards.
-# Locks in the consolidated skill set (29 skills), forbids the old
+# Locks in the consolidated skill set (28 skills), forbids the old
 # per-cluster names, and asserts each consolidated cluster carries the
 # documented dispatch + subcommand sections.
 
@@ -10,9 +10,9 @@ setup() {
   PLUGIN_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
 }
 
-@test "skill count is exactly MIN_SKILLS (29)" {
+@test "skill count is exactly MIN_SKILLS (28)" {
   actual=$(ls -d "$PLUGIN_ROOT"/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
-  [ "$actual" -eq 29 ]
+  [ "$actual" -eq 28 ]
 }
 
 @test "every expected skill directory exists with SKILL.md" {
@@ -69,11 +69,11 @@ setup() {
   done
 }
 
-@test "forge-verify has build, config, and all subcommand sections" {
+@test "forge-verify has build and all subcommand sections (no config)" {
   file="$PLUGIN_ROOT/skills/forge-verify/SKILL.md"
   grep -q '^### Subcommand: build' "$file"
-  grep -q '^### Subcommand: config' "$file"
   grep -q '^### Subcommand: all' "$file"
+  ! grep -q '^### Subcommand: config' "$file" || { echo "--config must be removed per Phase 2"; return 1; }
 }
 
 @test "forge-review --scope=all --fix documents AskUserQuestion safety gate" {
@@ -84,20 +84,8 @@ setup() {
   grep -q '\-\-yes' "$file"
 }
 
-@test "forge-help declares schema_version '2' in --json example" {
-  grep -q '"schema_version":[[:space:]]*"2"' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
-}
-
-@test "forge-help total_skills in --json is 29" {
-  grep -q '"total_skills":[[:space:]]*29' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
-}
-
-@test "forge-help has Migration section" {
-  grep -q '^## Migration' "$PLUGIN_ROOT/skills/forge-help/SKILL.md"
-}
-
-@test "CLAUDE.md Skills header reads '(29 total)'" {
-  grep -q '^## Skills (29 total)' "$PLUGIN_ROOT/CLAUDE.md"
+@test "CLAUDE.md Skills header reads '(28 total)'" {
+  grep -q '^## Skills (28 total)' "$PLUGIN_ROOT/CLAUDE.md"
 }
 
 @test "shared/skill-subcommand-pattern.md exists" {

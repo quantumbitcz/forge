@@ -115,6 +115,38 @@ If `.forge/run-history-trends.json` exists:
 If neither file exists: print "No live data (run has not completed a
 subagent dispatch yet)."
 
+## Config validation summary
+
+After the primary status report, emit a compact config-validation block. This
+absorbs what `/forge-verify --config` used to do (that subcommand is deleted
+as of Phase 2). Scope:
+
+1. Load `.claude/forge.local.md` (if present) and `.claude/forge-config.md`.
+2. Validate against PREFLIGHT constraints (`shared/preflight-constraints.md`).
+3. Report each constraint as PASS/FAIL/UNCHECKED with a one-line rationale.
+4. Under `--json`, emit this block as a `config_validation` top-level object:
+   ```json
+   {
+     "config_validation": {
+       "local_md_exists": true,
+       "config_md_exists": true,
+       "constraints": [
+         { "id": "pass_threshold", "verdict": "PASS" },
+         { "id": "total_retries_max", "verdict": "PASS" }
+       ]
+     }
+   }
+   ```
+If `.claude/forge.local.md` is missing entirely, emit the config block with
+`local_md_exists: false` and skip constraint checks (nothing to validate).
+
+## Recent hook failures
+
+Read the last 5 entries from `.forge/events.jsonl` where `type == "hook_failure"`.
+For each, show timestamp, hook name, exit code, and a one-line stderr snippet.
+If the file is missing or contains no hook_failure entries, emit "No recent
+hook failures." Under `--json`, emit as a `recent_hook_failures` array.
+
 ## Error Handling
 
 | Condition | Action |

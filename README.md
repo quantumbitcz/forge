@@ -133,7 +133,6 @@ Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in i
 | `/forge-automation` | [writes] | Event-driven automation management |
 | `/forge-graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
 | `/forge-commit` | [writes] | Terse conventional commit from staged changes |
-| `/forge-help` | [read-only] | Interactive decision tree to find the right skill |
 | `/forge-tour` | [read-only] | Guided 5-stop introduction to Forge |
 | `/forge-config` | [writes] | Interactive configuration editor |
 

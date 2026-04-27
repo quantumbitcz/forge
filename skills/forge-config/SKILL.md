@@ -91,4 +91,3 @@ Delegates to `/forge-verify --config` skill. Shows results inline.
 
 - `/forge-verify --config` — validate config without editing
 - `/forge-init` — initial project setup
-- `/forge-help` — find the right skill

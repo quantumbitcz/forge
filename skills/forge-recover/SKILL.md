@@ -49,6 +49,17 @@ See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Instructions
 
+### Subcommand: diagnose
+
+Step 0: Delegate state read. Run `/forge-status --json` and parse the JSON
+output. Embed the result as a top-level `state` field in the diagnose
+report. Do NOT read `.forge/state.json` directly — the orchestrator and
+forge-status own that path; recovery consumes the parsed snapshot.
+
+Recovery recommendations (the "what to do next" logic) remain `/forge-recover`'s responsibility; only the raw state read is delegated.
+
+### All subcommands (dispatch)
+
 Dispatch `fg-100-orchestrator` with `recovery_op` set to the subcommand name. See `agents/fg-100-orchestrator.md` §Recovery op dispatch for routing details. The orchestrator reads the current `.forge/state.json`, routes to the appropriate recovery strategy (per `shared/recovery/recovery-engine.md`), and applies the operation atomically via `shared/forge-state-write.sh`.
 
 ## Error Handling
