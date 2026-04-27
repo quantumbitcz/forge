@@ -13,18 +13,39 @@ PY_FILES=(
   for rel in "${PY_FILES[@]}"; do
     f="$PLUGIN_ROOT/$rel"
     [ -f "$f" ] || continue
-    run python3 -c "
-import ast, re, sys
-src = open(sys.argv[1], encoding='utf-8').read()
-# allow / inside regex patterns, URLs, comments, docstrings
-stripped = re.sub(r'\"[^\"]*\"|\'[^\']*\'|#.*$', '', src, flags=re.M)
-# We only flag literal string containing '/' or '\\\\' that look like path segments
-bad = re.findall(r\"'[^']*[\\\\\\/][^']*\\.(py|md|json|sh|jsonl)'\", src)
+    run python3 - "$f" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    src = fh.read()
+
+# Allow '/' inside legitimate uses: comments, raw strings (regex patterns),
+# URL string literals, and triple-quoted docstrings. Strip those so the
+# bad-path scan only sees ordinary string literals.
+stripped = src
+stripped = re.sub(r'(?s)""".*?"""', "", stripped)               # triple-double docstrings
+stripped = re.sub(r"(?s)'''.*?'''", "", stripped)               # triple-single docstrings
+stripped = re.sub(r"#.*$", "", stripped, flags=re.M)            # line comments
+stripped = re.sub(r"""[rRbB]+(?:"[^"]*"|'[^']*')""", "", stripped)  # raw/byte strings
+stripped = re.sub(r"""(?:"[^"]*://[^"]*"|'[^']*://[^']*')""", "", stripped)  # URL literals
+
+# Flag string literals (single OR double-quoted) that contain '/' or '\\'
+# and end in a known source/data extension — i.e. hardcoded paths that
+# should be constructed via pathlib instead.
+bad_pattern = (
+    r'"[^"]*[\\/][^"]*\.(?:py|md|json|sh|jsonl|yml|yaml|toml)"'
+    r"|"
+    r"'[^']*[\\/][^']*\.(?:py|md|json|sh|jsonl|yml|yaml|toml)'"
+)
+bad = re.findall(bad_pattern, stripped)
 if bad:
-    sys.exit(f'{sys.argv[1]} has hardcoded-path literals: {bad}')
-if 'from pathlib import Path' not in src and 'pathlib.Path' not in src:
-    sys.exit(f'{sys.argv[1]} does not import pathlib')
-" "$f"
+    sys.exit(f"{path} has hardcoded-path literals: {bad}")
+
+if "from pathlib import Path" not in src and "pathlib.Path" not in src:
+    sys.exit(f"{path} does not import pathlib")
+PY
     [ "$status" -eq 0 ] || fail "$output"
   done
 }
