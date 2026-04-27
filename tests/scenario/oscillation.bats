@@ -108,21 +108,21 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
-# 5. oscillation_tolerance=20 is very permissive (no REGRESSING)
+# 5. oscillation_tolerance=21 is very permissive (no REGRESSING)
 # ---------------------------------------------------------------------------
-@test "oscillation: oscillation_tolerance=20 is very permissive" {
+@test "oscillation: oscillation_tolerance=21 is very permissive" {
   run bash "$SIM_SCRIPT" \
     --scores "60,80,60,80" \
     --pass-threshold 80 \
-    --oscillation-tolerance 20 \
+    --oscillation-tolerance 21 \
     --plateau-patience 3
   assert_success
 
-  # Delta of -20 is NOT > tolerance of 20, so no REGRESSING
+  # Delta of -20 is NOT >= tolerance of 21, so no REGRESSING (>= boundary, post b6415111)
   local has_regressing
   has_regressing=$(echo "$output" | grep -c "phase=REGRESSING" || true)
   [[ "$has_regressing" -eq 0 ]] \
-    || fail "Expected no REGRESSING with tolerance=20, got: $output"
+    || fail "Expected no REGRESSING with tolerance=21, got: $output"
 }
 
 # ---------------------------------------------------------------------------
