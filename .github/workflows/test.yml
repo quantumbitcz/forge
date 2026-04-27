@@ -96,9 +96,66 @@ jobs:
       - name: Install Python dependencies
         run: pip install pyyaml
 
-      - name: Run ${{ matrix.tier }} tests
+      - name: Run ${{ matrix.tier }} tests (bash)
+        if: runner.os != 'Windows'
         run: ./tests/run-all.sh ${{ matrix.tier }}
+
+      - name: Run ${{ matrix.tier }} tests (pwsh wrapper)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\tests\run-all.ps1 ${{ matrix.tier }}
 
       - name: Run memory decay eval harness
         if: matrix.tier == 'unit' && runner.os != 'Windows'
         run: ./tests/evals/memory_decay_eval.sh
+
+  test-windows-pwsh-structural:
+    needs: structural
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: pip install pyyaml jsonschema
+
+      - name: Structural validation (pwsh wrapper)
+        run: .\tests\run-all.ps1 structural
+
+  test-windows-cmd:
+    needs: structural
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: pip install pyyaml jsonschema
+
+      - name: Structural validation (cmd wrapper)
+        run: tests\run-all.cmd structural
+
+      - name: Unit tests (cmd wrapper)
+        run: tests\run-all.cmd unit
