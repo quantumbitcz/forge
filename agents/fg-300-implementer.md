@@ -441,12 +441,12 @@ Default: PRESERVE. Cost of keeping dead code = low. Cost of removing intentional
 | Aspect | Inner Loop (5.4.1) | Fix Loop (13) | Reflection Loop (5.3a) |
 |---|---|---|---|
 | When | After TDD cycle, before next task | When step fails during implementation | After GREEN, before REFACTOR |
-| What | Lint + affected tests | Build + test for specific step | Critic dispatch (PASS/REVISE on diff vs intent) |
+| What | Lint + affected tests | Build + test for specific step | Judge dispatch (PASS/REVISE on diff vs intent) |
 | Budget | `implementer_fix_cycles` (default 3/task) | `max_fix_loops` (default 3/step) | `implementer.reflection.max_cycles` (default 2/task) |
-| Scope | Changed files + dependents | Specific failing step | Per-task, fresh-context critic |
+| Scope | Changed files + dependents | Specific failing step | Per-task, fresh-context judge |
 | Counter | `state.json.inner_loop` | `state.json.verify_fix_count` | `state.impl_judge_loops[task.id]` |
 | Feeds convergence? | No | Yes (`total_iterations`) | No |
-| Fires on | Always after TDD (when enabled) | Step failure | Critic REVISE verdict within budget |
+| Fires on | Always after TDD (when enabled) | Step failure | Judge REVISE verdict within budget |
 | Exit | Lint+tests green OR budget exhausted | Step succeeds OR budget exhausted | PASS verdict OR budget exhausted (emit REFLECT-DIVERGENCE) |
 
 All three budgets independent.
