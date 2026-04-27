@@ -14,6 +14,7 @@ New to forge? Three steps:
    looks right, then drop `--dry-run`.
 3. **Pick the right skill:** bug? `/forge-fix`. Quality check? `/forge-review --full`.
    Multiple features? `/forge-sprint`. Full skill table is in §Skill selection guide below.
+   When in doubt, ask Claude — it routes to the right skill from your description.
 
 Already familiar? Skip to §Architecture.
 

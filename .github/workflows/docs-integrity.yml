@@ -45,6 +45,11 @@ jobs:
       - name: Support-tier badge drift
         run: python3 tests/lib/derive_support_tiers.py --check --root .
 
+      - name: Feature matrix freshness
+        run: |
+          python3 shared/feature_matrix_generator.py
+          git diff --exit-code shared/feature-matrix.md
+
       - name: Support-tier badge drift negative test (tamper + assert fail)
         run: |
           cp modules/languages/kotlin.md /tmp/_kotlin.bak
