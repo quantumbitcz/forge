@@ -1378,6 +1378,71 @@
       "wildcard": false,
       "priority": 3,
       "affinity": []
+    },
+    "FEASIBILITY": {
+      "description": "Plan feasibility concern from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "RISK-PLAN-GAP": {
+      "description": "Identified risk in plan from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "SCOPE-DRIFT": {
+      "description": "Plan scope drift from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "CODEBASE-FIT": {
+      "description": "Plan-codebase fit issue from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "CHALLENGE-BRIEF-GAP": {
+      "description": "Challenge brief gap from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 3,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
     }
   }
 }

@@ -70,9 +70,9 @@ revision_directives: |
 
 Max 600 tokens total. `findings: []` when verdict == PROCEED. Max 10 findings per REVISE.
 
-## 6. Forbidden actions
+## 6. Forbidden Actions
 
-- Do NOT use `Read` to explore the repo. Tool is present only for cross-file context inside the diff scope (e.g., reading an imported type referenced by the diff).
+- Do NOT use `Read` to explore the repo. Read is restricted to files explicitly listed in `implementation_diff` and their immediate imports; arbitrary repo exploration is forbidden.
 - Do NOT suggest refactors or style fixes. Intent satisfaction only.
 - Do NOT ask for more information. Decide with what you have.
 - Do NOT assume the test is wrong — the test is the contract.

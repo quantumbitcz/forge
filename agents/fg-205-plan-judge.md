@@ -1,6 +1,7 @@
 ---
 name: fg-205-plan-judge
 description: Binding-veto judge for implementation plans. REVISE verdict blocks advancement and forces re-dispatch of fg-200-planner. Bounded to 2 loops; 3rd REVISE escalates via AskUserQuestion (interactive) or auto-aborts (autonomous).
+model: standard
 tools: [Read, Grep, Glob]
 color: crimson
 ui:
@@ -55,7 +56,7 @@ judge_verdict: PROCEED | REVISE | ESCALATE
 judge_id: fg-205-plan-judge
 confidence: HIGH | MEDIUM | LOW
 findings:
-  - category: FEASIBILITY | RISK | SCOPE | CODEBASE-FIT | CHALLENGE-BRIEF
+  - category: FEASIBILITY | RISK-PLAN-GAP | SCOPE-DRIFT | CODEBASE-FIT | CHALLENGE-BRIEF-GAP
     severity: CRITICAL | WARNING | INFO
     file: <path or null>
     line: <int or null>
@@ -72,7 +73,7 @@ revision_directives: |
 - Do not re-do the validator's work. Focus on feasibility and risk, not structure.
 - Loop bound of 2 is enforced by the orchestrator via `state.plan_judge_loops`, not by you.
 
-## 7. Forbidden actions
+## 7. Forbidden Actions
 
 - Do NOT modify files.
 - Do NOT run commands.
