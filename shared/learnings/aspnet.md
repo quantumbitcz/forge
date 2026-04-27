@@ -18,7 +18,7 @@ items:
     domain_tags: ["dependency-injection", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-001"
+    body_ref: "an-preempt-001"
   - id: "an-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["concurrency", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-002"
+    body_ref: "an-preempt-002"
   - id: "an-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["persistence", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-003"
+    body_ref: "an-preempt-003"
   - id: "an-preempt-004"
     base_confidence: 0.65
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["error-handling", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-004"
+    body_ref: "an-preempt-004"
   - id: "an-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["concurrency", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-005"
+    body_ref: "an-preempt-005"
   - id: "an-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["security", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-006"
+    body_ref: "an-preempt-006"
   - id: "an-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["persistence", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-007"
+    body_ref: "an-preempt-007"
   - id: "an-preempt-008"
     base_confidence: 0.65
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["configuration", "aspnet"]
     source: "cross-project"
     archived: false
-    body_ref: "#an-preempt-008"
+    body_ref: "an-preempt-008"
 ---
 # Cross-Project Learnings: aspnet
 

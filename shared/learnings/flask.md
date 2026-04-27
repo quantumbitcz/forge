@@ -18,7 +18,7 @@ items:
     domain_tags: ["persistence", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-001"
+    body_ref: "fl-preempt-001"
   - id: "fl-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["architecture", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-002"
+    body_ref: "fl-preempt-002"
   - id: "fl-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["security", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-003"
+    body_ref: "fl-preempt-003"
   - id: "fl-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["security", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-004"
+    body_ref: "fl-preempt-004"
   - id: "fl-preempt-005"
     base_confidence: 0.65
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["architecture", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-005"
+    body_ref: "fl-preempt-005"
   - id: "fl-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["migration", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-006"
+    body_ref: "fl-preempt-006"
   - id: "fl-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["testing", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-007"
+    body_ref: "fl-preempt-007"
   - id: "fl-preempt-008"
     base_confidence: 0.85
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["migration", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-008"
+    body_ref: "fl-preempt-008"
   - id: "fl-preempt-009"
     base_confidence: 0.85
     half_life_days: 30
@@ -130,7 +130,7 @@ items:
     domain_tags: ["security", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-009"
+    body_ref: "fl-preempt-009"
   - id: "fl-preempt-010"
     base_confidence: 0.65
     half_life_days: 30
@@ -144,7 +144,7 @@ items:
     domain_tags: ["persistence", "flask"]
     source: "cross-project"
     archived: false
-    body_ref: "#fl-preempt-010"
+    body_ref: "fl-preempt-010"
 ---
 # Cross-Project Learnings: flask
 

@@ -18,7 +18,7 @@ items:
     domain_tags: ["rendering", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-001"
+    body_ref: "nx-preempt-001"
   - id: "nx-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["data-fetching", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-002"
+    body_ref: "nx-preempt-002"
   - id: "nx-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["security", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-003"
+    body_ref: "nx-preempt-003"
   - id: "nx-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["security", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-004"
+    body_ref: "nx-preempt-004"
   - id: "nx-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["caching", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-005"
+    body_ref: "nx-preempt-005"
   - id: "nx-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["rendering", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-006"
+    body_ref: "nx-preempt-006"
   - id: "nx-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["routing", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-007"
+    body_ref: "nx-preempt-007"
   - id: "nx-preempt-008"
     base_confidence: 0.65
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["rendering", "nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nx-preempt-008"
+    body_ref: "nx-preempt-008"
   - id: "common-pitfalls"
     base_confidence: 0.75
     half_life_days: 30
@@ -130,7 +130,7 @@ items:
     domain_tags: ["nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#common-pitfalls"
+    body_ref: "common-pitfalls"
   - id: "effective-patterns"
     base_confidence: 0.75
     half_life_days: 30
@@ -144,7 +144,7 @@ items:
     domain_tags: ["nextjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#effective-patterns"
+    body_ref: "effective-patterns"
 ---
 # Cross-Project Learnings: nextjs
 

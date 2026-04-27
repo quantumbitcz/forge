@@ -18,7 +18,7 @@ items:
     domain_tags: ["concurrency", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-001"
+    body_ref: "vp-preempt-001"
   - id: "vp-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["security", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-002"
+    body_ref: "vp-preempt-002"
   - id: "vp-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["concurrency", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-003"
+    body_ref: "vp-preempt-003"
   - id: "vp-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["persistence", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-004"
+    body_ref: "vp-preempt-004"
   - id: "vp-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["migrations", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-005"
+    body_ref: "vp-preempt-005"
   - id: "vp-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["architecture", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-006"
+    body_ref: "vp-preempt-006"
   - id: "vp-preempt-007"
     base_confidence: 0.65
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["configuration", "vapor"]
     source: "cross-project"
     archived: false
-    body_ref: "#vp-preempt-007"
+    body_ref: "vp-preempt-007"
 ---
 # Cross-Project Learnings: vapor
 

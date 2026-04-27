@@ -18,7 +18,7 @@ items:
     domain_tags: ["dependency-injection", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-001"
+    body_ref: "nj-preempt-001"
   - id: "nj-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["request-handling", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-002"
+    body_ref: "nj-preempt-002"
   - id: "nj-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["security", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-003"
+    body_ref: "nj-preempt-003"
   - id: "nj-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["persistence", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-004"
+    body_ref: "nj-preempt-004"
   - id: "nj-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["security", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-005"
+    body_ref: "nj-preempt-005"
   - id: "nj-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["configuration", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-006"
+    body_ref: "nj-preempt-006"
   - id: "nj-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["dependency-injection", "nestjs"]
     source: "cross-project"
     archived: false
-    body_ref: "#nj-preempt-007"
+    body_ref: "nj-preempt-007"
 ---
 # Cross-Project Learnings: nestjs
 

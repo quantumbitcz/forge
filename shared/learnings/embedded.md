@@ -18,7 +18,7 @@ items:
     domain_tags: ["concurrency", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-001"
+    body_ref: "em-preempt-001"
   - id: "em-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["memory", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-002"
+    body_ref: "em-preempt-002"
   - id: "em-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["memory", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-003"
+    body_ref: "em-preempt-003"
   - id: "em-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["performance", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-004"
+    body_ref: "em-preempt-004"
   - id: "em-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["security", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-005"
+    body_ref: "em-preempt-005"
   - id: "em-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["concurrency", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-006"
+    body_ref: "em-preempt-006"
   - id: "em-preempt-007"
     base_confidence: 0.65
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["concurrency", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-007"
+    body_ref: "em-preempt-007"
   - id: "em-preempt-008"
     base_confidence: 0.65
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["reliability", "embedded"]
     source: "cross-project"
     archived: false
-    body_ref: "#em-preempt-008"
+    body_ref: "em-preempt-008"
 ---
 # Cross-Project Learnings: embedded
 

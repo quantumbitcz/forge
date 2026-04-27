@@ -14,7 +14,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#stage-responsibilities"
+    body_ref: "stage-responsibilities"
   - id: "auto-repo-pattern-nnn-short-title"
     base_confidence: 0.75
     half_life_days: 30
@@ -28,7 +28,7 @@ items:
     domain_tags: ["{area", "memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#auto-repo-pattern-nnn-short-title"
+    body_ref: "auto-repo-pattern-nnn-short-title"
   - id: "field-reference"
     base_confidence: 0.75
     half_life_days: 30
@@ -42,7 +42,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#field-reference"
+    body_ref: "field-reference"
   - id: "promotion-path"
     base_confidence: 0.75
     half_life_days: 30
@@ -56,7 +56,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#promotion-path"
+    body_ref: "promotion-path"
   - id: "how-it-works"
     base_confidence: 0.75
     half_life_days: 30
@@ -70,7 +70,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#how-it-works"
+    body_ref: "how-it-works"
   - id: "distinction-from-direct-knowledge-contribution"
     base_confidence: 0.75
     half_life_days: 30
@@ -84,7 +84,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#distinction-from-direct-knowledge-contribution"
+    body_ref: "distinction-from-direct-knowledge-contribution"
   - id: "configuration"
     base_confidence: 0.75
     half_life_days: 30
@@ -98,7 +98,7 @@ items:
     domain_tags: ["memory", "discovery"]
     source: "cross-project"
     archived: false
-    body_ref: "#configuration"
+    body_ref: "configuration"
 ---
 # Autonomous Memory Discovery
 

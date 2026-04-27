@@ -36,7 +36,7 @@ def _make_v2(tmp_path: Path, item_id: str, **overrides) -> Path:
         '    domain_tags: ["spring"]\n'
         '    source: "cross-project"\n'
         f'    archived: {base["archived"]}\n'
-        '    body_ref: "#x"\n'
+        '    body_ref: "x"\n'
         "---\n# body\n",
         encoding="utf-8",
     )
@@ -100,7 +100,7 @@ def test_archival_floor_marks_archived(tmp_path):
         '    domain_tags: ["spring"]\n'
         '    source: "auto-discovered"\n'
         '    archived: false\n'
-        '    body_ref: "#x"\n'
+        '    body_ref: "x"\n'
         "---\n# body\n",
         encoding="utf-8",
     )

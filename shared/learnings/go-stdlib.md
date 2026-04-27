@@ -18,7 +18,7 @@ items:
     domain_tags: ["concurrency", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-001"
+    body_ref: "gs-preempt-001"
   - id: "gs-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["concurrency", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-002"
+    body_ref: "gs-preempt-002"
   - id: "gs-preempt-003"
     base_confidence: 0.65
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["error-handling", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-003"
+    body_ref: "gs-preempt-003"
   - id: "gs-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["routing", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-004"
+    body_ref: "gs-preempt-004"
   - id: "gs-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["resource-management", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-005"
+    body_ref: "gs-preempt-005"
   - id: "gs-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["architecture", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-006"
+    body_ref: "gs-preempt-006"
   - id: "gs-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["serialization", "go", "stdlib"]
     source: "cross-project"
     archived: false
-    body_ref: "#gs-preempt-007"
+    body_ref: "gs-preempt-007"
 ---
 # Cross-Project Learnings: go-stdlib
 

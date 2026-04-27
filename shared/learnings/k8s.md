@@ -18,7 +18,7 @@ items:
     domain_tags: ["resource-management", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-001"
+    body_ref: "k8-preempt-001"
   - id: "k8-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["health", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-002"
+    body_ref: "k8-preempt-002"
   - id: "k8-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["health", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-003"
+    body_ref: "k8-preempt-003"
   - id: "k8-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["deployment", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-004"
+    body_ref: "k8-preempt-004"
   - id: "k8-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["availability", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-005"
+    body_ref: "k8-preempt-005"
   - id: "k8-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["security", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-006"
+    body_ref: "k8-preempt-006"
   - id: "k8-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["performance", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-007"
+    body_ref: "k8-preempt-007"
   - id: "k8-preempt-008"
     base_confidence: 0.65
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["security", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-008"
+    body_ref: "k8-preempt-008"
   - id: "k8-preempt-009"
     base_confidence: 0.85
     half_life_days: 30
@@ -130,7 +130,7 @@ items:
     domain_tags: ["security", "k8s"]
     source: "cross-project"
     archived: false
-    body_ref: "#k8-preempt-009"
+    body_ref: "k8-preempt-009"
 ---
 # Cross-Project Learnings: k8s
 

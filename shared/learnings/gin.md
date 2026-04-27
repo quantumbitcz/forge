@@ -18,7 +18,7 @@ items:
     domain_tags: ["middleware", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-001"
+    body_ref: "gn-preempt-001"
   - id: "gn-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["request-handling", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-002"
+    body_ref: "gn-preempt-002"
   - id: "gn-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["middleware", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-003"
+    body_ref: "gn-preempt-003"
   - id: "gn-preempt-004"
     base_confidence: 0.65
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["api-design", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-004"
+    body_ref: "gn-preempt-004"
   - id: "gn-preempt-005"
     base_confidence: 0.65
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["middleware", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-005"
+    body_ref: "gn-preempt-005"
   - id: "gn-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["concurrency", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-006"
+    body_ref: "gn-preempt-006"
   - id: "gn-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["deployment", "gin"]
     source: "cross-project"
     archived: false
-    body_ref: "#gn-preempt-007"
+    body_ref: "gn-preempt-007"
 ---
 # Cross-Project Learnings: gin
 

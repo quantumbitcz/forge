@@ -18,7 +18,7 @@ items:
     domain_tags: ["routing", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-001"
+    body_ref: "ax-preempt-001"
   - id: "ax-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["error-handling", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-002"
+    body_ref: "ax-preempt-002"
   - id: "ax-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["build", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-003"
+    body_ref: "ax-preempt-003"
   - id: "ax-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["concurrency", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-004"
+    body_ref: "ax-preempt-004"
   - id: "ax-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["build", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-005"
+    body_ref: "ax-preempt-005"
   - id: "ax-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["middleware", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-006"
+    body_ref: "ax-preempt-006"
   - id: "ax-preempt-007"
     base_confidence: 0.65
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["serialization", "axum"]
     source: "cross-project"
     archived: false
-    body_ref: "#ax-preempt-007"
+    body_ref: "ax-preempt-007"
 ---
 # Cross-Project Learnings: axum
 

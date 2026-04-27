@@ -18,7 +18,7 @@ items:
     domain_tags: ["error-handling", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-001"
+    body_ref: "ex-preempt-001"
   - id: "ex-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["error-handling", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-002"
+    body_ref: "ex-preempt-002"
   - id: "ex-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["security", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-003"
+    body_ref: "ex-preempt-003"
   - id: "ex-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["security", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-004"
+    body_ref: "ex-preempt-004"
   - id: "ex-preempt-005"
     base_confidence: 0.65
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["performance", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-005"
+    body_ref: "ex-preempt-005"
   - id: "ex-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["security", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-006"
+    body_ref: "ex-preempt-006"
   - id: "ex-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["build", "express"]
     source: "cross-project"
     archived: false
-    body_ref: "#ex-preempt-007"
+    body_ref: "ex-preempt-007"
 ---
 # Cross-Project Learnings: express
 

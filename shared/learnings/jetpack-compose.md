@@ -18,7 +18,7 @@ items:
     domain_tags: ["state", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-001"
+    body_ref: "jc-preempt-001"
   - id: "jc-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["performance", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-002"
+    body_ref: "jc-preempt-002"
   - id: "jc-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["rendering", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-003"
+    body_ref: "jc-preempt-003"
   - id: "jc-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["state", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-004"
+    body_ref: "jc-preempt-004"
   - id: "jc-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["state", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-005"
+    body_ref: "jc-preempt-005"
   - id: "jc-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["navigation", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-006"
+    body_ref: "jc-preempt-006"
   - id: "jc-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["styling", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-007"
+    body_ref: "jc-preempt-007"
   - id: "jc-preempt-008"
     base_confidence: 0.85
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["state", "jetpack", "compose"]
     source: "cross-project"
     archived: false
-    body_ref: "#jc-preempt-008"
+    body_ref: "jc-preempt-008"
 ---
 # Cross-Project Learnings: jetpack-compose
 

@@ -14,7 +14,7 @@ items:
     domain_tags: ["rule", "promotion"]
     source: "cross-project"
     archived: false
-    body_ref: "#status-values"
+    body_ref: "status-values"
 ---
 # Rule Promotion Algorithm
 

@@ -18,7 +18,7 @@ items:
     domain_tags: ["security", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-001"
+    body_ref: "sk-preempt-001"
   - id: "sk-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["migration", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-002"
+    body_ref: "sk-preempt-002"
   - id: "sk-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["data-fetching", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-003"
+    body_ref: "sk-preempt-003"
   - id: "sk-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["forms", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-004"
+    body_ref: "sk-preempt-004"
   - id: "sk-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["state", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-005"
+    body_ref: "sk-preempt-005"
   - id: "sk-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["error-handling", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-006"
+    body_ref: "sk-preempt-006"
   - id: "sk-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["architecture", "sveltekit"]
     source: "cross-project"
     archived: false
-    body_ref: "#sk-preempt-007"
+    body_ref: "sk-preempt-007"
 ---
 # Cross-Project Learnings: sveltekit
 

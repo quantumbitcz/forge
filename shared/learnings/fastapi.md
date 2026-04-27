@@ -18,7 +18,7 @@ items:
     domain_tags: ["concurrency", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-001"
+    body_ref: "fa-preempt-001"
   - id: "fa-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["dependency-injection", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-002"
+    body_ref: "fa-preempt-002"
   - id: "fa-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["serialization", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-003"
+    body_ref: "fa-preempt-003"
   - id: "fa-preempt-004"
     base_confidence: 0.65
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["api-design", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-004"
+    body_ref: "fa-preempt-004"
   - id: "fa-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["concurrency", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-005"
+    body_ref: "fa-preempt-005"
   - id: "fa-preempt-006"
     base_confidence: 0.65
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["error-handling", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-006"
+    body_ref: "fa-preempt-006"
   - id: "fa-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["build", "fastapi"]
     source: "cross-project"
     archived: false
-    body_ref: "#fa-preempt-007"
+    body_ref: "fa-preempt-007"
 ---
 # Cross-Project Learnings: fastapi
 

@@ -18,7 +18,7 @@ items:
     domain_tags: ["build", "turborepo"]
     source: "cross-project"
     archived: false
-    body_ref: "#ks-preempt-001"
+    body_ref: "ks-preempt-001"
   - id: "ks-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["configuration", "turborepo"]
     source: "cross-project"
     archived: false
-    body_ref: "#ks-preempt-002"
+    body_ref: "ks-preempt-002"
   - id: "ks-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["build", "turborepo"]
     source: "cross-project"
     archived: false
-    body_ref: "#ks-preempt-003"
+    body_ref: "ks-preempt-003"
 ---
 # Cross-Project Learnings: turborepo
 

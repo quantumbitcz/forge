@@ -18,7 +18,7 @@ items:
     domain_tags: ["build", "react"]
     source: "cross-project"
     archived: false
-    body_ref: "#rv-preempt-001"
+    body_ref: "rv-preempt-001"
   - id: "rv-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["styling", "react"]
     source: "cross-project"
     archived: false
-    body_ref: "#rv-preempt-002"
+    body_ref: "rv-preempt-002"
   - id: "rv-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["styling", "react"]
     source: "cross-project"
     archived: false
-    body_ref: "#rv-preempt-003"
+    body_ref: "rv-preempt-003"
   - id: "common-pitfalls"
     base_confidence: 0.75
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["react"]
     source: "cross-project"
     archived: false
-    body_ref: "#common-pitfalls"
+    body_ref: "common-pitfalls"
   - id: "effective-patterns"
     base_confidence: 0.75
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["react"]
     source: "cross-project"
     archived: false
-    body_ref: "#effective-patterns"
+    body_ref: "effective-patterns"
 ---
 # Cross-Project Learnings: react
 

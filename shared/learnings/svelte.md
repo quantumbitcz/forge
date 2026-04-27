@@ -18,7 +18,7 @@ items:
     domain_tags: ["build", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-001"
+    body_ref: "sv-preempt-001"
   - id: "sv-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["migration", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-002"
+    body_ref: "sv-preempt-002"
   - id: "sv-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["state", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-003"
+    body_ref: "sv-preempt-003"
   - id: "sv-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["state", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-004"
+    body_ref: "sv-preempt-004"
   - id: "sv-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["security", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-005"
+    body_ref: "sv-preempt-005"
   - id: "sv-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["rendering", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-006"
+    body_ref: "sv-preempt-006"
   - id: "sv-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["migration", "svelte"]
     source: "cross-project"
     archived: false
-    body_ref: "#sv-preempt-007"
+    body_ref: "sv-preempt-007"
 ---
 # Cross-Project Learnings: svelte
 

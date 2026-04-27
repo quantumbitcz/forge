@@ -54,6 +54,6 @@ def _v2_snippet(item_id: str) -> str:
         '    domain_tags: ["spring"]\n'
         '    source: "cross-project"\n'
         '    archived: false\n'
-        '    body_ref: "#a"\n'
+        '    body_ref: "a"\n'
         "---\n# body\n"
     )

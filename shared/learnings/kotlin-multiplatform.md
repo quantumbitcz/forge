@@ -18,7 +18,7 @@ items:
     domain_tags: ["build", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-001"
+    body_ref: "km-preempt-001"
   - id: "km-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["concurrency", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-002"
+    body_ref: "km-preempt-002"
   - id: "km-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["architecture", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-003"
+    body_ref: "km-preempt-003"
   - id: "km-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["build", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-004"
+    body_ref: "km-preempt-004"
   - id: "km-preempt-005"
     base_confidence: 0.85
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["interop", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-005"
+    body_ref: "km-preempt-005"
   - id: "km-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["concurrency", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-006"
+    body_ref: "km-preempt-006"
   - id: "km-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["testing", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-007"
+    body_ref: "km-preempt-007"
   - id: "km-preempt-008"
     base_confidence: 0.65
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["build", "kotlin", "multiplatform"]
     source: "cross-project"
     archived: false
-    body_ref: "#km-preempt-008"
+    body_ref: "km-preempt-008"
 ---
 # Cross-Project Learnings: kotlin-multiplatform
 

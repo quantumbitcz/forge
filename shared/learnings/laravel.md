@@ -18,7 +18,7 @@ items:
     domain_tags: ["security", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-001"
+    body_ref: "lv-preempt-001"
   - id: "lv-preempt-002"
     base_confidence: 0.85
     half_life_days: 30
@@ -32,7 +32,7 @@ items:
     domain_tags: ["persistence", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-002"
+    body_ref: "lv-preempt-002"
   - id: "lv-preempt-003"
     base_confidence: 0.85
     half_life_days: 30
@@ -46,7 +46,7 @@ items:
     domain_tags: ["queues", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-003"
+    body_ref: "lv-preempt-003"
   - id: "lv-preempt-004"
     base_confidence: 0.85
     half_life_days: 30
@@ -60,7 +60,7 @@ items:
     domain_tags: ["configuration", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-004"
+    body_ref: "lv-preempt-004"
   - id: "lv-preempt-005"
     base_confidence: 0.65
     half_life_days: 30
@@ -74,7 +74,7 @@ items:
     domain_tags: ["routing", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-005"
+    body_ref: "lv-preempt-005"
   - id: "lv-preempt-006"
     base_confidence: 0.85
     half_life_days: 30
@@ -88,7 +88,7 @@ items:
     domain_tags: ["migration", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-006"
+    body_ref: "lv-preempt-006"
   - id: "lv-preempt-007"
     base_confidence: 0.85
     half_life_days: 30
@@ -102,7 +102,7 @@ items:
     domain_tags: ["security", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-007"
+    body_ref: "lv-preempt-007"
   - id: "lv-preempt-008"
     base_confidence: 0.85
     half_life_days: 30
@@ -116,7 +116,7 @@ items:
     domain_tags: ["persistence", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-008"
+    body_ref: "lv-preempt-008"
   - id: "lv-preempt-009"
     base_confidence: 0.85
     half_life_days: 30
@@ -130,7 +130,7 @@ items:
     domain_tags: ["security", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-009"
+    body_ref: "lv-preempt-009"
   - id: "lv-preempt-010"
     base_confidence: 0.85
     half_life_days: 30
@@ -144,7 +144,7 @@ items:
     domain_tags: ["security", "laravel"]
     source: "cross-project"
     archived: false
-    body_ref: "#lv-preempt-010"
+    body_ref: "lv-preempt-010"
 ---
 # Cross-Project Learnings: laravel
 
