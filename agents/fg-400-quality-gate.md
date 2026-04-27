@@ -534,3 +534,23 @@ After Markdown report, MUST append structured JSON block in HTML comment for mac
   ]
 }
 ```
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `quality_gate` (meta-learnings: plateau thresholds, convergence
+patterns, reviewer batch sizing signals).
+
+Your dispatch prompt may include a `## Relevant Learnings (from prior
+runs)` block. Quality-gate-scoped learnings describe *how runs tend to
+behave*, not what the code should look like. Use them to weight verdict
+decisions (PASS vs CONCERNS vs FAIL) — e.g., "runs plateau when score
+hits 82 with ≥3 WARNINGs" is a learning you can consult before calling
+REGRESSING.
+
+Marker emission in your final summary:
+
+- `LEARNING_APPLIED: <id>` when a meta-learning shaped your verdict.
+- `LEARNING_FP: <id> reason=<text>` when the meta-learning is contradicted
+  by this run's data.
