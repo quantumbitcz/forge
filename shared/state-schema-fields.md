@@ -8,7 +8,7 @@
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Schema version string (`"1.10.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. If the version is older, sequential migrations are applied (see [Version Migration](#version-migration)). v1.10.0 adds handoff tracking sub-object (handoff.last_written_at, handoff.last_path, handoff.chain, handoff.soft_triggers_this_run, handoff.hard_triggers_this_run, handoff.milestone_triggers_this_run, handoff.suppressed_by_rate_limit) for session handoff artifacts. v1.9.0 adds self-consistency voting counters (`consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`). v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Chain-of-Verification critic. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
+| `version` | string | Yes | Schema version string (`"2.0.0"`). Enables schema compatibility checks — the recovery engine checks this before parsing. If the version is missing, the state file is reinitialized. v2.0.0 is a hard cut from the 1.x series — no migration shim per `feedback_no_backcompat`; older state files are auto-reset to a fresh v2.0.0 skeleton on load (a copy is preserved at `.forge/state.v1.bak` and a row is appended to `.forge/.hook-failures.jsonl`). v2.0.0 removes `critic_revisions`, `implementer_reflection_cycles*`, `reflection_verdicts`, and `reflection_divergence_count`; adds `plan_judge_loops`, `impl_judge_loops`, `judge_verdicts`, and `current_plan_sha`. v1.10.0 added handoff tracking sub-object (handoff.last_written_at, handoff.last_path, handoff.chain, handoff.soft_triggers_this_run, handoff.hard_triggers_this_run, handoff.milestone_triggers_this_run, handoff.suppressed_by_rate_limit) for session handoff artifacts. v1.9.0 adds self-consistency voting counters (`consistency_cache_hits`, `consistency_votes.{shaper_intent,validator_verdict,pr_rejection_classification}`). v1.8.0 adds reflection counters (run-level `implementer_reflection_cycles_total`, `reflection_divergence_count`; task-level `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts`) for Chain-of-Verification critic. v1.7.0 adds `recovery_op` (orchestrator input payload) and `eval_run` (pipeline evaluation harness). v1.6.0 adds `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history`. v1.5.0 adds `_seq` (write versioning), `previous_state` (for user_continue recovery), `convergence.diminishing_count`, `convergence.unfixable_info_count`. v1.4.0 adds optional `evidence` section for pre-ship verification tracking. v1.3.0 adds optional `decomposition` section and `visual_companion` integration. v1.2.0 adds the optional `graph` section for graph update state tracking. v1.1.0 added optional tracking fields. |
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
@@ -671,6 +671,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
 | 1.8.0 | 1.9.0 | (Forge 3.1.0) Self-consistency voting counters + time-travel CAS checkpoints. Breaking: CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
 | 1.9.0 | 1.10.0 | (Forge 3.6.0) Session handoff tracking sub-object for preserving run state across Claude Code session boundaries. | `handoff.last_written_at`, `handoff.last_path`, `handoff.chain`, `handoff.soft_triggers_this_run`, `handoff.hard_triggers_this_run`, `handoff.milestone_triggers_this_run`, `handoff.suppressed_by_rate_limit` | `null`, `null`, `[]`, `0`, `0`, `0`, `0` |
+| 1.10.0 | 2.0.0 | (Forge 4.0.0) Hard cut — no migration shim. Replaces the Chain-of-Verification critic with explicit plan/impl judges (fg-205, fg-301-implementer-judge). Older state files auto-reset; backup at `.forge/state.v1.bak`. | **Added:** `plan_judge_loops`, `impl_judge_loops`, `judge_verdicts`, `current_plan_sha`. **Removed:** `critic_revisions`, `implementer_reflection_cycles_total`, `reflection_divergence_count`, `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts` | `0`, `{}`, `[]`, `null` |
 
 ### Version Detection and Upgrade Protocol
 
@@ -991,6 +992,28 @@ Each task object under `tasks[*]` carries:
 ---
 
 ## Changelog
+
+### 2.0.0 (Forge 4.0.0 — Plan/Impl Judges Replace CoVe Critic)
+
+**Breaking — no migration shim.** Per `feedback_no_backcompat`, older state files are auto-reset to a fresh v2.0.0 skeleton on load. The previous file is preserved at `.forge/state.v1.bak` and a row is appended to `.forge/.hook-failures.jsonl` (`hook_name: state_init.load_or_reinit`, `matcher: version_mismatch`).
+
+**Added:**
+- `plan_judge_loops` (integer, required) — REVISE counter for `fg-205-plan-judge`. Resets to 0 when `current_plan_sha` changes. Validator REVISE, user-continue, and feedback loops do NOT reset.
+- `impl_judge_loops` (object, required) — per-task REVISE counter for `fg-301-implementer-judge`. Keys are `task_id` strings.
+- `judge_verdicts` (array, required) — append-only audit trail. Each row: `{ judge_id, verdict, dispatch_seq, timestamp, task_id? }`. `task_id` is required when `judge_id == "fg-301-implementer-judge"`.
+- `current_plan_sha` (string|null, optional) — SHA-256 of the current plan (requirement + approach digest). Drives `plan_judge_loops` reset semantics. Null until the first plan is drafted.
+
+**Removed (no shim):**
+- `critic_revisions` (run-level)
+- `implementer_reflection_cycles_total` (run-level)
+- `reflection_divergence_count` (run-level)
+- `tasks[*].implementer_reflection_cycles` (per-task)
+- `tasks[*].reflection_verdicts` (per-task)
+
+**Behaviour:**
+- `record_plan_judge_verdict` rejects verdicts outside `{PROCEED, REVISE, ESCALATE}`.
+- `record_impl_judge_verdict` rejects verdicts outside `{PROCEED, REVISE}` and persists `task_id` on every row.
+- `state_init.load_or_reinit` writes via `.tmp` + `os.replace` under `.forge/.lock` (POSIX `fcntl.flock`) so concurrent processes cannot both detect a stale version and overwrite each other.
 
 ### 1.9.0 (Forge 3.1.0 — Self-Consistency Voting + Time-Travel Checkpoints)
 
