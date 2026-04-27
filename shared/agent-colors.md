@@ -38,7 +38,7 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | Orchestrator + helpers | fg-100, fg-101, fg-102, fg-103 |
 | PREFLIGHT | fg-130, fg-135, fg-140, fg-143, fg-150, fg-155 |
 | Migration / Planning | fg-160, fg-200, fg-205, fg-210, fg-250 |
-| Implement | fg-300, fg-310, fg-320, fg-350 |
+| Implement | fg-300, fg-301, fg-310, fg-320, fg-350 |
 | Review | fg-400, fg-410, fg-411, fg-412, fg-413, fg-414, fg-416, fg-417, fg-418, fg-419 |
 | Verify / Test | fg-500, fg-505, fg-506, fg-510, fg-515, fg-555 |
 | Ship | fg-590, fg-600, fg-610, fg-620, fg-650 |
@@ -69,6 +69,7 @@ Agents that can appear in the same TaskCreate cluster must have distinct colors.
 | `fg-210-validator` | Migration/Plan | yellow | yellow |
 | `fg-250-contract-validator` | Migration/Plan | yellow | amber |
 | `fg-300-implementer` | Implement | green | green |
+| `fg-301-implementer-judge` | Implement | *(none)* | lime |
 | `fg-310-scaffolder` | Implement | green | lime |
 | `fg-320-frontend-polisher` | Implement | magenta | coral |
 | `fg-350-docs-generator` | Implement | green | teal |
