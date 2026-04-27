@@ -17,6 +17,10 @@ HEADER = (
 )
 
 
+def _sanitize(body: str) -> str:
+    return "".join(ch for ch in body if ch == "\n" or ch >= " ")
+
+
 def _truncate(body: str, limit: int = BODY_LIMIT) -> str:
     if len(body) <= limit:
         return body
@@ -32,7 +36,7 @@ def _fmt_item(idx: int, item: LearningItem) -> str:
         badge = f"[confidence {confidence}, {item.applied_count}× applied]"
     else:
         badge = f"[confidence {confidence}]"
-    body = _truncate(item.body)
+    body = _truncate(_sanitize(item.body))
     lines = [f"{idx}. {badge} {body}"]
     lines.append(f"   - Source: {item.source_path}")
     decay = f"   - Decay: {item.half_life_days}d half-life"
