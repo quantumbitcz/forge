@@ -158,6 +158,37 @@ jobs:
         run: python tests/e2e/dry-run-smoke.py --verbose
         timeout-minutes: 3
 
+  mutation:
+    needs: structural
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install python3
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install bats dependencies
+        run: sudo apt-get install -y parallel
+
+      - name: Run mutation harness canary
+        run: python -m pytest tests/mutation/test_harness_canary.py -v
+
+      - name: Run seed-row mutation harness
+        run: python tests/mutation/state_transitions.py
+
+      - name: Verify REPORT.md is up-to-date
+        run: python tests/mutation/state_transitions.py --check
+
   test-windows-pwsh-structural:
     needs: structural
     runs-on: windows-latest
@@ -208,3 +239,34 @@ jobs:
 
       - name: Unit tests (cmd wrapper)
         run: tests\run-all.cmd unit
+
+  coverage:
+    needs: structural
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install python3
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Regenerate coverage report
+        run: python tests/scenario/report_coverage.py
+
+      - name: Verify COVERAGE.md is up-to-date
+        run: python tests/scenario/report_coverage.py --check
+
+      - name: Apply 60%/80% coverage gate on T-* rows
+        run: python tests/scenario/report_coverage.py --gate
+
+      - name: Run coverage-reporter canary
+        run: python -m pytest tests/mutation/test_coverage_canary.py -v

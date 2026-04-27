@@ -26,6 +26,11 @@ def score_le(a, b):
     return float(a) - float(b) <= SCORE_EPSILON
 
 
+def score_gte(a, b):
+    """a >= b with epsilon tolerance (inclusive boundary)."""
+    return float(a) - float(b) >= -SCORE_EPSILON
+
+
 def score_eq(a, b):
     """a == b with epsilon tolerance."""
     return abs(float(a) - float(b)) < SCORE_EPSILON
@@ -290,7 +295,7 @@ def build_table(g, state, conv, conv_phase):
          {}, {}),
         # Row 37: REVIEWING + score_regressing + beyond tolerance -> ESCALATED
         ('REVIEWING', 'score_regressing',
-         lambda: score_gt(abs(float(g('delta', 0))), int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5)))),
+         lambda: score_gte(abs(float(g('delta', 0))), int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5)))),
          'ESCALATED', '37', 'score_regressing (beyond tolerance)',
          {}, {'convergence_state': 'REGRESSING'}),
 
