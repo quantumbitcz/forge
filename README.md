@@ -195,6 +195,21 @@ Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plat
 
 ## Testing
 
+Forge runs eight test tiers in CI (`.github/workflows/test.yml`):
+
+| Tier | Platforms | Purpose |
+| --- | --- | --- |
+| structural | 3 OS | Plugin-layout sanity checks (~2s) |
+| unit | 3 OS | Algorithm/pure-function tests (pytest + bats) |
+| contract | 3 OS | Inter-agent + state-machine contracts |
+| scenario | 3 OS | State-machine scenarios against transition table |
+| e2e | 3 OS | Minimal ts+vitest project → dry-run pipeline → VALIDATED |
+| mutation | ubuntu | Seeded mutations of transition-table rows |
+| coverage | ubuntu | Scenario-to-row coverage report with 60%/80% gates |
+| pipeline eval | ubuntu | Full replay (manual CI trigger) |
+
+See `tests/README.md` for the per-tier contract, runner, and regeneration workflow.
+
 ```bash
 # Full suite
 ./tests/run-all.sh
