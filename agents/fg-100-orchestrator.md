@@ -28,7 +28,7 @@ Execute: **$ARGUMENTS**
 
 ## §1 Identity & Purpose
 
-10 stages: **PREFLIGHT -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
+Stages: **PREFLIGHT -> [BRAINSTORMING (feature mode only)] -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
 
 - Resolve ALL ambiguity without asking — read conventions, grep codebase, check stage notes.
 - **3 user touchpoints:** Start, Approval (PR), Escalation. Everything else autonomous.
@@ -647,7 +647,17 @@ Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
 
 **Specialized modes:** `testing` (test files only, reduced reviewers, pass_threshold target), `refactor` (preserve behavior, no new features, fg-410 mandatory), `performance` (profiling context, fg-416/fg-413 perf-only mandatory).
 
-`fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge run`.
+**BRAINSTORMING dispatch matrix (per §3 of skill consolidation spec):**
+
+| Mode | Pre-EXPLORE behavior | Reason |
+|------|---------------------|--------|
+| feature (default) | PREFLIGHT → BRAINSTORMING → EXPLORING | Always-on; fg-010-shaper covers ideation. |
+| bugfix | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-020-bug-investigator handles bug shaping. |
+| migration | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-160-migration-planner handles migration shaping. |
+| bootstrap | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-050-project-bootstrapper handles greenfield shaping. |
+| --spec <path> | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | Spec is treated as already brainstormed; well-formedness checked at §5. |
+| --from=<stage past BRAINSTORMING> | Skip BRAINSTORMING (idempotent resume) | --from honors stage skip semantics. |
+| brainstorm.enabled: false (config) | Skip BRAINSTORMING with log line | Emergency disable; logs `[AUTO] brainstorm disabled by config`. |
 
 After detecting, load mode overlay per §9.
 
@@ -718,6 +728,52 @@ Collect all ERRORs, present as batch.
 2. Write progress to `.forge/progress/` per `shared/background-execution.md`
 3. Escalations → `alerts.json` + `background_paused = true` + Slack if available
 4. Completion → clean up progress dir
+
+---
+
+### §0.4d Platform Detection (v3.7+)
+
+Detect the VCS platform once per run for downstream multi-platform integrations (post-run, PR builder). Owned by AC-FEEDBACK-006 (skill consolidation spec §6.1).
+
+**Skip on resume:** if `state.platform.detected_at` is set AND `state.platform.detected_at` is within the current run boundary (`state.run_id` matches), skip detection and reuse the cached value.
+
+**Otherwise, detect:**
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/shared/platform-detect.py \
+  --repo-root "$PROJECT_ROOT" \
+  --config-platform-detection "${platform.detection:-auto}" \
+  --config-remote-name "${platform.remote_name:-origin}"
+```
+
+The script returns JSON:
+
+```jsonc
+{
+  "platform": "github | gitlab | bitbucket | gitea | unknown",
+  "remote_url": "<url>",
+  "api_base": "<url or null>",
+  "auth_method": "gh-cli | glab-cli | env-token | basic-auth | none"
+}
+```
+
+Write to state:
+
+```bash
+bash shared/forge-state-write.sh set-key platform.name "<platform>"
+bash shared/forge-state-write.sh set-key platform.remote_url "<remote_url>"
+bash shared/forge-state-write.sh set-key platform.api_base "<api_base>"
+bash shared/forge-state-write.sh set-key platform.auth_method "<auth_method>"
+bash shared/forge-state-write.sh set-key platform.detected_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+**Failure handling:**
+
+- Detection script exits non-zero → log WARNING `PLATFORM-DETECT-FAILED`, set `state.platform.name = "unknown"`. Continue. Pipeline does not abort.
+- Script returns `"platform": "unknown"` (no host pattern matched) → set `state.platform.name = "unknown"`, log INFO `PLATFORM-UNKNOWN`. Continue. Downstream agents fall back to local-only logging per §6.1 spec.
+- Auth env var missing for the detected platform (e.g. GitHub detected but `GITHUB_TOKEN` absent and `gh` CLI not authenticated) → log WARNING, do NOT abort. The post-run agent (fg-710) handles auth-missing gracefully and logs defenses to `feedback-decisions.jsonl` only.
+
+Counters: increment `state.platform.detection_runs` (default 0). The skip-on-resume branch does not increment.
 
 ---
 
@@ -964,6 +1020,8 @@ Existing state.json with `complete: false`:
 2. Read checkpoint, validate files exist
 3. Check git drift → warn if detected
 4. Resume from first incomplete stage
+
+**BRAINSTORMING resume:** when `state.story_state == "BRAINSTORMING"` is detected, re-dispatch `fg-010-shaper`. The agent owns interactive-vs-autonomous and with-spec-vs-without-spec routing per its prompt (see §3 of the skill consolidation spec). Cache (`.forge/brainstorm-cache.json`) and transcript (`.forge/brainstorm-transcripts/<run_id>.jsonl`) are honored — both survive `/forge-admin recover reset` per the A6 schema.
 
 ---
 
@@ -1233,6 +1291,76 @@ After a run that used an auto-refined playbook:
 ```bash
 bash shared/forge-state.sh transition preflight_complete --guard "dry_run=${is_dry_run}" --forge-dir .forge
 ```
+
+---
+
+## Stage 0.5: BRAINSTORM
+
+**story_state:** `BRAINSTORMING` | TaskUpdate: Preflight → completed, Brainstorm → in_progress
+
+Per §3 of the skill consolidation spec. Always-on for feature mode; skipped for bug, migration, bootstrap, and --spec modes.
+
+### SS0.5.1 Skip Conditions
+
+Evaluate in order. First match wins.
+
+| Condition | Action | Log line |
+|---|---|---|
+| `state.mode == "bugfix"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — bugfix mode (fg-020-bug-investigator handles requirement shaping)` |
+| `state.mode == "migration"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — migration mode (fg-160-migration-planner handles requirement shaping)` |
+| `state.mode == "bootstrap"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — bootstrap mode (fg-050-project-bootstrapper handles requirement shaping)` |
+| `--spec <path>` parsed and well-formed (per §5 --spec mode validation) | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — spec provided at <path>` |
+| `--from=<stage>` where stage is past BRAINSTORMING (explore, plan, validate, implement, verify, review, docs, ship, learn) | Skip; transition PREFLIGHT → <target stage> | `BRAINSTORMING skipped — --from=<stage> resume past brainstorm` |
+| `forge-config.md` has `brainstorm.enabled: false` | Skip; transition PREFLIGHT → EXPLORING | `[AUTO] brainstorm disabled by config` |
+
+No skip condition met → SS0.5.2.
+
+### SS0.5.2 Dispatch fg-010-shaper
+
+Per the §4 dispatch protocol:
+
+```
+sub_task_id = TaskCreate(
+  subject = "🟣 Dispatching fg-010-shaper",
+  description = "Brainstorming requirement into structured spec",
+  activeForm = "Brainstorming"
+)
+TaskUpdate(taskId = sub_task_id, addBlockedBy = [stage_task_id])
+
+result = Agent(name = "fg-010-shaper", prompt = $ARGUMENTS_RAW)
+
+TaskUpdate(taskId = sub_task_id, status = "completed")
+```
+
+Where `$ARGUMENTS_RAW` is the user's original requirement string (from §5 argument parsing — preserve verbatim, do not normalize).
+
+**Wait for agent return.** The agent owns Plan Mode entry/exit, AskUserQuestion gates, transcript writing, and spec authoring. The orchestrator does not interject.
+
+### SS0.5.3 Post-Dispatch Validation
+
+After `fg-010-shaper` returns:
+
+- **Required state writes** (set by the agent): `state.brainstorm.spec_path`, `state.brainstorm.completed_at`. Verify both are set.
+- **Spec file exists:** `Path(state.brainstorm.spec_path).exists()`. If false → CRITICAL finding `BRAINSTORM-NO-SPEC`, abort per error taxonomy.
+- **Spec well-formedness:** invoke the same parser as §5 --spec mode (looks for `## Goal`, `## Scope`, `## Acceptance criteria`). If parser fails → CRITICAL finding `BRAINSTORM-MALFORMED-SPEC`, escalate via AskUserQuestion ("Restart brainstorming", "Edit spec inline", "Abort"). Autonomous mode: log and exit non-zero.
+
+### SS0.5.4 Transition
+
+```bash
+result=$(bash shared/forge-state.sh transition brainstorm_complete --forge-dir .forge)
+```
+
+This triggers the `BRAINSTORMING → EXPLORING` transition per `shared/state-transitions.md`.
+
+TaskUpdate: Brainstorm → completed, Explore → in_progress.
+
+Pass `state.brainstorm.spec_path` to Stage 1 EXPLORE as input. The planner (fg-200, after D1 lands) reads this spec at Stage 2.
+
+### SS0.5.5 Resume Behavior
+
+When `state.story_state == "BRAINSTORMING"` is detected at startup (per §0.14), the orchestrator re-dispatches `fg-010-shaper` with the same `$ARGUMENTS_RAW`. The agent itself owns resume routing (interactive-with-spec, interactive-without-spec, autonomous) per its rewritten prompt — the orchestrator does not need to peek at `state.brainstorm.spec_path` to decide.
+
+Counter: `state.brainstorm.resume_count` increments by 1 each time the stage is re-entered via resume.
 
 ---
 
