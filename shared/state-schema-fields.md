@@ -176,6 +176,8 @@
 | `eval.last_run_timestamp` | string | — | ISO 8601 timestamp of the last eval run completion. |
 | `eval.last_pass_rate` | number | — | Pass rate (0.0-1.0) from the last eval run. |
 | `eval.last_result_file` | string | — | Relative path to the result JSON file from the last eval run (e.g., `"evals/pipeline/results/2026-04-14-10-30-00-lite.json"`). |
+| `intent_verification_results` | array | No | Phase 7 (F35) — per-acceptance-criterion verdicts emitted by `fg-540-intent-verifier`. Populated by `fg-100-orchestrator` at the end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. Cleared at PREFLIGHT of every new run (does **not** survive `/forge-recover reset`). Each entry: `{ "ac_id": "AC-NNN", "verdict": "VERIFIED\|PARTIAL\|MISSED\|UNVERIFIABLE", "evidence": [{ "probe": "<cmd>", "status": <int\|null>, "body_sha": "<sha\|null>", "duration_ms": <int> }], "probes_issued": <int>, "duration_ms": <int>, "reasoning": "<text>" }`. Verdict mapping: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`. Default: `[]`. See `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`. |
+| `impl_vote_history` | array | No | Phase 7 (F36) — per-task N=2 voting telemetry written by `fg-100-orchestrator` during Stage 4 IMPLEMENT. One entry per task where voting was evaluated (fired OR skipped, with reason). **Survives across pipeline runs** (informational only; not cleared at PREFLIGHT). Each entry: `{ "task_id": "<id>", "trigger": "confidence\|risk_tag\|regression_history\|null", "samples": [{ "sample_id": 1\|2, "diff_sha": "<sha>", "ast_fingerprint": "sha256:..." }], "judge_verdict": "SAME\|DIVERGES\|null", "tiebreak_dispatched": <bool>, "winner_sample_id": <int\|null>, "skipped_reason": "null\|cost\|disabled\|worktree_fail", "wall_time_ms": <int> }`. When `skipped_reason` is non-null, `samples`, `judge_verdict`, `tiebreak_dispatched`, and `winner_sample_id` may be empty/null — the entry exists only as telemetry for `fg-700-retrospective`. Default: `[]`. See `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`. |
 
 ## `state.json` sub-object schemas
 
@@ -1014,6 +1016,15 @@ Each task object under `tasks[*]` carries:
 - `record_plan_judge_verdict` rejects verdicts outside `{PROCEED, REVISE, ESCALATE}`.
 - `record_impl_judge_verdict` rejects verdicts outside `{PROCEED, REVISE}` and persists `task_id` on every row.
 - `state_init.load_or_reinit` writes via `.tmp` + `os.replace` under `.forge/.lock` (POSIX `fcntl.flock`) so concurrent processes cannot both detect a stale version and overwrite each other.
+
+**Phase 6 portion (cost governance):** see `state-schema.md` §`v2.0.0 cost block notes (Phase 6 portion)` for the reshaped `cost` block (`ceiling_usd`, `spent_usd`, `remaining_usd`, `pct_consumed`, `tier_estimates_usd`, `conservatism_multiplier`, `tier_breakdown`, `downgrade_count`, `downgrades[]`, `throttle_events[]`, `ceiling_breaches`). On version-mismatch load (any `1.x.x`), the orchestrator resets the cost block to defaults and logs a single INFO line.
+
+**Phase 7 portion (intent assurance):** added two append-only top-level arrays — both populated by `fg-100-orchestrator`, disjoint from the Phase 5 and Phase 6 contributions.
+
+- `intent_verification_results` (array, optional, default `[]`) — per-AC verdicts written at end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. **Cleared at PREFLIGHT** of every new run (does not survive `/forge-recover reset`). Verdict mapping per `shared/scoring.md` §INTENT-* Finding Handling: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`.
+- `impl_vote_history` (array, optional, default `[]`) — per-task N=2 voting telemetry written incrementally during Stage 4 IMPLEMENT. One entry per task whether voting fired or was skipped. **Survives across runs** (informational only). When `skipped_reason` is non-null, `samples`, `judge_verdict`, `tiebreak_dispatched`, and `winner_sample_id` may be empty/null — the entry exists only as telemetry for `fg-700-retrospective`.
+
+Full record shapes documented in `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`.
 
 ### 1.9.0 (Forge 3.1.0 — Self-Consistency Voting + Time-Travel Checkpoints)
 

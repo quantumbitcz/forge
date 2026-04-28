@@ -411,6 +411,8 @@ On version-mismatch load (any `1.x.x`), the orchestrator resets the cost block t
 
 Phase 7 adds two append-only top-level arrays to `state.json`. Both are populated by `fg-100-orchestrator` and disjoint from the Phase 5 and Phase 6 contributions.
 
+> Canonical JSON Schema: [`shared/state-schema.json`](state-schema.json). Per-field reference: [`shared/state-schema-fields.md`](state-schema-fields.md).
+
 ### `intent_verification_results[]`
 
 One entry per acceptance criterion verified by `fg-540-intent-verifier`. Populated at end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. Cleared at PREFLIGHT of every new run.

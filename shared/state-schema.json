@@ -336,6 +336,62 @@
         "last_update_files": { "type": "array" },
         "stale": { "type": "boolean" }
       }
+    },
+    "intent_verification_results": {
+      "type": "array",
+      "description": "Phase 7 F35: per-AC verdicts emitted by fg-540-intent-verifier at end of Stage 5 VERIFY. Cleared at PREFLIGHT of every new run.",
+      "items": {
+        "type": "object",
+        "required": ["ac_id", "verdict", "probes_issued", "duration_ms"],
+        "properties": {
+          "ac_id": { "type": "string", "pattern": "^AC-[0-9]{3,}$" },
+          "verdict": { "type": "string", "enum": ["VERIFIED", "PARTIAL", "MISSED", "UNVERIFIABLE"] },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "probe": { "type": "string" },
+                "status": { "type": ["integer", "null"] },
+                "body_sha": { "type": ["string", "null"] },
+                "duration_ms": { "type": "integer", "minimum": 0 }
+              }
+            }
+          },
+          "probes_issued": { "type": "integer", "minimum": 0 },
+          "duration_ms": { "type": "integer", "minimum": 0 },
+          "reasoning": { "type": "string" }
+        }
+      }
+    },
+    "impl_vote_history": {
+      "type": "array",
+      "description": "Phase 7 F36: per-task voting telemetry. Entries appended whether vote fired or skipped. Survives across pipeline runs (informational).",
+      "items": {
+        "type": "object",
+        "required": ["task_id"],
+        "properties": {
+          "task_id": { "type": "string" },
+          "trigger": { "type": ["string", "null"], "enum": ["confidence", "risk_tag", "regression_history", null] },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["sample_id"],
+              "properties": {
+                "sample_id": { "type": "integer", "enum": [1, 2] },
+                "diff_sha": { "type": "string" },
+                "ast_fingerprint": { "type": "string", "pattern": "^sha256:" }
+              }
+            }
+          },
+          "judge_verdict": { "type": ["string", "null"], "enum": ["SAME", "DIVERGES", null] },
+          "tiebreak_dispatched": { "type": "boolean" },
+          "winner_sample_id": { "type": ["integer", "null"] },
+          "skipped_reason": { "type": ["string", "null"], "enum": [null, "cost", "disabled", "worktree_fail"] },
+          "wall_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
     }
   },
   "additionalProperties": true
