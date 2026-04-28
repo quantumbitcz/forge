@@ -356,6 +356,122 @@ First-pass dispatches (no prior judge verdict) omit the block.
 
 ---
 
+## 5.7 Plan output schema (writing-plans parity)
+
+<!-- Pattern source: superpowers:writing-plans, ported in-tree per spec §4. -->
+
+Every plan you emit follows this shape. Phase → Epic (optional, for sprint mode) → Story → Task. Each task is one atomic action (2-5 minutes per the writing-plans bite-sized rule).
+
+### Task scaffold
+
+For every task, emit:
+
+```markdown
+#### Task <N.M>: <one-line description>
+
+**Type:** test | implementation | refactor
+**File:** <exact path>
+**Risk:** low | medium | high
+**Risk justification:** (REQUIRED if Risk: high — minimum 30 words. Document why
+the task is high-risk and what mitigation is in place.)
+**Depends on:** Task <prior id> (omit when none)
+**ACs covered:** <comma-separated AC IDs from the spec>
+
+**Implementer prompt:**
+
+<body of `shared/prompts/implementer-prompt.md` with placeholders
+`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` substituted.>
+
+**Spec-reviewer prompt:** (REQUIRED for `Type: test` tasks; OPTIONAL for
+implementation/refactor tasks where the test it follows already covers the
+spec-compliance check.)
+
+<body of `shared/prompts/spec-reviewer-prompt.md` with placeholders substituted.>
+
+- [ ] **Step 1: <action>**
+    <code block showing the exact change, if applicable>
+
+- [ ] **Step 2: <action>**
+    Run: `<exact command>`
+    Expected: <exact expected output>
+
+- [ ] **Step N: Commit**
+    ```
+    <conventional commit message>
+    ```
+```
+
+### TDD ordering
+
+For every implementation task, the immediately preceding task in the plan MUST
+be `Type: test` covering the same component. The `Depends on:` field on the
+implementation task MUST reference the test task's ID. Refactor tasks MUST
+come after the corresponding implementation task and inherit its test as the
+regression gate.
+
+The validator (fg-210) rejects plans missing this ordering with verdict
+`REVISE`.
+
+### Embedded prompt templates
+
+The Implementer prompt body comes verbatim from `shared/prompts/implementer-prompt.md`. The Spec-reviewer prompt body comes verbatim from `shared/prompts/spec-reviewer-prompt.md`. Both files carry the attribution comment `<!-- Source: superpowers:writing-plans pattern, ported in-tree per §10 -->`. Substitute `{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` per task. Do not improvise — the templates are normative.
+
+### Risk markers and justification
+
+Every task carries `Risk: low | medium | high`. Tasks with `Risk: high` carry an
+additional `Risk justification:` paragraph of at least 30 words documenting:
+
+1. Why the task is high-risk (blast radius, coupling, irreversibility, novelty).
+2. What mitigation is in place (tests, fallback, feature flag, careful ordering).
+
+The validator (fg-210) counts words in the justification block and returns
+`REVISE` if it is shorter than 30 words on any high-risk task.
+
+### Bugfix-mode integration
+
+When `state.mode == "bugfix"`, before producing any plan content, read
+`state.bug.fix_gate_passed`:
+
+- If the field is missing or `false`, return the special verdict
+  `BLOCKED-BUG-INCONCLUSIVE` and attach the hypothesis register
+  (`state.bug.hypotheses`) to your output. Do NOT produce a plan body.
+- If `true`, proceed to plan a fix that addresses the surviving hypothesis
+  (the one with the highest posterior). Plan body follows the standard
+  scaffold above.
+
+The orchestrator (fg-100) handles the BLOCKED verdict by escalating to the
+user (interactive) or aborting non-zero (autonomous, with the message
+`[AUTO] bug investigation inconclusive — aborting fix attempt`).
+
+The fix-gate threshold is `bug.fix_gate_threshold` from `forge.local.md`
+(default 0.75). The planner does NOT recompute the gate — it only reads the
+boolean. The math lives in fg-020.
+
+### Validator coupling
+
+`fg-210-validator` enforces this contract. If you ship a plan that violates
+any of:
+
+- Every implementation task has a preceding test task (TDD ordering).
+- Every task has an Implementer prompt block.
+- Every test task has a Spec-reviewer prompt block.
+- Every task has a Risk field.
+- Every Risk: high task has a Risk justification ≥30 words.
+- Bugfix-mode plans either ship a body OR return BLOCKED-BUG-INCONCLUSIVE
+  based on the fix-gate read.
+
+the validator returns `REVISE` and you re-plan. Do not ship a plan you know
+violates this list.
+
+### Autonomous mode
+
+The contract is mechanical (template substitution, structural fields). It
+applies identically in autonomous mode — no user prompts are needed for the
+per-task scaffold. The Challenge Brief section (existing) continues to be
+produced from your reasoning rather than user input.
+
+---
+
 ## 6. Context Management
 
 **Decision logging:** Append to `.forge/decisions.jsonl` per `shared/decision-log.md`.
