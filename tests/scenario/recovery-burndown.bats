@@ -13,45 +13,86 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
 
 # ---------------------------------------------------------------------------
-# Helper: compute total weight from a list of strategy applications
+# Helpers: floating-point arithmetic. `bc` is not on Git Bash for Windows;
+# python3 is already required, so use it. Output format mirrors bc:
+# trailing-zero-trimmed decimal (e.g. "5.5" not "5.50").
 # ---------------------------------------------------------------------------
-compute_total_weight() {
-  local total=0
-  for weight in "$@"; do
-    total=$(echo "$total + $weight" | bc)
-  done
-  echo "$total"
+_pf_add() {
+  # Mirrors `echo "a + b + ... | bc"` semantics: result scale = max input
+  # scale; integer inputs produce integer results. Trims trailing zeros
+  # past the input scale (e.g. 0.5 + 0.5 = 1.0, not 1.00).
+  python3 -c "
+import sys
+from decimal import Decimal
+
+vals = [Decimal(x) for x in sys.argv[1:]]
+total = sum(vals, Decimal('0'))
+scale = max((-v.as_tuple().exponent for v in vals if v.as_tuple().exponent < 0), default=0)
+if scale == 0:
+    print(int(total))
+else:
+    s = f'{total:.{scale}f}'
+    # bc prints '.5' not '0.5' for results in (-1, 1); mirror this.
+    if s.startswith('0.'):
+        s = s[1:]
+    elif s.startswith('-0.'):
+        s = '-' + s[2:]
+    print(s)
+" "$@"
 }
 
-# Helper: create state.json with recovery budget at a given weight
+_pf_cmp() {
+  # _pf_cmp <a> <op> <b>; op in (< <= > >= ==). Prints 1 if true, 0 otherwise.
+  python3 -c "
+import sys
+a, op, b = float(sys.argv[1]), sys.argv[2], float(sys.argv[3])
+ops = {'<': a < b, '<=': a <= b, '>': a > b, '>=': a >= b, '==': a == b}
+print(1 if ops[op] else 0)
+" "$1" "$2" "$3"
+}
+
+# Helper: compute total weight from a list of strategy applications
+compute_total_weight() {
+  _pf_add "$@"
+}
+
+# Helper: create state.json with recovery budget at a given weight.
+# Path passed via argv (sys.argv[1]); weight + applications passed via env
+# vars so MSYS auto-conversion of the path (which interpolating breaks under
+# native Windows Python) is preserved.
 create_state_with_budget() {
   local forge_dir="$1"
   local total_weight="$2"
   local apps_json="${3:-[]}"
   mkdir -p "$forge_dir"
-  python3 -c "
+  FORGE_TOTAL_WEIGHT="$total_weight" FORGE_APPS_JSON="$apps_json" \
+    python3 - "$forge_dir/state.json" <<'PY'
 import json
+import os
+import sys
+from pathlib import Path
+
 state = {
     'version': '1.5.0',
     'story_state': 'IMPLEMENTING',
     'mode': 'standard',
     '_seq': 0,
     'recovery_budget': {
-        'total_weight': $total_weight,
+        'total_weight': float(os.environ['FORGE_TOTAL_WEIGHT']),
         'max_weight': 5.5,
-        'applications': $apps_json
+        'applications': json.loads(os.environ['FORGE_APPS_JSON']),
     },
     'recovery': {
         'total_failures': 0,
         'total_recoveries': 0,
         'degraded_capabilities': [],
         'failures': [],
-        'budget_warning_issued': False
-    }
+        'budget_warning_issued': False,
+    },
 }
-with open('$forge_dir/state.json', 'w') as f:
+with Path(sys.argv[1]).open('w') as f:
     json.dump(state, f, indent=2)
-"
+PY
 }
 
 # Budget ceiling and strategy weights (from recovery-engine.md section 9)
@@ -99,7 +140,7 @@ W_GRACEFUL_STOP="0.0"
   local weights=("$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON" "$W_AGENT_RESET" "$W_DEP_HEALTH" "$W_RESOURCE_CLEAN" "$W_GRACEFUL_STOP")
 
   for i in 0 1 2 3 4 5 6; do
-    running_total=$(echo "$running_total + ${weights[$i]}" | bc)
+    running_total=$(_pf_add "$running_total" "${weights[$i]}")
     local expected="${expected_totals[$i]}"
     # bc may return ".5" instead of "0.5" — normalize
     local normalized
@@ -136,8 +177,8 @@ W_GRACEFUL_STOP="0.0"
   local budget="5.5"
   for weight in "$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON" "$W_AGENT_RESET" "$W_DEP_HEALTH" "$W_RESOURCE_CLEAN"; do
     local new_total
-    new_total=$(echo "$budget + $weight" | bc)
-    [[ $(echo "$new_total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+    new_total=$(_pf_add "$budget" "$weight")
+    [[ $(_pf_cmp "$new_total" '>' "$BUDGET_CEILING") -eq 1 ]] \
       || fail "Strategy with weight $weight should be blocked at budget $budget (would be $new_total)"
   done
 }
@@ -151,8 +192,8 @@ W_GRACEFUL_STOP="0.0"
   # graceful-stop has weight 0.0, so it should always be allowed
   local budget="5.5"
   local new_total
-  new_total=$(echo "$budget + $W_GRACEFUL_STOP" | bc)
-  [[ $(echo "$new_total <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  new_total=$(_pf_add "$budget" "$W_GRACEFUL_STOP")
+  [[ $(_pf_cmp "$new_total" '<=' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "graceful-stop (weight 0.0) should be allowed even at exhausted budget"
 }
 
@@ -217,21 +258,21 @@ W_GRACEFUL_STOP="0.0"
   local budget="5.0"
   local primary="$W_TOOL_DIAG"  # 1.0
   local new_total
-  new_total=$(echo "$budget + $primary" | bc)
-  [[ $(echo "$new_total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  new_total=$(_pf_add "$budget" "$primary")
+  [[ $(_pf_cmp "$new_total" '>' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "Primary should exceed budget at $budget"
 
   # But Fallback 1 resource-cleanup(0.5) fits: 5.0 + 0.5 = 5.5
   local fallback1="$W_RESOURCE_CLEAN"
   local fb1_total
-  fb1_total=$(echo "$budget + $fallback1" | bc)
-  [[ $(echo "$fb1_total <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  fb1_total=$(_pf_add "$budget" "$fallback1")
+  [[ $(_pf_cmp "$fb1_total" '<=' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "Fallback 1 (resource-cleanup, 0.5) should fit at budget $budget"
 
   # Fallback 2 agent-reset(1.0) would not fit after fb1: 5.5 + 1.0 = 6.5
   local fb2_total
-  fb2_total=$(echo "$fb1_total + $W_AGENT_RESET" | bc)
-  [[ $(echo "$fb2_total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  fb2_total=$(_pf_add "$fb1_total" "$W_AGENT_RESET")
+  [[ $(_pf_cmp "$fb2_total" '>' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "Fallback 2 should exceed budget after fallback 1 applied"
 }
 
@@ -247,13 +288,13 @@ W_GRACEFUL_STOP="0.0"
 
 @test "recovery-burndown: budget at 4.3 does not trigger 80% warning" {
   local total="4.3"
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '<' "$WARNING_80PCT") -eq 1 ]] \
     || fail "Budget $total should be below 80% warning threshold ($WARNING_80PCT)"
 }
 
 @test "recovery-burndown: budget at exactly 4.4 triggers 80% warning" {
   local total="4.4"
-  [[ $(echo "$total >= $WARNING_80PCT" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '>=' "$WARNING_80PCT") -eq 1 ]] \
     || fail "Budget $total should trigger 80% warning (threshold=$WARNING_80PCT)"
 }
 
@@ -264,13 +305,13 @@ W_GRACEFUL_STOP="0.0"
 
 @test "recovery-burndown: budget at 4.94 does not trigger 90% escalation" {
   local total="4.94"
-  [[ $(echo "$total < $WARNING_90PCT" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '<' "$WARNING_90PCT") -eq 1 ]] \
     || fail "Budget $total should NOT trigger 90% escalation (threshold=$WARNING_90PCT)"
 }
 
 @test "recovery-burndown: budget at 4.95 triggers 90% escalation" {
   local total="4.95"
-  [[ $(echo "$total >= $WARNING_90PCT" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '>=' "$WARNING_90PCT") -eq 1 ]] \
     || fail "Budget $total should trigger 90% escalation (threshold=$WARNING_90PCT)"
 }
 
@@ -300,7 +341,7 @@ W_GRACEFUL_STOP="0.0"
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TRANSIENT" "$W_TRANSIENT")
   [[ "$total" == "1.5" ]] || fail "Expected 1.5, got $total"
   # 1.5 is well within budget ceiling
-  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '<' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "3 transient retries ($total) should be within budget ($BUDGET_CEILING)"
 }
 
@@ -336,17 +377,20 @@ W_GRACEFUL_STOP="0.0"
   local forge_dir="${TEST_TEMP}/budget-reset/.forge"
   create_state_with_budget "$forge_dir" 3.5
 
-  run python3 -c "
+  run python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
     d = json.load(f)
 rb = d['recovery_budget']
 assert 'total_weight' in rb, 'Missing total_weight'
 assert 'max_weight' in rb, 'Missing max_weight'
-assert rb['max_weight'] == 5.5, f'max_weight should be 5.5, got {rb[\"max_weight\"]}'
-assert rb['total_weight'] == 3.5, f'total_weight should be 3.5, got {rb[\"total_weight\"]}'
+assert rb['max_weight'] == 5.5, f"max_weight should be 5.5, got {rb['max_weight']}"
+assert rb['total_weight'] == 3.5, f"total_weight should be 3.5, got {rb['total_weight']}"
 print('OK')
-"
+PY
   assert_success
   assert_output "OK"
 }
@@ -356,26 +400,33 @@ print('OK')
   create_state_with_budget "$forge_dir" 4.5 '[{"strategy":"transient-retry","weight":0.5},{"strategy":"tool-diagnosis","weight":1.0}]'
 
   # Simulate PREFLIGHT budget reset
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['recovery_budget']['total_weight'] = 0.0
 d['recovery_budget']['applications'] = []
 d['recovery']['budget_warning_issued'] = False
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
-  run python3 -c "
+  run python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
     d = json.load(f)
 assert d['recovery_budget']['total_weight'] == 0.0, 'Budget not reset'
 assert d['recovery_budget']['applications'] == [], 'Applications not cleared'
-assert d['recovery']['budget_warning_issued'] == False, 'Warning not cleared'
+assert d['recovery']['budget_warning_issued'] is False, 'Warning not cleared'
 print('OK')
-"
+PY
   assert_success
   assert_output "OK"
 }
@@ -419,37 +470,46 @@ print('OK')
   for entry in "${strategies_and_weights[@]}"; do
     local name="${entry%%:*}"
     local weight="${entry##*:}"
-    running_total=$(echo "$running_total + $weight" | bc)
+    running_total=$(_pf_add "$running_total" "$weight")
 
-    python3 -c "
+    FORGE_RUNNING_TOTAL="$running_total" FORGE_NAME="$name" FORGE_WEIGHT="$weight" \
+      python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import os
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
-d['recovery_budget']['total_weight'] = $running_total
+d['recovery_budget']['total_weight'] = float(os.environ['FORGE_RUNNING_TOTAL'])
 d['recovery_budget']['applications'].append({
-    'strategy': '$name',
-    'weight': $weight,
+    'strategy': os.environ['FORGE_NAME'],
+    'weight': float(os.environ['FORGE_WEIGHT']),
     'stage': 'IMPLEMENTING',
-    'timestamp': '2026-01-01T00:00:00Z'
+    'timestamp': '2026-01-01T00:00:00Z',
 })
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
   done
 
   # Verify final state
-  run python3 -c "
+  run python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
     d = json.load(f)
 rb = d['recovery_budget']
-assert rb['total_weight'] == 5.5, f'Expected 5.5, got {rb[\"total_weight\"]}'
-assert len(rb['applications']) == 6, f'Expected 6 applications, got {len(rb[\"applications\"])}'
+assert rb['total_weight'] == 5.5, f"Expected 5.5, got {rb['total_weight']}"
+assert len(rb['applications']) == 6, f"Expected 6 applications, got {len(rb['applications'])}"
 # Verify sum of individual weights matches total
 w_sum = sum(a['weight'] for a in rb['applications'])
-assert w_sum == 5.5, f'Sum of application weights ({w_sum}) != total_weight (5.5)'
+assert w_sum == 5.5, f"Sum of application weights ({w_sum}) != total_weight (5.5)"
 print('OK')
-"
+PY
   assert_success
   assert_output "OK"
 }
@@ -459,34 +519,34 @@ print('OK')
   local total="0.0"
 
   # transient-retry (0.5) -> total 0.5 (below 80%)
-  total=$(echo "$total + $W_TRANSIENT" | bc)
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_TRANSIENT")
+  [[ $(_pf_cmp "$total" '<' "$WARNING_80PCT") -eq 1 ]] \
     || fail "After transient-retry ($total), should be below 80% ($WARNING_80PCT)"
 
   # tool-diagnosis (1.0) -> total 1.5 (below 80%)
-  total=$(echo "$total + $W_TOOL_DIAG" | bc)
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_TOOL_DIAG")
+  [[ $(_pf_cmp "$total" '<' "$WARNING_80PCT") -eq 1 ]] \
     || fail "After tool-diagnosis ($total), should be below 80%"
 
   # state-reconstruction (1.5) -> total 3.0 (below 80%)
-  total=$(echo "$total + $W_STATE_RECON" | bc)
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_STATE_RECON")
+  [[ $(_pf_cmp "$total" '<' "$WARNING_80PCT") -eq 1 ]] \
     || fail "After state-reconstruction ($total), should be below 80%"
 
   # agent-reset (1.0) -> total 4.0 (below 80%)
-  total=$(echo "$total + $W_AGENT_RESET" | bc)
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_AGENT_RESET")
+  [[ $(_pf_cmp "$total" '<' "$WARNING_80PCT") -eq 1 ]] \
     || fail "After agent-reset ($total), should be below 80%"
 
   # dependency-health (1.0) -> total 5.0 (above 80%, above 90%)
-  total=$(echo "$total + $W_DEP_HEALTH" | bc)
-  [[ $(echo "$total >= $WARNING_80PCT" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_DEP_HEALTH")
+  [[ $(_pf_cmp "$total" '>=' "$WARNING_80PCT") -eq 1 ]] \
     || fail "After dependency-health ($total), should be above 80% ($WARNING_80PCT)"
-  [[ $(echo "$total >= $WARNING_90PCT" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '>=' "$WARNING_90PCT") -eq 1 ]] \
     || fail "After dependency-health ($total), should be above 90% ($WARNING_90PCT)"
 
   # resource-cleanup (0.5) -> total 5.5 (at ceiling)
-  total=$(echo "$total + $W_RESOURCE_CLEAN" | bc)
-  [[ $(echo "$total >= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  total=$(_pf_add "$total" "$W_RESOURCE_CLEAN")
+  [[ $(_pf_cmp "$total" '>=' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "After resource-cleanup ($total), should be at ceiling ($BUDGET_CEILING)"
 }

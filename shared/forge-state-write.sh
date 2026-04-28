@@ -101,20 +101,27 @@ do_write() {
   # Release lock on any exit path (error, signal, etc.)
   trap 'if [[ "${_lock_mode:-}" == "flock" ]]; then exec 200>&- 2>/dev/null; elif [[ -d "${lock_dir:-}" ]]; then rmdir "$lock_dir" 2>/dev/null; fi' EXIT
 
-  # Read current _seq from existing state.json (0 if not present)
+  # Read current _seq from existing state.json (0 if not present).
+  # Path passed via argv (not interpolated into source) so MSYS path
+  # auto-conversion produces a native form on Windows. See
+  # feedback_no_backcompat note re: Windows backslash-in-source breakage.
   local current_seq=0
   if [[ -f "$STATE_FILE" ]]; then
-    current_seq=$("$PYTHON" -c "
-import json, sys
+    current_seq=$("$PYTHON" - "$STATE_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
+
 try:
-    with open('$STATE_FILE') as f:
+    with Path(sys.argv[1]).open() as f:
         print(json.load(f).get('_seq', 0))
 except json.JSONDecodeError:
     print(0)
 except Exception as e:
     print('READ_ERROR: ' + str(e), file=sys.stderr)
     sys.exit(1)
-")
+PY
+)
     if [[ $? -ne 0 ]]; then
       echo "ERROR: failed to read current state.json" >&2
       exit 2
@@ -179,29 +186,34 @@ except Exception as e:
     echo "$updated_json"
   } >> "$WAL_FILE"
 
-  # Truncate WAL if over limit (inside write lock scope)
+  # Truncate WAL if over limit (inside write lock scope).
+  # Path + max-entries via argv to keep Windows backslashes out of source.
   local wal_count
   wal_count=$(grep -c "^--- SEQ:" "$WAL_FILE" 2>/dev/null || echo "0")
   if [[ "$wal_count" -gt "$WAL_MAX_ENTRIES" ]]; then
-    "$PYTHON" -c "
-import re, sys, os
+    "$PYTHON" - "$WAL_FILE" "$WAL_MAX_ENTRIES" <<'PY' 2>/dev/null || {
+import os
+import re
+import sys
+from pathlib import Path
+
+wal_file = Path(sys.argv[1])
+max_entries = int(sys.argv[2])
+tmp_path = wal_file.with_name(wal_file.name + '.tmp')
 try:
-    with open('$WAL_FILE') as f:
-        content = f.read()
+    content = wal_file.read_text()
     entries = re.split(r'(?=^--- SEQ:)', content, flags=re.MULTILINE)
     entries = [e for e in entries if e.strip()]
-    keep = entries[-$WAL_MAX_ENTRIES:]
-    tmp_path = '$WAL_FILE.tmp'
-    with open(tmp_path, 'w') as f:
-        f.write(''.join(keep))
-    os.replace(tmp_path, '$WAL_FILE')
+    keep = entries[-max_entries:]
+    tmp_path.write_text(''.join(keep))
+    os.replace(str(tmp_path), str(wal_file))
 except Exception as e:
     try:
-        os.remove('$WAL_FILE.tmp')
+        tmp_path.unlink()
     except OSError:
         pass
     print(f'WARNING: WAL truncation failed: {e}', file=sys.stderr)
-" 2>/dev/null || {
+PY
       rm -f "${WAL_FILE}.tmp" 2>/dev/null
       _log_warning "WAL truncation failed, wal_count=${wal_count}"
     }
@@ -270,12 +282,16 @@ do_recover() {
     return 1
   fi
 
-  # Split declaration from assignment to preserve $? from python3 subshell
+  # Split declaration from assignment to preserve $? from python3 subshell.
+  # Path passed via argv (not interpolated into source).
   local recovered
-  recovered=$("$PYTHON" -c "
-import re, json, sys
-with open('$WAL_FILE') as f:
-    content = f.read()
+  recovered=$("$PYTHON" - "$WAL_FILE" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+content = Path(sys.argv[1]).read_text()
 entries = re.split(r'^--- SEQ:\d+ TS:\S+ ---$', content, flags=re.MULTILINE)
 entries = [e.strip() for e in entries if e.strip()]
 if not entries:
@@ -288,7 +304,8 @@ for entry in reversed(entries):
     except json.JSONDecodeError:
         continue
 sys.exit(1)
-")
+PY
+)
 
   if [[ $? -ne 0 ]] || [[ -z "$recovered" ]]; then
     echo "ERROR: no valid JSON found in WAL" >&2

@@ -36,9 +36,17 @@ teardown() {
   # Create a mock PATH without docker
   local mock_bin="$TMPWORK/mock-bin"
   mkdir -p "$mock_bin"
-  # Only include basic commands, not docker
-  ln -sf "$(command -v bash)" "$mock_bin/bash"
-  ln -sf "$(command -v echo)" "$mock_bin/echo"
+  # Only include basic commands, not docker. `command -v` may return a
+  # builtin name (e.g. `echo` on Git Bash) instead of a filesystem path —
+  # skip those, they'll be resolved via PATH lookup of the inherited shell.
+  for tool in bash echo; do
+    local resolved
+    resolved="$(command -v "$tool" 2>/dev/null || true)"
+    if [[ -n "$resolved" && -f "$resolved" ]]; then
+      ln -sf "$resolved" "$mock_bin/$tool" 2>/dev/null || \
+        cp "$resolved" "$mock_bin/$tool"
+    fi
+  done
 
   PATH="$mock_bin" run "$PLUGIN_ROOT/shared/graph/neo4j-health.sh"
   [ "$status" -eq 1 ]

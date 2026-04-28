@@ -11,14 +11,47 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 
 # ---------------------------------------------------------------------------
-# Helper: compute total weight from a list of strategy applications
+# Helpers: floating-point arithmetic. `bc` is not on Git Bash for Windows;
+# python3 is already a required tool, so use it for portable comparison and
+# summation. Output format mirrors bc: trailing-zero-trimmed decimal
+# (e.g. "5.5" not "5.50").
 # ---------------------------------------------------------------------------
+_pf_add() {
+  # Mirrors `echo "a + b + ... | bc"` semantics: result scale = max input
+  # scale; integer inputs produce integer results. Trims trailing zeros
+  # past the input scale (e.g. 0.5 + 0.5 = 1.0, not 1.00).
+  python3 -c "
+import sys
+from decimal import Decimal
+
+vals = [Decimal(x) for x in sys.argv[1:]]
+total = sum(vals, Decimal('0'))
+scale = max((-v.as_tuple().exponent for v in vals if v.as_tuple().exponent < 0), default=0)
+if scale == 0:
+    print(int(total))
+else:
+    s = f'{total:.{scale}f}'
+    # bc prints '.5' not '0.5' for results in (-1, 1); mirror this.
+    if s.startswith('0.'):
+        s = s[1:]
+    elif s.startswith('-0.'):
+        s = '-' + s[2:]
+    print(s)
+" "$@"
+}
+
+_pf_cmp() {
+  # _pf_cmp <a> <op> <b>; op in (< <= > >= ==). Prints 1 if true, 0 otherwise.
+  python3 -c "
+import sys
+a, op, b = float(sys.argv[1]), sys.argv[2], float(sys.argv[3])
+ops = {'<': a < b, '<=': a <= b, '>': a > b, '>=': a >= b, '==': a == b}
+print(1 if ops[op] else 0)
+" "$1" "$2" "$3"
+}
+
 compute_total_weight() {
-  local total=0
-  for weight in "$@"; do
-    total=$(echo "$total + $weight" | bc)
-  done
-  echo "$total"
+  _pf_add "$@"
 }
 
 # Budget ceiling
@@ -95,7 +128,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON" \
     "$W_AGENT_RESET" "$W_DEP_HEALTH" "$W_RESOURCE_CLEAN" "$W_TRANSIENT")
-  [[ $(echo "$total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  [[ $(_pf_cmp "$total" '>' "$BUDGET_CEILING") -eq 1 ]] \
     || fail "Expected overflow (got $total), ceiling is $BUDGET_CEILING"
 }
 

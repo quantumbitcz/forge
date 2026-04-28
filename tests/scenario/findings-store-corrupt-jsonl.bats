@@ -21,11 +21,16 @@ teardown() { rm -rf "$TMPDIR"; }
 {"finding_id":"f-fg-410-code-reviewer-01J2BQK0003","dedup_key":"b.kt:2:QUAL-NAME","reviewer":"fg-410-code-reviewer","severity":"INFO","category":"QUAL-NAME","file":"b.kt","line":2,"message":"name","confidence":"LOW","created_at":"2026-04-22T10:00:01Z","seen_by":[]}
 EOF
 
-  run python3 -c "
-import sys, pathlib, io, contextlib
-sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+  run python3 - "$RUNS" <<'PY'
+import contextlib
+import io
+import sys
+from pathlib import Path
+
+# PYTHONPATH (set in setup) covers shared/python.
 from findings_store import reduce_findings
-root = pathlib.Path('$RUNS')
+
+root = Path(sys.argv[1])
 buf = io.StringIO()
 with contextlib.redirect_stderr(buf):
     out = reduce_findings(root, writer_glob='fg-4*.jsonl')
@@ -35,20 +40,23 @@ assert 'fg-410-code-reviewer' in err
 assert 'line 2' in err
 assert 'WARNING' in err.upper()
 print('OK')
-"
+PY
   [ "$status" -eq 0 ]
 }
 
 @test "binary garbage line → skipped, continues" {
   printf '\x00\xff\x7f' > "$RUNS/fg-411-security-reviewer.jsonl"
   printf '\n{"finding_id":"f-fg-411-security-reviewer-ABCDEFGHJK","dedup_key":"x.kt:1:SEC","reviewer":"fg-411-security-reviewer","severity":"CRITICAL","category":"SEC","file":"x.kt","line":1,"message":"m","confidence":"HIGH","created_at":"2026-04-22T10:00:00Z","seen_by":[]}\n' >> "$RUNS/fg-411-security-reviewer.jsonl"
-  run python3 -c "
-import sys, pathlib
-sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+  run python3 - "$RUNS" <<'PY'
+import sys
+from pathlib import Path
+
+# PYTHONPATH (set in setup) covers shared/python.
 from findings_store import reduce_findings
-out = reduce_findings(pathlib.Path('$RUNS'), writer_glob='fg-4*.jsonl')
+
+out = reduce_findings(Path(sys.argv[1]), writer_glob='fg-4*.jsonl')
 assert len(out) == 1 and out[0]['finding_id'] == 'f-fg-411-security-reviewer-ABCDEFGHJK'
 print('OK')
-"
+PY
   [ "$status" -eq 0 ]
 }

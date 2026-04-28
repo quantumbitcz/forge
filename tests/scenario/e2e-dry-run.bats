@@ -134,8 +134,11 @@ teardown() {
 }
 
 @test "e2e-dry-run: state.json can be initialized with correct schema version" {
-  python3 -c "
+  python3 - "$PROJECT/.forge/state.json" <<'PY'
 import json
+import sys
+from pathlib import Path
+
 state = {
     'version': '2.1.0',
     'complete': False,
@@ -158,12 +161,21 @@ state = {
     'current_plan_sha': None,
     'schema_version_history': []
 }
-with open('$PROJECT/.forge/state.json', 'w') as f:
+with Path(sys.argv[1]).open('w') as f:
     json.dump(state, f, indent=2)
-"
+PY
   # Verify it's valid JSON with correct version
   local version
-  version=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d['version'])")
+  version=$(python3 - "$PROJECT/.forge/state.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    d = json.load(f)
+print(d['version'])
+PY
+)
   [[ "$version" == "2.1.0" ]]
 }
 
@@ -173,7 +185,16 @@ with open('$PROJECT/.forge/state.json', 'w') as f:
     printf '{"version":"2.1.0","dry_run":true}\n' > "$PROJECT/.forge/state.json"
   fi
   local dry_run
-  dry_run=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d.get('dry_run', False))")
+  dry_run=$(python3 - "$PROJECT/.forge/state.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    d = json.load(f)
+print(d.get('dry_run', False))
+PY
+)
   [[ "$dry_run" == "True" ]]
 }
 
@@ -257,13 +278,17 @@ with open('$PROJECT/.forge/state.json', 'w') as f:
 # 8. Recovery budget initializes correctly
 # ---------------------------------------------------------------------------
 @test "e2e-dry-run: recovery budget starts at 0.0 with 5.5 ceiling" {
-  python3 -c "
+  python3 - "$PROJECT/.forge/state.json" <<'PY'
 import json
-state = json.load(open('$PROJECT/.forge/state.json')) if __import__('os').path.isfile('$PROJECT/.forge/state.json') else {}
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+state = json.loads(p.read_text()) if p.is_file() else {}
 budget = state.get('recovery_budget', {'total_weight': 0.0, 'max_weight': 5.5})
-assert budget['total_weight'] == 0.0, f'Expected 0.0, got {budget[\"total_weight\"]}'
-assert budget['max_weight'] == 5.5, f'Expected 5.5, got {budget[\"max_weight\"]}'
-"
+assert budget['total_weight'] == 0.0, f"Expected 0.0, got {budget['total_weight']}"
+assert budget['max_weight'] == 5.5, f"Expected 5.5, got {budget['max_weight']}"
+PY
 }
 
 # ---------------------------------------------------------------------------
@@ -271,12 +296,14 @@ assert budget['max_weight'] == 5.5, f'Expected 5.5, got {budget[\"max_weight\"]}
 # ---------------------------------------------------------------------------
 @test "e2e dry-run leaves .forge/runs/<id>/findings directory inode-ready" {
   # This is a structural smoke test — dry-run writes no findings but the directory convention is documented
-  run python3 -c "
-import pathlib
-p = pathlib.Path('$PLUGIN_ROOT/shared/findings-store.md')
+  run python3 - "$PLUGIN_ROOT/shared/findings-store.md" <<'PY'
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
 assert p.exists()
 print('OK')
-"
+PY
   [ "$status" -eq 0 ]
 }
 
@@ -285,16 +312,16 @@ print('OK')
 # ---------------------------------------------------------------------------
 @test "dry-run initializes state with version 2.1.0 and zeroed judge fields" {
   # Use state_init directly to avoid a full pipeline run
-  run python3 -c "
-import sys
-sys.path.insert(0, '$PLUGIN_ROOT/shared/python')
+  run python3 <<'PY'
+# PYTHONPATH (set by test-helpers) covers PLUGIN_ROOT/shared/python.
 from state_init import create_initial_state
+
 s = create_initial_state('', '', 'standard', True)
 assert s['version'] == '2.1.0'
 assert s['plan_judge_loops'] == 0
 assert s['impl_judge_loops'] == {}
 assert s['judge_verdicts'] == []
 print('OK')
-"
+PY
   [ "$status" -eq 0 ]
 }
