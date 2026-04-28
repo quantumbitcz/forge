@@ -30,8 +30,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$InformationPreference  = 'Continue'
 
-function Write-Info { param([string]$m) Write-Host "[install.ps1] $m" }
+function Write-Info { param([string]$m) Write-Information "[install.ps1] $m" }
 
 if ($Help) {
     @'
@@ -41,7 +42,7 @@ Usage: powershell -ExecutionPolicy Bypass -File install.ps1 [-WhatIf] [-Help]
                                                           [-PluginDir <path>]
 
 Installs the forge plugin into $env:USERPROFILE\.claude\plugins\forge.
-'@ | Write-Host
+'@ | Write-Information
     exit 0
 }
 
