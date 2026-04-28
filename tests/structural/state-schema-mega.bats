@@ -1,9 +1,6 @@
 #!/usr/bin/env bats
 # Asserts shared/state-schema.md, shared/state-transitions.md, and
 # shared/stage-contract.md document the mega-consolidation schema bump.
-#
-# Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §11.
-# ACs:  AC-S024, AC-S025 (event-name slots), AC-S026.
 
 setup() {
     REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"

@@ -48,6 +48,5 @@ Release gate: `PHASE_8_CORPUS_GATE=1` is set automatically by the weekly cron (`
 
 ## See also
 
-- Spec: `docs/superpowers/specs/2026-04-22-phase-8-measurement-design.md`
 - ADR: `docs/adr/0013-weekly-benchmark-extension.md`
 - Fast smoke tier: `tests/evals/pipeline/README.md`

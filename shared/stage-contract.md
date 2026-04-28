@@ -92,8 +92,6 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **Exit condition:** Spec written to `docs/superpowers/specs/<date>-<slug>-design.md` (or `brainstorm.spec_dir` override) and approved (interactive) or auto-approved (autonomous degradation per §3).
 
-**Spec:** `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §3. Full per-stage detail (inputs, outputs, telemetry, error handling) lands in C2 when the orchestrator wiring is added; this declaration reserves the slot.
-
 ---
 
 ### Stage 1: EXPLORE

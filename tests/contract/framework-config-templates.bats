@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
-# Contract tests: every framework's forge-config-template.md carries the Phase 6
-# `cost:` block introduced in tasks 8/9 of docs/superpowers/plans/2026-04-22-phase-6-cost-governance.md.
+# Contract tests: every framework's forge-config-template.md carries the
+# Phase 6 cost-governance `cost:` block.
 #
 # Note on regex vs fenced blocks: grep operates on raw text and does NOT respect
 # triple-backtick fence context — a `ceiling_usd: 25.00` literal anywhere in the

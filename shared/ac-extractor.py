@@ -1,7 +1,6 @@
 # shared/ac-extractor.py
 """Autonomous acceptance-criteria extractor used by fg-010-shaper in --autonomous mode.
 
-Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §3 (commit 660dbef7).
 Pure stdlib. No third-party dependencies. Cross-platform (Windows/macOS/Linux).
 """
 from __future__ import annotations

@@ -1,9 +1,6 @@
 #!/usr/bin/env bats
 # Asserts that shared/preflight-constraints.md documents all new config keys
-# from the mega-consolidation spec §11.1.
-#
-# Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §11.1.
-# AC:   AC-S028.
+# from the mega-consolidation skill-surface work.
 
 setup() {
     REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"

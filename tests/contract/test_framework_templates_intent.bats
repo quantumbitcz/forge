@@ -1,7 +1,6 @@
 #!/usr/bin/env bats
 # Contract tests: every framework's forge-config-template.md carries the
-# Phase 7 `intent_verification:` and `impl_voting:` blocks introduced in
-# Task 4 of docs/superpowers/plans/2026-04-22-phase-7-intent-assurance.md.
+# Phase 7 `intent_verification:` and `impl_voting:` blocks (intent-assurance).
 #
 # Note: grep operates on raw text and does NOT respect triple-backtick fence
 # context — presence of the literal anywhere in the file satisfies the

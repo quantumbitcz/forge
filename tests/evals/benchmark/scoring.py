@@ -1,6 +1,6 @@
 """Solve predicate and AC math for the benchmark harness.
 
-Spec reference: docs/superpowers/specs/2026-04-22-phase-8-measurement-design.md §2
+See ADR 0013 (`docs/adr/0013-weekly-benchmark-extension.md`) for the threshold rationale.
 """
 
 from __future__ import annotations

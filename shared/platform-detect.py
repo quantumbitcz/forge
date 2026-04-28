@@ -5,9 +5,6 @@ Reads `git remote get-url <remote_name>` and matches against known host
 patterns. Falls back to a Gitea API probe (best-effort; the timeout is
 per-socket-operation after connect — see _gitea_probe). Honors explicit
 override via config['platform']['detection'].
-
-Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §6.1
-ACs:  AC-FEEDBACK-006, AC-FEEDBACK-007.
 """
 from __future__ import annotations
 

@@ -72,8 +72,6 @@ Handoff generation is **deterministic Python**, not an LLM subagent.
 
 ## References
 
-- Spec: `docs/superpowers/specs/2026-04-21-session-handoff-design.md`
-  (will be removed at feature ship)
 - Modules: `hooks/_py/handoff/` (writer, resumer, triggers, milestones,
   alerts, search, auto_memory)
 - Skill: `/forge-admin handoff`

@@ -6,8 +6,7 @@ Used by:
   - skills/forge-admin/SKILL.md (config wizard)
   - agents/fg-050-project-bootstrapper.md (greenfield bootstrap)
 
-Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §2 (commit 660dbef7).
-Atomic-write contract: AC-S027 — target file is either absent or fully written.
+Atomic-write contract: target file is either absent or fully written.
 """
 from __future__ import annotations
 

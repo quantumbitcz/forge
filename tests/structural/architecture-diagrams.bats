@@ -27,6 +27,6 @@ load '../helpers/test-helpers'
 
 @test "no references to deleted skill-routing-guide.md" {
   local count
-  count=$(grep -rl 'skill-routing-guide' "${PLUGIN_ROOT}"/ --include='*.md' 2>/dev/null | grep -v 'docs/superpowers/' | grep -v 'CHANGELOG.md' | wc -l | tr -d ' ')
+  count=$(grep -rl 'skill-routing-guide' "${PLUGIN_ROOT}"/ --include='*.md' 2>/dev/null | grep -v 'CHANGELOG.md' | wc -l | tr -d ' ')
   assert [ "$count" -eq 0 ]
 }

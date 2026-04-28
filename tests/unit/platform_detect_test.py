@@ -1,9 +1,5 @@
 # tests/unit/platform_detect_test.py
-"""Tests for shared/platform-detect.py — VCS platform detection.
-
-Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §6.1
-ACs:  AC-FEEDBACK-006 (helper side), AC-FEEDBACK-007 (explicit override).
-"""
+"""Tests for shared/platform-detect.py — VCS platform detection."""
 from __future__ import annotations
 
 import subprocess

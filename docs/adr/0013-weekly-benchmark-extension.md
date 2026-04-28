@@ -1,9 +1,9 @@
 # 0013 — Weekly benchmark extension
 
-- Status: Accepted
-- Date: 2026-04-22
-- Supersedes: —
-- Superseded by: —
+- **Status:** Accepted
+- **Date:** 2026-04-22
+- **Supersedes:** —
+- **Superseded by:** —
 
 ## Context
 
@@ -26,9 +26,16 @@
 - Every matrix cell exercises exactly one model end-to-end (all three tiers pinned), so solve-rate differences are attributable.
 - `SCORECARD.md` is a first-class repo artifact. External readers see the number without leaving the repo.
 
-## Alternatives rejected
+## Alternatives Considered
 
 - **Dedicated benchmark repo.** Adds CI secrets, CODEOWNERS, release coordination — hostile to personal-tool inertia.
 - **Third-party SaaS (W&B, Braintrust).** Secret provisioning + per-run spend outside forge-config.
 - **Patching shared/model-routing.md at runtime.** Mutates a repo-tracked contract file.
 - **Per-commit benchmark.** Cost-prohibitive at 10+ entries × 6 cells × 90 min.
+
+## References
+
+- ADR 0008 — no-backcompat stance.
+- `tests/evals/pipeline/README.md` — fast smoke tier counterpart.
+- `tests/evals/benchmark/README.md` — operator workflows.
+- SWE-bench Verified leaderboard, OpenHands, SWE-agent — peer benchmarks referenced in §Context.

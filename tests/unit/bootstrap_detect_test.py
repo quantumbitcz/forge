@@ -1,9 +1,5 @@
 # tests/unit/bootstrap_detect_test.py
-"""Tests for shared/bootstrap-detect.py — stack detection + atomic-write contract.
-
-Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §2
-ACs:  AC-S015, AC-S017, AC-S018, AC-S027 (atomic-write).
-"""
+"""Tests for shared/bootstrap-detect.py — stack detection + atomic-write contract."""
 from __future__ import annotations
 
 import json

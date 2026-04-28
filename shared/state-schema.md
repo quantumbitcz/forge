@@ -486,8 +486,6 @@ The lock is held by the orchestrator process only. Subagents dispatched by `fg-1
 
 ## State Changes — Mega-Consolidation v2.1.0 (2026-04-27)
 
-Spec: `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §11 (commit 660dbef7).
-
 ### New stage enum value
 
 `state.story_state` (alias `state.stage` in some agents) gains the value `BRAINSTORMING`. It sits between `PREFLIGHT` and `EXPLORING` in the canonical pipeline ordering.
