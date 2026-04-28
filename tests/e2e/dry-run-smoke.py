@@ -266,10 +266,19 @@ def smoke(*, verbose: bool = False) -> int:
             "  - VALIDATING -> COMPLETE\n",
             encoding="utf-8",
         )
+        # Pass FORGE_PYTHON so the sim invokes the same interpreter that has
+        # pyyaml installed (CI installs pyyaml against the active python; the
+        # default `python3` on macOS may resolve to a different interpreter
+        # without the test deps). Same fix applies on Windows where Git Bash
+        # may resolve `python3` differently from the actions/setup-python
+        # interpreter used to launch this script.
+        sim_env = os.environ.copy()
+        sim_env["FORGE_PYTHON"] = sys.executable
         r = _run(
             [bash_path, str(sim_script), "run", str(scenario),
              "--forge-dir", str(project / ".forge")],
             cwd=project,
+            env=sim_env,
             timeout=90,
         )
         if verbose:

@@ -63,14 +63,14 @@ def test_row_count_matches_features_dict() -> None:
     # Data rows begin with `| F` (every feature id starts with F). This cleanly
     # excludes the header (`| ID |`) and the separator (`|----|`).
     data_rows = [line for line in block if line.startswith("| F")]
-    assert len(data_rows) == 30, (
-        f"expected 30 data rows (one per feature), got {len(data_rows)}"
+    assert len(data_rows) == 39, (
+        f"expected 39 data rows (one per feature), got {len(data_rows)}"
     )
     # Separately sanity-check total rows including header + separator.
-    # Use a floor (>= 32) rather than equality: future feature additions bump
+    # Use a floor (>= 41) rather than equality: future feature additions bump
     # this number and the data-row count above is the authoritative check.
     all_rows = [line for line in block if line.startswith("|")]
-    assert len(all_rows) >= 32, (
-        f"expected at least 32 total table rows (header + sep + >=30 data), "
+    assert len(all_rows) >= 41, (
+        f"expected at least 41 total table rows (header + sep + >=39 data), "
         f"got {len(all_rows)}"
     )

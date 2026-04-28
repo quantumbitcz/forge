@@ -7,8 +7,11 @@ A = (Path(__file__).parent.parent.parent / "shared" / "agents.md").read_text()
 
 def test_fg540_in_registry():
     assert "fg-540-intent-verifier" in A
-    # Tier 3
-    assert re.search(r"fg-540-intent-verifier.*\b3\b", A)
+    # Tier 4 (no UI capabilities — fresh-context probes only). Phase 7 originally
+    # placed fg-540 at Tier 3, but the contract evolved: fg-540 must not surface
+    # task tracker entries (which would imply TaskCreate/TaskUpdate tools, in
+    # turn forbidden by test_fg540_frontmatter.test_forbidden_tools_absent).
+    assert re.search(r"fg-540-intent-verifier.*\b4\b", A)
 
 
 def test_fg302_in_registry():

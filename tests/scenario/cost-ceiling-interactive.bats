@@ -57,6 +57,6 @@ print(st['cost']['ceiling_breaches'])
 
 @test "interactive breach: .forge/cost-incidents/*.json written" {
   python3 "$PLUGIN_ROOT/tests/helpers/orchestrator-gate-sim.py" fg-200-planner premium >/dev/null
-  run bash -c "ls $FORGE_DIR/cost-incidents/*.json | wc -l"
+  run bash -c "ls $FORGE_DIR/cost-incidents/*.json | wc -l | tr -d ' '"
   assert_output "1"
 }

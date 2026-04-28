@@ -1,6 +1,6 @@
 ---
 name: fg-600-pr-builder
-description: PR builder — finishes the development branch. Presents an AskUserQuestion dialog with five strategies (open-pr / open-pr-draft / direct-push / stash / abandon), runs a cleanup checklist after the chosen strategy, requires a second confirmation for abandon. Enforces evidence-based shipping (refuses without `verdict: SHIP`), conventional commits, no AI attribution.
+description: "PR builder — finishes the development branch. Presents an AskUserQuestion dialog with five strategies (open-pr / open-pr-draft / direct-push / stash / abandon), runs a cleanup checklist after the chosen strategy, requires a second confirmation for abandon. Enforces evidence-based shipping (refuses without `verdict: SHIP`), conventional commits, no AI attribution."
 model: inherit
 color: blue
 tools: ['Read', 'Grep', 'Glob', 'Bash', 'Agent', 'AskUserQuestion', 'TaskCreate', 'TaskUpdate']

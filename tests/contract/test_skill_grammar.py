@@ -7,8 +7,10 @@ Rules:
    error on Levenshtein ≤ 2 typos).
 4. [read-only] skills MUST NOT contain a `## Subcommands` heading.
 5. ui: (if present) parses to {tasks, ask, plan_mode} booleans exactly.
-6. forge-status contains `## Config validation summary` and `## Recent hook failures`.
-7. forge-verify does not mention `--config` anywhere.
+
+Note: forge-status / forge-verify standalone-skill assertions removed in Mega B
+(skills consolidated to /forge, /forge-admin, /forge-ask). Subcommand semantics
+are tested via tests/unit/skill-execution/.
 """
 from __future__ import annotations
 
@@ -132,14 +134,3 @@ def test_ui_block_shape(skill_path: Path) -> None:
             pytest.fail(f"{skill_path.parent.name}: ui block invalid:\n{exc}")
 
 
-def test_forge_status_has_required_sections() -> None:
-    _, body = _parse_skill(SKILLS_DIR / "forge-status" / "SKILL.md")
-    assert "\n## Config validation summary" in body, "forge-status missing Config validation summary"
-    assert "\n## Recent hook failures" in body, "forge-status missing Recent hook failures"
-
-
-def test_forge_verify_has_no_config_references() -> None:
-    path = SKILLS_DIR / "forge-verify" / "SKILL.md"
-    text = path.read_text(encoding="utf-8")
-    assert "--config" not in text, "forge-verify must not mention --config (removed in Phase 2)"
-    assert "Subcommand: config" not in text, "forge-verify must not have Subcommand: config section"

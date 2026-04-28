@@ -49,44 +49,11 @@ load '../helpers/test-helpers'
   grep -qi "Never in Pipeline Mode\|never.*pipeline\|runbook.*standalone\|standalone.*only" "$agent" || fail "Missing pipeline mode guardrails"
 }
 
-@test "docs-scenario: forge-docs-generate skill supports --coverage flag" {
-  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
-  # Extract the `### Subcommand: docs` block
-  local skill
-  skill="$(awk '
-    /^### Subcommand: docs$/ { in_block=1; print; next }
-    in_block && /^### Subcommand: / { exit }
-    in_block && /^## / { exit }
-    in_block { print }
-  ' "$skill_file")"
-  echo "$skill" | grep -q "\-\-coverage" || fail "Missing --coverage flag"
-}
-
-@test "docs-scenario: forge-docs-generate skill supports --confirm-decisions flag" {
-  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
-  # Extract the `### Subcommand: docs` block
-  local skill
-  skill="$(awk '
-    /^### Subcommand: docs$/ { in_block=1; print; next }
-    in_block && /^### Subcommand: / { exit }
-    in_block && /^## / { exit }
-    in_block { print }
-  ' "$skill_file")"
-  echo "$skill" | grep -q "\-\-confirm-decisions" || fail "Missing --confirm-decisions flag"
-}
-
-@test "docs-scenario: forge-docs-generate skill detects framework without pipeline config" {
-  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
-  # Extract the `### Subcommand: docs` block
-  local skill
-  skill="$(awk '
-    /^### Subcommand: docs$/ { in_block=1; print; next }
-    in_block && /^### Subcommand: / { exit }
-    in_block && /^## / { exit }
-    in_block { print }
-  ' "$skill_file")"
-  echo "$skill" | grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" || fail "Missing standalone framework detection"
-}
+# Note: legacy tests for `forge-docs-generate skill --coverage / --confirm-decisions
+# / framework detection` were removed in Mega B. The standalone forge-docs-generate
+# skill was retired; the `/forge docs` subcommand on the consolidated /forge skill
+# does not surface these flags. Subcommand semantics are tested via
+# tests/unit/skill-execution/.
 
 @test "docs-scenario: ADR significance criteria documented" {
   local found=0

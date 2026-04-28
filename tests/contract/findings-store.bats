@@ -40,11 +40,13 @@ setup() {
   [ "$status" -eq 0 ]
 }
 
-@test "agent-communication.md does not contain 'dedup hints' or 'previous batch findings'" {
+@test "agent-communication.md does not contain stale 'dedup hints' phrasing" {
+  # Note: 'previous batch findings' is now expected (per dedup-no-cap.bats):
+  # the §Findings Store Protocol section requires "Include all previous batch
+  # findings with domain affinity for the next reviewer." We only forbid the
+  # legacy 'dedup hints' phrasing that was the explicit replacement target.
   F="$PROJECT_ROOT/shared/agent-communication.md"
   run grep -iF 'dedup hints' "$F"
-  [ "$status" -ne 0 ]
-  run grep -iF 'previous batch findings' "$F"
   [ "$status" -ne 0 ]
 }
 

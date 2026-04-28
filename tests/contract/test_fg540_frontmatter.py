@@ -36,9 +36,13 @@ def test_forbidden_tools_absent():
     assert tools.isdisjoint(forbidden), f"forbidden tools present: {tools & forbidden}"
 
 
-def test_ui_tier_3():
+def test_ui_tier_4():
+    """fg-540 is Tier 4 (no UI capabilities) — it operates fresh-context and
+    must not surface in the user-facing task tracker. Adding TaskCreate/
+    TaskUpdate would also conflict with the forbidden-tools assertion above.
+    """
     fm = _frontmatter(AGENT)
-    assert "tasks: true" in fm
+    assert "tasks: false" in fm
     assert "ask: false" in fm
     assert "plan_mode: false" in fm
 

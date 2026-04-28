@@ -1,11 +1,11 @@
 """Phase 7 Wave 7 Task 37 — CLAUDE.md agent count + F35/F36 callsites.
 
-Asserts the 48->50 rollover landed and the Phase 7 features are surfaced.
-The `\\b50 agents\\b` token only appears in the prose-form callsite
-(line 21 "All 50 agents"); the §Agents heading uses the form `Agents (50,`
-which is not word-boundary-flanked. So the assertion is one prose match +
-zero stale `\\b48` references — that captures the intent without
-false-positive on differently-formatted callsites elsewhere.
+Asserts the agent rollover (48 → 50 → 51) landed and the Phase 7 features are
+surfaced. The `\\b51 agents\\b` token only appears in the prose-form callsite
+("All 51 agents"); the §Agents heading uses the form `Agents (51,` which is
+not word-boundary-flanked. So the assertion is one prose match + zero stale
+`\\b48` references — that captures the intent without false-positive on
+differently-formatted callsites elsewhere.
 """
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ def test_no_48_agents_references() -> None:
 
 
 def test_50_agents_callsite_present() -> None:
-    assert re.search(r"\b50 agents\b", CM), (
-        "expected at least one prose `50 agents` callsite in CLAUDE.md"
+    assert re.search(r"\b51 agents\b", CM), (
+        "expected at least one prose `51 agents` callsite in CLAUDE.md"
     )
 
 

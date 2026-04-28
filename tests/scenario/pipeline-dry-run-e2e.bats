@@ -85,7 +85,7 @@ teardown() {
   mode="$(jq -r '.mode' "$FORGE_DIR/state.json")"
   seq="$(jq -r '._seq' "$FORGE_DIR/state.json")"
 
-  [[ "$version" == "1.6.0" ]]
+  [[ "$version" == "2.1.0" ]]
   [[ -n "$state" && "$state" != "null" ]]
   [[ "$mode" == "standard" ]]
   (( seq > 0 ))

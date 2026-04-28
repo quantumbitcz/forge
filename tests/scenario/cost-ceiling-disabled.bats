@@ -23,7 +23,7 @@ with open(p, 'w') as fh:
   run python3 "$PLUGIN_ROOT/tests/helpers/orchestrator-gate-sim.py" fg-200-planner premium
   assert_success
   assert_output -p '"action": "dispatch"'
-  run bash -c "ls $FORGE_DIR/cost-incidents/ 2>/dev/null | wc -l"
+  run bash -c "ls $FORGE_DIR/cost-incidents/ 2>/dev/null | wc -l | tr -d ' '"
   assert_output "0"
 }
 

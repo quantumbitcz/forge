@@ -97,7 +97,6 @@ Task tracking only (no user interaction).
 | `fg-505-build-verifier` | Build verification |
 | `fg-506-migration-verifier` | Migration verification (migration mode) |
 | `fg-515-property-test-generator` | Property-based test generation (conditional) |
-| `fg-540-intent-verifier` | Intent verification probes (Phase 7 F35) |
 | `fg-555-resilience-tester` | Resilience testing (conditional) |
 | `fg-590-pre-ship-verifier` | Evidence-based ship gate |
 | `fg-610-infra-deploy-verifier` | Infrastructure verification (conditional) |
@@ -129,6 +128,7 @@ No UI capabilities. Produce findings only.
 | `fg-418-docs-consistency-reviewer` | Documentation consistency |
 | `fg-419-infra-deploy-reviewer` | Infrastructure review |
 | `fg-510-mutation-analyzer` | Mutation testing analysis |
+| `fg-540-intent-verifier` | Intent verification probes (Phase 7 F35); fresh-context, no UI surface |
 
 <a id="dispatch"></a>
 
@@ -364,7 +364,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-506-migration-verifier | 3 | No | Verify | Migration |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-515-property-test-generator | 3 | No | Verify | Testing |
-| fg-540-intent-verifier | 3 | No | Verify | Intent |
+| fg-540-intent-verifier | 4 | No | Verify | Intent |
 | fg-555-resilience-tester | 3 | No | Verify | Resilience |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |
