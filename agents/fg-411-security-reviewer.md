@@ -304,8 +304,8 @@ Summary: detected stack, files reviewed, PASS/FAIL per category.
 
 ## Output: prose report (writing-plans / requesting-code-review parity)
 
-<!-- Source: superpowers:requesting-code-review pattern + code-reviewer.md
-template, ported in-tree per spec §5 (D3). -->
+<!-- Source: superpowers:requesting-code-review pattern plus the upstream
+code-reviewer template, ported in-tree per spec §5 (D3). -->
 
 In addition to the findings JSON (existing contract — unchanged), write a
 prose report to:

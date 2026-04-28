@@ -7,7 +7,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 @test "skill-descriptions: all skills have description in frontmatter" {
   local missing=0
-  for skill_dir in "$SKILLS_DIR"/forge-*/; do
+  for skill_dir in "$SKILLS_DIR"/forge/ "$SKILLS_DIR"/forge-*/; do
     local skill_file="$skill_dir/SKILL.md"
     [ -f "$skill_file" ] || continue
     if ! sed -n '2,/^---$/p' "$skill_file" | grep -q '^description:'; then
@@ -20,7 +20,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 @test "skill-descriptions: all descriptions include 'Use when' clause" {
   local weak=0
-  for skill_dir in "$SKILLS_DIR"/forge-*/; do
+  for skill_dir in "$SKILLS_DIR"/forge/ "$SKILLS_DIR"/forge-*/; do
     local skill_file="$skill_dir/SKILL.md"
     [ -f "$skill_file" ] || continue
     local desc
@@ -35,7 +35,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 @test "skill-descriptions: all skills have allowed-tools in frontmatter" {
   local missing=0
-  for skill_dir in "$SKILLS_DIR"/forge-*/; do
+  for skill_dir in "$SKILLS_DIR"/forge/ "$SKILLS_DIR"/forge-*/; do
     local skill_file="$skill_dir/SKILL.md"
     [ -f "$skill_file" ] || continue
     if ! sed -n '2,/^---$/p' "$skill_file" | grep -q '^allowed-tools:'; then

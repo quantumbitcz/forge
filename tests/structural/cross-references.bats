@@ -148,7 +148,7 @@ is_runtime_artifact() {
 is_non_skill_slashpath() {
   case "$1" in
     # Claude Code built-in slash commands
-    compact|clear|help|model|config|cost|memory) return 0 ;;
+    compact|clear|help|model|config|cost|memory|schedule) return 0 ;;
     # HTTP endpoint paths used in observability / k8s / infra docs
     health|healthz|livez|readyz|metrics|ready|liveness|readiness) return 0 ;;
   esac

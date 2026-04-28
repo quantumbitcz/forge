@@ -1,6 +1,6 @@
 ---
 name: forge-ask
-description: "[read-only] Query forge state, codebase knowledge, run history, or analytics. Never mutates project state. Use to check pipeline status, search wiki/graph for code answers, view past runs, see analytics, or get an onboarding tour."
+description: "[read-only] Query forge state, codebase knowledge, run history, or analytics. Never mutates project state. Use when you want to check pipeline status, search wiki/graph for code answers, view past runs, see analytics, or get an onboarding tour."
 allowed-tools: ['Read', 'Bash', 'Glob', 'Grep', 'Agent']
 ---
 
