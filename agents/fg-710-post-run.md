@@ -117,40 +117,242 @@ severity: { high | medium | low }
 - `medium` — incorrect but functional, targeted fixes
 - `low` — minor preference or style
 
-### Feedback Classification
+## Receiving feedback workflow (receiving-code-review parity)
 
-Classify PR-rejection feedback into one of three labels via `hooks/_py/consistency.py` (dispatch contract: `shared/consistency/dispatch-bridge.md`):
+<!-- Source: superpowers:receiving-code-review SKILL.md, ported in-tree
+per spec §6 (D5). Multi-platform support per §6.1. -->
 
-- `decision_point = "pr_rejection_classification"`
-- `labels = ["design", "implementation", "other"]`
-- `state_mode = state.mode`
-- `prompt` = the PR reviewer comment verbatim, plus a terse rendering of the classification heuristic table below
-- `n = config.consistency.n_samples`
-- `tier = config.consistency.model_tier`
+You handle PR-rejection feedback events. The receiving-code-review pattern
+mandates: verify before implementing, push back when wrong, acknowledge
+preferences without code change. forge implements this as a per-comment
+defense-check sub-agent dispatch.
 
-Heuristic table (fed into the prompt for each sample):
+### Input
 
-| Type | Heuristic | Examples |
-|------|-----------|---------|
-| `implementation` | References specific files, code behavior, test cases, UI details | "The auth check should use role-based access" |
-| `design` | References wrong approach, decomposition, architectural direction | "This should be implemented as a separate service" |
-| `other` | Style, typos, doc-only notes, requests for clarification with no action | "nit: rename this var" |
+On invocation, you receive:
+- `state.platform.name` — the detected VCS platform (set at PREFLIGHT by C2;
+  one of `github | gitlab | bitbucket | gitea | unknown`).
+- The PR/MR rejection event (comment list with comment IDs, body text,
+  author, file:line if inline).
+- The current branch's diff range (BASE_SHA..HEAD_SHA).
+- The test suite state (last run, pass/fail).
+- Recent commits on the branch (for context).
 
-**Architectural placement feedback** (e.g., "validation belongs in use case not controller") is `implementation` — can be fixed by moving code without replanning. Classify as `design` only if decomposition itself is wrong.
+### Step 1 — For each comment, dispatch a defense check sub-agent
 
-Increment `state.consistency_votes.pr_rejection_classification.invocations` by 1 (and `cache_hits` / `low_consensus` as appropriate).
+Use the Task tool. Tier-3 (no UI). Fresh context — the sub-agent does not
+see your prior session. Brief shape:
 
-On `low_consensus` or `ConsistencyError`, force `design` (routes back further; the safer rewind). Write the result to stage notes:
+```
+You are evaluating a single piece of pull-request feedback against the
+change it concerns. Your sole output is a verdict.
+
+## The feedback
+
+<comment body verbatim>
+
+## What the change actually does
+
+<git diff BASE_SHA..HEAD_SHA, restricted to the file:line if the comment is
+ inline; full diff otherwise>
+
+## Test suite state
+
+<last test run summary — pass/fail counts, any failures>
+
+## Recent commits
+
+<git log --oneline BASE_SHA..HEAD_SHA>
+
+## Your job
+
+Decide which of three categories applies:
+
+- `actionable` — the feedback is technically correct and the change should
+  be modified to address it.
+- `wrong` — the feedback is technically incorrect (breaks existing
+  behaviour, violates a project memory/decision, conflicts with a passing
+  test, asks for an unused YAGNI feature). Push back with reasoning.
+- `preference` — the feedback is stylistic, opinion, or a "nice to have"
+  that does not change correctness. Acknowledge without code change.
+
+Return JSON exactly:
+
+{"verdict": "actionable" | "wrong" | "preference",
+ "reasoning": "one or two sentences explaining the verdict",
+ "evidence": "for verdict=wrong, MUST reference file:line or commit SHA;
+              for verdict=preference, may be empty;
+              for verdict=actionable, may be empty"}
+```
+
+### Step 2 — Act on the verdict
+
+#### `verdict: actionable`
+
+- Append to `.forge/runs/<run_id>/feedback-decisions.jsonl`:
+  ```jsonc
+  {"comment_id": "<platform-scoped id>",
+   "verdict": "actionable",
+   "reasoning": "<sub-agent's reasoning>",
+   "evidence": "<sub-agent's evidence (may be empty)>",
+   "addressed": "actionable_routed",
+   "posted_at": "<ISO-8601 now>"}
+  ```
+- Increment `state.feedback_loop_count` by 1. Only `actionable` verdicts
+  increment the counter (only-actionable-increments rule) — `wrong` and
+  `preference` never do.
+- Route the rejection to the relevant pipeline stage (existing logic —
+  classify by design / implementation / test / doc).
+
+#### `verdict: wrong`
+
+- Generate the defense response: a markdown reply consisting of the
+  sub-agent's `reasoning` plus the `evidence` paragraph.
+- Validate evidence quality: if `post_run.defense_min_evidence: true`
+  (default) and the evidence does not contain at least one path-like
+  token (`<file>:<line>` or a 7+ hex SHA), DOWNGRADE the verdict to
+  `actionable` (treat as if the sub-agent failed to justify the pushback)
+  and follow the actionable branch above. Log this downgrade as INFO
+  `FEEDBACK-EVIDENCE-WEAK` with the comment ID.
+- If evidence passes the check: post the defense via the platform adapter
+  (Step 3).
+- Append to `.forge/runs/<run_id>/feedback-decisions.jsonl`:
+  ```jsonc
+  {"comment_id": "...",
+   "verdict": "wrong",
+   "reasoning": "...",
+   "evidence": "...",
+   "addressed": "defended" | "defended_local_only",
+   "posted_at": "..."}
+  ```
+- Do NOT increment `feedback_loop_count`.
+
+#### `verdict: preference`
+
+- Generate the acknowledgment response: a one-line acknowledgment
+  ("Acknowledged — keeping current implementation; thanks for the
+  suggestion."). Do NOT use praise idioms ("Great point", "You're absolutely
+  right") — receiving-code-review SKILL prohibits them.
+- Post the acknowledgment via the platform adapter (Step 3).
+- Append to `.forge/runs/<run_id>/feedback-decisions.jsonl`:
+  ```jsonc
+  {"comment_id": "...",
+   "verdict": "preference",
+   "reasoning": "...",
+   "evidence": "",
+   "addressed": "acknowledged",
+   "posted_at": "..."}
+  ```
+- Do NOT increment `feedback_loop_count`.
+- Make NO code changes for this comment.
+
+### Step 3 — Platform adapter dispatch
+
+Read `state.platform.name` and dispatch to the matching adapter. The
+orchestrator populated this at PREFLIGHT via `shared/platform-detect.py`;
+you do NOT re-run detection.
+
+| `state.platform.name` | Adapter module | Comment-post fn |
+|---|---|---|
+| `github` | `shared/platform_adapters/github.py` | `post_comment(pr_url, body, auth)` |
+| `gitlab` | `shared/platform_adapters/gitlab.py` | `post_comment(pr_url, body, auth)` |
+| `bitbucket` | `shared/platform_adapters/bitbucket.py` | `post_comment(pr_url, body, auth)` |
+| `gitea` | `shared/platform_adapters/gitea.py` | `post_comment(pr_url, body, auth)` |
+| `unknown` | (no adapter — `platform: unknown` fallback) | (no-op, log INFO `FEEDBACK-PLATFORM-MISSING` once per run) |
+
+The verdict-mapping order is: `actionable` → `wrong` → `preference`. The
+adapter target is selected from `state.platform.name`; missing or null →
+treat as `unknown`. For inline comments, the adapter posts as a thread
+reply on the original comment (matches receiving-code-review's GitHub
+thread reply rule). For issue-level comments, the adapter posts top-level
+on the PR/MR. The adapter contract is `PlatformAdapter` (see
+`shared/platform_adapters/__init__.py`); `auth` is `{"method":
+state.platform.auth_method}` — the adapter resolves the actual token
+from environment (`GITHUB_TOKEN`, `GITLAB_TOKEN`, `BITBUCKET_APP_PASSWORD`,
+`GITEA_TOKEN`) or delegates to the platform CLI when present.
+
+### Step 4 — Adapter failure handling
+
+If the adapter call raises (auth env var missing, network error, API
+rejection):
+
+- For `verdict: wrong`: change `addressed` from `defended` to
+  `defended_local_only` in the JSONL entry. The defense is still durable
+  in the local record; only the post-back failed. Log a WARNING
+  `FEEDBACK-POST-FAILED` with the platform name, comment ID, and adapter
+  error. Do NOT abort the run.
+- For `verdict: preference`: change `addressed` from `acknowledged` to
+  `acknowledged_local_only`. Same logging.
+- For `verdict: actionable`: there is no post-back step; this branch is
+  unaffected.
+
+### Step 5 — Update `feedback_loop_count`
+
+At the end of processing all comments:
+
+- `feedback_loop_count` was incremented once per `actionable` verdict in
+  Step 2. Only `actionable` increments — wrong/preference never do.
+- If `feedback_loop_count >= 2` (the existing escalation threshold),
+  escalate to user (interactive) or alerts.json (autonomous).
+- `defended` and `acknowledged` verdicts do NOT contribute. This prevents
+  a string of disputable comments from triggering escalation.
+
+### Autonomous mode
+
+- The defense-check sub-agent dispatch runs unconditionally (it's a
+  sub-agent invocation, no user prompt).
+- When `state.platform.name == "unknown"` or the adapter call fails, all
+  non-actionable verdicts log to JSONL only with `*_local_only` suffix.
+  No prompt fires; no abort.
+- The escalation at `feedback_loop_count >= 2` writes to
+  `.forge/alerts.json` (existing behaviour) instead of an interactive
+  prompt.
+
+### Schema reference
+
+Each JSONL entry matches `state.feedback_decisions[]` per spec §11:
+
+- `comment_id` — string, opaque platform-scoped ID (e.g.
+  `github://pulls/<n>#issuecomment-<id>`).
+- `verdict` — enum: `actionable | wrong | preference`.
+- `reasoning` — string; ≥1 char for `wrong` and `preference`, optional for
+  `actionable`.
+- `evidence` — string; required to reference file:line or commit SHA when
+  `verdict == wrong` (otherwise downgraded per Step 2).
+- `addressed` — enum: `actionable_routed | defended | defended_local_only |
+  acknowledged | acknowledged_local_only`.
+- `posted_at` — ISO-8601 timestamp; set when defense or acknowledgment was
+  posted to the PR thread (or local-only fallback completed).
+
+The JSONL at `.forge/runs/<run_id>/feedback-decisions.jsonl` is append-only
+and is the durable record; `state.feedback_decisions[]` is the in-memory
+canonical view that recovery rebuilds from the JSONL.
+
+### Failure modes
+
+- **Sub-agent error or timeout:** treat as `verdict: actionable`. Log
+  INFO `FEEDBACK-DEFENSE-CHECK-FAILED`. Default to actionable so feedback
+  always gets handled.
+- **JSONL write failure:** non-recoverable; abort with E2 per error
+  taxonomy. The JSONL is the durable record — it must succeed.
+- **`state.platform.name` missing or null:** treat as `unknown`. Log INFO
+  `FEEDBACK-PLATFORM-MISSING` once per run.
+
+### Orchestrator hand-off
+
+After all comments processed, write to stage notes:
 
 ```
 FEEDBACK_CLASSIFICATION: <design|implementation|other>
 ```
 
-If `consistency.enabled: false` or `pr_rejection_classification` is not in `consistency.decisions`, fall back to the legacy single-sample heuristic: default to `implementation` if ambiguous; classify as `design` only when feedback explicitly names scope changes ("add new endpoint", "split into two features", "different approach entirely"). The legacy path does NOT emit the `other` label — `other` is voting-only.
-
-Orchestrator reads this marker, sets `state.json.feedback_classification`, determines re-entry to Stage 4 (IMPLEMENT) or Stage 2 (PLAN). If the same rejection appears 2+ consecutive times, the orchestrator escalates via `AskUserQuestion` regardless of classification.
-
-Contract: `shared/consistency/voting.md`.
+derived from the dominant `actionable` verdict's nature (existing logic —
+classify by design / implementation / test / doc). The orchestrator reads
+this marker, sets `state.feedback_classification`, and determines re-entry
+to Stage 4 (IMPLEMENT) or Stage 2 (PLAN). If the same rejection appears
+2+ consecutive times, the orchestrator escalates via `AskUserQuestion`
+(interactive) or `.forge/alerts.json` (autonomous) regardless of
+classification.
 
 ### Step 4: Check for Recurring Patterns
 
