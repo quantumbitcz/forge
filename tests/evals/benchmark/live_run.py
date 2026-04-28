@@ -92,6 +92,23 @@ def _count_hook_failures(target: Path) -> int:
     return sum(1 for _ in log.read_text(encoding="utf-8").splitlines() if _.strip())
 
 
+def _detect_must_not_touch(target: Path, patterns: list[str]) -> list[str]:
+    import fnmatch
+    try:
+        r = subprocess.run(["git", "status", "--porcelain"],
+                           cwd=target, check=True, capture_output=True, text=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+    changed = [line[3:].strip() for line in r.stdout.splitlines() if line.strip()]
+    out: list[str] = []
+    for pattern in patterns:
+        for path in changed:
+            if fnmatch.fnmatch(path, pattern) or (pattern.endswith("/**") and path.startswith(pattern[:-3])):
+                out.append(pattern)
+                break
+    return out
+
+
 def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) -> BenchmarkResult:
     """Execute one corpus entry end-to-end. Caller writes the result file."""
     started_at = _iso_now()
@@ -138,6 +155,10 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
 
         parsed = _parse_state(target)
         hook_failures = _count_hook_failures(target)
+        violations = _detect_must_not_touch(
+            target,
+            entry.expected.get("files_touched", {}).get("must_not_touch", []),
+        )
 
     duration_s = int(time.monotonic() - mono_start)
     partial_pct = parsed["partial_ac_pct"]
@@ -163,7 +184,7 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
         critical_findings=parsed["critical_findings"],
         warning_findings=parsed["warning_findings"],
         timeout=timed_out,
-        must_not_touch_violations=[],  # populated by Task 11
+        must_not_touch_violations=violations,
         touched_files_actual=parsed["touched_files_actual"],
         hook_failures_count=hook_failures,
         error=error,
