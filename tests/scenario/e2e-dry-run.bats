@@ -43,7 +43,7 @@ quality_gate:
 LOCALMD
 
   # Minimal forge-config.md
-  cat > "$PROJECT/.claude/forge-admin config.md" << 'CONFIGMD'
+  cat > "$PROJECT/.claude/forge-config.md" << 'CONFIGMD'
 ---
 scoring:
   critical_weight: 20
@@ -93,10 +93,10 @@ teardown() {
 }
 
 @test "e2e-dry-run: forge-config.md exists and contains scoring section" {
-  [[ -f "$PROJECT/.claude/forge-admin config.md" ]]
-  grep -q "scoring:" "$PROJECT/.claude/forge-admin config.md"
-  grep -q "convergence:" "$PROJECT/.claude/forge-admin config.md"
-  grep -q "total_retries_max:" "$PROJECT/.claude/forge-admin config.md"
+  [[ -f "$PROJECT/.claude/forge-config.md" ]]
+  grep -q "scoring:" "$PROJECT/.claude/forge-config.md"
+  grep -q "convergence:" "$PROJECT/.claude/forge-config.md"
+  grep -q "total_retries_max:" "$PROJECT/.claude/forge-config.md"
 }
 
 # ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ teardown() {
   [[ -d "$PLUGIN_ROOT/modules/frameworks/spring" ]]
   [[ -f "$PLUGIN_ROOT/modules/frameworks/spring/conventions.md" ]]
   [[ -f "$PLUGIN_ROOT/modules/frameworks/spring/local-template.md" ]]
-  [[ -f "$PLUGIN_ROOT/modules/frameworks/spring/forge-admin config-template.md" ]]
+  [[ -f "$PLUGIN_ROOT/modules/frameworks/spring/forge-config-template.md" ]]
 }
 
 @test "e2e-dry-run: testing module exists for configured testing framework" {

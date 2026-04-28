@@ -14,7 +14,7 @@ Canonical sequence for the A+ roadmap (8 phases) + mega-consolidation (5 plans).
 | 6 | Phase 6 — Cost Governance | `docs/superpowers/plans/2026-04-22-phase-6-cost-governance.md` | Bumps `plugin.json` to **4.1.0** |
 | 7 | Phase 7 — Intent Assurance | `docs/superpowers/plans/2026-04-22-phase-7-intent-assurance.md` | Adds `fg-540-intent-verifier`. **Prereq Edit 3 applied:** fg-540 reads ACs from `state.brainstorm.spec_path` with `.forge/specs/index.json` fallback |
 | 8 | Mega A — Helpers + Schema | `docs/superpowers/plans/2026-04-27-mega-consolidation-A-helpers.md` | Auto-bumps `state-schema` from 2.0.0 → **2.1.0** in A6 |
-| 9 | Mega B — Skill Surface | `docs/superpowers/plans/2026-04-27-mega-consolidation-B-skill-surface.md` | **Prereq Edit 6 applied:** B3 absorbs `forge-status` `--- live ---` content from Phase 1 Task 24. B12 deletes 26 old skills (incl. `/forge`, `/forge run`, `/forge-ask status`) |
+| 9 | Mega B — Skill Surface | `docs/superpowers/plans/2026-04-27-mega-consolidation-B-skill-surface.md` | **Prereq Edit 6 applied:** B3 absorbs `forge-status` `--- live ---` content from Phase 1 Task 24. B12 deletes 26 old skills (incl. `/forge-init`, `/forge-run`, `/forge-status`) |
 | 10 | Mega C — Brainstorming | `docs/superpowers/plans/2026-04-27-mega-consolidation-C-brainstorming.md` | Ports superpowers brainstorm pattern into `fg-010-shaper`; populates `state.brainstorm.spec_path` |
 | 11 | Mega D — Pattern Parity | `docs/superpowers/plans/2026-04-27-mega-consolidation-D-pattern-parity.md` | **Prereq Edit 1 applied:** D8 references `fg-301-implementer-judge.md` (post-P5 name) |
 | 12 | Mega E — Docs | `docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md` | **Prereq Edit 2 applied:** README enumeration uses post-P5 agent names. Bumps `plugin.json` to **5.3.0** |
@@ -27,7 +27,7 @@ These must be in master before Phase 1 starts. Run `git log --oneline | grep "cr
 - [x] **Edit 1** — Mega D8 file path: `agents/fg-301-implementer-critic.md` → `agents/fg-301-implementer-judge.md`
 - [x] **Edit 2** — Mega E1 agent enumeration: post-P5 names in README content
 - [x] **Edit 3** — Phase 7 fg-540 reads `state.brainstorm.spec_path` with fallback
-- [x] **Edit 4** — Phase 8 subprocess.run uses `/forge run --eval-mode=...` (no `/forge`)
+- [x] **Edit 4** — Phase 8 subprocess.run uses `/forge run --eval-mode=...` (no `/forge-run`)
 - [x] **Edit 5** — Phase 1 string-anchored Edits replace line-number pins (Task 17)
 - [x] **Edit 6** — Mega B3 absorbs `forge-status` `--- live ---` content from Phase 1 Task 24
 - [x] **Edit 7** — This document
@@ -53,7 +53,7 @@ Each phase's final commit bumps `plugin.json` accordingly. Tag immediately after
 
 - Phase 5 Task 6 sets `shared/state-schema.md` version to **2.0.0** (introduces `state.judges.*` fields).
 - Mega A Task 6 auto-bumps to **2.1.0** (introduces `state.brainstorm.*` and `state.shape.*` fields).
-- No backward-compat shims — forge is a personal tool; new versions freely break old `.forge/state.json`. Users running an old session through a new version will hit `STATE_SCHEMA_MISMATCH` and must `/forge recover reset`.
+- No backward-compat shims — forge is a personal tool; new versions freely break old `.forge/state.json`. Users running an old session through a new version will hit `STATE_SCHEMA_MISMATCH` and must `/forge-admin recover reset`.
 
 ## Per-phase release workflow
 

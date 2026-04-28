@@ -7,7 +7,17 @@ SCHEMA="$PLUGIN_ROOT/shared/schemas/playbook-refinement-schema.json"
 PLAYBOOKS_DOC="$PLUGIN_ROOT/shared/playbooks.md"
 RETROSPECTIVE="$PLUGIN_ROOT/agents/fg-700-retrospective.md"
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
-SKILL="$PLUGIN_ROOT/skills/forge-admin refine/SKILL.md"
+SKILL="$PLUGIN_ROOT/skills/forge-admin/SKILL.md"
+
+# Extract the `### Subcommand: refine` block from skills/forge-admin/SKILL.md.
+_refine_block() {
+  awk '
+    /^### Subcommand: refine$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$SKILL"
+}
 PREFLIGHT="$PLUGIN_ROOT/shared/preflight-constraints.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 
@@ -49,18 +59,23 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 # ---------------------------------------------------------------------------
 # 3. Skill exists with correct frontmatter
 # ---------------------------------------------------------------------------
-@test "playbook-refinement: skill file exists" {
+@test "playbook-refinement: forge-admin skill file exists" {
   [[ -f "$SKILL" ]]
 }
 
-@test "playbook-refinement: skill has name in frontmatter" {
-  grep -q "name: forge-playbook-refine" "$SKILL" \
-    || fail "Skill missing name frontmatter"
+@test "playbook-refinement: forge-admin skill name is forge-admin in frontmatter" {
+  grep -q "^name: forge-admin$" "$SKILL" \
+    || fail "Skill missing name: forge-admin frontmatter"
 }
 
-@test "playbook-refinement: skill has AskUserQuestion in allowed-tools" {
+@test "playbook-refinement: refine subcommand is documented" {
+  _refine_block | grep -q "^### Subcommand: refine$" \
+    || fail "refine subcommand section missing in forge-admin SKILL.md"
+}
+
+@test "playbook-refinement: forge-admin skill allows AskUserQuestion" {
   grep -q "AskUserQuestion" "$SKILL" \
-    || fail "Skill missing AskUserQuestion in allowed-tools"
+    || fail "forge-admin SKILL.md missing AskUserQuestion in allowed-tools"
 }
 
 # ---------------------------------------------------------------------------

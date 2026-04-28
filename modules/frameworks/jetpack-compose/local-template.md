@@ -99,7 +99,7 @@ conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
 conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/forge-log.md"
-config_file: ".claude/forge-admin config.md"
+config_file: ".claude/forge-config.md"
 
 documentation:
   enabled: true

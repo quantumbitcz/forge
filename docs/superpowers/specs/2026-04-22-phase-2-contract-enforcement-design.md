@@ -11,7 +11,7 @@ Close five contract and hygiene gaps that have accumulated since 3.0. Each gap i
 
 1. **Implicit Tier-4-by-omission.** `shared/agents.md:19` declares: *"ui: — the UI-capability tier (1–4), explicit per shared/agent-ui.md. Implicit Tier-4-by-omission is no longer accepted."* Reality: 13 agent files ship no `ui:` block at all. Confirmed missing (`grep -l '^ui:' agents/*.md` inverse) in `agents/fg-101-worktree-manager.md`, `fg-102-conflict-resolver.md`, `fg-205-plan-judge.md`, `fg-410-code-reviewer.md`, `fg-411-security-reviewer.md`, `fg-412-architecture-reviewer.md`, `fg-413-frontend-reviewer.md`, `fg-414-license-reviewer.md`, `fg-416-performance-reviewer.md`, `fg-417-dependency-reviewer.md`, `fg-418-docs-consistency-reviewer.md`, `fg-419-infra-deploy-reviewer.md`, `fg-510-mutation-analyzer.md`. The existing contract test `tests/contract/ui-frontmatter-consistency.bats` only checks *consistency between `ui:` and `tools:` when `ui:` is present*. It does not check presence.
 
-2. **Skill grammar drift.** 29 skills under `skills/` mix four invocation styles: flags (`/forge verify --build`), subcommands (`/forge-admin graph init`), positional text (`/forge-admin compress output full`), and silent positional content (`/forge-admin graph query "MATCH (n) RETURN n"`). `skills/forge sprint/SKILL.md:16` carries an extra malformed line after the ui block (`ui: { ask: true, tasks: true }` with no `plan_mode` key). No contract enforces which skills may use which style, and no linter rejects unknown frontmatter keys.
+2. **Skill grammar drift.** 29 skills under `skills/` mix four invocation styles: flags (`/forge verify --build`), subcommands (`/forge-admin graph init`), positional text (`/forge-admin compress output full`), and silent positional content (`/forge-admin graph query "MATCH (n) RETURN n"`). `skills/forge-sprint/SKILL.md:16` carries an extra malformed line after the ui block (`ui: { ask: true, tasks: true }` with no `plan_mode` key). No contract enforces which skills may use which style, and no linter rejects unknown frontmatter keys.
 
 3. **Inspection-skill overlap.** Three skills read `.forge/state.json` with overlapping ceremony: `/forge-ask status` (pipeline state), `/forge verify --config` (config validation), `/forge-admin recover diagnose` (pipeline health). Each repeats its own git-repo + forge-initialized prerequisite block. `/forge --help` exists purely as a static decision tree — per user memory, this duplicates what LLM routing already does well.
 
@@ -71,7 +71,7 @@ No tier is changed; the registry and ui-tier sections already agree on Tier 4 fo
 - **Multi-action (mutating) skills** use subcommands only. Examples: `/forge-admin graph init | rebuild | status | query | debug`, `/forge-admin recover diagnose | repair | reset | resume | rollback | rewind | list-checkpoints`, `/forge-admin compress agents | output | status | help`, `/forge-admin handoff ` (bare) `| list | show | resume | search`.
 - **Positional args are forbidden except where the arg is free-form content.** Exactly two cases qualify: a Cypher query (`/forge-admin graph query "<cypher>"`) and a requirement string (`/forge run "<requirement>"`, `/forge fix "<description>"`). Positional "mode" tokens (`/forge-admin compress output full`) are rewritten as `--mode=full` in spec examples but the current behavior is preserved as a recognized form until the author of the skill decides to rename.
 - **Every skill with subcommands must expose a `## Subcommands` section** listing each with a one-line purpose and a read-only/writes label. The existing `forge-recover`, `forge-compress`, and `forge-handoff` already conform; `forge-graph` needs its table promoted from prose.
-- **`allowed-tools` frontmatter must list real tool names.** Unknown keys at the top level of SKILL.md frontmatter (e.g. the malformed `ui:` with missing `plan_mode` in `skills/forge sprint/SKILL.md:16`) are rejected.
+- **`allowed-tools` frontmatter must list real tool names.** Unknown keys at the top level of SKILL.md frontmatter (e.g. the malformed `ui:` with missing `plan_mode` in `skills/forge-sprint/SKILL.md:16`) are rejected.
 
 **New test.** `tests/contract/skill_grammar.py` (pytest). For each `skills/*/SKILL.md`:
 
@@ -86,9 +86,9 @@ No tier is changed; the registry and ui-tier sections already agree on Tier 4 fo
 **Changes.**
 
 - **`/forge-ask status`** becomes the single read-only inspection surface. Adds two sections to its Instructions: *"Config validation summary"* (the checks previously run by `/forge verify --config`, emitted only when run without `--json` or under `--json` as a `config_validation` object) and *"Recent hook failures"* (last 5 entries from `.forge/events.jsonl` where `type == "hook_failure"`).
-- **`/forge verify`** drops `--config`. New flag matrix: `--build` (default), `--all` (runs `--build` then shells out to `/forge-ask status --json` for the config block and appends to its report), `--json`, `--help`. The `Subcommand: config` block in `skills/forge verify/SKILL.md` is deleted; `Subcommand: all` is rewritten to delegate.
+- **`/forge verify`** drops `--config`. New flag matrix: `--build` (default), `--all` (runs `--build` then shells out to `/forge-ask status --json` for the config block and appends to its report), `--json`, `--help`. The `Subcommand: config` block in `skills/forge-verify/SKILL.md` is deleted; `Subcommand: all` is rewritten to delegate.
 - **`/forge-admin recover diagnose`** remains but its Instructions get a new opening step: *"Run `/forge-ask status --json` and embed its output as the `state` field in the diagnose report."* It stops reading `.forge/state.json` directly; repair recommendations stay its sole responsibility.
-- **`/forge --help`** is **deleted**. `skills/forge --help/` is removed. All references in:
+- **`/forge-help`** is **deleted**. `skills/forge-help/` is removed. All references in:
   - `CLAUDE.md:15` (Start Here step 3 — rewritten to point at direct skill names).
   - `CLAUDE.md:121` (Skill selection guide row — removed).
   - `CLAUDE.md:137` (Getting started flows line — removed).
@@ -96,9 +96,9 @@ No tier is changed; the registry and ui-tier sections already agree on Tier 4 fo
   - `shared/skill-contract.md:44` (header "Phase 5 baseline — 28 skills" unchanged; the count was already 28 prior to the forge-handoff addition — see Component 6 below).
   - `shared/skill-contract.md:46` (Read-only list — `forge-help` removed, count 10 → 9).
   - `README.md:136` (skill table row — removed).
-  - `skills/forge-admin config/SKILL.md:94` (line `/forge --help — find the right skill` — removed).
-  - `skills/forge-ask tour/SKILL.md:138` (line `**All skills:** /forge --help` — rewrite to point at the CLAUDE.md skill table).
-  - `skills/forge-ask tour/SKILL.md:202` (line `/forge --help — full skill decision tree` — removed).
+  - `skills/forge-config/SKILL.md:94` (line `/forge-help — find the right skill` — removed).
+  - `skills/forge-tour/SKILL.md:138` (line `**All skills:** /forge-help` — rewrite to point at the CLAUDE.md skill table).
+  - `skills/forge-tour/SKILL.md:202` (line `/forge-help — full skill decision tree` — removed).
   - `tests/contract/skill-contract.bats:67` — remove `forge-help` from the literal skill-name list asserted in the read-only category.
   - `tests/lib/module-lists.bash:99` — remove the `forge-help` entry from the skills array (drops min skill count by 1).
   - `tests/structural/skill-consolidation.bats` — delete the three `forge-help` tests (`schema_version`, `total_skills 29`, Migration section); update the remaining `"total_skills":[[:space:]]*29` assertion to `28` anywhere it still appears. Per user memory `No backcompat`, this is a straight deletion — no shim, no opt-in.
@@ -190,16 +190,16 @@ The `feature_usage` table requirements are documented in this file (columns: `fe
 
 **Deleted files.**
 
-- `skills/forge --help/SKILL.md`
-- `skills/forge --help/` (directory)
+- `skills/forge-help/SKILL.md`
+- `skills/forge-help/` (directory)
 
 **Edited files.**
 
 - 13 agent files listed in Component 1: add `ui: { tasks: false, ask: false, plan_mode: false }` immediately after `tools:` (or after `color:` where already present).
-- `skills/forge sprint/SKILL.md`: fix the malformed frontmatter — the `ui:` line becomes `ui: { tasks: true, ask: true, plan_mode: false }`.
-- `skills/forge verify/SKILL.md`: remove `--config` subcommand block and flag; rewrite `--all` to delegate to `/forge-ask status --json`.
-- `skills/forge-ask status/SKILL.md`: add config-validation and hook-failure sections to Instructions.
-- `skills/forge-admin recover/SKILL.md`: rewrite diagnose subcommand to embed `/forge-ask status --json` output.
+- `skills/forge-sprint/SKILL.md`: fix the malformed frontmatter — the `ui:` line becomes `ui: { tasks: true, ask: true, plan_mode: false }`.
+- `skills/forge-verify/SKILL.md`: remove `--config` subcommand block and flag; rewrite `--all` to delegate to `/forge-ask status --json`.
+- `skills/forge-status/SKILL.md`: add config-validation and hook-failure sections to Instructions.
+- `skills/forge-recover/SKILL.md`: rewrite diagnose subcommand to embed `/forge-ask status --json` output.
 - `CLAUDE.md`: edits at lines 15, 121, 137, 308; new §Feature Matrix pointer to `shared/feature-matrix.md`.
 - `README.md:136`: remove `/forge --help` row.
 - `shared/skill-contract.md:46`: remove `forge-help`, update count.
@@ -264,12 +264,12 @@ Pipeline-level evals (`tests/evals/pipeline/`) are unaffected.
 ## Acceptance Criteria
 
 - **AC-1.** `pytest tests/contract/ui_frontmatter_required.py` passes against the repo at HEAD of commit 5. All 48 agents carry explicit `ui:` blocks with exactly the three boolean keys.
-- **AC-2.** `pytest tests/contract/skill_grammar.py` passes. Exactly 28 skills exist under `skills/`. No skill frontmatter has unknown top-level keys. `skills/forge sprint/SKILL.md` parses cleanly.
+- **AC-2.** `pytest tests/contract/skill_grammar.py` passes. Exactly 28 skills exist under `skills/`. No skill frontmatter has unknown top-level keys. `skills/forge-sprint/SKILL.md` parses cleanly.
 - **AC-3.** `pytest tests/contract/fg100_size_budget.py` passes at 1557 lines. Single-tier gate — no warnings emitted at any line count below 1800.
 - **AC-4.** `python shared/feature_matrix_generator.py` is idempotent: running it twice in succession produces zero diff on the second run. `git diff --exit-code shared/feature-matrix.md` returns 0.
 - **AC-5.** `grep -rn 'forge-help' CLAUDE.md README.md shared/` returns zero matches (excluding `shared/feature-lifecycle.md` example text, which uses `forge-example` placeholders).
-- **AC-6.** `skills/forge-ask status/SKILL.md` contains both a `## Config validation summary` section and a `## Recent hook failures` section. A contract test (`tests/contract/skill_grammar.py` or a structural bats) asserts both headings are present. (Skills are markdown prompts, not executables; CI cannot dispatch them, so the gate is structural, not runtime.)
-- **AC-7.** `skills/forge verify/SKILL.md` does NOT mention `--config` anywhere (no subcommand block, no flag in the allowed-tools hint, no example). A contract test asserts the recognized flag set is exactly `{--build, --all, --json, --help}`. (Same rationale as AC-6: no CI job invokes a skill.)
+- **AC-6.** `skills/forge-status/SKILL.md` contains both a `## Config validation summary` section and a `## Recent hook failures` section. A contract test (`tests/contract/skill_grammar.py` or a structural bats) asserts both headings are present. (Skills are markdown prompts, not executables; CI cannot dispatch them, so the gate is structural, not runtime.)
+- **AC-7.** `skills/forge-verify/SKILL.md` does NOT mention `--config` anywhere (no subcommand block, no flag in the allowed-tools hint, no example). A contract test asserts the recognized flag set is exactly `{--build, --all, --json, --help}`. (Same rationale as AC-6: no CI job invokes a skill.)
 - **AC-8.** `shared/feature-matrix.md` contains 30 rows (F05 through F34) between the sentinel comments, each with a non-empty Default cell and a Usage cell that is either an integer or the literal `unknown`. No em dashes, en dashes, or smart quotes (U+2018, U+2019, U+201C, U+201D) anywhere in the generated content. ASCII-only between sentinels.
 - **AC-9.** `shared/feature-lifecycle.md` defines the 90/180-day thresholds and the three lifecycle states exactly as in Component 5.
 - **AC-10.** `tests/run-all.sh contract` returns exit 0 and includes pytest output for all five new `tests/contract/test_*.py` files: `test_ui_frontmatter_required.py`, `test_skill_grammar.py`, `test_fg100_size_budget.py`, `test_feature_matrix_freshness.py`, and `test_skill_inventory.py`.

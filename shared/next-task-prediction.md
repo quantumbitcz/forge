@@ -160,7 +160,7 @@ Stage 9 (LEARN)
 | `agents/fg-710-post-run.md` | Add Part D: Next-Task Prediction after Part C |
 | `agents/fg-100-orchestrator.md` | At PREFLIGHT, compare new requirement against recent predictions for accuracy tracking |
 | `agents/fg-700-retrospective.md` | Include prediction accuracy stats in pipeline report |
-| `modules/frameworks/*/forge-admin config-template.md` | Add `predictions:` section |
+| `modules/frameworks/*/forge-config-template.md` | Add `predictions:` section |
 
 ## Error Handling
 

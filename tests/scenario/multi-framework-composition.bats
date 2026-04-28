@@ -60,8 +60,8 @@ teardown() {
 
   # The k8s config template or conventions should indicate language: null
   local found_null=false
-  if [[ -f "$k8s_dir/forge-admin config-template.md" ]]; then
-    if grep -q "language:.*null\|language: null" "$k8s_dir/forge-admin config-template.md"; then
+  if [[ -f "$k8s_dir/forge-config-template.md" ]]; then
+    if grep -q "language:.*null\|language: null" "$k8s_dir/forge-config-template.md"; then
       found_null=true
     fi
   fi

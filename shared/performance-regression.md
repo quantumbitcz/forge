@@ -166,5 +166,5 @@ Stage 6 (REVIEW)
 | `agents/fg-500-test-gate.md` | Record test_duration_ms, test_count to `.forge/.test-metrics.json` |
 | `agents/fg-400-quality-gate.md` | Regression detection before review dispatch |
 | `shared/checks/category-registry.json` | 4 new `PERF-REGRESSION-*` categories |
-| `modules/frameworks/*/forge-admin config-template.md` | `performance_tracking:` section |
-| `skills/forge-ask insights/SKILL.md` | Performance Trends dashboard section |
+| `modules/frameworks/*/forge-config-template.md` | `performance_tracking:` section |
+| `skills/forge-ask/SKILL.md` §Subcommand: insights | Performance Trends dashboard section |

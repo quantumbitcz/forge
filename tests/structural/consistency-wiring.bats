@@ -22,11 +22,11 @@ setup() {
 }
 
 @test "forge-config schema declares the consistency block with n_samples default 3" {
-  # Configuration defaults live in shared/schemas/forge-admin config-schema.json
+  # Configuration defaults live in shared/schemas/forge-config-schema.json
   # rather than a top-level forge-config.md. The schema is the canonical source.
-  run grep -E '"consistency"' "${REPO_ROOT}/shared/schemas/forge-admin config-schema.json"
+  run grep -E '"consistency"' "${REPO_ROOT}/shared/schemas/forge-config-schema.json"
   [ "$status" -eq 0 ]
-  run grep -E '"n_samples"' "${REPO_ROOT}/shared/schemas/forge-admin config-schema.json"
+  run grep -E '"n_samples"' "${REPO_ROOT}/shared/schemas/forge-config-schema.json"
   [ "$status" -eq 0 ]
 }
 

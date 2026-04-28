@@ -272,7 +272,7 @@ def main() -> int:
     ap.add_argument("--trigger", required=True)
     ap.add_argument("--payload", default="{}")
     ap.add_argument("--forge-dir", default=".forge")
-    ap.add_argument("--config", default=".claude/forge-admin config.md")
+    ap.add_argument("--config", default=".claude/forge-config.md")
     args = ap.parse_args()
     try:
         payload = json.loads(args.payload)

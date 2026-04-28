@@ -88,8 +88,8 @@ setup() {
     local hits
     # Exempt:
     #   - DEPRECATIONS.md, CHANGELOG.md — migration history
-    #   - skills/forge-admin recover/SKILL.md, skills/forge-admin compress/SKILL.md — legitimately
-    #     document the /old-skill → /new-skill migration tables
+    #   - skills/forge-admin/SKILL.md — recover and compress subcommand sections
+    #     legitimately document the /old-skill → /new-skill migration tables
     #   - tests/contract/skill-contract.bats — this file lists the deleted names as
     #     a negative-check array
     hits=$(grep -rln "/$name[^a-z-]" \
@@ -98,8 +98,7 @@ setup() {
              "$PLUGIN_ROOT/tests" "$PLUGIN_ROOT/hooks" 2>/dev/null \
            | grep -v "DEPRECATIONS.md" \
            | grep -v "CHANGELOG.md" \
-           | grep -v "skills/forge-admin recover/SKILL.md" \
-           | grep -v "skills/forge-admin compress/SKILL.md" \
+           | grep -v "skills/forge-admin/SKILL.md" \
            | grep -v "tests/contract/skill-contract.bats" || true)
     if [ -n "$hits" ]; then
       echo "Dangling reference to /$name in:"

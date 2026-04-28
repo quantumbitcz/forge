@@ -190,9 +190,9 @@ Stage 9 (LEARN)
 | File | Change |
 |------|--------|
 | `agents/fg-710-post-run.md` | Add Part E: DX Metrics computation and recap integration |
-| `skills/forge-ask insights/SKILL.md` | Add "Developer Impact" dashboard section |
+| `skills/forge-ask/SKILL.md` §Subcommand: insights | Add "Developer Impact" dashboard section |
 | `agents/fg-090-sprint-orchestrator.md` | Pass sprint metadata for burndown tracking |
-| `modules/frameworks/*/forge-admin config-template.md` | Add `dx_metrics:` section |
+| `modules/frameworks/*/forge-config-template.md` | Add `dx_metrics:` section |
 
 ## Error Handling
 

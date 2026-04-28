@@ -10,9 +10,20 @@ setup() {
   STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
   BUG_INVESTIGATOR="$PLUGIN_ROOT/agents/fg-020-bug-investigator.md"
-  FORGE_FIX="$PLUGIN_ROOT/skills/forge fix/SKILL.md"
-  FORGE_RUN="$PLUGIN_ROOT/skills/forge run/SKILL.md"
+  FORGE_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
   RETROSPECTIVE="$PLUGIN_ROOT/agents/fg-700-retrospective.md"
+}
+
+# Extract a `### Subcommand: <name>` block from skills/forge/SKILL.md.
+# Captures lines from `### Subcommand: <name>` (inclusive) until the next
+# `### Subcommand:` heading or top-level `## ` heading.
+_forge_subcommand_block() {
+  awk -v name="$1" '
+    $0 ~ "^### Subcommand: " name "$" { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$FORGE_SKILL"
 }
 
 # --- Agent ---
@@ -49,25 +60,29 @@ setup() {
   grep -q "3 attempt\|max 3\|3 reproduction" "$BUG_INVESTIGATOR"
 }
 
-# --- Skill ---
-@test "bugfix: forge-fix skill exists" {
-  [ -f "$FORGE_FIX" ]
+# --- Skill (consolidated /forge skill, fix subcommand) ---
+@test "bugfix: forge skill exists" {
+  [ -f "$FORGE_SKILL" ]
 }
 
-@test "bugfix: forge-fix has valid frontmatter" {
-  grep -q "^name: forge-fix$" "$FORGE_FIX"
+@test "bugfix: forge skill has valid frontmatter" {
+  grep -q "^name: forge$" "$FORGE_SKILL"
 }
 
-@test "bugfix: forge-fix documents kanban ticket input" {
-  grep -q "kanban\|ticket" "$FORGE_FIX"
+@test "bugfix: forge skill documents fix subcommand" {
+  grep -q '^### Subcommand: fix$' "$FORGE_SKILL"
 }
 
-@test "bugfix: forge-fix documents Linear input" {
-  grep -q "linear\|Linear\|--linear" "$FORGE_FIX"
+@test "bugfix: fix subcommand documents kanban ticket input" {
+  _forge_subcommand_block fix | grep -q "kanban\|ticket"
 }
 
-@test "bugfix: forge-fix dispatches orchestrator with bugfix mode" {
-  grep -qi "mode.*bugfix\|bugfix.*mode" "$FORGE_FIX"
+@test "bugfix: fix subcommand documents Linear input" {
+  _forge_subcommand_block fix | grep -q "linear\|Linear\|--linear"
+}
+
+@test "bugfix: fix subcommand dispatches orchestrator with bugfix mode" {
+  _forge_subcommand_block fix | grep -qi "mode.*bugfix\|bugfix.*mode"
 }
 
 # --- Orchestrator ---
@@ -139,7 +154,7 @@ setup() {
   grep -q "root.cause.category\|Root cause category\|root_cause" "$RETROSPECTIVE"
 }
 
-# --- forge-run ---
-@test "bugfix: forge-run accepts bugfix: prefix" {
-  grep -q "bugfix:" "$FORGE_RUN"
+# --- forge run subcommand ---
+@test "bugfix: forge run subcommand accepts bugfix: prefix" {
+  _forge_subcommand_block run | grep -q "bugfix:"
 }

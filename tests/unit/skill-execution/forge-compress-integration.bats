@@ -10,10 +10,20 @@
 setup() {
   load '../../helpers/test-helpers'
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-admin compress/SKILL.md"
+  SKILL_FILE="$SKILLS_DIR/forge-admin/SKILL.md"
 }
 
-@test "forge-compress-integration: skill documents --dry-run" {
-  run grep -qi '\-\-dry-run\|dry.run\|preview' "$SKILL_FILE"
+# Extract the `### Subcommand: compress` block.
+_compress_block() {
+  awk '
+    /^### Subcommand: compress$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$SKILL_FILE"
+}
+
+@test "forge-admin compress subcommand documents --dry-run" {
+  run bash -c "$(declare -f _compress_block); SKILL_FILE='$SKILL_FILE'; _compress_block | grep -qi -- '--dry-run\|dry.run\|preview'"
   assert_success
 }

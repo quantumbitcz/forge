@@ -188,7 +188,7 @@ When adding new agent integration points that should update ticket status, use t
 
 ## Git Conventions
 
-Branch naming and commit format rules are in `shared/git-conventions.md`. The `/forge` skill detects existing project hooks — see Phase 2a in `forge-init/SKILL.md`.
+Branch naming and commit format rules are in `shared/git-conventions.md`. The `/forge` skill detects existing project hooks — see the auto-bootstrap flow in `skills/forge/SKILL.md`.
 
 When modifying commit or branch naming behavior, update both `shared/git-conventions.md` and the consuming agents (`fg-100-orchestrator.md`, `fg-600-pr-builder.md`).
 

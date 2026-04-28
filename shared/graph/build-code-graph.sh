@@ -76,7 +76,7 @@ fi
 
 # ── Read config from forge-config.md if present ─────────────────────────────
 
-CONFIG_FILE="${PROJECT_ROOT}/.claude/forge-admin config.md"
+CONFIG_FILE="${PROJECT_ROOT}/.claude/forge-config.md"
 if [[ -f "$CONFIG_FILE" && -n "$FORGE_PYTHON" ]]; then
   eval "$("$FORGE_PYTHON" -c "
 import re, sys

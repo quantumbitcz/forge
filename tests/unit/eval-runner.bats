@@ -204,7 +204,7 @@ JSON
 }
 
 @test "eval-config reads forge-config eval section" {
-  local config_file="${BATS_TEST_TMPDIR}/forge-admin config.md"
+  local config_file="${BATS_TEST_TMPDIR}/forge-config.md"
   cat > "$config_file" <<'MD'
 ```yaml
 eval:
@@ -221,7 +221,7 @@ MD
 }
 
 @test "eval-config rejects out-of-range values" {
-  local config_file="${BATS_TEST_TMPDIR}/forge-admin config.md"
+  local config_file="${BATS_TEST_TMPDIR}/forge-config.md"
   cat > "$config_file" <<'MD'
 ```yaml
 eval:

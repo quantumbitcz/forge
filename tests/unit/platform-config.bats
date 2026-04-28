@@ -22,7 +22,7 @@ teardown() {
 @test "platform.sh: FORGE_WINDOWS_MODE reads wsl from config" {
   export FORGE_PROJECT_ROOT="${TEST_TEMP}/project"
   export FORGE_OS="windows"
-  cat > "${TEST_TEMP}/project/.claude/forge-admin config.md" << 'EOF'
+  cat > "${TEST_TEMP}/project/.claude/forge-config.md" << 'EOF'
 ```yaml
 platform:
   windows_mode: wsl
@@ -35,7 +35,7 @@ EOF
 @test "platform.sh: FORGE_WINDOWS_MODE reads gitbash from config" {
   export FORGE_PROJECT_ROOT="${TEST_TEMP}/project"
   export FORGE_OS="windows"
-  cat > "${TEST_TEMP}/project/.claude/forge-admin config.md" << 'EOF'
+  cat > "${TEST_TEMP}/project/.claude/forge-config.md" << 'EOF'
 ```yaml
 platform:
   windows_mode: gitbash
@@ -48,7 +48,7 @@ EOF
 @test "platform.sh: FORGE_WINDOWS_MODE ignores config when not windows" {
   export FORGE_PROJECT_ROOT="${TEST_TEMP}/project"
   export FORGE_OS="darwin"
-  cat > "${TEST_TEMP}/project/.claude/forge-admin config.md" << 'EOF'
+  cat > "${TEST_TEMP}/project/.claude/forge-config.md" << 'EOF'
 ```yaml
 platform:
   windows_mode: gitbash
@@ -61,7 +61,7 @@ EOF
 @test "platform.sh: invalid windows_mode defaults to auto" {
   export FORGE_PROJECT_ROOT="${TEST_TEMP}/project"
   export FORGE_OS="windows"
-  cat > "${TEST_TEMP}/project/.claude/forge-admin config.md" << 'EOF'
+  cat > "${TEST_TEMP}/project/.claude/forge-config.md" << 'EOF'
 ```yaml
 platform:
   windows_mode: native

@@ -129,7 +129,6 @@ machine-validated; do not hand-edit.
 - [`tdd-enforcement.md`](tdd-enforcement.md) — TDD inner-loop rules
 - [`testing-anti-patterns.md`](testing-anti-patterns.md) — anti-pattern catalog
 - [`debugging-techniques.md`](debugging-techniques.md) — debugging heuristics
-- [`skill-subcommand-pattern.md`](skill-subcommand-pattern.md) — skill dispatch pattern
 - [`tracking/tracking-schema.md`](tracking/tracking-schema.md) — kanban schema
 
 ## Policy & security

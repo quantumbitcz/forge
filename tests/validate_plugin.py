@@ -197,7 +197,7 @@ def check_config_template_has_total_retries() -> list[str]:
         None if "total_retries_max" in (
             (REPO / "modules" / "frameworks" / fw / "forge-config-template.md")
             .read_text(encoding="utf-8", errors="replace")
-        ) else f"{fw}/forge-admin config-template.md missing total_retries_max"
+        ) else f"{fw}/forge-config-template.md missing total_retries_max"
     ))
 
 
@@ -206,7 +206,7 @@ def check_config_template_has_oscillation_tolerance() -> list[str]:
         None if "oscillation_tolerance" in (
             (REPO / "modules" / "frameworks" / fw / "forge-config-template.md")
             .read_text(encoding="utf-8", errors="replace")
-        ) else f"{fw}/forge-admin config-template.md missing oscillation_tolerance"
+        ) else f"{fw}/forge-config-template.md missing oscillation_tolerance"
     ))
 
 

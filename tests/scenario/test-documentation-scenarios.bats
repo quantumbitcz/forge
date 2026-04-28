@@ -50,18 +50,42 @@ load '../helpers/test-helpers'
 }
 
 @test "docs-scenario: forge-docs-generate skill supports --coverage flag" {
-  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
-  grep -q "\-\-coverage" "$skill" || fail "Missing --coverage flag"
+  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
+  # Extract the `### Subcommand: docs` block
+  local skill
+  skill="$(awk '
+    /^### Subcommand: docs$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$skill_file")"
+  echo "$skill" | grep -q "\-\-coverage" || fail "Missing --coverage flag"
 }
 
 @test "docs-scenario: forge-docs-generate skill supports --confirm-decisions flag" {
-  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
-  grep -q "\-\-confirm-decisions" "$skill" || fail "Missing --confirm-decisions flag"
+  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
+  # Extract the `### Subcommand: docs` block
+  local skill
+  skill="$(awk '
+    /^### Subcommand: docs$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$skill_file")"
+  echo "$skill" | grep -q "\-\-confirm-decisions" || fail "Missing --confirm-decisions flag"
 }
 
 @test "docs-scenario: forge-docs-generate skill detects framework without pipeline config" {
-  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
-  grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" "$skill" || fail "Missing standalone framework detection"
+  local skill_file="$PLUGIN_ROOT/skills/forge/SKILL.md"
+  # Extract the `### Subcommand: docs` block
+  local skill
+  skill="$(awk '
+    /^### Subcommand: docs$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$skill_file")"
+  echo "$skill" | grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" || fail "Missing standalone framework detection"
 }
 
 @test "docs-scenario: ADR significance criteria documented" {

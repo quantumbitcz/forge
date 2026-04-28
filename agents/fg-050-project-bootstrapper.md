@@ -499,7 +499,7 @@ Failure → read error, fix, re-run. Up to 3 fix attempts per step.
 
 After build+tests pass:
 1. Dispatch `/forge` to configure forge for new project
-2. Init detects stack, generates `.claude/forge.local.md`, `.claude/forge-admin config.md`, `.claude/forge-log.md`
+2. Init detects stack, generates `.claude/forge.local.md`, `.claude/forge-config.md`, `.claude/forge-log.md`
 
 ---
 

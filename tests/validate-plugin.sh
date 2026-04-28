@@ -145,7 +145,7 @@ check "All conventions.md have Dos/Don'ts section" "$check7_fail"
 # Check 8: All forge-config-template.md have total_retries_max
 check8_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
-  f="$ROOT/modules/frameworks/$fw/forge-admin config-template.md"
+  f="$ROOT/modules/frameworks/$fw/forge-config-template.md"
   if ! grep -q "total_retries_max" "$f"; then
     check8_fail=1; break
   fi
@@ -155,7 +155,7 @@ check "All forge-config-template.md have total_retries_max" "$check8_fail"
 # Check 9: All forge-config-template.md have oscillation_tolerance
 check9_fail=0
 for fw in "${FRAMEWORKS[@]}"; do
-  f="$ROOT/modules/frameworks/$fw/forge-admin config-template.md"
+  f="$ROOT/modules/frameworks/$fw/forge-config-template.md"
   if ! grep -q "oscillation_tolerance" "$f"; then
     check9_fail=1; break
   fi
@@ -620,9 +620,9 @@ check "Convergence engine exists with required sections" "$check33_fail"
 
 # Check 34: All forge-config-template.md have convergence: section
 check34_fail=0
-for f in "$ROOT"/modules/frameworks/*/forge-admin config-template.md; do
+for f in "$ROOT"/modules/frameworks/*/forge-config-template.md; do
   if ! grep -q "convergence:" "$f"; then
-    echo "  FAIL: $(basename "$(dirname "$f")")/forge-admin config-template.md missing convergence section"
+    echo "  FAIL: $(basename "$(dirname "$f")")/forge-config-template.md missing convergence section"
     check34_fail=1
   fi
 done
@@ -690,19 +690,21 @@ if [ ! -f "$ROOT/agents/fg-020-bug-investigator.md" ]; then
 fi
 check "fg-020-bug-investigator agent exists" "$check_bugfix_agent_fail"
 
-# Check: forge-fix skill exists
+# Check: forge consolidated skill exists with fix subcommand
 check_forgefix_skill_fail=0
-if [ ! -f "$ROOT/skills/forge fix/SKILL.md" ]; then
+if [ ! -f "$ROOT/skills/forge/SKILL.md" ]; then
+  check_forgefix_skill_fail=1
+elif ! grep -q '^### Subcommand: fix$' "$ROOT/skills/forge/SKILL.md" 2>/dev/null; then
   check_forgefix_skill_fail=1
 fi
-check "forge-fix skill exists" "$check_forgefix_skill_fail"
+check "forge skill documents fix subcommand" "$check_forgefix_skill_fail"
 
-# Check: forge-fix name matches directory
+# Check: consolidated skill name is forge
 check_forgefix_name_fail=0
-if ! grep -q "^name: forge-fix$" "$ROOT/skills/forge fix/SKILL.md" 2>/dev/null; then
+if ! grep -q "^name: forge$" "$ROOT/skills/forge/SKILL.md" 2>/dev/null; then
   check_forgefix_name_fail=1
 fi
-check "forge-fix name matches directory" "$check_forgefix_name_fail"
+check "forge skill name matches directory" "$check_forgefix_name_fail"
 
 echo ""
 echo "--- PHASE 4: GRAPH + INIT ---"

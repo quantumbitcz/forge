@@ -54,7 +54,7 @@ LEARNINGS_DIR="$PLUGIN_ROOT/shared/learnings"
 @test "framework-conformance: forge-config-template.md has total_retries_max" {
   local failures=()
   for fw in "${DISCOVERED_FRAMEWORKS[@]}"; do
-    local cfg="$FRAMEWORKS_DIR/$fw/forge-admin config-template.md"
+    local cfg="$FRAMEWORKS_DIR/$fw/forge-config-template.md"
     [[ -f "$cfg" ]] || continue
     if ! grep -q 'total_retries_max' "$cfg"; then
       failures+=("$fw")
@@ -71,7 +71,7 @@ LEARNINGS_DIR="$PLUGIN_ROOT/shared/learnings"
 @test "framework-conformance: forge-config-template.md has oscillation_tolerance" {
   local failures=()
   for fw in "${DISCOVERED_FRAMEWORKS[@]}"; do
-    local cfg="$FRAMEWORKS_DIR/$fw/forge-admin config-template.md"
+    local cfg="$FRAMEWORKS_DIR/$fw/forge-config-template.md"
     [[ -f "$cfg" ]] || continue
     if ! grep -q 'oscillation_tolerance' "$cfg"; then
       failures+=("$fw")

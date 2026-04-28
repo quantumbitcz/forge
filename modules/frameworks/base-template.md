@@ -224,7 +224,7 @@ conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
 conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/<FRAMEWORK>/code-quality/"
 # language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"   # omit for k8s (language: ~)
 preempt_file: ".claude/forge-log.md"       # SHARED DEFAULT
-config_file: ".claude/forge-admin config.md"     # SHARED DEFAULT
+config_file: ".claude/forge-config.md"     # SHARED DEFAULT
 
 # ---------------------------------------------------------------------------
 # OVERRIDE: optional -- infra (k8s and infra-focused frameworks only)
@@ -349,7 +349,7 @@ These sections are byte-identical across all 21 frameworks. Any difference is dr
 | `risk.auto_proceed` | `MEDIUM` (except k8s: `LOW`) |
 | `linear` | `enabled: false, team: "", project: "", labels: ["pipeline-managed"]` |
 | `preempt_file` | `.claude/forge-log.md` |
-| `config_file` | `.claude/forge-admin config.md` |
+| `config_file` | `.claude/forge-config.md` |
 | `conventions_code_quality` | `${CLAUDE_PLUGIN_ROOT}/modules/code-quality/` |
 | `documentation.discovery` | `max_files: 500, max_file_size_kb: 512, exclude_patterns: []` |
 | `documentation.export` | confluence + notion both disabled |

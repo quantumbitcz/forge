@@ -6,7 +6,7 @@ Playbooks are user-defined task templates that encode "how we do X" as parameter
 
 ### Location
 
-- **Project playbooks:** `.claude/forge-admin playbooks/{name}.md`
+- **Project playbooks:** `.claude/forge-playbooks/{name}.md`
 - **Built-in playbooks:** `shared/playbooks/{name}.md` (shipped with plugin)
 
 Resolution order: project playbooks override built-in playbooks with the same name.
@@ -107,7 +107,7 @@ The interpolation engine handles the patterns above and nothing more. Complex lo
 
 ### Invocation Flow
 
-1. **PARSE:** Read `.claude/forge-admin playbooks/{name}.md`. If not found, check `shared/playbooks/{name}.md` (built-in). If not found: error `PLAYBOOK_NOT_FOUND`.
+1. **PARSE:** Read `.claude/forge-playbooks/{name}.md`. If not found, check `shared/playbooks/{name}.md` (built-in). If not found: error `PLAYBOOK_NOT_FOUND`.
 2. **VALIDATE PARAMETERS:** Check required params present, type-check values, parse lists, validate against `allowed_values` and `validation` regex, apply defaults.
 3. **INTERPOLATE TEMPLATE:** Replace `{{param}}` placeholders, expand `{{#each}}` blocks, evaluate `{{#if}}` conditionals.
 4. **INTERPOLATE ACCEPTANCE CRITERIA:** Apply same interpolation to `acceptance_criteria` list.
@@ -206,13 +206,13 @@ In `forge-config.md`:
 ```yaml
 playbooks:
   enabled: true                           # Master toggle (default: true)
-  directory: ".claude/forge-admin playbooks"    # Playbook directory (default: .claude/forge-admin playbooks)
+  directory: ".claude/forge-playbooks"    # Playbook directory (default: .claude/forge-playbooks)
   suggestion_confidence_threshold: MEDIUM # Minimum confidence for suggestions (LOW/MEDIUM/HIGH)
 ```
 
 ## Built-In Playbooks
 
-The plugin ships with playbooks in `shared/playbooks/`. Available when `playbooks.enabled: true` (default). Teams can override any built-in by creating a file with the same name in `.claude/forge-admin playbooks/`.
+The plugin ships with playbooks in `shared/playbooks/`. Available when `playbooks.enabled: true` (default). Teams can override any built-in by creating a file with the same name in `.claude/forge-playbooks/`.
 
 | Playbook | Description | Key Parameters |
 |----------|-------------|----------------|
@@ -315,4 +315,4 @@ playbooks:
 
 ### Auto-Apply File Rules
 
-Auto-apply only modifies project-level playbooks in `.claude/forge-admin playbooks/`. If a built-in playbook (in `shared/playbooks/`) has refinement proposals, auto-apply first copies it to `.claude/forge-admin playbooks/` (creating a project override), then applies refinements to the project copy. The plugin directory is never modified.
+Auto-apply only modifies project-level playbooks in `.claude/forge-playbooks/`. If a built-in playbook (in `shared/playbooks/`) has refinement proposals, auto-apply first copies it to `.claude/forge-playbooks/` (creating a project override), then applies refinements to the project copy. The plugin directory is never modified.

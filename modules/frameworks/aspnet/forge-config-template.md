@@ -360,7 +360,7 @@ condensation:
 # Playbooks (v2.0+)
 playbooks:
   enabled: true
-  directory: .claude/forge-admin playbooks
+  directory: .claude/forge-playbooks
   suggestion_confidence_threshold: MEDIUM
 
 # Living Specifications (v2.0+)

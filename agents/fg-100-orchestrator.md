@@ -1210,7 +1210,7 @@ When `playbooks.auto_refine: true` AND a playbook is being used for this run:
 1. Check `.forge/playbook-refinements/{playbook_id}.json` for `ready` proposals
 2. Filter to `confidence: HIGH` only
 3. Apply max `playbooks.max_auto_refines_per_run` proposals:
-   a. If playbook is built-in (in `shared/playbooks/`), copy to `.claude/forge-admin playbooks/` first
+   a. If playbook is built-in (in `shared/playbooks/`), copy to `.claude/forge-playbooks/` first
    b. Modify playbook frontmatter/body per proposal type
    c. Respect `<!-- locked -->` fences — skip proposals targeting locked sections
    d. Increment version in frontmatter

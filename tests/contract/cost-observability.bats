@@ -65,19 +65,26 @@ load '../helpers/test-helpers'
 
 # ── Insights Dashboard ───────────────────────────────────────────────────
 
-@test "forge-insights Category 3 includes per-stage cost breakdown" {
-  grep -q "Per-Stage Cost Breakdown\|per.stage.*cost\|Per-Run Cost Trend" \
-    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
+# Extract the `### Subcommand: insights` block from skills/forge-ask/SKILL.md.
+_insights_subcommand_block() {
+  awk '
+    /^### Subcommand: insights$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$PLUGIN_ROOT/skills/forge-ask/SKILL.md"
 }
 
-@test "forge-insights Category 3 includes cost recommendations" {
-  grep -q "Cost Recommendation\|Top-3.*Recommendation\|recommendation" \
-    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
+@test "forge-ask insights Category 3 includes per-stage cost breakdown" {
+  _insights_subcommand_block | grep -q "Per-Stage Cost Breakdown\|per.stage.*cost\|Per-Run Cost Trend"
 }
 
-@test "forge-insights Category 3 includes budget utilization" {
-  grep -q "Budget Utilization\|budget.*utilization" \
-    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
+@test "forge-ask insights Category 3 includes cost recommendations" {
+  _insights_subcommand_block | grep -q "Cost Recommendation\|Top-3.*Recommendation\|recommendation"
+}
+
+@test "forge-ask insights Category 3 includes budget utilization" {
+  _insights_subcommand_block | grep -q "Budget Utilization\|budget.*utilization"
 }
 
 # ── Config Validation ────────────────────────────────────────────────────

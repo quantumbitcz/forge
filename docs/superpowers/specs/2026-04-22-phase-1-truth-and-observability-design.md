@@ -146,7 +146,7 @@ Why option B over A (downgrade the claim): user said "I want all." Cost is one w
 ### 4. Progress file + trend rollup + inspection recipes
 
 - **Files created:** `.forge/progress/status.json` and `.forge/run-history-trends.json` are runtime artefacts — not created by the spec, but by the orchestrator and retrospective agents.
-- **Files modified:** `hooks/post_tool_use_agent.py` (adds progress-file writer — ~15 LOC calling a new `hooks/_py/progress.py` helper), `hooks/_py/progress.py` (new — `write_status(run_id, stage, agent, event)` helper), `agents/fg-100-orchestrator.md` (new §Progress file section documenting that the `Agent` hook is the writer, not the orchestrator), `agents/fg-700-retrospective.md` (new §Trend rollup section: last-30 aggregation + hook-failure tail), `skills/forge-ask status.md` (new `--- live ---` section), `shared/observability.md` (+ §Local inspection), `shared/state-schema.md` (note that `.forge/progress/` and `.forge/run-history-trends.json` survive `/forge-admin recover reset`).
+- **Files modified:** `hooks/post_tool_use_agent.py` (adds progress-file writer — ~15 LOC calling a new `hooks/_py/progress.py` helper), `hooks/_py/progress.py` (new — `write_status(run_id, stage, agent, event)` helper), `agents/fg-100-orchestrator.md` (new §Progress file section documenting that the `Agent` hook is the writer, not the orchestrator), `agents/fg-700-retrospective.md` (new §Trend rollup section: last-30 aggregation + hook-failure tail), `skills/forge-status/SKILL.md` (new `--- live ---` section), `shared/observability.md` (+ §Local inspection), `shared/state-schema.md` (note that `.forge/progress/` and `.forge/run-history-trends.json` survive `/forge-admin recover reset`).
 
 ## Data Flow / File Layout
 
@@ -220,7 +220,7 @@ All tests run in CI; none run locally. (User standing instruction: no local test
   - `shared/hook-design.md:72, 85, 96` (contract update — §Failure Behavior table, §Timeout Behavior bullet, §Script Contract rule 5)
   - `shared/state-schema-fields.md:693`
   - `CHANGELOG.md:451` (historical entry — factual update, not rewrite of history: add a `NOTE: renamed to .hook-failures.jsonl in <next-version>` inline marker)
-  - `skills/forge-ask status/SKILL.md:91–97` (four mentions; parsing switches to `jq`/JSON)
+  - `skills/forge-status/SKILL.md:91–97` (four mentions; parsing switches to `jq`/JSON)
   - `shared/checks/engine.sh:91, 112, 120` and `shared/checks/l0-syntax/validate-syntax.sh:32, 37` (writers themselves — switch filename and emit JSON line)
 - An AC enforces that a post-change `grep -rn "\.hook-failures\.log" --include="*.md" --include="*.json" --include="*.py" --include="*.sh" --include="*.ps1" --include="*.cmd"` returns zero matches (see AC-18).
 - **`CLAUDE.md`:**

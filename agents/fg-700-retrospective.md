@@ -494,7 +494,7 @@ propose lowering `impl_voting.trigger_on_confidence_below` by 0.05 or tightening
 When `state.json.playbook_id` is set, analyze run outcomes against playbook expectations and generate refinement proposals. Schema: `shared/schemas/playbook-refinement-schema.json`.
 
 **Per-run analysis:**
-1. Load playbook definition (project `.claude/forge-admin playbooks/` first, fall back to `shared/playbooks/`)
+1. Load playbook definition (project `.claude/forge-playbooks/` first, fall back to `shared/playbooks/`)
 2. Compute refinement suggestions across 4 categories:
    - **Scoring gap:** If score < pass_threshold, identify top finding categories causing deductions. For each unaddressed category, propose an acceptance criterion that prevents recurrence. NEVER propose lowering thresholds.
    - **Stage focus:** Compare stage timing distribution vs `stages_focus`. If a non-focused stage takes >25% wall time, propose adding it. If a focused stage takes <2% across 3+ runs, propose removing (never VERIFYING/REVIEWING/SHIPPING).

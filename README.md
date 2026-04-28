@@ -191,7 +191,7 @@ Auto-detected MCP servers at PREFLIGHT. All optional -- pipeline degrades gracef
 Project identity: `language`, `framework`, `testing`, `commands` (build/test/lint), `scaffolder.patterns`, `quality_gate` batches, `context7_libraries`, `linear` settings.
 
 ### `forge-config.md` (mutable, auto-tuned by retrospective)
-Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-admin config-schema.json` for the full schema.
+Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-config-schema.json` for the full schema.
 
 - **Cost ceiling (Phase 6).** Every run has a USD ceiling (default **$25**). Configurable via `cost.ceiling_usd` in `forge-config.md`; the orchestrator injects a `## Cost Budget` block into every subagent brief, soft-throttles the implementer at 80%/90% consumption, and dynamically downgrades tiers when the remaining budget is small (excluding a hardcoded SAFETY_CRITICAL reviewer set). See `shared/model-routing.md` §Cost-Aware Routing.
 

@@ -14,7 +14,8 @@ setup() {
 }
 
 @test "the three expected skills exist with SKILL.md" {
-  for name in forge forge-admin forge-ask; do
+  # Source of truth: EXPECTED_SKILL_NAMES from tests/lib/module-lists.bash
+  for name in "${EXPECTED_SKILL_NAMES[@]}"; do
     [ -f "$PLUGIN_ROOT/skills/$name/SKILL.md" ] || \
       { echo "MISSING: skills/$name/SKILL.md"; return 1; }
   done
@@ -79,7 +80,20 @@ setup() {
 
 @test "no retired skill name appears outside the allowlist (AC-S005)" {
   cd "$PLUGIN_ROOT"
-  stragglers=$(grep -rn '/forge-init\b\|/forge-run\b\|/forge-fix\b\|/forge-shape\b\|/forge-sprint\b\|/forge-review\b\|/forge-verify\b\|/forge-deploy\b\|/forge-commit\b\|/forge-migration\b\|/forge-bootstrap\b\|/forge-docs-generate\b\|/forge-security-audit\b\|/forge-status\b\|/forge-history\b\|/forge-insights\b\|/forge-profile\b\|/forge-tour\b\|/forge-help\b\|/forge-recover\b\|/forge-abort\b\|/forge-config\b\|/forge-handoff\b\|/forge-automation\b\|/forge-playbooks\b\|/forge-playbook-refine\b\|/forge-compress\b\|/forge-graph\b' . 2>/dev/null \
+  # Path-collision-safe matching:
+  #   HEAD: the leading `/` must be a slash-command prefix, not a path
+  #         separator. Require it to follow start-of-line, whitespace, or a
+  #         delimiting punctuation char (` `\``,`(`,`,`,`,`,`...) — never an
+  #         identifier or path char.
+  #   TAIL: the retired name must NOT be followed by `-`, `.`, `/`, or another
+  #         word character (which would make it a longer identifier or
+  #         filesystem path). `\b` alone is insufficient because `-` is a word
+  #         boundary in POSIX regex, so `/forge-config\b` would falsely match
+  #         `/forge-config-schema.json`. The negative-class-or-EOL tail forces
+  #         a true terminator.
+  local HEAD='(^|[^a-zA-Z0-9._/-])'
+  local TAIL='([^a-zA-Z0-9._/-]|$)'
+  stragglers=$(grep -rnE "${HEAD}/forge-init$TAIL|${HEAD}/forge-run$TAIL|${HEAD}/forge-fix$TAIL|${HEAD}/forge-shape$TAIL|${HEAD}/forge-sprint$TAIL|${HEAD}/forge-review$TAIL|${HEAD}/forge-verify$TAIL|${HEAD}/forge-deploy$TAIL|${HEAD}/forge-commit$TAIL|${HEAD}/forge-migration$TAIL|${HEAD}/forge-bootstrap$TAIL|${HEAD}/forge-docs-generate$TAIL|${HEAD}/forge-security-audit$TAIL|${HEAD}/forge-status$TAIL|${HEAD}/forge-history$TAIL|${HEAD}/forge-insights$TAIL|${HEAD}/forge-profile$TAIL|${HEAD}/forge-tour$TAIL|${HEAD}/forge-help$TAIL|${HEAD}/forge-recover$TAIL|${HEAD}/forge-abort$TAIL|${HEAD}/forge-config$TAIL|${HEAD}/forge-handoff$TAIL|${HEAD}/forge-automation$TAIL|${HEAD}/forge-playbooks$TAIL|${HEAD}/forge-playbook-refine$TAIL|${HEAD}/forge-compress$TAIL|${HEAD}/forge-graph$TAIL" . 2>/dev/null \
     --include='*.md' --include='*.json' --include='*.py' --include='*.yml' --include='*.yaml' --include='*.bats' --include='*.sh' \
     | awk -F: '{print $1}' \
     | sort -u \

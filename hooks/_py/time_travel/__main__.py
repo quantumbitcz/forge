@@ -10,7 +10,7 @@ contract surfaced to the user:
     6 = rewind aborted: unknown checkpoint id
     7 = rewind aborted: another rewind transaction in progress
 
-See skills/forge-admin recover/SKILL.md §Exit Codes and shared/recovery/time-travel.md
+See skills/forge-admin/SKILL.md §Subcommand: recover (Exit Codes) and shared/recovery/time-travel.md
 for the full protocol.
 """
 from __future__ import annotations

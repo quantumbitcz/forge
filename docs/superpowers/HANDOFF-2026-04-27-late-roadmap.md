@@ -13,7 +13,7 @@
 | # | Tag | Phase | Highlights |
 |---|---|---|---|
 | 1 | v3.7.0 | Phase 1 — Truth & Observability | install.sh/.ps1, hook crash audit, support-tier badges |
-| 2 | v3.8.0 | Phase 2 — Contract Enforcement | 5 pytest contract tests, `/forge --help` deleted, feature matrix |
+| 2 | v3.8.0 | Phase 2 — Contract Enforcement | 5 pytest contract tests, `/forge-help` deleted, feature matrix |
 | 3 | v3.9.0 | Phase 3 — Correctness Proofs | convergence `>=` boundary, e2e dry-run smoke, mutation harness |
 | 4 | v3.10.0 | Phase 4 — Learnings Dispatch Loop | 12-agent injection, marker reinforcement, v1→v2 migration |
 | 5 | v4.0.0 | Phase 5 — Pattern Modernization + Judges (BREAKING) | `*-critic` → `*-judge` with binding REVISE; state schema v2.0.0 |
@@ -25,7 +25,7 @@
 
 | # | Target | Plan | Notes |
 |---|---|---|---|
-| 9 | **v5.0.0** | **Mega B — Skill Surface (BREAKING; NEXT UP)** | B12 deletes 26 old skills (incl. `/forge`, `/forge run`, `/forge-ask status`); B3 absorbs `forge-status --- live ---` from Phase 1 Task 24 (prereq Edit 6 already applied) |
+| 9 | **v5.0.0** | **Mega B — Skill Surface (BREAKING; NEXT UP)** | B12 deletes 26 old skills (incl. `/forge-init`, `/forge-run`, `/forge-status`); B3 absorbs `forge-status --- live ---` from Phase 1 Task 24 (prereq Edit 6 already applied) |
 | 10 | v5.1.0 | Mega C — Brainstorming | Ports superpowers brainstorm pattern into `fg-010-shaper`; populates `state.brainstorm.spec_path` (Mega A laid the schema slot); wires `brainstorm_complete` / `resume_with_cache` into `shared/python/state_transitions.py` (Mega A deferred this) |
 | 11 | v5.2.0 | Mega D — Pattern Parity | D8 references `agents/fg-301-implementer-judge.md` (post-P5 name; prereq Edit 1 applied) |
 | 12 | v5.3.0 | Mega E — Docs | README enumeration uses post-P5 names (prereq Edit 2 applied). **Last mega plan to ship — also `git rm` the shared `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`** at this point (retained until E ships because Mega A/B/C/D/E all reference it) |
@@ -64,7 +64,7 @@ Same loop as prior handoff (still validated):
 ### Constraints (immutable across all phases)
 
 - `superpowers:*` skills/agents only — NOT `pr-review-toolkit:*` or `feature-dev:*`. (See memory `feedback_use_superpowers_plugins`.)
-- No `/forge review` (forge reviewing forge is circular; see memory `feedback_no_self_review`).
+- No `/forge-review` (forge reviewing forge is circular; see memory `feedback_no_self_review`).
 - No backwards-compat shims; new schemas freely break old `.forge/state.json` (see memory `feedback_no_backcompat`).
 - Code review after every PHASE (not every task). Per-task implementation only.
 - Fix EVERYTHING — critical, important, minor, nit, deferred. The maintainer's directive.
@@ -121,7 +121,7 @@ Pre-Mega-A also had `?? shared/ac-extractor.py` and `?? tests/unit/ac_extractor_
 4. Pick up at **Mega B (Skill Surface, target v5.0.0 BREAKING)**:
    - Plan: `docs/superpowers/plans/2026-04-27-mega-consolidation-B-skill-surface.md`
    - Spec (shared with all megas): `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`
-   - **B12 is the breaking change**: deletes 26 old skills including `/forge`, `/forge run`, `/forge-ask status`. Verify SHIP_ORDER's prereq Edit 6 (B3 absorbs `forge-status --- live ---` from Phase 1 Task 24) is in the plan.
+   - **B12 is the breaking change**: deletes 26 old skills including `/forge-init`, `/forge-run`, `/forge-status`. Verify SHIP_ORDER's prereq Edit 6 (B3 absorbs `forge-status --- live ---` from Phase 1 Task 24) is in the plan.
    - Cross-verify against Mega C/D/E + Phase 8 — what skill surfaces do they assume exist?
 5. Run the established workflow: enumerate → wave-dispatch → push → 2-reviewer split → fix all → release.
 
@@ -139,7 +139,7 @@ User auto-memory at `/Users/denissajnar/.claude/projects/-Users-denissajnar-Idea
 - `user_forge_personal_tool.md`
 - `feedback_no_local_tests.md` — don't run pytest whole-suite locally; CI verifies
 - `feedback_implementation_workflow.md` — code review per phase, fix everything, version bump + tag + push + release
-- `feedback_no_self_review.md` — never `/forge review`; use `superpowers:requesting-code-review`
+- `feedback_no_self_review.md` — never `/forge-review`; use `superpowers:requesting-code-review`
 - `feedback_no_backcompat.md` — new versions freely break old state/configs
 - `feedback_use_superpowers_plugins.md` — superpowers:* only, NOT pr-review-toolkit:*
 - `feedback_cleanup_after_ship.md` — at feature ship: delete plan + (when last to share) the spec

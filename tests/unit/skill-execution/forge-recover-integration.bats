@@ -15,21 +15,32 @@ teardown() {
   rm -rf "$TEST_FORGE_DIR"
 }
 
-@test "forge-recover SKILL.md exists" {
-  [ -f "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md" ]
+# Extract the `### Subcommand: recover` block from skills/forge-admin/SKILL.md.
+_recover_subcommand_block() {
+  awk '
+    /^### Subcommand: recover$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$PLUGIN_ROOT/skills/forge-admin/SKILL.md"
 }
 
-@test "forge-recover SKILL.md advertises all 5 subcommands" {
-  local body="$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
+@test "forge-admin SKILL.md exists" {
+  [ -f "$PLUGIN_ROOT/skills/forge-admin/SKILL.md" ]
+}
+
+@test "forge-admin recover subcommand advertises all 5 verbs" {
+  local body
+  body="$(_recover_subcommand_block)"
   for sc in diagnose repair reset resume rollback; do
-    grep -q "\`$sc\`" "$body" || { echo "Missing subcommand doc: $sc"; return 1; }
+    echo "$body" | grep -q "\`$sc\`" || { echo "Missing subcommand doc: $sc"; return 1; }
   done
 }
 
-@test "forge-recover SKILL.md advertises --dry-run on mutating subcommands" {
-  grep -q "\-\-dry-run" "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
+@test "forge-admin recover subcommand advertises --dry-run on mutating verbs" {
+  _recover_subcommand_block | grep -q "\-\-dry-run"
 }
 
-@test "forge-recover SKILL.md advertises --json on diagnose" {
-  grep -q "\-\-json" "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
+@test "forge-admin recover subcommand advertises --json on diagnose" {
+  _recover_subcommand_block | grep -q "\-\-json"
 }

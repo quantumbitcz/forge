@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 @test "forge-config template contains speculation block" {
-  local tmpl="$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-admin config-template.md"
+  local tmpl="$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-config-template.md"
   grep -q "^speculation:" "$tmpl"
   grep -q "  enabled: true" "$tmpl"
   grep -q "  candidates_max: 3" "$tmpl"

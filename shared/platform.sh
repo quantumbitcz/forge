@@ -43,7 +43,7 @@ _apply_platform_config() {
   if [[ "$FORGE_OS" != "windows" && "$FORGE_OS" != "wsl" ]]; then
     return 0
   fi
-  local config_file="${FORGE_PROJECT_ROOT:-.}/.claude/forge-admin config.md"
+  local config_file="${FORGE_PROJECT_ROOT:-.}/.claude/forge-config.md"
   if [[ ! -f "$config_file" ]]; then
     return 0
   fi

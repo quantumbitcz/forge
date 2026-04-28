@@ -60,7 +60,7 @@ if [[ -z "$PROJECT_ROOT" ]]; then
   exit 2
 fi
 
-CONFIG_FILE="${PROJECT_ROOT}/.claude/forge-admin config.md"
+CONFIG_FILE="${PROJECT_ROOT}/.claude/forge-config.md"
 FORGE_DIR="${PROJECT_ROOT}/.forge"
 HASHES_FILE="${FORGE_DIR}/config-hashes.json"
 
