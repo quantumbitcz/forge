@@ -9,8 +9,11 @@
 [![Finding Categories](https://img.shields.io/badge/finding_categories-149-purple?style=flat-square)](#quality-scoring)
 [![Build Systems](https://img.shields.io/badge/build_systems-9-blue?style=flat-square)](#available-modules)
 [![Tests](https://img.shields.io/badge/tests-760+-brightgreen?style=flat-square)](#testing)
+[![Measured](https://img.shields.io/badge/measured-SCORECARD-blue)](./SCORECARD.md)
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
+
+**Measured.** `SCORECARD.md` measures weekly real-feature solve rate on a curated corpus; `tests/evals/pipeline/leaderboard.md` measures per-PR pipeline smoke on synthetic scenarios. Different tiers, different cadences.
 
 Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **51 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 

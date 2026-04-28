@@ -26,7 +26,7 @@ Already familiar? Skip to §Architecture.
 
 Layered, top-down resolution:
 
-1. **Project config** — `.claude/forge.local.md`, `forge-config.md`, `forge-log.md` in consuming repo.
+1. **Project config** — `.claude/forge.local.md`, `forge-config.md`, `forge-log.md` in consuming repo. Repo-root manifest: `README.md`, `CLAUDE.md`, `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `SCORECARD.md` (Phase 8 weekly scorecard).
 2. **Module layer** (`modules/`):
    - `languages/` (15), `frameworks/` (24), `testing/` (19) — each with `conventions.md`, `variants/`, framework-binding subdirs (`testing/`, `persistence/`, `messaging/`, …).
    - Domain: `databases/`, `persistence/`, `migrations/`, `api-protocols/`, `messaging/`, `caching/`, `search/`, `storage/`, `auth/`, `observability/`.
@@ -53,6 +53,8 @@ powershell -ExecutionPolicy Bypass -File install.ps1   # Windows native
 Doc-only plugin (no build). Smoke test: symlink → `/forge "<requirement>"` (auto-bootstraps) → `/forge run --dry-run` → `/forge run` → check `.forge/state.json`.
 
 Pipeline-level evals: `tests/evals/pipeline/README.md` (CI-only; local `FORGE_EVAL=1 python -m tests.evals.pipeline.runner --dry-run --no-baseline`).
+
+**Weekly benchmark.** Real-feature solve rate on a user-curated corpus runs weekly (Mon 06:00 UTC) and writes [SCORECARD.md](./SCORECARD.md). See `tests/evals/benchmark/README.md` for operator workflow.
 
 **First-time?** Read `shared/agent-philosophy.md`. Run `validate-plugin.sh` after every change.
 
