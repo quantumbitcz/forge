@@ -54,7 +54,14 @@ load '../helpers/test-helpers'
 }
 
 @test "derive_support_tiers.py is idempotent" {
-  cp -r "$PLUGIN_ROOT" "$BATS_TEST_TMPDIR/repo"
+  # The script only needs `modules/`, `tests/lib/`, and the few helper paths it walks.
+  # Copy a minimal subset to avoid bats-core's broken-symlink fixtures that crash `cp` on Git Bash on Windows.
+  mkdir -p "$BATS_TEST_TMPDIR/repo/tests/lib"
+  cp -r "$PLUGIN_ROOT/modules" "$BATS_TEST_TMPDIR/repo/modules"
+  cp "$PLUGIN_ROOT/tests/lib/derive_support_tiers.py" "$BATS_TEST_TMPDIR/repo/tests/lib/derive_support_tiers.py"
+  if [ -d "$PLUGIN_ROOT/docs" ]; then
+    cp -r "$PLUGIN_ROOT/docs" "$BATS_TEST_TMPDIR/repo/docs"
+  fi
   python3 "$BATS_TEST_TMPDIR/repo/tests/lib/derive_support_tiers.py" --root "$BATS_TEST_TMPDIR/repo"
   a="$(md5sum "$BATS_TEST_TMPDIR/repo/modules/languages/kotlin.md" | awk '{print $1}')"
   python3 "$BATS_TEST_TMPDIR/repo/tests/lib/derive_support_tiers.py" --root "$BATS_TEST_TMPDIR/repo"

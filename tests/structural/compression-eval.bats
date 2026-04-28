@@ -55,25 +55,26 @@ load '../helpers/test-helpers'
 
 @test "prompts.json exists and has 15 prompts" {
   [[ -f "$PLUGIN_ROOT/benchmarks/prompts.json" ]]
+  # Path passed via argv so MSYS auto-converts /d/a/... to native Windows form on Git Bash.
   run python3 -c "
-import json
-data = json.load(open('$PLUGIN_ROOT/benchmarks/prompts.json'))
+import json, sys
+data = json.load(open(sys.argv[1]))
 total = sum(len(cat['prompts']) for cat in data['categories'].values())
 assert total == 15, f'Expected 15 prompts, got {total}'
 print('OK')
-"
+" "$PLUGIN_ROOT/benchmarks/prompts.json"
   assert_success
   assert_output "OK"
 }
 
 @test "prompts.json has 3 categories (explanation, review, code-gen)" {
   run python3 -c "
-import json
-data = json.load(open('$PLUGIN_ROOT/benchmarks/prompts.json'))
+import json, sys
+data = json.load(open(sys.argv[1]))
 cats = sorted(data['categories'].keys())
 assert cats == ['code-gen', 'explanation', 'review'], f'Expected 3 categories, got {cats}'
 print('OK')
-"
+" "$PLUGIN_ROOT/benchmarks/prompts.json"
   assert_success
   assert_output "OK"
 }
@@ -96,39 +97,39 @@ print('OK')
 
 @test "config schema validates compression_eval.enabled as boolean" {
   run python3 -c "
-import json
-schema = json.load(open('$PLUGIN_ROOT/shared/config-schema.json'))
+import json, sys
+schema = json.load(open(sys.argv[1]))
 ce = schema['properties']['compression_eval']
 assert ce['properties']['enabled']['type'] == 'boolean', 'enabled must be boolean'
 print('OK')
-"
+" "$PLUGIN_ROOT/shared/config-schema.json"
   assert_success
   assert_output "OK"
 }
 
 @test "config schema validates compression_eval.drift_threshold_pct range" {
   run python3 -c "
-import json
-schema = json.load(open('$PLUGIN_ROOT/shared/config-schema.json'))
+import json, sys
+schema = json.load(open(sys.argv[1]))
 dtp = schema['properties']['compression_eval']['properties']['drift_threshold_pct']
 assert dtp.get('minimum', 0) >= 10, 'minimum must be >= 10'
 assert dtp.get('maximum', 999) <= 200, 'maximum must be <= 200'
 print('OK')
-"
+" "$PLUGIN_ROOT/shared/config-schema.json"
   assert_success
   assert_output "OK"
 }
 
 @test "prompts.json prompts have required_facts" {
   run python3 -c "
-import json
-data = json.load(open('$PLUGIN_ROOT/benchmarks/prompts.json'))
+import json, sys
+data = json.load(open(sys.argv[1]))
 for cat_name, cat in data['categories'].items():
     for prompt in cat['prompts']:
         assert 'required_facts' in prompt, f'{prompt[\"id\"]} missing required_facts'
         assert len(prompt['required_facts']) > 0, f'{prompt[\"id\"]} has empty required_facts'
 print('OK')
-"
+" "$PLUGIN_ROOT/benchmarks/prompts.json"
   assert_success
   assert_output "OK"
 }

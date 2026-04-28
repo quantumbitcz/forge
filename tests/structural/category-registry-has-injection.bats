@@ -7,9 +7,10 @@ setup() {
 }
 
 @test "all 7 SEC-INJECTION-* categories are registered" {
-  python3 - <<PY
-import json
-d = json.load(open("$REG"))
+  # Path passed via argv so MSYS auto-converts /d/a/... to native Windows form on Git Bash.
+  python3 - "$REG" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
 ids = set(d["categories"].keys())
 required = {
   "SEC-INJECTION-OVERRIDE",
@@ -26,9 +27,9 @@ PY
 }
 
 @test "each new category has the security-reviewer agent" {
-  python3 - <<PY
-import json
-d = json.load(open("$REG"))
+  python3 - "$REG" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
 cats = d["categories"]
 ids = [
   "SEC-INJECTION-OVERRIDE",
@@ -41,7 +42,7 @@ ids = [
 ]
 for cid in ids:
     row = cats[cid]
-    assert "fg-411-security-reviewer" in row.get("agents", []), \\
+    assert "fg-411-security-reviewer" in row.get("agents", []), \
         f"{cid} missing security reviewer in agents"
     assert row.get("priority") == 1, f"{cid} priority should be 1 (CRITICAL routing)"
 PY
