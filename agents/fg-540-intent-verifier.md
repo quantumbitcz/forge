@@ -3,7 +3,7 @@ name: fg-540-intent-verifier
 description: Fresh-context intent verifier. Probes running system against acceptance criteria without seeing plan/tests/diff. Emits INTENT-* findings.
 model: inherit
 color: violet
-tools: ['Read', 'Grep', 'Glob', 'WebFetch']
+tools: ['Read', 'Grep', 'Glob', 'WebFetch', 'TaskCreate', 'TaskUpdate']
 ui:
   tasks: true
   ask: false

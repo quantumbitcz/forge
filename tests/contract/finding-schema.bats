@@ -23,20 +23,36 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 # 2. Required fields match output-format.md
 # ---------------------------------------------------------------------------
 @test "finding-schema: required fields match output-format.md" {
+  # output-format.md defines 5+1 fields: file, line, CATEGORY-CODE, SEVERITY, message, fix_hint.
+  # confidence (6th) is optional.
+  # category, severity, description, fix_hint are top-level required.
+  # file + line are conditionally required for non-INTENT findings via the allOf branch
+  # (INTENT-* findings are AC-scoped and may have file/line null — see Phase 7 fg-540).
   local required
   required=$(python3 -c "
 import json
 schema = json.load(open('$FINDING_SCHEMA'))
 print(' '.join(sorted(schema['required'])))
 ")
-  # output-format.md defines 5+1 fields: file, line, CATEGORY-CODE, SEVERITY, message, fix_hint
-  # The 6th (confidence) is optional
-  for field in "file" "line" "category" "severity" "description" "fix_hint"; do
+  for field in "category" "severity" "description" "fix_hint"; do
     echo "$required" | grep -q "$field" \
-      || fail "Required field '$field' missing from finding-schema.json"
+      || fail "Required field '$field' missing from finding-schema.json top-level required"
   done
 
-  # Confidence should NOT be in required
+  # file + line: required via allOf (non-INTENT branch) — assert the conditional shape exists.
+  python3 -c "
+import json
+schema = json.load(open('$FINDING_SCHEMA'))
+all_of = schema.get('allOf', [])
+non_intent_required = []
+for branch in all_of:
+    then_block = branch.get('then', {})
+    non_intent_required.extend(then_block.get('required', []))
+assert 'file' in non_intent_required, 'file must be conditionally required for non-INTENT findings'
+assert 'line' in non_intent_required, 'line must be conditionally required for non-INTENT findings'
+" || fail "file/line must be conditionally required via allOf for non-INTENT findings"
+
+  # Confidence should NOT be in required.
   echo "$required" | grep -qv "confidence" \
     || fail "confidence should not be required (it's optional per output-format.md)"
 }

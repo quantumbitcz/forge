@@ -28,7 +28,7 @@ Layered, top-down resolution:
 
 1. **Project config** — `.claude/forge.local.md`, `forge-config.md`, `forge-log.md` in consuming repo. Repo-root manifest: `README.md`, `CLAUDE.md`, `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `SCORECARD.md` (Phase 8 weekly scorecard).
 2. **Module layer** (`modules/`):
-   - `languages/` (15), `frameworks/` (24), `testing/` (19) — each with `conventions.md`, `variants/`, framework-binding subdirs (`testing/`, `persistence/`, `messaging/`, …).
+   - `languages/` (15), `frameworks/` (24), `testing/` (19) — each with `conventions.md`, `variants/`, framework-binding subdirs (`testing/`, `persistence/`, `messaging/`, …). Frameworks: angular, aspnet, axum, django, embedded, express, fastapi, flask, gin, go-stdlib, jetpack-compose, k8s, kotlin-multiplatform, laravel, nestjs, nextjs, rails, react, spring, svelte, sveltekit, swiftui, vapor, vue.
    - Domain: `databases/`, `persistence/`, `migrations/`, `api-protocols/`, `messaging/`, `caching/`, `search/`, `storage/`, `auth/`, `observability/`.
    - ML/data: `ml-ops/` (4), `data-pipelines/` (3), `feature-flags/` (3).
    - Tooling: `build-systems/` (9), `ci-cd/` (7), `container-orchestration/` (11), `code-quality/` (~70 tools), `documentation/`.
@@ -356,7 +356,7 @@ Each skill's `SKILL.md` body documents the full subcommand grammar, flag matrix,
 - **Greenfield:** `/forge` on an empty project detects no recognizable stack → offer `/forge bootstrap <stack>` or `/forge-admin config wizard`. No silent half-init.
 - **Bootstrap:** Stage 4 skipped. Reduced validation + review. Target = `pass_threshold`. Triggered by `/forge bootstrap <stack>` or `bootstrap:` prefix.
 - **Bugfix:** `/forge fix "<description>"` or `bugfix:` prefix. Skips BRAINSTORMING. `fg-020-bug-investigator` runs reproduction (max 3) → hypothesis register (up to 3) → optional parallel sub-investigators (`fg-021-hypothesis-investigator`) → Bayesian pruning → fix-gate (posterior ≥ `bug.fix_gate_threshold`, default 0.75). 4-perspective validation. Reduced reviewers. Patterns in `.forge/forge-log.md`.
-- **Migration:** all 10 stages; `fg-160` at Stage 2; Stage 4 cycles MIGRATING/PAUSED/CLEANUP/VERIFY.
+- **Migration:** all 10 stages; `fg-160` at Stage 2; Stage 4 cycles `MIGRATING` / `MIGRATION_PAUSED` / `MIGRATION_CLEANUP` / `MIGRATION_VERIFY` (canonical state names per `shared/state-schema-fields.md`).
 - **Dry-run:** PREFLIGHT→VALIDATE only. No worktree/Linear/lock/checkpoints.
 - **Autonomous** (`autonomous: true`): auto-selection logged `[AUTO]`. Never pauses except safety escalations (REGRESSING, E1-E4, unrecoverable CRITICAL). Cost-ceiling breach: try `cost_governance.downgrade_tier()` first, fall back to `abort_to_ship` if downgrade would drop a SAFETY_CRITICAL agent or already at `fast`. Decision logged `COST-ESCALATION-AUTO` + incident file. **AskUserQuestion is never invoked for cost in autonomous mode.**
 - **Sprint:** `--sprint` / `--parallel`. Independence analysis → parallel orchestrators. Isolation: `.forge/runs/{id}/` + `.forge/worktrees/{id}/`. Serial = SHIP completes before second starts IMPLEMENT.

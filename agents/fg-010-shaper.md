@@ -335,6 +335,49 @@ Spec sections are documented in step 5 above. The output is the spec file at `st
 
 ---
 
+## User-interaction examples
+
+The shaper drives the seven-step dialogue via `AskUserQuestion`. Two illustrative payloads (one per step type):
+
+```json
+{
+  "questions": [
+    {
+      "question": "Which actor triggers this feature?",
+      "header": "Actor",
+      "multiSelect": false,
+      "options": [
+        {"label": "End user (interactive UI)", "description": "Browser, mobile app, or desktop client"},
+        {"label": "Admin", "description": "Operator dashboard or back-office tool"},
+        {"label": "API caller", "description": "External service via public API"},
+        {"label": "Background job", "description": "Scheduler, queue worker, or cron"}
+      ]
+    }
+  ]
+}
+```
+
+```json
+{
+  "questions": [
+    {
+      "question": "Which approach should we take?",
+      "header": "Approach",
+      "multiSelect": false,
+      "options": [
+        {"label": "Approach A — minimal MVP", "description": "Ship narrow scope first; iterate."},
+        {"label": "Approach B — full vision", "description": "All surfaces in one pass; longer cycle."},
+        {"label": "Approach C — hybrid", "description": "MVP with extension points for full vision."}
+      ]
+    }
+  ]
+}
+```
+
+Question count is bounded (≤7-9). Autonomous mode never invokes `AskUserQuestion` (verified by AC-S022).
+
+---
+
 ## Forbidden Actions
 
 - **Do NOT proceed with contradictory requirements** (step 2 contradiction detection is mandatory).

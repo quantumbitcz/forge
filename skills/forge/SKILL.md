@@ -196,7 +196,7 @@ Otherwise: treat `$REST` as the bug description verbatim.
 
 #### Step 3: Dispatch
 
-Dispatch `fg-020-bug-investigator`:
+Initialize state with `mode: bugfix` (this is the bugfix mode entry point — see `shared/state-schema.md`), then dispatch `fg-020-bug-investigator`:
 
 > Investigate and fix this bug:
 >
@@ -204,6 +204,7 @@ Dispatch `fg-020-bug-investigator`:
 >
 > Source: `{ticket_id | linear_id | inline}`
 > Available MCPs: `{detected_mcps}`
+> Mode: bugfix
 
 ### Subcommand: sprint
 
@@ -289,15 +290,20 @@ Run `git commit -m "<message>"`. Relay output.
 
 ### Subcommand: migrate
 
-Migration pipeline. `$REST` is `"<from-version> to <to-version>"` or a free-text migration description.
+Migration pipeline. `$REST` is `"<from-version> to <to-version>"` or a free-text migration description. The orchestrator delegates planning to `fg-160-migration-planner` at Stage 2.
 
 #### Step 1: Parse input
 
 If `$REST` is empty: ask "What's the migration target? e.g., 'Spring Boot 2 to 3'".
 
+#### Usage patterns
+
+- **upgrade**: full migration with planning, batched fixes, and verification (default). Example: `/forge migrate "Spring Boot 2 to 3"`.
+- **check**: dry-run a migration to surface breaking changes and impact analysis without modifying the worktree. Example: `/forge migrate --dry-run "Spring Boot 3.2 to 3.4"`.
+
 #### Step 2: Dispatch
 
-Dispatch `fg-100-orchestrator` with `Mode: migration`:
+Dispatch `fg-100-orchestrator` with `Mode: migration` (which dispatches `fg-160-migration-planner` at Stage 2):
 
 > Execute migration:
 >

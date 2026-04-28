@@ -35,7 +35,7 @@ Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can rea
 
 Stage notes should stay under **2,000 tokens** to prevent context cascading in downstream dispatch prompts. If a stage produces more content:
 
-1. **Findings:** Deduplicate to top 20 by severity before writing. Include total count: "20 of {N} findings shown."
+1. **Findings:** Deduplicate by `(component, file, line, category)` before writing. Include total count and severity breakdown. Include **all** previous batch findings with domain affinity for the next reviewer (severity-weighted, no fixed cap) so cross-batch dedup is exact, not lossy. If counts exceed 50, compress to `(category, file, severity, count)` tuples — preserving every entry while shrinking the payload.
 2. **File listings:** Reference by directory pattern (e.g., `src/domain/**`) instead of listing every file.
 3. **Metrics:** Use a compact table format, not prose.
 
