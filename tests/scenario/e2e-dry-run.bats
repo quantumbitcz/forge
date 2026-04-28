@@ -137,7 +137,7 @@ teardown() {
   python3 -c "
 import json
 state = {
-    'version': '2.0.0',
+    'version': '2.1.0',
     'complete': False,
     'story_id': 'feat-test-dry-run',
     'requirement': 'Test dry run',
@@ -164,13 +164,13 @@ with open('$PROJECT/.forge/state.json', 'w') as f:
   # Verify it's valid JSON with correct version
   local version
   version=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d['version'])")
-  [[ "$version" == "2.0.0" ]]
+  [[ "$version" == "2.1.0" ]]
 }
 
 @test "e2e-dry-run: dry_run flag set to true in state.json" {
   # Reuse state.json from previous test if exists, or create minimal
   if [[ ! -f "$PROJECT/.forge/state.json" ]]; then
-    printf '{"version":"2.0.0","dry_run":true}\n' > "$PROJECT/.forge/state.json"
+    printf '{"version":"2.1.0","dry_run":true}\n' > "$PROJECT/.forge/state.json"
   fi
   local dry_run
   dry_run=$(python3 -c "import json; d=json.load(open('$PROJECT/.forge/state.json')); print(d.get('dry_run', False))")
@@ -281,16 +281,16 @@ print('OK')
 }
 
 # ---------------------------------------------------------------------------
-# 10. State init produces v2.0.0 with zeroed judge fields (Phase 5)
+# 10. State init produces v2.1.0 with zeroed judge fields (Phase 5)
 # ---------------------------------------------------------------------------
-@test "dry-run initializes state with version 2.0.0 and zeroed judge fields" {
+@test "dry-run initializes state with version 2.1.0 and zeroed judge fields" {
   # Use state_init directly to avoid a full pipeline run
   run python3 -c "
 import sys
 sys.path.insert(0, '$PLUGIN_ROOT/shared/python')
 from state_init import create_initial_state
 s = create_initial_state('', '', 'standard', True)
-assert s['version'] == '2.0.0'
+assert s['version'] == '2.1.0'
 assert s['plan_judge_loops'] == 0
 assert s['impl_judge_loops'] == {}
 assert s['judge_verdicts'] == []

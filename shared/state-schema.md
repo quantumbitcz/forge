@@ -114,7 +114,7 @@ Root pipeline state file. Created at PREFLIGHT, updated at every stage transitio
 
 ```json
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "_seq": 1,
   "complete": false,
   "story_id": "feat-plan-comments",
@@ -405,7 +405,7 @@ Tracks session-handoff artifact writes for the current run. Populated when `hand
 
 On version-mismatch load (any `1.x.x`), the orchestrator resets the cost block to defaults and logs a single INFO line. This follows the no-backcompat policy.
 
-> **Historical coordination note (Phase 6):** The `"version": "2.0.0"` literal landed as part of a coordinated bump shared with Phase 5 (findings-store) and Phase 7 (intent assurance). All three sets of additions are disjoint and live under the v2.0.0 banner.
+> **Historical coordination note:** Phase 5/6/7 coordinated on the v2.0.0 baseline; the mega-consolidation v2.1.0 bump preserves all those additions and adds the BRAINSTORMING/bug/feedback_decisions/platform blocks documented below.
 
 ## v2.0.0 intent + vote block notes (Phase 7 portion)
 
@@ -492,14 +492,7 @@ Spec: `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §11 (co
 
 `state.story_state` (alias `state.stage` in some agents) gains the value `BRAINSTORMING`. It sits between `PREFLIGHT` and `EXPLORING` in the canonical pipeline ordering.
 
-Transitions are documented in `shared/state-transitions.md`:
-
-| current | event | guard | next |
-|---|---|---|---|
-| `PREFLIGHT` | `preflight_complete` | `mode == "feature"` AND `brainstorm.enabled == true` | `BRAINSTORMING` |
-| `BRAINSTORMING` | `brainstorm_complete` | spec written and approved | `EXPLORING` |
-| `BRAINSTORMING` | `user_abort` | — | `ABORTED` |
-| `BRAINSTORMING` | `resume_with_cache` | `state.brainstorm.spec_path` exists | `BRAINSTORMING` (self-loop) |
+Transitions are documented in `shared/state-transitions.md` (rows 1, 1a, 2, 2a, 2b, 2c). The canonical guards include `dry_run`, `mode`, and `brainstorm.enabled`.
 
 ### `state.brainstorm`
 
@@ -518,7 +511,7 @@ Transitions are documented in `shared/state-transitions.md`:
 
 Per-field types:
 - `spec_path` — string, repo-relative path to the written spec.
-- `original_input` — string, the verbatim free-text input that triggered BRAINSTORMING. Required for autonomous-resume regeneration.
+- `original_input` — string, the verbatim free-text input that triggered BRAINSTORMING. The autonomous-resume flow regenerates the brainstorm cache from this field; populate it before any autonomous-mode dispatch.
 - `started_at`, `completed_at` — ISO-8601 timestamps.
 - `autonomous` — boolean. True when `--autonomous` or `autonomous: true` config was active.
 - `questions_asked` — int >= 0.
@@ -584,7 +577,7 @@ Per-field types:
 - `verdict` — enum: `actionable | wrong | preference`.
 - `reasoning` — string, defense or acknowledgment text. >=1 character; required for `wrong` and `preference`; optional for `actionable`.
 - `evidence` — string. For `wrong` verdict, must reference at least one file path or commit SHA. For other verdicts, optional.
-- `addressed` — enum: `actionable_routed | defended | acknowledged | defended_local_only`. Set after the action completes.
+- `addressed` — enum: `actionable_routed | defended | defended_local_only | acknowledged`. `defended_local_only` is set when the platform integration cannot post the defense (missing auth env, network failure); the defense is preserved in `feedback-decisions.jsonl`. See §6.1.
 - `posted_at` — ISO-8601 timestamp; set when defense or acknowledgment is posted to the PR thread.
 
 The list is also mirrored to `.forge/runs/<run_id>/feedback-decisions.jsonl` (append-only). The state field is the in-memory canonical view; the JSONL is the durable record. Recovery rebuilds state from JSONL.
@@ -623,4 +616,4 @@ The orchestrator (and `fg-010-shaper` once C1 lands) emits the following events 
 | `forge.brainstorm.completed` | Stage exit on success. |
 | `forge.brainstorm.aborted` | Stage exit on user abort or unrecoverable error. |
 
-Names are registered here (AC-S025 slot); event-emission wiring lands in C1 and C2.
+Names are registered here per AC-S025 ("OTel event names for BRAINSTORMING are reserved at schema-bump time"); event-emission wiring lands in C1 and C2.

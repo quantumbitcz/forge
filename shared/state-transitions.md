@@ -80,6 +80,8 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 51 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations >= max_iterations` | ESCALATED | Global iteration cap reached despite patience remaining |
 | 52 | `SHIPPING` | `evidence_SHIP` | `evidence_stale AND evidence_refresh_count >= 3` | ESCALATED | Evidence refresh loop cap reached, escalate to user |
 
+> **Deferred-to-C2 guards (BRAINSTORMING rows 2a-2c):** spec §3 also defines two BRAINSTORMING-skip paths that are not yet enumerated as transition rows: (a) `--spec <path>` with a well-formed spec → skip BRAINSTORMING and pass spec to planner; (b) `--from=<stage>` resuming past BRAINSTORMING. Wiring lands when fg-100-orchestrator is updated in C2; documented here so the contract is visible.
+
 ---
 
 ## Error Transitions (from ANY pipeline state)
