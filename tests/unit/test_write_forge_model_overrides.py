@@ -12,7 +12,7 @@ from tests.evals.benchmark.write_forge_model_overrides import write_overrides
 
 def test_writes_three_tier_override(tmp_path: Path) -> None:
     written = write_overrides(tmp_path, "claude-opus-4-7")
-    assert written == tmp_path / ".claude" / "forge.local.md"
+    assert written.samefile(tmp_path / ".claude" / "forge.local.md")
     raw = written.read_text(encoding="utf-8")
     # Extract YAML block from the markdown fragment
     yaml_block = raw.split("```yaml")[1].split("```")[0]
@@ -31,6 +31,6 @@ def test_refuses_to_write_in_forge_repo(tmp_path: Path) -> None:
         write_overrides(forge_root.parent, "claude-sonnet-4-6")
 
 
-def test_rejects_unknown_model_id(tmp_path: Path) -> None:
+def test_rejects_unknown_model_id() -> None:
     with pytest.raises(ValueError, match="unknown model id"):
-        write_overrides(tmp_path, "not-a-real-model")
+        write_overrides(Path("/tmp"), "not-a-real-model")

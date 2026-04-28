@@ -11,6 +11,7 @@ Flow (spec §Component 1):
 from __future__ import annotations
 
 import argparse
+import re
 import sqlite3
 import subprocess
 import sys
@@ -22,6 +23,9 @@ from typing import Any
 import yaml
 
 from tests.evals.benchmark.pii_scrub import scan, scrub
+
+_SLUG_RE = re.compile(r"^[a-z0-9-]+$")
+_COMPLEXITIES = frozenset({"S", "M", "L"})
 
 _CORPUS_ROOT = Path(__file__).resolve().parents[1] / "corpus"
 _MAX_TARBALL_MB = 50
@@ -162,7 +166,13 @@ def main(argv: list[str] | None = None) -> int:
         if resp != "y":
             continue
         slug = input("slug (kebab-case): ").strip()
+        if not _SLUG_RE.match(slug):
+            print("error: slug must match ^[a-z0-9-]+$", file=sys.stderr)
+            continue
         complexity = input("complexity [S/M/L]: ").strip().upper()
+        if complexity not in _COMPLEXITIES:
+            print("error: complexity must be S/M/L", file=sys.stderr)
+            continue
         domain = [
             s.strip() for s in input("domain tags (comma-separated): ").split(",") if s.strip()
         ]

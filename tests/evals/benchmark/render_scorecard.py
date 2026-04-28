@@ -29,6 +29,7 @@ def sparkline(values: Sequence[float | None]) -> str:
             rendered.append(_BLOCKS[0])
         else:
             clamped = max(0.0, min(1.0, float(v)))
+            # truncate (not round) so 0.5 → ▄ (test-locked behavior).
             idx = min(len(_BLOCKS) - 1, int(clamped * (len(_BLOCKS) - 1)))
             rendered.append(_BLOCKS[idx])
     return "".join(rendered)
@@ -171,9 +172,12 @@ def _peers_placeholder(_latest: dict | None) -> str:
 
 
 def _render_appendix(line: dict) -> str:
-    out = ["## Appendix — per-entry solve matrix\n"]
-    # Deliberately compact — may be empty until per-entry tracker is wired
-    return "\n".join(out) + "\n"
+    rows = ["## Appendix — per-entry solve matrix\n"]
+    rows.append("| os | model | entries solved/total |")
+    rows.append("|---|---|---|")
+    for c in line.get("cells", []):
+        rows.append(f"| {c['os']} | {c['model']} | {c['entries_solved']} / {c['entries_total']} |")
+    return "\n".join(rows) + "\n"
 
 
 def _build_parser() -> argparse.ArgumentParser:

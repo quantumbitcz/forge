@@ -21,7 +21,7 @@ class CorpusValidationError(RuntimeError):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class CorpusEntry:
     entry_id: str
     path: Path
@@ -43,7 +43,7 @@ def _load_schema(name: str) -> Draft202012Validator:
     return Draft202012Validator(json.loads((_SCHEMAS / f"{name}.schema.json").read_text()))
 
 
-def discover_corpus(corpus_root: Path, *, os: str) -> list[CorpusEntry]:
+def discover_corpus(corpus_root: Path, *, os_name: str) -> list[CorpusEntry]:
     """Discover + validate every entry, filter by os_compat."""
     meta_v = _load_schema("metadata")
     ac_v = _load_schema("acceptance_criteria")
@@ -84,9 +84,11 @@ def discover_corpus(corpus_root: Path, *, os: str) -> list[CorpusEntry]:
             ac_v.validate(ac)
             exp_v.validate(exp)
         except ValidationError as e:
-            raise CorpusValidationError(f"{entry_dir.name}: schema violation: {e.message}") from e
+            raise CorpusValidationError(
+                f"{entry_dir.name}: {list(e.absolute_path)}: {e.message}"
+            ) from e
 
-        if os not in meta["os_compat"]:
+        if os_name not in meta["os_compat"]:
             continue
 
         out.append(

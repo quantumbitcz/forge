@@ -22,6 +22,7 @@ class CostGuard:
         self.total_usd += max(0.0, float(usd))
 
     def within_limit(self) -> bool:
+        """True iff total_usd < max_weekly_cost_usd (exclusive upper)."""
         return self.total_usd < self.max_weekly_cost_usd
 
     def assert_within(self) -> None:

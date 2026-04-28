@@ -5,14 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True)
 class GateFinding:
     category: str
     severity: str
     message: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class GateResult:
     passed: bool
     findings: list[GateFinding] = field(default_factory=list)
@@ -50,14 +50,24 @@ def evaluate_gate(*, current: dict, baseline: dict | None) -> GateResult:
             )
             if cur is None:
                 continue
-            delta_pp = (cur - base[bucket]) * 100
+            base_val = base.get(bucket)
+            if base_val is None:
+                findings.append(
+                    GateFinding(
+                        "BENCH-BASELINE-INCOMPLETE",
+                        "WARNING",
+                        f"baseline missing {bucket} bucket for {model}",
+                    )
+                )
+                continue
+            delta_pp = (cur - base_val) * 100
             if delta_pp <= -threshold_pp:
                 passed = False
                 findings.append(
                     GateFinding(
                         "BENCH-REGRESSION",
                         "CRITICAL",
-                        f"{model} {bucket}: {cur * 100:.1f}% vs baseline {base[bucket] * 100:.1f}% "
+                        f"{model} {bucket}: {cur * 100:.1f}% vs baseline {base_val * 100:.1f}% "
                         f"(Δ {delta_pp:+.1f}pp ≤ -{threshold_pp}pp)",
                     )
                 )
@@ -66,7 +76,7 @@ def evaluate_gate(*, current: dict, baseline: dict | None) -> GateResult:
                     GateFinding(
                         "BENCH-REGRESSION",
                         "WARNING",
-                        f"{model} {bucket}: {cur * 100:.1f}% vs baseline {base[bucket] * 100:.1f}% (Δ {delta_pp:+.1f}pp)",
+                        f"{model} {bucket}: {cur * 100:.1f}% vs baseline {base_val * 100:.1f}% (Δ {delta_pp:+.1f}pp)",
                     )
                 )
     return GateResult(passed=passed, findings=findings)

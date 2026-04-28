@@ -40,7 +40,7 @@ strict_optional = true
 warn_unused_ignores = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests/unit", "tests/contract", "tests/scenario"]
+testpaths = ["tests/unit", "tests/contract", "tests/scenario", "tests/integration"]
 python_files = ["test_*.py", "*_test.py"]
 pythonpath = ["."]
 addopts = "-ra"

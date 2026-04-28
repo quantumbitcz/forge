@@ -22,3 +22,17 @@ def test_no_violations(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     (tmp_path / "src.py").write_text("x=1\n")
     assert _detect_must_not_touch(tmp_path, ["package-lock.json"]) == []
+
+
+def test_detects_rename_destination(tmp_path: Path) -> None:
+    """`git mv old.py forbidden/x.py` is flagged via the rename destination path."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "a@b.c"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "old.py").write_text("# safe\n")
+    subprocess.run(["git", "add", "old.py"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=tmp_path, check=True)
+    (tmp_path / ".github").mkdir()
+    subprocess.run(["git", "mv", "old.py", ".github/x.py"], cwd=tmp_path, check=True)
+    vios = _detect_must_not_touch(tmp_path, [".github/**"])
+    assert vios == [".github/**"]

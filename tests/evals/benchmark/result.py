@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
 
 def _iso_now() -> str:
@@ -37,7 +38,7 @@ class BenchmarkResult:
     hook_failures_count: int = 0
     error: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod

@@ -10,24 +10,20 @@ plugin symlink) but:
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tarfile
 import tempfile
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from tests.evals.benchmark.discovery import CorpusEntry
-from tests.evals.benchmark.result import BenchmarkResult
+from tests.evals.benchmark.result import BenchmarkResult, _iso_now
 from tests.evals.benchmark.scoring import SolveInputs, compute_partial_ac_pct, solved
 from tests.evals.benchmark.write_forge_model_overrides import write_overrides
 
 _TIMEOUTS_SEC: dict[str, int] = {"S": 900, "M": 2700, "L": 5400}
-
-
-def _iso_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _write_spec_injection(target: Path, entry: CorpusEntry) -> None:
@@ -44,6 +40,8 @@ def _write_spec_injection(target: Path, entry: CorpusEntry) -> None:
                     {
                         "id": ac["id"],
                         "text": ac["description"],
+                        # Corpus stores `verifiable_via` enum; Phase 7 fg-540 reads it
+                        # as `verifier_hint`. Keeping the mapping for forward-compat.
                         "verifier_hint": ac.get("verifier_hint", ac.get("verifiable_via", "")),
                     }
                     for ac in entry.ac_list
@@ -57,7 +55,9 @@ def _write_spec_injection(target: Path, entry: CorpusEntry) -> None:
 
 def _extract_tarball(tarball: Path, target: Path) -> None:
     with tarfile.open(tarball, "r:gz") as tf:
-        tf.extractall(target)
+        # `filter='data'` is enforced strict-mode on Python 3.12+ (refuses absolute
+        # paths, .., device files); accepted as no-op on 3.10/3.11.
+        tf.extractall(target, filter="data")
 
 
 def _symlink_plugin(forge_root: Path, target: Path) -> None:
@@ -83,7 +83,7 @@ def _parse_state(target: Path) -> dict[str, Any]:
         }
     state = json.loads(state_path.read_text(encoding="utf-8"))
     ivrs = state.get("intent_verification_results", []) or []
-    breakdown = {r["ac_id"]: r["status"] for r in ivrs if "ac_id" in r}
+    breakdown = {r["ac_id"]: r["status"] for r in ivrs if "ac_id" in r and "status" in r}
     return {
         "pipeline_verdict": state.get("pipeline_verdict", state.get("verdict", "ERROR")),
         "score": int(state.get("score", state.get("pipeline_score", 0))),
@@ -102,7 +102,8 @@ def _count_hook_failures(target: Path) -> int:
     log = target / ".forge" / ".hook-failures.jsonl"
     if not log.is_file():
         return 0
-    return sum(1 for _ in log.read_text(encoding="utf-8").splitlines() if _.strip())
+    with log.open(encoding="utf-8") as f:
+        return sum(1 for line in f if line.strip())
 
 
 def _detect_must_not_touch(target: Path, patterns: list[str]) -> list[str]:
@@ -114,7 +115,23 @@ def _detect_must_not_touch(target: Path, patterns: list[str]) -> list[str]:
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
-    changed = [line[3:].strip() for line in r.stdout.splitlines() if line.strip()]
+
+    # `git status --porcelain` rename lines have form `R  old.py -> new.py` (XY=R).
+    # We must check BOTH the source and the destination against must_not_touch
+    # patterns; otherwise a `git mv` rename into a forbidden path slips through.
+    changed: list[str] = []
+    for line in r.stdout.splitlines():
+        if not line.strip():
+            continue
+        xy = line[:2]
+        rest = line[3:].strip()
+        if xy[0] in {"R", "C"} and " -> " in rest:
+            old_path, _, new_path = rest.partition(" -> ")
+            changed.append(old_path.strip())
+            changed.append(new_path.strip())
+        else:
+            changed.append(rest)
+
     out: list[str] = []
     for pattern in patterns:
         for path in changed:
@@ -126,18 +143,20 @@ def _detect_must_not_touch(target: Path, patterns: list[str]) -> list[str]:
     return out
 
 
-def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) -> BenchmarkResult:
+def run_one_entry(
+    *, entry: CorpusEntry, forge_root: Path, model: str, os_name: str
+) -> BenchmarkResult:
     """Execute one corpus entry end-to-end. Caller writes the result file."""
     started_at = _iso_now()
     mono_start = time.monotonic()
     timeout = _TIMEOUTS_SEC[entry.complexity]
 
-    if entry.requires_docker and os == "windows-latest":
+    if entry.requires_docker and os_name == "windows-latest":
         return BenchmarkResult(
             schema_version=1,
             entry_id=entry.entry_id,
             run_date=started_at[:10],
-            os=os,
+            os=os_name,
             model=model,
             complexity=entry.complexity,
             started_at=started_at,
@@ -159,14 +178,37 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
 
     with tempfile.TemporaryDirectory(prefix=f"forge-bench-{entry.entry_id}-") as tmp:
         target = Path(tmp)
-        _extract_tarball(entry.path / "seed-project.tar.gz", target)
+        try:
+            _extract_tarball(entry.path / "seed-project.tar.gz", target)
+        except (tarfile.ReadError, OSError):
+            return BenchmarkResult(
+                schema_version=1,
+                entry_id=entry.entry_id,
+                run_date=started_at[:10],
+                os=os_name,
+                model=model,
+                complexity=entry.complexity,
+                started_at=started_at,
+                ended_at=_iso_now(),
+                duration_s=int(time.monotonic() - mono_start),
+                solved=False,
+                partial_ac_pct=0.0,
+                ac_breakdown={},
+                unverifiable_count=0,
+                cost_usd=0.0,
+                pipeline_verdict="ERROR",
+                score=0,
+                convergence_iterations=0,
+                critical_findings=0,
+                warning_findings=0,
+                timeout=False,
+                error="BENCH-CORPUS-TARBALL-CORRUPT",
+            )
         _symlink_plugin(forge_root, target)
         write_overrides(target, model)
         _write_spec_injection(target, entry)
 
-        import os as _os
-
-        env = {**_os.environ, "FORGE_EVAL": "1", "FORGE_BENCHMARK": "1"}
+        env = {**os.environ, "FORGE_EVAL": "1", "FORGE_BENCHMARK": "1"}
         timed_out = False
         error: str | None = None
         try:
@@ -220,7 +262,7 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
         schema_version=1,
         entry_id=entry.entry_id,
         run_date=started_at[:10],
-        os=os,
+        os=os_name,
         model=model,
         complexity=entry.complexity,
         started_at=started_at,

@@ -55,6 +55,18 @@ def test_no_baseline_is_pass_warning() -> None:
     assert any(f.severity == "WARNING" for f in r.findings)
 
 
+def test_baseline_incomplete_bucket() -> None:
+    """A baseline missing one bucket emits BENCH-BASELINE-INCOMPLETE WARNING, no crash."""
+    # Strip the "M" bucket from the model's baseline.
+    base = _baseline(0.9)
+    del base["baselines"]["claude-sonnet-4-6"]["M"]
+    r = evaluate_gate(current=_trends_line(0.9), baseline=base)
+    assert r.passed is True
+    assert any(
+        f.severity == "WARNING" and f.category == "BENCH-BASELINE-INCOMPLETE" for f in r.findings
+    )
+
+
 def test_mutation_manual_baseline_bump() -> None:
     """AC-809 mutation: bump baseline +15pp; current line that was fine now fails."""
     current = _trends_line(0.8)  # 80%

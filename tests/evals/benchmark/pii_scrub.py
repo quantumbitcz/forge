@@ -16,7 +16,12 @@ _AUTO_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"/Users/[^/\s]+"), "<redacted-home>"),
     (re.compile(r"/home/[^/\s]+"), "<redacted-home>"),
     (re.compile(r"C:\\Users\\[^\\]+"), r"<redacted-home>"),
-    (re.compile(r"\b[\w-]+\.(?:internal|prod|production|corp|local)\b"), "<internal-host>"),
+    (
+        re.compile(
+            r"\b[\w-]+(?:\.[\w-]+)*\.(?:internal|prod|production|corp|local)(?:\.[\w-]+)*\b"
+        ),
+        "<internal-host>",
+    ),
     (
         re.compile(
             r"\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b"

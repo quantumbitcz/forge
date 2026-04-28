@@ -14,7 +14,7 @@ _BANNED: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "private_ip",
         re.compile(
-            r"\b(?:10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)\b"
+            r"\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b"
         ),
     ),
     # Matches pii_scrub.py `_AUTO_PATTERNS` internal-host entry: includes `production` to
@@ -22,7 +22,12 @@ _BANNED: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("internal_host", re.compile(r"\b[\w-]+\.(?:internal|prod|production|corp|local)\b")),
     ("ssh_fp", re.compile(r"SHA256:[A-Za-z0-9+/]{43}=?")),
     ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
-    ("api_key", re.compile(r"(?i)(?:api[_-]?key|apikey|bearer)\s*[:=]\s*['\"][^'\"]{8,}")),
+    (
+        "api_key",
+        re.compile(
+            r"(?i)(?:api[_-]?key|apikey|secret[_-]?key|token|bearer)\s*[:=]\s*['\"][^'\"]{8,}"
+        ),
+    ),
 )
 
 

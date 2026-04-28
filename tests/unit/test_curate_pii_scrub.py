@@ -14,7 +14,7 @@ from tests.evals.benchmark.pii_scrub import scan, scrub
         ("/home/denis/repo", "<redacted-home>/repo"),
         (r"C:\Users\Denis\Desktop", r"<redacted-home>\Desktop"),
         ("ssh api-gateway.internal", "ssh <internal-host>"),
-        ("reach db.prod.example", "reach <internal-host>.example"),
+        ("reach db.prod.example", "reach <internal-host>"),
         ("10.0.4.7 is the lb", "<private-ip> is the lb"),
         ("172.16.5.9", "<private-ip>"),
         ("192.168.1.2", "<private-ip>"),

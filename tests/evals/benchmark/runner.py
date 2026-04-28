@@ -12,15 +12,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
+from tests.evals.benchmark.cost_guard import CostGuard
 from tests.evals.benchmark.discovery import CorpusValidationError, discover_corpus
 from tests.evals.benchmark.result import BenchmarkResult
-
-
-def _today() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
 def _write_result(results_root: Path, r: BenchmarkResult) -> Path:
@@ -40,6 +36,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "--os", type=str, required=True, choices=["ubuntu-latest", "macos-latest", "windows-latest"]
     )
     p.add_argument("--model", type=str, required=True)
+    # Kept for workflow YAML compatibility; runner is single-threaded today.
+    # Workflow passes `--parallel 1`; removing the flag would break it.
     p.add_argument("--parallel", type=int, default=1)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--forge-root", type=Path, default=Path(__file__).resolve().parents[3])
@@ -49,9 +47,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    assert args.parallel == 1, "parallelism not yet implemented"
+
+    # CostGuard tracks cumulative spend across this cell and aborts the loop
+    # once the weekly ceiling is reached. Default $200 mirrors cost_guard.py.
+    guard = CostGuard(max_weekly_cost_usd=200.0)
 
     try:
-        entries = discover_corpus(args.corpus_root, os=args.os)
+        entries = discover_corpus(args.corpus_root, os_name=args.os)
     except CorpusValidationError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
@@ -75,8 +78,18 @@ def main(argv: list[str] | None = None) -> int:
         # Live path added in Task 10.
         from tests.evals.benchmark.live_run import run_one_entry
 
-        r = run_one_entry(entry=entry, forge_root=args.forge_root, model=args.model, os=args.os)
+        r = run_one_entry(
+            entry=entry, forge_root=args.forge_root, model=args.model, os_name=args.os
+        )
         _write_result(args.results_root, r)
+        guard.record(r.cost_usd)
+        if not guard.within_limit():
+            print(
+                f"BENCH-COST-CEILING: ${guard.total_usd:.2f} >= ${guard.max_weekly_cost_usd:.2f}",
+                file=sys.stderr,
+            )
+            # TODO(phase8-review): wire cost_truncated through workflow
+            break
 
     return 0
 
