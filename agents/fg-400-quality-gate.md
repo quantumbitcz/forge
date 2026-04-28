@@ -233,6 +233,95 @@ Compare entries with non-empty `seen_by` arrays — these represent reviewers th
 
 ---
 
+## 7.5 Cross-reviewer consistency voting (post-deduplication)
+
+<!-- Source: beyond-superpowers goal 13, spec §5 + AC-REVIEW-005,
+AC-REVIEW-006, AC-BEYOND-004. -->
+
+After deduplication runs, but before scoring, perform a consistency-voting
+pass that exploits the fact that 9 reviewers run in parallel: when ≥N
+distinct reviewers independently flagged the same dedup key, that
+agreement is itself evidence the finding is real, regardless of any
+individual reviewer's confidence rating.
+
+### Config
+
+- `quality_gate.consistency_promotion.enabled` — boolean, default `true`.
+  When `false`, skip this entire pass.
+- `quality_gate.consistency_promotion.threshold` — int in range 2-9,
+  default 3. Number of distinct reviewers that must flag the same dedup
+  key for promotion to fire.
+
+### Algorithm (pseudocode)
+
+```python
+# Input: deduplicated_findings — list of finding objects, each with
+#   dedup_key = (component, file, line, category)
+#   reviewer  — agent name that emitted the finding
+#   confidence_weight — float in [0.0, 1.0] from individual rating
+#
+# Output: same list, with `consistency_promoted: true` and
+#   confidence_weight = 1.0 set on findings whose dedup key was flagged
+#   by ≥threshold distinct reviewers.
+
+if not config.quality_gate.consistency_promotion.enabled:
+    return deduplicated_findings  # short-circuit
+
+threshold = config.quality_gate.consistency_promotion.threshold  # default 3
+reviewers_per_key = {}  # dedup_key -> set[reviewer]
+
+# First pass: aggregate the unique reviewer set per dedup key.
+for f in deduplicated_findings:
+    key = (f.component, f.file, f.line, f.category)
+    reviewers_per_key.setdefault(key, set()).add(f.reviewer)
+
+# Second pass: tag and re-weight.
+for f in deduplicated_findings:
+    key = (f.component, f.file, f.line, f.category)
+    count = len(reviewers_per_key[key])
+    if count >= threshold:
+        f.consistency_promoted = True
+        f.consistency_reviewer_count = count
+        f.confidence_weight = 1.0
+    else:
+        f.consistency_promoted = False
+        # confidence_weight unchanged
+
+return deduplicated_findings
+```
+
+### What this guarantees
+
+- When threshold = 3 (default): a finding flagged by 3+ reviewers is
+  promoted regardless of any individual reviewer's MEDIUM/LOW confidence
+  rating. This catches real issues that a single fresh-context review
+  would miss.
+- The promotion does NOT change severity (CRITICAL/WARNING/INFO) — only
+  `confidence_weight`. Severity is the reviewer's domain expertise; weight
+  is forge's structural credence.
+- Logged as `consistency_promoted: true` and `consistency_reviewer_count`
+  on the finding so analytics (forge-insights) and forge-history can
+  track when this fires.
+
+### What this does NOT do
+
+- Does not promote findings flagged by 1 or 2 reviewers (default
+  threshold). Single-reviewer findings keep their reviewer's confidence
+  rating.
+- Does not demote findings — confidence_weight only increases.
+- Does not introduce new dedup keys — operates only on the already-
+  deduplicated set.
+
+### Failure modes
+
+- Config range violation (threshold not in 2-9): caught at PREFLIGHT;
+  this section never sees an out-of-range value.
+- Empty findings: pass returns the empty list unchanged.
+- All findings from one reviewer: nothing meets threshold by definition;
+  pass returns the list unchanged.
+
+---
+
 ## 8. Scoring
 
 Formula from `shared/scoring.md`:
