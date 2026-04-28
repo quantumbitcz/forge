@@ -1,0 +1,6 @@
+CHANGELOG.md
+DEPRECATIONS.md
+tests/structural/migration-callsites.txt
+skills/forge/SKILL.md
+skills/forge-admin/SKILL.md
+skills/forge-ask/SKILL.md
