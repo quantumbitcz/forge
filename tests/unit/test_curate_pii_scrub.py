@@ -18,7 +18,7 @@ from tests.evals.benchmark.pii_scrub import scan, scrub
         ("10.0.4.7 is the lb", "<private-ip> is the lb"),
         ("172.16.5.9", "<private-ip>"),
         ("192.168.1.2", "<private-ip>"),
-        ("SHA256:AbCdEfGhIjKlMnOpQrStUvWxYz0123456789AbCdEfGh", "<ssh-fp>"),
+        ("SHA256:AbCdEfGhIjKlMnOpQrStUvWxYz0123456789AbCdEfG", "<ssh-fp>"),
     ],
 )
 def test_auto_scrub(dirty: str, clean: str) -> None:
