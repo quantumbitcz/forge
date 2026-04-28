@@ -17,6 +17,13 @@ Rules:
 - Given/When/Then is recommended but not mandatory. Freeform ACs are tracked but marked `mappable: false` in the registry.
 - Existing shaper testability enforcement (Phase 6, rule 5) still applies. The AC-ID prefix is additive.
 
+### AC ID namespaces
+
+- `AC-NNN` (e.g. `AC-001`) — forge-generated ACs (fg-540 or shaper).
+- `AC-BNNN` (e.g. `AC-B001`) — benchmark-injected ACs (Phase 8). Source field `benchmark-injected`.
+
+The orchestrator's spec-refresh logic MUST preserve any spec entry whose `source` field is present (currently: only `benchmark-injected`).
+
 ## Spec Registry
 
 File: `.forge/specs/index.json`. Schema: `shared/schemas/spec-registry-schema.json`.
