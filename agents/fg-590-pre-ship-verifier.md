@@ -194,3 +194,33 @@ If enabled: update story/task with evidence results. MCP unavailable: skip silen
 ## 9. Optional Integrations
 
 Neo4j, Playwright, Context7: not used by this agent.
+
+---
+
+## 10. Evidence assertion (verification-before-completion polish)
+
+<!-- Source: superpowers:verification-before-completion polish per spec
+§9.2 (D8) and AC-POLISH-002. -->
+
+Write `.forge/evidence.json` with this exact schema:
+
+```jsonc
+{
+  "build": {"passed": <bool>, "command": "...", "duration_ms": <int>, "output_path": "..."},
+  "test":  {"passed": <bool>, "command": "...", "passed_count": <int>, "failed_count": <int>, "duration_ms": <int>},
+  "lint":  {"passed": <bool>, "command": "...", "violation_count": <int>, "duration_ms": <int>},
+  "review": {"verdict": "PASS" | "CONCERNS" | "FAIL", "score": <int>, "critical_count": <int>, "warning_count": <int>},
+  "verdict": "SHIP" | "NO-SHIP",
+  "reason": "<one-sentence explanation when verdict is NO-SHIP>",
+  "evaluated_at": "<ISO-8601>"
+}
+```
+
+Verdict rule: `verdict = "SHIP"` iff every signal passed:
+`build.passed AND test.passed AND lint.passed AND review.verdict in {"PASS"}`.
+Otherwise `verdict = "NO-SHIP"` with `reason` enumerating the failing
+signal(s).
+
+The PR builder (fg-600) refuses to proceed without
+`evidence.verdict == "SHIP"`. There is no "continue anyway" — fix, retry,
+or abort.

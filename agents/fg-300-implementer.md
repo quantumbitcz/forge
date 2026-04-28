@@ -695,3 +695,38 @@ Marker emission (append to your final structured output):
 
 No marker → no reinforcement, no penalty (pure time-decay applies on the
 next PREFLIGHT).
+
+## Test-must-fail-first check (test-driven-development polish)
+
+<!-- Source: superpowers:test-driven-development rule "test must fail
+first", ported in-tree per spec §9.1 (D8) and AC-POLISH-001. -->
+
+When you start an implementation task, the preceding test task (per the
+writing-plans contract from D1) wrote a test that expresses the spec.
+Before writing any production code:
+
+1. Run the test in isolation. Use the project's test runner with the
+   narrowest selector that targets only the new test.
+2. If the test FAILS — proceed normally to write minimum code that makes
+   it pass.
+3. If the test PASSES IMMEDIATELY without any production code changes,
+   this is a CRITICAL violation:
+
+   - Log a CRITICAL finding **TEST-NOT-FAILING** with:
+     - file:line of the test
+     - the failing-test selector that was run
+     - the test runner output showing PASS
+   - Abort the task. Do NOT proceed to write production code.
+   - Report to the orchestrator: "TEST-NOT-FAILING: the test for
+     <component> passed before any implementation. The test does not
+     actually test the new behaviour. Re-plan: revise the test to fail
+     when the behaviour is absent."
+
+This rule prevents the most common TDD failure mode: writing a test that
+asserts an already-true property, then writing production code that has
+no causal relationship to the test passing.
+
+The orchestrator (fg-100) treats TEST-NOT-FAILING as a hard stop and
+re-routes to fg-200-planner with the failing test cited as the cause.
+The implementer-judge (fg-301) defers to this check rather than
+re-flagging it.

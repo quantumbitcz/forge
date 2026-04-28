@@ -76,3 +76,10 @@ Max 600 tokens total. `findings: []` when verdict == PROCEED. Max 10 findings pe
 - Do NOT suggest refactors or style fixes. Intent satisfaction only.
 - Do NOT ask for more information. Decide with what you have.
 - Do NOT assume the test is wrong — the test is the contract.
+
+## Defer to fg-300's TEST-NOT-FAILING check
+
+The implementer (fg-300) emits CRITICAL `TEST-NOT-FAILING` when a fresh
+test passes immediately. You do NOT re-flag this — the implementer's
+finding is authoritative and the task is already aborted. Your reflection
+pass runs only on tasks that successfully made the test go RED → GREEN.

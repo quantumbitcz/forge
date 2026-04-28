@@ -2118,3 +2118,48 @@ Flag used by `tests/evals/pipeline/runner` to invoke the pipeline in a reproduci
 **Error cases:**
 - Missing `FORGE_EVAL=1` → exit 2 with message `--eval-mode requires FORGE_EVAL=1`.
 - Unknown `<scenario_id>` (no matching scenario directory) → exit 2 with message `unknown scenario`.
+
+## Parallel dispatch and checkpoints (subagent-driven-development / dispatching-parallel-agents / executing-plans polish)
+
+<!-- Source: superpowers patterns ported in-tree per spec §9.3 (D8) and
+AC-POLISH-003, AC-POLISH-004. -->
+
+### Parallel groups dispatch in a single tool-use block
+
+When the planner marks a task group `parallel: true`, you MUST emit ALL
+tasks in that group in a SINGLE TOOL-USE BLOCK (one assistant turn,
+multiple Task calls):
+
+```
+<!-- Single assistant turn — emit ALL Task calls together -->
+<Task agent="fg-300-implementer">task 1.1</Task>
+<Task agent="fg-300-implementer">task 1.2</Task>
+<Task agent="fg-300-implementer">task 1.3</Task>
+```
+
+This matches `superpowers:dispatching-parallel-agents`. Sequential
+dispatch (one Task call per turn) defeats the parallelism and is a
+correctness violation: the orchestrator's structural test
+(`tests/structural/orchestrator-parallel-dispatch.bats`) asserts the
+single-block pattern is documented.
+
+Do NOT serialise parallel groups even when "they would be safer
+sequentially" — the planner already ran the conflict-detection pass
+(fg-102-conflict-resolver). If a parallel group has a conflict, that's
+a planner bug, not a dispatch concern.
+
+### Checkpoint after every 3 tasks
+
+After every 3 tasks complete (count includes both serial and parallel
+tasks toward the rolling counter), emit a checkpoint:
+
+1. Save state to `.forge/runs/<run_id>/checkpoints/` (existing CAS DAG
+   mechanism).
+2. Run a brief review pass (read updated state, summarise progress, note
+   any drift from the plan).
+3. Continue or escalate based on the review.
+
+This matches `superpowers:executing-plans` "review after each batch of 3
+tasks". The checkpoint cadence is fixed at 3 (not configurable) — the
+number is calibrated by the upstream pattern and changing it loses the
+review property.

@@ -121,3 +121,35 @@ STALE_WORKTREES_DETECTED: <count>
 ## Forbidden Actions
 
 No force-delete outside `.forge/`. No source file modifications. No state writes (`sprint-state.json`, `state.json`). No shared contract/conventions/CLAUDE.md changes. See `shared/agent-defaults.md`.
+
+## Stale-worktree detection (using-git-worktrees polish)
+
+<!-- Source: superpowers:using-git-worktrees polish per spec §9.4 (D8)
+and AC-POLISH-005. -->
+
+On every invocation, before any worktree-creation logic, scan
+`.forge/worktrees/` (and the singleton `.forge/worktree/` for non-sprint
+runs):
+
+1. For each worktree directory, read its modification time (mtime —
+   prefer `git log -1 --format=%ct HEAD` from inside the worktree if
+   available, falling back to filesystem mtime).
+2. If `now - mtime > worktree.stale_after_days` (default **30** days,
+   range 1-365 per PREFLIGHT validation), emit a finding:
+
+   ```jsonc
+   {
+     "category": "WORKTREE-STALE",
+     "severity": "INFO",
+     "file": "<worktree-path>",
+     "message": "Worktree older than <stale_after_days> days; consider cleanup",
+     "age_days": <int>
+   }
+   ```
+
+3. Do NOT auto-delete stale worktrees — the finding is informational.
+   The user (or `/forge-admin recover` flow) decides cleanup.
+
+The `worktree.stale_after_days` config key lives under the existing
+`worktree:` section of `forge.local.md`. PREFLIGHT enforces the range
+[1, 365].
