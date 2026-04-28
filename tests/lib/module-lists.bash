@@ -77,7 +77,7 @@ done
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)
 # ---------------------------------------------------------------------------
-MIN_AGENTS=48
+MIN_AGENTS=51
 MIN_FRAMEWORKS=24
 MIN_SKILLS=3
 

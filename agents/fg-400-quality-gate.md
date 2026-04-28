@@ -264,6 +264,7 @@ individual reviewer's confidence rating.
 #   confidence_weight = 1.0 set on findings whose dedup key was flagged
 #   by ≥threshold distinct reviewers.
 
+# When config.quality_gate.consistency_promotion.enabled: false, short-circuit the promotion pass and return findings unmodified.
 if not config.quality_gate.consistency_promotion.enabled:
     return deduplicated_findings  # short-circuit
 

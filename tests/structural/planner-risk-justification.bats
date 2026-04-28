@@ -5,11 +5,20 @@ load '../helpers/test-helpers'
 FIX="$PLUGIN_ROOT/tests/fixtures/phase-D/synthetic-broken-plans"
 
 count_justification_words() {
-  # Extract the Risk justification block of the highest-risk task and
-  # count whitespace-separated words.
+  # Extract the Risk justification block (inline + any continuation
+  # lines until the next bold field marker or task boundary) and count
+  # whitespace-separated words. The marker itself can carry the body on
+  # the same line, so we strip the marker and emit the remainder before
+  # entering capture mode.
   awk '
-    /^\*\*Risk justification:\*\*/ { capturing=1; next }
+    /^\*\*Risk justification:\*\*/ {
+      sub(/^\*\*Risk justification:\*\*[[:space:]]*/, "")
+      capturing=1
+      if (length($0) > 0) print
+      next
+    }
     capturing && /^\*\*/ { capturing=0 }
+    capturing && /^### Task/ { capturing=0 }
     capturing { print }
   ' "$1" | wc -w
 }

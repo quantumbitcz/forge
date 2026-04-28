@@ -5,17 +5,17 @@ load '../helpers/test-helpers'
 PR="$PLUGIN_ROOT/agents/fg-600-pr-builder.md"
 
 @test "fg-600 dialog has exactly five options" {
-  local count=0
   for opt in '\[open-pr\]' '\[open-pr-draft\]' '\[direct-push\]' '\[stash\]' '\[abandon\]'; do
     run grep -E "$opt" "$PR"
     assert_success
-    count=$((count + 1))
   done
-  assert [ "$count" -eq 5 ]
 }
 
 @test "fg-600 default is open-pr (interactive)" {
-  run grep -E 'default.*open-pr[^-]' "$PR"
+  # Match either YAML "default: open-pr" (no trailing -draft) or prose
+  # "Default `[open-pr]`". Word-boundary on open-pr ensures we do not
+  # match open-pr-draft. Case-insensitive for prose vs YAML variance.
+  run grep -iE 'default[^a-z]+\bopen-pr\b' "$PR"
   assert_success
 }
 
@@ -31,7 +31,9 @@ PR="$PLUGIN_ROOT/agents/fg-600-pr-builder.md"
 }
 
 @test "fg-600 cleanup checklist runs after each non-stash strategy" {
-  run grep -E 'cleanup checklist.*Step 5|Step 5.*cleanup' "$PR"
+  # Cleanup checklist is referenced as "§4.6" near each non-stash
+  # branch. Match either order on a single line.
+  run grep -E 'cleanup checklist.*§4\.6|§4\.6.*cleanup' "$PR"
   assert_success
 }
 

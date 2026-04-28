@@ -1,53 +1,42 @@
 #!/usr/bin/env bats
-# AC-PLAN-001..004: parser-based assertions on planner fixtures.
+# AC-PLAN-001..004: structural assertions on the fg-200 planner contract.
+#
+# These tests verify that the planner agent (fg-200) declares the contract
+# the validator (fg-210) enforces. They grep the agent prose directly —
+# not synthetic plan fixtures — because the planner's normative duties
+# are stated in its system prompt.
 load '../helpers/test-helpers'
 
-FIX="$PLUGIN_ROOT/tests/fixtures/phase-D/synthetic-broken-plans"
 PLANNER="$PLUGIN_ROOT/agents/fg-200-planner.md"
 
-parse_tasks() {
-  # Emit one line per task: TYPE|RISK|HAS_PROMPT|HAS_REVIEWER|HAS_AC
-  awk '
-    /^### Task/ { in_task=1; type=""; risk=""; pr=""; rv=""; ac=""; next }
-    /^\*\*Type:\*\*/ { sub(/^\*\*Type:\*\* /, ""); type=$0; next }
-    /^\*\*Risk:\*\*/ { sub(/^\*\*Risk:\*\* /, ""); risk=$0; next }
-    /^\*\*Implementer prompt:\*\*/ { pr="yes"; next }
-    /^\*\*Spec-reviewer prompt:\*\*/ { rv="yes"; next }
-    /^\*\*ACs covered:\*\*/ { ac="yes"; next }
-    /^### Task/ && in_task { print type "|" risk "|" pr "|" rv "|" ac }
-    END { if (in_task) print type "|" risk "|" pr "|" rv "|" ac }
-  ' "$1"
-}
-
-@test "well-formed plan: every task has prompt + AC + risk" {
-  run parse_tasks "$FIX/well-formed.md"
+@test "fg-200 declares TDD ordering contract (W1)" {
+  run grep -E '### TDD ordering' "$PLANNER"
   assert_success
-  while IFS='|' read -r t r pr rv ac; do
-    assert [ -n "$t" ]
-    assert [ -n "$r" ]
-    assert [ "$pr" = "yes" ]
-    assert [ "$ac" = "yes" ]
-  done <<< "$output"
-}
-
-@test "well-formed plan: test tasks have spec-reviewer prompt" {
-  run parse_tasks "$FIX/well-formed.md"
+  run grep -E 'preceding task .* MUST be `Type: test`' "$PLANNER"
   assert_success
-  while IFS='|' read -r t r pr rv ac; do
-    if [ "$t" = "test" ]; then
-      assert [ "$rv" = "yes" ]
-    fi
-  done <<< "$output"
 }
 
-@test "missing-implementer-prompt fixture is detected" {
-  run parse_tasks "$FIX/missing-implementer-prompt.md"
+@test "fg-200 references implementer prompt template (W2)" {
+  run grep -F 'shared/prompts/implementer-prompt.md' "$PLANNER"
   assert_success
-  # Expect at least one task without the prompt
-  run sh -c "parse_tasks \"$FIX/missing-implementer-prompt.md\" | grep -c '||no|'" || true
 }
 
-@test "missing-spec-reviewer fixture has test task without reviewer" {
-  run parse_tasks "$FIX/missing-spec-reviewer.md"
+@test "fg-200 references spec-reviewer prompt template (W3)" {
+  run grep -F 'shared/prompts/spec-reviewer-prompt.md' "$PLANNER"
+  assert_success
+}
+
+@test "fg-200 declares Risk field with low|medium|high values (W4)" {
+  run grep -E 'Risk: low \| medium \| high|Risk: low\|medium\|high' "$PLANNER"
+  assert_success
+}
+
+@test "fg-200 declares 30-word risk-justification rule for Risk: high (W5)" {
+  run grep -E 'at least 30 words|≥30 words|>= ?30 words' "$PLANNER"
+  assert_success
+}
+
+@test "fg-200 documents validator-coupled REVISE on contract violations" {
+  run grep -E 'fg-210.* (REVISE|rejects)' "$PLANNER"
   assert_success
 }
