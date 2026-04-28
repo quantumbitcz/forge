@@ -147,7 +147,7 @@ Multiple features: /forge sprint                                # parallel orche
 
 ## Core contracts
 
-**Scoring** (`scoring.md`): `score = max(0, 100 − 20·CRIT − 5·WARN − 2·INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 92 categories (28 wildcards + 64 discrete) in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*` (excluded from score), `A11Y-*`, `DEP-*`, `INFRA-*`, `AI-{LOGIC,PERF,CONCURRENCY,SEC}-*`, `REFLECT-*`, `COST-*`. Dedup key: `(component, file, line, category)`. Convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner), `phase_iterations` (per-phase), `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (does NOT count toward convergence). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
+**Scoring** (`scoring.md`): `score = max(0, 100 − 20·CRIT − 5·WARN − 2·INFO)`. PASS ≥80, CONCERNS 60-79, FAIL <60 or unresolved CRITICAL. 149 categories in `shared/checks/category-registry.json`. Key wildcards: `ARCH-*`, `SEC-*`, `PERF-*`, `TEST-*`, `CONV-*`, `DOC-*`, `QUAL-*`, `SCOUT-*` (excluded from score), `A11Y-*`, `DEP-*`, `INFRA-*`, `AI-{LOGIC,PERF,CONCURRENCY,SEC}-*`, `REFLECT-*`, `COST-*`. Dedup key: `(component, file, line, category)`. Convergence counters: `verify_fix_count`, `test_cycles`, `quality_cycles` (inner), `phase_iterations` (per-phase), `total_iterations` (cumulative). Separate: `implementer_fix_cycles` (does NOT count toward convergence). Timed-out reviewers: INFO → WARNING. 7 validation perspectives.
 
 **State / recovery / errors:** State v2.0.0 in `.forge/` (gitignored). Checkpoints per task (CAS DAG `.forge/runs/<id>/checkpoints/`). Key fields: `mode` (standard/migration/bootstrap/bugfix), `feedback_loop_count` (escalates at 2), `recovery`, `ticket_id`, `branch_name`, `graph`, `plan_judge_loops`, `impl_judge_loops`, `judge_verdicts`, `consistency_*`, `cost`. Lock: `.forge/.lock` (PID + 24h stale). Recovery: 7 strategies, severity ceiling 5.5, `total_retries` budget (default 10). Errors: 22 types, 16-level severity. MCP failures → inline INFO. 3 transients in 60s → non-recoverable. `BUILD/TEST/LINT_FAILURE` → orchestrator fix loop.
 
@@ -378,6 +378,6 @@ Each skill's `SKILL.md` body documents the full subcommand grammar, flag matrix,
 
 ## Distribution & governance
 
-`.claude-plugin/plugin.json` (v4.1.0), `marketplace.json`. Hooks live only in `hooks/hooks.json`. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`.claude-plugin/plugin.json` (v5.2.0), `marketplace.json`. Hooks live only in `hooks/hooks.json`. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 `LICENSE` (Proprietary, QuantumBit s.r.o.), `CONTRIBUTING.md`, `SECURITY.md`, `.github/CODEOWNERS` (@quantumbitcz), `.github/release.yml`.
