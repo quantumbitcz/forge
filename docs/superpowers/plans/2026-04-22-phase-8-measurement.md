@@ -1,7 +1,7 @@
 # Phase 8 Measurement — TDD Implementation Plan
 
 **Source spec:** `docs/superpowers/specs/2026-04-22-phase-8-measurement-design.md`
-**Target version:** forge 3.8.0
+**Target version:** forge 6.0.0
 **Style:** TDD per step — write failing test first, then code, run full suite, commit green; CI-only verification (no local test runs per user memory).
 **Cross-platform target:** Ubuntu, macOS, Windows runners. All Python 3.10+. No bash in hook paths. Windows-compatible path handling (pathlib only, never string concatenation with `/`).
 
@@ -1577,7 +1577,7 @@ def test_aggregate_single_week(tmp_path: Path) -> None:
     _seed(tmp_path, "e1", "ubuntu-latest", "claude-sonnet-4-6", True, 0.5, "S")
     _seed(tmp_path, "e2", "ubuntu-latest", "claude-sonnet-4-6", False, 1.0, "M")
     line = aggregate_week(results_root=tmp_path, week_of=date(2026, 4, 27),
-                         commit_sha="abc1234", forge_version="3.8.0", hook_failures_total=3)
+                         commit_sha="abc1234", forge_version="6.0.0", hook_failures_total=3)
     assert line["schema_version"] == 1
     assert line["hook_failures_total"] == 3
     cell = line["cells"][0]
@@ -1600,7 +1600,7 @@ def test_aggregate_rejects_legacy_missing_complexity(tmp_path: Path) -> None:
     }))
     with pytest.raises(KeyError, match="complexity"):
         aggregate_week(results_root=tmp_path, week_of=date(2026, 4, 27),
-                       commit_sha="x", forge_version="3.8.0", hook_failures_total=0)
+                       commit_sha="x", forge_version="6.0.0", hook_failures_total=0)
 ```
 
 ### Implementation
@@ -1708,10 +1708,10 @@ def test_append_preserves_order(tmp_path: Path) -> None:
     trends = tmp_path / "trends.jsonl"
     (tmp_path / "results").mkdir()
     line1 = aggregate_week(results_root=tmp_path / "results",
-                           week_of=date(2026, 4, 20), commit_sha="a", forge_version="3.8.0",
+                           week_of=date(2026, 4, 20), commit_sha="a", forge_version="6.0.0",
                            hook_failures_total=0)
     line2 = aggregate_week(results_root=tmp_path / "results",
-                           week_of=date(2026, 4, 27), commit_sha="b", forge_version="3.8.0",
+                           week_of=date(2026, 4, 27), commit_sha="b", forge_version="6.0.0",
                            hook_failures_total=1)
     append_trends(trends, line1)
     append_trends(trends, line2)
@@ -1771,7 +1771,7 @@ def test_render_empty_history(tmp_path: Path) -> None:
 
 def test_render_with_one_week_all_solved() -> None:
     line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc1234",
-            "forge_version": "3.8.0",
+            "forge_version": "6.0.0",
             "cells": [{"os": "ubuntu-latest", "model": "claude-sonnet-4-6",
                        "entries_total": 10, "entries_solved": 10, "entries_timeout": 0,
                        "entries_docker_skipped": 0, "solve_rate_overall": 1.0,
@@ -1783,7 +1783,7 @@ def test_render_with_one_week_all_solved() -> None:
 
 
 def test_render_shows_regressions() -> None:
-    line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc", "forge_version": "3.8.0",
+    line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc", "forge_version": "6.0.0",
             "cells": [{"os": "ubuntu-latest", "model": "claude-sonnet-4-6",
                        "entries_total": 2, "entries_solved": 1, "entries_timeout": 0,
                        "entries_docker_skipped": 0, "solve_rate_overall": 0.5,
@@ -1797,7 +1797,7 @@ def test_render_shows_regressions() -> None:
 
 
 def test_render_cost_truncated_banner() -> None:
-    line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc", "forge_version": "3.8.0",
+    line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc", "forge_version": "6.0.0",
             "cells": [], "hook_failures_total": 0, "regressions": [], "cost_truncated": True}
     out = render(trends_lines=[line], baseline=None, hook_failures_total=0)
     assert "cost-truncated" in out.lower() or "truncated" in out.lower()
@@ -1823,7 +1823,7 @@ def test_sparkline_output_is_utf8_round_trippable() -> None:
 def test_render_12_week_sparkline_edge() -> None:
     lines = [
         {"schema_version": 1, "week_of": f"2026-{(i % 12) + 1:02d}-01", "commit_sha": "x",
-         "forge_version": "3.8.0",
+         "forge_version": "6.0.0",
          "cells": [{"os": "ubuntu-latest", "model": "claude-sonnet-4-6",
                     "entries_total": 10, "entries_solved": i,
                     "entries_timeout": 0, "entries_docker_skipped": 0,
@@ -2056,7 +2056,7 @@ SCHEMA = Draft202012Validator(json.loads((ROOT / "tests/evals/benchmark/schemas/
 
 def _seed_trends(trends: Path) -> None:
     line = {"schema_version": 1, "week_of": "2026-04-27", "commit_sha": "abc",
-            "forge_version": "3.8.0",
+            "forge_version": "6.0.0",
             "cells": [{"os": "ubuntu-latest", "model": "claude-sonnet-4-6",
                        "entries_total": 10, "entries_solved": 8, "entries_timeout": 0,
                        "entries_docker_skipped": 0, "solve_rate_overall": 0.8,
@@ -3190,7 +3190,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_render_is_idempotent(tmp_path: Path) -> None:
     trends = tmp_path / "trends.jsonl"
-    trends.write_text('{"schema_version":1,"week_of":"2026-04-27","commit_sha":"abc","forge_version":"3.8.0","cells":[],"hook_failures_total":0,"regressions":[]}\n')
+    trends.write_text('{"schema_version":1,"week_of":"2026-04-27","commit_sha":"abc","forge_version":"6.0.0","cells":[],"hook_failures_total":0,"regressions":[]}\n')
     out1 = tmp_path / "a.md"
     out2 = tmp_path / "b.md"
     for target in (out1, out2):
@@ -3654,7 +3654,7 @@ from pathlib import Path
 
 def test_changelog_3_8_0_entry() -> None:
     text = (Path(__file__).resolve().parents[2] / "CHANGELOG.md").read_text()
-    assert "[3.8.0]" in text
+    assert "[6.0.0]" in text
     for phrase in ("benchmark", "SCORECARD.md", "weekly"):
         assert phrase in text.lower()
 ```
@@ -3664,7 +3664,7 @@ def test_changelog_3_8_0_entry() -> None:
 Prepend to `CHANGELOG.md`:
 
 ```markdown
-## [3.8.0] - 2026-04-22 — Phase 8 Measurement
+## [6.0.0] - 2026-04-22 — Phase 8 Measurement
 
 ### Added
 - `tests/evals/benchmark/` harness: curated real-feature benchmark corpus, weekly CI cron, 3×2 OS/model matrix.
@@ -3684,9 +3684,9 @@ Prepend to `CHANGELOG.md`:
 - `benchmark.timeout_seconds.{S,M,L}: 900/2700/5400`.
 ```
 
-Bump `plugin.json` `version: 3.8.0` and `pyproject.toml` `version = "3.8.0"`.
+Bump `plugin.json` `version: 6.0.0` and `pyproject.toml` `version = "6.0.0"`.
 
-**Commit:** `chore(release): Phase 8 — bump forge to 3.8.0`.
+**Commit:** `chore(release): Phase 8 — bump forge to 6.0.0`.
 
 ---
 
@@ -3731,7 +3731,7 @@ No new code — this is the consolidated AC-802 check. It runs on every PR and m
 
 ## Final post-ship checklist
 
-- [ ] Merge to master; tag `v3.8.0`; push tag.
+- [ ] Merge to master; tag `v6.0.0`; push tag.
 - [ ] Release notes (GitHub) auto-generated from `CHANGELOG.md` entry.
 - [ ] Manually trigger `.github/workflows/benchmark.yml` once via `workflow_dispatch` with a single-entry corpus filter to exercise the live path end-to-end.
 - [ ] After first real weekly run, commit `baseline.json` via `refresh_baseline.py --confirm`.
