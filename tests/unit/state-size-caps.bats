@@ -9,17 +9,19 @@ setup() {
   PYTHON="${FORGE_PYTHON:-python3}"
   SCRIPT="${PLUGIN_ROOT}/shared/python/state_transitions.py"
   INIT_SCRIPT="${PLUGIN_ROOT}/shared/python/state_init.py"
-  MIGRATE_SCRIPT="${PLUGIN_ROOT}/shared/python/state_migrate.py"
 }
 
 teardown() {
   [[ -n "${TEST_TEMP:-}" && -d "${TEST_TEMP}" ]] && rm -rf "${TEST_TEMP}"
 }
 
+# state_migrate.py is intentionally disabled under the no-backcompat policy
+# (v1.x state files are auto-invalidated on load). state_init produces a
+# current-schema state directly, so these tests skip the migrate step.
+
 @test "score_history capped at 50 after transition" {
   local state
   state=$("$PYTHON" "$INIT_SCRIPT" "FG-001" "Test" "standard" "false")
-  state=$(echo "$state" | "$PYTHON" "$MIGRATE_SCRIPT")
   state=$(echo "$state" | "$PYTHON" -c "
 import json, sys
 s = json.load(sys.stdin)
@@ -39,7 +41,6 @@ assert len(s['score_history']) <= 50, f'got {len(s[\"score_history\"])}'
 @test "small score_history unchanged after transition" {
   local state
   state=$("$PYTHON" "$INIT_SCRIPT" "FG-001" "Test" "standard" "false")
-  state=$(echo "$state" | "$PYTHON" "$MIGRATE_SCRIPT")
   state=$(echo "$state" | "$PYTHON" -c "
 import json, sys
 s = json.load(sys.stdin)

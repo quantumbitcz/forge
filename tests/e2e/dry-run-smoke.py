@@ -68,6 +68,36 @@ def _run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None,
     )
 
 
+def _resolve_bash() -> str | None:
+    """Resolve a usable bash executable.
+
+    On Windows, ``shutil.which("bash")`` typically returns
+    ``C:\\Windows\\System32\\bash.exe`` (the WSL launcher), which fails when
+    no Linux distribution is installed — and GitHub-hosted ``windows-latest``
+    runners ship without one. We prefer Git for Windows' bash, falling back
+    to other PATH entries that are NOT the WSL launcher.
+    """
+    if sys.platform == "win32":
+        candidates = [
+            os.environ.get("ProgramFiles", r"C:\Program Files") + r"\Git\bin\bash.exe",
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)") + r"\Git\bin\bash.exe",
+            r"C:\Program Files\Git\bin\bash.exe",
+            r"C:\Program Files (x86)\Git\bin\bash.exe",
+        ]
+        for cand in candidates:
+            if Path(cand).is_file():
+                return cand
+        # Fall back to PATH lookup, but skip the System32 WSL launcher.
+        wsl_bash = (os.environ.get("SystemRoot", r"C:\Windows")
+                    + r"\System32\bash.exe").lower()
+        for p in os.environ.get("PATH", "").split(os.pathsep):
+            cand = Path(p) / "bash.exe"
+            if cand.is_file() and str(cand).lower() != wsl_bash:
+                return str(cand)
+        return None
+    return shutil.which("bash")
+
+
 def _symlink_or_junction(src: Path, dst: Path) -> None:
     """Create `dst` pointing at `src`. Windows falls back to directory junction."""
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -200,26 +230,44 @@ def smoke(*, verbose: bool = False) -> int:
         if not sim_script.is_file():
             print(f"[SKIP] forge-sim.sh not found at {sim_script}", file=sys.stderr)
             return 77
-        if shutil.which("bash") is None:
+        bash_path = _resolve_bash()
+        if bash_path is None:
             print("[SKIP] bash not on PATH; e2e dry-run smoke requires bash 4+",
                   file=sys.stderr)
             return 77
 
-        # Use a minimal inline scenario: PREFLIGHT → EXPLORING → PLANNING → VALIDATING → COMPLETE (dry-run).
+        # Use a minimal inline scenario: PREFLIGHT -> EXPLORING -> PLANNING ->
+        # VALIDATING -> COMPLETE (dry-run). Schema matches forge-sim-runner.py
+        # (mock_events, not events; guard values stringified; dry_run flag at
+        # the top level so init flips story_state's dry_run path correctly).
         scenario = project / "dry-run-scenario.yaml"
         scenario.write_text(
             "name: phase3-e2e-smoke\n"
+            "requirement: phase3-e2e-smoke\n"
             "mode: standard\n"
             "dry_run: true\n"
-            "events:\n"
-            "  - {event: preflight_complete, guard: 'dry_run == true'}\n"
-            "  - {event: explore_complete, guard: ''}\n"
-            "  - {event: plan_complete, guard: ''}\n"
-            "  - {event: validate_complete, guard: 'dry_run == true'}\n",
+            "mock_events:\n"
+            "  - event: preflight_complete\n"
+            "    guards:\n"
+            "      dry_run: \"true\"\n"
+            "  - event: explore_complete\n"
+            "    guards:\n"
+            "      scope_size: \"1\"\n"
+            "      threshold: \"5\"\n"
+            "  - event: plan_complete\n"
+            "    guards: {}\n"
+            "  - event: validate_complete\n"
+            "    guards:\n"
+            "      dry_run: \"true\"\n"
+            "expected_trace:\n"
+            "  - PREFLIGHT -> EXPLORING\n"
+            "  - EXPLORING -> PLANNING\n"
+            "  - PLANNING -> VALIDATING\n"
+            "  - VALIDATING -> COMPLETE\n",
             encoding="utf-8",
         )
         r = _run(
-            ["bash", str(sim_script), "run", str(scenario),
+            [bash_path, str(sim_script), "run", str(scenario),
              "--forge-dir", str(project / ".forge")],
             cwd=project,
             timeout=90,
