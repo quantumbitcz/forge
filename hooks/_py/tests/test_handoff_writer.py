@@ -136,7 +136,7 @@ def test_resume_prompt_block_present(tmp_path):
     result = write_handoff(req, forge_dir=forge_dir)
     content = result.path.read_text()
     assert "## RESUME PROMPT (copy everything below this line)" in content
-    assert "/forge-handoff resume" in content
+    assert "/forge-admin handoff resume" in content
 
 
 def test_size_cap_triggers_truncation(tmp_path):

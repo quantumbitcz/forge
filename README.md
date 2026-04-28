@@ -24,8 +24,8 @@ Claude Code is powerful, but without structure it makes inconsistent decisions, 
 powershell -ExecutionPolicy Bypass -File install.ps1
 
 # Then, in a project:
-/forge-init
-/forge-run Add user dashboard with activity feed
+/forge
+/forge run Add user dashboard with activity feed
 ```
 
 <details>
@@ -70,9 +70,9 @@ Then add to `.claude/settings.json`:
 - **Property-based testing** -- Optional fg-515 agent generates invariant/round-trip/idempotence/metamorphic tests for 10 PBT frameworks.
 - **Concurrent run protection** -- Lock file prevents parallel runs. Global retry budget (default 10) prevents unbounded cascades.
 - **Monorepo support** -- Nx and Turborepo modules with affected detection, scoped testing/building.
-- **Environment health check** -- `/forge-init` probes for optional tools (jq, docker, tree-sitter, gh, sqlite3) and MCP integrations, displays a dashboard with platform-specific install suggestions.
+- **Environment health check** -- `/forge` probes for optional tools (jq, docker, tree-sitter, gh, sqlite3) and MCP integrations, displays a dashboard with platform-specific install suggestions.
 - **Dynamic reviewer scaling** -- Quality gate scales review agents by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting recommendation.
-- **Caveman benchmark** -- `/forge-compress output benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
+- **Caveman benchmark** -- `/forge-admin compress output benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
 
 ### The 10 stages
 
@@ -105,35 +105,35 @@ Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in i
 
 | Skill | Badge | Description |
 |-------|-------|-------------|
-| `/forge-run` | [writes] | Main entry -- full 10-stage pipeline |
-| `/forge-init` | [writes] | Initialize project config (auto-detects framework) |
-| `/forge-fix` | [writes] | Bugfix workflow -- root cause investigation + targeted fix |
-| `/forge-shape` | [writes] | Collaboratively shape features into structured specs |
-| `/forge-sprint` | [writes] | Parallel multi-feature orchestration |
-| `/forge-review` | [writes] | Review changed files (quick: 3 agents, full: 8 agents) |
-| `/forge-status` | [read-only] | Show pipeline state, score, budgets |
-| `/forge-recover` | [writes] | Diagnose/repair/reset/resume/rollback pipeline state (`<subcommand>` dispatch). Replaces 5 old recovery skills. |
-| `/forge-abort` | [writes] | Graceful pipeline stop |
-| `/forge-history` | [read-only] | Quality trends across runs |
-| `/forge-profile` | [read-only] | Pipeline performance analysis |
-| `/forge-insights` | [read-only] | Quality, cost, convergence analytics |
+| `/forge run` | [writes] | Main entry -- full 10-stage pipeline |
+| `/forge` | [writes] | Initialize project config (auto-detects framework) |
+| `/forge fix` | [writes] | Bugfix workflow -- root cause investigation + targeted fix |
+| `/forge run` | [writes] | Collaboratively shape features into structured specs |
+| `/forge sprint` | [writes] | Parallel multi-feature orchestration |
+| `/forge review` | [writes] | Review changed files (quick: 3 agents, full: 8 agents) |
+| `/forge-ask status` | [read-only] | Show pipeline state, score, budgets |
+| `/forge-admin recover` | [writes] | Diagnose/repair/reset/resume/rollback pipeline state (`<subcommand>` dispatch). Replaces 5 old recovery skills. |
+| `/forge-admin abort` | [writes] | Graceful pipeline stop |
+| `/forge-ask history` | [read-only] | Quality trends across runs |
+| `/forge-ask profile` | [read-only] | Pipeline performance analysis |
+| `/forge-ask insights` | [read-only] | Quality, cost, convergence analytics |
 | `/forge-ask` | [read-only] | Codebase Q&A via wiki, graph, docs |
-| `/forge-playbooks` | [writes] | Manage reusable task templates |
-| `/forge-playbook-refine` | [writes] | Interactive review/apply of playbook refinements |
-| `/forge-compress` | [writes] | Compress agents/output/status/help. Replaces `forge-caveman` and `forge-compression-help`. |
-| `/forge-verify` | [read-only] | Quick build + lint + test check |
-| `/forge-security-audit` | [read-only] | Module-appropriate security scanners |
-| `/forge-review --scope=all` | [read-only] | Full check engine health report (codebase audit) |
-| `/forge-review --scope=all --fix` | [writes] | Iterative fix loop until clean (AskUserQuestion safety gate) |
-| `/forge-docs-generate` | [writes] | Generate project documentation |
-| `/forge-deploy` | [writes] | Deployment (staging, production, preview, rollback) |
-| `/forge-migration` | [writes] | Framework/library version migrations |
-| `/forge-bootstrap` | [writes] | Scaffold new project from template |
-| `/forge-automation` | [writes] | Event-driven automation management |
-| `/forge-graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
-| `/forge-commit` | [writes] | Terse conventional commit from staged changes |
-| `/forge-tour` | [read-only] | Guided 5-stop introduction to Forge |
-| `/forge-config` | [writes] | Interactive configuration editor |
+| `/forge-admin playbooks` | [writes] | Manage reusable task templates |
+| `/forge-admin refine` | [writes] | Interactive review/apply of playbook refinements |
+| `/forge-admin compress` | [writes] | Compress agents/output/status/help. Replaces `forge-caveman` and `forge-compression-help`. |
+| `/forge verify` | [read-only] | Quick build + lint + test check |
+| `/forge audit` | [read-only] | Module-appropriate security scanners |
+| `/forge review --scope=all` | [read-only] | Full check engine health report (codebase audit) |
+| `/forge review --scope=all --fix` | [writes] | Iterative fix loop until clean (AskUserQuestion safety gate) |
+| `/forge docs` | [writes] | Generate project documentation |
+| `/forge deploy` | [writes] | Deployment (staging, production, preview, rollback) |
+| `/forge migrate` | [writes] | Framework/library version migrations |
+| `/forge bootstrap` | [writes] | Scaffold new project from template |
+| `/forge-admin automation` | [writes] | Event-driven automation management |
+| `/forge-admin graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
+| `/forge commit` | [writes] | Terse conventional commit from staged changes |
+| `/forge-ask tour` | [read-only] | Guided 5-stop introduction to Forge |
+| `/forge-admin config` | [writes] | Interactive configuration editor |
 
 ## Available modules
 
@@ -191,7 +191,7 @@ Auto-detected MCP servers at PREFLIGHT. All optional -- pipeline degrades gracef
 Project identity: `language`, `framework`, `testing`, `commands` (build/test/lint), `scaffolder.patterns`, `quality_gate` batches, `context7_libraries`, `linear` settings.
 
 ### `forge-config.md` (mutable, auto-tuned by retrospective)
-Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-config-schema.json` for the full schema.
+Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-admin config-schema.json` for the full schema.
 
 - **Cost ceiling (Phase 6).** Every run has a USD ceiling (default **$25**). Configurable via `cost.ceiling_usd` in `forge-config.md`; the orchestrator injects a `## Cost Budget` block into every subagent brief, soft-throttles the implementer at 80%/90% consumption, and dynamically downgrades tiers when the remaining budget is small (excluding a hardcoded SAFETY_CRITICAL reviewer set). See `shared/model-routing.md` §Cost-Aware Routing.
 
@@ -260,26 +260,26 @@ After [Quick start](#quick-start):
 # Open .claude/forge.local.md and set commands, scaffolder patterns, quality gate
 
 # Usage examples
-/forge-run Add plan comment feature          # Full pipeline
-/forge-run --dry-run "Add user dashboard"    # Dry-run (PREFLIGHT→VALIDATE only)
-/forge-run "Add versioning" --from=implement # Resume from stage
-/forge-run --playbook=add-rest-endpoint entity=Task  # Use playbook template
-/forge-fix Users get 404 on group endpoint   # Bugfix workflow
-/forge-sprint                                # Multi-feature parallel execution
+/forge run Add plan comment feature          # Full pipeline
+/forge run --dry-run "Add user dashboard"    # Dry-run (PREFLIGHT→VALIDATE only)
+/forge run "Add versioning" --from=implement # Resume from stage
+/forge run --playbook=add-rest-endpoint entity=Task  # Use playbook template
+/forge fix Users get 404 on group endpoint   # Bugfix workflow
+/forge sprint                                # Multi-feature parallel execution
 ```
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| "No active pipeline" | Run `/forge-init` then `/forge-run` |
-| Pipeline stuck | `/forge-recover diagnose` (read-only), then `/forge-recover repair` |
-| Lock file blocks run | `/forge-recover reset` or remove `.forge/.lock` |
+| "No active pipeline" | Run `/forge` then `/forge run` |
+| Pipeline stuck | `/forge-admin recover diagnose` (read-only), then `/forge-admin recover repair` |
+| Lock file blocks run | `/forge-admin recover reset` or remove `.forge/.lock` |
 | Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.jsonl` |
 | Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |
 | Budget exhausted | Check `total_retries_max` (default 10, range 5-30) |
 | Evidence stale | Increase `shipping.evidence_max_age_minutes` (default 30) |
-| MCP not detected | `/forge-status`. Pipeline degrades gracefully |
+| MCP not detected | `/forge-ask status`. Pipeline degrades gracefully |
 
 See `shared/error-taxonomy.md` (22 error types) and `shared/recovery/recovery-engine.md` (7 strategies).
 

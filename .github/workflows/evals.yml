@@ -69,7 +69,7 @@ jobs:
     # Workflow cap is 50 min (45-min total_budget + 5-min overhead for setup/teardown/baseline).
     timeout-minutes: 50
     # GATED OFF: the runner invokes the `claude` CLI via executor.py to drive
-    # /forge-init + /forge-run --eval-mode, but GitHub-hosted runners do not
+    # /forge + /forge run --eval-mode, but GitHub-hosted runners do not
     # ship Claude Code. Follow-up task: install claude-code + wire
     # CLAUDE_CODE_OAUTH_TOKEN secret, then flip this condition back to the
     # live one below. Until then, full-suite cannot execute.

@@ -72,4 +72,4 @@ else
   fi
 fi
 
-log "done. Run /forge-init in a project to complete setup."
+log "done. Run /forge in a project to complete setup."

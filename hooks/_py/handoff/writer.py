@@ -272,7 +272,7 @@ def _render_resume_block(req: WriteRequest, path: Path, state: dict[str, Any]) -
         "## RESUME PROMPT (copy everything below this line)\n\n"
         "I'm resuming a forge run from a handoff.\n\n"
         "**Preferred (if forge is installed in this session):**\n"
-        f"/forge-handoff resume {path}\n\n"
+        f"/forge-admin handoff resume {path}\n\n"
         "**Manual fallback (no forge):**\n"
         f"- Run: {req.run_id}\n"
         f"- Branch: {state.get('branch_name') or '(none)'}\n"

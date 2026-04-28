@@ -4,8 +4,8 @@ Guidance for Claude Code working in this repo.
 
 ## Start Here (5-minute path)
 
-1. **Install:** `ln -s $(pwd) /path/to/your-project/.claude/plugins/forge`, then in that project run `/forge-init`. MCP auto-setup: `shared/mcp-provisioning.md`.
-2. **First run:** `/forge-run --dry-run "<requirement>"` — exercises PREFLIGHT → VALIDATE only. Confirm the plan, then drop `--dry-run`.
+1. **Install:** `ln -s $(pwd) /path/to/your-project/.claude/plugins/forge`, then in that project run `/forge`. MCP auto-setup: `shared/mcp-provisioning.md`.
+2. **First run:** `/forge run --dry-run "<requirement>"` — exercises PREFLIGHT → VALIDATE only. Confirm the plan, then drop `--dry-run`.
 3. **Pick the right skill:** see §Skill selection guide. When in doubt, ask Claude — it routes from your description.
 
 Already familiar? Skip to §Architecture.
@@ -16,7 +16,7 @@ Already familiar? Skip to §Architecture.
 
 ## What this is
 
-`forge` is a Claude Code plugin (v4.3.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge-run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v4.3.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge run` → `fg-100-orchestrator`.
 
 **Prompt-injection hardening:** External data tiered (Silent/Logged/Confirmed/Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching agents. All 50 agents carry the SHA-pinned Untrusted Data Policy header. Contract: `shared/untrusted-envelope.md`. Findings: `SEC-INJECTION-*`.
 
@@ -48,7 +48,7 @@ Layered, top-down resolution:
 powershell -ExecutionPolicy Bypass -File install.ps1   # Windows native
 ```
 
-Doc-only plugin (no build). Smoke test: symlink → `/forge-init` → `/forge-run --dry-run` → `/forge-run` → check `.forge/state.json`.
+Doc-only plugin (no build). Smoke test: symlink → `/forge` → `/forge run --dry-run` → `/forge run` → check `.forge/state.json`.
 
 Pipeline-level evals: `tests/evals/pipeline/README.md` (CI-only; local `FORGE_EVAL=1 python -m tests.evals.pipeline.runner --dry-run --no-baseline`).
 
@@ -86,41 +86,41 @@ For further docs (~85 files): `ls shared/` and `ls shared/learnings/`. Discovery
 
 | Intent | Skill | Notes |
 |---|---|---|
-| Build a feature | `/forge-run` | Full 10-stage pipeline |
-| Fix a bug | `/forge-fix` | Root-cause + targeted fix |
-| Shape a vague idea | `/forge-shape` | Collaborative spec refinement |
-| Review changed files | `/forge-review` | `--scope=changed` default; `--full` = 8 agents |
-| Audit / fix whole codebase | `/forge-review --scope=all [--fix]` | `--fix` is iterative; AskUserQuestion gate unless `autonomous: true` or `--yes` |
-| Build/lint/test only | `/forge-verify` | `--build` default; `--all` adds config validation |
-| Validate config | `/forge-status` | Includes config validation summary |
-| Graph ops | `/forge-graph {init,status,query,rebuild,debug}` | `query` is read-only Cypher |
-| Security scan | `/forge-security-audit` | Module-appropriate scanners |
-| Recovery | `/forge-recover {diagnose,repair,reset,resume,rollback}` | `reset` preserves learnings/caches |
-| Multiple features | `/forge-sprint` | Parallel orchestration |
-| Generate docs | `/forge-docs-generate` | README, ADRs, API specs, changelogs |
-| Deploy / migrate | `/forge-deploy`, `/forge-migration` | Strategies + framework upgrades |
+| Build a feature | `/forge run` | Full 10-stage pipeline |
+| Fix a bug | `/forge fix` | Root-cause + targeted fix |
+| Shape a vague idea | `/forge run` | Collaborative spec refinement |
+| Review changed files | `/forge review` | `--scope=changed` default; `--full` = 8 agents |
+| Audit / fix whole codebase | `/forge review --scope=all [--fix]` | `--fix` is iterative; AskUserQuestion gate unless `autonomous: true` or `--yes` |
+| Build/lint/test only | `/forge verify` | `--build` default; `--all` adds config validation |
+| Validate config | `/forge-ask status` | Includes config validation summary |
+| Graph ops | `/forge-admin graph {init,status,query,rebuild,debug}` | `query` is read-only Cypher |
+| Security scan | `/forge audit` | Module-appropriate scanners |
+| Recovery | `/forge-admin recover {diagnose,repair,reset,resume,rollback}` | `reset` preserves learnings/caches |
+| Multiple features | `/forge sprint` | Parallel orchestration |
+| Generate docs | `/forge docs` | README, ADRs, API specs, changelogs |
+| Deploy / migrate | `/forge deploy`, `/forge migrate` | Strategies + framework upgrades |
 | Codebase Q&A | `/forge-ask` | Wiki + graph + explore cache + docs |
-| Analytics | `/forge-insights`, `/forge-history`, `/forge-profile` | Quality, cost, trends, perf |
-| Playbooks | `/forge-playbooks`, `/forge-playbook-refine` | Reusable recipes + refinement review |
-| Compress | `/forge-compress {agents,output,status,help}` | Token reduction |
-| Quick commit | `/forge-commit` | Conventional commit from staged changes |
-| Onboarding | `/forge-tour` | 5-stop introduction |
-| Edit config | `/forge-config` | Interactive editor with validation |
-| Session handoff | `/forge-handoff` | Transfer run state to a fresh CC session |
-| Stop pipeline | `/forge-abort` | Graceful (state preserved for resume) |
-| Bootstrap | `/forge-bootstrap` | Greenfield scaffold |
-| Automations | `/forge-automation` | Cron/CI/MCP triggers |
+| Analytics | `/forge-ask insights`, `/forge-ask history`, `/forge-ask profile` | Quality, cost, trends, perf |
+| Playbooks | `/forge-admin playbooks`, `/forge-admin refine` | Reusable recipes + refinement review |
+| Compress | `/forge-admin compress {agents,output,status,help}` | Token reduction |
+| Quick commit | `/forge commit` | Conventional commit from staged changes |
+| Onboarding | `/forge-ask tour` | 5-stop introduction |
+| Edit config | `/forge-admin config` | Interactive editor with validation |
+| Session handoff | `/forge-admin handoff` | Transfer run state to a fresh CC session |
+| Stop pipeline | `/forge-admin abort` | Graceful (state preserved for resume) |
+| Bootstrap | `/forge bootstrap` | Greenfield scaffold |
+| Automations | `/forge-admin automation` | Cron/CI/MCP triggers |
 
 ### Getting started flows
 
 ```
-First time?        /forge-tour
-New project:       /forge-init → /forge-status → /forge-verify → /forge-run <req>
-Existing project:  /forge-init → /forge-review --scope=all [--fix] → /forge-run <req>
-Bug fix:           /forge-fix <description or ticket>
-Pre-ship:          /forge-verify → /forge-review --full
-Pipeline trouble:  /forge-recover diagnose → repair (if needed) → resume
-Sprint:            /forge-sprint  (Linear cycle or manual list)
+First time?        /forge-ask tour
+New project:       /forge → /forge-ask status → /forge verify → /forge run <req>
+Existing project:  /forge → /forge review --scope=all [--fix] → /forge run <req>
+Bug fix:           /forge fix <description or ticket>
+Pre-ship:          /forge verify → /forge review --full
+Pipeline trouble:  /forge-admin recover diagnose → repair (if needed) → resume
+Sprint:            /forge sprint  (Linear cycle or manual list)
 ```
 
 ## Agents (50, `agents/*.md`)
@@ -151,7 +151,7 @@ Sprint:            /forge-sprint  (Linear cycle or manual list)
 
 ### Routing & decomposition
 
-`/forge-run` auto-classifies. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint` deprecated → `/forge-sprint`, `--parallel`) override. Multi-feature detected via fast scan / deep post-EXPLORE → `fg-015` → `fg-090`. Frontend design preview via superpowers visual companion at PLAN (graceful degradation). Config: `routing.*`, `scope.*`, `model_routing.*`, `explore.*`, `plan_cache.*`.
+`/forge run` auto-classifies. Requirements <50 words missing 3+ of (actors, entities, surface, criteria) → shaper. Prefixes (`bugfix:`, `migrate:`, `bootstrap:`) and flags (`--sprint` deprecated → `/forge sprint`, `--parallel`) override. Multi-feature detected via fast scan / deep post-EXPLORE → `fg-015` → `fg-090`. Frontend design preview via superpowers visual companion at PLAN (graceful degradation). Config: `routing.*`, `scope.*`, `model_routing.*`, `explore.*`, `plan_cache.*`.
 
 ## Core contracts
 
@@ -168,7 +168,7 @@ Sprint:            /forge-sprint  (Linear cycle or manual list)
 35+ optional capabilities (cost governance, judge veto, speculative branches, self-consistency, repo-map PageRank, run history, MCP server, playbooks, property-based tests, flaky management, accessibility/i18n/perf regression, A2A, deployment strategies, contracts, AI quality, output compression, wiki, handoff, …). Per-feature config keys, IDs (F05-F35), categories, and activation state: **`shared/feature-matrix.md`** (auto-regen). Lifecycle: 90d unused → flagged, 180d → removal proposal (`shared/feature-lifecycle.md`).
 
 Cross-cutting subsystems used by most features:
-- **Confidence** (`confidence.*`): finding HIGH/MED/LOW (1.0/0.75/0.5x); pipeline 4-dim (clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: ≥0.7 proceed, ≥0.4 ask, <0.4 → `/forge-shape`. Trust state in `.forge/trust.json`.
+- **Confidence** (`confidence.*`): finding HIGH/MED/LOW (1.0/0.75/0.5x); pipeline 4-dim (clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: ≥0.7 proceed, ≥0.4 ask, <0.4 → `/forge run`. Trust state in `.forge/trust.json`.
 - **Repo-map PageRank** (`code_graph.prompt_compaction.*`, opt-in): `hooks/_py/repomap.py` ranks files by centrality × recency × keyword overlap. `{{REPO_MAP_PACK}}` replaces dir listings in 100/200/300 prompts (~30-50% token savings). Cache: `.forge/ranked-files-cache.json`. Reference: `shared/graph/pagerank-sql.md`.
 - **Cost governance** (`cost.*`, F35): USD ceiling, dispatch-gate projection, soft throttle (80/90% in implementer §5.3b emits `COST-THROTTLE-IMPL`). Dynamic tier downgrade with hardcoded SAFETY_CRITICAL list (210/250/411/412/414/419/500/505/506/590) — never silently skipped. Incidents: `.forge/cost-incidents/<ts>.json`. OTel: `forge.cost.*`.
 - **Judges** (F32, `plan.judge.*`, `implementer.reflection.*`): `fg-205` (plan-scoped) and `fg-301` (per-task) issue binding REVISE. 2-loop bound; 3rd REVISE → AskUserQuestion (interactive) or auto-abort (autonomous). Categories: `REFLECT-*`, `JUDGE-TIMEOUT`.
@@ -195,7 +195,7 @@ Cross-cutting subsystems used by most features:
 
 - **Linear** (optional, off by default): Epic/Stories/Tasks at PLAN, status per stage. MCP failure → graceful degradation.
 - **MCP detection:** Linear, Playwright, Slack, Context7, Figma, Excalidraw, Neo4j. First failure → degraded for run. None required.
-- **Cross-repo:** 5-step discovery at `/forge-init`. Contract validation, linked PRs, multi-repo worktrees. Timeout 30min, alphabetical lock ordering, PR failures don't block main PR.
+- **Cross-repo:** 5-step discovery at `/forge`. Contract validation, linked PRs, multi-repo worktrees. Timeout 30min, alphabetical lock ordering, PR failures don't block main PR.
 
 ## Knowledge graph
 
@@ -235,7 +235,7 @@ Two backends:
 
 **Git:** branch `{type}/{ticket}-{slug}` (configurable). Conventional Commits or `project` style auto-detected. **Never:** `Co-Authored-By`, AI attribution, `--no-verify`.
 
-**Init:** `/forge-init` generates project-local plugin (hooks, skills, agents). Respects existing hooks. MCP auto-provisioning at init.
+**Init:** `/forge` generates project-local plugin (hooks, skills, agents). Respects existing hooks. MCP auto-provisioning at init.
 
 ## Adding new modules
 
@@ -252,7 +252,7 @@ Two backends:
 - `shared/` files are contracts — verify downstream impact on changes.
 - Plugin never touches consuming-project files; runtime state always in `.forge/`.
 - `forge-config.md` auto-tuned by retrospective; `<!-- locked -->` fences protect sections.
-- `.forge/` deletion mid-run = unrecoverable; use `/forge-recover reset`. **Survives reset:** `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `playbook-refinements/`, `run-history.db`, `consistency-cache.jsonl`, `plans/candidates/`, `runs/<id>/handoffs/`, `progress/`, `run-history-trends.json`, `wiki/`, `.hook-failures.jsonl[*.gz]`. Only manual `rm -rf .forge/` removes them.
+- `.forge/` deletion mid-run = unrecoverable; use `/forge-admin recover reset`. **Survives reset:** `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `playbook-refinements/`, `run-history.db`, `consistency-cache.jsonl`, `plans/candidates/`, `runs/<id>/handoffs/`, `progress/`, `run-history-trends.json`, `wiki/`, `.hook-failures.jsonl[*.gz]`. Only manual `rm -rf .forge/` removes them.
 - Background runs write escalations to `.forge/alerts.json` (no interactive prompts).
 - A2A protocol uses local filesystem (`.forge/agent-card.json`), not HTTP — needs shared FS between repos.
 - Auto-discovered PREEMPT items decay 2× faster, start at MEDIUM, promote to HIGH after 3 successful applications.
@@ -267,7 +267,7 @@ Two backends:
 **PREFLIGHT** — see `shared/preflight-constraints.md` for all validation rules (scoring, convergence, sprint, shipping gates, model routing, implementer inner loop, confidence, output compression, AI quality, build graph, cost, eval, context guard).
 
 **Pipeline modes**
-- **Greenfield:** `/forge-init` on empty project → Bootstrap / Select stack / Skip.
+- **Greenfield:** `/forge` on empty project → Bootstrap / Select stack / Skip.
 - **Bootstrap:** Stage 4 skipped; reduced validation+review; target `pass_threshold`.
 - **Bugfix:** `fg-020` → reproduction (max 3) → 4-perspective validation → reduced reviewers. Patterns in `.forge/forge-log.md`.
 - **Migration:** all 10 stages; `fg-160` at Stage 2; Stage 4 cycles MIGRATING/PAUSED/CLEANUP/VERIFY.
@@ -283,7 +283,7 @@ Two backends:
 - Preview gating: FAIL blocks Stage 8. Fix loop max `preview.max_fix_loops`. Exhaustion → user choice.
 
 **Implementation**
-- Worktree created at PREFLIGHT (not IMPLEMENT). Exceptions: `--dry-run`, `/forge-init`. Branch from kanban ticket ID.
+- Worktree created at PREFLIGHT (not IMPLEMENT). Exceptions: `--dry-run`, `/forge`. Branch from kanban ticket ID.
 - Parallel tasks: scaffolders serial → conflict detect → implementers parallel. Shared files auto-serialized.
 - Same PR rejection 2+ times → escalate options. `feedback_loop_count` incremented by orchestrator.
 - Framework bindings EXTEND generic layers. `go-stdlib` / `framework: null` → language + testing only. `k8s` → `language: null`.
