@@ -27,6 +27,13 @@ files touched. It does NOT see the plan, the tests, or prior findings.
 
 ## 2. Algorithm
 
+> **Diff is syntactic, not semantic.** Comparison runs on the parsed AST/CST
+> (post-`ast.parse` for Python; tree-sitter CST otherwise). Logically
+> equivalent code with reordered operands, reordered imports, or
+> added/removed docstrings WILL register as `DIVERGES` — by design. The
+> tiebreak reconciles benign rewrites; this judge does not attempt
+> behavioral equivalence.
+
 For each touched file present in BOTH samples:
 
 1. **Python (`.py`)**:

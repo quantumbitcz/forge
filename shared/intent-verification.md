@@ -109,6 +109,11 @@ Agent(fg-302-diff-judge, sub_a, sub_b, touched_files)
 
 ### Diff Judge — structural AST
 
+The diff is **syntactic** (post-`ast.parse` for Python; CST hash for
+tree-sitter languages), NOT semantic — operand reorderings, import
+reorderings, and added/removed docstrings register as `DIVERGES` by design,
+and the tiebreak reconciles them.
+
 Python: stdlib `ast` with canonicalized dump + SHA256. Supported
 tree-sitter languages (per `tree-sitter-language-pack` 1.6.3+ (2026-04)):
 TS, JS, Kotlin, Go, Rust, Java, C, C++, Ruby, PHP, Swift. Fall back to

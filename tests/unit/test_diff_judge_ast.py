@@ -68,3 +68,38 @@ def test_file_in_only_one_sample_diverges(tmp_path):
     b = _make_sample(tmp_path, "b", {})
     r = judge(a, b, ["src/m.py"])
     assert r.verdict == "DIVERGES"
+
+
+def test_empty_touched_files_raises(tmp_path):
+    """judge() refuses to opine when there's nothing to compare."""
+    a = _make_sample(tmp_path, "a", {})
+    b = _make_sample(tmp_path, "b", {})
+    with pytest.raises(ValueError):
+        judge(a, b, [])
+
+
+def test_all_file_presence_only_yields_low_confidence(tmp_path):
+    """When EVERY comparison was file-presence-only (we never opened any
+    file's contents), the judge has no opinion on what's actually present —
+    confidence must be LOW even though the verdict is structurally meaningful.
+    """
+    a = _make_sample(tmp_path, "a", {"src/m.py": "x = 1"})
+    b = _make_sample(tmp_path, "b", {})
+    r = judge(a, b, ["src/m.py"])
+    assert r.verdict == "DIVERGES"
+    assert r.confidence == "LOW"
+
+
+def test_deeply_nested_file_does_not_blow_recursion(tmp_path):
+    """The iterative DFS in tup() must tolerate deep CSTs that the prior
+    recursive form would overflow on."""
+    pytest.importorskip("tree_sitter_language_pack")
+    # Build a 2000-deep nested expression: f(f(f(...(x))))
+    depth = 2000
+    open_parens = "f(" * depth
+    close_parens = ")" * depth
+    src = f"export const y = {open_parens}x{close_parens};"
+    a = _make_sample(tmp_path, "a", {"src/deep.ts": src})
+    b = _make_sample(tmp_path, "b", {"src/deep.ts": src})
+    r = judge(a, b, ["src/deep.ts"])
+    assert r.verdict == "SAME"

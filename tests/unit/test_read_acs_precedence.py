@@ -29,6 +29,47 @@ def test_brainstorm_spec_path_wins_when_present(tmp_path, monkeypatch):
     assert acs[0]["text"].startswith("list users")
 
 
+def test_reference_mention_does_not_parse(tmp_path, monkeypatch):
+    """``Section AC-001 covers...`` is a reference, not a definition — must not
+    parse as an AC. Only ``- AC-001: text`` style bullets should match."""
+    spec = tmp_path / "spec.md"
+    spec.write_text(
+        "# Spec\n\n"
+        "Section AC-001 covers the happy path.\n"
+        "AC-002 was deferred to the next sprint.\n"
+        "- AC-003: real text body for the criterion\n"
+    )
+    monkeypatch.chdir(tmp_path)
+    state = {"brainstorm": {"spec_path": str(spec)}}
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-003"]
+    assert acs[0]["text"] == "real text body for the criterion"
+
+
+def test_bullet_without_terminator_does_not_parse(tmp_path, monkeypatch):
+    """A bullet missing the ``:``/``.``/``)`` terminator after the AC ID should
+    NOT parse — historically these were status lines, not definitions."""
+    spec = tmp_path / "spec.md"
+    spec.write_text(
+        "- AC-001 was deferred\n"
+        "- AC-002: this one is real\n"
+    )
+    monkeypatch.chdir(tmp_path)
+    state = {"brainstorm": {"spec_path": str(spec)}}
+    acs = _read_acs(state)
+    assert [a["ac_id"] for a in acs] == ["AC-002"]
+
+
+def test_long_text_capped(tmp_path, monkeypatch):
+    """AC text body is capped at 500 chars to bound downstream context size."""
+    spec = tmp_path / "spec.md"
+    spec.write_text("- AC-001: " + ("x" * 800) + "\n")
+    monkeypatch.chdir(tmp_path)
+    state = {"brainstorm": {"spec_path": str(spec)}}
+    acs = _read_acs(state)
+    assert len(acs[0]["text"]) == 500
+
+
 def test_falls_back_to_index_when_spec_path_missing(tmp_path, monkeypatch):
     forge = tmp_path / ".forge" / "specs"
     forge.mkdir(parents=True)

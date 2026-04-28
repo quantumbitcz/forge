@@ -7,6 +7,15 @@ failure.
 
 Pure functions — no IO beyond reading the two sample files. Orchestrator
 wires up the agent dispatch; this module is the engine.
+
+NOTE on diff semantics: this judge compares STRUCTURE, not behavior. For
+Python that means comparing ``ast.dump(annotate_fields=False, indent=None)``
+output of the two trees; for tree-sitter languages it means comparing the
+serialized concrete-syntax tree. Two implementations that are logically
+equivalent but differ in operand order, import order, or
+present/absent docstrings WILL register as ``DIVERGES`` — by design. The
+F36 voting gate uses this signal to trigger a tiebreak; the tiebreak
+reconciles benign rewrites without any further judgment from this module.
 """
 from __future__ import annotations
 
@@ -38,16 +47,24 @@ _TS_EXT_TO_LANG: dict[str, str] = {
     ".swift": "swift",
 }
 
+# Defensive fallback: when the primary tree-sitter language for an extension
+# is unavailable (e.g. the pack ships ``typescript`` but not the separate
+# ``tsx`` grammar on a given platform), retry with the listed alternative.
+_TS_LANG_FALLBACK: dict[str, str] = {
+    "tsx": "typescript",
+    "kotlin": "kotlin",
+}
 
-@dataclasses.dataclass
+
+@dataclasses.dataclass(frozen=True)
 class FileDiff:
     path: str
     verdict: str                  # SAME | DIVERGES
-    mode: str                     # ast | tree-sitter | degraded
+    mode: str                     # ast | tree-sitter | degraded | file-presence | io-error
     subtree_hint: str | None = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class JudgeResult:
     verdict: str                  # SAME | DIVERGES
     confidence: str               # HIGH | MEDIUM | LOW
@@ -70,6 +87,23 @@ def _python_fingerprint(src: str) -> str | None:
     return _sha(dumped.encode())
 
 
+def _resolve_ts_language(lang_name: str) -> Any:
+    """Look up a tree-sitter grammar; on failure retry the configured
+    fallback (``tsx`` -> ``typescript``, etc.) before giving up."""
+    from tree_sitter_language_pack import get_language  # type: ignore[import-not-found]
+
+    try:
+        return get_language(lang_name)
+    except (LookupError, AttributeError):
+        fallback = _TS_LANG_FALLBACK.get(lang_name)
+        if fallback and fallback != lang_name:
+            try:
+                return get_language(fallback)
+            except (LookupError, AttributeError):
+                return None
+        return None
+
+
 def _tree_sitter_fingerprint(src: bytes, ext: str) -> tuple[str | None, str]:
     """Return (fingerprint_or_none, mode). mode is 'tree-sitter' or 'degraded'."""
     lang_name = _TS_EXT_TO_LANG.get(ext)
@@ -77,22 +111,64 @@ def _tree_sitter_fingerprint(src: bytes, ext: str) -> tuple[str | None, str]:
         return None, "degraded"
     try:
         from tree_sitter import Parser  # type: ignore[import-not-found]
-        from tree_sitter_language_pack import get_language  # type: ignore[import-not-found]
     except ImportError:
         return None, "degraded"
-    try:
-        lang = get_language(lang_name)
-    except (LookupError, AttributeError):
+    lang = _resolve_ts_language(lang_name)
+    if lang is None:
         return None, "degraded"
-    parser = Parser()
-    parser.language = lang
+    try:
+        # Constructor form (tree-sitter >= 0.22) — avoids the deprecated
+        # ``parser.language = lang`` property assignment that raises
+        # AttributeError on the newer API surface.
+        parser = Parser(lang)
+    except (TypeError, AttributeError):
+        # Older API: fall back to property assignment.
+        try:
+            parser = Parser()
+            parser.language = lang  # type: ignore[assignment]
+        except (TypeError, AttributeError):
+            log.debug("tree_sitter_parser_init_failed", extra={"ext": ext})
+            return None, "degraded"
     try:
         root = parser.parse(src).root_node
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 — third-party C-extension parse can raise broadly
+        log.debug("tree_sitter_parse_failed", extra={"ext": ext})
         return None, "degraded"
 
-    def tup(node) -> Any:
-        return (node.type, tuple(tup(c) for c in node.children))
+    def tup(node: Any) -> tuple:
+        """Iterative DFS serialization of the CST.
+
+        Recursion blows the Python stack on deeply-nested files (e.g. long
+        chained method calls in generated code); the iterative form uses
+        the heap and tolerates arbitrarily deep trees.
+        """
+        # Postorder traversal via explicit stack: a sentinel marker
+        # distinguishes the "enter" visit (push children, schedule exit) from
+        # the "exit" visit (collect children's results into a tuple).
+        sentinel = object()
+        results: list[Any] = []
+        order: list[tuple[Any, Any]] = [(node, sentinel)]
+        while order:
+            current, marker = order.pop()
+            if marker is sentinel:
+                # First visit: schedule the exit then queue children for entry.
+                children = list(current.children)
+                order.append((current, children))
+                # Push children in reverse so leftmost is processed first.
+                for child in reversed(children):
+                    order.append((child, sentinel))
+            else:
+                children = marker
+                # Pop one result per child (in original order — they were
+                # appended left-to-right because of the reverse-push trick).
+                child_count = len(children)
+                if child_count:
+                    child_tuples = results[-child_count:]
+                    del results[-child_count:]
+                else:
+                    child_tuples = []
+                results.append((current.type, tuple(child_tuples)))
+        return results[-1]
 
     return _sha(repr(tup(root)).encode()), "tree-sitter"
 
@@ -120,7 +196,15 @@ def judge(sample_a_root: Path, sample_b_root: Path,
 
     sample_{a,b}_root are the sub-worktree roots
     (e.g. .forge/votes/<task_id>/sample_1). touched_files are repo-relative.
+
+    Diff is **syntactic** (post-``ast.parse`` for Python; CST hash for
+    tree-sitter languages), NOT semantic. Logically equivalent code with
+    reordered operands, reordered imports, or added/removed docstrings WILL
+    register as ``DIVERGES`` — this is acceptable because the F36 tiebreak
+    reconciles benign rewrites.
     """
+    if not touched_files:
+        raise ValueError("judge() requires at least one touched file")
     diffs: list[FileDiff] = []
     degraded: list[str] = []
     agg_a, agg_b = hashlib.sha256(), hashlib.sha256()
@@ -135,8 +219,13 @@ def judge(sample_a_root: Path, sample_b_root: Path,
         if not a.exists():
             continue
         ext = a.suffix.lower()
-        src_a = a.read_bytes()
-        src_b = b.read_bytes()
+        try:
+            src_a = a.read_bytes()
+            src_b = b.read_bytes()
+        except OSError as e:
+            log.debug("diff_judge_io_error", extra={"file": rel, "error": str(e)})
+            diffs.append(FileDiff(rel, "DIVERGES", "io-error", str(e)))
+            continue
 
         fa: str | None
         fb: str | None
@@ -174,8 +263,21 @@ def judge(sample_a_root: Path, sample_b_root: Path,
         agg_b.update((rel + ":" + (fb or "")).encode())
 
     overall = "SAME" if all(d.verdict == "SAME" for d in diffs) else "DIVERGES"
-    all_degraded = degraded and len(degraded) == len(diffs)
-    confidence = "LOW" if all_degraded else ("MEDIUM" if degraded else "HIGH")
+    # Confidence rules:
+    #   - all comparisons were file-presence-only (we never opened a single
+    #     file) -> LOW; the verdict above is structurally meaningful but the
+    #     judge has no opinion on the contents that ARE present.
+    #   - any degraded comparison -> MEDIUM (or LOW if every file was degraded).
+    #   - otherwise -> HIGH.
+    file_presence_only = all(d.mode == "file-presence" for d in diffs) if diffs else False
+    if file_presence_only:
+        confidence = "LOW"
+    elif degraded and len(degraded) == len([d for d in diffs if d.mode != "file-presence"]):
+        confidence = "LOW"
+    elif degraded:
+        confidence = "MEDIUM"
+    else:
+        confidence = "HIGH"
 
     return JudgeResult(
         verdict=overall,
@@ -183,10 +285,10 @@ def judge(sample_a_root: Path, sample_b_root: Path,
         divergences=[
             {"file": d.path,
              "subtree": d.subtree_hint or "",
-             "severity": "structural" if d.mode != "degraded" else "textual"}
+             "severity": "structural" if d.mode not in ("degraded", "io-error", "file-presence") else "textual"}
             for d in diffs if d.verdict == "DIVERGES"
         ],
-        ast_fingerprint_sample_a="sha256:" + agg_a.hexdigest(),
-        ast_fingerprint_sample_b="sha256:" + agg_b.hexdigest(),
+        ast_fingerprint_sample_a=_sha(agg_a.digest()),
+        ast_fingerprint_sample_b=_sha(agg_b.digest()),
         degraded_files=degraded,
     )
