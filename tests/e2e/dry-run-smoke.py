@@ -3,14 +3,14 @@
 
 Spawns a minimal typescript+vitest project in a temp directory, runs
 `npm ci --no-audit --no-fund` to install real dev-deps, writes the
-plugin-detection output that `/forge-init` would produce, then drives
+plugin-detection output that `/forge` would produce, then drives
 `shared/forge-sim.sh` in dry-run mode against it. Asserts the resulting
 `.forge/state.json` ends in VALIDATED or COMPLETE.
 
-Scope note: `/forge-init` itself is a Claude Code skill — it cannot be
+Scope note: `/forge` itself is a Claude Code skill — it cannot be
 spawned in CI without a Claude Code host. We use a deterministic Python
 shim that reproduces the detection + config-write path. Full
-`/forge-init` coverage belongs in `tests/evals/pipeline/` (CI-only).
+`/forge` coverage belongs in `tests/evals/pipeline/` (CI-only).
 
 Exit codes:
   0  — PASS
@@ -135,7 +135,7 @@ def smoke(*, verbose: bool = False) -> int:
             print(f"[SKIP] OSError during link: {exc}", file=sys.stderr)
             return 77
 
-        # 3. Write forge.local.md (the deterministic slice of /forge-init).
+        # 3. Write forge.local.md (the deterministic slice of /forge).
         _write_forge_local_md(project)
 
         # 4. Assert the config was detected correctly.

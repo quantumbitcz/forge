@@ -69,7 +69,7 @@ print(json.dumps(state))
   # Write a minimal forge-config.md with context_guard disabled
   # context-guard reads from FORGE_CONFIG_DIR env var
   mkdir -p "$TEST_TEMP/config"
-  cat > "$TEST_TEMP/config/forge-config.md" <<'CFGEOF'
+  cat > "$TEST_TEMP/config/forge-admin config.md" <<'CFGEOF'
 ---
 context_guard:
   enabled: false

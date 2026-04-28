@@ -3,7 +3,7 @@
 load '../../helpers/test-helpers'
 
 SKILLS_DIR="$PLUGIN_ROOT/skills"
-SKILL_FILE="$SKILLS_DIR/forge-commit/SKILL.md"
+SKILL_FILE="$SKILLS_DIR/forge commit/SKILL.md"
 
 @test "forge-commit: SKILL.md exists" {
   assert [ -f "$SKILL_FILE" ]

@@ -14,5 +14,5 @@ SPEC="$BATS_TEST_DIRNAME/../../hooks/_py/speculation.py"
 }
 
 @test "forge-config-template default shows enabled: true (opt-out is one line)" {
-  grep -q "  enabled: true" "$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-config-template.md"
+  grep -q "  enabled: true" "$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-admin config-template.md"
 }

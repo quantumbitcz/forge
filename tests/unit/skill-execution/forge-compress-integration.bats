@@ -10,7 +10,7 @@
 setup() {
   load '../../helpers/test-helpers'
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-compress/SKILL.md"
+  SKILL_FILE="$SKILLS_DIR/forge-admin compress/SKILL.md"
 }
 
 @test "forge-compress-integration: skill documents --dry-run" {

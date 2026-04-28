@@ -9,7 +9,7 @@
 
 @test "at least one framework template declares the new block" {
   local found=0
-  for f in "${BATS_TEST_DIRNAME}/../../modules/frameworks/"*"/forge-config-template.md"; do
+  for f in "${BATS_TEST_DIRNAME}/../../modules/frameworks/"*"/forge-admin config-template.md"; do
     if grep -q "prompt_compaction:" "$f"; then
       found=1
       break

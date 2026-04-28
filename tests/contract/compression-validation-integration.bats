@@ -11,5 +11,5 @@
 load '../helpers/test-helpers'
 
 @test "forge-compress SKILL.md documents --dry-run flag" {
-  grep -q -- '--dry-run' "$PLUGIN_ROOT/skills/forge-compress/SKILL.md"
+  grep -q -- '--dry-run' "$PLUGIN_ROOT/skills/forge-admin compress/SKILL.md"
 }

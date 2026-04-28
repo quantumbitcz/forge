@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-# Runtime --dry-run behavior for /forge-recover subcommands
+# Runtime --dry-run behavior for /forge-admin recover subcommands
 
 setup() {
   PLUGIN_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../.." && pwd)"
@@ -16,20 +16,20 @@ teardown() {
 }
 
 @test "forge-recover SKILL.md exists" {
-  [ -f "$PLUGIN_ROOT/skills/forge-recover/SKILL.md" ]
+  [ -f "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md" ]
 }
 
 @test "forge-recover SKILL.md advertises all 5 subcommands" {
-  local body="$PLUGIN_ROOT/skills/forge-recover/SKILL.md"
+  local body="$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
   for sc in diagnose repair reset resume rollback; do
     grep -q "\`$sc\`" "$body" || { echo "Missing subcommand doc: $sc"; return 1; }
   done
 }
 
 @test "forge-recover SKILL.md advertises --dry-run on mutating subcommands" {
-  grep -q "\-\-dry-run" "$PLUGIN_ROOT/skills/forge-recover/SKILL.md"
+  grep -q "\-\-dry-run" "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
 }
 
 @test "forge-recover SKILL.md advertises --json on diagnose" {
-  grep -q "\-\-json" "$PLUGIN_ROOT/skills/forge-recover/SKILL.md"
+  grep -q "\-\-json" "$PLUGIN_ROOT/skills/forge-admin recover/SKILL.md"
 }

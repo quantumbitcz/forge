@@ -4,7 +4,7 @@
 
 @test "spec documents bugfix + bootstrap as skip_in_modes default" {
   grep -q "skip_in_modes: \[bugfix, bootstrap\]" \
-    "$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-config-template.md"
+    "$BATS_TEST_DIRNAME/../../modules/frameworks/spring/forge-admin config-template.md"
 }
 
 @test "speculation.md forbids speculation in bugfix/bootstrap" {

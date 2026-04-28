@@ -8,7 +8,7 @@ Forge runs eight test tiers. All but the pipeline eval run in `.github/workflows
 | Unit | `tests/unit/` | pytest (some bats) | `test (*, unit)` | 3 OS | Pure-function and algorithm tests — convergence sim, state-write, scoring |
 | Contract | `tests/contract/` | bats | `test (*, contract)` | 3 OS | Contract tests between agents and the state machine |
 | Scenario | `tests/scenario/` | bats | `test (*, scenario)` | 3 OS | Full state-machine scenarios; exercises the transition table in `shared/state-transitions.md` |
-| E2E | `tests/e2e/dry-run-smoke.py` | python | `e2e` | 3 OS | Spawns a minimal ts+vitest project, drives `/forge-init` (deterministic shim) + dry-run pipeline to VALIDATED/COMPLETE |
+| E2E | `tests/e2e/dry-run-smoke.py` | python | `e2e` | 3 OS | Spawns a minimal ts+vitest project, drives `/forge` (deterministic shim) + dry-run pipeline to VALIDATED/COMPLETE |
 | Sensitivity probe | `tests/mutation/state_transitions.py` | python | `mutation` | ubuntu | Scenario-sensitivity probe (NOT classical mutation): for 5 seed rows, sets `MUTATE_ROW=<id>` and asks the bats scenario to flip its own assertion. Fails if any scenario passes anyway (= scenario not actually exercising the row). See `tests/mutation/state_transitions.py` docstring. |
 | Coverage | `tests/scenario/report_coverage.py` | python | `coverage` | ubuntu | Regenerates `tests/scenario/COVERAGE.md`; CI fails on drift or <60% T-* coverage |
 | Pipeline eval | `tests/evals/pipeline/` | python | (CI-only, separate workflow) | ubuntu | Full pipeline replay against recorded transcripts; manual and CI-gated |

@@ -77,7 +77,7 @@ EXPLORE_CACHE="$PLUGIN_ROOT/shared/explore-cache.md"
 # ---------------------------------------------------------------------------
 # 6. Reset behavior documented
 # ---------------------------------------------------------------------------
-@test "explore-cache: documents /forge-recover behavior" {
+@test "explore-cache: documents /forge-admin recover behavior" {
   grep -q "forge-recover" "$EXPLORE_CACHE" \
-    || fail "/forge-recover behavior not documented"
+    || fail "/forge-admin recover behavior not documented"
 }

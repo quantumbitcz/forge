@@ -10,8 +10,8 @@ setup() {
   STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
   STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
   BUG_INVESTIGATOR="$PLUGIN_ROOT/agents/fg-020-bug-investigator.md"
-  FORGE_FIX="$PLUGIN_ROOT/skills/forge-fix/SKILL.md"
-  FORGE_RUN="$PLUGIN_ROOT/skills/forge-run/SKILL.md"
+  FORGE_FIX="$PLUGIN_ROOT/skills/forge fix/SKILL.md"
+  FORGE_RUN="$PLUGIN_ROOT/skills/forge run/SKILL.md"
   RETROSPECTIVE="$PLUGIN_ROOT/agents/fg-700-retrospective.md"
 }
 

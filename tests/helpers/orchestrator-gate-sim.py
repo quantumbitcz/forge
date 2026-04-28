@@ -99,7 +99,7 @@ def main() -> int:
                 },
                 {
                     "label": "Abort fully",
-                    "description": "Stops immediately. Preserves state for /forge-recover resume.",
+                    "description": "Stops immediately. Preserves state for /forge-admin recover resume.",
                 },
             ],
         }

@@ -40,29 +40,29 @@ setup() {
 }
 
 @test "forge-review has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge-review/SKILL.md")
+  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge review/SKILL.md")
   [ "$count" -eq 1 ]
 }
 
 @test "forge-graph has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge-graph/SKILL.md")
+  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge-admin graph/SKILL.md")
   [ "$count" -eq 1 ]
 }
 
 @test "forge-verify has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge-verify/SKILL.md")
+  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge verify/SKILL.md")
   [ "$count" -eq 1 ]
 }
 
 @test "forge-review has 'changed' and 'all' and 'all --fix' subcommand sections" {
-  file="$PLUGIN_ROOT/skills/forge-review/SKILL.md"
+  file="$PLUGIN_ROOT/skills/forge review/SKILL.md"
   grep -q '^### Subcommand: changed' "$file"
   grep -q '^### Subcommand: all' "$file"
   grep -q '^### Subcommand: all --fix' "$file"
 }
 
 @test "forge-graph has all 5 positional subcommand sections" {
-  file="$PLUGIN_ROOT/skills/forge-graph/SKILL.md"
+  file="$PLUGIN_ROOT/skills/forge-admin graph/SKILL.md"
   for sub in init status query rebuild debug; do
     grep -q "^### Subcommand: $sub" "$file" || \
       { echo "MISSING: ### Subcommand: $sub"; return 1; }
@@ -70,14 +70,14 @@ setup() {
 }
 
 @test "forge-verify has build and all subcommand sections (no config)" {
-  file="$PLUGIN_ROOT/skills/forge-verify/SKILL.md"
+  file="$PLUGIN_ROOT/skills/forge verify/SKILL.md"
   grep -q '^### Subcommand: build' "$file"
   grep -q '^### Subcommand: all' "$file"
   ! grep -q '^### Subcommand: config' "$file" || { echo "--config must be removed per Phase 2"; return 1; }
 }
 
 @test "forge-review --scope=all --fix documents AskUserQuestion safety gate" {
-  file="$PLUGIN_ROOT/skills/forge-review/SKILL.md"
+  file="$PLUGIN_ROOT/skills/forge review/SKILL.md"
   # The gate MUST be documented under the all --fix subcommand.
   grep -q 'AskUserQuestion' "$file"
   grep -qiE 'safety.*gate|safety-confirm|confirm.*gate' "$file"

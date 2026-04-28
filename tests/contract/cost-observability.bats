@@ -67,17 +67,17 @@ load '../helpers/test-helpers'
 
 @test "forge-insights Category 3 includes per-stage cost breakdown" {
   grep -q "Per-Stage Cost Breakdown\|per.stage.*cost\|Per-Run Cost Trend" \
-    "$PLUGIN_ROOT/skills/forge-insights/SKILL.md"
+    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
 }
 
 @test "forge-insights Category 3 includes cost recommendations" {
   grep -q "Cost Recommendation\|Top-3.*Recommendation\|recommendation" \
-    "$PLUGIN_ROOT/skills/forge-insights/SKILL.md"
+    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
 }
 
 @test "forge-insights Category 3 includes budget utilization" {
   grep -q "Budget Utilization\|budget.*utilization" \
-    "$PLUGIN_ROOT/skills/forge-insights/SKILL.md"
+    "$PLUGIN_ROOT/skills/forge-ask insights/SKILL.md"
 }
 
 # ── Config Validation ────────────────────────────────────────────────────

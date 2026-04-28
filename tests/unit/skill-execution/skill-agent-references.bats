@@ -22,22 +22,22 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint forge-bootstrap for
 }
 
 @test "skill-agent-refs: forge-run references orchestrator" {
-  run grep -q 'fg-100-orchestrator\|orchestrator' "$SKILLS_DIR/forge-run/SKILL.md"
+  run grep -q 'fg-100-orchestrator\|orchestrator' "$SKILLS_DIR/forge run/SKILL.md"
   assert_success
 }
 
 @test "skill-agent-refs: forge-fix references orchestrator" {
-  run grep -q 'fg-100-orchestrator\|orchestrator' "$SKILLS_DIR/forge-fix/SKILL.md"
+  run grep -q 'fg-100-orchestrator\|orchestrator' "$SKILLS_DIR/forge fix/SKILL.md"
   assert_success
 }
 
 @test "skill-agent-refs: forge-shape references shaper" {
-  run grep -q 'fg-010-shaper\|shaper' "$SKILLS_DIR/forge-shape/SKILL.md"
+  run grep -q 'fg-010-shaper\|shaper' "$SKILLS_DIR/forge run/SKILL.md"
   assert_success
 }
 
 @test "skill-agent-refs: forge-sprint references sprint orchestrator" {
-  run grep -q 'fg-090-sprint-orchestrator\|sprint' "$SKILLS_DIR/forge-sprint/SKILL.md"
+  run grep -q 'fg-090-sprint-orchestrator\|sprint' "$SKILLS_DIR/forge sprint/SKILL.md"
   assert_success
 }
 

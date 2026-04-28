@@ -3,7 +3,7 @@
 setup() {
   load '../../helpers/test-helpers'
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../../skills"
-  SKILL_FILE="$SKILLS_DIR/forge-review/SKILL.md"
+  SKILL_FILE="$SKILLS_DIR/forge review/SKILL.md"
 }
 
 @test "forge-review-integration: default dispatches 3 core agents" {

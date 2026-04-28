@@ -4,7 +4,7 @@
 load '../helpers/test-helpers'
 
 MCP_DOC="$PLUGIN_ROOT/shared/mcp-provisioning.md"
-FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+FORGE_INIT="$PLUGIN_ROOT/skills/forge/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists

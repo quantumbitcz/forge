@@ -5,7 +5,7 @@ load '../helpers/test-helpers'
 
 SERVER_FILE="$PLUGIN_ROOT/shared/mcp-server/forge-mcp-server.py"
 REQUIREMENTS="$PLUGIN_ROOT/shared/mcp-server/requirements.txt"
-INIT_SKILL="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+INIT_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 1. Server file exists and has valid Python syntax

@@ -14,12 +14,12 @@ setup() {
 }
 
 @test "skill-error-handling: graph skill handles missing Neo4j" {
-  # Skill consolidation: 5 graph skills merged into /forge-graph with positional subcommands.
-  run grep -qi 'docker\|container\|unavailable\|not running' "$SKILLS_DIR/forge-graph/SKILL.md"
+  # Skill consolidation: 5 graph skills merged into /forge-admin graph with positional subcommands.
+  run grep -qi 'docker\|container\|unavailable\|not running' "$SKILLS_DIR/forge-admin graph/SKILL.md"
   assert_success
 }
 
 @test "skill-error-handling: deploy skill has rollback guidance" {
-  run grep -qi 'rollback\|revert\|fail' "$SKILLS_DIR/forge-deploy/SKILL.md"
+  run grep -qi 'rollback\|revert\|fail' "$SKILLS_DIR/forge deploy/SKILL.md"
   assert_success
 }

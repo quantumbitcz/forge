@@ -7,7 +7,7 @@ SCHEMA="$PLUGIN_ROOT/shared/schemas/playbook-refinement-schema.json"
 PLAYBOOKS_DOC="$PLUGIN_ROOT/shared/playbooks.md"
 RETROSPECTIVE="$PLUGIN_ROOT/agents/fg-700-retrospective.md"
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"
-SKILL="$PLUGIN_ROOT/skills/forge-playbook-refine/SKILL.md"
+SKILL="$PLUGIN_ROOT/skills/forge-admin refine/SKILL.md"
 PREFLIGHT="$PLUGIN_ROOT/shared/preflight-constraints.md"
 STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 

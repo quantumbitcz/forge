@@ -38,8 +38,8 @@ MODULES_DIR="$PLUGIN_ROOT/modules"
 }
 
 @test "docs-structural: forge-docs-generate skill exists" {
-  [ -f "$SKILLS_DIR/forge-docs-generate/SKILL.md" ] || fail "Skill file not found"
-  grep -q "^name: forge-docs-generate" "$SKILLS_DIR/forge-docs-generate/SKILL.md" || fail "Missing or incorrect name field"
+  [ -f "$SKILLS_DIR/forge docs/SKILL.md" ] || fail "Skill file not found"
+  grep -q "^name: forge-docs-generate" "$SKILLS_DIR/forge docs/SKILL.md" || fail "Missing or incorrect name field"
 }
 
 @test "docs-structural: modules/documentation/conventions.md exists" {

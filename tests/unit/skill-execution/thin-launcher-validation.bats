@@ -22,7 +22,7 @@ THIN_LAUNCHERS=(forge-run forge-fix forge-shape forge-sprint forge-bootstrap for
 }
 
 @test "thin-launcher: forge-run is a thin launcher" {
-  local skill="$SKILLS_DIR/forge-run/SKILL.md"
+  local skill="$SKILLS_DIR/forge run/SKILL.md"
   run grep -qi 'dispatch' "$skill"
   assert_success
 }

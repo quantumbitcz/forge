@@ -70,7 +70,7 @@ On every PR run the runner compares the mean composite score to the latest `mast
 
 ### CI status: gate is gated off
 
-The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge-init` + `/forge-run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
+The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge` + `/forge run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
 
 Deferred pending a "claude CLI in CI" follow-up.
 

@@ -10,7 +10,7 @@
 
 setup() {
   load '../helpers/test-helpers'
-  COMPRESS_SKILL="$BATS_TEST_DIRNAME/../../skills/forge-compress/SKILL.md"
+  COMPRESS_SKILL="$BATS_TEST_DIRNAME/../../skills/forge-admin compress/SKILL.md"
 }
 
 @test "caveman-roundtrip: forge-compress documents --dry-run flag" {

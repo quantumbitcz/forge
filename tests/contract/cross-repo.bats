@@ -7,7 +7,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
-FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+FORGE_INIT="$PLUGIN_ROOT/skills/forge/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 1. cross_repo field documented in state-schema.md

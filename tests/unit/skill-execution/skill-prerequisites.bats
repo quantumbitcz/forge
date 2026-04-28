@@ -14,16 +14,16 @@ setup() {
 }
 
 @test "skill-prerequisites: forge-init checks for existing config" {
-  run grep -qi 'forge.local\|existing\|already' "$SKILLS_DIR/forge-init/SKILL.md"
+  run grep -qi 'forge.local\|existing\|already' "$SKILLS_DIR/forge/SKILL.md"
   assert_success
 }
 
 @test "skill-prerequisites: forge-recover checks for state.json" {
-  run grep -qi 'state\.json\|checkpoint\|aborted' "$SKILLS_DIR/forge-recover/SKILL.md"
+  run grep -qi 'state\.json\|checkpoint\|aborted' "$SKILLS_DIR/forge-admin recover/SKILL.md"
   assert_success
 }
 
 @test "skill-prerequisites: deploy checks for dirty tree" {
-  run grep -qi 'dirty\|uncommit\|clean' "$SKILLS_DIR/forge-deploy/SKILL.md"
+  run grep -qi 'dirty\|uncommit\|clean' "$SKILLS_DIR/forge deploy/SKILL.md"
   assert_success
 }

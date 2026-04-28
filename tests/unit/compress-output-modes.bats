@@ -5,12 +5,12 @@ setup() {
   SKILLS_DIR="$BATS_TEST_DIRNAME/../../skills"
 }
 
-@test "compress-output-modes: /forge-compress output skill exists" {
-  assert [ -f "$SKILLS_DIR/forge-compress/SKILL.md" ]
+@test "compress-output-modes: /forge-admin compress output skill exists" {
+  assert [ -f "$SKILLS_DIR/forge-admin compress/SKILL.md" ]
 }
 
 @test "compress-output-modes: skill defines 4 modes (lite, full, ultra, off)" {
-  local skill="$SKILLS_DIR/forge-compress/SKILL.md"
+  local skill="$SKILLS_DIR/forge-admin compress/SKILL.md"
   for mode in lite full ultra off; do
     run grep -q "$mode" "$skill"
     assert_success
@@ -22,11 +22,11 @@ setup() {
 # new skill is a concise 4-subcommand surface (agents|output|status|help).
 
 @test "compress-output-modes: skill has valid frontmatter" {
-  run head -1 "$SKILLS_DIR/forge-compress/SKILL.md"
+  run head -1 "$SKILLS_DIR/forge-admin compress/SKILL.md"
   assert_output "---"
 }
 
 @test "compress-output-modes: skill name matches directory" {
-  run sed -n 's/^name: *//p' "$SKILLS_DIR/forge-compress/SKILL.md"
+  run sed -n 's/^name: *//p' "$SKILLS_DIR/forge-admin compress/SKILL.md"
   assert_output "forge-compress"
 }

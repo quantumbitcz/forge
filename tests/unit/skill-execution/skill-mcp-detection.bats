@@ -6,22 +6,22 @@ setup() {
 }
 
 @test "skill-mcp-detection: forge-run detects MCPs" {
-  run grep -qi 'MCP\|mcp\|Linear\|Playwright\|Context7' "$SKILLS_DIR/forge-run/SKILL.md"
+  run grep -qi 'MCP\|mcp\|Linear\|Playwright\|Context7' "$SKILLS_DIR/forge run/SKILL.md"
   assert_success
 }
 
 @test "skill-mcp-detection: forge-fix detects MCPs" {
-  run grep -qi 'MCP\|mcp' "$SKILLS_DIR/forge-fix/SKILL.md"
+  run grep -qi 'MCP\|mcp' "$SKILLS_DIR/forge fix/SKILL.md"
   assert_success
 }
 
 @test "skill-mcp-detection: forge-shape detects MCPs" {
-  run grep -qi 'MCP\|mcp' "$SKILLS_DIR/forge-shape/SKILL.md"
+  run grep -qi 'MCP\|mcp' "$SKILLS_DIR/forge run/SKILL.md"
   assert_success
 }
 
 @test "skill-mcp-detection: graph skill checks Neo4j availability" {
-  # forge-graph-init consolidated into /forge-graph.
-  run grep -qi 'neo4j\|docker\|health' "$SKILLS_DIR/forge-graph/SKILL.md"
+  # forge-graph-init consolidated into /forge-admin graph.
+  run grep -qi 'neo4j\|docker\|health' "$SKILLS_DIR/forge-admin graph/SKILL.md"
   assert_success
 }

@@ -2,7 +2,7 @@
 
 The orchestrator invokes the time-travel module as
 ``python3 -m hooks._py.time_travel <op> <args...>``. Exit codes are the
-contract surfaced to ``/forge-recover`` (see SKILL.md exit-codes table).
+contract surfaced to ``/forge-admin recover`` (see SKILL.md exit-codes table).
 """
 from __future__ import annotations
 

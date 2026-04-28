@@ -87,7 +87,7 @@ RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 # ---------------------------------------------------------------------------
 @test "preflight-constraints: all framework config templates have sprint params" {
   local missing=0
-  for template in "$PLUGIN_ROOT"/modules/frameworks/*/forge-config-template.md; do
+  for template in "$PLUGIN_ROOT"/modules/frameworks/*/forge-admin config-template.md; do
     if ! grep -q "poll_interval_seconds" "$template"; then
       echo "MISSING sprint params: $(basename "$(dirname "$template")")" >&2
       missing=$((missing + 1))

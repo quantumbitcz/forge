@@ -3,7 +3,7 @@
 load '../../helpers/test-helpers'
 
 SKILLS_DIR="$PLUGIN_ROOT/skills"
-SKILL_FILE="$SKILLS_DIR/forge-run/SKILL.md"
+SKILL_FILE="$SKILLS_DIR/forge run/SKILL.md"
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
 
 @test "forge-run-integration: skill documents forge.local.md prerequisite" {

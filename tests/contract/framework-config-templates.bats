@@ -11,21 +11,21 @@
 load '../helpers/test-helpers'
 
 @test "every framework template declares cost.ceiling_usd" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "^\s*ceiling_usd:\s*25\.00" "$tpl"
     assert_success "missing cost.ceiling_usd in $tpl"
   done
 }
 
 @test "every framework template declares cost.aware_routing" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "^\s*aware_routing:\s*true" "$tpl"
     assert_success "missing cost.aware_routing in $tpl"
   done
 }
 
 @test "every framework template declares tier_estimates_usd.premium = 0.078" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "premium:\s*0\.078" "$tpl"
     assert_success "missing premium tier estimate in $tpl"
   done

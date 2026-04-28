@@ -3,7 +3,7 @@ setup() {
   load '../lib/bats-support/load'
   load '../lib/bats-assert/load'
   PLUGIN_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
-  FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+  FORGE_INIT="$PLUGIN_ROOT/skills/forge/SKILL.md"
 }
 
 @test "init-auto: documents project-local plugin generation" {
@@ -27,7 +27,7 @@ setup() {
 }
 
 @test "init-auto: offers implementation tasks" {
-  grep -q "Run /forge-run to implement\|setup tasks\|Setup Tasks" "$FORGE_INIT"
+  grep -q "Run /forge run to implement\|setup tasks\|Setup Tasks" "$FORGE_INIT"
 }
 
 @test "init-auto: respects existing hooks" {

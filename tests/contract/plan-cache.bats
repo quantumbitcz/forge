@@ -95,7 +95,7 @@ PLAN_CACHE="$PLUGIN_ROOT/shared/plan-cache.md"
 # ---------------------------------------------------------------------------
 # 7. Reset behavior documented
 # ---------------------------------------------------------------------------
-@test "plan-cache: documents /forge-recover behavior" {
+@test "plan-cache: documents /forge-admin recover behavior" {
   grep -q "forge-recover" "$PLAN_CACHE" \
-    || fail "/forge-recover behavior not documented"
+    || fail "/forge-admin recover behavior not documented"
 }

@@ -42,9 +42,9 @@ setup() {
 
 @test "writes skills list --dry-run in Flags" {
   # Writes skills per shared/skill-contract.md §4.
-  # Skill consolidation removed forge-deep-health (merged into /forge-review --scope all --fix),
-  # forge-graph-init/rebuild (merged into /forge-graph write-capable subcommands), and
-  # /forge-verify now gains writes via --all but stays listed under read-only since the
+  # Skill consolidation removed forge-deep-health (merged into /forge review --scope all --fix),
+  # forge-graph-init/rebuild (merged into /forge-admin graph write-capable subcommands), and
+  # /forge verify now gains writes via --all but stays listed under read-only since the
   # default subcommand is read-only.
   local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
                 forge-compress forge-config forge-deploy \
@@ -60,9 +60,9 @@ setup() {
 }
 
 @test "read-only skills list --json in Flags" {
-  # Skill consolidation removed forge-codebase-health (merged into /forge-review --scope all),
-  # forge-graph-{debug,query,status} (merged into /forge-graph), and
-  # forge-config-validate (merged into /forge-status).
+  # Skill consolidation removed forge-codebase-health (merged into /forge review --scope all),
+  # forge-graph-{debug,query,status} (merged into /forge-admin graph), and
+  # forge-config-validate (merged into /forge-ask status).
   local readonly_skills=(forge-ask forge-history forge-insights forge-playbooks \
                          forge-profile forge-security-audit forge-status \
                          forge-tour forge-verify)
@@ -88,7 +88,7 @@ setup() {
     local hits
     # Exempt:
     #   - DEPRECATIONS.md, CHANGELOG.md — migration history
-    #   - skills/forge-recover/SKILL.md, skills/forge-compress/SKILL.md — legitimately
+    #   - skills/forge-admin recover/SKILL.md, skills/forge-admin compress/SKILL.md — legitimately
     #     document the /old-skill → /new-skill migration tables
     #   - tests/contract/skill-contract.bats — this file lists the deleted names as
     #     a negative-check array
@@ -98,8 +98,8 @@ setup() {
              "$PLUGIN_ROOT/tests" "$PLUGIN_ROOT/hooks" 2>/dev/null \
            | grep -v "DEPRECATIONS.md" \
            | grep -v "CHANGELOG.md" \
-           | grep -v "skills/forge-recover/SKILL.md" \
-           | grep -v "skills/forge-compress/SKILL.md" \
+           | grep -v "skills/forge-admin recover/SKILL.md" \
+           | grep -v "skills/forge-admin compress/SKILL.md" \
            | grep -v "tests/contract/skill-contract.bats" || true)
     if [ -n "$hits" ]; then
       echo "Dangling reference to /$name in:"

@@ -50,17 +50,17 @@ load '../helpers/test-helpers'
 }
 
 @test "docs-scenario: forge-docs-generate skill supports --coverage flag" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
+  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
   grep -q "\-\-coverage" "$skill" || fail "Missing --coverage flag"
 }
 
 @test "docs-scenario: forge-docs-generate skill supports --confirm-decisions flag" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
+  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
   grep -q "\-\-confirm-decisions" "$skill" || fail "Missing --confirm-decisions flag"
 }
 
 @test "docs-scenario: forge-docs-generate skill detects framework without pipeline config" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
+  local skill="$PLUGIN_ROOT/skills/forge docs/SKILL.md"
   grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" "$skill" || fail "Missing standalone framework detection"
 }
 

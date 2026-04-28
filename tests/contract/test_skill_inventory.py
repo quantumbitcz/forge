@@ -1,4 +1,4 @@
-"""Contract test: skill count is exactly 28; /forge-help is absent.
+"""Contract test: skill count is exactly 28; /forge --help is absent.
 
 Also sweeps the repo for stale forge-help references in .md and .bats files.
 Excludes CHANGELOG.md (historical), docs/superpowers/{plans,specs}/ (frozen
@@ -64,7 +64,7 @@ def test_skill_count_is_28() -> None:
 
 
 def test_forge_help_directory_is_gone() -> None:
-    assert not (SKILLS_DIR / "forge-help").exists(), "skills/forge-help must be deleted"
+    assert not (SKILLS_DIR / "forge-help").exists(), "skills/forge --help must be deleted"
 
 
 @pytest.mark.parametrize("path", _sweep_targets(), ids=lambda p: str(p.relative_to(REPO_ROOT)))

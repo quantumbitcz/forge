@@ -7,7 +7,7 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
-MIGRATION_SKILL="$PLUGIN_ROOT/skills/forge-migration/SKILL.md"
+MIGRATION_SKILL="$PLUGIN_ROOT/skills/forge migrate/SKILL.md"
 MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 
 # ---------------------------------------------------------------------------

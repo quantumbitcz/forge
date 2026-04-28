@@ -5,8 +5,8 @@ Contract:
     2. If ``fixtures/starter.tar.gz`` exists in the scenario dir, extract it;
        otherwise ``git init`` an empty repo.
     3. Symlink the current forge checkout into ``.claude/plugins/forge``.
-    4. Run ``/forge-init`` non-interactively to seed config.
-    5. Set ``FORGE_EVAL=1`` and run ``/forge-run --eval-mode <id>``.
+    4. Run ``/forge`` non-interactively to seed config.
+    5. Set ``FORGE_EVAL=1`` and run ``/forge run --eval-mode <id>``.
     6. Parse ``.forge/state.json`` post-run.
     7. Return raw metrics (tokens, elapsed, score, verdict, touched files).
 
@@ -69,7 +69,7 @@ def _run_forge_init(target: Path) -> None:
     # Non-interactive: rely on FORGE_EVAL=1 to skip prompts.
     env = {**os.environ, "FORGE_EVAL": "1"}
     subprocess.run(
-        ["claude", "code", "--non-interactive", "/forge-init"],
+        ["claude", "code", "--non-interactive", "/forge"],
         cwd=target,
         env=env,
         check=True,
@@ -88,7 +88,7 @@ def _run_forge_with_eval_mode(
     env = {**os.environ, "FORGE_EVAL": "1"}
     cmd = [
         "claude", "code", "--non-interactive",
-        f"/forge-run --eval-mode {scenario.id}",
+        f"/forge run --eval-mode {scenario.id}",
         scenario.prompt,
     ]
     if dry_run:

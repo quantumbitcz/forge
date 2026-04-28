@@ -91,7 +91,7 @@ REQUIRED_FILES=("${REQUIRED_FRAMEWORK_FILES[@]}")
 @test "module-completeness: forge-config-template has total_retries_max and oscillation_tolerance" {
   local failures=()
   for fw in "${EXPECTED_FRAMEWORKS[@]}"; do
-    local tmpl="$FRAMEWORKS_DIR/$fw/forge-config-template.md"
+    local tmpl="$FRAMEWORKS_DIR/$fw/forge-admin config-template.md"
     if [[ ! -f "$tmpl" ]]; then
       continue
     fi

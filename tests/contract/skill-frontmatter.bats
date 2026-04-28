@@ -81,7 +81,7 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 # ---------------------------------------------------------------------------
 # 5. At least 35 skills exist (Phase 1 consolidation: 42 → 35 after deleting
-#    7 deprecated skills and consolidating into /forge-recover, /forge-compress)
+#    7 deprecated skills and consolidating into /forge-admin recover, /forge-admin compress)
 # ---------------------------------------------------------------------------
 @test "skill-frontmatter: at least 28 skills exist" {
   local count=0
