@@ -1,0 +1,10 @@
+version: 1
+ac_list:
+  - id: AC-B001
+    description: "GET /health returns HTTP 200"
+    verifiable_via: http
+    probe: "curl -fsS http://localhost:8080/health"
+  - id: AC-B002
+    description: "Response body is JSON with status=ok"
+    verifiable_via: http
+    probe: "curl -fsS http://localhost:8080/health | jq -e '.status == \"ok\"'"

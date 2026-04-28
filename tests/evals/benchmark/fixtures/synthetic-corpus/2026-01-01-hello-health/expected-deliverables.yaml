@@ -1,0 +1,11 @@
+version: 1
+files_touched:
+  expected_any_of:
+    - "src/routes/health.ts"
+    - "src/handlers/health.py"
+  must_not_touch:
+    - ".github/**"
+    - "package-lock.json"
+endpoints_expected:
+  - "GET /health"
+tests_expected_min: 1
