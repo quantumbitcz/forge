@@ -1,6 +1,6 @@
 # State Schema
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Storage:** `.forge/state.json` (gitignored)
 **Schema pin:** `shared/checks/state-schema-v2.0.json` (authoritative JSON Schema)
 **Field reference:** see [`state-schema-fields.md`](state-schema-fields.md) for exhaustive field-by-field documentation, subsystem schemas (security injection, events.jsonl, checkpoints, stage notes, feedback, reports, orchestrator input, eval_run, prompt_compaction, speculation), and the full changelog.
@@ -483,3 +483,144 @@ The lock is held by the orchestrator process only. Subagents dispatched by `fg-1
 - [`state-transitions.md`](state-transitions.md) — authoritative FSM transition table.
 - [`recovery/recovery-engine.md`](recovery/recovery-engine.md) — recovery strategies and budget.
 - [`sprint-state-schema.md`](sprint-state-schema.md) — sprint-mode state additions (per-run locks, worktree isolation).
+
+## State Changes — Mega-Consolidation v2.1.0 (2026-04-27)
+
+Spec: `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §11 (commit 660dbef7).
+
+### New stage enum value
+
+`state.story_state` (alias `state.stage` in some agents) gains the value `BRAINSTORMING`. It sits between `PREFLIGHT` and `EXPLORING` in the canonical pipeline ordering.
+
+Transitions are documented in `shared/state-transitions.md`:
+
+| current | event | guard | next |
+|---|---|---|---|
+| `PREFLIGHT` | `preflight_complete` | `mode == "feature"` AND `brainstorm.enabled == true` | `BRAINSTORMING` |
+| `BRAINSTORMING` | `brainstorm_complete` | spec written and approved | `EXPLORING` |
+| `BRAINSTORMING` | `user_abort` | — | `ABORTED` |
+| `BRAINSTORMING` | `resume_with_cache` | `state.brainstorm.spec_path` exists | `BRAINSTORMING` (self-loop) |
+
+### `state.brainstorm`
+
+```jsonc
+{
+  "spec_path": "docs/superpowers/specs/2026-04-27-add-export-csv-design.md",
+  "original_input": "add CSV export to the user list",
+  "started_at": "2026-04-27T14:23:11Z",
+  "completed_at": "2026-04-27T14:31:42Z",
+  "autonomous": false,
+  "questions_asked": 4,
+  "approaches_proposed": 3,
+  "section_approvals": ["architecture", "components", "data_flow", "error_handling", "testing"]
+}
+```
+
+Per-field types:
+- `spec_path` — string, repo-relative path to the written spec.
+- `original_input` — string, the verbatim free-text input that triggered BRAINSTORMING. Required for autonomous-resume regeneration.
+- `started_at`, `completed_at` — ISO-8601 timestamps.
+- `autonomous` — boolean. True when `--autonomous` or `autonomous: true` config was active.
+- `questions_asked` — int >= 0.
+- `approaches_proposed` — int >= 0.
+- `section_approvals` — list of strings; expected values: any of `architecture | components | data_flow | error_handling | testing`. Order reflects the order the user approved the sections.
+
+### `state.bug`
+
+```jsonc
+{
+  "ticket_id": "FG-742",
+  "reproduction_attempts": 2,
+  "reproduction_succeeded": true,
+  "branching_used": true,
+  "fix_gate_passed": true,
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Concurrent writes to .forge/state.json cause race that loses the last write",
+      "falsifiability_test": "Reproduce while holding the .forge/.lock file; expect bug to NOT occur",
+      "evidence_required": "stack trace shows lock-skip OR successful concurrent reproduction without lock",
+      "status": "tested",
+      "passes_test": true,
+      "confidence": "high",
+      "posterior": 0.78
+    }
+  ]
+}
+```
+
+Per-field types:
+- `ticket_id` — string or null.
+- `reproduction_attempts` — int in [0, 3].
+- `reproduction_succeeded` — boolean.
+- `branching_used` — boolean. True when `bug.hypothesis_branching.enabled` was true at investigation time.
+- `fix_gate_passed` — boolean. True iff at least one hypothesis has `passes_test: true` AND `posterior >= bug.fix_gate_threshold` (default 0.75; configurable).
+- `hypotheses[].id` — string, format `H<int>` (H1, H2, ...).
+- `hypotheses[].statement` — string, the hypothesis itself.
+- `hypotheses[].falsifiability_test` — string, an executable check that disproves the hypothesis if it fails.
+- `hypotheses[].evidence_required` — string, what observation confirms or denies the hypothesis.
+- `hypotheses[].status` — enum: `untested | testing | tested | dropped`.
+- `hypotheses[].passes_test` — bool, set when status transitions to `tested`.
+- `hypotheses[].confidence` — enum: `high | medium | low`.
+- `hypotheses[].posterior` — float in [0.0, 1.0]; updated per the Bayes formula in spec §7.
+
+### `state.feedback_decisions`
+
+```jsonc
+[
+  {
+    "comment_id": "github://pulls/123#issuecomment-9876",
+    "verdict": "wrong",
+    "reasoning": "Reviewer suggests we mock the database, but our memory says integration tests must hit a real DB.",
+    "evidence": "agents/fg-300-implementer.md:45 enforces real-DB testing per project memory",
+    "addressed": "defended",
+    "posted_at": "2026-04-27T15:02:11Z"
+  }
+]
+```
+
+Per-field types:
+- `comment_id` — string, opaque platform-scoped ID (e.g. `github://pulls/<n>#issuecomment-<id>`, `gitlab://merge_requests/<n>#note_<id>`).
+- `verdict` — enum: `actionable | wrong | preference`.
+- `reasoning` — string, defense or acknowledgment text. >=1 character; required for `wrong` and `preference`; optional for `actionable`.
+- `evidence` — string. For `wrong` verdict, must reference at least one file path or commit SHA. For other verdicts, optional.
+- `addressed` — enum: `actionable_routed | defended | acknowledged | defended_local_only`. Set after the action completes.
+- `posted_at` — ISO-8601 timestamp; set when defense or acknowledgment is posted to the PR thread.
+
+The list is also mirrored to `.forge/runs/<run_id>/feedback-decisions.jsonl` (append-only). The state field is the in-memory canonical view; the JSONL is the durable record. Recovery rebuilds state from JSONL.
+
+### `state.platform`
+
+```jsonc
+{
+  "name": "github",
+  "remote_url": "https://github.com/quantumbitcz/forge",
+  "api_base": "https://api.github.com",
+  "auth_method": "gh-cli",
+  "detected_at": "2026-04-27T15:00:00Z"
+}
+```
+
+Per-field types:
+- `name` — enum: `github | gitlab | bitbucket | gitea | unknown`.
+- `remote_url` — string. The git remote URL inspected during detection.
+- `api_base` — string. Platform API base URL.
+- `auth_method` — enum: `gh-cli | glab-cli | app-password | gitea-token | none`.
+- `detected_at` — ISO-8601 timestamp. Set once at PREFLIGHT; not refreshed on subsequent stages within the run.
+
+Detection logic and adapter wiring live in `shared/platform-detect.py` (added in commit A3 of the mega-consolidation plan).
+
+### OTel events registered for BRAINSTORMING
+
+The orchestrator (and `fg-010-shaper` once C1 lands) emits the following events under the `forge.brainstorm.*` namespace:
+
+| Event name | When fired |
+|---|---|
+| `forge.brainstorm.started` | Stage entry. |
+| `forge.brainstorm.question_asked` | Each `AskUserQuestion` invocation. |
+| `forge.brainstorm.approaches_proposed` | When the agent presents its 2-3 approaches. |
+| `forge.brainstorm.spec_written` | When the spec file is written (atomic write completes). |
+| `forge.brainstorm.completed` | Stage exit on success. |
+| `forge.brainstorm.aborted` | Stage exit on user abort or unrecoverable error. |
+
+Names are registered here (AC-S025 slot); event-emission wiring lands in C1 and C2.

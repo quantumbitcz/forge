@@ -11,7 +11,8 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
 | 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
-| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
+| 0.5 | BRAINSTORMING *(conditional)* | `fg-010-shaper` | `BRAINSTORMING` | PREFLIGHT complete AND `mode == feature` AND `brainstorm.enabled == true` | Spec written and approved (or auto-approved in autonomous degradation) |
+| 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully (or BRAINSTORMING completed in feature mode) | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
 | 2 | PLAN | `fg-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
 | 3 | VALIDATE | `fg-210-validator` + conditional: `fg-250-contract-validator` | `VALIDATING` | Plan exists | GO verdict (or NO-GO escalated to user); cross-repo contracts validated if applicable |
 | 4 | IMPLEMENT | `fg-310-scaffolder` + `fg-300-implementer` + conditional: `fg-320-frontend-polisher` | `IMPLEMENTING` | Plan validated with GO verdict; worktree exists at `.forge/worktree` (created at PREFLIGHT) | All tasks completed inside worktree (or failed after max retries) |
@@ -79,6 +80,19 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 - **`fg-350-docs-generator` (Stage 7):** Generate docs for changed files only. Skip cross-referencing, coverage gap analysis, and doc structure recommendations. Do not create new doc files that would normally be suggested by discovery results.
 - **`fg-418-docs-consistency-reviewer` (Stage 6):** Skip cross-repo decision/constraint validation. Validate against local docs only. Reduce confidence level on all findings to `MEDIUM` maximum (since doc context is incomplete). Report a SCOUT finding: `SCOUT-DOC-DEGRADED: Documentation discovery failed — review coverage may be incomplete.` (SCOUT prefix = zero score deduction; this is a pipeline infrastructure signal, not a code quality issue the implementer can fix.)
+
+---
+
+### Stage 0.5: BRAINSTORMING *(feature mode only)*
+
+**Agent:** `fg-010-shaper`
+**story_state:** `BRAINSTORMING`
+
+**Entry condition:** PREFLIGHT complete AND `state.mode == "feature"` AND `brainstorm.enabled == true` AND not `--dry-run`. Skipped for bugfix, migration, bootstrap modes; skipped when `brainstorm.enabled: false`.
+
+**Exit condition:** Spec written to `docs/superpowers/specs/<date>-<slug>-design.md` (or `brainstorm.spec_dir` override) and approved (interactive) or auto-approved (autonomous degradation per §3).
+
+**Spec:** `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` §3. Full per-stage detail (inputs, outputs, telemetry, error handling) lands in C2 when the orchestrator wiring is added; this declaration reserves the slot.
 
 ---
 

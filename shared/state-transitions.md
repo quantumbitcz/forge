@@ -12,7 +12,7 @@ Control flow (which state comes next, when to retry, when to escalate) is fully 
 
 ## Pipeline States
 
-The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response.
+The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `BRAINSTORMING`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response. `BRAINSTORMING` was added in state-schema v2.1.0 (mega-consolidation, 2026-04-27); see `shared/state-schema.md` §"State Changes — Mega-Consolidation v2.1.0".
 
 - **REWINDING** *(pseudo-state, non-persistent, added in state-schema v1.9.0)* — in effect only during the atomic rewind transaction. `state.story_state` is NOT written as `REWINDING`; this name appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket the rewind op.
 
@@ -24,8 +24,12 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 
 | # | current_state | event | guard | next_state | action |
 |---|---------------|-------|-------|------------|--------|
-| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
-| 2 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree, no lock, no checkpoints) |
+| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND mode == "feature" AND brainstorm.enabled == true` | `BRAINSTORMING` | Initialize state, create worktree, resolve convention stacks; dispatch fg-010-shaper |
+| 1a | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND (mode != "feature" OR brainstorm.enabled == false)` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
+| 2 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree, no lock, no checkpoints) — dry-run skips BRAINSTORMING |
+| 2a | `BRAINSTORMING` | `brainstorm_complete` | spec written and approved | `EXPLORING` | Pass `state.brainstorm.spec_path` to planner |
+| 2b | `BRAINSTORMING` | `user_abort` | — | `ABORTED` | Persist partial brainstorm cache; clean exit |
+| 2c | `BRAINSTORMING` | `resume_with_cache` | `state.brainstorm.spec_path` exists AND file present | `BRAINSTORMING` | Self-loop — re-enter shaper with cache loaded |
 | 3 | `PREFLIGHT` | `interrupted_run_detected` | `checkpoint_valid AND no_git_drift` | Resume from first incomplete stage | Load checkpoint, resume pipeline |
 | 4 | `PREFLIGHT` | `interrupted_run_detected` | `git_drift_detected` | `PREFLIGHT` | Warn user, ask whether to incorporate or discard changes |
 | 5 | `EXPLORING` | `explore_complete` | `scope < decomposition_threshold` | `PLANNING` | Write stage_1_notes, pass exploration context to planner |
