@@ -34,7 +34,7 @@ Documentation generation engine. Produce accurate, maintainable docs from real c
 
 Two modes:
 - **Pipeline mode:** Stage 7, diff-driven, limited to current run changes. No runbooks/user guides.
-- **Standalone mode:** `/forge-docs-generate`, coverage-driven, full project analysis.
+- **Standalone mode:** `/forge docs`, coverage-driven, full project analysis.
 
 ---
 
@@ -46,7 +46,7 @@ From orchestrator: changed files, quality verdict, Stage 2/4 notes, doc discover
 Check `state.json.documentation.discovery_error`: if `true`, skip cross-doc references and coverage gaps.
 
 ### Standalone Mode
-From `/forge-docs-generate`: generation request, project root, framework detection, documentation config.
+From `/forge docs`: generation request, project root, framework detection, documentation config.
 
 ---
 

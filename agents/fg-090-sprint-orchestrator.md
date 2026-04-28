@@ -5,7 +5,7 @@ description: |
 
   <example>
   Context: User provides manual feature list
-  user: "/forge-run --parallel 'Add user avatars' 'Fix checkout flow' 'Add export CSV'"
+  user: "/forge run --parallel 'Add user avatars' 'Fix checkout flow' 'Add export CSV'"
   assistant: "I'll dispatch the sprint orchestrator to analyze these 3 features for independence and execute them in parallel where safe."
   </example>
 model: inherit

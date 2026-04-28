@@ -153,7 +153,7 @@ All sub-tasks use `addBlockedBy: [stage_task_id]`.
 ### --spec Mode
 
 1. Read spec file. ERROR if not found.
-2. **Validate:** Required `## Problem Statement`, `### Story` blocks with ACs (`- [ ]` lines). `## Status: Blocked` → ERROR. Failures → suggest `/forge-shape`.
+2. **Validate:** Required `## Problem Statement`, `### Story` blocks with ACs (`- [ ]` lines). `## Status: Blocked` → ERROR. Failures → suggest `/forge run`.
 3. Parse: `## Epic` (requirement), `## Stories` (→ planner), `## Technical Notes` (→ EXPLORE/PLAN), `## NFRs` (→ planner+reviewers), `## Out of Scope` (→ implementer).
 4. Store in `state.json.spec`.
 5. Compatible with `--from` and `--dry-run`. Spec NEVER modified.
@@ -571,7 +571,7 @@ Trigger conditions per feature (subset; full mapping is in
 - F27 (AI quality): emit when AI-LOGIC-* findings appear
 - F32 (Implementer reflection): emit when fg-301-implementer-judge dispatches
 - F33 (Self-consistency voting): emit on consistency cache miss
-- F34 (Session handoff): emit when /forge-handoff write executes
+- F34 (Session handoff): emit when /forge-admin handoff write executes
 
 For features without a clear trigger, omit emission rather than guessing.
 The retrospective aggregates by (feature_id, run_id) into the
@@ -647,7 +647,7 @@ Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
 
 **Specialized modes:** `testing` (test files only, reduced reviewers, pass_threshold target), `refactor` (preserve behavior, no new features, fg-410 mandatory), `performance` (profiling context, fg-416/fg-413 perf-only mandatory).
 
-`fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge-shape`.
+`fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge run`.
 
 After detecting, load mode overlay per §9.
 
@@ -1210,7 +1210,7 @@ When `playbooks.auto_refine: true` AND a playbook is being used for this run:
 1. Check `.forge/playbook-refinements/{playbook_id}.json` for `ready` proposals
 2. Filter to `confidence: HIGH` only
 3. Apply max `playbooks.max_auto_refines_per_run` proposals:
-   a. If playbook is built-in (in `shared/playbooks/`), copy to `.claude/forge-playbooks/` first
+   a. If playbook is built-in (in `shared/playbooks/`), copy to `.claude/forge-admin playbooks/` first
    b. Modify playbook frontmatter/body per proposal type
    c. Respect `<!-- locked -->` fences — skip proposals targeting locked sections
    d. Increment version in frontmatter
@@ -1337,7 +1337,7 @@ Read `state.plan_judge_loops` (integer, default 0). On return:
 
 **Timeout.** If the judge times out (10 min ceiling per `shared/scoring.md:408`), log INFO `JUDGE-TIMEOUT fg-205-plan-judge`, treat as PROCEED with WARNING finding. Never block pipeline on judge failure.
 
-**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-recover resume` after reviewing `.forge/alerts.json`.
+**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-admin recover resume` after reviewing `.forge/alerts.json`.
 
 #### Plan SHA tracking for judge-loop reset
 
@@ -1907,7 +1907,7 @@ All transitions follow `shared/state-transitions.md`. Decision logging to `.forg
 
 ## § Recovery op dispatch
 
-When `/forge-recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback|rewind|list-checkpoints`. See `shared/state-schema.md` for the schema.
+When `/forge-admin recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback|rewind|list-checkpoints`. See `shared/state-schema.md` for the schema.
 
 **Routing:**
 
@@ -1935,8 +1935,8 @@ This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; onl
   "header": "Escalation",
   "multiSelect": false,
   "options": [
-    {"label": "Invoke /forge-recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
-    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-recover resume later."},
+    {"label": "Invoke /forge-admin recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
+    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-admin recover resume later."},
     {"label": "Force-continue with current state", "description": "Mark plateau as non-blocking; may produce lower-quality output."}
   ]
 }
@@ -1946,7 +1946,7 @@ This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; onl
 
 Flag used by `tests/evals/pipeline/runner` to invoke the pipeline in a reproducible, non-interactive way.
 
-**Invocation:** `/forge-run --eval-mode <scenario_id> [--dry-run] <prompt>`
+**Invocation:** `/forge run --eval-mode <scenario_id> [--dry-run] <prompt>`
 
 **Env guard (required):** the flag is rejected unless env var `FORGE_EVAL=1` is set. Standalone CLI use without the env var must error out. This prevents accidental Linear/Slack/AskUserQuestion suppression in production invocations.
 

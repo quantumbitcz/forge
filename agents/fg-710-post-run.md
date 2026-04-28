@@ -443,7 +443,7 @@ Based on changes in this run:
 
 1. **[HIGH] Add integration tests for new `/api/groups` endpoint**
    Category: testing | Trigger: new route handler in `GroupController.kt`
-   *Suggested command:* `/forge-run Add integration tests for the groups REST API endpoint`
+   *Suggested command:* `/forge run Add integration tests for the groups REST API endpoint`
 
 2. **[MEDIUM] Verify downstream consumers of `GroupService`**
    Category: compatibility | Trigger: modified shared service used by 3 modules

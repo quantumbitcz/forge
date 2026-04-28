@@ -443,7 +443,7 @@ Every project gets these files with real, working content:
 
 ## 6. Code Quality Scaffolding
 
-Apply code quality tooling based on tools selected during `/forge-init` flow. If bootstrapping without init, apply defaults from `modules/code-quality/`.
+Apply code quality tooling based on tools selected during `/forge` flow. If bootstrapping without init, apply defaults from `modules/code-quality/`.
 
 ### 6.1 Accepted Tools
 
@@ -479,7 +479,7 @@ Overlapping tools: scaffold only one per category:
 - DO NOT modify existing tool configs
 - DO NOT force declined tools
 - DO NOT scaffold conflicting tools without resolution
-- Log each scaffolded tool to `.forge/reports/forge-bootstrap-{YYYY-MM-DD}.md`
+- Log each scaffolded tool to `.forge/reports/forge bootstrap-{YYYY-MM-DD}.md`
 
 ---
 
@@ -498,8 +498,8 @@ Failure → read error, fix, re-run. Up to 3 fix attempts per step.
 ## 8. Auto-Init Pipeline
 
 After build+tests pass:
-1. Dispatch `/forge-init` to configure forge for new project
-2. Init detects stack, generates `.claude/forge.local.md`, `.claude/forge-config.md`, `.claude/forge-log.md`
+1. Dispatch `/forge` to configure forge for new project
+2. Init detects stack, generates `.claude/forge.local.md`, `.claude/forge-admin config.md`, `.claude/forge-log.md`
 
 ---
 
@@ -585,7 +585,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 1. `cd {project-path}`
 2. `{build command}` -- build the project
 3. `{run command}` -- start the application
-4. `/forge-run "Add {first feature}"` -- implement your first feature
+4. `/forge run "Add {first feature}"` -- implement your first feature
 ```
 
 ---
@@ -596,7 +596,7 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Use context7 on demand per build file
 - Generate files incrementally: build config → source → tests → infra
 - Keep output under 2,000 tokens
-- Log details to `.forge/reports/forge-bootstrap-{YYYY-MM-DD}.md`
+- Log details to `.forge/reports/forge bootstrap-{YYYY-MM-DD}.md`
 
 ---
 

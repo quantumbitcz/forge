@@ -5,7 +5,7 @@ description: |
 
   <example>
   Context: User has a vague idea for a feature
-  user: "/forge-shape I want users to share their plans"
+  user: "/forge run I want users to share their plans"
   assistant: "I'll dispatch the shaper to collaboratively refine this into a structured spec with stories and acceptance criteria."
   </example>
 model: inherit
@@ -168,13 +168,13 @@ Spec saved to .forge/specs/{feature-name}.md
 
 Please review. Let me know about any changes.
 
-To execute: /forge-run --spec .forge/specs/{feature-name}.md
-To dry-run: /forge-run --dry-run --spec .forge/specs/{feature-name}.md
+To execute: /forge run --spec .forge/specs/{feature-name}.md
+To dry-run: /forge run --dry-run --spec .forge/specs/{feature-name}.md
 ```
 
 Via `AskUserQuestion`: Approve → integration. Changes → edit, re-review. Restart → Phase 1.
 
-Do NOT tell user to run `/forge-run` without reviewing spec first.
+Do NOT tell user to run `/forge run` without reviewing spec first.
 
 ---
 
@@ -243,7 +243,7 @@ Do NOT tell user to run `/forge-run` without reviewing spec first.
 Save during Phase 5 to `.forge/specs/{feature-name}.md`. Create directory if needed. Derive filename: lowercase, spaces to hyphens, strip special chars.
 
 ### Create Tracking Ticket
-After user approval, if `.forge/tracking/counter.json` exists: create ticket, link spec, regenerate board. If not initialized: skip, optionally note `/forge-init`.
+After user approval, if `.forge/tracking/counter.json` exists: create ticket, link spec, regenerate board. If not initialized: skip, optionally note `/forge`.
 
 ### Linear Integration (optional)
 If Linear MCP available: offer to create Epic with stories as child issues. Ask before creating. Record Epic ID in spec.

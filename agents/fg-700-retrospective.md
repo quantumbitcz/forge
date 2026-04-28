@@ -460,7 +460,7 @@ high `unverifiable_pct` = spec quality (shaper should rewrite ACs).
 **Auto-tuning Rule 11 (propose-only):** if `intent_missed_count >= 2` across
 last 3 runs, propose `living_specs.strict_mode: true` via the F31 rule
 promotion flow (`shared/learnings/rule-promotion.md`). Surface via
-`/forge-playbook-refine`; never auto-apply.
+`/forge-admin refine`; never auto-apply.
 
 ### §2j.bis Cost-of-voting analytics
 
@@ -485,7 +485,7 @@ impl_voting:
 
 When `vote_cost_pct_of_run > 15%` AND `divergence_rate < 5%` across last 3 runs,
 propose lowering `impl_voting.trigger_on_confidence_below` by 0.05 or tightening
-`trigger_on_risk_tags` — propose-only, via `/forge-playbook-refine`.
+`trigger_on_risk_tags` — propose-only, via `/forge-admin refine`.
 
 ---
 
@@ -494,7 +494,7 @@ propose lowering `impl_voting.trigger_on_confidence_below` by 0.05 or tightening
 When `state.json.playbook_id` is set, analyze run outcomes against playbook expectations and generate refinement proposals. Schema: `shared/schemas/playbook-refinement-schema.json`.
 
 **Per-run analysis:**
-1. Load playbook definition (project `.claude/forge-playbooks/` first, fall back to `shared/playbooks/`)
+1. Load playbook definition (project `.claude/forge-admin playbooks/` first, fall back to `shared/playbooks/`)
 2. Compute refinement suggestions across 4 categories:
    - **Scoring gap:** If score < pass_threshold, identify top finding categories causing deductions. For each unaddressed category, propose an acceptance criterion that prevents recurrence. NEVER propose lowering thresholds.
    - **Stage focus:** Compare stage timing distribution vs `stages_focus`. If a non-focused stage takes >25% wall time, propose adding it. If a focused stage takes <2% across 3+ runs, propose removing (never VERIFYING/REVIEWING/SHIPPING).
@@ -804,7 +804,7 @@ Lock counter tracked alongside history. Decrement each run, remove at 0.
 
 ## 15. Structured Output
 
-After all three outputs, MUST append structured JSON in HTML comment for fg-710 and `/forge-insights`.
+After all three outputs, MUST append structured JSON in HTML comment for fg-710 and `/forge-ask insights`.
 
 **Format:**
 
@@ -926,9 +926,9 @@ At the end of every run (regardless of verdict), generate
    `.forge/run-history-trends.json`.
 
 `.forge/run-history-trends.json` is **regenerated every run** — never
-append. The file survives `/forge-recover reset`. Consumers:
+append. The file survives `/forge-admin recover reset`. Consumers:
 
-- `/forge-status --live` reads the head for a synopsis.
+- `/forge-ask status --live` reads the head for a synopsis.
 - Phase-1 observability recipes in `shared/observability.md` §Local
   inspection demonstrate `jq`/PowerShell/CMD access.
 
