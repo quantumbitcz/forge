@@ -5,6 +5,52 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.2.0] — Phase 7 Intent Assurance
+
+### Added (F35 — Intent Verification Gate)
+
+- **`fg-540-intent-verifier`** (Tier 3, color violet, tools `['Read','Grep','Glob','WebFetch']` — explicitly no Bash/Edit/Write/Agent/Task) dispatched at end of Stage 5 VERIFY. Receives an orchestrator-filtered context brief that excludes plan / tests / diff / prior findings.
+- **Two-layer context isolation.** Layer 1 (`hooks/_py/handoff/intent_context.py:build_intent_verifier_context`) is the enforcement — `ALLOWED_KEYS` allow-list + deep-leak walker (covers dict keys, lists, tuples, sets, bytes; fail-closed on unknown types). Layer 2 (agent-side "Context Exclusion Contract" clause) is defense-in-depth.
+- **Sandboxed runtime probes** (`hooks/_py/intent_probe.py`) — `ipaddress`-based forbidden-host parser (CIDR + IPv6 + metadata ranges); HTTP scheme allowlist `{http, https}`; userinfo rejected; IPv6 scope-id stripped; custom opener restricts handlers (no `file://` / `ftp://`); DNS-rebind defense via `resolve_host_for_denylist`; per-AC budget + timeout; deny-path warning logs; `IMPL-VOTE-WORKTREE-FAIL`-style fallback semantics.
+- **Five `INTENT-*` scoring categories** + `INTENT-NO-ACS` + `INTENT-CONTEXT-LEAK` (7 total) registered in `shared/checks/category-registry.json` and mirrored in `shared/scoring.md`.
+- **Hard SHIP gate** in `agents/fg-590-pre-ship-verifier.md` Step 6: `verdict = SHIP` requires 0 open `INTENT-MISSED` CRITICAL findings AND `verified_pct >= intent_verification.strict_ac_required_pct` (default 100). Vacuous-pass path documented; strict-mode promotes `INTENT-NO-ACS` to BLOCK.
+- **OTel spans** `forge.intent.verify_ac` (per AC) and `forge.impl.vote` (per voted sample) with 10 new `forge.intent.*` / `forge.impl_vote.*` attribute constants (`hooks/_py/otel_attributes.py`).
+- **AC source precedence:** `state.brainstorm.spec_path` (canonical post-Mega-C) → `.forge/specs/index.json` (fallback for bugfix/migration/bootstrap or pre-Mega).
+
+### Added (F36 — Confidence-Gated Implementer Voting)
+
+- **`fg-302-diff-judge`** (Tier 4, color gray, Read-only) compares two parallel `fg-300-implementer` samples via structural AST diff.
+- **`hooks/_py/diff_judge.py`** engine: Python via stdlib `ast` (canonical dump + SHA256); 11 other languages via `tree-sitter-language-pack` 1.6.3 with feature-detected `get_language()` (defensive `tsx → typescript` and `kts → kotlin` fallback); whitespace+comment-stripped textual fallback otherwise. Iterative-DFS AST serialization (no `RecursionError` on deeply-nested files); io-error wrapping; frozen dataclasses. `judge()` raises `ValueError` on empty `touched_files` (no silent SAME-on-zero); confidence forced LOW when all comparisons are file-presence-only.
+- **N=2 voting gate** (`agents/fg-100-orchestrator.md` `should_vote` + `dispatch_with_voting`) gated on (a) `impl_voting.enabled`, (b) >30% budget remaining, (c) any of: LOW confidence, high-risk task tags, or recent regression history.
+- **`task.risk_tags[]`** emitted by `fg-200-planner` per task. Closed canonical vocabulary (`hooks/_py/risk_tags.BASE_RISK_TAGS`): `{high, data-mutation, auth, payment, concurrency, migration}`. Mode overlay extension: `bugfix → +"bugfix"`.
+- **Sub-worktrees at `.forge/votes/<task_id>/sample_{1,2}/`** with crash-recovery stale sweep extension to `fg-101-worktree-manager.detect-stale`.
+- **`IMPL-VOTE-WORKTREE-FAIL` fallback** in orchestrator: try/except around `fg101_create`, emits WARNING + appends `skipped_reason: "worktree_fail"` to `impl_vote_history`, falls back to single-sample dispatch.
+- **6 informational telemetry categories** (`IMPL-VOTE-TRIGGERED/DEGRADED/UNRESOLVED/TIMEOUT/WORKTREE-FAIL` + `COST-SKIP-VOTE`) with explicit `score_impact: "0"`.
+
+### Added (Verification & Analytics)
+
+- **`shared/intent-verification.md`** — end-to-end architectural doc with ASCII dataflow diagrams; covers F35 + F36, two-layer isolation rationale, voting topology, 30%-vs-20% cost-skip rationale, syntactic-vs-semantic diff caveat.
+- **`fg-700-retrospective.md` §2j** Intent & Vote Analytics + **§2j.bis** Cost-of-voting analytics (`vote_cost_usd`, `vote_cost_pct_of_run`, `vote_savings_estimate_usd`).
+- **Auto-tuning Rule 11** (propose-only via `/forge-playbook-refine`): `intent_missed_count >= 2` across last 3 runs proposes `living_specs.strict_mode: true`.
+- **9 scenario tests** under `tests/scenario/sc-{intent-missed,impl-vote-diverge,impl-vote-disabled,impl-vote-cost-skip,autonomous-intent,vote-worktree-cleanup,retrospective-intent-metrics,intent-no-acs,intent-layer2-tripwire}/`.
+
+### Changed
+
+- **State schema** v2.0.0 narrative + canonical `state-schema.json` + `state-schema-fields.md` document new top-level keys `intent_verification_results[]` and `impl_vote_history[]`. (Schema literal already at 2.0.0 from coordinated Phase 5/6 bump; Phase 7 only adds the two new arrays.)
+- **Finding schema v1 → v2** (`shared/checks/finding-schema.json`): `file` and `line` become nullable; `ac_id` conditional-required when `category` starts with `INTENT-`.
+- **Agent count 48 → 50** at every callsite (`CLAUDE.md`, `shared/agents.md`).
+- **`fg-300-implementer` §5.3c "Voting Mode"** — `dispatch_mode: vote_sample` (skips REFLECT) / `vote_tiebreak` (reconciles divergences).
+- **`fg-101-worktree-manager.detect-stale`** scans `.forge/votes/*/sample_*` (orphaned sub-worktree sweep).
+- **`shared/state-integrity.sh`** stale-detection block for `.forge/dispatch-contexts/`; `${DISPATCH_CONTEXT_STALE_HOURS:-24}` config-driven.
+- **`agents/fg-100-orchestrator.md` PREFLIGHT** instructs `rm -rf .forge/dispatch-contexts/` (canonical destructive cleanup; ephemeral, not preserved across runs).
+- **Mode overlays.** `bootstrap` disables F35 + F36 (greenfield: no ACs, no risk baseline). `migration` disables F35 (use `fg-506-migration-verifier` instead). `bugfix` extends `impl_voting.trigger_on_risk_tags` with `"bugfix"`.
+- **`tests/contract/test_fg100_size_budget.py`** `MAX_LINES` 1800 → 2000 (orchestrator grew through Phase 7 voting + intent dispatch wiring; per maintainer policy the orchestrator is loaded once per run, not per stage).
+- **24 framework `forge-config-template.md`** files declare `intent_verification:` and `impl_voting:` blocks.
+
+### Dependencies
+
+- Added `tree-sitter>=0.25.2,<0.26` and `tree-sitter-language-pack>=1.6.3,<2.0` under `[project.optional-dependencies].test`. Production install unaffected.
+
 ## [4.1.0] — Phase 6 Cost Governance
 
 ### Added
