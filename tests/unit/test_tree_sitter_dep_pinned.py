@@ -1,9 +1,11 @@
 """Contract test: tree-sitter test-extra deps stay pinned.
 
 Phase 7 Wave 3 (F36 voting). The diff judge depends on
-tree-sitter-language-pack 1.6.3+ for cross-language AST fingerprinting.
-A version drift would silently degrade the judge to textual fallback for
-TS/JS/Kotlin/Go/Rust/Java/C/C++/Ruby/PHP/Swift, hiding real divergences.
+tree-sitter-language-pack 1.6.2+ (latest stable on PyPI; the next
+published rev is the 2.0 alpha line) for cross-language AST fingerprinting.
+A version drift below 1.6.x would silently degrade the judge to textual
+fallback for TS/JS/Kotlin/Go/Rust/Java/C/C++/Ruby/PHP/Swift, hiding real
+divergences.
 """
 from pathlib import Path
 import tomllib
@@ -21,7 +23,7 @@ def test_tree_sitter_language_pack_in_test_extras():
 def test_version_pinned_with_upper_bound():
     test_extra = PYPROJECT["project"]["optional-dependencies"]["test"]
     tsp = next(d for d in test_extra if d.startswith("tree-sitter-language-pack"))
-    assert ">=1.6.3" in tsp and "<2.0" in tsp, tsp
+    assert ">=1.6.2" in tsp and "<2.0" in tsp, tsp
 
 
 def test_tree_sitter_core_pinned():

@@ -141,6 +141,12 @@ VALID_CONFIG = textwrap.dedent("""\
       target_score: 90
     shipping:
       min_score: 90
+    cost:
+      ceiling_usd: 25
+      tier_estimates_usd:
+        fast: 0.5
+        standard: 2.0
+        premium: 8.0
     ```
     """)
 
@@ -173,6 +179,12 @@ def test_unknown_top_level_field_emits_warning(tmp_path):
         scoring:
           pass_threshold: 80
           concerns_threshold: 60
+        cost:
+          ceiling_usd: 25
+          tier_estimates_usd:
+            fast: 0.5
+            standard: 2.0
+            premium: 8.0
         wibble:
           foo: bar
         ```

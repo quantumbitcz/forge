@@ -26,6 +26,8 @@ test = [
   "tree-sitter>=0.25.2,<0.26",
   "tree-sitter-language-pack>=1.6.2,<2.0",
   "numpy>=1.26",
+  "ruff>=0.5",
+  "mypy>=1.0",
 ]
 
 [tool.ruff]
