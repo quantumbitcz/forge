@@ -33,6 +33,7 @@ This skill uses **positional verbs with NL fallback**.
 1. Read `$ARGUMENTS`.
 2. If `$ARGUMENTS` is empty: print usage block (see §Usage below) and exit 0. (AC-S009)
 3. If `$ARGUMENTS` is `--help` or first token is `--help`: print usage and exit 0. (AC-S008)
+3.5. **Consume top-level flags from the start of `$ARGUMENTS`.** Repeatedly: if the first token of `$ARGUMENTS` matches `--dry-run|--autonomous|--background|--from=*|--spec` (the latter consumes the next token as its value), shift it into a `FLAGS` accumulator. Stop when the first token is no longer a flag. The remaining `$ARGUMENTS` is the verb-and-rest. (`--parallel` is a sprint-only flag and is consumed by step 5's verb dispatcher, not here.)
 4. Split: `SUB="$1"; shift; REST="$*"`.
 5. If `$SUB` matches one of the 11 known verbs (`run | fix | sprint | review | verify | deploy | commit | migrate | bootstrap | docs | audit`): dispatch to the matching `### Subcommand: <SUB>` section with `$REST` as its arguments.
 6. Otherwise (unknown verb or first-token-is-not-a-verb): treat the entire `$ARGUMENTS` string as a natural-language requirement and fall through to the NL-classifier path. Do NOT print "did you mean" or any disambiguation message — silently classify. (AC-S010)

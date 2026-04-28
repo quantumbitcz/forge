@@ -369,9 +369,9 @@ README.md                                      # EDITED: drop forge-help table r
   4. `CLAUDE.md:308` (Skills list entry)
   5. `README.md:136` (skill table row)
   6. `shared/skill-contract.md:46` (read-only list)
-  7. `skills/forge-admin config/SKILL.md:94`
-  8. `skills/forge-ask tour/SKILL.md:138`
-  9. `skills/forge-ask tour/SKILL.md:202`
+  7. `skills/forge-admin/SKILL.md` (`### Subcommand: config`, locate via `grep -n "### Subcommand: config" skills/forge-admin/SKILL.md`)
+  8. `skills/forge-ask/SKILL.md` (`### Subcommand: tour` Stop 1, locate via `grep -n "Stop 1" skills/forge-ask/SKILL.md`)
+  9. `skills/forge-ask/SKILL.md` (`### Subcommand: tour` Tour Summary, locate via `grep -n "Tour Summary" skills/forge-ask/SKILL.md`)
   10. `skills/forge --help/SKILL.md:2` (name:)
   11. `skills/forge --help/SKILL.md:3` (description:)
   12. `skills/forge --help/SKILL.md:107`
@@ -459,8 +459,8 @@ README.md                                      # EDITED: drop forge-help table r
 **Files:**
 - Modify: `/Users/denissajnar/IdeaProjects/forge/README.md`
 - Modify: `/Users/denissajnar/IdeaProjects/forge/shared/skill-contract.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin config/SKILL.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask tour/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin/SKILL.md` (`### Subcommand: config`)
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md` (`### Subcommand: tour`)
 
 - [ ] **Step 1: Remove README.md line 136**
   Delete the table row:
@@ -493,14 +493,14 @@ README.md                                      # EDITED: drop forge-help table r
   and `ui` are permitted at the top level.
   ```
 
-- [ ] **Step 4: Edit skills/forge-admin config/SKILL.md line 94**
-  Delete the line:
+- [ ] **Step 4: Edit skills/forge-admin/SKILL.md (`### Subcommand: config`)**
+  Locate via `grep -n "/forge --help" skills/forge-admin/SKILL.md`. Delete the line:
   ```
   - `/forge --help` — find the right skill
   ```
 
-- [ ] **Step 5: Edit skills/forge-ask tour/SKILL.md line 138**
-  Replace:
+- [ ] **Step 5: Edit skills/forge-ask/SKILL.md (`### Subcommand: tour`, "What's Next?" section)**
+  Locate via `grep -n "All skills:" skills/forge-ask/SKILL.md`. Replace:
   ```
   - **All skills:** `/forge --help`
   ```
@@ -509,8 +509,8 @@ README.md                                      # EDITED: drop forge-help table r
   - **All skills:** See the skill table in `CLAUDE.md` §Skill selection guide.
   ```
 
-- [ ] **Step 6: Edit skills/forge-ask tour/SKILL.md line 202**
-  Delete the line:
+- [ ] **Step 6: Edit skills/forge-ask/SKILL.md (`### Subcommand: tour`, decision-tree refs)**
+  Locate via `grep -n "full skill decision tree" skills/forge-ask/SKILL.md`. Delete the line:
   ```
   - `/forge --help` — full skill decision tree
   ```
@@ -520,12 +520,12 @@ README.md                                      # EDITED: drop forge-help table r
 ### Task 8: Rewrite forge-verify (drop --config); extend forge-status + forge-recover
 
 **Files:**
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge verify/SKILL.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask status/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge/SKILL.md` (`### Subcommand: verify`)
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md` (`### Subcommand: status`)
 - Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin recover/SKILL.md`
 
 - [ ] **Step 1: Remove --config subcommand from forge-verify**
-  In `/Users/denissajnar/IdeaProjects/forge/skills/forge verify/SKILL.md`:
+  In `/Users/denissajnar/IdeaProjects/forge/skills/forge/SKILL.md` (`### Subcommand: verify`):
   - Remove the frontmatter description's `--config validates forge.local.md...` clause — description becomes:
     ```
     description: "[read-only] Pre-pipeline checks. --build runs configured build+lint+test. --all runs --build then delegates to /forge-ask status --json for the config-validation section. Defaults to --build. Never modifies files. Use when you want a fast sanity check before committing, opening a PR, or kicking off a full pipeline run."
@@ -539,7 +539,7 @@ README.md                                      # EDITED: drop forge-help table r
   Note for Task 10: `tests/structural/skill-consolidation.bats:72-77` still asserts forge-verify has `build`, `config`, AND `all` subcommand sections. Task 10 Step 3 drops the `config` line from that assertion.
 
 - [ ] **Step 3: Add Config validation + Recent hook failures sections to forge-status**
-  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask status/SKILL.md`, after the existing Instructions block (around line 60+), add two new top-level sections. Append to the end of the file (before the closing YAML/markdown or any trailing references):
+  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask/SKILL.md` (`### Subcommand: status`), after the existing Instructions block, add two new top-level sections. Append to the end of the status subcommand body (before the closing horizontal rule or any trailing references):
   ```markdown
   ## Config validation summary
 
@@ -547,7 +547,7 @@ README.md                                      # EDITED: drop forge-help table r
   absorbs what `/forge verify --config` used to do (that subcommand is deleted
   as of Phase 2). Scope:
 
-  1. Load `.claude/forge.local.md` (if present) and `.claude/forge-admin config.md`.
+  1. Load `.claude/forge.local.md` (if present) and `.claude/forge-config.md`.
   2. Validate against PREFLIGHT constraints (`shared/preflight-constraints.md`).
   3. Report each constraint as PASS/FAIL/UNCHECKED with a one-line rationale.
   4. Under `--json`, emit this block as a `config_validation` top-level object:
@@ -658,10 +658,10 @@ README.md                                      # EDITED: drop forge-help table r
   Edit lines 72-77 (`forge-verify has build, config, and all subcommand sections`). Change test name and body to:
   ```bash
   @test "forge-verify has build and all subcommand sections (no config)" {
-    file="$PLUGIN_ROOT/skills/forge verify/SKILL.md"
-    grep -q '^### Subcommand: build' "$file"
-    grep -q '^### Subcommand: all' "$file"
-    ! grep -q '^### Subcommand: config' "$file" || { echo "--config must be removed per Phase 2"; return 1; }
+    file="$PLUGIN_ROOT/skills/forge/SKILL.md"
+    awk '/^### Subcommand: verify/,/^### Subcommand: [^v]/' "$file" | grep -q '^#### .*--build\|build (default)'
+    awk '/^### Subcommand: verify/,/^### Subcommand: [^v]/' "$file" | grep -q '^#### .*--all\|all (combined)'
+    awk '/^### Subcommand: verify/,/^### Subcommand: [^v]/' "$file" | grep -q '^#### .*--config' && { echo "--config must be removed per Phase 2"; return 1; } || true
   }
   ```
 
@@ -686,8 +686,8 @@ README.md                                      # EDITED: drop forge-help table r
       shared/skill-contract.md (was stale since 3.6.0)
 
   Updates all 15 callsite references enumerated at plan-write-time:
-  CLAUDE.md (4), README.md (1), shared/skill-contract.md (2), skills/forge-admin config
-  (1), skills/forge-ask tour (2), tests/contract/skill-contract.bats (3),
+  CLAUDE.md (4), README.md (1), shared/skill-contract.md (2), skills/forge-admin
+  (1, ### Subcommand: config), skills/forge-ask (2, ### Subcommand: tour), tests/contract/skill-contract.bats (3),
   tests/lib/module-lists.bash (2), tests/structural/skill-consolidation.bats (4),
   tests/structural/skill-descriptions.bats (2), tests/unit/skill-execution/
   decision-tree-refs.bats (entire file deleted).

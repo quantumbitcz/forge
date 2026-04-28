@@ -57,7 +57,7 @@
 - `agents/fg-100-orchestrator.md` — line 1245 filename update; new `§Progress file` pointer.
 - `agents/fg-505-build-verifier.md` — lines 39, 55, 140 filename update + JSONL parsing.
 - `agents/fg-700-retrospective.md` — new `§Trend rollup` section.
-- `skills/forge-ask status/SKILL.md` — `§Hook Health` rewritten around JSONL; new `§Live Progress` block.
+- `skills/forge-ask/SKILL.md` (`### Subcommand: status`) — `§Hook Health` rewritten around JSONL; new `§Live Progress` block.
 - `README.md` — `§Quick start` install split; `§Available modules` tier column; `§Troubleshooting` hook-failures row.
 - `CLAUDE.md` — `§Platform requirements`, `§Quick start`, `§Available modules`, `§Gotchas` survival list.
 - `CHANGELOG.md` — one `[Unreleased]` entry under Phase 1.
@@ -1986,7 +1986,7 @@
 ### Task 17: Docs: rename `.hook-failures.log` → `.jsonl` across the tree
 
 **Files:**
-- Modify: `agents/fg-100-orchestrator.md`, `agents/fg-505-build-verifier.md`, `shared/logging-rules.md`, `shared/state-schema-fields.md`, `skills/forge-ask status/SKILL.md`, `shared/hook-design.md` (incl. new §Failure logging), `README.md`
+- Modify: `agents/fg-100-orchestrator.md`, `agents/fg-505-build-verifier.md`, `shared/logging-rules.md`, `shared/state-schema-fields.md`, `skills/forge-ask/SKILL.md` (`### Subcommand: status`), `shared/hook-design.md` (incl. new §Failure logging), `README.md`
 - Create: `tests/structural/no-hook-failures-log.bats`
 - Test: `tests/structural/no-hook-failures-log.bats`
 
@@ -2097,7 +2097,7 @@
      - Migration is logged to `.forge/.hook-failures.jsonl` with reason `state_migration:{from}->{to}` (one JSON row per migration event).
      ```
 
-   - **`skills/forge-ask status/SKILL.md`** §`### Hook Health` — block replacement (parsing recipes change to `jq`):
+   - **`skills/forge-ask/SKILL.md`** (`### Subcommand: status` → §`### Hook Health`) — block replacement (parsing recipes change to `jq`); use `grep -n "### Hook Health" skills/forge-ask/SKILL.md` to locate the block:
 
      before:
      ```
@@ -2576,11 +2576,11 @@
 ### Task 24: Extend `/forge-ask status` with `--- live ---` section
 
 **Files:**
-- Modify: `skills/forge-ask status/SKILL.md`
+- Modify: `skills/forge-ask/SKILL.md` (`### Subcommand: status`)
 - Test: CI docs-integrity (no new bats — skill file is descriptive prose)
 
-1. - [ ] **Step 1: Append `§Live Progress` to `skills/forge-ask status/SKILL.md`**
-   After the `§Hook Health` section (already updated in Task 17), add:
+1. - [ ] **Step 1: Append `§Live Progress` to `skills/forge-ask/SKILL.md` (`### Subcommand: status`)**
+   After the `§Hook Health` section (already updated in Task 17), add (locate via `grep -n "### Hook Health" skills/forge-ask/SKILL.md`):
    ```markdown
    ### Live progress
 

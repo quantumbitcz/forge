@@ -72,10 +72,10 @@ Default action when none provided: `diagnose` (read-only, safe default).
 
 Read `.forge/state.json`, `.forge/.lock`, recent events; report stuck stage, missing checkpoints, lock holders, score history. No mutations.
 
-Step 0: Delegate state read. Run `/forge-status --json` and parse the JSON
+Step 0: Delegate state read. Run `/forge-ask status --json` and parse the JSON
 output. Embed the result as a top-level `state` field in the diagnose
 report. Do NOT read `.forge/state.json` directly — the orchestrator and
-forge-status own that path; recovery consumes the parsed snapshot.
+/forge-ask status own that path; recovery consumes the parsed snapshot.
 
 Recovery recommendations (the "what to do next" logic) remain `/forge-admin recover`'s responsibility; only the raw state read is delegated.
 
@@ -85,7 +85,7 @@ Reset counters, clear stale `.forge/.lock` (>24h), normalize state to a known-go
 
 #### Action: reset
 
-Clear `.forge/state.json` and worktree state. Preserves: `.forge/explore-cache.json`, `.forge/plan-cache/`, `.forge/code-graph.db`, `.forge/trust.json`, `.forge/events.jsonl`, `.forge/playbook-analytics.json`, `.forge/run-history.db`, `.forge/playbook-refinements/`, `.forge/consistency-cache.jsonl`, `.forge/plans/candidates/`, `.forge/runs/<id>/handoffs/`, `.forge/wiki/`, `.forge/brainstorm-transcripts/`. Confirms via `AskUserQuestion` unless `--autonomous`.
+Clear `.forge/state.json` and worktree state. Preserves: `.forge/explore-cache.json`, `.forge/plan-cache/`, `.forge/code-graph.db`, `.forge/trust.json`, `.forge/events.jsonl`, `.forge/playbook-analytics.json`, `.forge/run-history.db`, `.forge/playbook-refinements/`, `.forge/consistency-cache.jsonl`, `.forge/plans/candidates/`, `.forge/runs/<id>/handoffs/`, `.forge/wiki/`. Confirms via `AskUserQuestion` unless `--autonomous`.
 
 #### Action: resume
 
@@ -193,14 +193,14 @@ Interactive config editor. Actions: `wizard` (full multi-question setup) or `<ke
 | `/forge-admin config set <key> <value>` | Set a config value |
 | `/forge-admin config add <key> <value>` | Add to list field (e.g., code_quality) |
 | `/forge-admin config remove <key> <value>` | Remove from list field |
-| `/forge-admin config validate` | Run validation (delegates to /forge-status) |
+| `/forge-admin config validate` | Run validation (delegates to /forge-ask status) |
 | `/forge-admin config show <section>` | Show specific section (components, scoring, convergence, caveman) |
 | `/forge-admin config diff` | Show changes since last pipeline run |
 | `/forge-admin config wizard` | Run the full bootstrap wizard |
 
 #### Config prerequisites
 
-1. Verify `.claude/forge.local.md` or `.claude/forge-config.md` exists. If neither: "No forge configuration found. Run `/forge-init` first." STOP.
+1. Verify `.claude/forge.local.md` or `.claude/forge-config.md` exists. If neither: "No forge configuration found. Run `/forge` first (auto-bootstraps if missing `.claude/forge.local.md`)." STOP.
 
 #### Action: wizard
 
@@ -237,7 +237,7 @@ Parse `<key>=<val>`, validate against `shared/preflight-constraints.md`, write t
 
 #### Action: validate
 
-Delegates to `/forge-status` (Config validation section). Shows results inline.
+Delegates to `/forge-ask status` (Config validation section). Shows results inline.
 
 #### Action: diff
 
@@ -257,7 +257,7 @@ Delegates to `/forge-status` (Config validation section). Shows results inline.
 
 | Condition | Action |
 |-----------|--------|
-| Config file missing | Suggest: "Run /forge-init first" |
+| Config file missing | Suggest: "Run /forge first (auto-bootstraps if missing `.claude/forge.local.md`)" |
 | Invalid key path | Show valid keys from config-schema.json |
 | Invalid value | Show valid values with fuzzy suggestion |
 | Locked section | Refuse edit, explain how to unlock |
@@ -372,8 +372,8 @@ Manage event-driven pipeline automations configured in `forge-config.md`. Full c
 Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository." and STOP.
-2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
-3. **Config exists:** Check `.claude/forge-config.md` exists. If not: report "No forge-config.md found. Run /forge-init to generate." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge first (auto-bootstraps if missing `.claude/forge.local.md`)." and STOP.
+3. **Config exists:** Check `.claude/forge-config.md` exists. If not: report "No forge-config.md found. Run /forge first to auto-bootstrap, or /forge-admin config wizard to configure manually." and STOP.
 
 #### Automation arguments
 
@@ -562,7 +562,7 @@ List all available playbooks (project-specific and built-in) with their descript
 Before any action, verify:
 
 1. **Git repository:** Run `git rev-parse --show-toplevel 2>/dev/null`. If fails: report "Not a git repository. Navigate to a project directory." and STOP.
-2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge-init first." and STOP.
+2. **Forge initialized:** Check `.claude/forge.local.md` exists. If not: report "Forge not initialized. Run /forge first (auto-bootstraps if missing `.claude/forge.local.md`)." and STOP.
 3. **Playbooks enabled:** Read `playbooks.enabled` from `forge-config.md`. If `false`: report "Playbooks are disabled. Set `playbooks.enabled: true` in forge-config.md." and STOP.
 
 #### Action: list (default)
@@ -609,7 +609,7 @@ Display playbooks grouped by source (project first, then built-in):
 ### Usage
 
 To run a playbook:
-  /forge-run --playbook={name} param1=value1 param2=value2
+  /forge run --playbook={name} param1=value1 param2=value2
 
 To see playbook details:
   /forge-admin playbooks {name}
@@ -666,7 +666,7 @@ If `$ARGUMENTS` contains a playbook name, show the detailed view for that specif
 
 ### Example
 
-  /forge-run --playbook={name} {example_params}
+  /forge run --playbook={name} {example_params}
 ```
 
 #### Playbooks important
@@ -774,7 +774,7 @@ Options:
 
 Token-cost compression controls. Actions: `agents | output <mode> | status | help`.
 
-Single entry point for compression. Replaces `/forge-compress` (previous agent-only surface), `/forge-caveman`, and `/forge-compression-help` (all removed in 3.0.0).
+Single entry point for compression. Replaces `/forge-compress` (previous agent-only surface), `/forge-caveman`, and `/forge-compression-help`.
 
 #### Compress sub-actions
 
@@ -881,7 +881,7 @@ Sub-action-specific flags are documented under each sub-action section.
 
 Before any sub-action:
 
-1. **Forge initialized:** `.claude/forge.local.md` exists. If not: "Pipeline not initialized. Run `/forge-init` first." STOP.
+1. **Forge initialized:** `.claude/forge.local.md` exists. If not: "Pipeline not initialized. Run `/forge` first (auto-bootstraps if missing `.claude/forge.local.md`)." STOP.
 2. **Graph enabled:** `graph.enabled: true` in `forge.local.md`. If false/absent: "Graph integration is disabled. Set `graph.enabled: true` to use this feature." STOP.
 3. **Docker available:** `docker info`. If fails: "Docker is not available. Cannot run graph operations." STOP.
 
@@ -896,7 +896,7 @@ You are the graph initializer. Your job is to start the Neo4j container, import 
 ##### Step 1: VERIFY PREREQUISITES
 
 1. Check that `.claude/forge.local.md` exists in the project root.
-   - If it does not exist: **ERROR** — "Pipeline not initialized. Run `/forge-init` first." Abort.
+   - If it does not exist: **ERROR** — "Pipeline not initialized. Run `/forge` first (auto-bootstraps if missing `.claude/forge.local.md`)." Abort.
 
 2. Read `.claude/forge.local.md` and check `graph.enabled`.
    - If `graph.enabled: false` or the `graph:` section is absent: inform the user — "Graph integration is disabled in `forge.local.md`. Set `graph.enabled: true` to use this feature." Exit.

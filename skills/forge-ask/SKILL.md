@@ -65,7 +65,11 @@ This skill MUST NOT modify any file under the project root, `.forge/`, or `.clau
 
 `allowed-tools` excludes `Write` and `Edit` — the harness enforces this.
 
-The Q&A subcommand may write to `.forge/ask-cache/` (an opaque cache); this is the only permitted write and is excluded from the AC-S012 contract test by an explicit cache-path check.
+The Q&A subcommand may write to `.forge/ask-cache/` and the insights
+subcommand may write to `.forge/reports/`. These are opaque caches
+and reports excluded from the AC-S012 contract test by explicit path
+checks. All writes are performed via `Bash` (heredoc redirect) — the
+harness blocks `Write`/`Edit` per the `allowed-tools` allowlist.
 
 ---
 
@@ -207,7 +211,7 @@ Show the current state of the development pipeline for this project.
 
 #### Prerequisites (in addition to shared)
 
-- **State exists:** Check `.forge/state.json` exists. If not: report "No pipeline run in progress. Run `/forge-run` to start." and STOP.
+- **State exists:** Check `.forge/state.json` exists. If not: report "No pipeline run in progress. Run `/forge run` to start." and STOP.
 
 #### Steps
 
@@ -275,7 +279,7 @@ If `.forge/.hook-failures.jsonl` exists and is non-empty:
 1. Count total failure entries: `wc -l < .forge/.hook-failures.jsonl`
 2. Count unique hook names: `jq -r '.hook_name' .forge/.hook-failures.jsonl | sort -u | wc -l`
 3. Show last 3 failures with timestamps: `tail -3 .forge/.hook-failures.jsonl | jq -r '"\(.ts)  \(.hook_name) exit=\(.exit_code)"'`
-4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
+4. If count > 10: show warning "High hook failure rate. Run /forge-admin recover diagnose for details."
 
 If `.forge/.hook-failures.jsonl` does not exist or is empty: show "Hooks: healthy (no failures logged)"
 
@@ -290,7 +294,7 @@ If `.forge/progress/status.json` exists:
 1. Parse via `python3 -c "import json; print(json.load(open('.forge/progress/status.json')))"`.
 2. Print: `Stage: {stage}  Agent: {agent_active or 'idle'}`.
 3. Print elapsed vs timeout: `{elapsed_ms_in_stage}ms / {timeout_ms}ms`.
-4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-recover diagnose."
+4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-admin recover diagnose."
 
 If `.forge/run-history-trends.json` exists:
 1. Print last 5 runs as a table: run_id, verdict, score, duration_s.
@@ -302,8 +306,8 @@ subagent dispatch yet)."
 #### Config validation summary
 
 After the primary status report, emit a compact config-validation block. This
-absorbs what `/forge-verify --config` used to do (that subcommand is deleted
-as of Phase 2). Scope:
+mirrors what `/forge verify --config` reports, for one-stop visibility from
+/forge-ask status. Scope:
 
 1. Load `.claude/forge.local.md` (if present) and `.claude/forge-config.md`.
 2. Validate against PREFLIGHT constraints (`shared/preflight-constraints.md`).
@@ -335,7 +339,7 @@ hook failures." Under `--json`, emit as a `recent_hook_failures` array.
 
 | Condition | Action |
 |-----------|--------|
-| state.json unparseable | Report "state.json is corrupted. Run `/forge-recover repair` to fix or `/forge-recover reset` to start fresh." and STOP |
+| state.json unparseable | Report "state.json is corrupted. Run `/forge-admin recover repair` to fix or `/forge-admin recover reset` to start fresh." and STOP |
 | state.json missing fields | Show what is available, note missing fields as "unknown" |
 | progress/status.json malformed | Report "Background progress data is corrupt." and fall back to state.json only |
 | Stage notes file missing | Skip stage notes section, continue with other data |
@@ -351,7 +355,7 @@ View trends across multiple pipeline runs — score oscillations, agent effectiv
 - **History data exists:** Check at least one of these sources:
   - `.claude/forge-log.md` with run entries
   - `.forge/reports/` with report files
-  If neither exists: report "No pipeline history found. Run `/forge-run` to start building history." and STOP.
+  If neither exists: report "No pipeline history found. Run `/forge run` to start building history." and STOP.
 
 #### Steps
 
@@ -451,7 +455,7 @@ Analyze trends across pipeline runs to surface actionable insights about quality
   - `.forge/reports/` with report files
   - `.forge/state.json` with `telemetry` data
   - `.claude/forge-log.md` with run entries
-  If none exist: report "No pipeline run data found. Run `/forge-run` to generate data, then try again." and STOP.
+  If none exist: report "No pipeline run data found. Run `/forge run` to generate data, then try again." and STOP.
 
 #### Steps
 
@@ -633,7 +637,7 @@ Analyze token savings and compression compliance:
 - **Output compression savings:** Compare actual output tokens per agent from `state.json.tokens.output_tokens_per_agent` against the expected range for their stage's compression level. Estimate tokens saved relative to verbose baseline using the stage-level token ranges from `shared/output-compression.md`: verbose 800-2000, standard 800-2000, terse 400-1200, minimal 100-600.
 - **Compression level distribution:** Show dispatch counts per level from `state.json.tokens.compression_level_distribution`. Highlight if distribution is skewed (e.g., 90% verbose suggests misconfiguration or `output_compression.enabled: false`).
 - **Drift detection:** Identify agents consistently exceeding their stage's expected token range by >50%. An agent dispatched at `terse` (expected 400-1200 tokens) producing 1800 tokens is drifting.
-- **Input compression savings:** If `/forge-compress` has been run (detect via `*.original.md` backup files in `agents/`), compute before/after line counts and estimated token savings using `wc -l`.
+- **Input compression savings:** If `/forge-admin compress agents` has been run (detect via `*.original.md` backup files in `agents/`), compute before/after line counts and estimated token savings using `wc -l`.
 - **Caveman mode usage:** Report whether caveman mode was active (read `.forge/caveman-mode`), which level, and how many sessions used it (from `.forge/events.jsonl` if available).
 
 ```markdown
@@ -706,7 +710,7 @@ Write the full report to `.forge/reports/insights-{date}.md` where `{date}` is t
 
 | Condition | Action |
 |-----------|--------|
-| No run data available | Report "No pipeline run data found. Run `/forge-run` to generate data, then try again." and STOP |
+| No run data available | Report "No pipeline run data found. Run `/forge run` to generate data, then try again." and STOP |
 | Only one data source available | Generate partial report and note which categories have insufficient data |
 | Fewer than 3 runs | Note that trend analysis requires more data points. Focus on single-run metrics |
 | Report directory does not exist | Create `.forge/reports/` before writing the report |
@@ -721,7 +725,7 @@ Per-stage timing and cost breakdown. Optional `<run-id>` (default: most recent r
 
 #### Prerequisites (in addition to shared)
 
-- **Performance data exists:** Check `.forge/state.json` exists with `cost.wall_time_seconds > 0`. If no timing data: report "No performance data available. Run a pipeline first with `/forge-run`." and STOP.
+- **Performance data exists:** Check `.forge/state.json` exists with `cost.wall_time_seconds > 0`. If no timing data: report "No performance data available. Run a pipeline first with `/forge run`." and STOP.
 - **Events log (optional):** Check `.forge/events.jsonl` exists. If not: note that per-stage/per-agent timing analysis will be limited -- report token and convergence data from state.json only, and note that detailed timing requires events.jsonl.
 
 #### Steps
@@ -801,11 +805,11 @@ If multiple run reports exist in `.forge/reports/`, compare performance across r
 
 | Condition | Action |
 |-----------|--------|
-| state.json missing or unparseable | Report "Pipeline state not found or corrupt. Run `/forge-run` first." and STOP |
+| state.json missing or unparseable | Report "Pipeline state not found or corrupt. Run `/forge run` first." and STOP |
 | events.jsonl missing | Generate partial report from state.json only, note limited data |
 | events.jsonl has malformed lines | Skip malformed lines, log WARNING, continue with valid entries |
 | No token data available | Report "No token usage data recorded." and skip token analysis sections |
-| State corruption | Suggest `/forge-recover repair` to fix state, then re-run profiler |
+| State corruption | Suggest `/forge-admin recover repair` to fix state, then re-run profiler |
 
 ---
 
@@ -815,25 +819,26 @@ Welcome to Forge, a 10-stage autonomous development pipeline. This tour walks yo
 
 Present each stop sequentially. Pause between stops to let the user ask questions or try the skill.
 
-#### Stop 1: /forge-init (Setup)
+#### Stop 1: First-run bootstrap (Setup)
 
-**What it does:** Configures Forge for your project by detecting your tech stack (language, framework, testing) and generating local config files.
+**What it does:** First-run bootstrap is automatic when you invoke `/forge` in a project without `.claude/forge.local.md`. Detection prompts the user with detected stack defaults and offers `[proceed]` / `[open wizard]` / `[cancel]`.
 
-**When to use:** First time setting up Forge in a project.
+**When to use:** First time setting up Forge in a project — no separate command required.
 
 **What happens:**
 - Detects your language, framework, and testing setup
+- Offers `[proceed]` / `[open wizard]` / `[cancel]` from the detected defaults
 - Generates `.claude/forge.local.md` (project config)
 - Generates `.claude/forge-config.md` (pipeline settings)
 - Detects available MCP integrations (Linear, Playwright, etc.)
 
-**Try it:** Run `/forge-init` in any project.
+**Try it:** Run `/forge "<requirement>"` in any uninitialized project — bootstrap fires automatically before the requirement is dispatched.
 
 ---
 
-#### Stop 2: /forge-verify (Quick Health Check)
+#### Stop 2: /forge verify (Quick Health Check)
 
-**What it does:** Runs build + lint + test and reports pass/fail. No pipeline, no agents — just a quick sanity check.
+**What it does:** Runs build + lint + test (or config validation) and reports pass/fail. No pipeline, no agents — just a quick sanity check.
 
 **When to use:** Before any pipeline run, after manual changes, before committing.
 
@@ -843,11 +848,11 @@ Present each stop sequentially. Pause between stops to let the user ask question
 - Runs your test command (if configured)
 - Reports PASS / FAIL / SKIPPED per step
 
-**Try it:** Run `/forge-verify` to check your project's baseline health.
+**Try it:** Run `/forge verify` to check the project's baseline health (build/lint/test or config validation).
 
 ---
 
-#### Stop 3: /forge-run (Build Features)
+#### Stop 3: /forge run (Build Features)
 
 **What it does:** The main entry point. Give it a requirement, and it runs the full 10-stage pipeline: explore → plan → implement (TDD) → verify → review → ship.
 
@@ -855,7 +860,7 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 **Example:**
 ```
-/forge-run Add email validation to user registration with error messages
+/forge run "add CSV export"
 ```
 
 **What happens:**
@@ -868,7 +873,7 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 ---
 
-#### Stop 4: /forge-fix (Fix Bugs)
+#### Stop 4: /forge fix (Fix Bugs)
 
 **What it does:** Specialized bugfix workflow — investigates root cause, writes a failing test that reproduces the bug, implements the fix.
 
@@ -876,7 +881,8 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 **Example:**
 ```
-/forge-fix Users get 404 when accessing /api/groups endpoint
+/forge fix FG-742
+/forge fix "login redirect 404"
 ```
 
 **What happens:**
@@ -887,7 +893,7 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 ---
 
-#### Stop 5: /forge-review (Review Changes)
+#### Stop 5: /forge review (Review Changes)
 
 **What it does:** Reviews your recent code changes using 3-8 specialized review agents (security, architecture, performance, accessibility, etc.).
 
@@ -895,8 +901,8 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 **Example:**
 ```
-/forge-review          # Quick mode: 3 agents
-/forge-review --full   # Full mode: up to 8 agents
+/forge review            # Quick mode: 3 agents
+/forge review --full     # Full mode: up to 8 agents
 ```
 
 **What happens:**
@@ -912,18 +918,18 @@ Present each stop sequentially. Pause between stops to let the user ask question
 
 | Skill | When | Time |
 |-------|------|------|
-| `/forge-init` | First time setup | ~1 min |
-| `/forge-verify` | Quick health check | ~30s |
-| `/forge-run` | Build a feature | 5-30 min |
-| `/forge-fix` | Fix a bug | 3-15 min |
-| `/forge-review` | Review code quality | 1-5 min |
+| `/forge` (auto-bootstrap) | First time setup | ~1 min |
+| `/forge verify` | Quick health check | ~1 min |
+| `/forge run` | Build a feature | 5-30 min |
+| `/forge fix` | Fix a bug | 3-15 min |
+| `/forge review --full` | Review code quality | 1-5 min |
 
 #### What's Next?
 
 - **All skills:** See the skill table in `CLAUDE.md` §Skill selection guide.
-- **Reduce token usage:** `/forge-compress output`
+- **Reduce token usage:** `/forge-admin compress output`
 - **Pipeline analytics:** `/forge-ask insights`
-- **Multiple features:** `/forge-sprint`
+- **Multiple features:** `/forge sprint`
 
 #### Platform Notes
 
