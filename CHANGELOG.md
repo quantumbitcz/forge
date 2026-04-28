@@ -5,6 +5,64 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.3.0] — Mega E: Documentation Rollup
+
+### Changed (Phase E1 — CLAUDE.md + README.md mega update)
+
+- **`CLAUDE.md`** rewritten across multiple sections to reflect post-Mega-A/B/C/D state:
+  - "Start Here" 3-step path with auto-bootstrap-aware `/forge "<requirement>"` invocation
+  - "What this is" intro: BRAINSTORMING inserted into the stage list (`Preflight → Brainstorming → Explore → ...`); entry simplified to `/forge → fg-100-orchestrator`
+  - Architecture: `agents/ (51)`, `skills/ (3)`
+  - Skill selection guide: collapsed from 26-row table to a 3-row table (forge / forge-ask / forge-admin) with subcommand grammar in each `SKILL.md`
+  - "Getting started flows": rewritten for the post-consolidation surface
+  - "Agents (51, agents/*.md)": header + enumeration include `fg-021-hypothesis-investigator`
+  - **New "Pattern parity" subsection** under Core contracts: 5-uplift table (planner / reviewer pipeline / post-run / bug investigator / PR builder) + 4 beyond-superpowers extensions (consistency voting, transcript mining, hypothesis branching, structured PR finishing)
+  - Routing & decomposition / Skills/hooks/kanban/git / Pipeline modes / Implementation gotchas / Survives reset / Confidence: all updated for the new surface and Megas C/D additions (BRAINSTORMING route at confidence < 0.4; brainstorm-transcripts and feedback-decisions in survives-reset list)
+- **`README.md`** rewritten:
+  - Badges: agents 51, skills 3, frameworks 24, tests 760+, finding_categories 149
+  - Lead: "51 specialized agents"
+  - Quick Start: auto-bootstrap-aware
+  - Key features: auto-bootstrap, always-on brainstorming, hypothesis-driven debugging, multi-VCS, structured PR finishing, consistency voting
+  - Available skills: 3-row table
+  - Multi-VCS support subsection (GitHub, GitLab, Bitbucket, Gitea)
+
+### Changed (Phase E2 — FEATURE_MATRIX block regeneration)
+
+- **`CLAUDE.md`** sentinel-bounded FEATURE_MATRIX block (`<!-- FEATURE_MATRIX_START -->` / `<!-- FEATURE_MATRIX_END -->`) regenerated to cover F05-F44 + 17 unnumbered "auto" capabilities. Phase 2 §AC-8 contract preserved (sentinels exactly-once on their own line; ASCII-only between sentinels).
+- **F-number rationalization** (caught at review):
+  - F35 = Intent verification gate (Phase 7)
+  - F36 = Implementer voting (Phase 7)
+  - F37 = BRAINSTORMING (Mega C)
+  - F38 = Transcript mining (Mega C)
+  - F39 = Cross-reviewer consistency voting (Mega D)
+  - F40 = Defense-check feedback handling (Mega D)
+  - F41 = Hypothesis branching for bugs (Mega D)
+  - F42 = Multi-VCS platform abstraction (Mega D)
+  - F43 = Structured PR finishing (Mega D)
+  - F44 = Stale-worktree detection (Mega D)
+  - "Speculative plan branches" (never shipped with config wiring) demoted to unnumbered "auto" row.
+- **`shared/feature_matrix_generator.py` FEATURES dict** synced to the v5.3.0 inventory (was diverging — pre-fix had only F35 = Speculative plan branches with no F36+).
+- **`shared/feature-matrix.md`** regenerated from the updated generator.
+- **F35 label collision fixed in CLAUDE.md prose**: "Cost governance" was carrying a stale `F35` annotation that conflicted with the canonical F35 = Intent verification gate. Cost governance is not a numbered feature; the annotation was dropped.
+
+### Changed (Discovered drift, fixed during review)
+
+- README badge `tests-3040+` was wildly stale. Actual test file count: 761 (`*.bats` + `*test*.py`). Badge now reads `tests-760+`.
+- README badge `finding_categories-87+` and CLAUDE.md prose "92 categories" both stale. Actual count in `shared/checks/category-registry.json`: 149. Both updated to 149.
+- CLAUDE.md prose annotation `.claude-plugin/plugin.json (v4.1.0)` was 4 majors stale; updated to current.
+
+### Removed
+
+- **`docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md`** — Mega E plan retired per `feedback_cleanup_after_ship`.
+- **`docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`** — shared mega spec retired. This spec was retained across Megas A/B/C/D as the canonical mapping holder; v5.3.0 is the last reference. The Phase 2 design doc and runtime artifacts (the SKILLs themselves, the BRAINSTORMING agent, the parity-uplift agents) are now the source of truth.
+- **AC-S005 allowlist** trimmed from 12 to 10 entries: removes `docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md` and `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`.
+
+### Notes
+
+- **Mega-consolidation train complete.** Phases A/B/C/D/E shipped sequentially across v4.3.0 → v5.3.0. The 5-plan train rewrote: helper modules + state schema (A); skill surface (B, BREAKING); brainstorming behavior (C); five superpowers patterns + four beyond-superpowers extensions (D); doc rollup + feature-matrix regeneration (E).
+- **Carry-overs** (`spring/*`, `kotlin.md`, `tests/lib/bats-core` submodule) remain unstaged across the v5.3.0 release window per existing convention.
+- **Next:** Phase 8 — Measurement (target v6.0.0, possibly BREAKING). It introduces the benchmark runner that exercises the post-mega skill surface end-to-end.
+
 ## [5.2.0] — Mega D: Pattern Parity Uplifts
 
 ### Added (Phase D1 — Planner writing-plans parity)

@@ -18,7 +18,7 @@ Already familiar? Skip to §Architecture.
 
 ## What this is
 
-`forge` is a Claude Code plugin (v5.2.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Brainstorming → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v5.3.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Brainstorming → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge` → `fg-100-orchestrator`.
 
 **Prompt-injection hardening:** External data tiered (Silent/Logged/Confirmed/Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching agents. All 51 agents carry the SHA-pinned Untrusted Data Policy header. Contract: `shared/untrusted-envelope.md`. Findings: `SEC-INJECTION-*`.
 
@@ -378,6 +378,6 @@ Each skill's `SKILL.md` body documents the full subcommand grammar, flag matrix,
 
 ## Distribution & governance
 
-`.claude-plugin/plugin.json` (v5.2.0), `marketplace.json`. Hooks live only in `hooks/hooks.json`. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
+`.claude-plugin/plugin.json` (v5.3.0), `marketplace.json`. Hooks live only in `hooks/hooks.json`. Install: `/plugin marketplace add quantumbitcz/forge` → `/plugin install forge@quantumbitcz`.
 
 `LICENSE` (Proprietary, QuantumBit s.r.o.), `CONTRIBUTING.md`, `SECURITY.md`, `.github/CODEOWNERS` (@quantumbitcz), `.github/release.yml`.
