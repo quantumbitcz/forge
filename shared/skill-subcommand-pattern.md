@@ -1,7 +1,7 @@
 # Skill Subcommand Dispatch Pattern
 
 Standard pattern for skills that expose multiple modes via subcommands (git-style).
-Adopted for `/forge-review`, `/forge-graph`, `/forge-verify`.
+Adopted for `/forge review`, `/forge-admin graph`, `/forge verify`.
 
 ## 1. Dispatch algorithm
 
@@ -23,7 +23,7 @@ at the top of its SKILL.md body. That section MUST describe the following steps:
 ## 2. Default subcommand
 
 Each skill MAY declare a default subcommand used when `$ARGUMENTS` is empty
-or starts with a flag. Skills that touch destructive state (e.g. `/forge-graph`
+or starts with a flag. Skills that touch destructive state (e.g. `/forge-admin graph`
 whose `rebuild` subcommand deletes nodes) MUST NOT declare a default; a bare
 invocation prints help and exits 2.
 
@@ -31,9 +31,9 @@ Current defaults:
 
 | Skill | Default | Rationale |
 |---|---|---|
-| `/forge-review` | `changed` (i.e. `--scope=changed` with `--fix` on) | Preserves old `/forge-review` muscle memory. |
-| `/forge-graph` | none — explicit subcommand required | Safer than silently invoking `rebuild`. |
-| `/forge-verify` | `build` | Matches old `/forge-verify` default. |
+| `/forge review` | `changed` (i.e. `--scope=changed` with `--fix` on) | Preserves old `/forge review` muscle memory. |
+| `/forge-admin graph` | none — explicit subcommand required | Safer than silently invoking `rebuild`. |
+| `/forge verify` | `build` | Matches old `/forge verify` default. |
 
 ## 3. Arg-parsing helper (inlined per skill)
 
@@ -87,4 +87,4 @@ than to a missing required flag.
 - NEW skill needs ≥ 3 modes whose setup/prerequisites overlap.
 - Existing skills that are obvious modes of each other (audit found: review,
   graph, verify).
-- DO NOT adopt for single-mode skills (`/forge-status`, `/forge-abort`).
+- DO NOT adopt for single-mode skills (`/forge-ask status`, `/forge-admin abort`).

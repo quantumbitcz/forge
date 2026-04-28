@@ -117,7 +117,7 @@
         "auto_run_after_compress": {
           "type": "boolean",
           "default": false,
-          "description": "Run validation automatically after /forge-compress"
+          "description": "Run validation automatically after /forge-admin compress"
         },
         "drift_threshold_pct": {
           "type": "integer",

@@ -202,7 +202,7 @@ Score plateaued at 76 (CONCERNS). Unlikely to improve further.
 Options:
   1. Keep trying (risk: more iterations without progress)
   2. Fix manually (pause pipeline, user fixes, resume from VERIFY)
-  3. Abort (/forge-abort)
+  3. Abort (/forge-admin abort)
 ```
 
 | Field | Final Value |
@@ -216,7 +216,7 @@ Options:
 
 **If user chooses option 1:** Reset `plateau_count` to 0, `convergence_state` to `"IMPROVING"`, continue iterating. `total_iterations` is NOT reset — global cap still applies. First cycle after restart is exempt from plateau detection.
 
-**If user chooses option 3:** `/forge-abort` → state transitions to ABORTED.
+**If user chooses option 3:** `/forge-admin abort` → state transitions to ABORTED.
 
 **State transitions used:** C7 (score_improving, cycles 1-2), C10 (score_plateau with plateau_count < plateau_patience, cycle 3), C8 (score_plateau with plateau_count >= plateau_patience, cycle 4 → ESCALATED per score escalation ladder).
 
@@ -247,7 +247,7 @@ Score REGRESSING: 82 → 68 (delta -14, tolerance 5).
 Fix attempt introduced regressions. Options:
   1. Revert last fix and retry with different approach
   2. Continue (risk: further regression)
-  3. Abort (/forge-abort)
+  3. Abort (/forge-admin abort)
 ```
 
 | Field | Final Value |

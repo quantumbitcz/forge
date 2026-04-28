@@ -98,8 +98,8 @@ These transitions can fire from any current_state. They take priority over norma
 | E6 | ANY (ESCALATED) | `user_abort` | — | `ABORTED` | Write abort-report.md, clean up worktree, release lock |
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
 | E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user. **Note:** The orchestrator's `cost-alerting.sh` system warns the user at configurable thresholds (default 50%/75%/90%) BEFORE E8 fires. E8 serves as an absolute safety net at the hard ceiling (default 2,000,000 tokens). The orchestrator calls `cost-alerting.sh check` before each agent dispatch; if exit 3 (CRITICAL) or 4 (EXCEEDED), it surfaces options to the user before E8's hard ESCALATED transition fires. |
-| E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-abort skill. Set abort_reason, release lock, preserve worktree. |
-| R1 | ANY | `recovery_op_rewind` | `/forge-recover rewind --to=<id>` dispatched by orchestrator | `REWINDING` | Entered transiently at the start of rewind. `StateTransitionEvent { from: <current>, to: "REWINDING" }` logged. `state.story_state` is NOT written. |
+| E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-admin abort skill. Set abort_reason, release lock, preserve worktree. |
+| R1 | ANY | `recovery_op_rewind` | `/forge-admin recover rewind --to=<id>` dispatched by orchestrator | `REWINDING` | Entered transiently at the start of rewind. `StateTransitionEvent { from: <current>, to: "REWINDING" }` logged. `state.story_state` is NOT written. |
 | R2 | `REWINDING` | `rewind_commit_success` | CAS atomic restore succeeded (python3 -m hooks._py.time_travel exit 0) | `<checkpoint.story_state>` | Whichever story_state the target checkpoint captured. `state.story_state` set to the target's captured story_state; `StateTransitionEvent { from: "REWINDING", to: <target> }` logged. |
 | R3 | `REWINDING` | `rewind_abort` | CAS restore failed (exit 5 dirty / 6 unknown / 7 tx-collision) | `<prior story_state>` | Zero side effects; pipeline returns to state before rewind. `StateTransitionEvent { from: "REWINDING", to: <prior> }` logged. Abort code surfaced via `AskUserQuestion`. |
 
@@ -125,7 +125,7 @@ Rewind is the only transition type that can originate from ANY pipeline state. I
 4a. On success (exit 0): `StateTransitionEvent { from: "REWINDING", to: <checkpoint.story_state> }` logged; `state.story_state` is set to the target's story_state (row R2).
 4b. On abort (exit 5/6/7): `StateTransitionEvent { from: "REWINDING", to: <prior story_state> }` logged; `state.story_state` reverts (row R3). Abort code surfaced via `AskUserQuestion`.
 
-Subsequent forward progress is normal. The next `/forge-recover resume` continues from the rewound head.
+Subsequent forward progress is normal. The next `/forge-admin recover resume` continues from the rewound head.
 
 ---
 

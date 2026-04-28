@@ -106,7 +106,7 @@ RETURN l.name
 
 **Used during:** forge-init
 
-Suggests layer modules that are commonly paired with a given framework for a specific layer. The orchestrator uses this during `/forge-init` to pre-populate `forge.local.md` with sensible defaults.
+Suggests layer modules that are commonly paired with a given framework for a specific layer. The orchestrator uses this during `/forge` to pre-populate `forge.local.md` with sensible defaults.
 
 ```cypher
 // What modules are commonly paired with a framework for a given layer?

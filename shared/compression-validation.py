@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-compression validation for /forge-compress.
+"""Post-compression validation for /forge-admin compress.
 
 Validates that compression preserves structural elements:
 - Heading count and text

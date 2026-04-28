@@ -13,7 +13,7 @@ Caches PLAN stage outputs in `.forge/plan-cache/` for reuse when similar require
 
 **Schema version 2.0 — breaking change.**
 
-Breaking change from v1.0 (added alongside speculation). Previous cache entries are invalidated on upgrade — `/forge-init` clears `.forge/plan-cache/` on schema mismatch; user is notified.
+Breaking change from v1.0 (added alongside speculation). Previous cache entries are invalidated on upgrade — `/forge` clears `.forge/plan-cache/` on schema mismatch; user is notified.
 
 ```json
 {
@@ -129,6 +129,6 @@ In `forge-config.md`:
       max_entries: 20
       max_age_days: 30
 
-## /forge-recover reset Behavior
+## /forge-admin recover reset Behavior
 
-`/forge-recover reset` preserves `.forge/plan-cache/` (same as explore cache). Only `/forge-recover reset --hard` or manual deletion removes it.
+`/forge-admin recover reset` preserves `.forge/plan-cache/` (same as explore cache). Only `/forge-admin recover reset --hard` or manual deletion removes it.

@@ -115,9 +115,9 @@ In `forge-config.md`:
 | `pii_detection` | boolean | `true` | Enable SEC-PII detection for email addresses |
 | `block_restricted` | boolean | `true` | Block RESTRICTED-tier values from all artifacts |
 
-## /forge-recover reset Behavior
+## /forge-admin recover reset Behavior
 
-`/forge-recover reset` clears `data_classification.redaction_counter` in `state.json`. Redaction history is not preserved across runs. `/forge-recover reset --hard` removes all artifacts including those containing `[REDACTED:...]` placeholders.
+`/forge-admin recover reset` clears `data_classification.redaction_counter` in `state.json`. Redaction history is not preserved across runs. `/forge-admin recover reset --hard` removes all artifacts including those containing `[REDACTED:...]` placeholders.
 
 ## 12. Input Classification (cross-reference)
 

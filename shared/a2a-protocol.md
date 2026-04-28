@@ -111,20 +111,20 @@ Each forge-enabled project exposes its capabilities via `.forge/agent-card.json`
 
 ## Agent Card Generation
 
-The agent card is created by `/forge-init` and updated on subsequent init runs.
+The agent card is created by `/forge` and updated on subsequent init runs.
 
 ### Generation Flow
 
-1. `/forge-init` detects the project's git remote to populate `project_id`
+1. `/forge` detects the project's git remote to populate `project_id`
 2. Skills are populated from the project's `forge.local.md` configuration (only skills relevant to the project's stack)
 3. The card is written to `.forge/agent-card.json`
 4. The file is gitignored (lives inside `.forge/`)
 
 ### Update Rules
 
-- Re-running `/forge-init` regenerates the card with the current forge version
+- Re-running `/forge` regenerates the card with the current forge version
 - The card is NOT updated during pipeline runs (it represents static capabilities, not runtime state)
-- Deleting `.forge/` removes the card — next `/forge-init` recreates it
+- Deleting `.forge/` removes the card — next `/forge` recreates it
 
 ---
 
@@ -167,7 +167,7 @@ Cross-repo discovery follows this order:
 
 ## Fallback Behavior
 
-When `.forge/agent-card.json` does not exist in a target repository, the system falls back to current file-based polling behavior. This ensures backward compatibility with projects that have not run `/forge-init` with A2A-capable forge versions.
+When `.forge/agent-card.json` does not exist in a target repository, the system falls back to current file-based polling behavior. This ensures backward compatibility with projects that have not run `/forge` with A2A-capable forge versions.
 
 ### Fallback Decision Tree
 
@@ -356,18 +356,18 @@ See `shared/a2a-http-transport.md` for the full configuration reference.
 
 ### Opting Out
 
-To prevent A2A discovery for a specific project, do not run `/forge-init` in that project (or delete `.forge/agent-card.json`). The fallback to file-based polling is automatic and silent.
+To prevent A2A discovery for a specific project, do not run `/forge` in that project (or delete `.forge/agent-card.json`). The fallback to file-based polling is automatic and silent.
 
 ---
 
 ## Lifecycle Summary
 
 ```
-/forge-init
+/forge
   → Detects git remote, generates .forge/agent-card.json
   → If a2a.transport == "http": includes transport and authentication fields in card
 
-/forge-run (producer repo)
+/forge run (producer repo)
   → PREFLIGHT: if a2a.transport == "http", start A2A HTTP server on configured port
   → state.json updated at each stage transition
   → No agent-card.json changes during run

@@ -71,7 +71,7 @@ parse_args() {
 # -- Read config from forge-config.md if present -----------------------------
 
 read_config() {
-  local config_file="${PROJECT_ROOT}/.claude/forge-config.md"
+  local config_file="${PROJECT_ROOT}/.claude/forge-admin config.md"
   [[ -f "$config_file" && -n "${FORGE_PYTHON:-}" ]] || return 0
 
   eval "$("$FORGE_PYTHON" -c "

@@ -12,7 +12,7 @@
 | `_seq` | integer | Yes | Monotonic write counter. Starts at 1. Incremented on every write by `forge-state-write.sh`. Used for stale write detection. |
 | `complete` | boolean | Yes | `false` while pipeline is running, `true` when Stage 9 finishes successfully. Used by PREFLIGHT to detect interrupted runs. |
 | `story_id` | string | Yes | Kebab-case identifier for the current story. Derived from the requirement at PREFLIGHT (e.g., `"feat-plan-comments"`, `"fix-client-404"`, `"refactor-booking-validation"`). Used as suffix for checkpoint and notes files. |
-| `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge-run` invocation argument. |
+| `requirement` | string | Yes | The original user requirement, verbatim. Captured from the `/forge run` invocation argument. |
 | `domain_area` | string | Yes | Primary domain area affected by this change. Detected by the planner at Stage 2 using the algorithm in `shared/domain-detection.md`. Known domains: `auth`, `billing`, `user`, `scheduling`, `communication`, `inventory`, `workflow`, `commerce`, `search`, `analytics`, `config`, `api`, `infra`, `general`. Falls back to `"general"` if detection produces no clear result or the planner fails to set it (orchestrator emits WARNING). Immutable after Stage 2. Used by PREEMPT decay, auto-tuning, and bug hotspot tracking. |
 | `risk_level` | string | Yes | Risk assessment from the planner. Valid values: `"LOW"`, `"MEDIUM"`, `"HIGH"`. Set at Stage 2, used at Stage 3 for the auto-proceed decision gate. |
 | `story_state` | string | Yes | The overall pipeline state — the highest active stage across all components. If backend is IMPLEMENTING and frontend is EXPLORING, the top-level story_state is IMPLEMENTING. Valid values and transitions defined below. Updated at the start of each stage. |
@@ -49,7 +49,7 @@
 | `last_commit_sha` | string | Yes | Git commit SHA of the most recent forge-created commit. Set after the pre-implement checkpoint commit (Stage 4) and updated after the final commit (Stage 8). Used by PREFLIGHT to detect git drift on interrupted-run recovery. Empty string `""` before the first commit. |
 | `preempt_items_applied` | string[] | Yes | List of PREEMPT item identifiers from `forge-log.md` that were loaded at PREFLIGHT for the current domain area. Records what was *loaded*, not what was *used*. Empty array `[]` if no items match. |
 | `preempt_items_status` | object | Yes | Tracks actual usage of PREEMPT items during implementation. Keys are item identifiers. Values: `{ "applied": true, "false_positive": false }` (item used and relevant), `{ "applied": false, "false_positive": true }` (item loaded but inapplicable). Populated by orchestrator from agent stage notes. Read by retrospective to update hit counts and confidence decay in `forge-log.md`. |
-| `learnings_cache` | object\|null | No | Per-run cache of `LearningItem` records loaded from `shared/learnings/` and `~/.claude/forge-learnings/` by `learnings_io.load_all()` at the first dispatch that needs injection (orchestrator §0.6.1). Populated lazily on first use; reused by every subsequent dispatch within the same run. The orchestrator selects per-agent subsets from this cache via `learnings_selector.select_for_dispatch()`; unused items remain in the cache but are never injected. The schema mirrors the `LearningItem` dataclass in `hooks/_py/learnings_selector.py` (`id`, `source_path`, `body`, `base_confidence`, `confidence_now`, `half_life_days`, `applied_count`, `last_applied`, `applies_to`, `domain_tags`, `archived`). Cleared at LEARN stage completion so the next run reloads after retrospective write-back. `null` (or absent) before the first injection-eligible dispatch. Survives `/forge-recover reset` only if the run completes — otherwise the next run rebuilds it on first dispatch (no on-disk persistence beyond `state.json`). |
+| `learnings_cache` | object\|null | No | Per-run cache of `LearningItem` records loaded from `shared/learnings/` and `~/.claude/forge-learnings/` by `learnings_io.load_all()` at the first dispatch that needs injection (orchestrator §0.6.1). Populated lazily on first use; reused by every subsequent dispatch within the same run. The orchestrator selects per-agent subsets from this cache via `learnings_selector.select_for_dispatch()`; unused items remain in the cache but are never injected. The schema mirrors the `LearningItem` dataclass in `hooks/_py/learnings_selector.py` (`id`, `source_path`, `body`, `base_confidence`, `confidence_now`, `half_life_days`, `applied_count`, `last_applied`, `applies_to`, `domain_tags`, `archived`). Cleared at LEARN stage completion so the next run reloads after retrospective write-back. `null` (or absent) before the first injection-eligible dispatch. Survives `/forge-admin recover reset` only if the run completes — otherwise the next run rebuilds it on first dispatch (no on-disk persistence beyond `state.json`). |
 | `feedback_classification` | string | Yes | Feedback type from the most recent PR rejection. Valid values: `""` (no feedback), `"implementation"` (code-level feedback → re-enter Stage 4), `"design"` (design-level feedback → re-enter Stage 2). Set by orchestrator after reading `fg-710-post-run` stage notes. |
 | `previous_feedback_classification` | string | Yes | Feedback type from the preceding PR rejection. Used by the orchestrator to detect feedback loops — when `feedback_classification == previous_feedback_classification` for 2+ consecutive rejections, the orchestrator escalates. Updated by the orchestrator before comparing classifications. Empty string `""` initially. |
 | `feedback_loop_count` | integer | Yes | Consecutive PR rejections with the same `feedback_classification`. Starts at 0, incremented on each rejection where classification matches `previous_feedback_classification`. Reset to 0 when classification changes. When `>= 2`, the orchestrator escalates with a feedback loop warning (see `stage-contract.md` Stage 8 and `fg-100-orchestrator.md` User Response section). |
@@ -124,7 +124,7 @@
 | `decision_quality.total_decisions_logged` | integer | — | Total number of entries in `.forge/decisions.jsonl` for this run. Updated at stage boundaries. Default: 0. |
 | `recovery_budget` | object | Yes | Weighted recovery budget tracking. `total_weight`: sum of all applied strategy weights. `max_weight`: budget ceiling (default: 5.5). `applications[]`: list of `{ "strategy": "<name>", "weight": <float>, "stage": "<stage>", "timestamp": "<ISO8601>" }`. Strategy weights: transient-retry=0.5, tool-diagnosis=1.0, state-reconstruction=1.5, agent-reset=1.0, dependency-health=1.0, resource-cleanup=0.5, graceful-stop=0.0. When `total_weight >= max_weight`, escalate. When `total_weight >= 4.4` (80%), set `recovery.budget_warning_issued: true`. |
 | `recovery` | object | Yes | Recovery engine runtime state. `total_failures`: count of error occurrences that triggered recovery evaluation. `total_recoveries`: count of successful recoveries. `degraded_capabilities`: list of capability names operating in degraded mode (e.g., `"linear"`, `"neo4j"`). `failures`: list of `{ "error_type": "<type>", "stage": "<stage>", "timestamp": "<ISO8601>", "strategy": "<strategy-applied>", "outcome": "recovered\|escalated" }`. `budget_warning_issued`: boolean, `true` when `recovery_budget.total_weight >= 4.4` (80% of budget). |
-| `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300, "flapping_count": <int>, "locked": <bool> }`. `flapping_count` (default 0): incremented when HALF_OPEN → OPEN (probe failed), reset to 0 on HALF_OPEN → CLOSED (probe succeeded). `locked` (default false): set to `true` when `flapping_count >= 3` — locked circuits remain OPEN indefinitely with no HALF_OPEN probes. Cleared by `/forge-recover repair`, `/forge-recover reset`, or new pipeline run; NOT cleared by `/forge-recover resume`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine, flapping detection, and category-to-error-type mapping. Default: `{}`. Added in v1.6.0. |
+| `recovery.circuit_breakers` | object | No | Per-category circuit breaker state. Keys are failure categories (`build`, `test`, `network`, `agent`, `state`, `environment`). Values: `{ "state": "CLOSED\|OPEN\|HALF_OPEN", "failures_count": <int>, "last_failure_timestamp": "<ISO8601>\|null", "cooldown_seconds": 300, "flapping_count": <int>, "locked": <bool> }`. `flapping_count` (default 0): incremented when HALF_OPEN → OPEN (probe failed), reset to 0 on HALF_OPEN → CLOSED (probe succeeded). `locked` (default false): set to `true` when `flapping_count >= 3` — locked circuits remain OPEN indefinitely with no HALF_OPEN probes. Cleared by `/forge-admin recover repair`, `/forge-admin recover reset`, or new pipeline run; NOT cleared by `/forge-admin recover resume`. Only categories with at least one failure appear. Absent categories are implicitly CLOSED with `failures_count: 0`. See `shared/recovery/recovery-engine.md` section 8.1 for state machine, flapping detection, and category-to-error-type mapping. Default: `{}`. Added in v1.6.0. |
 | `schema_version_history` | array | No | Append-only log of schema migrations applied to this state file. Each entry: `{ "from": "<version>", "to": "<version>", "timestamp": "<ISO8601>" }`. Capped at 20 entries (oldest trimmed). Added in v1.6.0. Default: `[]`. |
 | `consistency_cache_hits` | integer | Yes | Count of self-consistency voting dispatch calls served from `.forge/consistency-cache.jsonl`. Incremented by `hooks/_py/consistency.py` on cache hit. Added in v1.9.0. Default: `0`. See `shared/consistency/voting.md`. |
 | `consistency_votes` | object | Yes | Per-decision-point self-consistency voting counters. Keys: `shaper_intent`, `validator_verdict`, `pr_rejection_classification`. Each value is `{ "invocations": <int>, "cache_hits": <int>, "low_consensus": <int> }`. `invocations` increments on every dispatch (skipped on validator hard-verdict rule pass). `cache_hits` increments when a dispatch is served from cache. `low_consensus` increments when the winning label's mean confidence falls below `consistency.min_consensus_confidence` or when a `ConsistencyError` fires (too few samples survived parsing). Added in v1.9.0. Default: all counters `0`. See `shared/consistency/voting.md` §5 for fallback rules. |
@@ -170,13 +170,13 @@
 | `confidence.familiarity` | number | — | Pattern familiarity dimension score (0.0-1.0). Based on PREEMPT item matches, plan cache hits, and domain run history. |
 | `confidence.complexity` | number | — | Codebase complexity dimension score (0.0-1.0, inverted -- higher means simpler). Based on affected file count, cross-component changes, cyclomatic complexity. |
 | `confidence.history` | number | — | Historical success rate dimension score (0.0-1.0). Based on last 5 runs for the same `domain_area`. 0.3 when no prior runs exist. |
-| `confidence.gate_decision` | string | — | Gate decision after confidence evaluation. Valid values: `"PROCEED"` (HIGH confidence), `"ASK"` (MEDIUM -- user confirmation requested), `"SUGGEST_SHAPE"` (LOW -- `/forge-shape` recommended). In autonomous mode, always logged but not enforced. |
+| `confidence.gate_decision` | string | — | Gate decision after confidence evaluation. Valid values: `"PROCEED"` (HIGH confidence), `"ASK"` (MEDIUM -- user confirmation requested), `"SUGGEST_SHAPE"` (LOW -- `/forge run` recommended). In autonomous mode, always logged but not enforced. |
 | `eval` | object | No | Last eval run metadata. Informational only, not consumed by pipeline agents. Updated by `eval-runner.sh` after a live eval run completes (best-effort -- skipped if no `state.json` exists). |
 | `eval.last_suite` | string | — | Name of the last eval suite that was run (e.g., `"lite"`, `"smoke"`). |
 | `eval.last_run_timestamp` | string | — | ISO 8601 timestamp of the last eval run completion. |
 | `eval.last_pass_rate` | number | — | Pass rate (0.0-1.0) from the last eval run. |
 | `eval.last_result_file` | string | — | Relative path to the result JSON file from the last eval run (e.g., `"evals/pipeline/results/2026-04-14-10-30-00-lite.json"`). |
-| `intent_verification_results` | array | No | Phase 7 (F35) — per-acceptance-criterion verdicts emitted by `fg-540-intent-verifier`. Populated by `fg-100-orchestrator` at the end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. Cleared at PREFLIGHT of every new run (does **not** survive `/forge-recover reset`). Each entry: `{ "ac_id": "AC-NNN", "verdict": "VERIFIED\|PARTIAL\|MISSED\|UNVERIFIABLE", "evidence": [{ "probe": "<cmd>", "status": <int\|null>, "body_sha": "<sha\|null>", "duration_ms": <int> }], "probes_issued": <int>, "duration_ms": <int>, "reasoning": "<text>" }`. Verdict mapping: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`. Default: `[]`. See `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`. |
+| `intent_verification_results` | array | No | Phase 7 (F35) — per-acceptance-criterion verdicts emitted by `fg-540-intent-verifier`. Populated by `fg-100-orchestrator` at the end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. Cleared at PREFLIGHT of every new run (does **not** survive `/forge-admin recover reset`). Each entry: `{ "ac_id": "AC-NNN", "verdict": "VERIFIED\|PARTIAL\|MISSED\|UNVERIFIABLE", "evidence": [{ "probe": "<cmd>", "status": <int\|null>, "body_sha": "<sha\|null>", "duration_ms": <int> }], "probes_issued": <int>, "duration_ms": <int>, "reasoning": "<text>" }`. Verdict mapping: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`. Default: `[]`. See `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`. |
 | `impl_vote_history` | array | No | Phase 7 (F36) — per-task N=2 voting telemetry written by `fg-100-orchestrator` during Stage 4 IMPLEMENT. One entry per task where voting was evaluated (fired OR skipped, with reason). **Survives across pipeline runs** (informational only; not cleared at PREFLIGHT). Each entry: `{ "task_id": "<id>", "trigger": "confidence\|risk_tag\|regression_history\|null", "samples": [{ "sample_id": 1\|2, "diff_sha": "<sha>", "ast_fingerprint": "sha256:..." }], "judge_verdict": "SAME\|DIVERGES\|null", "tiebreak_dispatched": <bool>, "winner_sample_id": <int\|null>, "skipped_reason": "null\|cost\|disabled\|worktree_fail", "wall_time_ms": <int> }`. When `skipped_reason` is non-null, `samples`, `judge_verdict`, `tiebreak_dispatched`, and `winner_sample_id` may be empty/null — the entry exists only as telemetry for `fg-700-retrospective`. Default: `[]`. See `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`. |
 
 ## `state.json` sub-object schemas
@@ -272,7 +272,7 @@ Tracks worktrees and status for changes in related projects. Only populated when
 - Updated to `complete` when cross-repo implementation succeeds
 - Updated to `failed` on errors
 - `pr_url` populated during SHIP if PR creation succeeds
-- Cleaned up by `/forge-recover rollback` or `/forge-recover reset`
+- Cleaned up by `/forge-admin recover rollback` or `/forge-admin recover reset`
 
 ---
 
@@ -297,7 +297,7 @@ Present when pipeline was invoked with `--spec <path>`. Stores parsed spec metad
 
 ### ai_quality_tracking (object, optional)
 
-Tracks AI-specific finding patterns across pipeline runs. Created by `fg-700-retrospective` on first detection of `AI-*` findings. Persists across runs (not reset by `/forge-recover reset`).
+Tracks AI-specific finding patterns across pipeline runs. Created by `fg-700-retrospective` on first detection of `AI-*` findings. Persists across runs (not reset by `/forge-admin recover reset`).
 
 ```json
 {
@@ -534,7 +534,7 @@ All other fields in the Field Reference table marked "Yes" are also required; th
 
 ### Migration State (stored in `state.json.migration` during migration runs)
 
-During migration mode (triggered by `/forge-migration` or `/forge-run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
+During migration mode (triggered by `/forge migrate` or `/forge run "migrate: ..."`), the `migration` object is added to `state.json` by `fg-160-migration-planner`. This object tracks the full lifecycle of a migration run, including version detection, impact analysis, and per-phase progress.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -600,7 +600,7 @@ Example:
 
 ## security.injection_* (added in 3.1.0)
 
-Counters incremented by `hooks/_py/mcp_response_filter.py` (via orchestrator callback) for `events_count` and `blocks_count`; incremented by the orchestrator confirmation gate for `confirmations_requested`. Read by `fg-700-retrospective` and `/forge-insights`. All fields are optional and default to 0 / null.
+Counters incremented by `hooks/_py/mcp_response_filter.py` (via orchestrator callback) for `events_count` and `blocks_count`; incremented by the orchestrator confirmation gate for `confirmations_requested`. Read by `fg-700-retrospective` and `/forge-ask insights`. All fields are optional and default to 0 / null.
 
 ```json
 {
@@ -633,7 +633,7 @@ Unified append-only event log capturing all pipeline events. See `shared/event-l
 
 - Created on first event emission (typically `PIPELINE_START` at PREFLIGHT).
 - Appended by `shared/emit-event.sh` throughout the pipeline run.
-- **Survives `/forge-recover reset`** -- only manual `rm -rf .forge/` removes it.
+- **Survives `/forge-admin recover reset`** -- only manual `rm -rf .forge/` removes it.
 - Events older than `events.retention_days` (default: 90) pruned at PREFLIGHT.
 - File size pruned when exceeding `events.max_file_size_mb` (default: 50).
 
@@ -671,7 +671,7 @@ This section documents the evolution of the `state.json` schema and the protocol
 | 1.5.0 | 1.6.0 | (v2.7.0) Added circuit breaker tracking, planning critic counter, schema migration history | `recovery.circuit_breakers`, `critic_revisions`, `schema_version_history` | `{}`, `0`, `[]` |
 | 1.6.0 | 1.7.0 | (v2.0) Added confidence scoring, adaptive trust, context condensation, knowledge references | `confidence`, `convergence.condensation`, `tokens.condensation_savings`, `tokens.condensation_count`, `tokens.condensation_cost`, `tokens.effective_token_ratio` | `null` (computed at PLAN), see condensation defaults above, `0`, `0`, `0`, `1.0` |
 | 1.7.0 | 1.8.0 | (v2.0) Added output compression tracking | `tokens.compression_level_distribution`, `tokens.output_tokens_per_agent` | `{ "verbose": 0, "standard": 0, "terse": 0, "minimal": 0 }`, `{}` |
-| 1.8.0 | 1.9.0 | (Forge 3.1.0) Self-consistency voting counters + time-travel CAS checkpoints. Breaking: CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
+| 1.8.0 | 1.9.0 | (Forge 3.1.0) Self-consistency voting counters + time-travel CAS checkpoints. Breaking: CAS DAG replaces linear `.forge/checkpoint-*.json`; `/forge-admin recover reset` required for pre-1.9.0 state. | `consistency_cache_hits`, `consistency_votes`, `checkpoints`, `head_checkpoint` | `0`, `{ "shaper_intent": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "validator_verdict": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 }, "pr_rejection_classification": { "invocations": 0, "cache_hits": 0, "low_consensus": 0 } }`, `[]`, `""` |
 | 1.9.0 | 1.10.0 | (Forge 3.6.0) Session handoff tracking sub-object for preserving run state across Claude Code session boundaries. | `handoff.last_written_at`, `handoff.last_path`, `handoff.chain`, `handoff.soft_triggers_this_run`, `handoff.hard_triggers_this_run`, `handoff.milestone_triggers_this_run`, `handoff.suppressed_by_rate_limit` | `null`, `null`, `[]`, `0`, `0`, `0`, `0` |
 | 1.10.0 | 2.0.0 | (Forge 4.0.0) Hard cut — no migration shim. Replaces the Chain-of-Verification critic with explicit plan/impl judges (fg-205, fg-301-implementer-judge). Older state files auto-reset; backup at `.forge/state.v1.bak`. | **Added:** `plan_judge_loops`, `impl_judge_loops`, `judge_verdicts`, `current_plan_sha`. **Removed:** `critic_revisions`, `implementer_reflection_cycles_total`, `reflection_divergence_count`, `tasks[*].implementer_reflection_cycles`, `tasks[*].reflection_verdicts` | `0`, `{}`, `[]`, `null` |
 
@@ -694,7 +694,7 @@ The orchestrator detects the state version at PREFLIGHT (Stage 0) and applies mi
 - Migration is logged to `.forge/.hook-failures.jsonl` with reason `state_migration:{from}->{to}` (one JSON row per migration event).
 - The recovery engine checks the version field before parsing -- version mismatch triggers migration before any other state processing.
 
-**Manual reset:** Use `/forge-recover reset` to clear stale state if automatic migration is insufficient.
+**Manual reset:** Use `/forge-admin recover reset` to clear stale state if automatic migration is insufficient.
 
 ### story_state Valid Values
 
@@ -716,7 +716,7 @@ The orchestrator detects the state version at PREFLIGHT (Stage 0) and applies mi
 | `"MIGRATION_VERIFY"` | - | Post-migration verification (tests + compatibility checks) |
 | `"DECOMPOSED"` | - | Requirement decomposed into multiple features; sprint orchestrator taking over |
 
-Migration states are used exclusively by `fg-160-migration-planner` during `/forge-migration` runs. They are not part of the standard pipeline flow.
+Migration states are used exclusively by `fg-160-migration-planner` during `/forge migrate` runs. They are not part of the standard pipeline flow.
 
 **Multi-module only states** (used in `modules[].story_state`, never at top level):
 
@@ -742,7 +742,7 @@ All retry loops also increment `total_retries`. When `total_retries >= total_ret
 
 ## checkpoint-{storyId}.json
 
-> **DEPRECATED in v1.9.0.** This linear per-story file format is replaced by the content-addressable DAG documented in §Checkpoints above. New runs write to `.forge/runs/<run_id>/checkpoints/` via `hooks/_py/time_travel`. The schema below is retained for reference only — orchestrators on v1.9.0+ never read or write these files, and `/forge-recover reset` is required to migrate pre-1.9.0 state.
+> **DEPRECATED in v1.9.0.** This linear per-story file format is replaced by the content-addressable DAG documented in §Checkpoints above. New runs write to `.forge/runs/<run_id>/checkpoints/` via `hooks/_py/time_travel`. The schema below is retained for reference only — orchestrators on v1.9.0+ never read or write these files, and `/forge-admin recover reset` is required to migrate pre-1.9.0 state.
 
 Per-story recovery checkpoint. Created and updated during Stage 4 (IMPLEMENT) after each task completes. Enables resuming implementation at the exact task where a conversation was interrupted.
 
@@ -888,7 +888,7 @@ When `fg-100-orchestrator` is dispatched as a subagent (by a `/forge-*` skill or
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`, `rewind`, `list-checkpoints`. Present when `fg-100-orchestrator` is dispatched from `/forge-recover`. Absent otherwise; orchestrator proceeds with normal pipeline. `rewind` and `list-checkpoints` added in v1.9.0. |
+| `recovery_op` | string | no | One of `diagnose`, `repair`, `reset`, `resume`, `rollback`, `rewind`, `list-checkpoints`. Present when `fg-100-orchestrator` is dispatched from `/forge-admin recover`. Absent otherwise; orchestrator proceeds with normal pipeline. `rewind` and `list-checkpoints` added in v1.9.0. |
 
 ---
 
@@ -934,7 +934,7 @@ See `shared/recovery/time-travel.md` for the full protocol, atomic restore seman
 ### Refusal behavior
 
 Orchestrator at startup reads `state.json.version`. If < `1.9.0`, refuses to proceed with error:
-`state.json v<detected> detected; v1.9.0 required. Run /forge-recover reset to start fresh.`
+`state.json v<detected> detected; v1.9.0 required. Run /forge-admin recover reset to start fresh.`
 
 No automatic migration — the checkpoint format is incompatible. Legacy `.forge/checkpoint-*.json` files are deleted by `python3 -m hooks._py.time_travel` at first post-migration write unless `recovery.time_travel.preserve_legacy: true` (moves to `.forge/runs/<run_id>/checkpoints/legacy-trash/`).
 
@@ -942,18 +942,18 @@ No automatic migration — the checkpoint format is incompatible. Legacy `.forge
 
 1. **Create:** `hooks/_py/time_travel` writes a checkpoint after each task completion (or at any point the orchestrator requests a save). Content-addressable: identical bundles across rewind-and-retry iterations dedup to a single on-disk directory; only `tree.json` grows an edge.
 
-2. **Read:** On resume (`/forge-recover resume`), the orchestrator reads `HEAD` to find the active checkpoint and loads the four-tuple (state, worktree sha, events slice, memory) from `by-hash/`.
+2. **Read:** On resume (`/forge-admin recover resume`), the orchestrator reads `HEAD` to find the active checkpoint and loads the four-tuple (state, worktree sha, events slice, memory) from `by-hash/`.
 
 3. **Clean up:** Handled by `python3 -m hooks._py.time_travel gc`:
    - TTL-protected: any non-lineage node older than `retention_days`
    - Cap-enforced: oldest non-HEAD nodes evicted when `max_per_run` exceeded
    - Never deletes current HEAD itself, and skips entirely if the run is `RUNNING`/`PAUSED`/`ESCALATED`
-   - `/forge-recover reset` clears the entire `.forge/runs/<run_id>/checkpoints/` tree for this run
+   - `/forge-admin recover reset` clears the entire `.forge/runs/<run_id>/checkpoints/` tree for this run
 
 ### Survival Rules
 
-- Checkpoints survive `/forge-recover resume` (that's their purpose)
-- Checkpoints are cleared by `/forge-recover reset` and pipeline completion
+- Checkpoints survive `/forge-admin recover resume` (that's their purpose)
+- Checkpoints are cleared by `/forge-admin recover reset` and pipeline completion
 - Checkpoints do NOT survive `rm -rf .forge/`
 
 ### recovery.time_travel (new in 1.9.0)
@@ -1021,7 +1021,7 @@ Each task object under `tasks[*]` carries:
 
 **Phase 7 portion (intent assurance):** added two append-only top-level arrays — both populated by `fg-100-orchestrator`, disjoint from the Phase 5 and Phase 6 contributions.
 
-- `intent_verification_results` (array, optional, default `[]`) — per-AC verdicts written at end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. **Cleared at PREFLIGHT** of every new run (does not survive `/forge-recover reset`). Verdict mapping per `shared/scoring.md` §INTENT-* Finding Handling: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`.
+- `intent_verification_results` (array, optional, default `[]`) — per-AC verdicts written at end of Stage 5 VERIFY by reading `.forge/runs/<run_id>/findings/fg-540.jsonl`. **Cleared at PREFLIGHT** of every new run (does not survive `/forge-admin recover reset`). Verdict mapping per `shared/scoring.md` §INTENT-* Finding Handling: `MISSED` → `INTENT-MISSED` CRITICAL, `PARTIAL` → `INTENT-PARTIAL` WARNING, `UNVERIFIABLE` → `INTENT-UNVERIFIABLE` WARNING, `VERIFIED` → no finding. SHIP gate computes `verified_pct = VERIFIED / (VERIFIED + PARTIAL + MISSED + UNVERIFIABLE)`.
 - `impl_vote_history` (array, optional, default `[]`) — per-task N=2 voting telemetry written incrementally during Stage 4 IMPLEMENT. One entry per task whether voting fired or was skipped. **Survives across runs** (informational only). When `skipped_reason` is non-null, `samples`, `judge_verdict`, `tiebreak_dispatched`, and `winner_sample_id` may be empty/null — the entry exists only as telemetry for `fg-700-retrospective`.
 
 Full record shapes documented in `state-schema.md` §`v2.0.0 intent + vote block notes (Phase 7 portion)`.
@@ -1034,7 +1034,7 @@ Full record shapes documented in `state-schema.md` §`v2.0.0 intent + vote block
 - New fields initialized to `0` / the per-decision skeleton object at PREFLIGHT. Pre-1.9.0 state.json files receive defaults via the standard migration ladder.
 
 **Time-travel checkpoints (breaking):**
-- **Breaking:** replace linear `.forge/checkpoint-{storyId}.json` files with a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrator refuses to proceed when `state.json.version` < `1.9.0`; no automatic migration (run `/forge-recover reset`).
+- **Breaking:** replace linear `.forge/checkpoint-{storyId}.json` files with a content-addressable DAG under `.forge/runs/<run_id>/checkpoints/`. Orchestrator refuses to proceed when `state.json.version` < `1.9.0`; no automatic migration (run `/forge-admin recover reset`).
 - Add `state.json.checkpoints` (array, append-only, pre-rewind entries retained for audit) and `state.json.head_checkpoint` (mirrors `.forge/runs/<run_id>/checkpoints/HEAD`).
 - Add `recovery.time_travel.*` config block (`enabled`, `retention_days`, `max_checkpoints_per_run`, `require_clean_worktree`, `compression`, `preserve_legacy`).
 - Extend `recovery_op` payload values with `rewind` and `list-checkpoints`, backed by `hooks/_py/time_travel/` (CLI: `python3 -m hooks._py.time_travel`).
@@ -1044,7 +1044,7 @@ Full record shapes documented in `state-schema.md` §`v2.0.0 intent + vote block
 - Add `tasks[*].implementer_reflection_cycles` (integer, required) for per-task Chain-of-Verification (CoVe) counter. Does NOT feed into `total_retries`, `total_iterations`, `verify_fix_count`, `test_cycles`, `quality_cycles`, or `implementer_fix_cycles`.
 - Add `tasks[*].reflection_verdicts` (array, optional) audit trail, last 5 entries.
 - Add run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
-- On `/forge-recover resume`: `reflection_verdicts` reset to `[]`; `implementer_reflection_cycles` preserved (budget not refunded mid-task).
+- On `/forge-admin recover resume`: `reflection_verdicts` reset to `[]`; `implementer_reflection_cycles` preserved (budget not refunded mid-task).
 - **Breaking (no backcompat):** new required fields initialized to 0 / [] at PREFLIGHT. Pre-1.8.0 state.json files are not readable by a 1.8.0+ orchestrator without PREFLIGHT re-init.
 
 ### 1.7.0 (Forge 3.0.0)
@@ -1161,7 +1161,7 @@ default to no-op values so unaware consumers ignore them.
 | `speculation.winner_id` | string | `id` of the selected candidate, or `""` if none selected. |
 | `speculation.degraded` | string \| null | `null` (healthy), `"low_diversity"` (candidates too similar, fell back to single plan), or `"cost_ceiling"` (aborted due to token/cost budget). |
 
-Candidate artifacts live under `.forge/plans/candidates/{run_id}/cand-{N}.json` and survive `/forge-recover reset`. See `shared/speculation.md` for the full workflow.
+Candidate artifacts live under `.forge/plans/candidates/{run_id}/cand-{N}.json` and survive `/forge-admin recover reset`. See `shared/speculation.md` for the full workflow.
 
 ## Judge counters (Phase 5)
 

@@ -126,7 +126,7 @@ The recovery engine is NOT invoked for MCP provisioning failures. Handle all fai
 
 MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials before the pipeline can use them. Credential configuration flow:
 
-1. **During `/forge-init`:** If a non-auto-install MCP is listed in the `mcps:` config, forge-init prompts the user via `AskUserQuestion`:
+1. **During `/forge`:** If a non-auto-install MCP is listed in the `mcps:` config, forge-init prompts the user via `AskUserQuestion`:
    - Header: "MCP Configuration Required"
    - Question: "{MCP name} requires credentials. How would you like to configure?"
    - Options:

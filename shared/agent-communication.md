@@ -15,7 +15,7 @@ Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can rea
 - Written by: the agent completing a stage
 - Read by: the orchestrator (always), downstream agents (when orchestrator includes relevant context in dispatch)
 - Format: markdown with structured sections (findings, decisions, metrics)
-- Lifetime: per-run (cleared on `/forge-recover reset`)
+- Lifetime: per-run (cleared on `/forge-admin recover reset`)
 
 <a id="stage-notes-contents"></a>
 ### What goes in stage notes
@@ -281,7 +281,7 @@ Unknown agent → orchestrator skips injection (empty selector filter).
 <a id="structured-output"></a>
 ## Structured Output Standard
 
-Coordinator agents (fg-400-quality-gate, fg-500-test-gate, fg-700-retrospective) embed machine-readable JSON inside their Markdown output, wrapped in an HTML comment so it is invisible when rendered but trivially extractable by consumers (orchestrator, retrospective, post-run agent, `/forge-insights`).
+Coordinator agents (fg-400-quality-gate, fg-500-test-gate, fg-700-retrospective) embed machine-readable JSON inside their Markdown output, wrapped in an HTML comment so it is invisible when rendered but trivially extractable by consumers (orchestrator, retrospective, post-run agent, `/forge-ask insights`).
 
 <a id="structured-output-format"></a>
 ### Format
@@ -333,7 +333,7 @@ If the `FORGE_STRUCTURED_OUTPUT` block is missing from a coordinator's output, c
 |-------|--------------|-----------|
 | `fg-400-quality-gate` | verdict, score, findings_summary, batches, dedup_stats, cycle_info, reviewer_agreement, coverage_gaps | fg-100 (convergence), fg-700 (trends), fg-710 (timeline) |
 | `fg-500-test-gate` | phase_a, phase_b, mutation_testing, verdict | fg-100 (convergence), fg-700 (trends) |
-| `fg-700-retrospective` | run_summary, learnings, config_changes, agent_effectiveness, trend_comparison, approach_accumulations | fg-710 (timeline), `/forge-insights` |
+| `fg-700-retrospective` | run_summary, learnings, config_changes, agent_effectiveness, trend_comparison, approach_accumulations | fg-710 (timeline), `/forge-ask insights` |
 
 <a id="structured-output-tokens"></a>
 ### Token Budget Impact

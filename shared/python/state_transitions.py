@@ -418,7 +418,7 @@ def build_table(g, state, conv, conv_phase):
         # E9: ANY (not COMPLETE, not ABORTED) + user_abort_direct -> ABORTED
         ('ANY', 'user_abort_direct',
          lambda: state.get('story_state', '') not in ('COMPLETE', 'ABORTED'),
-         'ABORTED', 'E9', 'user_abort_direct (from /forge-abort)',
+         'ABORTED', 'E9', 'user_abort_direct (from /forge-admin abort)',
          {}, {}),
         # E8: ANY + token_budget_exhausted -> ESCALATED
         ('ANY', 'token_budget_exhausted',

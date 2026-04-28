@@ -39,15 +39,15 @@ Either inline list OR a single line: `See shared/skill-contract.md for the stand
 | 1 | User error (bad args, missing config, unknown subcommand) |
 | 2 | Pipeline failure (agent reported FAIL or CONCERNS without override) |
 | 3 | Recovery needed (state corruption, locked, or escalated) |
-| 4 | Aborted by user (`/forge-abort`, Ctrl+C, or "Abort" chosen in `AskUserQuestion`) |
+| 4 | Aborted by user (`/forge-admin abort`, Ctrl+C, or "Abort" chosen in `AskUserQuestion`) |
 
 ## 4. Skill categorization (Phase 5 baseline — 28 skills)
 
-**Read-only (9):** forge-ask, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify (plus any subcommand of `/forge-graph` marked read-only — but the parent skill is classified by maximum impact per §1).
+**Read-only (9):** forge-ask, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify (plus any subcommand of `/forge-admin graph` marked read-only — but the parent skill is classified by maximum impact per §1).
 
 **Writes (19):** forge-abort, forge-automation, forge-bootstrap, forge-commit, forge-compress, forge-config, forge-deploy, forge-docs-generate, forge-fix, forge-graph, forge-handoff, forge-init, forge-migration, forge-playbook-refine, forge-recover, forge-review, forge-run, forge-shape, forge-sprint.
 
-**Total: 28.** `/forge-graph` is `[writes]` (its `init` and `rebuild` subcommands write) even though `status`, `query`, and `debug` are read-only — the badge reflects maximum impact per §1.
+**Total: 28.** `/forge-admin graph` is `[writes]` (its `init` and `rebuild` subcommands write) even though `status`, `query`, and `debug` are read-only — the badge reflects maximum impact per §1.
 
 ## 5. Amendment process
 

@@ -627,7 +627,7 @@ def render_human(
     elif counts["WARNING"]:
         lines.append("Warnings found. Pipeline will use defaults for unset values.")
     else:
-        lines.append("Configuration is valid. Ready for /forge-run.")
+        lines.append("Configuration is valid. Ready for /forge run.")
     return "\n".join(lines) + "\n"
 
 
@@ -674,7 +674,7 @@ def main(argv: list[str] | None = None) -> int:
         return 3
     if not local_file.is_file():
         print(f"ERROR: forge.local.md not found at {local_file}", file=sys.stderr)
-        print("Run /forge-init to generate configuration.", file=sys.stderr)
+        print("Run /forge to generate configuration.", file=sys.stderr)
         return 3
 
     v = Validator()

@@ -121,7 +121,7 @@ machine-validated; do not hand-edit.
 - [`framework-gotchas.md`](framework-gotchas.md) — non-obvious per-framework
 - [`preflight-constraints.md`](preflight-constraints.md) — PREFLIGHT validation
 - [`model-routing.md`](model-routing.md) — model tier selection
-- [`intent-classification.md`](intent-classification.md) — /forge-run routing
+- [`intent-classification.md`](intent-classification.md) — /forge run routing
 - [`domain-detection.md`](domain-detection.md) — domain scoping
 - [`git-conventions.md`](git-conventions.md) — branch + commit rules
 - [`version-resolution.md`](version-resolution.md) — version lookup policy

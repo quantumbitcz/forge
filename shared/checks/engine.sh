@@ -406,13 +406,13 @@ resolve_component() {
       # and only before we've entered a valid component block.
       if [[ $indent_warned -eq 0 && $in_component_block -eq 0 ]]; then
         if [[ "$line" =~ ^$'\t' ]]; then
-          echo "[check-engine] WARNING: Tab indentation detected in components: block of forge.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /forge-init to regenerate config." >&2
+          echo "[check-engine] WARNING: Tab indentation detected in components: block of forge.local.md. Expected 2-space indentation. Multi-component detection will not work — falling back to single-component mode. Fix: convert tabs to 2-space indentation or run /forge to regenerate config." >&2
           handle_failure "component_indent_fallback:tab_indentation" "$file_path"
           # Write one-time warning marker for forge-status
           if [[ -d "${project_root}/.forge" ]]; then
             local _warn_file="${project_root}/.forge/.component-indent-warning"
             if [[ ! -f "$_warn_file" ]]; then
-              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: tab indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge-init to regenerate config." > "$_warn_file" 2>/dev/null || true
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: tab indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge to regenerate config." > "$_warn_file" 2>/dev/null || true
             fi
           fi
           indent_warned=1
@@ -420,13 +420,13 @@ resolve_component() {
         elif [[ "$line" =~ ^[[:space:]]{3,}[a-zA-Z_] ]]; then
           # 3+ leading spaces: this is NOT the expected 2-space indent for component names.
           # (2-space lines are caught by the component regex below, so reaching here means non-standard.)
-          echo "[check-engine] WARNING: Non-standard indentation detected in components: block of forge.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /forge-init to regenerate config." >&2
+          echo "[check-engine] WARNING: Non-standard indentation detected in components: block of forge.local.md (expected 2-space, found different). Multi-component detection will not work — falling back to single-component mode. Fix: use 2-space indentation or run /forge to regenerate config." >&2
           handle_failure "component_indent_fallback:non_standard_spacing" "$file_path"
           # Write one-time warning marker for forge-status
           if [[ -d "${project_root}/.forge" ]]; then
             local _warn_file="${project_root}/.forge/.component-indent-warning"
             if [[ ! -f "$_warn_file" ]]; then
-              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: non-standard indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge-init to regenerate config." > "$_warn_file" 2>/dev/null || true
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u)] Multi-component detection disabled: non-standard indentation in forge.local.md components: block. Fix: use 2-space indentation or run /forge to regenerate config." > "$_warn_file" 2>/dev/null || true
             fi
           fi
           indent_warned=1

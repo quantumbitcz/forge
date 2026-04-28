@@ -144,6 +144,6 @@ SCOUT-AI source entries follow the standard candidate schema with `source` prefi
 
 | File | Purpose |
 |------|---------|
-| `.forge/learned-candidates.json` | Candidate tracking (per-project, survives /forge-recover reset) |
+| `.forge/learned-candidates.json` | Candidate tracking (per-project, survives /forge-admin recover reset) |
 | `shared/checks/learned-rules-override.json` | Promoted rules loaded by engine (plugin-level) |
 | `.forge/forge-log.md` | Promotion/demotion audit trail |

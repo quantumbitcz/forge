@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://forge.quantumbit.cz/schemas/dx-metrics.json",
   "title": "Forge Developer Experience Metrics",
-  "description": "Aggregated DX metrics across pipeline runs. Stored at .forge/dx-metrics.json. Survives /forge-recover reset.",
+  "description": "Aggregated DX metrics across pipeline runs. Stored at .forge/dx-metrics.json. Survives /forge-admin recover reset.",
   "type": "object",
   "required": ["version", "runs", "aggregates"],
   "properties": {

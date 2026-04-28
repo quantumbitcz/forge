@@ -40,10 +40,10 @@ headings stay in place and continue to be accepted by the grammar.)
 ## 3. Positional args
 
 Forbidden except for free-form content:
-- Cypher query: `/forge-graph query "MATCH (n) RETURN n"`
-- Requirement string: `/forge-run "<requirement>"`, `/forge-fix "<description>"`
+- Cypher query: `/forge-admin graph query "MATCH (n) RETURN n"`
+- Requirement string: `/forge run "<requirement>"`, `/forge fix "<description>"`
 
-Positional mode tokens (`/forge-compress output full`) are a tolerated legacy
+Positional mode tokens (`/forge-admin compress output full`) are a tolerated legacy
 form — the grammar neither rejects them nor rewrites them.
 
 ## 4. Required body structure for subcommand skills

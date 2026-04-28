@@ -46,8 +46,8 @@ Use for safe-default escalations where one path is strongly preferred.
   "header": "Escalation",
   "multiSelect": false,
   "options": [
-    {"label": "Invoke /forge-recover diagnose (Recommended)", "description": "Read-only state analysis."},
-    {"label": "Abort this run", "description": "Graceful stop; preserves state for /forge-recover resume."},
+    {"label": "Invoke /forge-admin recover diagnose (Recommended)", "description": "Read-only state analysis."},
+    {"label": "Abort this run", "description": "Graceful stop; preserves state for /forge-admin recover resume."},
     {"label": "Force-continue despite failures", "description": "Mark failures non-blocking (dangerous)."}
   ]
 }
@@ -84,7 +84,7 @@ Body:  "Agent {agent_name} is about to receive confirmed-tier external data
 Options: ["Proceed", "Abort stage"]
 ```
 
-**Autonomous fallback:** when no interactive user is available (background run or CI), the orchestrator writes an escalation record to `.forge/alerts.json` with severity `high` and pauses the run per `shared/background-execution.md`. The run resumes only when a user acknowledges the alert or `/forge-recover resume` is invoked.
+**Autonomous fallback:** when no interactive user is available (background run or CI), the orchestrator writes an escalation record to `.forge/alerts.json` with severity `high` and pauses the run per `shared/background-execution.md`. The run resumes only when a user acknowledges the alert or `/forge-admin recover resume` is invoked.
 
 **Counter:** each invocation increments `state.json:security.injection_confirmations_requested` (see `shared/state-schema.md`).
 
@@ -103,7 +103,7 @@ Options: ["Proceed", "Abort stage"]
     {"label": "Raise ceiling to ${ceiling_usd_raised}", "description": "Continues run. Records new ceiling in state for this run only."},
     {"label": "Downgrade remaining agents (Recommended)", "description": "Switches premium->standard, standard->fast where safe. Excludes pinned agents and safety-critical reviewers."},
     {"label": "Abort to ship current state", "description": "Runs pre-ship verifier on what's in the worktree, then ships or exits."},
-    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-recover resume."}
+    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-admin recover resume."}
   ]
 }
 ```

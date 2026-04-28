@@ -22,7 +22,7 @@ from mcp.server.stdio import stdio_server
 
 def find_project_root() -> Path:
     """Locate the Forge project root directory."""
-    # 1. Environment variable (set by /forge-init in .mcp.json)
+    # 1. Environment variable (set by /forge in .mcp.json)
     env_root = os.environ.get("FORGE_PROJECT_ROOT")
     if env_root:
         p = Path(env_root)
@@ -223,7 +223,7 @@ async def forge_agent_card() -> str:
     """Project capabilities and available Forge skills."""
     card = read_json_file(FORGE_DIR / "agent-card.json")
     if card is None:
-        return json.dumps({"status": "not_initialized", "hint": "Run /forge-init first"})
+        return json.dumps({"status": "not_initialized", "hint": "Run /forge first"})
     return json.dumps(card)
 
 

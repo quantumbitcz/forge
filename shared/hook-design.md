@@ -4,7 +4,7 @@ Defines the hook execution model, event types, ordering guarantees, and script c
 
 ## Hook Types
 
-Hooks are event-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge-init`. All hooks are **Python 3.10+** entry scripts; bash is no longer required.
+Hooks are event-based interceptors that run automatically when specific events occur during a Claude Code session. They are declared in `hooks/hooks.json` and installed by `/forge`. All hooks are **Python 3.10+** entry scripts; bash is no longer required.
 
 ## Event Types and Execution Order
 
@@ -127,7 +127,7 @@ it is visible only in the live Claude Code transcript.
    - `event`: The event type (`PreToolUse`, `PostToolUse`, `Stop`, `Skill`, `Agent`, `SessionStart`)
    - `pattern`: Tool name pattern to match (regex, e.g., `Edit|Write`)
    - `command`: Invocation string, typically `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/<entry>.py`
-4. Run `/forge-init` in consuming projects to install the new hook.
+4. Run `/forge` in consuming projects to install the new hook.
 5. Test the hook with `./tests/validate-plugin.sh` (structural) and add unit coverage under `tests/unit/hooks/`.
 
 ## Related

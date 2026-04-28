@@ -205,6 +205,6 @@ it into runtime probes, and emits `INTENT-*` findings. `fg-590-pre-ship-verifier
 (fg-700 surfaces them in §2j Intent & Vote Analytics with a dedicated row so
 they're distinguishable from implementation-quality misses). When the
 retrospective sees 2+ `INTENT-MISSED` across 3 runs, Rule 11 proposes
-`living_specs.strict_mode: true` via `/forge-playbook-refine`.
+`living_specs.strict_mode: true` via `/forge-admin refine`.
 
 See `shared/intent-verification.md` for end-to-end architecture.

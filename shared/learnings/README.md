@@ -130,7 +130,7 @@ The existing PREEMPT system (per-project in `forge-log.md`, cross-project in `sh
 └── metrics.json                    # Application tracking and effectiveness
 ```
 
-The knowledge directory survives `/forge-recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-recover reset --hard` removes it.
+The knowledge directory survives `/forge-admin recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-admin recover reset --hard` removes it.
 
 ### Key distinction: learnings vs knowledge items
 

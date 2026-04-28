@@ -205,12 +205,12 @@ fg-400-quality-gate
 ### Pre-Pipeline Dispatch
 
 ```
-/forge-shape     → fg-010-shaper
-/forge-fix       → fg-020-bug-investigator
-/forge-bootstrap → fg-050-project-bootstrapper
-/forge-sprint    → fg-090-sprint-orchestrator
+/forge run     → fg-010-shaper
+/forge fix       → fg-020-bug-investigator
+/forge bootstrap → fg-050-project-bootstrapper
+/forge sprint    → fg-090-sprint-orchestrator
                      └── fg-100-orchestrator (per feature)
-/forge-migration → fg-160-migration-planner
+/forge migrate → fg-160-migration-planner
 ```
 
 <a id="supporting-dispatch"></a>

@@ -10,7 +10,7 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 | Stage | Name | Agent(s) | story_state | Entry Condition | Exit Condition |
 |-------|------|----------|-------------|-----------------|----------------|
-| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge-run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
+| 0 | PREFLIGHT | inline + `fg-130-docs-discoverer` + conditional: `fg-140-deprecation-refresh`, `fg-150-test-bootstrapper` | `PREFLIGHT` | User invokes `/forge run` with a requirement; concurrent run lock acquired | Config loaded, convention stacks resolved per component, rule caches generated, state initialized, documentation discovered, deprecation rules refreshed, test baseline established, worktree created (unless `--dry-run`), tracking ticket resolved |
 | 0.5 | BRAINSTORMING *(conditional)* | `fg-010-shaper` | `BRAINSTORMING` | PREFLIGHT complete AND `mode == feature` AND `brainstorm.enabled == true` | Spec written and approved (or auto-approved in autonomous degradation) |
 | 1 | EXPLORE | `explore_agents` from config | `EXPLORING` | Config loaded successfully (or BRAINSTORMING completed in feature mode) | Exploration results summarized in stage notes; or auto-decomposition triggered → DECOMPOSED |
 | 2 | PLAN | `fg-200-planner` | `PLANNING` | Exploration complete | Plan with risk level, stories, tasks, and parallel groups |
@@ -33,12 +33,12 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 **Agent:** Inline + `fg-130-docs-discoverer` (documentation discovery dispatched after config resolution)
 **story_state:** `PREFLIGHT`
 
-**Entry condition:** User invokes `/forge-run` with a requirement string.
+**Entry condition:** User invokes `/forge run` with a requirement string.
 
 **Phase grouping:** PREFLIGHT is decomposed into two phases. Phase A runs a Config Group (§0.1-§0.10: mode detection, config parsing, convention resolution, rule cache generation) and an Integration Group (§0.11, §0.22, §0.23: documentation discovery, graph context, MCP detection) in parallel. Config Group failure aborts the pipeline; Integration Group failures degrade gracefully. Phase B (§0.12-§0.21: state integrity, worktree creation, tracking) runs after Phase A completes. See `fg-100-orchestrator.md` "PREFLIGHT Phase Structure" for the full breakdown.
 
 **Inputs:**
-- User's requirement string (from `/forge-run` argument)
+- User's requirement string (from `/forge run` argument)
 - `forge.local.md` (static project config)
 - `forge-config.md` (mutable runtime params)
 - `forge-log.md` (PREEMPT items, run history)
@@ -204,9 +204,9 @@ Any agent or module that needs to understand where it fits in the pipeline shoul
 
 **On REVISE:** Loop back to Stage 2 (PLANNING). Increment `validation_retries`. Max retries: `validation.max_validation_retries` (default: 2). After max retries with continued REVISE, escalate as NO-GO.
 
-**On NO-GO:** Escalate to user. Pipeline pauses. If the user does not respond within 24 hours (configurable via `validation.no_go_timeout_hours`, default: 24), the orchestrator auto-aborts: clean up the worktree if created, set `state.json.complete = true` with `abort_reason: "NO-GO timeout"`, and log a WARNING in stage notes. The stale timeout is checked by PREFLIGHT of any subsequent `/forge-run` invocation (not by a background process).
+**On NO-GO:** Escalate to user. Pipeline pauses. If the user does not respond within 24 hours (configurable via `validation.no_go_timeout_hours`, default: 24), the orchestrator auto-aborts: clean up the worktree if created, set `state.json.complete = true` with `abort_reason: "NO-GO timeout"`, and log a WARNING in stage notes. The stale timeout is checked by PREFLIGHT of any subsequent `/forge run` invocation (not by a background process).
 
-**On NO-GO (spec-level):** When running in `--spec` mode and the validator's findings indicate spec-quality issues (contradictory acceptance criteria, infeasible scope, missing domain context) rather than plan-quality issues, the orchestrator offers a reshaping path: "Reshape spec" (re-run `/forge-shape` with validator findings as context), "Try replanning", or "Abort". This prevents endlessly replanning around a fundamentally flawed spec.
+**On NO-GO (spec-level):** When running in `--spec` mode and the validator's findings indicate spec-quality issues (contradictory acceptance criteria, infeasible scope, missing domain context) rather than plan-quality issues, the orchestrator offers a reshaping path: "Reshape spec" (re-run `/forge run` with validator findings as context), "Try replanning", or "Abort". This prevents endlessly replanning around a fundamentally flawed spec.
 
 **Decision gate:** Compare plan `risk_level` against `risk.auto_proceed` from config:
 - Risk <= threshold: proceed automatically on GO.
@@ -529,7 +529,7 @@ Before re-entering Stage 2 or Stage 4 from Stage 8, the orchestrator validates:
 1. **Worktree availability:** If re-entering Stage 4 (implementation path), verify `.forge/worktree` still exists and is a valid git worktree. If the worktree was cleaned up (e.g., by a previous ship attempt), recreate it from the pipeline branch before dispatching the implementer.
 2. **Feedback loop detection:** Track `state.json.feedback_loop_count` — incremented on each PR rejection re-entry. "Same classification" means the string value of `feedback_classification` matches the previous rejection (e.g., both `"design"` or both `"implementation"`) — it does NOT require the same specific issue, only the same category. If the same `feedback_classification` is received 2 consecutive times (i.e., user rejected → re-plan → re-implement → re-ship → rejected again with same classification), escalate:
 
-   The orchestrator **escalates via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred.", options: "Guide" (provide specific guidance — the user's text will be prepended to the next stage's input as high-priority context), "Start fresh" (abort current run and begin a new `/forge-run`), "Override" (proceed with current state despite recurring feedback — reset `feedback_loop_count` to 0 and continue).
+   The orchestrator **escalates via AskUserQuestion** with header "Loop", question "Feedback loop detected: {classification} feedback received {count} consecutive times. The pipeline re-planned/re-implemented but the same type of feedback recurred.", options: "Guide" (provide specific guidance — the user's text will be prepended to the next stage's input as high-priority context), "Start fresh" (abort current run and begin a new `/forge run`), "Override" (proceed with current state despite recurring feedback — reset `feedback_loop_count` to 0 and continue).
 
    Reset `feedback_loop_count` to 0 when `feedback_classification` changes between rejections.
 3. **Scaffold outputs:** If re-entering Stage 4, verify that scaffolder outputs from the initial implementation are still present in the worktree. If missing (e.g., worktree was recreated), re-run the scaffolder before dispatching the implementer.
@@ -624,7 +624,7 @@ The orchestrator detects the pipeline mode from the requirement prefix at PREFLI
 7. Stage 6 (REVIEW): Runs normally with full reviewer set. `fg-417-dependency-reviewer` is especially important — verifies no deprecated APIs remain.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. Documentation updates include migration notes and upgraded version references.
 
-The `/forge-migration` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
+The `/forge migrate` skill dispatches `fg-160-migration-planner` directly for standalone use outside the pipeline.
 
 See `agents/fg-160-migration-planner.md` for the full migration state machine, rollback strategy, and phased execution model.
 
@@ -632,20 +632,20 @@ See `agents/fg-160-migration-planner.md` for the full migration state machine, r
 
 1. Stage 0 (PREFLIGHT): Runs normally. If no `forge.local.md` exists yet, PREFLIGHT uses plugin defaults and defers config generation to the bootstrapper.
 2. Stage 1 (EXPLORE): Runs with reduced scope — confirms empty/minimal state. If no source files exist, exploration completes immediately with `"greenfield: true"` in stage notes.
-3. Stage 2 (PLAN): `fg-050-project-bootstrapper` is dispatched instead of `fg-200-planner`. The bootstrapper performs requirements gathering, architecture decisions, and scaffolding. It auto-runs `/forge-init` at the end.
+3. Stage 2 (PLAN): `fg-050-project-bootstrapper` is dispatched instead of `fg-200-planner`. The bootstrapper performs requirements gathering, architecture decisions, and scaffolding. It auto-runs `/forge` at the end.
 4. Stage 3 (VALIDATE): Runs with **bootstrap-scoped perspectives**. The validator checks: (a) project compiles (build command passes), (b) at least one test passes, (c) Docker config is valid (`docker compose config`), (d) architecture matches the declared pattern. Skips: conventions check (no pre-existing conventions to violate), approach quality (single approach was chosen interactively), documentation consistency (new project has no docs baseline). Challenge Brief is NOT required for bootstrap plans.
 5. Stage 4 (IMPLEMENT): **Skipped** — the bootstrapper already created all files in Stage 2. The orchestrator transitions directly from VALIDATE (GO) to VERIFY.
 6. Stage 5 (VERIFY): Runs normally — build + lint + tests must pass. The bootstrapper should have left the project in a green state; VERIFY confirms this.
 7. Stage 6 (REVIEW): Runs with **reduced reviewer set**. Dispatches: `fg-412-architecture-reviewer` (verify scaffold architecture matches declared pattern), `fg-410-code-reviewer` (verify scaffold structure, baseline error handling, naming, clarity), `fg-411-security-reviewer` (check for hardcoded secrets, insecure defaults). Skips: `frontend-*-reviewer` (no design baseline), `fg-416-performance-reviewer` (no business logic yet), `fg-418-docs-consistency-reviewer` (no docs baseline), `fg-417-dependency-reviewer` (versions just resolved, dependencies just selected). Quality target for bootstrap is `pass_threshold` (not 100) — new projects start clean. See also `fg-100-orchestrator.md` for dispatch details.
 8. Stages 7-9 (DOCS, SHIP, LEARN): Run normally. The docs generator creates initial documentation. The PR builder creates an "initial scaffold" PR. The retrospective records the bootstrap as the first run.
 
-The `/forge-bootstrap` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
+The `/forge bootstrap` skill dispatches `fg-050-project-bootstrapper` directly for standalone use outside the pipeline.
 
 See `agents/fg-050-project-bootstrapper.md` for supported project types and scaffolding capabilities.
 
 ### Bugfix Mode
 
-Activated by `/forge-fix` or `/forge-run bugfix: <description>`. Sets `state.json.mode = "bugfix"`.
+Activated by `/forge fix` or `/forge run bugfix: <description>`. Sets `state.json.mode = "bugfix"`.
 
 #### Stage Mapping
 
@@ -758,7 +758,7 @@ The `--from` flag allows users to manually resume a pipeline from a specific sta
 ### Syntax
 
 ```
-/forge-run "requirement" --from=<stage_name_or_number>
+/forge run "requirement" --from=<stage_name_or_number>
 ```
 
 Valid values: stage number (0-9) or lowercase stage name (`preflight`, `explore`, `plan`, `validate`, `implement`, `verify`, `review`, `docs`, `ship`, `learn`).
@@ -789,8 +789,8 @@ The `--dry-run` flag allows users to preview what the pipeline would do without 
 ### Syntax
 
 ```
-/forge-run "requirement" --dry-run
-/forge-run "requirement" --dry-run --from=plan
+/forge run "requirement" --dry-run
+/forge run "requirement" --dry-run --from=plan
 ```
 
 ### Behavior
@@ -878,7 +878,7 @@ Stage 9 (LEARN)
 
 All forge workflows (feature, bugfix, migration, bootstrap) run in `.forge/worktree`. No exceptions except:
 - `--dry-run` (read-only, no worktree)
-- `/forge-init` (writes to `.claude/` config, not source files)
+- `/forge` (writes to `.claude/` config, not source files)
 
 Worktree is created at PREFLIGHT (Stage 0) and persists through SHIP (Stage 8). User's working tree is NEVER modified during any forge workflow.
 
@@ -903,7 +903,7 @@ When `autonomous: true` in `forge-config.md`:
 
 ## Sprint Mode
 
-When `/forge-run --sprint` or `/forge-run --parallel` is used:
+When `/forge run --sprint` or `/forge run --parallel` is used:
 
 - `fg-090-sprint-orchestrator` runs the top-level lifecycle (GATHER → ANALYZE → GROUP → APPROVE → DISPATCH → MONITOR → MERGE)
 - Each feature gets its own `fg-100-orchestrator` instance with isolated state
@@ -922,6 +922,6 @@ The sprint orchestrator passes to each feature orchestrator:
 
 ### Single-Feature Compatibility
 
-Single-feature `/forge-run` (without `--sprint`/`--parallel`) is unchanged:
+Single-feature `/forge run` (without `--sprint`/`--parallel`) is unchanged:
 - Uses global `.forge/.lock`, `.forge/state.json`, `.forge/worktree`
 - No sprint-state.json, no per-run directories

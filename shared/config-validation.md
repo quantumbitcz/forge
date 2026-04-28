@@ -200,7 +200,7 @@ config-validator.sh validates generated config
 config-diff.sh --snapshot saves initial hashes
        |
        v
-/forge-run starts pipeline
+/forge run starts pipeline
        |
        v
 PREFLIGHT: config-validator.sh --json validates

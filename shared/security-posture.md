@@ -21,7 +21,7 @@ The following table maps each OWASP Agentic Security Initiative (ASI) risk to th
 
 ## Input Sanitization
 
-All requirement text entering the pipeline (via `/forge-run`, `/forge-fix`, `/forge-shape`, or sprint input) is sanitized before processing. Sanitization runs at the earliest pipeline entry point, before intent classification.
+All requirement text entering the pipeline (via `/forge run`, `/forge fix`, `/forge run`, or sprint input) is sanitized before processing. Sanitization runs at the earliest pipeline entry point, before intent classification.
 
 ### Rules
 

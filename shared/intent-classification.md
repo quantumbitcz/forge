@@ -1,6 +1,6 @@
 # Intent Classification
 
-Reference document for the intent classification system used by `/forge-run` to auto-route requirements to the correct pipeline mode.
+Reference document for the intent classification system used by `/forge run` to auto-route requirements to the correct pipeline mode.
 
 ## Classification Table
 

@@ -351,7 +351,7 @@ In `forge-config.md`:
 ```yaml
 events:
   enabled: true                   # Master toggle (default: true)
-  retention_days: 90              # Events older than this pruned on /forge-recover reset (default: 90)
+  retention_days: 90              # Events older than this pruned on /forge-admin recover reset (default: 90)
   max_file_size_mb: 50            # Prune oldest events when file exceeds this (default: 50)
   replay_enabled: true            # Enable /forge-replay skill (default: true)
   emit_state_writes: true         # Emit STATE_WRITE events (verbose, default: true)
@@ -364,7 +364,7 @@ Constraints enforced at PREFLIGHT:
 
 ## Retention
 
-- `events.jsonl` **survives `/forge-recover reset`** (same as `explore-cache.json`, `plan-cache/`, `wiki/`, `trust.json`).
+- `events.jsonl` **survives `/forge-admin recover reset`** (same as `explore-cache.json`, `plan-cache/`, `wiki/`, `trust.json`).
 - Events older than `events.retention_days` are pruned at PREFLIGHT.
 - When file exceeds `events.max_file_size_mb`, oldest events are pruned until under the limit (oldest 25% per pass).
 - Only manual `rm -rf .forge/` removes all events.
@@ -390,7 +390,7 @@ Sprint mode avoids contention entirely by using per-run event files at `.forge/r
 | `progress/timeline.jsonl` | Backward-compatible write in background mode | Write (compat) |
 | `/forge-replay` | Read events, reconstruct state, re-run from point | Read |
 | `/forge-events` | Read and query events | Read |
-| `/forge-insights` | Read events for trend analysis across runs | Read |
+| `/forge-ask insights` | Read events for trend analysis across runs | Read |
 | fg-700-retrospective | Read events for decision quality analysis | Read |
 
 ## Error Handling

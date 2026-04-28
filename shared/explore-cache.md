@@ -47,7 +47,7 @@ Persists codebase exploration data across pipeline runs in `.forge/explore-cache
 | `conventions_hash` differs from current `forge-config.md` hash | Full re-explore |
 | Cache file missing or corrupt (invalid JSON, missing `schema_version`) | Full re-explore |
 | `schema_version` mismatch with expected cache schema version (currently 1.0.0) | Full re-explore |
-| `--full-explore` flag passed to `/forge-run` | Full re-explore |
+| `--full-explore` flag passed to `/forge run` | Full re-explore |
 | None of the above | Partial re-explore (changed files only) |
 
 ## Partial Re-Explore
@@ -85,6 +85,6 @@ In `forge-config.md`:
 | `cache_enabled` | boolean | `true` | Enable/disable explore caching |
 | `max_cache_age_runs` | 1-50 | 10 | Runs before forced full re-explore |
 
-## /forge-recover reset Behavior
+## /forge-admin recover reset Behavior
 
-`/forge-recover reset` preserves `explore-cache.json` (same as `docs-index.json` and `feedback/`). Only `/forge-recover reset --hard` or manual deletion removes it.
+`/forge-admin recover reset` preserves `explore-cache.json` (same as `docs-index.json` and `feedback/`). Only `/forge-admin recover reset --hard` or manual deletion removes it.
