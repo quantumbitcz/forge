@@ -94,7 +94,7 @@ machine-validated; do not hand-edit.
 - [`caveman-benchmark.sh`](caveman-benchmark.sh) — token savings
 - [`compression-validation.py`](compression-validation.py) — compression eval
 - [`check_prerequisites.py`](check_prerequisites.py) — Python 3.10+ validation
-- [`check-environment.sh`](check-environment.sh) — optional tool detection
+- [`check_environment.py`](check_environment.py) — optional tool detection
 - [`config-validator.sh`](config-validator.sh) — legacy config validator
 - [`config_validator.py`](config_validator.py) — Python config validator
 - [`config-diff.sh`](config-diff.sh) — config diff helper
