@@ -501,3 +501,17 @@ impl_voting:
   samples: 2
   tiebreak_required: true
   skip_if_budget_remaining_below_pct: 30
+
+### benchmark:
+
+    benchmark:
+      enabled: true
+      max_weekly_cost_usd: 200      # derived from .forge/run-history.db median; refresh after 90 days
+      regression_threshold_pp: 10
+      corpus_root: tests/evals/benchmark/corpus
+      timeout_seconds:
+        S: 900
+        M: 2700
+        L: 5400
+
+Guard: `L > M > S` required at PREFLIGHT.

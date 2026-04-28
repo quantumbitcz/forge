@@ -52,6 +52,7 @@ KNOWN_CONFIG_FIELDS = {
     "autonomous", "documentation", "explore", "plan_cache", "confidence",
     "test_history", "condensation", "check_engine", "code_graph",
     "living_specs", "events", "playbooks", "mode_config", "cost",
+    "benchmark",
 }
 
 
