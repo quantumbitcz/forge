@@ -612,6 +612,7 @@ The orchestrator (and `fg-010-shaper` once C1 lands) emits the following events 
 | `forge.brainstorm.started` | Stage entry. |
 | `forge.brainstorm.question_asked` | Each `AskUserQuestion` invocation. |
 | `forge.brainstorm.approaches_proposed` | When the agent presents its 2-3 approaches. |
+| `forge.brainstorm.section_approved` | Each design section approved by the user in step 4 (Architecture / Components / Data flow / Error handling / Testing). Attributes: `section`. |
 | `forge.brainstorm.spec_written` | When the spec file is written (atomic write completes). |
 | `forge.brainstorm.completed` | Stage exit on success. |
 | `forge.brainstorm.aborted` | Stage exit on user abort or unrecoverable error. |

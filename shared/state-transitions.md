@@ -24,8 +24,8 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 
 | # | current_state | event | guard | next_state | action |
 |---|---------------|-------|-------|------------|--------|
-| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND mode == "feature" AND brainstorm.enabled == true` | `BRAINSTORMING` | Initialize state, create worktree, resolve convention stacks; dispatch fg-010-shaper |
-| 1a | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND (mode != "feature" OR brainstorm.enabled == false)` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
+| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND mode == "standard" AND brainstorm.enabled == true` | `BRAINSTORMING` | Initialize state, create worktree, resolve convention stacks; dispatch fg-010-shaper |
+| 1a | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND (mode != "standard" OR brainstorm.enabled == false)` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
 | 2 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree, no lock, no checkpoints) — dry-run skips BRAINSTORMING |
 | 2a | `BRAINSTORMING` | `brainstorm_complete` | spec written and approved | `EXPLORING` | Pass `state.brainstorm.spec_path` to planner |
 | 2b | `BRAINSTORMING` | `user_abort` | — | `ABORTED` | Persist partial brainstorm cache; clean exit |

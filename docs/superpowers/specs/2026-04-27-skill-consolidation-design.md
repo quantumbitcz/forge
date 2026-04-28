@@ -217,7 +217,7 @@ The agent's prompt is rewritten to adopt the superpowers brainstorming pattern, 
 7. **Hands off to user** — `AskUserQuestion`: "Spec written. Approve to proceed to planning?"
 8. **Transitions to `fg-200-planner`** with the spec path in `state.brainstorm.spec_path`.
 
-The threshold logic (`<50 words missing 3+ of actors/entities/surface/criteria`) is **removed**. Always-on for feature mode is the new default.
+The threshold logic (`<50 words missing 3+ of actors/entities/surface/criteria`) is **removed**. Always-on for standard mode (the default `state.mode == "standard"`) is the new default.
 
 #### Autonomous-mode degradation
 
@@ -602,7 +602,7 @@ The following keys are added to `forge-config.md` (plugin defaults) and validate
 
 ```yaml
 brainstorm:
-  enabled: true                  # default true; set false to short-circuit BRAINSTORMING (feature mode → EXPLORING)
+  enabled: true                  # default true; set false to short-circuit BRAINSTORMING (standard mode → EXPLORING)
   spec_dir: docs/superpowers/specs/   # default; where fg-010-shaper writes specs
   autonomous_extractor_min_confidence: medium   # default medium ("almost perfect code" — refuse weak specs); one of low|medium|high; below this, autonomous mode aborts instead of proceeding to EXPLORING
   transcript_mining:
@@ -691,7 +691,7 @@ The train is split into four phases. Phases A and B are independent and can ship
 #### Phase C — Brainstorming behavior (depends on A and B)
 
 20. **Commit C1 — rewrite `agents/fg-010-shaper.md`:** Adopt the seven-step pattern (§3). Section headings exactly match `tests/structural/fg-010-shaper-shape.bats` regex. Autonomous degradation per §3. Transcript mining per §10 (writes `.forge/brainstorm-transcripts/<run_id>.jsonl`).
-21. **Commit C2 — update `agents/fg-100-orchestrator.md`:** Recognize BRAINSTORMING stage. Dispatch fg-010-shaper for feature mode; skip for bug/migrate/bootstrap. Honor `brainstorm.enabled: false` short-circuit. Resume semantics per §3. **Adds PREFLIGHT platform-detection wiring:** orchestrator invokes `shared/platform-detect.py` at PREFLIGHT (after config validation, before any worktree/Linear setup) and writes the result to `state.platform`. This commit owns AC-FEEDBACK-006 implementation. Detection is skipped on resume if `state.platform.detected_at` is already set within the current run.
+21. **Commit C2 — update `agents/fg-100-orchestrator.md`:** Recognize BRAINSTORMING stage. Dispatch fg-010-shaper for standard mode; skip for bug/migrate/bootstrap. Honor `brainstorm.enabled: false` short-circuit. Resume semantics per §3. **Adds PREFLIGHT platform-detection wiring:** orchestrator invokes `shared/platform-detect.py` at PREFLIGHT (after config validation, before any worktree/Linear setup) and writes the result to `state.platform`. This commit owns AC-FEEDBACK-006 implementation. Detection is skipped on resume if `state.platform.detected_at` is already set within the current run.
 
 #### Phase D — Pattern parity uplifts (independent of B; can ship in parallel branches)
 
@@ -818,7 +818,7 @@ All current parallel-execution patterns continue to work in the new surface:
 - **AC-S025:** OTel events fire at brainstorm start, question, approaches proposal, spec write, completion/abort. Namespace `forge.brainstorm.*`.
 - **AC-S026:** `state-transitions.md` documents the four BRAINSTORMING transitions from §11.
 - **AC-S027:** `/forge --autonomous "<request>"` invoked on a project with no `forge.local.md` chains auto-bootstrap → BRAINSTORMING → EXPLORING in a single uninterrupted run. Both `[AUTO] bootstrapped...` and `[AUTO] brainstorm skipped...` log lines appear in `.forge/forge-log.md`. The pipeline reaches EXPLORING. If either step fails, the pipeline aborts cleanly with no partial state (`forge.local.md` is either fully written or not written; spec doc is either fully written or not written). Verified by scenario test at `tests/scenarios/autonomous-cold-start.bats`.
-- **AC-S028:** Config keys `brainstorm.spec_dir` (default `docs/superpowers/specs/`) and `brainstorm.enabled` (default `true`) are validated by `shared/preflight-constraints.md`. Setting `brainstorm.enabled: false` short-circuits BRAINSTORMING — feature mode goes straight to EXPLORING. Setting an invalid `brainstorm.spec_dir` (non-existent and non-creatable parent) fails PREFLIGHT with a clear error.
+- **AC-S028:** Config keys `brainstorm.spec_dir` (default `docs/superpowers/specs/`) and `brainstorm.enabled` (default `true`) are validated by `shared/preflight-constraints.md`. Setting `brainstorm.enabled: false` short-circuits BRAINSTORMING — standard mode goes straight to EXPLORING. Setting an invalid `brainstorm.spec_dir` (non-existent and non-creatable parent) fails PREFLIGHT with a clear error.
 - **AC-S029:** `/forge run --spec <path>` parses the spec file at `<path>` for the regex `^## (Objective|Goal|Goals)$`, `^## (Scope|Non-goals)$`, and `^## (Acceptance [Cc]riteria|ACs)$`. All three sections must be present (case-sensitive on the regex). If any is missing, interactive mode prompts "spec at `<path>` is incomplete (missing: <list>); run BRAINSTORMING instead?" and autonomous mode aborts the run with the same diagnostic. Verified by unit test at `tests/unit/skill-execution/spec-wellformed.bats`.
 
 ### Planner uplift (9)

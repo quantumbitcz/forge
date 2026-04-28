@@ -28,7 +28,7 @@ Execute: **$ARGUMENTS**
 
 ## §1 Identity & Purpose
 
-Stages: **PREFLIGHT -> [BRAINSTORMING (feature mode only)] -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
+Stages: **PREFLIGHT -> [BRAINSTORMING (standard mode only)] -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
 
 - Resolve ALL ambiguity without asking — read conventions, grep codebase, check stage notes.
 - **3 user touchpoints:** Start, Approval (PR), Escalation. Everything else autonomous.
@@ -146,15 +146,23 @@ All sub-tasks use `addBlockedBy: [stage_task_id]`.
 | `--wait-for <id>` | `--wait-for feat-auth` | Block at PREFLIGHT until dependency reaches VERIFY |
 | `--project-root <path>` | `--project-root /path/to/repo` | Override project root (cross-repo) |
 
-**Valid `--from`:** preflight(0), explore(1), plan(2), validate(3), implement(4), verify(5), review(6), docs(7), ship(8), learn(9)
+**Valid `--from`:** preflight(0), brainstorm(0.5), explore(1), plan(2), validate(3), implement(4), verify(5), review(6), docs(7), ship(8), learn(9)
 
 `--from` → always run PREFLIGHT first, skip stages before target (mark "skipped"), begin at target. Resume from verify+ → use current tree. Resume from implement → re-read plan from stage notes.
 
 ### --spec Mode
 
 1. Read spec file. ERROR if not found.
-2. **Validate:** Required `## Problem Statement`, `### Story` blocks with ACs (`- [ ]` lines). `## Status: Blocked` → ERROR. Failures → suggest `/forge run`.
-3. Parse: `## Epic` (requirement), `## Stories` (→ planner), `## Technical Notes` (→ EXPLORE/PLAN), `## NFRs` (→ planner+reviewers), `## Out of Scope` (→ implementer).
+2. **Validate (canonical schema, v5.1.0+):** Required `## (Objective|Goal|Goals)`, `## (Scope|Non-goals)`, `## (Acceptance [Cc]riteria|ACs)` (per `tests/unit/skill-execution/spec-wellformed.bats`). `## Status: Blocked` → ERROR. Failures → suggest `/forge-shape` or interactive `/forge-run`.
+3. Parse the canonical shaper schema (matches `agents/fg-010-shaper.md` `## Write spec`):
+   - `# <title>` + `## Summary` → requirement context.
+   - `## Goal` → planner objective.
+   - `## Scope` (with `### Non-goals`) → planner + implementer.
+   - `## Architecture` / `## Components` / `## Data flow` / `## Error handling` / `## Testing` → EXPLORE + PLAN context.
+   - `## Acceptance criteria` (`- [ ] AC-NNN: ...` items) → planner + reviewers.
+   - `## Approaches considered` → planner (chosen approach + rationale).
+   - `## Risks` → reviewers.
+   - `## Out of scope` → implementer (do-not-do list).
 4. Store in `state.json.spec`.
 5. Compatible with `--from` and `--dry-run`. Spec NEVER modified.
 
@@ -597,6 +605,8 @@ Phase A (parallel)
 │   §0.4  Config Validation
 │   §0.4a Telemetry Initialization
 │   §0.4b Security Enforcement
+│   §0.4c Background Execution
+│   §0.4d Platform Detection
 │   §0.5  Convention Fingerprinting
 │   §0.6  PREEMPT System + Version Detection
 │   §0.6a Detect Project Dependency Versions
@@ -651,7 +661,7 @@ Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
 
 | Mode | Pre-EXPLORE behavior | Reason |
 |------|---------------------|--------|
-| feature (default) | PREFLIGHT → BRAINSTORMING → EXPLORING | Always-on; fg-010-shaper covers ideation. |
+| standard (default) | PREFLIGHT → BRAINSTORMING → EXPLORING | Always-on; fg-010-shaper covers ideation. The default `state.mode` JSON value is `"standard"` per `shared/state-schema-fields.md`. |
 | bugfix | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-020-bug-investigator handles bug shaping. |
 | migration | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-160-migration-planner handles migration shaping. |
 | bootstrap | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-050-project-bootstrapper handles greenfield shaping. |
@@ -752,10 +762,14 @@ The script returns JSON:
 {
   "platform": "github | gitlab | bitbucket | gitea | unknown",
   "remote_url": "<url>",
-  "api_base": "<url or null>",
-  "auth_method": "gh-cli | glab-cli | env-token | basic-auth | none"
+  "api_base": "<url>",
+  "auth_method": "gh-cli | glab-cli | app-password | gitea-token | none",
+  "detected_at": "<ISO-8601>",
+  "warning": "<string or null>"
 }
 ```
+
+The `warning` field captures non-fatal issues (e.g. missing `GITLAB_TOKEN`/`GITEA_TOKEN`/`BITBUCKET_APP_PASSWORD` env var). When non-null, log it as INFO and write it to `state.platform.warning`. Schema enums match `shared/state-schema.md:597-602` verbatim.
 
 Write to state:
 
@@ -773,7 +787,7 @@ bash shared/forge-state-write.sh set-key platform.detected_at "$(date -u +%Y-%m-
 - Script returns `"platform": "unknown"` (no host pattern matched) → set `state.platform.name = "unknown"`, log INFO `PLATFORM-UNKNOWN`. Continue. Downstream agents fall back to local-only logging per §6.1 spec.
 - Auth env var missing for the detected platform (e.g. GitHub detected but `GITHUB_TOKEN` absent and `gh` CLI not authenticated) → log WARNING, do NOT abort. The post-run agent (fg-710) handles auth-missing gracefully and logs defenses to `feedback-decisions.jsonl` only.
 
-Counters: increment `state.platform.detection_runs` (default 0). The skip-on-resume branch does not increment.
+Recency is tracked via `state.platform.detected_at` alone — no separate counter (the timestamp answers "ran how recently?").
 
 ---
 
@@ -1298,7 +1312,7 @@ bash shared/forge-state.sh transition preflight_complete --guard "dry_run=${is_d
 
 **story_state:** `BRAINSTORMING` | TaskUpdate: Preflight → completed, Brainstorm → in_progress
 
-Per §3 of the skill consolidation spec. Always-on for feature mode; skipped for bug, migration, bootstrap, and --spec modes.
+Per §3 of the skill consolidation spec. Always-on for standard mode (the default `state.mode == "standard"`); skipped for bugfix, migration, bootstrap, and --spec modes.
 
 ### SS0.5.1 Skip Conditions
 
@@ -1325,14 +1339,14 @@ sub_task_id = TaskCreate(
   description = "Brainstorming requirement into structured spec",
   activeForm = "Brainstorming"
 )
-TaskUpdate(taskId = sub_task_id, addBlockedBy = [stage_task_id])
+TaskUpdate(taskId = sub_task_id, addBlockedBy = [current_stage_task_id])
 
 result = Agent(name = "fg-010-shaper", prompt = $ARGUMENTS_RAW)
 
 TaskUpdate(taskId = sub_task_id, status = "completed")
 ```
 
-Where `$ARGUMENTS_RAW` is the user's original requirement string (from §5 argument parsing — preserve verbatim, do not normalize).
+Where `$ARGUMENTS_RAW` is the user's original requirement string (from §5 argument parsing — preserve verbatim, do not normalize). `current_stage_task_id` matches the §4 canonical wrapper variable.
 
 **Wait for agent return.** The agent owns Plan Mode entry/exit, AskUserQuestion gates, transcript writing, and spec authoring. The orchestrator does not interject.
 
@@ -1358,7 +1372,9 @@ Pass `state.brainstorm.spec_path` to Stage 1 EXPLORE as input. The planner (fg-2
 
 ### SS0.5.5 Resume Behavior
 
-When `state.story_state == "BRAINSTORMING"` is detected at startup (per §0.14), the orchestrator re-dispatches `fg-010-shaper` with the same `$ARGUMENTS_RAW`. The agent itself owns resume routing (interactive-with-spec, interactive-without-spec, autonomous) per its rewritten prompt — the orchestrator does not need to peek at `state.brainstorm.spec_path` to decide.
+When `state.story_state == "BRAINSTORMING"` is detected at startup (per §0.14), the orchestrator re-dispatches `fg-010-shaper` with the same `$ARGUMENTS_RAW`. The agent itself owns **resume routing** (interactive-with-spec, interactive-without-spec, autonomous) per its rewritten prompt — the orchestrator does not need to peek at `state.brainstorm.spec_path` to choose a resume path.
+
+This is separate from **post-dispatch validation** (SS0.5.3): once the shaper returns, the orchestrator still inspects `state.brainstorm.spec_path` to confirm the spec exists and is well-formed. The two concerns do not overlap — resume routing is the agent's responsibility, post-dispatch validation is the orchestrator's.
 
 Counter: `state.brainstorm.resume_count` increments by 1 each time the stage is re-entered via resume.
 
@@ -1366,7 +1382,7 @@ Counter: `state.brainstorm.resume_count` increments by 1 each time the stage is 
 
 ## Stage 1: EXPLORE
 
-**story_state:** `EXPLORING` | TaskUpdate: Preflight → completed, Explore → in_progress
+**story_state:** `EXPLORING` | TaskUpdate: Preflight or Brainstorm → completed, Explore → in_progress
 
 ### SS1.1 Mode-Aware Exploration
 
