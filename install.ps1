@@ -89,4 +89,4 @@ if (-not (Test-Path -LiteralPath $settingsFile)) {
     }
 }
 
-Write-Info 'done. Run /forge-init in a project to complete setup.'
+Write-Info 'done. Run /forge in a project to complete setup.'

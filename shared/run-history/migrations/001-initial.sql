@@ -1,7 +1,7 @@
 -- Run History Store Schema v1
 -- Location: .forge/run-history.db
 -- Written by: fg-700-retrospective (Stage 9 LEARN)
--- Survives: /forge-recover reset (same as explore-cache.json)
+-- Survives: /forge-admin recover reset (same as explore-cache.json)
 
 PRAGMA journal_mode=WAL;
 PRAGMA busy_timeout=5000;
