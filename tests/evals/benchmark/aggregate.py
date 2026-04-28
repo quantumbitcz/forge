@@ -76,3 +76,25 @@ def count_hook_failures(artifacts_root: Path) -> int:
     for log in artifacts_root.rglob(".hook-failures.jsonl"):
         total += sum(1 for line in log.read_text(encoding="utf-8").splitlines() if line.strip())
     return total
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    from datetime import date as _date
+    p = argparse.ArgumentParser()
+    p.add_argument("--results-root", type=Path, required=True)
+    p.add_argument("--trends", type=Path, required=True)
+    p.add_argument("--commit-sha", type=str, required=True)
+    p.add_argument("--forge-version", type=str, required=True)
+    args = p.parse_args(argv)
+    line = aggregate_week(
+        results_root=args.results_root, week_of=_date.today(),
+        commit_sha=args.commit_sha, forge_version=args.forge_version,
+        hook_failures_total=count_hook_failures(args.results_root),
+    )
+    append_trends(args.trends, line)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
