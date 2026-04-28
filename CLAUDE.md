@@ -186,6 +186,65 @@ Two superpowers patterns are out of scope: `writing-skills` (forge does not auth
 
 35+ optional capabilities (cost governance, judge veto, speculative branches, self-consistency, repo-map PageRank, run history, MCP server, playbooks, property-based tests, flaky management, accessibility/i18n/perf regression, A2A, deployment strategies, contracts, AI quality, output compression, wiki, handoff, …). Per-feature config keys, IDs (F05-F35), categories, and activation state: **`shared/feature-matrix.md`** (auto-regen). Lifecycle: 90d unused → flagged, 180d → removal proposal (`shared/feature-lifecycle.md`).
 
+<!-- FEATURE_MATRIX_START -->
+| Feature | Config | Key details |
+|---|---|---|
+| Living specifications (F05) | `living_specs.*` | Spec-as-code; AC drift detection feeds INTENT-* findings. |
+| Event-sourced log (F07) | `events.*` | `.forge/events.jsonl`; replay-friendly; survives reset. |
+| Context condensation (F08) | `condensation.*` | Per-stage prompt compaction; complements output compression. |
+| Active knowledge base (F09) | `active_knowledge.*` | Wiki + graph + explore cache + docs index; powers /forge-ask. |
+| Enhanced security (F10) | `security.*` | Module-appropriate scanners; injection-hardened MCP envelope. |
+| Playbooks (F11) | `playbooks.*` | Reusable recipes under `playbooks/`; analytics in `.forge/playbook-analytics.json`. |
+| Spec inference (F12) | `spec_inference.*` | Heuristic AC extraction when shaper output is sparse. |
+| Property-based testing (F13) | `property_testing.*` | `fg-515-property-test`; framework-aware adapters. |
+| Flaky test management (F14) | `flaky_tests.*` | Quarantine, retry-budget, and root-cause classification. |
+| Dynamic accessibility (F15) | `accessibility.*` | A11Y-* findings via `fg-413-frontend` (a11y mode). |
+| i18n validation (F16) | `i18n.*` | Default-on; missing-key + locale-fallback checks. |
+| Performance regression (F17) | `performance_tracking.*` | PERF-REGRESSION-* findings; baseline cached in `.forge/`. |
+| Next-task prediction (F18) | `predictions.*` | Suggests follow-up tasks from run-history patterns. |
+| DX metrics (F19) | `dx_metrics.*` | Stage timing + agent effectiveness; surfaced via /forge-ask insights. |
+| Monorepo tooling (F20) | `monorepo.*` | Per-`components` config; build-graph dependency ordering. |
+| A2A protocol (F21) | `a2a.*` | Local filesystem agent-card; cross-repo coordination. |
+| AI/ML pipelines (F22) | `ml_ops.*` | `modules/ml-ops/`; feature-store + model-registry awareness. |
+| Feature flags (F23) | `feature_flags.*` | `modules/feature-flags/`; rollout-aware checks. |
+| Deployment strategies (F24) | `deployment.*` | Canary / blue-green / rolling; `fg-610-infra-deploy-verifier`. |
+| Consumer-driven contracts (F25) | `contract_testing.*` | `fg-250-contract-validator`; provider/consumer split. |
+| Output compression (F26) | `output_compression.*` | Per-stage verbosity (off / lite / full / ultra). |
+| AI quality (F27) | `ai_quality.*` | AI-LOGIC / AI-PERF / AI-CONCURRENCY / AI-SEC findings. |
+| Cross-project learnings (F28) | `cross_project.*` | Shared learnings across repos; decay-aware promotion. |
+| Run history store (F29) | `run_history.*` | SQLite at `.forge/run-history.db`; FTS5 transcript index. |
+| MCP server (F30) | `mcp_server.*` | Auto-provisioned by auto-bootstrap (or /forge-admin config wizard) into .mcp.json. |
+| Self-improving playbooks (F31) | `playbooks.refinement.*` | Skill: /forge-admin refine. Proposals reviewed before apply. |
+| Implementer reflection / judges (F32) | `plan.judge.*`, `implementer.reflection.*` | `fg-205` plan-judge + `fg-301` impl-judge; binding REVISE; 2-loop bound. |
+| Self-consistency voting (F33) | `consistency.*` | N=3 majority on validator + PR-rejection classification. |
+| Session handoff (F34) | `handoff.*` | Skill: /forge-admin handoff. Transfers run state to fresh CC session. |
+| Intent verification gate (F35) | `intent_verification.*` | `fg-540-intent-verifier` at end of Stage 5 VERIFY; `fg-590` hard-SHIP-gates on 0 INTENT-MISSED + verified_pct >= strict_ac_required_pct. Default enabled. |
+| Implementer voting (F36) | `impl_voting.*` | Confidence-gated N=2 sampling; `fg-302-diff-judge` AST tiebreak. Default enabled; cost-skip when <30% budget remains. |
+| BRAINSTORMING (F37) | `brainstorm.*` | Always-on for feature mode; `enabled: false` to disable. Seven-step pattern in `fg-010-shaper`. Spec dir `docs/superpowers/specs/` (configurable). State enum `BRAINSTORMING` in `state-schema.md`. |
+| Transcript mining (F38) | `brainstorm.transcript_mining.*` | F29 FTS5-backed historical context for `fg-010-shaper`. `top_k` default 3 (range 1-10); `max_chars` default 4000. Writes `.forge/brainstorm-transcripts/<run_id>.jsonl`. |
+| Cross-reviewer consistency voting (F39) | `quality_gate.consistency_promotion.*` | >= threshold reviewer agreement (default 3, range 2-9) on a dedup key promotes confidence to HIGH (1.0x weight). Logged as `consistency_promoted: true` on the finding. |
+| Defense-check feedback handling (F40) | `post_run.defense_*` | `fg-710-post-run` per-comment verdict: actionable / wrong / preference. Defense responses posted via platform adapter. State: `state.feedback_decisions[]`; mirror at `.forge/runs/<run_id>/feedback-decisions.jsonl`. Only `actionable` increments `feedback_loop_count`. |
+| Hypothesis branching for bugs (F41) | `bug.hypothesis_branching.*` | Up to 3 parallel sub-investigators via `fg-021-hypothesis-investigator`. Bayesian pruning. Fix-gate threshold `bug.fix_gate_threshold` (default 0.75, range 0.50-0.95). State: `state.bug.hypotheses[]`. |
+| Multi-VCS platform abstraction (F42) | `platform.*` | GitHub / GitLab / Bitbucket / Gitea/Forgejo. Detection at PREFLIGHT via `shared/platform-detect.py`; cached in `state.platform`. Adapters under `shared/platform_adapters/`. Pure Python (urllib.request); cross-platform. |
+| Structured PR finishing (F43) | `pr_builder.*` | `fg-600-pr-builder` AskUserQuestion dialog with five options: open-pr / open-pr-draft / direct-push / stash / abandon. Cleanup checklist runs after the chosen strategy. Autonomous default: open-pr-draft. |
+| Stale-worktree detection (F44) | `worktree.stale_after_days` | `fg-101-worktree-manager` flags worktrees older than the threshold (default 30, range 1-365). Finding category `WORKTREE-STALE` (WARNING). |
+| Wiki generator | `wiki.*` | Markdown wiki under `.forge/wiki/`; survives reset. |
+| Memory discovery | (auto) | Indexes `.claude/projects/.../memory/MEMORY.md`; cross-session context. |
+| Background execution | (auto) | Headless runs write escalations to `.forge/alerts.json`; no interactive prompts. |
+| Automations | `automations.*` | Cron / CI / MCP triggers via `hooks/automation_trigger.py`; cooldowns prevent loops. |
+| Visual verification | (frontend) | Superpowers visual companion at PLAN; graceful degradation if MCP absent. |
+| LSP integration | (auto) | Tree-sitter + LSP-aware checks in L0/L1 layers. |
+| Observability | `observability.*` | OTel GenAI semconv emitter; `forge.cost.*` + per-stage spans. |
+| Data classification | (auto) | PII-aware redaction in event log + handoff bundles. |
+| Security posture | (auto) | Injection-hardened MCP envelope; SHA-pinned untrusted-data policy. |
+| Pipeline timeline | (auto) | Per-stage timing via /forge-ask insights. |
+| Codebase Q&A | (auto) | /forge-ask answers from wiki + graph + explore cache + docs index. |
+| Caveman I/O | `output_compression.*` | Aggressive token reduction modes for cost-sensitive runs. |
+| Repo-map PageRank | `code_graph.prompt_compaction.*` | Centrality x recency x keyword overlap; ~30-50% token savings on 100/200/300 prompts. |
+| Speculative plan branches | `speculation.*` | Parallel candidate plans cached in `.forge/plans/candidates/`. |
+| Docs integrity | (auto) | Lychee link-checking; fenced code blocks excluded. |
+<!-- FEATURE_MATRIX_END -->
+
 Cross-cutting subsystems used by most features:
 - **Confidence** (`confidence.*`): finding HIGH/MED/LOW (1.0/0.75/0.5x); pipeline 4-dim (clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: ≥0.7 proceed, ≥0.4 ask, <0.4 → BRAINSTORMING (handled by `fg-010-shaper`). Trust state in `.forge/trust.json`.
 - **Repo-map PageRank** (`code_graph.prompt_compaction.*`, opt-in): `hooks/_py/repomap.py` ranks files by centrality × recency × keyword overlap. `{{REPO_MAP_PACK}}` replaces dir listings in 100/200/300 prompts (~30-50% token savings). Cache: `.forge/ranked-files-cache.json`. Reference: `shared/graph/pagerank-sql.md`.
