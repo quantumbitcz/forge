@@ -222,10 +222,25 @@ LIKELIHOOD = {
 }
 
 tested = [h for h in hypotheses if h.status == "tested"]
-n = len(hypotheses)
-prior = 1.0 / n
+
+# Non-branching mode guard: when bug.hypothesis_branching.enabled is
+# false the orchestrator dispatches a single fg-021 against the lead
+# hypothesis, so the register has 1 tested hypothesis and the rest are
+# "untested" (lik=0.5, prior=1/n). With more than one untested entry
+# the renormalisation dilutes the tested hypothesis below the 0.75
+# fix-gate threshold even when the evidence is decisive (lik=0.95).
+# To keep the gate ergonomic in single-hypothesis mode, restrict the
+# Bayes update to the tested subset before computing posteriors. The
+# untested hypotheses retain their pre-update prior unchanged.
+if not config.bug.hypothesis_branching.enabled:
+    bayes_input = tested
+else:
+    bayes_input = hypotheses
+
+n = len(bayes_input)
+prior = 1.0 / n if n > 0 else 0.0
 evidence_terms = []
-for h in hypotheses:
+for h in bayes_input:
     if h.status == "tested":
         lik = LIKELIHOOD[(h.passes_test, h.confidence)]
     else:
@@ -233,12 +248,13 @@ for h in hypotheses:
     evidence_terms.append(lik * prior)
 
 norm = sum(evidence_terms) or 1e-9
-for h, e in zip(hypotheses, evidence_terms):
+for h, e in zip(bayes_input, evidence_terms):
     h.posterior = e / norm
 
-# Prune
-survivors = [h for h in hypotheses if h.posterior >= 0.10]
-for h in hypotheses:
+# Prune (only the Bayes-input subset; untested hypotheses outside the
+# subset retain their initial prior and are not subject to pruning).
+survivors = [h for h in bayes_input if h.posterior >= 0.10]
+for h in bayes_input:
     if h.posterior < 0.10:
         h.status = "dropped"
 

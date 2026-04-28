@@ -193,6 +193,16 @@ Return JSON exactly:
               for verdict=actionable, may be empty"}
 ```
 
+> **Sub-agent timeout / crash guard.** If the defense check sub-agent
+> times out (default 5 min per comment) or crashes before returning
+> JSON, treat the comment as unverdicted and append to
+> `feedback-decisions.jsonl` with
+> `{"verdict": null, "addressed": "skipped_sub_agent_failure",
+> "reasoning": "<sub-agent failure reason>"}`. Do NOT increment
+> `feedback_loop_count` for skipped comments — they will be surfaced
+> for human triage on the next run. Log a WARNING
+> `FEEDBACK-SUBAGENT-TIMEOUT` (or `-CRASH`) once per skipped comment.
+
 ### Step 2 — Act on the verdict
 
 #### `verdict: actionable`

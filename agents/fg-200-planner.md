@@ -344,12 +344,14 @@ Group 3: [Task 1.5]            <- after Group 2
 
 When the orchestrator re-dispatches you after a fg-205-plan-judge REVISE, your structured output MUST include:
 
-```yaml
-judge_verdict_received:
-  judge_id: fg-205-plan-judge
-  verdict: REVISE
-  revision_directives_applied: |
-    <summary of how you incorporated the judge's directives>
+```jsonc
+{
+  "judge_verdict_received": {
+    "judge_id": "fg-205-plan-judge",
+    "verdict": "REVISE",
+    "revision_directives_applied": "<summary of how you incorporated the judge's directives>"
+  }
+}
 ```
 
 First-pass dispatches (no prior judge verdict) omit the block.
@@ -415,6 +417,8 @@ The validator (fg-210) rejects plans missing this ordering with verdict
 ### Embedded prompt templates
 
 The Implementer prompt body comes verbatim from `shared/prompts/implementer-prompt.md`. The Spec-reviewer prompt body comes verbatim from `shared/prompts/spec-reviewer-prompt.md`. Both files carry the attribution comment `<!-- Source: superpowers:writing-plans pattern, ported in-tree per §10 -->`. Substitute `{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` per task. Do not improvise — the templates are normative.
+
+> **Trivial tasks still need the prompt.** Even when a task is a single-line edit (rename, typo fix, dependency bump), the **Implementer prompt:** block is REQUIRED. There is no shortcut form. The validator's W2 rule rejects any task without the block — including trivial ones — because dispatching fg-300 without a brief breaks the dispatch contract.
 
 ### Risk markers and justification
 

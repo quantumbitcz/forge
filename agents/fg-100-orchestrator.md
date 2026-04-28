@@ -153,7 +153,7 @@ All sub-tasks use `addBlockedBy: [stage_task_id]`.
 ### --spec Mode
 
 1. Read spec file. ERROR if not found.
-2. **Validate (canonical schema, v5.1.0+):** Required `## (Objective|Goal|Goals)`, `## (Scope|Non-goals)`, `## (Acceptance [Cc]riteria|ACs)` (per `tests/unit/skill-execution/spec-wellformed.bats`). `## Status: Blocked` → ERROR. Failures → suggest `/forge-shape` or interactive `/forge-run`.
+2. **Validate (canonical schema, v5.1.0+):** Required `## (Objective|Goal|Goals)`, `## (Scope|Non-goals)`, `## (Acceptance [Cc]riteria|ACs)` (per `tests/unit/skill-execution/spec-wellformed.bats`). `## Status: Blocked` → ERROR. Failures → suggest `/forge shape` or interactive `/forge run`.
 3. Parse the canonical shaper schema (matches `agents/fg-010-shaper.md` `## Write spec`):
    - `# <title>` + `## Summary` → requirement context.
    - `## Goal` → planner objective.
@@ -1642,6 +1642,19 @@ d. Verify with build/test_single.
 > wiring (Type=test → red-only, Type=implementation → green-only)
 > is reserved for a future enhancement; until then, the field surfaces
 > only to the validator and to retrospective analytics.
+>
+> **Split-mode dispatch fields (reserved).** When split-mode lands, the
+> dispatch brief for a `Type: implementation` task will additionally
+> carry:
+> - `preceding_test_task_id` — the ID of the immediately-preceding
+>   `Type: test` task (per W1). The implementer uses this to locate the
+>   test file in the worktree without re-parsing the plan.
+> - `preceding_test_selector` — the test runner's narrowest selector
+>   that targets the new test (e.g. `pytest -k test_greet_world` or
+>   `npx vitest run -t "greet"`). The implementer uses this to run the
+>   test-must-fail-first probe (fg-300 §10) without grepping the test
+>   file. The planner emits both fields when it ships a Type: test task
+>   so they are available to the orchestrator at dispatch time.
 
 ### SS4.4 Checkpoints and Failure Isolation
 

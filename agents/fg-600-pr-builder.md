@@ -205,13 +205,19 @@ Every PR body MUST include:
 - [1-5 bullets]
 
 ## Verification Evidence
+> Source: `.forge/evidence.json` (fg-590-pre-ship-verifier — fresh,
+> non-cached evidence captured at ship time).
+
 - Build: [pass/fail] ([duration])
 - Tests: [passed]/[total] ([duration])
 - Lint: [pass/fail]
 - Code Review: [critical] critical, [important] important, [minor] minor
-- Quality Score: [score]/100
+- Pre-ship Score: [score]/100
 
 ## Quality Gate
+> Source: `state.json` convergence trace (fg-400-quality-gate — final
+> reviewer verdict from Stage 6 REVIEW, before pre-ship re-check).
+
 - Verdict: [PASS/CONCERNS], Score: [N]/100
 
 ## Test Plan

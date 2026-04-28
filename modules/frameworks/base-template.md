@@ -305,6 +305,21 @@ git:
   # commit_enforcement: external  # Uncomment if project has its own hooks
 
 # ---------------------------------------------------------------------------
+# SHARED DEFAULT -- worktree
+# Identical across ALL 21 frameworks. Do NOT change per-framework.
+# ---------------------------------------------------------------------------
+# Worktree isolation (sandbox the user's tree from in-flight implementation).
+# All implementation runs in .forge/worktree/. The user's tree is never
+# modified. Subagents are dispatched with relative-path framing so they
+# cannot leak absolute paths back to the user's tree.
+worktree:
+  enabled: true                 # Disable only for one-off dry-runs.
+  root: .forge/worktree         # Relative to project root.
+  branch_collision: epoch_suffix  # epoch_suffix | reuse | abort
+  cleanup_on_ship: true         # Remove worktree after fg-600 success.
+  cleanup_on_abort: false       # Keep on abort for forensic inspection.
+
+# ---------------------------------------------------------------------------
 # SHARED DEFAULT -- tracking
 # Identical across ALL 21 frameworks. Do NOT change per-framework.
 # ---------------------------------------------------------------------------
@@ -356,6 +371,7 @@ These sections are byte-identical across all 21 frameworks. Any difference is dr
 | `documentation.user_maintained_marker` | `<!-- user-maintained -->` |
 | `graph` | `enabled: true, enrich_symbols: true, neo4j_port: 7687, neo4j_http_port: 7474` |
 | `git` | Full block (branch_template through sign_commits) |
+| `worktree` | `enabled: true, root: .forge/worktree, branch_collision: epoch_suffix, cleanup_on_ship: true, cleanup_on_abort: false` |
 | `tracking` | `prefix: FG, archive_after_days: 90` |
 | `commands.build_timeout` | `120` (nextjs/vue override to `180`) |
 | `commands.test_timeout` | `300` |
