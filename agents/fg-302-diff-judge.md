@@ -27,6 +27,10 @@ files touched. It does NOT see the plan, the tests, or prior findings.
 
 ## 2. Algorithm
 
+The diffing math runs in `hooks/_py/diff_judge.py` invoked by the orchestrator
+before this agent is dispatched; this agent's role is to validate the verdict
+structure and return the JSON in §3.
+
 > **Diff is syntactic, not semantic.** Comparison runs on the parsed AST/CST
 > (post-`ast.parse` for Python; tree-sitter CST otherwise). Logically
 > equivalent code with reordered operands, reordered imports, or

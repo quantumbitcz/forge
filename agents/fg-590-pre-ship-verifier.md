@@ -122,7 +122,7 @@ Verdict is `SHIP` only if ALL:
 Otherwise `BLOCK`. Populate `block_reasons[]`:
 - `intent-missed: {N} open CRITICAL INTENT-MISSED findings`
 - `intent-threshold: verified {pct}% < required {threshold}%`
-- `intent-unreachable-runtime: all ACs UNVERIFIABLE (runtime not reachable)`
+- `intent-unreachable-runtime: all ACs UNVERIFIABLE (runtime not reachable; precondition for any per-AC threshold check)`
 
 `verified_pct is None` means **no ACs existed** (vacuous pass) —
 distinguishable from `verified_pct == 0` (all failed). When

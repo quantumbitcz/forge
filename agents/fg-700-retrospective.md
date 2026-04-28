@@ -430,13 +430,14 @@ After standard retrospective sections, emit:
 
 ```yaml
 intent_verification:
-  total_acs: <int>
+  total_acs: <int>                    # = len(state.intent_verification_results)
   verified: <int>
   partial: <int>
   missed: <int>
   unverifiable: <int>
-  verified_pct: <float>              # verified / total_acs * 100
-  unverifiable_pct: <float>          # unverifiable / total_acs * 100
+  verified_pct: <float>              # verified / (verified+partial+missed+unverifiable) * 100
+  unverifiable_pct: <float>          # unverifiable / (verified+partial+missed+unverifiable) * 100
+                                      # denominator matches SHIP-gate (fg-590 §6) so trends compare
 
 impl_voting:
   dispatches: <int>                   # voting fired (both samples ran)
@@ -444,7 +445,7 @@ impl_voting:
   tiebreaks: <int>
   unresolved: <int>                   # IMPL-VOTE-UNRESOLVED count
   cost_skipped: <int>
-  divergence_rate: <float>            # diverged / dispatches
+  divergence_rate: <float>            # diverged / dispatches * 100 (percent, 0-100)
   per_trigger:
     confidence: <int>
     risk_tag: <int>

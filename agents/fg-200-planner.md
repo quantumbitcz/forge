@@ -159,7 +159,8 @@ VALIDATE.
 Emit tags on `task.risk_tags: [string, ...]` in the structured plan output.
 Empty list is valid. Tags are consumed by `fg-100-orchestrator` at Stage 4
 IMPLEMENT to gate N=2 voting (see `shared/agent-communication.md` §risk_tags
-Contract).
+Contract). Canonical enum: `hooks/_py/risk_tags.BASE_RISK_TAGS` (mode
+overlays via `OVERLAY_EXTENSIONS`).
 
 ### 3.5 Multi-Module Requirements
 

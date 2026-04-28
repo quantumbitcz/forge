@@ -1,6 +1,11 @@
 """sc-impl-vote-disabled - impl_voting.enabled: false = no extra dispatches."""
 
 
+def _file_has_recent_regression(files, days):
+    """Stubbed for scenario tests — real impl reads .forge/run-history.db."""
+    return False  # default: no regression history in synthetic scenarios
+
+
 def should_vote(task, state, config):
     """Re-implement the gate from fg-100-orchestrator.md for the scenario test."""
     ivcfg = config.get("impl_voting", {})
@@ -18,6 +23,11 @@ def should_vote(task, state, config):
         return True, "confidence"
     if any(t in task.get("risk_tags", []) for t in ivcfg.get("trigger_on_risk_tags", [])):
         return True, "risk_tag"
+    if _file_has_recent_regression(
+        task.get("files", []),
+        ivcfg.get("trigger_on_regression_history_days", 30),
+    ):
+        return True, "regression_history"
     return False, None
 
 

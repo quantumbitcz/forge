@@ -2,7 +2,7 @@
 
 Phase 7 closes the "plan misread intent" gap with two coordinated gates.
 
-## F35 — Intent Verification Gate (Stage 5 VERIFY → Stage 9 SHIP)
+## F35 — Intent Verification Gate (Stage 5 VERIFY → Stage 8 SHIP)
 
 ### Why
 

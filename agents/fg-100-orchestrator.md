@@ -953,6 +953,8 @@ If `.forge/caveman-mode` does not exist: default to `off` (no compression).
 
 Existing state.json → run `shared/state-integrity.sh .forge/`. ERRORs → reconstruct from scratch (backup first). WARNINGs → log + proceed. Fresh run → skip.
 
+- **Cleanup ephemeral dispatch contexts.** `rm -rf .forge/dispatch-contexts/` (created/repopulated by Stage 5 intent-verifier dispatch each run; never preserved across runs unlike `.forge/explore-cache.json`, `.forge/plan-cache/`, etc.). This is the canonical destructive cleanup; `shared/state-integrity.sh` keeps a stale-detection block as defense-in-depth in case PREFLIGHT was skipped.
+
 ---
 
 ### §0.14 Check for Interrupted Runs
@@ -1506,6 +1508,8 @@ After scaffolders complete, BEFORE implementers: [dispatch fg-102-conflict-resol
 
 ### Voting Gate (Phase 7 F36)
 
+Canonical contract: `shared/intent-verification.md` § F36 and `shared/agent-communication.md` § risk_tags Contract.
+
 At Stage 4 IMPLEMENT, before dispatching `fg-300-implementer` for a task:
 
 ```python
@@ -1542,12 +1546,23 @@ def dispatch_with_voting(task, state, config):
         _emit_info_if_cost_skip(trigger)  # COST-SKIP-VOTE
         return dispatch_single(task)
     # N=2 parallel dispatch.
-    sub_a = fg101_create(task["id"], "sample_1",
-                         base_dir=f".forge/votes/{task['id']}/sample_1",
-                         start_point=state["parent_head"])
-    sub_b = fg101_create(task["id"], "sample_2",
-                         base_dir=f".forge/votes/{task['id']}/sample_2",
-                         start_point=state["parent_head"])
+    # Sub-worktree creation can fail (disk full, branch collision, permissions).
+    # See worktree_fail fallback paragraph below the pseudocode.
+    try:
+        sub_a = fg101_create(task["id"], "sample_1",
+                             base_dir=f".forge/votes/{task['id']}/sample_1",
+                             start_point=state["parent_head"])
+        sub_b = fg101_create(task["id"], "sample_2",
+                             base_dir=f".forge/votes/{task['id']}/sample_2",
+                             start_point=state["parent_head"])
+    except WorktreeCreateError as e:
+        # Best-effort cleanup of partial creation; cleanup is idempotent.
+        fg101_cleanup(sub_a, delete_branch=True) if 'sub_a' in locals() else None
+        emit_finding("IMPL-VOTE-WORKTREE-FAIL", severity="WARNING",
+                     description=f"sub-worktree create failed: {e}")
+        append_impl_vote_history(task, judge_result=None, trigger=trigger,
+                                 skipped_reason="worktree_fail")
+        return dispatch_single(task)
     # 15-min per-sample timeout; on one timeout, cancel peer, emit
     # IMPL-VOTE-TIMEOUT WARNING, use surviving sample.
     patch_a, patch_b = Agent_parallel([
@@ -1583,6 +1598,18 @@ def dispatch_with_voting(task, state, config):
 idempotent (`fg-101 cleanup` on a non-existent path is a no-op). Stale sweep
 at PREFLIGHT via `fg-101 detect-stale` (see `.forge/votes/*/sample_*` pattern
 added in Task 12).
+
+**Sub-worktree create failure (`worktree_fail` fallback).** If sub-worktree
+creation fails (disk full, branch collision, permissions, or any other
+`WorktreeCreateError`), the orchestrator emits `IMPL-VOTE-WORKTREE-FAIL`
+WARNING, records `skipped_reason: "worktree_fail"` in `impl_vote_history`,
+and falls back to single-sample dispatch via `dispatch_single(task)`. This
+preserves task progress without blocking on a transient infrastructure
+issue. Partial creation (sample_1 succeeded, sample_2 failed) is cleaned up
+best-effort; `fg-101 cleanup` is idempotent so a missing path is a no-op.
+The voting gate never aborts the pipeline on infra failure — it degrades
+to the single-sample path and surfaces the WARNING for retrospective
+analysis.
 
 ---
 

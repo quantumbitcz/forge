@@ -96,8 +96,9 @@ All other keys indicate a Layer-1 regression — trip the Context Exclusion Cont
       - Probe timed out / budget exceeded → `UNVERIFIABLE` (WARNING).
       - AC text could not be decomposed into probes → `UNVERIFIABLE` (WARNING, `INTENT-UNVERIFIABLE`).
       - Ambiguous outcome (probe succeeded but assertion underspecified) → `AMBIGUOUS` (INFO).
-3. Write findings JSONL at `.forge/runs/<run_id>/findings/fg-540.jsonl`, one
-   finding per line. Nullable `file` / `line`; required `ac_id`.
+3. Return findings as part of the §5 output JSON; the orchestrator persists them
+   to `.forge/runs/<run_id>/findings/fg-540.jsonl`, one finding per line. Nullable
+   `file` / `line`; required `ac_id`. This agent has no `Write` tool.
 
 ## 5. Output
 
@@ -114,6 +115,9 @@ Structured JSON (max 1500 tokens):
   "findings_path": ".forge/runs/<run_id>/findings/fg-540.jsonl"
 }
 ```
+
+`findings_path` is the orchestrator-assigned destination — this agent reports
+the path as a reference value, the orchestrator does the actual write.
 
 ## 6. Failure Modes
 

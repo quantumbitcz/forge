@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).parent.parent.parent
 AGENT = (REPO_ROOT / "agents" / "fg-540-intent-verifier.md").read_text()
 
@@ -28,11 +30,10 @@ def test_tools_are_exactly_four():
 
 def test_forbidden_tools_absent():
     fm = _frontmatter(AGENT)
-    for forbidden in (
-        "Bash", "Edit", "Write", "Agent", "Task",
-        "TaskCreate", "TaskUpdate", "NotebookEdit",
-    ):
-        assert forbidden not in fm, f"{forbidden} present in fg-540 frontmatter"
+    data = yaml.safe_load(fm)
+    tools = set(data.get("tools", []))
+    forbidden = {"Bash", "Edit", "Write", "Agent", "Task", "TaskCreate", "TaskUpdate", "NotebookEdit"}
+    assert tools.isdisjoint(forbidden), f"forbidden tools present: {tools & forbidden}"
 
 
 def test_ui_tier_3():

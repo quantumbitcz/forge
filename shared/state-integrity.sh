@@ -210,6 +210,12 @@ fi
 # never preserved across runs. PREFLIGHT cleanup removes the directory; this
 # validator only reports on it (does not delete) so a debug session can
 # inspect the briefs after a run completes.
+
+# Stale threshold for ephemeral dispatch-context briefs.
+# Per shared/state-schema.md, dispatch-contexts are cleaned at PREFLIGHT;
+# this stale-detection block is defense-in-depth in case PREFLIGHT was skipped.
+DISPATCH_CONTEXT_STALE_HOURS="${DISPATCH_CONTEXT_STALE_HOURS:-24}"
+
 DISPATCH_CTX_DIR="${FORGE_DIR}/dispatch-contexts"
 if [[ -d "$DISPATCH_CTX_DIR" ]]; then
   ctx_age_hours=0
@@ -223,8 +229,8 @@ if [[ -d "$DISPATCH_CTX_DIR" ]]; then
   if [[ -n "$ctx_mtime" ]]; then
     now_ts=$(date +%s)
     ctx_age_hours=$(( (now_ts - ctx_mtime) / 3600 ))
-    if [[ $ctx_age_hours -ge 24 ]]; then
-      warn ".forge/dispatch-contexts/ is stale (${ctx_age_hours}h old); PREFLIGHT will reap it on next run"
+    if [[ $ctx_age_hours -ge ${DISPATCH_CONTEXT_STALE_HOURS} ]]; then
+      warn ".forge/dispatch-contexts/ is stale (${ctx_age_hours}h old, threshold: ${DISPATCH_CONTEXT_STALE_HOURS}h); PREFLIGHT will reap it on next run"
     fi
   fi
 fi
