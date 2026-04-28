@@ -69,3 +69,10 @@ def append_trends(trends_path: Path, line: dict[str, Any]) -> None:
     trends_path.parent.mkdir(parents=True, exist_ok=True)
     with trends_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(line, sort_keys=True) + "\n")
+
+
+def count_hook_failures(artifacts_root: Path) -> int:
+    total = 0
+    for log in artifacts_root.rglob(".hook-failures.jsonl"):
+        total += sum(1 for line in log.read_text(encoding="utf-8").splitlines() if line.strip())
+    return total
