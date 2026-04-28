@@ -1,6 +1,6 @@
 [project]
 name = "forge-plugin"
-version = "4.2.0"
+version = "4.3.0"
 description = "Claude Code plugin: 10-stage autonomous pipeline (forge)"
 requires-python = ">=3.10"
 readme = "README.md"
@@ -32,6 +32,6 @@ ignore = ["E501"]  # line length handled elsewhere
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/contract", "tests/scenario"]
-python_files = ["test_*.py"]
+python_files = ["test_*.py", "*_test.py"]
 pythonpath = ["."]
 addopts = "-ra"

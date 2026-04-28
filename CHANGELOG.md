@@ -5,6 +5,52 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.3.0] — Mega A: Helpers + Schema
+
+### Added (Phase A1 — Autonomous AC extractor)
+
+- **`shared/ac-extractor.py`** — stdlib-only Python 3.10+ regex extractor. Three patterns: numbered list (`1.` / `1)`), Given/When/Then BDD lines, imperative-verb bullets (`must|should|will|ensure|validate|return|expose|accept|reject`). Imperative verb is retained in the extracted AC body. Patterns applied in source-line order (deduplicated, order-preserving). Three-tier confidence enum (`low` < 2 ACs / `medium` 2-4 / `high` 5+). Used by `fg-010-shaper` autonomous-mode degradation path (Mega C1).
+
+### Added (Phase A2 — Atomic bootstrap detect)
+
+- **`shared/bootstrap-detect.py`** — `detect_stack(repo_root: Path) -> StackResult` probes Kotlin/Spring (build.gradle.kts), TypeScript/Next (package.json + next.config.{js,mjs,ts,cjs} or tsconfig), Python/FastAPI/Django (pyproject.toml). Returns `ambiguous: True` when 0 or ≥2 stacks match. **`write_forge_local_md(stack, target_path)` uses atomic-write contract**: write to `<target>.tmp` → `Path.replace` (cross-platform atomic on POSIX and Windows ≥ Vista). Refuses to write ambiguous stacks. Cleans temp on failure. AC-S027 covered by simulated-interrupt test (monkeypatch `Path.replace` to raise; assert target absent + temp cleaned). Used by `skills/forge` and `skills/forge-admin` config wizards (Mega B).
+
+### Added (Phase A3 — Platform detection + adapter stubs)
+
+- **`shared/platform-detect.py`** — `detect_platform(repo_root, config=None) -> PlatformInfo`. Resolution: explicit `config['platform']['detection']` override → `git remote get-url <remote_name>` match against known hosts (github.com, gitlab.com, bitbucket.org with anchored regex `(?:^|@|//)host[:/]` to reject `subgithub.com`-style spoofs) → Gitea API probe at `<host>/api/v1/version` (User-Agent header; per-socket-op timeout, not wall-clock — documented). Falls back to `platform: "unknown"`. Auth env-var map: `GITLAB_TOKEN`, `BITBUCKET_APP_PASSWORD`, `GITEA_TOKEN` (GitHub uses `gh` CLI auth, no env-var canonical).
+- **`shared/platform_adapters/{__init__,github,gitlab,bitbucket,gitea}.py`** — 4 adapter stubs raising `NotImplementedError("D5 wires this up")`. `__init__.py` exposes `PlatformAdapter` Protocol + `PostResult` TypedDict so D5 has a typed contract.
+
+### Added (Phase A4-A5 — Config + classification docs)
+
+- **`shared/preflight-constraints.md`** — 7 new validation bullets covering 16 mega-consolidation config keys: `brainstorm.*` (enabled, spec_dir with PREFLIGHT write-probe, autonomous_extractor_min_confidence, transcript_mining.*), `quality_gate.consistency_promotion.*`, `bug.{hypothesis_branching,fix_gate_threshold}`, `post_run.{defense_enabled,defense_min_evidence}`, `pr_builder.{default_strategy,cleanup_checklist_enabled}`, `worktree.stale_after_days`, `platform.{detection,remote_name}`. All keys go in `<!-- locked -->` blocks (not subject to retrospective auto-tuning).
+- **`shared/intent-classification.md`** — new "Hybrid-grammar verbs" section: 11 explicit verbs (run, fix, sprint, review, verify, deploy, commit, migrate, bootstrap, docs, audit) recognized at first-token position with priority over signal-counting. Concrete "Vague outcome" definition: signal-count < 2 AND no explicit-verb match → routes to `run` mode (which triggers BRAINSTORMING).
+
+### Changed (Phase A6 — State schema bump)
+
+- **State schema v2.0.0 → v2.1.0** (`shared/state-schema.md`, `shared/checks/state-schema-v2.0.json`, `shared/python/state_init.py`). Per `feedback_no_backcompat`: no migration shim. Adds:
+  - `state.story_state` enum gains **`BRAINSTORMING`** (between PREFLIGHT and EXPLORING)
+  - **`state.brainstorm`** — spec_path, original_input (verbatim free-text input), started_at/completed_at, autonomous, questions_asked, approaches_proposed, section_approvals
+  - **`state.bug`** — ticket_id, reproduction_attempts/succeeded, branching_used, fix_gate_passed, hypotheses[] with id/statement/falsifiability_test/evidence_required/status/passes_test/confidence/posterior
+  - **`state.feedback_decisions[]`** — comment_id, verdict (actionable|wrong|preference), reasoning, evidence, addressed (actionable_routed|defended|defended_local_only|acknowledged), posted_at
+  - **`state.platform`** — name, remote_url, api_base, auth_method, detected_at
+- **`shared/state-transitions.md`** — 4 new BRAINSTORMING transition rows (PREFLIGHT→BRAINSTORMING gated on `mode==feature AND brainstorm.enabled AND not dry_run`; BRAINSTORMING→EXPLORING on completion; BRAINSTORMING→ABORTED on user abort; BRAINSTORMING self-loop on resume from cache). Deferred-C2 note for `--spec` and `--from=<stage>` skip paths.
+- **`shared/stage-contract.md`** — BRAINSTORMING declared as Stage 0.5 (conditional, feature-mode-only) in both overview table and per-stage block. Avoids renumbering 10 stages (deferred to Mega C2).
+- **6 OTel events registered** (slot only; emission lands in C1/C2): `forge.brainstorm.{started, question_asked, approaches_proposed, spec_written, completed, aborted}`.
+
+### Changed (Tooling)
+
+- **`pyproject.toml`** — `python_files` accepts both `test_*.py` and `*_test.py` so the new helper tests are discovered by `pytest tests/unit -q`.
+
+### Tests
+
+- 40 new pytest cases (`tests/unit/{ac_extractor,bootstrap_detect,platform_detect}_test.py` covering AC patterns + confidence boundaries + atomic-write under simulated interrupt + disk-full + 4 platform happy paths + explicit override + missing auth + DNS-rebind defense). Hoisted `load_hyphenated_module` helper to `tests/unit/conftest.py`.
+- 30 new bats structural tests (`tests/structural/{preflight-new-keys,intent-classification-verbs,state-schema-mega}.bats`).
+
+### Notes
+
+- `shared/python/state_transitions.py` FSM event wiring (`brainstorm_complete`, `resume_with_cache`) is intentionally deferred to Mega C2; `tests/contract/state-machine-contract.bats:59` will remain red until that orchestrator surgery lands.
+- Carried-over dirty files (`shared/ac-extractor.py`, `tests/unit/ac_extractor_test.py`) staged for the first time in Wave 1 (commit `38ab7796`); the carry-over set is reduced from 7 to 5 (spring/* and kotlin.md remain unstaged across phases).
+
 ## [4.2.0] — Phase 7 Intent Assurance
 
 ### Added (F35 — Intent Verification Gate)
