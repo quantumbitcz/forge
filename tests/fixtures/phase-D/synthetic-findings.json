@@ -1,0 +1,7 @@
+[
+  {"reviewer": "fg-410-code-reviewer", "component": "auth", "file": "src/auth/jwt.ts", "line": 42, "category": "SEC-INJECTION-OVERRIDE", "severity": "CRITICAL", "confidence": "MEDIUM"},
+  {"reviewer": "fg-411-security-reviewer", "component": "auth", "file": "src/auth/jwt.ts", "line": 42, "category": "SEC-INJECTION-OVERRIDE", "severity": "CRITICAL", "confidence": "MEDIUM"},
+  {"reviewer": "fg-412-architecture-reviewer", "component": "auth", "file": "src/auth/jwt.ts", "line": 42, "category": "SEC-INJECTION-OVERRIDE", "severity": "CRITICAL", "confidence": "LOW"},
+  {"reviewer": "fg-410-code-reviewer", "component": "ui", "file": "src/ui/Form.tsx", "line": 88, "category": "QUAL-NAMING", "severity": "INFO", "confidence": "LOW"},
+  {"reviewer": "fg-413-frontend-reviewer", "component": "ui", "file": "src/ui/Form.tsx", "line": 88, "category": "QUAL-NAMING", "severity": "INFO", "confidence": "MEDIUM"}
+]
