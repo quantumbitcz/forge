@@ -17,19 +17,35 @@
         "properties": {
           "os": {"type": "string"},
           "model": {"type": "string"},
-          "entries_total": {"type": "integer"},
-          "entries_solved": {"type": "integer"},
-          "entries_timeout": {"type": "integer"},
-          "entries_docker_skipped": {"type": "integer"},
-          "solve_rate_overall": {"type": "number"},
-          "solve_rate_by_complexity": {"type": "object"},
-          "median_cost_per_solve_usd": {"type": "number"},
-          "total_cost_usd": {"type": "number"},
+          "entries_total": {"type": "integer", "minimum": 0},
+          "entries_solved": {"type": "integer", "minimum": 0},
+          "entries_timeout": {"type": "integer", "minimum": 0},
+          "entries_docker_skipped": {"type": "integer", "minimum": 0},
+          "solve_rate_overall": {"type": "number", "minimum": 0, "maximum": 1},
+          "solve_rate_by_complexity": {
+            "type": "object",
+            "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "median_cost_per_solve_usd": {"type": "number", "minimum": 0},
+          "total_cost_usd": {"type": "number", "minimum": 0},
           "unverifiable_total": {"type": "integer", "minimum": 0}
         }
       }
     },
-    "hook_failures_total": {"type": "integer"},
-    "regressions": {"type": "array"}
+    "hook_failures_total": {"type": "integer", "minimum": 0},
+    "regressions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entry_id"],
+        "properties": {
+          "entry_id": {"type": "string"},
+          "delta_pp": {"type": "number"},
+          "severity": {"enum": ["CRITICAL", "WARNING", "INFO"]},
+          "os": {"type": "string"},
+          "model": {"type": "string"}
+        }
+      }
+    }
   }
 }

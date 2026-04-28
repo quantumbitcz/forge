@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
+  "additionalProperties": false,
   "required": ["schema_version", "entry_id", "run_date", "os", "model", "complexity", "started_at", "ended_at", "duration_s",
                "solved", "partial_ac_pct", "ac_breakdown", "unverifiable_count", "cost_usd", "pipeline_verdict", "score",
                "convergence_iterations", "critical_findings", "warning_findings", "timeout",

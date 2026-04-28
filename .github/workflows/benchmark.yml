@@ -106,7 +106,7 @@ jobs:
             --results-root all-cells \
             --trends tests/evals/benchmark/trends.jsonl \
             --commit-sha "$COMMIT_SHA" \
-            --forge-version "$(python -c 'import json; print(json.load(open(\"plugin.json\"))[\"version\"])')"
+            --forge-version "$(python -c 'import json; print(json.load(open(\".claude-plugin/plugin.json\"))[\"version\"])')"
       - name: Render scorecard
         run: |
           python -m tests.evals.benchmark.render_scorecard \
@@ -119,10 +119,12 @@ jobs:
             --trends tests/evals/benchmark/trends.jsonl \
             --baseline tests/evals/benchmark/baseline.json
       - name: Commit scorecard (idempotent)
+        id: commit
         shell: bash
         run: |
           if git diff --exit-code SCORECARD.md tests/evals/benchmark/trends.jsonl; then
             echo "no scorecard changes; skipping commit"
+            echo "fallback_needed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name 'github-actions[bot]'
@@ -131,13 +133,17 @@ jobs:
           git commit -m "chore(bench): weekly scorecard $(date -u +%Y-%m-%d)"
           # Race-retry once
           for i in 1 2; do
-            if git push origin HEAD:master; then exit 0; fi
+            if git push origin HEAD:master; then
+              echo "fallback_needed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             git fetch origin master && git rebase origin/master || break
           done
+          echo "fallback_needed=true" >> "$GITHUB_OUTPUT"
           echo "::warning ::BENCH-COMMIT-RACE: push failed twice; uploading artifact instead"
           exit 0
       - name: Upload scorecard (race fallback)
-        if: always()
+        if: steps.commit.outputs.fallback_needed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: scorecard-${{ github.run_id }}
