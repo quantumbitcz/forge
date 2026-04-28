@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://forge.quantumbitcz.com/schemas/state/2.0.0.json",
-  "title": "Forge pipeline state — v2.0.0",
+  "$id": "https://forge.quantumbitcz.com/schemas/state/2.1.0.json",
+  "title": "Forge pipeline state — v2.1.0",
   "type": "object",
   "required": ["version", "_seq", "plan_judge_loops", "impl_judge_loops", "judge_verdicts"],
   "properties": {
-    "version": { "const": "2.0.0" },
+    "version": { "const": "2.1.0" },
     "_seq": {
       "type": "integer",
       "minimum": 0,

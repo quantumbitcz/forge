@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Create the initial v2.0.0 forge pipeline state object.
+"""Create the initial v2.1.0 forge pipeline state object.
 
 Interface:
     state_init.py <story_id> <requirement> <mode> <dry_run>
 
-Output: JSON to stdout (complete v2.0.0 state object)
+Output: JSON to stdout (complete v2.1.0 state object)
 Exit codes: 0 = success, 1 = invalid args
 """
 import json
@@ -22,9 +22,9 @@ VALID_MODES = (
 
 
 def create_initial_state(story_id, requirement, mode, dry_run):
-    """Return the full v2.0.0 state dict."""
+    """Return the full v2.1.0 state dict."""
     return {
-        'version': '2.0.0',
+        'version': '2.1.0',
         '_seq': 0,
         'complete': False,
         'story_id': story_id,
@@ -111,7 +111,7 @@ def create_initial_state(story_id, requirement, mode, dry_run):
     }
 
 
-STATE_SCHEMA_VERSION = '2.0.0'
+STATE_SCHEMA_VERSION = '2.1.0'
 
 
 def _atomic_write(path, data):
@@ -207,7 +207,7 @@ def _record_reinit(forge_dir, reason, old_version):
 
 
 def load_or_reinit(path, story_id='', requirement='', mode='standard', dry_run=False):
-    """Load state.json or auto-reset if not v2.0.0 (no migration shim per feedback_no_backcompat).
+    """Load state.json or auto-reset if not v2.1.0 (no migration shim per feedback_no_backcompat).
 
     Concurrency-safe: acquires .forge/.lock (fcntl.flock on POSIX) and writes
     via .tmp + os.replace to avoid two concurrent processes both detecting a

@@ -16,11 +16,11 @@ teardown() {
   rm -rf "$TMPDIR"
 }
 
-@test "create_initial_state creates state with version 2.0.0 and zeroed judge counters" {
+@test "create_initial_state creates state with version 2.1.0 and zeroed judge counters" {
   run python3 -c "
 import json
 s=json.load(open('$STATE'))
-assert s['version'] == '2.0.0', s['version']
+assert s['version'] == '2.1.0', s['version']
 assert s['plan_judge_loops'] == 0
 assert s['impl_judge_loops'] == {}
 assert s['judge_verdicts'] == []
@@ -98,7 +98,7 @@ from state_init import load_or_reinit
 p = pathlib.Path('$TMPDIR/stale.json')
 p.write_text(json.dumps({'version': '1.10.0', 'critic_revisions': 1}))
 s = load_or_reinit(p, mode='standard')
-assert s['version'] == '2.0.0', s['version']
+assert s['version'] == '2.1.0', s['version']
 assert 'critic_revisions' not in s
 assert s['plan_judge_loops'] == 0
 print('OK')
@@ -113,9 +113,9 @@ sys.path.insert(0, '$PROJECT_ROOT/shared/python')
 from state_init import load_or_reinit
 p = pathlib.Path('$TMPDIR/corrupt.json')
 # Write malformed JSON: truncated, unterminated string, garbage
-p.write_text('{\"version\": \"2.0.0\", \"plan_judge_loops\": 1, \"unterminated\": \"this string never')
+p.write_text('{\"version\": \"2.1.0\", \"plan_judge_loops\": 1, \"unterminated\": \"this string never')
 s = load_or_reinit(p, mode='standard')
-assert s['version'] == '2.0.0', s['version']
+assert s['version'] == '2.1.0', s['version']
 assert s['plan_judge_loops'] == 0, s['plan_judge_loops']
 assert s['judge_verdicts'] == []
 # Backup of corrupt file should exist alongside the reinit
@@ -134,7 +134,7 @@ from state_init import load_or_reinit
 p = pathlib.Path('$TMPDIR/future.json')
 p.write_text(json.dumps({'version': '3.0.0', 'some_future_field': 'xyz', 'plan_judge_loops': 99}))
 s = load_or_reinit(p, mode='standard')
-assert s['version'] == '2.0.0', s['version']
+assert s['version'] == '2.1.0', s['version']
 # Future field is dropped (no migration shim, treated as unknown)
 assert 'some_future_field' not in s
 assert s['plan_judge_loops'] == 0, s['plan_judge_loops']

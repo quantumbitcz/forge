@@ -9,8 +9,8 @@ setup() {
   [ -f "$SCHEMA" ]
 }
 
-@test "schema declares version 2.0.0 as const" {
-  run python3 -c "import json,sys; s=json.load(open(sys.argv[1])); p=s['properties']['version']; sys.exit(0 if p.get('const')=='2.0.0' else 1)" "$SCHEMA"
+@test "schema declares version 2.1.0 as const" {
+  run python3 -c "import json,sys; s=json.load(open(sys.argv[1])); p=s['properties']['version']; sys.exit(0 if p.get('const')=='2.1.0' else 1)" "$SCHEMA"
   [ "$status" -eq 0 ]
 }
 
