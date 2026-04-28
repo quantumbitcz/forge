@@ -2,15 +2,16 @@
 """VCS platform detection.
 
 Reads `git remote get-url <remote_name>` and matches against known host
-patterns. Falls back to a Gitea API probe with 3-second timeout. Honors
-explicit override via config['platform']['detection'].
+patterns. Falls back to a Gitea API probe (best-effort; the timeout is
+per-socket-operation after connect — see _gitea_probe). Honors explicit
+override via config['platform']['detection'].
 
 Spec: docs/superpowers/specs/2026-04-27-skill-consolidation-design.md §6.1
 ACs:  AC-FEEDBACK-006, AC-FEEDBACK-007.
 """
 from __future__ import annotations
 
-import datetime as _dt
+import datetime
 import os
 import re
 import subprocess
@@ -46,14 +47,14 @@ _VALID_DETECTION_VALUES = ("auto", "github", "gitlab", "bitbucket", "gitea")
 
 
 def _now_iso() -> str:
-    return _dt.datetime.now(tz=_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _read_remote_url(repo_root: Path, remote_name: str) -> str | None:
     try:
         proc = subprocess.run(
             ["git", "remote", "get-url", remote_name],
-            cwd=str(repo_root),
+            cwd=repo_root,
             capture_output=True,
             text=True,
             timeout=10,
@@ -76,12 +77,19 @@ def _host_from_url(url: str) -> str | None:
 
 
 def _gitea_probe(host: str) -> bool:
-    """Probe <host>/api/v1/version with a 3-second timeout. True iff Gitea/Forgejo."""
+    """Probe <host>/api/v1/version. True iff Gitea/Forgejo.
+
+    Note: the timeout (_GITEA_PROBE_TIMEOUT_SECONDS) applies per-socket-operation
+    AFTER connect, not as a wall-clock cap. DNS resolution and TLS handshake are
+    not bounded by it. Worst-case probe duration is unbounded; use a separate
+    wall-clock budget at the orchestrator level if strict bounding is needed.
+    """
     if not host:
         return False
     url = f"https://{host}/api/v1/version"
     try:
-        with urllib.request.urlopen(url, timeout=_GITEA_PROBE_TIMEOUT_SECONDS) as resp:
+        req = urllib.request.Request(url, headers={"User-Agent": "forge-platform-probe/1.0"})
+        with urllib.request.urlopen(req, timeout=_GITEA_PROBE_TIMEOUT_SECONDS) as resp:
             body = resp.read(2048).decode("utf-8", errors="ignore").lower()
     except (urllib.error.URLError, TimeoutError, OSError):
         return False
@@ -114,8 +122,8 @@ def _auth_method_for(platform: str) -> str:
 
 
 def _auth_env_for(platform: str) -> str | None:
+    # GitHub intentionally absent: gh CLI handles auth, not env vars.
     return {
-        "github": "GITHUB_TOKEN",
         "gitlab": "GITLAB_TOKEN",
         "bitbucket": "BITBUCKET_APP_PASSWORD",
         "gitea": "GITEA_TOKEN",
@@ -162,9 +170,9 @@ def detect_platform(repo_root: Path, config: dict | None = None) -> PlatformInfo
 
     warning: str | None = None
     env_var = _auth_env_for(platform)
-    if env_var and not os.environ.get(env_var) and platform != "github":
-        # GitHub uses gh CLI auth which is not env-var-bound; missing here is fine.
-        # For others the env var is the canonical auth — warn (not abort) per §6.1.
+    if env_var and not os.environ.get(env_var):
+        # GitHub uses gh CLI auth (no env var in _auth_env_for); for others the env
+        # var is the canonical auth — warn (not abort) per §6.1.
         warning = (
             f"platform={platform} but {env_var} is not set; defenses will be logged "
             f"locally with addressed: defended_local_only"

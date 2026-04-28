@@ -30,7 +30,7 @@ _TEMP_SUFFIX = ".tmp"
 
 def _file_contains(path: Path, needle: str) -> bool:
     try:
-        return needle in path.read_text(encoding="utf-8", errors="ignore")
+        return needle in path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return False
 
@@ -59,17 +59,30 @@ def _detect_typescript(root: Path) -> StackResult | None:
     except (OSError, json.JSONDecodeError):
         return None
     deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
-    is_next = "next" in deps or (root / "next.config.js").exists() or (root / "next.config.mjs").exists()
+    next_config_present = (
+        (root / "next.config.js").exists()
+        or (root / "next.config.mjs").exists()
+        or (root / "next.config.ts").exists()
+        or (root / "next.config.cjs").exists()
+    )
+    is_next = "next" in deps or next_config_present
     has_ts = "typescript" in deps or (root / "tsconfig.json").exists()
     if not has_ts and not is_next:
         return None
+    reasons: list[str] = []
+    if next_config_present:
+        reasons.append("next.config detected")
+    if (root / "tsconfig.json").exists():
+        reasons.append("tsconfig.json")
+    if "next" in deps and not reasons:
+        reasons.append("'next' in package.json deps")
     return {
         "language": "typescript",
         "framework": "nextjs" if is_next else None,
         "testing": "vitest" if "vitest" in deps else ("jest" if "jest" in deps else None),
         "build": "npm",
         "ambiguous": False,
-        "reason": "package.json + " + ("next.config detected" if is_next else "tsconfig.json"),
+        "reason": "package.json + " + " + ".join(reasons),
     }
 
 
@@ -77,7 +90,7 @@ def _detect_python(root: Path) -> StackResult | None:
     pyproject = root / "pyproject.toml"
     if not pyproject.exists():
         return None
-    body = pyproject.read_text(encoding="utf-8", errors="ignore")
+    body = pyproject.read_text(encoding="utf-8", errors="replace")
     is_fastapi = "fastapi" in body.lower()
     is_django = "django" in body.lower()
     framework: str | None = None
@@ -88,7 +101,7 @@ def _detect_python(root: Path) -> StackResult | None:
     return {
         "language": "python",
         "framework": framework,
-        "testing": "pytest" if "pytest" in body else None,
+        "testing": "pytest" if "pytest" in body.lower() else None,
         "build": "uv" if (root / "uv.lock").exists() else "pip",
         "ambiguous": is_fastapi and is_django,
         "reason": "pyproject.toml present"
@@ -134,7 +147,8 @@ def write_forge_local_md(stack: StackResult, target_path: Path) -> None:
 
     Contract (AC-S027):
       - Target is either absent or fully written; never partial.
-      - Implementation: write to <target>.tmp in the same parent dir, then Path.rename.
+      - Implementation: write to <target>.tmp in the same parent dir, then Path.replace.
+        Path.replace is atomic on Windows ≥ Vista (replaces silently) and POSIX.
       - On any error during write, the temp file is removed and the exception propagates.
     """
     if not isinstance(target_path, Path):
@@ -150,7 +164,7 @@ def write_forge_local_md(stack: StackResult, target_path: Path) -> None:
     body = _render_forge_local_md(stack)
     try:
         temp_path.write_text(body, encoding="utf-8")
-        temp_path.rename(target_path)
+        temp_path.replace(target_path)
     except Exception:
         if temp_path.exists():
             try:

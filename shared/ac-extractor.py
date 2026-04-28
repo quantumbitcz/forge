@@ -40,7 +40,7 @@ _IMPERATIVE_VERBS = (
     "reject",
 )
 _IMPERATIVE = re.compile(
-    r"^\s*[-*]\s+(?:" + "|".join(_IMPERATIVE_VERBS) + r")\b(.+?)\s*$",
+    r"^\s*[-*]\s+((?:" + "|".join(_IMPERATIVE_VERBS) + r")\b.+?)\s*$",
     re.MULTILINE | re.IGNORECASE,
 )
 
@@ -64,14 +64,15 @@ def extract_acs(raw_text: str) -> ACResult:
     if not isinstance(raw_text, str):
         raise TypeError(f"raw_text must be str, got {type(raw_text).__name__}")
 
-    matches: list[str] = []
+    matches: list[tuple[int, str]] = []
     for pattern in (_NUMBERED, _GIVEN_WHEN_THEN, _IMPERATIVE):
-        for hit in pattern.findall(raw_text):
-            matches.append(hit.strip())
+        for m in pattern.finditer(raw_text):
+            matches.append((m.start(), m.group(1).strip()))
+    matches.sort(key=lambda x: x[0])
 
     seen: set[str] = set()
     deduped: list[str] = []
-    for ac in matches:
+    for _, ac in matches:
         if ac and ac not in seen:
             seen.add(ac)
             deduped.append(ac)

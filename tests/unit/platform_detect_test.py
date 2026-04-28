@@ -6,25 +6,16 @@ ACs:  AC-FEEDBACK-006 (helper side), AC-FEEDBACK-007 (explicit override).
 """
 from __future__ import annotations
 
-import importlib.util
 import subprocess
-import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-MODULE_PATH = REPO_ROOT / "shared" / "platform-detect.py"
+from tests.unit.conftest import load_hyphenated_module
 
 
 def _load_module():
-    spec = importlib.util.spec_from_file_location("platform_detect", MODULE_PATH)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["platform_detect"] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_hyphenated_module("shared/platform-detect.py", "platform_detect")
 
 
 @pytest.fixture(scope="module")
@@ -38,7 +29,9 @@ def _git_remote(stdout: str) -> subprocess.CompletedProcess:
 
 def test_detects_github(platform_detect, tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-    with patch("subprocess.run", return_value=_git_remote("https://github.com/quantumbitcz/forge.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("https://github.com/quantumbitcz/forge.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "github"
     assert result["api_base"] == "https://api.github.com"
@@ -49,7 +42,9 @@ def test_detects_github(platform_detect, tmp_path, monkeypatch):
 
 def test_detects_gitlab_com(platform_detect, tmp_path, monkeypatch):
     monkeypatch.setenv("GITLAB_TOKEN", "glpat-fake")
-    with patch("subprocess.run", return_value=_git_remote("git@gitlab.com:group/project.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("git@gitlab.com:group/project.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "gitlab"
     assert result["api_base"] == "https://gitlab.com/api/v4"
@@ -58,7 +53,9 @@ def test_detects_gitlab_com(platform_detect, tmp_path, monkeypatch):
 def test_detects_self_hosted_gitlab_via_explicit_override(platform_detect, tmp_path, monkeypatch):
     monkeypatch.setenv("GITLAB_TOKEN", "glpat-fake")
     config = {"platform": {"detection": "gitlab", "remote_name": "origin"}}
-    with patch("subprocess.run", return_value=_git_remote("https://gitlab.acme.io/team/repo.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("https://gitlab.acme.io/team/repo.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path, config)
     assert result["platform"] == "gitlab"
     # api_base honors the host of the explicit remote URL.
@@ -67,7 +64,9 @@ def test_detects_self_hosted_gitlab_via_explicit_override(platform_detect, tmp_p
 
 def test_detects_bitbucket_org(platform_detect, tmp_path, monkeypatch):
     monkeypatch.setenv("BITBUCKET_APP_PASSWORD", "secret")
-    with patch("subprocess.run", return_value=_git_remote("https://bitbucket.org/team/repo.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("https://bitbucket.org/team/repo.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "bitbucket"
     assert result["api_base"] == "https://api.bitbucket.org/2.0"
@@ -78,7 +77,7 @@ def test_detects_gitea_via_api_probe(platform_detect, tmp_path, monkeypatch):
 
     # The remote URL is a self-hosted host with no `gitea` substring; the probe
     # is what tells us it's Gitea/Forgejo.
-    def fake_urlopen(url, timeout=None):  # noqa: ANN001
+    def fake_urlopen(req, timeout=None):  # noqa: ANN001
         class _Resp:
             def read(self, _n):
                 return b'{"version": "1.21.0", "server": "Gitea"}'
@@ -91,8 +90,10 @@ def test_detects_gitea_via_api_probe(platform_detect, tmp_path, monkeypatch):
 
         return _Resp()
 
-    with patch("subprocess.run", return_value=_git_remote("git@code.acme.io:team/repo.git\n")), \
-         patch("urllib.request.urlopen", side_effect=fake_urlopen):
+    with patch.object(platform_detect, "subprocess") as sub, \
+         patch.object(platform_detect.urllib.request, "urlopen", side_effect=fake_urlopen):
+        sub.run.return_value = _git_remote("git@code.acme.io:team/repo.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "gitea"
     assert result["api_base"] == "https://code.acme.io/api/v1"
@@ -100,7 +101,7 @@ def test_detects_gitea_via_api_probe(platform_detect, tmp_path, monkeypatch):
 
 def test_unknown_remote_returns_unknown(platform_detect, tmp_path, monkeypatch):
     # Probe fails (no Gitea signature in body).
-    def fake_urlopen(url, timeout=None):  # noqa: ANN001
+    def fake_urlopen(req, timeout=None):  # noqa: ANN001
         class _Resp:
             def read(self, _n):
                 return b"<html>nothing here</html>"
@@ -113,8 +114,10 @@ def test_unknown_remote_returns_unknown(platform_detect, tmp_path, monkeypatch):
 
         return _Resp()
 
-    with patch("subprocess.run", return_value=_git_remote("https://my-vcs.example/team/repo.git\n")), \
-         patch("urllib.request.urlopen", side_effect=fake_urlopen):
+    with patch.object(platform_detect, "subprocess") as sub, \
+         patch.object(platform_detect.urllib.request, "urlopen", side_effect=fake_urlopen):
+        sub.run.return_value = _git_remote("https://my-vcs.example/team/repo.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "unknown"
     assert result["auth_method"] == "none"
@@ -125,7 +128,9 @@ def test_explicit_override_skips_auto_detect(platform_detect, tmp_path, monkeypa
     monkeypatch.setenv("GITLAB_TOKEN", "glpat-fake")
     config = {"platform": {"detection": "gitlab"}}
     # Even though remote URL says github.com, the explicit override wins.
-    with patch("subprocess.run", return_value=_git_remote("https://github.com/x/y.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("https://github.com/x/y.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path, config)
     assert result["platform"] == "gitlab"
 
@@ -133,7 +138,9 @@ def test_explicit_override_skips_auto_detect(platform_detect, tmp_path, monkeypa
 def test_missing_auth_emits_warning_not_error(platform_detect, tmp_path, monkeypatch):
     """AC-FEEDBACK-007 + §6.1: missing auth env warns, never aborts."""
     monkeypatch.delenv("GITLAB_TOKEN", raising=False)
-    with patch("subprocess.run", return_value=_git_remote("https://gitlab.com/team/repo.git\n")):
+    with patch.object(platform_detect, "subprocess") as sub:
+        sub.run.return_value = _git_remote("https://gitlab.com/team/repo.git\n")
+        sub.TimeoutExpired = subprocess.TimeoutExpired
         result = platform_detect.detect_platform(tmp_path)
     assert result["platform"] == "gitlab"
     assert result["warning"] is not None
