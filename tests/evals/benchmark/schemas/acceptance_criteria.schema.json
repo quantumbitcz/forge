@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["version", "ac_list"],
+  "properties": {
+    "version": {"const": 1},
+    "ac_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "verifiable_via"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^AC-B\\d{3}$"},
+          "description": {"type": "string", "minLength": 10},
+          "verifiable_via": {"enum": ["http", "cli", "file", "custom"]},
+          "probe": {"type": "string"},
+          "verifier_hint": {"type": "string"}
+        }
+      }
+    }
+  }
+}

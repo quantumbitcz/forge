@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "frozen_on", "frozen_commit_sha", "baselines", "regression_threshold_pp"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "frozen_on": {"type": "string", "format": "date"},
+    "frozen_commit_sha": {"type": "string"},
+    "baselines": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["S", "M", "L", "overall"],
+        "properties": {
+          "S": {"type": "number"},
+          "M": {"type": "number"},
+          "L": {"type": "number"},
+          "overall": {"type": "number"}
+        }
+      }
+    },
+    "regression_threshold_pp": {"type": "number", "minimum": 0}
+  }
+}
