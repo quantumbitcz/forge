@@ -76,7 +76,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   Already familiar? Skip to §Architecture.
   ```
 
-- [ ] **Step 1b — Update `CLAUDE.md` "What this is" section (currently ~line 25).** Replace the line ending `Entry: /forge-run → fg-100-orchestrator.`:
+- [ ] **Step 1b — Update `CLAUDE.md` "What this is" section (currently ~line 25).** Replace the line ending `Entry: /forge run → fg-100-orchestrator.`:
 
   ```markdown
   `forge` is a Claude Code plugin (v3.6.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Brainstorming → Explore → Plan → Validate → Implement (TDD) → Verify → Review → Docs → Ship → Learn. Entry: `/forge` → `fg-100-orchestrator`.
@@ -104,10 +104,10 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   Doc-only plugin (no build). Test: symlink into `.claude/plugins/` → `/forge "<req>"` (auto-bootstraps) → `/forge run --dry-run <req>` → `/forge run <req>` → check `.forge/state.json`.
   ```
 
-- [ ] **Step 1e — Update `CLAUDE.md` "Confidence scoring" line (currently ~line 202).** Replace the `LOW (<0.4) → /forge-shape` reference. The new line:
+- [ ] **Step 1e — Update `CLAUDE.md` "Confidence scoring" line (currently ~line 202).** Replace the `LOW (<0.4) → /forge run` reference. The new line:
 
   ```markdown
-  Confidence scoring: two-level — (1) finding confidence (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x weight multipliers); (2) pipeline confidence (4-dimension: clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks, LOW (<0.4) → BRAINSTORMING (handled by `fg-010-shaper`; previously delegated to retired `/forge-shape`). Adaptive trust in `.forge/trust.json`. Config: `confidence.*`.
+  Confidence scoring: two-level — (1) finding confidence (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x weight multipliers); (2) pipeline confidence (4-dimension: clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: HIGH (>=0.7) proceeds, MEDIUM (>=0.4) asks, LOW (<0.4) → BRAINSTORMING (handled by `fg-010-shaper`; previously delegated to retired `/forge run`). Adaptive trust in `.forge/trust.json`. Config: `confidence.*`.
   ```
 
 - [ ] **Step 2 — Update `CLAUDE.md` section "Skill selection guide" (currently ~lines 92-124).** Replace the entire 33-row table with a three-row table:
@@ -145,7 +145,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   Multiple features: /forge sprint                                # parallel orchestration (Linear or manual list)
   ```
 
-  Note the deletion: `/forge-help` is gone (interactive decision tree absorbed into this getting-started block). `/forge-init` is gone (auto-bootstrap on first `/forge` invocation).
+  Note the deletion: `/forge --help` is gone (interactive decision tree absorbed into this getting-started block). `/forge` is gone (auto-bootstrap on first `/forge` invocation).
 
 - [ ] **Step 4 — Update `CLAUDE.md` section "Skills (29 total), hooks, kanban, git" (currently ~line 306).** Rewrite the section header and the Skills paragraph:
 
@@ -164,7 +164,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   Leave the **Hooks**, **Kanban**, **Git**, **Init** subsections intact except for one edit in the **Init** subsection — replace the line with:
 
   ```markdown
-  **Init:** No explicit `/forge-init` skill. The first `/forge` invocation in a project missing `.claude/forge.local.md` auto-bootstraps via `shared/bootstrap-detect.py` (added in commit A2). Detection prompts the user with detected stack defaults and offers `[proceed]`/`[open wizard]`/`[cancel]`. Autonomous mode skips the prompt and writes defaults silently. MCP auto-provisioning runs as part of bootstrap.
+  **Init:** No explicit `/forge` skill. The first `/forge` invocation in a project missing `.claude/forge.local.md` auto-bootstraps via `shared/bootstrap-detect.py` (added in commit A2). Detection prompts the user with detected stack defaults and offers `[proceed]`/`[open wizard]`/`[cancel]`. Autonomous mode skips the prompt and writes defaults silently. MCP auto-provisioning runs as part of bootstrap.
   ```
 
 - [ ] **Step 5 — Update `CLAUDE.md` "Stage contracts & shipping" section (currently ~line 192).** Insert BRAINSTORMING into the state list. The replacement line:
@@ -235,7 +235,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   - Feedback loop: same PR rejection 2+ times → escalate options. `feedback_loop_count` incremented by orchestrator. **Only "actionable" feedback (per `fg-710-post-run` defense check) increments the counter** — feedback marked "wrong" (defended) or "preference" (acknowledged) does not.
   ```
 
-- [ ] **Step 11 — Update `CLAUDE.md` "Structural" gotchas section (currently ~line 355).** Replace the bullet listing files that survive `/forge-recover reset`:
+- [ ] **Step 11 — Update `CLAUDE.md` "Structural" gotchas section (currently ~line 355).** Replace the bullet listing files that survive `/forge-admin recover reset`:
 
   ```markdown
   - `explore-cache.json`, `plan-cache/`, `code-graph.db`, `trust.json`, `events.jsonl`, `playbook-analytics.json`, `run-history.db`, `playbook-refinements/`, `consistency-cache.jsonl`, `.forge/plans/candidates/`, `.forge/runs/<id>/handoffs/`, `.forge/brainstorm-transcripts/`, and `.forge/runs/<id>/feedback-decisions.jsonl` survive `/forge-admin recover reset`. Only manual `rm -rf .forge/` removes them.
@@ -244,46 +244,46 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   Also: do a final §12.1 sweep across `CLAUDE.md` to catch any retired skill name not already addressed by Steps 1a-1e or Steps 2-12. Apply every entry from the §12.1 mapping table:
 
   ```
-  /forge-init                  →  (auto on /forge or /forge bootstrap or /forge-admin config wizard)
-  /forge-run                   →  /forge run
-  /forge-fix                   →  /forge fix
-  /forge-shape                 →  (absorbed into BRAINSTORMING in /forge run)
-  /forge-sprint                →  /forge sprint
-  /forge-review                →  /forge review
-  /forge-verify                →  /forge verify
-  /forge-deploy                →  /forge deploy
-  /forge-commit                →  /forge commit
-  /forge-migration             →  /forge migrate
-  /forge-bootstrap             →  /forge bootstrap
-  /forge-docs-generate         →  /forge docs
-  /forge-security-audit        →  /forge audit
-  /forge-status                →  /forge-ask status
-  /forge-history               →  /forge-ask history
-  /forge-insights              →  /forge-ask insights
-  /forge-profile               →  /forge-ask profile
-  /forge-tour                  →  /forge-ask tour
-  /forge-help                  →  (deleted; remove any remaining refs)
+  /forge                  →  (auto on /forge or /forge bootstrap or /forge-admin config wizard)
+  /forge run                   →  /forge run
+  /forge fix                   →  /forge fix
+  /forge run                 →  (absorbed into BRAINSTORMING in /forge run)
+  /forge sprint                →  /forge sprint
+  /forge review                →  /forge review
+  /forge verify                →  /forge verify
+  /forge deploy                →  /forge deploy
+  /forge commit                →  /forge commit
+  /forge migrate             →  /forge migrate
+  /forge bootstrap             →  /forge bootstrap
+  /forge docs         →  /forge docs
+  /forge audit        →  /forge audit
+  /forge-ask status                →  /forge-ask status
+  /forge-ask history               →  /forge-ask history
+  /forge-ask insights              →  /forge-ask insights
+  /forge-ask profile               →  /forge-ask profile
+  /forge-ask tour                  →  /forge-ask tour
+  /forge --help                  →  (deleted; remove any remaining refs)
   /forge-ask                   →  /forge-ask     (unchanged)
-  /forge-recover               →  /forge-admin recover
-  /forge-abort                 →  /forge-admin abort
-  /forge-config                →  /forge-admin config
-  /forge-handoff               →  /forge-admin handoff
-  /forge-automation            →  /forge-admin automation
-  /forge-playbooks             →  /forge-admin playbooks
-  /forge-playbook-refine       →  /forge-admin refine
-  /forge-compress              →  /forge-admin compress
-  /forge-graph                 →  /forge-admin graph
+  /forge-admin recover               →  /forge-admin recover
+  /forge-admin abort                 →  /forge-admin abort
+  /forge-admin config                →  /forge-admin config
+  /forge-admin handoff               →  /forge-admin handoff
+  /forge-admin automation            →  /forge-admin automation
+  /forge-admin playbooks             →  /forge-admin playbooks
+  /forge-admin refine       →  /forge-admin refine
+  /forge-admin compress              →  /forge-admin compress
+  /forge-admin graph                 →  /forge-admin graph
   ```
 
-  Specifically known stragglers in `CLAUDE.md` that this sweep must catch (not exhaustively listed elsewhere): line 25 (`Entry: /forge-run`), line 53 (bash code in Quick start), line 60 (Development workflow), line 174 (Routing & decomposition `/forge-run` and `/forge-sprint`), line 202 (Confidence scoring `/forge-shape`), line 204 (Repo-map `/forge-recover reset`), lines 285/291/316/354/360/376/393 (Cross-repo, SQLite code graph, Init, Structural gotchas, Wiki, Greenfield, Implementation gotchas). Most are already covered by Steps 1a-1e or 12; this sweep is the safety net.
+  Specifically known stragglers in `CLAUDE.md` that this sweep must catch (not exhaustively listed elsewhere): line 25 (`Entry: /forge run`), line 53 (bash code in Quick start), line 60 (Development workflow), line 174 (Routing & decomposition `/forge run` and `/forge sprint`), line 202 (Confidence scoring `/forge run`), line 204 (Repo-map `/forge-admin recover reset`), lines 285/291/316/354/360/376/393 (Cross-repo, SQLite code graph, Init, Structural gotchas, Wiki, Greenfield, Implementation gotchas). Most are already covered by Steps 1a-1e or 12; this sweep is the safety net.
 
-- [ ] **Step 12 — Update `CLAUDE.md` "Cross-repo" line (currently ~line 285).** Replace `/forge-init` reference:
+- [ ] **Step 12 — Update `CLAUDE.md` "Cross-repo" line (currently ~line 285).** Replace `/forge` reference:
 
   ```markdown
   - **Cross-repo:** 5-step discovery on auto-bootstrap (or explicit `/forge bootstrap`). Contract validation, linked PRs, multi-repo worktrees. Timeout: 30min (configurable). Alphabetical lock ordering. PR failures don't block main PR. Discovery results stored with `detected_via`.
   ```
 
-- [ ] **Step 13 — Update `CLAUDE.md` "Adaptive MCP detection" reference and "Init" line in MCP server feature row (in feature matrix).** The feature-matrix row for F30 currently reads `Auto-provisioned by `/forge-init` into `.mcp.json``. E1 leaves the matrix alone (E2 owns regeneration); rewrite this single string in F30's row to `Auto-provisioned by auto-bootstrap (or `/forge-admin config wizard`) into `.mcp.json``. Note: this single in-row edit is a quick patch ahead of E2's full regeneration to keep the file passing AC-S005 between commits E1 and E2.
+- [ ] **Step 13 — Update `CLAUDE.md` "Adaptive MCP detection" reference and "Init" line in MCP server feature row (in feature matrix).** The feature-matrix row for F30 currently reads `Auto-provisioned by `/forge` into `.mcp.json``. E1 leaves the matrix alone (E2 owns regeneration); rewrite this single string in F30's row to `Auto-provisioned by auto-bootstrap (or `/forge-admin config wizard`) into `.mcp.json``. Note: this single in-row edit is a quick patch ahead of E2's full regeneration to keep the file passing AC-S005 between commits E1 and E2.
 
 - [ ] **Step 14 — Update `README.md` Quick Start (lines 17-29).** Replace with:
 
@@ -372,7 +372,7 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   All adapters are pure Python — no `curl` or shell-out — and work uniformly on Windows, macOS, and Linux. Detection is automatic (`platform.detection: auto`) via remote URL pattern matching plus repo-marker files (`.gitlab-ci.yml`, `bitbucket-pipelines.yml`) and an API-probe for self-hosted Gitea/Forgejo. Override with `platform.detection: github|gitlab|bitbucket|gitea` in `forge.local.md`.
   ```
 
-- [ ] **Step 19 — Update `README.md` "Key features" list (lines 50-75).** Strike the `/forge-init` references and add three new bullets for the new behaviors:
+- [ ] **Step 19 — Update `README.md` "Key features" list (lines 50-75).** Strike the `/forge` references and add three new bullets for the new behaviors:
 
   Replace the existing "Environment health check" line with:
 
@@ -484,7 +484,7 @@ You are checking that the doc updates accurately reflect the new surface. Verify
      Expected: empty.
 
 2. Open /Users/denissajnar/IdeaProjects/forge/README.md and confirm:
-   - Quick Start uses /forge (not /forge-init then /forge-run).
+   - Quick Start uses /forge (not /forge then /forge run).
    - Skill badge reads `skills-3` and agent badge reads `agents-49` (NOT `agents-43` — README badge was already stale at 42 pre-Phase-E; the corrected value is the actual file count post-Phase-D).
    - Lead-paragraph at line ~15 reads "49 specialized agents" (not 42 or 43).
    - "Available skills" section is the three-row table.
@@ -540,13 +540,13 @@ Option 2 is the conservative path — E2 does not assume Phase 2's commit orderi
 
 - [ ] **Step 3 — Regenerate the table content between the sentinels.** Replace everything strictly between (not including) the two sentinel lines with the full feature matrix. Preserve every existing row (F05, F07, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31, F32, F33, F34, plus the unnumbered rows for Wiki generator, Memory discovery, Background execution, Automations, Visual verification, LSP integration, Observability, Data classification, Security posture, A2A protocol, Pipeline timeline, Codebase Q&A, Caveman I/O, Repo-map PageRank, Speculative plan branches, Docs integrity, and Active knowledge base — see current file lines 210-254 for the authoritative list).
 
-  **Patch existing rows** for the `/forge-init` reference and renamed skills:
+  **Patch existing rows** for the `/forge` reference and renamed skills:
 
-  - Row F30 (`MCP server`): change `Auto-provisioned by /forge-init into .mcp.json` to `Auto-provisioned by auto-bootstrap (or /forge-admin config wizard) into .mcp.json`.
-  - Row F31 (`Self-improving playbooks`): change `Skill: /forge-playbook-refine` to `Skill: /forge-admin refine`.
-  - Row F34 (`Session handoff`): change `Skill: /forge-handoff` to `Skill: /forge-admin handoff`.
+  - Row F30 (`MCP server`): change `Auto-provisioned by /forge into .mcp.json` to `Auto-provisioned by auto-bootstrap (or /forge-admin config wizard) into .mcp.json`.
+  - Row F31 (`Self-improving playbooks`): change `Skill: /forge-admin refine` to `Skill: /forge-admin refine`.
+  - Row F34 (`Session handoff`): change `Skill: /forge-admin handoff` to `Skill: /forge-admin handoff`.
   - Row "Active knowledge base (F09)": no change (no skill reference).
-  - Row "Pipeline timeline": change `Per-stage timing via /forge-insights` to `Per-stage timing via /forge-ask insights`.
+  - Row "Pipeline timeline": change `Per-stage timing via /forge-ask insights` to `Per-stage timing via /forge-ask insights`.
 
   **Append eight new rows** at the bottom of the table (in F-number order), reflecting the new features added by phases A-D of this spec:
 
@@ -582,7 +582,7 @@ Option 2 is the conservative path — E2 does not assume Phase 2's commit orderi
   grep -nE '/forge-(init|run|fix|shape|sprint|review|verify|deploy|commit|migration|bootstrap|docs-generate|security-audit|status|history|insights|profile|tour|help|recover|abort|config|handoff|automation|playbooks|playbook-refine|compress|graph)([^a-z-]|$)' /Users/denissajnar/IdeaProjects/forge/CLAUDE.md
   ```
 
-  Expected: empty. (The intra-row `/forge-init` patches in Step 3 are why this must run after E2, not just E1.)
+  Expected: empty. (The intra-row `/forge` patches in Step 3 are why this must run after E2, not just E1.)
 
 - [ ] **Step 6 — Run structural tests.**
 
@@ -597,7 +597,7 @@ Option 2 is the conservative path — E2 does not assume Phase 2's commit orderi
   ```
   docs(consolidation): regenerate FEATURE_MATRIX block with eight new feature rows
 
-  - Patch /forge-init / /forge-handoff / /forge-playbook-refine / /forge-insights references
+  - Patch /forge / /forge-admin handoff / /forge-admin refine / /forge-ask insights references
     in F30, F31, F34, and Pipeline timeline rows
   - Append F35 (BRAINSTORMING), F36 (transcript mining), F37 (cross-reviewer consistency
     voting), F38 (defense-check feedback handling), F39 (hypothesis branching),
@@ -659,7 +659,7 @@ If any check fails, return REVISE with the specific failed step. If all pass, re
   - What this is (Step 1b) — yes
   - Quick start bash code (Step 1c) — yes
   - Development workflow (Step 1d) — yes
-  - Confidence scoring `/forge-shape` reference (Step 1e) — yes
+  - Confidence scoring `/forge run` reference (Step 1e) — yes
   - Skill selection guide (Step 2) — yes
   - Getting started flows (Step 3) — yes
   - Skills (N total) section header + paragraph (Step 4) — yes

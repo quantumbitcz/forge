@@ -929,7 +929,7 @@ Read `state.plan_judge_loops` (integer, default 0). On return:
 
 **Timeout.** If the judge times out (10 min ceiling per `shared/scoring.md:408`), log INFO `JUDGE-TIMEOUT fg-205-plan-judge`, treat as PROCEED with WARNING finding. Never block pipeline on judge failure.
 
-**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-recover resume` after reviewing `.forge/alerts.json`.
+**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-admin recover resume` after reviewing `.forge/alerts.json`.
 ```
 
 Edit `shared/agents.md`:

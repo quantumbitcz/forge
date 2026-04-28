@@ -5,7 +5,7 @@
 Close four latent correctness gaps in the forge pipeline so that behavior believed to be proven by the current test tiers is actually proven, automatically, on every push:
 
 1. Eliminate the boundary livelock in the convergence engine's REGRESSING check.
-2. Add a single, real, end-to-end smoke that spawns a minimal project and drives `/forge-init` → `/forge-run --dry-run` to VALIDATED on all three OSes.
+2. Add a single, real, end-to-end smoke that spawns a minimal project and drives `/forge` → `/forge run --dry-run` to VALIDATED on all three OSes.
 3. Introduce mutation testing over the `shared/state-transitions.md` table so under-covered transitions are visible in CI.
 4. Publish a machine-generated scenario-coverage report for the transition table, with CI thresholds.
 
@@ -34,7 +34,7 @@ With default `oscillation_tolerance = 5` and scores oscillating 82 → 87 → 82
 The fix is a single-character change: `>` → `>=` at the boundary. This makes delta = tolerance count as REGRESSING rather than "tolerable wobble." We lose nothing: a legitimate single-cycle dip of exactly the tolerance is not noise — it is the defining edge the parameter names. The current Consecutive Dip Rule at `scoring.md:373` already treats `<= oscillation_tolerance` as "minor regression, log WARNING, continue" — the asymmetry between that rule and the convergence engine is the actual bug.
 
 **Gap 2 — no true e2e test.**
-`tests/scenario/e2e-dry-run.bats` and `tests/scenario/pipeline-dry-run-e2e.bats` exist, but both simulate the pipeline against fabricated `.forge/state.json` fixtures inside bats — no real `/forge-init`, no real fg-100, no real plan. `tests/run-all.sh` runs structural + unit + contract + scenario + evals; none spawn a project tree and run a skill. Windows CI was added in Phase 1 but exercises only the bats tiers, which don't touch `/forge-init`.
+`tests/scenario/e2e-dry-run.bats` and `tests/scenario/pipeline-dry-run-e2e.bats` exist, but both simulate the pipeline against fabricated `.forge/state.json` fixtures inside bats — no real `/forge`, no real fg-100, no real plan. `tests/run-all.sh` runs structural + unit + contract + scenario + evals; none spawn a project tree and run a skill. Windows CI was added in Phase 1 but exercises only the bats tiers, which don't touch `/forge`.
 
 **Gap 3 — orchestrator state logic is prose.**
 `agents/fg-100-orchestrator.md` is 1557 lines. `shared/state-transitions.md` has 52 numbered pipeline rows, 9 error rows (E1-E9), 3 rewind rows (R1-R3), and 13+ convergence rows (C1-C13). `tests/unit/convergence-engine.bats` and `tests/scenario/convergence-phase-transitions.bats` exist, but a reader cannot tell *which* table rows are exercised. If row 47 (`pr_rejected → PLANNING`) silently regresses to `IMPLEMENTING`, the scenario tests may still pass because they don't target that row.
@@ -103,7 +103,7 @@ The `convergence_engine_sim.py` port is already done (Windows-compatible, no `bc
 
 New directory: `tests/e2e/`. New script: `tests/e2e/dry-run-smoke.py`. New fixture: `tests/e2e/fixtures/ts-vitest/`.
 
-Fixture contents (the minimum that `/forge-init` detects as a typescript+vitest project):
+Fixture contents (the minimum that `/forge` detects as a typescript+vitest project):
 
 ```
 tests/e2e/fixtures/ts-vitest/
@@ -143,7 +143,7 @@ Test steps (`dry-run-smoke.py`):
 1. `tempfile.TemporaryDirectory()`; copy fixture into it.
 2. `git init && git add -A && git commit -m 'fixture'` (forge-init expects a git repo).
 3. Symlink the plugin root in: `mkdir -p .claude/plugins && ln -s <forge-root> .claude/plugins/forge`. On Windows, use a directory junction via `subprocess.run(['cmd', '/c', 'mklink', '/J', ...])` fallback if symlinks fail.
-4. Run `/forge-init` — simulated via a direct Python shim that calls `hooks._py.forge_init.detect_and_write_config(project_dir: Path) -> dict` (the deterministic detection + `forge.local.md` write path), since we cannot spawn Claude Code in CI. The acceptance is scoped honestly as a **detection + config-write smoke**, not an end-to-end pipeline smoke; it does not exercise LLM routing. (This is the spec's biggest pragmatic choice — see Open Questions.)
+4. Run `/forge` — simulated via a direct Python shim that calls `hooks._py.forge_init.detect_and_write_config(project_dir: Path) -> dict` (the deterministic detection + `forge.local.md` write path), since we cannot spawn Claude Code in CI. The acceptance is scoped honestly as a **detection + config-write smoke**, not an end-to-end pipeline smoke; it does not exercise LLM routing. (This is the spec's biggest pragmatic choice — see Open Questions.)
 5. Assert `.forge/forge.local.md` exists and declares `language: typescript` and `testing: vitest`.
 6. Run the dry-run equivalent: invoke `shared/forge-sim.sh --dry-run "add health endpoint"` (existing harness — verified present; uses only `set -uo pipefail`, no bash 4+ features like `mapfile` / `declare -A`) against the temp dir. The Windows matrix executes this via Git Bash (the default shell on `windows-latest` GitHub runners), so the bash harness runs uniformly on all three OSes.
 7. Assert `.forge/state.json` exists and `state.story_state in {VALIDATED, COMPLETE}` (dry-run row D1 routes VALIDATING → COMPLETE).
@@ -264,7 +264,7 @@ Below 60 is the hard gate; between 60 and 80 is a visible warning. Matches the g
 
 ## Error Handling
 
-- **Fixture unreachable (network/perms).** `dry-run-smoke.py` catches `PermissionError`, `OSError(errno=ENOSPC)`, and network exceptions during the simulated `/forge-init`; logs and exits 77 (standard "skip"). CI treats 77 as `neutral` via `if: steps.e2e.outcome == 'skipped'`.
+- **Fixture unreachable (network/perms).** `dry-run-smoke.py` catches `PermissionError`, `OSError(errno=ENOSPC)`, and network exceptions during the simulated `/forge`; logs and exits 77 (standard "skip"). CI treats 77 as `neutral` via `if: steps.e2e.outcome == 'skipped'`.
 - **Malformed transition table.** The parser in `state_transitions.py` and `report_coverage.py` asserts each row matches the exact `| N | state | event | guard | next | action |` schema. On mismatch: raise `TransitionTableError(f"malformed row at {path}:{lineno}: {line!r}")` and exit 2. CI surfaces the exception traceback.
 - **Missing `# Covers:` header in a bats file.** Treated as no coverage claim, not an error. The coverage report lists the scenario under "unmapped scenarios" for humans to triage.
 - **Windows junction fallback.** `dry-run-smoke.py` tries `os.symlink` first, catches `OSError(errno=EPERM)` or `NotImplementedError`, falls back to `subprocess.run(['cmd', '/c', 'mklink', '/J', ...])`. If both fail: exit 77.
@@ -307,7 +307,7 @@ Below 60 is the hard gate; between 60 and 80 is a visible warning. Matches the g
 
 ## Open Questions
 
-1. **E2E `/forge-init` simulation depth.** Can we invoke `/forge-init` in CI without spawning Claude Code? The spec proposes a Python shim that reproduces the deterministic parts (module detection, `forge.local.md` writing). This exercises ~80% of init's surface but not the LLM-routed greenfield detection. Acceptable for Phase 3; real `/forge-init` coverage belongs to pipeline evals. If this proves too shallow, an alternative is to record a Claude Code fixture transcript once and replay — deferred.
+1. **E2E `/forge` simulation depth.** Can we invoke `/forge` in CI without spawning Claude Code? The spec proposes a Python shim that reproduces the deterministic parts (module detection, `forge.local.md` writing). This exercises ~80% of init's surface but not the LLM-routed greenfield detection. Acceptable for Phase 3; real `/forge` coverage belongs to pipeline evals. If this proves too shallow, an alternative is to record a Claude Code fixture transcript once and replay — deferred.
 2. **Coverage backfill. — RESOLVED.** Per `feedback_no_backcompat`, forge does not do baseline-minus-N ratchets or opt-in rollouts. Resolution: measure coverage in a draft PR against the unpinned reporter. Commit the real **60% gate** in the first shipping PR. If measured coverage is below 60%, add `# Covers:` headers to enough existing scenarios to clear the bar in the same PR. No staged/temporary gate. No ratchet.
 3. **Row naming convention.** Currently the rows use bare `| 37 |`. Harness and coverage report use `T-37` / `E-3` / `C-9` / `R-1`. Should `state-transitions.md` itself adopt these prefixes in the table for grep-ability? Proposed: yes, in a follow-up editorial pass — not blocking Phase 3.
 4. **Mutation scope.** 5 seed rows is starter coverage. Full 78-row mutation matrix would take 5-10 CI minutes sequentially. Deferred — ratchet up in Phase 3.2.

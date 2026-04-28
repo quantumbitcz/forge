@@ -26,7 +26,7 @@
    - Phase 1 line-number-pinned edits that drift when other plans land first
    - Phase 2 edits skills that Mega B12 deletes
    - State schema version literal contention across P5/P6/P7/Mega-A6
-   - Phase 8 benchmark runner hardcodes `/forge-init` and `/forge-run` (deleted by Mega B12)
+   - Phase 8 benchmark runner hardcodes `/forge` and `/forge run` (deleted by Mega B12)
    - Spec §14 coordination claims not honored in actual plan diffs
 
 ## Decision (user-approved this session)
@@ -85,9 +85,9 @@ These are mechanical fixes to the plans so each plan is execution-safe regardles
 **File:** `docs/superpowers/plans/2026-04-22-phase-8-measurement.md`
 **Lines:** ~1430-1442 (`tests/evals/benchmark/runner.py` task)
 **Change:**
-- `subprocess.run(["claude", "code", "--non-interactive", "/forge-init"], ...)` → remove (auto-bootstrap handles this)
-- `subprocess.run(["claude", "code", "--non-interactive", f"/forge-run --eval-mode {entry.entry_id}", entry.requirement], ...)` → `subprocess.run(["claude", "code", "--non-interactive", "/forge", "run", f"--eval-mode={entry.entry_id}", entry.requirement], ...)`
-**Reason:** Mega B12 deletes `/forge-init` and `/forge-run`. Phase 8 ships last so it must use the post-mega skill surface.
+- `subprocess.run(["claude", "code", "--non-interactive", "/forge"], ...)` → remove (auto-bootstrap handles this)
+- `subprocess.run(["claude", "code", "--non-interactive", f"/forge run --eval-mode {entry.entry_id}", entry.requirement], ...)` → `subprocess.run(["claude", "code", "--non-interactive", "/forge", "run", f"--eval-mode={entry.entry_id}", entry.requirement], ...)`
+**Reason:** Mega B12 deletes `/forge` and `/forge run`. Phase 8 ships last so it must use the post-mega skill surface.
 **Defer-able:** No — every benchmark run breaks otherwise.
 
 ### Edit 5 — Phase 1 string-anchor Edits (replace line-number pins)
@@ -131,7 +131,7 @@ These are mechanical fixes to the plans so each plan is execution-safe regardles
 - **No local test suite runs.** Single-file pytest/bats during TDD inner loop is fine; full suite via CI after push.
 - **No backwards compatibility.** Forge is a personal tool; new versions freely break old state.
 - **Code review after each phase, fix everything, version bump + tag + push + release per phase.** This is the user's preferred per-phase workflow.
-- **No `/forge-review`. No `Co-Authored-By` lines. No `--no-verify` skips.** Standard forge git conventions.
+- **No `/forge review`. No `Co-Authored-By` lines. No `--no-verify` skips.** Standard forge git conventions.
 
 ## Files referenced in this handoff
 

@@ -13,7 +13,7 @@
 | # | Tag | Phase | Highlights |
 |---|---|---|---|
 | 1 | v3.7.0 | Phase 1 — Truth & Observability | install.sh/.ps1, hook crash audit (`.hook-failures.jsonl`), support-tier badges, live-progress surface |
-| 2 | v3.8.0 | Phase 2 — Contract Enforcement | 5 pytest contract tests, `/forge-help` deleted (LLM routing), `--config` folded into `/forge-status`, feature matrix |
+| 2 | v3.8.0 | Phase 2 — Contract Enforcement | 5 pytest contract tests, `/forge --help` deleted (LLM routing), `--config` folded into `/forge-ask status`, feature matrix |
 | 3 | v3.9.0 | Phase 3 — Correctness Proofs | convergence `>=` boundary fix, e2e dry-run smoke, mutation harness, T-* coverage 86.3% |
 | 4 | v3.10.0 | Phase 4 — Learnings Dispatch Loop | 12-agent injection, marker reinforcement (`LEARNING_APPLIED/FP/VINDICATED`), v1→v2 schema migration (292 files) |
 | 5 | v4.0.0 | Phase 5 — Pattern Modernization + Judges (BREAKING) | `*-critic` → `*-judge` with binding REVISE veto; state schema v2.0.0 (no shim); findings store; fg-400 stays as dispatcher |
@@ -25,7 +25,7 @@
 |---|---|---|---|
 | 7 | v4.2.0 | Phase 7 — Intent Assurance | Adds `fg-540-intent-verifier`. Reads ACs from `state.brainstorm.spec_path` with `.forge/specs/index.json` fallback (prereq Edit 3 already applied). |
 | 8 | v4.3.0 | Mega A — Helpers + Schema | Auto-bumps `state-schema` 2.0.0 → 2.1.0 (introduces `state.brainstorm.*`, `state.shape.*`) |
-| 9 | v5.0.0 | Mega B — Skill Surface (BREAKING) | B12 deletes 26 old skills (incl. `/forge-init`, `/forge-run`, `/forge-status`); B3 absorbs `forge-status --- live ---` from Phase 1 Task 24 (prereq Edit 6 applied) |
+| 9 | v5.0.0 | Mega B — Skill Surface (BREAKING) | B12 deletes 26 old skills (incl. `/forge`, `/forge run`, `/forge-ask status`); B3 absorbs `forge-status --- live ---` from Phase 1 Task 24 (prereq Edit 6 applied) |
 | 10 | v5.1.0 | Mega C — Brainstorming | Ports superpowers brainstorm pattern into `fg-010-shaper`; populates `state.brainstorm.spec_path` |
 | 11 | v5.2.0 | Mega D — Pattern Parity | D8 references `agents/fg-301-implementer-judge.md` (post-P5 name; prereq Edit 1 applied) |
 | 12 | v5.3.0 | Mega E — Docs | README enumeration uses post-P5 names (prereq Edit 2 applied) |
@@ -65,7 +65,7 @@ For each phase, the loop is:
 ### Constraints (immutable across all phases)
 
 - `superpowers:*` skills/agents only — NOT `pr-review-toolkit:*` or `feature-dev:*`. (See memory `feedback_use_superpowers_plugins`.)
-- No `/forge-review` (forge reviewing forge is circular; see memory `feedback_no_self_review`).
+- No `/forge review` (forge reviewing forge is circular; see memory `feedback_no_self_review`).
 - No backwards-compat shims; new schemas freely break old `.forge/state.json`.
 - Code review after every PHASE (not every task). Per-task implementation only.
 - Fix EVERYTHING — critical, important, minor, deferred.
@@ -117,7 +117,7 @@ User auto-memory at `/Users/denissajnar/.claude/projects/-Users-denissajnar-Idea
 - `user_forge_personal_tool.md`
 - `feedback_no_local_tests.md`
 - `feedback_implementation_workflow.md` — code review per phase, fix everything, version bump + tag + push + release
-- `feedback_no_self_review.md` — never `/forge-review`; use `superpowers:requesting-code-review`
+- `feedback_no_self_review.md` — never `/forge review`; use `superpowers:requesting-code-review`
 - `feedback_no_backcompat.md`
 - `feedback_use_superpowers_plugins.md` — superpowers:* only, NOT pr-review-toolkit:*
 - `feedback_cleanup_after_ship.md` — at feature ship: delete `docs/superpowers/{specs,plans}/<feature>` + update CLAUDE.md/README/arch docs

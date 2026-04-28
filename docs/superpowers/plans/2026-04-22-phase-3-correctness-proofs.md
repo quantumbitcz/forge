@@ -548,7 +548,7 @@ Commit message body notes the scope: "All six sites (convergence_engine_sim.py, 
 
 **Steps:**
 
-1. Write the full script. Scope: this is a **real `npm ci` install + deterministic config-write + dry-run simulator** smoke. `/forge-init` itself (the Claude Code skill) is not spawned — CI has no Claude host — but the npm/ts toolchain path runs for real, which catches lockfile/registry/platform-install bugs that a detection-only probe would miss.
+1. Write the full script. Scope: this is a **real `npm ci` install + deterministic config-write + dry-run simulator** smoke. `/forge` itself (the Claude Code skill) is not spawned — CI has no Claude host — but the npm/ts toolchain path runs for real, which catches lockfile/registry/platform-install bugs that a detection-only probe would miss.
 
     ```python
     #!/usr/bin/env python3
@@ -556,14 +556,14 @@ Commit message body notes the scope: "All six sites (convergence_engine_sim.py, 
 
     Spawns a minimal typescript+vitest project in a temp directory, runs
     `npm ci --no-audit --no-fund` to install real dev-deps, writes the
-    plugin-detection output that `/forge-init` would produce, then drives
+    plugin-detection output that `/forge` would produce, then drives
     `shared/forge-sim.sh` in dry-run mode against it. Asserts the resulting
     `.forge/state.json` ends in VALIDATED or COMPLETE.
 
-    Scope note: `/forge-init` itself is a Claude Code skill — it cannot be
+    Scope note: `/forge` itself is a Claude Code skill — it cannot be
     spawned in CI without a Claude Code host. We use a deterministic Python
     shim that reproduces the detection + config-write path. Full
-    `/forge-init` coverage belongs in `tests/evals/pipeline/` (CI-only).
+    `/forge` coverage belongs in `tests/evals/pipeline/` (CI-only).
 
     Exit codes:
       0  — PASS
@@ -666,7 +666,7 @@ Commit message body notes the scope: "All six sites (convergence_engine_sim.py, 
                 print(f"[SKIP] OSError during link: {exc}", file=sys.stderr)
                 return 77
 
-            # 3. Write forge.local.md (the deterministic slice of /forge-init).
+            # 3. Write forge.local.md (the deterministic slice of /forge).
             _write_forge_local_md(project)
 
             # 4. Assert the config was detected correctly.
@@ -1913,7 +1913,7 @@ Commit message body notes the scope: "All six sites (convergence_engine_sim.py, 
     | Unit | `tests/unit/` | pytest (some bats) | `test (*, unit)` | 3 OS | Pure-function and algorithm tests — convergence sim, state-write, scoring |
     | Contract | `tests/contract/` | bats | `test (*, contract)` | 3 OS | Contract tests between agents and the state machine |
     | Scenario | `tests/scenario/` | bats | `test (*, scenario)` | 3 OS | Full state-machine scenarios; exercises the transition table in `shared/state-transitions.md` |
-    | E2E | `tests/e2e/dry-run-smoke.py` | python | `e2e` | 3 OS | Spawns a minimal ts+vitest project, drives `/forge-init` (deterministic shim) + dry-run pipeline to VALIDATED/COMPLETE |
+    | E2E | `tests/e2e/dry-run-smoke.py` | python | `e2e` | 3 OS | Spawns a minimal ts+vitest project, drives `/forge` (deterministic shim) + dry-run pipeline to VALIDATED/COMPLETE |
     | Mutation | `tests/mutation/state_transitions.py` | python | `mutation` | ubuntu | Applies 5 seed mutations to `state-transitions.md` rows; fails if any scenario fails to notice the mutation |
     | Coverage | `tests/scenario/report_coverage.py` | python | `coverage` | ubuntu | Regenerates `tests/scenario/COVERAGE.md`; CI fails on drift or <60% T-* coverage |
     | Pipeline eval | `tests/evals/pipeline/` | python | (CI-only, separate workflow) | ubuntu | Full pipeline replay against recorded transcripts; manual and CI-gated |

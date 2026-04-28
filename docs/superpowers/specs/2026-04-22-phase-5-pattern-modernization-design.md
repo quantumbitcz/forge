@@ -249,7 +249,7 @@ invariant. Concrete behavior:
   `[AUTO] abort-on-judge-veto judge_id=<fg-205|fg-301> findings=[...]`,
   writes the judge's `revision_directives` and `findings[]` to
   `.forge/alerts.json`, and transitions the run to ABORTED. User resumes
-  manually via `/forge-recover resume` after reviewing the alert.
+  manually via `/forge-admin recover resume` after reviewing the alert.
 
 ### 4. Quality gate aggregator-only
 
@@ -673,7 +673,7 @@ intended outcome.
    re-invocations where the findings store hasn't changed. A complete
    implementation requires pre-score SHA read, score compute, post-score
    SHA re-read, and a retry-on-mismatch WARNING — non-trivial for the
-   initial rollout. Deferred; revisit if `/forge-insights` shows fg-400
+   initial rollout. Deferred; revisit if `/forge-ask insights` shows fg-400
    CPU is a bottleneck in long convergence runs.
 
 ---

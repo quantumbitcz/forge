@@ -44,7 +44,7 @@
 - `agents/fg-100-orchestrator.md` — dispatch-gate block + AskUserQuestion + autonomous branch.
 - `agents/fg-300-implementer.md` — new §5.3b Soft Cost Throttle.
 - `agents/fg-700-retrospective.md` — new §Cost Analytics subsection.
-- `modules/frameworks/*/forge-config-template.md` — add `cost:` block to all 24 templates.
+- `modules/frameworks/*/forge-admin config-template.md` — add `cost:` block to all 24 templates.
 - `CLAUDE.md` — §Supporting systems + §Pipeline modes entries.
 - `README.md` — one-liner on cost ceiling.
 - `CHANGELOG.md` — Phase 6 entry under 3.7.0 (or next minor).
@@ -746,7 +746,7 @@ git commit -m "docs(preflight): document cost.* validation rules (AC-601)"
     {"label": "Raise ceiling to ${ceiling_usd_raised}", "description": "Continues run. Records new ceiling in state for this run only."},
     {"label": "Downgrade remaining agents (Recommended)", "description": "Switches premium->standard, standard->fast where safe. Excludes pinned agents and safety-critical reviewers."},
     {"label": "Abort to ship current state", "description": "Runs pre-ship verifier on what's in the worktree, then ships or exits."},
-    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-recover resume."}
+    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-admin recover resume."}
   ]
 }
 ```
@@ -784,7 +784,7 @@ git commit -m "docs(ask): add §8 cost-ceiling pattern + default timeouts (AC-60
 **Rationale:** Every framework template must gain the `cost:` block. Land it on spring first (most exercised by contract tests), then propagate in Task 9.
 
 **Files:**
-- Modify: `modules/frameworks/spring/forge-config-template.md`
+- Modify: `modules/frameworks/spring/forge-admin config-template.md`
 
 - [ ] **Step 1: Add the `cost:` block to the config YAML fence**
 
@@ -818,7 +818,7 @@ cost:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add modules/frameworks/spring/forge-config-template.md
+git add modules/frameworks/spring/forge-admin config-template.md
 git commit -m "feat(config): add cost: block to spring forge-config-template"
 ```
 
@@ -826,10 +826,10 @@ git commit -m "feat(config): add cost: block to spring forge-config-template"
 
 ## Task 9: Propagate cost: block to remaining framework templates
 
-**Rationale:** Contract tests walk every `modules/frameworks/*/forge-config-template.md` and expect the same `cost:` block. Copy the spring block to the other 23 frameworks.
+**Rationale:** Contract tests walk every `modules/frameworks/*/forge-admin config-template.md` and expect the same `cost:` block. Copy the spring block to the other 23 frameworks.
 
 **Files:**
-- Modify: `modules/frameworks/{angular,aspnet,axum,django,embedded,express,fastapi,flask,gin,go-stdlib,jetpack-compose,k8s,kotlin-multiplatform,laravel,nestjs,nextjs,rails,react,svelte,sveltekit,swiftui,vapor,vue}/forge-config-template.md`
+- Modify: `modules/frameworks/{angular,aspnet,axum,django,embedded,express,fastapi,flask,gin,go-stdlib,jetpack-compose,k8s,kotlin-multiplatform,laravel,nestjs,nextjs,rails,react,svelte,sveltekit,swiftui,vapor,vue}/forge-admin config-template.md`
 - Test: existing `tests/contract/framework-config-templates.bats` (will fail until all 24 carry the block — forcing completeness)
 
 - [ ] **Step 1: For each framework dir, append the same `## Cost Governance (Phase 6)` subsection**
@@ -840,7 +840,7 @@ Use the exact block from Task 8. Command to enumerate targets:
 for fw in angular aspnet axum django embedded express fastapi flask gin go-stdlib \
           jetpack-compose k8s kotlin-multiplatform laravel nestjs nextjs rails \
           react svelte sveltekit swiftui vapor vue; do
-  echo "modules/frameworks/$fw/forge-config-template.md"
+  echo "modules/frameworks/$fw/forge-admin config-template.md"
 done
 ```
 
@@ -854,21 +854,21 @@ Add a new assertion to `tests/contract/framework-config-templates.bats`:
 
 ```bash
 @test "every framework template declares cost.ceiling_usd" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "^\s*ceiling_usd:\s*25\.00" "$tpl"
     assert_success "missing cost.ceiling_usd in $tpl"
   done
 }
 
 @test "every framework template declares cost.aware_routing" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "^\s*aware_routing:\s*true" "$tpl"
     assert_success "missing cost.aware_routing in $tpl"
   done
 }
 
 @test "every framework template declares tier_estimates_usd.premium = 0.078" {
-  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-config-template.md; do
+  for tpl in $PLUGIN_ROOT/modules/frameworks/*/forge-admin config-template.md; do
     run grep -E "premium:\s*0\.078" "$tpl"
     assert_success "missing premium tier estimate in $tpl"
   done
@@ -880,7 +880,7 @@ Add a new assertion to `tests/contract/framework-config-templates.bats`:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add modules/frameworks/*/forge-config-template.md tests/contract/framework-config-templates.bats
+git add modules/frameworks/*/forge-admin config-template.md tests/contract/framework-config-templates.bats
 git commit -m "feat(config): propagate cost: block across all 24 framework templates"
 ```
 
@@ -1780,7 +1780,7 @@ def main() -> int:
                 {"label": f"Raise ceiling to ${raised}", "description": "Continues run. Records new ceiling in state for this run only."},
                 {"label": "Downgrade remaining agents (Recommended)", "description": "Switches premium->standard, standard->fast where safe. Excludes pinned agents and safety-critical reviewers."},
                 {"label": "Abort to ship current state", "description": "Runs pre-ship verifier on what's in the worktree, then ships or exits."},
-                {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-recover resume."},
+                {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-admin recover resume."},
             ],
         }
         print(json.dumps({"action": "ask-user", "payload": payload}))

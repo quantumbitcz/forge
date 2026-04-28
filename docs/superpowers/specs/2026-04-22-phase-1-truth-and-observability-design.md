@@ -11,13 +11,13 @@ Close four credibility gaps in forge: make the Windows-first-class claim real, g
    - The `test` job (`test.yml` lines 36–75) has **no** `defaults.run.shell`. On `windows-latest`, GitHub Actions defaults `run:` steps to **`pwsh`**, so the three tier jobs (unit, contract, scenario) already exercise PowerShell — even though they invoke `./tests/run-all.sh`, which is bash-only and therefore likely failing opaquely on the Windows pwsh legs. That means pwsh coverage technically exists but is neither ergonomic nor advertised, and CMD is never exercised.
    - The only `*.ps1` in the tree is a pip-generated venv stub (`.venv/Scripts/Activate.ps1`-style); there is no install helper.
    - `README.md:35` and `CLAUDE.md` §Quick start document install via `ln -s`, which on native Windows requires Developer Mode or admin.
-   - `shared/check-environment.sh` is bash and is invoked by `/forge-init` — it has a `gitbash` branch but no native-Windows code path.
+   - `shared/check-environment.sh` is bash and is invoked by `/forge` — it has a `gitbash` branch but no native-Windows code path.
 
 2. **Hook-failure logging contract exists but is unenforced for Python hooks.** `hooks/hooks.json` sets per-hook timeouts of 3–10 s. `shared/hook-design.md:85` already contracts the behaviour: *"Every entry script wraps its `main()` body in a top-level `try/except Exception` that appends a diagnostic line to `.forge/.hook-failures.log` and exits `0`."* Reality (verified 2026-04-22): the shell-side check engine (`shared/checks/engine.sh:91,120`) writes to `.forge/.hook-failures.log`, but the Python entry scripts (`hooks/pre_tool_use.py`, `post_tool_use.py`, `post_tool_use_skill.py`, `post_tool_use_agent.py`, `stop.py`, `session_start.py`) have **zero** `try/except` wrappers. A Python hook crash or non-zero exit leaves no trace except the ephemeral Claude Code transcript. The contract is documented but unenforced for the majority of hook execution paths.
 
 3. **Framework inventory overclaims coverage.** CLAUDE.md advertises 15 languages × 24 frameworks × 19 test frameworks; CI (`tests/run-all.sh`) executes structural + unit + contract + scenario tiers that never spin up a real toolchain for most of that space. A user picking `elixir + phoenix + exunit` gets the same badge as `kotlin + spring + kotest`, but only the latter has ever been through an end-to-end run.
 
-4. **Live-run visibility is poor.** `hooks/_py/otel.py` emits spans, but requires an OTel backend. `/forge-status` reads `.forge/state.json`, which is written at stage transitions only — a stuck agent in the middle of a stage is invisible. Users debugging a hang have to `cat .forge/events.jsonl | tail`, which mixes 12 event types without a "what's happening *right now*" view.
+4. **Live-run visibility is poor.** `hooks/_py/otel.py` emits spans, but requires an OTel backend. `/forge-ask status` reads `.forge/state.json`, which is written at stage transitions only — a stuck agent in the middle of a stage is invisible. Users debugging a hang have to `cat .forge/events.jsonl | tail`, which mixes 12 event types without a "what's happening *right now*" view.
 
 ## Non-Goals
 
@@ -35,7 +35,7 @@ Four surgical changes, each isolated to a small file set. No cross-cutting refac
 
 Make the claim true rather than retract it. Concrete steps:
 
-- **Port `shared/check-environment.sh` → `shared/check_environment.py`** (Python 3.10+, uses `pathlib.Path` and `shutil.which`). Covers the same probe list; platform detection via `sys.platform` + `platform.release()` (WSL check via `/proc/version` read gated on `pathlib.Path("/proc/version").exists()`). Emits identical JSON schema so `/forge-init`'s downstream consumer does not change. The bash file is deleted (no shim — user instruction: no back-compat).
+- **Port `shared/check-environment.sh` → `shared/check_environment.py`** (Python 3.10+, uses `pathlib.Path` and `shutil.which`). Covers the same probe list; platform detection via `sys.platform` + `platform.release()` (WSL check via `/proc/version` read gated on `pathlib.Path("/proc/version").exists()`). Emits identical JSON schema so `/forge`'s downstream consumer does not change. The bash file is deleted (no shim — user instruction: no back-compat).
 - **Add `install.ps1` at repo root.** Idiomatic Claude Code plugin installers in 2026 use `irm <url> | iex` (`claude.ai/install.ps1` sets the pattern). Script does: check `git` in `PATH`; compute plugin dir (`$env:USERPROFILE\.claude\plugins\forge`); clone or `git pull`; write a `settings.json` plugin entry via `ConvertTo-Json`; print next steps. No symlink — on Windows the plugin directory is a full clone, not a link. `install.sh` (new) does the same thing for macOS/Linux and supersedes the `ln -s` one-liner in README.
 - **Reshape `.github/workflows/test.yml` Windows coverage.** The existing `test` job's tier matrix on `windows-latest` already runs under `pwsh` by GitHub default, but without an explicit shell the legs' success/failure is noise. Phase 1 makes coverage explicit and adds the two gaps: (a) structural-pwsh and (b) CMD.
   - Add `shell: pwsh` override on the existing `test` job's `Run ${{ matrix.tier }} tests` step **only for `windows-latest`** — but since `run-all.sh` is bash, the step invokes a new `tests/run-all.ps1` wrapper on the pwsh leg that calls the Git-Bash-provided `bash.exe` with `run-all.sh`. Net effect: pwsh leg stays green and the pwsh shell is *actually* the interpreter for the wrapper script, not merely a bystander. No change to ubuntu/macOS legs.
@@ -115,7 +115,7 @@ Why option B over A (downgrade the claim): user said "I want all." Cost is one w
   }
   ```
   `recent_hook_failures` is the last 10 rows from `.forge/.hook-failures.jsonl` (live + newest `.gz` if needed). Capped at 10 to keep the file small enough for `head`.
-- **No new skill.** `/forge-status` is extended to also print a synopsis from `status.json` and the top of `run-history-trends.json`. Extension is additive — existing output format preserved at the top, new section appended under a `--- live ---` separator.
+- **No new skill.** `/forge-ask status` is extended to also print a synopsis from `status.json` and the top of `run-history-trends.json`. Extension is additive — existing output format preserved at the top, new section appended under a `--- live ---` separator.
 - **Inspection recipes** go into `shared/observability.md` under a new §Local inspection heading. Three-shell tables:
 
   | Shell | Current progress | Last 5 runs | Recent hook failures |
@@ -146,7 +146,7 @@ Why option B over A (downgrade the claim): user said "I want all." Cost is one w
 ### 4. Progress file + trend rollup + inspection recipes
 
 - **Files created:** `.forge/progress/status.json` and `.forge/run-history-trends.json` are runtime artefacts — not created by the spec, but by the orchestrator and retrospective agents.
-- **Files modified:** `hooks/post_tool_use_agent.py` (adds progress-file writer — ~15 LOC calling a new `hooks/_py/progress.py` helper), `hooks/_py/progress.py` (new — `write_status(run_id, stage, agent, event)` helper), `agents/fg-100-orchestrator.md` (new §Progress file section documenting that the `Agent` hook is the writer, not the orchestrator), `agents/fg-700-retrospective.md` (new §Trend rollup section: last-30 aggregation + hook-failure tail), `skills/forge-status.md` (new `--- live ---` section), `shared/observability.md` (+ §Local inspection), `shared/state-schema.md` (note that `.forge/progress/` and `.forge/run-history-trends.json` survive `/forge-recover reset`).
+- **Files modified:** `hooks/post_tool_use_agent.py` (adds progress-file writer — ~15 LOC calling a new `hooks/_py/progress.py` helper), `hooks/_py/progress.py` (new — `write_status(run_id, stage, agent, event)` helper), `agents/fg-100-orchestrator.md` (new §Progress file section documenting that the `Agent` hook is the writer, not the orchestrator), `agents/fg-700-retrospective.md` (new §Trend rollup section: last-30 aggregation + hook-failure tail), `skills/forge-ask status.md` (new `--- live ---` section), `shared/observability.md` (+ §Local inspection), `shared/state-schema.md` (note that `.forge/progress/` and `.forge/run-history-trends.json` survive `/forge-admin recover reset`).
 
 ## Data Flow / File Layout
 
@@ -220,14 +220,14 @@ All tests run in CI; none run locally. (User standing instruction: no local test
   - `shared/hook-design.md:72, 85, 96` (contract update — §Failure Behavior table, §Timeout Behavior bullet, §Script Contract rule 5)
   - `shared/state-schema-fields.md:693`
   - `CHANGELOG.md:451` (historical entry — factual update, not rewrite of history: add a `NOTE: renamed to .hook-failures.jsonl in <next-version>` inline marker)
-  - `skills/forge-status/SKILL.md:91–97` (four mentions; parsing switches to `jq`/JSON)
+  - `skills/forge-ask status/SKILL.md:91–97` (four mentions; parsing switches to `jq`/JSON)
   - `shared/checks/engine.sh:91, 112, 120` and `shared/checks/l0-syntax/validate-syntax.sh:32, 37` (writers themselves — switch filename and emit JSON line)
 - An AC enforces that a post-change `grep -rn "\.hook-failures\.log" --include="*.md" --include="*.json" --include="*.py" --include="*.sh" --include="*.ps1" --include="*.cmd"` returns zero matches (see AC-18).
 - **`CLAUDE.md`:**
   - §362 Platform requirements — rewrite to: "Forge requires Python 3.10+. Full CI coverage: macOS, Linux, Windows (Git Bash). Smoke CI coverage: Windows (PowerShell 7, CMD). Installation: `install.sh` (macOS/Linux) or `install.ps1` (Windows native). WSL2 runs as Linux."
   - §Quick start — mirror README update.
   - §Available modules / feature matrix — add one line noting support tiers, link to `docs/support-tiers.md`.
-  - §Gotchas — `.forge/` survival list (currently CLAUDE.md line 355) adds `.forge/progress/`, `.forge/run-history-trends.json`, live `.forge/.hook-failures.jsonl`, and rotated `.forge/.hook-failures-*.jsonl.gz`. All survive `/forge-recover reset`; only manual `rm -rf .forge/` removes them.
+  - §Gotchas — `.forge/` survival list (currently CLAUDE.md line 355) adds `.forge/progress/`, `.forge/run-history-trends.json`, live `.forge/.hook-failures.jsonl`, and rotated `.forge/.hook-failures-*.jsonl.gz`. All survive `/forge-admin recover reset`; only manual `rm -rf .forge/` removes them.
 - **`shared/observability.md`** — add §Local inspection (recipes table above).
 - **`shared/hook-design.md`** — add §Failure logging describing `.forge/.hook-failures.jsonl`, rotation policy, and the `failure_log` module.
 - **`shared/state-schema.md`** — note new runtime paths that survive reset.
@@ -237,7 +237,7 @@ All tests run in CI; none run locally. (User standing instruction: no local test
 
 ## Acceptance Criteria
 
-1. **AC-1.** `shared/check-environment.sh` does not exist. `shared/check_environment.py` exists, is Python 3.10+, uses `pathlib.Path`, and emits the same JSON shape that `/forge-init` consumes.
+1. **AC-1.** `shared/check-environment.sh` does not exist. `shared/check_environment.py` exists, is Python 3.10+, uses `pathlib.Path`, and emits the same JSON shape that `/forge` consumes.
 2. **AC-2.** `install.ps1` exists at repo root, parses without syntax errors under PowerShell 5.1+ and PowerShell 7+ (verified in CI by `powershell -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -Raw install.ps1))"`), passes `PSScriptAnalyzer -Severity Error,Warning` with no violations, supports a `-Help` switch that prints usage and exits 0, and supports a `-WhatIf` switch that performs no filesystem writes and prints the planned actions. End-to-end install on a fresh Windows runner is deferred — AC-4's `test-windows-pwsh-structural` job covers the interpreter path; a full install E2E belongs in a later phase once the script's surface stabilises.
 3. **AC-3.** `install.sh` exists at repo root and replaces the README `ln -s` snippet for macOS/Linux install flows.
 4. **AC-4.** `.github/workflows/test.yml` gains: (a) a `test-windows-pwsh-structural` job running structural tier on `windows-latest` under `defaults.run.shell: pwsh`; (b) a `test-windows-cmd` job running structural + unit tiers on `windows-latest` under `defaults.run.shell: cmd`; (c) an explicit pwsh-wrapped step on the existing `test` job's Windows legs via `tests/run-all.ps1`. The existing `test` job's implicit pwsh coverage is not *duplicated* — it's *formalised* by adding the wrapper. `tests/run-all.ps1` and `tests/run-all.cmd` exist and invoke `run-all.sh` via Git-Bash-provided `bash.exe`.
@@ -251,7 +251,7 @@ All tests run in CI; none run locally. (User standing instruction: no local test
 11. **AC-11.** `hooks/post_tool_use_agent.py` rewrites `.forge/progress/status.json` on every subagent-completion `Agent` event, via atomic rename. Verified by a unit test that invokes the hook's `main()` with a synthetic `Agent` event payload and asserts `status.json` is created/updated on disk with the expected schema.
 12. **AC-12.** `agents/fg-700-retrospective.md` describes generation of `.forge/run-history-trends.json` with last-30-runs aggregate and last-10 hook-failure tail.
 13. **AC-13.** `shared/observability.md` contains the three-shell inspection recipe table (bash/zsh, PowerShell, CMD) with best-effort recipes for status, recent runs, recent hook failures. bash/zsh and PowerShell rows provide executable one-liners; the CMD row provides `type` commands for raw viewing and directs users to open the files in a text editor or use PowerShell for structured inspection — CMD has no built-in JSON parsing.
-14. **AC-14.** `shared/state-schema.md` lists `.forge/progress/`, `.forge/run-history-trends.json`, and `.forge/.hook-failures*.jsonl*` as paths that survive `/forge-recover reset`.
+14. **AC-14.** `shared/state-schema.md` lists `.forge/progress/`, `.forge/run-history-trends.json`, and `.forge/.hook-failures*.jsonl*` as paths that survive `/forge-admin recover reset`.
 15. **AC-15.** `CLAUDE.md` §362 no longer claims uniform Windows support; it specifies full-CI (bash) vs smoke-CI (pwsh/cmd) tiers.
 16. **AC-16.** Grep for emoji codepoints (U+1F300–U+1FAFF, U+2600–U+27BF) in any new or modified file returns zero matches.
 17. **AC-17.** All new file paths in Python are constructed via `pathlib.Path` — structural test greps new `.py` files for hardcoded `/` separators in string literals and fails if found.

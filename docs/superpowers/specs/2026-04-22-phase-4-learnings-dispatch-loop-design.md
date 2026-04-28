@@ -23,7 +23,7 @@ Gaps in the current code path, with citations:
 
 - **Not changing PREEMPT discovery.** `shared/learnings/memory-discovery.md` and its auto-discovery path stay exactly as they are. Phase 4 touches only the *read* path.
 - **Not changing `fg-700-retrospective`'s extraction logic.** The retrospective still decides what to write; this phase only extends it to *update counts* based on injection telemetry.
-- **No learnings UI.** No new skill, no dashboard. `/forge-insights` already surfaces PREEMPT health; that stays untouched for now.
+- **No learnings UI.** No new skill, no dashboard. `/forge-ask insights` already surfaces PREEMPT health; that stays untouched for now.
 - **No new storage.** Everything lives in the existing `shared/learnings/*.md` files, the existing `.forge/events.jsonl` event log, and the existing OTel span stream.
 
 ## Approach
@@ -455,7 +455,7 @@ learnings corpus, ~500 items today); safe as attribute, never as span name.
 - **`forge.learning.injected` event** — schema in §7; lives in `.forge/events.jsonl` and mirrored onto the active span as attributes via `emit_event_mirror`.
 - **`forge.learning.applied` event** — `{type: "forge.learning.applied", forge.run_id, forge.agent.name, forge.stage, forge.learning.id, file, line}`; written by the orchestrator on marker parse.
 - **`forge.learning.fp` event** — `{type: "forge.learning.fp", forge.run_id, forge.learning.id, reason}`; written on `LEARNING_FP` / inapplicable `PREEMPT_SKIPPED`.
-- **`forge.learning.vindicated` event** — `{type: "forge.learning.vindicated", forge.run_id, forge.learning.id, reason}`; written by user action (future `/forge-insights --vindicate <id>` skill, out of scope here — the event consumer is specced now so it lands right the first time).
+- **`forge.learning.vindicated` event** — `{type: "forge.learning.vindicated", forge.run_id, forge.learning.id, reason}`; written by user action (future `/forge-ask insights --vindicate <id>` skill, out of scope here — the event consumer is specced now so it lands right the first time).
 
 ## Data Flow
 
@@ -527,4 +527,4 @@ back to top
 
 1. **Reviewer-side marker emission.** Reviewers today produce structured findings, not free-form prose. Adding `LEARNING_APPLIED: <id>` likely goes into their structured output block (schema `coordinator-output/v1`, `shared/agent-communication.md:291`). Does that require a schema bump or can it live under `findings[].learnings_referenced: [id]`? Leaning toward the latter; deferring to implementation.
 2. **Cross-project penalty threshold.** `learnings_density > sparse_threshold` needs a concrete value. Proposal: `sparse = len(candidates from shared/learnings/{framework}.md) < 5`. Revisit after one week of telemetry.
-3. **Archival visibility in `/forge-insights`.** Archived items currently still render in the insights "PREEMPT health" panel. Should the read path filter them too, or should insights grow an `--include-archived` flag? Not in scope for Phase 4 but the decision affects the archival semantics — flagging for follow-up.
+3. **Archival visibility in `/forge-ask insights`.** Archived items currently still render in the insights "PREEMPT health" panel. Should the read path filter them too, or should insights grow an `--include-archived` flag? Not in scope for Phase 4 but the decision affects the archival semantics — flagging for follow-up.

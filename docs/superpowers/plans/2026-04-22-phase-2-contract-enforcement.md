@@ -8,7 +8,7 @@ Branch: `feat/phase-2-contract-enforcement`
 
 Close five contract and hygiene gaps that have accumulated in the forge plugin since 3.0: (1) `ui:` frontmatter missing on 13 agents while `shared/agents.md` declares "Tier-4-by-omission is no longer accepted"; (2) skill invocation grammar drift across 29 skills; (3) three inspection skills with overlapping ceremony; (4) no hard size budget for `fg-100-orchestrator.md`; (5) no single activation-state matrix or deprecation lifecycle for features F05–F34.
 
-Close each gap with a contract test plus the minimum source edits that make current files pass, then collapse the `/forge-help` decision-tree skill into LLM routing (per user memory: LLM routing already does this well) so the skill count drops 29 → 28.
+Close each gap with a contract test plus the minimum source edits that make current files pass, then collapse the `/forge --help` decision-tree skill into LLM routing (per user memory: LLM routing already does this well) so the skill count drops 29 → 28.
 
 ## Architecture
 
@@ -49,7 +49,7 @@ skills/
   forge-sprint/SKILL.md                         # fix ui: frontmatter (add plan_mode key)
   forge-verify/SKILL.md                         # drop --config subcommand; --all delegates
   forge-status/SKILL.md                         # + Config validation + Recent hook failures sections
-  forge-recover/SKILL.md                        # diagnose embeds /forge-status --json
+  forge-recover/SKILL.md                        # diagnose embeds /forge-ask status --json
   forge-config/SKILL.md                         # drop forge-help reference line 94
   forge-tour/SKILL.md                           # drop forge-help references lines 138 + 202
 shared/
@@ -253,7 +253,7 @@ README.md                                      # EDITED: drop forge-help table r
 - Modify: `/Users/denissajnar/IdeaProjects/forge/agents/fg-418-docs-consistency-reviewer.md`
 - Modify: `/Users/denissajnar/IdeaProjects/forge/agents/fg-419-infra-deploy-reviewer.md`
 - Modify: `/Users/denissajnar/IdeaProjects/forge/agents/fg-510-mutation-analyzer.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-sprint/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge sprint/SKILL.md`
 
 - [ ] **Step 1: Insert ui: block into fg-101-worktree-manager.md**
   Locate the closing `---` of the frontmatter block. Insert the ui: block immediately after the `tools:` line and before the closing `---`:
@@ -294,7 +294,7 @@ README.md                                      # EDITED: drop forge-help table r
 - [ ] **Step 5: Insert ui: block into fg-510-mutation-analyzer.md**
   Same block. Tier 4 per `shared/agents.md` — mutation analyzer runs silently within verify stage; results flow back through fg-400 aggregation.
 
-- [ ] **Step 6: Fix malformed ui: in skills/forge-sprint/SKILL.md**
+- [ ] **Step 6: Fix malformed ui: in skills/forge sprint/SKILL.md**
   The file currently has:
   ```yaml
   ui: { ask: true, tasks: true }
@@ -303,7 +303,7 @@ README.md                                      # EDITED: drop forge-help table r
   ```yaml
   ui: { tasks: true, ask: true, plan_mode: false }
   ```
-  Key order is fixed (`tasks`, `ask`, `plan_mode`) to match the strict pydantic model in `tests/contract/ui_frontmatter_required.py` (Task 20). Setting `plan_mode: false` matches sprint orchestrator behavior (it dispatches parallel fg-100 instances; plan mode ceremony belongs to the child planners). This also means `skills/forge-sprint/SKILL.md` must NOT list `EnterPlanMode`/`ExitPlanMode` in `allowed-tools`. Verify — the existing frontmatter does list both at lines 13-14. Per the skill-grammar contract (Task 8), skills may carry ui: but the tools-ui consistency check is agent-scoped only (see existing `tests/contract/ui-frontmatter-consistency.bats` Phase 1 note at line 137). No tools removal needed.
+  Key order is fixed (`tasks`, `ask`, `plan_mode`) to match the strict pydantic model in `tests/contract/ui_frontmatter_required.py` (Task 20). Setting `plan_mode: false` matches sprint orchestrator behavior (it dispatches parallel fg-100 instances; plan mode ceremony belongs to the child planners). This also means `skills/forge sprint/SKILL.md` must NOT list `EnterPlanMode`/`ExitPlanMode` in `allowed-tools`. Verify — the existing frontmatter does list both at lines 13-14. Per the skill-grammar contract (Task 8), skills may carry ui: but the tools-ui consistency check is agent-scoped only (see existing `tests/contract/ui-frontmatter-consistency.bats` Phase 1 note at line 137). No tools removal needed.
 
 - [ ] **Step 7: Verify the new bats presence assertion now passes locally by inspection**
   Per user memory `No local tests`, do not run tests. Instead confirm by grep that every `agents/fg-*.md` file now contains a `^ui:` line:
@@ -330,7 +330,7 @@ README.md                                      # EDITED: drop forge-help table r
           agents/fg-413-frontend-reviewer.md agents/fg-414-license-reviewer.md \
           agents/fg-416-performance-reviewer.md agents/fg-417-dependency-reviewer.md \
           agents/fg-418-docs-consistency-reviewer.md agents/fg-419-infra-deploy-reviewer.md \
-          agents/fg-510-mutation-analyzer.md skills/forge-sprint/SKILL.md
+          agents/fg-510-mutation-analyzer.md skills/forge sprint/SKILL.md
   git commit -m "$(cat <<'EOF'
   feat(agents): add explicit ui: block to 13 Tier-4 agents + fix forge-sprint
 
@@ -350,10 +350,10 @@ README.md                                      # EDITED: drop forge-help table r
 
 ---
 
-### Task 5: Delete /forge-help skill directory + pre-commit reference audit (Commit 2)
+### Task 5: Delete /forge --help skill directory + pre-commit reference audit (Commit 2)
 
 **Files:**
-- Delete: `/Users/denissajnar/IdeaProjects/forge/skills/forge-help/` (entire directory incl. SKILL.md)
+- Delete: `/Users/denissajnar/IdeaProjects/forge/skills/forge --help/` (entire directory incl. SKILL.md)
 
 - [ ] **Step 1: Run a repo-wide grep to confirm every reference site before deleting**
   Critical verification per spec risk note. Run:
@@ -369,12 +369,12 @@ README.md                                      # EDITED: drop forge-help table r
   4. `CLAUDE.md:308` (Skills list entry)
   5. `README.md:136` (skill table row)
   6. `shared/skill-contract.md:46` (read-only list)
-  7. `skills/forge-config/SKILL.md:94`
-  8. `skills/forge-tour/SKILL.md:138`
-  9. `skills/forge-tour/SKILL.md:202`
-  10. `skills/forge-help/SKILL.md:2` (name:)
-  11. `skills/forge-help/SKILL.md:3` (description:)
-  12. `skills/forge-help/SKILL.md:107`
+  7. `skills/forge-admin config/SKILL.md:94`
+  8. `skills/forge-ask tour/SKILL.md:138`
+  9. `skills/forge-ask tour/SKILL.md:202`
+  10. `skills/forge --help/SKILL.md:2` (name:)
+  11. `skills/forge --help/SKILL.md:3` (description:)
+  12. `skills/forge --help/SKILL.md:107`
   13. `tests/contract/skill-contract.bats:67` (readonly_skills array)
   14. `tests/lib/module-lists.bash:99` (EXPECTED_SKILL_NAMES array)
   15. `tests/structural/skill-consolidation.bats:87,88,91,92,95,96` (three tests)
@@ -383,13 +383,13 @@ README.md                                      # EDITED: drop forge-help table r
 
   `CHANGELOG.md` references (lines 172, 293, 303, 367) are historical log entries and are NOT updated.
 
-- [ ] **Step 2: Delete the skills/forge-help/ directory**
+- [ ] **Step 2: Delete the skills/forge --help/ directory**
   ```bash
-  git rm -r /Users/denissajnar/IdeaProjects/forge/skills/forge-help/
+  git rm -r /Users/denissajnar/IdeaProjects/forge/skills/forge --help/
   ```
 
 - [ ] **Step 3: Delete tests/unit/skill-execution/decision-tree-refs.bats**
-  All seven tests reference `$SKILLS_DIR/forge-help/SKILL.md` — the file is moot once the skill is deleted.
+  All seven tests reference `$SKILLS_DIR/forge --help/SKILL.md` — the file is moot once the skill is deleted.
   ```bash
   git rm /Users/denissajnar/IdeaProjects/forge/tests/unit/skill-execution/decision-tree-refs.bats
   ```
@@ -404,26 +404,26 @@ README.md                                      # EDITED: drop forge-help table r
 - [ ] **Step 1: Rewrite line 15 (Start Here step 3)**
   Replace:
   ```
-  3. **Pick the right skill:** unsure what to run? `/forge-help`. Bug? `/forge-fix`.
-     Quality check? `/forge-review --full`. Multiple features? `/forge-sprint`.
+  3. **Pick the right skill:** unsure what to run? `/forge --help`. Bug? `/forge fix`.
+     Quality check? `/forge review --full`. Multiple features? `/forge sprint`.
      Full skill table is in §Skill selection guide below.
   ```
   With:
   ```
-  3. **Pick the right skill:** bug? `/forge-fix`. Quality check? `/forge-review --full`.
-     Multiple features? `/forge-sprint`. Full skill table is in §Skill selection guide below.
+  3. **Pick the right skill:** bug? `/forge fix`. Quality check? `/forge review --full`.
+     Multiple features? `/forge sprint`. Full skill table is in §Skill selection guide below.
   ```
 
 - [ ] **Step 2: Remove line 121 (Skill selection guide row)**
   Delete the entire row:
   ```
-  | Find the right skill | `/forge-help` | Interactive decision tree |
+  | Find the right skill | `/forge --help` | Interactive decision tree |
   ```
 
 - [ ] **Step 3: Remove line 137 (Getting started flows entry)**
   Delete the entire line:
   ```
-  Quick decision:    /forge-help (interactive skill picker)
+  Quick decision:    /forge --help (interactive skill picker)
   ```
 
 - [ ] **Step 4: Update CLAUDE.md:306 Skills header + line 308 Skills bullet**
@@ -459,13 +459,13 @@ README.md                                      # EDITED: drop forge-help table r
 **Files:**
 - Modify: `/Users/denissajnar/IdeaProjects/forge/README.md`
 - Modify: `/Users/denissajnar/IdeaProjects/forge/shared/skill-contract.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-config/SKILL.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-tour/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin config/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask tour/SKILL.md`
 
 - [ ] **Step 1: Remove README.md line 136**
   Delete the table row:
   ```
-  | `/forge-help` | [read-only] | Interactive decision tree to find the right skill |
+  | `/forge --help` | [read-only] | Interactive decision tree to find the right skill |
   ```
 
 - [ ] **Step 2: Update shared/skill-contract.md §4**
@@ -473,11 +473,11 @@ README.md                                      # EDITED: drop forge-help table r
   ```markdown
   ## 4. Skill categorization (Phase 5 baseline — 28 skills)
 
-  **Read-only (9):** forge-ask, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify (plus any subcommand of `/forge-graph` marked read-only — but the parent skill is classified by maximum impact per §1).
+  **Read-only (9):** forge-ask, forge-history, forge-insights, forge-playbooks, forge-profile, forge-security-audit, forge-status, forge-tour, forge-verify (plus any subcommand of `/forge-admin graph` marked read-only — but the parent skill is classified by maximum impact per §1).
 
   **Writes (19):** forge-abort, forge-automation, forge-bootstrap, forge-commit, forge-compress, forge-config, forge-deploy, forge-docs-generate, forge-fix, forge-graph, forge-handoff, forge-init, forge-migration, forge-playbook-refine, forge-recover, forge-review, forge-run, forge-shape, forge-sprint.
 
-  **Total: 28.** `/forge-graph` is `[writes]` (its `init` and `rebuild` subcommands write) even though `status`, `query`, and `debug` are read-only — the badge reflects maximum impact per §1.
+  **Total: 28.** `/forge-admin graph` is `[writes]` (its `init` and `rebuild` subcommands write) even though `status`, `query`, and `debug` are read-only — the badge reflects maximum impact per §1.
   ```
   Changes: forge-help removed from read-only (10 → 9); forge-handoff inserted alphabetically into writes (18 → 19); total stays 28.
 
@@ -493,26 +493,26 @@ README.md                                      # EDITED: drop forge-help table r
   and `ui` are permitted at the top level.
   ```
 
-- [ ] **Step 4: Edit skills/forge-config/SKILL.md line 94**
+- [ ] **Step 4: Edit skills/forge-admin config/SKILL.md line 94**
   Delete the line:
   ```
-  - `/forge-help` — find the right skill
+  - `/forge --help` — find the right skill
   ```
 
-- [ ] **Step 5: Edit skills/forge-tour/SKILL.md line 138**
+- [ ] **Step 5: Edit skills/forge-ask tour/SKILL.md line 138**
   Replace:
   ```
-  - **All skills:** `/forge-help`
+  - **All skills:** `/forge --help`
   ```
   With:
   ```
   - **All skills:** See the skill table in `CLAUDE.md` §Skill selection guide.
   ```
 
-- [ ] **Step 6: Edit skills/forge-tour/SKILL.md line 202**
+- [ ] **Step 6: Edit skills/forge-ask tour/SKILL.md line 202**
   Delete the line:
   ```
-  - `/forge-help` — full skill decision tree
+  - `/forge --help` — full skill decision tree
   ```
 
 ---
@@ -520,34 +520,34 @@ README.md                                      # EDITED: drop forge-help table r
 ### Task 8: Rewrite forge-verify (drop --config); extend forge-status + forge-recover
 
 **Files:**
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-verify/SKILL.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-status/SKILL.md`
-- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-recover/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge verify/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask status/SKILL.md`
+- Modify: `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin recover/SKILL.md`
 
 - [ ] **Step 1: Remove --config subcommand from forge-verify**
-  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-verify/SKILL.md`:
+  In `/Users/denissajnar/IdeaProjects/forge/skills/forge verify/SKILL.md`:
   - Remove the frontmatter description's `--config validates forge.local.md...` clause — description becomes:
     ```
-    description: "[read-only] Pre-pipeline checks. --build runs configured build+lint+test. --all runs --build then delegates to /forge-status --json for the config-validation section. Defaults to --build. Never modifies files. Use when you want a fast sanity check before committing, opening a PR, or kicking off a full pipeline run."
+    description: "[read-only] Pre-pipeline checks. --build runs configured build+lint+test. --all runs --build then delegates to /forge-ask status --json for the config-validation section. Defaults to --build. Never modifies files. Use when you want a fast sanity check before committing, opening a PR, or kicking off a full pipeline run."
     ```
   - Dispatch rules: change step 2 to list only `--build`, `--all`, `--json`, `--help` (no `--config`); step 3 mutual-exclusion list becomes `--build, --all`; step 6 dispatch: remove the `--config → ### Subcommand: config` line.
   - Flags section: delete the `--config` bullet entirely.
   - Delete the entire `### Subcommand: config` block (heading + body).
-  - Rewrite `### Subcommand: all` to: invoke `### Subcommand: build` first; then shell out `/forge-status --json` and embed the resulting JSON's `config_validation` object as the config section of the combined report.
+  - Rewrite `### Subcommand: all` to: invoke `### Subcommand: build` first; then shell out `/forge-ask status --json` and embed the resulting JSON's `config_validation` object as the config section of the combined report.
 
 - [ ] **Step 2: Update skill-consolidation structural assertions**
   Note for Task 10: `tests/structural/skill-consolidation.bats:72-77` still asserts forge-verify has `build`, `config`, AND `all` subcommand sections. Task 10 Step 3 drops the `config` line from that assertion.
 
 - [ ] **Step 3: Add Config validation + Recent hook failures sections to forge-status**
-  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-status/SKILL.md`, after the existing Instructions block (around line 60+), add two new top-level sections. Append to the end of the file (before the closing YAML/markdown or any trailing references):
+  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-ask status/SKILL.md`, after the existing Instructions block (around line 60+), add two new top-level sections. Append to the end of the file (before the closing YAML/markdown or any trailing references):
   ```markdown
   ## Config validation summary
 
   After the primary status report, emit a compact config-validation block. This
-  absorbs what `/forge-verify --config` used to do (that subcommand is deleted
+  absorbs what `/forge verify --config` used to do (that subcommand is deleted
   as of Phase 2). Scope:
 
-  1. Load `.claude/forge.local.md` (if present) and `.claude/forge-config.md`.
+  1. Load `.claude/forge.local.md` (if present) and `.claude/forge-admin config.md`.
   2. Validate against PREFLIGHT constraints (`shared/preflight-constraints.md`).
   3. Report each constraint as PASS/FAIL/UNCHECKED with a one-line rationale.
   4. Under `--json`, emit this block as a `config_validation` top-level object:
@@ -575,14 +575,14 @@ README.md                                      # EDITED: drop forge-help table r
   ```
 
 - [ ] **Step 4: Rewrite diagnose subcommand in forge-recover**
-  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-recover/SKILL.md`, locate the Instructions / Subcommand: diagnose section. Prepend to that section:
+  In `/Users/denissajnar/IdeaProjects/forge/skills/forge-admin recover/SKILL.md`, locate the Instructions / Subcommand: diagnose section. Prepend to that section:
   ```markdown
-  Step 0: Delegate state read. Run `/forge-status --json` and parse the JSON
+  Step 0: Delegate state read. Run `/forge-ask status --json` and parse the JSON
   output. Embed the result as a top-level `state` field in the diagnose
   report. Do NOT read `.forge/state.json` directly — the orchestrator and
   forge-status own that path; recovery consumes the parsed snapshot.
   ```
-  Recovery recommendations (the "what to do next" logic) remain `/forge-recover`'s responsibility; only the raw state read is delegated.
+  Recovery recommendations (the "what to do next" logic) remain `/forge-admin recover`'s responsibility; only the raw state read is delegated.
 
 ---
 
@@ -658,7 +658,7 @@ README.md                                      # EDITED: drop forge-help table r
   Edit lines 72-77 (`forge-verify has build, config, and all subcommand sections`). Change test name and body to:
   ```bash
   @test "forge-verify has build and all subcommand sections (no config)" {
-    file="$PLUGIN_ROOT/skills/forge-verify/SKILL.md"
+    file="$PLUGIN_ROOT/skills/forge verify/SKILL.md"
     grep -q '^### Subcommand: build' "$file"
     grep -q '^### Subcommand: all' "$file"
     ! grep -q '^### Subcommand: config' "$file" || { echo "--config must be removed per Phase 2"; return 1; }
@@ -672,22 +672,22 @@ README.md                                      # EDITED: drop forge-help table r
   ```bash
   git add -A
   git commit -m "$(cat <<'EOF'
-  refactor(skills): delete /forge-help; fold config validation into /forge-status
+  refactor(skills): delete /forge --help; fold config validation into /forge-ask status
 
-  Phase 2 Commit 2. The static decision tree in /forge-help duplicates what LLM
-  routing already does; per user-memory rationale /forge-help is removed outright
+  Phase 2 Commit 2. The static decision tree in /forge --help duplicates what LLM
+  routing already does; per user-memory rationale /forge --help is removed outright
   (No backcompat — direct deletion, no shim).
 
   Companion changes land together so CI stays green at this HEAD:
-    - /forge-verify loses --config; --all delegates to /forge-status --json
-    - /forge-status grows Config validation + Recent hook failures sections
-    - /forge-recover diagnose embeds /forge-status --json output
+    - /forge verify loses --config; --all delegates to /forge-ask status --json
+    - /forge-ask status grows Config validation + Recent hook failures sections
+    - /forge-admin recover diagnose embeds /forge-ask status --json output
     - Skill count drops 29 → 28; forge-handoff added to writes list in
       shared/skill-contract.md (was stale since 3.6.0)
 
   Updates all 15 callsite references enumerated at plan-write-time:
-  CLAUDE.md (4), README.md (1), shared/skill-contract.md (2), skills/forge-config
-  (1), skills/forge-tour (2), tests/contract/skill-contract.bats (3),
+  CLAUDE.md (4), README.md (1), shared/skill-contract.md (2), skills/forge-admin config
+  (1), skills/forge-ask tour (2), tests/contract/skill-contract.bats (3),
   tests/lib/module-lists.bash (2), tests/structural/skill-consolidation.bats (4),
   tests/structural/skill-descriptions.bats (2), tests/unit/skill-execution/
   decision-tree-refs.bats (entire file deleted).
@@ -750,10 +750,10 @@ README.md                                      # EDITED: drop forge-help table r
   ## 3. Positional args
 
   Forbidden except for free-form content:
-  - Cypher query: `/forge-graph query "MATCH (n) RETURN n"`
-  - Requirement string: `/forge-run "<requirement>"`, `/forge-fix "<description>"`
+  - Cypher query: `/forge-admin graph query "MATCH (n) RETURN n"`
+  - Requirement string: `/forge run "<requirement>"`, `/forge fix "<description>"`
 
-  Positional mode tokens (`/forge-compress output full`) are a tolerated legacy
+  Positional mode tokens (`/forge-admin compress output full`) are a tolerated legacy
   form — the grammar neither rejects them nor rewrites them.
 
   ## 4. Required body structure for subcommand skills
@@ -1725,7 +1725,7 @@ README.md                                      # EDITED: drop forge-help table r
 - [ ] **Step 1: Author pytest**
   Full content:
   ```python
-  """Contract test: skill count is exactly 28; /forge-help is absent.
+  """Contract test: skill count is exactly 28; /forge --help is absent.
 
   Also greps CLAUDE.md, README.md, and shared/* for stale forge-help references.
   Excludes CHANGELOG.md (historical), docs/superpowers/ (specs + plans), and
@@ -1748,7 +1748,7 @@ README.md                                      # EDITED: drop forge-help table r
 
 
   def test_forge_help_directory_is_gone() -> None:
-      assert not (SKILLS_DIR / "forge-help").exists(), "skills/forge-help must be deleted"
+      assert not (SKILLS_DIR / "forge-help").exists(), "skills/forge --help must be deleted"
 
 
   @pytest.mark.parametrize(
@@ -1833,7 +1833,7 @@ Net count: **6 commits total, 5 content commits match spec.** CI stays green acr
 - [ ] **Step 1: Reconcile the spec's 5-commit rollout with the actual task ordering**
   The spec lists five commits:
   1. Add ui: to 13 agents + forge-sprint fix (covered by Tasks 3-4).
-  2. Delete /forge-help + callsite updates + skill edits (covered by Tasks 5-10).
+  2. Delete /forge --help + callsite updates + skill edits (covered by Tasks 5-10).
   3. Docs + generators + migration + retrospective amend (covered by Tasks 11-20).
   4. Authoring rule in shared/agent-philosophy.md (covered by Task 18 folded into Commit 3/Task 20).
   5. Five contract tests (covered by Tasks 21-26).
@@ -1853,7 +1853,7 @@ Net count: **6 commits total, 5 content commits match spec.** CI stays green acr
   ```bash
   ls -d /Users/denissajnar/IdeaProjects/forge/skills/*/ | wc -l
   ```
-  Expected: 28. If 29, `skills/forge-help/` was not fully removed — re-run `git rm -r` and commit.
+  Expected: 28. If 29, `skills/forge --help/` was not fully removed — re-run `git rm -r` and commit.
 
 - [ ] **Step 2: Cross-check feature matrix sentinel uniqueness**
   ```bash
@@ -1896,7 +1896,7 @@ Net count: **6 commits total, 5 content commits match spec.** CI stays green acr
 
   1. **ui: frontmatter** now explicit on all 48 agents (was: 35/48). Strict pydantic enforcement via `tests/contract/ui_frontmatter_required.py`.
   2. **Skill grammar** documented in `shared/skill-grammar.md`, enforced by `tests/contract/skill_grammar.py`. Frontmatter allow-list, known-tools set with Levenshtein typo detection, read-only skills may not carry `## Subcommands`.
-  3. **Inspection overlap** resolved: `/forge-help` deleted (LLM routing replaces it); `/forge-verify --config` subcommand removed; `/forge-status` absorbs config validation + recent hook failures; `/forge-recover diagnose` delegates state read.
+  3. **Inspection overlap** resolved: `/forge --help` deleted (LLM routing replaces it); `/forge verify --config` subcommand removed; `/forge-ask status` absorbs config validation + recent hook failures; `/forge-admin recover diagnose` delegates state read.
   4. **fg-100 size budget** pinned at 1800 lines (current: 1557) via `tests/contract/fg100_size_budget.py`. Authoring rule added to `shared/agent-philosophy.md`.
   5. **Feature activation matrix** generated by `shared/feature_matrix_generator.py` into `shared/feature-matrix.md` (30 rows, sentinel-fenced, ASCII-only, idempotent). Lifecycle: 90-day flag / 180-day removal proposal via `shared/feature_deprecation_check.py`.
 
@@ -1908,8 +1908,8 @@ Net count: **6 commits total, 5 content commits match spec.** CI stays green acr
 
   1. `chore(ci): add test extras + contract testpath for phase 2 pytest tests` (Task 2) — `pyproject.toml` bump 3.4.0 → 3.6.0, `test` extras group, `testpaths = ["tests/unit", "tests/contract"]`, `tests/run-all.sh` pytest dispatch, CI workflow installs `.[test]`. No tests land here; glob matches zero files so CI stays green.
   2. `test(contract): rewrite Phase 1 ui: assertion for universal presence` (Task 3) — bats test inversion only; temporarily red on the 13 bare agents until Commit 3 lands. See Task 27 Deviation sign-off: this bounded red window is the one exception to the between-commit-green property and is resolved by the very next commit in the PR.
-  3. `feat(agents): add explicit ui: block to 13 Tier-4 agents + fix forge-sprint` (Task 4) — 13 agent edits + `skills/forge-sprint/SKILL.md` frontmatter fix. CI green at this HEAD (pair with Commit 2 completes the contract flip).
-  4. `refactor(skills): delete /forge-help; fold config validation into /forge-status` (Tasks 5-10) — `/forge-help` removal, `/forge-verify --config` deletion, `/forge-status` absorbs config+hook-failures, callsite sweep across 15 references, skill count 29 → 28, `forge-handoff` added to skill-contract writes list.
+  3. `feat(agents): add explicit ui: block to 13 Tier-4 agents + fix forge-sprint` (Task 4) — 13 agent edits + `skills/forge sprint/SKILL.md` frontmatter fix. CI green at this HEAD (pair with Commit 2 completes the contract flip).
+  4. `refactor(skills): delete /forge --help; fold config validation into /forge-ask status` (Tasks 5-10) — `/forge --help` removal, `/forge verify --config` deletion, `/forge-ask status` absorbs config+hook-failures, callsite sweep across 15 references, skill count 29 → 28, `forge-handoff` added to skill-contract writes list.
   5. `docs(features): add feature activation matrix, lifecycle, and generators` (Tasks 11-20) — includes the authoring-rule paragraph in `shared/agent-philosophy.md` that the spec listed as a separate commit (see Task 27 deviation sign-off).
   6. `test(contract): land 5 phase-2 contract tests (gate commit)` (Tasks 21-26) — five pytest files; all green against content already in place at Commit 5's HEAD.
 

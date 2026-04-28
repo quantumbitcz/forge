@@ -67,7 +67,7 @@ tests/evals/benchmark/corpus/
 - `scoring.py` — `solved` predicate.
 - `render_scorecard.py` — trend aggregation → `SCORECARD.md`.
 - `refresh_baseline.py` — baseline freeze/refresh (Component 5).
-- `write_forge_model_overrides.py` — writes matrix-cell `model_routing.overrides` fragment into the ephemeral project tempdir before `/forge-run`, per §Component 3 "Model selection wiring".
+- `write_forge_model_overrides.py` — writes matrix-cell `model_routing.overrides` fragment into the ephemeral project tempdir before `/forge run`, per §Component 3 "Model selection wiring".
 
 **Curation script:** `tests/evals/benchmark/curate.py` (Python 3.10+, stdlib only + `pyyaml`).
 
@@ -98,7 +98,7 @@ Imports from `tests.evals.pipeline.runner`:
 1. Read `metadata.yaml`, `acceptance-criteria.yaml`, `expected-deliverables.yaml`.
 2. Extract `seed-project.tar.gz` to a tempdir (reuses `executor._extract_starter`).
 3. Symlink forge plugin into `.claude/plugins/forge` (reuses `executor._symlink_plugin`).
-4. Invoke `claude code --non-interactive /forge-init` then `/forge-run --eval-mode <entry-id>` with the requirement text.
+4. Invoke `claude code --non-interactive /forge` then `/forge run --eval-mode <entry-id>` with the requirement text.
    - **Live-session constraint:** The current `executor.py:72` requires the `claude` CLI. The existing `tests/evals/pipeline/README.md:71–83` already documents the blocker and the unlock path (install Claude Code on the runner, provision `CLAUDE_CODE_OAUTH_TOKEN`). Phase 8 inherits that dependency and does not invent a synthetic mode. The workflow below includes the same install step. If the install fails, the benchmark job fails (as it should — there is nothing to measure).
 5. Parse `.forge/state.json` post-run, read `.forge/runs/<run_id>/findings/*.jsonl`, and apply `solved` predicate.
 6. Emit one `BenchmarkResult` to `tests/evals/benchmark/results/<YYYY-MM-DD>/<entry-id>.json`.
@@ -183,7 +183,7 @@ All three tiers are pinned to the same full ID so the cell exercises exactly tha
 
 Patching `shared/model-routing.md` tier aliases at runner-entry time was considered and rejected: it mutates a repo-tracked contract file, risks contaminating other concurrent uses, and creates a cleanup obligation on signal failure.
 
-Helper: `tests/evals/benchmark/write_forge_model_overrides.py` (Python, stdlib only). Called by `runner.py` per entry before `/forge-run` is invoked. Signature: `write_overrides(project_root: Path, model_id: str) -> Path` returning the written path for logging. Contract: writes into the ephemeral tempdir only; refuses if `project_root` equals or is an ancestor of the forge repo root.
+Helper: `tests/evals/benchmark/write_forge_model_overrides.py` (Python, stdlib only). Called by `runner.py` per entry before `/forge run` is invoked. Signature: `write_overrides(project_root: Path, model_id: str) -> Path` returning the written path for logging. Contract: writes into the ephemeral tempdir only; refuses if `project_root` equals or is an ancestor of the forge repo root.
 
 **Per-cell job:**
 1. Check out forge at `${{ github.sha }}`.
@@ -282,9 +282,9 @@ git commit -m "bench: refresh baseline after <improvement>"
   Ceiling formula: `max_weekly_cost_usd = ceil(median × 15 × 6 × 1.5)` where 15 is the expected corpus size, 6 the matrix cell count, and 1.5 a buffer for Opus-tier L-bucket runs (Opus ≈ 3× standard cost, but most cells are Sonnet). Phase 6 uses $25/run as an example ceiling; if the user's real-world median is closer to that, the weekly ceiling lands in the $200–$400 range, not $36.
 
   **Commit-time protocol.** Spec author runs the query immediately before merging Phase 8 and pastes the computed median into this section. As of spec authoring, `.forge/run-history.db` on the user's machine does not yet contain 90 days of populated `estimated_cost_usd` data (the column was added in Phase 6 wiring and needs real runs to fill). The ceiling is therefore **conservatively set to $200** for initial release; it will be refreshed after 90 days of post-Phase-6 benchmark runs. A CHANGELOG entry and `forge-config.md` update records the refresh; no migration shim needed (personal tool, no backcompat).
-- **Phase 7 (intent assurance, fg-540):** AC counting delegates to `fg-540-intent-verifier`. `corpus/<entry>/acceptance-criteria.yaml` format mirrors `.forge/specs/index.json` `ac_list` schema. When the run invokes forge, Phase 7's `build_intent_verifier_context` resolves the corpus AC list as the active spec (via an eval-mode injection path: the runner writes `.forge/specs/index.json` with the corpus ACs prior to `/forge-run`). Post-run, `partial_ac_pct` is computed from `state.intent_verification_results[]`.
+- **Phase 7 (intent assurance, fg-540):** AC counting delegates to `fg-540-intent-verifier`. `corpus/<entry>/acceptance-criteria.yaml` format mirrors `.forge/specs/index.json` `ac_list` schema. When the run invokes forge, Phase 7's `build_intent_verifier_context` resolves the corpus AC list as the active spec (via an eval-mode injection path: the runner writes `.forge/specs/index.json` with the corpus ACs prior to `/forge run`). Post-run, `partial_ac_pct` is computed from `state.intent_verification_results[]`.
 
-  **Injection contract (canonical shape — cross-reference Phase 7 spec's §Data Model).** Before `/forge-run` is invoked in a corpus entry tempdir, `runner.py` writes `.forge/specs/index.json` with exactly:
+  **Injection contract (canonical shape — cross-reference Phase 7 spec's §Data Model).** Before `/forge run` is invoked in a corpus entry tempdir, `runner.py` writes `.forge/specs/index.json` with exactly:
 
   ```json
   {

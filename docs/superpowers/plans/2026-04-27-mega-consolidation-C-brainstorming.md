@@ -527,7 +527,7 @@ Read the actual file. Do not trust the implementer's report. If any check fails,
 **File:** `agents/fg-100-orchestrator.md`
 **Risk:** high
 **ACs covered:** AC-S019, AC-S020, AC-S023 (resume routing), AC-FEEDBACK-006 (platform detection at PREFLIGHT).
-**Depends on:** A3 (`shared/platform-detect.py`), A6 (state schema slot for `state.platform`, BRAINSTORMING enum, four BRAINSTORMING transitions), B-phase complete (BRAINSTORMING is dispatched only after the new skill surface is in place — `skills/forge/SKILL.md` calls `/forge-run` which is owned by the orchestrator), C1 (the rewritten shaper this orchestrator dispatches).
+**Depends on:** A3 (`shared/platform-detect.py`), A6 (state schema slot for `state.platform`, BRAINSTORMING enum, four BRAINSTORMING transitions), B-phase complete (BRAINSTORMING is dispatched only after the new skill surface is in place — `skills/forge/SKILL.md` calls `/forge run` which is owned by the orchestrator), C1 (the rewritten shaper this orchestrator dispatches).
 
 #### Risk justification
 
@@ -542,7 +542,7 @@ Required edits (precise, surgical):
 
 1. §1 Identity & Purpose — update the stage list from `PREFLIGHT -> EXPLORE -> ...` to add BRAINSTORMING for feature mode. The list reads as a banner; both forms (with and without BRAINSTORMING) must coexist gracefully because bug/migrate/bootstrap modes still skip it. Use the form `PREFLIGHT -> [BRAINSTORMING (feature mode only)] -> EXPLORE -> PLAN -> ...`.
 
-2. §0.1 Requirement Mode Detection — replace the line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge-shape.` with the new dispatch matrix:
+2. §0.1 Requirement Mode Detection — replace the line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge run.` with the new dispatch matrix:
 
    - feature mode → PREFLIGHT → BRAINSTORMING → EXPLORING
    - bug mode → PREFLIGHT → EXPLORING (skip BRAINSTORMING; fg-020-bug-investigator covers the role)
@@ -595,7 +595,7 @@ You are checking that the orchestrator update matches §3 (BRAINSTORMING stage r
 4. ## Stage 0.5: BRAINSTORM section exists between Stage 0 PREFLIGHT and Stage 1 EXPLORE. Body covers: skip conditions, fg-010-shaper dispatch, BRAINSTORMING → EXPLORING transition, error handling for missing spec_path. Grep: `grep -q '## Stage 0.5: BRAINSTORM' agents/fg-100-orchestrator.md && grep -q 'fg-010-shaper' agents/fg-100-orchestrator.md`.
 5. §0.14 Check for Interrupted Runs mentions BRAINSTORMING resume. Grep: `grep -A 20 '§0.14' agents/fg-100-orchestrator.md | grep -q 'BRAINSTORMING'`.
 6. brainstorm.enabled: false short-circuit logs `[AUTO] brainstorm disabled by config`. Grep: `grep -q 'brainstorm disabled by config' agents/fg-100-orchestrator.md`.
-7. The line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge-shape.` is REMOVED. Grep: `! grep -q 'fg-010-shaper NOT dispatched by orchestrator' agents/fg-100-orchestrator.md`.
+7. The line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge run.` is REMOVED. Grep: `! grep -q 'fg-010-shaper NOT dispatched by orchestrator' agents/fg-100-orchestrator.md`.
 
 Read the actual file. Do not trust the implementer's report. If any check fails, return REVISE with the specific check that failed and the line number.
 ```
@@ -623,7 +623,7 @@ Read the actual file. Do not trust the implementer's report. If any check fails,
 - [ ] **Step 4 — Edit §0.1 Requirement Mode Detection.** Replace the line:
 
   ```
-  `fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge-shape`.
+  `fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge run`.
   ```
 
   with the new dispatch matrix:
@@ -823,7 +823,7 @@ Before declaring Phase C complete:
 - [ ] C2's stage routing matrix matches §3 (feature mode brainstorms; bugfix/migration/bootstrap skip)? Verified by four mode scenario tests.
 - [ ] C2's `brainstorm.enabled: false` short-circuit logs the exact phrase `[AUTO] brainstorm disabled by config`? Verified by grep.
 - [ ] C2's platform-detection skip-on-resume guard checks `state.platform.detected_at` set within current `state.run_id` boundary? Verified by `tests/unit/orchestrator-platform-wiring.bats`.
-- [ ] C2's removal of `fg-010-shaper NOT dispatched by orchestrator — runs via /forge-shape.` is complete (no stale text remains)? Verified by spec-reviewer check 7.
+- [ ] C2's removal of `fg-010-shaper NOT dispatched by orchestrator — runs via /forge run.` is complete (no stale text remains)? Verified by spec-reviewer check 7.
 - [ ] Risk justifications ≥30 words on both tasks? Verified by re-reading the risk-justification paragraph above each task — C1 is 75+ words, C2 is 75+ words.
 - [ ] Commit messages follow Conventional Commits and contain no AI attribution? Verified by `git log -2 --format=%B`.
 
@@ -905,4 +905,4 @@ Phase C produces exactly two commits:
 
 Both commits land sequentially on the same branch as Phases A and B (the consolidation train). C1 must precede C2 because C2 dispatches the agent rewritten in C1 — if C2 lands first, the orchestrator references the old shaper prompt body, which has no Stage 0.5 contract.
 
-Total Phase C deltas: ~610 lines of agent-prompt content rewritten in `agents/fg-010-shaper.md`, ~180 lines added to `agents/fg-100-orchestrator.md` (no removals beyond the single line about `/forge-shape`).
+Total Phase C deltas: ~610 lines of agent-prompt content rewritten in `agents/fg-010-shaper.md`, ~180 lines added to `agents/fg-100-orchestrator.md` (no removals beyond the single line about `/forge run`).

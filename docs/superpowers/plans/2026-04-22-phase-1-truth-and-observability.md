@@ -57,7 +57,7 @@
 - `agents/fg-100-orchestrator.md` — line 1245 filename update; new `§Progress file` pointer.
 - `agents/fg-505-build-verifier.md` — lines 39, 55, 140 filename update + JSONL parsing.
 - `agents/fg-700-retrospective.md` — new `§Trend rollup` section.
-- `skills/forge-status/SKILL.md` — `§Hook Health` rewritten around JSONL; new `§Live Progress` block.
+- `skills/forge-ask status/SKILL.md` — `§Hook Health` rewritten around JSONL; new `§Live Progress` block.
 - `README.md` — `§Quick start` install split; `§Available modules` tier column; `§Troubleshooting` hook-failures row.
 - `CLAUDE.md` — `§Platform requirements`, `§Quick start`, `§Available modules`, `§Gotchas` survival list.
 - `CHANGELOG.md` — one `[Unreleased]` entry under Phase 1.
@@ -534,7 +534,7 @@
      fi
    fi
 
-   log "done. Run /forge-init in a project to complete setup."
+   log "done. Run /forge in a project to complete setup."
    ```
    `chmod +x install.sh`.
 
@@ -654,7 +654,7 @@
        }
    }
 
-   Write-Info 'done. Run /forge-init in a project to complete setup.'
+   Write-Info 'done. Run /forge in a project to complete setup.'
    ```
 
 2. - [ ] **Step 2: Push and verify in CI**
@@ -1986,7 +1986,7 @@
 ### Task 17: Docs: rename `.hook-failures.log` → `.jsonl` across the tree
 
 **Files:**
-- Modify: `agents/fg-100-orchestrator.md`, `agents/fg-505-build-verifier.md`, `shared/logging-rules.md`, `shared/state-schema-fields.md`, `skills/forge-status/SKILL.md`, `shared/hook-design.md` (incl. new §Failure logging), `README.md`
+- Modify: `agents/fg-100-orchestrator.md`, `agents/fg-505-build-verifier.md`, `shared/logging-rules.md`, `shared/state-schema-fields.md`, `skills/forge-ask status/SKILL.md`, `shared/hook-design.md` (incl. new §Failure logging), `README.md`
 - Create: `tests/structural/no-hook-failures-log.bats`
 - Test: `tests/structural/no-hook-failures-log.bats`
 
@@ -2097,7 +2097,7 @@
      - Migration is logged to `.forge/.hook-failures.jsonl` with reason `state_migration:{from}->{to}` (one JSON row per migration event).
      ```
 
-   - **`skills/forge-status/SKILL.md`** §`### Hook Health` — block replacement (parsing recipes change to `jq`):
+   - **`skills/forge-ask status/SKILL.md`** §`### Hook Health` — block replacement (parsing recipes change to `jq`):
 
      before:
      ```
@@ -2107,7 +2107,7 @@
      1. Count total failure entries: `wc -l < .forge/.hook-failures.log`
      2. Count unique failure types: `awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}' .forge/.hook-failures.log | sort -u | wc -l`
      3. Show last 3 failures with timestamps
-     4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
+     4. If count > 10: show warning "High hook failure rate. Run /forge-admin recover diagnose for details."
 
      If `.forge/.hook-failures.log` does not exist or is empty: show "Hooks: healthy (no failures logged)"
      ```
@@ -2119,7 +2119,7 @@
      1. Count total failure entries: `wc -l < .forge/.hook-failures.jsonl`
      2. Count unique hook names: `jq -r '.hook_name' .forge/.hook-failures.jsonl | sort -u | wc -l`
      3. Show last 3 failures with timestamps: `tail -3 .forge/.hook-failures.jsonl | jq -r '"\(.ts)  \(.hook_name) exit=\(.exit_code)"'`
-     4. If count > 10: show warning "High hook failure rate. Run /forge-recover diagnose for details."
+     4. If count > 10: show warning "High hook failure rate. Run /forge-admin recover diagnose for details."
 
      If `.forge/.hook-failures.jsonl` does not exist or is empty: show "Hooks: healthy (no failures logged)"
      ```
@@ -2556,9 +2556,9 @@
       `.forge/run-history-trends.json`.
 
    `.forge/run-history-trends.json` is **regenerated every run** — never
-   append. The file survives `/forge-recover reset`. Consumers:
+   append. The file survives `/forge-admin recover reset`. Consumers:
 
-   - `/forge-status --live` reads the head for a synopsis.
+   - `/forge-ask status --live` reads the head for a synopsis.
    - Phase-1 observability recipes in `shared/observability.md` §Local
      inspection demonstrate `jq`/PowerShell/CMD access.
    ```
@@ -2573,13 +2573,13 @@
 
 ---
 
-### Task 24: Extend `/forge-status` with `--- live ---` section
+### Task 24: Extend `/forge-ask status` with `--- live ---` section
 
 **Files:**
-- Modify: `skills/forge-status/SKILL.md`
+- Modify: `skills/forge-ask status/SKILL.md`
 - Test: CI docs-integrity (no new bats — skill file is descriptive prose)
 
-1. - [ ] **Step 1: Append `§Live Progress` to `skills/forge-status/SKILL.md`**
+1. - [ ] **Step 1: Append `§Live Progress` to `skills/forge-ask status/SKILL.md`**
    After the `§Hook Health` section (already updated in Task 17), add:
    ```markdown
    ### Live progress
@@ -2592,7 +2592,7 @@
    1. Parse via `python3 -c "import json; print(json.load(open('.forge/progress/status.json')))"`.
    2. Print: `Stage: {stage}  Agent: {agent_active or 'idle'}`.
    3. Print elapsed vs timeout: `{elapsed_ms_in_stage}ms / {timeout_ms}ms`.
-   4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-recover diagnose."
+   4. If `(now - updated_at) > 60s` and `(now - state_entered_at) > stage_timeout_ms`: print "Run appears hung — consider /forge-admin recover diagnose."
 
    If `.forge/run-history-trends.json` exists:
    1. Print last 5 runs as a table: run_id, verdict, score, duration_s.
@@ -2654,9 +2654,9 @@
 - Test: `docs-integrity`
 
 1. - [ ] **Step 1: Edit survival bullets**
-   In `shared/state-schema.md`, locate the section listing paths that survive `/forge-recover reset` (it mirrors the CLAUDE.md §Gotchas list). Append the new paths explicitly:
+   In `shared/state-schema.md`, locate the section listing paths that survive `/forge-admin recover reset` (it mirrors the CLAUDE.md §Gotchas list). Append the new paths explicitly:
    ```
-   The following additional paths survive `/forge-recover reset`:
+   The following additional paths survive `/forge-admin recover reset`:
 
    - `.forge/progress/` (live subagent-completion status; written by
      `hooks/post_tool_use_agent.py`).
@@ -2710,7 +2710,7 @@
    (WSL users follow the macOS/Linux path.)
 
 3. - [ ] **Step 3: Append to CLAUDE.md §Gotchas survival bullet**
-   Inside the existing bullet that reads `.forge/wiki/ survives /forge-recover reset...`, update the paragraph listing surviving paths to also include `.forge/progress/`, `.forge/run-history-trends.json`, and the live + gzipped `.hook-failures.jsonl` files. The spec §Documentation Updates rewrite lands verbatim from that list.
+   Inside the existing bullet that reads `.forge/wiki/ survives /forge-admin recover reset...`, update the paragraph listing surviving paths to also include `.forge/progress/`, `.forge/run-history-trends.json`, and the live + gzipped `.hook-failures.jsonl` files. The spec §Documentation Updates rewrite lands verbatim from that list.
 
 4. - [ ] **Step 4: Rewrite README.md §Quick start block**
    Replace the `ln -s …` two-line block (lines 34–46 region) with:
@@ -2723,8 +2723,8 @@
    powershell -ExecutionPolicy Bypass -File install.ps1
 
    # Then, in a project:
-   /forge-init
-   /forge-run Add user dashboard with activity feed
+   /forge
+   /forge run Add user dashboard with activity feed
    ```
    ```
    Keep the Git-submodule <details> alternative below unchanged.
@@ -2858,7 +2858,7 @@
      `.forge/run-history-trends.json` (last 30 runs + last 10 hook failures).
      Support-tier badge system: `docs/support-tiers.md`, generator
      `tests/lib/derive_support_tiers.py`, drift gate in `docs-integrity.yml`.
-     `/forge-status` gains a `--- live ---` section. `shared/observability.md`
+     `/forge-ask status` gains a `--- live ---` section. `shared/observability.md`
      gains `§Local inspection` recipes for bash/pwsh/cmd.
    ```
 

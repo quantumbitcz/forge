@@ -76,7 +76,7 @@ Handoff generation is **deterministic Python**, not an LLM subagent.
   (will be removed at feature ship)
 - Modules: `hooks/_py/handoff/` (writer, resumer, triggers, milestones,
   alerts, search, auto_memory)
-- Skill: `/forge-handoff`
+- Skill: `/forge-admin handoff`
 - Config: `handoff.*` in `shared/preflight-constraints.md`
 - Related ADR: `0008-no-backwards-compatibility-stance.md` (informs schema
   v1.0 rejection of v2.0)

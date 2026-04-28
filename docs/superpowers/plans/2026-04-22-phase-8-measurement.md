@@ -1432,7 +1432,7 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
         error: str | None = None
         try:
             # Auto-bootstrap (mega B) runs init implicitly when .claude/forge.local.md is missing,
-            # so no explicit /forge-init invocation is needed here.
+            # so no explicit /forge invocation is needed here.
             subprocess.run(
                 ["claude", "code", "--non-interactive",
                  "/forge", "run", f"--eval-mode={entry.entry_id}", entry.requirement],

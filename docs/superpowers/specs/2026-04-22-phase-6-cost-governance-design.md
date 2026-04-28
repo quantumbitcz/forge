@@ -131,7 +131,7 @@ if projected > config.cost.ceiling_usd:
     {"label": "Raise ceiling to $35", "description": "Continues run. Records new ceiling in state for this run only."},
     {"label": "Downgrade remaining agents (Recommended)", "description": "Switches premium→standard, standard→fast where safe. Excludes pinned agents and safety-critical reviewers."},
     {"label": "Abort to ship current state", "description": "Runs pre-ship verifier on what's in the worktree, then ships or exits."},
-    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-recover resume."}
+    {"label": "Abort fully", "description": "Stops immediately. Preserves state for /forge-admin recover resume."}
   ]
 }
 ```
@@ -314,7 +314,7 @@ Output appended to `reports/forge-{YYYY-MM-DD}.md`.
 
 ### Cost incident schema (`.forge/cost-incidents/*.json`)
 
-See Component 3. One file per escalation. Appended — never overwritten. Survives `/forge-recover reset` (same policy as `events.jsonl`).
+See Component 3. One file per escalation. Appended — never overwritten. Survives `/forge-admin recover reset` (same policy as `events.jsonl`).
 
 ## Cost Estimation Tables
 
