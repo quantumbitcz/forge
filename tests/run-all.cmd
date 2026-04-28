@@ -1,14 +1,19 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 set "TIER=%~1"
 if "%TIER%"=="" set "TIER=all"
 
+rem Probe candidate bash.exe locations. We use delayed expansion (!VAR!)
+rem because %ProgramFiles(x86)% contains a literal ')' that the cmd parser
+rem treats as the end of an if/else block, which previously broke this
+rem script with "\Git\bin\bash.exe was unexpected at this time."
 set "BASH_EXE="
-if exist "%ProgramFiles%\Git\bin\bash.exe" (
-  set "BASH_EXE=%ProgramFiles%\Git\bin\bash.exe"
-) else if exist "%ProgramFiles(x86)%\Git\bin\bash.exe" (
-  set "BASH_EXE=%ProgramFiles(x86)%\Git\bin\bash.exe"
-) else (
+set "PF=%ProgramFiles%"
+set "PF86=%ProgramFiles(x86)%"
+
+if exist "!PF!\Git\bin\bash.exe" set "BASH_EXE=!PF!\Git\bin\bash.exe"
+if not defined BASH_EXE if exist "!PF86!\Git\bin\bash.exe" set "BASH_EXE=!PF86!\Git\bin\bash.exe"
+if not defined BASH_EXE (
   for /f "delims=" %%I in ('where bash 2^>NUL') do (
     if not defined BASH_EXE set "BASH_EXE=%%I"
   )
@@ -16,12 +21,12 @@ if exist "%ProgramFiles%\Git\bin\bash.exe" (
 
 if not defined BASH_EXE (
   echo ERROR: bash.exe not found. Probed:
-  echo   %ProgramFiles%\Git\bin\bash.exe
-  echo   %ProgramFiles(x86)%\Git\bin\bash.exe
+  echo   !PF!\Git\bin\bash.exe
+  echo   !PF86!\Git\bin\bash.exe
   echo   PATH (via 'where bash')
   echo Install Git for Windows, or expose WSL bash on PATH.
   exit /b 1
 )
 
-"%BASH_EXE%" "%~dp0run-all.sh" %TIER%
+"!BASH_EXE!" "%~dp0run-all.sh" %TIER%
 exit /b %ERRORLEVEL%

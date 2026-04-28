@@ -2,10 +2,14 @@
 """End-to-end dry-run smoke test for forge.
 
 Spawns a minimal typescript+vitest project in a temp directory, runs
-`npm ci --no-audit --no-fund` to install real dev-deps, writes the
+`npm install --no-audit --no-fund` to install real dev-deps, writes the
 plugin-detection output that `/forge` would produce, then drives
 `shared/forge-sim.sh` in dry-run mode against it. Asserts the resulting
 `.forge/state.json` ends in VALIDATED or COMPLETE.
+
+`npm install` (not `npm ci`) is used so the fixture does not have to ship
+a frozen `package-lock.json`; the smoke is concerned with the toolchain
+plumbing, not exact dep pinning.
 
 Scope note: `/forge` itself is a Claude Code skill — it cannot be
 spawned in CI without a Claude Code host. We use a deterministic Python
@@ -145,37 +149,43 @@ def smoke(*, verbose: bool = False) -> int:
                   file=sys.stderr)
             return 1
 
-        # 4b. Real `npm ci` install. Windows NTFS cold-cache can push past 90s;
-        # the CI step-level timeout is 180s on Windows, 90s elsewhere — we use
-        # a generous 240s subprocess timeout here so Python surfaces a clean
-        # TimeoutExpired rather than getting SIGKILL'd by the step timeout.
-        if shutil.which("npm") is None:
+        # 4b. Real `npm install` (not `npm ci`, the fixture ships no lockfile).
+        # Windows NTFS cold-cache can push past 90s; the CI step-level timeout
+        # is 180s on Windows, 90s elsewhere — we use a generous 240s subprocess
+        # timeout here so Python surfaces a clean TimeoutExpired rather than
+        # getting SIGKILL'd by the step timeout.
+        #
+        # On Windows, `npm` is `npm.cmd`. `subprocess.run(["npm", ...])` without
+        # `shell=True` cannot resolve `.cmd` shims, so we resolve through
+        # `shutil.which` (which honours PATHEXT) and pass the absolute path.
+        npm_path = shutil.which("npm")
+        if npm_path is None:
             print("[SKIP] npm not on PATH", file=sys.stderr)
             return 77
-        npm_ci = _run(
-            ["npm", "ci", "--no-audit", "--no-fund"],
+        npm_install = _run(
+            [npm_path, "install", "--no-audit", "--no-fund"],
             cwd=project,
             timeout=240,
         )
-        if npm_ci.returncode != 0:
+        if npm_install.returncode != 0:
             # Classify registry/network failures as SKIP, everything else as FAIL.
-            stderr = (npm_ci.stderr or "")
+            stderr = (npm_install.stderr or "")
             network_markers = ("ETIMEDOUT", "ENOTFOUND", "ECONNREFUSED",
                                "ECONNRESET", "registry.npmjs.org",
                                "network timeout")
             if any(marker in stderr for marker in network_markers):
-                print(f"[SKIP] npm ci network failure:\n{stderr}",
+                print(f"[SKIP] npm install network failure:\n{stderr}",
                       file=sys.stderr)
                 return 77
-            print(f"[FAIL] npm ci exited {npm_ci.returncode}:\n"
-                  f"stdout:\n{npm_ci.stdout}\nstderr:\n{stderr}",
+            print(f"[FAIL] npm install exited {npm_install.returncode}:\n"
+                  f"stdout:\n{npm_install.stdout}\nstderr:\n{stderr}",
                   file=sys.stderr)
             return 1
 
         # 4c. Invoke the fixture's test script to prove the toolchain works
         # end-to-end. `npm test` → `vitest run`.
         npm_test = _run(
-            ["npm", "test", "--silent"],
+            [npm_path, "test", "--silent"],
             cwd=project,
             timeout=NPM_TEST_TIMEOUT,
         )
