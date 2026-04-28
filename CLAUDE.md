@@ -184,7 +184,7 @@ Two superpowers patterns are out of scope: `writing-skills` (forge does not auth
 
 ## Features
 
-35+ optional capabilities (cost governance, judge veto, speculative branches, self-consistency, repo-map PageRank, run history, MCP server, playbooks, property-based tests, flaky management, accessibility/i18n/perf regression, A2A, deployment strategies, contracts, AI quality, output compression, wiki, handoff, …). Per-feature config keys, IDs (F05-F35), categories, and activation state: **`shared/feature-matrix.md`** (auto-regen). Lifecycle: 90d unused → flagged, 180d → removal proposal (`shared/feature-lifecycle.md`).
+45+ optional capabilities (cost governance, judge veto, speculative branches, self-consistency, repo-map PageRank, run history, MCP server, playbooks, property-based tests, flaky management, accessibility/i18n/perf regression, A2A, deployment strategies, contracts, AI quality, output compression, wiki, handoff, …). Per-feature config keys, IDs (F05-F44), categories, and activation state: **`shared/feature-matrix.md`** (auto-regen). Lifecycle: 90d unused → flagged, 180d → removal proposal (`shared/feature-lifecycle.md`).
 
 <!-- FEATURE_MATRIX_START -->
 | Feature | Config | Key details |
@@ -215,12 +215,12 @@ Two superpowers patterns are out of scope: `writing-skills` (forge does not auth
 | Run history store (F29) | `run_history.*` | SQLite at `.forge/run-history.db`; FTS5 transcript index. |
 | MCP server (F30) | `mcp_server.*` | Auto-provisioned by auto-bootstrap (or /forge-admin config wizard) into .mcp.json. |
 | Self-improving playbooks (F31) | `playbooks.refinement.*` | Skill: /forge-admin refine. Proposals reviewed before apply. |
-| Implementer reflection / judges (F32) | `plan.judge.*`, `implementer.reflection.*` | `fg-205` plan-judge + `fg-301` impl-judge; binding REVISE; 2-loop bound. |
+| Implementer reflection (judges) (F32) | `plan.judge.*`, `implementer.reflection.*` | `fg-205` plan-judge + `fg-301` impl-judge; binding REVISE; 2-loop bound. |
 | Self-consistency voting (F33) | `consistency.*` | N=3 majority on validator + PR-rejection classification. |
 | Session handoff (F34) | `handoff.*` | Skill: /forge-admin handoff. Transfers run state to fresh CC session. |
 | Intent verification gate (F35) | `intent_verification.*` | `fg-540-intent-verifier` at end of Stage 5 VERIFY; `fg-590` hard-SHIP-gates on 0 INTENT-MISSED + verified_pct >= strict_ac_required_pct. Default enabled. |
 | Implementer voting (F36) | `impl_voting.*` | Confidence-gated N=2 sampling; `fg-302-diff-judge` AST tiebreak. Default enabled; cost-skip when <30% budget remains. |
-| BRAINSTORMING (F37) | `brainstorm.*` | Always-on for feature mode; `enabled: false` to disable. Seven-step pattern in `fg-010-shaper`. Spec dir `docs/superpowers/specs/` (configurable). State enum `BRAINSTORMING` in `state-schema.md`. |
+| BRAINSTORMING (F37) | `brainstorm.*` | Always-on for feature mode; `enabled: false` to disable. Seven-step pattern in `fg-010-shaper`. Spec dir `docs/superpowers/specs/` (configurable via `brainstorm.spec_dir`). State enum `BRAINSTORMING` in `state-schema.md`. |
 | Transcript mining (F38) | `brainstorm.transcript_mining.*` | F29 FTS5-backed historical context for `fg-010-shaper`. `top_k` default 3 (range 1-10); `max_chars` default 4000. Writes `.forge/brainstorm-transcripts/<run_id>.jsonl`. |
 | Cross-reviewer consistency voting (F39) | `quality_gate.consistency_promotion.*` | >= threshold reviewer agreement (default 3, range 2-9) on a dedup key promotes confidence to HIGH (1.0x weight). Logged as `consistency_promoted: true` on the finding. |
 | Defense-check feedback handling (F40) | `post_run.defense_*` | `fg-710-post-run` per-comment verdict: actionable / wrong / preference. Defense responses posted via platform adapter. State: `state.feedback_decisions[]`; mirror at `.forge/runs/<run_id>/feedback-decisions.jsonl`. Only `actionable` increments `feedback_loop_count`. |
@@ -248,7 +248,7 @@ Two superpowers patterns are out of scope: `writing-skills` (forge does not auth
 Cross-cutting subsystems used by most features:
 - **Confidence** (`confidence.*`): finding HIGH/MED/LOW (1.0/0.75/0.5x); pipeline 4-dim (clarity 0.30, familiarity 0.25, complexity 0.20, history 0.25). Gate: ≥0.7 proceed, ≥0.4 ask, <0.4 → BRAINSTORMING (handled by `fg-010-shaper`). Trust state in `.forge/trust.json`.
 - **Repo-map PageRank** (`code_graph.prompt_compaction.*`, opt-in): `hooks/_py/repomap.py` ranks files by centrality × recency × keyword overlap. `{{REPO_MAP_PACK}}` replaces dir listings in 100/200/300 prompts (~30-50% token savings). Cache: `.forge/ranked-files-cache.json`. Reference: `shared/graph/pagerank-sql.md`.
-- **Cost governance** (`cost.*`, F35): USD ceiling, dispatch-gate projection, soft throttle (80/90% in implementer §5.3b emits `COST-THROTTLE-IMPL`). Dynamic tier downgrade with hardcoded SAFETY_CRITICAL list (210/250/411/412/414/419/500/505/506/590) — never silently skipped. Incidents: `.forge/cost-incidents/<ts>.json`. OTel: `forge.cost.*`.
+- **Cost governance** (`cost.*`): USD ceiling, dispatch-gate projection, soft throttle (80/90% in implementer §5.3b emits `COST-THROTTLE-IMPL`). Dynamic tier downgrade with hardcoded SAFETY_CRITICAL list (210/250/411/412/414/419/500/505/506/590) — never silently skipped. Incidents: `.forge/cost-incidents/<ts>.json`. OTel: `forge.cost.*`.
 - **Judges** (F32, `plan.judge.*`, `implementer.reflection.*`): `fg-205` (plan-scoped) and `fg-301` (per-task) issue binding REVISE. 2-loop bound; 3rd REVISE → AskUserQuestion (interactive) or auto-abort (autonomous). Categories: `REFLECT-*`, `JUDGE-TIMEOUT`.
 - **Self-consistency voting** (F33, `consistency.*`): N=3 majority + soft tiebreak on shaper intent, `INCONCLUSIVE` validator verdicts, PR-rejection classification. Cache `.forge/consistency-cache.jsonl` survives reset.
 - **Intent Verification Gate** (F35, `intent_verification.*`): `fg-540-intent-verifier` at end of Stage 5 VERIFY; fresh-context probes each AC; `fg-590` hard-SHIP-gates on 0 INTENT-MISSED + `verified_pct >= strict_ac_required_pct`. Default `enabled: true`, `strict_ac_required_pct: 100`. Categories: `INTENT-MISSED`, `INTENT-PARTIAL`, `INTENT-AMBIGUOUS`, `INTENT-UNVERIFIABLE`, `INTENT-CONTRACT-VIOLATION`.

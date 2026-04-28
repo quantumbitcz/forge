@@ -50,10 +50,19 @@ FEATURES: list[tuple[str, str, str]] = [
     ("F29", "Run history store", "conditional (run_history.enabled)"),
     ("F30", "MCP server", "conditional (mcp_server.enabled)"),
     ("F31", "Self-improving playbooks", "conditional (playbooks.refinement.enabled)"),
-    ("F32", "Implementer reflection", "conditional (implementer.reflection.enabled)"),
+    ("F32", "Implementer reflection (judges)", "conditional (implementer.reflection.enabled)"),
     ("F33", "Self-consistency voting", "conditional (consistency.enabled)"),
     ("F34", "Session handoff", "conditional (handoff.enabled)"),
-    ("F35", "Speculative plan branches", "conditional (speculation.enabled)"),
+    ("F35", "Intent verification gate", "enabled (intent_verification.enabled default true)"),
+    ("F36", "Implementer voting", "enabled (impl_voting.enabled default true)"),
+    ("F37", "BRAINSTORMING", "enabled (brainstorm.enabled default true)"),
+    ("F38", "Transcript mining", "conditional (brainstorm.transcript_mining.enabled)"),
+    ("F39", "Cross-reviewer consistency voting", "conditional (quality_gate.consistency_promotion.enabled)"),
+    ("F40", "Defense-check feedback handling", "conditional (post_run.defense_enabled)"),
+    ("F41", "Hypothesis branching for bugs", "conditional (bug.hypothesis_branching.enabled)"),
+    ("F42", "Multi-VCS platform abstraction", "auto (detected at PREFLIGHT)"),
+    ("F43", "Structured PR finishing", "enabled (pr_builder default open-pr-draft)"),
+    ("F44", "Stale-worktree detection", "enabled (worktree.stale_after_days default 30)"),
 ]
 
 START_SENTINEL = "<!-- FEATURE_MATRIX_START -->"

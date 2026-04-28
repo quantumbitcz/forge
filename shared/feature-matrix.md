@@ -36,10 +36,19 @@ Missing DB or table → every cell is `unknown`.
 | F29 | Run history store | conditional (run_history.enabled) | unknown |
 | F30 | MCP server | conditional (mcp_server.enabled) | unknown |
 | F31 | Self-improving playbooks | conditional (playbooks.refinement.enabled) | unknown |
-| F32 | Implementer reflection | conditional (implementer.reflection.enabled) | unknown |
+| F32 | Implementer reflection (judges) | conditional (implementer.reflection.enabled) | unknown |
 | F33 | Self-consistency voting | conditional (consistency.enabled) | unknown |
 | F34 | Session handoff | conditional (handoff.enabled) | unknown |
-| F35 | Speculative plan branches | conditional (speculation.enabled) | unknown |
+| F35 | Intent verification gate | enabled (intent_verification.enabled default true) | unknown |
+| F36 | Implementer voting | enabled (impl_voting.enabled default true) | unknown |
+| F37 | BRAINSTORMING | enabled (brainstorm.enabled default true) | unknown |
+| F38 | Transcript mining | conditional (brainstorm.transcript_mining.enabled) | unknown |
+| F39 | Cross-reviewer consistency voting | conditional (quality_gate.consistency_promotion.enabled) | unknown |
+| F40 | Defense-check feedback handling | conditional (post_run.defense_enabled) | unknown |
+| F41 | Hypothesis branching for bugs | conditional (bug.hypothesis_branching.enabled) | unknown |
+| F42 | Multi-VCS platform abstraction | auto (detected at PREFLIGHT) | unknown |
+| F43 | Structured PR finishing | enabled (pr_builder default open-pr-draft) | unknown |
+| F44 | Stale-worktree detection | enabled (worktree.stale_after_days default 30) | unknown |
 <!-- FEATURE_MATRIX_END -->
 
 See `shared/feature-lifecycle.md` for the 90/180-day deprecation policy.
