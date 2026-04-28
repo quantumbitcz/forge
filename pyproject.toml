@@ -6,6 +6,12 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "Proprietary" }
 
+[tool.setuptools]
+# Metadata-only project: forge ships its tools as repo-rooted scripts/modules
+# (under hooks/, shared/, tests/), not as an importable package. Setuptools'
+# auto-discovery would otherwise pick up multiple top-level dirs and refuse.
+py-modules = []
+
 [project.optional-dependencies]
 otel = [
   "opentelemetry-api>=1.41.0",
