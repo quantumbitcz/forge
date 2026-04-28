@@ -30,10 +30,16 @@ _recover_subcommand_block() {
 }
 
 @test "forge-admin recover subcommand advertises all 5 verbs" {
+  # Post-Mega-B: verbs are documented as `#### Action: <verb>` subsections
+  # within the consolidated recover subcommand. The pipe-separated list at
+  # the top of the block ("Actions: `diagnose | repair | reset | ...`") wraps
+  # the whole list in a single backtick-pair, so a per-verb backtick grep
+  # would only match the leading verb. Check both forms.
   local body
   body="$(_recover_subcommand_block)"
   for sc in diagnose repair reset resume rollback; do
-    echo "$body" | grep -q "\`$sc\`" || { echo "Missing subcommand doc: $sc"; return 1; }
+    echo "$body" | grep -qE "(#### Action: $sc|\\| $sc \\||\` $sc \\||$sc \\||\\| $sc \`|\`$sc\`)" \
+      || { echo "Missing subcommand doc: $sc"; return 1; }
   done
 }
 

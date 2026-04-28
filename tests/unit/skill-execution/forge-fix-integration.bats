@@ -16,8 +16,10 @@ _fix_subcommand_block() {
   ' "$SKILL_FILE"
 }
 
-@test "forge-fix-integration: fix subcommand documents forge.local.md prerequisite" {
-  run bash -c "$(declare -f _fix_subcommand_block); SKILL_FILE='$SKILL_FILE'; _fix_subcommand_block | grep -qi 'forge.local.md\|forge-init\|forge\.local\|prerequisit\|require'"
+@test "forge-fix-integration: parent /forge skill documents forge.local.md prerequisite" {
+  # Post-Mega-B: forge.local.md gating lives in the shared prerequisites
+  # block at the top of skills/forge/SKILL.md, not duplicated per-subcommand.
+  run grep -qi 'forge.local.md\|forge\.local' "$SKILL_FILE"
   assert_success
 }
 

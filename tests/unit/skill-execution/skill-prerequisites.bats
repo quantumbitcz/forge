@@ -16,12 +16,12 @@ _subcommand_block() {
   ' "$skill_file"
 }
 
-@test "skill-prerequisites: forge pipeline subcommands document prerequisites" {
-  local subs=(run fix sprint review)
-  for sc in "${subs[@]}"; do
-    run bash -c "$(declare -f _subcommand_block); _subcommand_block '$SKILLS_DIR/forge/SKILL.md' '$sc' | grep -qi 'prerequisit\|before\|require\|must\|STOP'"
-    assert_success
-  done
+@test "skill-prerequisites: parent /forge skill documents shared prerequisites" {
+  # Post-Mega-B: prerequisites (git repo, forge.local.md presence) live in
+  # the shared prerequisites block at the top of skills/forge/SKILL.md, not
+  # duplicated per-subcommand. The block applies to every subcommand.
+  run grep -qiE 'Shared prerequisites|forge\.local\.md|git rev-parse|STOP' "$SKILLS_DIR/forge/SKILL.md"
+  assert_success
 }
 
 @test "skill-prerequisites: forge skill checks for existing config" {
@@ -34,7 +34,11 @@ _subcommand_block() {
   assert_success
 }
 
-@test "skill-prerequisites: forge deploy subcommand checks for dirty tree" {
-  run bash -c "$(declare -f _subcommand_block); _subcommand_block '$SKILLS_DIR/forge/SKILL.md' deploy | grep -qi 'dirty\|uncommit\|clean'"
+@test "skill-prerequisites: forge deploy subcommand parses environment input" {
+  # Post-Mega-B: dirty-tree gating moved into fg-620-deploy-verifier and the
+  # underlying deploy tooling (kubectl/helm/argocd) configured via
+  # forge.local.md. The skill body just parses the environment and
+  # dispatches; the verifier owns the pre-deploy guardrails.
+  run bash -c "$(declare -f _subcommand_block); _subcommand_block '$SKILLS_DIR/forge/SKILL.md' deploy | grep -qiE 'staging|production|preview|environment'"
   assert_success
 }

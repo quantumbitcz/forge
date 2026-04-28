@@ -30,9 +30,12 @@ _subcommand_lines() {
 }
 
 @test "skill-completeness: forge verify subcommand has content" {
+  # Post-Mega-B: the verify subcommand is a terse dispatcher; the bulk of
+  # build/lint/test orchestration lives in the underlying agents and
+  # forge.local.md config. Threshold reflects the consolidated surface.
   local body_lines
   body_lines="$(_subcommand_lines "$SKILLS_DIR/forge/SKILL.md" verify)"
-  [[ "$body_lines" -ge 10 ]]
+  [[ "$body_lines" -ge 5 ]]
 }
 
 @test "skill-completeness: forge-admin compress subcommand has content" {
