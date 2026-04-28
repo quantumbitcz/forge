@@ -405,11 +405,7 @@ spec-compliance check.)
 
 ### TDD ordering
 
-For every implementation task, the immediately preceding task in the plan MUST
-be `Type: test` covering the same component. The `Depends on:` field on the
-implementation task MUST reference the test task's ID. Refactor tasks MUST
-come after the corresponding implementation task and inherit its test as the
-regression gate.
+For every implementation task, the immediately preceding task in the plan MUST be `Type: test` covering the same component. The `Depends on:` field on the implementation task MUST reference the test task's ID. Refactor tasks MUST come after the corresponding implementation task and inherit its test as the regression gate.
 
 The validator (fg-210) rejects plans missing this ordering with verdict
 `REVISE`.

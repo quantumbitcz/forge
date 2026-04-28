@@ -335,7 +335,7 @@ Spec sections are documented in step 5 above. The output is the spec file at `st
 
 ---
 
-## Forbidden actions
+## Forbidden Actions
 
 - **Do NOT proceed with contradictory requirements** (step 2 contradiction detection is mandatory).
 - **Do NOT implement code** — spec only.

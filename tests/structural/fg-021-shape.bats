@@ -28,22 +28,22 @@ F021="$PLUGIN_ROOT/agents/fg-021-hypothesis-investigator.md"
 }
 
 @test "fg-021 tools list contains Read" {
-  run grep -F '- Read' "$F021"
+  run grep -F -- '- Read' "$F021"
   assert_success
 }
 
 @test "fg-021 tools list contains Grep" {
-  run grep -F '- Grep' "$F021"
+  run grep -F -- '- Grep' "$F021"
   assert_success
 }
 
 @test "fg-021 tools list contains Glob" {
-  run grep -F '- Glob' "$F021"
+  run grep -F -- '- Glob' "$F021"
   assert_success
 }
 
 @test "fg-021 tools list contains Bash" {
-  run grep -F '- Bash' "$F021"
+  run grep -F -- '- Bash' "$F021"
   assert_success
 }
 
