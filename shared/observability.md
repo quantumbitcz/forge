@@ -190,3 +190,18 @@ stay under that ceiling.
 ### OTel namespace convention
 
 All forge-emitted OTel span attributes use the `forge.*` root namespace: `forge.run_id`, `forge.stage`, `forge.agent_id`, `forge.finding.dedup_key`, `forge.judge.verdict`, etc. This convention is load-bearing for Phase 6 and Phase 7. Phase 5 adds no new spans — reviewers remain implicit in the pipeline span tree — but the convention is restated here so downstream phases can rely on it.
+
+### Benchmark spans (Phase 8)
+
+`forge.benchmark.run` — one span per corpus-entry execution.
+
+| Attribute | Type | Source |
+|---|---|---|
+| `forge.benchmark.entry_id` | string | corpus directory name |
+| `forge.benchmark.os` | string | matrix cell OS |
+| `forge.benchmark.model` | string | matrix cell model ID |
+| `forge.benchmark.solved` | bool | solve predicate result |
+| `forge.benchmark.duration_s` | int | wall-clock seconds |
+| `forge.benchmark.cost_usd` | float | Phase 6 `state.cost.estimated_cost_usd` |
+
+Emitted by `tests/evals/benchmark/otel_emit.py:emit_benchmark_span` via `hooks/_py/otel.replay`.

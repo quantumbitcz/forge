@@ -96,3 +96,7 @@ A deliberately regression-inducing PR (e.g. make the orchestrator skip VERIFY) m
 ## Do not hand-edit `leaderboard.md`
 
 `leaderboard.md` is rewritten on every `master` push by `.github/workflows/evals.yml`. If you need to change its shape, edit `runner/report.py` and push.
+
+## See also
+
+- `tests/evals/benchmark/` — weekly measurement tier (real features, cross-OS, cross-model). This harness stays as the fast per-PR smoke tier.
