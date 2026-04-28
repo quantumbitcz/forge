@@ -5,6 +5,74 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.2.0] — Mega D: Pattern Parity Uplifts
+
+### Added (Phase D1 — Planner writing-plans parity)
+
+- **`agents/fg-200-planner.md`** rewritten (~595 lines) to mirror the `superpowers:writing-plans` pattern. Per-task structure: `**Type:** test|implementation|refactor`, `**Implementer prompt:** {block}`, `**Spec-reviewer prompt:** {block}`, `**ACs covered:**`, `**Risk:** low|medium|high`, `**Risk justification:**` (≥30 words for high-risk). Bugfix-mode reads `state.bug.fix_gate_passed` (set by D6) and emits `BLOCKED-BUG-INCONCLUSIVE` verdict if false.
+- **`shared/prompts/implementer-prompt.md`** + **`shared/prompts/spec-reviewer-prompt.md`** — canonical dispatch templates with placeholders (`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}`). Reused across D-phase commits for consistency.
+
+### Added (Phase D2 — Validator enforcement)
+
+- **`agents/fg-210-validator.md`** gains 6 new structural rules: W1 (TDD ordering: every implementation task has a preceding test task), W2 (every task has an implementer prompt — extended to reject unsubstituted `{PLACEHOLDER}` text per review), W3 (every test task has a spec-reviewer prompt), W4 (Risk field present), W5 (Risk justification ≥30 words for high-risk), W6 (bugfix-mode fix-gate read enforcement).
+
+### Added (Phase D3 — Reviewer prose-output uplift)
+
+- All 9 reviewer agents (`fg-410`, `fg-411`, `fg-412`, `fg-413`, `fg-414`, `fg-416`, `fg-417`, `fg-418`, `fg-419`) emit a structured prose report alongside the findings JSON. Sections: `## Strengths`, `## Issues` (with `### Critical (Must Fix)` / `### Important (Should Fix)` / `### Minor (Nice to Have)` subheadings), `## Recommendations`, `## Assessment` (`**Ready to merge:**` + `**Reasoning:**`). Path: `.forge/runs/<run_id>/reports/<reviewer>.md`.
+- **`agents/fg-400-quality-gate.md` §5.5** — orchestrates report writing: pre-creates `reports/` dir, passes `<run_id>` in each reviewer brief, post-dispatch verifies report-file presence (emits `REPORT-MISSING` WARNING for absences), surfaces report paths in stage notes.
+- All 9 reviewers gain `Write` in their `tools:` frontmatter (caught at review — was missing from D3, blocked the contract at runtime).
+
+### Added (Phase D4 — Cross-reviewer consistency voting)
+
+- **`agents/fg-400-quality-gate.md` §7.5** — post-dedup, pre-scoring promotion pass. Findings keyed by `(file, line, category)` and surfaced by `quality_gate.consistency_promotion.threshold` (default 3, range 2-9) distinct reviewers receive `consistency_promoted: true` + `confidence_weight` boost. `quality_gate.consistency_promotion.enabled: false` short-circuits.
+
+### Added (Phase D5 — Post-run: receiving-code-review + multi-platform)
+
+- **`agents/fg-710-post-run.md`** rewritten — defense-check sub-agent dispatch classifies each PR comment as `actionable | wrong | preference`. `feedback_loop_count` increments ONLY on `actionable` verdicts. Writes to `.forge/runs/<id>/feedback-decisions.jsonl`.
+- **Multi-platform support** via `state.platform.name` (consumes Mega C2's PREFLIGHT detection). Wires up `shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py` (replaces the A3 `NotImplementedError` stubs). GitHub: `gh` CLI + urllib fallback (GHE-aware). GitLab: `glab` CLI + urllib (self-hosted-aware). Bitbucket: Basic auth (app password). Gitea: token auth (Forgejo-compat).
+- **`addressed` enum** extended with `acknowledged_local_only` (preference verdict + adapter unavailable; mirrors `defended_local_only`) and `skipped_sub_agent_failure` (sub-agent timeout/error path; does NOT increment `feedback_loop_count` — prevents flaky sub-agent escalation noise).
+
+### Added (Phase D6 — Hypothesis branching + Bayesian pruning)
+
+- **`agents/fg-020-bug-investigator.md`** rewritten (475 lines) — hypothesis register schema persisted to `state.bug.hypotheses[]` (8 fields: id, statement, falsifiability_test, evidence_required, status, passes_test, confidence, posterior). Parallel sub-investigator dispatch via single Task tool-use block (up to 3 concurrent fg-021 invocations). Bayesian pruning: prior × likelihood → posterior; prune below 0.10 threshold. Fix gate at posterior ≥ 0.75 → `state.bug.fix_gate_passed = true`. `bug.hypothesis_branching.enabled: false` short-circuits to single-hypothesis serial mode (with non-tested hypothesis exclusion to prevent posterior dilution — fixed at review).
+- **`agents/fg-021-hypothesis-investigator.md`** (new, 101 lines) — Tier-4 single-purpose agent. Tests one hypothesis; returns evidence + likelihood update with `confidence: high|medium|low`. Tools: `Read, Grep, Glob, Bash`. No UI tier capabilities.
+- Agent count: 50 → 51.
+
+### Added (Phase D7 — PR builder finishing-dialog)
+
+- **`agents/fg-600-pr-builder.md`** rewritten — adopts `superpowers:finishing-a-development-branch` pattern. AskUserQuestion dialog with 5 strategies: `[open-pr]` (default), `[open-pr-draft]`, `[direct-push]`, `[stash]`, `[abandon]`. Cleanup checklist invocation. Abandon-confirmation gate (second confirmation required before destructive ops). `pr_builder.{default_strategy, cleanup_checklist_enabled}` config keys.
+
+### Added (Phase D8 — Strong-agent polish)
+
+- **`agents/fg-300-implementer.md`** — TEST-NOT-FAILING check (red-before-green). Scope-gated: applies to Type=implementation tasks (where prior dispatch wrote the test); §5.2's RED-then-GREEN flow handles unified-mode dispatches.
+- **`agents/fg-301-implementer-judge.md`** — defers to fg-300's TEST-NOT-FAILING (no double-flagging).
+- **`agents/fg-590-pre-ship-verifier.md`** — references the canonical `shared/verification-evidence.md` evidence schema (the conflicting §10 schema introduced and removed during review).
+- **`agents/fg-100-orchestrator.md`** — parallel-dispatch single-block pattern + per-task checkpoint (per-task remains canonical; the every-3-tasks block is a review-cadence note, not a replacement).
+- **`agents/fg-101-worktree-manager.md`** — stale-worktree detection (mtime > `worktree.stale_after_days` default 30, range 1-365 → `WORKTREE-STALE` finding).
+
+### Added (Phase D9 — Pattern-parity tests)
+
+- 11 structural bats files covering planner TDD ordering, planner risk justification, reviewer prose shape, fg-020 hypothesis register, fg-020 parallel dispatch, fg-021 frontmatter shape (now asserts T4 booleans), fg-600 PR finishing dialog, fg-710 defense check, orchestrator parallel-dispatch, fg-300 test-must-fail-first, fg-101 worktree-stale.
+- 5 scenario bats files covering cross-reviewer consistency promotion, defense flow per-platform, hypothesis branching, fix-gate thresholds, PR builder dialog.
+- 7 fixture artifacts under `tests/fixtures/phase-D/` (synthetic broken plans + multi-reviewer findings JSON).
+- **`tests/structural/test-floor-counts.bats`** (new) — wires `MIN_*_TESTS` constants from `module-lists.bash` into actual file-count enforcement.
+- The original D9 commit shipped with broken parser logic in `planner-tdd-ordering.bats` (awk `next` + rule order bug skipped non-last tasks; `sh -c` couldn't see bats functions); fixed at review (`3883df2e`). Several agent/test grep-pattern mismatches also fixed (case-sensitivity, multi-line co-occurrence, `default` casing).
+
+### Added (Cross-cutting — caught at review)
+
+- **`shared/checks/category-registry.json`** — 4 new wildcard entries: `WORKTREE-*`, `REPORT-*`, `FEEDBACK-*`, `BRANCH-*`.
+- **`shared/agents.md`** — agent count bumped to 51; fg-021 added to registry with T4 tier.
+- **`tests/lib/module-lists.bash`** — `MIN_AGENTS=48 → 51`. `MIN_*_TESTS` reseated to current floors and wired in.
+- **AC-S005 leak fix** — `agents/fg-100-orchestrator.md:156` rephrased to use post-Mega-B surface (`/forge run` etc.).
+
+### Notes
+
+- **Two reviewers, two failure classes.** Reviewer A flagged 3 CRITICAL agent-prompt contract gaps (reviewers without Write tool, fg-590 evidence-schema conflict, missing enum value). Reviewer B flagged 9 CRITICAL bugs in the D9 test layer itself — bats parsers that didn't actually parse, regexes that couldn't match, and a test that never tested its target agent. Both classes addressed in 4 fix commits (`aa86b037`, `3883df2e`, `76217f4f`, `f6960ec0`).
+- **Mega E plan agent count drift** corrected at this release: plan said 48 → 49; reality was 50 → 51 (Phase 7's fg-302 + fg-540 missing from plan's enumeration; Mega D added fg-021).
+- **Sub-agent timeout policy** — fg-710 now logs + writes `addressed: "skipped_sub_agent_failure"` and does NOT increment `feedback_loop_count` on sub-agent failure. Prior policy ("default to actionable") would have inflated escalation counters on flaky sub-agents.
+- **Bayes math in non-branching mode** — when `bug.hypothesis_branching.enabled: false`, untested hypotheses are excluded from posterior computation. Without this fix, a tested hypothesis with likelihood 0.95 would be diluted below the 0.75 fix-gate threshold by untested-hypothesis priors.
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core`) remain unstaged across the v5.2.0 release window per existing convention.
+
 ## [5.1.0] — Mega C: Brainstorming Behavior
 
 ### Added (Phase C1 — Shaper rewrite)
