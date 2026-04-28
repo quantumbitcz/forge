@@ -5,7 +5,10 @@ load '../helpers/test-helpers'
 
 SERVER_FILE="$PLUGIN_ROOT/shared/mcp-server/forge-mcp-server.py"
 REQUIREMENTS="$PLUGIN_ROOT/shared/mcp-server/requirements.txt"
-INIT_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
+# Post-Mega-B: /forge-init is retired. The MCP server is auto-provisioned by
+# auto-bootstrap (per CLAUDE.md F30) and documented in shared/mcp-provisioning.md.
+CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
+MCP_PROVISIONING="$PLUGIN_ROOT/shared/mcp-provisioning.md"
 
 # ---------------------------------------------------------------------------
 # 1. Server file exists and has valid Python syntax
@@ -98,11 +101,15 @@ INIT_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
 }
 
 # ---------------------------------------------------------------------------
-# 6. Integration: forge-init references MCP server
+# 6. Integration: auto-bootstrap surface references MCP server provisioning.
+#    Mega B retired /forge-init; CLAUDE.md F30 documents auto-provisioning,
+#    and shared/mcp-provisioning.md owns the flow contract.
 # ---------------------------------------------------------------------------
-@test "mcp-server: forge-init skill references MCP server provisioning" {
-  grep -qi "mcp.*server\|mcp-server" "$INIT_SKILL" \
-    || fail "forge-init SKILL.md does not reference MCP server provisioning"
+@test "mcp-server: auto-bootstrap references MCP server provisioning" {
+  grep -qiE "MCP server|mcp-server|mcp_server" "$CLAUDE_MD" \
+    || fail "CLAUDE.md does not reference MCP server provisioning"
+  [[ -f "$MCP_PROVISIONING" ]] \
+    || fail "shared/mcp-provisioning.md missing — required by Mega-B-era auto-bootstrap"
 }
 
 # ---------------------------------------------------------------------------

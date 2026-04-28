@@ -41,16 +41,11 @@ setup() {
 }
 
 @test "writes skills list --dry-run in Flags" {
-  # Writes skills per shared/skill-contract.md §4.
-  # Skill consolidation removed forge-deep-health (merged into /forge review --scope all --fix),
-  # forge-graph-init/rebuild (merged into /forge-admin graph write-capable subcommands), and
-  # /forge verify now gains writes via --all but stays listed under read-only since the
-  # default subcommand is read-only.
-  local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
-                forge-compress forge-config forge-deploy \
-                forge-docs-generate forge-fix forge-graph forge-handoff \
-                forge-init forge-migration forge-playbook-refine forge-recover \
-                forge-review forge-run forge-shape forge-sprint)
+  # Post-Mega-B consolidation: 27 forge-* skills retired and merged into 3
+  # top-level skills. The two write-capable surfaces are /forge (universal
+  # entry, dispatches every write verb) and /forge-admin (state management,
+  # config, recovery, automation, etc.). Both must list --dry-run in Flags.
+  local writes=(forge forge-admin)
   for s in "${writes[@]}"; do
     local f="$PLUGIN_ROOT/skills/$s/SKILL.md"
     [ -f "$f" ] || { echo "Missing skill: $s"; return 1; }
@@ -60,12 +55,8 @@ setup() {
 }
 
 @test "read-only skills list --json in Flags" {
-  # Skill consolidation removed forge-codebase-health (merged into /forge review --scope all),
-  # forge-graph-{debug,query,status} (merged into /forge-admin graph), and
-  # forge-config-validate (merged into /forge-ask status).
-  local readonly_skills=(forge-ask forge-history forge-insights forge-playbooks \
-                         forge-profile forge-security-audit forge-status \
-                         forge-tour forge-verify)
+  # Post-Mega-B consolidation: the read-only surface lives under /forge-ask.
+  local readonly_skills=(forge-ask)
   for s in "${readonly_skills[@]}"; do
     local f="$PLUGIN_ROOT/skills/$s/SKILL.md"
     [ -f "$f" ] || { echo "Missing skill: $s"; return 1; }
@@ -74,10 +65,11 @@ setup() {
   done
 }
 
-@test "exactly 28 skill directories exist" {
+@test "exactly 3 skill directories exist (post-Mega-B consolidation)" {
+  # /forge, /forge-ask, /forge-admin. See CLAUDE.md §"Skill selection guide".
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  [ "$count" -eq 28 ]
+  [ "$count" -eq 3 ]
 }
 
 @test "no dangling references to deleted skills" {

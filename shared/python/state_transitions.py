@@ -91,6 +91,21 @@ def build_table(g, state, conv, conv_phase):
          'PREFLIGHT', '4', 'interrupted_run_detected (git drift)',
          {}, {}),
 
+        # === BRAINSTORMING (state-schema v2.1.0 mega-consolidation) ===
+        # Row 2a: BRAINSTORMING + brainstorm_complete -> EXPLORING
+        # Spec written and approved by fg-010-shaper; orchestrator proceeds to
+        # EXPLORING with `state.brainstorm.spec_path` populated for the planner.
+        ('BRAINSTORMING', 'brainstorm_complete',
+         lambda: True,
+         'EXPLORING', '2a', 'brainstorm_complete (spec approved)',
+         {}, {}),
+        # Row 2c: BRAINSTORMING + resume_with_cache -> BRAINSTORMING
+        # Self-loop — re-enter shaper with the cached spec on resume.
+        ('BRAINSTORMING', 'resume_with_cache',
+         lambda: True,
+         'BRAINSTORMING', '2c', 'resume_with_cache (self-loop, cache hit)',
+         {}, {}),
+
         # === EXPLORING ===
         # Row 5: EXPLORING + explore_complete + scope < threshold -> PLANNING
         ('EXPLORING', 'explore_complete',

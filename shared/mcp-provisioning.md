@@ -1,6 +1,6 @@
 # MCP Auto-Provisioning
 
-Defines how forge-init automatically provisions MCP servers that the pipeline depends on. Covers the decision flow, configuration schema, version resolution, and graceful degradation on failure.
+Defines how auto-bootstrap (the `/forge` first-run trigger) automatically provisions MCP servers that the pipeline depends on. Covers the decision flow, configuration schema, version resolution, and graceful degradation on failure.
 
 ---
 
@@ -60,7 +60,7 @@ Field reference:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `required` | bool | yes | If `true`, pipeline aborts when MCP is unavailable after provisioning attempts. If `false`, degrades gracefully. |
-| `auto_install` | bool | yes | Whether forge-init should attempt automatic installation. |
+| `auto_install` | bool | yes | Whether auto-bootstrap (the `/forge` first-run trigger) should attempt automatic installation. |
 | `package` | string | yes | npm package name. Version is resolved at runtime — never hardcoded here. |
 | `prerequisites` | list | yes | System dependencies that must be available before install. Supported values: `docker`. Empty list means no prerequisites. |
 | `verify` | string | no | Command or Cypher query to confirm the MCP is reachable after install. Empty string skips verification. |
@@ -112,7 +112,7 @@ MCP provisioning failures must never block the initialization flow. Apply the fo
 
 | Failure scenario | Response |
 |-----------------|----------|
-| Installation failure | Log a WARNING. Skip this MCP. Continue with remaining MCPs and forge-init phases. Recovery engine is NOT invoked. |
+| Installation failure | Log a WARNING. Skip this MCP. Continue with remaining MCPs and auto-bootstrap (the `/forge` first-run trigger) phases. Recovery engine is NOT invoked. |
 | Verification failure | Retry verification once (no re-install). If still failing, log a WARNING and skip. Mark the MCP as `degraded` in `integrations` state. |
 | Missing prerequisites | Ask user via `AskUserQuestion`: install the prerequisite now, or skip this MCP. If user skips, continue without it. |
 | No internet access | Skip all MCPs with `auto_install: true`. Log a single INFO note: "No internet — MCP auto-provisioning skipped." |
@@ -126,7 +126,7 @@ The recovery engine is NOT invoked for MCP provisioning failures. Handle all fai
 
 MCPs with `auto_install: false` (e.g., Linear) require user-supplied credentials before the pipeline can use them. Credential configuration flow:
 
-1. **During `/forge`:** If a non-auto-install MCP is listed in the `mcps:` config, forge-init prompts the user via `AskUserQuestion`:
+1. **During `/forge`:** If a non-auto-install MCP is listed in the `mcps:` config, auto-bootstrap (the `/forge` first-run trigger) prompts the user via `AskUserQuestion`:
    - Header: "MCP Configuration Required"
    - Question: "{MCP name} requires credentials. How would you like to configure?"
    - Options:

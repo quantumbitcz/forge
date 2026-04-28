@@ -8,14 +8,14 @@ STATE="$PLUGIN_ROOT/shared/state-schema.md"
 STATE_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 
 # ---------------------------------------------------------------------------
-# 1. Schema still carries a recognisable semver marker (1.x.0).
+# 1. Schema still carries a recognisable semver marker (1.x.0 or 2.x.0).
 #
-# Note: the current schema is at v1.10.0 (session-handoff tracking).
-# Speculation fields were added additively without bumping the version,
-# so we just assert the version marker still exists.
+# Note: the current schema is at v2.1.0 (mega-consolidation, 2026-04-27).
+# v2.0.0 was a hard cut from the 1.x series. Speculation fields are additive
+# and survived the bump, so we just assert any major-version marker exists.
 # ---------------------------------------------------------------------------
-@test "state schema declares a 1.x.0 version marker" {
-  grep -Eq '1\.[0-9]+\.0' "$STATE"
+@test "state schema declares a major-version marker" {
+  grep -Eq '[12]\.[0-9]+\.0' "$STATE"
 }
 
 # ---------------------------------------------------------------------------

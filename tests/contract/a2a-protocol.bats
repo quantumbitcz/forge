@@ -55,11 +55,14 @@ A2A_PROTOCOL="$PLUGIN_ROOT/shared/a2a-protocol.md"
 }
 
 # ---------------------------------------------------------------------------
-# 7. Agent card generation documents forge-init as creator
+# 7. Agent card generation documents the auto-bootstrap entry as creator.
+#    Mega B retired /forge-init; auto-bootstrap on the first /forge invocation
+#    now writes the agent card (per CLAUDE.md §"Init"). The protocol doc must
+#    name a current creator surface (`/forge` or `bootstrap-detect`).
 # ---------------------------------------------------------------------------
-@test "a2a-protocol: forge-init creates agent card" {
-  grep -q "forge-init" "$A2A_PROTOCOL" \
-    || fail "forge-init not mentioned as agent card creator"
+@test "a2a-protocol: documents agent-card creator surface" {
+  grep -qE "/forge\b|bootstrap-detect|auto.bootstrap" "$A2A_PROTOCOL" \
+    || fail "agent-card creator (auto-bootstrap / /forge) not mentioned in a2a-protocol"
 }
 
 # ---------------------------------------------------------------------------

@@ -50,8 +50,18 @@ jsonschema.validate(json.load(open('$FIXTURES/progress-status-sample.json')), sc
 import json, jsonschema, os
 base = '$SCHEMAS'
 schema = json.load(open(os.path.join(base,'run-history-trends.schema.json')))
+hook_schema = json.load(open(os.path.join(base,'hook-failures.schema.json')))
 from jsonschema import RefResolver
-resolver = RefResolver(base_uri='file://' + base + '/', referrer=schema)
+# Both schemas declare absolute \$id URLs; the run-history-trends schema also
+# uses a relative \$ref ('hook-failures.schema.json'). RefResolver needs both
+# the absolute \$id and the relative reference in its store, otherwise it
+# falls through to remote HTTP fetch (which fails offline).
+store = {
+    schema.get('\$id', ''): schema,
+    hook_schema.get('\$id', ''): hook_schema,
+    'hook-failures.schema.json': hook_schema,
+}
+resolver = RefResolver(base_uri='file://' + base + '/', referrer=schema, store=store)
 jsonschema.validate(json.load(open('$FIXTURES/run-history-trends-sample.json')), schema, resolver=resolver)
 "
   assert_success
