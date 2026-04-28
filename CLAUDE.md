@@ -16,7 +16,7 @@ Already familiar? Skip to §Architecture.
 
 ## What this is
 
-`forge` is a Claude Code plugin (v4.3.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge run` → `fg-100-orchestrator`.
+`forge` is a Claude Code plugin (v5.0.0, `quantumbitcz` marketplace / Git submodule). 10-stage autonomous pipeline: Preflight → Explore → Plan → Validate → Implement (TDD, voting-gated per-task) → Verify (build/test/lint + intent) → Review → Docs → Ship (evidence + intent clearance) → Learn. Entry: `/forge run` → `fg-100-orchestrator`.
 
 **Prompt-injection hardening:** External data tiered (Silent/Logged/Confirmed/Blocked) and wrapped in `<untrusted>` envelopes by `hooks/_py/mcp_response_filter.py` before reaching agents. All 50 agents carry the SHA-pinned Untrusted Data Policy header. Contract: `shared/untrusted-envelope.md`. Findings: `SEC-INJECTION-*`.
 

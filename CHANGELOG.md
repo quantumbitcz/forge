@@ -5,6 +5,76 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.0.0] — Mega B: Skill Surface (BREAKING)
+
+### Removed (BREAKING)
+
+The 27 individual `/forge-<verb>` skills are removed. Their functionality is preserved as subcommands of three consolidated entry skills (`/forge`, `/forge-admin`, `/forge-ask`). Per `feedback_no_backcompat`, **no migration shim** is provided — old-name callers surface a "skill not found" at dispatch time.
+
+Deleted directories (27 atomic via `git rm -r`):
+
+`forge-abort`, `forge-automation`, `forge-bootstrap`, `forge-commit`, `forge-compress`, `forge-config`, `forge-deploy`, `forge-docs-generate`, `forge-fix`, `forge-graph`, `forge-handoff`, `forge-history`, `forge-init`, `forge-insights`, `forge-migration`, `forge-playbook-refine`, `forge-playbooks`, `forge-profile`, `forge-recover`, `forge-review`, `forge-run`, `forge-security-audit`, `forge-shape`, `forge-sprint`, `forge-status`, `forge-tour`, `forge-verify`.
+
+`/forge-help` was retired earlier in v3.8.0 (Phase 2); recorded here as part of the v5.0.0 closed-set manifest.
+
+`shared/skill-subcommand-pattern.md` deleted; the three consolidated skills inline their dispatch grammar.
+
+### Mapping (old slash-command → new surface)
+
+| Old | New | | Old | New |
+|---|---|---|---|---|
+| `/forge-init` | `/forge` (auto-bootstrap on first invocation) | | `/forge-recover` | `/forge-admin recover` |
+| `/forge-run` | `/forge run` | | `/forge-abort` | `/forge-admin abort` |
+| `/forge-fix` | `/forge fix` | | `/forge-config` | `/forge-admin config` |
+| `/forge-shape` | `/forge run` (BRAINSTORMING absorbed) | | `/forge-handoff` | `/forge-admin handoff` |
+| `/forge-sprint` | `/forge sprint` | | `/forge-automation` | `/forge-admin automation` |
+| `/forge-review` | `/forge review` | | `/forge-playbooks` | `/forge-admin playbooks` |
+| `/forge-verify` | `/forge verify` | | `/forge-playbook-refine` | `/forge-admin refine` |
+| `/forge-deploy` | `/forge deploy` | | `/forge-compress` | `/forge-admin compress` |
+| `/forge-commit` | `/forge commit` | | `/forge-graph` | `/forge-admin graph` |
+| `/forge-migration` | `/forge migrate` | | `/forge-status` | `/forge-ask status` |
+| `/forge-bootstrap` | `/forge bootstrap` | | `/forge-history` | `/forge-ask history` |
+| `/forge-docs-generate` | `/forge docs` | | `/forge-insights` | `/forge-ask insights` |
+| `/forge-security-audit` | `/forge audit` | | `/forge-profile` | `/forge-ask profile` |
+| `/forge-help` | `/forge --help` | | `/forge-tour` | `/forge-ask tour` |
+
+### Added (Phase B1-B3 — Three consolidated skills)
+
+- **`skills/forge/SKILL.md`** (384 lines, `[writes]`) — universal write-surface entry. Hybrid grammar: 11 verb subcommands (run, fix, sprint, review, verify, deploy, commit, migrate, bootstrap, docs, audit) plus NL fallback through `shared/intent-classification.md`. Auto-bootstrap on missing `.claude/forge.local.md` via `shared/bootstrap-detect.py` (added in A2). Top-level flags `--dry-run`, `--autonomous`, `--from=<stage>`, `--spec`, `--background` consumed before verb dispatch.
+- **`skills/forge-admin/SKILL.md`** (1532 lines, `[writes]`) — state-management surface. 9 subcommands: recover, abort, config, handoff, automation, playbooks, refine, compress, graph. Bodies copied verbatim from the now-deleted source skills. `### Subcommand: graph` enforces read-only Cypher (regex bans `CREATE | MERGE | DELETE | SET | REMOVE | DROP`).
+- **`skills/forge-ask/SKILL.md`** (1000 lines, `[reads]`) — read-only surface (rewrite of pre-existing 171-line `/forge-ask`). 6 subcommands: ask (default NL Q&A), status, history, insights, profile, tour. `allowed-tools` excludes `Write`/`Edit` (AC-S012 contract; writes via `Bash` heredoc to `.forge/ask-cache/` and `.forge/reports/` only). Absorbs `forge-status --- live ---` content from Phase 1 Task 24.
+
+### Changed (Phase B5-B10 — Repo-wide rewire)
+
+- **~150 files rewired** across `docs/`, `tests/`, `agents/`, `shared/`, `modules/`, root files (`README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `plugin.json`, `marketplace.json`, `install.sh`, `install.ps1`, `.github/`, `hooks/`, `evals/`). Drove by a single canonical perl mapping run against the B4 snapshot (`tests/structural/migration-callsites.txt`, 313 lines).
+- B7 manually reviewed `agents/fg-100-orchestrator.md`, `agents/fg-700-retrospective.md`, `agents/fg-710-post-run.md` for embedded refs missed by the perl boundary.
+- B8 reconciled `shared/intent-classification.md` to preserve A5's 11-verb list.
+- **AC-S005 callsite-cleanliness regex hardened** to use `HEAD/TAIL` character classes that reject path-separator and identifier neighbours, addressing the failure mode where `\b` fired on filesystem paths and compound names like `forge-config-template.md`.
+
+### Added (Phase B13 — Test fixtures)
+
+- **`tests/structural/skill-consolidation.bats`** (13 tests) — locks in the 3-skill surface; asserts retired-name absence; per-skill subcommand counts (11/9/6); frontmatter strings; read-only contracts; AC-S005 straggler check (hardened regex).
+- **`tests/unit/skill-execution/forge-dispatch.bats`** (15 tests) — 11 verb dispatch + 4 NL fallback (vague-input, classifier-resolved, unknown-verb, ambiguous-flag).
+- **`tests/unit/skill-execution/spec-wellformed.bats`** (AC-S029) — regex for `## Objective | ## Scope | ## Acceptance Criteria` triple.
+- **`tests/scenarios/autonomous-cold-start.bats`** (AC-S027) — full-pipeline cold-start scenario.
+- **`tests/structural/fg-010-shaper-shape.bats`** (AC-S021) — `skip` clauses keep it green until Mega C lands the 7-step BRAINSTORMING headers.
+- **`tests/structural/skill-references-allowlist.txt`** (13 entries) — explicit allowlist of files where retired-name references are intentionally retained (CHANGELOG, DEPRECATIONS, SHIP_ORDER, HANDOFF, Mega B plan, Mega E plan, Phase 2 design, shared spec, the 3 SKILLs, the snapshot, and the bats fixture itself).
+- **`tests/structural/migration-callsites.txt`** — frozen B4 snapshot (313 lines); canonical input to B5-B10's perl pipeline.
+
+### Removed (Tests)
+
+- **`tests/contract/test_skill_inventory.py`** — asserted `skill_count == 28` and banned `forge-help` references; both are obsolete post-consolidation. Coverage replaced by `tests/structural/skill-consolidation.bats`.
+
+### Changed (Module lists)
+
+- **`tests/lib/module-lists.bash`** — `MIN_SKILLS=29 → 3`; `EXPECTED_SKILL_NAMES` array replaced with `(forge forge-admin forge-ask)` and now consumed by `skill-consolidation.bats` (DRY).
+
+### Notes
+
+- **Sed-substitution discipline gap** — B5-B10's perl pattern used `\b` word-boundary, which fires on path separators (`.claude/forge-config.md` matched `/forge-config\b`). The first review caught 75+ filesystem-path refs miscorrected to `.claude/forge-admin config.md` (literal-space path); the post-review fix wave reverse-substituted these and replaced the AC-S005 regex with `HEAD/TAIL` character classes that reject path neighbours. Future similar work should anchor on `(?<![./-])/forge-<verb>` from the start.
+- **Plan + shared spec carry-over** — `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` is intentionally allowlisted and **retained** through this release; it is the shared mapping holder for Megas C/D/E and is removed only when Mega E ships. The Mega B plan is removed at this release per `feedback_cleanup_after_ship`.
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core` submodule) remain unstaged across the Mega B release window per existing convention.
+
 ## [4.3.0] — Mega A: Helpers + Schema
 
 ### Added (Phase A1 — Autonomous AC extractor)
