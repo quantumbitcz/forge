@@ -101,7 +101,7 @@ To prevent auto-tuning from overwriting a parameter, wrap it in a locked fence:
 #   target_score: 90        # Score target (80-100, must be >= pass_threshold). Default 90.
 #   safety_gate: true       # Run VERIFY after Phase 2
 
-# Sprint orchestration (only relevant for /forge-run --sprint)
+# Sprint orchestration (only relevant for /forge run --sprint)
 # sprint:
 #   poll_interval_seconds: 30    # How often to poll per-feature state (10-120)
 #   dependency_timeout_minutes: 60  # Max wait for a dependency feature (5-180)
@@ -363,7 +363,7 @@ condensation:
 # Playbooks (v2.0+)
 playbooks:
   enabled: true
-  directory: .claude/forge-playbooks
+  directory: .claude/forge-admin playbooks
   suggestion_confidence_threshold: MEDIUM
 
 # Living Specifications (v2.0+)

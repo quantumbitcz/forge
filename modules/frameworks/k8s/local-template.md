@@ -91,7 +91,7 @@ conventions_file: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/conventions.md"
 conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
 conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/k8s/code-quality/"
 preempt_file: ".claude/forge-log.md"
-config_file: ".claude/forge-config.md"
+config_file: ".claude/forge-admin config.md"
 
 infra:
   max_verification_tier: 2
@@ -136,7 +136,7 @@ graph:
   neo4j_port: 7687
   neo4j_http_port: 7474
 
-# Git conventions (auto-detected or configured by /forge-init)
+# Git conventions (auto-detected or configured by /forge)
 git:
   branch_template: "{type}/{ticket}-{slug}"
   branch_types: [feat, fix, refactor, chore]

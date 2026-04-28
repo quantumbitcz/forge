@@ -99,7 +99,7 @@ conventions_code_quality: "${CLAUDE_PLUGIN_ROOT}/modules/code-quality/"
 conventions_code_quality_binding: "${CLAUDE_PLUGIN_ROOT}/modules/frameworks/jetpack-compose/code-quality/"
 language_file: "${CLAUDE_PLUGIN_ROOT}/modules/languages/${components.language}.md"
 preempt_file: ".claude/forge-log.md"
-config_file: ".claude/forge-config.md"
+config_file: ".claude/forge-admin config.md"
 
 documentation:
   enabled: true
@@ -144,7 +144,7 @@ graph:
   neo4j_port: 7687
   neo4j_http_port: 7474
 
-# Git conventions (auto-detected or configured by /forge-init)
+# Git conventions (auto-detected or configured by /forge)
 git:
   branch_template: "{type}/{ticket}-{slug}"
   branch_types: [feat, fix, refactor, chore]
