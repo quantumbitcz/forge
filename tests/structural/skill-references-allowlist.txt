@@ -3,5 +3,10 @@ DEPRECATIONS.md
 skills/forge-admin/SKILL.md
 skills/forge-ask/SKILL.md
 skills/forge/SKILL.md
+tests/contract/a2a-protocol.bats
+tests/contract/cross-repo.bats
+tests/contract/mcp-provisioning.bats
+tests/contract/mcp-server.bats
+tests/contract/state-schema.bats
 tests/structural/migration-callsites.txt
 tests/structural/skill-consolidation.bats
