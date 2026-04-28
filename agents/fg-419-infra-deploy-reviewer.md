@@ -3,7 +3,7 @@ name: fg-419-infra-deploy-reviewer
 description: Infra reviewer. Helm, K8s, Terraform, Dockerfiles.
 model: inherit
 color: olive
-tools: ['Read', 'Bash', 'Glob', 'Grep', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
+tools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'mcp__plugin_context7_context7__resolve-library-id', 'mcp__plugin_context7_context7__query-docs']
 ui:
   tasks: false
   ask: false

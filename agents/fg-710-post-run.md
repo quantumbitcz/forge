@@ -320,7 +320,11 @@ Each JSONL entry matches `state.feedback_decisions[]` per spec §11:
 - `evidence` — string; required to reference file:line or commit SHA when
   `verdict == wrong` (otherwise downgraded per Step 2).
 - `addressed` — enum: `actionable_routed | defended | defended_local_only |
-  acknowledged | acknowledged_local_only`.
+  acknowledged | acknowledged_local_only | skipped_sub_agent_failure`.
+  `skipped_sub_agent_failure` is set when the receiving-code-review
+  sub-agent times out or crashes before returning a verdict; the comment
+  is logged for human triage and the per-comment retry counter is NOT
+  incremented (see Step 1 timeout guard).
 - `posted_at` — ISO-8601 timestamp; set when defense or acknowledgment was
   posted to the PR thread (or local-only fallback completed).
 

@@ -5,6 +5,7 @@ color: white
 description: Docs-consistency reviewer. Checks code against documented decisions.
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - Bash

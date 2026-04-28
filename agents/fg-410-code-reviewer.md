@@ -5,6 +5,7 @@ model: inherit
 color: cyan
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - Bash

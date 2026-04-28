@@ -577,7 +577,7 @@ Per-field types:
 - `verdict` — enum: `actionable | wrong | preference`.
 - `reasoning` — string, defense or acknowledgment text. >=1 character; required for `wrong` and `preference`; optional for `actionable`.
 - `evidence` — string. For `wrong` verdict, must reference at least one file path or commit SHA. For other verdicts, optional.
-- `addressed` — enum: `actionable_routed | defended | defended_local_only | acknowledged`. `defended_local_only` is set when the platform integration cannot post the defense (missing auth env, network failure); the defense is preserved in `feedback-decisions.jsonl`. See §6.1.
+- `addressed` — enum: `actionable_routed | defended | defended_local_only | acknowledged | acknowledged_local_only | skipped_sub_agent_failure`. `defended_local_only` is set when the platform integration cannot post the defense (missing auth env, network failure) for a `wrong` verdict; the defense is preserved in `feedback-decisions.jsonl`. `acknowledged_local_only` is the corresponding state for a `preference` verdict whose acknowledgment could not be posted to the platform. `skipped_sub_agent_failure` is set when the receiving-code-review sub-agent timed out or crashed before returning a verdict; the comment is logged for human triage and does NOT increment the per-comment retry counter. See §6.1.
 - `posted_at` — ISO-8601 timestamp; set when defense or acknowledgment is posted to the PR thread.
 
 The list is also mirrored to `.forge/runs/<run_id>/feedback-decisions.jsonl` (append-only). The state field is the in-memory canonical view; the JSONL is the durable record. Recovery rebuilds state from JSONL.

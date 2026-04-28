@@ -5,6 +5,7 @@ model: inherit
 color: navy
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - Bash

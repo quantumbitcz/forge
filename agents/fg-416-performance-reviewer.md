@@ -5,6 +5,7 @@ model: inherit
 color: amber
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - Bash

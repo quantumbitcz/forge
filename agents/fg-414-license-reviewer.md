@@ -5,6 +5,7 @@ model: inherit
 color: lime
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep

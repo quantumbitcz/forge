@@ -5,6 +5,7 @@ model: inherit
 color: crimson
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - Bash
