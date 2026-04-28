@@ -1,8 +1,6 @@
 #!/usr/bin/env bats
-# Skill-consolidation structural guards.
-# Locks in the consolidated skill set (28 skills), forbids the old
-# per-cluster names, and asserts each consolidated cluster carries the
-# documented dispatch + subcommand sections.
+# Skill-consolidation structural guards (post-B12).
+# Locks in the consolidated 3-skill surface and forbids the 28 retired names.
 
 load ../lib/module-lists.bash
 
@@ -10,90 +8,90 @@ setup() {
   PLUGIN_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
 }
 
-@test "skill count is exactly MIN_SKILLS (28)" {
+@test "skill count is exactly MIN_SKILLS (3)" {
   actual=$(ls -d "$PLUGIN_ROOT"/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
-  [ "$actual" -eq 28 ]
+  [ "$actual" -eq 3 ]
 }
 
-@test "every expected skill directory exists with SKILL.md" {
-  for name in "${EXPECTED_SKILL_NAMES[@]}"; do
+@test "the three expected skills exist with SKILL.md" {
+  for name in forge forge-admin forge-ask; do
     [ -f "$PLUGIN_ROOT/skills/$name/SKILL.md" ] || \
       { echo "MISSING: skills/$name/SKILL.md"; return 1; }
   done
 }
 
-@test "no removed Phase-05 skill directories exist" {
-  removed=(
-    forge-codebase-health
-    forge-deep-health
-    forge-config-validate
-    forge-graph-init
-    forge-graph-status
-    forge-graph-query
-    forge-graph-rebuild
-    forge-graph-debug
+@test "no retired skill directory exists" {
+  retired=(
+    forge-abort forge-automation forge-bootstrap forge-commit
+    forge-compress forge-config forge-deploy forge-docs-generate
+    forge-fix forge-graph forge-handoff forge-help forge-history
+    forge-init forge-insights forge-migration forge-playbook-refine
+    forge-playbooks forge-profile forge-recover forge-review forge-run
+    forge-security-audit forge-shape forge-sprint forge-status
+    forge-tour forge-verify
   )
-  for name in "${removed[@]}"; do
+  for name in "${retired[@]}"; do
     [ ! -e "$PLUGIN_ROOT/skills/$name" ] || \
       { echo "STILL PRESENT: skills/$name"; return 1; }
   done
 }
 
-@test "forge-review has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge review/SKILL.md")
-  [ "$count" -eq 1 ]
+@test "/forge has 11 subcommand sections" {
+  count=$(grep -c '^### Subcommand: ' "$PLUGIN_ROOT/skills/forge/SKILL.md")
+  [ "$count" -eq 11 ]
 }
 
-@test "forge-graph has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge-admin graph/SKILL.md")
-  [ "$count" -eq 1 ]
+@test "/forge-admin has 9 subcommand sections" {
+  count=$(grep -c '^### Subcommand: ' "$PLUGIN_ROOT/skills/forge-admin/SKILL.md")
+  [ "$count" -eq 9 ]
 }
 
-@test "forge-verify has exactly one '## Subcommand dispatch' section" {
-  count=$(grep -c '^## Subcommand dispatch' "$PLUGIN_ROOT/skills/forge verify/SKILL.md")
-  [ "$count" -eq 1 ]
+@test "/forge-ask has 6 subcommand sections (incl default)" {
+  count=$(grep -c '^### Subcommand: ' "$PLUGIN_ROOT/skills/forge-ask/SKILL.md")
+  [ "$count" -eq 6 ]
 }
 
-@test "forge-review has 'changed' and 'all' and 'all --fix' subcommand sections" {
-  file="$PLUGIN_ROOT/skills/forge review/SKILL.md"
-  grep -q '^### Subcommand: changed' "$file"
-  grep -q '^### Subcommand: all' "$file"
-  grep -q '^### Subcommand: all --fix' "$file"
+@test "/forge frontmatter description matches spec §1" {
+  grep -q 'Universal entry for the forge pipeline' "$PLUGIN_ROOT/skills/forge/SKILL.md"
+  grep -q 'Auto-bootstraps on first run' "$PLUGIN_ROOT/skills/forge/SKILL.md"
 }
 
-@test "forge-graph has all 5 positional subcommand sections" {
-  file="$PLUGIN_ROOT/skills/forge-admin graph/SKILL.md"
-  for sub in init status query rebuild debug; do
-    grep -q "^### Subcommand: $sub" "$file" || \
-      { echo "MISSING: ### Subcommand: $sub"; return 1; }
-  done
+@test "/forge-admin frontmatter description matches spec §1" {
+  grep -q 'Manage forge state and configuration' "$PLUGIN_ROOT/skills/forge-admin/SKILL.md"
 }
 
-@test "forge-verify has build and all subcommand sections (no config)" {
-  file="$PLUGIN_ROOT/skills/forge verify/SKILL.md"
-  grep -q '^### Subcommand: build' "$file"
-  grep -q '^### Subcommand: all' "$file"
-  ! grep -q '^### Subcommand: config' "$file" || { echo "--config must be removed per Phase 2"; return 1; }
+@test "/forge-ask frontmatter description matches spec §1" {
+  grep -q 'Query forge state, codebase knowledge' "$PLUGIN_ROOT/skills/forge-ask/SKILL.md"
 }
 
-@test "forge-review --scope=all --fix documents AskUserQuestion safety gate" {
-  file="$PLUGIN_ROOT/skills/forge review/SKILL.md"
-  # The gate MUST be documented under the all --fix subcommand.
-  grep -q 'AskUserQuestion' "$file"
-  grep -qiE 'safety.*gate|safety-confirm|confirm.*gate' "$file"
-  grep -q '\-\-yes' "$file"
+@test "/forge-ask allowed-tools is read-only (no Write, no Edit)" {
+  ! grep -E "^allowed-tools:.*\bWrite\b" "$PLUGIN_ROOT/skills/forge-ask/SKILL.md"
+  ! grep -E "^allowed-tools:.*\bEdit\b" "$PLUGIN_ROOT/skills/forge-ask/SKILL.md"
 }
 
-@test "CLAUDE.md Skills header reads '(28 total)'" {
-  grep -q '^## Skills (28 total)' "$PLUGIN_ROOT/CLAUDE.md"
+@test "/forge-admin graph query enforces read-only Cypher" {
+  grep -qE 'CREATE \| MERGE \| DELETE \| SET \| REMOVE \| DROP' "$PLUGIN_ROOT/skills/forge-admin/SKILL.md"
 }
 
-@test "validate-config.sh is read-only (I1 regression guard)" {
-  # No touch, mkdir, tee, or stdout redirection to filesystem paths.
-  # Allowed: echo >&2 (stderr), case-statement redirections.
-  forbidden=$(grep -nE '(\b(touch|mkdir|tee)\b|>\s*[./a-zA-Z]|>>\s*[./a-zA-Z])' \
-                   "$PLUGIN_ROOT/shared/validate-config.sh" \
-                | grep -vE '>\s*&\s*[12]|2>\s*>?[&/]|^[^:]*:[[:space:]]*#' \
-                || true)
-  [ -z "$forbidden" ] || { echo "FORBIDDEN WRITES in validate-config.sh:"; echo "$forbidden"; return 1; }
+@test "callsite allowlist file exists" {
+  [ -f "$PLUGIN_ROOT/tests/structural/skill-references-allowlist.txt" ]
+}
+
+@test "no retired skill name appears outside the allowlist (AC-S005)" {
+  cd "$PLUGIN_ROOT"
+  stragglers=$(grep -rn '/forge-init\b\|/forge-run\b\|/forge-fix\b\|/forge-shape\b\|/forge-sprint\b\|/forge-review\b\|/forge-verify\b\|/forge-deploy\b\|/forge-commit\b\|/forge-migration\b\|/forge-bootstrap\b\|/forge-docs-generate\b\|/forge-security-audit\b\|/forge-status\b\|/forge-history\b\|/forge-insights\b\|/forge-profile\b\|/forge-tour\b\|/forge-help\b\|/forge-recover\b\|/forge-abort\b\|/forge-config\b\|/forge-handoff\b\|/forge-automation\b\|/forge-playbooks\b\|/forge-playbook-refine\b\|/forge-compress\b\|/forge-graph\b' . 2>/dev/null \
+    --include='*.md' --include='*.json' --include='*.py' --include='*.yml' --include='*.yaml' --include='*.bats' --include='*.sh' \
+    | awk -F: '{print $1}' \
+    | sort -u \
+    | sed 's|^\./||' \
+    | while read -r path; do
+        if ! grep -qFx "$path" tests/structural/skill-references-allowlist.txt; then
+          echo "$path"
+        fi
+      done)
+  if [ -n "$stragglers" ]; then
+    echo "Stragglers (not in allowlist):"
+    echo "$stragglers"
+    return 1
+  fi
 }
