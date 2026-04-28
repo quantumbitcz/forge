@@ -2,6 +2,10 @@
 
 setup() {
   PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+  # PYTHONPATH covers shared/python so `import findings_store` works on Windows
+  # (Git Bash), where MSYS-style sys.path entries cannot be resolved by native
+  # Python; MSYS auto-converts known path-style env vars across the boundary.
+  export PYTHONPATH="$PROJECT_ROOT/shared/python${PYTHONPATH:+:$PYTHONPATH}"
   export TMPDIR="$(mktemp -d)"
   export RUNS="$TMPDIR/.forge/runs/R/findings"
   mkdir -p "$RUNS"
