@@ -91,3 +91,63 @@ def extract_acs(raw_text: str) -> ACResult:
         "acceptance_criteria": deduped,
         "confidence": confidence,
     }
+
+
+def _main() -> int:
+    """CLI entry point used by `agents/fg-010-shaper.md` autonomous mode.
+
+    Reads free-text input from a file (or stdin via `--input -`), runs
+    `extract_acs()`, and prints the JSON envelope expected by the shaper:
+        {"acs": [...], "objective": "...", "confidence": "high|medium|low"}
+
+    Exit codes:
+      0 — success
+      2 — input read error or `extract_acs()` raised
+    """
+    import argparse
+    import json
+    import sys
+
+    parser = argparse.ArgumentParser(
+        prog="ac-extractor",
+        description="Extract acceptance criteria from free-text input.",
+    )
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Path to input file, or '-' to read stdin.",
+    )
+    args = parser.parse_args()
+
+    try:
+        if args.input == "-":
+            raw_text = sys.stdin.read()
+        else:
+            from pathlib import Path
+
+            raw_text = Path(args.input).read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"ac-extractor: failed to read input: {exc}", file=sys.stderr)
+        return 2
+
+    try:
+        result = extract_acs(raw_text)
+    except (TypeError, ValueError) as exc:
+        print(f"ac-extractor: extraction failed: {exc}", file=sys.stderr)
+        return 2
+
+    # Shaper consumes `acs` (list); preserve `objective` and `confidence` for
+    # downstream telemetry and minimum-confidence gating.
+    payload = {
+        "acs": result["acceptance_criteria"],
+        "objective": result["objective"],
+        "confidence": result["confidence"],
+    }
+    print(json.dumps(payload))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(_main())

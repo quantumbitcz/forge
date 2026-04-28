@@ -161,3 +161,75 @@ def test_adapter_modules_importable():
     for name in ("github", "gitlab", "bitbucket", "gitea"):
         mod = importlib.import_module(f"shared.platform_adapters.{name}")
         assert hasattr(mod, "post_comment"), f"{name} adapter missing post_comment"
+
+
+# --- CLI surface tests (CRITICAL-2: orchestrator invocation) ---
+
+import json  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SCRIPT = _REPO_ROOT / "shared" / "platform-detect.py"
+
+
+def test_cli_emits_json_envelope(tmp_path):
+    """`python3 shared/platform-detect.py --repo-root <path>` returns JSON."""
+    proc = subprocess.run(
+        [sys.executable, str(_SCRIPT), "--repo-root", str(tmp_path)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    # CLI never errors — non-detection is encoded as platform="unknown".
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    expected_keys = {
+        "platform",
+        "remote_url",
+        "api_base",
+        "auth_method",
+        "detected_at",
+        "warning",
+    }
+    assert set(data.keys()) == expected_keys
+
+
+def test_cli_honors_explicit_detection_none(tmp_path):
+    """`--config-platform-detection none` short-circuits to unknown."""
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_SCRIPT),
+            "--repo-root",
+            str(tmp_path),
+            "--config-platform-detection",
+            "none",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["platform"] == "unknown"
+    assert data["auth_method"] == "none"
+
+
+def test_cli_invalid_choice_rejected(tmp_path):
+    """argparse rejects unsupported detection values (exit 2)."""
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_SCRIPT),
+            "--repo-root",
+            str(tmp_path),
+            "--config-platform-detection",
+            "perforce",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode != 0
+    assert "perforce" in proc.stderr or "invalid choice" in proc.stderr.lower()

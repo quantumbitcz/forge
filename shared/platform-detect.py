@@ -186,3 +186,83 @@ def detect_platform(repo_root: Path, config: dict | None = None) -> PlatformInfo
         "detected_at": _now_iso(),
         "warning": warning,
     }
+
+
+def _main() -> int:
+    """CLI entry point used by `agents/fg-100-orchestrator.md` §0.4d.
+
+    Reads CLI flags, builds a `config` dict shaped like
+    `{"platform": {"detection": ..., "remote_name": ...}}`, calls
+    `detect_platform()`, and prints the resulting dict as JSON to stdout.
+
+    Always exits 0. Detection failure is encoded as
+    `{"platform": "unknown", ...}` rather than a non-zero exit so the
+    orchestrator can still parse a valid envelope per §0.4d failure handling.
+    """
+    import argparse
+    import json
+    import sys
+
+    parser = argparse.ArgumentParser(
+        prog="platform-detect",
+        description="Detect the VCS platform for the repo at --repo-root.",
+    )
+    parser.add_argument("--repo-root", required=True, help="Path to repo root.")
+    parser.add_argument(
+        "--config-platform-detection",
+        default="auto",
+        choices=("auto", "github", "gitlab", "bitbucket", "gitea", "none"),
+        help="Override detection. 'auto' runs the host-pattern + Gitea probe.",
+    )
+    parser.add_argument(
+        "--config-remote-name",
+        default="origin",
+        help="Git remote name to inspect (default: origin).",
+    )
+    args = parser.parse_args()
+
+    # The "none" sentinel disables platform detection entirely; emit an
+    # `unknown` envelope so the orchestrator stays on the local-only path.
+    if args.config_platform_detection == "none":
+        envelope = {
+            "platform": "unknown",
+            "remote_url": "",
+            "api_base": "",
+            "auth_method": "none",
+            "detected_at": _now_iso(),
+            "warning": None,
+        }
+        print(json.dumps(envelope))
+        return 0
+
+    config = {
+        "platform": {
+            "detection": args.config_platform_detection,
+            "remote_name": args.config_remote_name,
+        }
+    }
+
+    try:
+        result = detect_platform(Path(args.repo_root), config)
+    except (ValueError, OSError) as exc:
+        # Surface the failure as an `unknown` envelope with the warning
+        # populated; orchestrator §0.4d handles `unknown` gracefully.
+        envelope = {
+            "platform": "unknown",
+            "remote_url": "",
+            "api_base": "",
+            "auth_method": "none",
+            "detected_at": _now_iso(),
+            "warning": f"platform-detect failed: {exc}",
+        }
+        print(json.dumps(envelope))
+        return 0
+
+    print(json.dumps(dict(result)))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(_main())

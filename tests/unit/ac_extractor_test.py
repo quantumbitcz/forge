@@ -135,3 +135,58 @@ def test_confidence_boundaries(ac_extractor, count, expected):
     text = "\n".join(f"{i + 1}. AC {i + 1}" for i in range(count))
     result = ac_extractor.extract_acs(text)
     assert result["confidence"] == expected
+
+
+# --- CLI surface tests (CRITICAL-1: shaper invocation) ---
+
+import json  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+_REPO_ROOT = _Path(__file__).resolve().parents[2]
+_SCRIPT = _REPO_ROOT / "shared" / "ac-extractor.py"
+
+
+def test_cli_reads_stdin_and_emits_json():
+    """`python3 shared/ac-extractor.py --input -` returns JSON over stdin."""
+    payload = "1. The system must validate input.\n2. Errors must be JSON."
+    proc = _subprocess.run(
+        [sys.executable, str(_SCRIPT), "--input", "-"],
+        input=payload,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert set(data.keys()) == {"acs", "objective", "confidence"}
+    assert isinstance(data["acs"], list)
+    assert len(data["acs"]) >= 1
+    assert data["confidence"] in {"high", "medium", "low"}
+
+
+def test_cli_reads_file_argument(tmp_path):
+    """`--input <path>` reads a regular file."""
+    p = tmp_path / "in.txt"
+    p.write_text("- must reject empty input\n- must return 200 on success\n")
+    proc = _subprocess.run(
+        [sys.executable, str(_SCRIPT), "--input", str(p)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert len(data["acs"]) == 2
+
+
+def test_cli_returns_2_on_unreadable_path(tmp_path):
+    """Bad input path exits 2 (parse/read error)."""
+    proc = _subprocess.run(
+        [sys.executable, str(_SCRIPT), "--input", str(tmp_path / "nope.txt")],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode == 2
