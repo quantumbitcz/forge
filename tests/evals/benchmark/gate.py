@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class GateResult:
     findings: list[GateFinding] = field(default_factory=list)
 
 
-def evaluate_gate(*, current: dict, baseline: dict | None) -> GateResult:
+def evaluate_gate(*, current: dict[str, Any], baseline: dict[str, Any] | None) -> GateResult:
     if baseline is None:
         return GateResult(
             passed=True,

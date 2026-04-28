@@ -16,6 +16,7 @@ import argparse
 import json
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 _BLOCKS = "▁▂▃▄▅▆▇█"
 
@@ -39,7 +40,12 @@ def _section(marker: str, body: str) -> str:
     return f"<!-- section:{marker} -->\n{body}\n"
 
 
-def render(*, trends_lines: list[dict], baseline: dict | None, hook_failures_total: int) -> str:
+def render(
+    *,
+    trends_lines: list[dict[str, Any]],
+    baseline: dict[str, Any] | None,
+    hook_failures_total: int,
+) -> str:
     parts: list[str] = []
     # Header
     if not trends_lines:
@@ -101,7 +107,7 @@ def render(*, trends_lines: list[dict], baseline: dict | None, hook_failures_tot
     return "\n".join(parts)
 
 
-def _render_this_week(line: dict) -> str:
+def _render_this_week(line: dict[str, Any]) -> str:
     rows = []
     rows.append(
         "| os | model | solved / total | overall | S | M | L | median $/solve | UNVERIFIABLE |"
@@ -119,23 +125,25 @@ def _render_this_week(line: dict) -> str:
     return "\n".join(rows) + "\n"
 
 
-def _render_sparklines(lines: list[dict]) -> str:
+def _render_sparklines(lines: list[dict[str, Any]]) -> str:
     by_cell: dict[tuple[str, str], list[float | None]] = {}
     for ln in lines:
         for c in ln.get("cells", []):
             by_cell.setdefault((c["os"], c["model"]), []).append(c["solve_rate_overall"])
     out = ["## Last 12 weeks\n"]
     for (os_name, model), vals in sorted(by_cell.items()):
-        padded = [None] * (12 - len(vals)) + list(vals)
+        padding: list[float | None] = [None] * (12 - len(vals))
+        padded: list[float | None] = padding + list(vals)
         first = next((v for v in vals if v is not None), 0.0)
-        last = vals[-1] if vals else 0.0
+        last_val = vals[-1] if vals else 0.0
+        last = last_val if last_val is not None else 0.0
         out.append(
             f"- `{os_name}` × `{model}`: {sparkline(padded)} ({first * 100:.0f}% → {last * 100:.0f}%)"
         )
     return "\n".join(out) + "\n"
 
 
-def _render_cost_per_solve(lines: list[dict]) -> str:
+def _render_cost_per_solve(lines: list[dict[str, Any]]) -> str:
     by_model: dict[str, list[float | None]] = {}
     for ln in lines:
         for c in ln.get("cells", []):
@@ -158,7 +166,7 @@ def _render_cost_per_solve(lines: list[dict]) -> str:
     return "\n".join(out) + "\n"
 
 
-def _peers_placeholder(_latest: dict | None) -> str:
+def _peers_placeholder(_latest: dict[str, Any] | None) -> str:
     return (
         "## Peer comparison (manual update — never auto-scraped)\n"
         "\n"
@@ -171,7 +179,7 @@ def _peers_placeholder(_latest: dict | None) -> str:
     )
 
 
-def _render_appendix(line: dict) -> str:
+def _render_appendix(line: dict[str, Any]) -> str:
     rows = ["## Appendix — per-entry solve matrix\n"]
     rows.append("| os | model | entries solved/total |")
     rows.append("|---|---|---|")
@@ -191,7 +199,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
-    lines: list[dict] = []
+    lines: list[dict[str, Any]] = []
     if args.trends.is_file():
         for raw in args.trends.read_text(encoding="utf-8").splitlines():
             if raw.strip():

@@ -118,6 +118,7 @@ def test_k8s_framework_allows_null_language(tmp_path):
         commands:
           build: kubectl apply
           test: kubectl get pods
+          lint: kubectl apply --dry-run=client -f .
         ---
         """)
     project = _make_project(tmp_path, k8s_local)

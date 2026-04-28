@@ -17,8 +17,10 @@ def _load_results(results_root: Path, week_of: date) -> list[dict[str, Any]]:
     return [json.loads(f.read_text()) for f in day_dir.glob("*.json")]
 
 
-def _group_by_cell(results: list[dict]) -> dict[tuple[str, str], list[dict]]:
-    g: dict[tuple[str, str], list[dict]] = defaultdict(list)
+def _group_by_cell(
+    results: list[dict[str, Any]],
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    g: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in results:
         g[(r["os"], r["model"])].append(r)
     return g

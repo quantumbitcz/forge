@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 try:
     import yaml
@@ -25,9 +26,44 @@ def parse_scenario(path: str) -> dict:
         return yaml.safe_load(f)
 
 
+def _resolve_bash() -> str:
+    """Resolve a usable bash executable.
+
+    On Windows, ``shutil.which("bash")`` typically returns
+    ``C:\\Windows\\System32\\bash.exe`` (the WSL launcher), which fails when
+    no Linux distribution is installed. GitHub-hosted ``windows-latest``
+    runners ship without one, so we prefer Git for Windows' bash.
+
+    Mirrors the resolution in tests/e2e/dry-run-smoke.py — keeping both copies
+    self-contained avoids inventing a shared module just for two callers.
+    """
+    if sys.platform == "win32":
+        candidates = [
+            os.environ.get("ProgramFiles", r"C:\Program Files") + r"\Git\bin\bash.exe",
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)") + r"\Git\bin\bash.exe",
+            r"C:\Program Files\Git\bin\bash.exe",
+            r"C:\Program Files (x86)\Git\bin\bash.exe",
+        ]
+        for cand in candidates:
+            if Path(cand).is_file():
+                return cand
+        # Fall back to PATH lookup, but skip the System32 WSL launcher.
+        wsl_bash = (
+            os.environ.get("SystemRoot", r"C:\Windows") + r"\System32\bash.exe"
+        ).lower()
+        for p in os.environ.get("PATH", "").split(os.pathsep):
+            cand = Path(p) / "bash.exe"
+            if cand.is_file() and str(cand).lower() != wsl_bash:
+                return str(cand)
+    return "bash"
+
+
+_BASH = _resolve_bash()
+
+
 def run_state_cmd(state_script: str, args: list[str], forge_dir: str) -> tuple[int, str, str]:
     """Run forge-state.sh with given args, return (exit_code, stdout, stderr)."""
-    cmd = ["bash", state_script] + args + ["--forge-dir", forge_dir]
+    cmd = [_BASH, state_script] + args + ["--forge-dir", forge_dir]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 

@@ -1,7 +1,8 @@
 """OTel GenAI-semconv emitter for benchmark runs.
 
-Delegates to hooks/_py/otel.replay for authoritative emission (per shared/observability.md).
-Falls back to no-op when OTel is unavailable (dep-gated).
+Wires through to OpenTelemetry when available; falls back to a no-op when the
+SDK is not installed (dep-gated). Tests monkey-patch ``_replay`` to capture
+spans without requiring opentelemetry on the runner.
 """
 
 from __future__ import annotations
@@ -11,12 +12,14 @@ from typing import Any
 
 def _replay(name: str, attrs: dict[str, Any]) -> None:
     try:
-        from hooks._py.otel import replay  # type: ignore
-
-        replay(name, attrs)
-    except Exception:
+        from opentelemetry import trace  # type: ignore[import-not-found]
+    except ImportError:
         # Dep-gated: opentelemetry not installed. Spec §Docs says OTel is optional.
         return
+    tracer = trace.get_tracer("forge.benchmark")
+    with tracer.start_as_current_span(name) as span:
+        for key, value in attrs.items():
+            span.set_attribute(key, value)
 
 
 def emit_benchmark_span(

@@ -84,9 +84,9 @@ def _write_entry(
     corpus_root: Path,
     target_dir: Path,
     requirement: str,
-    ac_list: list[dict],
-    expected: dict,
-    metadata: dict,
+    ac_list: list[dict[str, Any]],
+    expected: dict[str, Any],
+    metadata: dict[str, Any],
     seed_tarball: Path,
 ) -> None:
     corpus_root = corpus_root.resolve()

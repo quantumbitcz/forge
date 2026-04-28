@@ -28,6 +28,8 @@ test = [
   "numpy>=1.26",
   "ruff>=0.5",
   "mypy>=1.0",
+  "types-jsonschema>=4.0.0",
+  "types-PyYAML>=6.0",
 ]
 
 [tool.ruff]

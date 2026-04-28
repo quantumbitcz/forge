@@ -135,6 +135,14 @@ def _tree_sitter_fingerprint(src: bytes, ext: str) -> tuple[str | None, str]:
         log.debug("tree_sitter_parse_failed", extra={"ext": ext})
         return None, "degraded"
 
+    # Tree-sitter grammars vary in whether comments and similar trivia are
+    # exposed as ``extras`` on the parent or threaded inline as children.
+    # tree-sitter-language-pack 1.6.2 (the current floor) inlines TS/JS
+    # comments under ``program``; 1.6.3+ filters them. Normalize across
+    # versions by stripping a small set of trivia node types ourselves so
+    # the structural fingerprint is stable across pack versions.
+    _TRIVIA_TYPES = frozenset({"comment", "line_comment", "block_comment"})
+
     def tup(node: Any) -> tuple:
         """Iterative DFS serialization of the CST.
 
@@ -152,7 +160,8 @@ def _tree_sitter_fingerprint(src: bytes, ext: str) -> tuple[str | None, str]:
             current, marker = order.pop()
             if marker is sentinel:
                 # First visit: schedule the exit then queue children for entry.
-                children = list(current.children)
+                # Strip trivia so whitespace-only / comment-only edits hash equal.
+                children = [c for c in current.children if c.type not in _TRIVIA_TYPES]
                 order.append((current, children))
                 # Push children in reverse so leftmost is processed first.
                 for child in reversed(children):
