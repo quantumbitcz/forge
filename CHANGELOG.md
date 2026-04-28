@@ -5,6 +5,51 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.1.0] — Mega C: Brainstorming Behavior
+
+### Added (Phase C1 — Shaper rewrite)
+
+- **`agents/fg-010-shaper.md`** rewritten (377 lines) adopting the proven `superpowers:brainstorming` pattern in-tree (no runtime dependency). Seven canonical headings (substring-greppable, AC-S021): `## Explore project context`, `## Ask clarifying questions`, `## Propose 2-3 approaches`, `## Present design sections`, `## Write spec`, `## Self-review`, `## Handoff`.
+- **Autonomous-mode degradation path** — when `state.brainstorm.autonomous == true`, the shaper does NOT call `AskUserQuestion`/`EnterPlanMode`. It invokes `python3 ${CLAUDE_PLUGIN_ROOT}/shared/ac-extractor.py --input -` (CLI added in this release), parses the JSON output, and writes the spec one-shot. AC-S022.
+- **Transcript mining** (AC-BEYOND-001/002/003) — the new `## Historical context` H2 (between `Explore` and `Ask`) queries F29 run-history-store FTS5 (`run_search` virtual table, BM25-ranked against `requirement` column). `## Handoff` writes a JSONL transcript to `.forge/brainstorm-transcripts/<run_id>.jsonl`. Honors `brainstorm.transcript_mining.enabled: false` short-circuit.
+- **Resume semantics** (AC-S023) — three resume cases enumerated: interactive-with-spec, interactive-without-spec, autonomous. `state.brainstorm.spec_path` is repo-relative (matches schema; absolute-path drift fixed during review).
+
+### Added (Phase C2 — Orchestrator wiring)
+
+- **`agents/fg-100-orchestrator.md`** updated (~180 lines added, 1 line removed; 1976 → 2120 lines total).
+- **§1 stage banner** — now reads `PREFLIGHT -> [BRAINSTORMING (feature mode only)] -> EXPLORE -> ...`. Bracket notation makes BRAINSTORMING explicitly conditional.
+- **§0.1 dispatch matrix** — replaces the legacy line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge run.`. New matrix routes: standard mode → PREFLIGHT → BRAINSTORMING → EXPLORING; bug/migrate/bootstrap/--spec/--from past skip BRAINSTORMING; `brainstorm.enabled: false` short-circuits with log line `[AUTO] brainstorm disabled by config`.
+- **§0.4d Platform Detection** — new PREFLIGHT phase between §0.4c Background Execution and §0.5. Invokes `python3 ${CLAUDE_PLUGIN_ROOT}/shared/platform-detect.py --repo-root <path> --config-platform-detection <auto|...> --config-remote-name <name>` (CLI added in this release), parses JSON `{platform, remote_url, api_base, auth_method}`, writes `state.platform = {name, remote_url, api_base, auth_method, detected_at}`. Skip on resume if `state.platform.detected_at` already set. Failure → `state.platform.name = "unknown"`, log WARNING, **do NOT abort**. AC-FEEDBACK-006.
+- **`## Stage 0.5: BRAINSTORM`** — new stage block between Stage 0 PREFLIGHT and Stage 1 EXPLORE. SS0.5.1 (skip conditions), SS0.5.2 (dispatch via §4 standard 3-step wrapper), SS0.5.3 (post-dispatch validation: `state.brainstorm.spec_path` exists + matches the well-formedness regex from `tests/unit/skill-execution/spec-wellformed.bats`), SS0.5.4 (BRAINSTORMING → EXPLORING transition), SS0.5.5 (resume-routing note). On agent failure, logs `BRAINSTORM-NO-SPEC` finding (CRITICAL). AC-S019/S020/S023.
+- **§0.14 Check for Interrupted Runs** — extended to recognize `state.story_state == "BRAINSTORMING"`. Pass-through to BRAINSTORMING stage; the shaper agent owns the resume sub-routing.
+- **§5 --spec mode parser** updated to accept the canonical Goal/Scope/Acceptance criteria schema written by C1 (matches `spec-wellformed.bats` regex `## (Objective|Goal|Goals) | ## (Scope|Non-goals) | ## (Acceptance Criteria|ACs)`). The pre-existing Problem-Statement/Story schema is dropped per `feedback_no_backcompat`.
+- **MAX_LINES bump** — `tests/contract/test_fg100_size_budget.py` 2000 → 2200 (per `feedback_orchestrator_size`). Orchestrator at 2120, ~80 lines headroom.
+
+### Added (Phase A helper CLIs — backfilled this release)
+
+- **`shared/ac-extractor.py` CLI** — `__main__` + `argparse` block (`--input <path|->`) reads stdin or file, calls `extract_acs()`, prints `json.dumps({"acs": [...], "objective": "...", "confidence": "low|medium|high"})` to stdout. Exit 0 on success, 2 on parse error. The library `extract_acs(raw_text)` function remains unchanged for in-process callers.
+- **`shared/platform-detect.py` CLI** — `__main__` + `argparse` block (`--repo-root <path>`, `--config-platform-detection <auto|github|gitlab|bitbucket|gitea|none>`, `--config-remote-name <name>`). Prints `json.dumps(asdict(result))` to stdout including the optional `warning` field. Always exits 0 (non-detection is `"unknown"`, not error).
+- These CLIs were specified by Mega A's helper modules but never wired up; the v5.1.0 review caught the gap. The shaper (C1) and orchestrator §0.4d (C2) invocations would have silently degraded without them.
+
+### Changed (Cross-cutting)
+
+- **`shared/state-transitions.md`** — Row 1 BRAINSTORMING entry-guard fixed: `mode == "feature"` → `mode == "standard"` (matches the canonical `state.mode` enum from `state-schema-fields.md`). Without this fix, BRAINSTORMING never fired for the default mode (silent AC-S019 failure).
+- **`shared/state-schema.md`** — added `forge.brainstorm.section_approved` to the Stage 0.5 OTel event table (consumed by the shaper Telemetry section's emission rate analytics).
+- **OTel event renames in shaper** — `forge.brainstorm.start` → `forge.brainstorm.started`, `forge.brainstorm.question` → `forge.brainstorm.question_asked` (past tense, matches schema § OTel Events table).
+- **auth_method enum** harmonized between orchestrator §0.4d JSON example and `state-schema.md`: canonical set is `gh-cli | glab-cli | app-password | gitea-token | none`.
+- Mode vocabulary harmonized: "feature mode" → "standard mode" everywhere (in shaper, orchestrator, and the shared spec) to match the JSON value `state.mode == "standard"`.
+
+### Tests
+
+- **`tests/unit/ac_extractor_test.py`** + **`tests/unit/platform_detect_test.py`** — new CLI tests exercise the `__main__` blocks via `subprocess.run`, asserting JSON shape and exit codes.
+- `tests/structural/fg-010-shaper-shape.bats` (B13) `skip` clauses lift now that the seven canonical headings are present.
+
+### Notes
+
+- **Helper-module CLI gap caught at review** — Phase A shipped library-only Python helpers (`ac-extractor.py`, `platform-detect.py`); Phase C's shaper and orchestrator prose called them as if they had CLIs. Neither phase verified the cross-layer contract end-to-end. The review caught this as CRITICAL-1/2; the fix wave backfilled both CLIs in `044c6dbc`. Lesson: agent-prose contract changes must be paired with a contract-test commit that exercises the prescribed shell command, not just the library function.
+- **Cross-phase polish from review** — schema/parser/enum drifts (auth_method, OTel event names, mode value, FTS5 table name) all fixed in `c1ac042b`. The shared spec at `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` is allowlisted and was edited inline (still retained for Megas D/E).
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core`) remain unstaged across the v5.1.0 release window per existing convention.
+
 ## [5.0.0] — Mega B: Skill Surface (BREAKING)
 
 ### Removed (BREAKING)
