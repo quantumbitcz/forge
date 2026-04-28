@@ -26,7 +26,7 @@ See `shared/skill-contract.md` for the standard exit-code table.
 
 ## Subcommand dispatch
 
-Follow `shared/skill-subcommand-pattern.md`. This skill uses **positional verbs with NL fallback**.
+This skill uses **positional verbs with NL fallback**.
 
 **Dispatch rules:**
 

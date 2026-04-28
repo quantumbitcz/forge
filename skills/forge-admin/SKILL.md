@@ -20,7 +20,7 @@ See `shared/skill-contract.md` for the standard table.
 
 ## Subcommand dispatch
 
-Follow `shared/skill-subcommand-pattern.md`. **Positional, no NL fallback.**
+**Positional, no NL fallback.**
 
 **Dispatch rules:**
 
@@ -856,7 +856,7 @@ Knowledge-graph operations. Actions: `init | status | query <cypher> | rebuild |
 
 #### Graph dispatch
 
-Follow `shared/skill-subcommand-pattern.md`. This sub-area uses **positional sub-actions**, NOT flags.
+This sub-area uses **positional sub-actions**, NOT flags.
 
 **Dispatch rules:**
 

@@ -82,9 +82,9 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 # 5. All skills have ## Prerequisites section
 # ---------------------------------------------------------------------------
 @test "skill-quality: all skills have ## Prerequisites or ## Subcommand dispatch" {
-  # The subcommand pattern (shared/skill-subcommand-pattern.md) replaces
-  # the flat Prerequisites/Instructions sections with per-subcommand blocks,
-  # so either pattern satisfies the contract.
+  # Hybrid skills inline subcommand dispatch in place of the flat
+  # Prerequisites/Instructions sections, so either pattern satisfies
+  # the contract.
   local failures=()
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"

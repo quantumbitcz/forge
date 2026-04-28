@@ -2040,7 +2040,6 @@ CREATE (:SharedContract {name: 'scoring', file_path: 'shared/scoring.md'});
 CREATE (:SharedContract {name: 'security-audit-trail', file_path: 'shared/security-audit-trail.md'});
 CREATE (:SharedContract {name: 'security-posture', file_path: 'shared/security-posture.md'});
 CREATE (:SharedContract {name: 'skill-contract', file_path: 'shared/skill-contract.md'});
-CREATE (:SharedContract {name: 'skill-subcommand-pattern', file_path: 'shared/skill-subcommand-pattern.md'});
 CREATE (:SharedContract {name: 'spec-inference', file_path: 'shared/spec-inference.md'});
 CREATE (:SharedContract {name: 'speculation', file_path: 'shared/speculation.md'});
 CREATE (:SharedContract {name: 'sprint-state-schema', file_path: 'shared/sprint-state-schema.md'});

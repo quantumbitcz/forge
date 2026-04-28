@@ -88,10 +88,6 @@ setup() {
   grep -q '^## Skills (28 total)' "$PLUGIN_ROOT/CLAUDE.md"
 }
 
-@test "shared/skill-subcommand-pattern.md exists" {
-  [ -f "$PLUGIN_ROOT/shared/skill-subcommand-pattern.md" ]
-}
-
 @test "validate-config.sh is read-only (I1 regression guard)" {
   # No touch, mkdir, tee, or stdout redirection to filesystem paths.
   # Allowed: echo >&2 (stderr), case-statement redirections.
