@@ -205,6 +205,137 @@ Per `shared/agent-defaults.md` §Linear Tracking, §Optional Integrations.
 
 ---
 
+## Output: prose report (writing-plans / requesting-code-review parity)
+
+<!-- Source: superpowers:requesting-code-review pattern + code-reviewer.md
+template, ported in-tree per spec §5 (D3). -->
+
+In addition to the findings JSON (existing contract — unchanged), write a
+prose report to:
+
+````
+.forge/runs/<run_id>/reports/fg-416-performance-reviewer.md
+````
+
+The orchestrator (fg-400-quality-gate) creates the parent directory and
+passes `<run_id>` in the dispatch brief. You only write the file body.
+
+The report has exactly these four top-level headings, in this order, no
+others:
+
+````markdown
+## Strengths
+## Issues
+## Recommendations
+## Assessment
+````
+
+### `## Strengths`
+
+Bullet list of what the change does well in your domain. Be specific —
+`error handling at FooService.kt:42 catches and rethrows with context` is
+better than `good error handling`. If nothing in your domain is noteworthy,
+write `- (none specific to performance scope)`.
+
+Acknowledge strengths even when issues exist. The point is to give the user
+a balanced picture, not to be performatively positive.
+
+### `## Issues`
+
+Three sub-sections, in this order:
+
+````markdown
+### Critical (Must Fix)
+### Important (Should Fix)
+### Minor (Nice to Have)
+````
+
+Within each, one bullet per finding. The dedup key
+`(component, file, line, category)` of each bullet must match exactly one
+entry in your findings JSON. Bullet format:
+
+````markdown
+- **<short title>** — <file>:<line>
+  - What's wrong: <one sentence>
+  - Why it matters: <one sentence>
+  - How to fix: <concrete guidance — code snippet if useful>
+````
+
+Severity mapping:
+- `CRITICAL` finding → Critical (Must Fix).
+- `WARNING` finding → Important (Should Fix).
+- `INFO` finding → Minor (Nice to Have).
+
+If a sub-section has no findings, write `(none)` rather than omit it.
+
+### `## Recommendations`
+
+Strategic improvements not tied to specific findings. Bullet list. Each
+bullet ≤2 sentences. Examples in the performance domain:
+
+- N+1 query patterns appear in two list endpoints; a batch-load helper at
+  the repository layer would consolidate the optimisation rather than
+  papering over each call site.
+- Hot-path code allocates short-lived collections inside tight loops;
+  preallocation or stream-based iteration during the next sweep reduces
+  GC pressure in the latency-sensitive endpoints.
+
+If you have nothing strategic to say, write `(none)`.
+
+### `## Assessment`
+
+Exact format:
+
+````markdown
+**Ready to merge:** Yes | No | With fixes
+**Reasoning:** <one or two sentences technical assessment>
+````
+
+Verdict mapping:
+- **Yes** — no issues at any severity, or only `Minor` issues you'd accept.
+- **No** — any `Critical` issue, or many `Important` issues forming a
+  pattern of poor quality.
+- **With fixes** — one or more `Important` issues but the change is
+  fundamentally sound; addressing them brings it to Yes.
+
+Reasoning is technical, not vague. `"Has a SQL injection at AuthService:88
+that must be patched before merge"` is correct; `"Looks rough, needs
+work"` is not.
+
+### Dedup-key parity
+
+For every entry in your prose `## Issues`, the same dedup key
+`(component, file, line, category)` must appear in your findings JSON.
+This is enforced by the AC-REVIEW-004 reconciliation test. If you find
+yourself wanting to mention an issue in prose but not in JSON (or vice
+versa), STOP — you are violating the contract.
+
+### When the change is empty (no diff in your scope)
+
+If the diff has no files in your scope (rare but possible — e.g. doc-only
+change reaches performance-reviewer), write the report with:
+
+````markdown
+## Strengths
+- (no code changes in this reviewer's scope)
+## Issues
+### Critical (Must Fix)
+(none)
+### Important (Should Fix)
+(none)
+### Minor (Nice to Have)
+(none)
+## Recommendations
+(none)
+## Assessment
+**Ready to merge:** Yes
+**Reasoning:** No performance-relevant changes in this diff.
+````
+
+And emit empty findings JSON `[]`. Do not skip the report file.
+
+---
+
 ## Learnings Injection (Phase 4)
 
 Role key: `reviewer.performance` (see `hooks/_py/agent_role_map.py`). The

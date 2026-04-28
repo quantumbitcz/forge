@@ -117,6 +117,57 @@ No qualified agents → skip batch. ALL batches skipped → PASS score 100 + WAR
 
 ---
 
+## 5.5 Prose report orchestration (writing-plans / requesting-code-review parity)
+
+<!-- Source: superpowers:requesting-code-review, ported per spec §5 (D3). -->
+
+Each reviewer dispatch produces two outputs: findings JSON (existing
+contract) and a prose report. The prose report is written to:
+
+````
+.forge/runs/<run_id>/reports/<reviewer>.md
+````
+
+where `<reviewer>` is the agent name (`fg-410-code-reviewer`, etc.).
+
+### Your responsibility
+
+1. Before dispatch, ensure `.forge/runs/<run_id>/reports/` exists. Create
+   it if not (no error if it already exists).
+2. Pass `<run_id>` in every reviewer's dispatch brief.
+3. After all reviewers return, list the report files. If any reviewer
+   that was dispatched failed to write its report, log a WARNING finding
+   `REPORT-MISSING` with the reviewer name and continue (do not fail the
+   gate; the findings JSON is the authoritative scoring input).
+4. Surface the prose reports' paths to the user in the gate's stage notes
+   so `/forge review` output points at them. Suggested format:
+
+   ````
+   Reviewer reports:
+   - .forge/runs/<run_id>/reports/fg-410-code-reviewer.md
+   - .forge/runs/<run_id>/reports/fg-411-security-reviewer.md
+   - ...
+   ````
+
+### What stays the same
+
+- Findings JSON aggregation, dedup, scoring, and verdict (PASS/CONCERNS/
+  FAIL) are unchanged.
+- The deliberation-mode escalation is unchanged.
+- The batch-by-scope rule (1 batch <50 lines, all batches 50-500, all
+  batches + splitting note >500) is unchanged.
+
+### Failure modes
+
+- **Disk full / write error:** treat as non-recoverable; abort the gate
+  with E2 (Persistent Tooling Error) per error-taxonomy.
+- **Reviewer wrote a malformed report (missing required heading):** log a
+  WARNING `REPORT-MALFORMED-<reviewer>` and continue. The structural
+  test in D9 covers the agent prompts, but a runtime malformed report
+  should not block the run.
+
+---
+
 ## 6. Inline Checks
 
 After batches, run `quality_gate.inline_checks`:
