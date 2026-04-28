@@ -191,7 +191,7 @@ stay under that ceiling.
 
 All forge-emitted OTel span attributes use the `forge.*` root namespace: `forge.run_id`, `forge.stage`, `forge.agent_id`, `forge.finding.dedup_key`, `forge.judge.verdict`, etc. This convention is load-bearing for Phase 6 and Phase 7. Phase 5 adds no new spans — reviewers remain implicit in the pipeline span tree — but the convention is restated here so downstream phases can rely on it.
 
-### Benchmark spans (Phase 8)
+### Phase 8 spans (benchmark)
 
 `forge.benchmark.run` — one span per corpus-entry execution.
 

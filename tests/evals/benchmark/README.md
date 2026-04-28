@@ -6,31 +6,39 @@ This harness measures how often forge solves real, user-authored feature request
 
 ### Curate a new corpus entry
 
-    python -m tests.evals.benchmark.curate \
-      --db "$HOME/.forge/run-history.db" \
-      --source-repo "$HOME/Projects/myapp"
+```bash
+python -m tests.evals.benchmark.curate \
+  --db "$HOME/.forge/run-history.db" \
+  --source-repo "$HOME/Projects/myapp"
+```
 
 Per candidate, confirm complexity, tags, Docker detection, and each PII match. Writes `corpus/<date>-<slug>/`.
 
 ### Run the benchmark (dry-run — no claude CLI needed)
 
-    python -m tests.evals.benchmark.runner \
-      --corpus-root tests/evals/benchmark/corpus \
-      --results-root tests/evals/benchmark/results \
-      --os ubuntu-latest --model claude-sonnet-4-6 --dry-run
+```bash
+python -m tests.evals.benchmark.runner \
+  --corpus-root tests/evals/benchmark/corpus \
+  --results-root tests/evals/benchmark/results \
+  --os ubuntu-latest --model claude-sonnet-4-6 --dry-run
+```
 
 ### Render SCORECARD.md locally
 
-    python -m tests.evals.benchmark.render_scorecard \
-      --trends tests/evals/benchmark/trends.jsonl \
-      --output SCORECARD.md
+```bash
+python -m tests.evals.benchmark.render_scorecard \
+  --trends tests/evals/benchmark/trends.jsonl \
+  --output SCORECARD.md
+```
 
 ### Refresh baseline after an improvement
 
-    python -m tests.evals.benchmark.refresh_baseline \
-      --trends tests/evals/benchmark/trends.jsonl \
-      --output tests/evals/benchmark/baseline.json \
-      --confirm --commit-sha "$(git rev-parse HEAD)"
+```bash
+python -m tests.evals.benchmark.refresh_baseline \
+  --trends tests/evals/benchmark/trends.jsonl \
+  --output tests/evals/benchmark/baseline.json \
+  --confirm --commit-sha "$(git rev-parse HEAD)"
+```
 
 ## CI
 

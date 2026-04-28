@@ -20,7 +20,7 @@ _no data_
 
 | benchmark | solve rate | link |
 |---|---|---|
-| forge (this repo) | — | [SCORECARD.md](./SCORECARD.md) |
+| forge (this repo) | — | this file |
 | SWE-bench Verified | — | https://www.swebench.com/ |
 | OpenHands | — | https://github.com/All-Hands-AI/OpenHands |
 | SWE-agent | — | https://github.com/SWE-agent/SWE-agent |
