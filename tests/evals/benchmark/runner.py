@@ -6,14 +6,16 @@ writes DRY_RUN placeholder results, exits 0. No `claude` CLI required.
 Live mode calls tests.evals.pipeline.runner.executor.execute_scenario after
 writing model overrides and seeding Phase 7 AC injection.
 """
+
 from __future__ import annotations
+
 import argparse
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tests.evals.benchmark.discovery import discover_corpus, CorpusValidationError
+from tests.evals.benchmark.discovery import CorpusValidationError, discover_corpus
 from tests.evals.benchmark.result import BenchmarkResult
 
 
@@ -34,15 +36,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m tests.evals.benchmark.runner")
     p.add_argument("--corpus-root", type=Path, required=True)
     p.add_argument("--results-root", type=Path, required=True)
-    p.add_argument("--os", type=str, required=True,
-                   choices=["ubuntu-latest", "macos-latest", "windows-latest"])
+    p.add_argument(
+        "--os", type=str, required=True, choices=["ubuntu-latest", "macos-latest", "windows-latest"]
+    )
     p.add_argument("--model", type=str, required=True)
     p.add_argument("--parallel", type=int, default=1)
     p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--forge-root", type=Path,
-                   default=Path(__file__).resolve().parents[3])
-    p.add_argument("--entry-filter", type=str, default="",
-                   help="substring filter on entry id")
+    p.add_argument("--forge-root", type=Path, default=Path(__file__).resolve().parents[3])
+    p.add_argument("--entry-filter", type=str, default="", help="substring filter on entry id")
     return p
 
 
@@ -63,7 +64,9 @@ def main(argv: list[str] | None = None) -> int:
     for entry in entries:
         if args.dry_run:
             r = BenchmarkResult.dry_run(
-                entry_id=entry.entry_id, os=args.os, model=args.model,
+                entry_id=entry.entry_id,
+                os=args.os,
+                model=args.model,
                 complexity=entry.complexity,
             )
             _write_result(args.results_root, r)
@@ -71,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
 
         # Live path added in Task 10.
         from tests.evals.benchmark.live_run import run_one_entry
+
         r = run_one_entry(entry=entry, forge_root=args.forge_root, model=args.model, os=args.os)
         _write_result(args.results_root, r)
 

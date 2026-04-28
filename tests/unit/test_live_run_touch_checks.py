@@ -1,7 +1,10 @@
 """must_not_touch violations detected via git status in benchmark target."""
+
 from __future__ import annotations
-from pathlib import Path
+
 import subprocess
+from pathlib import Path
+
 from tests.evals.benchmark.live_run import _detect_must_not_touch
 
 

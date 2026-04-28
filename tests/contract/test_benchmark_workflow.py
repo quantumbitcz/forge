@@ -1,6 +1,9 @@
 """Workflow shape: cron, dispatch, matrix (3×2), required steps."""
+
 from __future__ import annotations
+
 from pathlib import Path
+
 import yaml
 
 WF = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "benchmark.yml"

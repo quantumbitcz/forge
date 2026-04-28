@@ -3,6 +3,7 @@
 Tasks 5 + 6: end-to-end span open/close with bounded names and gen_ai.*
 attributes. Uses the in-memory exporter to avoid network I/O.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -57,22 +58,24 @@ def test_pipeline_span_carries_semconv_attrs(monkeypatch):
 
 def test_nested_stage_and_agent_spans(monkeypatch):
     exporter = _enable_with_memory_exporter(monkeypatch)
-    with otel.pipeline_span(run_id="r1", mode="standard"):
-        with otel.stage_span("EXPLORING"):
-            with otel.agent_span(
-                name="fg-100-orchestrator",
-                model="claude-sonnet-4-7",
-                description="Coordinator",
-            ):
-                otel.record_agent_result(
-                    {
-                        "tokens_input": 100,
-                        "tokens_output": 200,
-                        "cost_usd": 0.005,
-                        "tool_calls": 3,
-                        "finish_reasons": ["stop"],
-                    }
-                )
+    with (
+        otel.pipeline_span(run_id="r1", mode="standard"),
+        otel.stage_span("EXPLORING"),
+        otel.agent_span(
+            name="fg-100-orchestrator",
+            model="claude-sonnet-4-7",
+            description="Coordinator",
+        ),
+    ):
+        otel.record_agent_result(
+            {
+                "tokens_input": 100,
+                "tokens_output": 200,
+                "cost_usd": 0.005,
+                "tool_calls": 3,
+                "finish_reasons": ["stop"],
+            }
+        )
     otel.shutdown()
     by_name = {s.name: s for s in exporter.get_finished_spans()}
     assert set(by_name) == {
@@ -95,9 +98,11 @@ def test_nested_stage_and_agent_spans(monkeypatch):
 
 def test_tool_span_uses_execute_tool_op(monkeypatch):
     exporter = _enable_with_memory_exporter(monkeypatch)
-    with otel.pipeline_span(run_id="r1", mode="standard"):
-        with otel.tool_span(name="Read", call_id="call-abc-123"):
-            pass
+    with (
+        otel.pipeline_span(run_id="r1", mode="standard"),
+        otel.tool_span(name="Read", call_id="call-abc-123"),
+    ):
+        pass
     otel.shutdown()
     by_name = {s.name: s for s in exporter.get_finished_spans()}
     t = by_name["tool.Read"]
@@ -108,18 +113,16 @@ def test_tool_span_uses_execute_tool_op(monkeypatch):
 
 def test_record_agent_result_marks_unknown_cost(monkeypatch):
     exporter = _enable_with_memory_exporter(monkeypatch)
-    with otel.pipeline_span(run_id="r1", mode="standard"):
-        with otel.agent_span(
+    with (
+        otel.pipeline_span(run_id="r1", mode="standard"),
+        otel.agent_span(
             name="fg-200-planner",
             model="unknown-model",
             description="planner",
-        ):
-            otel.record_agent_result(
-                {"tokens_input": 5, "tokens_output": 10}
-            )
+        ),
+    ):
+        otel.record_agent_result({"tokens_input": 5, "tokens_output": 10})
     otel.shutdown()
-    a = next(
-        s for s in exporter.get_finished_spans() if s.name.startswith("agent.")
-    )
+    a = next(s for s in exporter.get_finished_spans() if s.name.startswith("agent."))
     assert a.attributes.get(A.FORGE_COST_UNKNOWN) is True
     assert A.GEN_AI_COST_USD not in a.attributes

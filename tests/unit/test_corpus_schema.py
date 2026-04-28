@@ -1,7 +1,10 @@
 """Every file in every corpus/<entry>/ validates against its schema."""
+
 from __future__ import annotations
+
 import json
 from pathlib import Path
+
 import pytest
 import yaml
 from jsonschema import Draft202012Validator
@@ -15,7 +18,18 @@ def _load(p: Path) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("name", ["corpus_entry", "result", "trends_line", "baseline", "metadata", "acceptance_criteria", "expected_deliverables"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "corpus_entry",
+        "result",
+        "trends_line",
+        "baseline",
+        "metadata",
+        "acceptance_criteria",
+        "expected_deliverables",
+    ],
+)
 def test_schema_is_valid_json_schema(name: str) -> None:
     schema = _load(SCHEMAS / f"{name}.schema.json")
     Draft202012Validator.check_schema(schema)
@@ -30,8 +44,13 @@ def test_each_corpus_entry_validates() -> None:
         if not entry.is_dir() or entry.name.startswith("."):
             continue
         files = {p.name for p in entry.iterdir()}
-        assert {"requirement.md", "acceptance-criteria.yaml", "seed-project.tar.gz",
-                "expected-deliverables.yaml", "metadata.yaml"} <= files, f"{entry.name} incomplete"
+        assert {
+            "requirement.md",
+            "acceptance-criteria.yaml",
+            "seed-project.tar.gz",
+            "expected-deliverables.yaml",
+            "metadata.yaml",
+        } <= files, f"{entry.name} incomplete"
         entry_schema.validate({"name": entry.name, "files": sorted(files)})
         ac_schema.validate(yaml.safe_load((entry / "acceptance-criteria.yaml").read_text()))
         exp_schema.validate(yaml.safe_load((entry / "expected-deliverables.yaml").read_text()))

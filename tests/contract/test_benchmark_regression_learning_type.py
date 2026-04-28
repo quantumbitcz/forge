@@ -1,5 +1,7 @@
 """Phase 4 coordination: benchmark.regression must be registered in the learning-type allowlist."""
+
 from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -24,6 +26,9 @@ def test_registry_includes_benchmark_regression() -> None:
             if isinstance(types, list):
                 assert "benchmark.regression" in types
             elif isinstance(types, dict):
-                assert "benchmark.regression" in types.get("types", []) or "benchmark.regression" in types
+                assert (
+                    "benchmark.regression" in types.get("types", [])
+                    or "benchmark.regression" in types
+                )
             return
     # If no registry exists yet (Phase 4 not shipped), test is a noop (documented by README test above)

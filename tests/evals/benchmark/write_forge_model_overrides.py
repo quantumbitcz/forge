@@ -5,14 +5,18 @@ because shared/model-routing.md:13 fixes the Agent tool's `model` parameter to
 the alias set {haiku, sonnet, opus}; this helper writes the full ID override
 so model_routing.overrides.{fast,standard,premium} resolves end-to-end.
 """
+
 from __future__ import annotations
+
 from pathlib import Path
 
-_ALLOWED_MODELS: frozenset[str] = frozenset({
-    "claude-sonnet-4-6",
-    "claude-opus-4-7",
-    "claude-haiku-4-5-20251001",
-})
+_ALLOWED_MODELS: frozenset[str] = frozenset(
+    {
+        "claude-sonnet-4-6",
+        "claude-opus-4-7",
+        "claude-haiku-4-5-20251001",
+    }
+)
 
 _FORGE_ROOT = Path(__file__).resolve().parents[3]
 
@@ -34,7 +38,7 @@ def write_overrides(project_root: Path, model_id: str) -> Path:
         raise ValueError(f"unknown model id {model_id!r}; allowed: {sorted(_ALLOWED_MODELS)}")
 
     project_root = project_root.resolve()
-    if _FORGE_ROOT == project_root or _FORGE_ROOT.is_relative_to(project_root):
+    if project_root == _FORGE_ROOT or _FORGE_ROOT.is_relative_to(project_root):
         raise ValueError(
             f"refusing to write model overrides inside or above the forge repo "
             f"(project_root={project_root}, forge_root={_FORGE_ROOT})"

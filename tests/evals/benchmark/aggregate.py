@@ -1,5 +1,7 @@
 """Aggregate per-cell BenchmarkResult files into a single trends.jsonl line."""
+
 from __future__ import annotations
+
 import json
 import statistics
 from collections import defaultdict
@@ -22,8 +24,14 @@ def _group_by_cell(results: list[dict]) -> dict[tuple[str, str], list[dict]]:
     return g
 
 
-def aggregate_week(*, results_root: Path, week_of: date, commit_sha: str,
-                   forge_version: str, hook_failures_total: int) -> dict[str, Any]:
+def aggregate_week(
+    *,
+    results_root: Path,
+    week_of: date,
+    commit_sha: str,
+    forge_version: str,
+    hook_failures_total: int,
+) -> dict[str, Any]:
     all_results = _load_results(results_root, week_of)
     cells = []
     for (os_name, model), rs in sorted(_group_by_cell(all_results).items()):
@@ -37,20 +45,25 @@ def aggregate_week(*, results_root: Path, week_of: date, commit_sha: str,
             per_complexity[r["complexity"]].append(r["solved"])
         costs_solved = [r["cost_usd"] for r in solved_runs if r["cost_usd"] > 0]
         unverifiable_total = sum(int(r.get("unverifiable_count", 0)) for r in rs)
-        cells.append({
-            "os": os_name, "model": model,
-            "entries_total": len(rs),
-            "entries_solved": len(solved_runs),
-            "entries_timeout": timed,
-            "entries_docker_skipped": docker_sk,
-            "solve_rate_overall": len(solved_runs) / len(rs) if rs else 0.0,
-            "solve_rate_by_complexity": {
-                k: (sum(v) / len(v) if v else 0.0) for k, v in sorted(per_complexity.items())
-            },
-            "median_cost_per_solve_usd": statistics.median(costs_solved) if costs_solved else 0.0,
-            "total_cost_usd": sum(r["cost_usd"] for r in rs),
-            "unverifiable_total": unverifiable_total,
-        })
+        cells.append(
+            {
+                "os": os_name,
+                "model": model,
+                "entries_total": len(rs),
+                "entries_solved": len(solved_runs),
+                "entries_timeout": timed,
+                "entries_docker_skipped": docker_sk,
+                "solve_rate_overall": len(solved_runs) / len(rs) if rs else 0.0,
+                "solve_rate_by_complexity": {
+                    k: (sum(v) / len(v) if v else 0.0) for k, v in sorted(per_complexity.items())
+                },
+                "median_cost_per_solve_usd": statistics.median(costs_solved)
+                if costs_solved
+                else 0.0,
+                "total_cost_usd": sum(r["cost_usd"] for r in rs),
+                "unverifiable_total": unverifiable_total,
+            }
+        )
 
     # regressions computed by render_scorecard against prior trends line, not here.
     return {
@@ -81,6 +94,7 @@ def count_hook_failures(artifacts_root: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     import argparse
     from datetime import date as _date
+
     p = argparse.ArgumentParser()
     p.add_argument("--results-root", type=Path, required=True)
     p.add_argument("--trends", type=Path, required=True)
@@ -88,8 +102,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--forge-version", type=str, required=True)
     args = p.parse_args(argv)
     line = aggregate_week(
-        results_root=args.results_root, week_of=_date.today(),
-        commit_sha=args.commit_sha, forge_version=args.forge_version,
+        results_root=args.results_root,
+        week_of=_date.today(),
+        commit_sha=args.commit_sha,
+        forge_version=args.forge_version,
         hook_failures_total=count_hook_failures(args.results_root),
     )
     append_trends(args.trends, line)

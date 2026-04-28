@@ -9,11 +9,13 @@ Sections (enforced order, idempotent by HTML marker):
   - vs-peers (placeholder — never fabricate)
   - appendix (per-entry raw solve booleans)
 """
+
 from __future__ import annotations
+
 import argparse
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 _BLOCKS = "▁▂▃▄▅▆▇█"
 
@@ -50,7 +52,7 @@ def render(*, trends_lines: list[dict], baseline: dict | None, hook_failures_tot
         return "\n".join(parts)
 
     latest = trends_lines[-1]
-    header = f"# Forge Scorecard\n\n"
+    header = "# Forge Scorecard\n\n"
     header += f"- generated: {latest['week_of']}\n"
     header += f"- commit: {latest['commit_sha']}\n"
     header += f"- forge version: {latest['forge_version']}\n"
@@ -74,9 +76,13 @@ def render(*, trends_lines: list[dict], baseline: dict | None, hook_failures_tot
     # Regressions
     regs = latest.get("regressions", [])
     if regs:
-        body = "| entry | last week | this week |\n|---|---|---|\n" + "\n".join(
-            f"| `{r['entry_id']}` | {r['last_status']} | {r['this_status']} |" for r in regs
-        ) + "\n"
+        body = (
+            "| entry | last week | this week |\n|---|---|---|\n"
+            + "\n".join(
+                f"| `{r['entry_id']}` | {r['last_status']} | {r['this_status']} |" for r in regs
+            )
+            + "\n"
+        )
     else:
         body = "_none this week_\n"
     parts.append(_section("regressions", body))
@@ -96,14 +102,16 @@ def render(*, trends_lines: list[dict], baseline: dict | None, hook_failures_tot
 
 def _render_this_week(line: dict) -> str:
     rows = []
-    rows.append("| os | model | solved / total | overall | S | M | L | median $/solve | UNVERIFIABLE |")
+    rows.append(
+        "| os | model | solved / total | overall | S | M | L | median $/solve | UNVERIFIABLE |"
+    )
     rows.append("|---|---|---|---|---|---|---|---|---|")
     for c in line.get("cells", []):
         by = c["solve_rate_by_complexity"]
         rows.append(
             f"| {c['os']} | {c['model']} | {c['entries_solved']} / {c['entries_total']} | "
-            f"{c['solve_rate_overall']*100:.0f}% | "
-            f"{by.get('S', 0)*100:.0f}% | {by.get('M', 0)*100:.0f}% | {by.get('L', 0)*100:.0f}% | "
+            f"{c['solve_rate_overall'] * 100:.0f}% | "
+            f"{by.get('S', 0) * 100:.0f}% | {by.get('M', 0) * 100:.0f}% | {by.get('L', 0) * 100:.0f}% | "
             f"${c['median_cost_per_solve_usd']:.2f} | "
             f"{c.get('unverifiable_total', 0)} |"
         )
@@ -120,7 +128,9 @@ def _render_sparklines(lines: list[dict]) -> str:
         padded = [None] * (12 - len(vals)) + list(vals)
         first = next((v for v in vals if v is not None), 0.0)
         last = vals[-1] if vals else 0.0
-        out.append(f"- `{os_name}` × `{model}`: {sparkline(padded)} ({first*100:.0f}% → {last*100:.0f}%)")
+        out.append(
+            f"- `{os_name}` × `{model}`: {sparkline(padded)} ({first * 100:.0f}% → {last * 100:.0f}%)"
+        )
     return "\n".join(out) + "\n"
 
 
@@ -133,7 +143,13 @@ def _render_cost_per_solve(lines: list[dict]) -> str:
         return "_no data_\n"
     # Normalize: sparkline expects 0..1, so scale by max observed
     out = ["## Cost-per-solve (median USD)\n"]
-    max_cost = max((max(v for v in vals if v is not None) for vals in by_model.values() if vals), default=1.0) or 1.0
+    max_cost = (
+        max(
+            (max(v for v in vals if v is not None) for vals in by_model.values() if vals),
+            default=1.0,
+        )
+        or 1.0
+    )
     for model, vals in sorted(by_model.items()):
         padded = [None] * (12 - len(vals)) + [v / max_cost if v is not None else None for v in vals]
         last_raw = vals[-1] if vals else 0.0
@@ -176,8 +192,14 @@ def main(argv: list[str] | None = None) -> int:
         for raw in args.trends.read_text(encoding="utf-8").splitlines():
             if raw.strip():
                 lines.append(json.loads(raw))
-    baseline = json.loads(args.baseline.read_text(encoding="utf-8")) if args.baseline and args.baseline.is_file() else None
-    doc = render(trends_lines=lines, baseline=baseline, hook_failures_total=args.hook_failures_total)
+    baseline = (
+        json.loads(args.baseline.read_text(encoding="utf-8"))
+        if args.baseline and args.baseline.is_file()
+        else None
+    )
+    doc = render(
+        trends_lines=lines, baseline=baseline, hook_failures_total=args.hook_failures_total
+    )
     args.output.write_text(doc, encoding="utf-8")
     return 0
 

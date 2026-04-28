@@ -5,13 +5,14 @@ Asserts the propose-only threshold (`vote_cost_pct_of_run > 15%` AND
 metric trio (`vote_cost_usd`, `vote_cost_pct_of_run`,
 `vote_savings_estimate_usd`).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-A = (
-    Path(__file__).parent.parent.parent / "agents" / "fg-700-retrospective.md"
-).read_text(encoding="utf-8")
+A = (Path(__file__).parent.parent.parent / "agents" / "fg-700-retrospective.md").read_text(
+    encoding="utf-8"
+)
 
 
 def test_cost_of_voting_section() -> None:

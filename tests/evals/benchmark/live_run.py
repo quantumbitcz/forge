@@ -6,7 +6,9 @@ plugin symlink) but:
   - writes .claude/forge.local.md with model_routing.overrides
   - parses state.intent_verification_results to build ac_breakdown
 """
+
 from __future__ import annotations
+
 import json
 import subprocess
 import tarfile
@@ -18,7 +20,7 @@ from typing import Any
 
 from tests.evals.benchmark.discovery import CorpusEntry
 from tests.evals.benchmark.result import BenchmarkResult
-from tests.evals.benchmark.scoring import solved, SolveInputs, compute_partial_ac_pct
+from tests.evals.benchmark.scoring import SolveInputs, compute_partial_ac_pct, solved
 from tests.evals.benchmark.write_forge_model_overrides import write_overrides
 
 _TIMEOUTS_SEC: dict[str, int] = {"S": 900, "M": 2700, "L": 5400}
@@ -39,8 +41,11 @@ def _write_spec_injection(target: Path, entry: CorpusEntry) -> None:
             entry.entry_id: {
                 "requirement": entry.requirement,
                 "acceptance_criteria": [
-                    {"id": ac["id"], "text": ac["description"],
-                     "verifier_hint": ac.get("verifier_hint", ac.get("verifiable_via", ""))}
+                    {
+                        "id": ac["id"],
+                        "text": ac["description"],
+                        "verifier_hint": ac.get("verifier_hint", ac.get("verifiable_via", "")),
+                    }
                     for ac in entry.ac_list
                 ],
                 "source": "benchmark-injected",
@@ -64,10 +69,18 @@ def _symlink_plugin(forge_root: Path, target: Path) -> None:
 def _parse_state(target: Path) -> dict[str, Any]:
     state_path = target / ".forge" / "state.json"
     if not state_path.is_file():
-        return {"pipeline_verdict": "ERROR", "score": 0, "cost_usd": 0.0,
-                "ac_breakdown": {}, "partial_ac_pct": 0.0, "unverifiable_count": 0,
-                "convergence_iterations": 0, "critical_findings": 0, "warning_findings": 0,
-                "touched_files_actual": []}
+        return {
+            "pipeline_verdict": "ERROR",
+            "score": 0,
+            "cost_usd": 0.0,
+            "ac_breakdown": {},
+            "partial_ac_pct": 0.0,
+            "unverifiable_count": 0,
+            "convergence_iterations": 0,
+            "critical_findings": 0,
+            "warning_findings": 0,
+            "touched_files_actual": [],
+        }
     state = json.loads(state_path.read_text(encoding="utf-8"))
     ivrs = state.get("intent_verification_results", []) or []
     breakdown = {r["ac_id"]: r["status"] for r in ivrs if "ac_id" in r}
@@ -94,16 +107,20 @@ def _count_hook_failures(target: Path) -> int:
 
 def _detect_must_not_touch(target: Path, patterns: list[str]) -> list[str]:
     import fnmatch
+
     try:
-        r = subprocess.run(["git", "status", "--porcelain"],
-                           cwd=target, check=True, capture_output=True, text=True)
+        r = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=target, check=True, capture_output=True, text=True
+        )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
     changed = [line[3:].strip() for line in r.stdout.splitlines() if line.strip()]
     out: list[str] = []
     for pattern in patterns:
         for path in changed:
-            if fnmatch.fnmatch(path, pattern) or (pattern.endswith("/**") and path.startswith(pattern[:-3])):
+            if fnmatch.fnmatch(path, pattern) or (
+                pattern.endswith("/**") and path.startswith(pattern[:-3])
+            ):
                 out.append(pattern)
                 break
     return out
@@ -117,13 +134,27 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
 
     if entry.requires_docker and os == "windows-latest":
         return BenchmarkResult(
-            schema_version=1, entry_id=entry.entry_id, run_date=started_at[:10],
-            os=os, model=model, complexity=entry.complexity,
-            started_at=started_at, ended_at=_iso_now(),
-            duration_s=0, solved=False, partial_ac_pct=0.0, ac_breakdown={},
-            unverifiable_count=0, cost_usd=0.0, pipeline_verdict="ERROR", score=0,
-            convergence_iterations=0, critical_findings=0, warning_findings=1,
-            timeout=False, error="BENCH-DOCKER-SKIPPED",
+            schema_version=1,
+            entry_id=entry.entry_id,
+            run_date=started_at[:10],
+            os=os,
+            model=model,
+            complexity=entry.complexity,
+            started_at=started_at,
+            ended_at=_iso_now(),
+            duration_s=0,
+            solved=False,
+            partial_ac_pct=0.0,
+            ac_breakdown={},
+            unverifiable_count=0,
+            cost_usd=0.0,
+            pipeline_verdict="ERROR",
+            score=0,
+            convergence_iterations=0,
+            critical_findings=0,
+            warning_findings=1,
+            timeout=False,
+            error="BENCH-DOCKER-SKIPPED",
         )
 
     with tempfile.TemporaryDirectory(prefix=f"forge-bench-{entry.entry_id}-") as tmp:
@@ -134,6 +165,7 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
         _write_spec_injection(target, entry)
 
         import os as _os
+
         env = {**_os.environ, "FORGE_EVAL": "1", "FORGE_BENCHMARK": "1"}
         timed_out = False
         error: str | None = None
@@ -141,9 +173,19 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
             # Auto-bootstrap (mega B) runs init implicitly when .claude/forge.local.md is missing,
             # so no explicit /forge invocation is needed here.
             subprocess.run(
-                ["claude", "code", "--non-interactive",
-                 "/forge", "run", f"--eval-mode={entry.entry_id}", entry.requirement],
-                cwd=target, env=env, check=True, timeout=timeout,
+                [
+                    "claude",
+                    "code",
+                    "--non-interactive",
+                    "/forge",
+                    "run",
+                    f"--eval-mode={entry.entry_id}",
+                    entry.requirement,
+                ],
+                cwd=target,
+                env=env,
+                check=True,
+                timeout=timeout,
             )
         except subprocess.TimeoutExpired:
             timed_out = True
@@ -163,23 +205,34 @@ def run_one_entry(*, entry: CorpusEntry, forge_root: Path, model: str, os: str) 
     duration_s = int(time.monotonic() - mono_start)
     partial_pct = parsed["partial_ac_pct"]
     is_solved = (
-        not timed_out and error is None
-        and solved(SolveInputs(
-            pipeline_verdict=parsed["pipeline_verdict"],
-            partial_ac_pct=partial_pct,
-            critical_findings=parsed["critical_findings"],
-        ))
+        not timed_out
+        and error is None
+        and solved(
+            SolveInputs(
+                pipeline_verdict=parsed["pipeline_verdict"],
+                partial_ac_pct=partial_pct,
+                critical_findings=parsed["critical_findings"],
+            )
+        )
     )
 
     return BenchmarkResult(
-        schema_version=1, entry_id=entry.entry_id, run_date=started_at[:10],
-        os=os, model=model, complexity=entry.complexity,
-        started_at=started_at, ended_at=_iso_now(),
-        duration_s=duration_s, solved=is_solved, partial_ac_pct=partial_pct,
+        schema_version=1,
+        entry_id=entry.entry_id,
+        run_date=started_at[:10],
+        os=os,
+        model=model,
+        complexity=entry.complexity,
+        started_at=started_at,
+        ended_at=_iso_now(),
+        duration_s=duration_s,
+        solved=is_solved,
+        partial_ac_pct=partial_pct,
         ac_breakdown=parsed["ac_breakdown"],
         unverifiable_count=parsed["unverifiable_count"],
         cost_usd=parsed["cost_usd"],
-        pipeline_verdict=parsed["pipeline_verdict"], score=parsed["score"],
+        pipeline_verdict=parsed["pipeline_verdict"],
+        score=parsed["score"],
         convergence_iterations=parsed["convergence_iterations"],
         critical_findings=parsed["critical_findings"],
         warning_findings=parsed["warning_findings"],

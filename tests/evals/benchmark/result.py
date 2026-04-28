@@ -1,6 +1,8 @@
 """BenchmarkResult dataclass — one JSON file per entry per matrix cell."""
+
 from __future__ import annotations
-from dataclasses import dataclass, asdict, field
+
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
 
@@ -39,15 +41,29 @@ class BenchmarkResult:
         return asdict(self)
 
     @classmethod
-    def dry_run(cls, *, entry_id: str, os: str, model: str, complexity: str) -> "BenchmarkResult":
+    def dry_run(cls, *, entry_id: str, os: str, model: str, complexity: str) -> BenchmarkResult:
         now = _iso_now()
         today = now[:10]
         return cls(
-            schema_version=1, entry_id=entry_id, run_date=today,
-            os=os, model=model, complexity=complexity,
-            started_at=now, ended_at=now, duration_s=0,
-            solved=False, partial_ac_pct=0.0, ac_breakdown={},
-            unverifiable_count=0, cost_usd=0.0, pipeline_verdict="DRY_RUN", score=0,
-            convergence_iterations=0, critical_findings=0, warning_findings=0,
-            timeout=False, error=None,
+            schema_version=1,
+            entry_id=entry_id,
+            run_date=today,
+            os=os,
+            model=model,
+            complexity=complexity,
+            started_at=now,
+            ended_at=now,
+            duration_s=0,
+            solved=False,
+            partial_ac_pct=0.0,
+            ac_breakdown={},
+            unverifiable_count=0,
+            cost_usd=0.0,
+            pipeline_verdict="DRY_RUN",
+            score=0,
+            convergence_iterations=0,
+            critical_findings=0,
+            warning_findings=0,
+            timeout=False,
+            error=None,
         )

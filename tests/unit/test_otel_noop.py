@@ -5,21 +5,23 @@ def test_init_disabled_is_noop(tmp_path):
     state = otel.init({"enabled": False})
     assert state.enabled is False
     # All calls must be safe when disabled.
-    with otel.pipeline_span(run_id="r1", mode="standard"):
-        with otel.stage_span("EXPLORING"):
-            with otel.agent_span(
-                name="fg-100-orchestrator",
-                model="sonnet",
-                description="orchestrator",
-            ):
-                otel.record_agent_result(
-                    {
-                        "tokens_input": 1,
-                        "tokens_output": 2,
-                        "cost_usd": 0.01,
-                        "tool_calls": 0,
-                    }
-                )
+    with (
+        otel.pipeline_span(run_id="r1", mode="standard"),
+        otel.stage_span("EXPLORING"),
+        otel.agent_span(
+            name="fg-100-orchestrator",
+            model="sonnet",
+            description="orchestrator",
+        ),
+    ):
+        otel.record_agent_result(
+            {
+                "tokens_input": 1,
+                "tokens_output": 2,
+                "cost_usd": 0.01,
+                "tool_calls": 0,
+            }
+        )
     otel.shutdown()
 
 

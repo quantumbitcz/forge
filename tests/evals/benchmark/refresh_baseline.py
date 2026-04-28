@@ -1,5 +1,7 @@
 """Freeze or refresh tests/evals/benchmark/baseline.json from latest trends line."""
+
 from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -22,7 +24,11 @@ def main(argv: list[str] | None = None) -> int:
         print("refuse: --confirm is required (baseline refresh is destructive)", file=sys.stderr)
         return 2
 
-    lines = [json.loads(l) for l in args.trends.read_text(encoding="utf-8").splitlines() if l.strip()]
+    lines = [
+        json.loads(line)
+        for line in args.trends.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     if not lines:
         print("error: trends file is empty", file=sys.stderr)
         return 1

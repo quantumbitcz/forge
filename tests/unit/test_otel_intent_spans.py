@@ -1,4 +1,5 @@
 """Phase 7 F35/F36 — OTel span emission for intent verification + voting."""
+
 from __future__ import annotations
 
 import pytest

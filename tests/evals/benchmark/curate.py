@@ -7,19 +7,21 @@ Flow (spec §Component 1):
      scrub PII; write corpus/<date>-<slug>/.
   4. Reject on tarball > 50MB, missing SHA, or unacknowledged PII match.
 """
+
 from __future__ import annotations
+
 import argparse
 import sqlite3
 import subprocess
 import sys
-import tarfile
 import tempfile
-import yaml
 from datetime import date
 from pathlib import Path
 from typing import Any
 
-from tests.evals.benchmark.pii_scrub import scrub, scan
+import yaml
+
+from tests.evals.benchmark.pii_scrub import scan, scrub
 
 _CORPUS_ROOT = Path(__file__).resolve().parents[1] / "corpus"
 _MAX_TARBALL_MB = 50
@@ -61,23 +63,28 @@ def _ask(prompt: str, choices: str = "yNsq") -> str:
 
 def _detect_requires_docker(source_dir: Path) -> bool:
     probes = ["docker-compose.yml", "compose.yaml", "Dockerfile"]
-    for p in probes:
-        if (source_dir / p).exists():
-            return True
-    return False
+    return any((source_dir / p).exists() for p in probes)
 
 
 def _archive(source_dir: Path, target: Path) -> None:
-    subprocess.run(["git", "archive", "--format=tar.gz", "-o", str(target), "HEAD"],
-                   cwd=source_dir, check=True)
+    subprocess.run(
+        ["git", "archive", "--format=tar.gz", "-o", str(target), "HEAD"], cwd=source_dir, check=True
+    )
     size_mb = target.stat().st_size / (1024 * 1024)
     if size_mb > _MAX_TARBALL_MB:
         raise CurationError(f"tarball {size_mb:.1f} MB exceeds {_MAX_TARBALL_MB} MB cap")
 
 
-def _write_entry(*, corpus_root: Path, target_dir: Path, requirement: str,
-                 ac_list: list[dict], expected: dict, metadata: dict,
-                 seed_tarball: Path) -> None:
+def _write_entry(
+    *,
+    corpus_root: Path,
+    target_dir: Path,
+    requirement: str,
+    ac_list: list[dict],
+    expected: dict,
+    metadata: dict,
+    seed_tarball: Path,
+) -> None:
     corpus_root = corpus_root.resolve()
     target_dir = target_dir.resolve()
     try:
@@ -117,14 +124,23 @@ def _prompt_pii(text: str) -> str:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="python -m tests.evals.benchmark.curate",
-                                description="Interactively curate benchmark corpus entries.")
-    p.add_argument("--db", type=Path,
-                   default=Path.home() / ".forge" / "run-history.db",
-                   help="Path to .forge/run-history.db")
+    p = argparse.ArgumentParser(
+        prog="python -m tests.evals.benchmark.curate",
+        description="Interactively curate benchmark corpus entries.",
+    )
+    p.add_argument(
+        "--db",
+        type=Path,
+        default=Path.home() / ".forge" / "run-history.db",
+        help="Path to .forge/run-history.db",
+    )
     p.add_argument("--corpus-root", type=Path, default=_CORPUS_ROOT)
-    p.add_argument("--source-repo", type=Path, required=False,
-                   help="Path to git repo matching source_run_id (for git archive)")
+    p.add_argument(
+        "--source-repo",
+        type=Path,
+        required=False,
+        help="Path to git repo matching source_run_id (for git archive)",
+    )
     return p
 
 
@@ -147,7 +163,9 @@ def main(argv: list[str] | None = None) -> int:
             continue
         slug = input("slug (kebab-case): ").strip()
         complexity = input("complexity [S/M/L]: ").strip().upper()
-        domain = [s.strip() for s in input("domain tags (comma-separated): ").split(",") if s.strip()]
+        domain = [
+            s.strip() for s in input("domain tags (comma-separated): ").split(",") if s.strip()
+        ]
         if args.source_repo is None:
             print("error: --source-repo required to archive seed; skipping", file=sys.stderr)
             continue
@@ -168,9 +186,13 @@ def main(argv: list[str] | None = None) -> int:
                 target_dir=target,
                 requirement=clean_req,
                 ac_list=[],  # user hand-writes; seed empty per spec
-                expected={"version": 1, "files_touched": {"expected_any_of": [], "must_not_touch": []}},
+                expected={
+                    "version": 1,
+                    "files_touched": {"expected_any_of": [], "must_not_touch": []},
+                },
                 metadata={
-                    "version": 1, "complexity": complexity,
+                    "version": 1,
+                    "complexity": complexity,
                     "domain": domain or ["unknown"],
                     "language": cand["language"] or "unknown",
                     "framework": cand["framework"] or "unknown",

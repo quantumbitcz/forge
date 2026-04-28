@@ -3,11 +3,14 @@
 Validates metadata.yaml against schema; emits CorpusValidationError on missing
 requires_docker flag (AC-820), os_compat narrowing (AC-820), or structural drift.
 """
+
 from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
 import yaml
 from jsonschema import Draft202012Validator, ValidationError
 
@@ -53,8 +56,13 @@ def discover_corpus(corpus_root: Path, *, os: str) -> list[CorpusEntry]:
     for entry_dir in sorted(corpus_root.iterdir()):
         if not entry_dir.is_dir() or entry_dir.name.startswith("."):
             continue
-        for required in ("requirement.md", "acceptance-criteria.yaml",
-                         "expected-deliverables.yaml", "metadata.yaml", "seed-project.tar.gz"):
+        for required in (
+            "requirement.md",
+            "acceptance-criteria.yaml",
+            "expected-deliverables.yaml",
+            "metadata.yaml",
+            "seed-project.tar.gz",
+        ):
             if not (entry_dir / required).exists():
                 raise CorpusValidationError(f"{entry_dir.name}: missing {required}")
 
@@ -81,12 +89,14 @@ def discover_corpus(corpus_root: Path, *, os: str) -> list[CorpusEntry]:
         if os not in meta["os_compat"]:
             continue
 
-        out.append(CorpusEntry(
-            entry_id=entry_dir.name,
-            path=entry_dir,
-            requirement=(entry_dir / "requirement.md").read_text(encoding="utf-8"),
-            ac_list=ac["ac_list"],
-            expected=exp,
-            metadata=meta,
-        ))
+        out.append(
+            CorpusEntry(
+                entry_id=entry_dir.name,
+                path=entry_dir,
+                requirement=(entry_dir / "requirement.md").read_text(encoding="utf-8"),
+                ac_list=ac["ac_list"],
+                expected=exp,
+                metadata=meta,
+            )
+        )
     return out

@@ -2,12 +2,13 @@
 
 No `claude` CLI invoked — uses the same --dry-run posture as the pipeline runner.
 """
+
 from __future__ import annotations
+
 import json
-from pathlib import Path
 import subprocess
 import sys
-import pytest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_ROOT = ROOT / "tests" / "evals" / "benchmark" / "fixtures" / "synthetic-corpus"
@@ -16,13 +17,22 @@ FIXTURE_ROOT = ROOT / "tests" / "evals" / "benchmark" / "fixtures" / "synthetic-
 def test_dry_run_end_to_end(tmp_path: Path) -> None:
     results_root = tmp_path / "results"
     result = subprocess.run(
-        [sys.executable, "-m", "tests.evals.benchmark.runner",
-         "--corpus-root", str(FIXTURE_ROOT),
-         "--results-root", str(results_root),
-         "--os", "ubuntu-latest",
-         "--model", "claude-sonnet-4-6",
-         "--dry-run",
-         "--parallel", "1"],
+        [
+            sys.executable,
+            "-m",
+            "tests.evals.benchmark.runner",
+            "--corpus-root",
+            str(FIXTURE_ROOT),
+            "--results-root",
+            str(results_root),
+            "--os",
+            "ubuntu-latest",
+            "--model",
+            "claude-sonnet-4-6",
+            "--dry-run",
+            "--parallel",
+            "1",
+        ],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -40,16 +50,29 @@ def test_dry_run_end_to_end(tmp_path: Path) -> None:
 
 def test_dry_run_does_not_invoke_claude_cli(tmp_path: Path) -> None:
     """Smoke: the runner succeeds on a machine with no `claude` binary in PATH."""
-    env = {"PATH": "/nonexistent", **dict()}
     import os
+
     os_env = {**os.environ, "PATH": "/nonexistent"}
     result = subprocess.run(
-        [sys.executable, "-m", "tests.evals.benchmark.runner",
-         "--corpus-root", str(FIXTURE_ROOT),
-         "--results-root", str(tmp_path / "r"),
-         "--os", "ubuntu-latest",
-         "--model", "claude-sonnet-4-6",
-         "--dry-run", "--parallel", "1"],
-        cwd=ROOT, env=os_env, capture_output=True, text=True,
+        [
+            sys.executable,
+            "-m",
+            "tests.evals.benchmark.runner",
+            "--corpus-root",
+            str(FIXTURE_ROOT),
+            "--results-root",
+            str(tmp_path / "r"),
+            "--os",
+            "ubuntu-latest",
+            "--model",
+            "claude-sonnet-4-6",
+            "--dry-run",
+            "--parallel",
+            "1",
+        ],
+        cwd=ROOT,
+        env=os_env,
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0, result.stderr

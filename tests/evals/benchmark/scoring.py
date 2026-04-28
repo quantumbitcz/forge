@@ -2,9 +2,11 @@
 
 Spec reference: docs/superpowers/specs/2026-04-22-phase-8-measurement-design.md §2
 """
+
 from __future__ import annotations
+
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 _SHIPPABLE_VERDICTS: frozenset[str] = frozenset({"SHIP", "CONCERNS"})
 _AC_THRESHOLD: float = 0.9
@@ -26,9 +28,7 @@ def solved(inputs: SolveInputs) -> bool:
         return False
     if inputs.partial_ac_pct < _AC_THRESHOLD:
         return False
-    if inputs.critical_findings != 0:
-        return False
-    return True
+    return inputs.critical_findings == 0
 
 
 def compute_partial_ac_pct(ac_breakdown: Mapping[str, str]) -> float:

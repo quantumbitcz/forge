@@ -3,7 +3,9 @@
 Phase 6 contract: reads state.cost.estimated_cost_usd (field-name: pct_consumed).
 Default ceiling: $200 (conservative; user DB empty at commit time — see plan header).
 """
+
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 

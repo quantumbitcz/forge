@@ -1,8 +1,11 @@
 """Cost ceiling: aggregator aborts remaining cells when cumulative spend ≥ max_weekly_cost_usd."""
+
 from __future__ import annotations
+
 import json
 from pathlib import Path
-from tests.evals.benchmark.cost_guard import CostGuard, CostLimitExceeded
+
+from tests.evals.benchmark.cost_guard import CostGuard
 
 
 def _spend_line(cost: float) -> dict:
@@ -11,7 +14,8 @@ def _spend_line(cost: float) -> dict:
 
 def test_below_ceiling(tmp_path: Path) -> None:
     g = CostGuard(max_weekly_cost_usd=200.0)
-    g.record(50.0); g.record(40.0)
+    g.record(50.0)
+    g.record(40.0)
     assert g.total_usd == 90.0
     assert g.within_limit() is True
 
@@ -33,5 +37,6 @@ def test_simulator_feed(tmp_path: Path) -> None:
     for i, raw in enumerate(tracker.read_text().splitlines(), 1):
         g.record(json.loads(raw)["estimated_cost_usd"])
         if not g.within_limit():
-            tripped_at = i; break
-    assert tripped_at == 4   # 25+30+40+60 = 155 ≥ 150
+            tripped_at = i
+            break
+    assert tripped_at == 4  # 25+30+40+60 = 155 ≥ 150
