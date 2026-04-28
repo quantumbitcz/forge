@@ -1632,6 +1632,17 @@ c. [dispatch fg-300-implementer] <2,000 tokens: task, commands, conventions, PRE
    ## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder
 d. Verify with build/test_single.
 
+> **`task.type` consumption (D1 contract).** The planner emits `Type:
+> test` and `Type: implementation` for every task per the writing-plans
+> contract (`shared/prompts/`); the validator (`fg-210`) enforces the
+> ordering. The orchestrator currently treats `task.type` as
+> **informational**: `fg-300-implementer` is dispatched in unified mode
+> for both test-and-implementation tasks (it writes the RED test and
+> the GREEN code in the same dispatch per its §5.2). The split-mode
+> wiring (Type=test → red-only, Type=implementation → green-only)
+> is reserved for a future enhancement; until then, the field surfaces
+> only to the validator and to retrospective analytics.
+
 ### SS4.4 Checkpoints and Failure Isolation
 
 Per task → write checkpoint. Failed after max_fix_loops → record failed, continue with remaining.
@@ -2148,18 +2159,23 @@ sequentially" — the planner already ran the conflict-detection pass
 (fg-102-conflict-resolver). If a parallel group has a conflict, that's
 a planner bug, not a dispatch concern.
 
-### Checkpoint after every 3 tasks
+### Review-batch cadence (every 3 tasks)
 
-After every 3 tasks complete (count includes both serial and parallel
-tasks toward the rolling counter), emit a checkpoint:
+The canonical state-checkpoint cadence is **per-task** (see SS4.4 above
+and `CLAUDE.md`). That cadence is non-negotiable — every completed
+task writes a checkpoint to the CAS DAG so recovery is fine-grained.
 
-1. Save state to `.forge/runs/<run_id>/checkpoints/` (existing CAS DAG
-   mechanism).
-2. Run a brief review pass (read updated state, summarise progress, note
-   any drift from the plan).
+Layered on top of per-task checkpointing, the orchestrator runs a
+**review batch** every 3 completed tasks (count includes both serial
+and parallel tasks toward the rolling counter):
+
+1. Read the most recent per-task checkpoint (no extra write).
+2. Run a brief review pass (summarise progress, note any drift from the
+   plan, look for emerging risks).
 3. Continue or escalate based on the review.
 
-This matches `superpowers:executing-plans` "review after each batch of 3
-tasks". The checkpoint cadence is fixed at 3 (not configurable) — the
-number is calibrated by the upstream pattern and changing it loses the
-review property.
+This matches `superpowers:executing-plans` "review after each batch of
+3 tasks". The review-batch cadence is fixed at 3 (not configurable) —
+the number is calibrated by the upstream pattern. The review batch
+does NOT replace per-task checkpoints; it is purely a periodic
+attention pass that consults the existing CAS state.

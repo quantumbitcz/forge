@@ -701,9 +701,20 @@ next PREFLIGHT).
 <!-- Source: superpowers:test-driven-development rule "test must fail
 first", ported in-tree per spec §9.1 (D8) and AC-POLISH-001. -->
 
-When you start an implementation task, the preceding test task (per the
-writing-plans contract from D1) wrote a test that expresses the spec.
-Before writing any production code:
+**Scope.** This check applies ONLY when this dispatch is for a
+`Type: implementation` task whose RED test was written by a prior
+`Type: test` dispatch (the split-mode contract reserved for a future
+enhancement). When dispatched in unified mode (writing the test AND
+the implementation in the same dispatch — the current default per the
+orchestrator's `task.type` consumption note), §5.2's RED-then-GREEN
+flow already enforces the same invariant: the freshly-written test
+must fail before any production code is written. In unified mode,
+treat the §5.2 RED step as the test-must-fail-first probe and skip
+the explicit pre-flight described below.
+
+When you start a split-mode implementation task, the preceding test
+task (per the writing-plans contract from D1) wrote a test that
+expresses the spec. Before writing any production code:
 
 1. Run the test in isolation. Use the project's test runner with the
    narrowest selector that targets only the new test.

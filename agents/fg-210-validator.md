@@ -179,8 +179,16 @@ REVISE with reference `W1: every implementation task has a preceding test task`.
 
 Every task (test, implementation, refactor) must contain an
 `**Implementer prompt:**` block. The block must be non-empty (≥1 line of
-substantive text after the marker). If absent or empty, REVISE with reference
-`W2: every task has an implementer prompt`.
+substantive text after the marker) AND must NOT contain unsubstituted
+placeholders matching the canonical placeholder set
+`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` (regex
+`\{(TASK_DESCRIPTION|ACS|FILE_PATHS)\}`). The planner is required to
+substitute every placeholder when it embeds the prompt template per
+the planner contract §"Embedded prompt templates"; an unsubstituted
+placeholder means the planner shipped a half-rendered template. If
+absent, empty, or carrying unsubstituted placeholders, REVISE with
+reference `W2: every task has an implementer prompt with all
+placeholders substituted`.
 
 ### Rule W3 — Spec-reviewer prompt presence
 

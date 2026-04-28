@@ -1,6 +1,6 @@
 ---
 name: fg-021-hypothesis-investigator
-description: Single-purpose hypothesis tester for bug investigation. Receives one hypothesis and a falsifiability test, runs the test, returns a verdict.
+description: Single-purpose hypothesis tester for bug investigation. Receives one hypothesis and a falsifiability test, runs the test, returns evidence + a likelihood update.
 model: inherit
 color: orange
 tools:

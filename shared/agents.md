@@ -9,7 +9,7 @@
 
 ## Model
 
-Forge currently ships 50 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
+Forge currently ships 51 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
 
 **What an agent IS.** A YAML frontmatter block declaring:
 
@@ -30,7 +30,7 @@ The body of the file is the system prompt: role, constraints, dispatch contract,
 
 Runtime wiring lives in [`agent-ui.md`](agent-ui.md) (task nesting, AskUserQuestion patterns) and in [`agent-communication.md`](agent-communication.md) (stage notes, dedup hints, PREEMPT markers, structured output).
 
-**Who the agents ARE.** 50 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
+**Who the agents ARE.** 51 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
 
 1. A row in §Registry.
 2. A tier assignment in §UI Tiers (and matching `ui:` frontmatter).
@@ -113,6 +113,7 @@ No UI capabilities. Produce findings only.
 
 | Agent | Role |
 |---|---|
+| `fg-021-hypothesis-investigator` | Sub-investigator dispatched by fg-020 in parallel hypothesis branching mode; returns evidence + likelihood updates as JSON |
 | `fg-101-worktree-manager` | Worktree lifecycle |
 | `fg-102-conflict-resolver` | Merge conflict resolution |
 | `fg-205-plan-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-200-planner; 2-loop bound with AskUserQuestion escalation |
@@ -324,6 +325,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-010-shaper | 1 | Yes | Pre-pipeline | Shaping |
 | fg-015-scope-decomposer | 1 | Yes | Pre-pipeline | Decomposition |
 | fg-020-bug-investigator | 2 | Yes | Pre-pipeline | Investigation |
+| fg-021-hypothesis-investigator | 4 | No | Pre-pipeline | Investigation |
 | fg-050-project-bootstrapper | 1 | Yes | Pre-pipeline | Bootstrap |
 | fg-090-sprint-orchestrator | 1 | Yes | Sprint | Orchestration |
 | fg-100-orchestrator | 2 | Yes | Core | Orchestration |

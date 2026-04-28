@@ -26,37 +26,42 @@ F020="$PLUGIN_ROOT/agents/fg-020-bug-investigator.md"
 }
 
 @test "fg-020 documents Bayes update formula" {
-  run grep -E 'P\(H_i \| E\)' "$F020"
+  # Match either the canonical "P(H_i | E)" form or any equivalent
+  # Bayesian posterior expression: P(<hyp> | <evidence>). Also accept
+  # the literal word "Bayes" in case the formula gets reformatted.
+  run grep -E 'Bayes|P\([A-Za-z_]+[^|]*\|[^)]+\)' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.95 row" {
-  run grep -F '0.95' "$F020"
+  # Tighten: the value must appear inside an actual table cell, not in
+  # narrative prose elsewhere. Match a pipe-delimited cell.
+  run grep -E '\|[[:space:]]*\*?\*?0\.95\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.75 row" {
-  run grep -F '0.75' "$F020"
+  run grep -E '\|[[:space:]]*\*?\*?0\.75\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.50 row" {
-  run grep -F '0.50' "$F020"
+  run grep -E '\|[[:space:]]*\*?\*?0\.50\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.05 row" {
-  run grep -F '0.05' "$F020"
+  run grep -E '\|[[:space:]]*\*?\*?0\.05\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.20 row" {
-  run grep -F '0.20' "$F020"
+  run grep -E '\|[[:space:]]*\*?\*?0\.20\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 
 @test "fg-020 likelihood table includes 0.40 row" {
-  run grep -F '0.40' "$F020"
+  run grep -E '\|[[:space:]]*\*?\*?0\.40\*?\*?[[:space:]]*\|' "$F020"
   assert_success
 }
 

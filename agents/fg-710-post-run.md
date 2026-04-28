@@ -140,6 +140,14 @@ On invocation, you receive:
 
 ### Step 1 — For each comment, dispatch a defense check sub-agent
 
+> **Defense disabled (legacy mode).** When `post_run.defense_enabled:
+> false`, skip the sub-agent dispatch entirely. Treat every comment as
+> `verdict: actionable` and route directly to Step 2's actionable
+> branch (forward to fg-200-planner / fg-300-implementer). Log
+> `addressed: actionable_routed` in `feedback-decisions.jsonl` for
+> each. This restores the pre-D5 receive-and-route behaviour for users
+> who don't want the defense layer.
+
 Use the Task tool. Tier-3 (no UI). Fresh context — the sub-agent does not
 see your prior session. Brief shape:
 
@@ -266,10 +274,20 @@ treat as `unknown`. For inline comments, the adapter posts as a thread
 reply on the original comment (matches receiving-code-review's GitHub
 thread reply rule). For issue-level comments, the adapter posts top-level
 on the PR/MR. The adapter contract is `PlatformAdapter` (see
-`shared/platform_adapters/__init__.py`); `auth` is `{"method":
-state.platform.auth_method}` — the adapter resolves the actual token
-from environment (`GITHUB_TOKEN`, `GITLAB_TOKEN`, `BITBUCKET_APP_PASSWORD`,
-`GITEA_TOKEN`) or delegates to the platform CLI when present.
+`shared/platform_adapters/__init__.py`).
+
+`auth` is a per-adapter mapping. The base shape is `{"method":
+state.platform.auth_method}`; Bitbucket additionally requires
+`{"method": ..., "username": <username>}` because Bitbucket app
+passwords are username-scoped. Per-adapter env fallbacks resolve the
+actual credential when `auth` is incomplete:
+
+| Adapter | Token env | Username env | Notes |
+|---|---|---|---|
+| `github` | `GITHUB_TOKEN` | — | falls back to `gh auth token` |
+| `gitlab` | `GITLAB_TOKEN` | — | falls back to `glab auth status` |
+| `bitbucket` | `BITBUCKET_APP_PASSWORD` | `BITBUCKET_USERNAME` | both required; missing either → adapter raises and Step 4 marks `defended_local_only` / `acknowledged_local_only` |
+| `gitea` | `GITEA_TOKEN` | — | falls back to `tea login` if present |
 
 ### Step 4 — Adapter failure handling
 

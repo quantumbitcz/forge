@@ -13,9 +13,17 @@ F021="$PLUGIN_ROOT/agents/fg-021-hypothesis-investigator.md"
   assert_success
 }
 
-@test "fg-021 declares no UI capabilities (Tier-3)" {
-  # ui frontmatter must declare tasks: false (or be Tier-3 by frontmatter rules)
+@test "fg-021 declares no UI capabilities (Tier-4)" {
+  # Sub-investigator: no UI surface. Tier-4 means tasks/ask/plan_mode all
+  # false. Original plan drafted Tier-3 but the agent has no task tracking
+  # and no AskUserQuestion — frontmatter is the source of truth.
   run grep -E '^ui:' "$F021"
+  assert_success
+  run grep -E '^[[:space:]]+tasks:[[:space:]]+false' "$F021"
+  assert_success
+  run grep -E '^[[:space:]]+ask:[[:space:]]+false' "$F021"
+  assert_success
+  run grep -E '^[[:space:]]+plan_mode:[[:space:]]+false' "$F021"
   assert_success
 }
 

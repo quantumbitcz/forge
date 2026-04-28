@@ -49,9 +49,9 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
 - [ ] **Step 1 — Read starting state.** Read both files in full to capture current section structure and identify every retired skill reference. Build a mental list of sections that need rewriting.
 
   **Ground-truth state at spec date (2026-04-27):**
-  - `CLAUDE.md` is 408 lines. Header reads `## Agents (48 total, agents/*.md)` (line 140). Feature matrix runs lines 210-254 (the table opens at the `| Feature | Config | Key details |` header).
-  - `README.md` is 284 lines. Agent badge reads `agents-42` (stale by 6: actual file count is 48 before Phase D, 49 after). Skill badge reads `skills-35`.
-  - Phase D (D6) adds exactly one new agent file: `agents/fg-021-hypothesis-investigator.md`. Pre-Phase-D file count is 48; post-Phase-D is **49**. Both numbers must be reflected.
+  - `CLAUDE.md` is 408 lines. Header reads `## Agents (50 total, agents/*.md)` (line 140) — Phase 7 added `fg-302-diff-judge` (F36) and `fg-540-intent-verifier` (F35) bringing the pre-Phase-D total to 50. Feature matrix runs lines 210-254 (the table opens at the `| Feature | Config | Key details |` header).
+  - `README.md` is 284 lines. Agent badge reads `agents-42` (stale by 8: actual file count is 50 before Phase D, 51 after). Skill badge reads `skills-35`.
+  - Phase D (D6) adds exactly one new agent file: `agents/fg-021-hypothesis-investigator.md`. Pre-Phase-D file count is 50; post-Phase-D is **51**. Both numbers must be reflected. (The earlier draft of this plan said 48 → 49; that is corrected to 50 → 51 here because Phase 7 shipped fg-302 and fg-540 between the plan-draft date and the implementation date.)
   - Phase D, B12, and B5 do NOT modify the "Start Here" section, "What this is", "Quick start" bash, "Development workflow", or "Confidence scoring" line — those updates are owned by E1 and are listed below as Steps 1a-1e.
 
 - [ ] **Step 1a — Update `CLAUDE.md` "Start Here (5-minute path)" section (currently ~lines 5-21).** Rewrite to use the new three-skill surface. Replacement block:
@@ -175,12 +175,12 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
 
 - [ ] **Step 6 — Update `CLAUDE.md` "## Agents" section header and Pre-pipeline agent line (currently ~lines 140-143).**
 
-  First, bump the section header from `## Agents (48 total, agents/*.md)` to `## Agents (49 total, agents/*.md)` to reflect the new `fg-021-hypothesis-investigator` added by Phase D6.
+  First, bump the section header from `## Agents (50 total, agents/*.md)` to `## Agents (51 total, agents/*.md)` to reflect the new `fg-021-hypothesis-investigator` added by Phase D6. (Pre-D total of 50 already accounts for fg-302-diff-judge and fg-540-intent-verifier shipped in Phase 7.)
 
   Then update the Pre-pipeline bullet to note the always-on shaper and the new sub-investigator:
 
   ```markdown
-  - Pre-pipeline: `fg-010-shaper` (always-on for feature mode — adopts seven-step superpowers brainstorming pattern with one-question-at-a-time, 2-3 approach proposals, sectioned approval gates, transcript mining via F29 FTS5, autonomous degradation), `fg-015-scope-decomposer`, `fg-020-bug-investigator` (hypothesis register + Bayesian pruning + parallel sub-investigators via `fg-021-hypothesis-investigator`, fix-gate posterior ≥ 0.75), `fg-021-hypothesis-investigator` (Tier-3 sub-investigator dispatched by `fg-020` for hypothesis branching; new in Phase D6), `fg-050-project-bootstrapper`
+  - Pre-pipeline: `fg-010-shaper` (always-on for feature mode — adopts seven-step superpowers brainstorming pattern with one-question-at-a-time, 2-3 approach proposals, sectioned approval gates, transcript mining via F29 FTS5, autonomous degradation), `fg-015-scope-decomposer`, `fg-020-bug-investigator` (hypothesis register + Bayesian pruning + parallel sub-investigators via `fg-021-hypothesis-investigator`, fix-gate posterior ≥ 0.75), `fg-021-hypothesis-investigator` (Tier-4 sub-investigator dispatched by `fg-020` for hypothesis branching; new in Phase D6), `fg-050-project-bootstrapper`
   ```
 
 - [ ] **Step 7 — Add new section "Pattern parity" to `CLAUDE.md` after the "Stage contracts & shipping" section.** Sourced from spec §10.1 coverage matrix:
@@ -393,27 +393,27 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
 - [ ] **Step 20 — Update `README.md` skills/agents badges (lines 5-11).** Update the agent and skill counts to reflect ground truth:
 
   ```markdown
-  [![Agents](https://img.shields.io/badge/agents-49-green?style=flat-square)](#agents)
+  [![Agents](https://img.shields.io/badge/agents-51-green?style=flat-square)](#agents)
   [![Skills](https://img.shields.io/badge/skills-3-green?style=flat-square)](#available-skills)
   ```
 
-  (Pre-existing drift: README badge currently reads `agents-42`, but `agents/` actually contains 48 files at spec date. Phase D adds `fg-021-hypothesis-investigator`, bringing the post-Phase-D total to **49**. The badge is corrected to ground truth in this commit, not a +1 from the stale value. Skill count drops from 35 to 3 — the consolidation is the dominant change.)
+  (Pre-existing drift: README badge currently reads `agents-42`, but `agents/` actually contains 50 files at spec date (Phase 7 added `fg-302-diff-judge` and `fg-540-intent-verifier` to the original 48 in Phases 1-6). Phase D adds `fg-021-hypothesis-investigator`, bringing the post-Phase-D total to **51**. The badge is corrected to ground truth in this commit, not a +1 from the stale value. Skill count drops from 35 to 3 — the consolidation is the dominant change.)
 
-  Also update the lead-paragraph prose at line 15 (`...orchestrating 42 specialized agents...`) to read `49 specialized agents`.
+  Also update the lead-paragraph prose at line 15 (`...orchestrating 42 specialized agents...`) to read `51 specialized agents`.
 
-- [ ] **Step 21 — Update `README.md` "Agents" section (lines 158-164).** Bump the count to 49 and resync the enumeration with the actual `agents/` directory (the existing list omits 6 agents added between earlier doc passes — this is pre-existing drift):
+- [ ] **Step 21 — Update `README.md` "Agents" section (lines 158-164).** Bump the count to 51 and resync the enumeration with the actual `agents/` directory (the existing list omits 8 agents added between earlier doc passes — this is pre-existing drift):
 
   ```markdown
   ## Agents
 
-  49 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
+  51 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
 
-  **Pipeline agents** (40): fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-021-hypothesis-investigator (Tier-3 sub-investigator for hypothesis branching, new in Phase D6), fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-143-observability-bootstrap, fg-150-test-bootstrapper, fg-155-i18n-validator, fg-160-migration-planner, fg-200-planner, fg-205-plan-judge, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-301-implementer-judge, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-506-migration-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-555-resilience-tester, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
+  **Pipeline agents** (42): fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-021-hypothesis-investigator (Tier-4 sub-investigator for hypothesis branching, new in Phase D6), fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-143-observability-bootstrap, fg-150-test-bootstrapper, fg-155-i18n-validator, fg-160-migration-planner, fg-200-planner, fg-205-plan-judge, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-301-implementer-judge, fg-302-diff-judge, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-506-migration-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-540-intent-verifier, fg-555-resilience-tester, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
 
   **Review agents** (9): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-414-license-reviewer, fg-416-performance-reviewer, fg-417-dependency-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer.
   ```
 
-  Verify `(40 pipeline + 9 review = 49)` matches the `## Agents (49 total ...)` header in `CLAUDE.md` (Step 6) and the badge value in Step 20. Also update the line `## Architecture` "42 agents organized by pipeline stage" reference at README line 171 (`docs/architecture/agent-dispatch.md -- 42 agents organized by pipeline stage`) to read `49 agents`.
+  Verify `(42 pipeline + 9 review = 51)` matches the `## Agents (51 total ...)` header in `CLAUDE.md` (Step 6) and the badge value in Step 20. Also update the line `## Architecture` "42 agents organized by pipeline stage" reference at README line 171 (`docs/architecture/agent-dispatch.md -- 42 agents organized by pipeline stage`) to read `51 agents`.
 
 - [ ] **Step 22 — Run AC-S005 sanity grep across both files.**
 
@@ -444,10 +444,11 @@ Phase E emits two doc commits, no test additions, no code changes. It is therefo
   - Add "Pattern parity" section listing 12 mirrored superpowers patterns
   - Document four beyond-superpowers extensions (consistency voting, transcript mining,
     hypothesis branching, structured PR-finishing dialog)
-  - README: correct agent badge to 49 (was stale at 42; +1 from fg-021-hypothesis-investigator brings actual file count to 49), skills badge to 3
-  - README: resync agent enumeration to include 7 added/omitted agents
-    (fg-021 new in Phase D6; fg-143, fg-155, fg-301, fg-414, fg-506, fg-555
-    were previously omitted from the README enumeration despite existing in agents/)
+  - README: correct agent badge to 51 (was stale at 42; Phase 7 added fg-302 and fg-540 bringing pre-Phase-D total to 50, +1 from fg-021-hypothesis-investigator brings actual file count to 51), skills badge to 3
+  - README: resync agent enumeration to include 9 added/omitted agents
+    (fg-021 new in Phase D6; fg-302 and fg-540 added by Phase 7; fg-143,
+    fg-155, fg-301, fg-414, fg-506, fg-555 were previously omitted from
+    the README enumeration despite existing in agents/)
   - README: add Multi-VCS support section (GitHub/GitLab/Bitbucket/Gitea)
   - Strike all retired skill names (28); replace per spec §12.1 mapping table
   ```
@@ -475,7 +476,7 @@ You are checking that the doc updates accurately reflect the new surface. Verify
    - The "Skill selection guide" section has exactly three rows: /forge, /forge-ask, /forge-admin.
    - "Getting started flows" uses the new skill names exclusively.
    - "Skills (N total)" header reads "Skills (3 total)".
-   - "## Agents (N total ...)" header reads "## Agents (49 total, agents/*.md)" — reflects fg-021 added by Phase D6.
+   - "## Agents (N total ...)" header reads "## Agents (51 total, agents/*.md)" — reflects fg-021 added by Phase D6 on top of the Phase-7 additions (fg-302, fg-540).
    - The "Start Here (5-minute path)", "What this is", "Quick start" bash, "Development workflow", and "Confidence scoring" sections all reference only the new three-skill surface.
    - The pipeline state list contains BRAINSTORMING immediately after PREFLIGHT.
    - A "Pattern parity" section is present with all 12 mapped superpowers skills (per spec §10.1) and a "Beyond-superpowers extensions" sub-list with 4 items (consistency voting, transcript mining, hypothesis branching, structured PR-finishing dialog).
@@ -485,12 +486,12 @@ You are checking that the doc updates accurately reflect the new surface. Verify
 
 2. Open /Users/denissajnar/IdeaProjects/forge/README.md and confirm:
    - Quick Start uses /forge (not /forge-init then /forge-run).
-   - Skill badge reads `skills-3` and agent badge reads `agents-49` (NOT `agents-43` — README badge was already stale at 42 pre-Phase-E; the corrected value is the actual file count post-Phase-D).
-   - Lead-paragraph at line ~15 reads "49 specialized agents" (not 42 or 43).
+   - Skill badge reads `skills-3` and agent badge reads `agents-51` (NOT `agents-43` — README badge was already stale at 42 pre-Phase-E; the corrected value is the actual file count post-Phase-D, which includes the Phase-7 fg-302 and fg-540 additions and Phase-D's fg-021).
+   - Lead-paragraph at line ~15 reads "51 specialized agents" (not 42 or 43).
    - "Available skills" section is the three-row table.
    - "Multi-VCS support" section is present and lists GitHub, GitLab, Bitbucket, Gitea.
-   - "Agents" section count reads 49 and explicitly lists fg-021-hypothesis-investigator alongside the 5 other agents that were missing from the prior README enumeration (fg-143-observability-bootstrap, fg-155-i18n-validator, fg-301-implementer-judge, fg-414-license-reviewer, fg-506-migration-verifier, fg-555-resilience-tester).
-   - The "## Architecture" sub-line referencing the agent-dispatch diagram reads "49 agents organized by pipeline stage" (not 42).
+   - "Agents" section count reads 51 and explicitly lists fg-021-hypothesis-investigator alongside the 8 other agents that were missing from the prior README enumeration (fg-143-observability-bootstrap, fg-155-i18n-validator, fg-301-implementer-judge, fg-302-diff-judge, fg-414-license-reviewer, fg-506-migration-verifier, fg-540-intent-verifier, fg-555-resilience-tester).
+   - The "## Architecture" sub-line referencing the agent-dispatch diagram reads "51 agents organized by pipeline stage" (not 42).
    - Same retired-skill grep as above returns empty.
 
 3. The new sections quote the spec verbatim where the spec uses verbatim language (descriptions in §1; pattern-parity table in §10.1). The implementer is not permitted to paraphrase those.
@@ -664,7 +665,7 @@ If any check fails, return REVISE with the specific failed step. If all pass, re
   - Getting started flows (Step 3) — yes
   - Skills (N total) section header + paragraph (Step 4) — yes
   - Stage contracts & shipping line (Step 5) — yes
-  - "## Agents (49 total ...)" header bump + Pre-pipeline agent line (Step 6) — yes
+  - "## Agents (51 total ...)" header bump + Pre-pipeline agent line (Step 6) — yes
   - New "Pattern parity" section (Step 7) — yes
   - Routing & decomposition (Step 8) — yes
   - Pipeline modes (Step 9) — yes
@@ -679,7 +680,7 @@ If any check fails, return REVISE with the specific failed step. If all pass, re
   - README.md Multi-VCS section (Step 18) — yes
   - README.md Key features (Step 19) — yes
   - README.md badges + lead-paragraph agent count (Step 20) — yes
-  - README.md Agents section (resync to 49) + Architecture line (Step 21) — yes
+  - README.md Agents section (resync to 51) + Architecture line (Step 21) — yes
   - AC-S005 grep verification (Step 22) — yes
 
 - [ ] **E2 feature matrix has 8 new entries with correct config keys?**

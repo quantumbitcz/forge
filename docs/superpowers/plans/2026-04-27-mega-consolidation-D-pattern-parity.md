@@ -18,7 +18,7 @@
 
 - `shared/prompts/implementer-prompt.md` — canonical implementer dispatch template (D1).
 - `shared/prompts/spec-reviewer-prompt.md` — canonical spec compliance reviewer template (D1).
-- `agents/fg-021-hypothesis-investigator.md` — Tier-3 single-purpose hypothesis tester (D6).
+- `agents/fg-021-hypothesis-investigator.md` — Tier-4 single-purpose hypothesis tester (D6) — sub-investigator that returns JSON, never dispatches further or asks. (Plan originally drafted T3; final implementation is T4 because it has no UI surface; the agent frontmatter is the source of truth.)
 - `tests/structural/planner-tdd-ordering.bats` — verifies planner TDD ordering (D9).
 - `tests/structural/planner-risk-justification.bats` — verifies high-risk justification ≥30 words (D9).
 - `tests/structural/reviewer-prose-shape.bats` — verifies prose report headings on all 9 reviewers (D9).

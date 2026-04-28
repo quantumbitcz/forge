@@ -117,10 +117,13 @@ MIN_DOCUMENTATION_BINDINGS=21
 
 # ---------------------------------------------------------------------------
 # Test file count guards (update when adding new test files)
+# Wired in by tests/structural/test-floor-counts.bats — accidental
+# deletion of test files trips the structural suite.
 # ---------------------------------------------------------------------------
-MIN_UNIT_TESTS=108        # Current: 132 files (added 4 phase-08 structural tests)
-MIN_CONTRACT_TESTS=83     # Current: 85 files
-MIN_SCENARIO_TESTS=40     # Current: 41 files
+MIN_UNIT_TESTS=210        # tests/unit/**/*.{bats,py}
+MIN_CONTRACT_TESTS=120    # tests/contract/**/*.{bats,py}
+MIN_STRUCTURAL_TESTS=39   # tests/structural/**/*.bats
+MIN_SCENARIO_TESTS=6      # tests/scenarios/**/*.bats (gateway scenarios; reviewer/feature/eval scenarios live under tests/scenario/, not counted here)
 
 # guard_min_count <label> <actual> <minimum>
 # Returns 0 if actual >= minimum, 1 otherwise. Prints message on failure.

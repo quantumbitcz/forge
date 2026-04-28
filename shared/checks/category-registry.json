@@ -425,6 +425,60 @@
         "fg-419-infra-deploy-reviewer"
       ]
     },
+    "WORKTREE": {
+      "description": "Worktree isolation or absolute-path leakage (sandbox-violating brief)",
+      "agents": [
+        "fg-100-orchestrator",
+        "fg-300-implementer"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "REPORT": {
+      "description": "Reviewer prose-report write or schema violation (.forge/runs/<run_id>/reports/<reviewer>.md)",
+      "agents": [
+        "fg-400-quality-gate",
+        "fg-410-code-reviewer",
+        "fg-411-security-reviewer",
+        "fg-412-architecture-reviewer",
+        "fg-413-frontend-reviewer",
+        "fg-414-license-reviewer",
+        "fg-416-performance-reviewer",
+        "fg-417-dependency-reviewer",
+        "fg-418-docs-consistency-reviewer",
+        "fg-419-infra-deploy-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-400-quality-gate"
+      ]
+    },
+    "FEEDBACK": {
+      "description": "Post-run feedback handling failure (defense, acknowledgment, sub-agent timeout, platform adapter)",
+      "agents": [
+        "fg-710-post-run"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-710-post-run"
+      ]
+    },
+    "BRANCH": {
+      "description": "Branch / finishing-development-branch dialog violation (cleanup checklist, abandon confirmation, branch protection)",
+      "agents": [
+        "fg-600-pr-builder"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-600-pr-builder"
+      ]
+    },
     "REVIEW-GAP": {
       "description": "Coverage gap from timed-out or failed review agent",
       "agents": [
