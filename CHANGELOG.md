@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-04-28 — Phase 8 Measurement
+
+### Added
+- `tests/evals/benchmark/` harness: curated real-feature benchmark corpus, weekly CI cron, 3×2 OS/model matrix.
+- `SCORECARD.md` at repo root — weekly solve-rate numbers with sparklines and regression table.
+- `tests/evals/benchmark/baseline.json` frozen baseline + 10pp regression gate.
+- New learning type `benchmark.regression` (Phase 4 integration).
+- OTel `forge.benchmark.run` span.
+- ADR 0013 (weekly benchmark extension).
+
+### Changed
+- `shared/observability.md` lists benchmark span attributes.
+- `shared/learnings/README.md` lists new learning type.
+- `README.md` + `CLAUDE.md` link to SCORECARD.md.
+
+### Config
+- `benchmark.max_weekly_cost_usd: 200` (conservative initial; refresh after 90 days of data).
+- `benchmark.timeout_seconds.{S,M,L}: 900/2700/5400`.
+
 ## [5.3.0] — Mega E: Documentation Rollup
 
 ### Changed (Phase E1 — CLAUDE.md + README.md mega update)
