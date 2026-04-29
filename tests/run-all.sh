@@ -5,25 +5,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BATS="$SCRIPT_DIR/lib/bats-core/bin/bats"
 TIER="${1:-all}"
 
-# Enable parallel test execution when GNU parallel is available
+# Enable parallel test execution when GNU parallel is available.
+# Windows-MSYS2 carve-out: GNU parallel autodetects the OS max command-line
+# length at startup ("Finding the maximal command line length. This may
+# take up to 1 minute."). The probe binary-searches via Win32 CreateProcess
+# and on Windows runners routinely hangs >15 min instead of completing in
+# ~1 min. Setting --max-chars / -s does NOT bypass the probe — it caps the
+# input size but the OS-limit probe runs anyway. There's no documented env
+# var to skip it. Falling back to serial bats on Windows is faster end-to-end
+# (serial Windows ~8m vs hung-with-parallel >20m) and matches Linux/macOS
+# correctness.
 BATS_JOBS=()
-if command -v parallel &>/dev/null; then
-  NCPU=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
-  BATS_JOBS=(--jobs "$NCPU" --no-parallelize-within-files)
-
-  # GNU parallel autodetects max command line length at startup ("Finding the
-  # maximal command line length. This may take up to 1 minute."). On Windows
-  # MSYS2 the probe spawns many test processes through Win32 CreateProcess
-  # and routinely hangs >10 min. Bypass with a fixed value via the PARALLEL
-  # env var. Use --max-chars (-s) — '--max-line' is ambiguous on parallel,
-  # matching both --max-line-length-allowed and --max-lines. CMD's actual
-  # limit is 8191; 8000 sits safely under it.
-  case "$(uname -s 2>/dev/null || echo unknown)" in
-    MINGW*|MSYS*|CYGWIN*)
-      export PARALLEL="--max-chars=8000 --will-cite"
-      ;;
-  esac
-fi
+case "$(uname -s 2>/dev/null || echo unknown)" in
+  MINGW*|MSYS*|CYGWIN*) ;;  # serial on Windows
+  *)
+    if command -v parallel &>/dev/null; then
+      NCPU=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+      BATS_JOBS=(--jobs "$NCPU" --no-parallelize-within-files)
+    fi
+    ;;
+esac
 
 # Verify bats is available (all tiers, including structural which now dispatches tests/structural/*.bats)
 if [[ ! -x "$BATS" ]]; then
