@@ -30,6 +30,26 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install bash 4+ and GNU parallel (MacOS)
+        if: runner.os == 'MacOS'
+        run: |
+          brew install bash parallel
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Install GNU parallel (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y parallel
+
+      - name: Install GNU parallel (Windows, MSYS2)
+        # MSYS2 is preinstalled at C:\msys64 on windows-latest; pacman provides parallel.
+        # Best-effort: if install fails, run-all.sh auto-falls-back to serial bats.
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          C:\msys64\usr\bin\pacman.exe -S --noconfirm parallel
+          "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
       - name: Structural validation
         run: ./tests/run-all.sh structural
 
