@@ -15,10 +15,12 @@ if command -v parallel &>/dev/null; then
   # maximal command line length. This may take up to 1 minute."). On Windows
   # MSYS2 the probe spawns many test processes through Win32 CreateProcess
   # and routinely hangs >10 min. Bypass with a fixed value via the PARALLEL
-  # env var (CMD limit is 8191; 8000 is safely under it).
+  # env var. Use --max-chars (-s) — '--max-line' is ambiguous on parallel,
+  # matching both --max-line-length-allowed and --max-lines. CMD's actual
+  # limit is 8191; 8000 sits safely under it.
   case "$(uname -s 2>/dev/null || echo unknown)" in
     MINGW*|MSYS*|CYGWIN*)
-      export PARALLEL="--max-line=8000 --will-cite"
+      export PARALLEL="--max-chars=8000 --will-cite"
       ;;
   esac
 fi
