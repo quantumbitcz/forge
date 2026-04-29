@@ -30,6 +30,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Disable Windows Defender for workspace (perf)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "bash.exe","python.exe","python3.exe","git.exe","node.exe" -ErrorAction SilentlyContinue
+
       - name: Structural validation
         run: ./tests/run-all.sh structural
 
@@ -78,6 +85,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Disable Windows Defender for workspace (perf)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "bash.exe","python.exe","python3.exe","git.exe","node.exe" -ErrorAction SilentlyContinue
+
       - name: Install bash 4+ and GNU parallel (MacOS)
         if: runner.os == 'MacOS'
         run: |
@@ -87,6 +101,11 @@ jobs:
       - name: Install GNU parallel (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get install -y parallel
+
+      - name: Install GNU parallel (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install parallel -y --no-progress --limit-output
 
       - name: Install python3
         uses: actions/setup-python@v6
@@ -128,6 +147,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Disable Windows Defender for workspace (perf)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "bash.exe","python.exe","python3.exe","git.exe","node.exe" -ErrorAction SilentlyContinue
 
       - name: Install python3
         uses: actions/setup-python@v6
@@ -217,6 +243,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Disable Windows Defender for workspace (perf)
+        run: |
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "bash.exe","python.exe","python3.exe","git.exe","node.exe" -ErrorAction SilentlyContinue
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.10'
@@ -240,6 +271,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Disable Windows Defender for workspace (perf)
+        shell: pwsh
+        run: |
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "bash.exe","python.exe","python3.exe","git.exe","node.exe" -ErrorAction SilentlyContinue
+
+      - name: Install GNU parallel
+        shell: pwsh
+        run: choco install parallel -y --no-progress --limit-output
 
       - uses: actions/setup-python@v6
         with:
