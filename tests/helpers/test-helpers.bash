@@ -7,13 +7,12 @@
 # ---------------------------------------------------------------------------
 
 # PLUGIN_ROOT: two levels up from tests/helpers/ → plugin root.
-# On Git Bash on Windows, `pwd` returns an MSYS-style path (/d/a/forge/forge)
-# that native Windows Python cannot resolve. Convert to mixed form (D:/a/forge/forge)
-# so bash AND native Python both accept it.
+# Keep this in POSIX form on Git Bash on Windows (`/d/a/forge/forge`) so bats's
+# `load` resolves it correctly — `load` does not understand mixed `D:/...` form.
+# When the value crosses into native Windows Python via PYTHONPATH below, MSYS
+# auto-converts the known path-style env var, so we don't need a separate
+# Windows-native variable here.
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-if command -v cygpath >/dev/null 2>&1; then
-  PLUGIN_ROOT="$(cygpath -m "$PLUGIN_ROOT")"
-fi
 
 # Load bats-support and bats-assert for rich assertions
 load "${PLUGIN_ROOT}/tests/lib/bats-support/load"
