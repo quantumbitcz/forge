@@ -58,7 +58,11 @@ eval_validate_config() {
 eval_get_forge_version() {
   local plugin_json="${EVAL_PLUGIN_ROOT:-${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}}/plugin.json"
   if [[ -f "$plugin_json" ]] && command -v "${FORGE_PYTHON:-python3}" &>/dev/null; then
-    "${FORGE_PYTHON:-python3}" -c "import json; print(json.load(open('${plugin_json}'))['version'])" 2>/dev/null || echo "unknown"
+    # Pass path via argv to avoid Windows backslash-escape parsing.
+    "${FORGE_PYTHON:-python3}" - "$plugin_json" 2>/dev/null <<'PYEOF' || echo "unknown"
+import json, sys
+print(json.load(open(sys.argv[1]))['version'])
+PYEOF
   else
     echo "unknown"
   fi
@@ -99,11 +103,13 @@ eval_load_config() {
   fi
 
   local config_json
-  config_json="$("${FORGE_PYTHON:-python3}" -c "
+  # Pass the config file path via argv so Windows-native Python doesn't
+  # see backslashes inside a string literal (parsed as escapes).
+  config_json="$("${FORGE_PYTHON:-python3}" - "$config_file" 2>/dev/null <<'PYEOF'
 import re, sys, json
-content = open('${config_file}', 'r').read()
+content = open(sys.argv[1], 'r').read()
 # Extract YAML from fenced code blocks
-yaml_blocks = re.findall(r'\`\`\`ya?ml\n(.*?)\`\`\`', content, re.DOTALL)
+yaml_blocks = re.findall(r'```ya?ml\n(.*?)```', content, re.DOTALL)
 if not yaml_blocks:
     print('{}')
     sys.exit(0)
@@ -136,7 +142,8 @@ for line in yaml_text.split('\n'):
                             val = val.lower() == 'true'
                 result[key] = val
 print(json.dumps(result))
-" 2>/dev/null)" || {
+PYEOF
+)" || {
     echo "WARNING: Failed to parse config, using defaults" >&2
     return 0
   }

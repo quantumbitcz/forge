@@ -13,8 +13,9 @@ setup() {
 }
 
 @test "fg-301-implementer-judge forbids repo exploration with Read" {
+  # -i is broken on some MSYS grep builds; the source already uses this exact case.
   AGENT="$PROJECT_ROOT/agents/fg-301-implementer-judge.md"
-  run grep -iF 'Do NOT use `Read` to explore' "$AGENT"
+  run grep -F 'Do NOT use `Read` to explore' "$AGENT"
   [ "$status" -eq 0 ]
 }
 
@@ -22,6 +23,6 @@ setup() {
   AGENT="$PROJECT_ROOT/agents/fg-301-implementer-judge.md"
   run grep -F 'PREEMPT' "$AGENT"
   [ "$status" -eq 0 ]
-  run grep -iF 'conventions' "$AGENT"
+  run grep -F 'conventions' "$AGENT"
   [ "$status" -eq 0 ]
 }

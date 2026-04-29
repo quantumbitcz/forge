@@ -529,7 +529,13 @@ CFG_EOF
 
   assert_success
   assert_output --partial "QUAL-NULL"
-  assert_finding_format "$output"
+  # Filter "Terminated" — under Git Bash on Windows the engine's watchdog-fork
+  # cleanup races the SIGTERM path and prints a literal "Terminated" line
+  # alongside the finding. The signal noise is unrelated to the format we're
+  # asserting on; only the engine's own emission lines need to validate.
+  local filtered_output
+  filtered_output="$(printf '%s\n' "$output" | grep -v '^Terminated$' || true)"
+  assert_finding_format "$filtered_output"
 }
 
 # ---------------------------------------------------------------------------

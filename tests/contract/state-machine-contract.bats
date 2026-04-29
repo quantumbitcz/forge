@@ -23,15 +23,20 @@ TRANSITIONS_PY="$PLUGIN_ROOT/shared/python/state_transitions.py"
 import re, sys
 with open(sys.argv[1]) as f:
     content = f.read()
-# Match events in the table (backtick-wrapped values in 3rd column)
+# Match events in the table (backtick-wrapped values in 3rd column).
+# The Normal Flow table is the only one whose third column holds an event
+# identifier; mode-specific config tables also use the | N | x | y | shape
+# but their third column is a config key like ``max_quality_cycles``. We
+# filter out pure-numeric matches (which only appear as column values in
+# those config tables) so the assertion stays scoped to event names.
 events = set()
 for line in content.split('\n'):
-    # Match table rows: | N | STATE | event | ...
     m = re.match(r'^\|\s*\w+\s*\|\s*\S+\s*\|\s*\x60?(\w+)\x60?\s*\|', line)
     if m:
         events.add(m.group(1))
-# Remove header words
+# Remove header words and pure-numeric spurious matches.
 events -= {'event', 'guard', 'current_state'}
+events = {e for e in events if not e.isdigit()}
 for e in sorted(events):
     print(e)
 PYEOF

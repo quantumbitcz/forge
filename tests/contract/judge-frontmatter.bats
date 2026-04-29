@@ -25,16 +25,17 @@ setup() {
 }
 
 @test "fg-205-plan-judge body declares binding veto" {
+  # -i is broken on some MSYS grep builds; match both Title-case and lowercase forms.
   AGENT="$PROJECT_ROOT/agents/fg-205-plan-judge.md"
-  run grep -iF 'binding' "$AGENT"
+  run grep -F -e 'binding' -e 'Binding' "$AGENT"
   [ "$status" -eq 0 ]
-  run grep -iF 'veto' "$AGENT"
+  run grep -F -e 'veto' -e 'Veto' "$AGENT"
   [ "$status" -eq 0 ]
 }
 
 @test "fg-301-implementer-judge body declares binding veto" {
   AGENT="$PROJECT_ROOT/agents/fg-301-implementer-judge.md"
-  run grep -iF 'binding' "$AGENT"
+  run grep -F -e 'binding' -e 'Binding' "$AGENT"
   [ "$status" -eq 0 ]
 }
 

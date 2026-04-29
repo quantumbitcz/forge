@@ -143,43 +143,34 @@ def _tree_sitter_fingerprint(src: bytes, ext: str) -> tuple[str | None, str]:
     # the structural fingerprint is stable across pack versions.
     _TRIVIA_TYPES = frozenset({"comment", "line_comment", "block_comment"})
 
-    def tup(node: Any) -> tuple:
-        """Iterative DFS serialization of the CST.
-
-        Recursion blows the Python stack on deeply-nested files (e.g. long
-        chained method calls in generated code); the iterative form uses
-        the heap and tolerates arbitrarily deep trees.
-        """
-        # Postorder traversal via explicit stack: a sentinel marker
-        # distinguishes the "enter" visit (push children, schedule exit) from
-        # the "exit" visit (collect children's results into a tuple).
-        sentinel = object()
-        results: list[Any] = []
-        order: list[tuple[Any, Any]] = [(node, sentinel)]
-        while order:
-            current, marker = order.pop()
-            if marker is sentinel:
-                # First visit: schedule the exit then queue children for entry.
-                # Strip trivia so whitespace-only / comment-only edits hash equal.
-                children = [c for c in current.children if c.type not in _TRIVIA_TYPES]
-                order.append((current, children))
-                # Push children in reverse so leftmost is processed first.
-                for child in reversed(children):
-                    order.append((child, sentinel))
-            else:
-                children = marker
-                # Pop one result per child (in original order — they were
-                # appended left-to-right because of the reverse-push trick).
-                child_count = len(children)
-                if child_count:
-                    child_tuples = results[-child_count:]
-                    del results[-child_count:]
-                else:
-                    child_tuples = []
-                results.append((current.type, tuple(child_tuples)))
-        return results[-1]
-
-    return _sha(repr(tup(root)).encode()), "tree-sitter"
+    # Iterative DFS that streams "open(type)" / "close" tokens directly into
+    # a SHA-256 hasher. Building a deep nested tuple and then ``repr()``-ing
+    # it both blow CPython's default recursion limit (1000) on deeply-nested
+    # files (e.g. long chained method calls in generated code, or pathological
+    # 2000-deep ``f(f(f(...)))`` constructions). The streaming form uses heap
+    # memory only.
+    OPEN = b"("
+    CLOSE = b")"
+    SEP = b"|"
+    h = hashlib.sha256()
+    # Stack holds either ('enter', node) frames or ('close',) sentinels.
+    # On 'enter' we hash an open marker + node type then push close + children.
+    stack: list[tuple[str, Any]] = [("enter", root)]
+    while stack:
+        action, payload = stack.pop()
+        if action == "close":
+            h.update(CLOSE)
+            continue
+        node = payload
+        h.update(OPEN)
+        h.update(node.type.encode("utf-8"))
+        h.update(SEP)
+        # Schedule the close after all children have been processed.
+        stack.append(("close", None))
+        # Push children in reverse so leftmost is processed first.
+        for child in reversed([c for c in node.children if c.type not in _TRIVIA_TYPES]):
+            stack.append(("enter", child))
+    return "sha256:" + h.hexdigest(), "tree-sitter"
 
 
 _WS_RE = re.compile(r"\s+")

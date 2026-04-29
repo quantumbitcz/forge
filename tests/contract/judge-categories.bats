@@ -13,12 +13,14 @@ setup() {
 }
 
 @test "JUDGE-TIMEOUT category exists with INFO severity default" {
-  run python3 -c "
-import json
-r = json.load(open('$REG'))
+  # Pass the registry path via argv so Windows-native Python never sees
+  # backslashes inside a string literal (which it would interpret as escapes).
+  run python3 - "$REG" <<'PYEOF'
+import json, sys
+r = json.load(open(sys.argv[1]))
 c = r['categories']['JUDGE-TIMEOUT']
 assert c['severity'] == 'INFO', c
 print('OK')
-"
+PYEOF
   [ "$status" -eq 0 ]
 }

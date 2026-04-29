@@ -18,7 +18,10 @@ setup() {
 }
 
 @test "findings-store.md declares append-only semantics" {
-  run grep -iF "append-only" "$PROJECT_ROOT/shared/findings-store.md"
+  # Match both case forms (the section header is "Append-only" but body
+  # references "append-only") without -i, which is broken in some MSYS
+  # grep builds against UTF-8 docs.
+  run grep -F -e "Append-only" -e "append-only" "$PROJECT_ROOT/shared/findings-store.md"
   [ "$status" -eq 0 ]
 }
 
@@ -28,19 +31,20 @@ setup() {
 }
 
 @test "findings-store.md documents duplicate emission tiebreaker" {
-  run grep -iF "tiebreaker" "$PROJECT_ROOT/shared/findings-store.md"
+  # Strings are lowercase in the source; -i is broken on some MSYS grep builds.
+  run grep -F "tiebreaker" "$PROJECT_ROOT/shared/findings-store.md"
   [ "$status" -eq 0 ]
 }
 
 @test "stage-contract.md describes Agent Teams pattern for Stage 6" {
   F="$PROJECT_ROOT/shared/stage-contract.md"
-  run grep -iF 'Agent Teams' "$F"
+  run grep -F 'Agent Teams' "$F"
   [ "$status" -eq 0 ]
 }
 
 @test "stage-contract.md describes judge veto in Stage 2 and Stage 4" {
   F="$PROJECT_ROOT/shared/stage-contract.md"
-  run grep -iF 'binding veto' "$F"
+  run grep -F 'binding veto' "$F"
   [ "$status" -eq 0 ]
 }
 
