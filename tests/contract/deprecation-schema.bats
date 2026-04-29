@@ -32,7 +32,12 @@ _run_python_check() {
       continue
     fi
     local version
-    version="$(python3 -c "import json; d=json.load(open('$dep_file')); print(d.get('version',''))")"
+    version="$(python3 - "$dep_file" <<'PYEOF'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(d.get('version', ''))
+PYEOF
+)"
     if [[ "$version" != "2" ]]; then
       failures+=("$module: version=$version")
     fi

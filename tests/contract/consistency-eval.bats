@@ -15,8 +15,12 @@ setup() {
   PRRJ="${RESULTS_DIR}/consistency-pr_rejection_classification.json"
 }
 
+# Run a stdin-fed Python script with the three result file paths as
+# argv[1..3]. Heredoc with quoted delimiter avoids interpolation; paths
+# arrive via sys.argv so Windows-native Python never sees MSYS-style
+# strings inside the source.
 assert_py() {
-  run python3 -c "$1"
+  run python3 - "$SHAPER" "$VALID" "$PRRJ" <<<"$1"
   [ "$status" -eq 0 ]
   [ "$output" = "OK" ]
 }
@@ -24,7 +28,7 @@ assert_py() {
 @test "unanimity rate > 95 percent on the easy subset" {
   assert_py "
 import json, sys
-for f in ['$SHAPER','$VALID','$PRRJ']:
+for f in sys.argv[1:4]:
     d = json.load(open(f))
     easy = [r for r in d['results'] if r['difficulty'] == 'easy' and r.get('voted') is not None]
     unan = [r for r in easy if not r['low_consensus']]
@@ -37,7 +41,7 @@ print('OK')
 @test "adversarial prompts trigger low_consensus at least 80 percent" {
   assert_py "
 import json, sys
-for f in ['$SHAPER','$VALID','$PRRJ']:
+for f in sys.argv[1:4]:
     d = json.load(open(f))
     adv = [r for r in d['results'] if r['difficulty'] == 'adversarial']
     flagged = [r for r in adv if r['low_consensus'] or r.get('error')]
@@ -50,7 +54,7 @@ print('OK')
 @test "voted accuracy exceeds single-sample by at least 5 percentage points" {
   assert_py "
 import json, sys
-for f in ['$SHAPER','$VALID','$PRRJ']:
+for f in sys.argv[1:4]:
     d = json.load(open(f))
     rs = [r for r in d['results'] if r.get('voted') is not None]
     voted_acc = sum(1 for r in rs if r['voted'] == r['gold']) / max(1, len(rs))
@@ -62,9 +66,13 @@ print('OK')
 }
 
 @test "cache correctness: second pass with cache enabled yields identical labels" {
-  assert_py "
-import asyncio, json, sys, tempfile, os
-sys.path.insert(0, '$REPO_ROOT')
+  # This test does not need result-file paths but does need REPO_ROOT for
+  # the sys.path.insert. Pass via argv instead of interpolating into the
+  # Python source, otherwise Windows-native Python parses MSYS paths as
+  # invalid unicode escapes.
+  run python3 - "$REPO_ROOT" <<'PYEOF'
+import asyncio, json, sys, tempfile, os, pathlib
+sys.path.insert(0, sys.argv[1])
 from hooks._py import consistency as C
 import random, hashlib
 labels = ['GO','REVISE','NO-GO']
@@ -72,27 +80,29 @@ async def smp(p, lbls, tier, seed):
     rng = random.Random(hashlib.sha256(f'{p}|{seed}'.encode()).digest())
     return {'label': lbls[rng.randrange(len(lbls))], 'confidence': 0.8}
 with tempfile.TemporaryDirectory() as tmp:
-    cp = os.path.join(tmp, 'c.jsonl')
+    cp = pathlib.Path(tmp) / 'c.jsonl'
     prompts = ['p1','p2','p3','p4','p5']
     first = [asyncio.run(C.vote_async(decision_point='validator_verdict',
         prompt=p, labels=labels, state_mode='eval', n=3, tier='fast',
-        cache_enabled=True, cache_path=__import__('pathlib').Path(cp),
+        cache_enabled=True, cache_path=cp,
         sampler=smp)) for p in prompts]
     second = [asyncio.run(C.vote_async(decision_point='validator_verdict',
         prompt=p, labels=labels, state_mode='eval', n=3, tier='fast',
-        cache_enabled=True, cache_path=__import__('pathlib').Path(cp),
+        cache_enabled=True, cache_path=cp,
         sampler=smp)) for p in prompts]
     for a, b in zip(first, second):
         if a.label != b.label or not b.cache_hit:
             print('FAIL cache mismatch'); sys.exit(1)
 print('OK')
-"
+PYEOF
+  [ "$status" -eq 0 ]
+  [ "$output" = "OK" ]
 }
 
 @test "p95 elapsed time per decision point is under 2500 ms" {
   assert_py "
 import json, sys
-for f in ['$SHAPER','$VALID','$PRRJ']:
+for f in sys.argv[1:4]:
     d = json.load(open(f))
     xs = sorted(r['elapsed_ms'] for r in d['results'])
     if not xs: sys.exit(1)

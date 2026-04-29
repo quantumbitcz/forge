@@ -33,6 +33,15 @@ teardown() {
 # 3. Neo4j health check returns gracefully when docker unavailable
 # ---------------------------------------------------------------------------
 @test "edge-case: neo4j-health handles missing docker" {
+  # On Git Bash on Windows the PATH-restriction trick does not isolate
+  # docker.exe reliably (Windows command resolution falls back to the
+  # system PATH for known executables), so the script may find the host
+  # docker installation and report a different status. The behaviour we
+  # care about is exercised on Linux/macOS where PATH isolation works.
+  if [[ "${OS:-}" == "Windows_NT" ]] || [[ "$(uname -s 2>/dev/null)" == MINGW* ]] || [[ "$(uname -s 2>/dev/null)" == CYGWIN* ]]; then
+    skip "PATH-isolation does not bound docker.exe lookup on Git Bash on Windows"
+  fi
+
   # Create a mock PATH without docker
   local mock_bin="$TMPWORK/mock-bin"
   mkdir -p "$mock_bin"

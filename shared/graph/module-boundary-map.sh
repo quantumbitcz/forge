@@ -81,6 +81,10 @@ root_dir = sys.argv[1]
 ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
 result = {"build_system": "maven", "root": root_dir, "modules": []}
 
+def _posix(p):
+    """Normalize a path to POSIX-style for JSON output (Windows compat)."""
+    return p.replace(os.sep, '/') if p else p
+
 def parse_pom(pom_path, parent_dir):
     try:
         tree = ET.parse(pom_path)
@@ -108,10 +112,10 @@ def parse_pom(pom_path, parent_dir):
     for src_type in ['java', 'kotlin', 'scala', 'groovy']:
         src_path = os.path.join(rel_dir, 'src', 'main', src_type) if rel_dir else os.path.join('src', 'main', src_type)
         if os.path.isdir(os.path.join(root_dir, src_path)):
-            source_dirs.append(src_path)
+            source_dirs.append(_posix(src_path))
         test_path = os.path.join(rel_dir, 'src', 'test', src_type) if rel_dir else os.path.join('src', 'test', src_type)
         if os.path.isdir(os.path.join(root_dir, test_path)):
-            test_dirs.append(test_path)
+            test_dirs.append(_posix(test_path))
 
     depends_on = []
     for dep in root.findall('.//m:dependencies/m:dependency', ns):
@@ -123,7 +127,7 @@ def parse_pom(pom_path, parent_dir):
     return {
         "name": artifact_id,
         "artifact_id": f"{group_id}:{artifact_id}" if group_id else artifact_id,
-        "directory": rel_dir or ".",
+        "directory": _posix(rel_dir) if rel_dir else ".",
         "source_dirs": source_dirs,
         "test_dirs": test_dirs,
         "depends_on_artifacts": depends_on
@@ -176,8 +180,12 @@ PYEOF
 discover_gradle_modules() {
   local root="$1"
 
-  # Strategy 1: Use gradle projects -q if available
-  if command -v gradle &>/dev/null; then
+  # Strategy 1: Use gradle projects -q if available.
+  # Skipped when MODULE_BOUNDARY_SKIP_INTROSPECTION=1 (used by unit tests
+  # to avoid spawning the Gradle daemon, which hangs on Windows runners
+  # because the MSYS `timeout` builtin cannot reliably terminate a JVM
+  # process tree).
+  if [[ "${MODULE_BOUNDARY_SKIP_INTROSPECTION:-0}" != "1" ]] && command -v gradle &>/dev/null; then
     local projects_output
     projects_output="$(cd "$root" && portable_timeout "$INTROSPECTION_TIMEOUT" gradle projects -q 2>/dev/null)" || true
     if [[ -n "$projects_output" ]]; then
@@ -187,6 +195,9 @@ import re, os, sys, json
 
 root_dir = sys.argv[1]
 result = {"build_system": "gradle", "root": root_dir, "modules": []}
+
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
 
 modules = []
 for line in sys.stdin:
@@ -205,10 +216,10 @@ for mod_name in modules:
     for lang in ['java', 'kotlin', 'scala', 'groovy']:
         src = os.path.join(mod_dir, 'src', 'main', lang)
         if os.path.isdir(os.path.join(root_dir, src)):
-            source_dirs.append(src)
+            source_dirs.append(_posix(src))
         tst = os.path.join(mod_dir, 'src', 'test', lang)
         if os.path.isdir(os.path.join(root_dir, tst)):
-            test_dirs.append(tst)
+            test_dirs.append(_posix(tst))
 
     depends_on = []
     for bf in ['build.gradle.kts', 'build.gradle']:
@@ -223,7 +234,7 @@ for mod_name in modules:
             break
 
     result["modules"].append({
-        "name": mod_name, "artifact_id": mod_name, "directory": mod_dir,
+        "name": mod_name, "artifact_id": mod_name, "directory": _posix(mod_dir),
         "source_dirs": source_dirs, "test_dirs": test_dirs,
         "depends_on": list(dict.fromkeys(depends_on))
     })
@@ -247,8 +258,10 @@ PYEOF
   [[ -f "$root/settings.gradle.kts" ]] && settings_file="$root/settings.gradle.kts"
   [[ -f "$root/settings.gradle" ]] && settings_file="$root/settings.gradle"
   if [[ -z "$settings_file" ]]; then
-    # Single-module Gradle project
-    "${FORGE_PYTHON:-python3}" -c "
+    # Single-module Gradle project. Use heredoc + argv to avoid Windows
+    # path-interpolation issues (MSYS-style paths break Python `-c` parsing
+    # on native Windows Python).
+    "${FORGE_PYTHON:-python3}" - "$root" <<'PYEOF'
 import os, sys, json
 root_dir = sys.argv[1]
 result = {'build_system': 'gradle', 'root': root_dir, 'modules': []}
@@ -257,7 +270,8 @@ for lang_dir in ['java', 'kotlin', 'scala', 'groovy']:
     if os.path.isdir(os.path.join(root_dir, src)):
         result['modules'].append({
             'name': '__root__', 'artifact_id': '__root__', 'directory': '.',
-            'source_dirs': [src], 'test_dirs': [], 'depends_on': [], 'depended_by': []
+            'source_dirs': [src.replace(os.sep, '/')], 'test_dirs': [],
+            'depends_on': [], 'depended_by': []
         })
         break
 if not result['modules']:
@@ -266,7 +280,7 @@ if not result['modules']:
         'source_dirs': [], 'test_dirs': [], 'depends_on': [], 'depended_by': []
     })
 json.dump(result, sys.stdout, indent=2)
-" "$root"
+PYEOF
     return $?
   fi
 
@@ -275,6 +289,9 @@ import re, os, sys, json
 
 settings_path = sys.argv[1]
 root_dir = sys.argv[2]
+
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
 
 with open(settings_path, 'r') as f:
     content = f.read()
@@ -303,10 +320,10 @@ for mod_name in modules:
     for lang_dir in ['java', 'kotlin', 'scala', 'groovy']:
         src = os.path.join(mod_dir, 'src', 'main', lang_dir)
         if os.path.isdir(os.path.join(root_dir, src)):
-            source_dirs.append(src)
+            source_dirs.append(_posix(src))
         tst = os.path.join(mod_dir, 'src', 'test', lang_dir)
         if os.path.isdir(os.path.join(root_dir, tst)):
-            test_dirs.append(tst)
+            test_dirs.append(_posix(tst))
 
     depends_on = []
     for build_file_name in ['build.gradle.kts', 'build.gradle']:
@@ -321,7 +338,7 @@ for mod_name in modules:
             break
 
     result["modules"].append({
-        "name": mod_name, "artifact_id": mod_name, "directory": mod_dir,
+        "name": mod_name, "artifact_id": mod_name, "directory": _posix(mod_dir),
         "source_dirs": source_dirs, "test_dirs": test_dirs,
         "depends_on": list(dict.fromkeys(depends_on))
     })
@@ -332,7 +349,7 @@ for lang_dir in ['java', 'kotlin', 'scala', 'groovy']:
     if os.path.isdir(os.path.join(root_dir, root_src)):
         result["modules"].insert(0, {
             "name": "__root__", "artifact_id": "__root__", "directory": ".",
-            "source_dirs": [root_src], "test_dirs": [], "depends_on": []
+            "source_dirs": [_posix(root_src)], "test_dirs": [], "depends_on": []
         })
         break
 
@@ -348,14 +365,18 @@ PYEOF
 discover_cargo_modules() {
   local root="$1"
 
-  # Strategy 1: cargo metadata (preferred)
-  if command -v cargo &>/dev/null; then
+  # Strategy 1: cargo metadata (preferred).
+  # Skipped when MODULE_BOUNDARY_SKIP_INTROSPECTION=1 (test isolation).
+  if [[ "${MODULE_BOUNDARY_SKIP_INTROSPECTION:-0}" != "1" ]] && command -v cargo &>/dev/null; then
     local metadata
     metadata="$(cd "$root" && portable_timeout "$INTROSPECTION_TIMEOUT" \
       cargo metadata --format-version 1 --no-deps 2>/dev/null)" || true
     if [[ -n "$metadata" ]]; then
       echo "$metadata" | "${FORGE_PYTHON:-python3}" << 'PYEOF'
 import json, sys, os
+
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
 
 data = json.load(sys.stdin)
 workspace_root = data.get("workspace_root", "")
@@ -367,9 +388,9 @@ for pkg in data.get("packages", []):
     rel_dir = os.path.relpath(pkg_dir, workspace_root) if workspace_root else pkg_dir
 
     src_dir = os.path.join(rel_dir, "src")
-    source_dirs = [src_dir] if os.path.isdir(os.path.join(workspace_root, src_dir)) else []
+    source_dirs = [_posix(src_dir)] if os.path.isdir(os.path.join(workspace_root, src_dir)) else []
     test_dir = os.path.join(rel_dir, "tests")
-    test_dirs = [test_dir] if os.path.isdir(os.path.join(workspace_root, test_dir)) else []
+    test_dirs = [_posix(test_dir)] if os.path.isdir(os.path.join(workspace_root, test_dir)) else []
 
     depends_on = []
     for dep in pkg.get("dependencies", []):
@@ -377,7 +398,7 @@ for pkg in data.get("packages", []):
             depends_on.append(dep["name"])
 
     result["modules"].append({
-        "name": pkg["name"], "artifact_id": pkg["name"], "directory": rel_dir,
+        "name": pkg["name"], "artifact_id": pkg["name"], "directory": _posix(rel_dir),
         "source_dirs": source_dirs, "test_dirs": test_dirs,
         "depends_on": depends_on
     })
@@ -402,6 +423,9 @@ except ImportError:
     except ImportError:
         json.dump({"build_system": "cargo", "root": sys.argv[1], "modules": []}, sys.stdout, indent=2)
         sys.exit(0)
+
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
 
 root_dir = sys.argv[1]
 result = {"build_system": "cargo", "root": root_dir, "modules": []}
@@ -441,9 +465,9 @@ else:
             if isinstance(dep_val, dict) and dep_val.get("path"):
                 depends_on.append(dep_name)
         result["modules"].append({
-            "name": name, "artifact_id": name, "directory": member_dir,
-            "source_dirs": [os.path.join(member_dir, "src")],
-            "test_dirs": [os.path.join(member_dir, "tests")] if os.path.isdir(os.path.join(root_dir, member_dir, "tests")) else [],
+            "name": name, "artifact_id": name, "directory": _posix(member_dir),
+            "source_dirs": [_posix(os.path.join(member_dir, "src"))],
+            "test_dirs": [_posix(os.path.join(member_dir, "tests"))] if os.path.isdir(os.path.join(root_dir, member_dir, "tests")) else [],
             "depends_on": depends_on
         })
 
@@ -584,6 +608,9 @@ discover_js_modules() {
   "${FORGE_PYTHON:-python3}" << 'PYEOF' - "$root"
 import os, sys, json, glob as glob_mod
 
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
+
 root_dir = sys.argv[1]
 result = {"build_system": "npm", "root": root_dir, "modules": []}
 
@@ -634,7 +661,7 @@ for pattern in workspace_patterns:
     matches = glob_mod.glob(os.path.join(root_dir, pattern))
     for match in matches:
         if os.path.isfile(os.path.join(match, "package.json")):
-            workspace_dirs.append(os.path.relpath(match, root_dir))
+            workspace_dirs.append(_posix(os.path.relpath(match, root_dir)))
 
 name_to_dir = {}
 pkg_data = {}
@@ -657,15 +684,15 @@ for name, ws_pkg in pkg_data.items():
     source_dirs = []
     for d in ["src", "lib", "app"]:
         if os.path.isdir(os.path.join(root_dir, ws_dir, d)):
-            source_dirs.append(os.path.join(ws_dir, d))
+            source_dirs.append(_posix(os.path.join(ws_dir, d)))
     test_dirs = []
     for d in ["test", "tests", "__tests__", "spec"]:
         if os.path.isdir(os.path.join(root_dir, ws_dir, d)):
-            test_dirs.append(os.path.join(ws_dir, d))
+            test_dirs.append(_posix(os.path.join(ws_dir, d)))
 
     result["modules"].append({
-        "name": name, "artifact_id": name, "directory": ws_dir,
-        "source_dirs": source_dirs or [ws_dir],
+        "name": name, "artifact_id": name, "directory": _posix(ws_dir),
+        "source_dirs": source_dirs or [_posix(ws_dir)],
         "test_dirs": test_dirs,
         "depends_on": cross_deps
     })
@@ -685,6 +712,9 @@ discover_dotnet_modules() {
   "${FORGE_PYTHON:-python3}" << 'PYEOF' - "$root"
 import os, sys, json, re
 import xml.etree.ElementTree as ET
+
+def _posix(p):
+    return p.replace(os.sep, '/') if p else p
 
 root_dir = sys.argv[1]
 result = {"build_system": "dotnet", "root": root_dir, "modules": []}
@@ -708,7 +738,7 @@ else:
         dirnames[:] = [d for d in dirnames if d not in ('bin', 'obj', '.git', 'node_modules')]
         for fn in filenames:
             if fn.endswith('.csproj'):
-                rel = os.path.relpath(os.path.join(dirpath, fn), root_dir)
+                rel = _posix(os.path.relpath(os.path.join(dirpath, fn), root_dir))
                 name = fn.replace('.csproj', '')
                 projects.append((name, rel))
 
@@ -726,14 +756,14 @@ for proj_name, csproj_rel in projects:
     except ET.ParseError:
         pass
 
-    source_dirs = [proj_dir] if proj_dir else ["."]
+    source_dirs = [_posix(proj_dir)] if proj_dir else ["."]
     test_dirs = []
     if any(proj_name.endswith(suffix) for suffix in ['.Tests', '.Test', 'Tests', 'Test']):
         test_dirs = source_dirs
         source_dirs = []
 
     result["modules"].append({
-        "name": proj_name, "artifact_id": proj_name, "directory": proj_dir or ".",
+        "name": proj_name, "artifact_id": proj_name, "directory": _posix(proj_dir) if proj_dir else ".",
         "source_dirs": source_dirs, "test_dirs": test_dirs,
         "depends_on": depends_on
     })
