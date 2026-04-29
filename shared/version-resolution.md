@@ -21,9 +21,9 @@ Training data versions are stale by definition. Using them leads to:
 
 | Context | Agent / Entry Point |
 |---|---|
-| New project recommendations | `/forge-init` |
-| Implementation dependencies | `/forge-run` → `fg-300-implementer` |
-| Bugfix dependencies | `/forge-fix` → `fg-300-implementer` |
+| New project recommendations | `/forge` |
+| Implementation dependencies | `/forge run` → `fg-300-implementer` |
+| Bugfix dependencies | `/forge fix` → `fg-300-implementer` |
 | Project scaffold | `fg-050-project-bootstrapper` |
 | Dependency declarations | `fg-310-scaffolder` |
 | Deprecation checks | `fg-140-deprecation-refresh` |

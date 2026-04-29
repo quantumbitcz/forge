@@ -1,5 +1,7 @@
 # Spring Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Spring-specific patterns.
 
 ## Code Documentation

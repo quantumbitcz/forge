@@ -1,6 +1,6 @@
 # Playbooks -- Reusable Task Templates
 
-Playbooks are user-defined task templates that encode "how we do X" as parameterized requirement templates with config overrides. They feed into the existing `/forge-run` pipeline -- they are requirement generation + config overlay, not a separate orchestration path.
+Playbooks are user-defined task templates that encode "how we do X" as parameterized requirement templates with config overrides. They feed into the existing `/forge run` pipeline -- they are requirement generation + config overlay, not a separate orchestration path.
 
 ## Playbook File Format
 
@@ -102,7 +102,7 @@ The interpolation engine handles the patterns above and nothing more. Complex lo
 ## Invocation
 
 ```bash
-/forge-run --playbook=add-rest-endpoint entity=Task operations=create,read
+/forge run --playbook=add-rest-endpoint entity=Task operations=create,read
 ```
 
 ### Invocation Flow
@@ -112,7 +112,7 @@ The interpolation engine handles the patterns above and nothing more. Complex lo
 3. **INTERPOLATE TEMPLATE:** Replace `{{param}}` placeholders, expand `{{#each}}` blocks, evaluate `{{#if}}` conditionals.
 4. **INTERPOLATE ACCEPTANCE CRITERIA:** Apply same interpolation to `acceptance_criteria` list.
 5. **OVERLAY CONFIG:** Merge `playbook.scoring` over `forge-config.md` scoring, merge `playbook.review` over review settings, merge `playbook.stages` over stage settings. Store overlay source in `state.json`.
-6. **DISPATCH /forge-run:** Feed interpolated requirement text + merged config to normal pipeline.
+6. **DISPATCH /forge run:** Feed interpolated requirement text + merged config to normal pipeline.
 7. **ON COMPLETION (LEARN stage):** `fg-700-retrospective` updates `.forge/playbook-analytics.json`. `fg-710-post-run` checks for playbook suggestion opportunity.
 
 ### Config Overlay Resolution
@@ -139,7 +139,7 @@ The overlay is scoped to the current run. It does not modify `forge-config.md` o
 
 ## Discovery
 
-`/forge-playbooks` lists all available playbooks (project + built-in) with:
+`/forge-admin playbooks` lists all available playbooks (project + built-in) with:
 - Name and description
 - Run count, average score, last used date (from analytics)
 - Parameter list with types and defaults
@@ -241,13 +241,13 @@ The plugin ships with playbooks in `shared/playbooks/`. Available when `playbook
 
 | System | Integration | Direction |
 |--------|-------------|-----------|
-| `/forge-run` | Playbook parsed and interpolated at entry | Read |
+| `/forge run` | Playbook parsed and interpolated at entry | Read |
 | `fg-100-orchestrator` | Config overlay applied at PREFLIGHT | Read |
 | `fg-200-planner` | Receives interpolated requirement (transparent) | Consumer |
 | `fg-700-retrospective` | Updates playbook analytics | Write |
 | `fg-710-post-run` | Auto-suggestion after non-playbook runs | Read |
 | `forge-config.md` | Playbook scoring/review overrides merged | Read |
-| `/forge-playbooks` skill | Lists playbooks with analytics | Read |
+| `/forge-admin playbooks` skill | Lists playbooks with analytics | Read |
 
 ## Component Ownership
 
@@ -256,7 +256,7 @@ The plugin ships with playbooks in `shared/playbooks/`. Available when `playbook
 | Playbook parser | `fg-100-orchestrator` | Parse frontmatter, validate params, interpolate template |
 | Config overlay | `fg-100-orchestrator` | Merge playbook config with project config at PREFLIGHT |
 | Analytics tracker | `fg-700-retrospective` | Update analytics after each playbook run |
-| `/forge-playbooks` skill | Skill | List playbooks with stats |
+| `/forge-admin playbooks` skill | Skill | List playbooks with stats |
 | Auto-suggestion | `fg-710-post-run` | Suggest playbook usage after runs |
 | Built-in playbooks | Plugin distribution | Ship with forge in `shared/playbooks/` |
 
@@ -289,7 +289,7 @@ Refinements always push quality up — adding preventive criteria, fixing blind 
 
 ### Applying Refinements
 
-**Manual (default):** Review and apply via `/forge-playbook-refine [playbook_id]`
+**Manual (default):** Review and apply via `/forge-admin refine [playbook_id]`
 
 **Auto-apply (opt-in):** Set `playbooks.auto_refine: true` in `forge-config.md`. Only HIGH confidence proposals are auto-applied (max 2 per run). Changes are logged with `[AUTO-REFINE]` marker.
 
@@ -297,7 +297,7 @@ Refinements always push quality up — adding preventive criteria, fixing blind 
 
 ### File Locations
 
-- Proposals: `.forge/playbook-refinements/{playbook_id}.json` (survives `/forge-recover reset`)
+- Proposals: `.forge/playbook-refinements/{playbook_id}.json` (survives `/forge-admin recover reset`)
 - Schema: `shared/schemas/playbook-refinement-schema.json`
 - Analytics: `.forge/playbook-analytics.json` (version history for rollback)
 

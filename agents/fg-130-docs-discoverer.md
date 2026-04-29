@@ -231,7 +231,7 @@ After output, write to `state.json.docs_discovery`: `last_run`, `mode`, `file_ha
 Same extraction across 3+ consecutive runs without override → upgrade. Track via timestamps or `confidence_history`.
 
 ### Manual upgrade: MEDIUM → HIGH
-Users run `/forge-docs-generate --confirm-decisions` for interactive review. Options: upgrade, keep, dismiss.
+Users run `/forge docs --confirm-decisions` for interactive review. Options: upgrade, keep, dismiss.
 
 ### Downgrade and dismissal
 Users can downgrade HIGH → MEDIUM or dismiss. Dismissed items recorded with `reason: "user_dismissed"` to prevent re-extraction.
@@ -265,7 +265,7 @@ After linking: enumerate top-level source packages, check if any DocSection refe
 | File unreadable | INFO | "fg-130: {path} unreadable — skipping." |
 | Neo4j unavailable mid-run | WARNING | "fg-130: Falling back to .forge/docs-index.json." |
 | Scan limit exceeded | WARNING | "fg-130: {total} files found, processing first {max_files}." |
-| No documentation found | INFO | "fg-130: No docs found. Index empty. Run /forge-docs-generate for baseline." |
+| No documentation found | INFO | "fg-130: No docs found. Index empty. Run /forge docs for baseline." |
 | state.json unreadable | INFO | "fg-130: Full (non-incremental) discovery." |
 | docs-index.json write failure | ERROR | "fg-130: Cannot write index — {error}." |
 

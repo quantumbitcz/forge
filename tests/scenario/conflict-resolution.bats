@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: reviewer conflict resolution end-to-end behavior
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 AGENT_COMM="$PLUGIN_ROOT/shared/agent-communication.md"

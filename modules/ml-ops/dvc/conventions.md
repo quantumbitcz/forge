@@ -1,5 +1,7 @@
 # DVC — Data Version Control
 
+> Support tier: community
+
 ## Overview
 
 DVC tracks large files, datasets, and ML models alongside Git without storing them in the repository. It defines reproducible ML pipelines via `dvc.yaml` and manages remote storage (S3, GCS, Azure, SSH) for data artifacts. DVC enables experiment comparison, data lineage tracking, and cache-efficient pipeline re-execution by detecting which stages have changed inputs.

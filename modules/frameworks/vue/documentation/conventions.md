@@ -1,5 +1,7 @@
 # Vue Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Vue 3-specific patterns.
 
 ## Code Documentation

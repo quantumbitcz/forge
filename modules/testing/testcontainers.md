@@ -1,5 +1,7 @@
 # Testcontainers Conventions (Cross-Framework)
 
+> Support tier: contract-verified
+
 Testcontainers provides real infrastructure (PostgreSQL, Redis, Kafka, etc.) spun up in Docker for integration tests. These conventions apply regardless of language/framework.
 
 ## Core Principle

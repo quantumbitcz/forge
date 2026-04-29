@@ -158,6 +158,83 @@ Check planned changes against documented decisions/constraints from `DocDecision
 
 ---
 
+## Plan structural rules (writing-plans parity)
+
+<!-- Source: superpowers:writing-plans validator side, ported in-tree per
+spec §4 (D1) and AC-PLAN-005 / AC-PLAN-009. -->
+
+You enforce the planner's writing-plans contract introduced in D1. On any
+violation in this list, return verdict `REVISE` with a precise rule
+reference. These rules are mechanical — apply them by parsing the plan,
+not by judgement.
+
+### Rule W1 — TDD ordering
+
+For every task with `Type: implementation`, the immediately preceding task
+in plan order must have `Type: test` covering the same component, and the
+implementation task must list the test task in `Depends on:`. If absent,
+REVISE with reference `W1: every implementation task has a preceding test task`.
+
+### Rule W2 — Implementer prompt presence
+
+Every task (test, implementation, refactor) must contain an
+`**Implementer prompt:**` block. The block must be non-empty (≥1 line of
+substantive text after the marker) AND must NOT contain unsubstituted
+placeholders matching the canonical placeholder set
+`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` (regex
+`\{(TASK_DESCRIPTION|ACS|FILE_PATHS)\}`). The planner is required to
+substitute every placeholder when it embeds the prompt template per
+the planner contract §"Embedded prompt templates"; an unsubstituted
+placeholder means the planner shipped a half-rendered template. If
+absent, empty, or carrying unsubstituted placeholders, REVISE with
+reference `W2: every task has an implementer prompt with all
+placeholders substituted`.
+
+### Rule W3 — Spec-reviewer prompt presence
+
+Every task with `Type: test` must contain a `**Spec-reviewer prompt:**`
+block (non-empty). Implementation and refactor tasks may omit it. If a test
+task is missing the block, REVISE with reference
+`W3: every test task has a spec-reviewer prompt`.
+
+### Rule W4 — Risk field presence and value
+
+Every task must contain a `**Risk:**` field with value exactly one of
+`low | medium | high`. Other values, missing field, or absent line REVISE
+with reference `W4: Risk field must be low|medium|high`.
+
+### Rule W5 — Risk justification ≥30 words on high-risk tasks
+
+For every task with `**Risk:** high`, a `**Risk justification:**` block
+must follow. Count words (whitespace-separated tokens) in the block until
+the next `**` field marker or task boundary. If the count is below 30, OR
+the block is missing entirely, REVISE with reference
+`W5: high-risk tasks require ≥30-word justification`.
+
+### Rule W6 — Bugfix-mode fix-gate read-side
+
+When `state.mode == "bugfix"`, the planner has two valid outputs:
+
+1. The verdict `BLOCKED-BUG-INCONCLUSIVE` (no plan body) — accepted when
+   `state.bug.fix_gate_passed` is `false` or absent.
+2. A normal plan body — accepted when `state.bug.fix_gate_passed` is `true`.
+
+Any other combination (plan body shipped while gate is `false`, or BLOCKED
+verdict shipped while gate is `true`) returns REVISE with reference
+`W6: bugfix-mode plan must match fix-gate state`.
+
+### Output
+
+When all six rules pass, run the existing seven-perspective validation. The
+final verdict is the join: REVISE if any structural rule fails OR any
+perspective fails; GO otherwise; NO-GO only on critical scope/feasibility
+conflicts (existing semantic, unchanged).
+
+The structural rules are checked first because they are deterministic and
+cheap; failing them short-circuits the more expensive perspective dispatch.
+
+---
+
 ## 4. Critical Thinking Enforcement
 
 Meta-checks beyond 7 perspectives:

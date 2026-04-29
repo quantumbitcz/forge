@@ -12,7 +12,10 @@ setup() {
     [ -f "${dir}SKILL.md" ] || fail "Missing SKILL.md in $dir"
     count=$((count + 1))
   done
-  [[ "$count" -ge 28 ]]
+  # Post-Mega-B (v5.0.0): skill surface consolidated to 3 canonical skills
+  # (forge, forge-admin, forge-ask). Prior consolidations:
+  # 42 -> 35 (Phase 1 v3.0.0), 35 -> 3 (Mega B v5.0.0).
+  [[ "$count" -ge 3 ]]
 }
 
 @test "skill-frontmatter: all skills have name field" {
@@ -51,5 +54,8 @@ setup() {
   # Phase 1 (v3.0.0) consolidated 42 → 35 skills. Threshold bumped 40 → 35.
   local count
   count=$(find "$SKILLS_DIR" -name "SKILL.md" | wc -l)
-  [[ "$count" -ge 28 ]]
+  # Post-Mega-B (v5.0.0): skill surface consolidated to 3 canonical skills
+  # (forge, forge-admin, forge-ask). Prior consolidations:
+  # 42 -> 35 (Phase 1 v3.0.0), 35 -> 3 (Mega B v5.0.0).
+  [[ "$count" -ge 3 ]]
 }

@@ -1,6 +1,6 @@
 # Input Compression
 
-Per-file compression system that reduces input tokens in agent system prompts, convention stacks, and config templates. Applied offline via `/forge-compress` — not runtime post-processing.
+Per-file compression system that reduces input tokens in agent system prompts, convention stacks, and config templates. Applied offline via `/forge-admin compress` — not runtime post-processing.
 
 ## Compression Rules
 
@@ -74,8 +74,8 @@ Per-file compression system that reduces input tokens in agent system prompts, c
 
 ## Relationship to Output Compression
 
-- **Input compression** (this doc): Compresses files loaded as system prompt context. Applied offline via `/forge-compress`.
+- **Input compression** (this doc): Compresses files loaded as system prompt context. Applied offline via `/forge-admin compress`.
 - **Output compression** (`output-compression.md`): Constrains agent output verbosity. Applied via system prompt injection at runtime.
-- **Caveman mode** (`skills/forge-compress output/SKILL.md`): User-configurable terseness for Forge's own user-facing messages.
+- **Caveman mode** (`skills/forge-admin/SKILL.md` §Subcommand: compress): User-configurable terseness for Forge's own user-facing messages.
 
 These three layers are independent. No double-compression occurs because each operates at a different boundary.

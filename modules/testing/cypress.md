@@ -1,5 +1,7 @@
 # Cypress Best Practices
 
+> Support tier: contract-verified
+
 ## Overview
 Cypress is a JavaScript-based E2E testing framework providing real-time browser reloading, automatic waiting, time-travel debugging, and network stubbing. Use it for testing web applications (React, Vue, Angular, Next.js) where visual feedback and developer experience matter. Avoid Cypress for cross-browser testing at scale (use Playwright for Webkit/Firefox), mobile app testing, or non-web applications.
 

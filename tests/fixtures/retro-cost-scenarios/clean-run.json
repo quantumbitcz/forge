@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "run_id": "clean-run",
+  "cost": {"ceiling_usd": 25.0, "spent_usd": 3.12, "ceiling_breaches": 0, "throttle_events": []},
+  "tokens": {
+    "by_agent": {
+      "fg-410-code-reviewer":     {"input": 8000, "output": 1500, "dispatch_count": 1, "model": "sonnet"},
+      "fg-411-security-reviewer": {"input": 8000, "output": 1500, "dispatch_count": 1, "model": "sonnet"},
+      "fg-412-architecture-reviewer": {"input":8000,"output":1500,"dispatch_count":1,"model":"sonnet"}
+    }
+  },
+  "findings": []
+}

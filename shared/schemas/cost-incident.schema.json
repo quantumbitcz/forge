@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.quantumbit.cz/schemas/cost-incident.schema.json",
+  "title": "Forge Cost Incident",
+  "description": "Written to .forge/cost-incidents/<timestamp>.json on every ceiling breach escalation.",
+  "type": "object",
+  "required": [
+    "timestamp", "ceiling_usd", "spent_usd", "projected_usd",
+    "next_agent", "resolved_tier", "decision", "autonomous", "run_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of the escalation."
+    },
+    "ceiling_usd": {"type": "number", "minimum": 0},
+    "spent_usd": {"type": "number", "minimum": 0},
+    "projected_usd": {"type": "number", "minimum": 0},
+    "next_agent": {
+      "type": "string",
+      "pattern": "^fg-[0-9]{3}-[a-z-]+$",
+      "description": "Agent ID that would have been dispatched."
+    },
+    "resolved_tier": {"enum": ["fast", "standard", "premium"]},
+    "decision": {
+      "enum": ["raise_ceiling", "downgrade", "abort_to_ship", "abort_full", "timeout"]
+    },
+    "autonomous": {"type": "boolean"},
+    "run_id": {"type": "string", "minLength": 1},
+    "new_ceiling_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Present only when decision == raise_ceiling."
+    },
+    "downgrade_from": {
+      "enum": ["fast", "standard", "premium"],
+      "description": "Present only when decision == downgrade."
+    },
+    "downgrade_to": {
+      "enum": ["fast", "standard", "premium"],
+      "description": "Present only when decision == downgrade."
+    }
+  }
+}

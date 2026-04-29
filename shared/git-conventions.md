@@ -1,6 +1,6 @@
 # Git Conventions
 
-Shared reference document for branch naming, commit formatting, and hook detection used by `fg-100-orchestrator`, `fg-600-pr-builder`, and `/forge-init`.
+Shared reference document for branch naming, commit formatting, and hook detection used by `fg-100-orchestrator`, `fg-600-pr-builder`, and `/forge`.
 
 Configuration lives in the `git:` section of `forge.local.md`. All fields have hardcoded defaults; omit to accept defaults.
 
@@ -156,7 +156,7 @@ The implementer (`fg-300-implementer`) targets one commit per layer when changes
 
 ### Scanned Paths
 
-During `/forge-init`, the following paths are scanned in the consuming project root:
+During `/forge`, the following paths are scanned in the consuming project root:
 
 | Path / Pattern              | Tool          |
 |-----------------------------|---------------|
@@ -189,4 +189,4 @@ During `/forge-init`, the following paths are scanned in the consuming project r
 |----------------------|--------------------------------------------------------------------------------|
 | `fg-100-orchestrator` | Reads `branch_template`, `ticket_source` to construct worktree branch names  |
 | `fg-600-pr-builder`  | Reads `commit_format`, `commit_types`, `sign_commits`, `commit_enforcement`   |
-| `/forge-init`        | Runs hook detection, writes `git:` section to `forge.local.md`               |
+| `/forge`        | Runs hook detection, writes `git:` section to `forge.local.md`               |

@@ -87,12 +87,12 @@ CFGEOF
   bash "$SCRIPT" check 25000 --forge-dir "$forge_dir"
   bash "$SCRIPT" check 10000 --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert d['context']['peak_tokens'] == 25000, d['context']['peak_tokens']
-"
+PYEOF
 }
 
 @test "context-guard: guard_checks counter increments" {
@@ -102,12 +102,12 @@ assert d['context']['peak_tokens'] == 25000, d['context']['peak_tokens']
   bash "$SCRIPT" check 12000 --forge-dir "$forge_dir"
   bash "$SCRIPT" check 8000 --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert d['context']['guard_checks'] == 3, d['context']['guard_checks']
-"
+PYEOF
 }
 
 @test "context-guard: metrics command outputs all fields" {
@@ -135,13 +135,13 @@ assert d['context']['guard_checks'] == 3, d['context']['guard_checks']
   # Below threshold -- should not increment
   bash "$SCRIPT" check 20000 --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert d['context']['condensation_triggers'] == 2, d['context']['condensation_triggers']
 assert d['context']['guard_checks'] == 3, d['context']['guard_checks']
-"
+PYEOF
 }
 
 @test "context-guard: per_stage_peak tracks per stage" {
@@ -174,14 +174,14 @@ json.dump(s, sys.stdout)
 
   bash "$SCRIPT" check 15000 --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 peaks = d['context']['per_stage_peak']
 assert peaks.get('implementing') == 20000, peaks
 assert peaks.get('reviewing') == 15000, peaks
-"
+PYEOF
 }
 
 @test "context-guard: critical_threshold triggers condensation before critical" {

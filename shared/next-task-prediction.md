@@ -81,11 +81,11 @@ Based on the changes in this run, consider these next steps:
 
 1. **[HIGH] Add integration tests for new `/api/groups` endpoint**
    Category: testing | Trigger: new route handler in `GroupController.kt`
-   *Suggested command:* `/forge-run Add integration tests for the groups REST API endpoint`
+   *Suggested command:* `/forge run Add integration tests for the groups REST API endpoint`
 
 2. **[HIGH] Update OpenAPI specification for groups endpoint**
    Category: docs | Trigger: new public API endpoint
-   *Suggested command:* `/forge-docs-generate --scope api`
+   *Suggested command:* `/forge docs --scope api`
 
 3. **[MEDIUM] Verify downstream consumers of `GroupService`**
    Category: compatibility | Trigger: modified shared service used by 3 modules
@@ -105,9 +105,9 @@ Each prediction includes:
 **Lifecycle:**
 - Created on first run with predictions enabled
 - Appended after each run by `fg-710-post-run`
-- Survives `/forge-recover reset`
+- Survives `/forge-admin recover reset`
 
-**Accuracy tracking:** When a subsequent `/forge-run` requirement semantically matches a prediction (compared at PREFLIGHT), the prediction is marked as `acted_on: true` with the matching run ID. Retrospective includes prediction accuracy stats.
+**Accuracy tracking:** When a subsequent `/forge run` requirement semantically matches a prediction (compared at PREFLIGHT), the prediction is marked as `acted_on: true` with the matching run ID. Retrospective includes prediction accuracy stats.
 
 **Low accuracy handling:** If `predictions.json` shows <20% acted-on rate after 10+ runs, retrospective flags this and suggests reducing `max_suggestions` or raising `min_confidence` to HIGH. Does not auto-disable.
 

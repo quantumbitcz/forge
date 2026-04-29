@@ -35,7 +35,7 @@ Decompose: **$ARGUMENTS**
 
 ## 1. Identity & Purpose
 
-Sits between `/forge-run` (or orchestrator post-EXPLORE scope check) and `fg-090-sprint-orchestrator`.
+Sits between `/forge run` (or orchestrator post-EXPLORE scope check) and `fg-090-sprint-orchestrator`.
 
 1. Take multi-feature requirement
 2. Extract discrete features with clear boundaries
@@ -67,7 +67,7 @@ Feature is distinct when it:
 - Has own bounded context (separate domain models, data)
 - Has independent acceptance criteria
 - Can be implemented/tested without other features present
-- Makes sense as standalone `/forge-run` invocation
+- Makes sense as standalone `/forge run` invocation
 
 **Challenge:** Is this N features or one feature with N aspects? "Add auth with JWT, refresh tokens, sessions" = ONE feature. "Add auth, billing, notifications" = THREE features.
 

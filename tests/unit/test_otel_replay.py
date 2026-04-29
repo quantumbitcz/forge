@@ -4,6 +4,7 @@ Verifies otel.replay() rebuilds the canonical span hierarchy from a fsync'd
 event log, and that the ``python -m hooks._py.otel_cli replay`` entry point
 runs end-to-end with a console exporter.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -78,11 +79,7 @@ def test_replay_propagates_agent_close_attrs(monkeypatch):
             "service_name": "forge-pipeline",
         },
     )
-    a = next(
-        s
-        for s in exporter.get_finished_spans()
-        if s.name == "agent.fg-200-planner"
-    )
+    a = next(s for s in exporter.get_finished_spans() if s.name == "agent.fg-200-planner")
     assert a.attributes["gen_ai.tokens.input"] == 1200
     assert a.attributes["gen_ai.tokens.output"] == 800
     assert a.attributes["gen_ai.tokens.total"] == 2000

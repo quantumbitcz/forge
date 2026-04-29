@@ -94,7 +94,7 @@ machine-validated; do not hand-edit.
 - [`caveman-benchmark.sh`](caveman-benchmark.sh) — token savings
 - [`compression-validation.py`](compression-validation.py) — compression eval
 - [`check_prerequisites.py`](check_prerequisites.py) — Python 3.10+ validation
-- [`check-environment.sh`](check-environment.sh) — optional tool detection
+- [`check_environment.py`](check_environment.py) — optional tool detection
 - [`config-validator.sh`](config-validator.sh) — legacy config validator
 - [`config_validator.py`](config_validator.py) — Python config validator
 - [`config-diff.sh`](config-diff.sh) — config diff helper
@@ -121,7 +121,7 @@ machine-validated; do not hand-edit.
 - [`framework-gotchas.md`](framework-gotchas.md) — non-obvious per-framework
 - [`preflight-constraints.md`](preflight-constraints.md) — PREFLIGHT validation
 - [`model-routing.md`](model-routing.md) — model tier selection
-- [`intent-classification.md`](intent-classification.md) — /forge-run routing
+- [`intent-classification.md`](intent-classification.md) — /forge run routing
 - [`domain-detection.md`](domain-detection.md) — domain scoping
 - [`git-conventions.md`](git-conventions.md) — branch + commit rules
 - [`version-resolution.md`](version-resolution.md) — version lookup policy
@@ -129,7 +129,6 @@ machine-validated; do not hand-edit.
 - [`tdd-enforcement.md`](tdd-enforcement.md) — TDD inner-loop rules
 - [`testing-anti-patterns.md`](testing-anti-patterns.md) — anti-pattern catalog
 - [`debugging-techniques.md`](debugging-techniques.md) — debugging heuristics
-- [`skill-subcommand-pattern.md`](skill-subcommand-pattern.md) — skill dispatch pattern
 - [`tracking/tracking-schema.md`](tracking/tracking-schema.md) — kanban schema
 
 ## Policy & security

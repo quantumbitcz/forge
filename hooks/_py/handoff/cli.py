@@ -1,4 +1,4 @@
-"""CLI dispatcher for /forge-handoff subcommands."""
+"""CLI dispatcher for /forge-admin handoff subcommands."""
 from __future__ import annotations
 
 import argparse

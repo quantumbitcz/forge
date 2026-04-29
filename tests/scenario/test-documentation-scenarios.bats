@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: documentation subsystem behavior verification.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 @test "docs-scenario: discoverer agent has all required sections" {
@@ -47,20 +49,11 @@ load '../helpers/test-helpers'
   grep -qi "Never in Pipeline Mode\|never.*pipeline\|runbook.*standalone\|standalone.*only" "$agent" || fail "Missing pipeline mode guardrails"
 }
 
-@test "docs-scenario: forge-docs-generate skill supports --coverage flag" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
-  grep -q "\-\-coverage" "$skill" || fail "Missing --coverage flag"
-}
-
-@test "docs-scenario: forge-docs-generate skill supports --confirm-decisions flag" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
-  grep -q "\-\-confirm-decisions" "$skill" || fail "Missing --confirm-decisions flag"
-}
-
-@test "docs-scenario: forge-docs-generate skill detects framework without pipeline config" {
-  local skill="$PLUGIN_ROOT/skills/forge-docs-generate/SKILL.md"
-  grep -qi "stack marker\|auto-detect\|detection fails\|framework.*detect" "$skill" || fail "Missing standalone framework detection"
-}
+# Note: legacy tests for `forge-docs-generate skill --coverage / --confirm-decisions
+# / framework detection` were removed in Mega B. The standalone forge-docs-generate
+# skill was retired; the `/forge docs` subcommand on the consolidated /forge skill
+# does not surface these flags. Subcommand semantics are tested via
+# tests/unit/skill-execution/.
 
 @test "docs-scenario: ADR significance criteria documented" {
   local found=0

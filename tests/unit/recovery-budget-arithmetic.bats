@@ -8,14 +8,36 @@ load '../helpers/test-helpers'
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
 
 # ---------------------------------------------------------------------------
-# Helper: compute total weight from a list of strategy applications
+# Helper: compute total weight from a list of strategy applications.
+# Uses python3 for floating-point arithmetic (bc is not available on Windows
+# Git Bash by default).
 # ---------------------------------------------------------------------------
 compute_total_weight() {
-  local total=0
-  for weight in "$@"; do
-    total=$(echo "$total + $weight" | bc)
-  done
-  echo "$total"
+  python3 - "$@" <<'PYEOF'
+import sys
+print(sum(float(w) for w in sys.argv[1:]))
+PYEOF
+}
+
+# Compare two numbers via python3 (replacement for `echo "a OP b" | bc`).
+# Returns 0 if comparison is true, 1 otherwise.
+_cmp() {
+  python3 - "$1" "$2" "$3" <<'PYEOF'
+import sys
+a, op, b = sys.argv[1], sys.argv[2], sys.argv[3]
+ops = {'<': float(a) < float(b), '<=': float(a) <= float(b),
+       '>': float(a) > float(b), '>=': float(a) >= float(b),
+       '==': float(a) == float(b)}
+sys.exit(0 if ops[op] else 1)
+PYEOF
+}
+
+# Add two numbers (replacement for `echo "a + b" | bc`).
+_add() {
+  python3 - "$1" "$2" <<'PYEOF'
+import sys
+print(float(sys.argv[1]) + float(sys.argv[2]))
+PYEOF
 }
 
 # Budget ceiling
@@ -64,7 +86,7 @@ W_GRACEFUL_STOP="0.0"
 @test "recovery-budget: 2 transient retries = 1.0 (under ceiling)" {
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TRANSIENT")
-  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$BUDGET_CEILING" \
     || fail "2 transient retries ($total) should be under ceiling ($BUDGET_CEILING)"
 }
 
@@ -72,7 +94,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON")
   [[ "$total" == "3.0" ]] || fail "Expected 3.0, got $total"
-  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$BUDGET_CEILING" \
     || fail "$total should be under ceiling $BUDGET_CEILING"
 }
 
@@ -81,7 +103,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON" "$W_AGENT_RESET" "$W_DEP_HEALTH" "$W_RESOURCE_CLEAN")
   [[ "$total" == "5.5" ]] || fail "Expected 5.5, got $total"
-  [[ $(echo "$total >= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" ">=" "$BUDGET_CEILING" \
     || fail "$total should be at or above ceiling ($BUDGET_CEILING)"
 }
 
@@ -90,7 +112,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_RESOURCE_CLEAN" "$W_AGENT_RESET")
   [[ "$total" == "2.0" ]] || fail "Expected 2.0, got $total"
-  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$BUDGET_CEILING" \
     || fail "$total should be under ceiling $BUDGET_CEILING"
 }
 
@@ -99,7 +121,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TOOL_DIAG" "$W_STATE_RECON" "$W_AGENT_RESET" "$W_DEP_HEALTH" "$W_RESOURCE_CLEAN" "$W_TRANSIENT")
   [[ "$total" == "6.0" ]] || fail "Expected 6.0, got $total"
-  [[ $(echo "$total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" ">" "$BUDGET_CEILING" \
     || fail "$total should exceed ceiling $BUDGET_CEILING"
 }
 
@@ -113,13 +135,13 @@ W_GRACEFUL_STOP="0.0"
 
 @test "recovery-budget: budget at exactly 4.4 triggers warning" {
   local total="4.4"
-  [[ $(echo "$total >= $WARNING_80PCT" | bc) -eq 1 ]] \
+  _cmp "$total" ">=" "$WARNING_80PCT" \
     || fail "$total should trigger 80% warning (threshold=$WARNING_80PCT)"
 }
 
 @test "recovery-budget: budget at 4.3 does not trigger warning" {
   local total="4.3"
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$WARNING_80PCT" \
     || fail "$total should NOT trigger 80% warning (threshold=$WARNING_80PCT)"
 }
 
@@ -156,13 +178,13 @@ W_GRACEFUL_STOP="0.0"
 # ---------------------------------------------------------------------------
 @test "recovery-budget: budget at 4.95 triggers 90% escalation" {
   local total="4.95"
-  [[ $(echo "$total >= $WARNING_90PCT" | bc) -eq 1 ]] \
+  _cmp "$total" ">=" "$WARNING_90PCT" \
     || fail "$total should trigger 90% escalation (threshold=$WARNING_90PCT)"
 }
 
 @test "recovery-budget: budget at 4.94 does not trigger 90% escalation" {
   local total="4.94"
-  [[ $(echo "$total < $WARNING_90PCT" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$WARNING_90PCT" \
     || fail "$total should NOT trigger 90% escalation (threshold=$WARNING_90PCT)"
 }
 
@@ -181,8 +203,8 @@ W_GRACEFUL_STOP="0.0"
   local budget="5.5"
   local proposed="$W_TRANSIENT"
   local new_total
-  new_total=$(echo "$budget + $proposed" | bc)
-  [[ $(echo "$new_total > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  new_total=$(_add "$budget" "$proposed")
+  _cmp "$new_total" ">" "$BUDGET_CEILING" \
     || fail "Adding $proposed to exhausted budget $budget should exceed ceiling"
 }
 
@@ -191,7 +213,7 @@ W_GRACEFUL_STOP="0.0"
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_STATE_RECON" "$W_TOOL_DIAG" "$W_DEP_HEALTH")
   [[ "$total" == "4.0" ]] || fail "Expected 4.0, got $total"
-  [[ $(echo "$total < $WARNING_80PCT" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$WARNING_80PCT" \
     || fail "4.0 should still be below 80% warning threshold"
 }
 
@@ -208,7 +230,7 @@ W_GRACEFUL_STOP="0.0"
   # Even worst-case 3 transient retries = 1.5, well under budget
   local total
   total=$(compute_total_weight "$W_TRANSIENT" "$W_TRANSIENT" "$W_TRANSIENT")
-  [[ $(echo "$total < $BUDGET_CEILING" | bc) -eq 1 ]] \
+  _cmp "$total" "<" "$BUDGET_CEILING" \
     || fail "3 transient retries ($total) should be well under ceiling"
 }
 
@@ -245,13 +267,13 @@ W_GRACEFUL_STOP="0.0"
   local fallback="$W_RESOURCE_CLEAN"  # 0.5
 
   local after_primary
-  after_primary=$(echo "$budget + $primary" | bc)
-  [[ $(echo "$after_primary <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  after_primary=$(_add "$budget" "$primary")
+  _cmp "$after_primary" "<=" "$BUDGET_CEILING" \
     || fail "Primary ($primary) should be within budget"
 
   local after_fallback
-  after_fallback=$(echo "$after_primary + $fallback" | bc)
-  [[ $(echo "$after_fallback <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  after_fallback=$(_add "$after_primary" "$fallback")
+  _cmp "$after_fallback" "<=" "$BUDGET_CEILING" \
     || fail "Primary + fallback ($after_fallback) should still be within budget"
 }
 
@@ -266,15 +288,15 @@ W_GRACEFUL_STOP="0.0"
   local primary="$W_TOOL_DIAG"  # 1.0
 
   local after_primary
-  after_primary=$(echo "$budget + $primary" | bc)
-  [[ $(echo "$after_primary > $BUDGET_CEILING" | bc) -eq 1 ]] \
+  after_primary=$(_add "$budget" "$primary")
+  _cmp "$after_primary" ">" "$BUDGET_CEILING" \
     || fail "Primary at budget 5.0 should exceed ceiling"
 
   # But resource-cleanup (0.5) would fit: 5.0 + 0.5 = 5.5 (at ceiling)
   local fallback="$W_RESOURCE_CLEAN"  # 0.5
   local after_fallback_only
-  after_fallback_only=$(echo "$budget + $fallback" | bc)
-  [[ $(echo "$after_fallback_only <= $BUDGET_CEILING" | bc) -eq 1 ]] \
+  after_fallback_only=$(_add "$budget" "$fallback")
+  _cmp "$after_fallback_only" "<=" "$BUDGET_CEILING" \
     || fail "Fallback (0.5) alone at budget 5.0 should fit at ceiling"
 }
 

@@ -109,9 +109,11 @@ _make_kotlin_file() {
     # Extract file:line_no prefix (first field before first space-pipe)
     local file_lineno
     file_lineno="$(printf '%s' "$line" | awk -F' \\| ' '{print $1}')"
-    # Line number is the part after the last colon
+    # Line number is the part after the last colon. ``rev`` is not in the
+    # default Git Bash on Windows, so use awk's NF to grab the last colon-
+    # delimited field portably.
     local lineno
-    lineno="$(printf '%s' "$file_lineno" | rev | cut -d: -f1 | rev)"
+    lineno="$(printf '%s' "$file_lineno" | awk -F: '{print $NF}')"
     if ! printf '%s' "$lineno" | grep -qE '^[0-9]+$'; then
       invalid_lines+=("lineno='$lineno' in: $line")
     fi

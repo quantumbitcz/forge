@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://forge.quantumbit.cz/schemas/hook-failures.schema.json",
+  "title": "Hook failure row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "ts", "hook_name", "matcher", "exit_code", "duration_ms", "cwd"],
+  "properties": {
+    "schema": {"const": 1},
+    "ts": {"type": "string", "format": "date-time"},
+    "hook_name": {"type": "string", "minLength": 1},
+    "matcher": {"type": "string"},
+    "exit_code": {"type": "integer"},
+    "stderr_excerpt": {"type": "string", "maxLength": 2048},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "cwd": {"type": "string"}
+  }
+}

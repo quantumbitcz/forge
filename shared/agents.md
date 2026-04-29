@@ -9,7 +9,7 @@
 
 ## Model
 
-Forge currently ships 48 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
+Forge currently ships 51 agents, each declared as a self-contained Markdown file at `agents/fg-NNN-<role>.md`. The orchestrator loads the agent file as the sub-agent system prompt, so every line in that file is a runtime token cost — keep them terse. See [`agent-philosophy.md`](agent-philosophy.md) for the design rules.
 
 **What an agent IS.** A YAML frontmatter block declaring:
 
@@ -17,6 +17,7 @@ Forge currently ships 48 agents, each declared as a self-contained Markdown file
 - `description` — short trigger description. Tier 1 entry agents may include an example; Tier 4 leaves stay one-line.
 - `tools` — the explicit tool allowlist. Dispatch agents include `Agent` in this list; every other agent is a *leaf* (can report findings but cannot dispatch further sub-agents).
 - `ui:` — the UI-capability tier (1–4), explicit per `shared/agent-ui.md`. Implicit Tier-4-by-omission is no longer accepted.
+  Enforced by `tests/contract/test_ui_frontmatter_required.py` (strict pydantic: `ui` must be a mapping with exactly `{tasks, ask, plan_mode}` as booleans).
 - `color:` — cluster color for the task timeline (see [`agent-colors.md`](agent-colors.md)).
 
 The body of the file is the system prompt: role, constraints, dispatch contract, and output format. Shared constraint language lives in [`agent-defaults.md`](agent-defaults.md) so individual agents can reference it instead of duplicating text.
@@ -29,7 +30,7 @@ The body of the file is the system prompt: role, constraints, dispatch contract,
 
 Runtime wiring lives in [`agent-ui.md`](agent-ui.md) (task nesting, AskUserQuestion patterns) and in [`agent-communication.md`](agent-communication.md) (stage notes, dedup hints, PREEMPT markers, structured output).
 
-**Who the agents ARE.** 48 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
+**Who the agents ARE.** 51 agents distributed across the 10 pipeline stages (PREFLIGHT → EXPLORE → PLAN → VALIDATE → IMPLEMENT → VERIFY → REVIEW → DOCS → SHIP → LEARN) plus pre-pipeline entry points and supporting roles. The authoritative list lives in §Registry at the bottom of this file. Every new agent requires **four** coordinated updates:
 
 1. A row in §Registry.
 2. A tier assignment in §UI Tiers (and matching `ui:` frontmatter).
@@ -111,9 +112,12 @@ No UI capabilities. Produce findings only.
 
 | Agent | Role |
 |---|---|
+| `fg-021-hypothesis-investigator` | Sub-investigator dispatched by fg-020 in parallel hypothesis branching mode; returns evidence + likelihood updates as JSON |
 | `fg-101-worktree-manager` | Worktree lifecycle |
 | `fg-102-conflict-resolver` | Merge conflict resolution |
-| `fg-205-planning-critic` | Silent adversarial plan reviewer; emits CRITIC findings consumed by fg-210-validator |
+| `fg-205-plan-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-200-planner; 2-loop bound with AskUserQuestion escalation |
+| `fg-301-implementer-judge` | Binding-veto judge; REVISE forces re-dispatch of fg-300-implementer; 2-loop bound with AskUserQuestion escalation |
+| `fg-302-diff-judge` | Implementer-voting diff judge (Phase 7 F36) |
 | `fg-410-code-reviewer` | Code quality review |
 | `fg-411-security-reviewer` | Security review |
 | `fg-412-architecture-reviewer` | Architecture review |
@@ -124,6 +128,7 @@ No UI capabilities. Produce findings only.
 | `fg-418-docs-consistency-reviewer` | Documentation consistency |
 | `fg-419-infra-deploy-reviewer` | Infrastructure review |
 | `fg-510-mutation-analyzer` | Mutation testing analysis |
+| `fg-540-intent-verifier` | Intent verification probes (Phase 7 F35); fresh-context, no UI surface |
 
 <a id="dispatch"></a>
 
@@ -154,11 +159,14 @@ fg-100-orchestrator
   ├── IMPLEMENTING
   │   ├── fg-310-scaffolder (serial, first)
   │   ├── fg-300-implementer (parallel per task)
+  │   │     ├── fg-301-implementer-judge (inner reflection)
+  │   │     └── fg-302-diff-judge          (voting — when impl_voting gate fires)
   │   └── fg-320-frontend-polisher (conditional)
   ├── VERIFYING
   │   ├── fg-505-build-verifier
   │   ├── fg-506-migration-verifier        (conditional: mode == "migration")
   │   ├── fg-500-test-gate
+  │   ├── fg-540-intent-verifier           (Phase 7 F35: end of VERIFY, before REVIEW)
   │   └── fg-555-resilience-tester         (conditional: resilience_testing.enabled)
   ├── REVIEWING
   │   ├── fg-400-quality-gate (dispatches reviewers)
@@ -198,12 +206,12 @@ fg-400-quality-gate
 ### Pre-Pipeline Dispatch
 
 ```
-/forge-shape     → fg-010-shaper
-/forge-fix       → fg-020-bug-investigator
-/forge-bootstrap → fg-050-project-bootstrapper
-/forge-sprint    → fg-090-sprint-orchestrator
+/forge run     → fg-010-shaper
+/forge fix       → fg-020-bug-investigator
+/forge bootstrap → fg-050-project-bootstrapper
+/forge sprint    → fg-090-sprint-orchestrator
                      └── fg-100-orchestrator (per feature)
-/forge-migration → fg-160-migration-planner
+/forge migrate → fg-160-migration-planner
 ```
 
 <a id="supporting-dispatch"></a>
@@ -317,6 +325,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-010-shaper | 1 | Yes | Pre-pipeline | Shaping |
 | fg-015-scope-decomposer | 1 | Yes | Pre-pipeline | Decomposition |
 | fg-020-bug-investigator | 2 | Yes | Pre-pipeline | Investigation |
+| fg-021-hypothesis-investigator | 4 | No | Pre-pipeline | Investigation |
 | fg-050-project-bootstrapper | 1 | Yes | Pre-pipeline | Bootstrap |
 | fg-090-sprint-orchestrator | 1 | Yes | Sprint | Orchestration |
 | fg-100-orchestrator | 2 | Yes | Core | Orchestration |
@@ -331,11 +340,12 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-155-i18n-validator | 3 | No | Preflight | i18n |
 | fg-160-migration-planner | 1 | Yes | Preflight | Migration |
 | fg-200-planner | 1 | Yes | Plan | Planning |
-| fg-205-planning-critic | 4 | No | Plan | Quality |
+| fg-205-plan-judge | 4 | No | Plan | Quality |
 | fg-210-validator | 4 | No | Validate | Validation |
 | fg-250-contract-validator | 3 | Yes | Validate | Contracts |
 | fg-300-implementer | 3 | No | Implement | TDD |
-| fg-301-implementer-critic | 4 | No | Implement | Reflection (CoVe) |
+| fg-301-implementer-judge | 4 | No | Implement | Reflection (CoVe) |
+| fg-302-diff-judge | 4 | No | Implement | Voting |
 | fg-310-scaffolder | 3 | Yes | Implement | Scaffolding |
 | fg-320-frontend-polisher | 3 | No | Implement | Frontend |
 | fg-350-docs-generator | 3 | Yes | Document | Documentation |
@@ -354,6 +364,7 @@ Downstream agents (polisher, reviewer) read this from stage notes to ground thei
 | fg-506-migration-verifier | 3 | No | Verify | Migration |
 | fg-510-mutation-analyzer | 4 | No | Verify | Testing |
 | fg-515-property-test-generator | 3 | No | Verify | Testing |
+| fg-540-intent-verifier | 4 | No | Verify | Intent |
 | fg-555-resilience-tester | 3 | No | Verify | Resilience |
 | fg-590-pre-ship-verifier | 3 | Yes | Ship | Verification |
 | fg-600-pr-builder | 2 | Yes | Ship | Shipping |

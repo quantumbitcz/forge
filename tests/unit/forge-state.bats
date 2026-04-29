@@ -32,11 +32,11 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"
   assert_success
   assert [ -f "$forge_dir/state.json" ]
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PYEOF'
 import json, sys
-with open('$forge_dir/state.json') as f:
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['version'] == '1.6.0', f'version: {d[\"version\"]}'
+assert d['version'] == '2.1.0', f'version: {d["version"]}'
 assert d['complete'] == False
 assert d['story_id'] == 'feat-test'
 assert d['story_state'] == 'PREFLIGHT'
@@ -48,7 +48,7 @@ assert 'convergence' in d
 assert d['convergence']['phase'] == 'correctness'
 assert d['convergence']['convergence_state'] == 'IMPROVING'
 assert d['convergence']['diminishing_count'] == 0
-"
+PYEOF
 }
 
 @test "forge-state: init with --dry-run sets dry_run flag" {
@@ -59,7 +59,10 @@ assert d['convergence']['diminishing_count'] == 0
   assert_success
 
   local dry_run
-  dry_run=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['dry_run'])")
+  dry_run=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys; print(json.load(open(sys.argv[1]))['dry_run'])
+PYEOF
+  )
   assert_equal "$dry_run" "True"
 }
 
@@ -71,7 +74,10 @@ assert d['convergence']['diminishing_count'] == 0
   assert_success
 
   local mode
-  mode=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['mode'])")
+  mode=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys; print(json.load(open(sys.argv[1]))['mode'])
+PYEOF
+  )
   assert_equal "$mode" "bugfix"
 }
 
@@ -217,16 +223,16 @@ assert d['convergence']['phase_iterations'] == 0
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
   # Fast-forward state directly (bypasses forge-state-write.sh WAL/_seq validation;
   # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is)
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition score_target_reached --forge-dir "$forge_dir"
   assert_success
@@ -244,16 +250,16 @@ assert d['convergence']['phase'] == 'safety_gate', d['convergence']['phase']
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'VERIFYING'
 d['convergence']['phase'] = 'safety_gate'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition verify_pass --guard "convergence.phase=safety_gate" --forge-dir "$forge_dir"
   assert_success
@@ -264,15 +270,15 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'DOCUMENTING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition docs_complete --forge-dir "$forge_dir"
   assert_success
@@ -283,15 +289,15 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition user_approve_pr --forge-dir "$forge_dir"
   assert_success
@@ -302,15 +308,15 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'LEARNING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition retrospective_complete --forge-dir "$forge_dir"
   assert_success
@@ -329,16 +335,16 @@ assert d['new_state'] == 'COMPLETE', d['new_state']
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'VERIFYING'
 d['convergence']['phase'] = 'correctness'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition phase_a_failure \
     --guard "verify_fix_count=0" --guard "max_fix_loops=3" \
@@ -360,17 +366,17 @@ assert c['total_retries'] == 1
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['convergence']['plateau_count'] = 1
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition score_improving \
     --guard "total_iterations=2" --guard "max_iterations=8" \
@@ -389,18 +395,18 @@ assert d['convergence']['plateau_count'] == 0
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['quality_cycles'] = 3
 d['test_cycles'] = 2
 d['total_retries'] = 5
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition pr_rejected --guard "feedback_classification=implementation" --forge-dir "$forge_dir"
   assert_success
@@ -424,17 +430,17 @@ assert d['story_state'] == 'IMPLEMENTING'
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['total_retries'] = 10
 d['total_retries_max'] = 10
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition budget_exhausted \
     --guard "total_retries=10" --guard "total_retries_max=10" \
@@ -465,16 +471,16 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['quality_cycles'] = 3
 d['test_cycles'] = 2
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" reset implementation --forge-dir "$forge_dir"
   assert_success
@@ -505,9 +511,9 @@ assert d['test_cycles'] == 0
   assert [ "$line_count" -ge 1 ]
 
   # Validate JSON format
-  python3 -c "
-import json
-with open('$forge_dir/decisions.jsonl') as f:
+  python3 - "$forge_dir/decisions.jsonl" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     for line in f:
         line = line.strip()
         if line:
@@ -515,7 +521,7 @@ with open('$forge_dir/decisions.jsonl') as f:
             assert 'ts' in d, 'missing ts'
             assert 'decision' in d, 'missing decision'
             assert d['decision'] == 'state_transition', d['decision']
-"
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -526,18 +532,18 @@ with open('$forge_dir/decisions.jsonl') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['convergence']['diminishing_count'] = 2
 d['score_history'] = [85, 86, 87]
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
 
   run bash "$SCRIPT" transition score_diminishing \
     --guard "diminishing_count=2" --guard "score=87" --guard "pass_threshold=80" \
@@ -562,16 +568,16 @@ assert d['convergence']['phase'] == 'safety_gate'
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
   # Fast-forward to REVIEWING then ESCALATED
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'ESCALATED'
 d['previous_state'] = 'REVIEWING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
   run bash "$SCRIPT" transition user_continue --forge-dir "$forge_dir"
   assert_success
   echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='REVIEWING', d['new_state']"
@@ -585,9 +591,9 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['quality_cycles'] = 3
@@ -596,9 +602,9 @@ d['verify_fix_count'] = 2
 d['validation_retries'] = 1
 d['total_retries'] = 8
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
   run bash "$SCRIPT" transition pr_rejected --guard "feedback_classification=design" --forge-dir "$forge_dir"
   assert_success
   run bash "$SCRIPT" query --forge-dir "$forge_dir"
@@ -622,16 +628,16 @@ assert d['story_state'] == 'PLANNING'
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
   run bash "$SCRIPT" transition score_regressing \
     --guard "delta=-8" --guard "oscillation_tolerance=5" \
     --forge-dir "$forge_dir"
@@ -647,15 +653,15 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --dry-run --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['story_state'] = 'VALIDATING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
   run bash "$SCRIPT" transition validate_complete --guard "dry_run=true" --forge-dir "$forge_dir"
   assert_success
   echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['new_state']=='COMPLETE'"
@@ -669,18 +675,18 @@ with open('$forge_dir/state.json', 'w') as f:
   local forge_dir="$TEST_TEMP/project/.forge"
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 d['quality_cycles'] = 3
 d['test_cycles'] = 2
 d['verify_fix_count'] = 2
 d['validation_retries'] = 1
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with open(sys.argv[2], 'w') as f:
     json.dump(d, f, indent=2)
-"
+PYEOF
   run bash "$SCRIPT" reset design --forge-dir "$forge_dir"
   assert_success
   run bash "$SCRIPT" query --forge-dir "$forge_dir"
@@ -710,16 +716,16 @@ assert d['validation_retries'] == 0
   # Verify events.jsonl was created and has a state_transition event
   assert [ -f "$forge_dir/events.jsonl" ]
 
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "state_transition event not emitted correctly"
+import json, sys
+with open(sys.argv[1]) as f:
     events = [json.loads(line) for line in f if line.strip()]
 # Find state_transition events
 transitions = [e for e in events if e['event'] == 'state_transition']
 assert len(transitions) >= 1, f'Expected at least 1 state_transition event, got {len(transitions)}'
 last = transitions[-1]
-assert last['fields']['from'] == 'PREFLIGHT', f'from: {last[\"fields\"][\"from\"]}'
-assert last['fields']['to'] == 'EXPLORING', f'to: {last[\"fields\"][\"to\"]}'
-assert last['fields']['trigger'] == 'preflight_complete', f'trigger: {last[\"fields\"][\"trigger\"]}'
-" || fail "state_transition event not emitted correctly"
+assert last['fields']['from'] == 'PREFLIGHT', f'from: {last["fields"]["from"]}'
+assert last['fields']['to'] == 'EXPLORING', f'to: {last["fields"]["to"]}'
+assert last['fields']['trigger'] == 'preflight_complete', f'trigger: {last["fields"]["trigger"]}'
+PYEOF
 }

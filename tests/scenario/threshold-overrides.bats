@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: threshold overrides (file size and function size)
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 RUN_PATTERNS="$PLUGIN_ROOT/shared/checks/layer-1-fast/run-patterns.sh"

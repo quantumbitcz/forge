@@ -26,6 +26,8 @@ stages:
     target_score: pass_threshold
 output_compression:
   verifying: terse
+impl_voting:
+  trigger_on_risk_tags: ["high", "bugfix"]  # every bugfix task is high-risk
 ---
 
 ## Bugfix Mode

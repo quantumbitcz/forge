@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: graceful degradation of shared/graph/* scripts
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 HEALTH_CHECK="$PLUGIN_ROOT/shared/graph/neo4j-health.sh"

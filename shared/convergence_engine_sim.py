@@ -72,7 +72,7 @@ def simulate(
         # Decision logic — order matters; mirrors the bash original.
         if total_iterations >= max_iterations:
             phase, decision = "BUDGET_EXHAUSTED", "ESCALATE"
-        elif i > 0 and delta < 0 and abs(delta) > oscillation_tolerance:
+        elif i > 0 and delta < 0 and abs(delta) >= oscillation_tolerance:
             phase, decision = "REGRESSING", "ESCALATE"
         elif score >= pass_threshold and plateau_count < plateau_patience:
             if cycle >= 3 and abs(smoothed) <= plateau_threshold:

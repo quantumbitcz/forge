@@ -1,0 +1,5 @@
+{"type":"run_start","run_id":"otel-test-run","forge.run_id":"otel-test-run"}
+{"type":"dispatch_start","gen_ai.agent.name":"fg-200-planner","forge.stage":"PLANNING","forge.run.budget_total_usd":25.0,"forge.run.budget_remaining_usd":24.5,"forge.agent.tier_estimate_usd":0.078,"forge.agent.tier_original":"premium","forge.agent.tier_used":"premium","forge.cost.throttle_reason":"none"}
+{"type":"dispatch_complete","gen_ai.agent.name":"fg-200-planner","gen_ai.tokens.input":8000,"gen_ai.tokens.output":1500,"gen_ai.cost.usd":0.078}
+{"type":"dispatch_start","gen_ai.agent.name":"fg-300-implementer","forge.stage":"IMPLEMENTING","forge.run.budget_total_usd":25.0,"forge.run.budget_remaining_usd":2.5,"forge.agent.tier_estimate_usd":0.047,"forge.agent.tier_original":"standard","forge.agent.tier_used":"standard","forge.cost.throttle_reason":"soft_20pct"}
+{"type":"dispatch_complete","gen_ai.agent.name":"fg-300-implementer","gen_ai.tokens.input":8000,"gen_ai.tokens.output":1500,"gen_ai.cost.usd":0.047}

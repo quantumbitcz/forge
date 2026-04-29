@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: linter output parsing (detekt + eslint adapters) via severity-map
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 SEVERITY_MAP="$PLUGIN_ROOT/shared/checks/layer-2-linter/config/severity-map.json"

@@ -1,5 +1,7 @@
 # Go Stdlib Framework Conventions
 
+> Support tier: contract-verified
+
 > Framework-specific conventions for Go stdlib projects. Language idioms are in `modules/languages/go.md`. Generic testing patterns are in `modules/testing/go-testing.md`.
 
 ## Architecture (Handler / Service / Repository)

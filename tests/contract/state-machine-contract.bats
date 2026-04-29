@@ -19,25 +19,33 @@ TRANSITIONS_PY="$PLUGIN_ROOT/shared/python/state_transitions.py"
 @test "state-machine-contract: all normal flow events from transitions table exist in forge-state.sh" {
   # Extract unique events from the Normal Flow table
   local events
-  events=$(python3 -c "
-import re
-with open('$TRANSITIONS') as f:
+  events=$(python3 - "$TRANSITIONS" <<'PYEOF'
+import re, sys
+with open(sys.argv[1]) as f:
     content = f.read()
-# Match events in the table (backtick-wrapped values in 3rd column)
+# Match events in the table (backtick-wrapped values in 3rd column).
+# The Normal Flow table is the only one whose third column holds an event
+# identifier; mode-specific config tables also use the | N | x | y | shape
+# but their third column is a config key like ``max_quality_cycles``. We
+# filter out pure-numeric matches (which only appear as column values in
+# those config tables) so the assertion stays scoped to event names.
 events = set()
 for line in content.split('\n'):
-    # Match table rows: | N | STATE | event | ...
     m = re.match(r'^\|\s*\w+\s*\|\s*\S+\s*\|\s*\x60?(\w+)\x60?\s*\|', line)
     if m:
         events.add(m.group(1))
-# Remove header words
+# Remove header words and pure-numeric spurious matches.
 events -= {'event', 'guard', 'current_state'}
+events = {e for e in events if not e.isdigit()}
 for e in sorted(events):
     print(e)
-")
+PYEOF
+  )
 
   # Transitions are implemented in state_transitions.py (extracted from forge-state.sh in v2.7.0)
   for event in $events; do
+    # Strip Windows \r (Python on Windows emits \r\n; bash word-split keeps \r attached).
+    event="${event%$'\r'}"
     grep -q "'$event'" "$TRANSITIONS_PY" || grep -q "\"$event\"" "$TRANSITIONS_PY" || fail "Event '$event' from state-transitions.md not found in state_transitions.py"
   done
 }

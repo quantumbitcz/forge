@@ -2,6 +2,8 @@
 # Scenario tests: state machine end-to-end transition flows.
 # Tests multi-step paths through forge-state.sh to verify the complete pipeline.
 
+# Covers: T-01, T-02, T-05, T-09, T-10, T-19, T-26, T-27, T-30, T-38, T-40, T-41, T-42, T-43, T-44, T-45, T-49, T-50, T-52, D-01, E-01
+
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"
@@ -54,17 +56,22 @@ assert d['verify_fix_count'] == 0
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
   # Fast-forward state directly (bypasses forge-state-write.sh WAL/_seq validation;
-  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is)
-  python3 -c "
+  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is).
+  # Path passed via argv so MSYS auto-conversion produces a native form on Windows.
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'VERIFYING'
 d['convergence']['phase'] = 'correctness'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   # correctness → perfection
   bash "$SCRIPT" transition verify_pass --guard "convergence.phase=correctness" --forge-dir "$forge_dir" > /dev/null
@@ -96,19 +103,23 @@ assert d['convergence']['safety_gate_passed'] == True
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
   # Fast-forward state directly (bypasses forge-state-write.sh WAL/_seq validation;
-  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is)
-  python3 -c "
+  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is).
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'VERIFYING'
 d['total_retries'] = 10
 d['total_retries_max'] = 10
 d['convergence']['phase'] = 'correctness'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition budget_exhausted \
     --guard "total_retries=10" --guard "total_retries_max=10" \
@@ -143,19 +154,23 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
   # Fast-forward state directly (bypasses forge-state-write.sh WAL/_seq validation;
-  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is)
-  python3 -c "
+  # this is acceptable for test setup since forge-state.sh reads _seq from the file as-is).
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['convergence']['diminishing_count'] = 2
 d['score_history'] = [85, 86, 87]
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition score_diminishing \
     --guard "diminishing_count=2" --guard "score=87" --guard "pass_threshold=80" \
@@ -176,18 +191,22 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'REVIEWING'
 d['convergence']['phase'] = 'perfection'
 d['convergence']['diminishing_count'] = 2
 d['score_history'] = [85, 86, 87]
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition score_diminishing \
     --guard "diminishing_count=2" --guard "score=87" --guard "pass_threshold=80" \
@@ -208,15 +227,19 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition evidence_BLOCK \
     --guard "block_reason=tests" \
@@ -237,15 +260,19 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition evidence_BLOCK \
     --guard "block_reason=review" \
@@ -266,16 +293,20 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['evidence_refresh_count'] = 0
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition evidence_SHIP \
     --guard "evidence_fresh=false" \
@@ -294,16 +325,20 @@ with open('$forge_dir/state.json', 'w') as f:
   mkdir -p "$forge_dir"
   bash "$SCRIPT" init "feat-test" "Test" --mode standard --forge-dir "$forge_dir"
 
-  python3 -c "
+  python3 - "$forge_dir/state.json" <<'PY'
 import json
-with open('$forge_dir/state.json') as f:
+import sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+with p.open() as f:
     d = json.load(f)
 d['story_state'] = 'SHIPPING'
 d['evidence_refresh_count'] = 3
 d['_seq'] = d.get('_seq', 0)
-with open('$forge_dir/state.json', 'w') as f:
+with p.open('w') as f:
     json.dump(d, f, indent=2)
-"
+PY
 
   run bash "$SCRIPT" transition evidence_SHIP \
     --guard "evidence_fresh=false" \

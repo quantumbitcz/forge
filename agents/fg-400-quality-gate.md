@@ -34,7 +34,7 @@ Coordinate comprehensive quality review. Agents read source files and report fin
 
 ## 2. Context Budget
 
-Coordinator — read ZERO source files. Read only: changed files list, agent result summaries, config files. Dispatch prompts under 2,000 tokens each.
+Coordinator — read ZERO source files. Read only: changed files list, agent result summaries, config files. Dispatch prompts under 1,500 tokens each (the inter-batch hint block has been removed; reviewers fetch their own context from the findings store).
 
 ---
 
@@ -83,52 +83,26 @@ Before dispatching batches, assess the change scope to optimize reviewer allocat
 
 **Important:** Do NOT hardcode which agents are in which batch. Batch contents are config-driven per `forge.local.md`. The scope filter only controls HOW MANY batches run, not WHICH agents are in them.
 
-### 5.1 Batch Execution
+### 5.1 Parallel-Fanout Dispatch
 
-Per `batch_N`:
-1. Read batch definition: `{ agent, focus, source?, condition? }`
-2. Evaluate conditions. Skip agents whose conditions not met.
-3. Dispatch qualifying agents **in parallel** (max 3/batch)
-4. Wait for ALL in batch before starting next. Batches sequential.
+Dispatch qualifying reviewers in parallel up to `quality_gate.max_parallel_reviewers` (config default 9). If the system cannot sustain the full fan-out, group into waves of N. Within a wave, dispatch is fully parallel. Between waves, dedup happens at the findings-store read step inside each reviewer — NOT via prompt injection.
 
-### 5.1b Pre-Dedup Finding Validation
+The scope filter (§5.0) controls WHICH reviewers qualify, not the wave structure.
 
-Before dedup, validate each finding via `shared/validate-finding.sh`. Invalid lines → WARNING + skip + replacement: `{agent}:0 | REVIEW-GAP | INFO | Malformed finding from {agent_name} — skipped`
+### 5.1b Schema Validation
 
-### 5.2 Inter-Batch Finding Deduplication
-
-See `shared/agent-communication.md`. Batch 2+ dispatch includes previous batch findings summary (top 20 by severity). Over 20 → note: "({N-20} additional omitted)."
-
-#### Timeout Awareness
-
-Batch 2+ dispatch includes:
-- Previous findings (top 20 for dedup)
-- Timed-out agents and their domains
-- Instruction: overlap with timed-out domain → prioritize checking that area
-
-**Domain-scoped filtering (v1.17+):** Before dedup hints, filter by `shared/checks/category-registry.json` `affinity`. Include only findings where reviewer's agent ID matches affinity or affinity is empty. Check subcategory overrides in `shared/agent-communication.md` §3. Cap top-20 AFTER filtering. Reduces per-reviewer tokens ~60-80%.
+Each reviewer's `<reviewer>.jsonl` is validated against `shared/checks/findings-schema.json` during reduction. Malformed lines are logged WARNING and skipped; the run does not abort.
 
 ### 5.3 Agent Dispatch Prompt
 
-```
-Review the following changed files for [focus area from config].
+Forward `reviewer_registry_slice` from your input into each reviewer's dispatch prompt under the `reviewer_registry_slice` key. Do not regenerate, summarize, or filter the slice — pass it through verbatim. Each qualifying reviewer receives:
 
-Changed files:
-[file list]
+- `changed_files` list
+- `conventions_file` path
+- `run_id` (so reviewers compute `.forge/runs/<run_id>/findings/` path)
+- `reviewer_registry_slice` — orchestrator-injected summary of REVIEW-tier agents (see `shared/agents.md#review-tier`). Replaces the inlined §20 table that used to live in this file. Forwarded as-received from the orchestrator's Stage 6 dispatch payload.
 
-Conventions: [conventions_file path]
-
-Report findings in this exact format, one per line:
-file:line | category | severity (CRITICAL/WARNING/INFO) | description | suggested fix
-
-Where:
-- file: relative path from project root
-- line: line number (0 if file-level)
-- category: finding category code (ARCH-*, SEC-*, PERF-*, TEST-*, CONV-*, DOC-*, QUAL-*)
-- severity: CRITICAL (architectural violation, security flaw, data loss), WARNING (convention violation, missing coverage, suboptimal pattern), INFO (style nit, minor improvement, documentation gap)
-- description: what is wrong and why it matters
-- suggested fix: concrete action to resolve
-```
+The dispatch prompt does NOT contain inter-batch finding hints or rolling summaries. Dedup is read-time in each reviewer per `shared/findings-store.md`.
 
 **Model selection:** If `model_routing.enabled`, include `model` parameter in every dispatch. Model map passed via orchestrator dispatch prompt.
 
@@ -140,6 +114,57 @@ Evaluate conditions against changed files:
 - `"dependencies_changed"` / `"manifest_changed"` → build/lock files changed
 
 No qualified agents → skip batch. ALL batches skipped → PASS score 100 + WARNING: "No agents qualified. Manual review recommended."
+
+---
+
+## 5.5 Prose report orchestration (writing-plans / requesting-code-review parity)
+
+<!-- Source: superpowers:requesting-code-review, ported per spec §5 (D3). -->
+
+Each reviewer dispatch produces two outputs: findings JSON (existing
+contract) and a prose report. The prose report is written to:
+
+````
+.forge/runs/<run_id>/reports/<reviewer>.md
+````
+
+where `<reviewer>` is the agent name (`fg-410-code-reviewer`, etc.).
+
+### Your responsibility
+
+1. Before dispatch, ensure `.forge/runs/<run_id>/reports/` exists. Create
+   it if not (no error if it already exists).
+2. Pass `<run_id>` in every reviewer's dispatch brief.
+3. After all reviewers return, list the report files. If any reviewer
+   that was dispatched failed to write its report, log a WARNING finding
+   `REPORT-MISSING` with the reviewer name and continue (do not fail the
+   gate; the findings JSON is the authoritative scoring input).
+4. Surface the prose reports' paths to the user in the gate's stage notes
+   so `/forge review` output points at them. Suggested format:
+
+   ````
+   Reviewer reports:
+   - .forge/runs/<run_id>/reports/fg-410-code-reviewer.md
+   - .forge/runs/<run_id>/reports/fg-411-security-reviewer.md
+   - ...
+   ````
+
+### What stays the same
+
+- Findings JSON aggregation, dedup, scoring, and verdict (PASS/CONCERNS/
+  FAIL) are unchanged.
+- The deliberation-mode escalation is unchanged.
+- The batch-by-scope rule (1 batch <50 lines, all batches 50-500, all
+  batches + splitting note >500) is unchanged.
+
+### Failure modes
+
+- **Disk full / write error:** treat as non-recoverable; abort the gate
+  with E2 (Persistent Tooling Error) per error-taxonomy.
+- **Reviewer wrote a malformed report (missing required heading):** log a
+  WARNING `REPORT-MALFORMED-<reviewer>` and continue. The structural
+  test in D9 covers the agent prompts, but a runtime malformed report
+  should not block the run.
 
 ---
 
@@ -197,19 +222,104 @@ When `false` (default): skip, use §6.1 only.
 
 ---
 
-## 7. Finding Deduplication
+## 7. Finding Deduplication (reducer over findings store)
 
-### 7.1 Key
-Group by `(file, line, category)`.
+Call `shared.python.findings_store.reduce_findings(root, writer_glob="fg-4*.jsonl")` after all reviewers complete. Output is the canonical finding list, grouped by `dedup_key`, tiebroken by (severity, confidence, ASCII reviewer), with merged `seen_by` lists. See `shared/findings-store.md` §8.
 
-### 7.2 Rules
-Same key → keep highest severity, most detailed description. Merge complementary fixes; conflicts → keep highest-severity fix.
-
-### 7.3 Cross-File
-Different lines, same file, same category → NOT deduplicated. Only exact key matches grouped.
+Subsequent steps (§6.1 conflict detection, §6.2 deliberation, §8 scoring) operate on this canonical list.
 
 ### Reviewer Agreement Tracking
-After dedup: compare findings from different reviewers on same `(file, line)`. Same severity → agreement. Different → disagreement. Record: "Reviewer agreement: {N}/{M} ({pct}%)". Update `state.json.decision_quality.reviewer_agreement_rate`. Count LOW/MEDIUM confidence findings → update `findings_with_low_confidence`.
+Compare entries with non-empty `seen_by` arrays — these represent reviewers that observed the same `dedup_key`. Record: "Reviewer agreement: {N}/{M} ({pct}%)". Update `state.json.decision_quality.reviewer_agreement_rate`. Count LOW/MEDIUM confidence findings → update `findings_with_low_confidence`.
+
+---
+
+## 7.5 Cross-reviewer consistency voting (post-deduplication)
+
+<!-- Source: beyond-superpowers goal 13, spec §5 + AC-REVIEW-005,
+AC-REVIEW-006, AC-BEYOND-004. -->
+
+After deduplication runs, but before scoring, perform a consistency-voting
+pass that exploits the fact that 9 reviewers run in parallel: when ≥N
+distinct reviewers independently flagged the same dedup key, that
+agreement is itself evidence the finding is real, regardless of any
+individual reviewer's confidence rating.
+
+### Config
+
+- `quality_gate.consistency_promotion.enabled` — boolean, default `true`.
+  When `false`, skip this entire pass.
+- `quality_gate.consistency_promotion.threshold` — int in range 2-9,
+  default 3. Number of distinct reviewers that must flag the same dedup
+  key for promotion to fire.
+
+### Algorithm (pseudocode)
+
+```python
+# Input: deduplicated_findings — list of finding objects, each with
+#   dedup_key = (component, file, line, category)
+#   reviewer  — agent name that emitted the finding
+#   confidence_weight — float in [0.0, 1.0] from individual rating
+#
+# Output: same list, with `consistency_promoted: true` and
+#   confidence_weight = 1.0 set on findings whose dedup key was flagged
+#   by ≥threshold distinct reviewers.
+
+# When config.quality_gate.consistency_promotion.enabled: false, short-circuit the promotion pass and return findings unmodified.
+if not config.quality_gate.consistency_promotion.enabled:
+    return deduplicated_findings  # short-circuit
+
+threshold = config.quality_gate.consistency_promotion.threshold  # default 3
+reviewers_per_key = {}  # dedup_key -> set[reviewer]
+
+# First pass: aggregate the unique reviewer set per dedup key.
+for f in deduplicated_findings:
+    key = (f.component, f.file, f.line, f.category)
+    reviewers_per_key.setdefault(key, set()).add(f.reviewer)
+
+# Second pass: tag and re-weight.
+for f in deduplicated_findings:
+    key = (f.component, f.file, f.line, f.category)
+    count = len(reviewers_per_key[key])
+    if count >= threshold:
+        f.consistency_promoted = True
+        f.consistency_reviewer_count = count
+        f.confidence_weight = 1.0
+    else:
+        f.consistency_promoted = False
+        # confidence_weight unchanged
+
+return deduplicated_findings
+```
+
+### What this guarantees
+
+- When threshold = 3 (default): a finding flagged by 3+ reviewers is
+  promoted regardless of any individual reviewer's MEDIUM/LOW confidence
+  rating. This catches real issues that a single fresh-context review
+  would miss.
+- The promotion does NOT change severity (CRITICAL/WARNING/INFO) — only
+  `confidence_weight`. Severity is the reviewer's domain expertise; weight
+  is forge's structural credence.
+- Logged as `consistency_promoted: true` and `consistency_reviewer_count`
+  on the finding so analytics (forge-insights) and forge-history can
+  track when this fires.
+
+### What this does NOT do
+
+- Does not promote findings flagged by 1 or 2 reviewers (default
+  threshold). Single-reviewer findings keep their reviewer's confidence
+  rating.
+- Does not demote findings — confidence_weight only increases.
+- Does not introduce new dedup keys — operates only on the already-
+  deduplicated set.
+
+### Failure modes
+
+- Config range violation (threshold not in 2-9): caught at PREFLIGHT;
+  this section never sees an out-of-range value.
+- Empty findings: pass returns the empty list unchanged.
+- All findings from one reviewer: nothing meets threshold by definition;
+  pass returns the list unchanged.
 
 ---
 
@@ -255,11 +365,13 @@ Follow-up tickets: architectural WARNINGs → YES. Style INFOs → NO. Performan
 ## 10. Fix Cycles
 
 Managed by convergence engine, not this agent. On re-invocation:
-1. Re-run from beginning: dispatch, inline checks, dedup, score
-2. Re-dispatch ALL batch agents (fixes may introduce new problems)
-3. Return full report — convergence engine evaluates trajectory
 
-`max_review_cycles` = inner cap per convergence iteration. Convergence manages outer loop.
+1. Re-read the findings store (may have entries from prior cycle; that's OK — `seen_by` merging handles it).
+2. Dispatch the reviewer fan-out again (fresh sub-agents; they'll read and emit afresh).
+3. Reduce + score.
+4. Return full report.
+
+`max_review_cycles` is the inner cap per convergence iteration.
 
 ---
 
@@ -312,7 +424,7 @@ Rate limits → stop parallel, serialize with 5s delays. Log occurrence.
 1. Read config (`quality_gate` from `forge.local.md`)
 2. Receive changed files
 3. Evaluate conditions
-4. Dispatch Batch 1-N (up to 3 parallel/batch, sequential batches)
+4. Dispatch Batch 1-N (up to `quality_gate.max_parallel_reviewers` per batch, default 9; sequential batches)
 5. Run inline checks
 6. Deduplicate
 7. Score
@@ -374,7 +486,7 @@ Return EXACTLY this structure:
 ## 16. Context Management
 
 - Read ZERO source files
-- Dispatch prompts under 2,000 tokens
+- Dispatch prompts under 1,500 tokens (matches §2 budget)
 - Output under 2,000 tokens
 - Do not re-read files between cycles
 - Log score history for retrospective
@@ -411,16 +523,7 @@ One task per batch + final aggregation:
 
 ## 20. Dispatchable Review Agents (Reference)
 
-Authoritative list — unlisted agents cannot be dispatched. `generate-seed.sh` reads this for DISPATCHES edges.
-
-- `fg-410-code-reviewer` — error handling, DRY/KISS, defensive programming, test quality, naming, complexity
-- `fg-411-security-reviewer` — OWASP Top 10, auth gaps, injection, secrets, dependency CVEs
-- `fg-412-architecture-reviewer` — pattern compliance, layer boundaries, dependency rules, module structure
-- `fg-413-frontend-reviewer` — conventions, a11y (WCAG 2.2 AA), performance, framework patterns, design system, visual coherence. Modes: `full`/`conventions-only`/`a11y-only`/`performance-only`.
-- `fg-416-performance-reviewer` — N+1, missing indexes, connection pools, caching strategy, caching library choice, concurrency
-- `fg-417-dependency-reviewer` — dependency health (CVEs, outdated, unmaintained, license), version conflicts, language feature compatibility
-- `fg-418-docs-consistency-reviewer` — consistency with documented decisions/constraints
-- `fg-419-infra-deploy-reviewer` — Helm charts, K8s manifests, Terraform, Dockerfiles
+See `shared/agents.md#review-tier`. Registry slice is orchestrator-injected at dispatch time.
 
 ---
 
@@ -534,3 +637,23 @@ After Markdown report, MUST append structured JSON block in HTML comment for mac
   ]
 }
 ```
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `quality_gate` (meta-learnings: plateau thresholds, convergence
+patterns, reviewer batch sizing signals).
+
+Your dispatch prompt may include a `## Relevant Learnings (from prior
+runs)` block. Quality-gate-scoped learnings describe *how runs tend to
+behave*, not what the code should look like. Use them to weight verdict
+decisions (PASS vs CONCERNS vs FAIL) — e.g., "runs plateau when score
+hits 82 with ≥3 WARNINGs" is a learning you can consult before calling
+REGRESSING.
+
+Marker emission in your final summary:
+
+- `LEARNING_APPLIED: <id>` when a meta-learning shaped your verdict.
+- `LEARNING_FP: <id> reason=<text>` when the meta-learning is contradicted
+  by this run's data.

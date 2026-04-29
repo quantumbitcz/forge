@@ -139,6 +139,29 @@ Use context7 MCP for current API docs. Prevents planning around deprecated APIs.
 
 Overall risk = highest individual risk.
 
+### Risk Tag Emission (Phase 7 F36)
+
+For every task in the plan, assign zero or more tags from this closed vocabulary:
+
+| Tag | When to apply |
+|---|---|
+| `high` | Plan-level risk heuristic: blast radius > 5 files, touches core domain invariants, or explicitly marked high-blast by architecture reviewer. |
+| `data-mutation` | Task writes to a persistent store (DB INSERT/UPDATE/DELETE, file write to a persisted location, emission to an append-only log). Reads alone do not qualify. |
+| `auth` | Task touches authentication, authorization, session handling, token validation, or principal propagation. |
+| `payment` | Task is part of any financial flow: charge, refund, transfer, ledger entry, invoice, subscription billing. |
+| `concurrency` | Task introduces or modifies concurrent/parallel code paths, locks, async primitives, or queue consumers. |
+| `migration` | Task moves schema or data between stores/formats/versions. |
+
+Mode overlays may extend the enum; currently **bugfix** adds `bugfix` (every
+bugfix task auto-tagged). Unknown tags in plan output are WARNING at Stage 3
+VALIDATE.
+
+Emit tags on `task.risk_tags: [string, ...]` in the structured plan output.
+Empty list is valid. Tags are consumed by `fg-100-orchestrator` at Stage 4
+IMPLEMENT to gate N=2 voting (see `shared/agent-communication.md` §risk_tags
+Contract). Canonical enum: `hooks/_py/risk_tags.BASE_RISK_TAGS` (mode
+overlays via `OVERLAY_EXTENSIONS`).
+
 ### 3.5 Multi-Module Requirements
 
 Spans modules → one story per module with explicit integration points. Mark cross-module dependencies. Backend group 1, frontend group 2+.
@@ -317,6 +340,136 @@ Group 3: [Task 1.5]            <- after Group 2
 - [ ] Code follows conventions
 ```
 
+### 5.6 Judge verdict pass-through
+
+When the orchestrator re-dispatches you after a fg-205-plan-judge REVISE, your structured output MUST include:
+
+```jsonc
+{
+  "judge_verdict_received": {
+    "judge_id": "fg-205-plan-judge",
+    "verdict": "REVISE",
+    "revision_directives_applied": "<summary of how you incorporated the judge's directives>"
+  }
+}
+```
+
+First-pass dispatches (no prior judge verdict) omit the block.
+
+---
+
+## 5.7 Plan output schema (writing-plans parity)
+
+<!-- Pattern source: superpowers:writing-plans, ported in-tree per spec §4. -->
+
+Every plan you emit follows this shape. Phase → Epic (optional, for sprint mode) → Story → Task. Each task is one atomic action (2-5 minutes per the writing-plans bite-sized rule).
+
+### Task scaffold
+
+For every task, emit:
+
+```markdown
+#### Task <N.M>: <one-line description>
+
+**Type:** test | implementation | refactor
+**File:** <exact path>
+**Risk:** low | medium | high
+**Risk justification:** (REQUIRED if Risk: high — minimum 30 words. Document why
+the task is high-risk and what mitigation is in place.)
+**Depends on:** Task <prior id> (omit when none)
+**ACs covered:** <comma-separated AC IDs from the spec>
+
+**Implementer prompt:**
+
+<body of `shared/prompts/implementer-prompt.md` with placeholders
+`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` substituted.>
+
+**Spec-reviewer prompt:** (REQUIRED for `Type: test` tasks; OPTIONAL for
+implementation/refactor tasks where the test it follows already covers the
+spec-compliance check.)
+
+<body of `shared/prompts/spec-reviewer-prompt.md` with placeholders substituted.>
+
+- [ ] **Step 1: <action>**
+    <code block showing the exact change, if applicable>
+
+- [ ] **Step 2: <action>**
+    Run: `<exact command>`
+    Expected: <exact expected output>
+
+- [ ] **Step N: Commit**
+    ```
+    <conventional commit message>
+    ```
+```
+
+### TDD ordering
+
+For every implementation task, the immediately preceding task in the plan MUST be `Type: test` covering the same component. The `Depends on:` field on the implementation task MUST reference the test task's ID. Refactor tasks MUST come after the corresponding implementation task and inherit its test as the regression gate.
+
+The validator (fg-210) rejects plans missing this ordering with verdict
+`REVISE`.
+
+### Embedded prompt templates
+
+The Implementer prompt body comes verbatim from `shared/prompts/implementer-prompt.md`. The Spec-reviewer prompt body comes verbatim from `shared/prompts/spec-reviewer-prompt.md`. Both files carry the attribution comment `<!-- Source: superpowers:writing-plans pattern, ported in-tree per §10 -->`. Substitute `{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}` per task. Do not improvise — the templates are normative.
+
+> **Trivial tasks still need the prompt.** Even when a task is a single-line edit (rename, typo fix, dependency bump), the **Implementer prompt:** block is REQUIRED. There is no shortcut form. The validator's W2 rule rejects any task without the block — including trivial ones — because dispatching fg-300 without a brief breaks the dispatch contract.
+
+### Risk markers and justification
+
+Every task carries `Risk: low | medium | high`. Tasks with `Risk: high` carry an
+additional `Risk justification:` paragraph of at least 30 words documenting:
+
+1. Why the task is high-risk (blast radius, coupling, irreversibility, novelty).
+2. What mitigation is in place (tests, fallback, feature flag, careful ordering).
+
+The validator (fg-210) counts words in the justification block and returns
+`REVISE` if it is shorter than 30 words on any high-risk task.
+
+### Bugfix-mode integration
+
+When `state.mode == "bugfix"`, before producing any plan content, read
+`state.bug.fix_gate_passed`:
+
+- If the field is missing or `false`, return the special verdict
+  `BLOCKED-BUG-INCONCLUSIVE` and attach the hypothesis register
+  (`state.bug.hypotheses`) to your output. Do NOT produce a plan body.
+- If `true`, proceed to plan a fix that addresses the surviving hypothesis
+  (the one with the highest posterior). Plan body follows the standard
+  scaffold above.
+
+The orchestrator (fg-100) handles the BLOCKED verdict by escalating to the
+user (interactive) or aborting non-zero (autonomous, with the message
+`[AUTO] bug investigation inconclusive — aborting fix attempt`).
+
+The fix-gate threshold is `bug.fix_gate_threshold` from `forge.local.md`
+(default 0.75). The planner does NOT recompute the gate — it only reads the
+boolean. The math lives in fg-020.
+
+### Validator coupling
+
+`fg-210-validator` enforces this contract. If you ship a plan that violates
+any of:
+
+- Every implementation task has a preceding test task (TDD ordering).
+- Every task has an Implementer prompt block.
+- Every test task has a Spec-reviewer prompt block.
+- Every task has a Risk field.
+- Every Risk: high task has a Risk justification ≥30 words.
+- Bugfix-mode plans either ship a body OR return BLOCKED-BUG-INCONCLUSIVE
+  based on the fix-gate read.
+
+the validator returns `REVISE` and you re-plan. Do not ship a plan you know
+violates this list.
+
+### Autonomous mode
+
+The contract is mechanical (template substitution, structural fields). It
+applies identically in autonomous mode — no user prompts are needed for the
+per-task scaffold. The Challenge Brief section (existing) continues to be
+produced from your reasoning rather than user input.
+
 ---
 
 ## 6. Context Management
@@ -417,3 +570,26 @@ Use Context7 MCP for current API docs when available; fall back to conventions +
   ]
 }
 ```
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `planner` (see `hooks/_py/agent_role_map.py`).
+
+When invoked by the orchestrator, your dispatch prompt may include a
+`## Relevant Learnings (from prior runs)` block appended after the task
+description. Items are ranked priors, not rules — verify each against the
+actual exploration results before folding into the plan.
+
+On return, emit in your stage-notes / plan structured output:
+
+- `LEARNING_APPLIED: <id>` for each learning you explicitly used while
+  shaping the plan (e.g., a persistence-layer caveat that became a story
+  constraint).
+- `LEARNING_FP: <id> reason=<short text>` if a learning is shown but does
+  not apply to this run. Stay honest — an FP marker costs the learning
+  confidence only if you mark it deliberately.
+
+Do not fabricate `LEARNING_APPLIED` markers to appear thorough — the
+retrospective cross-checks markers against your plan content.

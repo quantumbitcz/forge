@@ -3,6 +3,8 @@
 # Validates PREFLIGHT -> EXPLORING -> PLANNING -> VALIDATING -> COMPLETE
 # using forge-state.sh transition events.
 
+# Covers: T-01, T-02, T-09, D-01
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
@@ -83,7 +85,7 @@ teardown() {
   mode="$(jq -r '.mode' "$FORGE_DIR/state.json")"
   seq="$(jq -r '._seq' "$FORGE_DIR/state.json")"
 
-  [[ "$version" == "1.6.0" ]]
+  [[ "$version" == "2.1.0" ]]
   [[ -n "$state" && "$state" != "null" ]]
   [[ "$mode" == "standard" ]]
   (( seq > 0 ))

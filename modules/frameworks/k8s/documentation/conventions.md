@@ -1,5 +1,7 @@
 # Kubernetes Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Kubernetes-specific patterns.
 > Note: k8s uses `language: null` — there is no code doc section.
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env bats
-# Contract tests: shared/mcp-provisioning.md and forge-init MCP provisioning phase.
+# Contract tests: shared/mcp-provisioning.md and the auto-bootstrap MCP
+# provisioning phase. Mega B retired /forge-init; auto-bootstrap (the first
+# /forge invocation in a project missing forge.local.md) now owns provisioning.
 
 load '../helpers/test-helpers'
 
 MCP_DOC="$PLUGIN_ROOT/shared/mcp-provisioning.md"
-FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+FORGE_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 1. Document exists
@@ -48,11 +50,13 @@ FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 }
 
 # ---------------------------------------------------------------------------
-# 6. forge-init has MCP provisioning phase
+# 6. mcp-provisioning.md describes the auto-bootstrap MCP provisioning phase.
+#    Post-Mega-B: provisioning lives in shared/mcp-provisioning.md and is
+#    invoked from auto-bootstrap (the /forge first-run trigger).
 # ---------------------------------------------------------------------------
-@test "mcp-provisioning: forge-init has MCP provisioning phase" {
-  grep -qi "MCP Provisioning\|Phase 6c" "$FORGE_INIT" \
-    || fail "MCP Provisioning phase (Phase 6c) not found in forge-init SKILL.md"
+@test "mcp-provisioning: provisioning flow documented in mcp-provisioning.md" {
+  grep -qi "Provisioning Flow\|MCP.*provision\|auto-bootstrap" "$MCP_DOC" \
+    || fail "MCP provisioning flow not documented in mcp-provisioning.md"
 }
 
 # ---------------------------------------------------------------------------

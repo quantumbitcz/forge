@@ -159,64 +159,94 @@ When applicable (see 5.7 for exceptions):
 3. Follow conventions for naming, annotations, framework usage
 4. Run test to verify GREEN
 
-### 5.3a Reflect (Chain-of-Verification)
+### 5.3a Dispatch implementer judge (binding veto)
 
-After GREEN verifies the test passes, dispatch `fg-301-implementer-critic` as a
-sub-subagent via the Task tool. The critic runs in a fresh Claude context (no
-inherited reasoning from this implementer instance).
+After GREEN verifies the test passes, dispatch `fg-301-implementer-judge` as a sub-subagent via the Task tool. Fresh Claude context (no conversation history, PREEMPT items, or other task context).
 
-**Skip this step when any of the following hold:**
-- `implementer.reflection.enabled` is `false` (PREFLIGHT-validated).
-- Task falls under §5.7 exemptions (domain models, migrations, mappers, configs — no test was written; nothing to reflect on).
-- Current invocation is a targeted re-implementation from a VERIFY or REVIEW fix loop. The orchestrator passes a `dispatch_mode: fix_loop` flag; if present, skip REFLECT.
+Inputs (exactly three): `task` description + ACs, `test_code`, `implementation_diff`.
 
-**Dispatch payload (exactly three fields, no more, no less):**
+Skip conditions: `implementer.reflection.enabled` is `false` (PREFLIGHT-validated) OR task has no tests (scaffold-only).
 
-```yaml
-task:
-  id: {task.id}
-  description: {task.description}
-  acceptance_criteria: {task.acceptance_criteria}
-test_code: |
-  {verbatim contents of test file written in RED}
-implementation_diff: |
-  {git diff HEAD -- <production files modified in GREEN>}
+**Verdict handling (orchestrator-owned):** You return the judge's structured verdict in your stage notes. The orchestrator reads `state.impl_judge_loops[task.id]` (integer default 0), increments it on REVISE, and controls re-dispatch.
+
+| Verdict | Orchestrator action |
+|---|---|
+| **PROCEED** | Proceed to §5.4 REFACTOR. Append `{judge_id, verdict, dispatch_seq, timestamp}` to `state.judge_verdicts`. |
+| **REVISE** AND `impl_judge_loops[task.id] < 2` | Increment `state.impl_judge_loops[task.id]`. Append verdict. Re-dispatch fg-300-implementer for this task with `revision_directives` appended. On return, re-run test, re-dispatch judge (fresh sub-subagent). |
+| **REVISE** AND `impl_judge_loops[task.id] == 2` | Increment and append. Emit `REFLECT-DIVERGENCE` finding (WARNING, copied from judge's last output). Fire `AskUserQuestion` (interactive) or auto-abort as E-class (autonomous). |
+
+**Counter isolation:** `impl_judge_loops` is strictly separate from `implementer_fix_cycles` (inner loop) and does NOT feed `total_retries`.
+
+**Timeout:** 90s per dispatch (configurable via `implementer.reflection.timeout_seconds`). On timeout, log INFO `JUDGE-TIMEOUT: {task.id}` and proceed to REFACTOR. Never block pipeline on judge failure.
+
+**Forbidden:** Do not self-override the judge verdict. If the judge returns REVISE and the orchestrator has not yet re-dispatched you, do NOT proceed to REFACTOR. The loop-bound decision is orchestrator-owned, not implementer-owned.
+
+### 5.3b Soft Cost Throttle (Phase 6)
+
+Read `state.cost` from the brief's `## Cost Budget` block. Compute `remaining_frac = remaining_usd / ceiling_usd` (or skip this section when ceiling is 0).
+
+| Remaining fraction | Action |
+|---|---|
+| `> 0.20` | Full behavior: proceed to §5.4 REFACTOR + §5.3a critic loop as configured. |
+| `0.10 < x <= 0.20` | Emit `COST-THROTTLE-IMPL` INFO finding. Skip second refactor pass (minimal cleanup only). Still dispatch `fg-301-implementer-judge` per §5.3a. |
+| `<= 0.10` | Emit `COST-THROTTLE-IMPL` WARNING finding. Skip second refactor. Skip judge dispatch; append `REFLECT_SKIPPED_COST` INFO event (NOT `REFLECT_EXHAUSTED`). |
+
+**Finding payload:**
+
+```json
+{
+  "category": "COST-THROTTLE-IMPL",
+  "severity": "INFO|WARNING",
+  "file": "{current_task.files[0]}",
+  "line": 1,
+  "message": "Skipped refactor pass #2 — budget at {pct}% consumed",
+  "confidence": "HIGH",
+  "suggestion": "Raise cost.ceiling_usd in forge-config.md or accept slightly lower polish"
+}
 ```
 
-The critic MUST NOT receive: prior reasoning, PREEMPT items, conventions stack,
-scaffolder output, context7 docs, other tasks, or prior reflection iterations
-of this same task.
+**Append to state (append-only):**
 
-**Handle verdict:**
+```json
+state.cost.throttle_events.append({
+  "agent": "fg-300-implementer",
+  "severity": "INFO",                    // or "WARNING"
+  "pct_consumed": 0.85,
+  "action": "skip_refactor_pass_2",      // or "skip_refactor_and_judge"
+  "task_id": "{current_task.id}",
+  "timestamp": "{now_iso}"
+})
+```
 
-- `PASS` → proceed to §5.4 REFACTOR. Append verdict to `tasks[task.id].reflection_verdicts`.
-- `REVISE` AND `tasks[task.id].implementer_reflection_cycles < implementer.reflection.max_cycles`:
-  1. Append verdict to `tasks[task.id].reflection_verdicts` (trim to last 5).
-  2. Increment `tasks[task.id].implementer_reflection_cycles` by 1.
-  3. Increment `state.implementer_reflection_cycles_total` by 1.
-  4. Re-enter §5.3 GREEN with the critic's findings appended to this implementer's context.
-  5. Re-run `commands.test_single`. On green, re-dispatch critic (NEW sub-subagent, fresh context).
-- `REVISE` AND budget exhausted (`implementer_reflection_cycles == max_cycles`):
-  1. Emit `REFLECT-DIVERGENCE` finding (WARNING, file/line/explanation/suggestion copied from the critic's last output).
-  2. Increment `state.reflection_divergence_count` by 1.
-  3. Log stage note: `REFLECT_EXHAUSTED: {task.id} — critic rejected {max_cycles} consecutive implementations.`
-  4. Proceed to §5.4 REFACTOR. Stage-6 reviewer panel will make the final call on the diff.
+**Forbidden:** Throttle NEVER skips the RED phase (§5.1 Write Failing Test), the GREEN phase (§5.3 Implement), or the inner-loop lint/test validation (§5.4.1). Correctness gates are immune. Only discretionary polish (second refactor pass, judge dispatch) is elided.
 
-**Budget semantics (off-by-one guard):** the check `count < max_cycles` is
-evaluated BEFORE increment. With `max_cycles == 2`, the flow is:
+**Throttle reason propagation:** Set `throttle_reason = "soft_20pct"` or `"soft_10pct"` in the implementer's result dict so the orchestrator can surface it through `otel.record_agent_result()` as `forge.cost.throttle_reason` (Task 12).
 
-| Dispatch | Counter before check | Verdict | Counter after action |
-|---|---|---|---|
-| 1st | 0 | PASS | 0 (proceed to REFACTOR) |
-| 1st | 0 | REVISE | 1 (re-enter GREEN, re-dispatch) |
-| 2nd | 1 | PASS | 1 (proceed to REFACTOR) |
-| 2nd | 1 | REVISE | 2 (budget exhausted, emit REFLECT-DIVERGENCE, proceed) |
+### 5.3c Voting Mode (Phase 7 F36)
 
-**Timeout:** Per-dispatch 90s (configurable via `implementer.reflection.timeout_seconds`). On timeout, log INFO `REFLECT_TIMEOUT: {task.id}` and proceed to REFACTOR without incrementing the counter or emitting a finding. Never block the pipeline on a critic failure.
+When the orchestrator dispatches this agent with `dispatch_mode: vote_sample`
+OR `dispatch_mode: vote_tiebreak`, the behavior changes:
 
-**Counter isolation:** `implementer_reflection_cycles` is strictly separate from
-`implementer_fix_cycles`. It does NOT feed into `total_retries`, `total_iterations`,
-`verify_fix_count`, `test_cycles`, or `quality_cycles`.
+| Dispatch mode | RED | GREEN | REFLECT | REFACTOR | Output |
+|---|---|---|---|---|---|
+| `fix_loop` | skip | run | skip | run | patch in main worktree |
+| `vote_sample` | run | run | **skip** | run | patch in sub-worktree `.forge/votes/<task_id>/sample_N/` |
+| `vote_tiebreak` | skip | run with divergence_notes | **skip** | run | patch in sub-worktree, marker `vote_tiebreak: true` |
+
+Rationale for skipping REFLECT under `vote_sample`: the vote IS the
+reflection. Running fg-301-implementer-judge twice (once per sample) would
+double the cost without improving the signal — fg-302-diff-judge surfaces
+divergence more cheaply.
+
+`vote_tiebreak` receives a `divergence_notes` field listing the files and
+subtrees where samples 1 and 2 disagreed. The tiebreak sample MUST reconcile
+every listed divergence; its output is cherry-picked onto the main worktree
+regardless of whether it matches either original.
+
+**Sample isolation.** Both `vote_sample` invocations start from the same
+parent HEAD (the orchestrator created both sub-worktrees via `fg-101
+create`). The sub-worktree IS the agent's working directory for this
+dispatch; no edits leak to the main `.forge/worktree`.
 
 ### 5.4 Refactor
 
@@ -478,12 +508,12 @@ Default: PRESERVE. Cost of keeping dead code = low. Cost of removing intentional
 | Aspect | Inner Loop (5.4.1) | Fix Loop (13) | Reflection Loop (5.3a) |
 |---|---|---|---|
 | When | After TDD cycle, before next task | When step fails during implementation | After GREEN, before REFACTOR |
-| What | Lint + affected tests | Build + test for specific step | Critic dispatch (PASS/REVISE on diff vs intent) |
+| What | Lint + affected tests | Build + test for specific step | Judge dispatch (PASS/REVISE on diff vs intent) |
 | Budget | `implementer_fix_cycles` (default 3/task) | `max_fix_loops` (default 3/step) | `implementer.reflection.max_cycles` (default 2/task) |
-| Scope | Changed files + dependents | Specific failing step | Per-task, fresh-context critic |
-| Counter | `state.json.inner_loop` | `state.json.verify_fix_count` | `tasks[*].implementer_reflection_cycles` |
+| Scope | Changed files + dependents | Specific failing step | Per-task, fresh-context judge |
+| Counter | `state.json.inner_loop` | `state.json.verify_fix_count` | `state.impl_judge_loops[task.id]` |
 | Feeds convergence? | No | Yes (`total_iterations`) | No |
-| Fires on | Always after TDD (when enabled) | Step failure | Critic REVISE verdict within budget |
+| Fires on | Always after TDD (when enabled) | Step failure | Judge REVISE verdict within budget |
 | Exit | Lint+tests green OR budget exhausted | Step succeeds OR budget exhausted | PASS verdict OR budget exhausted (emit REFLECT-DIVERGENCE) |
 
 All three budgets independent.
@@ -563,9 +593,9 @@ Return EXACTLY this structure. No preamble, reasoning, or explanation outside th
 - Remaining inner-loop issues: [list or "none"]
 
 ### Reflection Summary
-- Total reflections dispatched: {state.implementer_reflection_cycles_total}
-- Tasks that triggered at least one reflection: {count of tasks where implementer_reflection_cycles > 0}
-- REFLECT-DIVERGENCE count: {state.reflection_divergence_count}
+- Total judge re-dispatches: {sum of state.impl_judge_loops values}
+- Tasks that triggered at least one judge REVISE: {count of tasks where impl_judge_loops > 0}
+- REFLECT-DIVERGENCE count: {count of REFLECT-DIVERGENCE findings in state.judge_verdicts}
 - Per-task breakdown: {table of task_id → cycles → final verdict}
 
 ### Notes for Retrospective
@@ -641,3 +671,73 @@ Per task, create TDD cycle sub-tasks:
 - "Writing failing test for {task_name}"
 - "Implementing to pass test"
 - "Verify: run tests + lint"
+
+---
+
+## Learnings Injection (Phase 4)
+
+Role key: `implementer`.
+
+Your dispatch prompt includes a `## Relevant Learnings (from prior runs)`
+block between the task description and tool hints. Treat each entry as a
+prior, not a rule. Cross-check with the conventions stack before acting.
+
+Marker emission (append to your final structured output):
+
+- `PREEMPT_APPLIED: <id>` or `LEARNING_APPLIED: <id>` — interchangeable —
+  when a learning informed a decision (e.g., you chose `kotlin.uuid.Uuid`
+  over `java.util.UUID` because an item flagged the mix risk).
+- `PREEMPT_SKIPPED: <id> reason=<text>` or
+  `LEARNING_FP: <id> reason=<text>` — when a shown learning is
+  inapplicable or wrong. The retrospective will apply a 20% reduction to
+  the learning's confidence (×0.80 multiplier), so use this marker
+  deliberately.
+
+No marker → no reinforcement, no penalty (pure time-decay applies on the
+next PREFLIGHT).
+
+## Test-must-fail-first check (test-driven-development polish)
+
+<!-- Source: superpowers:test-driven-development rule "test must fail
+first", ported in-tree per spec §9.1 (D8) and AC-POLISH-001. -->
+
+**Scope.** This check applies ONLY when this dispatch is for a
+`Type: implementation` task whose RED test was written by a prior
+`Type: test` dispatch (the split-mode contract reserved for a future
+enhancement). When dispatched in unified mode (writing the test AND
+the implementation in the same dispatch — the current default per the
+orchestrator's `task.type` consumption note), §5.2's RED-then-GREEN
+flow already enforces the same invariant: the freshly-written test
+must fail before any production code is written. In unified mode,
+treat the §5.2 RED step as the test-must-fail-first probe and skip
+the explicit pre-flight described below.
+
+When you start a split-mode implementation task, the preceding test
+task (per the writing-plans contract from D1) wrote a test that
+expresses the spec. Before writing any production code:
+
+1. Run the test in isolation. Use the project's test runner with the
+   narrowest selector that targets only the new test.
+2. If the test FAILS — proceed normally to write minimum code that makes
+   it pass.
+3. If the test PASSES IMMEDIATELY without any production code changes,
+   this is a CRITICAL violation:
+
+   - Log a CRITICAL finding **TEST-NOT-FAILING** with:
+     - file:line of the test
+     - the failing-test selector that was run
+     - the test runner output showing PASS
+   - Abort the task. Do NOT proceed to write production code.
+   - Report to the orchestrator: "TEST-NOT-FAILING: the test for
+     <component> passed before any implementation. The test does not
+     actually test the new behaviour. Re-plan: revise the test to fail
+     when the behaviour is absent."
+
+This rule prevents the most common TDD failure mode: writing a test that
+asserts an already-true property, then writing production code that has
+no causal relationship to the test passing.
+
+The orchestrator (fg-100) treats TEST-NOT-FAILING as a hard stop and
+re-routes to fg-200-planner with the failing test cited as the cause.
+The implementer-judge (fg-301) defers to this check rather than
+re-flagging it.

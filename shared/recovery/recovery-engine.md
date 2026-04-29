@@ -423,10 +423,10 @@ A circuit breaker "flaps" when it repeatedly transitions OPEN → HALF_OPEN → 
 
 **Unlocking:**
 - Locked circuits are cleared by:
-  - `/forge-recover repair` (manual intervention)
-  - `/forge-recover reset` (clears all state)
+  - `/forge-admin recover repair` (manual intervention)
+  - `/forge-admin recover reset` (clears all state)
   - Starting a new pipeline run (fresh state.json)
-- Locked circuits are NOT cleared by `/forge-recover resume` (the underlying issue persists)
+- Locked circuits are NOT cleared by `/forge-admin recover resume` (the underlying issue persists)
 
 **Locked Check (added to transition timing):**
 ```
@@ -475,7 +475,7 @@ When a single pipeline action produces multiple simultaneous errors (e.g., netwo
 
 ### Budget Reset Policy
 
-The recovery budget resets to `0.0` at PREFLIGHT of each new `/forge-run` invocation. Budget is per-run, not per-session — a failed first run does not starve a subsequent run of recovery capacity.
+The recovery budget resets to `0.0` at PREFLIGHT of each new `/forge run` invocation. Budget is per-run, not per-session — a failed first run does not starve a subsequent run of recovery capacity.
 
 ### Sprint Mode Budget Scope
 
@@ -547,7 +547,7 @@ If both budgets exhaust at the same decision point:
 
 1. Recovery budget exhaustion (E2) takes precedence over pipeline retry exhaustion (E1) in the escalation message.
 2. Rationale: recovery budget exhaustion indicates systemic failure (infrastructure, tools, state) whereas pipeline retry exhaustion indicates convergence failure (code quality). Systemic failure is more urgent.
-3. User sees: "Recovery budget exhausted (E2). Pipeline retry budget also exhausted (E1). Recommend: /forge-abort followed by /forge-recover diagnose."
+3. User sees: "Recovery budget exhausted (E2). Pipeline retry budget also exhausted (E1). Recommend: /forge-admin abort followed by /forge-admin recover diagnose."
 4. Both counters are logged in state.json for retrospective analysis.
 
 ---

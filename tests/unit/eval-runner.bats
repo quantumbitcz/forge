@@ -155,12 +155,12 @@ JSON
   [[ "$status" -eq 0 ]]
   [[ -f "$baseline_dir/test-bl.json" ]]
 
-  run python3 -c "
-import json
-b = json.load(open('$baseline_dir/test-bl.json'))
+  run python3 - "$baseline_dir/test-bl.json" <<'PYEOF'
+import json, sys
+b = json.load(open(sys.argv[1]))
 assert 'baseline_metadata' in b
 assert b['baseline_metadata']['name'] == 'test-bl'
-"
+PYEOF
   [[ "$status" -eq 0 ]]
 }
 

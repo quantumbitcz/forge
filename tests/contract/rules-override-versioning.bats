@@ -13,7 +13,11 @@ FRAMEWORKS_DIR="$PLUGIN_ROOT/modules/frameworks"
   local failures=()
   while IFS= read -r -d '' file; do
     local version
-    version=$(python3 -c "import json; print(json.load(open('$file')).get('_version', 'MISSING'))" 2>/dev/null)
+    version=$(python3 - "$file" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1])).get('_version', 'MISSING'))
+PYEOF
+)
     if [[ "$version" == "MISSING" ]]; then
       failures+=("$file: missing _version")
     elif ! [[ "$version" =~ ^[0-9]+$ ]] || [[ "$version" -lt 1 ]]; then
@@ -35,7 +39,11 @@ FRAMEWORKS_DIR="$PLUGIN_ROOT/modules/frameworks"
   local failures=()
   while IFS= read -r -d '' file; do
     local updated
-    updated=$(python3 -c "import json; print(json.load(open('$file')).get('_updated', 'MISSING'))" 2>/dev/null)
+    updated=$(python3 - "$file" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1])).get('_updated', 'MISSING'))
+PYEOF
+)
     if [[ "$updated" == "MISSING" ]]; then
       failures+=("$file: missing _updated")
     elif ! [[ "$updated" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
@@ -56,7 +64,17 @@ FRAMEWORKS_DIR="$PLUGIN_ROOT/modules/frameworks"
 @test "rules-override: all files are valid JSON" {
   local failures=()
   while IFS= read -r -d '' file; do
-    if ! python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+    local result
+    result=$(python3 - "$file" <<'PYEOF'
+import json, sys
+try:
+    json.load(open(sys.argv[1]))
+    print("OK")
+except Exception:
+    print("FAIL")
+PYEOF
+)
+    if [[ "$result" != "OK" ]]; then
       failures+=("$file")
     fi
   done < <(find "$FRAMEWORKS_DIR" -name "rules-override.json" -print0)

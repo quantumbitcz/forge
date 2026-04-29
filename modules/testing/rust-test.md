@@ -1,5 +1,7 @@
 # Rust Testing Conventions
 
+> Support tier: contract-verified
+
 ## Test Structure
 
 Unit tests live in a `#[cfg(test)] mod tests {}` block at the bottom of the module file. Integration tests live in the `tests/` directory at the crate root — each file is compiled as a separate crate, so they test only the public API.

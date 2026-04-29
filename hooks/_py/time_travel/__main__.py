@@ -1,6 +1,6 @@
 """CLI entry point for the time-travel checkpoint store.
 
-Invoked by the orchestrator and ``/forge-recover`` via
+Invoked by the orchestrator and ``/forge-admin recover`` via
 ``python3 -m hooks._py.time_travel <op> <args...>``. Exit codes are the
 contract surfaced to the user:
 
@@ -10,7 +10,7 @@ contract surfaced to the user:
     6 = rewind aborted: unknown checkpoint id
     7 = rewind aborted: another rewind transaction in progress
 
-See skills/forge-recover/SKILL.md §Exit Codes and shared/recovery/time-travel.md
+See skills/forge-admin/SKILL.md §Subcommand: recover (Exit Codes) and shared/recovery/time-travel.md
 for the full protocol.
 """
 from __future__ import annotations

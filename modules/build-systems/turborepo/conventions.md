@@ -1,5 +1,7 @@
 # Turborepo Monorepo Conventions
 
+> Support tier: community
+
 ## Overview
 
 Turborepo is a high-performance build system for JavaScript and TypeScript monorepos. It orchestrates task execution across workspace packages, providing intelligent caching (local and remote), parallel execution, and task dependency management. Turborepo builds on top of npm/pnpm/yarn workspaces — it does not replace the package manager, it accelerates task execution.

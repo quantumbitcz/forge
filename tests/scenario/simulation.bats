@@ -3,6 +3,8 @@
 # Runs 10 YAML-driven scenarios through forge-sim.sh to validate
 # end-to-end state machine behaviour.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 SIM="$PLUGIN_ROOT/shared/forge-sim.sh"

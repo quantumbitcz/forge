@@ -1,6 +1,6 @@
 # Eval Fixtures
 
-Each fixture is a minimal project directory containing a reproducible bug (for `/forge-fix` suites) or a feature-building starting point (for `/forge-run` suites).
+Each fixture is a minimal project directory containing a reproducible bug (for `/forge fix` suites) or a feature-building starting point (for `/forge run` suites).
 
 ## Fixture Format
 

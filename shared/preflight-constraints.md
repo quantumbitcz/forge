@@ -18,6 +18,13 @@ Validation rules enforced during PREFLIGHT stage. Referenced from CLAUDE.md.
 - Eval: `eval.suite` must be `lite`, `convergence`, `cost`, `compression`, or `smoke` (default `lite`). `eval.timeout_per_task_minutes` 5-120 (default 30). `eval.parallel_tasks` 1-5 (default 1). `eval.validation_timeout_seconds` 5-300 (default 60). `eval.regression_threshold_percent` 5-50 (default 20). `eval.keep_workdirs` (boolean, default `false`). `eval.model_override` must be `null`, `haiku`, `sonnet`, or `opus` (default `null`). No PREFLIGHT failure -- eval config is only used by `eval-runner.sh`, not by pipeline agents.
 - Context guard: `context_guard.enabled` (boolean, default `true`), `context_guard.condensation_threshold` (integer, 5000-100000, default 30000), `context_guard.critical_threshold` (integer, must be > `condensation_threshold`, default 50000), `context_guard.max_condensation_triggers` (integer, 1-20, default 5). Cross-field: `critical_threshold` must be > `condensation_threshold`. On violation: WARNING, use `critical_threshold = condensation_threshold + 20000`.
 - Compression eval: `compression_eval.enabled` (boolean, default `true`), `compression_eval.auto_run_after_compress` (boolean, default `false`), `compression_eval.drift_threshold_pct` 10-200 (default 50).
+- BRAINSTORMING: `brainstorm.enabled` (boolean, default `true`); `brainstorm.spec_dir` (string, default `docs/superpowers/specs/`, parent directory must exist or be creatable — write probe at PREFLIGHT); `brainstorm.autonomous_extractor_min_confidence` must be one of `low | medium | high` (default `medium`); `brainstorm.transcript_mining.enabled` (boolean, default `true`); `brainstorm.transcript_mining.top_k` integer in [1, 10] (default 3); `brainstorm.transcript_mining.max_chars` integer in [500, 32000] (default 4000). All keys go in the `<!-- locked -->` block — not subject to retrospective auto-tuning.
+- Cross-reviewer consistency: `quality_gate.consistency_promotion.enabled` (boolean, default `true`); `quality_gate.consistency_promotion.threshold` integer in [2, 9] (default 3).
+- Bug investigator: `bug.hypothesis_branching.enabled` (boolean, default `true`); `bug.fix_gate_threshold` float in [0.50, 0.95] (default 0.75 — "almost perfect code" gate; only hypotheses above this posterior satisfy the fix gate).
+- Post-run defense: `post_run.defense_enabled` (boolean, default `true`); `post_run.defense_min_evidence` (boolean, default `true` — defense responses must reference at least one file path or commit SHA when set).
+- PR builder: `pr_builder.default_strategy` must be one of `open-pr | open-pr-draft | direct-push | stash` (default `open-pr-draft` — autonomous lands as draft for explicit human promotion; `abandon` is interactive-only, never an autonomous default); `pr_builder.cleanup_checklist_enabled` (boolean, default `true`).
+- Worktree hygiene: `worktree.stale_after_days` integer in [1, 365] (default 30 — worktrees older than this are flagged `WORKTREE-STALE`).
+- Platform detection: `platform.detection` must be one of `auto | github | gitlab | bitbucket | gitea` (default `auto` — detect via remote URL + repo files); `platform.remote_name` non-empty string matching `^[a-zA-Z0-9_./-]+$` (default `origin` — git remote to inspect when `platform.detection == auto`).
 
 ### Run History Store
 
@@ -76,21 +83,11 @@ Wall-clock contract (single source of truth — do not redefine elsewhere):
 
 **Filter availability.** PREFLIGHT MUST succeed importing `hooks/_py/mcp_response_filter.py`. A `ModuleNotFoundError` halts the pipeline with `SEC-INJECTION-DISABLED` because every external-data ingress depends on the filter.
 
-## Implementer Reflection
+### Judge loop bounds
 
-| Key | Type | Default | Range | Violation behavior |
-|---|---|---|---|---|
-| `implementer.reflection.enabled` | boolean | `true` | — | Non-boolean → log WARNING and default to `true`. |
-| `implementer.reflection.max_cycles` | integer | `2` | `[1, 3]` | Out of range → log WARNING and clamp to default `2`. |
-| `implementer.reflection.fresh_context` | boolean | `true` | — | Non-boolean → log WARNING and default to `true`. Setting to `false` opts into same-context critic (matches rejected Alt-A in spec §4.6 — discouraged). |
-| `implementer.reflection.timeout_seconds` | integer | `90` | `[30, 180]` | Out of range → log WARNING and clamp to default `90`. On timeout per-dispatch: log INFO in stage notes, skip reflection for that task, continue to REFACTOR. Never blocks pipeline. |
-
-**Resume rules:** On `/forge-recover resume`, PREFLIGHT must:
-1. Reset `tasks[*].reflection_verdicts` to `[]` (stale mid-dispatch verdicts are not trustworthy).
-2. Preserve `tasks[*].implementer_reflection_cycles` (budget is not refunded mid-task — prevents runaway retries after OS kill).
-3. Preserve run-level `implementer_reflection_cycles_total` and `reflection_divergence_count`.
-
-**Initialization:** At PREFLIGHT, for every task created at PLAN, set `implementer_reflection_cycles: 0` and `reflection_verdicts: []`. Set run-level `implementer_reflection_cycles_total: 0` and `reflection_divergence_count: 0`.
+- `plan_judge_loops <= 2` — enforced by orchestrator; violation is a PREFLIGHT error.
+- `impl_judge_loops[<task_id>] <= 2` for every known task.
+- `judge_verdicts[].judge_id in {"fg-205-plan-judge", "fg-301-implementer-judge"}`.
 
 ## Speculation
 
@@ -172,3 +169,56 @@ Violations log WARNING and fall back to defaults. When `enabled=true` but `opent
 | `handoff.chain_limit` | 5-500 | `50` | Rotation cap per run |
 | `handoff.auto_memory_promotion` | bool | `true` | Terminal handoffs push top PREEMPTs to user auto-memory |
 | `handoff.mcp_expose` | bool | `true` | Expose handoffs via F30 MCP server |
+
+## Cost Governance (Phase 6)
+
+All validations run at PREFLIGHT. Any CRITICAL aborts the run; WARNING logs and proceeds.
+
+| Field | Rule | Severity on violation |
+|---|---|---|
+| `cost.ceiling_usd` | float >= 0 | CRITICAL if negative |
+| `cost.ceiling_usd` | warn if 0 < x < 1.00 (likely typo) | WARNING |
+| `cost.warn_at` | 0 < x < 1 | CRITICAL |
+| `cost.throttle_at` | 0 < x < 1 | CRITICAL |
+| `cost.abort_at` | 0 < x <= 1 | CRITICAL |
+| ordering | `warn_at < throttle_at <= abort_at` | CRITICAL |
+| `cost.aware_routing` | boolean | CRITICAL if non-bool |
+| `cost.aware_routing: true` requires `model_routing.enabled: true` | otherwise CRITICAL |
+| `cost.tier_estimates_usd.fast/standard/premium` | float > 0 | CRITICAL if <= 0 or missing |
+| tier ratio | warn if `premium / fast > 200` | WARNING |
+| `cost.conservatism_multiplier.fast/standard/premium` | float >= 1.0 | CRITICAL if < 1.0 |
+| multiplier sanity | warn if any multiplier > 10.0 | WARNING |
+| `cost.pinned_agents[]` | each must match agents.md#registry | WARNING for unknown IDs |
+| `cost.skippable_under_cost_pressure[]` | each must match agents.md#registry | WARNING for unknown IDs |
+| `cost.skippable_under_cost_pressure[]` | MUST NOT contain any SAFETY_CRITICAL agent | CRITICAL |
+
+**Implementation note:** PREFLIGHT calls `shared/config_validator.py` which reads the above rules from this section. The SAFETY_CRITICAL cross-check imports `cost_governance.SAFETY_CRITICAL` (single source of truth).
+
+## intent_verification (Phase 7 F35)
+
+- `intent_verification.enabled` — boolean; default `true`.
+- `intent_verification.strict_ac_required_pct` — integer 50-100; default `100`.
+- `intent_verification.max_probes_per_ac` — integer 1-200; default `20`.
+- `intent_verification.probe_timeout_seconds` — integer 5-300; default `30`.
+- `intent_verification.probe_tier` — integer in {1, 2, 3}; default `2`.
+- `intent_verification.allow_runtime_probes` — boolean; default `true`.
+- `intent_verification.forbidden_probe_hosts` — list of glob patterns; default
+  `["*.prod.*", "*.production.*", "*.live.*", "*.amazonaws.com",
+    "*.googleusercontent.com", "10.*", "172.16.*-172.31.*", "192.168.*"]`.
+
+PREFLIGHT FAIL (CRITICAL) if `probe_tier == 3` and
+`infra.max_verification_tier < 3`.
+
+## impl_voting (Phase 7 F36)
+
+- `impl_voting.enabled` — boolean; default `true`.
+- `impl_voting.trigger_on_confidence_below` — float 0.0-1.0; default `0.4`;
+  **must be <= `confidence.pause_threshold`** (PREFLIGHT FAIL CRITICAL otherwise).
+- `impl_voting.trigger_on_risk_tags` — list of strings from
+  {"high","data-mutation","auth","payment","concurrency","migration","bugfix"};
+  default `["high"]`. Unknown tags -> WARNING at PREFLIGHT, not FAIL.
+- `impl_voting.trigger_on_regression_history_days` — integer 0-365; default `30`.
+- `impl_voting.samples` — **exactly 2** (future-reserved; any other value is
+  PREFLIGHT FAIL CRITICAL).
+- `impl_voting.tiebreak_required` — boolean; default `true`.
+- `impl_voting.skip_if_budget_remaining_below_pct` — integer 0-100; default `30`.

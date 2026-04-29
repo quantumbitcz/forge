@@ -8,7 +8,7 @@ from typing import Iterable
 import jsonschema
 
 _SCHEMA = json.loads(
-    (Path(__file__).parent.parent.parent / "shared" / "schemas" / "otel-genai-v1.json").read_text()
+    (Path(__file__).parent.parent.parent / "shared" / "schemas" / "otel-genai-v1.json").read_text(encoding="utf-8")
 )
 
 

@@ -70,7 +70,7 @@ On every PR run the runner compares the mean composite score to the latest `mast
 
 ### CI status: gate is gated off
 
-The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge-init` + `/forge-run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
+The `full-suite` (master push) and `pr-suite` (PR gate) jobs in `.github/workflows/evals.yml` are currently **gated off** (`if: false`) because GitHub-hosted runners do not ship the `claude` CLI that `executor.py` invokes to drive `/forge` + `/forge run --eval-mode`. Without `claude`, every scenario fails with `FileNotFoundError: 'claude'`.
 
 Deferred pending a "claude CLI in CI" follow-up.
 
@@ -96,3 +96,7 @@ A deliberately regression-inducing PR (e.g. make the orchestrator skip VERIFY) m
 ## Do not hand-edit `leaderboard.md`
 
 `leaderboard.md` is rewritten on every `master` push by `.github/workflows/evals.yml`. If you need to change its shape, edit `runner/report.py` and push.
+
+## See also
+
+- `tests/evals/benchmark/` — weekly measurement tier (real features, cross-OS, cross-model). This harness stays as the fast per-PR smoke tier.

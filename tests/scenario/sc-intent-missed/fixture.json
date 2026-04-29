@@ -1,0 +1,23 @@
+{
+  "run_id": "test-sc-intent-missed",
+  "requirement_text": "GET /users returns a JSON list of users.",
+  "active_spec_slug": "users-api",
+  "intent_verification_results": [
+    {"ac_id": "AC-001", "verdict": "MISSED", "probes_issued": 3, "duration_ms": 214,
+     "reasoning": "GET /users returned {} for 3 probes."}
+  ],
+  "findings": [
+    {"category": "INTENT-MISSED", "severity": "CRITICAL",
+     "description": "GET /users returned {}; expected list.",
+     "fix_hint": "Implement the list endpoint.",
+     "file": null, "line": null, "ac_id": "AC-001"}
+  ],
+  "build_exit_code": 0,
+  "tests_failed": 0,
+  "lint_exit_code": 0,
+  "review_critical": 0,
+  "review_important": 0,
+  "score": 85,
+  "min_score": 80,
+  "config": {"intent_verification": {"strict_ac_required_pct": 100}}
+}

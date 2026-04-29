@@ -6,12 +6,49 @@
 # Constants
 # ---------------------------------------------------------------------------
 
-# PLUGIN_ROOT: two levels up from tests/helpers/ → plugin root
+# PLUGIN_ROOT: two levels up from tests/helpers/ → plugin root.
+# Keep this in POSIX form on Git Bash on Windows (`/d/a/forge/forge`) so bats's
+# `load` resolves it correctly — `load` does not understand mixed `D:/...` form.
+# When the value crosses into native Windows Python via PYTHONPATH below, MSYS
+# auto-converts the known path-style env var, so we don't need a separate
+# Windows-native variable here.
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Load bats-support and bats-assert for rich assertions
 load "${PLUGIN_ROOT}/tests/lib/bats-support/load"
 load "${PLUGIN_ROOT}/tests/lib/bats-assert/load"
+
+# ---------------------------------------------------------------------------
+# PYTHONPATH — make in-repo Python helpers importable from `python3 -c`.
+#
+# Many bats tests use `python3 -c "import sys; sys.path.insert(0, '$PLUGIN_ROOT/...'); ..."`
+# to import `findings_store`, `cost_governance`, `config_validator`, the check-engine
+# modules, and the `hooks._py` package. On Linux/macOS the interpolated POSIX path is
+# usable directly. On Git Bash on Windows the interpolation produces an MSYS-style
+# path (e.g. /d/a/forge/forge/shared) that native Windows Python cannot resolve as
+# a sys.path entry, producing ModuleNotFoundError.
+#
+# MSYS automatically converts known path-style env vars (PYTHONPATH included) when
+# they are passed across the bash → native-Windows boundary, so exporting PYTHONPATH
+# here covers both platforms with a single assignment. The path layout below mirrors
+# every directory referenced by a `sys.path.insert(...)` in the suite, so the
+# `sys.path.insert` calls become redundant (but harmless) once Python finds the
+# modules via PYTHONPATH at startup.
+# ---------------------------------------------------------------------------
+_forge_pythonpath_segments=(
+  "${PLUGIN_ROOT}"
+  "${PLUGIN_ROOT}/shared"
+  "${PLUGIN_ROOT}/shared/python"
+  "${PLUGIN_ROOT}/hooks"
+  "${PLUGIN_ROOT}/hooks/_py/check_engine"
+)
+_forge_pythonpath_joined="$(IFS=':'; echo "${_forge_pythonpath_segments[*]}")"
+if [[ -n "${PYTHONPATH:-}" ]]; then
+  export PYTHONPATH="${_forge_pythonpath_joined}:${PYTHONPATH}"
+else
+  export PYTHONPATH="${_forge_pythonpath_joined}"
+fi
+unset _forge_pythonpath_segments _forge_pythonpath_joined
 
 # ---------------------------------------------------------------------------
 # setup / teardown — called automatically by bats for every test
@@ -20,6 +57,15 @@ load "${PLUGIN_ROOT}/tests/lib/bats-assert/load"
 setup() {
   # Unique temp dir per test to avoid cross-test pollution
   TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-forge.XXXXXX")"
+
+  # On Git Bash on Windows, mktemp returns an MSYS-style path (/tmp/bats-forge.X).
+  # Native Windows Python cannot resolve that path. Convert to a mixed form
+  # (C:/Users/.../...) which both bash and native Python accept.
+  # Use cygpath -m to keep forward slashes (avoids backslash-escape pitfalls in
+  # double-quoted shell strings).
+  if command -v cygpath >/dev/null 2>&1; then
+    TEST_TEMP="$(cygpath -m "$TEST_TEMP")"
+  fi
 
   # Dedicated bin dir for mock executables; prepended to PATH
   MOCK_BIN="${TEST_TEMP}/mock-bin"
@@ -51,8 +97,18 @@ get_frontmatter() {
 # ---------------------------------------------------------------------------
 extract_mcp_list() {
   local line
-  line="$(grep -i "Detects.*Linear" "$PLUGIN_ROOT/CLAUDE.md" | head -1)"
-  echo "$line" | sed 's/.*Detects //' | sed 's/\..*//' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//'
+  # Match either legacy "Detects" phrasing or current "MCP detection:" prefix.
+  line="$(grep -iE "(Detects|MCP detection:).*Linear" "$PLUGIN_ROOT/CLAUDE.md" | head -1)"
+  # Strip leading prose (boldface, leading dash, "MCP detection:" or "Detects "), then truncate at first period.
+  echo "$line" \
+    | sed -E 's/^[[:space:]]*-[[:space:]]*//' \
+    | sed -E 's/\*\*MCP detection:\*\*[[:space:]]*//' \
+    | sed -E 's/MCP detection:[[:space:]]*//' \
+    | sed -E 's/.*Detects[[:space:]]*//' \
+    | sed 's/\..*//' \
+    | tr ',' '\n' \
+    | sed 's/^ *//' \
+    | sed 's/ *$//'
 }
 
 # ---------------------------------------------------------------------------

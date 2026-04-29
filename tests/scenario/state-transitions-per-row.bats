@@ -2,6 +2,8 @@
 # Per-row state transition tests: one test per transition table row.
 # Tests individual rows from state-transitions.md against forge-state.sh.
 
+# Covers: T-01, T-02, T-05, T-06, T-07, T-08, T-09, T-10, T-14, T-15, T-16, T-17, T-18, T-19, T-21, T-22, T-23, T-26, T-27, T-28, T-29, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-37, T-38, T-39, T-42, T-43, T-46, T-47, T-49, T-50, T-51
+
 load '../helpers/test-helpers'
 
 SCRIPT="$PLUGIN_ROOT/shared/forge-state.sh"

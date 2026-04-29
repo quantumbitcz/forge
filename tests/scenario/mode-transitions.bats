@@ -2,6 +2,8 @@
 # Scenario test: pipeline mode transitions (bugfix, bootstrap, dry-run, standard).
 # Validates mode-specific behavior using forge-state.sh.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

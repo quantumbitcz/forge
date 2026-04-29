@@ -1,5 +1,7 @@
 # Amazon SageMaker — Training, Endpoints & Pipelines
 
+> Support tier: community
+
 ## Overview
 
 SageMaker provides managed ML infrastructure: training jobs, real-time endpoints, batch transforms, and ML pipelines. Use SageMaker Estimators to launch training jobs on managed compute, deploy models to endpoints for inference, and orchestrate multi-step workflows with SageMaker Pipelines. SageMaker integrates with S3 for data and artifact storage, ECR for custom containers, and IAM for access control.

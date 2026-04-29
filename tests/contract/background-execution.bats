@@ -185,9 +185,9 @@ BG_EXEC="$PLUGIN_ROOT/shared/background-execution.md"
 # ---------------------------------------------------------------------------
 # 12. User interaction documented
 # ---------------------------------------------------------------------------
-@test "background-execution: documents /forge-status integration" {
-  grep -q "/forge-status" "$BG_EXEC" \
-    || fail "/forge-status integration not documented"
+@test "background-execution: documents /forge-ask status integration" {
+  grep -q "/forge-ask status" "$BG_EXEC" \
+    || fail "/forge-ask status integration not documented"
 }
 
 @test "background-execution: documents --watch polling" {

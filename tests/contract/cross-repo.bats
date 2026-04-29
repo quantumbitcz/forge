@@ -7,7 +7,10 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
-FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
+# Post-Mega-B: /forge-init is retired. Auto-bootstrap (the universal /forge
+# entry plus shared/bootstrap-detect.py) handles project-local discovery.
+FORGE_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
+BOOTSTRAP_DETECT="$PLUGIN_ROOT/shared/bootstrap-detect.py"
 
 # ---------------------------------------------------------------------------
 # 1. cross_repo field documented in state-schema.md
@@ -38,11 +41,17 @@ FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 }
 
 # ---------------------------------------------------------------------------
-# 4. Pipeline-init handles cross-repo discovery
+# 4. Auto-bootstrap (the post-Mega-B init surface) handles cross-repo discovery.
+#    Discovery lives in shared/discovery/discover-projects.sh, dispatched from
+#    the orchestrator at PREFLIGHT. The /forge skill mentions the bootstrap
+#    flow explicitly; cross-repo coordination is captured in CLAUDE.md.
 # ---------------------------------------------------------------------------
-@test "cross-repo: forge-init skill includes cross-repo discovery phase" {
-  grep -qi "cross.repo\|CROSS-REPO\|related.*project\|related_projects" "$FORGE_INIT" \
-    || fail "Cross-repo discovery not mentioned in forge-init skill"
+@test "cross-repo: auto-bootstrap surface documents cross-repo discovery" {
+  local discovery="$PLUGIN_ROOT/shared/discovery/discover-projects.sh"
+  [[ -f "$discovery" ]] \
+    || fail "shared/discovery/discover-projects.sh not found (expected after Mega B)"
+  grep -qi "cross.repo\|CROSS-REPO\|related.*project\|related_projects" "$CLAUDE_MD" \
+    || fail "Cross-repo discovery not mentioned in CLAUDE.md"
 }
 
 # ---------------------------------------------------------------------------
@@ -70,11 +79,16 @@ FORGE_INIT="$PLUGIN_ROOT/skills/forge-init/SKILL.md"
 }
 
 # ---------------------------------------------------------------------------
-# 8. detected_via field documented for discovery results
+# 8. detected_via field present in discovery results. Post-Mega-B the field
+#    is emitted by shared/discovery/discover-projects.sh; CLAUDE.md tracks
+#    cross-repo coordination at a higher level.
 # ---------------------------------------------------------------------------
-@test "cross-repo: detected_via field documented" {
-  grep -q "detected_via" "$CLAUDE_MD" \
-    || fail "detected_via field not documented in CLAUDE.md"
+@test "cross-repo: detected_via field present in discovery output" {
+  local discovery="$PLUGIN_ROOT/shared/discovery/discover-projects.sh"
+  [[ -f "$discovery" ]] \
+    || fail "discover-projects.sh not found"
+  grep -q "detected_via" "$discovery" \
+    || fail "detected_via field not present in discover-projects.sh output"
 }
 
 # ---------------------------------------------------------------------------

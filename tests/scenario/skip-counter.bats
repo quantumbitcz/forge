@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: skip counter mechanism in the check engine
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 setup() {

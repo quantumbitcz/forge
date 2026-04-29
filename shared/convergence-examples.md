@@ -164,8 +164,9 @@ score = 84
 **Score: 75** | Delta: -3
 - `score_history` = [72, 78, 75]
 - `phase_iterations` = 3
-- Raw delta: -3. |delta| = 3 ≤ oscillation_tolerance (5) → **NOT REGRESSING**
-  (within tolerance, per convergence-engine.md oscillation rules)
+- Raw delta: -3. |delta| = 3 < oscillation_tolerance (5) → **NOT REGRESSING**
+  (strictly less than tolerance; boundary `|delta| >= tolerance` is REGRESSING per
+  convergence-engine.md §Precedence)
 - `compute_smoothed_delta`: len == 3 → 2-point weighted average
   - d1 = 75 - 78 = -3 (most recent, weight 0.6)
   - d2 = 78 - 72 = +6 (previous, weight 0.4)
@@ -201,7 +202,7 @@ Score plateaued at 76 (CONCERNS). Unlikely to improve further.
 Options:
   1. Keep trying (risk: more iterations without progress)
   2. Fix manually (pause pipeline, user fixes, resume from VERIFY)
-  3. Abort (/forge-abort)
+  3. Abort (/forge-admin abort)
 ```
 
 | Field | Final Value |
@@ -215,7 +216,7 @@ Options:
 
 **If user chooses option 1:** Reset `plateau_count` to 0, `convergence_state` to `"IMPROVING"`, continue iterating. `total_iterations` is NOT reset — global cap still applies. First cycle after restart is exempt from plateau detection.
 
-**If user chooses option 3:** `/forge-abort` → state transitions to ABORTED.
+**If user chooses option 3:** `/forge-admin abort` → state transitions to ABORTED.
 
 **State transitions used:** C7 (score_improving, cycles 1-2), C10 (score_plateau with plateau_count < plateau_patience, cycle 3), C8 (score_plateau with plateau_count >= plateau_patience, cycle 4 → ESCALATED per score escalation ladder).
 
@@ -237,7 +238,7 @@ Options:
 
 **Score: 68** | Delta: -14
 - `phase_iterations` = 2
-- Raw delta: -14. |delta| = 14 > oscillation_tolerance (5)
+- Raw delta: -14. |delta| = 14 >= oscillation_tolerance (5)
 - **REGRESSING detected** — score dropped significantly
 - → Escalate immediately to user:
 
@@ -246,7 +247,7 @@ Score REGRESSING: 82 → 68 (delta -14, tolerance 5).
 Fix attempt introduced regressions. Options:
   1. Revert last fix and retry with different approach
   2. Continue (risk: further regression)
-  3. Abort (/forge-abort)
+  3. Abort (/forge-admin abort)
 ```
 
 | Field | Final Value |
@@ -268,4 +269,42 @@ Fix attempt introduced regressions. Options:
 | 1: Clean | 1 | 95 | PASS | Single-cycle pass |
 | 2: Fix loop | 2 | 84 | PASS | CRITICAL fix → re-review |
 | 3: Plateau | 4 | 76 | PLATEAUED | Smoothed delta ≤ threshold × patience |
-| 4: Regression | 2 | 68 | REGRESSING | Raw |delta| > oscillation_tolerance |
+| 4: Regression | 2 | 68 | REGRESSING | Raw |delta| >= oscillation_tolerance |
+
+---
+
+## Scenario 5: Boundary oscillation (the bug this fix closes)
+
+**Requirement:** "Address review findings" | **Risk:** LOW | **Confidence:** HIGH (0.85)
+
+### Setup
+
+- `oscillation_tolerance = 5` (default)
+- `plateau_threshold = 2`, `plateau_patience = 2`
+- `pass_threshold = 80`
+- Scores arrive as `[87, 82, 87, 82, 87]` — the classic "one reviewer fixes X, next cycle reintroduces Y" oscillation exactly at the tolerance boundary.
+
+### Cycle 1 — score 87
+
+- `delta = 0` (first cycle), phase `IMPROVING`, decision `CONTINUE`.
+
+### Cycle 2 — score 82, delta = -5
+
+- `|delta| = 5`. Under the old strict `>` guard: `5 > 5` is **false** → NOT REGRESSING → continue.
+- Under the new inclusive `>=` guard: `5 >= 5` is **true** → `phase=REGRESSING`, `decision=ESCALATE`. Pipeline halts and surfaces to user within one cycle.
+
+### Why strict `>` livelocked
+
+With scores oscillating `[87, 82, 87, 82, 87]` and tolerance 5, every second delta is exactly `-5`. The old guard never fired. Plateau detection read `smoothed_delta ≈ 0` which is `<= 2`, so plateau_count incremented — but only when the pipeline already had three cycles of data AND a fresh IMPLEMENT hadn't reset `phase_iterations`. In practice, the implementer reset the counter on each dispatch, plateau never confirmed, and the pipeline iterated until `max_iterations` — 30+ minutes of unproductive review→implement→review loops.
+
+### Why `>=` is correct
+
+`oscillation_tolerance` names the "noise floor we tolerate." Anything equal to or above that floor is, by definition of the parameter, out of noise and into signal. A -5 dip at tolerance 5 is not "tolerable wobble" — it is a full-tolerance regression. The inner-loop Consecutive Dip Rule in `scoring.md` intentionally keeps `<= tolerance = WARN-and-continue` because a single quality-gate cycle gets one tolerated dip for free; the outer convergence loop cannot afford the same permissiveness because it runs on cycle deltas, not cycle counts.
+
+### Scenario 6 (negative control): asymmetric drift
+
+Scores `[82, 87, 82, 88, 82]`, tolerance 5.
+- Deltas: `+5, -5, +6, -6`.
+- Cycle 2: `|delta| = 5 >= 5` → REGRESSING, ESCALATE. Same outcome: the engine escalates on the first full-tolerance dip.
+
+---

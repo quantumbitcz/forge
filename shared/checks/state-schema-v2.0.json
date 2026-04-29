@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.quantumbitcz.com/schemas/state/2.1.0.json",
+  "title": "Forge pipeline state — v2.1.0",
+  "type": "object",
+  "required": ["version", "_seq", "plan_judge_loops", "impl_judge_loops", "judge_verdicts"],
+  "properties": {
+    "version": { "const": "2.1.0" },
+    "_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic write counter incremented by every state write. Used for stale-write detection."
+    },
+    "plan_judge_loops": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of REVISE verdicts from fg-205-plan-judge for the current plan. Resets to 0 when a new plan is drafted (SHA of requirement + approach changes). Validator REVISE, user-continue, and feedback loops do NOT reset this counter."
+    },
+    "impl_judge_loops": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Per-task REVISE counter from fg-301-implementer-judge. Keyed by task_id."
+    },
+    "judge_verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["judge_id", "verdict", "dispatch_seq", "timestamp"],
+        "properties": {
+          "judge_id": { "enum": ["fg-205-plan-judge", "fg-301-implementer-judge"] },
+          "verdict": { "enum": ["PROCEED", "REVISE", "ESCALATE"] },
+          "dispatch_seq": { "type": "integer", "minimum": 1 },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "task_id": { "type": "string" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "judge_id": { "const": "fg-301-implementer-judge" } } },
+            "then": { "required": ["task_id"] }
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "current_plan_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the current plan (requirement + approach digest). Resets plan_judge_loops to 0 on change. Null until the first plan is drafted."
+    }
+  },
+  "additionalProperties": true
+}

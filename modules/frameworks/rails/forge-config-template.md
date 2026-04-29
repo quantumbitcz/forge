@@ -14,6 +14,29 @@ Updated by the retrospective agent based on run metrics. Manual edits welcome.
 | total_retries_max | 10 | Global retry budget across all loops (5-30) |
 | oscillation_tolerance | 3 | Score regression tolerance for quality cycles (0-20) |
 
+## Cost Governance (Phase 6)
+
+Nested YAML block. PREFLIGHT validates every field per `shared/preflight-constraints.md#cost-governance-phase-6`.
+
+```yaml
+cost:
+  ceiling_usd: 25.00            # hard per-run ceiling (0 = disabled)
+  warn_at: 0.75                 # INFO event at 75% consumed
+  throttle_at: 0.80             # implementer soft throttle activates
+  abort_at: 1.00                # hard stop
+  aware_routing: true           # dynamic tier downgrades
+  pinned_agents: []             # agents that never downgrade
+  tier_estimates_usd:
+    fast: 0.016                 # Haiku 4.5 — 8k@$1/MTok + 1.5k@$5/MTok
+    standard: 0.047             # Sonnet 4.6 — 8k@$3/MTok + 1.5k@$15/MTok
+    premium: 0.078              # Opus 4.7 — 8k@$5/MTok + 1.5k@$25/MTok
+  conservatism_multiplier:
+    fast: 1.0
+    standard: 1.0
+    premium: 1.0                # raise (e.g. 3.0) for planner with high variance
+  skippable_under_cost_pressure: []  # opt-in list for agents that CAN be skipped
+```
+
 ## Review Agents
 
 | Agent | Enabled | Weight | Notes |
@@ -78,7 +101,7 @@ convergence:
   # target_score: 90        # Score target (80-100, must be >= pass_threshold). Default 90.
   # safety_gate: true       # Run VERIFY after Phase 2
 
-# Sprint orchestration (only relevant for /forge-run --sprint)
+# Sprint orchestration (only relevant for /forge run --sprint)
 # sprint:
 #   poll_interval_seconds: 30    # How often to poll per-feature state (10-120)
 #   dependency_timeout_minutes: 60  # Max wait for a dependency feature (5-180)
@@ -450,3 +473,31 @@ rubocop:
   rails: true                    # hint to load rubocop-rails
   rspec: true                    # hint to load rubocop-rspec
   performance: true              # hint to load rubocop-performance
+
+# Phase 7 F35 — Intent verification gate (Stage 5 VERIFY, Stage 9 SHIP)
+intent_verification:
+  enabled: true
+  strict_ac_required_pct: 100
+  max_probes_per_ac: 20
+  probe_timeout_seconds: 30
+  allow_runtime_probes: true
+  probe_tier: 2
+  forbidden_probe_hosts:
+    - "*.prod.*"
+    - "*.production.*"
+    - "*.live.*"
+    - "*.amazonaws.com"
+    - "*.googleusercontent.com"
+    - "10.*"
+    - "172.16.*-172.31.*"
+    - "192.168.*"
+
+# Phase 7 F36 — Confidence-gated implementer voting (Stage 4 IMPLEMENT)
+impl_voting:
+  enabled: true
+  trigger_on_confidence_below: 0.4
+  trigger_on_risk_tags: ["high"]
+  trigger_on_regression_history_days: 30
+  samples: 2
+  tiebreak_required: true
+  skip_if_budget_remaining_below_pct: 30

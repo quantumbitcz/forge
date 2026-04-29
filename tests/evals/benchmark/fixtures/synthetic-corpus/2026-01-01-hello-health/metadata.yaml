@@ -1,0 +1,9 @@
+version: 1
+complexity: S
+domain: [api]
+language: python
+framework: fastapi
+source_run_id: "synthetic-2026-01-01"
+requires_docker: false
+os_compat: [ubuntu-latest, macos-latest, windows-latest]
+notes: "Fixture for integration test; no real run."

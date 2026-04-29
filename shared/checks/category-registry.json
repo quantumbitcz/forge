@@ -215,58 +215,58 @@
       ]
     },
     "REFLECT": {
-      "description": "Implementer-critic (fg-301) reflection findings \u2014 the implementation diff does not satisfy the intent of the tests. Wildcard parent.",
+      "description": "Implementer-judge (fg-301) reflection findings \u2014 the implementation diff does not satisfy the intent of the tests. Wildcard parent.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": true,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-DIVERGENCE": {
       "description": "Implementation diverges from requirement without justification.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-HARDCODED-RETURN": {
       "description": "Implementation returns a hardcoded value that makes the test pass without solving the general case.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-OVER-NARROW": {
       "description": "Implementation only handles the single case the test asserts; other valid inputs break.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-MISSING-BRANCH": {
       "description": "Implementation missed a branch or guard that the requirement implies.",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "priority": 2,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "APPROACH": {
@@ -293,65 +293,76 @@
     "REFLECT": {
       "description": "Per-task reflection finding: diff satisfies test letter but not intent",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": true,
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-DIVERGENCE": {
       "description": "Critic rejected two consecutive implementations; reviewer panel must decide",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "WARNING",
       "score_impact": "-5",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-HARDCODED-RETURN": {
       "description": "Implementation returns a literal matching the test assertion without real computation",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-OVER-NARROW": {
       "description": "Implementation narrows input domain more tightly than AC allows",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
     },
     "REFLECT-MISSING-BRANCH": {
       "description": "Implementation's control flow handles fewer branches than AC describes",
       "agents": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ],
       "wildcard": false,
       "severity": "INFO",
       "score_impact": "-2",
       "priority": 3,
       "affinity": [
-        "fg-301-implementer-critic"
+        "fg-301-implementer-judge"
       ]
+    },
+    "JUDGE-TIMEOUT": {
+      "description": "Plan or implementer judge timed out; PROCEED treated as default verdict; emits informational JUDGE-TIMEOUT marker.",
+      "agents": [
+        "fg-205-plan-judge",
+        "fg-301-implementer-judge"
+      ],
+      "wildcard": false,
+      "priority": 5,
+      "severity": "INFO",
+      "affinity": []
     },
     "A11Y": {
       "description": "Accessibility violation (WCAG, keyboard nav, screen reader, ARIA)",
@@ -412,6 +423,60 @@
       "priority": 4,
       "affinity": [
         "fg-419-infra-deploy-reviewer"
+      ]
+    },
+    "WORKTREE": {
+      "description": "Worktree isolation or absolute-path leakage (sandbox-violating brief)",
+      "agents": [
+        "fg-100-orchestrator",
+        "fg-300-implementer"
+      ],
+      "wildcard": true,
+      "priority": 2,
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "REPORT": {
+      "description": "Reviewer prose-report write or schema violation (.forge/runs/<run_id>/reports/<reviewer>.md)",
+      "agents": [
+        "fg-400-quality-gate",
+        "fg-410-code-reviewer",
+        "fg-411-security-reviewer",
+        "fg-412-architecture-reviewer",
+        "fg-413-frontend-reviewer",
+        "fg-414-license-reviewer",
+        "fg-416-performance-reviewer",
+        "fg-417-dependency-reviewer",
+        "fg-418-docs-consistency-reviewer",
+        "fg-419-infra-deploy-reviewer"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-400-quality-gate"
+      ]
+    },
+    "FEEDBACK": {
+      "description": "Post-run feedback handling failure (defense, acknowledgment, sub-agent timeout, platform adapter)",
+      "agents": [
+        "fg-710-post-run"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-710-post-run"
+      ]
+    },
+    "BRANCH": {
+      "description": "Branch / finishing-development-branch dialog violation (cleanup checklist, abandon confirmation, branch protection)",
+      "agents": [
+        "fg-600-pr-builder"
+      ],
+      "wildcard": true,
+      "priority": 3,
+      "affinity": [
+        "fg-600-pr-builder"
       ]
     },
     "REVIEW-GAP": {
@@ -1367,6 +1432,252 @@
       "wildcard": false,
       "priority": 3,
       "affinity": []
+    },
+    "FEASIBILITY": {
+      "description": "Plan feasibility concern from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "RISK-PLAN-GAP": {
+      "description": "Identified risk in plan from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "SCOPE-DRIFT": {
+      "description": "Plan scope drift from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "CODEBASE-FIT": {
+      "description": "Plan-codebase fit issue from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 2,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "CHALLENGE-BRIEF-GAP": {
+      "description": "Challenge brief gap from fg-205-plan-judge",
+      "agents": [
+        "fg-205-plan-judge"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 3,
+      "affinity": [
+        "fg-205-plan-judge"
+      ]
+    },
+    "COST": {
+      "description": "Cost governance event (throttle, downgrade, escalation). Wildcard prefix for COST-* sub-categories.",
+      "agents": [
+        "fg-100-orchestrator",
+        "fg-300-implementer",
+        "fg-700-retrospective"
+      ],
+      "wildcard": true,
+      "priority": 4,
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-THROTTLE-IMPL": {
+      "description": "Implementer skipped a discretionary refactor or judge pass due to cost pressure. Severity INFO at 80% consumed, WARNING at 90% consumed.",
+      "agents": [
+        "fg-300-implementer"
+      ],
+      "wildcard": false,
+      "severity_allowed": ["INFO", "WARNING"],
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-300-implementer"
+      ]
+    },
+    "COST-DOWNGRADE": {
+      "description": "Orchestrator downgraded an agent tier under cost.aware_routing.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-ESCALATION-AUTO": {
+      "description": "Autonomous-mode ceiling breach auto-decision logged.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "COST-ESCALATION-TIMEOUT": {
+      "description": "Interactive ceiling-breach prompt timed out; defaulted to abort-to-ship.",
+      "agents": [
+        "fg-100-orchestrator"
+      ],
+      "wildcard": false,
+      "severity": "INFO",
+      "score_impact": "-2",
+      "priority": 4,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-100-orchestrator"
+      ]
+    },
+    "EST-DRIFT": {
+      "description": "Actual agent cost drifted >2x from tier_estimates_usd across 10+ dispatches.",
+      "agents": [
+        "fg-700-retrospective"
+      ],
+      "wildcard": false,
+      "severity_allowed": ["WARNING"],
+      "severity": "WARNING",
+      "score_impact": "-5",
+      "priority": 3,
+      "introduced_in": "4.1.0",
+      "affinity": [
+        "fg-700-retrospective"
+      ]
+    },
+    "INTENT-MISSED": {
+      "description": "Acceptance criterion not satisfied by running system.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-PARTIAL": {
+      "description": "AC partially satisfied; some but not all subconditions probe green.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 2,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-AMBIGUOUS": {
+      "description": "AC wording admits multiple interpretations; verifier could not decide.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 5,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-UNVERIFIABLE": {
+      "description": "AC written in a form that cannot be runtime-probed.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-CONTRACT-VIOLATION": {
+      "description": "Verifier context contained a forbidden key OR probe hit a forbidden host.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-NO-ACS": {
+      "description": "Active spec has zero ACs; intent verification skipped.",
+      "agents": ["fg-540-intent-verifier"],
+      "wildcard": false,
+      "priority": 3,
+      "affinity": ["fg-540-intent-verifier"]
+    },
+    "INTENT-CONTEXT-LEAK": {
+      "description": "Orchestrator built a forbidden context key (Layer-1 enforcement).",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "priority": 1,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-TRIGGERED": {
+      "description": "N=2 voting dispatched for this task.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 5,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-DEGRADED": {
+      "description": "AST grammar unavailable; diff judge fell back to textual diff.",
+      "agents": ["fg-302-diff-judge"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 5,
+      "affinity": ["fg-302-diff-judge"]
+    },
+    "IMPL-VOTE-UNRESOLVED": {
+      "description": "Tiebreak sample diverged from both originals; smallest-diff chosen.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-TIMEOUT": {
+      "description": "One sample timed out; surviving sample used.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "IMPL-VOTE-WORKTREE-FAIL": {
+      "description": "Sub-worktree creation failed; fell back to single sample.",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 3,
+      "affinity": ["fg-100-orchestrator"]
+    },
+    "COST-SKIP-VOTE": {
+      "description": "Voting skipped because remaining budget fell below `impl_voting.skip_if_budget_remaining_below_pct` (default 30%).",
+      "agents": ["fg-100-orchestrator"],
+      "wildcard": false,
+      "score_impact": "0",
+      "priority": 5,
+      "affinity": ["fg-100-orchestrator"]
     }
   }
 }

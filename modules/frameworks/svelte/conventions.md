@@ -1,5 +1,7 @@
 # Svelte 5 Framework Conventions
 
+> Support tier: contract-verified
+
 > Framework-specific conventions for standalone Svelte 5 projects (SPAs, widget libraries, Electron apps, Vite-based UIs). **Not SvelteKit** — no file-based routing, no server-side rendering, no load functions. Language idioms are in `modules/languages/typescript.md`. Generic testing patterns are in `modules/testing/vitest.md`.
 
 ## Architecture (Component-Based SPA)

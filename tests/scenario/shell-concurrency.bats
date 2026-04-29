@@ -2,6 +2,8 @@
 # Scenario tests: shell concurrency — validates concurrent event emission,
 # atomic operations, state init safety, lock files, and stale lock detection.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_EVENT="$PLUGIN_ROOT/shared/forge-event.sh"
@@ -37,8 +39,10 @@ ENGINE_SH="$PLUGIN_ROOT/shared/checks/engine.sh"
   local bad_lines=0
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
-    python3 -c "import json; json.loads('''$line''')" 2>/dev/null \
-      || bad_lines=$((bad_lines + 1))
+    python3 - "$line" <<'PYEOF' 2>/dev/null || bad_lines=$((bad_lines + 1))
+import json, sys
+json.loads(sys.argv[1])
+PYEOF
   done < "$events_file"
 
   [[ "$bad_lines" -eq 0 ]] \
@@ -93,15 +97,43 @@ ENGINE_SH="$PLUGIN_ROOT/shared/checks/engine.sh"
   [[ -f "$state_a" ]] || fail "state.json A was not created"
   [[ -f "$state_b" ]] || fail "state.json B was not created"
 
-  python3 -c "import json; json.load(open('$state_a'))" 2>/dev/null \
-    || fail "state.json A is not valid JSON"
-  python3 -c "import json; json.load(open('$state_b'))" 2>/dev/null \
-    || fail "state.json B is not valid JSON"
+  python3 - "$state_a" <<'PY' 2>/dev/null || fail "state.json A is not valid JSON"
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    json.load(f)
+PY
+  python3 - "$state_b" <<'PY' 2>/dev/null || fail "state.json B is not valid JSON"
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    json.load(f)
+PY
 
   # Verify they have different story IDs
   local story_a story_b
-  story_a=$(python3 -c "import json; print(json.load(open('$state_a')).get('story_id',''))" 2>/dev/null)
-  story_b=$(python3 -c "import json; print(json.load(open('$state_b')).get('story_id',''))" 2>/dev/null)
+  story_a=$(python3 - "$state_a" <<'PY' 2>/dev/null
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    print(json.load(f).get('story_id', ''))
+PY
+)
+  story_b=$(python3 - "$state_b" <<'PY' 2>/dev/null
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    print(json.load(f).get('story_id', ''))
+PY
+)
 
   [[ "$story_a" != "$story_b" ]] \
     || fail "Both state files have the same story_id: $story_a"

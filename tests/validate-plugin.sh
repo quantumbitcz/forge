@@ -690,19 +690,21 @@ if [ ! -f "$ROOT/agents/fg-020-bug-investigator.md" ]; then
 fi
 check "fg-020-bug-investigator agent exists" "$check_bugfix_agent_fail"
 
-# Check: forge-fix skill exists
+# Check: forge consolidated skill exists with fix subcommand
 check_forgefix_skill_fail=0
-if [ ! -f "$ROOT/skills/forge-fix/SKILL.md" ]; then
+if [ ! -f "$ROOT/skills/forge/SKILL.md" ]; then
+  check_forgefix_skill_fail=1
+elif ! grep -q '^### Subcommand: fix$' "$ROOT/skills/forge/SKILL.md" 2>/dev/null; then
   check_forgefix_skill_fail=1
 fi
-check "forge-fix skill exists" "$check_forgefix_skill_fail"
+check "forge skill documents fix subcommand" "$check_forgefix_skill_fail"
 
-# Check: forge-fix name matches directory
+# Check: consolidated skill name is forge
 check_forgefix_name_fail=0
-if ! grep -q "^name: forge-fix$" "$ROOT/skills/forge-fix/SKILL.md" 2>/dev/null; then
+if ! grep -q "^name: forge$" "$ROOT/skills/forge/SKILL.md" 2>/dev/null; then
   check_forgefix_name_fail=1
 fi
-check "forge-fix name matches directory" "$check_forgefix_name_fail"
+check "forge skill name matches directory" "$check_forgefix_name_fail"
 
 echo ""
 echo "--- PHASE 4: GRAPH + INIT ---"
@@ -940,6 +942,29 @@ for agent_file in "$ROOT"/agents/fg-41*.md; do
   fi
 done
 check "All review agents have eval directories with inputs/expected/eval.bats ($eval_agent_count agents)" "$check_eval_agents_fail"
+
+# Phase 3 correctness-proofs harness scripts: each must exist, parse as valid
+# Python, and carry a module docstring. Belt-and-suspenders: a missing file
+# fails structural before the dependent CI tier runs.
+check_phase3_scripts_fail=0
+for rel in tests/mutation/state_transitions.py tests/scenario/report_coverage.py tests/e2e/dry-run-smoke.py; do
+  abs="$ROOT/$rel"
+  if [[ ! -f "$abs" ]]; then
+    echo "    $rel: file is missing"
+    check_phase3_scripts_fail=1
+    continue
+  fi
+  parse_stderr=$(python3 -c "import ast,sys; src=open(sys.argv[1],encoding='utf-8').read(); m=ast.parse(src); doc=ast.get_docstring(m); raise SystemExit(0 if doc else 1)" "$abs" 2>&1 1>/dev/null)
+  parse_status=$?
+  if [[ $parse_status -ne 0 ]]; then
+    echo "    $rel: failed to parse OR missing module docstring"
+    if [[ -n "$parse_stderr" ]]; then
+      echo "$parse_stderr" | sed 's/^/      /'
+    fi
+    check_phase3_scripts_fail=1
+  fi
+done
+check "Phase 3 harness scripts parse and carry module docstrings" "$check_phase3_scripts_fail"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

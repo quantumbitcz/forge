@@ -1,5 +1,7 @@
 # pytest Testing Conventions
 
+> Support tier: contract-verified
+
 ## Test Structure
 
 All test files use the `test_` prefix. Organize by module: `tests/unit/`, `tests/integration/`, `tests/e2e/`. Mirror the source package layout inside each tier. Place shared fixtures and plugins in `conftest.py` at the appropriate directory level.

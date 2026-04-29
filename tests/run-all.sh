@@ -12,8 +12,8 @@ if command -v parallel &>/dev/null; then
   BATS_JOBS=(--jobs "$NCPU" --no-parallelize-within-files)
 fi
 
-# Verify bats is available (except for structural-only runs which don't need it)
-if [[ "$TIER" != "structural" ]] && [[ ! -x "$BATS" ]]; then
+# Verify bats is available (all tiers, including structural which now dispatches tests/structural/*.bats)
+if [[ ! -x "$BATS" ]]; then
   echo "ERROR: bats not found at $BATS" >&2
   echo "  Run: git submodule update --init --recursive" >&2
   exit 1
@@ -76,9 +76,12 @@ print_summary() {
 case "$TIER" in
   all)
     run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
+    run_tier "Structural Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/structural/*.bats
     run_tier "Unit Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
+    run_tier "Unit Tests (pytest)" python3 -m pytest "$SCRIPT_DIR/unit" "$SCRIPT_DIR/integration" -q
     run_tier "Hooks" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/hooks/*.bats
-    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (bats)" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (pytest)" python3 -m pytest "$SCRIPT_DIR/contract" -q
     run_tier "Scenario Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/scenario/*.bats
     run_tier "Eval Suite" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/evals/agents/*/eval.bats
     if [[ -d "$SCRIPT_DIR/evals/time-travel" ]]; then
@@ -88,14 +91,17 @@ case "$TIER" in
     ;;
   structural)
     run_tier "Structural Validation" bash "$SCRIPT_DIR/validate-plugin.sh"
+    run_tier "Structural Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/structural/*.bats
     print_summary
     ;;
   unit)
     run_tier "Unit Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/unit/*.bats "$SCRIPT_DIR"/unit/agent-behavior/*.bats "$SCRIPT_DIR"/unit/skill-execution/*.bats
+    run_tier "Unit Tests (pytest)" python3 -m pytest "$SCRIPT_DIR/unit" "$SCRIPT_DIR/integration" -q
     print_summary
     ;;
   contract)
-    run_tier "Contract Tests" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (bats)" "$BATS" ${BATS_JOBS[@]+"${BATS_JOBS[@]}"} "$SCRIPT_DIR"/contract/*.bats
+    run_tier "Contract Tests (pytest)" python3 -m pytest "$SCRIPT_DIR/contract" -q
     print_summary
     ;;
   scenario)

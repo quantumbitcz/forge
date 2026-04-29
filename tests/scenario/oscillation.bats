@@ -3,6 +3,9 @@
 # Validates that score oscillation patterns are correctly classified as
 # PLATEAUED, REGRESSING, or IMPROVING by the convergence engine simulator.
 
+# mutation_row: 37
+# Covers: T-37, T-36
+
 load '../helpers/test-helpers'
 
 SIM_SCRIPT="$PLUGIN_ROOT/shared/convergence-engine-sim.sh"
@@ -35,8 +38,16 @@ teardown() {
   # The last line should show phase=PLATEAUED (small smoothed delta over many cycles)
   local last_line
   last_line="$(echo "$output" | tail -1)"
-  [[ "$last_line" == *"phase=PLATEAUED"* ]] \
-    || fail "Expected PLATEAUED in last cycle, got: $last_line"
+  # Mutation harness: under MUTATE_ROW=37 we flip the expected assertion
+  # so the mutation "next_state -> IMPLEMENTING" survives iff the scenario
+  # did not actually exercise row 37.
+  if [[ "${MUTATE_ROW:-}" == "37" ]]; then
+    [[ "$last_line" != *"phase=PLATEAUED"* ]] \
+      || fail "Under MUTATE_ROW=37 expected PLATEAUED to NOT appear; mutation survived: $last_line"
+  else
+    [[ "$last_line" == *"phase=PLATEAUED"* ]] \
+      || fail "Expected PLATEAUED in last cycle, got: $last_line"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -97,21 +108,21 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
-# 5. oscillation_tolerance=20 is very permissive (no REGRESSING)
+# 5. oscillation_tolerance=21 is very permissive (no REGRESSING)
 # ---------------------------------------------------------------------------
-@test "oscillation: oscillation_tolerance=20 is very permissive" {
+@test "oscillation: oscillation_tolerance=21 is very permissive" {
   run bash "$SIM_SCRIPT" \
     --scores "60,80,60,80" \
     --pass-threshold 80 \
-    --oscillation-tolerance 20 \
+    --oscillation-tolerance 21 \
     --plateau-patience 3
   assert_success
 
-  # Delta of -20 is NOT > tolerance of 20, so no REGRESSING
+  # Delta of -20 is NOT >= tolerance of 21, so no REGRESSING (>= boundary, post b6415111)
   local has_regressing
   has_regressing=$(echo "$output" | grep -c "phase=REGRESSING" || true)
   [[ "$has_regressing" -eq 0 ]] \
-    || fail "Expected no REGRESSING with tolerance=20, got: $output"
+    || fail "Expected no REGRESSING with tolerance=21, got: $output"
 }
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 # ASP.NET Core Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with ASP.NET Core-specific patterns.
 
 ## Code Documentation

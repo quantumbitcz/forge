@@ -1,0 +1,111 @@
+#!/usr/bin/env bats
+# AC-5, AC-7: hooks/_py/failure_log.py — record_failure + rotate + safe-if-missing.
+load '../helpers/test-helpers'
+
+setup() {
+  TMP="$(mktemp -d)"
+  # Convert MSYS path to mixed form on native Windows runners (Git Bash on
+  # Windows produces /tmp/tmp.XXX which native Python cannot resolve).
+  # Use cygpath -m to keep forward slashes (avoids backslash-escape pitfalls).
+  if command -v cygpath >/dev/null 2>&1; then
+    TMP="$(cygpath -m "$TMP")"
+  fi
+  export FORGE_TEST_CWD="$TMP"
+  cd "$TMP"
+  PY="python3 -c \"import sys; sys.path.insert(0,'$PLUGIN_ROOT/hooks'); from _py import failure_log; failure_log.main()\""
+}
+
+teardown() {
+  rm -rf "$TMP"
+}
+
+@test "record_failure is a no-op when .forge missing and writable is False" {
+  run python3 - "$PLUGIN_ROOT/hooks" "$TMP" "$TMP" <<'PYEOF'
+import sys, json
+sys.path.insert(0,sys.argv[1])
+from _py import failure_log
+import os
+os.chdir(sys.argv[2])
+failure_log.record_failure('test.py','Edit', 1, 'oops', 42, sys.argv[3])
+PYEOF
+  assert_success
+  # When .forge doesn't exist we create it (exist_ok=True per spec)
+  assert [ -f "$TMP/.forge/.hook-failures.jsonl" ]
+}
+
+@test "record_failure appends a valid JSON row" {
+  mkdir -p "$TMP/.forge"
+  python3 - "$PLUGIN_ROOT/hooks" "$TMP" "$TMP" <<'PYEOF'
+import sys, os
+sys.path.insert(0,sys.argv[1])
+os.chdir(sys.argv[2])
+from _py import failure_log
+failure_log.record_failure('pre_tool_use.py','Edit|Write',2,'boom',1,sys.argv[3])
+PYEOF
+  run python3 - "$TMP/.forge/.hook-failures.jsonl" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
+    row = json.loads(f.readline())
+assert row['schema'] == 1
+assert row['hook_name'] == 'pre_tool_use.py'
+assert row['exit_code'] == 2
+assert row['duration_ms'] == 1
+assert 'ts' in row and row['ts'].endswith('Z')
+PYEOF
+  assert_success
+}
+
+@test "record_failure truncates stderr_excerpt to 2048 bytes" {
+  mkdir -p "$TMP/.forge"
+  python3 - "$PLUGIN_ROOT/hooks" "$TMP" "$TMP" <<'PYEOF'
+import sys, os
+sys.path.insert(0,sys.argv[1])
+os.chdir(sys.argv[2])
+from _py import failure_log
+failure_log.record_failure('h.py','m',1,'x'*5000,10,sys.argv[3])
+PYEOF
+  run python3 - "$TMP/.forge/.hook-failures.jsonl" <<'PYEOF'
+import json, sys
+row = json.loads(open(sys.argv[1]).readline())
+assert len(row['stderr_excerpt']) == 2048
+PYEOF
+  assert_success
+}
+
+@test "rotate gzips files older than 7 days" {
+  mkdir -p "$TMP/.forge"
+  touch -t 202601010000 "$TMP/.forge/.hook-failures.jsonl"
+  printf '{"schema":1,"ts":"2026-01-01T00:00:00Z","hook_name":"x","matcher":"m","exit_code":1,"duration_ms":1,"cwd":"."}\n' > "$TMP/.forge/.hook-failures.jsonl"
+  touch -t 202601010000 "$TMP/.forge/.hook-failures.jsonl"
+  python3 - "$PLUGIN_ROOT/hooks" "$TMP" <<'PYEOF'
+import sys, os
+sys.path.insert(0,sys.argv[1])
+os.chdir(sys.argv[2])
+from _py import failure_log
+failure_log.rotate(now_ts=None)
+PYEOF
+  # ls (no -A) hides dotfile-prefixed names. Use a glob existence check instead:
+  # the rotated archive matches .hook-failures-YYYYMMDD.jsonl.gz, and the live
+  # file must be gone.
+  refute [ -f "$TMP/.forge/.hook-failures.jsonl" ]
+  shopt -s nullglob dotglob
+  archives=( "$TMP/.forge/".hook-failures-*.jsonl.gz )
+  shopt -u nullglob dotglob
+  [ "${#archives[@]}" -ge 1 ] || fail "no .hook-failures-*.jsonl.gz archive produced"
+  [[ "${archives[0]}" =~ /\.hook-failures-[0-9]{8}\.jsonl\.gz$ ]] || fail "archive name did not match expected pattern: ${archives[0]}"
+}
+
+@test "rotate deletes gz older than 30 days" {
+  mkdir -p "$TMP/.forge"
+  old="$TMP/.forge/.hook-failures-20250101.jsonl.gz"
+  printf 'x' | gzip -c > "$old"
+  touch -t 202501010000 "$old"
+  python3 - "$PLUGIN_ROOT/hooks" "$TMP" <<'PYEOF'
+import sys, os
+sys.path.insert(0,sys.argv[1])
+os.chdir(sys.argv[2])
+from _py import failure_log
+failure_log.rotate(now_ts=None)
+PYEOF
+  refute [ -f "$old" ]
+}

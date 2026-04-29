@@ -1,19 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Finding",
-  "description": "Schema for a single quality finding emitted by review agents.",
+  "description": "Schema for a single quality finding emitted by review or verification agents. v2.",
   "type": "object",
-  "required": ["file", "line", "category", "severity", "description", "fix_hint"],
+  "required": ["category", "severity", "description", "fix_hint"],
   "properties": {
     "file": {
-      "type": "string",
-      "description": "Project-relative path",
+      "type": ["string", "null"],
+      "description": "Project-relative path. Null permitted for AC-level findings (e.g. INTENT-*).",
       "pattern": "^[^\\s]"
     },
     "line": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "minimum": 0,
-      "description": "1-based line number, 0 for file-level"
+      "description": "1-based line number, 0 for file-level. Null permitted for AC-level findings."
     },
     "category": {
       "type": "string",
@@ -36,6 +36,29 @@
       "type": "string",
       "enum": ["HIGH", "MEDIUM", "LOW"],
       "default": "HIGH"
+    },
+    "ac_id": {
+      "type": "string",
+      "pattern": "^AC-[0-9]{3}$",
+      "description": "Acceptance criterion ID. Required when category starts with INTENT-."
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "category": { "pattern": "^INTENT-" } }
+      },
+      "then": {
+        "required": ["ac_id"]
+      }
+    },
+    {
+      "if": {
+        "not": { "properties": { "category": { "pattern": "^INTENT-" } } }
+      },
+      "then": {
+        "required": ["file", "line"]
+      }
+    }
+  ]
 }

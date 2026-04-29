@@ -109,7 +109,7 @@ FUNCTION decide_next(state.convergence, verify_result, review_result):
       ELSE IF total_iterations >= max_iterations:
         -> ESCALATE (global cap applies to perfection phase too)
 
-      ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance:
+      ELSE IF delta < 0 AND abs(delta) >= oscillation_tolerance:
         // REGRESSING detection uses raw delta (not smoothed) for responsiveness
         // oscillation_tolerance applies to Phase 2 (perfection) and Phase 3
         // (safety gate) score oscillation only. Phase 1 (correctness) uses
@@ -249,7 +249,8 @@ SCOUT items represent improvements already made — they do not affect the score
 The REGRESSING state and the score escalation ladder serve different purposes and do NOT conflict:
 - **REGRESSING** (oscillation_tolerance check) fires on score *drops between iterations* that exceed tolerance — this is a **trajectory signal** meaning "we're going backwards." It triggers immediately, regardless of absolute score.
 - **Score escalation ladder** fires when convergence reaches **PLATEAUED** — this is a **terminal verdict** meaning "we've stopped improving." It determines what happens next based on absolute score.
-- If a single iteration shows both a drop exceeding tolerance AND would trigger plateau (e.g., score oscillating around threshold), **REGRESSING takes priority** — it is checked first in the algorithm (line `ELSE IF delta < 0 AND abs(delta) > oscillation_tolerance` precedes the plateau check). This prevents the pipeline from declaring "plateau" when the score is actually declining.
+- If a single iteration shows both a drop exceeding tolerance AND would trigger plateau (e.g., score oscillating around threshold), **REGRESSING takes priority** — it is checked first in the algorithm (line `ELSE IF delta < 0 AND abs(delta) >= oscillation_tolerance` precedes the plateau check). This prevents the pipeline from declaring "plateau" when the score is actually declining.
+- **Boundary semantics (inclusive).** A delta equal to `oscillation_tolerance` counts as REGRESSING, not "tolerable wobble." A dip of exactly the tolerance is the defining edge the parameter names — we escalate rather than continue. This is deliberately asymmetric with `scoring.md:373` (Consecutive Dip Rule uses `<= tolerance = WARN-and-continue`); the inner loop can afford one tolerated dip per review cycle, the outer convergence loop cannot afford persistent oscillation at the boundary.
 
 ### Diminishing Returns Detection
 

@@ -6,7 +6,7 @@ Persistent test result history with algorithmic flaky detection, automatic quara
 
 ## 1. Test History
 
-Persistent file: `.forge/test-history.json` (survives `/forge-recover reset`, same lifecycle as `explore-cache.json`). Schema: `shared/schemas/test-history-schema.json`.
+Persistent file: `.forge/test-history.json` (survives `/forge-admin recover reset`, same lifecycle as `explore-cache.json`). Schema: `shared/schemas/test-history-schema.json`.
 
 The test gate reads the history at the start of every VERIFY pass and writes it at the end. First run with no history file creates an empty one; all features degrade gracefully to existing behavior.
 
@@ -203,7 +203,7 @@ If `catch_rate` drops below 80% over 10+ runs, log WARNING: "Predictive test sel
 | explore-cache.json | File dependencies for test-code associations | Read |
 | category-registry.json | `TEST-FLAKY`, `TEST-QUARANTINE` finding codes | Read |
 | state.json | Test cycle counts and convergence data | Read |
-| `/forge-insights` | Flaky trends across runs | Read |
+| `/forge-ask insights` | Flaky trends across runs | Read |
 
 ### History Pruning (fg-700-retrospective)
 

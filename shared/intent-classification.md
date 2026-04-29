@@ -1,6 +1,6 @@
 # Intent Classification
 
-Reference document for the intent classification system used by `/forge-run` to auto-route requirements to the correct pipeline mode.
+Reference document for the intent classification system used by `/forge run` to auto-route requirements to the correct pipeline mode.
 
 ## Classification Table
 
@@ -17,20 +17,53 @@ Reference document for the intent classification system used by `/forge-run` to 
 | **performance** | "optimize", "performance", "slow", "latency", "bundle size", "memory", "N+1", "throughput", "cache" | Any 2+ signals or 1 strong signal with measurable target | `fg-100-orchestrator` standard mode (EXPLORE includes profiling/benchmarking, REVIEW uses performance-focused reviewer set) |
 | **single-feature** | Clear, bounded requirement with identifiable scope | Default when no other intent matches | `fg-100-orchestrator` standard mode |
 
+## Hybrid-grammar verbs (added 2026-04-27)
+
+The new `/forge` skill (per spec §1) recognizes 11 explicit verbs as the FIRST token of input. When present, the verb wins outright — no signal-counting, no NL classification. The classifier still runs to populate downstream telemetry but its outcome is overridden.
+
+| Verb | Mode |
+|---|---|
+| `run` | `single-feature` (or downstream split via multi-feature detection) |
+| `fix` | `bugfix` |
+| `sprint` | `multi-feature` (sprint orchestration) |
+| `review` | `review` (read or fix scope, per `--scope`/`--fix` flags) |
+| `verify` | `verify` (build/lint/test or config) |
+| `deploy` | `deploy` |
+| `commit` | `commit` |
+| `migrate` | `migration` |
+| `bootstrap` | `bootstrap` (greenfield) |
+| `docs` | `documentation` |
+| `audit` | `security-audit` |
+
+Detection rule: `^\s*(run|fix|sprint|review|verify|deploy|commit|migrate|bootstrap|docs|audit)\b`. The match is case-sensitive and operates on the trimmed input. Anything matching falls into the verb's mode unconditionally.
+
+When the input does NOT match the verb regex, the rest of this document's classifier runs as before — including the `vague` outcome below.
+
+## Vague outcome (concrete threshold, added 2026-04-27)
+
+The `vague` row in the table above is now defined concretely:
+
+> **Vague triggers when:** the input contains fewer than 2 of the four completeness signals (actors, entities, surface, criteria) AND the input does not match any explicit verb regex AND no other intent reaches its confidence threshold.
+
+When `vague` fires, the dispatcher routes to `run` mode (single-feature). The `run` pipeline immediately enters BRAINSTORMING (per spec §3), where `fg-010-shaper` resolves the ambiguity through clarifying questions.
+
+This keeps the classifier deterministic — it never returns `vague` and walks away. It always returns a route; `vague` is just the route that says "go through BRAINSTORMING first."
+
 ## Classification Priority
 
 When multiple intents match, use this precedence (highest first):
-1. Explicit prefix/flag override (always wins)
-2. bugfix (specific, actionable)
-3. migration (specific pattern)
-4. bootstrap (specific or environmental)
-5. multi-feature (structural detection)
-6. testing (specific — test-focused requests)
-7. documentation (specific — doc-focused requests)
-8. refactor (specific — improvement-focused requests)
-9. performance (specific — performance-focused requests)
-10. vague (catch-all for unclear)
-11. single-feature (default)
+1. Explicit hybrid-grammar verb (always wins — see "Hybrid-grammar verbs" above)
+2. Explicit prefix/flag override (always wins)
+3. bugfix (specific, actionable)
+4. migration (specific pattern)
+5. bootstrap (specific or environmental)
+6. multi-feature (structural detection)
+7. testing (specific — test-focused requests)
+8. documentation (specific — doc-focused requests)
+9. refactor (specific — improvement-focused requests)
+10. performance (specific — performance-focused requests)
+11. vague (catch-all for unclear)
+12. single-feature (default)
 
 ## Signal Detection Rules
 

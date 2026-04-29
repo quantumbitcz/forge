@@ -56,11 +56,11 @@ cmd_summary() {
     exit 2
   fi
 
-  "${FORGE_PYTHON:-python3}" -c "
+  "${FORGE_PYTHON:-python3}" - "$result_file" "$format" <<'PYEOF'
 import json, sys
 
-data = json.load(open('${result_file}'))
-fmt = '${format}'
+data = json.load(open(sys.argv[1]))
+fmt = sys.argv[2]
 tasks = data.get('results', {}).get('tasks', [])
 agg = data.get('results', {}).get('aggregate', {})
 
@@ -69,30 +69,30 @@ if fmt == 'json':
 elif fmt == 'markdown':
     print('## Eval Summary')
     print('')
-    print(f'Suite: **{data.get(\"suite\", \"unknown\")}**')
-    print(f'Timestamp: {data.get(\"timestamp\", \"unknown\")}')
-    print(f'Duration: {data.get(\"duration_seconds\", 0)}s')
+    print(f"Suite: **{data.get('suite', 'unknown')}**")
+    print(f"Timestamp: {data.get('timestamp', 'unknown')}")
+    print(f"Duration: {data.get('duration_seconds', 0)}s")
     print('')
-    print(f'Pass Rate: **{agg.get(\"pass_rate\", 0):.1%}** ({agg.get(\"passed\", 0)}/{agg.get(\"total\", 0)})')
+    print(f"Pass Rate: **{agg.get('pass_rate', 0):.1%}** ({agg.get('passed', 0)}/{agg.get('total', 0)})")
     print('')
     print('| Task | Language | Difficulty | Result | Score | Duration |')
     print('|------|----------|------------|--------|-------|----------|')
     for t in tasks:
         score = t.get('final_score', '-') or '-'
-        print(f'| {t[\"id\"]} | {t[\"language\"]} | {t[\"difficulty\"]} | {t[\"result\"]} | {score} | {t.get(\"duration_seconds\", 0)}s |')
+        print(f"| {t['id']} | {t['language']} | {t['difficulty']} | {t['result']} | {score} | {t.get('duration_seconds', 0)}s |")
     qs = agg.get('quality_summary', {})
     if qs:
         print('')
         print('### Quality')
-        print(f'- Avg Score: {qs.get(\"avg_score\", \"-\")}')
-        print(f'- Total Tokens: {qs.get(\"total_tokens\", 0):,}')
-        print(f'- Total Cost: \${qs.get(\"total_cost_usd\", 0):.2f}')
+        print(f"- Avg Score: {qs.get('avg_score', '-')}")
+        print(f"- Total Tokens: {qs.get('total_tokens', 0):,}")
+        print(f"- Total Cost: ${qs.get('total_cost_usd', 0):.2f}")
 else:
     # Table format
-    print(f'Suite: {data.get(\"suite\", \"unknown\")}')
-    print(f'Timestamp: {data.get(\"timestamp\", \"unknown\")}')
-    print(f'Duration: {data.get(\"duration_seconds\", 0)}s')
-    print(f'Pass Rate: {agg.get(\"pass_rate\", 0):.1%} ({agg.get(\"passed\", 0)}/{agg.get(\"total\", 0)})')
+    print(f"Suite: {data.get('suite', 'unknown')}")
+    print(f"Timestamp: {data.get('timestamp', 'unknown')}")
+    print(f"Duration: {data.get('duration_seconds', 0)}s")
+    print(f"Pass Rate: {agg.get('pass_rate', 0):.1%} ({agg.get('passed', 0)}/{agg.get('total', 0)})")
     print('')
     print('{:<25} {:<12} {:<10} {:<8} {:<8} {:<10}'.format(
         'Task', 'Language', 'Difficulty', 'Result', 'Score', 'Duration'))
@@ -105,8 +105,8 @@ else:
     qs = agg.get('quality_summary', {})
     if qs and qs.get('avg_score') is not None:
         print('')
-        print(f'Avg Score: {qs[\"avg_score\"]}  Tokens: {qs.get(\"total_tokens\", 0):,}  Cost: \${qs.get(\"total_cost_usd\", 0):.2f}')
-"
+        print(f"Avg Score: {qs['avg_score']}  Tokens: {qs.get('total_tokens', 0):,}  Cost: ${qs.get('total_cost_usd', 0):.2f}")
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -162,11 +162,11 @@ cmd_trend() {
     exit 2
   fi
 
-  "${FORGE_PYTHON:-python3}" -c "
+  "${FORGE_PYTHON:-python3}" - "$format" "${result_files[@]}" <<'PYEOF'
 import json, sys
 
-files = $(printf '"%s",' "${result_files[@]}" | sed 's/,$//' | sed 's/^/[/' | sed 's/$/]/')
-fmt = '${format}'
+fmt = sys.argv[1]
+files = sys.argv[2:]
 
 runs = []
 for f in files:
@@ -216,7 +216,7 @@ elif fmt == 'markdown':
     print('|-----------|-------|-----------|--------------|-----------|--------|------|')
     for r in runs:
         score = r['avg_score'] if r['avg_score'] is not None else '-'
-        print(f'| {r[\"timestamp\"]} | {r[\"suite\"]} | {r[\"pass_rate\"]:.1%} | {r[\"passed\"]}/{r[\"total\"]} | {score} | {r[\"total_tokens\"]:,} | \${r[\"total_cost\"]:.2f} |')
+        print(f"| {r['timestamp']} | {r['suite']} | {r['pass_rate']:.1%} | {r['passed']}/{r['total']} | {score} | {r['total_tokens']:,} | ${r['total_cost']:.2f} |")
 else:
     print(f'Trend: {trend}')
     print('')
@@ -225,11 +225,11 @@ else:
     print('-' * 90)
     for r in runs:
         score = str(r['avg_score']) if r['avg_score'] is not None else '-'
-        print('{:<25} {:<10} {:<12} {:<14} {:<10} {:<12} \${:<.2f}'.format(
-            r['timestamp'], r['suite'], f'{r[\"pass_rate\"]:.1%}',
-            f'{r[\"passed\"]}/{r[\"total\"]}', score,
-            f'{r[\"total_tokens\"]:,}', r['total_cost']))
-"
+        print('{:<25} {:<10} {:<12} {:<14} {:<10} {:<12} ${:<.2f}'.format(
+            r['timestamp'], r['suite'], f"{r['pass_rate']:.1%}",
+            f"{r['passed']}/{r['total']}", score,
+            f"{r['total_tokens']:,}", r['total_cost']))
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -253,11 +253,11 @@ cmd_cross_model() {
     exit 2
   fi
 
-  "${FORGE_PYTHON:-python3}" -c "
+  "${FORGE_PYTHON:-python3}" - "$format" "${result_files[@]}" <<'PYEOF'
 import json, sys
 
-files = $(printf '"%s",' "${result_files[@]}" | sed 's/,$//' | sed 's/^/[/' | sed 's/$/]/')
-fmt = '${format}'
+fmt = sys.argv[1]
+files = sys.argv[2:]
 
 models = []
 for f in files:
@@ -289,11 +289,11 @@ else:
     print('-' * 70)
     for m in models:
         score = str(m['avg_score']) if m['avg_score'] is not None else '-'
-        print('{:<12} {:<12} {:<14} {:<10} {:<12} \${:<.2f}'.format(
-            m['model'], f'{m[\"pass_rate\"]:.1%}',
-            f'{m[\"passed\"]}/{m[\"total\"]}', score,
-            f'{m[\"total_tokens\"]:,}', m['total_cost']))
-"
+        print('{:<12} {:<12} {:<14} {:<10} {:<12} ${:<.2f}'.format(
+            m['model'], f"{m['pass_rate']:.1%}",
+            f"{m['passed']}/{m['total']}", score,
+            f"{m['total_tokens']:,}", m['total_cost']))
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -315,11 +315,11 @@ cmd_export() {
     exit 2
   fi
 
-  "${FORGE_PYTHON:-python3}" -c "
+  "${FORGE_PYTHON:-python3}" - "$result_file" "$format" <<'PYEOF'
 import json, sys
 
-data = json.load(open('${result_file}'))
-fmt = '${format}'
+data = json.load(open(sys.argv[1]))
+fmt = sys.argv[2]
 tasks = data.get('results', {}).get('tasks', [])
 
 if fmt == 'json':
@@ -330,17 +330,17 @@ elif fmt == 'csv':
         score = t.get('final_score', '')
         if score is None:
             score = ''
-        print(f'{t[\"id\"]},{t[\"language\"]},{t[\"difficulty\"]},{t[\"result\"]},{score},{t.get(\"duration_seconds\", 0)}')
+        print(f"{t['id']},{t['language']},{t['difficulty']},{t['result']},{score},{t.get('duration_seconds', 0)}")
 elif fmt == 'markdown':
     print('| Task | Language | Difficulty | Result | Score | Duration |')
     print('|------|----------|------------|--------|-------|----------|')
     for t in tasks:
         score = t.get('final_score', '-') or '-'
-        print(f'| {t[\"id\"]} | {t[\"language\"]} | {t[\"difficulty\"]} | {t[\"result\"]} | {score} | {t.get(\"duration_seconds\", 0)}s |')
+        print(f"| {t['id']} | {t['language']} | {t['difficulty']} | {t['result']} | {score} | {t.get('duration_seconds', 0)}s |")
 else:
     print(f'ERROR: Unknown format: {fmt}', file=sys.stderr)
     sys.exit(1)
-"
+PYEOF
 }
 
 # ---------------------------------------------------------------------------

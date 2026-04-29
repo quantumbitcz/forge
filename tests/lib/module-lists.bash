@@ -77,42 +77,17 @@ done
 # ---------------------------------------------------------------------------
 # Minimum count guards (update these when intentionally adding/removing modules)
 # ---------------------------------------------------------------------------
+MIN_AGENTS=51
 MIN_FRAMEWORKS=24
-MIN_SKILLS=29
+MIN_SKILLS=3
 
-# Canonical post-Phase-05 skill names. Tasks are written to ensure the skills
+# Canonical post-Mega-B skill names. Tasks are written to ensure the skills
 # directory contains exactly this set. `DISCOVERED_SKILLS` is compared to
 # `EXPECTED_SKILL_NAMES` by `tests/structural/skill-consolidation.bats`.
 EXPECTED_SKILL_NAMES=(
-  forge-abort
+  forge
+  forge-admin
   forge-ask
-  forge-automation
-  forge-bootstrap
-  forge-commit
-  forge-compress
-  forge-config
-  forge-deploy
-  forge-docs-generate
-  forge-fix
-  forge-graph
-  forge-handoff
-  forge-help
-  forge-history
-  forge-init
-  forge-insights
-  forge-migration
-  forge-playbook-refine
-  forge-playbooks
-  forge-profile
-  forge-recover
-  forge-review
-  forge-run
-  forge-security-audit
-  forge-shape
-  forge-sprint
-  forge-status
-  forge-tour
-  forge-verify
 )
 MIN_LANGUAGES=15
 MIN_TESTING_FILES=19
@@ -142,10 +117,13 @@ MIN_DOCUMENTATION_BINDINGS=21
 
 # ---------------------------------------------------------------------------
 # Test file count guards (update when adding new test files)
+# Wired in by tests/structural/test-floor-counts.bats — accidental
+# deletion of test files trips the structural suite.
 # ---------------------------------------------------------------------------
-MIN_UNIT_TESTS=108        # Current: 132 files (added 4 phase-08 structural tests)
-MIN_CONTRACT_TESTS=83     # Current: 85 files
-MIN_SCENARIO_TESTS=40     # Current: 41 files
+MIN_UNIT_TESTS=210        # tests/unit/**/*.{bats,py}
+MIN_CONTRACT_TESTS=120    # tests/contract/**/*.{bats,py}
+MIN_STRUCTURAL_TESTS=39   # tests/structural/**/*.bats
+MIN_SCENARIO_TESTS=6      # tests/scenarios/**/*.bats (gateway scenarios; reviewer/feature/eval scenarios live under tests/scenario/, not counted here)
 
 # guard_min_count <label> <actual> <minimum>
 # Returns 0 if actual >= minimum, 1 otherwise. Prints message on failure.

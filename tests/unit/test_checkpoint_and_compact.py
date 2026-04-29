@@ -20,7 +20,7 @@ def test_checkpoint_writes_entry(tmp_path: Path, monkeypatch):
     assert checkpoint.main(stdin=stdin) == 0
     ckpt = tmp_path / ".forge" / "checkpoints.jsonl"
     assert ckpt.exists()
-    line = json.loads(ckpt.read_text().strip().splitlines()[-1])
+    line = json.loads(ckpt.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert line["skill"] == "forge-run"
     assert "timestamp" in line
 

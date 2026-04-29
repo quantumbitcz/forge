@@ -118,6 +118,7 @@ def test_k8s_framework_allows_null_language(tmp_path):
         commands:
           build: kubectl apply
           test: kubectl get pods
+          lint: kubectl apply --dry-run=client -f .
         ---
         """)
     project = _make_project(tmp_path, k8s_local)
@@ -141,6 +142,12 @@ VALID_CONFIG = textwrap.dedent("""\
       target_score: 90
     shipping:
       min_score: 90
+    cost:
+      ceiling_usd: 25
+      tier_estimates_usd:
+        fast: 0.5
+        standard: 2.0
+        premium: 8.0
     ```
     """)
 
@@ -173,6 +180,12 @@ def test_unknown_top_level_field_emits_warning(tmp_path):
         scoring:
           pass_threshold: 80
           concerns_threshold: 60
+        cost:
+          ceiling_usd: 25
+          tier_estimates_usd:
+            fast: 0.5
+            standard: 2.0
+            premium: 8.0
         wibble:
           foo: bar
         ```

@@ -53,15 +53,18 @@ _linear_available() {
     echo "false"
     return 0
   fi
-  "${FORGE_PYTHON:-python3}" -c "
-import json, sys
+  "${FORGE_PYTHON:-python3}" - "${FORGE_DIR}/state.json" <<'PY' 2>/dev/null || echo "false"
+import json
+import sys
+from pathlib import Path
+
 try:
-    with open('${FORGE_DIR}/state.json') as f:
+    with Path(sys.argv[1]).open() as f:
         d = json.load(f)
     print(str(d.get('integrations', {}).get('linear', {}).get('available', False)).lower())
 except Exception:
     print('false')
-" 2>/dev/null || echo "false"
+PY
 }
 
 # ── Emit ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,16 @@
+CHANGELOG.md
+DEPRECATIONS.md
+skills/forge-admin/SKILL.md
+skills/forge-ask/SKILL.md
+skills/forge/SKILL.md
+tests/contract/a2a-protocol.bats
+tests/contract/cross-repo.bats
+tests/contract/mcp-provisioning.bats
+tests/contract/mcp-server.bats
+tests/contract/state-schema.bats
+tests/structural/migration-callsites.txt
+tests/structural/skill-consolidation.bats
+tests/unit/skill-execution/forge-commit.bats
+tests/unit/skill-execution/forge-review-integration.bats
+tests/unit/skill-execution/forge-run-integration.bats
+tests/unit/skill-execution/verify-integration.bats

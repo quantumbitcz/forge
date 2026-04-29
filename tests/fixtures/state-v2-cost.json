@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "_seq": 0,
+  "run_id": "test-run-phase6",
+  "mode": "standard",
+  "autonomous": false,
+  "stage": "IMPLEMENTING",
+  "cost": {
+    "ceiling_usd": 10.00,
+    "spent_usd": 0.00,
+    "remaining_usd": 10.00,
+    "pct_consumed": 0.0,
+    "tier_estimates_usd": {"fast": 0.016, "standard": 0.047, "premium": 0.078},
+    "conservatism_multiplier": {"fast": 1.0, "standard": 1.0, "premium": 1.0},
+    "tier_breakdown": {"fast": 0.0, "standard": 0.0, "premium": 0.0},
+    "downgrade_count": 0,
+    "downgrades": [],
+    "throttle_events": [],
+    "ceiling_breaches": 0
+  }
+}

@@ -5,10 +5,503 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Consolidates post-3.5.0 polish across docs architecture, agent layer refactor, repo-map PageRank, and speculation — no version bump yet.
+## [6.0.0] - 2026-04-28 — Phase 8 Measurement
+
+### Added
+- `tests/evals/benchmark/` harness: curated real-feature benchmark corpus, weekly CI cron, 3×2 OS/model matrix.
+- `SCORECARD.md` at repo root — weekly solve-rate numbers with sparklines and regression table.
+- `tests/evals/benchmark/baseline.json` frozen baseline + 10pp regression gate.
+- New learning type `benchmark.regression` (Phase 4 integration).
+- OTel `forge.benchmark.run` span.
+- ADR 0013 (weekly benchmark extension).
+
+### Changed
+- `shared/observability.md` lists benchmark span attributes.
+- `shared/learnings/README.md` lists new learning type.
+- `README.md` + `CLAUDE.md` link to SCORECARD.md.
+
+### Config
+- `benchmark.max_weekly_cost_usd: 200` (conservative initial; refresh after 90 days of data).
+- `benchmark.timeout_seconds.{S,M,L}: 900/2700/5400`.
+
+## [5.3.0] — Mega E: Documentation Rollup
+
+### Changed (Phase E1 — CLAUDE.md + README.md mega update)
+
+- **`CLAUDE.md`** rewritten across multiple sections to reflect post-Mega-A/B/C/D state:
+  - "Start Here" 3-step path with auto-bootstrap-aware `/forge "<requirement>"` invocation
+  - "What this is" intro: BRAINSTORMING inserted into the stage list (`Preflight → Brainstorming → Explore → ...`); entry simplified to `/forge → fg-100-orchestrator`
+  - Architecture: `agents/ (51)`, `skills/ (3)`
+  - Skill selection guide: collapsed from 26-row table to a 3-row table (forge / forge-ask / forge-admin) with subcommand grammar in each `SKILL.md`
+  - "Getting started flows": rewritten for the post-consolidation surface
+  - "Agents (51, agents/*.md)": header + enumeration include `fg-021-hypothesis-investigator`
+  - **New "Pattern parity" subsection** under Core contracts: 5-uplift table (planner / reviewer pipeline / post-run / bug investigator / PR builder) + 4 beyond-superpowers extensions (consistency voting, transcript mining, hypothesis branching, structured PR finishing)
+  - Routing & decomposition / Skills/hooks/kanban/git / Pipeline modes / Implementation gotchas / Survives reset / Confidence: all updated for the new surface and Megas C/D additions (BRAINSTORMING route at confidence < 0.4; brainstorm-transcripts and feedback-decisions in survives-reset list)
+- **`README.md`** rewritten:
+  - Badges: agents 51, skills 3, frameworks 24, tests 760+, finding_categories 149
+  - Lead: "51 specialized agents"
+  - Quick Start: auto-bootstrap-aware
+  - Key features: auto-bootstrap, always-on brainstorming, hypothesis-driven debugging, multi-VCS, structured PR finishing, consistency voting
+  - Available skills: 3-row table
+  - Multi-VCS support subsection (GitHub, GitLab, Bitbucket, Gitea)
+
+### Changed (Phase E2 — FEATURE_MATRIX block regeneration)
+
+- **`CLAUDE.md`** sentinel-bounded FEATURE_MATRIX block (`<!-- FEATURE_MATRIX_START -->` / `<!-- FEATURE_MATRIX_END -->`) regenerated to cover F05-F44 + 17 unnumbered "auto" capabilities. Phase 2 §AC-8 contract preserved (sentinels exactly-once on their own line; ASCII-only between sentinels).
+- **F-number rationalization** (caught at review):
+  - F35 = Intent verification gate (Phase 7)
+  - F36 = Implementer voting (Phase 7)
+  - F37 = BRAINSTORMING (Mega C)
+  - F38 = Transcript mining (Mega C)
+  - F39 = Cross-reviewer consistency voting (Mega D)
+  - F40 = Defense-check feedback handling (Mega D)
+  - F41 = Hypothesis branching for bugs (Mega D)
+  - F42 = Multi-VCS platform abstraction (Mega D)
+  - F43 = Structured PR finishing (Mega D)
+  - F44 = Stale-worktree detection (Mega D)
+  - "Speculative plan branches" (never shipped with config wiring) demoted to unnumbered "auto" row.
+- **`shared/feature_matrix_generator.py` FEATURES dict** synced to the v5.3.0 inventory (was diverging — pre-fix had only F35 = Speculative plan branches with no F36+).
+- **`shared/feature-matrix.md`** regenerated from the updated generator.
+- **F35 label collision fixed in CLAUDE.md prose**: "Cost governance" was carrying a stale `F35` annotation that conflicted with the canonical F35 = Intent verification gate. Cost governance is not a numbered feature; the annotation was dropped.
+
+### Changed (Discovered drift, fixed during review)
+
+- README badge `tests-3040+` was wildly stale. Actual test file count: 761 (`*.bats` + `*test*.py`). Badge now reads `tests-760+`.
+- README badge `finding_categories-87+` and CLAUDE.md prose "92 categories" both stale. Actual count in `shared/checks/category-registry.json`: 149. Both updated to 149.
+- CLAUDE.md prose annotation `.claude-plugin/plugin.json (v4.1.0)` was 4 majors stale; updated to current.
+
+### Removed
+
+- **`docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md`** — Mega E plan retired per `feedback_cleanup_after_ship`.
+- **`docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`** — shared mega spec retired. This spec was retained across Megas A/B/C/D as the canonical mapping holder; v5.3.0 is the last reference. The Phase 2 design doc and runtime artifacts (the SKILLs themselves, the BRAINSTORMING agent, the parity-uplift agents) are now the source of truth.
+- **AC-S005 allowlist** trimmed from 12 to 10 entries: removes `docs/superpowers/plans/2026-04-27-mega-consolidation-E-docs.md` and `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md`.
+
+### Notes
+
+- **Mega-consolidation train complete.** Phases A/B/C/D/E shipped sequentially across v4.3.0 → v5.3.0. The 5-plan train rewrote: helper modules + state schema (A); skill surface (B, BREAKING); brainstorming behavior (C); five superpowers patterns + four beyond-superpowers extensions (D); doc rollup + feature-matrix regeneration (E).
+- **Carry-overs** (`spring/*`, `kotlin.md`, `tests/lib/bats-core` submodule) remain unstaged across the v5.3.0 release window per existing convention.
+- **Next:** Phase 8 — Measurement (target v6.0.0, possibly BREAKING). It introduces the benchmark runner that exercises the post-mega skill surface end-to-end.
+
+## [5.2.0] — Mega D: Pattern Parity Uplifts
+
+### Added (Phase D1 — Planner writing-plans parity)
+
+- **`agents/fg-200-planner.md`** rewritten (~595 lines) to mirror the `superpowers:writing-plans` pattern. Per-task structure: `**Type:** test|implementation|refactor`, `**Implementer prompt:** {block}`, `**Spec-reviewer prompt:** {block}`, `**ACs covered:**`, `**Risk:** low|medium|high`, `**Risk justification:**` (≥30 words for high-risk). Bugfix-mode reads `state.bug.fix_gate_passed` (set by D6) and emits `BLOCKED-BUG-INCONCLUSIVE` verdict if false.
+- **`shared/prompts/implementer-prompt.md`** + **`shared/prompts/spec-reviewer-prompt.md`** — canonical dispatch templates with placeholders (`{TASK_DESCRIPTION}`, `{ACS}`, `{FILE_PATHS}`). Reused across D-phase commits for consistency.
+
+### Added (Phase D2 — Validator enforcement)
+
+- **`agents/fg-210-validator.md`** gains 6 new structural rules: W1 (TDD ordering: every implementation task has a preceding test task), W2 (every task has an implementer prompt — extended to reject unsubstituted `{PLACEHOLDER}` text per review), W3 (every test task has a spec-reviewer prompt), W4 (Risk field present), W5 (Risk justification ≥30 words for high-risk), W6 (bugfix-mode fix-gate read enforcement).
+
+### Added (Phase D3 — Reviewer prose-output uplift)
+
+- All 9 reviewer agents (`fg-410`, `fg-411`, `fg-412`, `fg-413`, `fg-414`, `fg-416`, `fg-417`, `fg-418`, `fg-419`) emit a structured prose report alongside the findings JSON. Sections: `## Strengths`, `## Issues` (with `### Critical (Must Fix)` / `### Important (Should Fix)` / `### Minor (Nice to Have)` subheadings), `## Recommendations`, `## Assessment` (`**Ready to merge:**` + `**Reasoning:**`). Path: `.forge/runs/<run_id>/reports/<reviewer>.md`.
+- **`agents/fg-400-quality-gate.md` §5.5** — orchestrates report writing: pre-creates `reports/` dir, passes `<run_id>` in each reviewer brief, post-dispatch verifies report-file presence (emits `REPORT-MISSING` WARNING for absences), surfaces report paths in stage notes.
+- All 9 reviewers gain `Write` in their `tools:` frontmatter (caught at review — was missing from D3, blocked the contract at runtime).
+
+### Added (Phase D4 — Cross-reviewer consistency voting)
+
+- **`agents/fg-400-quality-gate.md` §7.5** — post-dedup, pre-scoring promotion pass. Findings keyed by `(file, line, category)` and surfaced by `quality_gate.consistency_promotion.threshold` (default 3, range 2-9) distinct reviewers receive `consistency_promoted: true` + `confidence_weight` boost. `quality_gate.consistency_promotion.enabled: false` short-circuits.
+
+### Added (Phase D5 — Post-run: receiving-code-review + multi-platform)
+
+- **`agents/fg-710-post-run.md`** rewritten — defense-check sub-agent dispatch classifies each PR comment as `actionable | wrong | preference`. `feedback_loop_count` increments ONLY on `actionable` verdicts. Writes to `.forge/runs/<id>/feedback-decisions.jsonl`.
+- **Multi-platform support** via `state.platform.name` (consumes Mega C2's PREFLIGHT detection). Wires up `shared/platform_adapters/{github,gitlab,bitbucket,gitea}.py` (replaces the A3 `NotImplementedError` stubs). GitHub: `gh` CLI + urllib fallback (GHE-aware). GitLab: `glab` CLI + urllib (self-hosted-aware). Bitbucket: Basic auth (app password). Gitea: token auth (Forgejo-compat).
+- **`addressed` enum** extended with `acknowledged_local_only` (preference verdict + adapter unavailable; mirrors `defended_local_only`) and `skipped_sub_agent_failure` (sub-agent timeout/error path; does NOT increment `feedback_loop_count` — prevents flaky sub-agent escalation noise).
+
+### Added (Phase D6 — Hypothesis branching + Bayesian pruning)
+
+- **`agents/fg-020-bug-investigator.md`** rewritten (475 lines) — hypothesis register schema persisted to `state.bug.hypotheses[]` (8 fields: id, statement, falsifiability_test, evidence_required, status, passes_test, confidence, posterior). Parallel sub-investigator dispatch via single Task tool-use block (up to 3 concurrent fg-021 invocations). Bayesian pruning: prior × likelihood → posterior; prune below 0.10 threshold. Fix gate at posterior ≥ 0.75 → `state.bug.fix_gate_passed = true`. `bug.hypothesis_branching.enabled: false` short-circuits to single-hypothesis serial mode (with non-tested hypothesis exclusion to prevent posterior dilution — fixed at review).
+- **`agents/fg-021-hypothesis-investigator.md`** (new, 101 lines) — Tier-4 single-purpose agent. Tests one hypothesis; returns evidence + likelihood update with `confidence: high|medium|low`. Tools: `Read, Grep, Glob, Bash`. No UI tier capabilities.
+- Agent count: 50 → 51.
+
+### Added (Phase D7 — PR builder finishing-dialog)
+
+- **`agents/fg-600-pr-builder.md`** rewritten — adopts `superpowers:finishing-a-development-branch` pattern. AskUserQuestion dialog with 5 strategies: `[open-pr]` (default), `[open-pr-draft]`, `[direct-push]`, `[stash]`, `[abandon]`. Cleanup checklist invocation. Abandon-confirmation gate (second confirmation required before destructive ops). `pr_builder.{default_strategy, cleanup_checklist_enabled}` config keys.
+
+### Added (Phase D8 — Strong-agent polish)
+
+- **`agents/fg-300-implementer.md`** — TEST-NOT-FAILING check (red-before-green). Scope-gated: applies to Type=implementation tasks (where prior dispatch wrote the test); §5.2's RED-then-GREEN flow handles unified-mode dispatches.
+- **`agents/fg-301-implementer-judge.md`** — defers to fg-300's TEST-NOT-FAILING (no double-flagging).
+- **`agents/fg-590-pre-ship-verifier.md`** — references the canonical `shared/verification-evidence.md` evidence schema (the conflicting §10 schema introduced and removed during review).
+- **`agents/fg-100-orchestrator.md`** — parallel-dispatch single-block pattern + per-task checkpoint (per-task remains canonical; the every-3-tasks block is a review-cadence note, not a replacement).
+- **`agents/fg-101-worktree-manager.md`** — stale-worktree detection (mtime > `worktree.stale_after_days` default 30, range 1-365 → `WORKTREE-STALE` finding).
+
+### Added (Phase D9 — Pattern-parity tests)
+
+- 11 structural bats files covering planner TDD ordering, planner risk justification, reviewer prose shape, fg-020 hypothesis register, fg-020 parallel dispatch, fg-021 frontmatter shape (now asserts T4 booleans), fg-600 PR finishing dialog, fg-710 defense check, orchestrator parallel-dispatch, fg-300 test-must-fail-first, fg-101 worktree-stale.
+- 5 scenario bats files covering cross-reviewer consistency promotion, defense flow per-platform, hypothesis branching, fix-gate thresholds, PR builder dialog.
+- 7 fixture artifacts under `tests/fixtures/phase-D/` (synthetic broken plans + multi-reviewer findings JSON).
+- **`tests/structural/test-floor-counts.bats`** (new) — wires `MIN_*_TESTS` constants from `module-lists.bash` into actual file-count enforcement.
+- The original D9 commit shipped with broken parser logic in `planner-tdd-ordering.bats` (awk `next` + rule order bug skipped non-last tasks; `sh -c` couldn't see bats functions); fixed at review (`3883df2e`). Several agent/test grep-pattern mismatches also fixed (case-sensitivity, multi-line co-occurrence, `default` casing).
+
+### Added (Cross-cutting — caught at review)
+
+- **`shared/checks/category-registry.json`** — 4 new wildcard entries: `WORKTREE-*`, `REPORT-*`, `FEEDBACK-*`, `BRANCH-*`.
+- **`shared/agents.md`** — agent count bumped to 51; fg-021 added to registry with T4 tier.
+- **`tests/lib/module-lists.bash`** — `MIN_AGENTS=48 → 51`. `MIN_*_TESTS` reseated to current floors and wired in.
+- **AC-S005 leak fix** — `agents/fg-100-orchestrator.md:156` rephrased to use post-Mega-B surface (`/forge run` etc.).
+
+### Notes
+
+- **Two reviewers, two failure classes.** Reviewer A flagged 3 CRITICAL agent-prompt contract gaps (reviewers without Write tool, fg-590 evidence-schema conflict, missing enum value). Reviewer B flagged 9 CRITICAL bugs in the D9 test layer itself — bats parsers that didn't actually parse, regexes that couldn't match, and a test that never tested its target agent. Both classes addressed in 4 fix commits (`aa86b037`, `3883df2e`, `76217f4f`, `f6960ec0`).
+- **Mega E plan agent count drift** corrected at this release: plan said 48 → 49; reality was 50 → 51 (Phase 7's fg-302 + fg-540 missing from plan's enumeration; Mega D added fg-021).
+- **Sub-agent timeout policy** — fg-710 now logs + writes `addressed: "skipped_sub_agent_failure"` and does NOT increment `feedback_loop_count` on sub-agent failure. Prior policy ("default to actionable") would have inflated escalation counters on flaky sub-agents.
+- **Bayes math in non-branching mode** — when `bug.hypothesis_branching.enabled: false`, untested hypotheses are excluded from posterior computation. Without this fix, a tested hypothesis with likelihood 0.95 would be diluted below the 0.75 fix-gate threshold by untested-hypothesis priors.
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core`) remain unstaged across the v5.2.0 release window per existing convention.
+
+## [5.1.0] — Mega C: Brainstorming Behavior
+
+### Added (Phase C1 — Shaper rewrite)
+
+- **`agents/fg-010-shaper.md`** rewritten (377 lines) adopting the proven `superpowers:brainstorming` pattern in-tree (no runtime dependency). Seven canonical headings (substring-greppable, AC-S021): `## Explore project context`, `## Ask clarifying questions`, `## Propose 2-3 approaches`, `## Present design sections`, `## Write spec`, `## Self-review`, `## Handoff`.
+- **Autonomous-mode degradation path** — when `state.brainstorm.autonomous == true`, the shaper does NOT call `AskUserQuestion`/`EnterPlanMode`. It invokes `python3 ${CLAUDE_PLUGIN_ROOT}/shared/ac-extractor.py --input -` (CLI added in this release), parses the JSON output, and writes the spec one-shot. AC-S022.
+- **Transcript mining** (AC-BEYOND-001/002/003) — the new `## Historical context` H2 (between `Explore` and `Ask`) queries F29 run-history-store FTS5 (`run_search` virtual table, BM25-ranked against `requirement` column). `## Handoff` writes a JSONL transcript to `.forge/brainstorm-transcripts/<run_id>.jsonl`. Honors `brainstorm.transcript_mining.enabled: false` short-circuit.
+- **Resume semantics** (AC-S023) — three resume cases enumerated: interactive-with-spec, interactive-without-spec, autonomous. `state.brainstorm.spec_path` is repo-relative (matches schema; absolute-path drift fixed during review).
+
+### Added (Phase C2 — Orchestrator wiring)
+
+- **`agents/fg-100-orchestrator.md`** updated (~180 lines added, 1 line removed; 1976 → 2120 lines total).
+- **§1 stage banner** — now reads `PREFLIGHT -> [BRAINSTORMING (feature mode only)] -> EXPLORE -> ...`. Bracket notation makes BRAINSTORMING explicitly conditional.
+- **§0.1 dispatch matrix** — replaces the legacy line `fg-010-shaper NOT dispatched by orchestrator — runs via /forge run.`. New matrix routes: standard mode → PREFLIGHT → BRAINSTORMING → EXPLORING; bug/migrate/bootstrap/--spec/--from past skip BRAINSTORMING; `brainstorm.enabled: false` short-circuits with log line `[AUTO] brainstorm disabled by config`.
+- **§0.4d Platform Detection** — new PREFLIGHT phase between §0.4c Background Execution and §0.5. Invokes `python3 ${CLAUDE_PLUGIN_ROOT}/shared/platform-detect.py --repo-root <path> --config-platform-detection <auto|...> --config-remote-name <name>` (CLI added in this release), parses JSON `{platform, remote_url, api_base, auth_method}`, writes `state.platform = {name, remote_url, api_base, auth_method, detected_at}`. Skip on resume if `state.platform.detected_at` already set. Failure → `state.platform.name = "unknown"`, log WARNING, **do NOT abort**. AC-FEEDBACK-006.
+- **`## Stage 0.5: BRAINSTORM`** — new stage block between Stage 0 PREFLIGHT and Stage 1 EXPLORE. SS0.5.1 (skip conditions), SS0.5.2 (dispatch via §4 standard 3-step wrapper), SS0.5.3 (post-dispatch validation: `state.brainstorm.spec_path` exists + matches the well-formedness regex from `tests/unit/skill-execution/spec-wellformed.bats`), SS0.5.4 (BRAINSTORMING → EXPLORING transition), SS0.5.5 (resume-routing note). On agent failure, logs `BRAINSTORM-NO-SPEC` finding (CRITICAL). AC-S019/S020/S023.
+- **§0.14 Check for Interrupted Runs** — extended to recognize `state.story_state == "BRAINSTORMING"`. Pass-through to BRAINSTORMING stage; the shaper agent owns the resume sub-routing.
+- **§5 --spec mode parser** updated to accept the canonical Goal/Scope/Acceptance criteria schema written by C1 (matches `spec-wellformed.bats` regex `## (Objective|Goal|Goals) | ## (Scope|Non-goals) | ## (Acceptance Criteria|ACs)`). The pre-existing Problem-Statement/Story schema is dropped per `feedback_no_backcompat`.
+- **MAX_LINES bump** — `tests/contract/test_fg100_size_budget.py` 2000 → 2200 (per `feedback_orchestrator_size`). Orchestrator at 2120, ~80 lines headroom.
+
+### Added (Phase A helper CLIs — backfilled this release)
+
+- **`shared/ac-extractor.py` CLI** — `__main__` + `argparse` block (`--input <path|->`) reads stdin or file, calls `extract_acs()`, prints `json.dumps({"acs": [...], "objective": "...", "confidence": "low|medium|high"})` to stdout. Exit 0 on success, 2 on parse error. The library `extract_acs(raw_text)` function remains unchanged for in-process callers.
+- **`shared/platform-detect.py` CLI** — `__main__` + `argparse` block (`--repo-root <path>`, `--config-platform-detection <auto|github|gitlab|bitbucket|gitea|none>`, `--config-remote-name <name>`). Prints `json.dumps(asdict(result))` to stdout including the optional `warning` field. Always exits 0 (non-detection is `"unknown"`, not error).
+- These CLIs were specified by Mega A's helper modules but never wired up; the v5.1.0 review caught the gap. The shaper (C1) and orchestrator §0.4d (C2) invocations would have silently degraded without them.
+
+### Changed (Cross-cutting)
+
+- **`shared/state-transitions.md`** — Row 1 BRAINSTORMING entry-guard fixed: `mode == "feature"` → `mode == "standard"` (matches the canonical `state.mode` enum from `state-schema-fields.md`). Without this fix, BRAINSTORMING never fired for the default mode (silent AC-S019 failure).
+- **`shared/state-schema.md`** — added `forge.brainstorm.section_approved` to the Stage 0.5 OTel event table (consumed by the shaper Telemetry section's emission rate analytics).
+- **OTel event renames in shaper** — `forge.brainstorm.start` → `forge.brainstorm.started`, `forge.brainstorm.question` → `forge.brainstorm.question_asked` (past tense, matches schema § OTel Events table).
+- **auth_method enum** harmonized between orchestrator §0.4d JSON example and `state-schema.md`: canonical set is `gh-cli | glab-cli | app-password | gitea-token | none`.
+- Mode vocabulary harmonized: "feature mode" → "standard mode" everywhere (in shaper, orchestrator, and the shared spec) to match the JSON value `state.mode == "standard"`.
+
+### Tests
+
+- **`tests/unit/ac_extractor_test.py`** + **`tests/unit/platform_detect_test.py`** — new CLI tests exercise the `__main__` blocks via `subprocess.run`, asserting JSON shape and exit codes.
+- `tests/structural/fg-010-shaper-shape.bats` (B13) `skip` clauses lift now that the seven canonical headings are present.
+
+### Notes
+
+- **Helper-module CLI gap caught at review** — Phase A shipped library-only Python helpers (`ac-extractor.py`, `platform-detect.py`); Phase C's shaper and orchestrator prose called them as if they had CLIs. Neither phase verified the cross-layer contract end-to-end. The review caught this as CRITICAL-1/2; the fix wave backfilled both CLIs in `044c6dbc`. Lesson: agent-prose contract changes must be paired with a contract-test commit that exercises the prescribed shell command, not just the library function.
+- **Cross-phase polish from review** — schema/parser/enum drifts (auth_method, OTel event names, mode value, FTS5 table name) all fixed in `c1ac042b`. The shared spec at `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` is allowlisted and was edited inline (still retained for Megas D/E).
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core`) remain unstaged across the v5.1.0 release window per existing convention.
+
+## [5.0.0] — Mega B: Skill Surface (BREAKING)
+
+### Removed (BREAKING)
+
+The 27 individual `/forge-<verb>` skills are removed. Their functionality is preserved as subcommands of three consolidated entry skills (`/forge`, `/forge-admin`, `/forge-ask`). Per `feedback_no_backcompat`, **no migration shim** is provided — old-name callers surface a "skill not found" at dispatch time.
+
+Deleted directories (27 atomic via `git rm -r`):
+
+`forge-abort`, `forge-automation`, `forge-bootstrap`, `forge-commit`, `forge-compress`, `forge-config`, `forge-deploy`, `forge-docs-generate`, `forge-fix`, `forge-graph`, `forge-handoff`, `forge-history`, `forge-init`, `forge-insights`, `forge-migration`, `forge-playbook-refine`, `forge-playbooks`, `forge-profile`, `forge-recover`, `forge-review`, `forge-run`, `forge-security-audit`, `forge-shape`, `forge-sprint`, `forge-status`, `forge-tour`, `forge-verify`.
+
+`/forge-help` was retired earlier in v3.8.0 (Phase 2); recorded here as part of the v5.0.0 closed-set manifest.
+
+`shared/skill-subcommand-pattern.md` deleted; the three consolidated skills inline their dispatch grammar.
+
+### Mapping (old slash-command → new surface)
+
+| Old | New | | Old | New |
+|---|---|---|---|---|
+| `/forge-init` | `/forge` (auto-bootstrap on first invocation) | | `/forge-recover` | `/forge-admin recover` |
+| `/forge-run` | `/forge run` | | `/forge-abort` | `/forge-admin abort` |
+| `/forge-fix` | `/forge fix` | | `/forge-config` | `/forge-admin config` |
+| `/forge-shape` | `/forge run` (BRAINSTORMING absorbed) | | `/forge-handoff` | `/forge-admin handoff` |
+| `/forge-sprint` | `/forge sprint` | | `/forge-automation` | `/forge-admin automation` |
+| `/forge-review` | `/forge review` | | `/forge-playbooks` | `/forge-admin playbooks` |
+| `/forge-verify` | `/forge verify` | | `/forge-playbook-refine` | `/forge-admin refine` |
+| `/forge-deploy` | `/forge deploy` | | `/forge-compress` | `/forge-admin compress` |
+| `/forge-commit` | `/forge commit` | | `/forge-graph` | `/forge-admin graph` |
+| `/forge-migration` | `/forge migrate` | | `/forge-status` | `/forge-ask status` |
+| `/forge-bootstrap` | `/forge bootstrap` | | `/forge-history` | `/forge-ask history` |
+| `/forge-docs-generate` | `/forge docs` | | `/forge-insights` | `/forge-ask insights` |
+| `/forge-security-audit` | `/forge audit` | | `/forge-profile` | `/forge-ask profile` |
+| `/forge-help` | `/forge --help` | | `/forge-tour` | `/forge-ask tour` |
+
+### Added (Phase B1-B3 — Three consolidated skills)
+
+- **`skills/forge/SKILL.md`** (384 lines, `[writes]`) — universal write-surface entry. Hybrid grammar: 11 verb subcommands (run, fix, sprint, review, verify, deploy, commit, migrate, bootstrap, docs, audit) plus NL fallback through `shared/intent-classification.md`. Auto-bootstrap on missing `.claude/forge.local.md` via `shared/bootstrap-detect.py` (added in A2). Top-level flags `--dry-run`, `--autonomous`, `--from=<stage>`, `--spec`, `--background` consumed before verb dispatch.
+- **`skills/forge-admin/SKILL.md`** (1532 lines, `[writes]`) — state-management surface. 9 subcommands: recover, abort, config, handoff, automation, playbooks, refine, compress, graph. Bodies copied verbatim from the now-deleted source skills. `### Subcommand: graph` enforces read-only Cypher (regex bans `CREATE | MERGE | DELETE | SET | REMOVE | DROP`).
+- **`skills/forge-ask/SKILL.md`** (1000 lines, `[reads]`) — read-only surface (rewrite of pre-existing 171-line `/forge-ask`). 6 subcommands: ask (default NL Q&A), status, history, insights, profile, tour. `allowed-tools` excludes `Write`/`Edit` (AC-S012 contract; writes via `Bash` heredoc to `.forge/ask-cache/` and `.forge/reports/` only). Absorbs `forge-status --- live ---` content from Phase 1 Task 24.
+
+### Changed (Phase B5-B10 — Repo-wide rewire)
+
+- **~150 files rewired** across `docs/`, `tests/`, `agents/`, `shared/`, `modules/`, root files (`README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `plugin.json`, `marketplace.json`, `install.sh`, `install.ps1`, `.github/`, `hooks/`, `evals/`). Drove by a single canonical perl mapping run against the B4 snapshot (`tests/structural/migration-callsites.txt`, 313 lines).
+- B7 manually reviewed `agents/fg-100-orchestrator.md`, `agents/fg-700-retrospective.md`, `agents/fg-710-post-run.md` for embedded refs missed by the perl boundary.
+- B8 reconciled `shared/intent-classification.md` to preserve A5's 11-verb list.
+- **AC-S005 callsite-cleanliness regex hardened** to use `HEAD/TAIL` character classes that reject path-separator and identifier neighbours, addressing the failure mode where `\b` fired on filesystem paths and compound names like `forge-config-template.md`.
+
+### Added (Phase B13 — Test fixtures)
+
+- **`tests/structural/skill-consolidation.bats`** (13 tests) — locks in the 3-skill surface; asserts retired-name absence; per-skill subcommand counts (11/9/6); frontmatter strings; read-only contracts; AC-S005 straggler check (hardened regex).
+- **`tests/unit/skill-execution/forge-dispatch.bats`** (15 tests) — 11 verb dispatch + 4 NL fallback (vague-input, classifier-resolved, unknown-verb, ambiguous-flag).
+- **`tests/unit/skill-execution/spec-wellformed.bats`** (AC-S029) — regex for `## Objective | ## Scope | ## Acceptance Criteria` triple.
+- **`tests/scenarios/autonomous-cold-start.bats`** (AC-S027) — full-pipeline cold-start scenario.
+- **`tests/structural/fg-010-shaper-shape.bats`** (AC-S021) — `skip` clauses keep it green until Mega C lands the 7-step BRAINSTORMING headers.
+- **`tests/structural/skill-references-allowlist.txt`** (13 entries) — explicit allowlist of files where retired-name references are intentionally retained (CHANGELOG, DEPRECATIONS, SHIP_ORDER, HANDOFF, Mega B plan, Mega E plan, Phase 2 design, shared spec, the 3 SKILLs, the snapshot, and the bats fixture itself).
+- **`tests/structural/migration-callsites.txt`** — frozen B4 snapshot (313 lines); canonical input to B5-B10's perl pipeline.
+
+### Removed (Tests)
+
+- **`tests/contract/test_skill_inventory.py`** — asserted `skill_count == 28` and banned `forge-help` references; both are obsolete post-consolidation. Coverage replaced by `tests/structural/skill-consolidation.bats`.
+
+### Changed (Module lists)
+
+- **`tests/lib/module-lists.bash`** — `MIN_SKILLS=29 → 3`; `EXPECTED_SKILL_NAMES` array replaced with `(forge forge-admin forge-ask)` and now consumed by `skill-consolidation.bats` (DRY).
+
+### Notes
+
+- **Sed-substitution discipline gap** — B5-B10's perl pattern used `\b` word-boundary, which fires on path separators (`.claude/forge-config.md` matched `/forge-config\b`). The first review caught 75+ filesystem-path refs miscorrected to `.claude/forge-admin config.md` (literal-space path); the post-review fix wave reverse-substituted these and replaced the AC-S005 regex with `HEAD/TAIL` character classes that reject path neighbours. Future similar work should anchor on `(?<![./-])/forge-<verb>` from the start.
+- **Plan + shared spec carry-over** — `docs/superpowers/specs/2026-04-27-skill-consolidation-design.md` is intentionally allowlisted and **retained** through this release; it is the shared mapping holder for Megas C/D/E and is removed only when Mega E ships. The Mega B plan is removed at this release per `feedback_cleanup_after_ship`.
+- Carried-over dirty files (`spring/*`, `kotlin.md`, `tests/lib/bats-core` submodule) remain unstaged across the Mega B release window per existing convention.
+
+## [4.3.0] — Mega A: Helpers + Schema
+
+### Added (Phase A1 — Autonomous AC extractor)
+
+- **`shared/ac-extractor.py`** — stdlib-only Python 3.10+ regex extractor. Three patterns: numbered list (`1.` / `1)`), Given/When/Then BDD lines, imperative-verb bullets (`must|should|will|ensure|validate|return|expose|accept|reject`). Imperative verb is retained in the extracted AC body. Patterns applied in source-line order (deduplicated, order-preserving). Three-tier confidence enum (`low` < 2 ACs / `medium` 2-4 / `high` 5+). Used by `fg-010-shaper` autonomous-mode degradation path (Mega C1).
+
+### Added (Phase A2 — Atomic bootstrap detect)
+
+- **`shared/bootstrap-detect.py`** — `detect_stack(repo_root: Path) -> StackResult` probes Kotlin/Spring (build.gradle.kts), TypeScript/Next (package.json + next.config.{js,mjs,ts,cjs} or tsconfig), Python/FastAPI/Django (pyproject.toml). Returns `ambiguous: True` when 0 or ≥2 stacks match. **`write_forge_local_md(stack, target_path)` uses atomic-write contract**: write to `<target>.tmp` → `Path.replace` (cross-platform atomic on POSIX and Windows ≥ Vista). Refuses to write ambiguous stacks. Cleans temp on failure. AC-S027 covered by simulated-interrupt test (monkeypatch `Path.replace` to raise; assert target absent + temp cleaned). Used by `skills/forge` and `skills/forge-admin` config wizards (Mega B).
+
+### Added (Phase A3 — Platform detection + adapter stubs)
+
+- **`shared/platform-detect.py`** — `detect_platform(repo_root, config=None) -> PlatformInfo`. Resolution: explicit `config['platform']['detection']` override → `git remote get-url <remote_name>` match against known hosts (github.com, gitlab.com, bitbucket.org with anchored regex `(?:^|@|//)host[:/]` to reject `subgithub.com`-style spoofs) → Gitea API probe at `<host>/api/v1/version` (User-Agent header; per-socket-op timeout, not wall-clock — documented). Falls back to `platform: "unknown"`. Auth env-var map: `GITLAB_TOKEN`, `BITBUCKET_APP_PASSWORD`, `GITEA_TOKEN` (GitHub uses `gh` CLI auth, no env-var canonical).
+- **`shared/platform_adapters/{__init__,github,gitlab,bitbucket,gitea}.py`** — 4 adapter stubs raising `NotImplementedError("D5 wires this up")`. `__init__.py` exposes `PlatformAdapter` Protocol + `PostResult` TypedDict so D5 has a typed contract.
+
+### Added (Phase A4-A5 — Config + classification docs)
+
+- **`shared/preflight-constraints.md`** — 7 new validation bullets covering 16 mega-consolidation config keys: `brainstorm.*` (enabled, spec_dir with PREFLIGHT write-probe, autonomous_extractor_min_confidence, transcript_mining.*), `quality_gate.consistency_promotion.*`, `bug.{hypothesis_branching,fix_gate_threshold}`, `post_run.{defense_enabled,defense_min_evidence}`, `pr_builder.{default_strategy,cleanup_checklist_enabled}`, `worktree.stale_after_days`, `platform.{detection,remote_name}`. All keys go in `<!-- locked -->` blocks (not subject to retrospective auto-tuning).
+- **`shared/intent-classification.md`** — new "Hybrid-grammar verbs" section: 11 explicit verbs (run, fix, sprint, review, verify, deploy, commit, migrate, bootstrap, docs, audit) recognized at first-token position with priority over signal-counting. Concrete "Vague outcome" definition: signal-count < 2 AND no explicit-verb match → routes to `run` mode (which triggers BRAINSTORMING).
+
+### Changed (Phase A6 — State schema bump)
+
+- **State schema v2.0.0 → v2.1.0** (`shared/state-schema.md`, `shared/checks/state-schema-v2.0.json`, `shared/python/state_init.py`). Per `feedback_no_backcompat`: no migration shim. Adds:
+  - `state.story_state` enum gains **`BRAINSTORMING`** (between PREFLIGHT and EXPLORING)
+  - **`state.brainstorm`** — spec_path, original_input (verbatim free-text input), started_at/completed_at, autonomous, questions_asked, approaches_proposed, section_approvals
+  - **`state.bug`** — ticket_id, reproduction_attempts/succeeded, branching_used, fix_gate_passed, hypotheses[] with id/statement/falsifiability_test/evidence_required/status/passes_test/confidence/posterior
+  - **`state.feedback_decisions[]`** — comment_id, verdict (actionable|wrong|preference), reasoning, evidence, addressed (actionable_routed|defended|defended_local_only|acknowledged), posted_at
+  - **`state.platform`** — name, remote_url, api_base, auth_method, detected_at
+- **`shared/state-transitions.md`** — 4 new BRAINSTORMING transition rows (PREFLIGHT→BRAINSTORMING gated on `mode==feature AND brainstorm.enabled AND not dry_run`; BRAINSTORMING→EXPLORING on completion; BRAINSTORMING→ABORTED on user abort; BRAINSTORMING self-loop on resume from cache). Deferred-C2 note for `--spec` and `--from=<stage>` skip paths.
+- **`shared/stage-contract.md`** — BRAINSTORMING declared as Stage 0.5 (conditional, feature-mode-only) in both overview table and per-stage block. Avoids renumbering 10 stages (deferred to Mega C2).
+- **6 OTel events registered** (slot only; emission lands in C1/C2): `forge.brainstorm.{started, question_asked, approaches_proposed, spec_written, completed, aborted}`.
+
+### Changed (Tooling)
+
+- **`pyproject.toml`** — `python_files` accepts both `test_*.py` and `*_test.py` so the new helper tests are discovered by `pytest tests/unit -q`.
+
+### Tests
+
+- 40 new pytest cases (`tests/unit/{ac_extractor,bootstrap_detect,platform_detect}_test.py` covering AC patterns + confidence boundaries + atomic-write under simulated interrupt + disk-full + 4 platform happy paths + explicit override + missing auth + DNS-rebind defense). Hoisted `load_hyphenated_module` helper to `tests/unit/conftest.py`.
+- 30 new bats structural tests (`tests/structural/{preflight-new-keys,intent-classification-verbs,state-schema-mega}.bats`).
+
+### Notes
+
+- `shared/python/state_transitions.py` FSM event wiring (`brainstorm_complete`, `resume_with_cache`) is intentionally deferred to Mega C2; `tests/contract/state-machine-contract.bats:59` will remain red until that orchestrator surgery lands.
+- Carried-over dirty files (`shared/ac-extractor.py`, `tests/unit/ac_extractor_test.py`) staged for the first time in Wave 1 (commit `38ab7796`); the carry-over set is reduced from 7 to 5 (spring/* and kotlin.md remain unstaged across phases).
+
+## [4.2.0] — Phase 7 Intent Assurance
+
+### Added (F35 — Intent Verification Gate)
+
+- **`fg-540-intent-verifier`** (Tier 3, color violet, tools `['Read','Grep','Glob','WebFetch']` — explicitly no Bash/Edit/Write/Agent/Task) dispatched at end of Stage 5 VERIFY. Receives an orchestrator-filtered context brief that excludes plan / tests / diff / prior findings.
+- **Two-layer context isolation.** Layer 1 (`hooks/_py/handoff/intent_context.py:build_intent_verifier_context`) is the enforcement — `ALLOWED_KEYS` allow-list + deep-leak walker (covers dict keys, lists, tuples, sets, bytes; fail-closed on unknown types). Layer 2 (agent-side "Context Exclusion Contract" clause) is defense-in-depth.
+- **Sandboxed runtime probes** (`hooks/_py/intent_probe.py`) — `ipaddress`-based forbidden-host parser (CIDR + IPv6 + metadata ranges); HTTP scheme allowlist `{http, https}`; userinfo rejected; IPv6 scope-id stripped; custom opener restricts handlers (no `file://` / `ftp://`); DNS-rebind defense via `resolve_host_for_denylist`; per-AC budget + timeout; deny-path warning logs; `IMPL-VOTE-WORKTREE-FAIL`-style fallback semantics.
+- **Five `INTENT-*` scoring categories** + `INTENT-NO-ACS` + `INTENT-CONTEXT-LEAK` (7 total) registered in `shared/checks/category-registry.json` and mirrored in `shared/scoring.md`.
+- **Hard SHIP gate** in `agents/fg-590-pre-ship-verifier.md` Step 6: `verdict = SHIP` requires 0 open `INTENT-MISSED` CRITICAL findings AND `verified_pct >= intent_verification.strict_ac_required_pct` (default 100). Vacuous-pass path documented; strict-mode promotes `INTENT-NO-ACS` to BLOCK.
+- **OTel spans** `forge.intent.verify_ac` (per AC) and `forge.impl.vote` (per voted sample) with 10 new `forge.intent.*` / `forge.impl_vote.*` attribute constants (`hooks/_py/otel_attributes.py`).
+- **AC source precedence:** `state.brainstorm.spec_path` (canonical post-Mega-C) → `.forge/specs/index.json` (fallback for bugfix/migration/bootstrap or pre-Mega).
+
+### Added (F36 — Confidence-Gated Implementer Voting)
+
+- **`fg-302-diff-judge`** (Tier 4, color gray, Read-only) compares two parallel `fg-300-implementer` samples via structural AST diff.
+- **`hooks/_py/diff_judge.py`** engine: Python via stdlib `ast` (canonical dump + SHA256); 11 other languages via `tree-sitter-language-pack` 1.6.3 with feature-detected `get_language()` (defensive `tsx → typescript` and `kts → kotlin` fallback); whitespace+comment-stripped textual fallback otherwise. Iterative-DFS AST serialization (no `RecursionError` on deeply-nested files); io-error wrapping; frozen dataclasses. `judge()` raises `ValueError` on empty `touched_files` (no silent SAME-on-zero); confidence forced LOW when all comparisons are file-presence-only.
+- **N=2 voting gate** (`agents/fg-100-orchestrator.md` `should_vote` + `dispatch_with_voting`) gated on (a) `impl_voting.enabled`, (b) >30% budget remaining, (c) any of: LOW confidence, high-risk task tags, or recent regression history.
+- **`task.risk_tags[]`** emitted by `fg-200-planner` per task. Closed canonical vocabulary (`hooks/_py/risk_tags.BASE_RISK_TAGS`): `{high, data-mutation, auth, payment, concurrency, migration}`. Mode overlay extension: `bugfix → +"bugfix"`.
+- **Sub-worktrees at `.forge/votes/<task_id>/sample_{1,2}/`** with crash-recovery stale sweep extension to `fg-101-worktree-manager.detect-stale`.
+- **`IMPL-VOTE-WORKTREE-FAIL` fallback** in orchestrator: try/except around `fg101_create`, emits WARNING + appends `skipped_reason: "worktree_fail"` to `impl_vote_history`, falls back to single-sample dispatch.
+- **6 informational telemetry categories** (`IMPL-VOTE-TRIGGERED/DEGRADED/UNRESOLVED/TIMEOUT/WORKTREE-FAIL` + `COST-SKIP-VOTE`) with explicit `score_impact: "0"`.
+
+### Added (Verification & Analytics)
+
+- **`shared/intent-verification.md`** — end-to-end architectural doc with ASCII dataflow diagrams; covers F35 + F36, two-layer isolation rationale, voting topology, 30%-vs-20% cost-skip rationale, syntactic-vs-semantic diff caveat.
+- **`fg-700-retrospective.md` §2j** Intent & Vote Analytics + **§2j.bis** Cost-of-voting analytics (`vote_cost_usd`, `vote_cost_pct_of_run`, `vote_savings_estimate_usd`).
+- **Auto-tuning Rule 11** (propose-only via `/forge-playbook-refine`): `intent_missed_count >= 2` across last 3 runs proposes `living_specs.strict_mode: true`.
+- **9 scenario tests** under `tests/scenario/sc-{intent-missed,impl-vote-diverge,impl-vote-disabled,impl-vote-cost-skip,autonomous-intent,vote-worktree-cleanup,retrospective-intent-metrics,intent-no-acs,intent-layer2-tripwire}/`.
+
+### Changed
+
+- **State schema** v2.0.0 narrative + canonical `state-schema.json` + `state-schema-fields.md` document new top-level keys `intent_verification_results[]` and `impl_vote_history[]`. (Schema literal already at 2.0.0 from coordinated Phase 5/6 bump; Phase 7 only adds the two new arrays.)
+- **Finding schema v1 → v2** (`shared/checks/finding-schema.json`): `file` and `line` become nullable; `ac_id` conditional-required when `category` starts with `INTENT-`.
+- **Agent count 48 → 50** at every callsite (`CLAUDE.md`, `shared/agents.md`).
+- **`fg-300-implementer` §5.3c "Voting Mode"** — `dispatch_mode: vote_sample` (skips REFLECT) / `vote_tiebreak` (reconciles divergences).
+- **`fg-101-worktree-manager.detect-stale`** scans `.forge/votes/*/sample_*` (orphaned sub-worktree sweep).
+- **`shared/state-integrity.sh`** stale-detection block for `.forge/dispatch-contexts/`; `${DISPATCH_CONTEXT_STALE_HOURS:-24}` config-driven.
+- **`agents/fg-100-orchestrator.md` PREFLIGHT** instructs `rm -rf .forge/dispatch-contexts/` (canonical destructive cleanup; ephemeral, not preserved across runs).
+- **Mode overlays.** `bootstrap` disables F35 + F36 (greenfield: no ACs, no risk baseline). `migration` disables F35 (use `fg-506-migration-verifier` instead). `bugfix` extends `impl_voting.trigger_on_risk_tags` with `"bugfix"`.
+- **`tests/contract/test_fg100_size_budget.py`** `MAX_LINES` 1800 → 2000 (orchestrator grew through Phase 7 voting + intent dispatch wiring; per maintainer policy the orchestrator is loaded once per run, not per stage).
+- **24 framework `forge-config-template.md`** files declare `intent_verification:` and `impl_voting:` blocks.
+
+### Dependencies
+
+- Added `tree-sitter>=0.25.2,<0.26` and `tree-sitter-language-pack>=1.6.3,<2.0` under `[project.optional-dependencies].test`. Production install unaffected.
+
+## [4.1.0] — Phase 6 Cost Governance
 
 ### Added
 
+- **USD cost ceiling** (`cost.ceiling_usd`, default $25). Orchestrator blocks any dispatch that would breach the ceiling; in interactive mode escalates via AskUserQuestion (pattern §8), in autonomous mode auto-decides per `cost_governance.downgrade_tier()`.
+- **`## Cost Budget` brief injection** — every dispatched subagent receives a current Spent/Remaining/Tier summary.
+- **Soft cost throttle in implementer (§5.3b)** — emits `COST-THROTTLE-IMPL` INFO at 80% / WARNING at 90% consumed; skips discretionary refactor+critic passes while keeping RED/GREEN inviolate.
+- **Dynamic tier downgrade** (`cost.aware_routing: true`) with hardcoded SAFETY_CRITICAL list: `fg-210`, `fg-250`, `fg-411`, `fg-412`, `fg-414`, `fg-419`, `fg-500`, `fg-505`, `fg-506`, `fg-590`. These agents are NEVER silently skipped.
+- **`forge.cost.*` / `forge.agent.tier_*` OTel attributes** — six new attrs on every dispatch span, round-tripped through `otel.replay()`.
+- **Cost incident log** — `.forge/cost-incidents/<timestamp>.json` per escalation, schema at `shared/schemas/cost-incident.schema.json`.
+- **Retrospective cost analytics** — per-run summary, cost-per-actionable-finding flagging (gated on peer cohort ≥1 CRITICAL/WARNING), EST-DRIFT detection, four new `run_summary` columns (migration 002).
+- **300-second default timeout** for interactive AskUserQuestion patterns §3, §7, §8.
+
+### Changed
+
+- **`shared/forge-token-tracker.sh` pricing table** refreshed to Anthropic 2026-04-22 rates: Haiku 4.5 $1/$5, Sonnet 4.6 $3/$15, Opus 4.7 $5/$25 per MTok.
+- **State schema bumps to v2.0.0** (coordinated with Phase 5 and Phase 7). Old `1.x.x` state files reset `cost` block on load per no-backcompat policy.
+- **`shared/observability.md`** codifies `forge.*` namespace contract; Phase 4's unprefixed `learning.*` attrs are renamed to `forge.learning.*` as a prerequisite.
+
+### Tests
+
+- 3 unit bats suites (cost-governance-helpers, cost-governance-downgrade, token-tracker-pricing)
+- 8 scenario bats suites (ceiling-interactive, ceiling-autonomous, soft-throttle, incident-write, otel-attrs, no-silent-safety-skip, ceiling-disabled, aware-routing, retro-per-finding)
+- 1 contract extension (framework-config-templates.bats — 24 frameworks × 3 assertions)
+
+## [4.0.0] - 2026-04-27
+
+### Breaking
+
+- Renamed `fg-205-planning-critic` → `fg-205-plan-judge` with binding REVISE authority.
+- Renamed `fg-301-implementer-critic` → `fg-301-implementer-judge` with binding REVISE authority.
+- State schema bumped v1.x → v2.0.0 (coordinated with Phases 6 and 7). Fields `critic_revisions` and `implementer_reflection_cycles` removed; replaced by `plan_judge_loops` (int), `impl_judge_loops` (object keyed by task_id), `judge_verdicts[]` (array of {judge_id, verdict, dispatch_seq, timestamp}).
+- Stage 6 REVIEW migrated from batched-dispatch-with-dedup-hints to Agent Teams pattern (shared findings store at `.forge/runs/<run_id>/findings/<reviewer>.jsonl`, append-only, read-peers-before-write).
+- `shared/agent-communication.md` Shared Findings Context section deleted; replaced by Findings Store Protocol reference.
+- fg-400-quality-gate §5.2 (inter-batch dedup hints / "previous batch findings" / "top 20" prose) deleted — fg-400 still dispatches reviewers in parallel fan-out, but dedup is now read-time per the Findings Store Protocol (`shared/findings-store.md`). Reviewer registry §20 shrunk to a 3-line reference; orchestrator injects the registry slice into the Stage 6 dispatch payload (`fg-100` SS6.1a) and fg-400 forwards it verbatim into each reviewer's prompt.
+- v1.x state.json files are auto-invalidated on version mismatch (no migration shim, per `feedback_no_backcompat`).
+
+## [3.10.0] - 2026-04-27
+
+Phase 4 of the A+ roadmap (Learnings Dispatch Loop) ships. The learning database becomes an active prompt-time input: relevant learnings inject into agent prompts at PLAN/IMPLEMENT/REVIEW, then reinforce via marker-protocol parsing at LEARN.
+
+### Added
+
+- **Phase 4: Learnings Dispatch Loop**
+  - **Foundation modules:**
+    - `hooks/_py/memory_decay.py` — `pre_fp_base` snapshot, `apply_vindication()` for bit-exact restore, `archival_floor()` returning `(bool, reason)`. New constants: SPARSE_THRESHOLD, MAX_DELTA_T_DAYS, ARCHIVAL_CONFIDENCE_FLOOR, ARCHIVAL_IDLE_DAYS, VINDICATE_FALLBACK_FACTOR.
+    - `hooks/_py/agent_role_map.py` — frozen 12-entry MappingProxyType (fg-200, fg-300, fg-400, 9 reviewers). `role_for_agent()` API.
+    - `hooks/_py/learnings_selector.py` — frozen `LearningItem` dataclass + `select_for_dispatch()` with role/domain/recency/cross-project ranking and id-ascending tiebreak.
+    - `hooks/_py/otel_attributes.py` — 5 `FORGE_LEARNING_*` constants + `FORGE_AGENT_NAME` registered in UNBOUNDED/BOUNDED_ATTRS.
+  - **Schema migration:** v1 → v2 across 292 learning files in `shared/learnings/`. Migration script removed after successful application (no shim, per "no back-compat" rule).
+  - **I/O stack:** `learnings_io.py` (parser, `_body_slice` scoped past frontmatter, matches `id="X"` HTML anchors), `learnings_format.py` (`## Relevant Learnings` block renderer + `_sanitize` strips control bytes), `learnings_markers.py` (line-anchored parser for LEARNING_APPLIED / LEARNING_FP / LEARNING_VINDICATED), `learnings_writeback.py` (applies markers + archival floor with idempotent updates).
+  - **Orchestrator dispatch seam:** `agents/fg-100-orchestrator.md` §0.6.1 builds dispatch context, wraps the rendered block in `<untrusted source="learnings">` envelope before concatenating into the agent prompt. Cache invalidation at LEARN stage.
+  - **12 agent prompts** — fg-200, fg-300, fg-400, and the nine reviewers (fg-410..414, fg-416..419) gain `## Learnings Injection` sections describing how they consume the injected block and emit reinforcement markers.
+  - **Tests:** structural decay-singleton bats; orchestrator-seam contract bats; cache-invalidation contract bats; integration test exercising the full loop; sanitization hardening tests; `_body_slice` smoke test against real spring.md (204 items render real prose, zero empty bodies).
+  - **Documentation:** `decay.md` (explicit formulas + §10 Vindication), `learnings/README.md` (§Read Path), `cross-project-learnings.md` (§Selector Interaction), `observability.md` (forge.learning.* events + attributes), `agent-communication.md` (§Learning Markers parallel to §PREEMPT), `CLAUDE.md` (Phase 4 read path summary).
+
+### Changed
+
+- `state.learnings_cache` field documented in `shared/state-schema-fields.md`.
+- `_body_slice` rewritten — was matching anchors inside YAML frontmatter, leaking schema text into rendered prompts. Now scoped past frontmatter and aligned with the `<a id="X">` migration convention.
+- `body_ref` values normalized to bare ids (no `#` prefix) across 28 learning files; legacy `#X` form still tolerated.
+- `bats` contract tests use `python3` explicitly (cross-platform).
+
+### Process
+
+30 plan tasks across 28 implementation commits. Code review via `superpowers:requesting-code-review` found 3 critical / 6 important / 8 minor. All 17 issues fixed across 10 follow-up commits before release. Critical #1+#2 (`_body_slice` broken end-to-end) caught before any agent dispatch saw malformed payloads. Phase 1-3 ACs re-verified (in scope) — no regressions.
+
+## [3.9.0] - 2026-04-27
+
+Phase 3 of the A+ roadmap (Correctness Proofs) ships. Closes 4 correctness gaps with proof-grade infrastructure.
+
+### Added
+
+- **Phase 3: Correctness Proofs**
+  - **Convergence engine `>=` boundary fix:** flipped strict `>` to `>=` in `shared/convergence_engine_sim.py` and `shared/python/state_transitions.py`. Off-by-one bug fix that under-counted plateau iterations. 4 new boundary tests in `tests/unit/test_convergence_engine_sim.py` (16 tests pass total). Documentation aligned in `convergence-engine.md`, `state-transitions.md` rows 37/C9, `convergence-examples.md` (Scenarios 5+6), CLAUDE.md.
+  - **End-to-end dry-run smoke harness** at `tests/e2e/dry-run-smoke.py` — symlinks plugin into a temp project (Windows junction fallback), runs forge through PREFLIGHT→VALIDATE only, verifies state.json shape. `--self-test` negative control. Exit-77 SKIP semantics for env-level failures. Cross-OS `e2e:` job in `.github/workflows/test.yml`. Fixture: `tests/e2e/fixtures/ts-vitest/`.
+  - **State-transitions sensitivity probe** at `tests/mutation/state_transitions.py` (renamed from "mutation testing" to clarify semantics — flips bats scenario assertions via MUTATE_ROW env var; not classical source mutation). Negative-control baseline run per seed row. 5 seed rows. Canary fixtures + tests. New `mutation:` CI job. Schema test pins REPORT.md columns.
+  - **Scenario coverage reporter** at `tests/scenario/report_coverage.py` — walks `# Covers:` headers, generates `tests/scenario/COVERAGE.md` matrix vs `state-transitions.md` rows. Tightened table parser (gates on canonical headers only). Python 3.10+ pinned. New `coverage:` CI job with **T-* hard gate at 60%** (current: 86.3%, well above). Backfilled `# Covers:` headers across the entire scenario suite (T-* coverage 19.6% → 86.3%).
+  - **Pathlib-only enforcement** extended to all 3 new Phase 3 harnesses.
+  - **`tests/README.md`** — 8-tier matrix + regen workflow.
+  - **`README.md`** — testing tier matrix added.
+
+### Changed
+
+- `tests/scenario/oscillation.bats` test 5 tolerance bumped 20 → 21 to reflect post-`>=` boundary semantics (delta=-20 now equals tolerance=20 → REGRESSING; tolerance=21 preserves "very permissive" intent).
+- 51 existing scenario `.bats` files gained `# Covers:` headers (4 explicitly enumerate every T-/C-/E-/D-/R- row; 47 are placeholder pending follow-up).
+- `tests/validate-plugin.sh` Phase 3 harness check now prints stderr on parse failure (was silenced).
+
+### Process
+
+29 plan tasks landed across 11 implementation commits. Code review via `superpowers:requesting-code-review` found 2 critical / 7 important / 11 minor. All 20 issues fixed across 14 follow-up commits before release. Phase 1 + Phase 2 ACs re-verified after Phase 3 fixes (in scope of mutation harness changes) — no regressions.
+
+## [3.8.0] - 2026-04-27
+
+Phase 2 of the A+ roadmap (Contract Enforcement) ships. Closes 5 contract and hygiene gaps.
+
+### Added
+
+- **Phase 2: Contract Enforcement**
+  - 5 pytest contract tests under `tests/contract/test_*.py` — `ui_frontmatter_required`, `skill_grammar`, `fg100_size_budget`, `feature_matrix_freshness`, `skill_inventory`. 207+ assertions enforcing structural contracts that bats can't easily express.
+  - **Universal `ui:` frontmatter:** all 48 fg-* agents now carry explicit `ui:` blocks (13 missing agents added; Tier-4-by-omission no longer accepted).
+  - **Skill grammar contract:** `shared/skill-grammar.md` defines strict skill `ui:` block shape (`{tasks, ask, plan_mode}`); 8 skills migrated from shorthand. §4 accepts both `## Subcommands` and `## Subcommand dispatch` headings.
+  - **Feature activation matrix:** `shared/feature-matrix.md` (30-row activation table, sentinel-fenced), `shared/feature-lifecycle.md` (90/180-day deprecation policy), `shared/feature_matrix_generator.py` (idempotent regenerator), `shared/feature_deprecation_check.py` (180-day removal-PR proposer), `shared/run-history/migrations/002-feature-usage.sql`. `agents/fg-700-retrospective.md` aggregates feature_usage. `agents/fg-100-orchestrator.md` emits `feature_used` events into `.forge/events.jsonl`.
+  - **fg-100-orchestrator size budget:** `tests/contract/test_fg100_size_budget.py` enforces a 1800-line ceiling. `shared/agent-philosophy.md` adds the authoring rule.
+  - **pyproject test extras:** `pip install -e ".[test]"` brings `pydantic>=2.0`, `pyyaml>=6.0`, `pytest>=8.0`. CI installs via this group; `tests/run-all.sh` dispatches pytest after bats in `contract` and `all` tiers.
+
+### Changed
+
+- **`/forge-help` skill DELETED.** LLM routing handles skill discovery. Skills count: 29 → 28. References scrubbed across CLAUDE.md, README.md, skill-contract.md, forge-config/tour skills, tests.
+- **`/forge-verify --config` subcommand DELETED.** Folded into `/forge-status` (Config validation summary section). 10 stale references swept across CLAUDE.md (3), README.md, and 6 SKILL.md files.
+- **`/forge-status` extended:** absorbs config validation + recent hook failures sections. `/forge-recover diagnose` embeds `/forge-status --json`.
+- **`forge-sprint` skill:** drops `EnterPlanMode`/`ExitPlanMode` from `allowed-tools` (was inconsistent with `ui.plan_mode: false`).
+- **`feature_usage.run_id` column:** gains `REFERENCES runs(id) ON DELETE CASCADE` (matches rest of run-history schema).
+
+### Removed
+
+- `skills/forge-help/` (directory)
+- `tests/unit/skill-execution/decision-tree-refs.bats` (all 7 tests referenced forge-help)
+- `/forge-verify --config` subcommand
+- Phase 1 contradictory bats assertion `every Tier-4 agent omits ui:` (rewritten to `every fg-*.md agent has explicit ui: block`).
+
+### Process
+
+29 plan tasks landed across 7 implementation commits. Code review via `superpowers:requesting-code-review` found 4 critical / 6 important / 13 minor. All 23 issues fixed across 9 follow-up commits before release. Phase 1 ACs re-verified after Phase 2 fixes — no regressions. 2429 contract tests pass; 19 structural bats pass.
+
+## [3.7.0] - 2026-04-27
+
+Phase 1 of the A+ roadmap (Truth & Observability) ships. Closes four credibility gaps: Windows is now a real first-class CI target, every hook crash gets a durable JSONL audit trail, every module is tagged with a truthful support tier, and a cat/jq/Get-Content-readable live-run surface is live. Plus the cross-verification prerequisite edits coordinating the 13-plan ship train (`SHIP_ORDER.md`).
+
+### Added
+
+- **Phase 1: Truth & Observability** — Windows install helper (`install.ps1`);
+  bash helper (`install.sh`) supersedes `ln -s`; `shared/check-environment.sh`
+  ported to `shared/check_environment.py`; `tests/run-all.ps1` + `run-all.cmd`
+  wrappers; new CI jobs `test-windows-pwsh-structural` and `test-windows-cmd`.
+  `hooks/_py/failure_log.py` + `hooks/_py/progress.py` — every hook entry
+  wraps `main()` and appends to `.forge/.hook-failures.jsonl` (renamed from
+  `.log`; no shim). `SessionStart` rotates archives (gzip at 7 d, delete at
+  30 d). `post_tool_use_agent.py` rewrites `.forge/progress/status.json`
+  atomically on every subagent completion. `fg-700-retrospective` generates
+  `.forge/run-history-trends.json` (last 30 runs + last 10 hook failures).
+  Support-tier badge system: `docs/support-tiers.md`, generator
+  `tests/lib/derive_support_tiers.py`, drift gate in `docs-integrity.yml`.
+  `/forge-status` gains a `--- live ---` section. `shared/observability.md`
+  gains `§Local inspection` recipes for bash/pwsh/cmd.
 - **5 new pipeline agents** (opt-in via `agents.*` config schema):
   - `fg-143-observability-bootstrap` (PREFLIGHT Tier-3) — auto-wires OTel exporter when `observability_bootstrap.enabled=true`.
   - `fg-155-i18n-validator` (PREFLIGHT Tier-3) — hardcoded-string / RTL / locale checks; default-enabled.
@@ -448,7 +941,7 @@ All 7 forge hooks, the check engine, and the critical `shared/*.sh` scripts port
 - Terse review format with text markers `[CRIT]`/`[WARN]`/`[INFO]`/`[PASS]` in forge-review
 - Natural language trigger documentation for caveman mode
 - `token_pricing` config section for overridable model pricing
-- Log rotation for `.hook-failures.log` and `.forge/forge.log`
+- Log rotation for the hook failure log and `.forge/forge.log`
 
 ### Changed
 - React TypeScript variant extended with generic components, context typing, strict TypeScript patterns

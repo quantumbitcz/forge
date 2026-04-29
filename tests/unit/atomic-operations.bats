@@ -64,7 +64,11 @@ PLATFORM_SH="$PLUGIN_ROOT/shared/platform.sh"
   assert_success
 
   local value
-  value=$(python3 -c "import json; print(json.load(open('$json_file'))['name'])")
+  value=$(python3 - "$json_file" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['name'])
+PYEOF
+)
   assert_equal "$value" "new"
 }
 
@@ -77,7 +81,11 @@ PLATFORM_SH="$PLUGIN_ROOT/shared/platform.sh"
   assert_success
 
   local count
-  count=$(python3 -c "import json; print(json.load(open('$json_file'))['count'])")
+  count=$(python3 - "$json_file" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['count'])
+PYEOF
+)
   assert_equal "$count" "42"
 }
 

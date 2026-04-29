@@ -1,5 +1,7 @@
 # Kotlin Language Conventions
 
+> Support tier: contract-verified
+
 ## Type System
 
 - Use `kotlin.uuid.Uuid` for UUIDs in domain code; convert to `java.util.UUID` only at persistence boundaries via `toJavaUuid()` / `toKotlinUuid()`.

@@ -26,6 +26,11 @@ def score_le(a, b):
     return float(a) - float(b) <= SCORE_EPSILON
 
 
+def score_gte(a, b):
+    """a >= b with epsilon tolerance (inclusive boundary)."""
+    return float(a) - float(b) >= -SCORE_EPSILON
+
+
 def score_eq(a, b):
     """a == b with epsilon tolerance."""
     return abs(float(a) - float(b)) < SCORE_EPSILON
@@ -84,6 +89,21 @@ def build_table(g, state, conv, conv_phase):
         ('PREFLIGHT', 'interrupted_run_detected',
          lambda: g('git_drift_detected', False) == True,
          'PREFLIGHT', '4', 'interrupted_run_detected (git drift)',
+         {}, {}),
+
+        # === BRAINSTORMING (state-schema v2.1.0 mega-consolidation) ===
+        # Row 2a: BRAINSTORMING + brainstorm_complete -> EXPLORING
+        # Spec written and approved by fg-010-shaper; orchestrator proceeds to
+        # EXPLORING with `state.brainstorm.spec_path` populated for the planner.
+        ('BRAINSTORMING', 'brainstorm_complete',
+         lambda: True,
+         'EXPLORING', '2a', 'brainstorm_complete (spec approved)',
+         {}, {}),
+        # Row 2c: BRAINSTORMING + resume_with_cache -> BRAINSTORMING
+        # Self-loop — re-enter shaper with the cached spec on resume.
+        ('BRAINSTORMING', 'resume_with_cache',
+         lambda: True,
+         'BRAINSTORMING', '2c', 'resume_with_cache (self-loop, cache hit)',
          {}, {}),
 
         # === EXPLORING ===
@@ -290,7 +310,7 @@ def build_table(g, state, conv, conv_phase):
          {}, {}),
         # Row 37: REVIEWING + score_regressing + beyond tolerance -> ESCALATED
         ('REVIEWING', 'score_regressing',
-         lambda: score_gt(abs(float(g('delta', 0))), int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5)))),
+         lambda: score_gte(abs(float(g('delta', 0))), int(g('oscillation_tolerance', state.get('oscillation_tolerance', 5)))),
          'ESCALATED', '37', 'score_regressing (beyond tolerance)',
          {}, {'convergence_state': 'REGRESSING'}),
 
@@ -413,7 +433,7 @@ def build_table(g, state, conv, conv_phase):
         # E9: ANY (not COMPLETE, not ABORTED) + user_abort_direct -> ABORTED
         ('ANY', 'user_abort_direct',
          lambda: state.get('story_state', '') not in ('COMPLETE', 'ABORTED'),
-         'ABORTED', 'E9', 'user_abort_direct (from /forge-abort)',
+         'ABORTED', 'E9', 'user_abort_direct (from /forge-admin abort)',
          {}, {}),
         # E8: ANY + token_budget_exhausted -> ESCALATED
         ('ANY', 'token_budget_exhausted',

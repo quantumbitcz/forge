@@ -1,5 +1,7 @@
 # ExUnit Best Practices
 
+> Support tier: contract-verified
+
 ## Overview
 ExUnit is Elixir's built-in testing framework. Use it for unit and integration tests in Elixir/Phoenix applications. ExUnit excels at concurrent test execution, doctests, and first-class support for async testing with the BEAM VM. Avoid it for non-Elixir projects.
 

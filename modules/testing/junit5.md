@@ -1,5 +1,7 @@
 # JUnit 5 Testing Conventions
 
+> Support tier: contract-verified
+
 ## Test Structure
 
 Organize with `@Nested` classes to group related scenarios. One top-level test class per production class. Use `@DisplayName` for human-readable descriptions at both class and method level.

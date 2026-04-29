@@ -1,5 +1,7 @@
 # Java Language Conventions
 
+> Support tier: contract-verified
+
 ## Type System
 
 - Use Java records (`record XxxResponse(...)`) for immutable DTOs — they auto-generate constructor, accessors, `equals`, `hashCode`, and `toString`.

@@ -41,16 +41,11 @@ setup() {
 }
 
 @test "writes skills list --dry-run in Flags" {
-  # Writes skills per shared/skill-contract.md §4.
-  # Skill consolidation removed forge-deep-health (merged into /forge-review --scope all --fix),
-  # forge-graph-init/rebuild (merged into /forge-graph write-capable subcommands), and
-  # /forge-verify now gains writes via --all but stays listed under read-only since the
-  # default subcommand is read-only.
-  local writes=(forge-abort forge-automation forge-bootstrap forge-commit \
-                forge-compress forge-config forge-deploy \
-                forge-docs-generate forge-fix forge-graph \
-                forge-init forge-migration forge-playbook-refine forge-recover \
-                forge-review forge-run forge-shape forge-sprint)
+  # Post-Mega-B consolidation: 27 forge-* skills retired and merged into 3
+  # top-level skills. The two write-capable surfaces are /forge (universal
+  # entry, dispatches every write verb) and /forge-admin (state management,
+  # config, recovery, automation, etc.). Both must list --dry-run in Flags.
+  local writes=(forge forge-admin)
   for s in "${writes[@]}"; do
     local f="$PLUGIN_ROOT/skills/$s/SKILL.md"
     [ -f "$f" ] || { echo "Missing skill: $s"; return 1; }
@@ -60,13 +55,8 @@ setup() {
 }
 
 @test "read-only skills list --json in Flags" {
-  # Skill consolidation removed forge-codebase-health (merged into /forge-review --scope all),
-  # forge-graph-{debug,query,status} (merged into /forge-graph), and
-  # forge-config-validate (merged into /forge-verify --config).
-  local readonly_skills=(forge-ask \
-                         forge-help forge-history forge-insights forge-playbooks \
-                         forge-profile forge-security-audit forge-status \
-                         forge-tour forge-verify)
+  # Post-Mega-B consolidation: the read-only surface lives under /forge-ask.
+  local readonly_skills=(forge-ask)
   for s in "${readonly_skills[@]}"; do
     local f="$PLUGIN_ROOT/skills/$s/SKILL.md"
     [ -f "$f" ] || { echo "Missing skill: $s"; return 1; }
@@ -75,16 +65,11 @@ setup() {
   done
 }
 
-@test "exactly 29 skill directories exist" {
+@test "exactly 3 skill directories exist (post-Mega-B consolidation)" {
+  # /forge, /forge-ask, /forge-admin. See CLAUDE.md §"Skill selection guide".
   local count
   count=$(find "$PLUGIN_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-  # Skill consolidation reductions:
-  #   35 → 33 (forge-codebase-health + forge-deep-health → /forge-review --scope)
-  #   33 → 29 (forge-graph-{init,status,query,rebuild,debug} → /forge-graph)
-  #   29 → 28 (forge-config-validate → /forge-verify --config)
-  # Additions:
-  #   28 → 29 (forge-handoff added for F34 session handoff)
-  [ "$count" -eq 29 ]
+  [ "$count" -eq 3 ]
 }
 
 @test "no dangling references to deleted skills" {
@@ -95,8 +80,8 @@ setup() {
     local hits
     # Exempt:
     #   - DEPRECATIONS.md, CHANGELOG.md — migration history
-    #   - skills/forge-recover/SKILL.md, skills/forge-compress/SKILL.md — legitimately
-    #     document the /old-skill → /new-skill migration tables
+    #   - skills/forge-admin/SKILL.md — recover and compress subcommand sections
+    #     legitimately document the /old-skill → /new-skill migration tables
     #   - tests/contract/skill-contract.bats — this file lists the deleted names as
     #     a negative-check array
     hits=$(grep -rln "/$name[^a-z-]" \
@@ -105,8 +90,7 @@ setup() {
              "$PLUGIN_ROOT/tests" "$PLUGIN_ROOT/hooks" 2>/dev/null \
            | grep -v "DEPRECATIONS.md" \
            | grep -v "CHANGELOG.md" \
-           | grep -v "skills/forge-recover/SKILL.md" \
-           | grep -v "skills/forge-compress/SKILL.md" \
+           | grep -v "skills/forge-admin/SKILL.md" \
            | grep -v "tests/contract/skill-contract.bats" || true)
     if [ -n "$hits" ]; then
       echo "Dangling reference to /$name in:"

@@ -1,5 +1,7 @@
 # Axum Framework Conventions
 
+> Support tier: contract-verified
+
 > Framework-specific conventions for Axum projects. Language idioms are in `modules/languages/rust.md`. Generic testing patterns are in `modules/testing/rust-test.md`.
 
 ## Architecture (Handler / Service / Model)

@@ -1,3 +1,7 @@
+---
+schema_version: 2
+items:
+---
 # Resilience Learnings
 
 Per-project cumulative learnings for `fg-555-resilience-tester`.

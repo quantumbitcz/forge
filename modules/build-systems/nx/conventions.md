@@ -1,5 +1,7 @@
 # Nx Monorepo Conventions
 
+> Support tier: community
+
 ## Overview
 
 Nx is a monorepo build orchestration tool that manages task execution, caching, affected detection, and dependency graph traversal across multiple packages in a workspace. Nx sits above package managers (npm, pnpm, yarn) — it does not replace them, it orchestrates them. Nx provides two workspace styles: integrated (Nx-managed project structure with `project.json` per project) and package-based (standard npm workspaces with `package.json` per project).

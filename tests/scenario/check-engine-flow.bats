@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: end-to-end check-engine flows
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 ENGINE="$PLUGIN_ROOT/shared/checks/engine.sh"

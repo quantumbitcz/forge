@@ -1,5 +1,7 @@
 # Django Framework Conventions
 
+> Support tier: contract-verified
+
 > Framework-specific conventions for Django projects. Language idioms are in `modules/languages/python.md`.
 > Generic testing patterns are in `modules/testing/pytest.md`.
 

@@ -5,6 +5,8 @@
 # mutating state.json.lastCheckpoint. These tests cover the observable
 # persistence behavior.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 CHECKPOINT_HOOK="$PLUGIN_ROOT/hooks/post_tool_use_skill.py"
@@ -30,16 +32,19 @@ teardown() { rm -rf "$TEST_TEMP"; }
   assert_success
   assert [ -f "$log" ]
   # Verify fields
-  run python3 -c "
+  run python3 - "$log" <<'PY'
 import json
-with open('$log') as f:
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
     line = f.readline().strip()
 entry = json.loads(line)
 for key in ('timestamp', 'skill', 'tool'):
     assert key in entry, f'missing {key}'
 assert entry['skill'] == 'forge-run'
 assert entry['tool'] == 'Skill'
-"
+PY
   assert_success
 }
 
@@ -94,9 +99,13 @@ assert entry['tool'] == 'Skill'
   run bash -c "cd '$proj' && echo '{\"tool_input\":{\"skill_name\":\"x\"}}' | python3 '$CHECKPOINT_HOOK'"
   assert_success
 
-  run python3 -c "
-import json, re, sys
-with open('$log') as f:
+  run python3 - "$log" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
     entry = json.loads(f.readline())
 ts = entry.get('timestamp', '')
 # Accept RFC 3339 / ISO-8601 with timezone offset (e.g. 2026-04-19T12:34:56.789+00:00 or Z)
@@ -104,6 +113,6 @@ pat = r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-]
 if not re.match(pat, ts):
     print(f'FAIL: timestamp {ts!r} does not match ISO 8601 UTC', file=sys.stderr)
     sys.exit(1)
-"
+PY
   assert_success
 }

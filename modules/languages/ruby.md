@@ -1,5 +1,7 @@
 # Ruby Language Conventions
 
+> Support tier: contract-verified
+
 ## Type System
 
 - Ruby is dynamically typed. Use **Sorbet** (`sig { params(...).returns(...) }`) or **RBS** (`.rbs` type definition files) for opt-in static type checking in larger codebases.

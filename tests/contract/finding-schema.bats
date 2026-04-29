@@ -15,28 +15,47 @@ SCORING="$PLUGIN_ROOT/shared/scoring.md"
 # ---------------------------------------------------------------------------
 @test "finding-schema: schema is valid JSON" {
   [[ -f "$FINDING_SCHEMA" ]] || fail "finding-schema.json does not exist"
-  python3 -c "import json; json.load(open('$FINDING_SCHEMA'))" \
-    || fail "finding-schema.json is not valid JSON"
+  python3 - "$FINDING_SCHEMA" <<'PYEOF' || fail "finding-schema.json is not valid JSON"
+import json, sys
+json.load(open(sys.argv[1]))
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
 # 2. Required fields match output-format.md
 # ---------------------------------------------------------------------------
 @test "finding-schema: required fields match output-format.md" {
+  # output-format.md defines 5+1 fields: file, line, CATEGORY-CODE, SEVERITY, message, fix_hint.
+  # confidence (6th) is optional.
+  # category, severity, description, fix_hint are top-level required.
+  # file + line are conditionally required for non-INTENT findings via the allOf branch
+  # (INTENT-* findings are AC-scoped and may have file/line null — see Phase 7 fg-540).
   local required
-  required=$(python3 -c "
-import json
-schema = json.load(open('$FINDING_SCHEMA'))
+  required=$(python3 - "$FINDING_SCHEMA" <<'PYEOF'
+import json, sys
+schema = json.load(open(sys.argv[1]))
 print(' '.join(sorted(schema['required'])))
-")
-  # output-format.md defines 5+1 fields: file, line, CATEGORY-CODE, SEVERITY, message, fix_hint
-  # The 6th (confidence) is optional
-  for field in "file" "line" "category" "severity" "description" "fix_hint"; do
+PYEOF
+)
+  for field in "category" "severity" "description" "fix_hint"; do
     echo "$required" | grep -q "$field" \
-      || fail "Required field '$field' missing from finding-schema.json"
+      || fail "Required field '$field' missing from finding-schema.json top-level required"
   done
 
-  # Confidence should NOT be in required
+  # file + line: required via allOf (non-INTENT branch) — assert the conditional shape exists.
+  python3 - "$FINDING_SCHEMA" <<'PYEOF' || fail "file/line must be conditionally required via allOf for non-INTENT findings"
+import json, sys
+schema = json.load(open(sys.argv[1]))
+all_of = schema.get('allOf', [])
+non_intent_required = []
+for branch in all_of:
+    then_block = branch.get('then', {})
+    non_intent_required.extend(then_block.get('required', []))
+assert 'file' in non_intent_required, 'file must be conditionally required for non-INTENT findings'
+assert 'line' in non_intent_required, 'line must be conditionally required for non-INTENT findings'
+PYEOF
+
+  # Confidence should NOT be in required.
   echo "$required" | grep -qv "confidence" \
     || fail "confidence should not be required (it's optional per output-format.md)"
 }
@@ -46,11 +65,12 @@ print(' '.join(sorted(schema['required'])))
 # ---------------------------------------------------------------------------
 @test "finding-schema: severity enum matches scoring.md" {
   local severities
-  severities=$(python3 -c "
-import json
-schema = json.load(open('$FINDING_SCHEMA'))
+  severities=$(python3 - "$FINDING_SCHEMA" <<'PYEOF'
+import json, sys
+schema = json.load(open(sys.argv[1]))
 print(' '.join(schema['properties']['severity']['enum']))
-")
+PYEOF
+)
   for sev in "CRITICAL" "WARNING" "INFO"; do
     echo "$severities" | grep -q "$sev" \
       || fail "Severity '$sev' missing from finding-schema.json enum"
@@ -62,11 +82,12 @@ print(' '.join(schema['properties']['severity']['enum']))
 # ---------------------------------------------------------------------------
 @test "finding-schema: category pattern matches output-format.md" {
   local pattern
-  pattern=$(python3 -c "
-import json
-schema = json.load(open('$FINDING_SCHEMA'))
+  pattern=$(python3 - "$FINDING_SCHEMA" <<'PYEOF'
+import json, sys
+schema = json.load(open(sys.argv[1]))
 print(schema['properties']['category']['pattern'])
-")
+PYEOF
+)
   # Pattern should match uppercase with hyphens: ^[A-Z][A-Z0-9-]+$
   [[ "$pattern" == '^[A-Z][A-Z0-9-]+$' ]] \
     || fail "Category pattern should be '^[A-Z][A-Z0-9-]+\$', got '$pattern'"
@@ -77,8 +98,10 @@ print(schema['properties']['category']['pattern'])
 # ---------------------------------------------------------------------------
 @test "dispatch-response-schema: schema is valid JSON" {
   [[ -f "$DISPATCH_SCHEMA" ]] || fail "dispatch-response-schema.json does not exist"
-  python3 -c "import json; json.load(open('$DISPATCH_SCHEMA'))" \
-    || fail "dispatch-response-schema.json is not valid JSON"
+  python3 - "$DISPATCH_SCHEMA" <<'PYEOF' || fail "dispatch-response-schema.json is not valid JSON"
+import json, sys
+json.load(open(sys.argv[1]))
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -86,11 +109,12 @@ print(schema['properties']['category']['pattern'])
 # ---------------------------------------------------------------------------
 @test "dispatch-response-schema: maxItems = 100" {
   local max_items
-  max_items=$(python3 -c "
-import json
-schema = json.load(open('$DISPATCH_SCHEMA'))
+  max_items=$(python3 - "$DISPATCH_SCHEMA" <<'PYEOF'
+import json, sys
+schema = json.load(open(sys.argv[1]))
 print(schema['properties']['findings']['maxItems'])
-")
+PYEOF
+)
   [[ "$max_items" == "100" ]] \
     || fail "maxItems should be 100 (per scoring.md findings cap), got $max_items"
 }

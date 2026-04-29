@@ -200,7 +200,9 @@ Categories are defined per module in `conventions.md`. Common shared categories:
 | `CONV-*` | Convention violation (naming, style, patterns) |
 | `DOC-*` | Documentation gap (missing KDoc/TSDoc, unclear intent) |
 | `QUAL-*` | Code quality (complexity, duplication, dead code, error handling, defensive programming, plan alignment, naming). Subcategories: `QUAL-ERR-*` (error handling), `QUAL-DRY-*` (duplication), `QUAL-DEF-*` (defensive programming), `QUAL-PLAN-*` (plan alignment), `QUAL-NAME` (naming), `QUAL-COMPLEX` (complexity), `QUAL-MAGIC` (magic values), `QUAL-LENGTH` (function length), `QUAL-KISS-*` (over-engineering). Emitted by `fg-410-code-reviewer`. |
-| `REFLECT-*` | Implementer-critic (fg-301) reflection findings — implementation diff does not satisfy the intent of the tests. Subcategories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. Emitted by `fg-301-implementer-critic` during TDD GREEN→REFACTOR transition (Chain-of-Verification). |
+| `REFLECT-*` | Implementer-judge (fg-301) reflection findings — implementation diff does not satisfy the intent of the tests. Subcategories: `REFLECT-DIVERGENCE`, `REFLECT-HARDCODED-RETURN`, `REFLECT-OVER-NARROW`, `REFLECT-MISSING-BRANCH`. Emitted by `fg-301-implementer-judge` during TDD GREEN→REFACTOR transition (Chain-of-Verification). |
+| `INTENT-*` | Intent verification gate findings (Phase 7 F35) from `fg-540-intent-verifier` — running system does not satisfy the acceptance criterion. Subcategories: `INTENT-MISSED` (CRITICAL: all assertion probes FAIL for the AC), `INTENT-PARTIAL` (WARNING: some probes PASS, some FAIL), `INTENT-AMBIGUOUS` (INFO: probe succeeded but assertion underspecified), `INTENT-UNVERIFIABLE` (WARNING: AC text could not be decomposed into probes, or probe timed out), `INTENT-CONTRACT-VIOLATION` (CRITICAL: verifier context contained a forbidden key OR probe hit a forbidden host), `INTENT-NO-ACS` (WARNING: active spec has zero ACs; verification skipped), `INTENT-CONTEXT-LEAK` (CRITICAL: orchestrator built a forbidden context key — Layer-1 enforcement). Findings carry `ac_id` and may have null `file`/`line` (AC-level, not line-level). Hard SHIP gate via `fg-590-pre-ship-verifier`. |
+| `IMPL-VOTE-*` | Implementer voting telemetry (Phase 7 F36) from `fg-100-orchestrator` and `fg-302-diff-judge`. Informational only (priority 3-5; zero or low score impact). Subcategories: `IMPL-VOTE-TRIGGERED` (N=2 voting dispatched), `IMPL-VOTE-DEGRADED` (AST grammar unavailable; fell back to text diff), `IMPL-VOTE-UNRESOLVED` (tiebreak diverged; smallest-diff chosen — WARNING), `IMPL-VOTE-TIMEOUT` (one sample timed out; surviving sample used — WARNING), `IMPL-VOTE-WORKTREE-FAIL` (sub-worktree creation failed — WARNING), `COST-SKIP-VOTE` (voting skipped because <30% of budget remains). |
 | `APPROACH-*` | Solution quality (suboptimal pattern, unnecessary complexity, missed simplification) |
 | `SCOUT-*` | Boy Scout improvement (tracked, no point deduction). Cleanup improvement made while modifying code — removed unused imports, renamed variables, extracted helpers |
 | `EVAL-*` | see `shared/checks/eval-categories.md` | excluded from pipeline scoring (harness-only) |
@@ -211,6 +213,7 @@ Additional category codes for specialized review domains:
 |------|---------|
 | `A11Y-*` | Accessibility violation (WCAG compliance, keyboard nav, screen reader, ARIA) |
 | `DEP-*` | Dependency health (vulnerable, unmaintained, outdated, conflicting versions, license compliance). Subcategories: `DEP-CVE-*` (vulnerabilities), `DEP-OUTDATED-*` (outdated), `DEP-UNMAINTAINED` / `DEP-DEPRECATED` (maintenance), `DEP-CONFLICT-*` (version conflicts), `DEP-LICENSE-*` (license compliance). Emitted by `fg-417-dependency-reviewer`. |
+| `COST-*` | Cost governance — pipeline spend ceiling, downgrade audit, throttle events. Subcategories: `COST-CEILING-BREACH` (CRITICAL — `state.cost.spent_usd` exceeded `cost.ceiling_usd`), `COST-DOWNGRADE-PINNED` (INFO — pinned agent kept original tier under cost pressure), `COST-DOWNGRADE-APPLIED` (INFO — agent tier stepped down), `COST-THROTTLE` (INFO — orchestrator paused/serialized dispatch). Emitted by `fg-100-orchestrator` via `shared/cost_governance.py`. |
 | `COMPAT-*` | Compatibility issue (browser, platform, API version, backward compatibility). Reserved — currently `fg-417-dependency-reviewer` uses `QUAL-COMPAT`. `COMPAT-*` may be activated for browser/platform-specific compatibility. |
 | `CONTRACT-*` | Contract validation findings from `fg-250-contract-validator` — subcategories: `CONTRACT-BREAK` (CRITICAL: breaking API change — removed endpoint, changed type, removed field), `CONTRACT-CHANGE` (WARNING: non-breaking but impactful change — new required field, enum change), `CONTRACT-ADD` (INFO: additive change or skip notice — new endpoint, new optional field) |
 | `REVIEW-GAP` | Coverage gap from timed-out or failed review agent (see Partial Failure Handling) |
@@ -306,7 +309,7 @@ Findings at different lines in the same file with the same category are NOT dedu
 
 ### REFLECT-* Finding Handling
 
-`REFLECT-*` findings are emitted by `fg-301-implementer-critic` during the per-task
+`REFLECT-*` findings are emitted by `fg-301-implementer-judge` during the per-task
 reflection loop inside fg-300 (§5.3a). They are NOT SCOUT-class — they count
 toward the score.
 
@@ -318,6 +321,23 @@ subtype findings are NOT re-surfaced (no double-counting). Reviewers at Stage 6
 independently re-examine the code; they do not read `REFLECT-*` findings as prior art.
 
 Dedup: standard `(component, file, line, category)` key.
+
+### INTENT-* Finding Handling
+
+`INTENT-*` findings are emitted by `fg-540-intent-verifier` during Stage 5
+VERIFY (Phase A+B). They attach to acceptance criteria, not source lines —
+`file` and `line` may both be null. The finding schema v2 requires `ac_id`
+(pattern `AC-[0-9]{3}`) whenever `category` starts with `INTENT-`.
+
+Dedup key for INTENT-* is `(component, ac_id, category)` rather than the
+standard `(component, file, line, category)`. Two INTENT findings for the
+same AC with the same category collapse to the highest-severity entry,
+matching the standard dedup rules.
+
+INTENT findings are NOT subject to the INFO efficiency policy — a single
+open `INTENT-MISSED` CRITICAL blocks SHIP regardless of score or cycle
+count. `fg-590-pre-ship-verifier` is the authoritative gate (see
+`shared/stage-contract.md` §9.0).
 
 ### Cross-Category Deduplication for AI-* Overlap
 
@@ -407,6 +427,8 @@ Constraint: `oscillation_tolerance` must be >= 0 and <= 20. If violated, log WAR
 
 Each review cycle should complete within 10 minutes. If a review agent exceeds 10 minutes, treat as timeout per the partial failure handling rules.
 
+**Judge timeout semantics.** fg-205-plan-judge and fg-301-implementer-judge reuse the same 10-minute ceiling. On timeout, treat verdict as PROCEED and emit a single INFO `JUDGE-TIMEOUT` finding into the scoring set (category added in Phase 5). The pipeline never blocks on judge failure.
+
 ## Findings Cap
 
 If any single agent returns >100 raw findings, it should return only the top 100 by severity with a note: "{N} additional findings below threshold — truncated for context budget."
@@ -431,7 +453,7 @@ See `convergence-examples.md` for worked scoring calculations in context.
 ## See Also
 
 - `shared/convergence-engine.md` — Uses score history for IMPROVING/PLATEAUED/REGRESSING detection
-- `shared/checks/category-registry.json` — Master list of 87 scoring categories (27 wildcard + 60 discrete)
+- `shared/checks/category-registry.json` — Master list of 87 scoring categories (28 wildcard + 60 discrete)
 - `shared/agent-communication.md` — Finding format validation and deduplication rules
 - `shared/confidence-scoring.md` — Finding confidence weights (HIGH=1.0x, MEDIUM=0.75x, LOW=0.5x)
 - `shared/state-schema.md` — `score_history` and `convergence` state fields

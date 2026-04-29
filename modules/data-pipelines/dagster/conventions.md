@@ -1,5 +1,7 @@
 # Dagster — Asset-Based Pipelines & IO Managers
 
+> Support tier: community
+
 ## Overview
 
 Dagster models data pipelines as software-defined assets rather than task graphs. Each asset declares its dependencies, and Dagster infers the execution graph. IO Managers abstract storage (database, file system, cloud), enabling the same pipeline logic to run against different backends. Dagster provides a development UI (Dagit/Dagster UI), job scheduling, partitioning, and observability out of the box.

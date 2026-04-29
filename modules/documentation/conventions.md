@@ -1,5 +1,7 @@
 # Documentation Conventions
 
+> Support tier: community
+
 Generic documentation conventions for all frameworks. Framework-specific bindings override where they conflict.
 
 ## Principles

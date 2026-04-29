@@ -1,0 +1,1 @@
+{"schema":1,"ts":"2026-04-22T11:03:14.212Z","hook_name":"post_tool_use.py","matcher":"Edit|Write","exit_code":1,"stderr_excerpt":"Traceback (most recent call last):\n  File \"hooks/post_tool_use.py\", line 10\nRuntimeError: demo","duration_ms":8421,"cwd":"/Users/denissajnar/IdeaProjects/forge"}

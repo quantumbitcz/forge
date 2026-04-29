@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://forge.quantumbit.cz/schemas/benchmarks.json",
   "title": "Forge Performance Benchmarks",
-  "description": "Rolling window of performance metrics per pipeline run. Stored at .forge/benchmarks.json. Survives /forge-recover reset.",
+  "description": "Rolling window of performance metrics per pipeline run. Stored at .forge/benchmarks.json. Survives /forge-admin recover reset.",
   "type": "object",
   "required": ["version", "runs", "rolling_average"],
   "properties": {

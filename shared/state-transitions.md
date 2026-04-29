@@ -12,7 +12,7 @@ Control flow (which state comes next, when to retry, when to escalate) is fully 
 
 ## Pipeline States
 
-The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response.
+The canonical pipeline state values `story_state` can take are enumerated in `shared/state-schema.md`: `PREFLIGHT`, `BRAINSTORMING`, `EXPLORING`, `PLANNING`, `VALIDATING`, `IMPLEMENTING`, `VERIFYING`, `REVIEWING`, `DOCUMENTING`, `SHIPPING`, `LEARNING`, `COMPLETE`, `ABORTED`, plus the `ESCALATED` pseudo-state that resolves via user response. `BRAINSTORMING` was added in state-schema v2.1.0 (mega-consolidation, 2026-04-27); see `shared/state-schema.md` §"State Changes — Mega-Consolidation v2.1.0".
 
 - **REWINDING** *(pseudo-state, non-persistent, added in state-schema v1.9.0)* — in effect only during the atomic rewind transaction. `state.story_state` is NOT written as `REWINDING`; this name appears only in `events.jsonl` `StateTransitionEvent` pairs that bracket the rewind op.
 
@@ -24,8 +24,12 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 
 | # | current_state | event | guard | next_state | action |
 |---|---------------|-------|-------|------------|--------|
-| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
-| 2 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree, no lock, no checkpoints) |
+| 1 | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND mode == "standard" AND brainstorm.enabled == true` | `BRAINSTORMING` | Initialize state, create worktree, resolve convention stacks; dispatch fg-010-shaper |
+| 1a | `PREFLIGHT` | `preflight_complete` | `dry_run == false AND (mode != "standard" OR brainstorm.enabled == false)` | `EXPLORING` | Initialize state, create worktree, resolve convention stacks |
+| 2 | `PREFLIGHT` | `preflight_complete` | `dry_run == true` | `EXPLORING` | Initialize state (no worktree, no lock, no checkpoints) — dry-run skips BRAINSTORMING |
+| 2a | `BRAINSTORMING` | `brainstorm_complete` | spec written and approved | `EXPLORING` | Pass `state.brainstorm.spec_path` to planner |
+| 2b | `BRAINSTORMING` | `user_abort` | — | `ABORTED` | Persist partial brainstorm cache; clean exit |
+| 2c | `BRAINSTORMING` | `resume_with_cache` | `state.brainstorm.spec_path` exists AND file present | `BRAINSTORMING` | Self-loop — re-enter shaper with cache loaded |
 | 3 | `PREFLIGHT` | `interrupted_run_detected` | `checkpoint_valid AND no_git_drift` | Resume from first incomplete stage | Load checkpoint, resume pipeline |
 | 4 | `PREFLIGHT` | `interrupted_run_detected` | `git_drift_detected` | `PREFLIGHT` | Warn user, ask whether to incorporate or discard changes |
 | 5 | `EXPLORING` | `explore_complete` | `scope < decomposition_threshold` | `PLANNING` | Write stage_1_notes, pass exploration context to planner |
@@ -59,7 +63,7 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 34 | `REVIEWING` | `score_plateau` | `plateau_count >= plateau_patience AND score >= concerns_threshold AND score < pass_threshold` | ESCALATED | AskUserQuestion: Keep trying / Fix manually / Abort |
 | 35 | `REVIEWING` | `score_plateau` | `plateau_count >= plateau_patience AND score < concerns_threshold` | ESCALATED | Recommend abort, AskUserQuestion: Keep trying / Fix manually / Abort |
 | 36 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations < max_iterations` | `IMPLEMENTING` | Increment plateau_count + phase_iterations + total_iterations + total_retries, dispatch implementer with findings |
-| 37 | `REVIEWING` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate immediately |
+| 37 | `REVIEWING` | `score_regressing` | `abs(delta) >= oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate immediately |
 | 38 | `DOCUMENTING` | `docs_complete` | — | `SHIPPING` | Dispatch fg-590-pre-ship-verifier |
 | 39 | `DOCUMENTING` | `docs_failure` | — | `SHIPPING` | Log WARNING, set documentation.generation_error = true, proceed to pre-ship |
 | 40 | `SHIPPING` | `evidence_SHIP` | `evidence fresh (< evidence_max_age_minutes)` | `SHIPPING` (PR creation) | Dispatch fg-600-pr-builder |
@@ -75,6 +79,8 @@ Every row is a unique `(current_state, event, guard)` triple. The orchestrator l
 | 50 | `REVIEWING` | `score_diminishing` | `diminishing_count >= 2 AND score >= pass_threshold` | `VERIFYING` | Transition to "safety_gate", document diminishing gains as unfixable |
 | 51 | `REVIEWING` | `score_plateau` | `plateau_count < plateau_patience AND total_iterations >= max_iterations` | ESCALATED | Global iteration cap reached despite patience remaining |
 | 52 | `SHIPPING` | `evidence_SHIP` | `evidence_stale AND evidence_refresh_count >= 3` | ESCALATED | Evidence refresh loop cap reached, escalate to user |
+
+> **Deferred-to-C2 guards (BRAINSTORMING rows 2a-2c):** spec §3 also defines two BRAINSTORMING-skip paths that are not yet enumerated as transition rows: (a) `--spec <path>` with a well-formed spec → skip BRAINSTORMING and pass spec to planner; (b) `--from=<stage>` resuming past BRAINSTORMING. Wiring lands when fg-100-orchestrator is updated in C2; documented here so the contract is visible.
 
 ---
 
@@ -92,8 +98,8 @@ These transitions can fire from any current_state. They take priority over norma
 | E6 | ANY (ESCALATED) | `user_abort` | — | `ABORTED` | Write abort-report.md, clean up worktree, release lock |
 | E7 | ANY (ESCALATED) | `user_reshape` | — | `PLANNING` | Re-run forge-shape with current context, then re-enter PLAN |
 | E8 | ANY | `token_budget_exhausted` | `tokens.estimated_total >= budget_ceiling AND budget_ceiling > 0` | ESCALATED | Token budget exceeded, escalate to user. **Note:** The orchestrator's `cost-alerting.sh` system warns the user at configurable thresholds (default 50%/75%/90%) BEFORE E8 fires. E8 serves as an absolute safety net at the hard ceiling (default 2,000,000 tokens). The orchestrator calls `cost-alerting.sh check` before each agent dispatch; if exit 3 (CRITICAL) or 4 (EXCEEDED), it surfaces options to the user before E8's hard ESCALATED transition fires. |
-| E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-abort skill. Set abort_reason, release lock, preserve worktree. |
-| R1 | ANY | `recovery_op_rewind` | `/forge-recover rewind --to=<id>` dispatched by orchestrator | `REWINDING` | Entered transiently at the start of rewind. `StateTransitionEvent { from: <current>, to: "REWINDING" }` logged. `state.story_state` is NOT written. |
+| E9 | ANY (not COMPLETE, not ABORTED) | `user_abort_direct` | — | `ABORTED` | Direct abort from /forge-admin abort skill. Set abort_reason, release lock, preserve worktree. |
+| R1 | ANY | `recovery_op_rewind` | `/forge-admin recover rewind --to=<id>` dispatched by orchestrator | `REWINDING` | Entered transiently at the start of rewind. `StateTransitionEvent { from: <current>, to: "REWINDING" }` logged. `state.story_state` is NOT written. |
 | R2 | `REWINDING` | `rewind_commit_success` | CAS atomic restore succeeded (python3 -m hooks._py.time_travel exit 0) | `<checkpoint.story_state>` | Whichever story_state the target checkpoint captured. `state.story_state` set to the target's captured story_state; `StateTransitionEvent { from: "REWINDING", to: <target> }` logged. |
 | R3 | `REWINDING` | `rewind_abort` | CAS restore failed (exit 5 dirty / 6 unknown / 7 tx-collision) | `<prior story_state>` | Zero side effects; pipeline returns to state before rewind. `StateTransitionEvent { from: "REWINDING", to: <prior> }` logged. Abort code surfaced via `AskUserQuestion`. |
 
@@ -119,7 +125,7 @@ Rewind is the only transition type that can originate from ANY pipeline state. I
 4a. On success (exit 0): `StateTransitionEvent { from: "REWINDING", to: <checkpoint.story_state> }` logged; `state.story_state` is set to the target's story_state (row R2).
 4b. On abort (exit 5/6/7): `StateTransitionEvent { from: "REWINDING", to: <prior story_state> }` logged; `state.story_state` reverts (row R3). Abort code surfaced via `AskUserQuestion`.
 
-Subsequent forward progress is normal. The next `/forge-recover resume` continues from the rewound head.
+Subsequent forward progress is normal. The next `/forge-admin recover resume` continues from the rewound head.
 
 ---
 
@@ -137,7 +143,7 @@ Sub-state machine governing the IMPLEMENTING <-> VERIFYING <-> REVIEWING iterati
 | C6 | `perfection` | `score_target_reached` | `score >= target_score` | `safety_gate` | Transition to safety gate, dispatch final VERIFY |
 | C7 | `perfection` | `score_improving` | `delta > plateau_threshold AND total_iterations < max_iterations` | `perfection` | Reset plateau_count = 0, increment phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
 | C8 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count >= plateau_patience` | `safety_gate` or ESCALATED | Apply score escalation ladder (see scoring.md) (Note: Plateau detection guarded by phase_iterations >= 2 per convergence-engine.md §Plateau Detection. First 2 cycles always classified as IMPROVING regardless of delta.) |
-| C9 | `perfection` | `score_regressing` | `abs(delta) > oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
+| C9 | `perfection` | `score_regressing` | `abs(delta) >= oscillation_tolerance` | ESCALATED | Set convergence_state = REGRESSING, escalate |
 | C10 | `perfection` | `score_plateau` | `phase_iterations >= 2 AND plateau_count < plateau_patience AND total_iterations < max_iterations` | `perfection` | Increment plateau_count + phase_iterations + total_iterations, dispatch IMPLEMENT then REVIEW |
 | C10a | `perfection` | `score_plateau` | `phase_iterations < 2` | `perfection` | First 2 cycles exempt from plateau counting (establishing baseline). Increment phase_iterations + total_iterations + total_retries, treat as IMPROVING. |
 | C11 | `safety_gate` | `verify_pass` | `tests_pass` | CONVERGED | Set safety_gate_passed = true, proceed to DOCS |
@@ -238,3 +244,10 @@ These properties hold for the entire state machine:
 4. **Budget-bounded:** Every iteration loop is bounded by at least one of: `max_fix_loops`, `max_test_cycles`, `max_iterations`, `total_retries_max`, `recovery_budget.max_weight`. The pipeline cannot iterate indefinitely.
 
 5. **User sovereignty:** The user can always abort (`user_abort`). The pipeline never auto-ships below `shipping.min_score`. Escalations always offer user choice. Autonomous mode auto-selects "keep trying" but still respects hard caps.
+
+---
+
+## See Also
+
+- `tests/mutation/REPORT.md` — mutation-testing coverage of this table (seed rows 37, 28, E3, 47, 48).
+- `tests/scenario/COVERAGE.md` — scenario-to-row coverage report.

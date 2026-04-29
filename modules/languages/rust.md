@@ -1,5 +1,7 @@
 # Rust Language Conventions
 
+> Support tier: contract-verified
+
 ## Ownership and Borrowing
 
 - Rust's ownership system enforces memory safety at compile time — understand moves, borrows, and lifetimes before fighting the borrow checker.

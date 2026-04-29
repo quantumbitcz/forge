@@ -4,7 +4,7 @@ Documents the format and semantics of `.forge/security-audit.jsonl`, the append-
 
 ## File Location
 
-`.forge/security-audit.jsonl` -- one JSON object per line (JSON Lines format). Created on first security event. Survives `/forge-recover reset`. Rotated when file size exceeds `security.audit_trail.max_file_size_mb` (default 10 MB).
+`.forge/security-audit.jsonl` -- one JSON object per line (JSON Lines format). Created on first security event. Survives `/forge-admin recover reset`. Rotated when file size exceeds `security.audit_trail.max_file_size_mb` (default 10 MB).
 
 ## Event Types
 

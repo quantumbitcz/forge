@@ -1,7 +1,7 @@
 {
   "name": "cost",
   "version": "1.0.0",
-  "description": "5-task cost-per-feature measurement suite using /forge-run",
+  "description": "5-task cost-per-feature measurement suite using /forge run",
   "default_timeout_minutes": 60,
   "default_model": "sonnet",
   "tasks": [

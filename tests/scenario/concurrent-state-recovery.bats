@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario test: concurrent state recovery from WAL
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
@@ -24,8 +26,15 @@ STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
   [[ "$failures" -eq 0 ]] || fail "$failures of 5 parallel reads failed"
 
   for i in 1 2 3 4 5; do
-    python3 -c "import json; d=json.load(open('$TEST_TEMP/output_${i}.json')); assert d['story_state']=='REVIEWING'" \
-      || fail "output_${i}.json has invalid content"
+    python3 - "$TEST_TEMP/output_${i}.json" <<'PY' || fail "output_${i}.json has invalid content"
+import json
+import sys
+from pathlib import Path
+
+with Path(sys.argv[1]).open() as f:
+    d = json.load(f)
+assert d['story_state'] == 'REVIEWING'
+PY
   done
 
   assert [ -f "$forge_dir/state.json" ]

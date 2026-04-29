@@ -3,11 +3,23 @@
 load '../../helpers/test-helpers'
 
 SKILLS_DIR="$PLUGIN_ROOT/skills"
-SKILL_FILE="$SKILLS_DIR/forge-fix/SKILL.md"
+SKILL_FILE="$SKILLS_DIR/forge/SKILL.md"
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
 
-@test "forge-fix-integration: skill documents forge.local.md prerequisite" {
-  run grep -qi 'forge.local.md\|forge-init\|forge\.local\|prerequisit\|require' "$SKILL_FILE"
+# Extract the `### Subcommand: fix` block from skills/forge/SKILL.md.
+_fix_subcommand_block() {
+  awk '
+    /^### Subcommand: fix$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$SKILL_FILE"
+}
+
+@test "forge-fix-integration: parent /forge skill documents forge.local.md prerequisite" {
+  # Post-Mega-B: forge.local.md gating lives in the shared prerequisites
+  # block at the top of skills/forge/SKILL.md, not duplicated per-subcommand.
+  run grep -qi 'forge.local.md\|forge\.local' "$SKILL_FILE"
   assert_success
 }
 
@@ -23,7 +35,7 @@ FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"
   assert [ "$mode" = "bugfix" ]
 }
 
-@test "forge-fix-integration: skill documents ticket ID acceptance" {
-  run grep -qi 'ticket\|issue\|ID\|linear\|kanban\|bug' "$SKILL_FILE"
+@test "forge-fix-integration: fix subcommand documents ticket ID acceptance" {
+  run bash -c "$(declare -f _fix_subcommand_block); SKILL_FILE='$SKILL_FILE'; _fix_subcommand_block | grep -qi 'ticket\|issue\|ID\|linear\|kanban\|bug'"
   assert_success
 }

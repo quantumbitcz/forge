@@ -146,49 +146,18 @@ has_tool() {
 # 5 new Phase 1 assertions (plan Task 18 Step 2)
 # ---------------------------------------------------------------------------
 
-@test "every non-Tier-4 agent has explicit ui: block; every Tier-4 agent omits ui:" {
-  # Contract tightening: Tier-4 (silent) agents MUST omit ui: entirely.
-  # Tier-4 list is sourced from shared/agent-role-hierarchy.md §"Tier 4 — None (Silent)".
-  local tier4=(
-    fg-101-worktree-manager
-    fg-102-conflict-resolver
-    fg-205-planning-critic
-    fg-410-code-reviewer
-    fg-411-security-reviewer
-    fg-412-architecture-reviewer
-    fg-413-frontend-reviewer
-    fg-414-license-reviewer
-    fg-416-performance-reviewer
-    fg-417-dependency-reviewer
-    fg-418-docs-consistency-reviewer
-    fg-419-infra-deploy-reviewer
-    fg-510-mutation-analyzer
-  )
-
-  # Build a lookup
-  declare -A is_tier4
-  for a in "${tier4[@]}"; do is_tier4[$a]=1; done
-
+@test "every fg-*.md agent has explicit ui: block" {
+  # Phase 2 contract: every agent — including Tier-4 reviewers and helpers —
+  # carries an explicit ui: block. Tier-4 agents use ui: { tasks: false, ask: false, plan_mode: false }.
+  # The pytest sibling tests/contract/test_ui_frontmatter_required.py enforces shape (extra=forbid, boolean types).
   local failures=()
   for f in "$PLUGIN_ROOT"/agents/fg-*.md; do
     local base
     base="$(basename "$f" .md)"
-    local has_ui
-    if grep -q "^ui:" "$f"; then has_ui=1; else has_ui=0; fi
-
-    if [[ -n "${is_tier4[$base]:-}" ]]; then
-      # Tier-4 MUST omit ui:
-      if (( has_ui == 1 )); then
-        failures+=("$base: Tier-4 agent must omit ui: block (found ui:)")
-      fi
-    else
-      # Non-Tier-4 MUST have ui:
-      if (( has_ui == 0 )); then
-        failures+=("$base: non-Tier-4 agent must have explicit ui: block (missing)")
-      fi
+    if ! grep -q "^ui:" "$f"; then
+      failures+=("$base: missing ui: block")
     fi
   done
-
   if (( ${#failures[@]} > 0 )); then
     printf '%s\n' "${failures[@]}"
     fail "ui: block contract violations: ${#failures[@]}"
@@ -239,6 +208,22 @@ has_tool() {
     fi
   done
   [ "$bad" -eq 0 ]
+}
+
+@test "fg-205-plan-judge and fg-301-implementer-judge are Tier 4" {
+  for agent in fg-205-plan-judge fg-301-implementer-judge; do
+    local f="$PLUGIN_ROOT/agents/${agent}.md"
+    [ -f "$f" ] || { echo "Missing agent file: $f"; return 1; }
+    # Extract the ui: block (until next top-level YAML key)
+    local ui_block
+    ui_block=$(awk '/^ui:/{flag=1; next} flag && /^[a-z]/{flag=0} flag' "$f")
+    echo "$ui_block" | grep -q "tasks: false" \
+      || { echo "$agent ui.tasks must be false"; return 1; }
+    echo "$ui_block" | grep -q "ask: false" \
+      || { echo "$agent ui.ask must be false"; return 1; }
+    echo "$ui_block" | grep -q "plan_mode: false" \
+      || { echo "$agent ui.plan_mode must be false"; return 1; }
+  done
 }
 
 @test "Tier 1/2 agents contain User-interaction examples section" {

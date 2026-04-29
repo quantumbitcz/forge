@@ -1,0 +1,152 @@
+name: Benchmark
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      corpus_filter:
+        description: 'Substring filter on entry ids (optional)'
+        required: false
+        default: ''
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # bot commits SCORECARD.md directly
+  actions: read
+
+jobs:
+  benchmark-matrix:
+    name: Benchmark ${{ matrix.os }} × ${{ matrix.claude-model }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        claude-model: [claude-sonnet-4-6, claude-opus-4-7]
+    env:
+      FORGE_EVAL: '1'
+      FORGE_BENCHMARK: '1'
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      # Corpus size gate (AC-801, Task 23): only cron runs enforce ≥10 entries.
+      # workflow_dispatch (manual / debug) runs without the gate so partial-corpus
+      # debugging is possible without failing the release-branch invariant.
+      PHASE_8_CORPUS_GATE: ${{ github.event_name == 'schedule' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - name: Install deps
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/evals/benchmark/requirements.txt
+      - name: Install Claude CLI
+        shell: bash
+        run: |
+          # Follow tests/evals/pipeline/README.md:77–82 install path.
+          npm install -g @anthropic-ai/claude-code || exit 1
+          claude --version
+      - name: Run benchmark cell
+        shell: bash
+        env:
+          MATRIX_OS: ${{ matrix.os }}
+          MATRIX_MODEL: ${{ matrix.claude-model }}
+          CORPUS_FILTER: ${{ github.event.inputs.corpus_filter }}
+        run: |
+          python -m tests.evals.benchmark.runner \
+            --corpus-root tests/evals/benchmark/corpus \
+            --results-root tests/evals/benchmark/results \
+            --os "$MATRIX_OS" \
+            --model "$MATRIX_MODEL" \
+            --parallel 1 \
+            --entry-filter "$CORPUS_FILTER"
+      - name: Upload cell artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-${{ matrix.os }}-${{ matrix.claude-model }}-${{ github.run_id }}
+          path: |
+            tests/evals/benchmark/results/
+          retention-days: 90
+
+  aggregate:
+    name: Aggregate + render scorecard
+    needs: benchmark-matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: always()
+    env:
+      PHASE_8_CORPUS_GATE: ${{ github.event_name == 'schedule' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - name: Install deps
+        run: pip install -r tests/evals/benchmark/requirements.txt
+      - name: Download all cells
+        uses: actions/download-artifact@v8
+        with:
+          pattern: benchmark-*-${{ github.run_id }}
+          path: all-cells/
+          merge-multiple: true
+      - name: Aggregate week
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python -m tests.evals.benchmark.aggregate \
+            --results-root all-cells \
+            --trends tests/evals/benchmark/trends.jsonl \
+            --commit-sha "$COMMIT_SHA" \
+            --forge-version "$(python -c 'import json; print(json.load(open(\".claude-plugin/plugin.json\"))[\"version\"])')"
+      - name: Render scorecard
+        run: |
+          python -m tests.evals.benchmark.render_scorecard \
+            --trends tests/evals/benchmark/trends.jsonl \
+            --baseline tests/evals/benchmark/baseline.json \
+            --output SCORECARD.md
+      - name: Regression gate
+        run: |
+          python -m tests.evals.benchmark.gate_cli \
+            --trends tests/evals/benchmark/trends.jsonl \
+            --baseline tests/evals/benchmark/baseline.json
+      - name: Commit scorecard (idempotent)
+        id: commit
+        shell: bash
+        run: |
+          if git diff --exit-code SCORECARD.md tests/evals/benchmark/trends.jsonl; then
+            echo "no scorecard changes; skipping commit"
+            echo "fallback_needed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add SCORECARD.md tests/evals/benchmark/trends.jsonl
+          git commit -m "chore(bench): weekly scorecard $(date -u +%Y-%m-%d)"
+          # Race-retry once
+          for i in 1 2; do
+            if git push origin HEAD:master; then
+              echo "fallback_needed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git fetch origin master && git rebase origin/master || break
+          done
+          echo "fallback_needed=true" >> "$GITHUB_OUTPUT"
+          echo "::warning ::BENCH-COMMIT-RACE: push failed twice; uploading artifact instead"
+          exit 0
+      - name: Upload scorecard (race fallback)
+        if: steps.commit.outputs.fallback_needed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: scorecard-${{ github.run_id }}
+          path: |
+            SCORECARD.md
+            tests/evals/benchmark/trends.jsonl

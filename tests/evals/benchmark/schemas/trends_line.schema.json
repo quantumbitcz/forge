@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "week_of", "commit_sha", "forge_version", "cells", "hook_failures_total", "regressions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "week_of": {"type": "string", "format": "date"},
+    "commit_sha": {"type": "string"},
+    "forge_version": {"type": "string"},
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["os", "model", "entries_total", "entries_solved", "entries_timeout",
+                     "entries_docker_skipped", "solve_rate_overall", "solve_rate_by_complexity",
+                     "median_cost_per_solve_usd", "total_cost_usd"],
+        "properties": {
+          "os": {"type": "string"},
+          "model": {"type": "string"},
+          "entries_total": {"type": "integer", "minimum": 0},
+          "entries_solved": {"type": "integer", "minimum": 0},
+          "entries_timeout": {"type": "integer", "minimum": 0},
+          "entries_docker_skipped": {"type": "integer", "minimum": 0},
+          "solve_rate_overall": {"type": "number", "minimum": 0, "maximum": 1},
+          "solve_rate_by_complexity": {
+            "type": "object",
+            "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "median_cost_per_solve_usd": {"type": "number", "minimum": 0},
+          "total_cost_usd": {"type": "number", "minimum": 0},
+          "unverifiable_total": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "hook_failures_total": {"type": "integer", "minimum": 0},
+    "regressions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entry_id"],
+        "properties": {
+          "entry_id": {"type": "string"},
+          "delta_pp": {"type": "number"},
+          "severity": {"enum": ["CRITICAL", "WARNING", "INFO"]},
+          "os": {"type": "string"},
+          "model": {"type": "string"}
+        }
+      }
+    }
+  }
+}

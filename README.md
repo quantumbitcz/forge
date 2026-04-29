@@ -2,17 +2,20 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/quantumbitcz/forge?style=flat-square&color=blue)](https://github.com/quantumbitcz/forge/releases/latest)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
-[![Agents](https://img.shields.io/badge/agents-42-green?style=flat-square)](#agents)
-[![Skills](https://img.shields.io/badge/skills-35-green?style=flat-square)](#available-skills)
-[![Frameworks](https://img.shields.io/badge/frameworks-21-orange?style=flat-square)](#available-modules)
+[![Agents](https://img.shields.io/badge/agents-51-green?style=flat-square)](#agents)
+[![Skills](https://img.shields.io/badge/skills-3-green?style=flat-square)](#available-skills)
+[![Frameworks](https://img.shields.io/badge/frameworks-24-orange?style=flat-square)](#available-modules)
 [![Languages](https://img.shields.io/badge/languages-15-orange?style=flat-square)](#available-modules)
-[![Finding Categories](https://img.shields.io/badge/finding_categories-87+-purple?style=flat-square)](#quality-scoring)
+[![Finding Categories](https://img.shields.io/badge/finding_categories-149-purple?style=flat-square)](#quality-scoring)
 [![Build Systems](https://img.shields.io/badge/build_systems-9-blue?style=flat-square)](#available-modules)
-[![Tests](https://img.shields.io/badge/tests-3040+-brightgreen?style=flat-square)](#testing)
+[![Tests](https://img.shields.io/badge/tests-800+-brightgreen?style=flat-square)](#testing)
+[![Measured](https://img.shields.io/badge/measured-SCORECARD-blue?style=flat-square)](./SCORECARD.md)
 
 > Autonomous 10-stage development pipeline for Claude Code. Point it at a requirement and get a tested, reviewed, documented pull request.
 
-Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **42 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
+**Measured.** `SCORECARD.md` measures weekly real-feature solve rate on a curated corpus; `tests/evals/pipeline/leaderboard.md` measures per-PR pipeline smoke on synthetic scenarios. Different tiers, different cadences.
+
+Claude Code is powerful, but without structure it makes inconsistent decisions, skips tests, forgets conventions, and produces PRs that need heavy review. **forge** fixes this by orchestrating **51 specialized agents** across 10 stages -- from exploration through TDD implementation, multi-perspective quality review, and self-improving retrospectives -- so every run follows the same disciplined process.
 
 ## Quick start
 
@@ -21,12 +24,11 @@ Claude Code is powerful, but without structure it makes inconsistent decisions, 
 /plugin marketplace add quantumbitcz/forge
 /plugin install forge@quantumbitcz
 
-# 2. Initialize your project (auto-detects framework, gitignores .forge/)
-/forge-init
-
-# 3. Run it
-/forge-run Add user dashboard with activity feed
+# 2. Run it — auto-bootstraps forge.local.md on first invocation
+/forge "Add user dashboard with activity feed"
 ```
+
+No explicit init step. The first `/forge` invocation detects your stack (language, framework, testing, build) and offers `[proceed]` / `[open wizard]` / `[cancel]`. Autonomous mode (`autonomous: true` in `.claude/forge.local.md`, or `--autonomous` flag) writes defaults silently and continues.
 
 <details>
 <summary>Alternative: install as Git submodule</summary>
@@ -43,6 +45,8 @@ Then add to `.claude/settings.json`:
 }
 ```
 
+Or run the bundled installer scripts (`./install.sh` on macOS/Linux, `powershell -ExecutionPolicy Bypass -File install.ps1` on Windows).
+
 </details>
 
 ## Key features
@@ -52,7 +56,7 @@ Then add to `.claude/settings.json`:
 - **Inner-loop lint+test** -- Tight edit-lint-test-fix cycle inside the implementer. 3-strategy affected test detection (explore cache, code graph, directory heuristic).
 - **Model routing** -- Curated tier assignments: 9 fast (haiku), 19 standard (sonnet), 14 premium (opus). 60-80% cost reduction with cascade fallback.
 - **Output compression** -- 4 verbosity levels (verbose/standard/terse/minimal) per pipeline stage. 30-45% output token savings. Auto-clarity safety valve for security warnings.
-- **Agent prompt compression** -- All 42 agent .md files compressed 27% (17,127 to 12,441 lines). Orchestrator reduced 53%.
+- **Agent prompt compression** -- All 51 agent .md files compressed 27%. Orchestrator reduced 53%.
 - **Self-healing recovery** -- 7 recovery strategies with weighted budget (ceiling 5.5) handle transient failures, tool issues, and state corruption automatically.
 - **4-layer check engine** -- L0 (tree-sitter pre-edit), L1 (regex sub-second), L2 (linter adapters), L3 (AI-driven deprecation + version compat).
 - **Confidence scoring** -- 4-dimension weighted algorithm (clarity, familiarity, complexity, history) with adaptive trust model. Gates execution based on confidence.
@@ -70,9 +74,14 @@ Then add to `.claude/settings.json`:
 - **Property-based testing** -- Optional fg-515 agent generates invariant/round-trip/idempotence/metamorphic tests for 10 PBT frameworks.
 - **Concurrent run protection** -- Lock file prevents parallel runs. Global retry budget (default 10) prevents unbounded cascades.
 - **Monorepo support** -- Nx and Turborepo modules with affected detection, scoped testing/building.
-- **Environment health check** -- `/forge-init` probes for optional tools (jq, docker, tree-sitter, gh, sqlite3) and MCP integrations, displays a dashboard with platform-specific install suggestions.
+- **Auto-bootstrap** -- First `/forge` invocation in a project missing `.claude/forge.local.md` detects the stack via `shared/bootstrap-detect.py`, prompts the user with detected defaults, and writes the config atomically. Autonomous mode skips the prompt. No explicit init step.
 - **Dynamic reviewer scaling** -- Quality gate scales review agents by change scope: <50 lines = batch 1 only, 50-500 = all batches, >500 = all batches + splitting recommendation.
-- **Caveman benchmark** -- `/forge-compress output benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
+- **Caveman benchmark** -- `/forge-admin compress output benchmark` measures actual token savings across lite/full/ultra compression modes on any file.
+- **Always-on brainstorming** -- Every feature-mode `/forge` run starts with BRAINSTORMING (`fg-010-shaper` adopts the superpowers seven-step pattern: explore context, ask one question at a time, propose 2-3 approaches, sectioned approval gates, write spec, self-review, hand off). Opt out via `brainstorm.enabled: false`. Transcript mining queries past run history (F29 FTS5) for similar features.
+- **Hypothesis-driven debugging** -- `/forge fix` runs reproduction → up to 3 competing hypotheses → optional parallel sub-investigators (`fg-021-hypothesis-investigator`) → Bayesian pruning → fix-gate (posterior ≥ 0.75). Refuses to plan a fix without root-cause evidence.
+- **Multi-VCS first-class** -- GitHub, GitLab, Bitbucket, Gitea/Forgejo. Pure-Python adapters under `shared/platform_adapters/` work uniformly on Windows, macOS, and Linux. Automatic detection at PREFLIGHT.
+- **Structured PR finishing** -- `/forge` ships ready-to-merge work via `AskUserQuestion` dialog: open-pr / open-pr-draft / direct-push / stash / abandon. Cleanup checklist runs after the chosen strategy completes. Autonomous default: `open-pr-draft`.
+- **Cross-reviewer consistency voting** -- When ≥3 reviewers flag the same dedup key, confidence is promoted to HIGH (1.0× weight). Reduces false positives from any single reviewer's fresh-context limitations.
 
 ### The 10 stages
 
@@ -99,49 +108,21 @@ PASS >= 80, CONCERNS 60-79, FAIL < 60 or unresolved CRITICAL. Confidence-weighte
 
 ## Available skills
 
-35 skills provide the user-facing interface.
-
-Every skill advertises its impact with a `[read-only]` or `[writes]` prefix in its description. Read-only skills expose `--json`; writing skills expose `--dry-run`. All skills expose `--help`. See `shared/skill-contract.md` for the full contract.
+Three skills cover all functionality. Each advertises its impact with a `[read-only]` or `[writes]` prefix in its description. Read-only skills expose `--json`; writing skills expose `--dry-run`. All skills expose `--help`. See `shared/skill-contract.md` for the full contract.
 
 | Skill | Badge | Description |
 |-------|-------|-------------|
-| `/forge-run` | [writes] | Main entry -- full 10-stage pipeline |
-| `/forge-init` | [writes] | Initialize project config (auto-detects framework) |
-| `/forge-fix` | [writes] | Bugfix workflow -- root cause investigation + targeted fix |
-| `/forge-shape` | [writes] | Collaboratively shape features into structured specs |
-| `/forge-sprint` | [writes] | Parallel multi-feature orchestration |
-| `/forge-review` | [writes] | Review changed files (quick: 3 agents, full: 8 agents) |
-| `/forge-status` | [read-only] | Show pipeline state, score, budgets |
-| `/forge-recover` | [writes] | Diagnose/repair/reset/resume/rollback pipeline state (`<subcommand>` dispatch). Replaces 5 old recovery skills. |
-| `/forge-abort` | [writes] | Graceful pipeline stop |
-| `/forge-history` | [read-only] | Quality trends across runs |
-| `/forge-profile` | [read-only] | Pipeline performance analysis |
-| `/forge-insights` | [read-only] | Quality, cost, convergence analytics |
-| `/forge-ask` | [read-only] | Codebase Q&A via wiki, graph, docs |
-| `/forge-playbooks` | [writes] | Manage reusable task templates |
-| `/forge-playbook-refine` | [writes] | Interactive review/apply of playbook refinements |
-| `/forge-compress` | [writes] | Compress agents/output/status/help. Replaces `forge-caveman` and `forge-compression-help`. |
-| `/forge-verify` | [read-only] | Quick build + lint + test check |
-| `/forge-security-audit` | [read-only] | Module-appropriate security scanners |
-| `/forge-review --scope=all` | [read-only] | Full check engine health report (codebase audit) |
-| `/forge-review --scope=all --fix` | [writes] | Iterative fix loop until clean (AskUserQuestion safety gate) |
-| `/forge-docs-generate` | [writes] | Generate project documentation |
-| `/forge-deploy` | [writes] | Deployment (staging, production, preview, rollback) |
-| `/forge-migration` | [writes] | Framework/library version migrations |
-| `/forge-bootstrap` | [writes] | Scaffold new project from template |
-| `/forge-verify --config` | [read-only] | Pre-pipeline config validation |
-| `/forge-automation` | [writes] | Event-driven automation management |
-| `/forge-graph` | [writes] | Knowledge graph dispatcher: `init`, `status`, `query <cypher>`, `rebuild`, `debug`. Replaces 5 old `forge-graph-*` skills. |
-| `/forge-commit` | [writes] | Terse conventional commit from staged changes |
-| `/forge-help` | [read-only] | Interactive decision tree to find the right skill |
-| `/forge-tour` | [read-only] | Guided 5-stop introduction to Forge |
-| `/forge-config` | [writes] | Interactive configuration editor |
+| `/forge` | [writes] | Build, fix, deploy, review, or modify code. Universal entry; hybrid grammar (`run`, `fix`, `sprint`, `review`, `verify`, `deploy`, `commit`, `migrate`, `bootstrap`, `docs`, `audit`); free-text falls through to the intent classifier. Auto-bootstraps a missing `forge.local.md` on first invocation. |
+| `/forge-ask` | [read-only] | Query forge state, codebase knowledge, run history, or analytics. Subcommands: bare `<question>`, `status`, `history`, `insights`, `profile`, `tour`. |
+| `/forge-admin` | [writes] | Manage forge state and configuration. Two-level dispatch: `recover`, `abort`, `config`, `handoff`, `automation`, `playbooks`, `compress`, `graph`, `refine`. |
 
 ## Available modules
 
+Every module carries a support-tier badge (CI-verified / contract-verified / community). See docs/support-tiers.md for the taxonomy.
+
 | Category | Count | Examples |
 |----------|-------|---------|
-| Frameworks | 21 | spring, react, nextjs, fastapi, django, axum, angular, nestjs, vue, svelte, sveltekit, express, gin, go-stdlib, swiftui, vapor, jetpack-compose, kotlin-multiplatform, aspnet, embedded, k8s |
+| Frameworks | 24 | spring, react, nextjs, fastapi, django, flask, axum, angular, nestjs, vue, svelte, sveltekit, express, gin, go-stdlib, swiftui, vapor, jetpack-compose, kotlin-multiplatform, aspnet, laravel, rails, embedded, k8s |
 | Languages | 15 | kotlin, java, typescript, python, go, rust, swift, c, csharp, ruby, php, dart, elixir, scala, cpp |
 | Testing | 19 | kotest, junit5, vitest, jest, pytest, go-testing, xctest, rust-test, playwright, cypress, cucumber, k6, detox, rspec, phpunit, exunit, scalatest, xunit-nunit, testcontainers |
 | Build Systems | 9 | gradle, maven, npm, cargo, go, cmake, bazel, nx, turborepo |
@@ -157,18 +138,18 @@ All framework modules include `conventions.md` (with Dos/Don'ts), `local-templat
 
 ## Agents
 
-42 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
+51 agents organized by pipeline stage. See `shared/agents.md#registry` for the full list.
 
-**Pipeline agents**: fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-150-test-bootstrapper, fg-160-migration-planner, fg-200-planner, fg-205-planning-critic, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
+**Pipeline agents** (42): fg-010-shaper, fg-015-scope-decomposer, fg-020-bug-investigator, fg-021-hypothesis-investigator, fg-050-project-bootstrapper, fg-090-sprint-orchestrator, fg-100-orchestrator, fg-101-worktree-manager, fg-102-conflict-resolver, fg-103-cross-repo-coordinator, fg-130-docs-discoverer, fg-135-wiki-generator, fg-140-deprecation-refresh, fg-143-observability-bootstrap, fg-150-test-bootstrapper, fg-155-i18n-validator, fg-160-migration-planner, fg-200-planner, fg-205-plan-judge, fg-210-validator, fg-250-contract-validator, fg-300-implementer, fg-301-implementer-judge, fg-302-diff-judge, fg-310-scaffolder, fg-320-frontend-polisher, fg-350-docs-generator, fg-400-quality-gate, fg-500-test-gate, fg-505-build-verifier, fg-506-migration-verifier, fg-510-mutation-analyzer, fg-515-property-test-generator, fg-540-intent-verifier, fg-555-resilience-tester, fg-590-pre-ship-verifier, fg-600-pr-builder, fg-610-infra-deploy-verifier, fg-620-deploy-verifier, fg-650-preview-validator, fg-700-retrospective, fg-710-post-run.
 
-**Review agents** (8): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-416-performance-reviewer, fg-417-dependency-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer.
+**Review agents** (9): fg-410-code-reviewer, fg-411-security-reviewer, fg-412-architecture-reviewer, fg-413-frontend-reviewer, fg-414-license-reviewer, fg-416-performance-reviewer, fg-417-dependency-reviewer, fg-418-docs-consistency-reviewer, fg-419-infra-deploy-reviewer.
 
 ## Architecture
 
 Visual diagrams of the pipeline, agent dispatch, and state machine:
 
 - [Pipeline Flow](docs/architecture/pipeline-flow.md) -- 10-stage pipeline with decision points and feedback loops
-- [Agent Dispatch](docs/architecture/agent-dispatch.md) -- 42 agents organized by pipeline stage
+- [Agent Dispatch](docs/architecture/agent-dispatch.md) -- 51 agents organized by pipeline stage
 - [State Machine](docs/architecture/state-machine.md) -- 57 normal + 9 error state transitions
 
 ## Integrations
@@ -185,6 +166,19 @@ Auto-detected MCP servers at PREFLIGHT. All optional -- pipeline degrades gracef
 | **Neo4j** | Knowledge graph (dual-purpose: plugin seed + project codebase) |
 | **Excalidraw** | Architecture diagrams |
 
+### Multi-VCS support
+
+Forge detects the PR/MR platform once at PREFLIGHT (cached in `state.platform`) and dispatches feedback posts and PR opens through the matching adapter:
+
+| Platform | Auth | Adapter |
+|---|---|---|
+| GitHub | `gh` CLI auth or `GITHUB_TOKEN` env | GitHub MCP (with `gh api` fallback) |
+| GitLab | `glab` CLI auth or `GITLAB_TOKEN` env | `glab` CLI; Python `urllib.request` fallback when `glab` is absent |
+| Bitbucket | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` env | Pure Python (`urllib.request` against REST API v2.0) |
+| Gitea / Forgejo | `GITEA_TOKEN` env | Pure Python (`urllib.request` against REST API v1) |
+
+All adapters are pure Python — no `curl` or shell-out — and work uniformly on Windows, macOS, and Linux. Detection is automatic (`platform.detection: auto`) via remote URL pattern matching plus repo-marker files (`.gitlab-ci.yml`, `bitbucket-pipelines.yml`) and an API-probe for self-hosted Gitea/Forgejo. Override with `platform.detection: github|gitlab|bitbucket|gitea` in `forge.local.md`.
+
 ## Configuration
 
 ### `forge.local.md` (static, checked into git)
@@ -193,7 +187,24 @@ Project identity: `language`, `framework`, `testing`, `commands` (build/test/lin
 ### `forge-config.md` (mutable, auto-tuned by retrospective)
 Runtime parameters: scoring weights, convergence limits (`max_iterations`, `plateau_threshold`), retry budgets (`total_retries_max`), model routing, confidence scoring, output compression, inner-loop config, test history, condensation, playbooks, and 15+ more sections. See `shared/schemas/forge-config-schema.json` for the full schema.
 
+- **Cost ceiling (Phase 6).** Every run has a USD ceiling (default **$25**). Configurable via `cost.ceiling_usd` in `forge-config.md`; the orchestrator injects a `## Cost Budget` block into every subagent brief, soft-throttles the implementer at 80%/90% consumption, and dynamically downgrades tiers when the remaining budget is small (excluding a hardcoded SAFETY_CRITICAL reviewer set). See `shared/model-routing.md` §Cost-Aware Routing.
+
 ## Testing
+
+Forge runs eight test tiers in CI (`.github/workflows/test.yml`):
+
+| Tier | Platforms | Purpose |
+| --- | --- | --- |
+| structural | 3 OS | Plugin-layout sanity checks (~2s) |
+| unit | 3 OS | Algorithm/pure-function tests (pytest + bats) |
+| contract | 3 OS | Inter-agent + state-machine contracts |
+| scenario | 3 OS | State-machine scenarios against transition table |
+| e2e | 3 OS | Minimal ts+vitest project → dry-run pipeline → VALIDATED |
+| mutation | ubuntu | Seeded mutations of transition-table rows |
+| coverage | ubuntu | Scenario-to-row coverage report with 60%/80% gates |
+| pipeline eval | ubuntu | Full replay (manual CI trigger) |
+
+See `tests/README.md` for the per-tier contract, runner, and regeneration workflow.
 
 ```bash
 # Full suite
@@ -243,26 +254,27 @@ After [Quick start](#quick-start):
 # Open .claude/forge.local.md and set commands, scaffolder patterns, quality gate
 
 # Usage examples
-/forge-run Add plan comment feature          # Full pipeline
-/forge-run --dry-run "Add user dashboard"    # Dry-run (PREFLIGHT→VALIDATE only)
-/forge-run "Add versioning" --from=implement # Resume from stage
-/forge-run --playbook=add-rest-endpoint entity=Task  # Use playbook template
-/forge-fix Users get 404 on group endpoint   # Bugfix workflow
-/forge-sprint                                # Multi-feature parallel execution
+/forge "Add plan comment feature"                    # full pipeline; brainstorms first
+/forge run --dry-run "Add user dashboard"            # dry-run (PREFLIGHT → VALIDATE only)
+/forge run --from=implement "Add versioning"         # resume from stage
+/forge run --playbook=add-rest-endpoint entity=Task  # use playbook template
+/forge fix "Users get 404 on group endpoint"         # bugfix workflow (skips BRAINSTORMING)
+/forge sprint                                        # multi-feature parallel execution
+/forge sprint --parallel "feat A" "feat B"           # explicit sprint with two features
 ```
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| "No active pipeline" | Run `/forge-init` then `/forge-run` |
-| Pipeline stuck | `/forge-recover diagnose` (read-only), then `/forge-recover repair` |
-| Lock file blocks run | `/forge-recover reset` or remove `.forge/.lock` |
-| Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.log` |
+| "No active pipeline" | Run `/forge "<requirement>"` (auto-bootstraps if needed) |
+| Pipeline stuck | `/forge-admin recover diagnose` (read-only), then `/forge-admin recover repair` |
+| Lock file blocks run | `/forge-admin recover reset` or remove `.forge/.lock` |
+| Check engine errors | Install bash 4+ (`brew install bash`). Check `.forge/.hook-failures.jsonl` |
 | Score oscillating | Check `oscillation_tolerance` in forge-config.md (default 5) |
 | Budget exhausted | Check `total_retries_max` (default 10, range 5-30) |
 | Evidence stale | Increase `shipping.evidence_max_age_minutes` (default 30) |
-| MCP not detected | `/forge-status`. Pipeline degrades gracefully |
+| MCP not detected | `/forge-ask status`. Pipeline degrades gracefully |
 
 See `shared/error-taxonomy.md` (22 error types) and `shared/recovery/recovery-engine.md` (7 strategies).
 

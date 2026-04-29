@@ -1,5 +1,7 @@
 # TypeScript Language Conventions
 
+> Support tier: contract-verified
+
 ## Type System
 
 - Enable `strict: true` in `tsconfig.json` — this activates `strictNullChecks`, `noImplicitAny`, `strictFunctionTypes`, and more.

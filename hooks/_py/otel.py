@@ -187,7 +187,16 @@ def tool_span(*, name: str, call_id: str | None = None) -> Iterator[Any]:
 
 
 def record_agent_result(result: dict) -> None:
-    """Attach result to the currently active agent span."""
+    """Attach result to the currently active agent span.
+
+    Phase 6 keys honored on `result` (all optional; default 0/empty):
+      - budget_total_usd          -> forge.run.budget_total_usd
+      - budget_remaining_usd      -> forge.run.budget_remaining_usd
+      - tier_estimate_usd         -> forge.agent.tier_estimate_usd
+      - tier_original             -> forge.agent.tier_original
+      - tier_used                 -> forge.agent.tier_used
+      - throttle_reason           -> forge.cost.throttle_reason
+    """
     if not _STATE.enabled:
         return
     from opentelemetry import trace
@@ -195,6 +204,22 @@ def record_agent_result(result: dict) -> None:
     span = trace.get_current_span()
     if span is None:
         return
+
+    # Phase 6 cost attributes (best-effort; never raise).
+    for src, attr in (
+        ("budget_total_usd", A.FORGE_RUN_BUDGET_TOTAL_USD),
+        ("budget_remaining_usd", A.FORGE_RUN_BUDGET_REMAINING_USD),
+        ("tier_estimate_usd", A.FORGE_AGENT_TIER_ESTIMATE_USD),
+        ("tier_original", A.FORGE_AGENT_TIER_ORIGINAL),
+        ("tier_used", A.FORGE_AGENT_TIER_USED),
+        ("throttle_reason", A.FORGE_COST_THROTTLE_REASON),
+    ):
+        if src in result:
+            try:
+                span.set_attribute(attr, result[src])
+            except Exception:
+                pass
+
     sid = span.get_span_context().span_id
     # If we are inside an agent_span, buffer the result so _apply_agent_result
     # picks it up at span close; otherwise apply immediately.
@@ -257,3 +282,51 @@ def replay(*, events_path: str, config: dict) -> int:
     from hooks._py.event_to_span import replay_events  # Task 10
 
     return replay_events(events_path=events_path, config=config)
+
+
+# Phase 7 F35/F36 span helpers
+
+
+@contextlib.contextmanager
+def intent_verify_ac_span(ac_id: str, probe_tier: int) -> Iterator[Any]:
+    """Span: forge.intent.verify_ac. One per AC."""
+    if not _STATE.enabled or _STATE.tracer is None:
+        yield None
+        return
+    with _STATE.tracer.start_as_current_span("forge.intent.verify_ac") as span:
+        span.set_attribute(A.INTENT_AC_ID, ac_id)
+        span.set_attribute(A.INTENT_PROBE_TIER, probe_tier)
+        yield span
+
+
+def record_intent_verdict(
+    span: Any, verdict: str, probes_issued: int, duration_ms: int
+) -> None:
+    if span is None:
+        return
+    span.set_attribute(A.INTENT_AC_VERDICT, verdict)
+    span.set_attribute(A.INTENT_PROBES_ISSUED, probes_issued)
+    span.set_attribute(A.INTENT_DURATION_MS, duration_ms)
+
+
+@contextlib.contextmanager
+def impl_vote_span(task_id: str, sample_id: int, trigger: str) -> Iterator[Any]:
+    """Span: forge.impl.vote. One per voted sample."""
+    if not _STATE.enabled or _STATE.tracer is None:
+        yield None
+        return
+    with _STATE.tracer.start_as_current_span("forge.impl.vote") as span:
+        span.set_attribute("forge.impl_vote.task_id", task_id)
+        span.set_attribute(A.IMPL_VOTE_SAMPLE_ID, sample_id)
+        span.set_attribute(A.IMPL_VOTE_TRIGGER, trigger)
+        yield span
+
+
+def record_vote_verdict(
+    span: Any, verdict: str, ast_fingerprint: str, degraded: bool
+) -> None:
+    if span is None:
+        return
+    span.set_attribute(A.IMPL_VOTE_VERDICT, verdict)
+    span.set_attribute(A.IMPL_VOTE_AST_FINGERPRINT, ast_fingerprint)
+    span.set_attribute(A.IMPL_VOTE_DEGRADED, degraded)

@@ -14,25 +14,29 @@ STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 # ---------------------------------------------------------------------------
-# 2. Schema version is "1.10.0" (bumped from 1.9.0 for session-handoff tracking)
+# 2. Schema version is current (currently 2.1.0 — mega-consolidation bump
+#    from 2.0.0 that added BRAINSTORMING/bug/feedback_decisions/platform blocks).
 # ---------------------------------------------------------------------------
-@test "state-schema: schema version 1.10.0 documented" {
-  grep -q '"version": "1.10.0"' "$STATE_SCHEMA" \
-    || fail 'Schema version "1.10.0" not found in state-schema.md'
+@test "state-schema: schema version 2.1.0 documented" {
+  grep -q '"version": "2.1.0"' "$STATE_SCHEMA" \
+    || fail 'Schema version "2.1.0" not found in state-schema.md'
 }
 
 # ---------------------------------------------------------------------------
-# 2b. Self-consistency voting counters (still present in schema 1.10.0)
+# 2b. Self-consistency voting counters still present at v2.1.0
 # ---------------------------------------------------------------------------
-@test "state-schema 1.10.0 declares consistency_cache_hits and consistency_votes" {
+@test "state-schema 2.1.0 declares consistency_cache_hits and consistency_votes" {
   grep -Eq '"consistency_cache_hits"[[:space:]]*:[[:space:]]*0' "$STATE_SCHEMA" \
     || fail "consistency_cache_hits field not found in state-schema.md"
 
   grep -Eq '"consistency_votes"[[:space:]]*:' "$STATE_SCHEMA" \
     || fail "consistency_votes object not found in state-schema.md"
 
-  grep -Eq '1\.9\.0[[:space:]]*\|[[:space:]]*1\.10\.0' "$STATE_SCHEMA_FIELDS" \
-    || fail "1.9.0 -> 1.10.0 migration row not found in state-schema-fields.md (migration table lives there per state-schema.md §Atomic writes)"
+  # The 1.10.0 -> 2.0.0 hard-cut row lives in state-schema-fields.md per
+  # state-schema.md §Atomic writes. v2.1.0 was an additive mega-consolidation
+  # bump documented in state-schema.md §"State Changes — Mega-Consolidation v2.1.0".
+  grep -Eq '1\.10\.0[[:space:]]*\|[[:space:]]*2\.0\.0' "$STATE_SCHEMA_FIELDS" \
+    || fail "1.10.0 -> 2.0.0 migration row not found in state-schema-fields.md"
 }
 
 # ---------------------------------------------------------------------------
@@ -107,11 +111,13 @@ STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 }
 
 # ---------------------------------------------------------------------------
-# 9. v1.0.0 clean break documented: forge-recover required
+# 9. Major-version clean break documented (current: v2.0.0 hard cut from 1.x;
+#    historically 1.0.0 was also a clean break). Mega B retired the standalone
+#    /forge-recover skill — recovery now lives under /forge-admin recover.
 # ---------------------------------------------------------------------------
-@test "state-schema: v1.0.0 clean break and forge-recover documented" {
-  grep -q "clean break\|forge-recover\|incompatible" "$STATE_SCHEMA" \
-    || fail "v1.0.0 clean break / forge-recover guidance not documented"
+@test "state-schema: major-version clean break and recovery skill documented" {
+  grep -q "clean break\|forge-admin recover\|incompatible\|hard cut" "$STATE_SCHEMA" \
+    || fail "Major-version clean break / /forge-admin recover guidance not documented"
 }
 
 # ---------------------------------------------------------------------------

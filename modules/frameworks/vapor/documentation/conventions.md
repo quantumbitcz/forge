@@ -1,5 +1,7 @@
 # Vapor Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Vapor-specific patterns.
 
 ## Code Documentation

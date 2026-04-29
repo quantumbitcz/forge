@@ -127,7 +127,7 @@ Invoked post-SHIP and (optionally) by cron. See `hooks/_py/time_travel/gc.py`.
 - TTL expired (`now - created_at >= retention_days`).
 - Over the `max_checkpoints_per_run` cap — oldest non-protected checkpoints reclaimed first.
 
-**Orphan subtrees:** after a rewind, unreferenced children of the rewind target are dead branches. They are reclaimable under TTL. If a run crashes (stale PID, status stuck RUNNING), treat as active for `retention_days`; then reclaim. Manual `/forge-recover reset` clears the run's entire subtree.
+**Orphan subtrees:** after a rewind, unreferenced children of the rewind target are dead branches. They are reclaimable under TTL. If a run crashes (stale PID, status stuck RUNNING), treat as active for `retention_days`; then reclaim. Manual `/forge-admin recover reset` clears the run's entire subtree.
 
 **Cross-run safety:** GC reads `.forge/runs/*/state.json` to identify active runs but only ever mutates its own `checkpoints/` subtree. Parallel sprint runs cannot delete each other's checkpoints.
 
@@ -146,7 +146,7 @@ recovery:
     preserve_legacy: false
 ```
 
-Setting `enabled: false` makes the orchestrator skip checkpoint writes entirely; `/forge-recover rewind` then fails with a clear error.
+Setting `enabled: false` makes the orchestrator skip checkpoint writes entirely; `/forge-admin recover rewind` then fails with a clear error.
 
 ## 10. Failure modes
 

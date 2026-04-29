@@ -77,10 +77,13 @@ USAGE
 # ---------------------------------------------------------------------------
 validate_suite_json() {
   local suite_file="$1"
-  "${FORGE_PYTHON:-python3}" -c "
+  # Pass the suite path via argv (sys.argv[1]) instead of inlining it into
+  # the Python source. On Windows, ``${suite_file}`` contains backslashes
+  # which Python interprets as escape sequences inside the heredoc.
+  "${FORGE_PYTHON:-python3}" - "$suite_file" <<'PYEOF' 2>&1
 import json, sys, re, os
 
-suite_file = '${suite_file}'
+suite_file = sys.argv[1]
 try:
     s = json.load(open(suite_file))
 except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -114,7 +117,7 @@ for i, task in enumerate(s['tasks']):
 
     # ID format
     if 'id' in task and not task_id_pattern.match(task['id']):
-        errors.append(f'Task {tid}: ID does not match pattern ^[a-z]{{2,5}}-[0-9]{{2}}(-[a-z-]+)?$')
+        errors.append(f'Task {tid}: ID does not match pattern ^[a-z]{2,5}-[0-9]{2}(-[a-z-]+)?$')
 
     # Duplicate IDs
     if 'id' in task:
@@ -124,19 +127,19 @@ for i, task in enumerate(s['tasks']):
 
     # Language validation
     if task.get('language') and task['language'] not in valid_languages:
-        errors.append(f'Task {tid}: invalid language: {task[\"language\"]}')
+        errors.append(f"Task {tid}: invalid language: {task['language']}")
 
     # Difficulty validation
     if task.get('difficulty') and task['difficulty'] not in valid_difficulties:
-        errors.append(f'Task {tid}: invalid difficulty: {task[\"difficulty\"]}')
+        errors.append(f"Task {tid}: invalid difficulty: {task['difficulty']}")
 
 if errors:
     for e in errors:
         print(f'ERROR: {e}', file=sys.stderr)
     sys.exit(1)
 
-print(f'Validated {len(s[\"tasks\"])} tasks in suite \"{s.get(\"name\", \"unknown\")}\"')
-" 2>&1
+print(f"Validated {len(s['tasks'])} tasks in suite \"{s.get('name', 'unknown')}\"")
+PYEOF
   return "${PIPESTATUS[0]}"
 }
 
@@ -195,19 +198,25 @@ cmd_run() {
     echo "=== Eval Dry Run ==="
     echo "$validation_output"
 
-    # Count tasks and check fixtures
+    # Count tasks and check fixtures (paths via argv to avoid Windows
+    # backslash-escape parsing inside Python source strings).
     local task_count fixture_count missing_fixtures
-    task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
+    task_count="$("${FORGE_PYTHON:-python3}" - "$suite_file" <<'PYEOF'
+import json, sys
+print(len(json.load(open(sys.argv[1]))['tasks']))
+PYEOF
+)"
     fixture_count=0
     missing_fixtures=0
 
     local fixtures_json
-    fixtures_json="$("${FORGE_PYTHON:-python3}" -c "
-import json
-s = json.load(open('${suite_file}'))
+    fixtures_json="$("${FORGE_PYTHON:-python3}" - "$suite_file" <<'PYEOF'
+import json, sys
+s = json.load(open(sys.argv[1]))
 for t in s['tasks']:
     print(t['fixture'])
-")"
+PYEOF
+)"
 
     while IFS= read -r fixture; do
       if [[ -d "${FIXTURES_DIR}/${fixture}" ]]; then
@@ -243,7 +252,11 @@ for t in s['tasks']:
     echo "Parallel: ${parallel}"
 
     local task_count
-    task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('${suite_file}'))['tasks']))")"
+    task_count="$("${FORGE_PYTHON:-python3}" - "$suite_file" <<'PYEOF'
+import json, sys
+print(len(json.load(open(sys.argv[1]))['tasks']))
+PYEOF
+)"
     echo "Tasks: ${task_count}"
 
     local timestamp
@@ -475,13 +488,17 @@ cmd_compare() {
     fi
   fi
 
-  "${FORGE_PYTHON:-python3}" -c "
+  # Pass paths and parameters via argv to avoid Windows backslash-escape
+  # parsing inside the Python source.
+  "${FORGE_PYTHON:-python3}" - "$baseline_file" "$current_file" "$format" "$threshold" <<'PYEOF'
 import json, sys
 
-baseline = json.load(open('${baseline_file}'))
-current = json.load(open('${current_file}'))
-format_type = '${format}'
-threshold = ${threshold}
+baseline = json.load(open(sys.argv[1]))
+current = json.load(open(sys.argv[2]))
+format_type = sys.argv[3]
+threshold = int(sys.argv[4])
+baseline_arg = sys.argv[1]
+current_arg = sys.argv[2]
 
 # Build task maps
 baseline_tasks = {t['id']: t for t in baseline.get('results', {}).get('tasks', [])}
@@ -537,8 +554,8 @@ comparison = {
 }
 
 result = {
-    'baseline': '${baseline_file}',
-    'current': '${current_file}',
+    'baseline': baseline_arg,
+    'current': current_arg,
     'comparison': comparison
 }
 
@@ -551,7 +568,7 @@ elif format_type == 'markdown':
     print(f'')
     print(f'| Metric | Baseline | Current | Delta |')
     print(f'|--------|----------|---------|-------|')
-    print(f'| Pass Rate | {b_agg.get(\"pass_rate\", 0):.1%} | {c_agg.get(\"pass_rate\", 0):.1%} | {pass_rate_delta:+.1%} |')
+    print(f"| Pass Rate | {b_agg.get('pass_rate', 0):.1%} | {c_agg.get('pass_rate', 0):.1%} | {pass_rate_delta:+.1%} |")
     if regressions:
         print(f'')
         print(f'### Regressions ({len(regressions)})')
@@ -565,14 +582,14 @@ elif format_type == 'markdown':
 else:
     # table format
     print(f'Verdict: {verdict}')
-    print(f'Pass Rate: {b_agg.get(\"pass_rate\", 0):.1%} -> {c_agg.get(\"pass_rate\", 0):.1%} ({pass_rate_delta:+.1%})')
+    print(f"Pass Rate: {b_agg.get('pass_rate', 0):.1%} -> {c_agg.get('pass_rate', 0):.1%} ({pass_rate_delta:+.1%})")
     if regressions:
-        print(f'Regressions ({len(regressions)}): {\" \".join(regressions)}')
+        print(f"Regressions ({len(regressions)}): {' '.join(regressions)}")
     if improvements:
-        print(f'Improvements ({len(improvements)}): {\" \".join(improvements)}')
+        print(f"Improvements ({len(improvements)}): {' '.join(improvements)}")
 
 sys.exit(3 if verdict == 'REGRESSION' else 0)
-"
+PYEOF
   return $?
 }
 
@@ -614,17 +631,20 @@ cmd_save() {
   mkdir -p "$baseline_dir"
   local dest="${baseline_dir}/${baseline_name}.json"
 
-  "${FORGE_PYTHON:-python3}" -c "
-import json, time
-data = json.load(open('${source_file}'))
+  # Pass paths and the baseline name via argv to avoid Windows backslash-
+  # escape parsing inside the Python source.
+  "${FORGE_PYTHON:-python3}" - "$source_file" "$baseline_name" "$dest" <<'PYEOF'
+import json, sys, time
+source_file, baseline_name, dest = sys.argv[1], sys.argv[2], sys.argv[3]
+data = json.load(open(source_file))
 data['baseline_metadata'] = {
-    'name': '${baseline_name}',
+    'name': baseline_name,
     'created': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-    'source_file': '${source_file}'
+    'source_file': source_file
 }
-json.dump(data, open('${dest}', 'w'), indent=2)
-print(f'Baseline saved: ${dest}')
-"
+json.dump(data, open(dest, 'w'), indent=2)
+print(f'Baseline saved: {dest}')
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -649,8 +669,19 @@ cmd_list() {
         for f in "${SUITES_DIR}"/*.json; do
           local name desc task_count
           name="$(basename "$f" .json)"
-          desc="$("${FORGE_PYTHON:-python3}" -c "import json; print(json.load(open('$f')).get('description',''))" 2>/dev/null || echo "")"
-          task_count="$("${FORGE_PYTHON:-python3}" -c "import json; print(len(json.load(open('$f')).get('tasks',[])))" 2>/dev/null || echo "?")"
+          # Pass path via argv to avoid Windows backslash-escape parsing.
+          desc="$("${FORGE_PYTHON:-python3}" - "$f" 2>/dev/null <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1])).get('description',''))
+PYEOF
+)"
+          [[ -z "$desc" ]] && desc=""
+          task_count="$("${FORGE_PYTHON:-python3}" - "$f" 2>/dev/null <<'PYEOF'
+import json, sys
+print(len(json.load(open(sys.argv[1])).get('tasks',[])))
+PYEOF
+)"
+          [[ -z "$task_count" ]] && task_count="?"
           echo "  ${name} (${task_count} tasks) -- ${desc}"
         done
       else

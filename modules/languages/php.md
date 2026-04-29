@@ -1,5 +1,7 @@
 # PHP Language Conventions
 
+> Support tier: contract-verified
+
 ## Type System
 
 - Use strict types in every file: `declare(strict_types=1);` — prevents implicit type coercion.

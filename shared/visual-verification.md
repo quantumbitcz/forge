@@ -43,7 +43,7 @@ Resolution order (first match wins):
    b. Wait for network idle (max 10s)
    c. Capture full-page screenshot
    d. Store in `.forge/screenshots/{page}-{breakpoint}.png`
-3. Screenshots are ephemeral — deleted on `/forge-recover reset`
+3. Screenshots are ephemeral — deleted on `/forge-admin recover reset`
 
 ## Verification Modes
 

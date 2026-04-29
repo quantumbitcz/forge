@@ -80,17 +80,17 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 }
 
 # ---------------------------------------------------------------------------
-# 5. At least 35 skills exist (Phase 1 consolidation: 42 → 35 after deleting
-#    7 deprecated skills and consolidating into /forge-recover, /forge-compress)
+# 5. At least 3 skills exist. Post-Mega-B consolidation collapsed the 28-skill
+#    surface into 3 top-level skills (/forge, /forge-ask, /forge-admin).
 # ---------------------------------------------------------------------------
-@test "skill-frontmatter: at least 28 skills exist" {
+@test "skill-frontmatter: at least 3 skills exist" {
   local count=0
   for d in "$SKILLS_DIR"/*/; do
     [ -d "$d" ] && count=$(( count + 1 ))
   done
-  # Skill consolidation target: 28.
-  if (( count < 28 )); then
-    fail "Expected >= 28 skills, found $count"
+  # Post-Mega-B consolidation target: 3.
+  if (( count < 3 )); then
+    fail "Expected >= 3 skills, found $count"
   fi
 }
 

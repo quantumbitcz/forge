@@ -3,6 +3,8 @@
 # Validates that engine.sh and engine.py correctly detect modules, load
 # overrides, and run Layer 1 pattern checks on realistic project layouts.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 ENGINE_SH="$PLUGIN_ROOT/shared/checks/engine.sh"

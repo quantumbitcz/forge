@@ -25,7 +25,7 @@ All 43 agents have explicit tier assignments (10 fast, 18 standard, 14 premium, 
 | `fg-130-docs-discoverer` | File listing and metadata extraction |
 | `fg-135-wiki-generator` | Templated wiki generation from structured data |
 | `fg-140-deprecation-refresh` | Pattern matching against deprecation registries |
-| `fg-301-implementer-critic` | Per-task, clean slate, ≤4k input, ≤600 output. Fast tier keeps per-task latency under 10s and per-run reflection cost under 5% of pipeline budget. |
+| `fg-301-implementer-judge` | Per-task, clean slate, ≤4k input, ≤600 output. Fast tier keeps per-task latency under 10s and per-run reflection cost under 5% of pipeline budget. |
 | `fg-310-scaffolder` | File structure creation from templates |
 | `fg-350-docs-generator` | Documentation generation from structured inputs |
 | `fg-505-build-verifier` | Runs build/lint commands and reads output — deterministic |
@@ -93,7 +93,7 @@ In `forge-config.md`:
           - fg-130-docs-discoverer
           - fg-135-wiki-generator
           - fg-140-deprecation-refresh
-          - fg-301-implementer-critic
+          - fg-301-implementer-judge
           - fg-310-scaffolder
           - fg-350-docs-generator
           - fg-505-build-verifier
@@ -236,3 +236,38 @@ The orchestrator records model assignments in `stage_0_notes`:
     - Default tier: standard (sonnet)
     - Overrides: 9 fast, 14 premium, 18 standard (remaining)
     - Total agents: 41
+
+## Cost-Aware Routing (Phase 6)
+
+When `cost.aware_routing: true` (default), `fg-100-orchestrator` consults `shared.cost_governance.downgrade_tier()` before every dispatch. Algorithm:
+
+1. `resolved = static_resolve(agent)` — unchanged from §Resolution Order above.
+2. If `agent in cost.pinned_agents`: keep `resolved`, emit `COST-DOWNGRADE-PINNED` INFO.
+3. `effective = tier_estimate[resolved] * conservatism_multiplier[resolved]`.
+4. If `state.cost.remaining_usd >= 5 * effective`: keep `resolved`.
+5. Else step down one tier: `premium -> standard -> fast`.
+6. If already at `fast`:
+   - `agent in SAFETY_CRITICAL` -> keep `fast` (logged as `safety_pinned`).
+   - else -> escalate to orchestrator decision (NEVER silent skip).
+
+Every applied downgrade is appended to `state.cost.downgrades[]` and increments `state.cost.downgrade_count`.
+
+## Safety-Critical Agents
+
+The following agents are **hardcoded** in `shared/cost_governance.py` as `SAFETY_CRITICAL`. They are never silently skipped under cost pressure — downgrade is permitted down to `fast`, below which the orchestrator escalates.
+
+```yaml
+safety_critical_agents:
+  - fg-210-validator
+  - fg-250-contract-validator
+  - fg-411-security-reviewer
+  - fg-412-architecture-reviewer
+  - fg-414-license-reviewer          # legal binding; cannot be downgraded silently
+  - fg-419-infra-deploy-reviewer     # prod deployment cost overrun is what this checks
+  - fg-500-test-gate
+  - fg-505-build-verifier
+  - fg-506-migration-verifier        # migration-mode only; still safety-critical when active
+  - fg-590-pre-ship-verifier
+```
+
+This list is **not user-configurable**. Rationale: a run that ships without a security review to save $0.30 is a bug, not a feature. Users who need to pin additional agents against downgrades should add them to `cost.pinned_agents[]`.

@@ -1,0 +1,3 @@
+-r ../pipeline/runner/requirements.txt
+pyyaml>=6.0
+jsonschema>=4.0.0

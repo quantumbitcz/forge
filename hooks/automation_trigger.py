@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standalone CLI entry shim — invoked by /forge-automation skill directly."""
+"""Standalone CLI entry shim — invoked by /forge-admin automation skill directly."""
 from __future__ import annotations
 
 import sys

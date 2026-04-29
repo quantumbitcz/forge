@@ -53,9 +53,9 @@ MODES_DIR="$PLUGIN_ROOT/shared/modes"
   for mode in standard bugfix migration bootstrap testing refactor performance; do
     local file="$MODES_DIR/${mode}.md"
     # Extract stage keys from frontmatter (lines between --- delimiters that start with 2-space indent under stages:)
-    python3 -c "
+    python3 - "$file" "$valid_stages" "ERROR: {key} is not a valid stage name in ${mode}.md" <<'PYEOF'
 import sys, re
-with open('$file') as f:
+with open(sys.argv[1]) as f:
     content = f.read()
 # Extract frontmatter
 m = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
@@ -72,13 +72,13 @@ for line in fm.split('\n'):
         continue
     if in_stages and re.match(r'^  [a-z]', line):
         key = line.strip().rstrip(':')
-        valid = '$valid_stages'.split()
+        valid = sys.argv[2].split()
         if key not in valid:
-            print(f'ERROR: {key} is not a valid stage name in ${mode}.md', file=sys.stderr)
+            print(fsys.argv[3], file=sys.stderr)
             sys.exit(1)
     elif in_stages and not line.startswith('  '):
         in_stages = False
-"
+PYEOF
   done
 }
 

@@ -1,5 +1,7 @@
 # React Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with React-specific patterns.
 
 ## Code Documentation

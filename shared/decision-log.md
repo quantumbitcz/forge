@@ -87,7 +87,7 @@ Decision types whose agent was never dispatched (e.g., `finding_severity` when t
 ## Consumption
 
 - **`fg-700-retrospective`**: Reads the decision log to identify slow convergence patterns, suboptimal routing, and recovery inefficiencies.
-- **`/forge-history`**: Surfaces decision log entries for human review of past runs.
+- **`/forge-ask history`**: Surfaces decision log entries for human review of past runs.
 - **Debugging**: When a run takes unexpectedly many iterations, the decision log shows every branch point and why.
 
 ## Size Management

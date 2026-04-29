@@ -1,3 +1,7 @@
+---
+schema_version: 2
+items:
+---
 # Migration Learnings
 
 Per-project cumulative learnings for `fg-506-migration-verifier` and `fg-160-migration-planner`.

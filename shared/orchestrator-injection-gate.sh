@@ -54,7 +54,7 @@ rec = {
   "agent": os.environ["agent"],
   "source": os.environ["source_field"],
   "run_id": os.environ["run_id"],
-  "resume_hint": "Run /forge-recover resume after reviewing the ingress.",
+  "resume_hint": "Run /forge-admin recover resume after reviewing the ingress.",
 }
 p.write_text(json.dumps(rec, sort_keys=True, indent=2))
 PY

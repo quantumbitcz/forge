@@ -309,6 +309,184 @@ Write structured run data to `.forge/run-history.db` for cross-run queryability.
 
 **Config:** `run_history.enabled` (default true), `run_history.retention_days` (default 365), `run_history.optimize_interval` (default 10).
 
+## Feature usage aggregation
+
+At LEARN stage, aggregate `feature_used` events from `.forge/events.jsonl` for
+the current run and write one row per unique `feature_id` into
+`feature_usage`:
+
+1. Apply migration `shared/run-history/migrations/002-feature-usage.sql` if
+   the table is absent (`CREATE TABLE IF NOT EXISTS`). Idempotent.
+2. Read `.forge/events.jsonl`; filter to `type == "feature_used"` for the
+   current `run_id`.
+3. De-duplicate on `feature_id` (one row per feature per run).
+4. Insert: `INSERT INTO feature_usage (feature_id, ts, run_id) VALUES (?, ?, ?)`.
+
+Error handling: DB missing → skip (no-op, retrospective still succeeds).
+DB locked → retry once after 100ms; if still locked, append a warning to
+`.forge/.hook-failures.jsonl` (use the `record_failure` helper from
+`hooks/_py/failure_log.py`) and skip the feature_usage write.
+
+---
+
+### Output 2.7: Cost Governance Analytics (Phase 6)
+
+**Per-run summary.** Read `.forge/cost-incidents/*.json` (empty = clean run). Emit under `## Cost Governance` in the retrospective report:
+
+```markdown
+## Cost Governance
+
+- Ceiling: ${ceiling_usd}
+- Spent:   ${spent_usd} ({pct_consumed}%)
+- Ceiling breaches: {ceiling_breaches}
+- Downgrades applied: {downgrade_count}
+- Throttle events: {len(throttle_events)} ({info_count} INFO / {warning_count} WARNING)
+```
+
+**Cost-per-actionable-finding (AC-611).**
+
+Scope: reviewers only (`fg-410` through `fg-419`). Skip all other agents.
+
+```python
+peer_cohort_findings = [f for f in all_findings if f.agent.startswith("fg-4")]
+actionable = [f for f in peer_cohort_findings if f.severity in ("CRITICAL", "WARNING")]
+
+# Gate: only emit cost-per-finding when peer cohort produced actionable findings.
+if not actionable:
+    return  # clean run — no reviewer flagged, zero-finding reviewers NOT penalized.
+
+for reviewer in reviewers:
+    unique = dedupe(reviewer.findings, keyed_by=("file", "line", "category"))
+    unique_actionable = [f for f in unique if f.severity in ("CRITICAL", "WARNING")]
+    if not unique_actionable:
+        continue  # this reviewer clean on a dirty run — still NOT flagged.
+    cpaf = reviewer.cost_usd / len(unique_actionable)
+    reviewer.cost_per_actionable_finding = cpaf
+
+median_cpaf = statistics.median(r.cost_per_actionable_finding for r in reviewers
+                                if hasattr(r, "cost_per_actionable_finding"))
+
+flagged = [r for r in reviewers
+           if getattr(r, "cost_per_actionable_finding", 0) > 3 * median_cpaf]
+```
+
+Emit each flagged reviewer as a candidate for `model_routing` downgrade suggestion. Subject to the existing "2 tier changes per run" cap from `shared/model-routing.md`.
+
+**Zero-finding-clean-code safety:** AC-611 explicitly carves out the case where every reviewer emits 0 findings — nobody is flagged. This is the reviewer working as intended on clean code. The gate above (`if not actionable: return`) is the one line enforcing that rule.
+
+**EST-DRIFT detection (AC-613).** Across the last 10 dispatches per agent, compute:
+
+```python
+actual_per_dispatch = agent.cost_usd / agent.dispatches
+estimated = cost.tier_estimates_usd[agent.tier_used_majority]
+if agent.dispatches >= 10 and abs(actual_per_dispatch - estimated) / estimated > 2.0:
+    emit_finding({
+        "category": "EST-DRIFT",
+        "severity": "WARNING",
+        "file": "forge-config.md",
+        "line": 0,
+        "message": f"Agent {agent.id} actual cost ${actual_per_dispatch:.4f} vs estimated ${estimated:.4f} (>{2.0}x drift across {agent.dispatches} dispatches)",
+        "confidence": "HIGH",
+        "suggestion": f"Update cost.tier_estimates_usd.{agent.tier_used_majority} in forge-config.md",
+    })
+```
+
+Do NOT auto-adjust `tier_estimates_usd` — user edits config. Auto-tuning estimates is too self-reinforcing.
+
+**Run-history columns (AC-612).** On INSERT INTO `runs` (existing Step 4 of Output 2.5), also populate the four new `run_summary` columns from migration 002:
+
+```sql
+INSERT INTO run_summary (
+  run_id, started_at, ...existing_columns...,
+  ceiling_usd, spent_usd, ceiling_breaches, throttle_events
+) VALUES (
+  ?, ?, ...,
+  :ceiling_usd, :spent_usd, :ceiling_breaches, :throttle_events_count
+);
+```
+
+Where `:throttle_events_count = len(state.cost.throttle_events)`.
+
+**30-day trend query (example, run on demand):**
+
+```sql
+SELECT
+  DATE(started_at) AS day,
+  AVG(spent_usd) AS avg_cost,
+  SUM(ceiling_breaches) AS total_breaches,
+  AVG(spent_usd / NULLIF(ceiling_usd, 0)) AS avg_utilization
+FROM run_summary
+WHERE started_at > datetime('now', '-30 days')
+GROUP BY day;
+```
+
+Appended to `reports/forge-{YYYY-MM-DD}.md` when the retrospective runs.
+
+---
+
+### §2j Intent & Vote Analytics (Phase 7)
+
+After standard retrospective sections, emit:
+
+```yaml
+intent_verification:
+  total_acs: <int>                    # = len(state.intent_verification_results)
+  verified: <int>
+  partial: <int>
+  missed: <int>
+  unverifiable: <int>
+  verified_pct: <float>              # verified / (verified+partial+missed+unverifiable) * 100
+  unverifiable_pct: <float>          # unverifiable / (verified+partial+missed+unverifiable) * 100
+                                      # denominator matches SHIP-gate (fg-590 §6) so trends compare
+
+impl_voting:
+  dispatches: <int>                   # voting fired (both samples ran)
+  diverged: <int>
+  tiebreaks: <int>
+  unresolved: <int>                   # IMPL-VOTE-UNRESOLVED count
+  cost_skipped: <int>
+  divergence_rate: <float>            # diverged / dispatches * 100 (percent, 0-100)
+  per_trigger:
+    confidence: <int>
+    risk_tag: <int>
+    regression_history: <int>
+```
+
+Source: `state.intent_verification_results[]` and `state.impl_vote_history[]`.
+Render `verified_pct` and `unverifiable_pct` as **separate rows** in the
+report — low `verified_pct` + low `unverifiable_pct` = implementation quality;
+high `unverifiable_pct` = spec quality (shaper should rewrite ACs).
+
+**Auto-tuning Rule 11 (propose-only):** if `intent_missed_count >= 2` across
+last 3 runs, propose `living_specs.strict_mode: true` via the F31 rule
+promotion flow (`shared/learnings/rule-promotion.md`). Surface via
+`/forge-admin refine`; never auto-apply.
+
+### §2j.bis Cost-of-voting analytics
+
+Compute per-run:
+
+- `vote_cost_usd` — sum of estimated cost for both samples + judge on voted tasks.
+- `vote_cost_pct_of_run` — `vote_cost_usd / state.cost.spent_usd * 100`.
+- `vote_savings_estimate_usd` — heuristic: `diverged * avg_rework_cost_usd`
+  where `avg_rework_cost_usd` comes from `.forge/run-history.db` (fallback 0 if
+  no history).
+
+Surface:
+
+```yaml
+impl_voting:
+  ...
+  cost:
+    vote_cost_usd: <float>
+    vote_cost_pct_of_run: <float>
+    vote_savings_estimate_usd: <float>
+```
+
+When `vote_cost_pct_of_run > 15%` AND `divergence_rate < 5%` across last 3 runs,
+propose lowering `impl_voting.trigger_on_confidence_below` by 0.05 or tightening
+`trigger_on_risk_tags` — propose-only, via `/forge-admin refine`.
+
 ---
 
 ### Output 2.6: Playbook Refinement Analysis
@@ -626,7 +804,7 @@ Lock counter tracked alongside history. Decrement each run, remove at 0.
 
 ## 15. Structured Output
 
-After all three outputs, MUST append structured JSON in HTML comment for fg-710 and `/forge-insights`.
+After all three outputs, MUST append structured JSON in HTML comment for fg-710 and `/forge-ask insights`.
 
 **Format:**
 
@@ -731,3 +909,52 @@ Post to Slack when MCP available; skip otherwise. Never fail due to MCP.
 - "Compute run scoring"
 - "Extract learnings"
 - "Auto-tune forge-config.md"
+
+## Trend rollup
+
+At the end of every run (regardless of verdict), generate
+`.forge/run-history-trends.json` matching
+`shared/schemas/run-history-trends.schema.json`:
+
+1. Read the 30 most recent rows from `.forge/run-history.db` (table
+   `runs`, order by `started_at DESC LIMIT 30`). For each row emit
+   `{run_id, started_at, duration_s, verdict, score, convergence_iterations, cost_usd, mode}`.
+2. Read the last 10 rows from the **live** `.forge/.hook-failures.jsonl`
+   (and the newest rotated `.gz` if live is absent) into
+   `recent_hook_failures`.
+3. Write via temp-file + `os.replace()` swap to
+   `.forge/run-history-trends.json`.
+
+`.forge/run-history-trends.json` is **regenerated every run** — never
+append. The file survives `/forge-admin recover reset`. Consumers:
+
+- `/forge-ask status --live` reads the head for a synopsis.
+- Phase-1 observability recipes in `shared/observability.md` §Local
+  inspection demonstrate `jq`/PowerShell/CMD access.
+
+---
+
+## Learnings Write-Back (Phase 4)
+
+After the standard retrospective extraction, run the following at Stage 9:
+
+```
+1. events := otel.replay(events_path=".forge/events.jsonl", config=...)
+   Filter to forge.learning.{injected,applied,fp,vindicated} for this run_id.
+
+2. For each file under shared/learnings/ and ~/.claude/forge-learnings/
+   that has at least one event targeting its items:
+       learnings_writeback.apply_events_to_file(path, events, now)
+
+3. Emit the standard decay summary line:
+       decay: N demoted, M archived, K reinforced, J false-positives
+       (last 7d: L)
+
+4. Emit one `learning-update: id=<id> Δbase=<delta> archived=<bool>` line
+   per mutated item (structured output; fg-710-post-run may aggregate).
+```
+
+Never infer false-positives from "reviewer raised CRITICAL in the same
+domain" — the retrospective responds **only** to explicit LEARNING_FP /
+inapplicable PREEMPT_SKIPPED markers (AC9). Domain overlap is too coarse
+and would punish learnings for being topical rather than wrong.

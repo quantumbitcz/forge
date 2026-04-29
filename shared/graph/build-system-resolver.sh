@@ -186,7 +186,15 @@ compute_build_file_hashes() {
     if [[ -f "$f" ]]; then
       local rel_path="${f#"$root"/}"
       local file_hash
-      file_hash="$(shasum -a 256 "$f" 2>/dev/null | cut -d' ' -f1)"
+      # shasum is BSD/macOS; sha256sum is GNU/Linux/MSYS — try both.
+      if command -v shasum >/dev/null 2>&1; then
+        file_hash="$(shasum -a 256 "$f" 2>/dev/null | cut -d' ' -f1)"
+      elif command -v sha256sum >/dev/null 2>&1; then
+        file_hash="$(sha256sum "$f" 2>/dev/null | cut -d' ' -f1)"
+      else
+        # Fallback: Python (always available since this script requires it)
+        file_hash="$("${FORGE_PYTHON:-python3}" -c "import hashlib, sys; print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" "$f" 2>/dev/null)"
+      fi
       hash_input+="${rel_path}:${file_hash};"
     fi
   done

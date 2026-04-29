@@ -20,7 +20,7 @@ def test_feedback_capture_writes_event(tmp_path: Path, monkeypatch):
     assert feedback_capture.main(stdin=stdin) == 0
     events = tmp_path / ".forge" / "events.jsonl"
     assert events.exists()
-    entry = json.loads(events.read_text().strip().splitlines()[-1])
+    entry = json.loads(events.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert entry["kind"] == "session_stop"
 
 
@@ -37,6 +37,6 @@ def test_session_start_writes_event(tmp_path: Path, monkeypatch):
     assert session_start.main(stdin=stdin) == 0
     events = tmp_path / ".forge" / "events.jsonl"
     assert events.exists()
-    entry = json.loads(events.read_text().strip().splitlines()[-1])
+    entry = json.loads(events.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert entry["kind"] == "session_start"
     assert entry.get("session_id") == "abc-123"

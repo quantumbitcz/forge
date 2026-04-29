@@ -15,7 +15,7 @@ Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can rea
 - Written by: the agent completing a stage
 - Read by: the orchestrator (always), downstream agents (when orchestrator includes relevant context in dispatch)
 - Format: markdown with structured sections (findings, decisions, metrics)
-- Lifetime: per-run (cleared on `/forge-recover reset`)
+- Lifetime: per-run (cleared on `/forge-admin recover reset`)
 
 <a id="stage-notes-contents"></a>
 ### What goes in stage notes
@@ -35,80 +35,33 @@ Each stage writes `.forge/stage_N_notes_{storyId}.md`. Downstream stages can rea
 
 Stage notes should stay under **2,000 tokens** to prevent context cascading in downstream dispatch prompts. If a stage produces more content:
 
-1. **Findings:** Deduplicate to top 20 by severity before writing. Include total count: "20 of {N} findings shown."
+1. **Findings:** Deduplicate by `(component, file, line, category)` before writing. Include total count and severity breakdown. Include **all** previous batch findings with domain affinity for the next reviewer (severity-weighted, no fixed cap) so cross-batch dedup is exact, not lossy. If counts exceed 50, compress to `(category, file, severity, count)` tuples — preserving every entry while shrinking the payload.
 2. **File listings:** Reference by directory pattern (e.g., `src/domain/**`) instead of listing every file.
 3. **Metrics:** Use a compact table format, not prose.
 
 The retrospective (Stage 9) reads all stage notes (0-8). With the 2K cap, 9 stage notes total ~18K tokens — within dispatch limits. Feedback files are read separately (not included in orchestrator dispatch). With many feedback entries (>20), the retrospective reads only `feedback/summary.md` (the consolidated file).
 
-<a id="shared-findings-context"></a>
-## Shared Findings Context (within REVIEW stage)
+<a id="findings-store-protocol"></a>
+## Findings Store Protocol (within REVIEW stage)
 
-During REVIEW, multiple agent batches run sequentially. To reduce duplicate work, the quality gate includes previous batch findings in subsequent dispatch prompts.
+During REVIEW, qualifying reviewers fan out in parallel and append findings to per-reviewer JSONL files under `.forge/runs/<run_id>/findings/`. Dedup is read-time, not write-time: each reviewer reads peer files before emitting, skipping duplicates via `seen_by` annotations. The aggregator (fg-400) reduces the store to a canonical finding set.
 
-<a id="finding-deduplication"></a>
-### Finding Deduplication Hints
+**Authoritative contract:** `shared/findings-store.md` (path convention, line schema, read-before-write protocol, concurrency, annotation inheritance, reducer contract).
 
-When the quality gate dispatches batch 2+ agents, it includes a summary of findings from previous batches:
+**Key rules (summary):**
 
-    Previous batch findings (for deduplication — do not re-report these):
-    - ARCH-HEX-001: file.kt:42 — Core imports adapter type
-    - SEC-AUTH-003: controller.kt:15 — Missing ownership check
+- Each reviewer appends to its own file — no write contention.
+- Before emitting, read all peer JSONL files and compute `seen_keys`.
+- Duplicate found → append a `seen_by` annotation to your OWN file; skip full emission.
+- Duplicate race (two reviewers emit simultaneously) → aggregator applies tiebreaker (severity → confidence → ASCII reviewer).
+- Schema: `shared/checks/findings-schema.json`. Supports Phase 7 fg-540 writer (nullable file/line, INTENT categories require ac_id).
 
-This prevents batch 2 agents from flagging the same issues batch 1 already found.
-
-<a id="deduplication-size"></a>
-### Deduplication Hint Size Management
-
-Include **all** previous batch findings in dedup hints. Domain affinity filtering (§Domain-Scoped Deduplication Hints) ensures each reviewer receives only findings relevant to its domain — no global cap needed.
-
-**Token management:** If a reviewer's domain-filtered findings exceed 50, compress to single-line entries:
-
-    Previous batch findings ({N} domain-relevant, compressed format):
-    SEC-AUTH-003: controller.kt:15
-    SEC-INJECT-001: query.kt:88
-    ...
-
-This preserves dedup accuracy while managing token cost. The quality gate performs post-hoc dedup regardless, but minimizing re-reports reduces noise and saves review tokens.
-
-<a id="domain-scoped-deduplication"></a>
-### Domain-Scoped Deduplication Hints
-
-When dispatching batch 2+ agents, the quality gate filters dedup hints by **category affinity** (defined in `shared/checks/category-registry.json`, `affinity` field). Each reviewer only sees findings from categories relevant to its domain:
-
-- `fg-411-security-reviewer`: `SEC-*`, `QUAL-ERR-*` (error handling has security implications)
-- `fg-412-architecture-reviewer`: `ARCH-*`, `STRUCT-*`, `QUAL-COMPLEX`
-- `fg-413-frontend-reviewer`: `FE-PERF-*`, `A11Y-*`, `CONV-*`, `DESIGN-*`
-- `fg-416-performance-reviewer`: `PERF-*`
-- `fg-417-dependency-reviewer`: `DEP-*`
-- `fg-418-docs-consistency-reviewer`: `DOC-*`
-- `fg-419-infra-deploy-reviewer`: `INFRA-*`
-- `fg-410-code-reviewer`: `TEST-*`, `CONV-*`, `QUAL-*`
-
-**Affinity resolution:** For each finding, look up its category prefix in `category-registry.json` and check the `affinity` array for the target reviewer's ID. Include the finding if the reviewer is in the affinity list OR affinity is `[]` (send to all). Otherwise, exclude.
-
-**Subcategory affinity:** Subcategories may override parent affinity when documented here; otherwise fall through to the parent in `category-registry.json`.
-
-- `QUAL-ERR-*`: `["fg-410-code-reviewer", "fg-411-security-reviewer"]` (error handling is a security concern)
-- `QUAL-COMPLEX`: `["fg-410-code-reviewer", "fg-412-architecture-reviewer"]` (complexity is an architecture concern)
-
-**Backward compatibility:** Missing `affinity` → send to ALL reviewers (pre-v1.17 behavior).
-
-**Registry unavailability fallback:** If `category-registry.json` is unavailable or corrupted, broadcast all findings to all reviewers (conservative) and log WARNING: "Category registry unavailable, broadcasting all findings."
-
-<a id="cross-agent-references"></a>
-### Cross-Agent References
-
-If a review agent finds an issue that relates to another agent's domain, note it:
-
-    file:line | ARCH-BOUNDARY | WARNING | Core imports adapter — also a security concern (ownership check depends on this boundary) | Fix: move mapping to adapter
-
-The quality gate uses these cross-references to understand finding relationships.
+The aggregator collapses all `fg-41*.jsonl` lines during §7 dedup, producing a single canonical list for scoring. Dispatch prompts contain no inter-batch finding hints — dedup is read-time inside each reviewer.
 
 <a id="conflict-resolution"></a>
 ### Conflict Reporting Protocol
 
-When a review agent produces a finding that contradicts another agent's known output (via dedup hints or cross-agent references), it MUST report the conflict explicitly:
+When a review agent produces a finding that contradicts another agent's known output (observed via the findings store or aggregator-mediated cross-agent references), it MUST report the conflict explicitly:
 
 ```
 CONFLICT: {category} at {file}:{line}
@@ -162,7 +115,9 @@ The orchestrator is the sole writer of state.json. Agents read it (for integrati
     IMPLEMENT → stage_4_notes → orchestrator → state.json (preempt_items_status)
                                              → checkpoint.json (preempt_items_used)
     VERIFY (test gate) → stage_5_notes → orchestrator → REVIEW dispatch
-    REVIEW batch 1 → findings → quality gate → batch 2 (domain-filtered dedup hints)
+    REVIEW fan-out → all qualifying fg-41* reviewers in parallel
+                 → each appends to .forge/runs/<run_id>/findings/<reviewer>.jsonl
+                 → aggregator (fg-400) reduces via dedup_key + seen_by merging
     REVIEW final → stage_6_notes → orchestrator → state.json (score_history)
     DOCS → stage_7_notes → orchestrator → state.json (documentation)
          ← changed files, quality verdict, plan notes, stage_0_docs_discovery.md
@@ -286,10 +241,47 @@ ARCHIVED items are excluded from PREEMPT loading at PREFLIGHT but remain in `for
 
 See `shared/learnings/decay.md` for worked examples covering applied/loaded-no-match/not-loaded scenarios.
 
+---
+
+## Learning Markers (Phase 4)
+
+Subagents may emit these markers in stage notes (free-form line prefix):
+
+| Marker                                   | Kind         | Effect on retrospective           |
+|------------------------------------------|--------------|-----------------------------------|
+| `LEARNING_APPLIED: <id>`                 | reinforcement| `apply_success(item, now)`        |
+| `PREEMPT_APPLIED: <id>`                  | reinforcement| identical to the above            |
+| `LEARNING_FP: <id> reason=<text>`        | penalty      | `apply_false_positive(item, now)` |
+| `PREEMPT_SKIPPED: <id> reason=<text>`    | penalty      | identical to the above            |
+| `LEARNING_VINDICATED: <id> reason=<text>`| restoration  | `apply_vindication(item, now)`    |
+
+A reviewer raising a CRITICAL in the same domain as a shown learning is
+**not** a false-positive signal (spec Phase 4 §3.1). The retrospective
+responds only to explicit markers.
+
+Agent-to-role mapping (authoritative in `hooks/_py/agent_role_map.py`):
+
+```
+planner               → fg-200-planner
+implementer           → fg-300-implementer
+quality_gate          → fg-400-quality-gate
+reviewer.code         → fg-410-code-reviewer
+reviewer.security     → fg-411-security-reviewer
+reviewer.architecture → fg-412-architecture-reviewer
+reviewer.frontend     → fg-413-frontend-reviewer
+reviewer.license      → fg-414-license-reviewer
+reviewer.performance  → fg-416-performance-reviewer
+reviewer.dependency   → fg-417-dependency-reviewer
+reviewer.docs         → fg-418-docs-consistency-reviewer
+reviewer.infra        → fg-419-infra-deploy-reviewer
+```
+
+Unknown agent → orchestrator skips injection (empty selector filter).
+
 <a id="structured-output"></a>
 ## Structured Output Standard
 
-Coordinator agents (fg-400-quality-gate, fg-500-test-gate, fg-700-retrospective) embed machine-readable JSON inside their Markdown output, wrapped in an HTML comment so it is invisible when rendered but trivially extractable by consumers (orchestrator, retrospective, post-run agent, `/forge-insights`).
+Coordinator agents (fg-400-quality-gate, fg-500-test-gate, fg-700-retrospective) embed machine-readable JSON inside their Markdown output, wrapped in an HTML comment so it is invisible when rendered but trivially extractable by consumers (orchestrator, retrospective, post-run agent, `/forge-ask insights`).
 
 <a id="structured-output-format"></a>
 ### Format
@@ -341,9 +333,38 @@ If the `FORGE_STRUCTURED_OUTPUT` block is missing from a coordinator's output, c
 |-------|--------------|-----------|
 | `fg-400-quality-gate` | verdict, score, findings_summary, batches, dedup_stats, cycle_info, reviewer_agreement, coverage_gaps | fg-100 (convergence), fg-700 (trends), fg-710 (timeline) |
 | `fg-500-test-gate` | phase_a, phase_b, mutation_testing, verdict | fg-100 (convergence), fg-700 (trends) |
-| `fg-700-retrospective` | run_summary, learnings, config_changes, agent_effectiveness, trend_comparison, approach_accumulations | fg-710 (timeline), `/forge-insights` |
+| `fg-700-retrospective` | run_summary, learnings, config_changes, agent_effectiveness, trend_comparison, approach_accumulations | fg-710 (timeline), `/forge-ask insights` |
 
 <a id="structured-output-tokens"></a>
 ### Token Budget Impact
 
 The structured block adds approximately 500-2000 tokens per coordinator invocation, within the stage notes budget (2,000 tokens/stage). If the combined Markdown + JSON exceeds the budget, the coordinator MUST compress Markdown prose (shorter descriptions, fewer examples) rather than omit the structured block — downstream consumers depend on it.
+
+## risk_tags Contract (Phase 7 F36)
+
+Producer: `fg-200-planner` emits `task.risk_tags: string[]` in the structured
+plan output during §3.4 per-task planning. Closed vocabulary:
+`{"high", "data-mutation", "auth", "payment", "concurrency", "migration"}`.
+
+Mode overlays may extend the vocabulary — the **bugfix** overlay adds
+`"bugfix"`. Extensions must be declared in the overlay's `stages.plan` block
+or this section; unknown tags in plan output emit a WARNING at Stage 3 VALIDATE.
+
+Consumer: `fg-100-orchestrator` reads `task.risk_tags` at Stage 4 IMPLEMENT
+before dispatching `fg-300-implementer`. The voting gate (see
+`shared/intent-verification.md` § Voting Gate) triggers N=2 dispatch when:
+
+1. `impl_voting.enabled == true`, AND
+2. Budget permits: `state.cost.remaining_usd / state.cost.ceiling_usd >=
+   impl_voting.skip_if_budget_remaining_below_pct / 100`, AND
+3. At least one of:
+   - `state.confidence.effective_confidence <
+     impl_voting.trigger_on_confidence_below`, OR
+   - `any(t in task.risk_tags for t in impl_voting.trigger_on_risk_tags)`, OR
+   - `file_has_recent_regression(task.files,
+     impl_voting.trigger_on_regression_history_days)` via
+     `.forge/run-history.db`.
+
+No other agent consumes `task.risk_tags`. Retrospective aggregates them via
+`fg-100-orchestrator`'s `impl_vote_history[].trigger` field, not via the raw
+tags.

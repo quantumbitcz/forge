@@ -16,14 +16,15 @@ setup() {
 }
 
 @test "pattern library is valid JSON" {
-  python3 -c "import json; json.load(open('$PATTERNS'))"
+  # Path passed via argv so MSYS auto-converts /d/a/... to native Windows form on Git Bash.
+  python3 -c "import json, sys; json.load(open(sys.argv[1]))" "$PATTERNS"
 }
 
 @test "pattern library validates against schema" {
-  python3 - <<PY
+  python3 - "$PATTERNS" "$SCHEMA" <<'PY'
 import json, re, sys
-data = json.load(open("$PATTERNS"))
-schema = json.load(open("$SCHEMA"))
+data = json.load(open(sys.argv[1]))
+schema = json.load(open(sys.argv[2]))
 assert data.get("version") == schema["properties"]["version"]["const"], "version mismatch"
 assert isinstance(data["patterns"], list)
 assert len(data["patterns"]) >= 40, f"expected >= 40 patterns, got {len(data['patterns'])}"
@@ -42,9 +43,9 @@ PY
 }
 
 @test "every pattern category has at least one entry" {
-  python3 - <<PY
-import json
-data = json.load(open("$PATTERNS"))
+  python3 - "$PATTERNS" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
 cats = {p["category"] for p in data["patterns"]}
 required = {"OVERRIDE","ROLE_HIJACK","SYSTEM_SPOOF","TOOL_COERCION","EXFIL","CREDENTIAL_SHAPED","PROMPT_LEAK"}
 missing = required - cats

@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario tests: convergence engine behavior in the orchestrator
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 ORCHESTRATOR="$PLUGIN_ROOT/agents/fg-100-orchestrator.md"

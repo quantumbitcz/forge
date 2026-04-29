@@ -23,7 +23,7 @@ all 15 supported languages. Stored at `.forge/code-graph.db`. Config flags:
 
 ## Consequences
 
-- **Positive:** Zero external dependencies beyond a checked-in binary. Works on every supported platform. Survives `/forge-recover reset`.
+- **Positive:** Zero external dependencies beyond a checked-in binary. Works on every supported platform. Survives `/forge-admin recover reset`.
 - **Negative:** Cypher-class traversal queries are not available; the MCP server exposes a narrower tool surface over SQLite.
 - **Neutral:** Two graph code paths to maintain, partially unified by the `code_graph.backend` switch.
 

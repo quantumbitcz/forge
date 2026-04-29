@@ -1,5 +1,7 @@
 # Axum Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Axum-specific patterns.
 
 ## Code Documentation

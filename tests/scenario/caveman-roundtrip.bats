@@ -6,20 +6,32 @@
 # compression pipeline and are no longer documented at the SKILL.md surface.
 # Only --dry-run remains a user-visible contract at the skill level.
 
+# Covers:
+
 setup() {
   load '../helpers/test-helpers'
-  COMPRESS_SKILL="$BATS_TEST_DIRNAME/../../skills/forge-compress/SKILL.md"
+  ADMIN_SKILL="$BATS_TEST_DIRNAME/../../skills/forge-admin/SKILL.md"
 }
 
-@test "caveman-roundtrip: forge-compress documents --dry-run flag" {
-  run grep -q '\-\-dry-run' "$COMPRESS_SKILL"
+# Extract the `### Subcommand: compress` block from skills/forge-admin/SKILL.md.
+_compress_block() {
+  awk '
+    /^### Subcommand: compress$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$ADMIN_SKILL"
+}
+
+@test "caveman-roundtrip: forge-admin compress subcommand documents --dry-run flag" {
+  run bash -c "$(declare -f _compress_block); ADMIN_SKILL='$ADMIN_SKILL'; _compress_block | grep -q -- '--dry-run'"
   assert_success
 }
 
-@test "caveman-roundtrip: forge-compress documents output subcommand modes" {
+@test "caveman-roundtrip: forge-admin compress subcommand documents output verb modes" {
   # Phase 1: 4 output modes (off, lite, full, ultra) must be documented
   for mode in off lite full ultra; do
-    run grep -q "$mode" "$COMPRESS_SKILL"
+    run bash -c "$(declare -f _compress_block); ADMIN_SKILL='$ADMIN_SKILL'; _compress_block | grep -q '$mode'"
     assert_success
   done
 }

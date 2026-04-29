@@ -41,3 +41,26 @@ Cross-project files contain generic patterns, not project-specific code or secre
 ## Error Handling
 
 If `~/.claude/forge-learnings/` is not writable (read-only home dir, network mount), skip silently at PREFLIGHT. Log as INFO: "Cross-project learnings unavailable, skipping."
+
+---
+
+## Selector Interaction (Phase 4)
+
+The learnings selector (`hooks/_py/learnings_selector.py`) ranks every
+candidate — including those loaded from `~/.claude/forge-learnings/` — by:
+
+```
+score = confidence_now * domain_match_score * recency_bonus * cross_project_penalty
+```
+
+`cross_project_penalty` drops cross-project items to **0.85** of their
+score **only when** the active project has more than
+`SPARSE_THRESHOLD` (default 10; see `hooks/_py/memory_decay.py`) local
+candidates for the relevant framework/component. Sparse projects —
+fewer than 10 locally sourced learnings — therefore benefit fully from
+cross-project priors; dense projects down-weight them in favour of
+local evidence.
+
+Tune `SPARSE_THRESHOLD` by editing `hooks/_py/memory_decay.py` (constant
+module-level). Do not duplicate the constant elsewhere — the selector and
+any tests import it from that single source.

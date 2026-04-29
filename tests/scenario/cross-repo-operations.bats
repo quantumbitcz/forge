@@ -3,6 +3,8 @@
 # Per REVISIONS.md: tests only lock ordering logic and state.json cross-repo
 # fields. No actual git discovery simulation.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

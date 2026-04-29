@@ -32,7 +32,7 @@ Weights must sum to 1.0 (tolerance +/- 0.01). Configurable in `forge-config.md` 
 |---|---|---|
 | >= `autonomous_threshold` (default 0.7) | HIGH | `PROCEED` -- proceed autonomously |
 | >= `pause_threshold` (default 0.4) | MEDIUM | `ASK` -- display breakdown, ask confirmation via `AskUserQuestion` |
-| < `pause_threshold` (default 0.4) | LOW | `SUGGEST_SHAPE` -- suggest `/forge-shape` for requirement refinement |
+| < `pause_threshold` (default 0.4) | LOW | `SUGGEST_SHAPE` -- suggest `/forge run` for requirement refinement |
 
 ## Dimension: Requirement Clarity (0.0-1.0)
 
@@ -118,7 +118,7 @@ Trust is stored in `.forge/trust.json` (local, NOT committed to git). This is de
 }
 ```
 
-The file survives `/forge-recover reset` (alongside `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `wiki/`).
+The file survives `/forge-admin recover reset` (alongside `explore-cache.json`, `plan-cache/`, `code-graph.db`, and `wiki/`).
 
 ### Trust Initialization
 
@@ -140,7 +140,7 @@ Starts at `initial_trust` (default 0.5). Clamped to [0.0, 1.0]. Never decays bel
 | User provides design-level feedback | -0.08 | `feedback_classification == "design"` |
 | User provides implementation-level feedback | -0.05 | `feedback_classification == "implementation"` |
 | Pipeline FAIL verdict | -0.03 | Score < 60 |
-| User aborts pipeline | -0.05 | `/forge-abort` invoked |
+| User aborts pipeline | -0.05 | `/forge-admin abort` invoked |
 
 ### Trust Decay
 
@@ -179,7 +179,7 @@ Proceed? [Yes / Refine requirement / Abort]
 
 ### LOW Confidence (SUGGEST_SHAPE)
 
-Display concerns. Suggest `/forge-shape` for requirement refinement. Offer to proceed anyway.
+Display concerns. Suggest `/forge run` for requirement refinement. Offer to proceed anyway.
 
 ```
 Pipeline Confidence: LOW (0.31)
@@ -189,9 +189,9 @@ Concerns:
   - No prior runs in domain "inventory" -- no historical baseline
   - Estimated blast radius: 25+ files across 3 components
 
-Recommendation: Use /forge-shape to refine the requirement first.
+Recommendation: Use /forge run to refine the requirement first.
 
-[Proceed anyway / Refine with /forge-shape / Abort]
+[Proceed anyway / Refine with /forge run / Abort]
 ```
 
 ### Autonomous Mode
@@ -218,7 +218,7 @@ The orchestrator (`fg-100-orchestrator`) uses confidence scoring as follows. Thi
 6. Apply trust modifier to get effective confidence
 7. Determine gate decision: `PROCEED` / `ASK` / `SUGGEST_SHAPE`
 8. If `ASK`: display breakdown via `AskUserQuestion`, wait for response
-9. If `SUGGEST_SHAPE`: display concerns, suggest `/forge-shape`
+9. If `SUGGEST_SHAPE`: display concerns, suggest `/forge run`
 10. Store confidence data in `state.json.confidence`
 11. Log decision to `.forge/decisions.jsonl` per `shared/decision-log.md`
 
@@ -290,4 +290,15 @@ confidence:
 
 ### Interaction with Speculation
 
-MEDIUM-confidence requirements with ambiguity signals trigger speculative parallel plan branches. See `shared/speculation.md §Trigger Logic` for the exact predicate. HIGH and LOW bands are unaffected: HIGH proceeds single-plan, LOW routes to `/forge-shape`.
+MEDIUM-confidence requirements with ambiguity signals trigger speculative parallel plan branches. See `shared/speculation.md §Trigger Logic` for the exact predicate. HIGH and LOW bands are unaffected: HIGH proceeds single-plan, LOW routes to `/forge run`.
+
+## Cross-ref: Implementer Voting Gate (Phase 7 F36)
+
+`impl_voting.trigger_on_confidence_below` (default 0.4) is evaluated against
+`state.confidence.effective_confidence` defined above. The gate is subject
+to the invariant `impl_voting.trigger_on_confidence_below <=
+confidence.pause_threshold` (enforced at PREFLIGHT CRITICAL). This ensures
+voting fires only on tasks the pipeline itself would have paused on — not
+on every MEDIUM task.
+
+See `shared/intent-verification.md` § F36 Voting Gate.

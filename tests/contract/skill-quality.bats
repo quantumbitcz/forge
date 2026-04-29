@@ -82,9 +82,9 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 # 5. All skills have ## Prerequisites section
 # ---------------------------------------------------------------------------
 @test "skill-quality: all skills have ## Prerequisites or ## Subcommand dispatch" {
-  # The subcommand pattern (shared/skill-subcommand-pattern.md) replaces
-  # the flat Prerequisites/Instructions sections with per-subcommand blocks,
-  # so either pattern satisfies the contract.
+  # Hybrid skills inline subcommand dispatch in place of the flat
+  # Prerequisites/Instructions sections, so either pattern satisfies
+  # the contract.
   local failures=()
   for skill_dir in "$SKILLS_DIR"/*/; do
     local skill_file="$skill_dir/SKILL.md"
@@ -214,17 +214,19 @@ SKILLS_DIR="$PLUGIN_ROOT/skills"
 
 # ---------------------------------------------------------------------------
 # 11. Minimum skill count guard
-#     Phase 1 (v3.0.0) consolidated 42 → 35 skills (deleted 7, added 1, rewrote
-#     forge-compress). Threshold bumped down from 40 to 35.
+#     Post-Mega-B consolidation (v6.0.0) collapsed the 28-skill surface into
+#     3 top-level skills: /forge (writes), /forge-ask (read-only), /forge-admin
+#     (state management). Threshold floored at 3 — adding a fourth top-level
+#     skill should be a deliberate decision.
 # ---------------------------------------------------------------------------
 @test "skill-quality: minimum skill count is met" {
   local count=0
   for skill_dir in "$SKILLS_DIR"/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && (( ++count ))
   done
-  # Skill-consolidation target: 28.
-  if (( count < 28 )); then
-    fail "Expected at least 28 skills, found $count"
+  # Post-Mega-B consolidation target: 3.
+  if (( count < 3 )); then
+    fail "Expected at least 3 skills, found $count"
   fi
 }
 

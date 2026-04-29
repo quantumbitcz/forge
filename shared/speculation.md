@@ -45,7 +45,7 @@ Rules (see §4.4 of design spec for full table): auto-pick when delta > `auto_pi
 
 ## Persistence
 
-Path: `.forge/plans/candidates/{run_id}/cand-{N}.json`. Schema: v1.0.0 (fields per design spec §5.4). Index: `.forge/plans/candidates/index.json`. FIFO eviction: keep last 20 runs. Survives `/forge-recover reset`.
+Path: `.forge/plans/candidates/{run_id}/cand-{N}.json`. Schema: v1.0.0 (fields per design spec §5.4). Index: `.forge/plans/candidates/index.json`. FIFO eviction: keep last 20 runs. Survives `/forge-admin recover reset`.
 
 ### Candidate payload
 

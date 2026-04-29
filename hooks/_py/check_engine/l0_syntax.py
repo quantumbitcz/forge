@@ -1,4 +1,4 @@
-"""L0 pre-edit syntax validation (replaces validate-syntax.sh)."""
+"""L0 pre-edit syntax validation."""
 from __future__ import annotations
 
 import ast

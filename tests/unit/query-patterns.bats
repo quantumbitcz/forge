@@ -62,6 +62,8 @@ PYEOF
   local in_block=0
 
   while IFS= read -r line; do
+    # Strip Windows \r if present (Python on Windows emits \r\n; bash keeps \r).
+    line="${line%$'\r'}"
     if [[ "$line" =~ ^BLOCK_START_[0-9]+$ ]]; then
       in_block=1
       current_block=""

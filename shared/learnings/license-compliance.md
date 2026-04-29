@@ -1,3 +1,7 @@
+---
+schema_version: 2
+items:
+---
 # License Compliance Learnings
 
 Per-project cumulative learnings for `fg-414-license-reviewer`.

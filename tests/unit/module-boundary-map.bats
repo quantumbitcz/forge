@@ -5,6 +5,12 @@ load '../helpers/test-helpers'
 
 BOUNDARY_MAP="$PLUGIN_ROOT/shared/graph/module-boundary-map.sh"
 
+# Disable build-tool introspection (gradle CLI, cargo metadata) so unit
+# tests exercise file-based parsing only. On Windows runners, invoking
+# gradle spawns a JVM daemon that the MSYS `timeout` cannot reliably kill,
+# causing 60s hangs and a 40-min job timeout.
+export MODULE_BOUNDARY_SKIP_INTROSPECTION=1
+
 # ---------------------------------------------------------------------------
 # Structural checks
 # ---------------------------------------------------------------------------

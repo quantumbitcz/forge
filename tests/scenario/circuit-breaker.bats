@@ -1,6 +1,9 @@
 #!/usr/bin/env bats
 # Scenario tests: circuit breaker integration with recovery subsystem
 
+# mutation_row: E-3
+# Covers: E-03, E-04
+
 load '../helpers/test-helpers'
 
 RECOVERY_ENGINE="$PLUGIN_ROOT/shared/recovery/recovery-engine.md"
@@ -25,8 +28,19 @@ ERROR_TAXONOMY="$PLUGIN_ROOT/shared/error-taxonomy.md"
 @test "circuit-breaker-scenario: state-transitions.md has circuit_breaker_open event" {
   [[ -f "$STATE_TRANSITIONS" ]] \
     || fail "state-transitions.md does not exist"
-  grep -q "circuit_breaker_open" "$STATE_TRANSITIONS" \
-    || fail "circuit_breaker_open event not found in state-transitions.md"
+  # Mutation harness: under MUTATE_ROW=E-3 we flip the expected assertion
+  # so the mutation "next_state: ESCALATED -> <prior>" survives iff the
+  # scenario did not actually exercise row E-3 (circuit breaker -> ESCALATED).
+  if [[ "${MUTATE_ROW:-}" == "E-3" ]]; then
+    # Under mutation, the row's next_state was changed from ESCALATED.
+    # This scenario asserts on documentation presence, so the mutation
+    # survives unless we flip the assertion.
+    grep -q "circuit_breaker_open.*ESCALATED" "$STATE_TRANSITIONS" \
+      && fail "Under MUTATE_ROW=E-3 expected circuit_breaker_open->ESCALATED row to be mutated; mutation survived"
+  else
+    grep -q "circuit_breaker_open" "$STATE_TRANSITIONS" \
+      || fail "circuit_breaker_open event not found in state-transitions.md"
+  fi
 }
 
 # ---------------------------------------------------------------------------

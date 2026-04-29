@@ -7,8 +7,18 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 STATE_SCHEMA_FIELDS="$PLUGIN_ROOT/shared/state-schema-fields.md"
 STAGE_CONTRACT="$PLUGIN_ROOT/shared/stage-contract.md"
 CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
-MIGRATION_SKILL="$PLUGIN_ROOT/skills/forge-migration/SKILL.md"
+FORGE_SKILL="$PLUGIN_ROOT/skills/forge/SKILL.md"
 MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
+
+# Extract the `### Subcommand: migrate` block from skills/forge/SKILL.md.
+_migrate_subcommand_block() {
+  awk '
+    /^### Subcommand: migrate$/ { in_block=1; print; next }
+    in_block && /^### Subcommand: / { exit }
+    in_block && /^## / { exit }
+    in_block { print }
+  ' "$FORGE_SKILL"
+}
 
 # ---------------------------------------------------------------------------
 # 1. All 4 migration states documented in state-schema
@@ -48,9 +58,9 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 # ---------------------------------------------------------------------------
 # 5. Migration skill exists and references planner
 # ---------------------------------------------------------------------------
-@test "migration-states: migration skill references fg-160-migration-planner" {
-  grep -q "fg-160-migration-planner" "$MIGRATION_SKILL" \
-    || fail "Migration skill does not reference fg-160-migration-planner"
+@test "migration-states: migrate subcommand references fg-160-migration-planner" {
+  _migrate_subcommand_block | grep -q "fg-160-migration-planner" \
+    || fail "migrate subcommand does not reference fg-160-migration-planner"
 }
 
 # ---------------------------------------------------------------------------
@@ -66,11 +76,13 @@ MIGRATION_PLANNER="$PLUGIN_ROOT/agents/fg-160-migration-planner.md"
 # ---------------------------------------------------------------------------
 # 7. Migration skill supports usage patterns
 # ---------------------------------------------------------------------------
-@test "migration-states: migration skill documents usage patterns" {
+@test "migration-states: migrate subcommand documents usage patterns" {
+  local block
+  block="$(_migrate_subcommand_block)"
   local patterns=(upgrade check)
   for pattern in "${patterns[@]}"; do
-    grep -qi "$pattern" "$MIGRATION_SKILL" \
-      || fail "Usage pattern '$pattern' not documented in migration skill"
+    echo "$block" | grep -qi "$pattern" \
+      || fail "Usage pattern '$pattern' not documented in migrate subcommand"
   done
 }
 

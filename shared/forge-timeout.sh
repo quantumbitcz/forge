@@ -9,29 +9,37 @@ MAX_SECONDS="${2:-7200}"
 STATE_FILE="${FORGE_DIR}/state.json"
 [[ -f "$STATE_FILE" ]] || exit 0
 
-start_ts=$("${FORGE_PYTHON:-python3}" -c "
-import json, sys
+# Path passed via argv (not interpolated into source) so MSYS path
+# auto-conversion produces a native form on Windows.
+start_ts=$("${FORGE_PYTHON:-python3}" - "$STATE_FILE" <<'PY' 2>/dev/null
+import json
+import sys
+from pathlib import Path
+
 try:
-    with open('$STATE_FILE') as f:
+    with Path(sys.argv[1]).open() as f:
         d = json.load(f)
     ts = d.get('stage_timestamps', {}).get('preflight', '')
     print(ts)
-except:
+except Exception:
     print('')
-" 2>/dev/null)
+PY
+)
 
 [[ -z "$start_ts" ]] && exit 0
 
-elapsed=$("${FORGE_PYTHON:-python3}" -c "
-from datetime import datetime, timezone
+elapsed=$("${FORGE_PYTHON:-python3}" - "$start_ts" <<'PY'
 import sys
+from datetime import datetime, timezone
+
 try:
-    start = datetime.fromisoformat('$start_ts'.replace('Z','+00:00'))
+    start = datetime.fromisoformat(sys.argv[1].replace('Z', '+00:00'))
     now = datetime.now(timezone.utc)
     print(int((now - start).total_seconds()))
-except:
+except Exception:
     print(0)
-")
+PY
+)
 
 if (( elapsed >= MAX_SECONDS )); then
   echo "TIMEOUT: Pipeline running for ${elapsed}s (limit: ${MAX_SECONDS}s)"

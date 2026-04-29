@@ -103,7 +103,7 @@ Following the Windsurf model, Forge distinguishes two knowledge types:
 └── metrics.json                    # Application tracking and effectiveness
 ```
 
-All files survive `/forge-recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-recover reset --hard` removes them.
+All files survive `/forge-admin recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-admin recover reset --hard` removes them.
 
 ### Schema references
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Scenario: Edge case handling for pipeline operations.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 setup() {
@@ -31,12 +33,29 @@ teardown() {
 # 3. Neo4j health check returns gracefully when docker unavailable
 # ---------------------------------------------------------------------------
 @test "edge-case: neo4j-health handles missing docker" {
+  # On Git Bash on Windows the PATH-restriction trick does not isolate
+  # docker.exe reliably (Windows command resolution falls back to the
+  # system PATH for known executables), so the script may find the host
+  # docker installation and report a different status. The behaviour we
+  # care about is exercised on Linux/macOS where PATH isolation works.
+  if [[ "${OS:-}" == "Windows_NT" ]] || [[ "$(uname -s 2>/dev/null)" == MINGW* ]] || [[ "$(uname -s 2>/dev/null)" == CYGWIN* ]]; then
+    skip "PATH-isolation does not bound docker.exe lookup on Git Bash on Windows"
+  fi
+
   # Create a mock PATH without docker
   local mock_bin="$TMPWORK/mock-bin"
   mkdir -p "$mock_bin"
-  # Only include basic commands, not docker
-  ln -sf "$(command -v bash)" "$mock_bin/bash"
-  ln -sf "$(command -v echo)" "$mock_bin/echo"
+  # Only include basic commands, not docker. `command -v` may return a
+  # builtin name (e.g. `echo` on Git Bash) instead of a filesystem path —
+  # skip those, they'll be resolved via PATH lookup of the inherited shell.
+  for tool in bash echo; do
+    local resolved
+    resolved="$(command -v "$tool" 2>/dev/null || true)"
+    if [[ -n "$resolved" && -f "$resolved" ]]; then
+      ln -sf "$resolved" "$mock_bin/$tool" 2>/dev/null || \
+        cp "$resolved" "$mock_bin/$tool"
+    fi
+  done
 
   PATH="$mock_bin" run "$PLUGIN_ROOT/shared/graph/neo4j-health.sh"
   [ "$status" -eq 1 ]

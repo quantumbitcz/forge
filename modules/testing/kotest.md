@@ -1,5 +1,7 @@
 # Kotest Testing Conventions
 
+> Support tier: contract-verified
+
 ## Test Structure
 
 Use `ShouldSpec` as the default spec style. Group related tests inside `context()` blocks when behaviour varies by state or input category. One spec class per production class.

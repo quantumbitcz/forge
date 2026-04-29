@@ -71,7 +71,7 @@ Completed tickets are archived after `tracking.archive_after_days` (default 90, 
 
 1. IDs are **never reused** -- even after archival.
 2. Operations **silently skip** if tracking is not initialized (no `.forge/tracking/` directory).
-3. The prefix is set once at `/forge-init` and should not change mid-project.
+3. The prefix is set once at `/forge` and should not change mid-project.
 4. Counter file must be updated atomically to prevent duplicate IDs in sprint mode.
 
 ## Related

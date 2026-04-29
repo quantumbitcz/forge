@@ -1,5 +1,7 @@
 # Angular Documentation Conventions
 
+> Support tier: community
+
 > Extends `modules/documentation/conventions.md` with Angular-specific patterns.
 
 ## Code Documentation

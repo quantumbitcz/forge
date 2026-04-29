@@ -24,9 +24,10 @@ load '../helpers/test-helpers'
 }
 
 @test "eval suite files have valid JSON" {
+  # Paths passed via argv so MSYS auto-converts /d/a/... to native Windows form on Git Bash.
   for suite in "$PLUGIN_ROOT"/evals/pipeline/suites/*.json; do
     [[ -f "$suite" ]] || continue
-    run python3 -c "import json; json.load(open('$suite'))"
+    run python3 -c "import json, sys; json.load(open(sys.argv[1]))" "$suite"
     [[ "$status" -eq 0 ]]
   done
 }
@@ -35,14 +36,16 @@ load '../helpers/test-helpers'
   for suite in "$PLUGIN_ROOT"/evals/pipeline/suites/*.json; do
     [[ -f "$suite" ]] || continue
     run python3 -c "
-import json, sys
-s = json.load(open('$suite'))
+import json, os, sys
+suite_path = sys.argv[1]
+s = json.load(open(suite_path))
+suite_name = os.path.basename(suite_path)
 for key in ['name', 'version', 'description', 'tasks']:
-    assert key in s, f'Missing {key} in $(basename "$suite")'
+    assert key in s, f'Missing {key} in {suite_name}'
 for task in s['tasks']:
     for key in ['id', 'language', 'difficulty', 'description', 'fixture', 'validation_command']:
         assert key in task, f'Missing {key} in task {task.get(\"id\", \"unknown\")}'
-"
+" "$suite"
     [[ "$status" -eq 0 ]]
   done
 }
@@ -51,12 +54,12 @@ for task in s['tasks']:
   for suite in "$PLUGIN_ROOT"/evals/pipeline/suites/*.json; do
     [[ -f "$suite" ]] || continue
     run python3 -c "
-import json
-s = json.load(open('$suite'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 ids = [t['id'] for t in s['tasks']]
 dupes = [x for x in ids if ids.count(x) > 1]
 assert not dupes, f'Duplicate task IDs: {set(dupes)}'
-"
+" "$suite"
     [[ "$status" -eq 0 ]]
   done
 }
@@ -65,11 +68,11 @@ assert not dupes, f'Duplicate task IDs: {set(dupes)}'
   for suite in "$PLUGIN_ROOT"/evals/pipeline/suites/*.json; do
     [[ -f "$suite" ]] || continue
     run python3 -c "
-import json, re
-s = json.load(open('$suite'))
+import json, re, sys
+s = json.load(open(sys.argv[1]))
 for t in s['tasks']:
     assert re.match(r'^[a-z]{2,5}-[0-9]{2}(-[a-z-]+)?$', t['id']), f'Invalid task ID: {t[\"id\"]}'
-"
+" "$suite"
     [[ "$status" -eq 0 ]]
   done
 }
@@ -78,17 +81,18 @@ for t in s['tasks']:
   for suite in "$PLUGIN_ROOT"/evals/pipeline/suites/*.json; do
     [[ -f "$suite" ]] || continue
     run python3 -c "
-import json, os
-s = json.load(open('$suite'))
+import json, os, sys
+s = json.load(open(sys.argv[1]))
+fixtures_root = sys.argv[2]
 missing = []
 for t in s['tasks']:
-    p = os.path.join('$PLUGIN_ROOT', 'evals', 'pipeline', 'fixtures', t['fixture'])
+    p = os.path.join(fixtures_root, t['fixture'])
     if not os.path.isdir(p):
         missing.append(t['fixture'])
 if missing:
     print('Missing fixtures: ' + ', '.join(missing))
     raise SystemExit(1)
-"
+" "$suite" "$PLUGIN_ROOT/evals/pipeline/fixtures"
     [[ "$status" -eq 0 ]]
   done
 }
@@ -105,45 +109,46 @@ if missing:
     [[ -d "$fixture_dir" ]] || continue
     [[ -f "$fixture_dir/.forge-eval.json" ]] || continue
     run python3 -c "
-import json
-m = json.load(open('$fixture_dir/.forge-eval.json'))
+import json, sys
+meta_path = sys.argv[1]
+m = json.load(open(meta_path))
 for key in ['fixture_version', 'created', 'language', 'build_command', 'test_command', 'known_failing_tests', 'forge_local_template']:
-    assert key in m, f'Missing {key} in $fixture_dir/.forge-eval.json'
+    assert key in m, f'Missing {key} in {meta_path}'
 tpl = m['forge_local_template']
 assert 'language' in tpl, 'Missing language in forge_local_template'
 assert 'testing' in tpl, 'Missing testing in forge_local_template'
 assert 'commands' in tpl, 'Missing commands in forge_local_template'
-"
+" "$fixture_dir/.forge-eval.json"
     [[ "$status" -eq 0 ]]
   done
 }
 
 @test "lite suite has exactly 25 tasks" {
   run python3 -c "
-import json
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/lite.json'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 assert len(s['tasks']) == 25, f'Expected 25 tasks, got {len(s[\"tasks\"])}'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/lite.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "lite suite has 5 tasks per language" {
   run python3 -c "
-import json
+import json, sys
 from collections import Counter
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/lite.json'))
+s = json.load(open(sys.argv[1]))
 counts = Counter(t['language'] for t in s['tasks'])
 for lang in ['python', 'typescript', 'kotlin', 'go', 'rust']:
     assert counts[lang] == 5, f'{lang} has {counts[lang]} tasks, expected 5'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/lite.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "lite suite difficulty distribution is 2 easy 2 medium 1 hard per language" {
   run python3 -c "
-import json
+import json, sys
 from collections import Counter
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/lite.json'))
+s = json.load(open(sys.argv[1]))
 by_lang = {}
 for t in s['tasks']:
     by_lang.setdefault(t['language'], []).append(t['difficulty'])
@@ -152,49 +157,49 @@ for lang, diffs in by_lang.items():
     assert c['easy'] == 2, f'{lang}: {c[\"easy\"]} easy, expected 2'
     assert c['medium'] == 2, f'{lang}: {c[\"medium\"]} medium, expected 2'
     assert c['hard'] == 1, f'{lang}: {c[\"hard\"]} hard, expected 1'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/lite.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "convergence suite has expected_convergence in each task" {
   run python3 -c "
-import json
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/convergence.json'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 for t in s['tasks']:
     assert 'expected_convergence' in t, f'Missing expected_convergence in {t[\"id\"]}'
     ec = t['expected_convergence']
     assert 'max_iterations' in ec, f'Missing max_iterations in {t[\"id\"]}'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/convergence.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "convergence suite has 10 tasks" {
   run python3 -c "
-import json
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/convergence.json'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 assert len(s['tasks']) == 10, f'Expected 10 tasks, got {len(s[\"tasks\"])}'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/convergence.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "cost suite has expected_cost in each task" {
   run python3 -c "
-import json
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/cost.json'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 for t in s['tasks']:
     assert 'expected_cost' in t, f'Missing expected_cost in {t[\"id\"]}'
     ec = t['expected_cost']
     assert 'max_total_cost_usd' in ec, f'Missing max_total_cost_usd in {t[\"id\"]}'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/cost.json"
   [[ "$status" -eq 0 ]]
 }
 
 @test "cost suite has 5 tasks" {
   run python3 -c "
-import json
-s = json.load(open('$PLUGIN_ROOT/evals/pipeline/suites/cost.json'))
+import json, sys
+s = json.load(open(sys.argv[1]))
 assert len(s['tasks']) == 5, f'Expected 5 tasks, got {len(s[\"tasks\"])}'
-"
+" "$PLUGIN_ROOT/evals/pipeline/suites/cost.json"
   [[ "$status" -eq 0 ]]
 }
 

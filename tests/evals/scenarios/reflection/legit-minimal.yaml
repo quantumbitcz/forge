@@ -1,7 +1,7 @@
 id: reflection-legit-minimal
 phase: 04
 kind: false-positive-guard
-agent_under_test: fg-301-implementer-critic
+agent_under_test: fg-301-implementer-judge
 description: |
   Test covers unique-email happy path; AC only describes this one branch.
   Implementation is minimal and correct — persists and returns a generated id.

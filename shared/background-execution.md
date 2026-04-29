@@ -4,9 +4,9 @@ Defines the contract for running the forge pipeline asynchronously. When activat
 
 ## Activation
 
-The `--background` flag on `/forge-run` activates background mode:
+The `--background` flag on `/forge run` activates background mode:
 
-    /forge-run --background "Add user profile endpoint"
+    /forge run --background "Add user profile endpoint"
 
 Background mode sets `state.json.background: true` at PREFLIGHT. The orchestrator suppresses all `AskUserQuestion` calls and replaces interactive task updates with file-based progress artifacts. Autonomous mode (`autonomous: true`) is implied — all decisions use recommended defaults logged with `[AUTO]` prefix.
 
@@ -14,7 +14,7 @@ Background mode is incompatible with `--dry-run` (dry-run requires no worktree o
 
 ## Progress Artifacts
 
-All progress files live under `.forge/progress/`. The directory is created at PREFLIGHT when `background: true`. Files are ephemeral — they do not survive `/forge-recover reset` and are not committed to git.
+All progress files live under `.forge/progress/`. The directory is created at PREFLIGHT when `background: true`. Files are ephemeral — they do not survive `/forge-admin recover reset` and are not committed to git.
 
 ```
 .forge/progress/
@@ -29,7 +29,7 @@ All progress files live under `.forge/progress/`. The directory is created at PR
 
 ### status.json
 
-Updated by the orchestrator at every stage transition, convergence iteration, and significant progress event. This is the primary polling target for `/forge-status`.
+Updated by the orchestrator at every stage transition, convergence iteration, and significant progress event. This is the primary polling target for `/forge-ask status`.
 
 ```json
 {
@@ -174,7 +174,7 @@ When the orchestrator encounters a condition that would normally trigger `AskUse
 
 1. **Auto-resolvable decisions**: Resolved automatically using the recommended default (same as `autonomous: true`). Logged with `[AUTO]` prefix in timeline.
 2. **Safety escalations**: Written to `alerts.json` with `resolved: false`. The pipeline **pauses** at the current stage and polls `alerts.json` every 30 seconds for resolution.
-3. **Resolution**: The user (via `/forge-status`, Slack notification, or direct file edit) sets `resolved: true` and `resolution` to the chosen option ID. The orchestrator reads the resolution and continues.
+3. **Resolution**: The user (via `/forge-ask status`, Slack notification, or direct file edit) sets `resolved: true` and `resolution` to the chosen option ID. The orchestrator reads the resolution and continues.
 
 ### Pause behavior
 
@@ -190,13 +190,13 @@ When paused on an alert:
 If an alert remains unresolved for 60 minutes (configurable via `background.alert_timeout_minutes`), the orchestrator aborts the run gracefully:
 1. Writes `pipeline_end` event to timeline with `detail: "Alert timeout"`
 2. Sets `state.json.complete: true` with `story_state: "ABORTED"`
-3. Preserves all artifacts for `/forge-recover resume`
+3. Preserves all artifacts for `/forge-admin recover resume`
 
 ## User Interaction
 
-### /forge-status
+### /forge-ask status
 
-In background mode, `/forge-status` reads `.forge/progress/status.json` and displays:
+In background mode, `/forge-ask status` reads `.forge/progress/status.json` and displays:
 - Current stage and progress percentage
 - Quality score and convergence state
 - Active alerts (if any) with resolution options
@@ -270,4 +270,4 @@ The `background` field in `state.json`:
 
 - **Sprint mode** (`--sprint --background`): Each feature run gets its own `progress/` directory under `.forge/runs/{id}/progress/`. The sprint orchestrator aggregates status across all runs.
 - **Dry-run** (`--dry-run`): Overrides `--background`. No progress artifacts are created.
-- **Resume** (`/forge-recover resume`): Works normally. If the previous run was background, resume also runs in background mode unless `--interactive` is passed.
+- **Resume** (`/forge-admin recover resume`): Works normally. If the previous run was background, resume also runs in background mode unless `--interactive` is passed.

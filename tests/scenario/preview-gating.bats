@@ -4,6 +4,8 @@
 # Preview failures block SHIPPING progression. Fix loop exhaustion
 # escalates to user.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

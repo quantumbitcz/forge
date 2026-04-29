@@ -168,7 +168,7 @@ graph:
   neo4j_port: 7687
   neo4j_http_port: 7474
 
-# Git conventions (auto-detected or configured by /forge-init)
+# Git conventions (auto-detected or configured by /forge)
 git:
   branch_template: "{type}/{ticket}-{slug}"
   branch_types: [feat, fix, refactor, chore]

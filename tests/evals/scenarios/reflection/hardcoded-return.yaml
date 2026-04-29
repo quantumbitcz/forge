@@ -1,7 +1,7 @@
 id: reflection-hardcoded-return
 phase: 04
 kind: planted-defect
-agent_under_test: fg-301-implementer-critic
+agent_under_test: fg-301-implementer-judge
 description: |
   Test asserts userId != null. Implementation returns UserId(1) unconditionally
   with no persistence. Critic must flag as REFLECT-HARDCODED-RETURN.

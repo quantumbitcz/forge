@@ -28,7 +28,7 @@ Execute: **$ARGUMENTS**
 
 ## §1 Identity & Purpose
 
-10 stages: **PREFLIGHT -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
+Stages: **PREFLIGHT -> [BRAINSTORMING (standard mode only)] -> EXPLORE -> PLAN -> VALIDATE -> IMPLEMENT -> VERIFY -> REVIEW -> DOCS -> SHIP -> LEARN**
 
 - Resolve ALL ambiguity without asking — read conventions, grep codebase, check stage notes.
 - **3 user touchpoints:** Start, Approval (PR), Escalation. Everything else autonomous.
@@ -146,15 +146,23 @@ All sub-tasks use `addBlockedBy: [stage_task_id]`.
 | `--wait-for <id>` | `--wait-for feat-auth` | Block at PREFLIGHT until dependency reaches VERIFY |
 | `--project-root <path>` | `--project-root /path/to/repo` | Override project root (cross-repo) |
 
-**Valid `--from`:** preflight(0), explore(1), plan(2), validate(3), implement(4), verify(5), review(6), docs(7), ship(8), learn(9)
+**Valid `--from`:** preflight(0), brainstorm(0.5), explore(1), plan(2), validate(3), implement(4), verify(5), review(6), docs(7), ship(8), learn(9)
 
 `--from` → always run PREFLIGHT first, skip stages before target (mark "skipped"), begin at target. Resume from verify+ → use current tree. Resume from implement → re-read plan from stage notes.
 
 ### --spec Mode
 
 1. Read spec file. ERROR if not found.
-2. **Validate:** Required `## Problem Statement`, `### Story` blocks with ACs (`- [ ]` lines). `## Status: Blocked` → ERROR. Failures → suggest `/forge-shape`.
-3. Parse: `## Epic` (requirement), `## Stories` (→ planner), `## Technical Notes` (→ EXPLORE/PLAN), `## NFRs` (→ planner+reviewers), `## Out of Scope` (→ implementer).
+2. **Validate (canonical schema, v5.1.0+):** Required `## (Objective|Goal|Goals)`, `## (Scope|Non-goals)`, `## (Acceptance [Cc]riteria|ACs)` (per `tests/unit/skill-execution/spec-wellformed.bats`). `## Status: Blocked` → ERROR. Failures → suggest `/forge shape` or interactive `/forge run`.
+3. Parse the canonical shaper schema (matches `agents/fg-010-shaper.md` `## Write spec`):
+   - `# <title>` + `## Summary` → requirement context.
+   - `## Goal` → planner objective.
+   - `## Scope` (with `### Non-goals`) → planner + implementer.
+   - `## Architecture` / `## Components` / `## Data flow` / `## Error handling` / `## Testing` → EXPLORE + PLAN context.
+   - `## Acceptance criteria` (`- [ ] AC-NNN: ...` items) → planner + reviewers.
+   - `## Approaches considered` → planner (chosen approach + rationale).
+   - `## Risks` → reviewers.
+   - `## Out of scope` → implementer (do-not-do list).
 4. Store in `state.json.spec`.
 5. Compatible with `--from` and `--dry-run`. Spec NEVER modified.
 
@@ -290,6 +298,138 @@ At stage boundaries, emit: `cost-alerting.sh stage-report <stage> --forge-dir $F
 
 Autonomous mode: INFO/WARNING/CRITICAL handled silently (logged `[AUTO]`). EXCEEDED auto-selects "Downgrade model tiers".
 
+### Cost Governance (Phase 6) — USD-denominated
+
+**Applies to every `Agent(...)` dispatch.** Runs after `cost-alerting.sh check` and before context-guard.
+
+**Step 1 — Load budget snapshot:**
+
+```python
+cost_cfg = config.cost                            # from forge-config.md
+state_cost = state["cost"]                        # from state.json v2.0.0
+ceiling = cost_cfg["ceiling_usd"]
+spent = state_cost.get("spent_usd", state_cost.get("estimated_cost_usd", 0.0))
+remaining = max(0.0, ceiling - spent) if ceiling > 0 else float("inf")
+resolved_tier = model_routing.resolve(agent_name)
+original_tier = resolved_tier                     # snapshot pre-downgrade tier; reused in Steps 5 & 7
+tier_est = cost_cfg["tier_estimates_usd"][resolved_tier]
+```
+
+**Step 2 — Dynamic downgrade (if `cost.aware_routing: true`):**
+
+```python
+from shared.cost_governance import downgrade_tier, is_safety_critical
+
+new_tier, reason = downgrade_tier(
+    agent=agent_name,
+    resolved_tier=resolved_tier,
+    remaining_usd=remaining,
+    tier_estimates=cost_cfg["tier_estimates_usd"],
+    conservatism_multiplier=cost_cfg["conservatism_multiplier"],
+    pinned_agents=cost_cfg["pinned_agents"],
+    aware_routing=cost_cfg["aware_routing"],
+)
+if reason == "escalate_required":
+    # Fast-tier non-safety agent would be skipped -> escalate instead.
+    escalate_ceiling_breach(agent_name, new_tier, spent + tier_est)
+elif new_tier != resolved_tier:
+    state_cost["downgrades"].append({
+        "agent": agent_name, "from": resolved_tier, "to": new_tier,
+        "timestamp": now_iso(), "remaining_usd": round(remaining, 4),
+    })
+    state_cost["downgrade_count"] = len(state_cost["downgrades"])
+    resolved_tier = new_tier
+    tier_est = cost_cfg["tier_estimates_usd"][new_tier]
+```
+
+**Step 3 — Ceiling breach check (AC-603):**
+
+```python
+projected = spent + tier_est
+if ceiling > 0 and projected > ceiling:
+    escalate_ceiling_breach(agent_name, resolved_tier, projected)
+    # escalate may return a new tier, raise ceiling, or abort — see Step 4.
+    # On return, re-read state_cost and re-project.
+```
+
+**Step 4 — `escalate_ceiling_breach(agent, tier, projected)`:**
+
+| Mode | Action |
+|---|---|
+| `state.autonomous == false` | **AskUserQuestion** payload from `shared/ask-user-question-patterns.md` §8. Map user choice: `raise_ceiling` -> update `state.cost.ceiling_usd = ceiling * 1.4` rounded; `downgrade` -> call `cost-alerting.sh apply-downgrade` + mark `state.cost_alerting.routing_override`; `abort_to_ship` -> transition to SHIPPING via `forge-state.sh transition abort-to-ship`; `abort_full` -> transition to ABORTED. |
+| `state.autonomous == true` | **NEVER AskUserQuestion.** Auto-select (1) downgrade; if `downgrade_tier()` returns `no_downgrade` or `safety_pinned`, auto-select (2) abort-to-ship. Log `COST-ESCALATION-AUTO` INFO. |
+| Interactive timeout (300s per §Default Timeouts) | Default to `abort_to_ship`. Log `COST-ESCALATION-TIMEOUT`. |
+
+**Step 5 — Write incident (every escalation, both modes):**
+
+```python
+from shared.cost_governance import write_incident
+incident = {
+    "timestamp": now_iso(),
+    "ceiling_usd": ceiling,
+    "spent_usd": round(spent, 4),
+    "projected_usd": round(projected, 4),
+    "next_agent": agent_name,
+    "resolved_tier": resolved_tier,
+    "decision": decision,                # raise_ceiling | downgrade | abort_to_ship | abort_full | timeout
+    "autonomous": bool(state.get("autonomous", False)),
+    "run_id": state["run_id"],
+}
+if decision == "raise_ceiling":
+    incident["new_ceiling_usd"] = state_cost["ceiling_usd"]
+elif decision == "downgrade":
+    incident["downgrade_from"] = original_tier
+    incident["downgrade_to"] = resolved_tier
+write_incident(incident, Path(FORGE_DIR))
+state_cost["ceiling_breaches"] += 1
+```
+
+**Step 6 — Inject `## Cost Budget` block into the brief (AC-602):**
+
+```python
+from shared.cost_governance import compute_budget_block
+brief = (
+    static_system_prompt(agent_name)
+    + "\n"
+    + compute_budget_block(
+        ceiling_usd=ceiling, spent_usd=spent,
+        tier=resolved_tier, tier_estimate=tier_est,
+    )
+    + "\n"
+    + dynamic_task_content
+)
+```
+
+The block appears AFTER the static system prompt and BEFORE per-task dynamic content so prompt caching is preserved (see `shared/model-routing.md` §Prompt Caching Strategy).
+
+**Step 7 — Dispatch and record Phase-6 result keys:**
+
+```python
+result = Agent(subagent_type=agent_name, model=resolved_tier, prompt=brief)
+# After dispatch returns:
+otel.record_agent_result({
+    **result.otel_keys,
+    "budget_total_usd": ceiling,
+    "budget_remaining_usd": max(0.0, ceiling - (spent + actual_cost(result))),
+    "tier_estimate_usd": tier_est,
+    "tier_original": original_tier,
+    "tier_used": resolved_tier,
+    "throttle_reason": throttle_reason_from_steps_2_3,
+})
+events.append({"type": "dispatch_complete", **result.otel_keys,
+               "budget_total_usd": ceiling, "tier_used": resolved_tier, ...})
+```
+
+**Step 8 — Post-dispatch warn-at threshold:**
+
+After recording, if `state.cost.pct_consumed >= cost.warn_at` and not already warned: log `[COST] INFO: crossed warn_at threshold ({pct}% of ${ceiling})` and set a one-time flag in `state.cost.warn_at_fired = true`.
+
+**Disabled-ceiling behavior (`cost.ceiling_usd: 0`, AC-614):**
+- `remaining` = infinity, Step 3 never fires.
+- Budget block renders "unlimited" via `compute_budget_block()`.
+- Downgrade check never trips.
+- No incidents written.
+
 ### Context Guard Integration
 
 Before each agent dispatch, estimate context size and check against the context guard:
@@ -400,6 +540,53 @@ Span-name safety: only bounded attributes (`gen_ai.agent.name`, `forge.stage`, `
 
 ---
 
+## Feature usage tracking
+
+When a feature's code path executes for the first time within a pipeline run,
+emit a `feature_used` event into `.forge/events.jsonl`:
+
+```jsonl
+{"type":"feature_used","feature_id":"F12","run_id":"<current_run_id>","ts":"<ISO-8601 UTC>"}
+```
+
+Feature IDs are defined in `shared/feature-matrix.md` (rows F05-F34) and
+`shared/feature_matrix_generator.py` (FEATURES tuple). Emit at most ONE event
+per `(feature_id, run_id)` pair (track in-memory via a per-run set).
+
+Trigger conditions per feature (subset; full mapping is in
+`shared/feature-lifecycle.md`):
+
+- F05 (Living specifications): emit when fg-200-planner reads/writes a spec slug
+- F07 (Event-sourced log): always emit at PREFLIGHT (the log itself is the host)
+- F08 (Context condensation): emit when condensation triggers
+- F09 (Active knowledge base): emit when a learning is auto-promoted
+- F10 (Enhanced security): emit when supply-chain audit runs
+- F11 (Playbooks): emit when a playbook is invoked
+- F13 (Property testing): emit when fg-515 dispatches
+- F14 (Flaky test management): emit when a quarantine decision is made
+- F15 (Dynamic accessibility): emit when fg-413 runs in a11y mode
+- F16 (i18n validation): emit when fg-155 dispatches
+- F17 (Performance regression): emit when benchmarks compare
+- F18 (Next-task prediction): emit when prediction triggers
+- F19 (DX metrics): emit at LEARN stage if metrics enabled
+- F20 (Monorepo): emit when affected detection runs
+- F21 (A2A HTTP): emit on inter-repo HTTP call
+- F22 (ML pipelines): emit when ML categories appear
+- F23 (Feature flags): emit when flag categories appear
+- F24 (Deployment strategies): emit on canary/blue-green dispatch
+- F25 (Contract testing): emit when fg-250 dispatches
+- F26 (Output compression): emit when level != verbose
+- F27 (AI quality): emit when AI-LOGIC-* findings appear
+- F32 (Implementer reflection): emit when fg-301-implementer-judge dispatches
+- F33 (Self-consistency voting): emit on consistency cache miss
+- F34 (Session handoff): emit when /forge-admin handoff write executes
+
+For features without a clear trigger, omit emission rather than guessing.
+The retrospective aggregates by (feature_id, run_id) into the
+feature_usage SQLite table for matrix freshness scoring.
+
+---
+
 ## Stage 0: PREFLIGHT
 
 **story_state:** `PREFLIGHT`
@@ -418,6 +605,8 @@ Phase A (parallel)
 │   §0.4  Config Validation
 │   §0.4a Telemetry Initialization
 │   §0.4b Security Enforcement
+│   §0.4c Background Execution
+│   §0.4d Platform Detection
 │   §0.5  Convention Fingerprinting
 │   §0.6  PREEMPT System + Version Detection
 │   §0.6a Detect Project Dependency Versions
@@ -468,7 +657,17 @@ Phase B — Workspace (§0.12–§0.21) ── requires Phase A complete
 
 **Specialized modes:** `testing` (test files only, reduced reviewers, pass_threshold target), `refactor` (preserve behavior, no new features, fg-410 mandatory), `performance` (profiling context, fg-416/fg-413 perf-only mandatory).
 
-`fg-010-shaper` NOT dispatched by orchestrator — runs via `/forge-shape`.
+**BRAINSTORMING dispatch matrix (per §3 of skill consolidation spec):**
+
+| Mode | Pre-EXPLORE behavior | Reason |
+|------|---------------------|--------|
+| standard (default) | PREFLIGHT → BRAINSTORMING → EXPLORING | Always-on; fg-010-shaper covers ideation. The default `state.mode` JSON value is `"standard"` per `shared/state-schema-fields.md`. |
+| bugfix | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-020-bug-investigator handles bug shaping. |
+| migration | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-160-migration-planner handles migration shaping. |
+| bootstrap | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | fg-050-project-bootstrapper handles greenfield shaping. |
+| --spec <path> | PREFLIGHT → EXPLORING (skip BRAINSTORMING) | Spec is treated as already brainstormed; well-formedness checked at §5. |
+| --from=<stage past BRAINSTORMING> | Skip BRAINSTORMING (idempotent resume) | --from honors stage skip semantics. |
+| brainstorm.enabled: false (config) | Skip BRAINSTORMING with log line | Emergency disable; logs `[AUTO] brainstorm disabled by config`. |
 
 After detecting, load mode overlay per §9.
 
@@ -542,6 +741,56 @@ Collect all ERRORs, present as batch.
 
 ---
 
+### §0.4d Platform Detection (v3.7+)
+
+Detect the VCS platform once per run for downstream multi-platform integrations (post-run, PR builder). Owned by AC-FEEDBACK-006 (skill consolidation spec §6.1).
+
+**Skip on resume:** if `state.platform.detected_at` is set AND `state.platform.detected_at` is within the current run boundary (`state.run_id` matches), skip detection and reuse the cached value.
+
+**Otherwise, detect:**
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/shared/platform-detect.py \
+  --repo-root "$PROJECT_ROOT" \
+  --config-platform-detection "${platform.detection:-auto}" \
+  --config-remote-name "${platform.remote_name:-origin}"
+```
+
+The script returns JSON:
+
+```jsonc
+{
+  "platform": "github | gitlab | bitbucket | gitea | unknown",
+  "remote_url": "<url>",
+  "api_base": "<url>",
+  "auth_method": "gh-cli | glab-cli | app-password | gitea-token | none",
+  "detected_at": "<ISO-8601>",
+  "warning": "<string or null>"
+}
+```
+
+The `warning` field captures non-fatal issues (e.g. missing `GITLAB_TOKEN`/`GITEA_TOKEN`/`BITBUCKET_APP_PASSWORD` env var). When non-null, log it as INFO and write it to `state.platform.warning`. Schema enums match `shared/state-schema.md:597-602` verbatim.
+
+Write to state:
+
+```bash
+bash shared/forge-state-write.sh set-key platform.name "<platform>"
+bash shared/forge-state-write.sh set-key platform.remote_url "<remote_url>"
+bash shared/forge-state-write.sh set-key platform.api_base "<api_base>"
+bash shared/forge-state-write.sh set-key platform.auth_method "<auth_method>"
+bash shared/forge-state-write.sh set-key platform.detected_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+**Failure handling:**
+
+- Detection script exits non-zero → log WARNING `PLATFORM-DETECT-FAILED`, set `state.platform.name = "unknown"`. Continue. Pipeline does not abort.
+- Script returns `"platform": "unknown"` (no host pattern matched) → set `state.platform.name = "unknown"`, log INFO `PLATFORM-UNKNOWN`. Continue. Downstream agents fall back to local-only logging per §6.1 spec.
+- Auth env var missing for the detected platform (e.g. GitHub detected but `GITHUB_TOKEN` absent and `gh` CLI not authenticated) → log WARNING, do NOT abort. The post-run agent (fg-710) handles auth-missing gracefully and logs defenses to `feedback-decisions.jsonl` only.
+
+Recency is tracked via `state.platform.detected_at` alone — no separate counter (the timestamp answers "ran how recently?").
+
+---
+
 ### §0.5 Convention Fingerprinting
 
 SHA256 first 8 chars of conventions_file → `conventions_hash`. Unavailable → empty string.
@@ -574,6 +823,86 @@ At PREFLIGHT, when loading PREEMPT items from forge-log.md / .forge/memory/:
 
 Reference: shared/learnings/decay.md
 ```
+
+---
+
+### §0.6.1 Dispatch-Context Builder (Phase 4)
+
+Just before every `Agent(name=<fg-*>, prompt=<...>)` dispatch for the
+agents listed below, run this inline helper:
+
+```
+1. run_cache := _get(state.learnings_cache)
+   if run_cache is None:
+       run_cache := learnings_io.load_all([
+           Path("shared/learnings"),
+           Path("~/.claude/forge-learnings").expanduser(),
+       ], now=datetime.now(UTC))
+       state.learnings_cache := run_cache
+
+2. agent_role := agent_role_map.role_for_agent(agent_name)
+   if agent_role is None:
+       skip injection; continue to step 5
+
+3. selected := learnings_selector.select_for_dispatch(
+        agent=agent_name,
+        stage=current_stage,
+        domain_tags=state.current_task.domain_tags or [],
+        component=state.current_task.component,
+        candidates=run_cache,
+        now=datetime.now(UTC),
+   )
+
+4. block := learnings_format.render(selected)
+   if block:
+       # Wrap in <untrusted source="learnings"> envelope per
+       # shared/untrusted-envelope.md. Files under shared/learnings/ and
+       # ~/.claude/forge-learnings/ are disk-mutable, so the block is data
+       # (priors), not instructions. Without the envelope, a malicious or
+       # accidentally-promoted body containing "## EVIL HEADER" would break
+       # out of section-header containment and claim peer-level structure
+       # with the host prompt. render() stays pure (returns bare markdown);
+       # the envelope is applied here, at the documented dispatch seam.
+       wrapped := (
+           "<untrusted source=\"learnings\">\n"
+           + block
+           + "\n</untrusted>"
+       )
+       dispatch_prompt := dispatch_prompt + "\n\n" + wrapped
+       for item in selected:
+           otel.emit_event_mirror({
+             "type": "forge.learning.injected",
+             "forge.learning.id": item.id,
+             "forge.learning.confidence_now": round(item.confidence_now, 4),
+             "forge.learning.applied_count": item.applied_count,
+             "forge.learning.source_path": item.source_path,
+             "forge.agent.name": agent_name,
+             "forge.stage": current_stage,
+           })
+
+5. Dispatch the subagent via Agent(...).
+
+6. After the subagent returns, parse its stage notes via
+   learnings_markers.parse_markers(notes). For each (kind, id, reason):
+     - "applied"    → emit_event_mirror forge.learning.applied
+     - "fp"         → emit_event_mirror forge.learning.fp    (include forge.learning.reason)
+     - "vindicated" → emit_event_mirror forge.learning.vindicated
+
+Applies to these dispatch points:
+  - §SS2.2 fg-200-planner
+  - §SS4 fg-300-implementer
+  - §SS6 fg-400-quality-gate
+  - §SS6 fg-410 .. fg-419 reviewer batches
+  - §SS5 fg-500-test-gate  (injection present; markers only on explicit use)
+
+Cache invalidation:
+  - On LEARN stage completion (retrospective may have written v2 frontmatter),
+    clear state.learnings_cache so the next run reloads.
+```
+
+Reference: `hooks/_py/agent_role_map.py`, `hooks/_py/learnings_selector.py`,
+`hooks/_py/learnings_io.py`, `hooks/_py/learnings_format.py`,
+`hooks/_py/learnings_markers.py`.
 
 ---
 
@@ -694,6 +1023,8 @@ If `.forge/caveman-mode` does not exist: default to `off` (no compression).
 
 Existing state.json → run `shared/state-integrity.sh .forge/`. ERRORs → reconstruct from scratch (backup first). WARNINGs → log + proceed. Fresh run → skip.
 
+- **Cleanup ephemeral dispatch contexts.** `rm -rf .forge/dispatch-contexts/` (created/repopulated by Stage 5 intent-verifier dispatch each run; never preserved across runs unlike `.forge/explore-cache.json`, `.forge/plan-cache/`, etc.). This is the canonical destructive cleanup; `shared/state-integrity.sh` keeps a stale-detection block as defense-in-depth in case PREFLIGHT was skipped.
+
 ---
 
 ### §0.14 Check for Interrupted Runs
@@ -703,6 +1034,8 @@ Existing state.json with `complete: false`:
 2. Read checkpoint, validate files exist
 3. Check git drift → warn if detected
 4. Resume from first incomplete stage
+
+**BRAINSTORMING resume:** when `state.story_state == "BRAINSTORMING"` is detected, re-dispatch `fg-010-shaper`. The agent owns interactive-vs-autonomous and with-spec-vs-without-spec routing per its prompt (see §3 of the skill consolidation spec). Cache (`.forge/brainstorm-cache.json`) and transcript (`.forge/brainstorm-transcripts/<run_id>.jsonl`) are honored — both survive `/forge-admin recover reset` per the A6 schema.
 
 ---
 
@@ -975,9 +1308,81 @@ bash shared/forge-state.sh transition preflight_complete --guard "dry_run=${is_d
 
 ---
 
+## Stage 0.5: BRAINSTORM
+
+**story_state:** `BRAINSTORMING` | TaskUpdate: Preflight → completed, Brainstorm → in_progress
+
+Per §3 of the skill consolidation spec. Always-on for standard mode (the default `state.mode == "standard"`); skipped for bugfix, migration, bootstrap, and --spec modes.
+
+### SS0.5.1 Skip Conditions
+
+Evaluate in order. First match wins.
+
+| Condition | Action | Log line |
+|---|---|---|
+| `state.mode == "bugfix"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — bugfix mode (fg-020-bug-investigator handles requirement shaping)` |
+| `state.mode == "migration"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — migration mode (fg-160-migration-planner handles requirement shaping)` |
+| `state.mode == "bootstrap"` | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — bootstrap mode (fg-050-project-bootstrapper handles requirement shaping)` |
+| `--spec <path>` parsed and well-formed (per §5 --spec mode validation) | Skip; transition PREFLIGHT → EXPLORING | `BRAINSTORMING skipped — spec provided at <path>` |
+| `--from=<stage>` where stage is past BRAINSTORMING (explore, plan, validate, implement, verify, review, docs, ship, learn) | Skip; transition PREFLIGHT → <target stage> | `BRAINSTORMING skipped — --from=<stage> resume past brainstorm` |
+| `forge-config.md` has `brainstorm.enabled: false` | Skip; transition PREFLIGHT → EXPLORING | `[AUTO] brainstorm disabled by config` |
+
+No skip condition met → SS0.5.2.
+
+### SS0.5.2 Dispatch fg-010-shaper
+
+Per the §4 dispatch protocol:
+
+```
+sub_task_id = TaskCreate(
+  subject = "🟣 Dispatching fg-010-shaper",
+  description = "Brainstorming requirement into structured spec",
+  activeForm = "Brainstorming"
+)
+TaskUpdate(taskId = sub_task_id, addBlockedBy = [current_stage_task_id])
+
+result = Agent(name = "fg-010-shaper", prompt = $ARGUMENTS_RAW)
+
+TaskUpdate(taskId = sub_task_id, status = "completed")
+```
+
+Where `$ARGUMENTS_RAW` is the user's original requirement string (from §5 argument parsing — preserve verbatim, do not normalize). `current_stage_task_id` matches the §4 canonical wrapper variable.
+
+**Wait for agent return.** The agent owns Plan Mode entry/exit, AskUserQuestion gates, transcript writing, and spec authoring. The orchestrator does not interject.
+
+### SS0.5.3 Post-Dispatch Validation
+
+After `fg-010-shaper` returns:
+
+- **Required state writes** (set by the agent): `state.brainstorm.spec_path`, `state.brainstorm.completed_at`. Verify both are set.
+- **Spec file exists:** `Path(state.brainstorm.spec_path).exists()`. If false → CRITICAL finding `BRAINSTORM-NO-SPEC`, abort per error taxonomy.
+- **Spec well-formedness:** invoke the same parser as §5 --spec mode (looks for `## Goal`, `## Scope`, `## Acceptance criteria`). If parser fails → CRITICAL finding `BRAINSTORM-MALFORMED-SPEC`, escalate via AskUserQuestion ("Restart brainstorming", "Edit spec inline", "Abort"). Autonomous mode: log and exit non-zero.
+
+### SS0.5.4 Transition
+
+```bash
+result=$(bash shared/forge-state.sh transition brainstorm_complete --forge-dir .forge)
+```
+
+This triggers the `BRAINSTORMING → EXPLORING` transition per `shared/state-transitions.md`.
+
+TaskUpdate: Brainstorm → completed, Explore → in_progress.
+
+Pass `state.brainstorm.spec_path` to Stage 1 EXPLORE as input. The planner (fg-200, after D1 lands) reads this spec at Stage 2.
+
+### SS0.5.5 Resume Behavior
+
+When `state.story_state == "BRAINSTORMING"` is detected at startup (per §0.14), the orchestrator re-dispatches `fg-010-shaper` with the same `$ARGUMENTS_RAW`. The agent itself owns **resume routing** (interactive-with-spec, interactive-without-spec, autonomous) per its rewritten prompt — the orchestrator does not need to peek at `state.brainstorm.spec_path` to choose a resume path.
+
+This is separate from **post-dispatch validation** (SS0.5.3): once the shaper returns, the orchestrator still inspects `state.brainstorm.spec_path` to confirm the spec exists and is well-formed. The two concerns do not overlap — resume routing is the agent's responsibility, post-dispatch validation is the orchestrator's.
+
+Counter: `state.brainstorm.resume_count` increments by 1 each time the stage is re-entered via resume.
+
+---
+
 ## Stage 1: EXPLORE
 
-**story_state:** `EXPLORING` | TaskUpdate: Preflight → completed, Explore → in_progress
+**story_state:** `EXPLORING` | TaskUpdate: Preflight or Brainstorm → completed, Explore → in_progress
 
 ### SS1.1 Mode-Aware Exploration
 
@@ -1044,6 +1449,7 @@ Create implementation plan for: [requirement]
 
 Exploration results: [summarized paths, patterns, tests, gaps]
 PREEMPT learnings: [matched items]
+## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder
 Domain hotspots: [from config]
 Conventions file: [path]
 Scaffolder patterns: [from config]
@@ -1056,19 +1462,30 @@ Extract: risk level, stories (1-3 with ACs), tasks (2-8 with parallel groups), t
 
 **Domain validation:** `domain_area` missing → default "general" + WARNING.
 
-### SS2.2b Planning Critic Review
+### SS2.2b Plan Judge Review (binding veto)
 
-After planner completes, dispatch the planning critic for feasibility and risk review before validation.
+After planner completes, dispatch the plan judge. REVISE is binding: advancement is blocked until the plan is re-dispatched and the judge issues PROCEED, OR the loop bound is hit.
 
-[dispatch fg-205-planning-critic] with plan output from SS2.2.
+[dispatch fg-205-plan-judge] with plan output from SS2.2.
+
+Read `state.plan_judge_loops` (integer, default 0). On return:
 
 | Verdict | Action |
-|---------|--------|
-| **PROCEED** | Continue to SS2.3 and then Stage 3 (VALIDATE) |
-| **REVISE** | Send plan back to fg-200-planner with critic findings. Increment `critic_revisions`. Max 2 critic revisions — after 2, proceed to VALIDATE regardless. |
-| **RESHAPE** | Escalate to user via AskUserQuestion: "Reshape requirement", "Try replanning", "Abort". |
+|---|---|
+| **PROCEED** | Continue to SS2.3 and then Stage 3 (VALIDATE). Append `{judge_id, verdict: PROCEED, dispatch_seq, timestamp}` to `state.judge_verdicts`. |
+| **REVISE** AND `plan_judge_loops < 2` | Increment `state.plan_judge_loops` by 1. Append to `judge_verdicts`. Re-dispatch fg-200-planner with `revision_directives` appended to its prompt. On return, re-dispatch fg-205-plan-judge. |
+| **REVISE** AND `plan_judge_loops == 2` | Increment and append. Fire `AskUserQuestion` in interactive mode, OR in autonomous mode treat as E-class safety escalation — auto-abort the run, write `revision_directives` and `findings[]` to `.forge/alerts.json`, transition to ABORTED. |
+| **ESCALATE** | Fire `AskUserQuestion` immediately: "Reshape requirement", "Continue with manual hints", "Abort". |
 
-Track `critic_revisions` in stage notes. Reset to 0 at start of each PLAN stage.
+**Reset semantics.** `plan_judge_loops` resets to 0 when a new plan is drafted. Detect by computing SHA256 of (requirement text + approach section); reset when SHA changes. Validator REVISE, user-continue, and feedback loops do NOT reset it.
+
+**Timeout.** If the judge times out (10 min ceiling per `shared/scoring.md:408`), log INFO `JUDGE-TIMEOUT fg-205-plan-judge`, treat as PROCEED with WARNING finding. Never block pipeline on judge failure.
+
+**Autonomous override.** In autonomous mode (`autonomous: true`), a 2nd REVISE is treated as E-class. `AskUserQuestion` still fires if interactive surface is available; in true background/headless, auto-abort fires (log `[AUTO] abort-on-judge-veto judge_id=fg-205-plan-judge findings=[...]`). User resumes manually via `/forge-admin recover resume` after reviewing `.forge/alerts.json`.
+
+#### Plan SHA tracking for judge-loop reset
+
+Compute `plan_sha = sha256(requirement_text + "\n" + approach_section)` at every fg-200-planner dispatch. If `state.current_plan_sha != plan_sha`, reset `state.plan_judge_loops = 0` and set `state.current_plan_sha = plan_sha`. Otherwise preserve the counter.
 
 ### SS2.3 Cross-Repo and Multi-Service
 
@@ -1212,7 +1629,32 @@ Per task (concurrent up to `parallel_threshold`):
 a. Scaffolder if configured. [dispatch fg-310-scaffolder]
 b. Write tests (RED)
 c. [dispatch fg-300-implementer] <2,000 tokens: task, commands, conventions, PREEMPT, rules (TDD, no dup tests, business behavior, KDoc, <40 lines, Boy Scout).
+   ## Relevant Learnings: auto-appended by §0.6.1 dispatch-context builder
 d. Verify with build/test_single.
+
+> **`task.type` consumption (D1 contract).** The planner emits `Type:
+> test` and `Type: implementation` for every task per the writing-plans
+> contract (`shared/prompts/`); the validator (`fg-210`) enforces the
+> ordering. The orchestrator currently treats `task.type` as
+> **informational**: `fg-300-implementer` is dispatched in unified mode
+> for both test-and-implementation tasks (it writes the RED test and
+> the GREEN code in the same dispatch per its §5.2). The split-mode
+> wiring (Type=test → red-only, Type=implementation → green-only)
+> is reserved for a future enhancement; until then, the field surfaces
+> only to the validator and to retrospective analytics.
+>
+> **Split-mode dispatch fields (reserved).** When split-mode lands, the
+> dispatch brief for a `Type: implementation` task will additionally
+> carry:
+> - `preceding_test_task_id` — the ID of the immediately-preceding
+>   `Type: test` task (per W1). The implementer uses this to locate the
+>   test file in the worktree without re-parsing the plan.
+> - `preceding_test_selector` — the test runner's narrowest selector
+>   that targets the new test (e.g. `pytest -k test_greet_world` or
+>   `npx vitest run -t "greet"`). The implementer uses this to run the
+>   test-must-fail-first probe (fg-300 §10) without grepping the test
+>   file. The planner emits both fields when it ships a Type: test task
+>   so they are available to the orchestrator at dispatch time.
 
 ### SS4.4 Checkpoints and Failure Isolation
 
@@ -1232,6 +1674,111 @@ After scaffolders complete, BEFORE implementers: [dispatch fg-102-conflict-resol
 
 **Post-IMPLEMENT Graph:** If graph enabled + files changed → `update-project-graph.sh`. Failure → WARNING + stale=true. Transaction failure → rollback + INFO + disable graph for run.
 
+### Voting Gate (Phase 7 F36)
+
+Canonical contract: `shared/intent-verification.md` § F36 and `shared/agent-communication.md` § risk_tags Contract.
+
+At Stage 4 IMPLEMENT, before dispatching `fg-300-implementer` for a task:
+
+```python
+def should_vote(task, state, config) -> tuple[bool, str | None]:
+    """Return (should_vote, trigger_reason_or_None)."""
+    ivcfg = config.get("impl_voting", {})
+    if not ivcfg.get("enabled", False):
+        return False, None
+    # Cost-skip: budget remaining fraction computed from Phase 6 fields.
+    # state.cost.remaining_usd and state.cost.ceiling_usd are canonical.
+    ceiling = state.get("cost", {}).get("ceiling_usd", 0.0)
+    if ceiling > 0:
+        remaining = state.get("cost", {}).get("remaining_usd", ceiling)
+        pct_remaining = remaining / ceiling
+        if pct_remaining < ivcfg.get("skip_if_budget_remaining_below_pct", 30) / 100.0:
+            # Emit COST-SKIP-VOTE INFO. Append impl_vote_history entry with
+            # skipped_reason="cost". Single-sample continues.
+            return False, "cost_skip"
+    # Trigger checks.
+    if state.get("confidence", {}).get("effective_confidence", 1.0) < \
+            ivcfg.get("trigger_on_confidence_below", 0.4):
+        return True, "confidence"
+    if any(t in task.get("risk_tags", []) for t in ivcfg.get("trigger_on_risk_tags", ["high"])):
+        return True, "risk_tag"
+    if file_has_recent_regression(task.get("files", []),
+                                   ivcfg.get("trigger_on_regression_history_days", 30)):
+        return True, "regression_history"
+    return False, None
+
+
+def dispatch_with_voting(task, state, config):
+    vote, trigger = should_vote(task, state, config)
+    if not vote:
+        _emit_info_if_cost_skip(trigger)  # COST-SKIP-VOTE
+        return dispatch_single(task)
+    # N=2 parallel dispatch.
+    # Sub-worktree creation can fail (disk full, branch collision, permissions).
+    # See worktree_fail fallback paragraph below the pseudocode.
+    try:
+        sub_a = fg101_create(task["id"], "sample_1",
+                             base_dir=f".forge/votes/{task['id']}/sample_1",
+                             start_point=state["parent_head"])
+        sub_b = fg101_create(task["id"], "sample_2",
+                             base_dir=f".forge/votes/{task['id']}/sample_2",
+                             start_point=state["parent_head"])
+    except WorktreeCreateError as e:
+        # Best-effort cleanup of partial creation; cleanup is idempotent.
+        fg101_cleanup(sub_a, delete_branch=True) if 'sub_a' in locals() else None
+        emit_finding("IMPL-VOTE-WORKTREE-FAIL", severity="WARNING",
+                     description=f"sub-worktree create failed: {e}")
+        append_impl_vote_history(task, judge_result=None, trigger=trigger,
+                                 skipped_reason="worktree_fail")
+        return dispatch_single(task)
+    # 15-min per-sample timeout; on one timeout, cancel peer, emit
+    # IMPL-VOTE-TIMEOUT WARNING, use surviving sample.
+    patch_a, patch_b = Agent_parallel([
+        Agent("fg-300-implementer", {**task, "dispatch_mode": "vote_sample",
+                                     "sample_id": 1, "worktree": sub_a}),
+        Agent("fg-300-implementer", {**task, "dispatch_mode": "vote_sample",
+                                     "sample_id": 2, "worktree": sub_b}),
+    ], per_agent_timeout_minutes=15)
+    emit_finding("IMPL-VOTE-TRIGGERED", severity="INFO",
+                 description=f"trigger={trigger}")
+    judge_result = Agent("fg-302-diff-judge",
+                         {"sample_a_root": sub_a, "sample_b_root": sub_b,
+                          "touched_files": task["files"]})
+    if judge_result["verdict"] == "SAME":
+        winner = min([patch_a, patch_b], key=lambda p: p["line_count"])
+        cherry_pick(winner, main_worktree=".forge/worktree")
+    else:
+        tiebreak = Agent("fg-300-implementer",
+                         {**task, "dispatch_mode": "vote_tiebreak",
+                          "divergence_notes": judge_result["divergences"],
+                          "worktree": sub_a})  # reuse sub_a worktree
+        cherry_pick(tiebreak, main_worktree=".forge/worktree")
+        if _still_diverges(tiebreak, patch_a, patch_b) and state["autonomous"]:
+            emit_finding("IMPL-VOTE-UNRESOLVED", severity="WARNING")
+    # Always cleanup, even on failure — finally-block.
+    fg101_cleanup(sub_a, delete_branch=True)
+    fg101_cleanup(sub_b, delete_branch=True)
+    append_impl_vote_history(task, judge_result, trigger)
+```
+
+**Serialization.** Cherry-pick onto main worktree is serialized via
+`.forge/worktree/.vote-merge.lock`. Cleanup runs in a finally-block and is
+idempotent (`fg-101 cleanup` on a non-existent path is a no-op). Stale sweep
+at PREFLIGHT via `fg-101 detect-stale` (see `.forge/votes/*/sample_*` pattern
+added in Task 12).
+
+**Sub-worktree create failure (`worktree_fail` fallback).** If sub-worktree
+creation fails (disk full, branch collision, permissions, or any other
+`WorktreeCreateError`), the orchestrator emits `IMPL-VOTE-WORKTREE-FAIL`
+WARNING, records `skipped_reason: "worktree_fail"` in `impl_vote_history`,
+and falls back to single-sample dispatch via `dispatch_single(task)`. This
+preserves task progress without blocking on a transient infrastructure
+issue. Partial creation (sample_1 succeeded, sample_2 failed) is cleaned up
+best-effort; `fg-101 cleanup` is idempotent so a missing path is a no-op.
+The voting gate never aborts the pipeline on infra failure — it degrades
+to the single-sample path and surfaces the WARNING for retrospective
+analysis.
+
 ---
 
 ## Stage 5: VERIFY
@@ -1242,7 +1789,7 @@ After scaffolders complete, BEFORE implementers: [dispatch fg-102-conflict-resol
 
 ### SS5.1 Phase A — Build & Lint
 
-Read `.forge/.hook-failures.log` and `.forge/.check-engine-skipped`.
+Read `.forge/.hook-failures.jsonl` and `.forge/.check-engine-skipped`.
 
 [dispatch fg-505-build-verifier]: build, lint, inline checks, max_fix_loops, conventions.
 
@@ -1270,6 +1817,35 @@ Each iteration increments `total_iterations` + `total_retries`. Exceeded → esc
 
 **Post-VERIFY/Pre-REVIEW Graph:** Delta update if fix iterations changed files. Pre-REVIEW: full update if stale.
 
+### Intent Verification Dispatch (Stage 5 end, before Stage 6)
+
+After Stage 5 Phase A returns success AND before entering Stage 6 REVIEW:
+
+1. **Skip** if `intent_verification.enabled: false`, OR `state.mode == "bootstrap"`, OR `state.mode == "migration"`. Log one INFO if skipped.
+2. **Build the dispatch context** via `build_intent_verifier_context(state)` (`hooks/_py/handoff/intent_context.py`):
+   - ALLOWED_KEYS = {`requirement_text`, `active_spec_slug`, `ac_list`, `runtime_config`, `probe_sandbox`, `mode`}.
+   - Any other key → `IntentContextLeak`; orchestrator emits `INTENT-CONTEXT-LEAK` CRITICAL and halts. Layer-1 enforcement.
+   - `ac_list` is resolved by `_read_acs(state)` per Mega-spec §14: `state.brainstorm.spec_path` (if file exists) wins, else fallback to `.forge/specs/index.json` keyed by `active_spec_slug`.
+   - Persist the built context to `.forge/dispatch-contexts/fg-540-<ISO8601>.json` for the contract test (ephemeral; cleaned at PREFLIGHT — see `shared/state-integrity.sh`).
+3. **Dispatch** `Agent(fg-540-intent-verifier, built_context)`.
+4. **Read the findings file** at `.forge/runs/<run_id>/findings/fg-540.jsonl` and merge per-AC verdicts into `state.intent_verification_results[]`.
+5. **Emit OTel spans**: one `forge.intent.verify_ac` per AC with attributes `forge.intent.ac_id`, `forge.intent.ac_verdict`, `forge.intent.probe_tier`.
+
+Pseudocode reference (canonical implementation in `hooks/_py/handoff/intent_context.py`):
+
+```python
+ALLOWED_KEYS = {
+    "requirement_text", "active_spec_slug", "ac_list",
+    "runtime_config", "probe_sandbox", "mode",
+}
+
+def build_intent_verifier_context(state: dict) -> dict:
+    built = {k: state.get(k) for k in ALLOWED_KEYS}
+    built["ac_list"] = _read_acs(state)  # brainstorm spec wins; index.json fallback
+    _deep_leak_check(built)              # raise IntentContextLeak on smuggled markers
+    return built
+```
+
 ---
 
 ## Stage 6: REVIEW
@@ -1284,9 +1860,15 @@ Graph available → "Documentation Impact" + "Stale Docs Detection" queries.
 
 Check `mode_config.stages.review`. Override reviewers for reduced batch: fg-412 + fg-410-code-reviewer + fg-411 (+ fg-413 if frontend files). Bugfix mode: reduced batch dispatches fg-410-code-reviewer alongside fg-411-security-reviewer.
 
+### SS6.1a Stage 6 dispatch payload for fg-400
+
+Before dispatching fg-400-quality-gate, compute `reviewer_registry_slice` by reading `shared/agents.md` §Registry once per run (cached) and extracting the REVIEW-tier rows (agent name + domain) via `shared/python/reviewer_registry.py:extract_review_tier_slice`. Inject the slice into the fg-400 dispatch payload. fg-400 reads the slice from the payload rather than from its own prompt body.
+
+Expected size: ~300 tokens slice (vs ~40-line inlined §20 that used to add ~500 tokens to every dispatch).
+
 ### SS6.2 Batch Dispatch
 
-Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap.
+Read `quality_gate` config. Per batch → [dispatch per protocol] parallel. Wait between batches. Partial failure → proceed + note gap. Each reviewer dispatch payload (fg-410..fg-419) and fg-400-quality-gate receive a `## Relevant Learnings` block auto-appended by the §0.6.1 dispatch-context builder.
 
 After batches: inline checks. Then [dispatch fg-417-dependency-reviewer] if non-unknown versions (cross-cutting, separate from batches). Merge findings before scoring. Timeout → WARNING coverage gap.
 
@@ -1439,6 +2021,11 @@ Check mode overrides. Bugfix → include bugfix context in dispatch.
 
 After: `complete → true`.
 
+**Learnings-cache invalidation (Phase 4):** After `fg-700-retrospective`
+returns successfully, clear `state.learnings_cache` in `.forge/state.json`
+so the next PREFLIGHT re-reads the (possibly rewritten) v2 frontmatter.
+Inline step — no agent dispatch. Log: `learnings: cache invalidated`.
+
 ### Wiki Incremental (v1.20+)
 
 `wiki.auto_update` true → [dispatch fg-135-wiki-generator] incremental with changed files + learnings. Update meta. Failure → INFO.
@@ -1488,7 +2075,7 @@ All transitions follow `shared/state-transitions.md`. Decision logging to `.forg
 
 ## § Recovery op dispatch
 
-When `/forge-recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback|rewind|list-checkpoints`. See `shared/state-schema.md` for the schema.
+When `/forge-admin recover <subcommand>` invokes the orchestrator, the input payload carries `recovery_op: diagnose|repair|reset|resume|rollback|rewind|list-checkpoints`. See `shared/state-schema.md` for the schema.
 
 **Routing:**
 
@@ -1516,8 +2103,8 @@ This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; onl
   "header": "Escalation",
   "multiSelect": false,
   "options": [
-    {"label": "Invoke /forge-recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
-    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-recover resume later."},
+    {"label": "Invoke /forge-admin recover diagnose (Recommended)", "description": "Read-only state analysis; no changes to worktree."},
+    {"label": "Abort this run", "description": "Gracefully stop; preserves state for /forge-admin recover resume later."},
     {"label": "Force-continue with current state", "description": "Mark plateau as non-blocking; may produce lower-quality output."}
   ]
 }
@@ -1527,7 +2114,7 @@ This is a routing update only. The recovery _logic_ is unchanged from 2.8.x; onl
 
 Flag used by `tests/evals/pipeline/runner` to invoke the pipeline in a reproducible, non-interactive way.
 
-**Invocation:** `/forge-run --eval-mode <scenario_id> [--dry-run] <prompt>`
+**Invocation:** `/forge run --eval-mode <scenario_id> [--dry-run] <prompt>`
 
 **Env guard (required):** the flag is rejected unless env var `FORGE_EVAL=1` is set. Standalone CLI use without the env var must error out. This prevents accidental Linear/Slack/AskUserQuestion suppression in production invocations.
 
@@ -1555,3 +2142,53 @@ Flag used by `tests/evals/pipeline/runner` to invoke the pipeline in a reproduci
 **Error cases:**
 - Missing `FORGE_EVAL=1` → exit 2 with message `--eval-mode requires FORGE_EVAL=1`.
 - Unknown `<scenario_id>` (no matching scenario directory) → exit 2 with message `unknown scenario`.
+
+## Parallel dispatch and checkpoints (subagent-driven-development / dispatching-parallel-agents / executing-plans polish)
+
+<!-- Source: superpowers patterns ported in-tree per spec §9.3 (D8) and
+AC-POLISH-003, AC-POLISH-004. -->
+
+### Parallel groups dispatch in a single tool-use block
+
+When the planner marks a task group `parallel: true`, you MUST emit ALL
+tasks in that group in a SINGLE TOOL-USE BLOCK (one assistant turn,
+multiple Task calls):
+
+```
+<!-- Single assistant turn — emit ALL Task calls together -->
+<Task agent="fg-300-implementer">task 1.1</Task>
+<Task agent="fg-300-implementer">task 1.2</Task>
+<Task agent="fg-300-implementer">task 1.3</Task>
+```
+
+This matches `superpowers:dispatching-parallel-agents`. Sequential
+dispatch (one Task call per turn) defeats the parallelism and is a
+correctness violation: the orchestrator's structural test
+(`tests/structural/orchestrator-parallel-dispatch.bats`) asserts the
+single-block pattern is documented.
+
+Do NOT serialise parallel groups even when "they would be safer
+sequentially" — the planner already ran the conflict-detection pass
+(fg-102-conflict-resolver). If a parallel group has a conflict, that's
+a planner bug, not a dispatch concern.
+
+### Review-batch cadence (every 3 tasks)
+
+The canonical state-checkpoint cadence is **per-task** (see SS4.4 above
+and `CLAUDE.md`). That cadence is non-negotiable — every completed
+task writes a checkpoint to the CAS DAG so recovery is fine-grained.
+
+Layered on top of per-task checkpointing, the orchestrator runs a
+**review batch** every 3 completed tasks (count includes both serial
+and parallel tasks toward the rolling counter):
+
+1. Read the most recent per-task checkpoint (no extra write).
+2. Run a brief review pass (summarise progress, note any drift from the
+   plan, look for emerging risks).
+3. Continue or escalate based on the review.
+
+This matches `superpowers:executing-plans` "review after each batch of
+3 tasks". The review-batch cadence is fixed at 3 (not configurable) —
+the number is calibrated by the upstream pattern. The review batch
+does NOT replace per-task checkpoints; it is purely a periodic
+attention pass that consults the existing CAS state.

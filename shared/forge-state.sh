@@ -133,17 +133,9 @@ do_transition() {
     return 2
   fi
 
-  # Migrate state schema if needed
-  local _version
-  _version=$(printf '%s' "$current_state_json" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin).get('version','1.5.0'))")
-  if [[ "$_version" != "1.6.0" ]]; then
-    current_state_json=$(printf '%s' "$current_state_json" | "$PYTHON" "$SCRIPT_DIR/python/state_migrate.py")
-    if [[ $? -eq 0 ]]; then
-      bash "$STATE_WRITER" write "$current_state_json" --forge-dir "$FORGE_DIR" > /dev/null
-      # Re-read after migration write to get updated _seq
-      current_state_json=$(bash "$STATE_WRITER" read --forge-dir "$FORGE_DIR")
-    fi
-  fi
+  # No-backcompat policy: state schema is current (v2.1.0) only.
+  # v1.x state.json files are auto-invalidated on load by state_init.load_or_reinit;
+  # no migration shim exists. See feedback_no_backcompat.
 
   # Build guards JSON from --guard args
   local guards_json="{}"

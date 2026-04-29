@@ -1,6 +1,6 @@
 # Developer Experience Metrics
 
-Aggregates developer-facing metrics across pipeline runs to answer: "Is the pipeline getting better at helping me?" Stored in `.forge/dx-metrics.json` and surfaced via `/forge-insights`.
+Aggregates developer-facing metrics across pipeline runs to answer: "Is the pipeline getting better at helping me?" Stored in `.forge/dx-metrics.json` and surfaced via `/forge-ask insights`.
 
 ## Overview
 
@@ -41,7 +41,7 @@ Pipeline telemetry (tokens, findings, iterations) is available in `state.json` b
 - Created on first pipeline run with `dx_metrics.enabled: true`
 - Appended after each run by `fg-710-post-run`
 - Aggregates recomputed on each append
-- Survives `/forge-recover reset` (alongside benchmarks, explore-cache, plan-cache)
+- Survives `/forge-admin recover reset` (alongside benchmarks, explore-cache, plan-cache)
 - Maximum `retention_runs` entries retained (default: 100, oldest trimmed)
 
 **Schema:** See `shared/schemas/dx-metrics-schema.json`.
@@ -190,7 +190,7 @@ Stage 9 (LEARN)
 | File | Change |
 |------|--------|
 | `agents/fg-710-post-run.md` | Add Part E: DX Metrics computation and recap integration |
-| `skills/forge-insights/SKILL.md` | Add "Developer Impact" dashboard section |
+| `skills/forge-ask/SKILL.md` §Subcommand: insights | Add "Developer Impact" dashboard section |
 | `agents/fg-090-sprint-orchestrator.md` | Pass sprint metadata for burndown tracking |
 | `modules/frameworks/*/forge-config-template.md` | Add `dx_metrics:` section |
 

@@ -9,6 +9,14 @@ The adaptive learning system operates across two dimensions — per-project and 
 | Per-project | `.claude/forge-log.md` (consuming repo) | Grows with each pipeline run; never leaves the project |
 | Cross-project | `shared/learnings/{module}.md` (this plugin repo) | One file per framework, language, testing framework, and crosscutting layer. Curated by retrospective agent; ships with the plugin |
 
+## Learning types
+
+The selector service (`hooks/_py/learnings_selector.py`) recognizes typed learning rows in `.forge/run-history.db`. Each typed row has a stable string identifier (the `type` column). Adding a new type requires a row here plus an emitter under `tests/evals/benchmark/` or the responsible agent.
+
+| Type | Description | Consumer |
+|------|-------------|----------|
+| `benchmark.regression` | Benchmark entry flipped solved → failed for 2+ consecutive weeks. Emitted by `tests/evals/benchmark/aggregate.py`. | Phase 4 selector service injects warning into implementer/reviewer dispatch for the entry's domain. |
+
 ## Learning classification
 
 Every learning produced by `fg-700-retrospective` is classified into one of two categories:
@@ -130,7 +138,7 @@ The existing PREEMPT system (per-project in `forge-log.md`, cross-project in `sh
 └── metrics.json                    # Application tracking and effectiveness
 ```
 
-The knowledge directory survives `/forge-recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-recover reset --hard` removes it.
+The knowledge directory survives `/forge-admin recover reset`. Only manual `rm -rf .forge/knowledge/` or `/forge-admin recover reset --hard` removes it.
 
 ### Key distinction: learnings vs knowledge items
 
@@ -158,3 +166,28 @@ Before a learning is promoted from per-project to cross-project:
 4. The result is reviewed by `fg-700-retrospective` for remaining project-specific content
 
 No project-specific data ever enters the plugin repository.
+
+---
+
+## Read Path (Phase 4)
+
+The read path closes the loop that the write path opens. At every
+dispatch for the planner, implementer, quality gate, and nine reviewers,
+the orchestrator calls:
+
+```
+learnings_io.load_all(roots)        → list[LearningItem]  (per-run cache)
+learnings_selector.select_for_dispatch(
+    agent, stage, domain_tags, component, candidates, now, max_items=6)
+                                     → list[LearningItem]  (filtered + ranked)
+learnings_format.render(selected)    → "## Relevant Learnings" markdown
+```
+
+The block is appended to the dispatch prompt; subagents may return the
+markers `LEARNING_APPLIED`, `LEARNING_FP: <id> reason=<...>`, or
+`LEARNING_VINDICATED: <id> reason=<...>` (see `agent-communication.md`
+§Learning Markers). The retrospective consumes the resulting
+`forge.learning.*` events and runs `learnings_writeback.apply_events_to_file`.
+
+Reference modules: `hooks/_py/learnings_{selector,io,format,markers,writeback}.py`,
+`hooks/_py/agent_role_map.py`, `hooks/_py/memory_decay.py`.

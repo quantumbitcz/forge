@@ -1,13 +1,23 @@
 #!/usr/bin/env bats
 # Scenario tests: convention drift detection
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 QUALITY_GATE="$PLUGIN_ROOT/agents/fg-400-quality-gate.md"
 
 compute_hash() {
+  # Cross-platform SHA256 prefix: prefer sha256sum (Linux + Git Bash on
+  # Windows), fall back to shasum (macOS), then Python.
   local content="$1"
-  printf '%s' "$content" | shasum -a 256 | cut -c1-8
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$content" | sha256sum | cut -c1-8
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$content" | shasum -a 256 | cut -c1-8
+  else
+    printf '%s' "$content" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:8])'
+  fi
 }
 
 @test "convention-drift: matching hashes = no warning" {

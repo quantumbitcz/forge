@@ -27,14 +27,14 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state-write.sh"
   wait "$pid_b" || true
 
   # state.json must be valid JSON regardless of which write won
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert 'version' in d, 'Missing version key'
-assert d['_seq'] >= 1, f'_seq should be >= 1, got {d[\"_seq\"]}'
+assert d['_seq'] >= 1, f'_seq should be >= 1, got {d["_seq"]}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -49,13 +49,13 @@ print('OK')
   done
 
   # Final state.json must be valid with _seq=10
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['_seq'] == 10, f'Expected _seq=10, got {d[\"_seq\"]}'
+assert d['_seq'] == 10, f'Expected _seq=10, got {d["_seq"]}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -72,14 +72,14 @@ print('OK')
   wait
 
   # state.json must be valid JSON
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['_seq'] >= 1, f'_seq should be >= 1, got {d[\"_seq\"]}'
+assert d['_seq'] >= 1, f'_seq should be >= 1, got {d["_seq"]}'
 assert 'version' in d
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -142,14 +142,14 @@ print('OK')
   assert_success
 
   # Verify recovered state is the latest
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['stage'] == 'IMPLEMENTING', f'Expected IMPLEMENTING, got {d[\"stage\"]}'
-assert d['_seq'] == 3, f'Expected _seq=3, got {d[\"_seq\"]}'
+assert d['stage'] == 'IMPLEMENTING', f'Expected IMPLEMENTING, got {d["stage"]}'
+assert d['_seq'] == 3, f'Expected _seq=3, got {d["_seq"]}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -188,17 +188,17 @@ print('OK')
 
   # The output includes a WARNING line on stderr and JSON on stdout
   # Extract just the JSON portion and validate
-  run python3 -c "
+  run python3 - "$output" <<'PYEOF'
 import json, sys
 # The read command outputs JSON to stdout; bats captures both stdout and stderr
 # Filter to find the JSON object
-lines = '''$output'''.strip().split('\n')
-json_lines = [l for l in lines if l.strip().startswith('{') or l.strip().startswith('\"') or l.strip().startswith('}') or l.strip().startswith(' ')]
+lines = sys.argv[1].strip().split('\n')
+json_lines = [l for l in lines if l.strip().startswith('{') or l.strip().startswith('"') or l.strip().startswith('}') or l.strip().startswith(' ')]
 json_str = '\n'.join(json_lines)
 d = json.loads(json_str)
-assert d['mode'] == 'bugfix', f'Expected bugfix mode, got {d[\"mode\"]}'
+assert d['mode'] == 'bugfix', f'Expected bugfix mode, got {d["mode"]}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -214,19 +214,31 @@ print('OK')
   run bash "$SCRIPT" write '{"version":"1.5.0","_seq":0}' --forge-dir "$forge_dir"
   assert_success
   local seq1
-  seq1=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  seq1=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+)
   assert_equal "$seq1" "1"
 
   run bash "$SCRIPT" write '{"version":"1.5.0","_seq":1}' --forge-dir "$forge_dir"
   assert_success
   local seq2
-  seq2=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  seq2=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+)
   assert_equal "$seq2" "2"
 
   run bash "$SCRIPT" write '{"version":"1.5.0","_seq":2}' --forge-dir "$forge_dir"
   assert_success
   local seq3
-  seq3=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  seq3=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+)
   assert_equal "$seq3" "3"
 }
 
@@ -257,7 +269,11 @@ print('OK')
 
   # Final _seq should be >= 2 (at least initial + 1 successful concurrent write)
   local final_seq
-  final_seq=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  final_seq=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+)
   [[ "$final_seq" -ge 2 ]] \
     || fail "Expected _seq >= 2 after concurrent writes, got $final_seq"
 }
@@ -276,14 +292,14 @@ print('OK')
   [[ "$wal_entries" -eq 3 ]] || fail "Expected 3 WAL entries, got $wal_entries"
 
   # Verify SEQ numbers are 1, 2, 3
-  run python3 -c "
-import re
-with open('$forge_dir/state.wal') as f:
+  run python3 - "$forge_dir/state.wal" <<'PYEOF'
+import re, sys
+with open(sys.argv[1]) as f:
     content = f.read()
 seqs = [int(m) for m in re.findall(r'SEQ:(\d+)', content)]
 assert seqs == [1, 2, 3], f'Expected SEQ [1,2,3], got {seqs}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }
@@ -404,14 +420,14 @@ print('OK')
   assert_success
 
   # Final state should reflect the third write
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['step'] == 'third', f'Expected third, got {d[\"step\"]}'
-assert d['_seq'] == 3, f'Expected _seq=3, got {d[\"_seq\"]}'
+assert d['step'] == 'third', f'Expected third, got {d["step"]}'
+assert d['_seq'] == 3, f'Expected _seq=3, got {d["_seq"]}'
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 }

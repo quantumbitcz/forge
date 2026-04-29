@@ -62,7 +62,7 @@ Execute these steps in order. Each step is designed to be safe even if previous 
    Failure: {failure_category} — {failure_summary}
    Tasks completed: {N}/{total}
 
-   Resume with: /forge-run --from={current_stage_name} {original_requirement}"
+   Resume with: /forge run --from={current_stage_name} {original_requirement}"
 
    # Return to original branch
    git checkout -
@@ -113,12 +113,12 @@ Pipeline stopped: UNRECOVERABLE failure
 
 ## How to resume
 1. Fix the underlying issue: [specific suggestion based on failure]
-2. Run: /forge-run --from={stage} {requirement}
+2. Run: /forge run --from={stage} {requirement}
    The pipeline will pick up from the last checkpoint.
 
 ## Alternative: Start fresh
 1. Delete .forge/ directory
-2. Run: /forge-run {requirement}
+2. Run: /forge run {requirement}
 ```
 
 ---
@@ -138,7 +138,7 @@ Return to recovery engine:
   "result": "ESCALATE",
   "details": "Graceful stop completed. State preserved.",
   "wip_branch": "wip/forge-{storyId}-{timestamp}",
-  "resume_command": "/forge-run --from={stage} {requirement}",
+  "resume_command": "/forge run --from={stage} {requirement}",
   "completed_stages": ["PREFLIGHT", "EXPLORE", "PLAN"],
   "failed_stage": "IMPLEMENT",
   "tasks_completed": 3,

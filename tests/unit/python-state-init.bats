@@ -20,7 +20,7 @@ teardown() {
   echo "$output" | "$PYTHON" -c "
 import json, sys
 state = json.load(sys.stdin)
-assert state['version'] == '1.6.0', f'version: {state[\"version\"]}'
+assert state['version'] == '2.1.0', f'version: {state[\"version\"]}'
 assert state['story_id'] == 'FG-001'
 assert state['requirement'] == 'Test requirement'
 assert state['mode'] == 'standard'

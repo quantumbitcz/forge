@@ -91,7 +91,7 @@ A shaper-intent vote cached in `state.mode = "standard"` must NOT be reused in `
 
 ### 3.3 Eviction
 
-None. File grows unbounded. `/forge-recover reset` does NOT clear it (same rule as `explore-cache.json` and `plan-cache/`). Only manual `rm` removes it.
+None. File grows unbounded. `/forge-admin recover reset` does NOT clear it (same rule as `explore-cache.json` and `plan-cache/`). Only manual `rm` removes it.
 
 ### 3.4 Disable
 

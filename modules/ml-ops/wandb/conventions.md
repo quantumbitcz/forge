@@ -1,5 +1,7 @@
 # Weights & Biases (W&B) — Experiment Tracking & Sweeps
 
+> Support tier: community
+
 ## Overview
 
 W&B provides experiment tracking, hyperparameter sweeps, model versioning via Artifacts, and team dashboards. Use `wandb.init()` to start a run, `wandb.log()` to record metrics, and `wandb.Artifact` to version datasets and models. W&B Sweeps automate hyperparameter search with Bayesian optimization, grid search, or random search. The W&B platform hosts the dashboard — no self-hosted infrastructure required (though self-hosted is available).

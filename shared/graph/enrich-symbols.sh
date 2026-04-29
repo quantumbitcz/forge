@@ -730,7 +730,7 @@ echo ""
 # Record enrichment — AFTER :commit output, so the consumer sees
 # the complete transaction before we log files as enriched.
 # NOTE: if the consumer rolls back, these paths will still be
-# recorded; a subsequent /forge-graph rebuild is needed to re-enrich.
+# recorded; a subsequent /forge-admin graph rebuild is needed to re-enrich.
 # ============================================================================
 
 for ep in "${ENRICHED_PATHS[@]}"; do

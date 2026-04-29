@@ -3,6 +3,8 @@
 # Tests error-during-recovery, WAL fallback, hook failure isolation,
 # and timeout bounding.
 
+# Covers:
+
 load '../helpers/test-helpers'
 
 FORGE_STATE_SH="$PLUGIN_ROOT/shared/forge-state.sh"

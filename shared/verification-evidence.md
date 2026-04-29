@@ -42,6 +42,15 @@ This document defines the evidence artifact that `fg-590-pre-ship-verifier` prod
       "current": 100,
       "target": 100
     },
+    "intent_verification": {
+      "total_acs": 12,
+      "verified": 11,
+      "partial": 0,
+      "missed": 1,
+      "unverifiable": 0,
+      "verified_pct": 91.67,
+      "open_critical_findings": 1
+    },
     "verdict": "SHIP",
     "block_reasons": []
   }
@@ -73,6 +82,13 @@ This document defines the evidence artifact that `fg-590-pre-ship-verifier` prod
 | `review.minor_issues` | integer | Yes | Informational only — does not affect verdict |
 | `score.current` | integer | Yes | Must be >= `shipping.min_score` |
 | `score.target` | integer | Yes | The configured `shipping.min_score` value |
+| `intent_verification.total_acs` | integer | Yes | Sum of verified+partial+missed+unverifiable |
+| `intent_verification.verified` | integer | Yes | Count of ACs with verdict `VERIFIED` from fg-540 |
+| `intent_verification.partial` | integer | Yes | Count of ACs with verdict `PARTIAL` |
+| `intent_verification.missed` | integer | Yes | Count of ACs with verdict `MISSED` |
+| `intent_verification.unverifiable` | integer | Yes | Count of ACs with verdict `UNVERIFIABLE` |
+| `intent_verification.verified_pct` | number\|null | Yes | `verified / total_acs * 100`, or `null` when `total_acs == 0` (vacuous pass) |
+| `intent_verification.open_critical_findings` | integer | Yes | Count of open `INTENT-MISSED` findings at CRITICAL severity |
 | `verdict` | string | Yes | `"SHIP"` or `"BLOCK"` |
 | `block_reasons` | string[] | Yes | Empty when SHIP. Lists all failing checks when BLOCK. |
 
@@ -84,8 +100,19 @@ This document defines the evidence artifact that `fg-590-pre-ship-verifier` prod
 - `lint.exit_code == 0`
 - `review.critical_issues == 0` AND `review.important_issues == 0`
 - `score.current >= shipping.min_score`
+- `intent_verification.open_critical_findings == 0` (Phase 7 F35)
+- `intent_verification.verified_pct is null` OR
+  `intent_verification.verified_pct >= intent_verification.strict_ac_required_pct`
+  (Phase 7 F35; `strict_ac_required_pct` from `forge-config.md`,
+  default 100)
 
-Any violation → `verdict: "BLOCK"` with `block_reasons` listing each failing condition.
+Any violation → `verdict: "BLOCK"` with `block_reasons` listing each
+failing condition. Intent-related block reasons:
+- `intent-missed: {N} open CRITICAL INTENT-MISSED findings`
+- `intent-threshold: verified {pct}% < required {threshold}%`
+- `intent-unreachable-runtime: all ACs UNVERIFIABLE`
+- `intent-no-acs-strict` (only when `living_specs.strict_mode: true`
+  and `verified_pct is null`)
 
 ## Staleness
 

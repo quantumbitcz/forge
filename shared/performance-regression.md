@@ -15,7 +15,7 @@ Performance regressions -- changes that silently degrade build time, test durati
 **Lifecycle:**
 - Created on first pipeline run with `performance_tracking.enabled: true`
 - Appended after each run (rolling window of last N runs, default 10)
-- Survives `/forge-recover reset` (like explore-cache and plan-cache)
+- Survives `/forge-admin recover reset` (like explore-cache and plan-cache)
 - Only manual `rm -rf .forge/` removes it
 - Trimmed to `rolling_window * 2` entries when file exceeds 1MB
 
@@ -167,4 +167,4 @@ Stage 6 (REVIEW)
 | `agents/fg-400-quality-gate.md` | Regression detection before review dispatch |
 | `shared/checks/category-registry.json` | 4 new `PERF-REGRESSION-*` categories |
 | `modules/frameworks/*/forge-config-template.md` | `performance_tracking:` section |
-| `skills/forge-insights/SKILL.md` | Performance Trends dashboard section |
+| `skills/forge-ask/SKILL.md` §Subcommand: insights | Performance Trends dashboard section |
