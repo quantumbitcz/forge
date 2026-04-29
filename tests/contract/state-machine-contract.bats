@@ -44,6 +44,8 @@ PYEOF
 
   # Transitions are implemented in state_transitions.py (extracted from forge-state.sh in v2.7.0)
   for event in $events; do
+    # Strip Windows \r (Python on Windows emits \r\n; bash word-split keeps \r attached).
+    event="${event%$'\r'}"
     grep -q "'$event'" "$TRANSITIONS_PY" || grep -q "\"$event\"" "$TRANSITIONS_PY" || fail "Event '$event' from state-transitions.md not found in state_transitions.py"
   done
 }

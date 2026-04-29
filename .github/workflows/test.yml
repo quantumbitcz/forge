@@ -230,7 +230,7 @@ jobs:
   test-windows-cmd:
     needs: structural
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       contents: read
     defaults:
