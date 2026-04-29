@@ -36,6 +36,8 @@ PYEOF
   local missing_list=()
 
   while IFS= read -r module_name; do
+    # Strip Windows \r if present (Python on Windows emits \r\n; bash IFS=$'\n' loops keep \r).
+    module_name="${module_name%$'\r'}"
     [[ -z "$module_name" ]] && continue
     total=$(( total + 1 ))
 

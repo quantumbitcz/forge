@@ -18,6 +18,11 @@ make_tracking_dir() {
 setup() {
   # Create our own TEST_TEMP (overrides the one in test-helpers.bash setup)
   TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-tracking.XXXXXX")"
+  # On Git Bash on Windows, mktemp returns an MSYS-style path that native
+  # Windows Python cannot resolve. Convert to mixed form (forward-slashed).
+  if command -v cygpath >/dev/null 2>&1; then
+    TEST_TEMP="$(cygpath -m "$TEST_TEMP")"
+  fi
   MOCK_BIN="${TEST_TEMP}/mock-bin"
   mkdir -p "${MOCK_BIN}"
   export PATH="${MOCK_BIN}:${PATH}"

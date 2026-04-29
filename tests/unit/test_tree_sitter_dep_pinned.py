@@ -8,7 +8,11 @@ fallback for TS/JS/Kotlin/Go/Rust/Java/C/C++/Ruby/PHP/Swift, hiding real
 divergences.
 """
 from pathlib import Path
-import tomllib
+
+try:  # tomllib is stdlib in 3.11+; fall back to tomli on 3.10
+    import tomllib
+except ImportError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore[no-redef]
 
 PYPROJECT = tomllib.loads(
     (Path(__file__).parent.parent.parent / "pyproject.toml").read_text(encoding="utf-8")
