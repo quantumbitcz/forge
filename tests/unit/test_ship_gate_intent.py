@@ -1,7 +1,7 @@
 """Phase 7 F35 — fg-590 pre-ship intent clearance documentation."""
 from pathlib import Path
 
-A = (Path(__file__).parent.parent.parent / "agents" / "fg-590-pre-ship-verifier.md").read_text()
+A = (Path(__file__).parent.parent.parent / "agents" / "fg-590-pre-ship-verifier.md").read_text(encoding="utf-8")
 
 
 def test_intent_clauses_present():

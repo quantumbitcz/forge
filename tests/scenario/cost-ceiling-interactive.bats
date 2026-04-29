@@ -36,11 +36,11 @@ with open(p, 'w') as fh:
 @test "interactive breach: header is exactly 12 chars" {
   run python3 "$PLUGIN_ROOT/tests/helpers/orchestrator-gate-sim.py" fg-200-planner premium
   assert_success
-  run python3 -c "
+  run python3 - "$output" <<'PYEOF'
 import json, sys
-d = json.loads('''$output''')
+d = json.loads(sys.argv[1])
 print(len(d['payload']['header']))
-"
+PYEOF
   assert_output "12"
 }
 

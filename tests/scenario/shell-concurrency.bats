@@ -39,8 +39,10 @@ ENGINE_SH="$PLUGIN_ROOT/shared/checks/engine.sh"
   local bad_lines=0
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
-    python3 -c "import json; json.loads('''$line''')" 2>/dev/null \
-      || bad_lines=$((bad_lines + 1))
+    python3 - "$line" <<'PYEOF' 2>/dev/null || bad_lines=$((bad_lines + 1))
+import json, sys
+json.loads(sys.argv[1])
+PYEOF
   done < "$events_file"
 
   [[ "$bad_lines" -eq 0 ]] \

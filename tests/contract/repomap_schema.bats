@@ -20,6 +20,7 @@ load "${BATS_TEST_DIRNAME}/../lib/bats-assert/load"
 }
 
 @test "schema applies cleanly in a fresh sqlite DB" {
+  command -v sqlite3 >/dev/null 2>&1 || skip "sqlite3 not available (Windows runners lack it by default)"
   local tmpdb="$(mktemp -u).db"
   sqlite3 "$tmpdb" < "${BATS_TEST_DIRNAME}/../../shared/graph/code-graph-schema.sql"
   run sqlite3 "$tmpdb" ".schema ranked_files_cache"

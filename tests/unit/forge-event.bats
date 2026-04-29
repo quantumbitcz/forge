@@ -36,12 +36,12 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-event.sh"
   [[ "$line_count" -eq 1 ]] || fail "Expected 1 line, got $line_count"
 
   # Validate JSON
-  run python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  run python3 - "$forge_dir/events.jsonl" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     for line in f:
         json.loads(line)
-"
+PYEOF
   assert_success
 }
 
@@ -54,14 +54,14 @@ with open('$forge_dir/events.jsonl') as f:
 
   bash "$SCRIPT" test_event --forge-dir "$forge_dir"
 
-  python3 -c "
-import json, re
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "Timestamp is not ISO 8601"
+import json, sys, re
+with open(sys.argv[1]) as f:
     event = json.loads(f.readline())
 ts = event['ts']
 # ISO 8601 pattern: YYYY-MM-DDTHH:MM:SS or with timezone
 assert re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', ts), f'Bad timestamp: {ts}'
-" || fail "Timestamp is not ISO 8601"
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -74,14 +74,14 @@ assert re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', ts), f'Bad timestamp: {t
   bash "$SCRIPT" event_a --forge-dir "$forge_dir"
   bash "$SCRIPT" event_b --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "Seq does not increment monotonically"
+import json, sys
+with open(sys.argv[1]) as f:
     lines = [json.loads(line) for line in f]
 assert len(lines) == 2, f'Expected 2 events, got {len(lines)}'
-assert lines[0]['seq'] == 1, f'First seq: {lines[0][\"seq\"]}'
-assert lines[1]['seq'] == 2, f'Second seq: {lines[1][\"seq\"]}'
-" || fail "Seq does not increment monotonically"
+assert lines[0]['seq'] == 1, f'First seq: {lines[0]["seq"]}'
+assert lines[1]['seq'] == 2, f'Second seq: {lines[1]["seq"]}'
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -93,12 +93,12 @@ assert lines[1]['seq'] == 2, f'Second seq: {lines[1][\"seq\"]}'
 
   bash "$SCRIPT" state_transition --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "Event type not stored correctly"
+import json, sys
+with open(sys.argv[1]) as f:
     event = json.loads(f.readline())
-assert event['event'] == 'state_transition', f'Event type: {event[\"event\"]}'
-" || fail "Event type not stored correctly"
+assert event['event'] == 'state_transition', f'Event type: {event["event"]}'
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -110,13 +110,13 @@ assert event['event'] == 'state_transition', f'Event type: {event[\"event\"]}'
 
   bash "$SCRIPT" state_transition --field from=IMPLEMENTING --field to=VERIFYING --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "Fields not stored correctly"
+import json, sys
+with open(sys.argv[1]) as f:
     event = json.loads(f.readline())
-assert event['fields']['from'] == 'IMPLEMENTING', f'from: {event[\"fields\"][\"from\"]}'
-assert event['fields']['to'] == 'VERIFYING', f'to: {event[\"fields\"][\"to\"]}'
-" || fail "Fields not stored correctly"
+assert event['fields']['from'] == 'IMPLEMENTING', f'from: {event["fields"]["from"]}'
+assert event['fields']['to'] == 'VERIFYING', f'to: {event["fields"]["to"]}'
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -134,13 +134,13 @@ assert event['fields']['to'] == 'VERIFYING', f'to: {event[\"fields\"][\"to\"]}'
   [[ "$line_count" -eq 2 ]] || fail "Expected 2 lines (append), got $line_count"
 
   # Verify both events are valid and have correct types
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "Appended events not valid"
+import json, sys
+with open(sys.argv[1]) as f:
     lines = [json.loads(line) for line in f]
 assert lines[0]['event'] == 'first_event'
 assert lines[1]['event'] == 'second_event'
-" || fail "Appended events not valid"
+PYEOF
 }
 
 # ---------------------------------------------------------------------------
@@ -155,12 +155,12 @@ assert lines[1]['event'] == 'second_event'
 
   bash "$SCRIPT" test_event --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/events.jsonl') as f:
+  python3 - "$forge_dir/events.jsonl" <<'PYEOF' || fail "run_id not read from state.json"
+import json, sys
+with open(sys.argv[1]) as f:
     event = json.loads(f.readline())
-assert event.get('run_id') == 'feat-test-123', f'run_id: {event.get(\"run_id\")}'
-" || fail "run_id not read from state.json"
+assert event.get('run_id') == 'feat-test-123', f'run_id: {event.get("run_id")}'
+PYEOF
 }
 
 # ---------------------------------------------------------------------------

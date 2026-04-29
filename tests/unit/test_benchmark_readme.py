@@ -8,7 +8,7 @@ README = Path(__file__).resolve().parents[2] / "tests" / "evals" / "benchmark" /
 
 
 def test_covers_workflows() -> None:
-    text = README.read_text()
+    text = README.read_text(encoding="utf-8")
     for phrase in (
         "curate",
         "runner",

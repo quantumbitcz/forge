@@ -29,8 +29,10 @@ STATE_SCHEMA="$PLUGIN_ROOT/shared/state-schema.md"
 }
 
 @test "playbook-refinement: schema is valid JSON" {
-  python3 -c "import json; json.load(open('$SCHEMA'))" 2>/dev/null \
-    || fail "Schema is not valid JSON"
+  python3 - "$SCHEMA" <<'PYEOF' 2>/dev/null || fail "Schema is not valid JSON"
+import json, sys
+json.load(open(sys.argv[1]))
+PYEOF
 }
 
 # ---------------------------------------------------------------------------

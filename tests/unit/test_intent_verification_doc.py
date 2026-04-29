@@ -9,13 +9,13 @@ def test_doc_exists():
 
 
 def test_two_layer_isolation_explained():
-    txt = DOC.read_text()
+    txt = DOC.read_text(encoding="utf-8")
     assert "Layer 1" in txt
     assert "Layer 2" in txt
     assert "defense-in-depth" in txt.lower()
 
 
 def test_voting_gate_thresholds_present():
-    txt = DOC.read_text()
+    txt = DOC.read_text(encoding="utf-8")
     assert "30" in txt  # cost-skip pct
     assert "trigger_on_risk_tags" in txt

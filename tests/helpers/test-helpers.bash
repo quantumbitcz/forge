@@ -6,8 +6,14 @@
 # Constants
 # ---------------------------------------------------------------------------
 
-# PLUGIN_ROOT: two levels up from tests/helpers/ → plugin root
+# PLUGIN_ROOT: two levels up from tests/helpers/ → plugin root.
+# On Git Bash on Windows, `pwd` returns an MSYS-style path (/d/a/forge/forge)
+# that native Windows Python cannot resolve. Convert to mixed form (D:/a/forge/forge)
+# so bash AND native Python both accept it.
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if command -v cygpath >/dev/null 2>&1; then
+  PLUGIN_ROOT="$(cygpath -m "$PLUGIN_ROOT")"
+fi
 
 # Load bats-support and bats-assert for rich assertions
 load "${PLUGIN_ROOT}/tests/lib/bats-support/load"
@@ -52,6 +58,15 @@ unset _forge_pythonpath_segments _forge_pythonpath_joined
 setup() {
   # Unique temp dir per test to avoid cross-test pollution
   TEST_TEMP="$(mktemp -d "${TMPDIR:-${TMP:-${TEMP:-/tmp}}}/bats-forge.XXXXXX")"
+
+  # On Git Bash on Windows, mktemp returns an MSYS-style path (/tmp/bats-forge.X).
+  # Native Windows Python cannot resolve that path. Convert to a mixed form
+  # (C:/Users/.../...) which both bash and native Python accept.
+  # Use cygpath -m to keep forward slashes (avoids backslash-escape pitfalls in
+  # double-quoted shell strings).
+  if command -v cygpath >/dev/null 2>&1; then
+    TEST_TEMP="$(cygpath -m "$TEST_TEMP")"
+  fi
 
   # Dedicated bin dir for mock executables; prepended to PATH
   MOCK_BIN="${TEST_TEMP}/mock-bin"

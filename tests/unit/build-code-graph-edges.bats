@@ -13,6 +13,7 @@ SCHEMA_FILE="$PLUGIN_ROOT/shared/graph/code-graph-schema.sql"
 # duplicating DDL inline. This ensures tests stay in sync with schema changes.
 setup_test_db() {
   local db="$1"
+  command -v sqlite3 >/dev/null 2>&1 || skip "sqlite3 not available (Windows runners lack it by default)"
   sqlite3 "$db" < "$SCHEMA_FILE"
   sqlite3 "$db" "INSERT OR REPLACE INTO schema_meta VALUES ('version', '1.0.0');"
 }

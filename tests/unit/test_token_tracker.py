@@ -10,7 +10,7 @@ def test_record_usage_creates_tokens_section(tmp_path: Path):
     state = tmp_path / "state.json"
     state.write_text(json.dumps({"_seq": 0}))
     tt.record_usage(state, agent="fg-100", prompt=1000, completion=200, model="sonnet")
-    data = json.loads(state.read_text())
+    data = json.loads(state.read_text(encoding="utf-8"))
     assert data["tokens"]["total"]["prompt"] == 1000
     assert data["tokens"]["total"]["completion"] == 200
     assert data["tokens"]["by_agent"]["fg-100"]["prompt"] == 1000
@@ -21,7 +21,7 @@ def test_record_usage_accumulates(tmp_path: Path):
     state.write_text(json.dumps({"_seq": 0}))
     tt.record_usage(state, agent="fg-200", prompt=500, completion=100, model="sonnet")
     tt.record_usage(state, agent="fg-200", prompt=300, completion=50, model="sonnet")
-    data = json.loads(state.read_text())
+    data = json.loads(state.read_text(encoding="utf-8"))
     assert data["tokens"]["by_agent"]["fg-200"]["prompt"] == 800
     assert data["tokens"]["by_agent"]["fg-200"]["completion"] == 150
 

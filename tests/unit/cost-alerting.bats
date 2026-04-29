@@ -62,9 +62,9 @@ print(json.dumps(state))
   run bash "$SCRIPT" init --forge-dir "$forge_dir"
   assert_success
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 ca = d['cost_alerting']
 assert ca['enabled'] == True, ca
@@ -73,7 +73,7 @@ assert ca['alerts_issued'] == [], ca['alerts_issued']
 assert ca['last_alert_level'] == 'OK', ca['last_alert_level']
 assert 'per_stage_limits' in ca, 'missing per_stage_limits'
 assert ca['routing_override'] is None, ca['routing_override']
-"
+PYEOF
 }
 
 @test "cost-alerting: check returns OK (exit 0) when below first threshold" {
@@ -172,9 +172,9 @@ json.dump(s, sys.stdout)
   assert_success
 
   # Verify per-stage limits sum to ceiling (within rounding)
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 limits = d['cost_alerting']['per_stage_limits']
 assert len(limits) == 10, f'expected 10 stages, got {len(limits)}: {list(limits.keys())}'
@@ -184,7 +184,7 @@ ceiling = d['tokens']['budget_ceiling']
 assert abs(total - ceiling) <= 10, f'sum {total} != ceiling {ceiling}'
 # Implementing should be the largest
 assert limits['implementing'] > limits['preflight'], 'implementing should be > preflight'
-"
+PYEOF
 }
 
 @test "cost-alerting: per-stage check detects over-budget stage" {
@@ -234,15 +234,15 @@ json.dump(s, sys.stdout)
 ")
   bash "$STATE_WRITER" write "$state" --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 ro = d['cost_alerting']['routing_override']
 assert ro is not None
 assert ro['fg-350-docs-generator'] == 'haiku'
 assert len(ro) == 4
-"
+PYEOF
 }
 
 @test "cost-alerting: apply-downgrade writes routing override" {
@@ -251,15 +251,15 @@ assert len(ro) == 4
   run bash "$SCRIPT" apply-downgrade --forge-dir "$forge_dir"
   assert_success
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 ro = d['cost_alerting']['routing_override']
 assert ro is not None, 'routing_override should not be None'
 assert 'fg-350-docs-generator' in ro, 'missing docs-generator override'
 assert ro['fg-350-docs-generator'] == 'haiku'
-"
+PYEOF
 }
 
 @test "cost-alerting: stage-report format matches [COST] pattern" {

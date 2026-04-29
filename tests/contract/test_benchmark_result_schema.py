@@ -17,7 +17,7 @@ SCHEMA = json.loads(
         / "benchmark"
         / "schemas"
         / "result.schema.json"
-    ).read_text()
+    ).read_text(encoding="utf-8")
 )
 _VALIDATOR = Draft202012Validator(SCHEMA)
 

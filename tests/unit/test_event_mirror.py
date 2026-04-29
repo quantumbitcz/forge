@@ -112,7 +112,7 @@ def test_state_write_append_event_calls_mirror(monkeypatch, tmp_path):
     # File contains exactly one JSON line with the event.
     rows = [
         json.loads(line)
-        for line in log_path.read_text().splitlines()
+        for line in log_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
     assert rows == [
@@ -147,7 +147,7 @@ def test_state_write_append_event_survives_mirror_failure(
     state_write.append_event(log_path, {"type": "ok", "a": 1})
     rows = [
         json.loads(line)
-        for line in log_path.read_text().splitlines()
+        for line in log_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
     assert rows == [{"type": "ok", "a": 1}]

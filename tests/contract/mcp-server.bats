@@ -21,7 +21,10 @@ MCP_PROVISIONING="$PLUGIN_ROOT/shared/mcp-provisioning.md"
   if ! command -v python3 &>/dev/null; then
     skip "python3 not available"
   fi
-  python3 -c "import ast; ast.parse(open('$SERVER_FILE').read())"
+  python3 - "$SERVER_FILE" <<'PYEOF'
+import sys
+import ast; ast.parse(open(sys.argv[1]).read())
+PYEOF
 }
 
 # ---------------------------------------------------------------------------

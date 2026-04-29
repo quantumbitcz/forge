@@ -14,7 +14,7 @@ def test_workflow_exists() -> None:
 
 
 def test_cron_trigger() -> None:
-    doc = yaml.safe_load(WF.read_text())
+    doc = yaml.safe_load(WF.read_text(encoding="utf-8"))
     triggers = doc[True] if True in doc else doc["on"]  # PyYAML treats `on:` as True
     assert "schedule" in triggers
     assert triggers["schedule"][0]["cron"] == "0 6 * * 1"
@@ -22,7 +22,7 @@ def test_cron_trigger() -> None:
 
 
 def test_matrix_has_six_cells() -> None:
-    doc = yaml.safe_load(WF.read_text())
+    doc = yaml.safe_load(WF.read_text(encoding="utf-8"))
     job = doc["jobs"]["benchmark-matrix"]
     matrix = job["strategy"]["matrix"]
     assert set(matrix["os"]) == {"ubuntu-latest", "macos-latest", "windows-latest"}
@@ -30,13 +30,13 @@ def test_matrix_has_six_cells() -> None:
 
 
 def test_timeout_cap() -> None:
-    doc = yaml.safe_load(WF.read_text())
+    doc = yaml.safe_load(WF.read_text(encoding="utf-8"))
     assert doc["jobs"]["benchmark-matrix"]["timeout-minutes"] == 180
 
 
 def test_corpus_gate_env_only_on_cron() -> None:
     """PHASE_8_CORPUS_GATE must be set to '1' only for scheduled runs."""
-    doc = yaml.safe_load(WF.read_text())
+    doc = yaml.safe_load(WF.read_text(encoding="utf-8"))
     matrix_env = doc["jobs"]["benchmark-matrix"]["env"]
     aggregate_env = doc["jobs"]["aggregate"]["env"]
     for env in (matrix_env, aggregate_env):

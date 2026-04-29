@@ -6,7 +6,7 @@ MODES_DIR = Path(__file__).parent.parent.parent / "shared" / "modes"
 
 
 def _load_frontmatter(name: str) -> str:
-    text = (MODES_DIR / name).read_text()
+    text = (MODES_DIR / name).read_text(encoding="utf-8")
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     assert m, f"no frontmatter in {name}"
     return m.group(1)

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from hooks._py.risk_tags import BASE_RISK_TAGS
 
-A = (Path(__file__).parent.parent.parent / "agents" / "fg-200-planner.md").read_text()
+A = (Path(__file__).parent.parent.parent / "agents" / "fg-200-planner.md").read_text(encoding="utf-8")
 
 
 def test_risk_tags_vocabulary_documented():

@@ -41,7 +41,7 @@ def test_each_entry_script_exits_zero_on_empty_stdin(tmp_path: Path, monkeypatch
 
 def test_hooks_json_references_python_entries():
     hooks_json = HOOKS / "hooks.json"
-    data = json.loads(hooks_json.read_text())
+    data = json.loads(hooks_json.read_text(encoding="utf-8"))
     commands = []
     for slot in data["hooks"].values():
         for block in slot:
@@ -58,7 +58,7 @@ def test_hooks_json_references_python_entries():
 
 def test_hooks_json_entries_all_resolve():
     hooks_json = HOOKS / "hooks.json"
-    data = json.loads(hooks_json.read_text())
+    data = json.loads(hooks_json.read_text(encoding="utf-8"))
     for slot in data["hooks"].values():
         for block in slot:
             for cmd in block.get("hooks", []):

@@ -34,7 +34,7 @@ def test_simulator_feed(tmp_path: Path) -> None:
             f.write(json.dumps(_spend_line(cost)) + "\n")
     g = CostGuard(max_weekly_cost_usd=150.0)
     tripped_at = None
-    for i, raw in enumerate(tracker.read_text().splitlines(), 1):
+    for i, raw in enumerate(tracker.read_text(encoding="utf-8").splitlines(), 1):
         g.record(json.loads(raw)["estimated_cost_usd"])
         if not g.within_limit():
             tripped_at = i

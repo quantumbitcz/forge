@@ -5,6 +5,10 @@
 
 setup() {
   export PYTHONPATH="$BATS_TEST_DIRNAME/../.."
+  # Force UTF-8 on stdin/stdout/stderr so unicode characters (e.g. × in render
+  # output) survive on Windows runners where the default cp1252 codec mangles them.
+  export PYTHONIOENCODING="utf-8"
+  export PYTHONUTF8="1"
 }
 
 @test "render emits stable ## Relevant Learnings header" {

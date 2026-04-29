@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_scorecard_template_exists() -> None:
     sc = ROOT / "SCORECARD.md"
     assert sc.is_file()
-    text = sc.read_text()
+    text = sc.read_text(encoding="utf-8")
     for marker in (
         "<!-- section:header -->",
         "<!-- section:this-week -->",
@@ -23,11 +23,11 @@ def test_scorecard_template_exists() -> None:
 
 
 def test_readme_links_to_scorecard() -> None:
-    readme = (ROOT / "README.md").read_text()
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "SCORECARD.md" in readme
     assert "Measured" in readme  # Badge text
 
 
 def test_claude_md_links_to_scorecard() -> None:
-    claude = (ROOT / "CLAUDE.md").read_text()
+    claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     assert "SCORECARD.md" in claude

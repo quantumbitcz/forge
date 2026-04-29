@@ -44,13 +44,19 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state-write.sh"
   run bash "$SCRIPT" write '{"version":"1.5.0","_seq":0}' --forge-dir "$forge_dir"
   assert_success
   local seq1
-  seq1=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  seq1=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys; print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+  )
   assert_equal "$seq1" "1"
 
   run bash "$SCRIPT" write '{"version":"1.5.0","_seq":1}' --forge-dir "$forge_dir"
   assert_success
   local seq2
-  seq2=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['_seq'])")
+  seq2=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys; print(json.load(open(sys.argv[1]))['_seq'])
+PYEOF
+  )
   assert_equal "$seq2" "2"
 }
 
@@ -127,7 +133,10 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state-write.sh"
   assert [ -f "$forge_dir/state.json" ]
 
   local restored_state
-  restored_state=$(python3 -c "import json; print(json.load(open('$forge_dir/state.json'))['story_state'])")
+  restored_state=$(python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys; print(json.load(open(sys.argv[1]))['story_state'])
+PYEOF
+  )
   assert_equal "$restored_state" "IMPLEMENTING"
 }
 
@@ -177,14 +186,14 @@ SCRIPT="$PLUGIN_ROOT/shared/forge-state-write.sh"
   wait
 
   # state.json must be valid JSON with _seq >= 1
-  run python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  run python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
-assert d['_seq'] >= 1, f'_seq={d[\"_seq\"]}'
+assert d['_seq'] >= 1, f'_seq={d["_seq"]}'
 assert 'version' in d
 print('OK')
-"
+PYEOF
   assert_success
   assert_output "OK"
 

@@ -12,7 +12,7 @@ def test_adr_exists() -> None:
 
 
 def test_adr_covers_decisions() -> None:
-    text = ADR.read_text()
+    text = ADR.read_text(encoding="utf-8")
     for phrase in (
         "extend-in-place",
         "0.9",

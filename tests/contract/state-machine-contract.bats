@@ -19,9 +19,9 @@ TRANSITIONS_PY="$PLUGIN_ROOT/shared/python/state_transitions.py"
 @test "state-machine-contract: all normal flow events from transitions table exist in forge-state.sh" {
   # Extract unique events from the Normal Flow table
   local events
-  events=$(python3 -c "
-import re
-with open('$TRANSITIONS') as f:
+  events=$(python3 - "$TRANSITIONS" <<'PYEOF'
+import re, sys
+with open(sys.argv[1]) as f:
     content = f.read()
 # Match events in the table (backtick-wrapped values in 3rd column)
 events = set()
@@ -34,7 +34,8 @@ for line in content.split('\n'):
 events -= {'event', 'guard', 'current_state'}
 for e in sorted(events):
     print(e)
-")
+PYEOF
+  )
 
   # Transitions are implemented in state_transitions.py (extracted from forge-state.sh in v2.7.0)
   for event in $events; do

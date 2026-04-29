@@ -164,7 +164,7 @@ def test_persisted_brief_has_no_forbidden_substrings(tmp_path, monkeypatch):
     })
     path = tmp_path / "fg-540-2026.json"
     path.write_text(json.dumps(built))
-    txt = path.read_text()
+    txt = path.read_text(encoding="utf-8")
     for sub in (
         "stage_2_notes", "test_code", "implementation_diff",
         "tdd_history", "prior_findings", "git_diff",

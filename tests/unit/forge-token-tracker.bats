@@ -37,16 +37,16 @@ STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
   run bash "$SCRIPT" record explore fg-200-planner 5000 2000 --forge-dir "$forge_dir"
   assert_success
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert d['tokens']['estimated_total'] == 7000, d['tokens']['estimated_total']
 assert d['tokens']['by_stage']['explore']['input'] == 5000
 assert d['tokens']['by_stage']['explore']['output'] == 2000
 assert d['tokens']['by_agent']['fg-200-planner']['input'] == 5000
 assert d['tokens']['by_agent']['fg-200-planner']['output'] == 2000
-"
+PYEOF
 }
 
 @test "forge-token-tracker: record accumulates across multiple calls" {
@@ -57,14 +57,14 @@ assert d['tokens']['by_agent']['fg-200-planner']['output'] == 2000
   bash "$SCRIPT" record explore fg-200-planner 5000 2000 --forge-dir "$forge_dir"
   bash "$SCRIPT" record plan fg-200-planner 3000 1000 --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 assert d['tokens']['estimated_total'] == 11000
 assert d['tokens']['by_agent']['fg-200-planner']['input'] == 8000
 assert d['tokens']['by_agent']['fg-200-planner']['output'] == 3000
-"
+PYEOF
 }
 
 @test "forge-token-tracker: check exits 0 when within budget" {
@@ -124,13 +124,13 @@ assert d['tokens']['by_agent']['fg-200-planner']['output'] == 3000
   bash "$SCRIPT" record implementing fg-300-implementer 5000 2000 sonnet --forge-dir "$forge_dir"
   bash "$SCRIPT" record implementing fg-300-implementer 3000 1500 sonnet --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 agent = d['tokens']['by_agent']['fg-300-implementer']
-assert agent.get('dispatch_count') == 2, f'expected 2, got {agent.get(\"dispatch_count\")}'
-"
+assert agent.get('dispatch_count') == 2, f'expected 2, got {agent.get("dispatch_count")}'
+PYEOF
 }
 
 @test "forge-token-tracker: per-stage cost computed from agent costs" {
@@ -140,14 +140,14 @@ assert agent.get('dispatch_count') == 2, f'expected 2, got {agent.get(\"dispatch
 
   bash "$SCRIPT" record implementing fg-300-implementer 10000 5000 sonnet --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 per_stage = d.get('cost', {}).get('per_stage', {})
 assert isinstance(per_stage, dict), f'per_stage should be dict, got {type(per_stage)}'
 assert d['cost']['estimated_cost_usd'] > 0, d['cost']['estimated_cost_usd']
-"
+PYEOF
 }
 
 @test "forge-token-tracker: budget_remaining_tokens computed" {
@@ -157,14 +157,14 @@ assert d['cost']['estimated_cost_usd'] > 0, d['cost']['estimated_cost_usd']
 
   bash "$SCRIPT" record implementing fg-300-implementer 50000 20000 sonnet --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 remaining = d['cost'].get('budget_remaining_tokens')
 assert remaining is not None, 'budget_remaining_tokens missing'
 assert remaining == 930000, f'expected 930000, got {remaining}'
-"
+PYEOF
 }
 
 @test "forge-token-tracker: model_costs config overrides default pricing" {
@@ -174,13 +174,13 @@ assert remaining == 930000, f'expected 930000, got {remaining}'
 
   bash "$SCRIPT" record implementing fg-300-implementer 1000000 500000 sonnet --forge-dir "$forge_dir"
 
-  python3 -c "
-import json
-with open('$forge_dir/state.json') as f:
+  python3 - "$forge_dir/state.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 # Default sonnet pricing: input 3.0/MTok, output 15.0/MTok
 # 1M input * 3.0/1M + 500K output * 15.0/1M = 3.0 + 7.5 = 10.5
 cost = d['cost']['estimated_cost_usd']
 assert 10.0 < cost < 11.0, f'expected ~10.5, got {cost}'
-"
+PYEOF
 }

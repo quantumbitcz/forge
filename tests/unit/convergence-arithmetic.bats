@@ -116,6 +116,31 @@ print(len(unfixable))
 # Helper: compute smoothed_delta from a space-separated score history
 # Implements the 4-case smoothed_delta function from convergence-engine.md
 # ---------------------------------------------------------------------------
+# Use python3 for floating-point arithmetic (bc not available on Windows MSYS Bash).
+# Helper computes a weighted sum: _calc_weighted d1 w1 d2 w2 [d3 w3].
+_calc_weighted() {
+  python3 - "$@" <<'PYEOF'
+import sys
+vals = sys.argv[1:]
+total = 0.0
+for i in range(0, len(vals), 2):
+    total += float(vals[i]) * float(vals[i+1])
+# Mimic bc-style output: integers print without decimal, floats with natural repr.
+if total == int(total):
+    print(f"{total:.1f}")
+else:
+    print(repr(total))
+PYEOF
+}
+
+# Compare floating-point: returns 0 if a <= b, 1 otherwise.
+_le() {
+  python3 - "$1" "$2" <<'PYEOF'
+import sys
+sys.exit(0 if float(sys.argv[1]) <= float(sys.argv[2]) else 1)
+PYEOF
+}
+
 compute_smoothed_delta() {
   local -a scores=($@)
   local len=${#scores[@]}
@@ -126,26 +151,26 @@ compute_smoothed_delta() {
   fi
 
   if [[ $len -eq 2 ]]; then
-    # Raw delta
-    echo "${scores[1]} - ${scores[0]}" | bc
+    # Raw delta — integer result
+    echo "$((${scores[1]} - ${scores[0]}))"
     return
   fi
 
   if [[ $len -eq 3 ]]; then
     # 2-point weighted: d1*0.6 + d2*0.4
     local d1 d2
-    d1=$(echo "${scores[2]} - ${scores[1]}" | bc)
-    d2=$(echo "${scores[1]} - ${scores[0]}" | bc)
-    echo "$d1 * 0.6 + $d2 * 0.4" | bc
+    d1=$((${scores[2]} - ${scores[1]}))
+    d2=$((${scores[1]} - ${scores[0]}))
+    _calc_weighted "$d1" 0.6 "$d2" 0.4
     return
   fi
 
   # 4+ scores: 3-point weighted using last 4 scores
   local d1 d2 d3
-  d1=$(echo "${scores[$((len-1))]} - ${scores[$((len-2))]}" | bc)
-  d2=$(echo "${scores[$((len-2))]} - ${scores[$((len-3))]}" | bc)
-  d3=$(echo "${scores[$((len-3))]} - ${scores[$((len-4))]}" | bc)
-  echo "$d1 * 0.5 + $d2 * 0.3 + $d3 * 0.2" | bc
+  d1=$((${scores[$((len-1))]} - ${scores[$((len-2))]}))
+  d2=$((${scores[$((len-2))]} - ${scores[$((len-3))]}))
+  d3=$((${scores[$((len-3))]} - ${scores[$((len-4))]}))
+  _calc_weighted "$d1" 0.5 "$d2" 0.3 "$d3" 0.2
 }
 
 @test "convergence-arith: smoothed_delta with 2 scores uses raw delta" {
@@ -189,13 +214,13 @@ compute_smoothed_delta() {
   local smoothed_delta=0
   local plateau_threshold=2
 
-  if [[ $phase_iterations -ge 2 ]] && [[ $(echo "$smoothed_delta <= $plateau_threshold" | bc) -eq 1 ]]; then
+  if [[ $phase_iterations -ge 2 ]] && _le "$smoothed_delta" "$plateau_threshold"; then
     fail "phase_iterations=1 should NOT trigger plateau counting"
   fi
 
   # phase_iterations=2 should trigger
   phase_iterations=2
-  if [[ $phase_iterations -ge 2 ]] && [[ $(echo "$smoothed_delta <= $plateau_threshold" | bc) -eq 1 ]]; then
+  if [[ $phase_iterations -ge 2 ]] && _le "$smoothed_delta" "$plateau_threshold"; then
     # This is correct — plateau detected
     true
   else

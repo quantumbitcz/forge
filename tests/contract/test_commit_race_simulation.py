@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def test_workflow_has_race_retry_loop() -> None:
-    wf = (Path(__file__).resolve().parents[2] / ".github" / "workflows" / "benchmark.yml").read_text()
+    wf = (Path(__file__).resolve().parents[2] / ".github" / "workflows" / "benchmark.yml").read_text(encoding="utf-8")
     assert "for i in 1 2; do" in wf
     assert "BENCH-COMMIT-RACE" in wf
     assert "Upload scorecard (race fallback)" in wf or "scorecard-${{ github.run_id }}" in wf

@@ -20,14 +20,14 @@ STATE_WRITER="$PLUGIN_ROOT/shared/forge-state-write.sh"
   assert_success
   assert [ -f "$forge_dir/linear-events.jsonl" ]
 
-  python3 -c "
-import json
-with open('$forge_dir/linear-events.jsonl') as f:
+  python3 - "$forge_dir/linear-events.jsonl" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     line = f.readline().strip()
     d = json.loads(line)
     assert d['event_type'] == 'plan_complete'
     assert d['linear_available'] == False
-"
+PYEOF
 }
 
 @test "forge-linear-sync: emit always exits 0 even with bad JSON" {
@@ -61,12 +61,12 @@ with open('$forge_dir/linear-events.jsonl') as f:
   run bash "$SCRIPT" emit pr_created '{"epic_id":"E1","pr_url":"https://github.com/test/pr/1"}' --forge-dir "$forge_dir"
   assert_success
 
-  python3 -c "
-import json
-with open('$forge_dir/linear-events.jsonl') as f:
+  python3 - "$forge_dir/linear-events.jsonl" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.loads(f.readline().strip())
     assert d['linear_available'] == True
-"
+PYEOF
 }
 
 @test "forge-linear-sync: emit works without state.json (exits 0)" {

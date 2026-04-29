@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).parent.parent.parent
-AGENT = (REPO_ROOT / "agents" / "fg-540-intent-verifier.md").read_text()
+AGENT = (REPO_ROOT / "agents" / "fg-540-intent-verifier.md").read_text(encoding="utf-8")
 
 
 def _frontmatter(text: str) -> str:

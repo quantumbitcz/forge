@@ -11,7 +11,10 @@ setup() {
 }
 
 @test "skill-config-refs: schema is valid JSON" {
-  run python3 -c "import json; json.load(open('$SCHEMA'))"
+  run python3 - "$SCHEMA" <<'PYEOF'
+import json, sys
+json.load(open(sys.argv[1]))
+PYEOF
   assert_success
 }
 

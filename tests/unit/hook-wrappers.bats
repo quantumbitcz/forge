@@ -47,21 +47,21 @@ HOOKS=(pre_tool_use.py post_tool_use.py post_tool_use_skill.py
   run env CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" python3 "$PLUGIN_ROOT/hooks/post_tool_use_skill.py" <<<'{}'
   [ "$status" -eq 0 ]
   assert [ -f ".forge/.hook-failures.jsonl" ]
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT/shared/schemas/hook-failures.schema.json" <<'PYEOF'
 import json, sys
 from pathlib import Path
 try:
     import jsonschema
 except ImportError:
     sys.exit(0)  # CI installs jsonschema (Task 10); local skip is acceptable
-schema = json.loads(Path('$PLUGIN_ROOT/shared/schemas/hook-failures.schema.json').read_text())
+schema = json.loads(Path(sys.argv[1]).read_text())
 for raw in Path('.forge/.hook-failures.jsonl').read_text().splitlines():
     raw = raw.strip()
     if not raw:
         continue
     row = json.loads(raw)
     jsonschema.validate(row, schema)
-"
+PYEOF
   assert_success
   rm -rf "$tmp"
 }

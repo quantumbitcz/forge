@@ -25,44 +25,44 @@ has_jsonschema() {
 
 @test "hook-failures fixture validates (skip if jsonschema absent)" {
   has_jsonschema || skip "jsonschema not installed"
-  run python3 -c "
+  run python3 - "$SCHEMAS/hook-failures.schema.json" "$FIXTURES/hook-failure-sample.jsonl" <<'PYEOF'
 import json, sys, jsonschema
-schema = json.load(open('$SCHEMAS/hook-failures.schema.json'))
-for line in open('$FIXTURES/hook-failure-sample.jsonl'):
+schema = json.load(open(sys.argv[1]))
+for line in open(sys.argv[2]):
     jsonschema.validate(json.loads(line), schema)
-"
+PYEOF
   assert_success
 }
 
 @test "progress-status fixture validates (skip if jsonschema absent)" {
   has_jsonschema || skip "jsonschema not installed"
-  run python3 -c "
-import json, jsonschema
-schema = json.load(open('$SCHEMAS/progress-status.schema.json'))
-jsonschema.validate(json.load(open('$FIXTURES/progress-status-sample.json')), schema)
-"
+  run python3 - "$SCHEMAS/progress-status.schema.json" "$FIXTURES/progress-status-sample.json" <<'PYEOF'
+import json, sys, jsonschema
+schema = json.load(open(sys.argv[1]))
+jsonschema.validate(json.load(open(sys.argv[2])), schema)
+PYEOF
   assert_success
 }
 
 @test "run-history-trends fixture validates (skip if jsonschema absent)" {
   has_jsonschema || skip "jsonschema not installed"
-  run python3 -c "
-import json, jsonschema, os
-base = '$SCHEMAS'
+  run python3 - "$SCHEMAS" "$FIXTURES/run-history-trends-sample.json" <<'PYEOF'
+import json, sys, jsonschema, os
+base = sys.argv[1]
 schema = json.load(open(os.path.join(base,'run-history-trends.schema.json')))
 hook_schema = json.load(open(os.path.join(base,'hook-failures.schema.json')))
 from jsonschema import RefResolver
-# Both schemas declare absolute \$id URLs; the run-history-trends schema also
-# uses a relative \$ref ('hook-failures.schema.json'). RefResolver needs both
-# the absolute \$id and the relative reference in its store, otherwise it
+# Both schemas declare absolute $id URLs; the run-history-trends schema also
+# uses a relative $ref ('hook-failures.schema.json'). RefResolver needs both
+# the absolute $id and the relative reference in its store, otherwise it
 # falls through to remote HTTP fetch (which fails offline).
 store = {
-    schema.get('\$id', ''): schema,
-    hook_schema.get('\$id', ''): hook_schema,
+    schema.get('$id', ''): schema,
+    hook_schema.get('$id', ''): hook_schema,
     'hook-failures.schema.json': hook_schema,
 }
 resolver = RefResolver(base_uri='file://' + base + '/', referrer=schema, store=store)
-jsonschema.validate(json.load(open('$FIXTURES/run-history-trends-sample.json')), schema, resolver=resolver)
-"
+jsonschema.validate(json.load(open(sys.argv[2])), schema, resolver=resolver)
+PYEOF
   assert_success
 }

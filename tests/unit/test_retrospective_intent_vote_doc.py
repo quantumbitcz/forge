@@ -1,7 +1,7 @@
 """Phase 7 Wave 5 Task 23 — fg-700-retrospective §2j Intent & Vote Analytics doc."""
 from pathlib import Path
 
-A = (Path(__file__).parent.parent.parent / "agents" / "fg-700-retrospective.md").read_text()
+A = (Path(__file__).parent.parent.parent / "agents" / "fg-700-retrospective.md").read_text(encoding="utf-8")
 
 
 def test_analytics_section_present():

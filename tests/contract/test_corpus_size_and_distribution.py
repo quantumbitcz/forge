@@ -29,7 +29,7 @@ def test_corpus_has_min_entries() -> None:
 def test_language_and_framework_spread() -> None:
     langs, frameworks, complexities = set(), set(), []
     for e in _entries():
-        meta = yaml.safe_load((e / "metadata.yaml").read_text())
+        meta = yaml.safe_load((e / "metadata.yaml").read_text(encoding="utf-8"))
         langs.add(meta["language"])
         frameworks.add(meta["framework"])
         complexities.append(meta["complexity"])

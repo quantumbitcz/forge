@@ -21,9 +21,9 @@ with open(p, 'w') as fh:
 }
 
 @test "aware_routing with remaining=0.30, premium est=0.078, trip=0.39 -> downgrade (AC-607)" {
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT/shared" <<'PYEOF'
 import sys
-sys.path.insert(0, '$PLUGIN_ROOT/shared')
+sys.path.insert(0, sys.argv[1])
 from cost_governance import downgrade_tier
 t, r = downgrade_tier(
     agent='fg-200-planner', resolved_tier='premium', remaining_usd=0.30,
@@ -32,15 +32,15 @@ t, r = downgrade_tier(
     pinned_agents=[], aware_routing=True,
 )
 print(f'{t}|{r}')
-"
+PYEOF
   assert_success
   assert_output "standard|downgrade_from_premium"
 }
 
 @test "pinned_agent stays on premium even when trip is crossed (AC-609)" {
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT/shared" <<'PYEOF'
 import sys
-sys.path.insert(0, '$PLUGIN_ROOT/shared')
+sys.path.insert(0, sys.argv[1])
 from cost_governance import downgrade_tier
 t, r = downgrade_tier(
     agent='fg-200-planner', resolved_tier='premium', remaining_usd=0.30,
@@ -49,17 +49,17 @@ t, r = downgrade_tier(
     pinned_agents=['fg-200-planner'], aware_routing=True,
 )
 print(f'{t}|{r}')
-"
+PYEOF
   assert_success
   assert_output "premium|agent_pinned"
 }
 
 @test "downgrade appended to state.cost.downgrades[] with (from, to, remaining_usd)" {
   # Simulate the orchestrator state mutation performed in Task 14 Step 2.
-  python3 -c "
+  python3 - "$PLUGIN_ROOT/shared" <<'PYEOF'
 import json, os, sys
 from pathlib import Path
-sys.path.insert(0, '$PLUGIN_ROOT/shared')
+sys.path.insert(0, sys.argv[1])
 from cost_governance import downgrade_tier
 from datetime import datetime, timezone
 p = Path(os.environ['FORGE_DIR']) / 'state.json'
@@ -82,7 +82,7 @@ if t != 'premium':
     st['cost']['downgrade_count'] = len(st['cost']['downgrades'])
 with open(p, 'w') as fh:
     json.dump(st, fh, indent=2)
-"
+PYEOF
   run python3 -c "
 import json, os
 from pathlib import Path

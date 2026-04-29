@@ -2,7 +2,7 @@
 import re
 from pathlib import Path
 
-A = (Path(__file__).parent.parent.parent / "shared" / "agents.md").read_text()
+A = (Path(__file__).parent.parent.parent / "shared" / "agents.md").read_text(encoding="utf-8")
 
 
 def test_fg540_in_registry():

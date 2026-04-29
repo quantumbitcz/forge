@@ -14,7 +14,7 @@ ROOT = Path(__file__).parent.parent.parent
 
 def test_orchestrator_preflight_cleans_dispatch_contexts():
     """Orchestrator PREFLIGHT prose must instruct removal of .forge/dispatch-contexts/."""
-    text = (ROOT / "agents" / "fg-100-orchestrator.md").read_text()
+    text = (ROOT / "agents" / "fg-100-orchestrator.md").read_text(encoding="utf-8")
     # Look for an explicit destructive cleanup directive (rm -rf or shutil.rmtree)
     # alongside the dispatch-contexts path in the PREFLIGHT context.
     assert re.search(
@@ -26,5 +26,5 @@ def test_orchestrator_preflight_cleans_dispatch_contexts():
 
 def test_state_integrity_still_detects_stale():
     """state-integrity.sh keeps stale-detection block as a defense-in-depth."""
-    text = (ROOT / "shared" / "state-integrity.sh").read_text()
+    text = (ROOT / "shared" / "state-integrity.sh").read_text(encoding="utf-8")
     assert "dispatch-contexts" in text

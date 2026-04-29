@@ -86,21 +86,21 @@ run_hook_in() {
   local hooks_json="$PLUGIN_ROOT/hooks/hooks.json"
   [[ -f "$hooks_json" ]] || fail "hooks.json not found"
 
-  run python3 -c "
-import json
-with open('$hooks_json') as f:
+  run python3 - "$hooks_json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 for group in d['hooks'].get('PostToolUse', []):
     if group.get('matcher') == 'Skill':
         for h in group.get('hooks', []):
             if 'post_tool_use_skill' in h.get('command', ''):
                 assert 'timeout' in h, 'No timeout defined for checkpoint hook'
-                assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
-                print(f'timeout={h[\"timeout\"]}')
+                assert h['timeout'] > 0, f'Timeout must be positive, got {h["timeout"]}'
+                print(f'timeout={h["timeout"]}')
                 exit(0)
 print('NOTFOUND')
 exit(1)
-"
+PYEOF
   assert_success
   [[ "$output" == *"timeout="* ]] || fail "Checkpoint hook timeout not found in hooks.json"
 }
@@ -109,20 +109,20 @@ exit(1)
   local hooks_json="$PLUGIN_ROOT/hooks/hooks.json"
   [[ -f "$hooks_json" ]] || fail "hooks.json not found"
 
-  run python3 -c "
-import json
-with open('$hooks_json') as f:
+  run python3 - "$hooks_json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     d = json.load(f)
 for group in d['hooks'].get('Stop', []):
     for h in group.get('hooks', []):
         if 'stop.py' in h.get('command', ''):
             assert 'timeout' in h, 'No timeout defined for feedback hook'
-            assert h['timeout'] > 0, f'Timeout must be positive, got {h[\"timeout\"]}'
-            print(f'timeout={h[\"timeout\"]}')
+            assert h['timeout'] > 0, f'Timeout must be positive, got {h["timeout"]}'
+            print(f'timeout={h["timeout"]}')
             exit(0)
 print('NOTFOUND')
 exit(1)
-"
+PYEOF
   assert_success
   [[ "$output" == *"timeout="* ]] || fail "Feedback hook timeout not found in hooks.json"
 }
@@ -166,16 +166,16 @@ exit(1)
   local log="$project_dir/.forge/checkpoints.jsonl"
   assert [ -f "$log" ]
   # Every line must be valid JSON with a timestamp key.
-  run python3 -c "
-import json
-with open('$log') as f:
+  run python3 - "$log" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
     for line in f:
         line = line.strip()
         if not line: continue
         entry = json.loads(line)
         assert 'timestamp' in entry
 print('OK')
-"
+PYEOF
   assert_success
 }
 

@@ -7,16 +7,16 @@ skip_if_no_otel() {
 
 @test "replay emits forge.run.budget_total_usd on agent spans" {
   skip_if_no_otel
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT" "$PLUGIN_ROOT/tests/fixtures/events-cost-attrs.jsonl" <<'PYEOF' 2>&1
 import sys, pathlib
-sys.path.insert(0, '$PLUGIN_ROOT')
+sys.path.insert(0, sys.argv[1])
 from hooks._py.otel import replay
 # Use the console exporter to capture output.
 cfg = {'enabled': True, 'exporter': 'console', 'endpoint': '', 'sample_rate': 1.0,
        'service_name': 'forge-test', 'openinference_compat': False,
        'include_tool_spans': False, 'batch_size': 32, 'flush_interval_seconds': 2}
-replay(events_path='$PLUGIN_ROOT/tests/fixtures/events-cost-attrs.jsonl', config=cfg)
-" 2>&1
+replay(events_path=sys.argv[2], config=cfg)
+PYEOF
   assert_success
   assert_output -p 'forge.run.budget_total_usd'
   assert_output -p 'forge.run.budget_remaining_usd'
@@ -33,15 +33,15 @@ replay(events_path='$PLUGIN_ROOT/tests/fixtures/events-cost-attrs.jsonl', config
   cat > "$tmp" <<'EOF'
 {"type":"dispatch_start","gen_ai.agent.name":"fg-200-planner","forge.agent.tier_original":"premium","forge.agent.tier_used":"standard","forge.cost.throttle_reason":"dynamic_downgrade"}
 EOF
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT" "$tmp" <<'PYEOF' 2>&1
 import sys
-sys.path.insert(0, '$PLUGIN_ROOT')
+sys.path.insert(0, sys.argv[1])
 from hooks._py.otel import replay
 cfg = {'enabled': True, 'exporter': 'console', 'endpoint': '', 'sample_rate': 1.0,
        'service_name': 'forge-test', 'openinference_compat': False,
        'include_tool_spans': False, 'batch_size': 32, 'flush_interval_seconds': 2}
-replay(events_path='$tmp', config=cfg)
-" 2>&1
+replay(events_path=sys.argv[2], config=cfg)
+PYEOF
   assert_success
   assert_output -p 'tier_original": "premium"'
   assert_output -p 'tier_used": "standard"'

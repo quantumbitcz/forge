@@ -28,14 +28,14 @@ with open(p, 'w') as fh:
 }
 
 @test "ceiling_usd=0: budget block renders 'unlimited'" {
-  run python3 -c "
+  run python3 - "$PLUGIN_ROOT/shared" <<'PYEOF'
 import sys
-sys.path.insert(0, '$PLUGIN_ROOT/shared')
+sys.path.insert(0, sys.argv[1])
 from cost_governance import compute_budget_block
 out = compute_budget_block(ceiling_usd=0, spent_usd=123.45, tier='premium', tier_estimate=0.078)
 assert 'unlimited' in out.lower()
 print(out)
-"
+PYEOF
   assert_success
   assert_output -p "unlimited"
   assert_output -p 'Your tier: premium'

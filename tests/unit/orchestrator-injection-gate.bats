@@ -30,14 +30,14 @@ teardown() { rm -rf "$TMP"; }
     --agent fg-020-bug-investigator --source mcp:playwright
   [ "$status" -ne 0 ]
   [ -f "$FORGE_DIR/alerts.json" ]
-  run python3 -c "
-import json
-a = json.load(open('$FORGE_DIR/alerts.json'))
+  run python3 - "$FORGE_DIR/alerts.json" <<'PYEOF'
+import json, sys
+a = json.load(open(sys.argv[1]))
 assert a['severity'] == 'high'
 assert a['reason'] == 'T-C + Bash dispatch blocked'
 assert a['agent'] == 'fg-020-bug-investigator'
 assert a['source'] == 'mcp:playwright'
-"
+PYEOF
   [ "$status" -eq 0 ]
 }
 

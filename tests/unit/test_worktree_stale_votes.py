@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
-AGENT = (REPO_ROOT / "agents" / "fg-101-worktree-manager.md").read_text()
+AGENT = (REPO_ROOT / "agents" / "fg-101-worktree-manager.md").read_text(encoding="utf-8")
 
 
 def test_detect_stale_references_votes_dir():

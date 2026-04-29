@@ -130,7 +130,17 @@ PYEOF
   for fw in "${DISCOVERED_FRAMEWORKS[@]}"; do
     local ro="$FRAMEWORKS_DIR/$fw/rules-override.json"
     [[ -f "$ro" ]] || continue
-    if ! python3 -c "import json; json.load(open('$ro'))" 2>/dev/null; then
+    local result
+    result=$(python3 - "$ro" <<'PYEOF'
+import json, sys
+try:
+    json.load(open(sys.argv[1]))
+    print("OK")
+except Exception:
+    print("FAIL")
+PYEOF
+)
+    if [[ "$result" != "OK" ]]; then
       failures+=("$fw")
     fi
   done

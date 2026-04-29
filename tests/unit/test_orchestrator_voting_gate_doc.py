@@ -1,7 +1,7 @@
 """Phase 7 F36 — fg-100-orchestrator voting gate pseudocode documentation."""
 from pathlib import Path
 
-A = (Path(__file__).parent.parent.parent / "agents" / "fg-100-orchestrator.md").read_text()
+A = (Path(__file__).parent.parent.parent / "agents" / "fg-100-orchestrator.md").read_text(encoding="utf-8")
 
 
 def test_voting_gate_pseudocode_present():

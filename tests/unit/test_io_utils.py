@@ -34,13 +34,13 @@ def test_atomic_json_update_roundtrip(tmp_path: Path):
         return d
 
     io_utils.atomic_json_update(target, mutate)
-    assert json.loads(target.read_text())["counter"] == 2
+    assert json.loads(target.read_text(encoding="utf-8"))["counter"] == 2
 
 
 def test_atomic_json_update_handles_missing_file(tmp_path: Path):
     target = tmp_path / "new.json"
     io_utils.atomic_json_update(target, lambda d: {"created": True}, default={})
-    assert json.loads(target.read_text())["created"] is True
+    assert json.loads(target.read_text(encoding="utf-8"))["created"] is True
 
 
 def test_atomic_json_update_is_concurrent_safe(tmp_path: Path):
@@ -56,7 +56,7 @@ def test_atomic_json_update_is_concurrent_safe(tmp_path: Path):
         t.start()
     for t in threads:
         t.join()
-    assert json.loads(target.read_text())["n"] == 200
+    assert json.loads(target.read_text(encoding="utf-8"))["n"] == 200
 
 
 def test_normalize_path_emits_posix(tmp_path: Path):

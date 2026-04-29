@@ -15,11 +15,11 @@ teardown() { rm -rf "$TMPDIR"; }
 
 @test "3 reviewers with overlapping findings → one scored entry + non-empty seen_by" {
   # Simulate 3 reviewers emitting findings with the same dedup_key
-  python3 -c "
+  python3 - "$PROJECT_ROOT/shared/python" "$RUNS" <<'PYEOF'
 import sys, pathlib
-sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+sys.path.insert(0, sys.argv[1])
 from findings_store import append_finding, reduce_findings
-root = pathlib.Path('$RUNS')
+root = pathlib.Path(sys.argv[2])
 for i, (reviewer, sev, conf) in enumerate([
   ('fg-410-code-reviewer', 'INFO', 'LOW'),
   ('fg-411-security-reviewer', 'CRITICAL', 'HIGH'),
@@ -45,15 +45,15 @@ assert winner['severity'] == 'CRITICAL', winner['severity']  # highest sev
 assert winner['reviewer'] == 'fg-411-security-reviewer'
 assert set(winner['seen_by']) == {'fg-410-code-reviewer', 'fg-412-architecture-reviewer'}
 print('OK')
-"
+PYEOF
 }
 
 @test "Phase 7 tolerance: fg-540 INTENT finding with null file/line reduces correctly" {
-  python3 -c "
+  python3 - "$PROJECT_ROOT/shared/python" "$RUNS" <<'PYEOF'
 import sys, pathlib
-sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+sys.path.insert(0, sys.argv[1])
 from findings_store import append_finding, reduce_findings
-root = pathlib.Path('$RUNS')
+root = pathlib.Path(sys.argv[2])
 append_finding(root, 'fg-540-intent-verifier', {
   'finding_id': 'f-fg-540-intent-verifier-01J2BQK000Z',
   'dedup_key': '-:-:INTENT-AC-007',
@@ -73,5 +73,5 @@ out_phase7 = reduce_findings(root, writer_glob='fg-540*.jsonl')
 assert out_phase5 == []
 assert len(out_phase7) == 1 and out_phase7[0]['ac_id'] == 'AC-007'
 print('OK')
-"
+PYEOF
 }

@@ -9,7 +9,9 @@ HOOKS_JSON="$PLUGIN_ROOT/hooks/hooks.json"
 # 1. Valid JSON
 # ---------------------------------------------------------------------------
 @test "hooks-json: file is valid JSON" {
-  run python3 -c "import json; json.load(open('$HOOKS_JSON'))"
+  run python3 - "$HOOKS_JSON" <<'PYEOF'
+import json, sys; json.load(open(sys.argv[1]))
+PYEOF
   assert_success
 }
 

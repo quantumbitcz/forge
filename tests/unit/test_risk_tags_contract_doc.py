@@ -1,7 +1,7 @@
 """Phase 7 F36 — risk_tags producer/consumer contract documentation."""
 from pathlib import Path
 
-DOC = (Path(__file__).parent.parent.parent / "shared" / "agent-communication.md").read_text()
+DOC = (Path(__file__).parent.parent.parent / "shared" / "agent-communication.md").read_text(encoding="utf-8")
 
 
 def test_risk_tags_producer_consumer_documented():

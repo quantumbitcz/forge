@@ -1,8 +1,8 @@
 """Phase 7 Wave 5 Task 26 — living-specifications + confidence-scoring cross-refs."""
 from pathlib import Path
 
-LS = (Path(__file__).parent.parent.parent / "shared" / "living-specifications.md").read_text()
-CS = (Path(__file__).parent.parent.parent / "shared" / "confidence-scoring.md").read_text()
+LS = (Path(__file__).parent.parent.parent / "shared" / "living-specifications.md").read_text(encoding="utf-8")
+CS = (Path(__file__).parent.parent.parent / "shared" / "confidence-scoring.md").read_text(encoding="utf-8")
 
 
 def test_living_specs_references_fg540():

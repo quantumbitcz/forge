@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = Draft202012Validator(
-    json.loads((ROOT / "tests/evals/benchmark/schemas/baseline.schema.json").read_text())
+    json.loads((ROOT / "tests/evals/benchmark/schemas/baseline.schema.json").read_text(encoding="utf-8"))
 )
 
 
@@ -86,7 +86,7 @@ def test_confirmed_writes_valid(tmp_path: Path) -> None:
         text=True,
     )
     assert r.returncode == 0, r.stderr
-    doc = json.loads(out.read_text())
+    doc = json.loads(out.read_text(encoding="utf-8"))
     SCHEMA.validate(doc)
     assert "claude-sonnet-4-6" in doc["baselines"]
     assert doc["baselines"]["claude-sonnet-4-6"]["overall"] == 0.8

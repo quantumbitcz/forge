@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_learning_type_documented_in_readme() -> None:
-    readme = (ROOT / "shared" / "learnings" / "README.md").read_text()
+    readme = (ROOT / "shared" / "learnings" / "README.md").read_text(encoding="utf-8")
     assert "benchmark.regression" in readme, "Phase 8 must document new learning type"
 
 
@@ -22,7 +22,7 @@ def test_registry_includes_benchmark_regression() -> None:
     ]
     for path in registry_candidates:
         if path.is_file():
-            types = json.loads(path.read_text())
+            types = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(types, list):
                 assert "benchmark.regression" in types
             elif isinstance(types, dict):

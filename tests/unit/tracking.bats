@@ -102,8 +102,14 @@ teardown() {
 
   [[ -f "${td}/counter.json" ]]
   local prefix next
-  prefix="$(python3 -c "import json; d=json.load(open('${td}/counter.json')); print(d['prefix'])")"
-  next="$(python3 -c "import json; d=json.load(open('${td}/counter.json')); print(d['next'])")"
+  prefix="$(python3 - "${td}/counter.json" <<'PYEOF'
+import json, sys; d=json.load(open(sys.argv[1])); print(d['prefix'])
+PYEOF
+  )"
+  next="$(python3 - "${td}/counter.json" <<'PYEOF'
+import json, sys; d=json.load(open(sys.argv[1])); print(d['next'])
+PYEOF
+  )"
   [[ "$prefix" == "FG" ]]
   [[ "$next" == "1" ]]
 }
@@ -116,7 +122,10 @@ teardown() {
   assert_success
 
   local prefix
-  prefix="$(python3 -c "import json; d=json.load(open('${td}/counter.json')); print(d['prefix'])")"
+  prefix="$(python3 - "${td}/counter.json" <<'PYEOF'
+import json, sys; d=json.load(open(sys.argv[1])); print(d['prefix'])
+PYEOF
+  )"
   [[ "$prefix" == "WP" ]]
 }
 
@@ -131,7 +140,10 @@ teardown() {
   assert_success
 
   local next
-  next="$(python3 -c "import json; d=json.load(open('${td}/counter.json')); print(d['next'])")"
+  next="$(python3 - "${td}/counter.json" <<'PYEOF'
+import json, sys; d=json.load(open(sys.argv[1])); print(d['next'])
+PYEOF
+  )"
   [[ "$next" == "42" ]]
 }
 

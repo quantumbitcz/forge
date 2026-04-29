@@ -14,7 +14,7 @@ SCHEMA = Path(__file__).parent.parent.parent / "shared" / "schemas" / "otel-gena
 
 def test_schema_file_exists_and_is_valid_json():
     assert SCHEMA.exists(), "pinned semconv schema missing"
-    data = json.loads(SCHEMA.read_text())
+    data = json.loads(SCHEMA.read_text(encoding="utf-8"))
     assert data.get("$schema", "").startswith("https://json-schema.org/")
     assert "properties" in data
     required_attrs = data["properties"]["agent_span"]["required"]

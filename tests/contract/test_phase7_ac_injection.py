@@ -21,7 +21,7 @@ def test_source_field_present_and_untouched(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()
     _write_spec_injection(project, entry)
-    doc = json.loads((project / ".forge" / "specs" / "index.json").read_text())
+    doc = json.loads((project / ".forge" / "specs" / "index.json").read_text(encoding="utf-8"))
     assert doc["specs"]["demo"]["source"] == "benchmark-injected"
 
 

@@ -24,7 +24,7 @@ def test_spec_injection_uses_B_namespace(tmp_path: Path) -> None:
     target = tmp_path / "project"
     (target / ".forge" / "specs").mkdir(parents=True)
     _write_spec_injection(target, entry)
-    doc = json.loads((target / ".forge" / "specs" / "index.json").read_text())
+    doc = json.loads((target / ".forge" / "specs" / "index.json").read_text(encoding="utf-8"))
     assert doc["active_spec_id"] == "2026-01-01-demo"
     ids = [ac["id"] for ac in doc["specs"]["2026-01-01-demo"]["acceptance_criteria"]]
     assert all(i.startswith("AC-B") for i in ids)

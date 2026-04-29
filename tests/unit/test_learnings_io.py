@@ -13,7 +13,7 @@ FIXTURE = Path(__file__).parent.parent / "fixtures" / "learnings" / "spring_v2_e
 
 def test_parse_v2_items(tmp_path):
     dst = tmp_path / "spring.md"
-    dst.write_text(FIXTURE.read_text().replace("__FILE_MTIME__", "2026-04-20T00:00:00Z"))
+    dst.write_text(FIXTURE.read_text(encoding="utf-8").replace("__FILE_MTIME__", "2026-04-20T00:00:00Z"))
     items = parse_file(dst)
     assert [i.id for i in items] == ["ks-preempt-001", "ks-preempt-002", "ks-preempt-003"]
     assert all(i.applied_count == 0 for i in items)

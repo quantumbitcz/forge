@@ -11,7 +11,7 @@ from pathlib import Path
 import tomllib
 
 PYPROJECT = tomllib.loads(
-    (Path(__file__).parent.parent.parent / "pyproject.toml").read_text()
+    (Path(__file__).parent.parent.parent / "pyproject.toml").read_text(encoding="utf-8")
 )
 
 

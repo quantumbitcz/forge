@@ -2,6 +2,10 @@
 
 setup() {
   PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+  # Convert MSYS path to mixed form on native Windows so native Python can resolve it.
+  if command -v cygpath >/dev/null 2>&1; then
+    PROJECT_ROOT="$(cygpath -m "$PROJECT_ROOT")"
+  fi
 }
 
 @test "shared/findings-store.md exists" {
@@ -95,18 +99,18 @@ setup() {
 }
 
 @test "reviewer_registry helper exists and extracts REVIEW-tier from shared/agents.md" {
-  run python3 -c "
+  run python3 - "$PROJECT_ROOT/shared/python" "$PROJECT_ROOT/shared/agents.md" <<'PYEOF'
 import sys
-sys.path.insert(0, '$PROJECT_ROOT/shared/python')
+sys.path.insert(0, sys.argv[1])
 from reviewer_registry import extract_review_tier_slice
 import pathlib
-slice = extract_review_tier_slice(pathlib.Path('$PROJECT_ROOT/shared/agents.md'))
+slice = extract_review_tier_slice(pathlib.Path(sys.argv[2]))
 assert isinstance(slice, (list, tuple)) and len(slice) == 9, f'expected 9, got {len(slice)}'
 names = [r['name'] for r in slice]
 assert names == sorted(set(names)), f'duplicates or unsorted: {names}'
 assert any('fg-411-security-reviewer' == r['name'] for r in slice)
 assert all(not r['domain'].startswith('6 (') for r in slice), 'leaked Tier-matrix row'
 print('OK')
-"
+PYEOF
   [ "$status" -eq 0 ]
 }
